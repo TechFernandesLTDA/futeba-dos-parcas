@@ -17,6 +17,7 @@ import {
   Alert,
   useTheme,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -78,6 +79,13 @@ export const DevToolsScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
+        {import.meta.env.MODE === 'production' && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <strong>⚠️ AMBIENTE DE PRODUÇÃO</strong>
+            <Typography variant="body2">Ações destrutivas afetam dados reais. Tenha cautela.</Typography>
+          </Alert>
+        )}
+
         {lastAction && (
           <Alert severity="success" sx={{ mb: 2 }} onClose={() => setLastAction(null)} aria-live="polite">
             {lastAction}
@@ -114,15 +122,19 @@ export const DevToolsScreen: React.FC = () => {
                 />
               </ListItemButton>
               <Divider />
-              <ListItemButton onClick={() => setLastAction('Dados do usuário limpos')}>
-                <ListItemIcon>
-                  <DeleteIcon color="error" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Limpar Dados do Usuário"
-                  secondary="Remove dados de teste do usuário atual"
-                />
-              </ListItemButton>
+              <Tooltip title="Em desenvolvimento" placement="top">
+                <span>
+                  <ListItemButton disabled>
+                    <ListItemIcon>
+                      <DeleteIcon color="disabled" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Limpar Dados do Usuário"
+                      secondary="Remove dados de teste do usuário atual"
+                    />
+                  </ListItemButton>
+                </span>
+              </Tooltip>
             </List>
           </CardContent>
         </Card>
@@ -180,7 +192,7 @@ export const DevToolsScreen: React.FC = () => {
                 <ListItemIcon>
                   <StorageIcon />
                 </ListItemIcon>
-                <ListItemText primary="Ambiente" secondary="development" />
+                <ListItemText primary="Ambiente" secondary={import.meta.env.MODE} />
               </ListItem>
               <Divider />
               <ListItem>
