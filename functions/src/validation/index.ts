@@ -13,6 +13,7 @@ import {
   MAX_GOALS_PER_GAME,
   MAX_ASSISTS_PER_GAME,
   MAX_SAVES_PER_GAME,
+  LEVEL_TABLE,
 } from "../constants";
 
 // ============================================
@@ -65,8 +66,11 @@ export const VALIDATION_CONSTANTS = {
   LEAGUE_RATING_MAX: 100.0,
 
   // Limites de nível
+  // FIX #995: derivar de LEVEL_TABLE.maxLevel (xp-constants.json) em vez de
+  // hardcoded 10. LEVEL_TABLE.maxLevel é 20 (níveis 0-20), antes LEVEL_MAX=10
+  // rejeitava levels válidos 11-20 reportados pelo cliente.
   LEVEL_MIN: 0,
-  LEVEL_MAX: 10,
+  LEVEL_MAX: LEVEL_TABLE.maxLevel,
 
   // Anti-cheat limits (importados de constants.ts)
   MAX_GOALS_PER_GAME,

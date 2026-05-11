@@ -353,12 +353,17 @@ export const systemHealthCheck =
     // CHECK 5: XP duplicatas (últimas 24h)
     // ========================================
     try {
-      // Verificar jogos com erros de XP
+      // FIX #993: adicionar filtro temporal — antes pegava TODOS os
+      // jogos com erro historicamente (alertas perpétuos de erros antigos).
+      const dayAgo = admin.firestore.Timestamp.fromMillis(
+        Date.now() - 24 * 60 * 60 * 1000
+      );
       const errorGamesSnap = await db
         .collection("games")
         .where(
           "xp_processing_error", "!=", null
         )
+        .where("updated_at", ">=", dayAgo)
         .limit(10)
         .get();
 
