@@ -175,7 +175,7 @@ class UserPermissionsTest {
             assertTrue(
                 UserPermissions.canManageResource(
                     admin,
-                    UserPermissions.Action.EDIT_ANY_GAME,
+                    UserPermissions.Action.EDIT_GAME,
                     "other-user-123"
                 )
             )
@@ -188,7 +188,7 @@ class UserPermissionsTest {
             assertTrue(
                 UserPermissions.canManageResource(
                     player,
-                    UserPermissions.Action.EDIT_ANY_GAME,
+                    UserPermissions.Action.EDIT_GAME,
                     "player-123"
                 )
             )
@@ -198,7 +198,7 @@ class UserPermissionsTest {
         @DisplayName("Não-dono não pode gerenciar recurso de outro")
         fun `non-owner cannot manage other's resource`() {
             val player = createUser(id = "player-123", role = UserRole.PLAYER.name)
-            // Player tem EDIT_ANY_GAME mas não é dono nem admin
+            // Player tem EDIT_GAME (flag global) mas não é dono nem admin
             val result = UserPermissions.canManageResource(
                 player,
                 UserPermissions.Action.DELETE_ANY_GAME,
@@ -214,7 +214,7 @@ class UserPermissionsTest {
             assertFalse(
                 UserPermissions.canManageResource(
                     null,
-                    UserPermissions.Action.EDIT_ANY_GAME,
+                    UserPermissions.Action.EDIT_GAME,
                     "owner-123"
                 )
             )
@@ -227,7 +227,7 @@ class UserPermissionsTest {
             assertTrue(
                 UserPermissions.canManageResource(
                     fieldOwner,
-                    UserPermissions.Action.EDIT_ANY_GAME,
+                    UserPermissions.Action.EDIT_GAME,
                     null
                 )
             )
@@ -375,7 +375,7 @@ class UserPermissionsTest {
         fun `User canManageResource extension works correctly`() {
             val user = createUser(id = "user-123")
 
-            assertTrue(user.canManageResource(UserPermissions.Action.EDIT_ANY_GAME, "user-123"))
+            assertTrue(user.canManageResource(UserPermissions.Action.EDIT_GAME, "user-123"))
             assertFalse(user.canManageResource(UserPermissions.Action.DELETE_ANY_GAME, "other-user"))
         }
     }
@@ -391,8 +391,8 @@ class UserPermissionsTest {
         fun `should have all expected actions`() {
             val expectedActions = listOf(
                 "MANAGE_USERS", "VIEW_ALL_USERS", "CHANGE_USER_ROLE",
-                "CREATE_GAME", "EDIT_ANY_GAME", "DELETE_ANY_GAME",
-                "CONFIRM_PRESENCE_ANY_GAME", "EDIT_GAME_STATS",
+                "CREATE_GAME", "EDIT_GAME", "DELETE_ANY_GAME",
+                "CONFIRM_OWN_PRESENCE", "EDIT_GAME_STATS",
                 "CREATE_LOCATION", "EDIT_ANY_LOCATION", "DELETE_ANY_LOCATION",
                 "MANAGE_OWN_LOCATIONS", "CREATE_GROUP", "EDIT_ANY_GROUP",
                 "DELETE_ANY_GROUP", "MANAGE_GROUP_CASHBOX",
@@ -429,7 +429,7 @@ class UserPermissionsTest {
 
         private val fieldOwnerExpected: Set<UserPermissions.Action> = setOf(
             UserPermissions.Action.CREATE_GAME,
-            UserPermissions.Action.EDIT_ANY_GAME,
+            UserPermissions.Action.EDIT_GAME,
             UserPermissions.Action.EDIT_GAME_STATS,
             UserPermissions.Action.CREATE_LOCATION,
             UserPermissions.Action.MANAGE_OWN_LOCATIONS,
@@ -440,10 +440,11 @@ class UserPermissionsTest {
 
         private val playerExpected: Set<UserPermissions.Action> = setOf(
             UserPermissions.Action.CREATE_GAME,
-            UserPermissions.Action.EDIT_ANY_GAME,
-            UserPermissions.Action.CONFIRM_PRESENCE_ANY_GAME,
-            UserPermissions.Action.CREATE_GROUP,
-            UserPermissions.Action.MANAGE_GROUP_CASHBOX
+            UserPermissions.Action.EDIT_GAME,
+            UserPermissions.Action.CONFIRM_OWN_PRESENCE,
+            UserPermissions.Action.CREATE_GROUP
+            // Issue #1039: MANAGE_GROUP_CASHBOX removida do PLAYER no matrix global.
+            // Player admin de grupo específico tem acesso via checagem no caller.
         )
 
         @Test
@@ -475,7 +476,7 @@ class UserPermissionsTest {
         }
 
         @Test
-        @DisplayName("PLAYER: matriz exata (5 allow, 18 deny)")
+        @DisplayName("PLAYER: matriz exata (4 allow, 19 deny)")
         fun `player matrix`() {
             val player = createUser(role = UserRole.PLAYER.name)
             UserPermissions.Action.entries.forEach { action ->

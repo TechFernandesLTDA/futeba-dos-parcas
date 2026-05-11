@@ -18,18 +18,33 @@ service cloud.firestore {
     //
     // Matriz de Permissões (deve corresponder a UserPermissions.kt):
     //
-    // | Ação                    | ADMIN | FIELD_OWNER | PLAYER |
-    // |-------------------------|-------|-------------|--------|
-    // | Criar jogo              | ✓     | ✓           | ✓      |
-    // | Editar qualquer jogo    | ✓     | próprios    | próprios|
-    // | Deletar qualquer jogo   | ✓     | próprios    | próprios|
-    // | Criar local             | ✓     | ✓           | ✗      |
-    // | Editar qualquer local   | ✓     | próprios    | ✗      |
-    // | Deletar local           | ✓     | ✗           | ✗      |
-    // | Gerenciar usuários      | ✓     | ✗           | ✗      |
-    // | Ver stats globais       | ✓     | leitura     | leitura |
-    // | Editar rankings         | ✓     | ✗           | ✗      |
-    // | Ajustar XP              | ✓     | ✗           | ✗      |
+    // Issue #1039: ações `*_ANY_*` foram renomeadas — flag global NUNCA implica
+    // acesso "any" ao recurso. Caller cliente DEVE combinar com ownership/grupo.
+    //
+    // | Action (UserPermissions.kt) | ADMIN | FIELD_OWNER         | PLAYER              |
+    // |-----------------------------|-------|---------------------|---------------------|
+    // | CREATE_GAME                 | ✓     | ✓                   | ✓                   |
+    // | EDIT_GAME (era *_ANY_*)     | ✓     | próprios (ownerId)  | próprios (ownerId)  |
+    // | DELETE_ANY_GAME             | ✓     | próprios            | próprios            |
+    // | CONFIRM_OWN_PRESENCE        | ✓     | própria presença    | própria presença    |
+    // | EDIT_GAME_STATS             | ✓     | ✓                   | ✗                   |
+    // | CREATE_LOCATION             | ✓     | ✓                   | ✗                   |
+    // | EDIT_ANY_LOCATION           | ✓     | próprios            | ✗                   |
+    // | DELETE_ANY_LOCATION         | ✓     | ✗                   | ✗                   |
+    // | MANAGE_OWN_LOCATIONS        | ✓     | ✓                   | ✗                   |
+    // | CREATE_GROUP                | ✓     | ✓                   | ✓                   |
+    // | EDIT_ANY_GROUP              | ✓     | ✗                   | ✗                   |
+    // | DELETE_ANY_GROUP            | ✓     | ✗                   | ✗                   |
+    // | MANAGE_GROUP_CASHBOX (*)    | ✓     | role-level          | ✗ na flag global    |
+    // | MANAGE_USERS                | ✓     | ✗                   | ✗                   |
+    // | VIEW_GLOBAL_STATS           | ✓     | leitura             | ✗                   |
+    // | EDIT_RANKINGS               | ✓     | ✗                   | ✗                   |
+    // | ADJUST_XP                   | ✓     | ✗                   | ✗                   |
+    //
+    // (*) MANAGE_GROUP_CASHBOX: a flag global indica que o role *pode* ser admin de cashbox,
+    // mas NÃO concede acesso ao grupo. Backend/caller DEVE verificar se o user está em
+    // groups/{groupId}.admins[] (ou claim equivalente) antes de operar no cashbox.
+    // PLAYER admin de grupo específico tem acesso via essa checagem, não pela flag global.
     //
     // ============================================
 
