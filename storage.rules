@@ -36,21 +36,25 @@ service firebase.storage {
       return firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
     }
 
-    // Verifica se o usuário é admin do grupo
+    // Verifica se o usuário é admin do grupo.
+    // Usa exists() para evitar falha quando o doc está ausente.
     function isGroupAdmin(groupId) {
-      let member = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data;
-      return member != null && (member.role == 'OWNER' || member.role == 'ADMIN');
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
+             firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role in ['OWNER', 'ADMIN'];
     }
 
-    // Verifica se o usuário é admin do sistema
+    // Verifica se o usuário é admin do sistema via Custom Claims (zero Firestore reads).
+    // Requer token JWT atualizado — usuário precisa re-logar após promoção para obter claim.
     function isAdmin() {
-      return firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
-             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+      return isAuthenticated() && request.auth.token.role == 'ADMIN';
     }
 
-    // Verifica se o arquivo é uma imagem válida
+    // Verifica se o arquivo é uma imagem válida.
+    // Blacklist explícito de SVG/XML para prevenir XSS via imagem com script embutido.
     function isImage() {
-      return request.resource.contentType.matches('image/.*');
+      return request.resource.contentType.matches('image/.*') &&
+             !(request.resource.contentType in ['image/svg+xml', 'image/svg', 'image/xml']);
     }
 
     // Verifica tamanho máximo do arquivo (em MB)
@@ -199,13 +203,16 @@ service firebase.storage {
     // Para uso futuro - jogadores confirmados podem postar fotos
     // ============================================
     match /games/{gameId}/photos/{fileName} {
-      // Apenas participantes do jogo podem ver fotos
+      // Apenas participantes de um jogo existente podem ver fotos
       allow read: if isAuthenticated() &&
+                     firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
                      firestore.exists(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid));
 
-      // Apenas jogadores confirmados podem fazer upload
+      // Apenas jogadores confirmados podem fazer upload em jogos CONFIRMADOS ou AO VIVO
       // Máximo 10MB por foto, apenas imagem
       allow write: if isAuthenticated() &&
+                     firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                     firestore.get(/databases/(default)/documents/games/$(gameId)).data.status in ['CONFIRMED', 'LIVE'] &&
                      firestore.exists(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) &&
                      isImage() && isUnderSize(10);
 
