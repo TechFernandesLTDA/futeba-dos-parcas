@@ -195,7 +195,7 @@ export const TacticalBoardScreen: React.FC = () => {
               top: '50%',
               left: 0,
               right: 0,
-              borderTop: '2px solid rgba(255,255,255,0.5)',
+              borderTop: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
             }}
           />
           <Box
@@ -207,7 +207,7 @@ export const TacticalBoardScreen: React.FC = () => {
               width: 80,
               height: 80,
               borderRadius: '50%',
-              border: '2px solid rgba(255,255,255,0.5)',
+              border: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
             }}
           />
           
@@ -219,9 +219,9 @@ export const TacticalBoardScreen: React.FC = () => {
               left: '25%',
               right: '25%',
               height: '15%',
-              borderTop: '2px solid rgba(255,255,255,0.5)',
-              borderLeft: '2px solid rgba(255,255,255,0.5)',
-              borderRight: '2px solid rgba(255,255,255,0.5)',
+              borderTop: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
+              borderLeft: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
+              borderRight: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
             }}
           />
           <Box
@@ -231,9 +231,9 @@ export const TacticalBoardScreen: React.FC = () => {
               left: '25%',
               right: '25%',
               height: '15%',
-              borderBottom: '2px solid rgba(255,255,255,0.5)',
-              borderLeft: '2px solid rgba(255,255,255,0.5)',
-              borderRight: '2px solid rgba(255,255,255,0.5)',
+              borderBottom: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
+              borderLeft: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
+              borderRight: `2px solid ${alpha(theme.palette.common.white, 0.5)}`,
             }}
           />
 
