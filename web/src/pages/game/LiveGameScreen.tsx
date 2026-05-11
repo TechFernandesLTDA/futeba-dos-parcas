@@ -36,6 +36,11 @@ import {
   SportsSoccer as SoccerIcon,
   Add as AddIcon,
   Timer as TimerIcon,
+  Square as YellowCardIcon,
+  Block as RedCardIcon,
+  EmojiEvents as AssistIcon,
+  SaveAlt as SaveIcon,
+  SwapHoriz as SubstitutionIcon,
 } from '@mui/icons-material';
 import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -376,11 +381,13 @@ export const LiveGameScreen: React.FC = () => {
                                 : 'primary.main',
                           }}
                         >
-                          {event.eventType === 'GOAL' && <SoccerIcon />}
-                          {event.eventType === 'YELLOW_CARD' && <Typography variant="caption">CA</Typography>}
-                          {event.eventType === 'RED_CARD' && <Typography variant="caption">CV</Typography>}
-                          {event.eventType === 'ASSIST' && <Typography variant="caption">AST</Typography>}
-                          {event.eventType === 'SAVE' && <Typography variant="caption">DEF</Typography>}
+                          {/* Ícones vetoriais por tipo de evento — fix #762 */}
+                          {event.eventType === 'GOAL' && <SoccerIcon aria-label="Gol" />}
+                          {event.eventType === 'YELLOW_CARD' && <YellowCardIcon aria-label="Cartão Amarelo" sx={{ color: 'warning.light' }} />}
+                          {event.eventType === 'RED_CARD' && <RedCardIcon aria-label="Cartão Vermelho" />}
+                          {event.eventType === 'ASSIST' && <AssistIcon aria-label="Assistência" />}
+                          {event.eventType === 'SAVE' && <SaveIcon aria-label="Defesa" />}
+                          {event.eventType === 'SUBSTITUTION' && <SubstitutionIcon aria-label="Substituição" />}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
