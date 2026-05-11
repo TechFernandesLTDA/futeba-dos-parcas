@@ -175,21 +175,32 @@ export const denormalizeGameLocations = onCall(
     }
 
     const db = admin.firestore();
-    const gamesSnap = await db.collection("games").get();
 
     let updated = 0;
     let skipped = 0;
     const errors: Array<{gameId: string; error: string}> = [];
 
-    const CHUNK_SIZE = 200;
-    const docs = gamesSnap.docs;
+    // FIX #758: cursor-based pagination para evitar OOM em coleções grandes.
+    // Antes: db.collection("games").get() materializava TODOS os docs em memória.
+    const PAGE_SIZE = 500;
+    let lastDoc:
+      admin.firestore.QueryDocumentSnapshot | undefined;
+    let pageIndex = 0;
 
-    for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
-      const chunk = docs.slice(i, i + CHUNK_SIZE);
+    while (true) {
+      let q = db
+        .collection("games")
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(PAGE_SIZE);
+      if (lastDoc) q = q.startAfter(lastDoc);
+
+      const page = await q.get();
+      if (page.empty) break;
+
       const batch = db.batch();
       let chunkUpdates = 0;
 
-      for (const doc of chunk) {
+      for (const doc of page.docs) {
         const data = doc.data();
 
         if (
@@ -218,23 +229,27 @@ export const denormalizeGameLocations = onCall(
         chunkUpdates++;
       }
 
-      if (chunkUpdates === 0) continue;
-
-      try {
-        await batch.commit();
-        updated += chunkUpdates;
-      } catch (err) {
-        logger.error(
-          `[GAME_LOC_BACKFILL] Chunk ${i} failed:`,
-          err
-        );
-        for (const doc of chunk) {
-          errors.push({
-            gameId: doc.id,
-            error: (err as Error).message,
-          });
+      if (chunkUpdates > 0) {
+        try {
+          await batch.commit();
+          updated += chunkUpdates;
+        } catch (err) {
+          logger.error(
+            `[GAME_LOC_BACKFILL] Página ${pageIndex} failed:`,
+            err
+          );
+          for (const doc of page.docs) {
+            errors.push({
+              gameId: doc.id,
+              error: (err as Error).message,
+            });
+          }
         }
       }
+
+      lastDoc = page.docs[page.docs.length - 1];
+      pageIndex++;
+      if (page.size < PAGE_SIZE) break;
     }
 
     logger.info(
@@ -247,7 +262,7 @@ export const denormalizeGameLocations = onCall(
       updated,
       skipped,
       errors,
-      total: docs.length,
+      total: updated + skipped + errors.length,
     };
   }
 );
