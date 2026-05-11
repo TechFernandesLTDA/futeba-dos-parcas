@@ -476,11 +476,104 @@ async function fetchGroupMembersWithoutConfirmation(
  * @return {Promise<boolean>} Se enviou com
  *   sucesso.
  */
+/**
+ * Verifica preferencias de notificacao do usuario.
+ * Falha aberta: se o doc nao existir ou campo
+ * ausente, assume que notificacoes estao habilitadas.
+ *
+ * @param {string} userId - ID do usuario
+ * @param {string | null} groupId - ID do grupo (para mute_groups)
+ * @return {Promise<boolean>} true se pode enviar
+ */
+async function canSendReminderToUser(
+  userId: string,
+  groupId: string | null
+): Promise<boolean> {
+  try {
+    const settingsSnap = await getDb()
+      .collection("notification_settings")
+      .doc(userId)
+      .get();
+
+    if (!settingsSnap.exists) {
+      // Sem configuracoes = fail-open
+      return true;
+    }
+
+    const settings =
+      settingsSnap.data() as Record<string, unknown>;
+
+    // Verificar se notificacoes globais estao ativas
+    if (settings.enablePushNotifications === false) {
+      return false;
+    }
+
+    // Verificar se lembretes de jogo estao ativos
+    if (settings.enableGameReminders === false) {
+      return false;
+    }
+
+    // Verificar silenciamento global (muteUntilTime)
+    if (settings.muteUntilTime) {
+      const muteUntil =
+        settings.muteUntilTime instanceof
+          admin.firestore.Timestamp ?
+        settings.muteUntilTime.toDate() :
+        new Date(settings.muteUntilTime as string);
+      if (muteUntil > new Date()) {
+        console.log(
+          `[REMINDERS] Usuario ${userId}` +
+          " silenciado ate " + muteUntil.toISOString()
+        );
+        return false;
+      }
+    }
+
+    // Verificar mute_groups (array de groupIds)
+    if (groupId) {
+      const muteGroups = settings.muteGroups;
+      if (
+        Array.isArray(muteGroups) &&
+        (muteGroups as string[]).includes(groupId)
+      ) {
+        console.log(
+          `[REMINDERS] Usuario ${userId} silenciou` +
+          ` grupo ${groupId}`
+        );
+        return false;
+      }
+    }
+
+    return true;
+  } catch (e) {
+    console.error(
+      "[REMINDERS] Erro ao verificar prefs" +
+      ` de ${userId}, fail-open:`,
+      e
+    );
+    // Fail-open: em caso de erro, enviar
+    return true;
+  }
+}
+
 async function sendReminder(
   userId: string,
   game: GameForReminder,
   reminderType: "24h" | "2h"
 ): Promise<boolean> {
+  // Verificar preferencias do usuario antes de enviar
+  const canSend = await canSendReminderToUser(
+    userId,
+    game.group_id
+  );
+  if (!canSend) {
+    console.log(
+      "[REMINDERS] Pulando lembrete para" +
+      ` ${userId} — preferencias bloqueiam envio`
+    );
+    return false;
+  }
+
   const gameDateTime = getGameDateTime(game);
   const formattedDate = gameDateTime ?
     formatGameDateTime(gameDateTime) :
