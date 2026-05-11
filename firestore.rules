@@ -1930,6 +1930,26 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: error_logs (captura de erros do cliente web)
+    // ============================================
+    // Qualquer usuario autenticado pode criar (gravar o proprio erro).
+    // Apenas admin pode ler/atualizar/deletar (para investigacao posterior).
+    // Validacao: campos obrigatorios + limite de tamanho de stack.
+    // ============================================
+    match /error_logs/{logId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.kind is string
+        && request.resource.data.kind.size() > 0
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.createdAt == request.time
+        // Limita tamanho do stack trace a 10KB (~10240 chars)
+        && (!('stack' in request.resource.data) || request.resource.data.stack.size() <= 10240);
+
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ============================================
     // REGRA PADRAO: Negar tudo que nao foi explicitamente permitido
     // ============================================
     match /{document=**} {

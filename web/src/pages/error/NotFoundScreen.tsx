@@ -1,11 +1,39 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, useTheme } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Typography, Button, useTheme, Chip } from '@mui/material';
 import { SentimentDissatisfied as NotFoundIcon } from '@mui/icons-material';
+import { logError } from '../../utils/errorLogger';
+import { ErrorDetailsButton } from '../../components/common/ErrorDetailsButton';
+import type { ErrorLogEntry } from '../../utils/errorLogger';
 
 export const NotFoundScreen: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
+  const [errorId, setErrorId] = useState<string | null>(null);
+  const [logEntry, setLogEntry] = useState<(Partial<ErrorLogEntry> & { errorId: string }) | null>(null);
+
+  useEffect(() => {
+    // Registra o 404 para saber qual link está quebrado
+    const attemptedPath = location.pathname + location.search;
+    logError(new Error(`Rota não encontrada: ${attemptedPath}`), {
+      kind: 'route-not-found',
+      attemptedPath,
+    }).then((id) => {
+      setErrorId(id);
+      setLogEntry({
+        errorId: id,
+        kind: 'route-not-found',
+        message: `Rota não encontrada: ${attemptedPath}`,
+        url: window.location.href,
+        route: attemptedPath,
+        context: { kind: 'route-not-found', attemptedPath },
+        createdAt: new Date().toISOString(),
+      });
+    });
+    // Executa apenas na montagem do componente
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Box
@@ -20,22 +48,38 @@ export const NotFoundScreen: React.FC = () => {
         bgcolor: theme.palette.background.default,
         textAlign: 'center',
       }}
+      role="main"
+      aria-labelledby="not-found-title"
     >
       <NotFoundIcon sx={{ fontSize: 80, color: theme.palette.text.disabled }} />
-      <Typography variant="h4" fontWeight={700} color={theme.palette.text.primary}>
+      <Typography id="not-found-title" variant="h4" fontWeight={700} color={theme.palette.text.primary}>
         404 — Página não encontrada
       </Typography>
       <Typography variant="body1" color={theme.palette.text.secondary}>
         O endereço que você tentou acessar não existe.
       </Typography>
-      <Button
-        variant="contained"
-        size="large"
-        onClick={() => navigate('/')}
-        sx={{ mt: 1 }}
-      >
-        Voltar pro início
-      </Button>
+
+      {/* Código do erro para facilitar suporte */}
+      {errorId && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            Código:
+          </Typography>
+          <Chip label={errorId} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
+        </Box>
+      )}
+
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', mt: 1 }}>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={() => navigate('/')}
+          aria-label="Voltar para o início"
+        >
+          Voltar pro início
+        </Button>
+        {logEntry && <ErrorDetailsButton entry={logEntry} />}
+      </Box>
     </Box>
   );
 };

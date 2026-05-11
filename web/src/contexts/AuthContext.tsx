@@ -17,6 +17,7 @@ import { User } from '../types';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getAuthErrorMessage } from '../utils/firebaseErrors';
+import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 
 const logger = createLogger('AuthContext');
 
@@ -210,8 +211,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      addBreadcrumb('auth', 'Login com email/senha', { uid: result.user.uid });
     } catch (err) {
+      addBreadcrumb('auth', 'Falha no login com email/senha', {
+        code: (err as { code?: string })?.code,
+      });
       setError((err as Error).message || 'Erro ao fazer login');
       throw err;
     }
@@ -253,9 +258,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setError(null);
     try {
+      addBreadcrumb('auth', 'Logout iniciado', { uid: auth.currentUser?.uid });
       await signOut(auth);
       // Limpar cache do TanStack Query para evitar vazamento de dados entre contas
       queryClient.clear();
+      // Limpa breadcrumbs após logout — próxima sessão começa limpa
+      clearBreadcrumbs();
     } catch (err) {
       setError((err as Error).message || 'Erro ao sair');
       throw err;
