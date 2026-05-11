@@ -125,18 +125,13 @@ export const checkSeasonEnd = onSchedule(
         `${seasonId} (${seasonData.name})`
       );
 
-      // 1. Mark Season as Inactive
-      batch.update(doc.ref, {
-        is_active: false,
-        closed_at:
-          admin.firestore.FieldValue.serverTimestamp(),
-      });
-      operationCount++;
-      if (operationCount >= BATCH_LIMIT) {
-        await commitBatch();
-      }
+      // FIX #991: Gravar standings ANTES de marcar is_active=false.
+      // Antes, is_active=false entrava no primeiro batch commit junto com
+      // as primeiras standings, mas em seasons grandes poderia ser
+      // commitado em um batch anterior à finalização das standings,
+      // deixando a season parcialmente fechada e irrecuperável.
 
-      // 2. Snapshot Final Standings
+      // 1. Snapshot Final Standings PRIMEIRO
       // PERF: Chunked para evitar timeout
       const participationsSnap = await db()
         .collection("season_participation")
@@ -296,6 +291,20 @@ export const checkSeasonEnd = onSchedule(
           // Não fazer throw aqui, continuar
           // A próxima execução tentará novamente
         }
+      }
+
+      // 3b. FIX #991: Marcar season como inativa SOMENTE após standings
+      // e próxima season gravadas com sucesso. Isso garante que, se ocorrer
+      // timeout durante as standings, a season não fique parcialmente
+      // fechada (is_active=false sem standings completas).
+      batch.update(doc.ref, {
+        is_active: false,
+        closed_at:
+          admin.firestore.FieldValue.serverTimestamp(),
+      });
+      operationCount++;
+      if (operationCount >= BATCH_LIMIT) {
+        await commitBatch();
       }
 
       processedCount++;

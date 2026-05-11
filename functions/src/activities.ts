@@ -76,7 +76,11 @@ export async function generateGameFinishedActivityDirect(
 
   const userData = userDoc.data();
   const userName = userData ? userData.name : "Alguém";
-  const userPhoto = userData ? userData.photoUrl : null;
+  // FIX #992: Firestore canonico usa snake_case (photo_url),
+  // mas suporta camelCase (photoUrl) como fallback legacy.
+  const userPhoto = userData
+    ? (userData.photo_url ?? userData.photoUrl ?? null)
+    : null;
 
   if (liveScoreDoc.exists) {
     const score = liveScoreDoc.data();
@@ -118,7 +122,10 @@ export async function generateGameFinishedActivityDirect(
     user_photo: userPhoto,
     visibility: visibility,
     metadata: {
-      location: gameData.locationName || "",
+      // FIX #992: Firestore canonico usa location_name (snake_case);
+      // fallback para locationName (camelCase legacy).
+      location:
+        gameData.location_name ?? gameData.locationName ?? "",
       game_id: gameId,
     },
   };

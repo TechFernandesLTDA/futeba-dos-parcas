@@ -98,20 +98,28 @@ export const onUserDeleted = auth
           );
         }
 
-        // 4. FIX #652-B3: Cleanup audit_logs (target_user_id == uid)
-        const auditLogsSnap = await db
-          .collection("audit_logs")
-          .where("target_user_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of auditLogsSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 4. FIX #652-B3 + #994: Cleanup audit_logs (target_user_id == uid)
+        // LGPD Art. 18 VI — loopa até esgotar (era limit 500 sem loop, deixava
+        // docs órfãos para usuários com mais de 500 audit_logs)
+        let auditLogsTotal = 0;
+        while (true) {
+          const auditLogsSnap = await db
+            .collection("audit_logs")
+            .where("target_user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (auditLogsSnap.empty) break;
+          for (const doc of auditLogsSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          auditLogsTotal += auditLogsSnap.size;
+          if (auditLogsSnap.size < 500) break;
         }
-        if (auditLogsSnap.size > 0) {
+        if (auditLogsTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${auditLogsSnap.size} audit_logs ` +
+            `[ACCOUNT_CLEANUP] Deletando ${auditLogsTotal} audit_logs ` +
             `do usuário ${uid}`
           );
         }
@@ -121,40 +129,52 @@ export const onUserDeleted = auth
         batchOps++;
         logger.info(`[ACCOUNT_CLEANUP] Deletando sessions/${uid}`);
 
-        // 6. FIX #652-B3: Cleanup verification_failures
-        const verifyFailSnap = await db
-          .collection("verification_failures")
-          .where("uid", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of verifyFailSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 6. FIX #652-B3 + #994: Cleanup verification_failures (loop)
+        let verifyFailTotal = 0;
+        while (true) {
+          const verifyFailSnap = await db
+            .collection("verification_failures")
+            .where("uid", "==", uid)
+            .limit(500)
+            .get();
+          if (verifyFailSnap.empty) break;
+          for (const doc of verifyFailSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          verifyFailTotal += verifyFailSnap.size;
+          if (verifyFailSnap.size < 500) break;
         }
-        if (verifyFailSnap.size > 0) {
+        if (verifyFailTotal > 0) {
           logger.info(
             "[ACCOUNT_CLEANUP] Deletando " +
-            `${verifyFailSnap.size} ` +
+            `${verifyFailTotal} ` +
             `verification_failures do usuário ${uid}`
           );
         }
 
-        // 7. FIX #652-B3: Cleanup notifications (recipient)
-        const notificationsSnap = await db
-          .collection("notifications")
-          .where("recipient_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of notificationsSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 7. FIX #652-B3 + #994: Cleanup notifications (recipient) (loop)
+        let notificationsTotal = 0;
+        while (true) {
+          const notificationsSnap = await db
+            .collection("notifications")
+            .where("recipient_id", "==", uid)
+            .limit(500)
+            .get();
+          if (notificationsSnap.empty) break;
+          for (const doc of notificationsSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          notificationsTotal += notificationsSnap.size;
+          if (notificationsSnap.size < 500) break;
         }
-        if (notificationsSnap.size > 0) {
+        if (notificationsTotal > 0) {
           logger.info(
             "[ACCOUNT_CLEANUP] Deletando " +
-            `${notificationsSnap.size} ` +
+            `${notificationsTotal} ` +
             `notifications do usuário ${uid}`
           );
         }
