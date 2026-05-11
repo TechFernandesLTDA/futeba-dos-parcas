@@ -418,13 +418,17 @@ export const restoreDeletedGame =
       }
 
       // Verificar permissão
+      // FIX #792: admin bypass — paridade com restoreDeletedGroup (linha ~555)
+      const isAdmin =
+        request.auth?.token?.role === "ADMIN";
       if (
+        !isAdmin &&
         gameData.deleted_by !== userId &&
         gameData.owner_id !== userId
       ) {
         throw new functions.https.HttpsError(
           "permission-denied",
-          "Apenas quem deletou ou o dono " +
+          "Apenas quem deletou, o dono ou ADMIN " +
           "pode restaurar"
         );
       }

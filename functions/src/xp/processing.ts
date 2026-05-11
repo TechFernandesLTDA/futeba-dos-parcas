@@ -14,6 +14,9 @@ import {logger} from "firebase-functions/v2";
 import {
   MAX_XP_PER_GAME,
   MIN_XP_PER_GAME,
+  MAX_GOALS_PER_GAME,
+  MAX_ASSISTS_PER_GAME,
+  MAX_SAVES_PER_GAME,
 } from "../constants";
 import {db} from "../_db";
 
@@ -332,19 +335,21 @@ export function validateAndSanitizeXpData(
   }
 
   // Sanitizar metadata
+  // FIX #789: passar caps específicos (15/10/30) ao validateStatValue.
+  // Antes usava default MAX_STATS_PER_GAME=50, permitindo stats infladas.
   const validResults = ["WIN", "DRAW", "LOSS"];
   const metadata: XpMetadata = {
-    goals: validateStatValue(
-      data.metadata?.goals,
-      "metadata.goals"
+    goals: Math.min(
+      validateStatValue(data.metadata?.goals, "metadata.goals"),
+      MAX_GOALS_PER_GAME,
     ),
-    assists: validateStatValue(
-      data.metadata?.assists,
-      "metadata.assists"
+    assists: Math.min(
+      validateStatValue(data.metadata?.assists, "metadata.assists"),
+      MAX_ASSISTS_PER_GAME,
     ),
-    saves: validateStatValue(
-      data.metadata?.saves,
-      "metadata.saves"
+    saves: Math.min(
+      validateStatValue(data.metadata?.saves, "metadata.saves"),
+      MAX_SAVES_PER_GAME,
     ),
     wasMvp: Boolean(data.metadata?.wasMvp),
     wasCleanSheet: Boolean(
