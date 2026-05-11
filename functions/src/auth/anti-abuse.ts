@@ -46,6 +46,15 @@ export const canSendSmsOtp = onCall(
     consumeAppCheckToken: true,
   },
   async (request) => {
+    // #1034: Defense in depth — auth guard antes de qualquer
+    // processamento de dados para evitar consumo de rate limit por anônimos
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Login obrigatorio",
+      );
+    }
+
     const phone: unknown = request.data?.phone;
     if (typeof phone !== "string" || !/^\+\d{10,15}$/.test(phone)) {
       throw new HttpsError(

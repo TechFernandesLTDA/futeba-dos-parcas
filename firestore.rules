@@ -800,6 +800,8 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
         // Owner deve ser o usuario autenticado
         request.resource.data.owner_id == userId() &&
+        // #1026: Apenas FIELD_OWNER ou ADMIN podem criar locais
+        (request.auth.token.role == 'FIELD_OWNER' || request.auth.token.role == 'ADMIN') &&
         // Validacao de dados
         hasValidLocationData() &&
         // Campos de sistema devem ter valores corretos na criacao

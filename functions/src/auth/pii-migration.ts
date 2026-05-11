@@ -152,6 +152,9 @@ export const onUserDocUpdated = onDocumentUpdated(
         `[PII_SYNC] Failed to sync PII update for ${userId}:`,
         err
       );
+      // #1030: Relança o erro — onUserDocUpdated deve falhar para
+      // garantir retry automático do Firebase e evitar PII desincronizada
+      throw err;
     }
   }
 );
