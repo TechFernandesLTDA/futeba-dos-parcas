@@ -580,8 +580,13 @@ service cloud.firestore {
     // COLECAO: confirmations
     // ============================================
     match /confirmations/{confirmationId} {
-      // Apenas o proprio usuario pode ler suas confirmacoes
-      allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      // #1016: ampliar leitura para admins, dono do jogo e confirmados (necessario para list query)
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == userId() ||
+        isAdmin() ||
+        isGameOwner(resource.data.game_id) ||
+        isConfirmedPlayer(resource.data.game_id)
+      );
 
       // FASE 5 #448: confirmacao exige verified (30-day grace).
       // SECFIX #428: branch summon (game owner) agora exige
@@ -1729,9 +1734,11 @@ service cloud.firestore {
     // ============================================
     match /activities/{activityId} {
       // C-004 fix: validacao de visibility e created_by
+      // #1017: web filtra por user_id (nao created_by) — adicionar terceira clausula
       allow read: if isAuthenticated() && (
         resource.data.visibility == 'PUBLIC' ||
-        resource.data.created_by == userId()
+        resource.data.created_by == userId() ||
+        resource.data.user_id == userId()
       );
 
       allow create: if isAuthenticated() &&
