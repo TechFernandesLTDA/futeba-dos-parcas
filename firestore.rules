@@ -596,13 +596,15 @@ service cloud.firestore {
       // C-003 FIX: Usuario pode criar sua propria confirmacao com validação de ID
       // ID deve seguir padrao: {gameId}_{userId}
       // OU o dono do jogo pode criar convites (summon) para outros
-      allow create: if isVerifiedOrGrace() &&
+      // #1018: isAdmin() nunca pode ficar bloqueado por isVerifiedOrGrace() — admin é sempre permitido
+      allow create: if (isAdmin() || isVerifiedOrGrace()) &&
                        ((request.resource.data.user_id == userId() &&
                          isValidConfirmationId(confirmationId, request.resource.data.game_id, userId())) ||
                         (isGameOwner(request.resource.data.game_id) &&
                          request.resource.data.user_id != userId() &&
                          isValidConfirmationId(confirmationId, request.resource.data.game_id, request.resource.data.user_id) &&
-                         request.resource.data.get('status', 'PENDING') == 'PENDING'));
+                         request.resource.data.get('status', 'PENDING') == 'PENDING') ||
+                        isAdmin());
 
       // SECFIX #438: dono da confirmacao agora restrito a campos de
       // ETA only (is_on_the_way, eta_minutes, on_the_way_at, updated_at).
@@ -702,8 +704,23 @@ service cloud.firestore {
       // Sub-colecao: eventos do jogo
       match /events/{eventId} {
         allow read: if isAuthenticated();
-        allow create, update, delete: if isAuthenticated() &&
-                                         (isAdmin() || isGameOwner(gameId) || isConfirmedPlayer(gameId));
+        // #1036: confirmado não-owner só pode agir em eventos criados por si mesmo.
+        // Owner e admin operam sem restrição de autoria.
+        allow create: if isAuthenticated() && (
+          isAdmin() ||
+          isGameOwner(gameId) ||
+          (isConfirmedPlayer(gameId) && request.resource.data.created_by == userId())
+        );
+        allow update: if isAuthenticated() && (
+          isAdmin() ||
+          isGameOwner(gameId) ||
+          (isConfirmedPlayer(gameId) && resource.data.created_by == userId())
+        );
+        allow delete: if isAuthenticated() && (
+          isAdmin() ||
+          isGameOwner(gameId) ||
+          (isConfirmedPlayer(gameId) && resource.data.created_by == userId())
+        );
       }
     }
 
@@ -992,12 +1009,17 @@ service cloud.firestore {
           isValidDescription(request.resource.data.get('comment', null));
 
         // Update: apenas o autor pode editar
+        // #1043: throttle de 60s entre edições — previne spam de avaliações.
+        // Primeira edição (sem updated_at) é liberada; subsequentes exigem intervalo mínimo.
+        // updated_at deve ser server time (== request.time) para garantir throttle futuro.
         allow update: if isAuthenticated() &&
           resource.data.user_id == userId() &&
           fieldUnchanged('user_id') &&
           fieldUnchanged('created_at') &&
           request.resource.data.rating >= 1 &&
-          request.resource.data.rating <= 5;
+          request.resource.data.rating <= 5 &&
+          request.resource.data.updated_at == request.time &&
+          (!('updated_at' in resource.data) || request.time > resource.data.updated_at + duration.value(60, 's'));
 
         // Delete: autor ou admin
         allow delete: if isAuthenticated() &&
@@ -1115,8 +1137,9 @@ service cloud.firestore {
 
       // FASE 5 #448: criar grupo exige verified (30-day grace)
       // Validacoes na criacao de grupo
-      allow create: if isVerifiedOrGrace() &&
-                       request.resource.data.owner_id == userId() &&
+      // #1018: admin nunca bloqueado por isVerifiedOrGrace()
+      allow create: if (isAdmin() || isVerifiedOrGrace()) &&
+                       (isAdmin() || request.resource.data.owner_id == userId()) &&
                        // Nome do grupo: 3-50 caracteres
                        isValidStringLength(request.resource.data.name, 3, 50) &&
                        // Descricao: max 500 caracteres
@@ -1167,7 +1190,15 @@ service cloud.firestore {
 
       // Sub-colecao: members
       match /members/{memberId} {
-        allow read: if isAuthenticated();
+        // #1035: restringido — não-membro não pode listar membros de grupos alheios.
+        // Admin pode para suporte. Membro pode ver dados do próprio grupo.
+        // memberId == userId() permite que o usuário leia a própria entrada mesmo sem isGroupMember().
+        allow read: if isAuthenticated() && (
+          isAdmin() ||
+          resource.data.user_id == userId() ||
+          memberId == userId() ||
+          isGroupMember(groupId)
+        );
 
         // SECFIX #427: TOCTOU corrigido via getAfter().
         // Self-OWNER membership agora exige que o documento /groups/{groupId}
@@ -1248,8 +1279,9 @@ service cloud.firestore {
         // FASE 5 #448: cashbox create exige verified (30-day grace)
         // SECURITY: Validacao de bounds no amount (max R$ 100.000)
         // Previne entradas absurdas que poderiam indicar exploit ou erro
-        allow create: if isVerifiedOrGrace() &&
-                         isGroupAdmin(groupId) &&
+        // #1018: admin nunca bloqueado por isVerifiedOrGrace()
+        allow create: if (isAdmin() || isVerifiedOrGrace()) &&
+                         (isAdmin() || isGroupAdmin(groupId)) &&
                          isGroupActive(groupId) &&
                          request.resource.data.amount > 0 &&
                          request.resource.data.amount <= 100000 &&
@@ -1258,7 +1290,8 @@ service cloud.firestore {
         // M-001 fix: validacao de timestamp em voided_at
         allow update: if isAuthenticated() && isGroupAdmin(groupId) &&
                       isGroupActive(groupId) &&
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'voided_at', 'voided_by']) &&
+                      // #1037.1: updated_at incluido para permitir que cliente persista timestamp junto ao void
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'voided_at', 'voided_by', 'updated_at']) &&
                       request.resource.data.status == 'VOIDED' &&
                       request.resource.data.voided_by == userId() &&
                       request.resource.data.voided_at == request.time;
@@ -1267,7 +1300,8 @@ service cloud.firestore {
       }
 
       match /cashbox_summary/{docId} {
-        allow read: if isGroupMember(groupId);
+        // #1037.4: isGroupMember() faz get() — garante autenticação explícita primeiro
+        allow read: if isAuthenticated() && isGroupMember(groupId);
         allow create, update: if isAuthenticated() && isGroupAdmin(groupId);
       }
     }
@@ -1404,11 +1438,14 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.user_id == userId();
 
       // C-003 fix: validacao de created_by e user_id
-      allow create: if isAuthenticated() &&
-                       request.resource.data.created_by == userId() &&
-                       request.resource.data.user_id != userId() &&
-                       exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
-                       request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']);
+      // #1037.5: isAdmin() bypass — admin nunca pode ficar bloqueado por exists() de user soft-deleted
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (request.resource.data.created_by == userId() &&
+         request.resource.data.user_id != userId() &&
+         exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
+         request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']))
+      );
 
       allow update: if isAuthenticated() &&
                        resource.data.user_id == userId() &&
@@ -1425,7 +1462,9 @@ service cloud.firestore {
     // Schema: users/{uid}/preferences/{prefDocId}
     //   - "notifications" doc: { notifications, email_notifications, game_reminders, updated_at }
     match /users/{userId}/preferences/{prefId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      // #1037.3: prefId restrito a valores conhecidos — evita que cliente escreva docs arbitrários
+      allow read, write: if isAuthenticated() && request.auth.uid == userId
+        && prefId in ['notifications', 'theme', 'gamification'];
     }
 
     // ============================================
@@ -1922,7 +1961,8 @@ service cloud.firestore {
         && request.resource.data.title.size() <= 80
         && request.resource.data.description.size() > 0
         && request.resource.data.description.size() <= 2000
-        && request.resource.data.context.platform in ['web', 'android', 'ios', 'mobile', 'desktop']
+        // #1037.6: null-safe — campo context pode estar ausente (clientes legados)
+        && (!('context' in request.resource.data) || request.resource.data.context.platform in ['web', 'android', 'ios', 'mobile', 'desktop'])
         && !('triaged_at' in request.resource.data)
         && !('github_issue_number' in request.resource.data);
       allow update: if isAdmin();

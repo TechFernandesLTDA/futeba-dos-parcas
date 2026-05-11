@@ -189,6 +189,19 @@ describe("notifications — criação", () => {
       })
     );
   });
+
+  // #1037.5: admin pode criar notificação mesmo para user soft-deleted (exists() não bloqueia admin)
+  it("Admin pode criar notificação para qualquer usuário (#1037.5)", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.doc("notifications/notif-admin-created").set({
+        created_by: UID_ADMIN,
+        user_id: UID_PLAYER_B,
+        type: "SYSTEM",
+        title: "Notificação administrativa",
+      })
+    );
+  });
 });
 
 // ============================================================

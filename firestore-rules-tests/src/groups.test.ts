@@ -131,6 +131,34 @@ describe("groups — leitura", () => {
 });
 
 // ============================================================
+// LEITURA — members (subcoleção) — #1035
+// ============================================================
+
+describe("groups/members — leitura", () => {
+  it("Membro pode ler membros do próprio grupo", async () => {
+    // PlayerB é membro de GROUP_PUBLIC
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(db.doc(`groups/${GROUP_PUBLIC}/members/${UID_PLAYER_A}`).get());
+  });
+
+  it("Admin pode ler membros de qualquer grupo", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(db.doc(`groups/${GROUP_PUBLIC}/members/${UID_PLAYER_A}`).get());
+  });
+
+  it("Não-membro NÃO pode ler membros de grupo alheio (#1035)", async () => {
+    // PlayerC não é membro de GROUP_PUBLIC
+    const db = asPlayerC(testEnv);
+    await assertFails(db.doc(`groups/${GROUP_PUBLIC}/members/${UID_PLAYER_A}`).get());
+  });
+
+  it("Não-autenticado NÃO pode ler membros", async () => {
+    const db = asAnon(testEnv);
+    await assertFails(db.doc(`groups/${GROUP_PUBLIC}/members/${UID_PLAYER_A}`).get());
+  });
+});
+
+// ============================================================
 // ATUALIZAÇÃO — grupos
 // ============================================================
 
