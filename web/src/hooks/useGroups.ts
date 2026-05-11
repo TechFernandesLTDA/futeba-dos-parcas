@@ -68,14 +68,16 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
     chunks.push(groupIds.slice(i, i + 10));
   }
 
-  const results = await Promise.all(
+  // Usar allSettled para que falha em um chunk não derrube os demais
+  const settled = await Promise.allSettled(
     chunks.map((chunk) =>
       getDocs(query(collection(db, 'groups'), where(documentId(), 'in', chunk)))
     )
   );
 
-  for (const result of results) {
-    for (const docSnap of result.docs) {
+  for (const result of settled) {
+    if (result.status === 'rejected') continue;
+    for (const docSnap of result.value.docs) {
       const raw = docSnap.data();
       groupsMap.set(docSnap.id, parseGroupDoc(docSnap.id, raw));
     }

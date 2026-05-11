@@ -323,6 +323,7 @@ private fun MilestonesUnlockedSection(
             ) {
                 Icon(
                     imageVector = Icons.Default.Star,
+                    // Decorativo — texto "Conquistas" ao lado fornece semântica
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.size(20.dp)
@@ -347,6 +348,7 @@ private fun MilestonesUnlockedSection(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Star,
+                        // Decorativo — displayName do milestone ao lado fornece semântica
                         contentDescription = null,
                         tint = GamificationColors.Gold,
                         modifier = Modifier.size(16.dp)

@@ -133,7 +133,10 @@ export const CashboxScreen: React.FC = () => {
           if (!cancelled) setMembers(membersData);
         }
       } catch (err) {
-        if (!cancelled) logger.error('Error fetching members:', err);
+        if (!cancelled) {
+          logger.error('Error fetching members:', err);
+          showError('Erro ao carregar membros do grupo.');
+        }
       }
     };
 

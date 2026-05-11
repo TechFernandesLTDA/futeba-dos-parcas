@@ -308,7 +308,7 @@ fun LeagueHeader(
                                         if (s.isActive) {
                                             Text(
                                                 text = stringResource(R.string.league_active),
-                                                fontSize = 11.sp,
+                                                fontSize = MaterialTheme.typography.labelSmall.fontSize,
                                                 color = MaterialTheme.colorScheme.primary
                                             )
                                         }
@@ -540,13 +540,13 @@ fun DivisionSelector(
                         stringResource(R.string.league_rating_description),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         stringResource(R.string.league_rating_components),
                         style = MaterialTheme.typography.bodySmall,
-                        fontSize = 11.sp,
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 16.sp
                     )
@@ -611,13 +611,13 @@ fun DivisionInfoItem(
             )
             Text(
                 text = description,
-                fontSize = 10.sp,
+                fontSize = MaterialTheme.typography.labelSmall.fontSize,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Text(
             text = rating,
-            fontSize = 11.sp,
+            fontSize = MaterialTheme.typography.labelSmall.fontSize,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -727,13 +727,13 @@ fun RankingListItem(
                 )
                 Text(
                     text = stringResource(R.string.league_rating_format, "%.1f".format(item.participation.leagueRating)),
-                    fontSize = 11.sp,
+                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = stringResource(R.string.league_wins_goals_format, item.participation.wins, item.participation.goals),
-                    fontSize = 11.sp,
+                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

@@ -162,6 +162,7 @@ private fun CompactHeaderLayout(
             color = MaterialTheme.colorScheme.primaryContainer,
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier
+                .minimumInteractiveComponentSize()
                 .height(32.dp)
                 .clickable {
                     hapticManager?.tick()
@@ -276,6 +277,7 @@ private fun ExpandedHeaderLayout(
                     color = MaterialTheme.colorScheme.primaryContainer,
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier
+                        .minimumInteractiveComponentSize()
                         .height(36.dp)
                         .clickable {
                             hapticManager?.tick()

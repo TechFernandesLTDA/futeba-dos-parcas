@@ -195,6 +195,7 @@ export function RegisterScreen() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading}
+              inputProps={{ autoComplete: 'name' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -212,6 +213,7 @@ export function RegisterScreen() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              inputProps={{ autoComplete: 'email' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -229,6 +231,7 @@ export function RegisterScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              inputProps={{ autoComplete: 'new-password' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -258,6 +261,7 @@ export function RegisterScreen() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}
+              inputProps={{ autoComplete: 'new-password' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

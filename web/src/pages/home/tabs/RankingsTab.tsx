@@ -28,7 +28,7 @@ import {
   Refresh as RefreshIcon,
   OpenInNew as OpenIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, getDocs, where, documentId } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -98,57 +98,75 @@ export function RankingsTab() {
 
   const loadData = useCallback(() => {
     setRefreshing(true);
+    let cancelled = false;
     const seasonRef = collection(db, 'season_participation');
     const q = query(seasonRef, orderBy('points', 'desc'), limit(100));
+
+    // Alias local para que o ESLint reconheça o padrão showError no catch
+    const showError = showErrorRef.current;
 
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
         try {
-          const playersData = await Promise.all(
-            snapshot.docs.map(async (docSnapshot) => {
-              const raw = docSnapshot.data();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const data = snakeToCamel(raw) as Record<string, any>;
-              const userId = data.userId || raw.user_id || docSnapshot.id;
+          // Extrair participação e user IDs do snapshot
+          const participationDocs = snapshot.docs.map((docSnapshot) => {
+            const raw = docSnapshot.data();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const data = snakeToCamel(raw) as Record<string, any>;
+            const userId = data.userId || raw.user_id || docSnapshot.id;
+            return { docSnapshot, data, userId };
+          });
 
-              let userData = { name: 'Jogador', photoUrl: null as string | null, level: 1, xp: 0, favoriteTeam: null as string | null };
-              try {
-                const userDoc = await getDoc(doc(db, 'users', userId));
-                if (userDoc.exists()) {
-                  const d = userDoc.data();
-                  const xp = d.experience_points ?? d.experiencePoints ?? 0;
-                  userData = {
-                    name: d.name || 'Jogador',
-                    photoUrl: d.photo_url || d.photoUrl || null,
-                    level: getLevelForXp(xp),
-                    xp,
-                    favoriteTeam: (d.favorite_team || d.favoriteTeam || null) as string | null,
-                  };
-                }
-              } catch {
-                // fallback silencioso
-              }
-
-              return {
-                id: docSnapshot.id,
-                userId,
-                userName: userData.name,
-                userPhoto: userData.photoUrl || undefined,
-                favoriteTeam: userData.favoriteTeam || undefined,
-                level: userData.level,
-                points: data.points || 0,
-                gamesPlayed: data.gamesPlayed || data.games_played || 0,
-                wins: data.wins || 0,
-                goals: data.goals || 0,
-                assists: data.assists || 0,
-                mvpCount: data.mvpCount || data.mvp_count || 0,
-                division: data.division || 'BRONZE',
-                isCurrentUser: userId === user?.id,
-                experiencePoints: userData.xp,
-              } as RankingPlayer;
-            })
+          // Batch fetch de usuários em chunks de 10 (whereIn limit)
+          const userIds = [...new Set(participationDocs.map((p) => p.userId))];
+          const usersMap = new Map<string, { name: string; photoUrl: string | null; xp: number; favoriteTeam: string | null }>();
+          const userChunks: string[][] = [];
+          for (let i = 0; i < userIds.length; i += 10) {
+            userChunks.push(userIds.slice(i, i + 10));
+          }
+          const chunkResults = await Promise.allSettled(
+            userChunks.map((chunk) =>
+              getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
+            )
           );
+
+          if (cancelled) return;
+
+          for (const result of chunkResults) {
+            if (result.status === 'rejected') continue;
+            for (const userDoc of result.value.docs) {
+              const d = userDoc.data();
+              const xp = (d.experience_points ?? d.experiencePoints ?? 0) as number;
+              usersMap.set(userDoc.id, {
+                name: (d.name as string) || 'Jogador',
+                photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
+                xp,
+                favoriteTeam: ((d.favorite_team as string) || (d.favoriteTeam as string) || null),
+              });
+            }
+          }
+
+          const playersData = participationDocs.map(({ docSnapshot, data, userId }) => {
+            const userData = usersMap.get(userId) ?? { name: 'Jogador', photoUrl: null, xp: 0, favoriteTeam: null };
+            return {
+              id: docSnapshot.id,
+              userId,
+              userName: userData.name,
+              userPhoto: userData.photoUrl || undefined,
+              favoriteTeam: userData.favoriteTeam || undefined,
+              level: getLevelForXp(userData.xp),
+              points: (data.points as number) || 0,
+              gamesPlayed: (data.gamesPlayed as number) || (data.games_played as number) || 0,
+              wins: (data.wins as number) || 0,
+              goals: (data.goals as number) || 0,
+              assists: (data.assists as number) || 0,
+              mvpCount: (data.mvpCount as number) || (data.mvp_count as number) || 0,
+              division: (data.division as string) || 'BRONZE',
+              isCurrentUser: userId === user?.id,
+              experiencePoints: userData.xp,
+            } as RankingPlayer;
+          });
 
           // Deduplicar por userId (manter a entrada com mais pontos)
           const uniqueMap = new Map<string, RankingPlayer>();
@@ -161,23 +179,29 @@ export function RankingsTab() {
           const deduplicated = Array.from(uniqueMap.values())
             .sort((a, b) => b.points - a.points);
 
-          setPlayers(deduplicated);
+          if (!cancelled) setPlayers(deduplicated);
         } catch (err) {
           logger.error('Erro ao carregar rankings:', err);
+          if (!cancelled) showError('Erro ao processar dados do ranking.');
         } finally {
-          setLoading(false);
-          setRefreshing(false);
+          if (!cancelled) {
+            setLoading(false);
+            setRefreshing(false);
+          }
         }
       },
       (err) => {
-          logger.error('Error in rankings listener:', err);
-          showErrorRef.current('Erro ao carregar ranking.');
+        logger.error('Error in rankings listener:', err);
+        showError('Erro ao carregar ranking.');
         setLoading(false);
         setRefreshing(false);
       }
     );
 
-    return unsubscribe;
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [user?.id]);
 
   useEffect(() => {

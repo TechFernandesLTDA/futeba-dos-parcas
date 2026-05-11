@@ -29,6 +29,10 @@ import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 
 @Composable
 fun ExpandableStatsSection(
@@ -52,6 +56,10 @@ fun ExpandableStatsSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .semantics {
+                        stateDescription = if (expanded) "Expandido" else "Recolhido"
+                        role = Role.Button
+                    }
                     .clickable { expanded = !expanded }
                     .padding(spacing.md),
                 horizontalArrangement = Arrangement.SpaceBetween,

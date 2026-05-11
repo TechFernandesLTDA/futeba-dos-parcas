@@ -143,12 +143,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       }
 
       if (tab === 0 || tab === 3) {
-        const snap = await getDocs(query(collection(db, 'games'), orderBy('date', 'desc'), limit(20)));
+        const snap = await getDocs(query(collection(db, 'games'), orderBy('dateTime', 'desc'), limit(20)));
         snap.docs.forEach((d) => {
           const data = snakeToCamel(d.data()) as Record<string, unknown>;
           const loc = data.locationName as string | undefined;
           if (loc?.toLowerCase().includes(q.toLowerCase())) {
-            all.push({ id: d.id, type: 'game', name: loc || 'Jogo', subtitle: formatGameDate(data.date as never) });
+            all.push({ id: d.id, type: 'game', name: loc || 'Jogo', subtitle: formatGameDate((data.dateTime || data.date) as never) });
           }
         });
       }

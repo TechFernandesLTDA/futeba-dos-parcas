@@ -270,11 +270,11 @@ export const CpfVerificationScreen: React.FC = () => {
                   sx={{ display: 'block', mt: 2, textAlign: 'center' }}
                 >
                   Ao continuar, você concorda com a{' '}
-                  <a href="/privacy_policy.html" target="_blank" rel="noopener">
+                  <a href="/privacy_policy.html" target="_blank" rel="noopener noreferrer">
                     Política de Privacidade
                   </a>{' '}
                   e os{' '}
-                  <a href="/terms_of_service.html" target="_blank" rel="noopener">
+                  <a href="/terms_of_service.html" target="_blank" rel="noopener noreferrer">
                     Termos de Uso
                   </a>
                   .
