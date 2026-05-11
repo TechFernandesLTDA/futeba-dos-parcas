@@ -4,6 +4,8 @@ import path from 'path';
 
 config();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
@@ -13,6 +15,14 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'futeba_db',
   synchronize: process.env.NODE_ENV === 'development',
   logging: process.env.NODE_ENV === 'development',
+  // SSL obrigatório em produção para criptografar conexão com PostgreSQL (#810)
+  ...(isProduction && {
+    extra: {
+      ssl: {
+        rejectUnauthorized: true,
+      },
+    },
+  }),
   entities: [path.join(__dirname, '../entities/*.{ts,js}')],
   migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
   subscribers: [],

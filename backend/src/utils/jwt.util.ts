@@ -12,13 +12,15 @@ export class JwtUtil {
     // pois @types/jsonwebtoken usa tipo literal StringValue ao invés de string
     const options: SignOptions = {
       expiresIn: appConfig.jwt.expiration as SignOptions['expiresIn'],
+      algorithm: 'HS256',
     };
     return jwt.sign(payload, appConfig.jwt.secret, options);
   }
 
   static verifyToken(token: string): JwtPayload {
     try {
-      return jwt.verify(token, appConfig.jwt.secret) as JwtPayload;
+      // Algoritmo explícito para evitar confusão none/RS256 (#809)
+      return jwt.verify(token, appConfig.jwt.secret, { algorithms: ['HS256'] }) as JwtPayload;
     } catch (error) {
       throw new Error('Token inválido ou expirado');
     }

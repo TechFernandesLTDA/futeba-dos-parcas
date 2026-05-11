@@ -22,15 +22,17 @@ export class GamificationService {
     private userBadgeRepository = AppDataSource.getRepository(UserBadge);
     private streakRepository = AppDataSource.getRepository(UserStreak);
 
-    // Tabelas de XP baseadas no Kotlin XPCalculator.kt
+    // Valores canônicos de XP — source of truth: shared/xp-constants.json (#800)
+    // Sincronizado com xpActions: GOAL:10, ASSIST:7, SAVE:8, WIN:20, DRAW:10, MVP:30, WORST_PLAYER:-10
+    // Nota: STREAK_BONUS_BASE usa tiering (STREAK_3:20, STREAK_5:35...) — mantido simplificado por ora
     private readonly XP_VALUES = {
-        GOAL: 50,
-        ASSIST: 30,
-        SAVE: 20,
-        WIN: 100,
-        DRAW: 40,
-        MVP: 150,
-        WORST_PLAYER: -50,
+        GOAL: 10,
+        ASSIST: 7,
+        SAVE: 8,
+        WIN: 20,
+        DRAW: 10,
+        MVP: 30,
+        WORST_PLAYER: -10,
         STREAK_BONUS_BASE: 20,
     };
 

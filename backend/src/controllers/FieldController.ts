@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { Field } from '../entities/Field';
+import { FieldType } from '../entities/User';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { ApiResponse } from '../utils/api-response';
 import { logger } from '../utils/logger';
@@ -10,6 +11,11 @@ export class FieldController {
 
   getAll = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+      // Paginação padrão para evitar retorno ilimitado de registros (#808)
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+      const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || '20'), 10)));
+      const skip = (page - 1) * limit;
+
       const { location_id, type } = req.query;
 
       const whereConditions: any = {};
@@ -18,17 +24,25 @@ export class FieldController {
         whereConditions.location_id = location_id;
       }
 
+      // Validar type contra enum para evitar injeção de valor arbitrário (#806)
       if (type) {
+        const validTypes = Object.values(FieldType) as string[];
+        if (!validTypes.includes(type as string)) {
+          ApiResponse.error(res, `Tipo inválido. Valores aceitos: ${validTypes.join(', ')}`, 400);
+          return;
+        }
         whereConditions.type = type;
       }
 
-      const fields = await this.fieldRepository.find({
+      const [fields, total] = await this.fieldRepository.findAndCount({
         where: whereConditions,
         relations: ['location'],
         order: { name: 'ASC' },
+        skip,
+        take: limit,
       });
 
-      ApiResponse.success(res, fields);
+      ApiResponse.success(res, { data: fields, page, limit, total });
     } catch (error) {
       logger.error('Error in getAll fields:', error);
       ApiResponse.internalError(res);

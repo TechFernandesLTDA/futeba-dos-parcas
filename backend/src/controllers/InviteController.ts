@@ -19,10 +19,21 @@ export class InviteController {
 
       const game = await this.gameRepository.findOne({
         where: { id: game_id },
+        relations: ['schedule', 'confirmations'],
       });
 
       if (!game) {
         ApiResponse.notFound(res, 'Jogo não encontrado');
+        return;
+      }
+
+      // Apenas o dono do schedule ou um jogador confirmado pode enviar convites (#804)
+      const isOwner = game.schedule?.owner_id === senderId;
+      const isConfirmed = game.confirmations?.some(
+        (c) => c.user_id === senderId && c.status === ConfirmationStatus.CONFIRMED
+      );
+      if (!isOwner && !isConfirmed) {
+        ApiResponse.forbidden(res, 'Apenas membros confirmados ou o dono podem enviar convites');
         return;
       }
 

@@ -94,6 +94,7 @@ export class GameController {
   getById = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const userId = req.user!.userId;
 
       const game = await this.gameRepository.findOne({
         where: { id },
@@ -115,6 +116,18 @@ export class GameController {
       if (!game) {
         ApiResponse.notFound(res, 'Jogo não encontrado');
         return;
+      }
+
+      // Jogos de schedules privados só acessíveis ao dono ou membros (#803)
+      if (game.schedule && !game.schedule.is_public) {
+        const isOwner = game.schedule.owner_id === userId;
+        const isMember = await this.membershipRepository.findOne({
+          where: { schedule_id: game.schedule_id, user_id: userId, status: MembershipStatus.ACTIVE },
+        });
+        if (!isOwner && !isMember) {
+          ApiResponse.forbidden(res, 'Acesso restrito a membros deste jogo');
+          return;
+        }
       }
 
       ApiResponse.success(res, game);
@@ -373,10 +386,13 @@ export class GameController {
       game.xp_processed = true;
       await this.gameRepository.save(game);
 
-      for (const stat of player_stats) {
-        await this.statisticsService.recalculateUserStats(stat.user_id, game.schedule_id);
-        await this.leagueService.updatePlayerLeague(stat.user_id);
-      }
+      // Paralelizar recálculo por jogador para evitar N+1 sequencial (#805)
+      await Promise.all(
+        player_stats.map(async (stat: { user_id: string }) => {
+          await this.statisticsService.recalculateUserStats(stat.user_id, game.schedule_id);
+          await this.leagueService.updatePlayerLeague(stat.user_id);
+        })
+      );
 
       ApiResponse.success(res, { message: 'Estatísticas e XP lançados com sucesso' });
     } catch (error) {

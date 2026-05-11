@@ -16,11 +16,18 @@ export class ScheduleController {
     try {
       const userId = req.user!.userId;
 
+      // Paginação padrão para owned e member schedules (#812)
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+      const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || '20'), 10)));
+      const skip = (page - 1) * limit;
+
       // Horários que o usuário é dono
-      const owned = await this.scheduleRepository.find({
+      const [owned, ownedTotal] = await this.scheduleRepository.findAndCount({
         where: { owner_id: userId },
         relations: ['field', 'field.location', 'owner'],
         order: { created_at: 'DESC' },
+        skip,
+        take: limit,
       });
 
       // Horários que o usuário é membro
@@ -31,11 +38,16 @@ export class ScheduleController {
       const memberScheduleIds = memberships.map((m) => m.schedule_id);
 
       let member: Schedule[] = [];
+      let memberTotal = 0;
       if (memberScheduleIds.length > 0) {
-        member = await this.scheduleRepository.find({
+        const [memberList, count] = await this.scheduleRepository.findAndCount({
           where: { id: In(memberScheduleIds) },
           relations: ['field', 'field.location', 'owner'],
+          skip,
+          take: limit,
         });
+        member = memberList;
+        memberTotal = count;
       }
 
       // Horários públicos (exceto os que já é dono ou membro)
@@ -49,13 +61,17 @@ export class ScheduleController {
         .where('schedule.is_public = :isPublic', { isPublic: true })
         .andWhere(excludeIds.length > 0 ? 'schedule.id NOT IN (:...excludeIds)' : '1=1', { excludeIds })
         .orderBy('schedule.created_at', 'DESC')
-        .take(20)
+        .take(limit)
         .getMany();
 
       ApiResponse.success(res, {
         owned,
+        ownedTotal,
         member,
+        memberTotal,
         public: publicSchedules,
+        page,
+        limit,
       });
     } catch (error) {
       logger.error('Error in getAll schedules:', error);
@@ -66,6 +82,7 @@ export class ScheduleController {
   getById = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const userId = req.user!.userId;
 
       const schedule = await this.scheduleRepository.findOne({
         where: { id },
@@ -75,6 +92,18 @@ export class ScheduleController {
       if (!schedule) {
         ApiResponse.notFound(res, 'Horário não encontrado');
         return;
+      }
+
+      // Horários privados só acessíveis ao dono ou membros ativos (#802)
+      if (!schedule.is_public) {
+        const isOwner = schedule.owner_id === userId;
+        const isMember = schedule.memberships?.some(
+          (m) => m.user_id === userId && m.status === MembershipStatus.ACTIVE
+        );
+        if (!isOwner && !isMember) {
+          ApiResponse.forbidden(res, 'Acesso restrito a membros deste horário');
+          return;
+        }
       }
 
       ApiResponse.success(res, schedule);
