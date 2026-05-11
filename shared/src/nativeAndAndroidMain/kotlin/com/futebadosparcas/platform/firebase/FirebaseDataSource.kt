@@ -14,7 +14,6 @@ import dev.gitlive.firebase.storage.storage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -1066,8 +1065,8 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
-    actual fun logout() {
-        runBlocking { auth.signOut() }
+    actual suspend fun logout() {
+        auth.signOut()
     }
 
     // ========== GROUPS ==========

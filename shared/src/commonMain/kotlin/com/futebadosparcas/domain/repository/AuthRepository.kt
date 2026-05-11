@@ -40,6 +40,8 @@ interface AuthRepository {
 
     /**
      * Realiza logout do usuário.
+     *
+     * Suspend para evitar runBlocking em iOS (deadlock garantido se chamado da main thread).
      */
-    fun logout()
+    suspend fun logout()
 }

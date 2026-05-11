@@ -41,23 +41,24 @@ export const onGameEventCreated = onDocumentCreated(
       MAX_EVENTS_PER_OWNER_GAME :
       MAX_EVENTS_PER_USER_GAME;
 
-    // FIX #584/H11: count() inclui o doc novo (post-create trigger), e a
-    // query rodava fora de transaction → race onde 2 events concorrentes
-    // ambos viam 51, ambos deletavam.
-    // Solução: fazer leitura+delete dentro de runTransaction (atomic).
+    // FIX #960: count() aggregate roda fora da transaction mesmo quando
+    // declarado dentro de runTransaction — usa db() em vez de txn.get().
+    // Trocamos por txn.get(query) que é genuinamente atomic: a transaction
+    // re-executa se outro client modificou o conjunto durante a leitura.
+    // Custo: trazemos até (limit+1) docs em vez do count agregado, mas
+    // limit é pequeno (50/200) então é trade-off aceitável pela correção.
     await db().runTransaction(async (txn) => {
       const eventRef = event.data?.ref;
       if (!eventRef) return;
 
-      // Read current event count (atomic dentro da transaction)
-      const countSnap = await db()
+      const query = db()
         .collection("game_events")
         .where("game_id", "==", gameId)
         .where("created_by", "==", createdBy)
-        .count()
-        .get();
+        .limit(limit + 1);
 
-      const count = countSnap.data().count;
+      const eventsSnap = await txn.get(query);
+      const count = eventsSnap.size;
       if (count <= limit) return;
 
       logger.warn(

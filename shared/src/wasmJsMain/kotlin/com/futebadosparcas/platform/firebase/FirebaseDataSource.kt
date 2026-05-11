@@ -195,7 +195,7 @@ actual class FirebaseDataSource {
     actual fun isLoggedIn(): Boolean = false
     actual fun getCurrentAuthUserId(): String? = null
     actual suspend fun getCurrentAuthUser(): Result<User> = stubResult()
-    actual fun logout() { /* no-op no web stub */ }
+    actual suspend fun logout() { /* no-op no web stub */ }
 
     // ========== LOCATIONS ==========
 

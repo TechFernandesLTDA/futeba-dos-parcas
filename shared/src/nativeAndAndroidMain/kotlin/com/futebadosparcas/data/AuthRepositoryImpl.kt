@@ -32,7 +32,7 @@ class AuthRepositoryImpl(
         return firebaseDataSource.getCurrentAuthUser()
     }
 
-    override fun logout() {
+    override suspend fun logout() {
         firebaseDataSource.logout()
     }
 }
