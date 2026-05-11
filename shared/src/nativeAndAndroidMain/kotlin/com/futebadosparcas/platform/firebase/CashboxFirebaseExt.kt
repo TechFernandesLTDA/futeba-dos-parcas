@@ -15,12 +15,19 @@ internal fun DocumentSnapshot.toCashboxEntryOrNull(): CashboxEntry? {
     if (!exists) return null
 
     return try {
+        // Fase 1 (compat read) BUGFIX_CASHBOX_DOUBLE_AND_TIMESTAMP:
+        // Aceita amount_cents (Long, novo) OU amount (Double, legacy).
+        // Quando ambos presentes, prefere amount_cents (autoritativo).
+        val amountCents = get<Long?>("amount_cents")
+        val amount = amountCents?.let { it / 100.0 }
+            ?: get<Double?>("amount")
+            ?: 0.0
         CashboxEntry(
             id = id,
             type = get<String?>("type") ?: CashboxEntryType.INCOME.name,
             category = get<String?>("category") ?: CashboxCategory.OTHER.name,
             customCategory = get<String?>("custom_category"),
-            amount = get<Double?>("amount") ?: 0.0,
+            amount = amount,
             description = get<String?>("description") ?: "",
             createdById = get<String?>("created_by_id") ?: "",
             createdByName = get<String?>("created_by_name") ?: "",
@@ -43,7 +50,9 @@ internal fun DocumentSnapshot.toCashboxEntryOrNull(): CashboxEntry? {
 
 /**
  * Converte campo de data do Firestore para Instant.
- * Suporta Timestamp (Date do Firebase), Long (millis) ou null.
+ * Suporta Timestamp (preferido), Long (millis), String ISO-8601 ou String numérica legacy.
+ *
+ * Fase 1 BUGFIX_CASHBOX_DOUBLE_AND_TIMESTAMP: aceita Instant.toString() legacy.
  */
 private fun DocumentSnapshot.getDateFieldAsInstant(field: String): Instant? {
     return try {
@@ -51,7 +60,11 @@ private fun DocumentSnapshot.getDateFieldAsInstant(field: String): Instant? {
         when (value) {
             is Timestamp -> Instant.fromEpochSeconds(value.seconds, value.nanoseconds)
             is Number -> Instant.fromEpochMilliseconds(value.toLong())
-            is String -> value.toLongOrNull()?.let { Instant.fromEpochMilliseconds(it) }
+            is String -> {
+                // String pode ser: 1) millis numérico, 2) ISO-8601 (Instant.toString())
+                value.toLongOrNull()?.let { Instant.fromEpochMilliseconds(it) }
+                    ?: runCatching { Instant.parse(value) }.getOrNull()
+            }
             else -> null
         }
     } catch (e: Exception) {
