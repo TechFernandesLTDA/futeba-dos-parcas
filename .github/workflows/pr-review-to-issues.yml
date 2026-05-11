@@ -21,6 +21,12 @@ concurrency:
 jobs:
   create-issue-from-review:
     name: Parse Review and Create Issues
+    # Bloquear PRs de forks: pull_request_review com issues:write
+    # permite que contribuidores externos injetem issues se o job
+    # rodar no contexto de um fork sem esta guarda.
+    if: >
+      github.event_name == 'issue_comment' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 15
 
