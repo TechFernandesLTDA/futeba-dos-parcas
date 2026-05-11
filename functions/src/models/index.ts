@@ -95,6 +95,8 @@ export interface XpLog {
     // Flag "Bola Murcha"
     was_worst_player: boolean;
     game_result: string;
+    /** Status do jogo no momento do processamento — sempre "FINISHED" (#954) */
+    game_status: string;
     milestones_unlocked: string[];
     created_at: admin.firestore.FieldValue;
 }
