@@ -373,10 +373,13 @@ export class GameController {
       game.xp_processed = true;
       await this.gameRepository.save(game);
 
-      for (const stat of player_stats) {
-        await this.statisticsService.recalculateUserStats(stat.user_id, game.schedule_id);
-        await this.leagueService.updatePlayerLeague(stat.user_id);
-      }
+      // Paralelizar recálculo por jogador para evitar N+1 sequencial (#805)
+      await Promise.all(
+        player_stats.map(async (stat: { user_id: string }) => {
+          await this.statisticsService.recalculateUserStats(stat.user_id, game.schedule_id);
+          await this.leagueService.updatePlayerLeague(stat.user_id);
+        })
+      );
 
       ApiResponse.success(res, { message: 'Estatísticas e XP lançados com sucesso' });
     } catch (error) {
