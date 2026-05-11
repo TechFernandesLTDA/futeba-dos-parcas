@@ -47,6 +47,10 @@ const mockCollection = jest.fn().mockReturnValue({
   doc: mockDoc,
   get: mockCollectionGet,
   add: jest.fn().mockResolvedValue({id: "audit_1"}),
+  where: jest.fn().mockReturnThis(),
+  orderBy: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  startAfter: jest.fn().mockReturnThis(),
 });
 
 const mockRunTransaction = jest.fn();
@@ -69,6 +73,9 @@ jest.mock("firebase-admin", () => {
 
   mockAdmin.firestore.FieldValue = {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+  };
+  mockAdmin.firestore.FieldPath = {
+    documentId: jest.fn(() => ({_type: "FieldPathDocumentId"})),
   };
 
   return mockAdmin;

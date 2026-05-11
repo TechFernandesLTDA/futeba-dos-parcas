@@ -387,9 +387,21 @@ describe("sendNotificationToUsers", () => {
       size: 2,
     });
 
-    // Reconfigurar o mock do firestore para esta query específica
+    // FIX #785: shouldNotifyUser lê users/{uid}.notification_preferences.
+    // Stub mockDocGet pra retornar perfil com push habilitado (default).
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        notification_preferences: { push_enabled: true },
+        mute_groups: [],
+      }),
+    });
+
+    // Reconfigurar o mock do firestore para esta query específica.
+    // Usa mockReturnValue (não Once) — shouldNotifyUser chama getDb() N vezes
+    // (uma por user) + sendNotificationToUsers chama mais 2x p/ token fetch.
     const admin = require("firebase-admin");
-    admin.firestore.mockReturnValueOnce({
+    admin.firestore.mockReturnValue({
       collection: jest.fn().mockReturnValue({
         doc: jest.fn().mockReturnValue({
           id: "notif-doc-id",
@@ -433,9 +445,18 @@ describe("sendNotificationToUsers", () => {
   });
 
   test("deve retornar 0 quando nenhum usuário tem token FCM", async () => {
-    // Sem tokens na query
+    // shouldNotifyUser ainda passa (push habilitado) mas tokens vêm vazios
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        notification_preferences: { push_enabled: true },
+        mute_groups: [],
+      }),
+    });
+    // Sem tokens na query — usar mockReturnValue (não Once) pra sobrepor
+    // o stub sticky deixado por testes anteriores.
     const admin = require("firebase-admin");
-    admin.firestore.mockReturnValueOnce({
+    admin.firestore.mockReturnValue({
       collection: jest.fn().mockReturnValue({
         doc: jest.fn().mockReturnValue({
           id: "notif-doc-id",

@@ -239,8 +239,8 @@ describe("Validation Module", () => {
       expect(validateLevel(5)).toBeNull();
     });
 
-    test("invalid level 11", () => {
-      expect(validateLevel(11)).not.toBeNull();
+    test("invalid level 21 (acima de LEVEL_TABLE.maxLevel=20)", () => {
+      expect(validateLevel(21)).not.toBeNull();
     });
 
     test("invalid negative level", () => {
@@ -251,8 +251,8 @@ describe("Validation Module", () => {
       expect(validateLevel(0)).toBeNull();
     });
 
-    test("boundary 10", () => {
-      expect(validateLevel(10)).toBeNull();
+    test("boundary 20 (LEVEL_TABLE.maxLevel)", () => {
+      expect(validateLevel(20)).toBeNull();
     });
   });
 
