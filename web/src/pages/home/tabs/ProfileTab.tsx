@@ -166,7 +166,7 @@ export function ProfileTab() {
               fontWeight: 'bold',
               border: '4px solid',
               borderColor: 'background.paper',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.2)}`,
             }}
           >
             {user?.name ? getInitials(user.name) : '?'}
