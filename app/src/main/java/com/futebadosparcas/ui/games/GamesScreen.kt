@@ -241,7 +241,7 @@ private fun GamesFilters(
             label = { Text(stringResource(R.string.all_games)) },
             leadingIcon = {
                 Icon(
-                    imageVector = if (selectedFilter == GameFilterType.ALL) Icons.Default.Check else Icons.Default.CalendarMonth,
+                    imageVector = if (selectedFilter == GameFilterType.ALL) Icons.Default.Check else Icons.Default.FilterList,
                     contentDescription = stringResource(R.string.all_games),
                     modifier = Modifier.size(FilterChipDefaults.IconSize)
                 )

@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import {
   SportsSoccer,
+  SportsScore,
   CalendarMonth,
   LocationOn,
   People,
@@ -248,16 +249,16 @@ export function HomeTab() {
             {/* Stats rápidos */}
             <Box sx={{ display: 'flex', gap: 2 }}>
               {[
-                { value: user?.totalGames || 0, label: 'Jogos', icon: <SportsSoccer sx={{ fontSize: 16, opacity: 0.7 }} /> },
-                { value: user?.totalGoals || 0, label: 'Gols', icon: <SportsSoccer sx={{ fontSize: 16, opacity: 0.7 }} /> },
-                { value: user?.mvpCount || 0, label: 'MVPs', icon: <EmojiEvents sx={{ fontSize: 16, opacity: 0.7 }} /> },
+                { value: user?.totalGames || 0, label: 'Jogos', icon: <SportsSoccer sx={{ fontSize: 16, opacity: 0.9 }} />, color: 'rgba(255,255,255,0.15)' },
+                { value: user?.totalGoals || 0, label: 'Gols', icon: <SportsScore sx={{ fontSize: 16, opacity: 0.9 }} />, color: 'rgba(76,175,80,0.25)' },
+                { value: user?.mvpCount || 0, label: 'MVPs', icon: <EmojiEvents sx={{ fontSize: 16, opacity: 0.9 }} />, color: 'rgba(255,193,7,0.25)' },
               ].map((stat) => (
                 <Box
                   key={stat.label}
                   sx={{
                     flex: 1,
                     textAlign: 'center',
-                    bgcolor: 'rgba(255,255,255,0.1)',
+                    bgcolor: stat.color,
                     borderRadius: 2,
                     py: 1,
                     px: 0.5,

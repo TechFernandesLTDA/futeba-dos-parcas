@@ -144,10 +144,23 @@ export const MVPVoteScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
-        <Skeleton variant="rectangular" height={200} sx={{ mb: 2 }} />
-        <Skeleton variant="text" />
-      </Container>
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', p: 1, borderBottom: 1, borderColor: 'divider' }}>
+          <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
+          <Skeleton variant="text" width={120} height={28} />
+        </Box>
+        <Container maxWidth="sm" sx={{ py: 2 }}>
+          <Skeleton variant="rounded" height={80} sx={{ mb: 3 }} />
+          <Skeleton variant="text" width="50%" height={24} sx={{ mb: 1 }} />
+          {[0, 1, 2, 3].map((i) => (
+            <Box key={i} sx={{ display: 'flex', alignItems: 'center', py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+              <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2, flexShrink: 0 }} />
+              <Skeleton variant="text" sx={{ flex: 1 }} height={20} />
+              <Skeleton variant="circular" width={20} height={20} sx={{ ml: 2, flexShrink: 0 }} />
+            </Box>
+          ))}
+        </Container>
+      </Box>
     );
   }
 

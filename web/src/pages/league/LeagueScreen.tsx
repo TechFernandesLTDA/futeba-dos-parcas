@@ -74,12 +74,21 @@ export const LeagueScreen: React.FC = () => {
           aria-label="Divisões da liga"
         >
           <Tab label="Geral" />
-          <Tab label={t('league.bronze')} />
-          <Tab label={t('league.silver')} />
-          <Tab label={t('league.gold')} />
-          <Tab label="Platina" />
-          <Tab label={t('league.diamond')} />
-          <Tab label="Campeão" />
+          {divisions.map((div) => (
+            <Tab
+              key={div}
+              label={DIVISION_CONFIG[div]?.label ?? div}
+              sx={{
+                borderTop: tabValue === divisions.indexOf(div) + 1 ? 3 : 0,
+                borderColor: DIVISION_CONFIG[div]?.color ?? 'transparent',
+                '&.Mui-selected': {
+                  color: DIVISION_CONFIG[div]?.color,
+                  borderTop: 3,
+                  borderColor: DIVISION_CONFIG[div]?.color,
+                },
+              }}
+            />
+          ))}
         </Tabs>
       </Box>
 

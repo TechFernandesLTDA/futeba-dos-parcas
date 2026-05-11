@@ -27,6 +27,13 @@ import {
   Star as StarIcon,
   Refresh as RefreshIcon,
   OpenInNew as OpenIcon,
+  SportsSoccer,
+  SportsScore,
+  AssistWalker,
+  SportsMartialArts,
+  Whatshot,
+  Handshake,
+  Shield,
 } from '@mui/icons-material';
 import { collection, query, orderBy, limit, onSnapshot, getDocs, where, documentId } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
@@ -67,17 +74,17 @@ interface RankingPlayer {
 
 // Tabela de XP por ação para referência rápida
 const XP_TABLE = [
-  { label: 'Participação', xp: XP_PARTICIPATION, icon: '⚽' },
-  { label: 'Gol', xp: XP_GOAL, icon: '🥅' },
-  { label: 'Assistência', xp: XP_ASSIST, icon: '🅰️' },
-  { label: 'Defesa (GK)', xp: XP_SAVE, icon: '🧤' },
-  { label: 'MVP', xp: XP_MVP, icon: '⭐' },
-  { label: 'Vitória', xp: XP_WIN, icon: '🏆' },
-  { label: 'Empate', xp: XP_DRAW, icon: '🤝' },
-  { label: 'Streak 3+', xp: XP_STREAK_3, icon: '🔥' },
-  { label: 'Streak 5+', xp: XP_STREAK_5, icon: '🔥🔥' },
-  { label: 'Streak 7+', xp: XP_STREAK_7, icon: '🔥🔥' },
-  { label: 'Streak 10+', xp: XP_STREAK_10, icon: '🔥🔥🔥' },
+  { label: 'Participação', xp: XP_PARTICIPATION, Icon: SportsSoccer, color: 'primary' as const },
+  { label: 'Gol', xp: XP_GOAL, Icon: SportsScore, color: 'success' as const },
+  { label: 'Assistência', xp: XP_ASSIST, Icon: AssistWalker, color: 'info' as const },
+  { label: 'Defesa (GK)', xp: XP_SAVE, Icon: Shield, color: 'secondary' as const },
+  { label: 'MVP', xp: XP_MVP, Icon: StarIcon, color: 'warning' as const },
+  { label: 'Vitória', xp: XP_WIN, Icon: TrophyIcon, color: 'warning' as const },
+  { label: 'Empate', xp: XP_DRAW, Icon: Handshake, color: 'default' as const },
+  { label: 'Streak 3+', xp: XP_STREAK_3, Icon: Whatshot, color: 'error' as const },
+  { label: 'Streak 5+', xp: XP_STREAK_5, Icon: Whatshot, color: 'error' as const },
+  { label: 'Streak 7+', xp: XP_STREAK_7, Icon: Whatshot, color: 'error' as const },
+  { label: 'Streak 10+', xp: XP_STREAK_10, Icon: SportsMartialArts, color: 'error' as const },
 ];
 
 export function RankingsTab() {
@@ -381,9 +388,9 @@ export function RankingsTab() {
                         borderBottom: index < XP_TABLE.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
                       }}
                     >
-                      <Typography sx={{ fontSize: '1.3rem', mr: 1.5, width: 36, textAlign: 'center' }}>
-                        {item.icon}
-                      </Typography>
+                      <Box sx={{ mr: 1.5, width: 36, display: 'flex', justifyContent: 'center' }}>
+                        <item.Icon color={item.color === 'default' ? 'action' : item.color} fontSize="small" />
+                      </Box>
                       <Typography variant="body2" sx={{ flex: 1 }} fontWeight={500}>
                         {item.label}
                       </Typography>
