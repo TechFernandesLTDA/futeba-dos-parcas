@@ -193,14 +193,15 @@ describe("Rate Limiter - checkRateLimit", () => {
     expect(result.remaining).toBe(8);
   });
 
-  test("deve permitir request (fail-open) quando transação falha", async () => {
+  test("deve bloquear request (fail-closed) quando transação falha", async () => {
     mockRunTransaction.mockRejectedValue(new Error("Firestore error"));
 
     const config: RateLimitConfig = { maxRequests: 10, windowMs: 60000 };
     const result = await checkRateLimit("user1", config);
 
-    // Fail-open: permite request em caso de erro
-    expect(result.allowed).toBe(true);
+    // Fail-closed (PR #979): bloqueia request em erro Firestore para evitar
+    // bypass invisível em incidente. Erro é logado com tag [ALERT].
+    expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
 
@@ -439,12 +440,13 @@ describe("Rate Limiter - checkRateLimitByIp", () => {
     expect(result.allowed).toBe(true);
   });
 
-  test("deve permitir request (fail-open) quando transação falha", async () => {
+  test("deve bloquear request (fail-closed) quando transação falha", async () => {
     mockRunTransaction.mockRejectedValue(new Error("Firestore error"));
 
     const config: RateLimitConfig = { maxRequests: 10, windowMs: 60000 };
     const result = await checkRateLimitByIp("10.0.0.1", config);
 
-    expect(result.allowed).toBe(true);
+    // Fail-closed (PR #979): bloqueia IP em erro Firestore.
+    expect(result.allowed).toBe(false);
   });
 });
