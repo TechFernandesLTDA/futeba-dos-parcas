@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { camelToSnake } from '../utils/camelToSnake';
 import { createLogger } from '../utils/logger';
+import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 
 const logger = createLogger('useGames');
 
@@ -154,7 +155,7 @@ export function useGameDetail(gameId: string | null) {
       },
       (err) => {
         logger.error('Error fetching game:', err);
-        setError(err.message);
+        setError(getFirestoreErrorMessage(err));
         setLoading(false);
       }
     );
@@ -181,7 +182,8 @@ export function useGameDetail(gameId: string | null) {
       (err) => {
         logger.error('Error in confirmations listener:', err);
         setConfirmations([]);
-        setError(err.message);
+        setError(getFirestoreErrorMessage(err));
+        setLoading(false);
       }
     );
 

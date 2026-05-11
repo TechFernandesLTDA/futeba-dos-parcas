@@ -20,6 +20,7 @@ import { Group, GroupMember, GroupRole, CashboxTransaction } from '../types/grou
 import { useAuth } from '../contexts/AuthContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 
 const logger = createLogger('useGroups');
 
@@ -210,7 +211,7 @@ export function useGroupDetail(groupId: string | null) {
       },
       (err) => {
         logger.error('Error fetching group:', err);
-        setError(err.message);
+        setError(getFirestoreErrorMessage(err));
         setLoading(false);
       }
     );
@@ -231,7 +232,8 @@ export function useGroupDetail(groupId: string | null) {
       },
       (err) => {
         logger.error('Error fetching members:', err);
-        setError(err.message);
+        setError(getFirestoreErrorMessage(err));
+        setLoading(false);
       }
     );
 
@@ -360,7 +362,7 @@ export function useCashbox(groupId: string | null) {
       },
       (err) => {
         logger.error('Error fetching cashbox:', err);
-        setError(err.message);
+        setError(getFirestoreErrorMessage(err));
         setLoading(false);
       }
     );
