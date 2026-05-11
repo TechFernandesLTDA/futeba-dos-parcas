@@ -27,7 +27,7 @@ import {
   Google,
   SportsSoccer,
 } from '@mui/icons-material';
-import { useTheme } from '@mui/material';
+import { useTheme, alpha } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -125,7 +125,7 @@ export function LoginScreen() {
           maxWidth: 420,
           width: '100%',
           borderRadius: 4,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
         }}
       >
         <CardContent sx={{ p: 4 }}>

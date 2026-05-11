@@ -384,7 +384,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           maxWidth: { xs: '100%', sm: 480, md: 800, lg: 1200 },
           minHeight: '100vh',
           bgcolor: 'background.default',
-          boxShadow: { xs: 'none', sm: '0 0 40px rgba(0,0,0,0.12)' },
+          boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.12)'}` }),
           position: 'relative',
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}

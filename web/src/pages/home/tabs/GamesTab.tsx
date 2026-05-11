@@ -196,7 +196,13 @@ export function GamesTab() {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {hasActiveFilters
                 ? 'Tente alterar a busca ou os filtros'
-                : 'Crie um novo jogo para começar!'}
+                : statusFilter === 'all'
+                  ? 'Nenhum jogo disponível no momento'
+                  : statusFilter === 'SCHEDULED'
+                    ? 'Nenhum jogo aberto para inscrição'
+                    : statusFilter === 'LIVE'
+                      ? 'Nenhum jogo ao vivo agora'
+                      : 'Nenhum jogo finalizado ainda'}
             </Typography>
             {hasActiveFilters ? (
               <Button
@@ -206,7 +212,7 @@ export function GamesTab() {
               >
                 Limpar Filtros
               </Button>
-            ) : (
+            ) : statusFilter === 'all' ? null : (
               <Button
                 variant="contained"
                 startIcon={<Add />}

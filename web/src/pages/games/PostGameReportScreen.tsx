@@ -37,6 +37,8 @@ const logger = createLogger('PostGameReportScreen');
 interface PostGameStats {
   teamAScore: number;
   teamBScore: number;
+  teamAName?: string;
+  teamBName?: string;
   winner: 'A' | 'B' | 'DRAW';
   mvpId?: string;
   mvpName?: string;
@@ -77,6 +79,8 @@ export const PostGameReportScreen: React.FC = () => {
           setStats({
             teamAScore: data.teamAScore || data.team1Score || 0,
             teamBScore: data.teamBScore || data.team2Score || 0,
+            teamAName: data.team1Name || data.teamAName || undefined,
+            teamBName: data.team2Name || data.teamBName || undefined,
             winner: data.winnerTeam || 'DRAW',
             mvpId: data.mvpId,
             mvpName,
@@ -147,7 +151,7 @@ export const PostGameReportScreen: React.FC = () => {
                   {stats.teamAScore}
                 </Typography>
                 <Chip
-                  label="Time A"
+                  label={stats.teamAName || 'Time A'}
                   size="small"
                   color={stats.winner === 'A' ? 'success' : 'default'}
                 />
@@ -166,7 +170,7 @@ export const PostGameReportScreen: React.FC = () => {
                   {stats.teamBScore}
                 </Typography>
                 <Chip
-                  label="Time B"
+                  label={stats.teamBName || 'Time B'}
                   size="small"
                   color={stats.winner === 'B' ? 'success' : 'default'}
                 />

@@ -492,7 +492,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         background: XP_BAR_GRADIENT,
                         borderRadius: 3,
                         transition: 'width 0.8s ease',
-                        boxShadow: '0 0 6px rgba(0,200,83,0.6)',
+                        boxShadow: `0 0 6px ${alpha(theme.palette.primary.main, 0.6)}`,
                       }}
                     />
                   </Box>

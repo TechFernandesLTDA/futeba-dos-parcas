@@ -259,7 +259,7 @@ fun PlayerVsPlayerCard(
                     text = selectedCategory.formatValue(selectedCategory.getValue(player1.stats)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (value1 > value2) PositiveColor else MaterialTheme.colorScheme.onSurface,
+                    color = if (value1 > value2) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.width(50.dp),
                     textAlign = TextAlign.Center
                 )
@@ -278,7 +278,7 @@ fun PlayerVsPlayerCard(
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(
-                                if (value1 > value2) PositiveColor
+                                if (value1 > value2) MaterialTheme.colorScheme.tertiary
                                 else MaterialTheme.colorScheme.primary
                             )
                             .align(Alignment.CenterEnd)
@@ -301,7 +301,7 @@ fun PlayerVsPlayerCard(
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(
-                                if (value2 > value1) PositiveColor
+                                if (value2 > value1) MaterialTheme.colorScheme.tertiary
                                 else MaterialTheme.colorScheme.secondary
                             )
                             .align(Alignment.CenterStart)
@@ -313,7 +313,7 @@ fun PlayerVsPlayerCard(
                     text = selectedCategory.formatValue(selectedCategory.getValue(player2.stats)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (value2 > value1) PositiveColor else MaterialTheme.colorScheme.onSurface,
+                    color = if (value2 > value1) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.width(50.dp),
                     textAlign = TextAlign.Center
                 )
@@ -616,7 +616,7 @@ fun QuickComparisonSummary(
                         text = "$winsCount",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = PositiveColor
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                     Text(
                         text = " - ",
@@ -626,7 +626,7 @@ fun QuickComparisonSummary(
                         text = "$lossesCount",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = NegativeColor
+                        color = MaterialTheme.colorScheme.error
                     )
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -682,8 +682,8 @@ private fun ComparisonRow(
     modifier: Modifier = Modifier
 ) {
     val (userColor, otherColor) = when (result) {
-        ComparisonResult.WINNING -> PositiveColor to MaterialTheme.colorScheme.onSurfaceVariant
-        ComparisonResult.LOSING -> MaterialTheme.colorScheme.onSurfaceVariant to NegativeColor
+        ComparisonResult.WINNING -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onSurfaceVariant
+        ComparisonResult.LOSING -> MaterialTheme.colorScheme.onSurfaceVariant to MaterialTheme.colorScheme.error
         ComparisonResult.TIED -> MaterialTheme.colorScheme.onSurface to MaterialTheme.colorScheme.onSurface
     }
 
@@ -733,8 +733,7 @@ private fun ComparisonRow(
 
 // ==================== Cores ====================
 
-private val PositiveColor = Color(0xFF4CAF50)
-private val NegativeColor = Color(0xFFE53935)
+// MaterialTheme.colorScheme.tertiary/MaterialTheme.colorScheme.error removidos — fix #779: usar MaterialTheme.colorScheme.tertiary/error
 private val GoldColor = Color(0xFFFFD700)
 private val SilverColor = Color(0xFFC0C0C0)
 private val BronzeColor = Color(0xFFCD7F32)
