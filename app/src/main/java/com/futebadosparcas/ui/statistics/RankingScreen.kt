@@ -194,7 +194,7 @@ private fun RankingHeader(
                     label = {
                         Text(
                             getPeriodLabel(period),
-                            fontSize = 11.sp,
+                            fontSize = MaterialTheme.typography.labelSmall.fontSize,
                             fontWeight = if (period == selectedPeriod) FontWeight.Bold else FontWeight.Normal
                         )
                     },
@@ -501,7 +501,7 @@ private fun RankingItem(
                 if (!player.nickname.isNullOrEmpty() && player.playerName != player.nickname) {
                     Text(
                         text = player.playerName,
-                        fontSize = 11.sp,
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -515,14 +515,14 @@ private fun RankingItem(
                 ) {
                     Text(
                         text = stringResource(R.string.league_games_played_lower, player.gamesPlayed),
-                        fontSize = 11.sp,
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     if (player.average > 0) {
                         Text(
                             text = stringResource(R.string.ranking_average, String.format("%.2f", player.average)),
-                            fontSize = 11.sp,
+                            fontSize = MaterialTheme.typography.labelSmall.fontSize,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -547,7 +547,7 @@ private fun RankingItem(
                 )
                 Text(
                     text = getCategoryUnit(category),
-                    fontSize = 10.sp,
+                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

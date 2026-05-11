@@ -681,7 +681,7 @@ private fun GoalEvolutionChart(
                         text = entry.key,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 10.sp
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize
                     )
                 }
             }
