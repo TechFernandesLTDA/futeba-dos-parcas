@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
 import { AuthProvider, ThemeProvider, LanguageProvider, useAuth, TeamsProvider } from './contexts';
@@ -255,6 +256,11 @@ function useFocusOnNavigate() {
       el.setAttribute('tabIndex', '-1');
       el.focus();
     }
+    // Registra breadcrumb de navegação para contexto em erros futuros
+    addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {
+      pathname: location.pathname,
+      search: location.search,
+    });
   }, [location.pathname]);
 }
 
