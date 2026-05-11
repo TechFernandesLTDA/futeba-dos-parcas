@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { Field } from '../entities/Field';
+import { FieldType } from '../entities/User';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { ApiResponse } from '../utils/api-response';
 import { logger } from '../utils/logger';
@@ -18,7 +19,13 @@ export class FieldController {
         whereConditions.location_id = location_id;
       }
 
+      // Validar type contra enum para evitar injeção de valor arbitrário (#806)
       if (type) {
+        const validTypes = Object.values(FieldType) as string[];
+        if (!validTypes.includes(type as string)) {
+          ApiResponse.error(res, `Tipo inválido. Valores aceitos: ${validTypes.join(', ')}`, 400);
+          return;
+        }
         whereConditions.type = type;
       }
 
