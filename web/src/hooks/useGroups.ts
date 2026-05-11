@@ -137,6 +137,7 @@ export function useDiscoverPublicGroups() {
     enabled: !!uid,
     staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false, // lista de grupos públicos — não refetch ao focar janela
   });
 
   return { groups, loading, error: error?.message || null, refetch };

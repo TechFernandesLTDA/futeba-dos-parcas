@@ -25,6 +25,18 @@ interface UseFirestoreQueryResult<T> {
 /**
  * Hook genérico para queries Firestore com listener em tempo real.
  * Converte automaticamente snake_case → camelCase e gerencia lifecycle.
+ *
+ * ATENÇÃO: `query` deve ser memoizado pelo caller com `useMemo`.
+ * Passar uma query inline (ex: `query(collection(...), ...)` diretamente)
+ * cria uma nova referência a cada render, causando re-subscribe e memory leak.
+ *
+ * @example
+ * // CORRETO — query memoizada
+ * const q = useMemo(() => query(collection(db, 'games'), where('status', '==', 'LIVE')), []);
+ * const { data } = useFirestoreQuery({ query: q });
+ *
+ * // ERRADO — nova ref a cada render = listener duplicado
+ * const { data } = useFirestoreQuery({ query: query(collection(db, 'games'), ...) });
  */
 export function useFirestoreQuery<T>({
   query: firestoreQuery,
