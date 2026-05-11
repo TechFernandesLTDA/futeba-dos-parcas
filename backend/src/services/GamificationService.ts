@@ -54,20 +54,26 @@ export class GamificationService {
     }
 
     async addExperience(userId: string, xp: number): Promise<void> {
-        const user = await this.userRepository.findOneBy({ id: userId });
-        if (!user) return;
+        // Wrap em transaction com pessimistic lock para evitar race condition em XP concorrente.
+        await AppDataSource.transaction(async (txManager) => {
+            const user = await txManager.findOne(User, {
+                where: { id: userId },
+                lock: { mode: 'pessimistic_write' },
+            });
+            if (!user) return;
 
-        user.experience_points = Number(user.experience_points) + xp;
+            user.experience_points = Number(user.experience_points) + xp;
 
-        // Nivel = floor(sqrt(xp / 100)) + 1
-        const newLevel = Math.floor(Math.sqrt(user.experience_points / 100)) + 1;
+            // Nivel = floor(sqrt(xp / 100)) + 1
+            const newLevel = Math.floor(Math.sqrt(user.experience_points / 100)) + 1;
 
-        if (newLevel > user.level) {
-            logger.info(`User ${userId} leveled up to ${newLevel}`);
-            user.level = newLevel;
-        }
+            if (newLevel > user.level) {
+                logger.info(`User ${userId} leveled up to ${newLevel}`);
+                user.level = newLevel;
+            }
 
-        await this.userRepository.save(user);
+            await txManager.save(user);
+        });
     }
 
     async awardBadge(userId: string, badgeType: BadgeType): Promise<void> {
