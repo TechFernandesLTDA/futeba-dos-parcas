@@ -185,6 +185,7 @@ export function useGroups() {
 
 export function useGroupDetail(groupId: string | null) {
   const [group, setGroup] = useState<Group | null>(null);
+  const [groupDeleted, setGroupDeleted] = useState(false);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -203,8 +204,17 @@ export function useGroupDetail(groupId: string | null) {
       (docSnap) => {
         if (docSnap.exists()) {
           const raw = docSnap.data();
-          setGroup(parseGroupDoc(docSnap.id, raw));
+          const parsed = parseGroupDoc(docSnap.id, raw);
+          // Checar se grupo foi encerrado (soft-delete)
+          if (parsed.deletedAt || raw.is_active === false) {
+            setGroupDeleted(true);
+            setGroup(null);
+          } else {
+            setGroupDeleted(false);
+            setGroup(parsed);
+          }
         } else {
+          setGroupDeleted(false);
           setGroup(null);
         }
         setLoading(false);
@@ -243,7 +253,7 @@ export function useGroupDetail(groupId: string | null) {
     };
   }, [groupId]);
 
-  return { group, members, loading, error };
+  return { group, groupDeleted, members, loading, error };
 }
 
 export function useCreateGroup() {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -20,6 +20,7 @@ import {
   ListItemSecondaryAction,
   ListItemAvatar,
   Button,
+  Alert,
   useTheme,
 } from '@mui/material';
 import {
@@ -39,6 +40,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('FieldOwnerDashboardScreen');
 
@@ -70,56 +72,76 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const [stats, setStats] = useState<LocationStats | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDashboard = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const locationsRef = collection(db, 'locations');
+      const locQ = query(locationsRef, where('owner_id', '==', user.id));
+      const locSnap = await getDocs(locQ);
+
+      const locs = locSnap.docs.map((d) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = snakeToCamel(d.data()) as Record<string, any>;
+        return {
+          id: d.id,
+          name: data.name || 'Quadra',
+          city: data.city || '',
+          photoUrl: data.photoUrl,
+          fieldCount: data.fieldCount || 1,
+          rating: data.rating || 0,
+          ratingCount: data.ratingCount || 0,
+        };
+      });
+      setLocations(locs);
+
+      const totalGames = locs.reduce((sum, l) => sum + (l.fieldCount || 0) * 10, 0);
+      const totalRevenue = locs.reduce((sum, l) => sum + (l.rating || 0) * 100, 0);
+      const avgRating = locs.length > 0
+        ? locs.reduce((sum, l) => sum + (l.rating || 0), 0) / locs.length
+        : 0;
+
+      setStats({
+        totalGames,
+        totalRevenue,
+        averageRating: avgRating,
+        totalReviews: locs.reduce((sum, l) => sum + (l.ratingCount || 0), 0),
+        upcomingGames: 5,
+      });
+    } catch (err) {
+      logger.error('Error fetching dashboard:', err);
+      setError(getFirestoreErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-
-    const fetchData = async () => {
-      try {
-        const locationsRef = collection(db, 'locations');
-        const locQ = query(locationsRef, where('owner_id', '==', user.id));
-        const locSnap = await getDocs(locQ);
-
-        const locs = locSnap.docs.map((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(d.data()) as Record<string, any>;
-          return {
-            id: d.id,
-            name: data.name || 'Quadra',
-            city: data.city || '',
-            photoUrl: data.photoUrl,
-            fieldCount: data.fieldCount || 1,
-            rating: data.rating || 0,
-            ratingCount: data.ratingCount || 0,
-          };
-        });
-        setLocations(locs);
-
-        const totalGames = locs.reduce((sum, l) => sum + (l.fieldCount || 0) * 10, 0);
-        const totalRevenue = locs.reduce((sum, l) => sum + (l.rating || 0) * 100, 0);
-        const avgRating = locs.length > 0
-          ? locs.reduce((sum, l) => sum + (l.rating || 0), 0) / locs.length
-          : 0;
-
-        setStats({
-          totalGames,
-          totalRevenue,
-          averageRating: avgRating,
-          totalReviews: locs.reduce((sum, l) => sum + (l.ratingCount || 0), 0),
-          upcomingGames: 5,
-        });
-      } catch (error) {
-        logger.error('Error fetching dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]);
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   if (loading) {
     return <LoadingState shimmerCount={4} itemType="CARD" />;
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={fetchDashboard}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      </Container>
+    );
   }
 
   return (
