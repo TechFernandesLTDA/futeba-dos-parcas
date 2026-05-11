@@ -32,7 +32,7 @@ const logger = createLogger('CreateGroupScreen');
 export const CreateGroupScreen: React.FC = () => {
   useDocumentTitle('Criar Grupo');
   const navigate = useNavigate();
-  useAuth();
+  const { user } = useAuth();
 
   const { createGroup, loading, error } = useCreateGroup();
   const { showSuccess, showError } = useToast();
@@ -60,6 +60,12 @@ export const CreateGroupScreen: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!validate()) return;
+
+    // Defesa em profundidade: apenas FIELD_OWNER e ADMIN podem criar grupos
+    if (user && user.role !== 'FIELD_OWNER' && user.role !== 'ADMIN') {
+      showError('Apenas Field Owners e Admins podem criar grupos.');
+      return;
+    }
 
     try {
       const groupId = await createGroup(formData);

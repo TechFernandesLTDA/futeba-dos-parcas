@@ -112,6 +112,15 @@ export const JoinByInviteScreen: React.FC = () => {
 
   const handleJoin = async () => {
     if (!code || !preview) return;
+    // Defesa em profundidade: bloquear join se convite inválido
+    if (preview.expired) {
+      showError('Este convite expirou. Peça um novo ao organizador.');
+      return;
+    }
+    if (preview.used) {
+      showError('Este convite já foi utilizado. Peça um novo ao organizador.');
+      return;
+    }
     try {
       await joinByInviteCode(code);
       showSuccess(`Você entrou no grupo ${preview.groupName}!`);
@@ -188,11 +197,11 @@ export const JoinByInviteScreen: React.FC = () => {
               <Typography variant="h6">
                 {preview.used ? 'Convite já usado' : 'Convite expirado'}
               </Typography>
-              <Typography color="text.secondary" textAlign="center">
+              <Alert severity="warning" sx={{ width: '100%' }}>
                 {preview.used
                   ? 'Este convite já foi utilizado. Peça um novo ao organizador.'
                   : 'Este convite expirou. Peça um novo ao organizador.'}
-              </Typography>
+              </Alert>
               <Button variant="outlined" onClick={() => navigate('/')}>
                 Voltar
               </Button>

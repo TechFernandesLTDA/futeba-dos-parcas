@@ -34,7 +34,7 @@ import {
   Star as StarIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -65,6 +65,7 @@ export const LiveEventsScreen: React.FC = () => {
 
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [canManage, setCanManage] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [eventType, setEventType] = useState<'GOAL' | 'ASSIST' | 'YELLOW_CARD' | 'RED_CARD' | 'SAVE'>('GOAL');
   const [selectedTeam, setSelectedTeam] = useState<'A' | 'B'>('A');
@@ -74,6 +75,27 @@ export const LiveEventsScreen: React.FC = () => {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+
+  useEffect(() => {
+    if (!gameId || !user) return;
+
+    // Verificar se o usuário pode gerenciar eventos (owner do jogo)
+    const checkManagePermission = async () => {
+      try {
+        const gameDoc = await getDoc(doc(db, 'games', gameId));
+        if (gameDoc.exists()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          const ownerId = gameData.ownerId || gameData.owner_id;
+          setCanManage(user.id === ownerId);
+        }
+      } catch (err) {
+        logger.error('Erro ao verificar permissão de gerenciamento:', err);
+      }
+    };
+
+    checkManagePermission();
+  }, [gameId, user]);
 
   useEffect(() => {
     if (!gameId) return;
@@ -176,14 +198,16 @@ export const LiveEventsScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Eventos do Jogo
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setDialogOpen(true)}
-            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
-          >
-            Adicionar Evento
-          </Button>
+          {canManage && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setDialogOpen(true)}
+              sx={{ display: { xs: 'none', md: 'inline-flex' } }}
+            >
+              Adicionar Evento
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -231,14 +255,16 @@ export const LiveEventsScreen: React.FC = () => {
         )}
       </Container>
 
-      <Fab
-        color="primary"
-        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
-        onClick={() => setDialogOpen(true)}
-        aria-label="Adicionar evento"
-      >
-        <AddIcon />
-      </Fab>
+      {canManage && (
+        <Fab
+          color="primary"
+          sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+          onClick={() => setDialogOpen(true)}
+          aria-label="Adicionar evento"
+        >
+          <AddIcon />
+        </Fab>
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">Adicionar Evento</DialogTitle>
