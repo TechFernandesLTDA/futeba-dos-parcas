@@ -82,6 +82,7 @@ export class ScheduleController {
   getById = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const userId = req.user!.userId;
 
       const schedule = await this.scheduleRepository.findOne({
         where: { id },
@@ -91,6 +92,18 @@ export class ScheduleController {
       if (!schedule) {
         ApiResponse.notFound(res, 'Horário não encontrado');
         return;
+      }
+
+      // Horários privados só acessíveis ao dono ou membros ativos (#802)
+      if (!schedule.is_public) {
+        const isOwner = schedule.owner_id === userId;
+        const isMember = schedule.memberships?.some(
+          (m) => m.user_id === userId && m.status === MembershipStatus.ACTIVE
+        );
+        if (!isOwner && !isMember) {
+          ApiResponse.forbidden(res, 'Acesso restrito a membros deste horário');
+          return;
+        }
       }
 
       ApiResponse.success(res, schedule);

@@ -94,6 +94,7 @@ export class GameController {
   getById = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const userId = req.user!.userId;
 
       const game = await this.gameRepository.findOne({
         where: { id },
@@ -115,6 +116,18 @@ export class GameController {
       if (!game) {
         ApiResponse.notFound(res, 'Jogo não encontrado');
         return;
+      }
+
+      // Jogos de schedules privados só acessíveis ao dono ou membros (#803)
+      if (game.schedule && !game.schedule.is_public) {
+        const isOwner = game.schedule.owner_id === userId;
+        const isMember = await this.membershipRepository.findOne({
+          where: { schedule_id: game.schedule_id, user_id: userId, status: MembershipStatus.ACTIVE },
+        });
+        if (!isOwner && !isMember) {
+          ApiResponse.forbidden(res, 'Acesso restrito a membros deste jogo');
+          return;
+        }
       }
 
       ApiResponse.success(res, game);
