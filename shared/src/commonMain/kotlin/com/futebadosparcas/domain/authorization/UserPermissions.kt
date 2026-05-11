@@ -1,5 +1,6 @@
 package com.futebadosparcas.domain.authorization
 
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.UserRole
 
@@ -8,14 +9,31 @@ import com.futebadosparcas.domain.model.UserRole
  *
  * CMD-10: Padronização de definição de admin e UserRole no domain
  * CMD-11: AUTHZ real com matriz de permissões
+ * Issue #1039: Renomeia ações `*_ANY_*` enganosas — flags globais NÃO implicam acesso "any".
  *
  * Define quem pode fazer o que no sistema, baseado em UserRole.
  * Permissões são verificadas tanto no cliente (UI gating) quanto no backend (Firestore rules).
+ *
+ * ## Convenção de nomes (issue #1039)
+ *
+ * - `EDIT_GAME`: flag global "pode editar jogos". Caller DEVE combinar com
+ *   `canManageResource(action, game.ownerId)` para validar ownership. Sem combinar,
+ *   PLAYER/FIELD_OWNER veriam permissão "pode" mas a regra Firestore bloqueia.
+ *
+ * - `CONFIRM_OWN_PRESENCE`: flag global "pode confirmar presença". Backend valida
+ *   que o jogador só altera o próprio status na lista de presença.
+ *
+ * - `MANAGE_GROUP_CASHBOX`: flag global "pode gerenciar cashbox". PLAYER NÃO tem
+ *   essa permissão no matrix global — caller DEVE verificar role do user no
+ *   `groups/{groupId}.admins[]` (ou claim equivalente) antes de permitir operação.
  */
 object UserPermissions {
 
     /**
      * Ações do sistema que requerem autorização.
+     *
+     * IMPORTANTE: ações com sufixo `_ANY_*` foram REMOVIDAS (issue #1039) por induzirem
+     * erro de leitura. Aliases @Deprecated existem no companion object para compat temporário.
      */
     enum class Action {
         // Gerenciamento de usuários
@@ -25,9 +43,19 @@ object UserPermissions {
 
         // Gerenciamento de jogos
         CREATE_GAME,
-        EDIT_ANY_GAME,
+
+        /**
+         * Flag global: usuário pode editar jogos.
+         * Caller DEVE combinar com [canManageResource] para validar ownership/admin.
+         */
+        EDIT_GAME,
         DELETE_ANY_GAME,
-        CONFIRM_PRESENCE_ANY_GAME,
+
+        /**
+         * Flag global: usuário pode confirmar presença em jogo.
+         * Backend valida que só pode alterar a própria presença.
+         */
+        CONFIRM_OWN_PRESENCE,
         EDIT_GAME_STATS,
 
         // Gerenciamento de locais/quadras
@@ -40,6 +68,12 @@ object UserPermissions {
         CREATE_GROUP,
         EDIT_ANY_GROUP,
         DELETE_ANY_GROUP,
+
+        /**
+         * Flag global: usuário pertence a um role que pode gerenciar cashbox.
+         * **Não** implica acesso a qualquer grupo — caller DEVE verificar se o user
+         * é admin do grupo específico (via `groups/{groupId}.admins[]` ou similar).
+         */
         MANAGE_GROUP_CASHBOX,
 
         // Rankings e Estatísticas
@@ -51,7 +85,31 @@ object UserPermissions {
         MANAGE_NOTIFICATIONS,
         ACCESS_ADMIN_PANEL,
         MANAGE_BADGES,
-        MANAGE_CHALLENGES
+        MANAGE_CHALLENGES;
+
+        companion object {
+            /**
+             * Alias deprecado (issue #1039) — antiga `EDIT_ANY_GAME`. Use [EDIT_GAME] +
+             * `canManageResource(action, game.ownerId)`. Será removido em release futura.
+             */
+            @Deprecated(
+                "Use EDIT_GAME + canManageResource(action, game.ownerId) para validar ownership",
+                ReplaceWith("EDIT_GAME"),
+                DeprecationLevel.WARNING
+            )
+            val EDIT_ANY_GAME: Action = EDIT_GAME
+
+            /**
+             * Alias deprecado (issue #1039) — antiga `CONFIRM_PRESENCE_ANY_GAME`. Use
+             * [CONFIRM_OWN_PRESENCE]. Backend já restringe ao próprio user.
+             */
+            @Deprecated(
+                "Use CONFIRM_OWN_PRESENCE — não implicava 'any' presença mesmo antes",
+                ReplaceWith("CONFIRM_OWN_PRESENCE"),
+                DeprecationLevel.WARNING
+            )
+            val CONFIRM_PRESENCE_ANY_GAME: Action = CONFIRM_OWN_PRESENCE
+        }
     }
 
     /**
@@ -70,9 +128,9 @@ object UserPermissions {
 
             // Gerenciamento de jogos (todos)
             Action.CREATE_GAME,
-            Action.EDIT_ANY_GAME,
+            Action.EDIT_GAME,
             Action.DELETE_ANY_GAME,
-            Action.CONFIRM_PRESENCE_ANY_GAME,
+            Action.CONFIRM_OWN_PRESENCE,
             Action.EDIT_GAME_STATS,
 
             // Gerenciamento de locais (todos)
@@ -102,7 +160,7 @@ object UserPermissions {
         UserRole.FIELD_OWNER to setOf(
             // Jogos
             Action.CREATE_GAME,
-            Action.EDIT_ANY_GAME, // Pode editar jogos que criou
+            Action.EDIT_GAME, // Pode editar jogos que criou (caller valida ownership)
             Action.EDIT_GAME_STATS,
 
             // Locais (apenas próprios)
@@ -111,7 +169,7 @@ object UserPermissions {
 
             // Grupos
             Action.CREATE_GROUP,
-            Action.MANAGE_GROUP_CASHBOX,
+            Action.MANAGE_GROUP_CASHBOX, // Caller deve verificar role no grupo específico
 
             // Estatísticas limitadas
             Action.VIEW_GLOBAL_STATS
@@ -120,12 +178,14 @@ object UserPermissions {
         UserRole.PLAYER to setOf(
             // Jogos básicos
             Action.CREATE_GAME,
-            Action.EDIT_ANY_GAME, // Apenas próprios jogos
-            Action.CONFIRM_PRESENCE_ANY_GAME, // Apenas própria presença
+            Action.EDIT_GAME, // Apenas próprios jogos — caller valida ownership
+            Action.CONFIRM_OWN_PRESENCE, // Backend restringe a própria presença
 
             // Grupos
-            Action.CREATE_GROUP,
-            Action.MANAGE_GROUP_CASHBOX // Se for admin do grupo
+            Action.CREATE_GROUP
+            // NOTA #1039: MANAGE_GROUP_CASHBOX REMOVIDA do matrix global do PLAYER.
+            // Player que for admin de um grupo específico tem acesso via checagem
+            // explícita no caller (groups/{groupId}.admins[]), não pela flag global.
         )
     )
 
@@ -235,6 +295,24 @@ object UserPermissions {
     fun canDeleteResource(user: User?, resourceOwnerId: String?): Boolean {
         if (user == null) return false
         return isAdmin(user) || user.id == resourceOwnerId
+    }
+
+    /**
+     * Verifica se um usuário é gerente de um local específico.
+     *
+     * Issue #1039: este helper NÃO conflita com [Action.MANAGE_OWN_LOCATIONS] —
+     * `MANAGE_OWN_LOCATIONS` é flag de role (pode criar locais próprios),
+     * `isLocationManager` é consulta a `location.managers[]` (delegação de gestão
+     * por dono do local). FIELD_OWNER pode ter ambos; PLAYER pode ser manager
+     * de um local específico sem ter `MANAGE_OWN_LOCATIONS`.
+     *
+     * @param location Local a ser verificado
+     * @param userId ID do usuário
+     * @return true se userId está em location.managers
+     */
+    fun isLocationManager(location: Location?, userId: String?): Boolean {
+        if (location == null || userId.isNullOrBlank()) return false
+        return location.managers.contains(userId)
     }
 }
 
