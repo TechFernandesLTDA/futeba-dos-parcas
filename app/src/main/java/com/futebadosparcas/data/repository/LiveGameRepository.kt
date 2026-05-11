@@ -348,8 +348,8 @@ class LiveGameRepository constructor(
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro ao observar eventos", error)
-                    // Send empty list on error to prevent loading indefinitely
-                    trySend(emptyList()) 
+                    // Propagar o erro para o collector via close — o ViewModel deve tratar com .catch {}
+                    close(error)
                     return@addSnapshotListener
                 }
 
