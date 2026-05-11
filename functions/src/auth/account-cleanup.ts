@@ -63,11 +63,19 @@ export const onUserDeleted = auth
           }
         };
 
-        // 1. Remove users/{uid} (user profile)
+        // FIX #935: Tokens FCM ficam no campo `fcm_token` de users/{uid}.
+        // Ao deletar o documento abaixo, o campo é removido implicitamente,
+        // impedindo envio de notificações ao dispositivo do ex-usuário.
+        // NOTA: revokeRefreshTokens(uid) NÃO pode ser chamado aqui porque o
+        // trigger onDelete dispara APÓS o Auth user ser deletado — a chamada
+        // lançaria auth/user-not-found. Os refresh tokens já foram invalidados
+        // pelo próprio Firebase ao deletar a conta.
+
+        // 1. Remove users/{uid} (user profile + fcm_token implícito)
         const userRef = db.doc(`users/${uid}`);
         batch.delete(userRef);
         batchOps++;
-        logger.info(`[ACCOUNT_CLEANUP] Deletando users/${uid}`);
+        logger.info(`[ACCOUNT_CLEANUP] Deletando users/${uid} (inclui fcm_token)`);
 
         // 2. Remove users_private/{uid} (PII data + cpfHash lookup)
         const userPrivateRef = db.doc(`users_private/${uid}`);
