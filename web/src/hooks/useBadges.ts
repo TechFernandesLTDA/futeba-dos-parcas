@@ -42,6 +42,7 @@ export const useBadges = (userId?: string) => {
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutos - badges mudam raramente
     gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false, // listener real-time abaixo já invalida quando necessário
   });
 
   // Listener real-time para invalidar cache quando novas badges são desbloqueadas

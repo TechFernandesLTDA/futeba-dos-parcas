@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   collection,
   doc,
@@ -76,50 +76,23 @@ export function useGames(filters?: {
   date?: string;
   limitCount?: number;
 }) {
-  const queryClient = useQueryClient();
-
-  // Chave de query estável baseada nos filtros
-  const queryKey = ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const;
+  // Chave de query estável baseada nos filtros primitivos
+  const queryKey = useMemo(
+    () => ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filters?.status, filters?.groupId, filters?.date, filters?.limitCount]
+  );
 
   const { data: games = [], isLoading: loading, error: queryError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchGames(filters),
     staleTime: 1 * 60 * 1000, // 1 minuto - jogos mudam com frequência
     gcTime: 5 * 60 * 1000,
+    // PERF: mutations (useCreateGame, useUpdateGameStatus) já chamam invalidateQueries.
+    // Remover onSnapshot redundante que causava double-fetch a cada mudança:
+    // snapshot disparava invalidação → getDocs era chamado novamente além do fetch da mutation.
+    refetchOnWindowFocus: false,
   });
-
-  // Listener real-time para invalidar cache quando jogos mudam
-  useEffect(() => {
-    const gamesRef = collection(db, 'games');
-    let q = query(gamesRef, orderBy('dateTime', 'asc'));
-
-    if (filters?.status) {
-      q = query(q, where('status', '==', filters.status));
-    }
-    if (filters?.groupId) {
-      q = query(q, where('group_id', '==', filters.groupId));
-    }
-    if (filters?.date) {
-      q = query(q, where('date', '==', filters.date));
-    }
-    if (filters?.limitCount) {
-      q = query(q, limit(filters.limitCount));
-    }
-
-    let isFirstSnapshot = true;
-
-    const unsubscribe = onSnapshot(q, () => {
-      if (isFirstSnapshot) {
-        isFirstSnapshot = false;
-        return;
-      }
-      queryClient.invalidateQueries({ queryKey });
-    }, (err) => {
-      logger.error('Error in games cache invalidation listener:', err);
-    });
-
-    return () => unsubscribe();
-  }, [filters?.status, filters?.groupId, filters?.date, filters?.limitCount, queryClient]);
 
   const error = queryError ? (queryError as Error).message : null;
 

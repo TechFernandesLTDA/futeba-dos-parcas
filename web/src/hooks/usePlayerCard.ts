@@ -80,5 +80,6 @@ export function usePlayerCard(userId: string | null) {
     queryFn: () => fetchPlayerCardData(userId!),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false, // dados estáticos do jogador — não buscar ao focar janela
   });
 }

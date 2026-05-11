@@ -35,6 +35,7 @@ export const useLocations = () => {
     queryFn: fetchLocations,
     staleTime: 10 * 60 * 1000, // 10 minutos - localizações mudam muito raramente
     gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false, // localizações são dados estáticos — não refetch ao focar
   });
 
   // Listener real-time para invalidar cache quando localizações mudam
@@ -72,6 +73,7 @@ export const useLocationDetail = (locationId?: string) => {
     enabled: !!locationId,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false, // localização específica é estática — não refetch ao focar
   });
 
   const error = queryError ? (queryError as Error).message : null;
