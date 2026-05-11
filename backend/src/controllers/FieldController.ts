@@ -11,6 +11,11 @@ export class FieldController {
 
   getAll = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+      // Paginação padrão para evitar retorno ilimitado de registros (#808)
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+      const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || '20'), 10)));
+      const skip = (page - 1) * limit;
+
       const { location_id, type } = req.query;
 
       const whereConditions: any = {};
@@ -29,13 +34,15 @@ export class FieldController {
         whereConditions.type = type;
       }
 
-      const fields = await this.fieldRepository.find({
+      const [fields, total] = await this.fieldRepository.findAndCount({
         where: whereConditions,
         relations: ['location'],
         order: { name: 'ASC' },
+        skip,
+        take: limit,
       });
 
-      ApiResponse.success(res, fields);
+      ApiResponse.success(res, { data: fields, page, limit, total });
     } catch (error) {
       logger.error('Error in getAll fields:', error);
       ApiResponse.internalError(res);

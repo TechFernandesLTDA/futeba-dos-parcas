@@ -10,12 +10,19 @@ export class LocationController {
 
   getAll = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const locations = await this.locationRepository.find({
+      // Paginação padrão para evitar retorno ilimitado de registros (#807)
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+      const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || '20'), 10)));
+      const skip = (page - 1) * limit;
+
+      const [locations, total] = await this.locationRepository.findAndCount({
         relations: ['fields'],
         order: { name: 'ASC' },
+        skip,
+        take: limit,
       });
 
-      ApiResponse.success(res, locations);
+      ApiResponse.success(res, { data: locations, page, limit, total });
     } catch (error) {
       logger.error('Error in getAll locations:', error);
       ApiResponse.internalError(res);
