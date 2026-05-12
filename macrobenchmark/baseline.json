@@ -1,0 +1,10 @@
+{
+  "startup_ms_p95": null,
+  "homescreen_jank_pct": null,
+  "rankingscreen_jank_pct": null,
+  "gamedetail_ms_p95": null,
+  "captured_at": null,
+  "commit_sha": null,
+  "device": "emulator-api34-x86_64",
+  "notes": "Placeholder — será preenchido pelo primeiro run do workflow android-macrobenchmark.yml após aprovação de PR #1092. Use format ISO-8601 para captured_at (YYYY-MM-DDTHH:MM:SSZ)."
+}
