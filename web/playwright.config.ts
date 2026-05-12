@@ -2,6 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  // Executado uma vez antes de todos os testes:
+  // valida emulador + realiza seed dos usuários E2E
+  globalSetup: './e2e/globalSetup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
