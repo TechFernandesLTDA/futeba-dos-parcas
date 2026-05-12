@@ -115,6 +115,13 @@ nul
 # Web app build output
 web/dist/
 
+# E2E test credentials (apenas .env.test.example é comitado)
+web/.env.test
+
+# Playwright output
+web/test-results/
+web/playwright-report/
+
 # Cloud Functions build output
 functions/lib/
 
