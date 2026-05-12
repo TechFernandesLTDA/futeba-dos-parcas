@@ -25,6 +25,7 @@ module.exports = {
     "src/**/*.js", // JS scripts não compilados por TS
     "test/**/*", // Testes não seguem Google style
     "jest.config.js", // Config JS sem tsconfig
+    "jest.perf.config.js", // Config JS de performance sem tsconfig
     ".eslintrc.js", // Config JS não precisa de lint
     "src/**/*.d.ts", // Arquivos de declaração de tipo apenas
   ],
