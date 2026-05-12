@@ -100,8 +100,14 @@ O workflow `.github/workflows/android-macrobenchmark.yml` executa automaticament
 
 Os resultados são publicados como artifact `macrobenchmark-results-<sha>` com retenção de 30 dias.
 
+**SLOs e gates de regressão** (Issue #1092): O workflow agora:
+- Valida métricas contra baseline definido em `baseline.json`
+- Falha se regressão > 20% do baseline
+- Publica comentário no GitHub com resultados comparativos
+- Consulte `SLO.md` para definição formal de thresholds e tolerâncias
+
 **Nota**: O workflow roda apenas no `master` (não em PRs) por ser lento (~15-30min).
-Gates de regressão automáticos serão adicionados na Issue #1094.
+Tendências históricas e dashboard serão adicionados na Issue #1094.
 
 ## Avisos em emulador
 
@@ -118,7 +124,8 @@ Para métricas absolutas de produção, use um Pixel físico em modo Release.
 
 - `baselineprofile/` — geração de Baseline Profiles para melhorar startup
 - Issue #1078 — criação deste módulo
-- Issue #1094 — SLOs formais e gates de regressão automáticos (Issue 15 do audit)
+- Issue #1092 — SLOs formais e gates de regressão automáticos (implementado)
+- Issue #1094 — Dashboard de tendências históricas (futuro)
 
 ## Nota sobre libs.versions.toml
 
