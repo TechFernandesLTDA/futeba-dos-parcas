@@ -48,6 +48,7 @@ import { getLevelColor } from '../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription } from '../../utils/levelBadge';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { TeamBadge } from '../../components/team/TeamBadge';
 
 const logger = createLogger('LevelJourneyScreen');
 
@@ -184,6 +185,12 @@ export const LevelJourneyScreen: React.FC = () => {
                         objectFit: 'contain',
                       }}
                     />
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {currentUser?.name || 'Jogador'}
+                    </Typography>
+                    <TeamBadge teamId={currentUser?.favoriteTeam} size={24} />
                   </Box>
                   <Typography variant="h5" fontWeight={700}>
                     {currentEntry.name}

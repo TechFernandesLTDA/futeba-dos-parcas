@@ -21,6 +21,8 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import {
   EmojiEvents,
@@ -54,7 +56,7 @@ import { TeamBadge } from '../../../components/team/TeamBadge';
 const logger = createLogger('ProfileTab');
 
 export function ProfileTab() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -146,6 +148,57 @@ export function ProfileTab() {
     { icon: <Shield fontSize="small" />, label: 'Zagueiro', value: user?.defenderRating || 0, color: theme.palette.info.main },
     { icon: <SportsKabaddi fontSize="small" />, label: 'Goleiro', value: user?.gkRating || 0, color: theme.palette.success.main },
   ], [user?.strikerRating, user?.midRating, user?.defenderRating, user?.gkRating, theme.palette]);
+
+  if (loading) {
+    return (
+      <Box sx={{ pb: 8 }}>
+        <Box
+          sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            pt: 2,
+            pb: 6,
+            px: 2,
+            textAlign: 'center',
+          }}
+        >
+          <Skeleton variant="circular" width={100} height={100} sx={{ mx: 'auto', bgcolor: alpha(theme.palette.common.white, 0.2) }} />
+          <Skeleton variant="text" width={200} height={40} sx={{ mx: 'auto', mt: 2, bgcolor: alpha(theme.palette.common.white, 0.2) }} />
+          <Skeleton variant="text" width={150} height={24} sx={{ mx: 'auto', mt: 0.5, bgcolor: alpha(theme.palette.common.white, 0.2) }} />
+        </Box>
+        <Box sx={{ px: 2, mt: -3, display: 'flex', gap: 2 }}>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} variant="rectangular" height={90} sx={{ flex: 1, borderRadius: 3 }} />
+          ))}
+        </Box>
+        <Box sx={{ px: 2, mt: 2 }}>
+          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 3 }} />
+        </Box>
+        <Box sx={{ px: 2, mt: 2 }}>
+          <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 3 }} />
+        </Box>
+        <Box sx={{ px: 2, mt: 2 }}>
+          <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 3 }} />
+        </Box>
+      </Box>
+    );
+  }
+
+  if (!user && !loading) {
+    return (
+      <Box sx={{ pb: 8, px: 2, pt: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={() => refreshUser()}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          Erro ao carregar perfil
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ pb: 8 }}>

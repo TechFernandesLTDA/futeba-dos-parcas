@@ -23,14 +23,12 @@ import {
   DialogActions,
   TextField,
   useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Person as PersonIcon,
   Palette as PaletteIcon,
   Info as InfoIcon,
-  Logout as LogoutIcon,
   EmojiEvents as TrophyIcon,
   RateReview as FeedbackIcon,
   DeleteForever as DeleteForeverIcon,
@@ -45,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { deleteAccount } from '../../services/cloudFunctions';
 import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
+import { TeamBadge } from '../../components/team/TeamBadge';
 
 const logger = createLogger('SettingsScreen');
 
@@ -57,13 +56,11 @@ interface Settings {
 export const SettingsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const { t } = useTranslation();
-  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // Fluxo de exclusão de conta — LGPD art. 18
   const [deleteStep1Open, setDeleteStep1Open] = useState(false);
@@ -122,18 +119,6 @@ export const SettingsScreen: React.FC = () => {
       showError('Erro ao salvar configurações.');
     }
     setSaving(false);
-  };
-
-  const handleLogout = async () => {
-    setLogoutDialogOpen(false);
-    try {
-      // Usa logout() do contexto que já limpa o cache do TanStack Query
-      await logout();
-      navigate('/login');
-    } catch (err) {
-      logger.error('Error signing out:', err);
-      showError('Erro ao sair da conta. Tente novamente.');
-    }
   };
 
   // Abre o passo 2 do fluxo de exclusão, fechando o passo 1
@@ -196,9 +181,12 @@ export const SettingsScreen: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <PersonIcon color="primary" sx={{ fontSize: 40 }} />
                   <Box>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {user?.name || 'Usuário'}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {user?.name || 'Usuário'}
+                      </Typography>
+                      <TeamBadge teamId={user?.favoriteTeam} size={24} />
+                    </Box>
                     <Typography variant="body2" color="text.secondary">
                       {user?.email}
                     </Typography>
@@ -292,18 +280,6 @@ export const SettingsScreen: React.FC = () => {
               </Button>
             </Box>
 
-            <Box sx={{ mt: 2 }}>
-              <Button
-                variant="outlined"
-                color="error"
-                fullWidth
-                onClick={() => setLogoutDialogOpen(true)}
-                startIcon={<LogoutIcon />}
-              >
-                {t('nav.logout')}
-              </Button>
-            </Box>
-
             {/* Seção de exclusão de conta — LGPD art. 18 */}
             <Box sx={{ mt: 2 }}>
               <Button
@@ -320,29 +296,6 @@ export const SettingsScreen: React.FC = () => {
           </>
         )}
       </Container>
-
-      {/* Logout Confirmation Dialog */}
-      <Dialog
-        open={logoutDialogOpen}
-        onClose={() => setLogoutDialogOpen(false)}
-        fullScreen={isMobile}
-        fullWidth
-        maxWidth="sm"
-        aria-labelledby="settings-logout-dialog-title"
-      >
-        <DialogTitle id="settings-logout-dialog-title">Sair da conta?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Você será desconectado e precisará fazer login novamente para acessar o app.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLogoutDialogOpen(false)}>{t('common.cancel')}</Button>
-          <Button onClick={handleLogout} color="error" variant="contained">
-            {t('nav.logout')}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 
