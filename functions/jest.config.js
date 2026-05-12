@@ -3,6 +3,9 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   testMatch: ["**/test/**/*.test.ts"],
+  // Exclui testes de performance — requerem emulador Firestore rodando.
+  // Rodar via: npm run test:perf (jest.perf.config.js)
+  testPathIgnorePatterns: ["/node_modules/", "/test/performance/"],
   moduleFileExtensions: ["ts", "js", "json"],
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {
