@@ -21,6 +21,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
+import {FUNCTION_REGION} from "../constants";
 
 /**
  * Arredonda número pra N casas decimais.
@@ -86,7 +87,7 @@ function approxAlreadyCorrect(
 export const onGameWrittenDenormalizeLocation =
   onDocumentWritten(
     {
-      region: "us-central1",
+      region: FUNCTION_REGION,
       document: "games/{gameId}",
     },
     async (event) => {
@@ -150,7 +151,7 @@ export const onGameWrittenDenormalizeLocation =
  */
 export const denormalizeGameLocations = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable ADMIN manipula
     // games em batch — não deve aceitar chamada não-verificada.
     enforceAppCheck: process.env.NODE_ENV === "production",

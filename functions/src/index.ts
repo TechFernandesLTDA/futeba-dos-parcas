@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {setGlobalOptions} from "firebase-functions/v2";
 import {
   onDocumentUpdated,
   onDocumentDeleted,
@@ -16,6 +17,12 @@ import {
 import {
   getAllBadgesToAward,
 } from "./badges/badge-helper";
+
+// Padroniza região default de TODAS as functions v2 que não especificam
+// region explicitamente. Antes, 15 functions ficavam em us-central1
+// (default do Firebase) enquanto Firestore está em southamerica-east1,
+// gerando latência extra e split confuso entre módulos.
+setGlobalOptions({region: FUNCTION_REGION});
 
 // ==========================================
 // IMPORTS DOS MÓDULOS EXTRAÍDOS
