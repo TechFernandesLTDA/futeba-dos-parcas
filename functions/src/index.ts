@@ -1956,7 +1956,8 @@ export * from "./maintenance/soft-delete";
 // Use minInstances na declaração das funções críticas se necessário.
 // export * from "./maintenance/keep-warm";
 export * from "./monitoring/collect-metrics";
-export {collectCallableLatencyMetrics} from "./monitoring/collect-latency-metrics";
+export {collectCallableLatencyMetrics}
+  from "./monitoring/collect-latency-metrics";
 export * from "./storage/generate-thumbnails";
 
 // SPEC: feat-2026-05-08-consolidate-shareable-invites
