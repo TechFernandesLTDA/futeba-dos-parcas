@@ -294,21 +294,8 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/**
- * Restringe a rota a usuários FIELD_OWNER (donos de quadra).
- */
-function FieldOwnerRoute({ children }: { children: React.ReactNode }) {
-  const { user, firebaseUser, loading } = useAuth();
-  const location = useLocation();
-  if (loading) return <AppLoadingFallback />;
-  // FIX #584/H5: unauth user → /login.
-  // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
-  if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (user?.role !== 'FIELD_OWNER' && user?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />;
-  }
-  return <>{children}</>;
-}
+// GAP #8 (#1081): FieldOwnerRoute removido — era idêntico a FieldOwnerOrAdminRoute
+// (ambos permitiam FIELD_OWNER ou ADMIN). Use FieldOwnerOrAdminRoute em todas as rotas.
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
@@ -385,7 +372,8 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         {/* Games */}
         <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
-        <Route path="/game/create" element={<Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense>} />
+        {/* GAP #7 (#1080): VerifiedRoute redireciona unverified pra onboarding em vez de deixar submit falhar silencioso no rules */}
+        <Route path="/game/create" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense></VerifiedRoute>} />
         {/* Groups */}
         <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         {/* FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta */}
@@ -420,7 +408,7 @@ function AppRoutes() {
         <Route path="/location/:locationId" element={<Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense>} />
         <Route path="/location/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/location/:locationId/edit" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
-        <Route path="/owner/dashboard" element={<FieldOwnerRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></FieldOwnerRoute>} />
+        <Route path="/owner/dashboard" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         {/* Map */}
         <Route path="/map/games" element={<Suspense fallback={<RouteFallback />}><PublicGamesMapScreen /></Suspense>} />
         <Route path="/map/locations" element={<Suspense fallback={<RouteFallback />}><LocationsMapScreen /></Suspense>} />

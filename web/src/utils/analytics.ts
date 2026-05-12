@@ -33,6 +33,14 @@ interface AnalyticsEventMap {
   // Gamification
   level_up: { level: number; xp: number };
   badge_unlocked: { badgeId: string };
+
+  // Performance — Web Vitals (#1088)
+  // FID está deprecated em web-vitals 4.x (substituído por INP), mas tipo ainda lista
+  web_vital: {
+    name: 'CLS' | 'INP' | 'LCP' | 'FCP' | 'TTFB' | 'FID';
+    value: number;
+    rating: 'good' | 'needs-improvement' | 'poor';
+  };
 }
 
 type EventName = keyof AnalyticsEventMap;
