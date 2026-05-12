@@ -1,5 +1,9 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'futeba-v1';
+
+// Bump version a cada deploy que precisa invalidar cache.
+// v1 → v2: corrige bug em que cache-first travava assets antigos
+// mesmo após hash de bundle mudar (BadgesScreen-BexbiUlU.js sticky).
+const CACHE_NAME = 'futeba-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -16,17 +20,19 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Ativar: limpar caches antigos
+// Ativar: limpar TODOS os caches antigos (qualquer nome != CACHE_NAME)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: network-first para API, cache-first para assets estáticos
+// Fetch:
+// - HTML (navigate): network-first (sempre busca versão atual do SPA root)
+// - Assets hashed (.js/.css/...): stale-while-revalidate (cache imediato + atualiza em bg)
+// - Firebase APIs: passthrough
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -36,26 +42,57 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname.includes('googleapis.com')) return;
   if (url.hostname.includes('firebaseio.com')) return;
   if (url.hostname.includes('gstatic.com')) return;
+  if (url.hostname.includes('firebasestorage.app')) return;
 
-  // Assets estáticos (JS, CSS, imagens): cache-first
-  if (url.pathname.match(/\.(js|css|png|jpg|svg|woff2?)$/)) {
+  // Navegação (HTML): network-first com fallback de cache offline
+  if (request.mode === 'navigate') {
     event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      }))
+      fetch(request)
+        .then((response) => {
+          // Cachear cópia em background pra fallback offline
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) =>
+            cached || caches.match('/') || new Response('Offline', { status: 503 })
+          )
+        )
     );
     return;
   }
 
-  // Navegação: network-first com fallback para cache
-  if (request.mode === 'navigate') {
+  // Assets estáticos: stale-while-revalidate
+  // Vite gera hashes únicos por build (BadgesScreen-XXXX.js), então cache hit
+  // de um hash não bloqueia novos hashes — entram via network e populam o cache.
+  // Para um arquivo de mesmo nome que mudou (raro com hash, mas pode acontecer
+  // em manifest.json), pegamos cache imediato e revalidamos em background.
+  if (url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|woff2?|webp|ico)$/)) {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/') || new Response('Offline', { status: 503 }))
+      caches.match(request).then((cached) => {
+        const networkFetch = fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => cached); // Sem rede: usa cache
+        // Stale-while-revalidate: serve cache se houver, atualiza em bg
+        return cached || networkFetch;
+      })
     );
     return;
+  }
+});
+
+// Permitir que cliente force ativação imediata (ex: prompt "Atualizar app")
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
