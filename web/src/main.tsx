@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { logError } from './utils/errorLogger';
+import { initWebVitals } from './utils/webVitals';
 
 // Captura erros síncronos globais (ex: erros em scripts não-React, libs externas)
 window.addEventListener('error', (e) => {
@@ -27,6 +28,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>
 );
+
+// #1088: Core Web Vitals → Firebase Analytics
+initWebVitals();
 
 // Registrar Service Worker para PWA offline
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
