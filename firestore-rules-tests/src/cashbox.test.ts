@@ -15,6 +15,7 @@
 import { describe, it, beforeAll, afterAll } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { serverTimestamp } from "firebase/firestore";
 import {
   initTestEnv,
   asAdmin,
@@ -168,13 +169,14 @@ describe("cashbox — update: void (shape enforcement)", () => {
   it("Group admin (owner) pode fazer void com shape correta", async () => {
     // Campos permitidos: ['status', 'voided_at', 'voided_by', 'updated_at']
     // status == 'VOIDED', voided_by == userId(), voided_at == request.time
+    // FIX: voided_at DEVE ser serverTimestamp() pra match com request.time na rule
     const db = asPlayerA(testEnv);
     await assertSucceeds(
       db.doc(`groups/${GROUP_CASHBOX}/cashbox/${ENTRY_EXISTING}`).update({
         status: "VOIDED",
-        voided_at: new Date(),
+        voided_at: serverTimestamp(),
         voided_by: UID_PLAYER_A,
-        updated_at: new Date(),
+        updated_at: serverTimestamp(),
       })
     );
   });
