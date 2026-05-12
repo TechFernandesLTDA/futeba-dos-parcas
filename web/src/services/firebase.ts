@@ -1,8 +1,8 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getFunctions } from 'firebase/functions';
+import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getMessaging, isSupported } from 'firebase/messaging';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 
@@ -53,6 +53,21 @@ export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, 'southamerica-east1');
+
+// Wiring de emuladores para Playwright E2E e dev local (follow-up de #1079).
+// Ativa só quando VITE_USE_EMULATOR='true' — produção nunca toca esses hosts.
+if (import.meta.env.VITE_USE_EMULATOR === 'true' && typeof window !== 'undefined') {
+  const host = '127.0.0.1';
+  try {
+    connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
+    connectFirestoreEmulator(db, host, 8080);
+    connectStorageEmulator(storage, host, 9199);
+    connectFunctionsEmulator(functions, host, 5001);
+  } catch (err) {
+    // Reconexão silenciosa: HMR pode re-importar o módulo
+    console.warn('[firebase] emulator wiring skipped:', err);
+  }
+}
 
 // Messaging (optional, only in supported browsers)
 export const messagingPromise = isSupported().then(supported => 
