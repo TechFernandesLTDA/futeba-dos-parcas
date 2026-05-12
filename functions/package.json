@@ -18,6 +18,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@google-cloud/logging": "^11.2.1",
     "@google-cloud/storage": "^5.18.3",
     "date-fns": "^4.1.0",
     "firebase-admin": "^13.8.0",
