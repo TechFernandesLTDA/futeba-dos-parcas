@@ -641,13 +641,13 @@ export const cleanupAllSoftDeleted =
     // FIX #1040: try/catch externo para re-throw — aciona retry do Cloud Scheduler.
     // Sem isso, erros eram swallowed e documentos expirados ficavam acumulados.
     try {
-    console.log(
-      "[SOFT_DELETE_CLEANUP] Iniciando " +
+      console.log(
+        "[SOFT_DELETE_CLEANUP] Iniciando " +
       "cleanup unificado (TTL: " +
       `${RETENTION_DAYS} dias)`
-    );
+      );
 
-    const startTime = Date.now();
+      const startTime = Date.now();
 
     interface CleanupResult {
       collection: string;
