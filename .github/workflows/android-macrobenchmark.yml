@@ -1,0 +1,113 @@
+# Workflow de Android Macrobenchmark — Futeba dos Parças
+#
+# Executa benchmarks de startup e scroll em emulador API 34 após merges no master.
+# NÃO executa em PRs (benchmarks são lentos e necessitam de dispositivo/emulador).
+#
+# Para executar manualmente: Actions → Android Macrobenchmark → Run workflow
+#
+# Resultados: disponíveis como artifact "macrobenchmark-results" por 30 dias.
+# Interpretar com Android Studio Benchmark plugin ou abrir o JSON diretamente.
+
+name: Android Macrobenchmark
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'app/**'
+      - 'shared/**'
+      - 'composeApp/**'
+      - 'macrobenchmark/**'
+  # Permite disparo manual para runs pontuais
+  workflow_dispatch:
+
+# Cancela execução anterior do mesmo branch para poupar runner
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+  EMULATOR_API: 34
+
+jobs:
+  macrobenchmark:
+    name: Macrobenchmark (API 34)
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 60
+
+    env:
+      COMMIT_SHA: ${{ github.sha }}
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+
+      - name: Configurar ambiente Android
+        run: |
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          mkdir -p app
+          cat > app/google-services.json << 'GSEOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "placeholder",
+              "storage_bucket": "placeholder.appspot.com"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                "android_client_info": { "package_name": "com.futebadosparcas" }
+              },
+              "api_key": [{ "current_key": "placeholder" }]
+            }]
+          }
+          GSEOF
+
+      - name: Build APK de benchmark do :app
+        run: ./gradlew :app:assembleBenchmark
+
+      - name: Executar Macrobenchmarks no emulador
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.EMULATOR_API }}
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
+              -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None \
+              -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
+
+      - name: Upload resultados dos benchmarks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macrobenchmark-results-${{ env.COMMIT_SHA }}
+          path: |
+            macrobenchmark/build/outputs/connected_android_test_additional_output/
+            macrobenchmark/build/outputs/androidTest-results/
+          retention-days: 30
+
+      - name: Resumo no GitHub Step Summary
+        if: always()
+        run: |
+          echo "## Macrobenchmark Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Commit:** $COMMIT_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Emulator API:** $EMULATOR_API" >> "$GITHUB_STEP_SUMMARY"
+          echo "Os resultados completos estão disponíveis no artifact macrobenchmark-results." >> "$GITHUB_STEP_SUMMARY"
+          echo "Para interpretar: abra os arquivos JSON no Android Studio via Run > Open Profiler Results." >> "$GITHUB_STEP_SUMMARY"

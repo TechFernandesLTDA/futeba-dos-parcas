@@ -64,6 +64,17 @@ android {
                 debugSymbolLevel = "FULL"
             }
         }
+        // Build type "benchmark": espelha release para medir performance realista,
+        // mas usa assinatura debug para facilitar execução em emulador/CI.
+        // Usado pelo módulo :macrobenchmark (#1078).
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            // Desabilita minificação para resultados mais estáveis em CI
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
 
     compileOptions {
