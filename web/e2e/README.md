@@ -79,16 +79,17 @@ configurado.
 
 ## 4. Wiring do emulador no web app {#emulator-wiring}
 
-> **ATENÇÃO — Pendência:** O arquivo `web/src/services/firebase.ts` ainda **não**
-> chama `connectAuthEmulator()` quando `VITE_USE_EMULATOR=true`. Isso significa
-> que o web app, ao ser iniciado pelo Playwright (`npm run dev`), tentará
-> autenticar contra o Firebase de produção mesmo com o emulador rodando.
->
-> Os testes de fixture (`playerPage`, `fieldOwnerPage`, `adminPage`) vão falhar
-> até que esse wiring seja implementado.
->
-> **Fix necessário em `web/src/services/firebase.ts`:**
->
+O arquivo `web/src/services/firebase.ts` chama `connectAuthEmulator()`,
+`connectFirestoreEmulator()`, `connectStorageEmulator()` e
+`connectFunctionsEmulator()` automaticamente quando `VITE_USE_EMULATOR=true`.
+Portas padrão: Auth=9099, Firestore=8080, Storage=9199, Functions=5001.
+
+<details>
+<summary>Histórico (pendência fechada)</summary>
+
+Versões anteriores deste guia listavam o wiring como pendência manual. A fix
+foi feita em commit subsequente após PR #1101.
+
 > ```typescript
 > import { connectAuthEmulator } from 'firebase/auth';
 > import { connectFirestoreEmulator } from 'firebase/firestore';
@@ -98,8 +99,8 @@ configurado.
 >   connectFirestoreEmulator(db, '127.0.0.1', 8080);
 > }
 > ```
->
-> Esse wiring será implementado em issue #XXXX (follow-up de #1079).
+
+</details>
 
 Os testes **sem fixture** (UI pública: tela de login, validações) funcionam
 independente do emulador e podem ser rodados a qualquer momento.
