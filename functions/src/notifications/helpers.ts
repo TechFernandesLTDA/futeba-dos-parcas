@@ -475,7 +475,7 @@ async function getUnreadCount(
     // O campo .data().count existe na API Admin
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (snap.data() as any).count ?? 1;
-  } catch (e) {
+  } catch {
     // Fallback seguro: 1 (indica ao menos uma notif)
     return 1;
   }
@@ -488,6 +488,7 @@ async function getUnreadCount(
  *
  * @param {string} userId - ID do usuário
  * @param {FcmNotification} notification - Dados
+ * @param {string} [groupId] - ID do grupo (opcional, pra checar mute_groups)
  * @return {Promise<boolean>} true se ao menos
  *   um token recebeu com sucesso
  */
@@ -599,6 +600,7 @@ export async function sendNotificationToUser(
  *
  * @param {string[]} userIds - IDs dos usuários
  * @param {FcmNotification} notification - Dados
+ * @param {string} [groupId] - ID do grupo (opcional, pra checar mute_groups)
  * @return {Promise<number>} Quantidade enviada
  */
 export async function sendNotificationToUsers(

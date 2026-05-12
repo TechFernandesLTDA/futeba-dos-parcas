@@ -37,5 +37,10 @@ module.exports = {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
     "indent": ["error", 2],
+    // Bump pra 120 — google style 80 é restritivo demais pra TS moderno
+    // com tipos longos. Mantém legibilidade sem forçar quebras feias.
+    "max-len": ["error", {"code": 120, "ignoreUrls": true, "ignoreStrings": true}],
+    // Permite while(true) e similares em workers/loops intencionais
+    "no-constant-condition": ["error", {"checkLoops": false}],
   },
 };

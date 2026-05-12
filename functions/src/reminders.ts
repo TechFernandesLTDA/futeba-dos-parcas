@@ -518,8 +518,8 @@ async function canSendReminderToUser(
       const muteUntil =
         settings.muteUntilTime instanceof
           admin.firestore.Timestamp ?
-        settings.muteUntilTime.toDate() :
-        new Date(settings.muteUntilTime as string);
+          settings.muteUntilTime.toDate() :
+          new Date(settings.muteUntilTime as string);
       if (muteUntil > new Date()) {
         console.log(
           `[REMINDERS] Usuario ${userId}` +
@@ -556,6 +556,15 @@ async function canSendReminderToUser(
   }
 }
 
+/**
+ * Envia lembrete de jogo (24h ou 2h antes) ao usuário.
+ * Respeita preferências de notificação e mute_groups.
+ *
+ * @param {string} userId - destinatário
+ * @param {GameForReminder} game - dados do jogo
+ * @param {"24h" | "2h"} reminderType - janela do lembrete
+ * @return {Promise<boolean>} true se push enviado com sucesso
+ */
 async function sendReminder(
   userId: string,
   game: GameForReminder,

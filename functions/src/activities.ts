@@ -78,9 +78,9 @@ export async function generateGameFinishedActivityDirect(
   const userName = userData ? userData.name : "Alguém";
   // FIX #992: Firestore canonico usa snake_case (photo_url),
   // mas suporta camelCase (photoUrl) como fallback legacy.
-  const userPhoto = userData
-    ? (userData.photo_url ?? userData.photoUrl ?? null)
-    : null;
+  const userPhoto = userData ?
+    (userData.photo_url ?? userData.photoUrl ?? null) :
+    null;
 
   if (liveScoreDoc.exists) {
     const score = liveScoreDoc.data();
