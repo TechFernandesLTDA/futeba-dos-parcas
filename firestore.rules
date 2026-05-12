@@ -1802,9 +1802,14 @@ service cloud.firestore {
                        (request.resource.data.visibility == 'PUBLIC' || request.resource.data.visibility == 'PRIVATE') &&
                        request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'visibility']);
 
-      allow update, delete: if isAuthenticated() &&
-                               resource.data.created_by == userId() &&
-                               fieldUnchanged('created_by');
+      // FIX (#1099/1100 test fail): split update e delete. `fieldUnchanged()`
+      // referencia request.resource.data que é null em DELETE → null value error.
+      allow update: if isAuthenticated() &&
+                       resource.data.created_by == userId() &&
+                       fieldUnchanged('created_by');
+
+      allow delete: if isAuthenticated() &&
+                       resource.data.created_by == userId();
     }
 
     // ============================================

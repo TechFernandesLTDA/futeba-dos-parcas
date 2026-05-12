@@ -124,6 +124,7 @@ jest.mock("firebase-functions/v2/https", () => ({
 }));
 
 jest.mock("firebase-functions/v2", () => ({
+  setGlobalOptions: jest.fn(),
   scheduler: {
     onSchedule: jest.fn(() => jest.fn()),
   },

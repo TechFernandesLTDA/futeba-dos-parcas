@@ -101,8 +101,9 @@ jest.mock("../src/league", () => ({
   RELEGATION_GAMES_REQUIRED: 3,
 }));
 
-// Mock firebase-functions v2 (scheduler, storage)
+// Mock firebase-functions v2 (scheduler, storage, setGlobalOptions)
 jest.mock("firebase-functions/v2", () => ({
+  setGlobalOptions: jest.fn(),
   scheduler: {
     onSchedule: jest.fn(() => jest.fn()),
   },
