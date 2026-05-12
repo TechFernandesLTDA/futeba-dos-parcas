@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
@@ -13,6 +13,8 @@ import { LoadingScreen } from './components/common/LoadingScreen';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { AppLayout } from './components/layout';
 import { CommandPalette } from './components/search/CommandPalette';
+import { useIsGroupMember } from './hooks/useGroups';
+import { useToast } from './contexts/ToastContext';
 
 
 // Splash & Onboarding
@@ -256,6 +258,43 @@ function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * GAP-3: Guard de membership de grupo. Redireciona não-membros pra /group/:id
+ * (detail page tem CTA amigável de entrar). Usado em rotas que exigem ser
+ * membro: /edit, /settings, /cashbox, /invite.
+ *
+ * Por que existe: <ProtectedRoute> só checa auth, não membership. Antes desse
+ * guard, não-membros viam UI carregar e só falhavam no write — leak de telas
+ * privadas + UX confusa.
+ */
+function GroupMemberRoute({ children }: { children: React.ReactNode }) {
+  const { groupId } = useParams<{ groupId: string }>();
+  const { user, firebaseUser, loading } = useAuth();
+  const isMember = useIsGroupMember(groupId);
+  const { showError } = useToast();
+  const [notified, setNotified] = useState(false);
+
+  if (loading) return <AppLoadingFallback />;
+  if (!firebaseUser) return <Navigate to="/login" replace />;
+
+  // Admin tem acesso global (consistente com rules)
+  if (user?.role === 'ADMIN') return <>{children}</>;
+
+  // Checagem em curso — mostra fallback (não bloqueia children desnecessariamente)
+  if (isMember === undefined) return <AppLoadingFallback />;
+
+  if (!isMember) {
+    if (!notified) {
+      // Feedback explícito para usuário entender o redirect
+      showError('Você precisa ser membro do grupo para acessar essa página.');
+      setNotified(true);
+    }
+    return <Navigate to={`/group/${groupId}`} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/**
  * Restringe a rota a usuários FIELD_OWNER (donos de quadra).
  */
 function FieldOwnerRoute({ children }: { children: React.ReactNode }) {
@@ -351,12 +390,13 @@ function AppRoutes() {
         <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         {/* FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta */}
         <Route path="/group/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></FieldOwnerOrAdminRoute>} />
-        <Route path="/group/:groupId/edit" element={<Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense>} />
-        <Route path="/group/:groupId/settings" element={<Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense>} />
-        <Route path="/group/:groupId/cashbox" element={<Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense>} />
+        {/* GAP-3: rotas privadas do grupo exigem membership (ou ADMIN). */}
+        <Route path="/group/:groupId/edit" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense></GroupMemberRoute>} />
+        <Route path="/group/:groupId/settings" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense></GroupMemberRoute>} />
+        <Route path="/group/:groupId/cashbox" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/players" element={<Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense>} />
         <Route path="/group/:groupId/schedules" element={<Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense>} />
-        <Route path="/group/:groupId/invite" element={<Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense>} />
+        <Route path="/group/:groupId/invite" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense>} />
         <Route path="/groups/discover" element={<Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense>} />
         {/* Profile + perfis públicos */}

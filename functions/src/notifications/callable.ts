@@ -36,8 +36,11 @@ const getDb = () => admin.firestore();
  */
 export const sendTestNotification = secureCallable(
   {
-    appCheck: false,
+    // GAP-2: callable de debug deve ficar atrás de App Check (default em prod)
+    // e restrita a ADMIN. Antes: appCheck:false + sem requiredRole permitia
+    // qualquer user autenticado disparar notif de teste em prod.
     requireAuth: true,
+    requiredRole: "ADMIN",
     rateLimit: {
       maxRequests: 10,
       windowMs: 60 * 1000,
@@ -138,8 +141,11 @@ interface FakeNotificationResult {
  */
 export const createFakeGameNotifications = secureCallable(
   {
-    appCheck: false,
+    // GAP-2: callable de debug deve ficar atrás de App Check (default em prod)
+    // e restrita a ADMIN. Antes: appCheck:false + sem requiredRole permitia
+    // qualquer user autenticado popular notif fake.
     requireAuth: true,
+    requiredRole: "ADMIN",
     rateLimit: {
       maxRequests: 10,
       windowMs: 60 * 1000,

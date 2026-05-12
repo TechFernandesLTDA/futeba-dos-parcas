@@ -221,14 +221,43 @@ class UserPermissionsTest {
         }
 
         @Test
-        @DisplayName("ResourceOwnerId null - verifica apenas permissão")
+        @DisplayName("ResourceOwnerId null - verifica apenas permissão (CREATE_GAME)")
         fun `null resourceOwnerId checks only permission`() {
             val fieldOwner = createUser(role = UserRole.FIELD_OWNER.name)
+            // CREATE_GAME é flag global de FIELD_OWNER; usado p/ assertar fallback de permissão.
+            assertTrue(
+                UserPermissions.canManageResource(
+                    fieldOwner,
+                    UserPermissions.Action.CREATE_GAME,
+                    null
+                )
+            )
+        }
+
+        @Test
+        @DisplayName("GAP-1: FIELD_OWNER NÃO-dono não pode EDIT_GAME (rule só permite owner/admin)")
+        fun `field owner non-owner cannot edit game without ownership`() {
+            val fieldOwner = createUser(id = "fo-1", role = UserRole.FIELD_OWNER.name)
+            // FIELD_OWNER tentando editar jogo de outro: bloqueado (alinhado ao backend)
+            assertFalse(
+                UserPermissions.canManageResource(
+                    fieldOwner,
+                    UserPermissions.Action.EDIT_GAME,
+                    "other-owner-id"
+                )
+            )
+        }
+
+        @Test
+        @DisplayName("GAP-1: FIELD_OWNER dono PODE EDIT_GAME via canManageResource")
+        fun `field owner as game owner can edit via canManageResource`() {
+            val fieldOwner = createUser(id = "fo-1", role = UserRole.FIELD_OWNER.name)
+            // Dono do recurso passa pelo ownership check independente da flag global.
             assertTrue(
                 UserPermissions.canManageResource(
                     fieldOwner,
                     UserPermissions.Action.EDIT_GAME,
-                    null
+                    "fo-1"
                 )
             )
         }
@@ -427,10 +456,11 @@ class UserPermissionsTest {
         private val adminExpected: Set<UserPermissions.Action> =
             UserPermissions.Action.entries.toSet()
 
+        // GAP-1: EDIT_GAME e EDIT_GAME_STATS REMOVIDAS do matrix global do FIELD_OWNER.
+        // Backend rule só permite owner/admin; FIELD_OWNER genérico NÃO consegue.
+        // Caller deve usar canManageResource(EDIT_GAME, game.ownerId) para ownership.
         private val fieldOwnerExpected: Set<UserPermissions.Action> = setOf(
             UserPermissions.Action.CREATE_GAME,
-            UserPermissions.Action.EDIT_GAME,
-            UserPermissions.Action.EDIT_GAME_STATS,
             UserPermissions.Action.CREATE_LOCATION,
             UserPermissions.Action.MANAGE_OWN_LOCATIONS,
             UserPermissions.Action.CREATE_GROUP,
@@ -462,7 +492,7 @@ class UserPermissionsTest {
         }
 
         @Test
-        @DisplayName("FIELD_OWNER: matriz exata (8 allow, 15 deny)")
+        @DisplayName("FIELD_OWNER: matriz exata (6 allow, 17 deny)")
         fun `field owner matrix`() {
             val fieldOwner = createUser(role = UserRole.FIELD_OWNER.name)
             UserPermissions.Action.entries.forEach { action ->
@@ -510,6 +540,10 @@ class UserPermissionsTest {
                 UserPermissions.Action.MANAGE_USERS,
                 UserPermissions.Action.VIEW_ALL_USERS,
                 UserPermissions.Action.CHANGE_USER_ROLE,
+                // GAP-1: EDIT_GAME/EDIT_GAME_STATS NÃO são flags globais do FIELD_OWNER;
+                // ownership é validado via canManageResource (não pela flag).
+                UserPermissions.Action.EDIT_GAME,
+                UserPermissions.Action.EDIT_GAME_STATS,
                 UserPermissions.Action.DELETE_ANY_GAME,
                 UserPermissions.Action.EDIT_ANY_LOCATION,
                 UserPermissions.Action.DELETE_ANY_LOCATION,

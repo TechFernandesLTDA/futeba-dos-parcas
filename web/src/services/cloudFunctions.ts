@@ -2,7 +2,11 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
 
 // Admin
-export const setUserRole = httpsCallable(functions, 'setUserRole');
+// GAP-4: tipo explícito evita drift quando o callable for renomeado/refatorado.
+export const setUserRole = httpsCallable<
+  { uid: string; role: string },
+  { success: boolean }
+>(functions, 'setUserRole');
 
 // Phone + CPF Verification (Anti-Bot)
 // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md

@@ -504,3 +504,35 @@ export function useInvitePlayers() {
 
   return { generateInviteCode, joinByInviteCode, loading, error };
 }
+
+/**
+ * GAP-3: hook leve que confere se o user autenticado é membro do grupo.
+ * Usado por <GroupMemberRoute> para guardar rotas /group/:id/{edit,settings,cashbox,invite}.
+ *
+ * Retorna:
+ * - undefined: checando (loading)
+ * - true: é membro
+ * - false: não é membro (UI deve redirecionar)
+ *
+ * Usa TanStack Query — cacheia por (uid, groupId) e reaproveita entre rotas.
+ */
+export function useIsGroupMember(groupId: string | null | undefined): boolean | undefined {
+  const { firebaseUser } = useAuth();
+  const uid = firebaseUser?.uid;
+
+  const { data, isLoading } = useQuery<boolean>({
+    queryKey: ['groupMember', uid, groupId],
+    queryFn: async () => {
+      if (!uid || !groupId) return false;
+      // Subcoleção groups/{groupId}/members/{uid} é fonte canônica de membership.
+      const memberRef = doc(db, 'groups', groupId, 'members', uid);
+      const snap = await getDoc(memberRef);
+      return snap.exists();
+    },
+    enabled: !!uid && !!groupId,
+    staleTime: 60_000, // 1 min — membership não muda frequentemente
+  });
+
+  if (isLoading) return undefined;
+  return data ?? false;
+}
