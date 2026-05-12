@@ -30,8 +30,10 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, limit, getDocs, startAfter, DocumentSnapshot } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../services/firebase';
+import { db } from '../../services/firebase';
+// GAP-4: usar callable centralizada em services/cloudFunctions ao invés de
+// httpsCallable inline. Refator garante rename safety (string name num só lugar).
+import { setUserRole as setUserRoleCallable } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -135,9 +137,8 @@ export const UserManagementScreen: React.FC = () => {
     setActionLoading(true);
     setError(null);
     try {
-      // Usar Cloud Function para atualizar Custom Claims + documento
-      const setUserRole = httpsCallable(functions, 'setUserRole');
-      await setUserRole({ uid: selectedUser.id, role: newRole });
+      // Usar callable centralizada (services/cloudFunctions) — atualiza Custom Claims + documento
+      await setUserRoleCallable({ uid: selectedUser.id, role: newRole });
       setUsers((prev) =>
         prev.map((u) => (u.id === selectedUser.id ? { ...u, role: newRole } : u))
       );

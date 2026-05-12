@@ -160,8 +160,12 @@ object UserPermissions {
         UserRole.FIELD_OWNER to setOf(
             // Jogos
             Action.CREATE_GAME,
-            Action.EDIT_GAME, // Pode editar jogos que criou (caller valida ownership)
-            Action.EDIT_GAME_STATS,
+            // NOTA GAP-1: EDIT_GAME e EDIT_GAME_STATS REMOVIDAS do matrix global do
+            // FIELD_OWNER. Backend (firestore.rules) só permite edit/update game se
+            // `isAdmin() || isGameOwner(gameId)`. FIELD_OWNER genérico (não dono do
+            // jogo) NÃO consegue. Caller DEVE usar `canManageResource(EDIT_GAME,
+            // game.ownerId)` — ownership check passa quando o user é dono mesmo
+            // sem a flag global.
 
             // Locais (apenas próprios)
             Action.CREATE_LOCATION,
