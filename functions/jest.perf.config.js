@@ -31,4 +31,9 @@ module.exports = {
   verbose: true,
   // Timeout maior para seed de dados e queries contra emulador
   testTimeout: 120_000,
+  // forceExit: Firestore connection pool não fecha graciosamente após teardown,
+  // causando "import after teardown" race. Pragmatic exit pós-suite encerra tudo.
+  forceExit: true,
+  // detectOpenHandles ajuda a debugar leaks; manter off em CI pra speed
+  detectOpenHandles: false,
 };
