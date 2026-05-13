@@ -41,6 +41,9 @@ function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
   } as Game;
 }
 
+// Default limit para evitar full-collection scans (#1121)
+const DEFAULT_GAMES_LIMIT = 50;
+
 // Busca jogos com filtros
 async function fetchGames(filters?: {
   status?: GameStatus;
@@ -60,9 +63,11 @@ async function fetchGames(filters?: {
   if (filters?.date) {
     q = query(q, where('date', '==', filters.date));
   }
-  if (filters?.limitCount) {
-    q = query(q, limit(filters.limitCount));
-  }
+
+  // SEMPRE aplicar limit p/ evitar scan completo da collection (#1121).
+  // Default 50; caller pode override via filters.limitCount.
+  const limitCount = filters?.limitCount ?? DEFAULT_GAMES_LIMIT;
+  q = query(q, limit(limitCount));
 
   const snapshot = await getDocs(q);
   return snapshot.docs
@@ -79,7 +84,6 @@ export function useGames(filters?: {
   // Chave de query estável baseada nos filtros primitivos
   const queryKey = useMemo(
     () => ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [filters?.status, filters?.groupId, filters?.date, filters?.limitCount]
   );
 
