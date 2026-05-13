@@ -139,7 +139,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       });
 
       canvas.toBlob(async (blob) => {
-        if (!blob) return;
+        if (!blob) {
+          // Libera spinner se geração de blob falhar (#1128)
+          setSharing(false);
+          showError('Falha ao gerar imagem. Tente novamente.');
+          return;
+        }
         const file = new File([blob], `${player.name}-futeba.png`, { type: 'image/png' });
 
         // Tenta Web Share API (mobile / WhatsApp)
