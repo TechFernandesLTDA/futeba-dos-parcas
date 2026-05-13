@@ -22,8 +22,12 @@ import {
   Groups,
   EmojiEvents,
   Person,
+  Notifications as NotificationsIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@mui/material';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Carregamento lazy das tabs para reduzir bundle inicial da HomeScreen
 const HomeTab = lazy(() => import('./tabs/HomeTab').then(m => ({ default: m.HomeTab })));
@@ -31,6 +35,7 @@ const GamesTab = lazy(() => import('./tabs/GamesTab').then(m => ({ default: m.Ga
 const GroupsTab = lazy(() => import('./tabs/GroupsTab').then(m => ({ default: m.GroupsTab })));
 const RankingsTab = lazy(() => import('./tabs/RankingsTab').then(m => ({ default: m.RankingsTab })));
 const ProfileTab = lazy(() => import('./tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
+const NotificationsScreenLazy = lazy(() => import('../ranking/NotificationsScreen').then(m => ({ default: m.NotificationsScreen })));
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 
 // Larguras dos navs adaptativos (Material 3 spec)
@@ -54,6 +59,14 @@ export function HomeScreen() {
   const { permission, requestPermission } = useNotificationPermission();
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const { unreadCount } = useNotifications(user?.id);
+
+  const notificationIcon = useMemo(() => (
+    <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0} max={99}>
+      <NotificationsIcon />
+    </Badge>
+  ), [unreadCount]);
 
   useEffect(() => {
     // Mostrar banner apenas se permissão ainda não foi decidida
@@ -70,7 +83,8 @@ export function HomeScreen() {
     { icon: <Groups />, label: t('nav.groups') },
     { icon: <EmojiEvents />, label: t('nav.league') },
     { icon: <Person />, label: t('nav.profile') },
-  ], [t]);
+    { icon: notificationIcon, label: t('nav.notifications', 'Notificações') },
+  ], [t, notificationIcon]);
 
   // Estabilizado com useCallback para evitar recriação a cada render
   const handleTabChange = useCallback((idx: number) => {
@@ -216,6 +230,7 @@ export function HomeScreen() {
           {tabValue === 2 && <GroupsTab />}
           {tabValue === 3 && <RankingsTab />}
           {tabValue === 4 && <ProfileTab />}
+          {tabValue === 5 && <NotificationsScreenLazy />}
         </Suspense>
       </Box>
 
