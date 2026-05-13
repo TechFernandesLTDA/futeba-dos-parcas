@@ -41,8 +41,9 @@ export const AboutScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
 
-  const appVersion = '1.21.3';
-  const buildNumber = '45';
+  // Versão e build lidos em build time via Vite define (package.json + CI run number).
+  const appVersion = import.meta.env.VITE_APP_VERSION ?? 'dev';
+  const buildNumber = import.meta.env.VITE_APP_BUILD ?? 'dev';
 
   return (
     <Box sx={{ pb: 4 }}>

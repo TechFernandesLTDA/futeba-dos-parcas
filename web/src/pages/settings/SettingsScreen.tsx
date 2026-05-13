@@ -250,7 +250,7 @@ export const SettingsScreen: React.FC = () => {
                   <ListItemIcon>
                     <InfoIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Sobre o App" secondary="Versão 1.21.3" />
+                  <ListItemText primary="Sobre o App" secondary={`Versão ${import.meta.env.VITE_APP_VERSION ?? 'dev'}`} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => setFeedbackOpen(true)}>

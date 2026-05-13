@@ -40,6 +40,10 @@ export const DevToolsScreen: React.FC = () => {
 
   const [lastAction, setLastAction] = useState<string | null>(null);
 
+  // Versão e build lidos em build time via Vite define (package.json + CI run number).
+  const appVersion = import.meta.env.VITE_APP_VERSION ?? 'dev';
+  const buildNumber = import.meta.env.VITE_APP_BUILD ?? 'dev';
+
   const handleClearCache = () => {
     localStorage.clear();
     sessionStorage.clear();
@@ -178,14 +182,14 @@ export const DevToolsScreen: React.FC = () => {
                 <ListItemIcon>
                   <InfoIcon />
                 </ListItemIcon>
-                <ListItemText primary="Versão" secondary="1.10.7" />
+                <ListItemText primary="Versão" secondary={appVersion} />
               </ListItem>
               <Divider />
               <ListItem>
                 <ListItemIcon>
                   <CodeIcon />
                 </ListItemIcon>
-                <ListItemText primary="Build" secondary="30" />
+                <ListItemText primary="Build" secondary={buildNumber} />
               </ListItem>
               <Divider />
               <ListItem>
