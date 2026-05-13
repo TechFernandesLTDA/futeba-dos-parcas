@@ -1,26 +1,30 @@
-import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, limit, onSnapshot, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import type { Notification, NotificationType } from '../types';
 
 const logger = createLogger('useNotifications');
 
-export interface Notification {
-  id: string;
-  userId: string;
-  type: 'GAME_INVITE' | 'GAME_REMINDER' | 'MVP_VOTE' | 'LEVEL_UP' | 'BADGE' | 'GROUP_INVITE' | 'SYSTEM';
-  title: string;
-  message: string;
-  data?: Record<string, unknown>;
-  read: boolean;
-  createdAt: Date;
-}
+export type { Notification, NotificationType };
 
 export const useNotifications = (userId?: string) => {
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -98,6 +102,75 @@ export const useNotifications = (userId?: string) => {
     }
   };
 
+  const toggleRead = useCallback(async (notificationId: string, currentRead: boolean) => {
+    try {
+      await updateDoc(doc(db, 'notifications', notificationId), { read: !currentRead });
+    } catch (err) {
+      logger.error('Error toggling notification read status:', err);
+      showError('Erro ao alterar status da notificação.');
+    }
+  }, [showError]);
+
+  const restoreNotification = useCallback(async (notification: Notification) => {
+    try {
+      const { addDoc } = await import('firebase/firestore');
+      const notifRef = collection(db, 'notifications');
+      await addDoc(notifRef, {
+        user_id: notification.userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        read: notification.read,
+        reference_id: notification.referenceId || null,
+        reference_type: notification.referenceType || null,
+        sender_id: notification.senderId || null,
+        sender_name: notification.senderName || null,
+        sender_photo: notification.senderPhoto || null,
+        group_id: notification.groupId || null,
+        action_type: notification.actionType || null,
+        created_at: notification.createdAt || new Date(),
+      });
+      showSuccess('Notificação restaurada.');
+    } catch (err) {
+      logger.error('Error restoring notification:', err);
+      showError('Erro ao restaurar notificação.');
+    }
+  }, [showSuccess, showError]);
+
+  const deleteOldNotifications = useCallback(async (daysOld: number) => {
+    if (!userId) return;
+    try {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - daysOld);
+
+      const notifRef = collection(db, 'notifications');
+      const q = query(
+        notifRef,
+        where('user_id', '==', userId),
+        orderBy('created_at', 'asc'),
+        limit(100)
+      );
+
+      const snapshot = await getDocs(q);
+      const toDelete = snapshot.docs.filter((d) => {
+        const raw = d.data();
+        const createdAt = (raw.created_at || raw.createdAt)?.toDate?.() || new Date();
+        return createdAt < cutoff;
+      });
+
+      if (toDelete.length === 0) return;
+
+      const batch = writeBatch(db);
+      toDelete.forEach((d) => batch.delete(doc(db, 'notifications', d.id)));
+      await batch.commit();
+
+      showSuccess(`${toDelete.length} notificações antigas removidas.`);
+    } catch (err) {
+      logger.error('Error deleting old notifications:', err);
+      showError('Erro ao remover notificações antigas.');
+    }
+  }, [userId, showSuccess, showError]);
+
   return {
     notifications,
     unreadCount,
@@ -106,5 +179,8 @@ export const useNotifications = (userId?: string) => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    toggleRead,
+    restoreNotification,
+    deleteOldNotifications,
   };
 };

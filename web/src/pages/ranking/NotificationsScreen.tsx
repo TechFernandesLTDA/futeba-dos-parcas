@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { gamificationColors } from '../../theme';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +15,14 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
+  Chip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Slide,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -24,51 +32,215 @@ import {
   EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
   SportsSoccer as SoccerIcon,
+  Groups as GroupsIcon,
+  PersonAdd as PersonAddIcon,
+  PersonRemove as PersonRemoveIcon,
+  WorkspacePremium as BadgeIcon,
+  HowToVote as VoteIcon,
+  Cancel as CancelIcon,
+  Update as UpdateIcon,
+  LocalFireDepartment as StreakIcon,
+  Delete as DeleteIcon,
+  Undo as UndoIcon,
+  DoneAll as DoneAllIcon,
+  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useConfirmPresence } from '../../hooks/useGames';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
+import type { NotificationType } from '../../types';
+
+const ALL_FILTERS: Array<{ type: NotificationType | 'ALL'; label: string }> = [
+  { type: 'ALL', label: 'Todas' },
+  { type: 'GAME_INVITE', label: 'Jogos' },
+  { type: 'GAME_SUMMON', label: 'Convocações' },
+  { type: 'GAME_CONFIRMED', label: 'Confirmados' },
+  { type: 'GAME_REMINDER', label: 'Lembretes' },
+  { type: 'GAME_CANCELLED', label: 'Cancelados' },
+  { type: 'GAME_UPDATED', label: 'Atualizados' },
+  { type: 'GAME_VACANCY', label: 'Vagas' },
+  { type: 'GROUP_INVITE', label: 'Grupos' },
+  { type: 'ACHIEVEMENT', label: 'Conquistas' },
+  { type: 'BADGE_UNLOCKED', label: 'Badges' },
+  { type: 'LEVEL_UP', label: 'Nível' },
+  { type: 'MVP_RECEIVED', label: 'MVP' },
+  { type: 'MVP_VOTE', label: 'Votações' },
+  { type: 'STREAK_BROKEN', label: 'Streak' },
+  { type: 'SYSTEM', label: 'Sistema' },
+];
+
+function getDateGroup(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.floor((today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Hoje';
+  if (diffDays === 1) return 'Ontem';
+  if (diffDays < 7) return 'Esta semana';
+  return 'Mais antigos';
+}
+
+function getTypeIcon(type: string): React.ReactNode {
+  switch (type) {
+    case 'GAME_INVITE':
+      return <SoccerIcon color="primary" />;
+    case 'GAME_SUMMON':
+      return <SoccerIcon color="warning" />;
+    case 'GAME_CONFIRMED':
+      return <CheckIcon color="success" />;
+    case 'GAME_REMINDER':
+      return <NotificationIcon color="info" />;
+    case 'GAME_CANCELLED':
+      return <CancelIcon color="error" />;
+    case 'GAME_UPDATED':
+      return <UpdateIcon color="info" />;
+    case 'GAME_VACANCY':
+      return <PersonAddIcon color="primary" />;
+    case 'GROUP_INVITE':
+      return <GroupsIcon color="secondary" />;
+    case 'GROUP_INVITE_ACCEPTED':
+      return <GroupsIcon color="success" />;
+    case 'GROUP_INVITE_DECLINED':
+      return <GroupsIcon color="error" />;
+    case 'MEMBER_JOINED':
+      return <PersonAddIcon color="success" />;
+    case 'MEMBER_LEFT':
+      return <PersonRemoveIcon color="warning" />;
+    case 'ACHIEVEMENT':
+      return <TrophyIcon sx={{ color: gamificationColors.gold }} />;
+    case 'BADGE_UNLOCKED':
+      return <BadgeIcon sx={{ color: gamificationColors.silver }} />;
+    case 'LEVEL_UP':
+      return <TrendingIcon sx={{ color: gamificationColors.level }} />;
+    case 'MVP_RECEIVED':
+      return <TrophyIcon sx={{ color: gamificationColors.mvp }} />;
+    case 'MVP_VOTE':
+      return <VoteIcon sx={{ color: gamificationColors.mvp }} />;
+    case 'STREAK_BROKEN':
+      return <StreakIcon sx={{ color: gamificationColors.streak }} />;
+    case 'SYSTEM':
+      return <NotificationIcon color="info" />;
+    default:
+      return <NotificationIcon />;
+  }
+}
+
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return 'Agora';
+  if (diffMins < 60) return `${diffMins}min`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d`;
+}
 
 export const NotificationsScreen: React.FC = () => {
   useDocumentTitle('Notificações');
   const navigate = useNavigate();
-    const theme = useTheme();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
-    const { user } = useAuth();
+  const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
+  const { user } = useAuth();
+  const { showSuccess, showError, showWithAction } = useToast();
 
-  const { notifications, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications(user?.id);
+  const {
+    notifications,
+    loading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    toggleRead,
+    restoreNotification,
+    deleteOldNotifications,
+  } = useNotifications(user?.id);
+
+  const { confirmPresence } = useConfirmPresence();
+
+  const [activeFilter, setActiveFilter] = useState<NotificationType | 'ALL'>('ALL');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'GAME_SUMMON':
-        return <SoccerIcon color="primary" />;
-      case 'GAME_CONFIRMED':
-        return <CheckIcon color="success" />;
-      case 'GAME_CANCELLED':
-        return <CloseIcon color="error" />;
-      case 'ACHIEVEMENT':
-        return <TrophyIcon sx={{ color: gamificationColors.gold }} />;
-      case 'LEVEL_UP':
-        return <TrendingIcon color="success" />;
-      default:
-        return <NotificationIcon />;
-    }
-  };
+  const handleDismiss = useCallback((id: string) => {
+    setDismissedIds((prev) => new Set(prev).add(id));
+  }, []);
 
-  const getTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Agora';
-    if (diffMins < 60) return `${diffMins}min`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d`;
+  const filteredNotifications = notifications
+    .filter((n) => !dismissedIds.has(n.id))
+    .filter((n) => activeFilter === 'ALL' || n.type === activeFilter);
+
+  const groupedNotifications = filteredNotifications.reduce<Record<string, typeof notifications>>((acc, n) => {
+    const group = getDateGroup(n.createdAt);
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(n);
+    return acc;
+  }, {});
+
+  const dateGroupOrder = ['Hoje', 'Ontem', 'Esta semana', 'Mais antigos'];
+
+  const handleAccept = useCallback(async (notification: typeof notifications[0]) => {
+    try {
+      if (notification.type === 'GROUP_INVITE' && notification.referenceId) {
+        await markAsRead(notification.id);
+        navigate(`/group/${notification.referenceId}`);
+        showSuccess('Navegando para o grupo!');
+      } else if ((notification.type === 'GAME_INVITE' || notification.type === 'GAME_SUMMON') && notification.referenceId) {
+        await confirmPresence(notification.referenceId);
+        await markAsRead(notification.id);
+        showSuccess('Presença confirmada!');
+      }
+    } catch {
+      showError('Erro ao aceitar. Tente novamente.');
+    }
+  }, [confirmPresence, markAsRead, showSuccess, showError, navigate]);
+
+  const handleDecline = useCallback(async (notification: typeof notifications[0]) => {
+    try {
+      await markAsRead(notification.id);
+      showSuccess('Convite recusado.');
+    } catch {
+      showError('Erro ao recusar.');
+    }
+  }, [markAsRead, showSuccess, showError]);
+
+  const handleDeleteWithUndo = useCallback(async (notification: typeof notifications[0]) => {
+    const deletedNotif = notification;
+    try {
+      await deleteNotification(notification.id);
+      showWithAction('Notificação removida.', {
+        label: 'Desfazer',
+        onClick: () => {
+          restoreNotification(deletedNotif);
+        },
+      }, 'info');
+    } catch {
+      showError('Erro ao excluir notificação.');
+    }
+  }, [deleteNotification, restoreNotification, showWithAction, showError]);
+
+  const handleClearAll = useCallback(async () => {
+    setDeleting(true);
+    try {
+      await deleteOldNotifications(0);
+      setDeleteDialogOpen(false);
+    } catch {
+      showError('Erro ao limpar notificações.');
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteOldNotifications, showError]);
+
+  const isActionable = (type: string): boolean => {
+    return type === 'GROUP_INVITE' || type === 'GAME_INVITE' || type === 'GAME_SUMMON';
   };
 
   return (
@@ -94,9 +266,39 @@ export const NotificationsScreen: React.FC = () => {
           )}
           {unreadCount > 0 && (
             <IconButton onClick={markAllAsRead} aria-label="Marcar todas como lidas" sx={{ padding: theme.spacing(1.25) }}>
-              <CheckIcon fontSize="small" />
+              <DoneAllIcon fontSize="small" />
             </IconButton>
           )}
+          {notifications.length > 0 && (
+            <IconButton onClick={() => setDeleteDialogOpen(true)} aria-label="Limpar todas" sx={{ padding: theme.spacing(1.25) }}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            px: 1,
+            pb: 1,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+          }}
+        >
+          {ALL_FILTERS.map((filter) => (
+            <Chip
+              key={filter.type}
+              label={filter.label}
+              size="small"
+              color={activeFilter === filter.type ? 'primary' : 'default'}
+              variant={activeFilter === filter.type ? 'filled' : 'outlined'}
+              onClick={() => setActiveFilter(filter.type)}
+              icon={activeFilter === filter.type ? <FilterIcon fontSize="small" /> : undefined}
+              aria-label={`Filtrar por ${filter.label}`}
+            />
+          ))}
         </Box>
       </Box>
 
@@ -115,50 +317,156 @@ export const NotificationsScreen: React.FC = () => {
               </CardContent>
             </Card>
           ))
-        ) : notifications.length === 0 ? (
-            <EmptyState
-              icon={<NotificationIcon />}
-              title="Nenhuma notificação"
-              description="Você receberá notificações sobre jogos, conquistas e convites"
-            />
+        ) : filteredNotifications.length === 0 ? (
+          <EmptyState
+            icon={<NotificationIcon />}
+            title="Nenhuma notificação"
+            description={activeFilter !== 'ALL' ? 'Nenhuma notificação deste tipo encontrada.' : 'Você receberá notificações sobre jogos, conquistas e convites'}
+          />
         ) : (
-          <List disablePadding aria-label="Lista de notificações">
-            {notifications.map((notification) => (
-              <Card
-                key={notification.id}
-                sx={{
-                  mb: 1,
-                  bgcolor: notification.read ? 'background.paper' : alpha(theme.palette.primary.main, 0.05),
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main' }}>
-                      {getTypeIcon(notification.type)}
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" fontWeight={600}>
-                        {notification.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {notification.message}
-                      </Typography>
-                      <Typography variant="caption" color="text.disabled">
-                        {getTimeAgo(notification.createdAt)}
-                      </Typography>
-                    </Box>
-                    {!notification.read && (
-                      <IconButton onClick={() => markAsRead(notification.id)} aria-label="Marcar como lida" sx={{ padding: theme.spacing(1.25) }}>
-                        <CheckIcon fontSize="small" color="success" />
-                      </IconButton>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </List>
+          <Box>
+            {dateGroupOrder.map((groupLabel) => {
+              const groupItems = groupedNotifications[groupLabel];
+              if (!groupItems || groupItems.length === 0) return null;
+
+              return (
+                <Box key={groupLabel} sx={{ mb: 2 }}>
+                  <Typography
+                    variant="overline"
+                    color="text.secondary"
+                    sx={{ px: 1, fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.08em' }}
+                  >
+                    {groupLabel}
+                  </Typography>
+                  <List disablePadding aria-label={`Notificações - ${groupLabel}`}>
+                    {groupItems.map((notification) => (
+                      <Slide direction="left" in key={notification.id}>
+                        <Card
+                          sx={{
+                            mb: 1,
+                            bgcolor: notification.read
+                              ? 'background.paper'
+                              : alpha(theme.palette.primary.main, 0.05),
+                          }}
+                        >
+                          <CardContent sx={{ pb: 1, '&:last-child': { pb: 1 } }}>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                {getTypeIcon(notification.type)}
+                              </Avatar>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant="subtitle2" fontWeight={600}>
+                                  {notification.title}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  {notification.message}
+                                </Typography>
+                                {notification.actionType && (
+                                  <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                                    Ação: {notification.actionType}
+                                  </Typography>
+                                )}
+                                <Typography variant="caption" color="text.disabled">
+                                  {getTimeAgo(notification.createdAt)}
+                                </Typography>
+
+                                {isActionable(notification.type) && !notification.read && (
+                                  <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                                    <Button
+                                      size="small"
+                                      variant="contained"
+                                      color="primary"
+                                      onClick={() => handleAccept(notification)}
+                                      startIcon={<CheckIcon />}
+                                      aria-label={`Aceitar ${notification.title}`}
+                                    >
+                                      Aceitar
+                                    </Button>
+                                    <Button
+                                      size="small"
+                                      variant="outlined"
+                                      color="inherit"
+                                      onClick={() => handleDecline(notification)}
+                                      startIcon={<CloseIcon />}
+                                      aria-label={`Recusar ${notification.title}`}
+                                    >
+                                      Recusar
+                                    </Button>
+                                  </Box>
+                                )}
+                              </Box>
+
+                              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                                {!notification.read ? (
+                                  <IconButton
+                                    onClick={() => markAsRead(notification.id)}
+                                    aria-label="Marcar como lida"
+                                    size="small"
+                                    sx={{ padding: theme.spacing(0.5) }}
+                                  >
+                                    <CheckIcon fontSize="small" color="success" />
+                                  </IconButton>
+                                ) : (
+                                  <IconButton
+                                    onClick={() => toggleRead(notification.id, notification.read)}
+                                    aria-label="Marcar como não lida"
+                                    size="small"
+                                    sx={{ padding: theme.spacing(0.5) }}
+                                  >
+                                    <UndoIcon fontSize="small" color="action" />
+                                  </IconButton>
+                                )}
+                                <IconButton
+                                  onClick={() => {
+                                    handleDismiss(notification.id);
+                                    handleDeleteWithUndo(notification);
+                                  }}
+                                  aria-label="Excluir notificação"
+                                  size="small"
+                                  sx={{ padding: theme.spacing(0.5) }}
+                                >
+                                  <DeleteIcon fontSize="small" color="action" />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Slide>
+                    ))}
+                  </List>
+                </Box>
+              );
+            })}
+          </Box>
         )}
       </Container>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        role="alertdialog"
+        aria-labelledby="clear-notif-title"
+        aria-describedby="clear-notif-desc"
+      >
+        <DialogTitle id="clear-notif-title">Limpar todas as notificações?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="clear-notif-desc">
+            Esta ação removerá todas as suas notificações. Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+          <Button
+            onClick={handleClearAll}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+            startIcon={<DeleteIcon />}
+          >
+            {deleting ? 'Limpando...' : 'Limpar tudo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

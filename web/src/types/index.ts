@@ -54,15 +54,31 @@ export interface Notification {
   referenceId?: string;
   referenceType?: 'game' | 'group' | 'badge' | 'level' | 'invite';
   createdAt: Date;
+  senderId?: string;
+  senderName?: string;
+  senderPhoto?: string;
+  groupId?: string;
+  actionType?: string;
+  readAt?: Date;
 }
 
 export type NotificationType =
+  | 'GAME_INVITE'
   | 'GAME_SUMMON'
   | 'GAME_CONFIRMED'
   | 'GAME_REMINDER'
   | 'GAME_CANCELLED'
+  | 'GAME_UPDATED'
+  | 'GAME_VACANCY'
   | 'GROUP_INVITE'
+  | 'GROUP_INVITE_ACCEPTED'
+  | 'GROUP_INVITE_DECLINED'
+  | 'MEMBER_JOINED'
+  | 'MEMBER_LEFT'
   | 'ACHIEVEMENT'
+  | 'BADGE_UNLOCKED'
   | 'LEVEL_UP'
   | 'MVP_RECEIVED'
-  | 'STREAK_BROKEN';
+  | 'MVP_VOTE'
+  | 'STREAK_BROKEN'
+  | 'SYSTEM';

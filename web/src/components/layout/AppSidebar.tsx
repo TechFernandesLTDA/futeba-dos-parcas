@@ -8,6 +8,8 @@ import {
   ListItemText,
   Typography,
   Tooltip,
+  Badge,
+  keyframes,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -15,9 +17,18 @@ import {
   Groups,
   EmojiEvents,
   Person,
+  Notifications as NotificationsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../hooks/useNotifications';
+
+const pulse = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+`;
 
 const RAIL_WIDTH = 80;
 const DRAWER_WIDTH = 240;
@@ -41,12 +52,24 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const { unreadCount } = useNotifications(user?.id);
 
   const NAV_ITEMS: NavItem[] = [
     { icon: <HomeIcon />, label: t('nav.home'), path: '/?tab=0', matchPaths: ['/'] },
     { icon: <SportsSoccer />, label: t('nav.games'), path: '/?tab=1', matchPaths: ['/games', '/game'] },
     { icon: <Groups />, label: t('nav.groups'), path: '/?tab=2', matchPaths: ['/groups', '/group'] },
     { icon: <EmojiEvents />, label: t('nav.league'), path: '/?tab=3', matchPaths: ['/ranking', '/league'] },
+    {
+      icon: (
+        <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
+          <NotificationsIcon />
+        </Badge>
+      ),
+      label: t('nav.notifications'),
+      path: '/notifications',
+      matchPaths: ['/notifications'],
+    },
     { icon: <Person />, label: t('nav.profile'), path: '/?tab=4', matchPaths: ['/profile'] },
   ];
 
@@ -80,6 +103,7 @@ export function AppSidebar() {
         <List sx={{ pt: 1 }}>
           {NAV_ITEMS.map((item) => {
             const active = isItemActive(item, location.pathname, location.search);
+            const isNotifItem = item.path === '/notifications';
             return (
               <Tooltip key={item.label} title={item.label} placement="right">
                 <ListItemButton
@@ -94,7 +118,14 @@ export function AppSidebar() {
                     },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      justifyContent: 'center',
+                      mb: 0.5,
+                      animation: isNotifItem && unreadCount > 0 ? `${pulse} 2s ease-in-out infinite` : undefined,
+                    }}
+                  >
                     {React.cloneElement(item.icon as React.ReactElement, { 'aria-hidden': true })}
                   </ListItemIcon>
                   <Typography
@@ -151,6 +182,7 @@ export function AppSidebar() {
         <List>
           {NAV_ITEMS.map((item) => {
             const active = isItemActive(item, location.pathname, location.search);
+            const isNotifItem = item.path === '/notifications';
             return (
               <ListItemButton
                 key={item.label}
@@ -170,7 +202,14 @@ export function AppSidebar() {
                   },
                 }}
               >
-                <ListItemIcon sx={{ color: 'text.secondary' }}>{React.cloneElement(item.icon as React.ReactElement, { 'aria-hidden': true })}</ListItemIcon>
+                <ListItemIcon
+                  sx={{
+                    color: 'text.secondary',
+                    animation: isNotifItem && unreadCount > 0 ? `${pulse} 2s ease-in-out infinite` : undefined,
+                  }}
+                >
+                  {React.cloneElement(item.icon as React.ReactElement, { 'aria-hidden': true })}
+                </ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItemButton>
             );

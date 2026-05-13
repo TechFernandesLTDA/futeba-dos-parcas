@@ -23,6 +23,16 @@ messaging.onBackgroundMessage((payload) => {
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
+
+  clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    clientList.forEach((client) => {
+      client.postMessage({
+        type: 'FCM_BACKGROUND_NOTIFICATION',
+        data: payload.data,
+        notification: payload.notification,
+      });
+    });
+  });
 });
 
 self.addEventListener('notificationclick', (event) => {

@@ -95,6 +95,7 @@ const SettingsScreen = lazy(() => import('./pages/settings/SettingsScreen').then
 const ThemeSettingsScreen = lazy(() => import('./pages/settings/ThemeSettingsScreen').then(m => ({ default: m.ThemeSettingsScreen })));
 const GamificationSettingsScreen = lazy(() => import('./pages/settings/GamificationSettingsScreen').then(m => ({ default: m.GamificationSettingsScreen })));
 const MyFeedbacksScreen = lazy(() => import('./pages/settings/MyFeedbacksScreen').then(m => ({ default: m.MyFeedbacksScreen })));
+const NotificationSettingsScreen = lazy(() => import('./pages/settings/NotificationSettingsScreen').then(m => ({ default: m.NotificationSettingsScreen })));
 
 // Notifications & Search
 const NotificationsScreen = lazy(() => import('./pages/ranking/NotificationsScreen').then(m => ({ default: m.NotificationsScreen })));
@@ -415,6 +416,7 @@ function AppRoutes() {
         {/* Settings */}
         <Route path="/settings" element={<Suspense fallback={<RouteFallback />}><SettingsScreen /></Suspense>} />
         <Route path="/settings/theme" element={<Suspense fallback={<RouteFallback />}><ThemeSettingsScreen /></Suspense>} />
+        <Route path="/settings/notifications" element={<Suspense fallback={<RouteFallback />}><NotificationSettingsScreen /></Suspense>} />
         <Route path="/settings/gamification" element={<AdminRoute><Suspense fallback={<RouteFallback />}><GamificationSettingsScreen /></Suspense></AdminRoute>} />
         <Route path="/settings/feedbacks" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MyFeedbacksScreen /></Suspense></ProtectedRoute>} />
         {/* Search & Notifications & About */}
