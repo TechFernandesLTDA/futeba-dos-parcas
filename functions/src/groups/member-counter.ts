@@ -88,10 +88,13 @@ export const onMemberWritten = onDocumentWritten(
     const after = event.data?.after?.data();
 
     // FIX #651-B1: join-request approval already increments member_count
-    // atomically in a transaction. Skip double-count.
-    if (isCountedByJoinRequest(after)) {
+    // atomically in a transaction. Skip double-count on CREATE only.
+    // FIX #1144: Subsequent writes (kicks, leaves) must go through delta
+    // logic to decrement — flag was never cleared on those paths.
+    const beforeExists = !!event.data?.before?.data();
+    if (!beforeExists && isCountedByJoinRequest(after)) {
       console.log(
-        `[MEMBER_COUNTER] Skipping ${groupId}/${memberId} — ` +
+        `[MEMBER_COUNTER] Skipping CREATE for ${groupId}/${memberId} — ` +
         "member_count already incremented by join-request approval"
       );
       return;

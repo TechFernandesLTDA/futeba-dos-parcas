@@ -1945,8 +1945,21 @@ subir no ranking!</string>
     <string name="game_live">Ao Vivo</string>
     <string name="locations_title">Locais</string>
 
-    <!-- Auth Register (migrated from moko-resources) -->
-    <string name="auth_register_title">Registro</string>
+    <!-- Auth Register -->
+    <string name="auth_register_title">Criar Conta</string>
+    <string name="auth_register_subtitle">Preencha os dados para se registrar</string>
+    <string name="auth_register_button">Criar Conta</string>
+    <string name="auth_name_label">Nome</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Senha</string>
+    <string name="auth_sign_in_with_email">Entrar com Email</string>
+    <string name="auth_back_to_google">Voltar para Google</string>
+    <string name="auth_forgot_password">Esqueci minha senha</string>
+    <string name="auth_no_account_register">Não tem conta? Registre-se</string>
+    <string name="auth_already_have_account">Já tem uma conta? Entrar</string>
+    <string name="auth_reset_email_sent">Email de redefinição enviado. Verifique sua caixa de entrada.</string>
+
+    <!-- Auth Register (deprecated) -->
     <string name="auth_register_message">O registro agora e feito via Google Sign-In</string>
     <string name="auth_register_redirect">Você será redirecionado para a tela de login</string>
 
@@ -2545,7 +2558,13 @@ subir no ranking!</string>
     <string name="about_terms_of_service">Termos de Uso</string>
     <string name="about_terms_of_service_desc">Condições de uso do aplicativo</string>
     <string name="about_delete_account">Excluir Conta</string>
-    <string name="about_delete_account_desc">Como solicitar exclusão da sua conta</string>
+    <string name="about_delete_account_desc">Solicitar exclusão permanente da sua conta</string>
+    <string name="about_delete_account_warning">Tem certeza que deseja excluir sua conta? Todos os seus dados serão permanentemente removidos. Esta ação não pode ser desfeita.</string>
+    <string name="about_delete_account_continue">Continuar</string>
+    <string name="about_delete_account_confirm_title">Confirme a exclusão</string>
+    <string name="about_delete_account_confirm_message">Digite seu email para confirmar a exclusão permanente da sua conta.</string>
+    <string name="about_delete_account_type_email">Digite seu email</string>
+    <string name="about_delete_account_confirm_button">Excluir Minha Conta</string>
     <string name="about_child_safety">Segurança Infantil</string>
     <string name="about_child_safety_desc">Padrões de proteção a menores (CSAE/CSAM)</string>
 

@@ -68,6 +68,17 @@ class LoginActivityCompose : AppCompatActivity() {
                     uiState = uiState,
                     versionName = BuildConfig.VERSION_NAME,
                     onGoogleSignInClick = { signInWithGoogle() },
+                    onEmailPasswordSignIn = { email, password ->
+                        viewModel.signInWithEmailAndPassword(email, password)
+                    },
+                    onForgotPassword = { email ->
+                        viewModel.sendPasswordResetEmail(email)
+                        showToast(getString(R.string.auth_reset_email_sent))
+                    },
+                    onNavigateToRegister = {
+                        val intent = Intent(this, RegisterActivityCompose::class.java)
+                        startActivity(intent)
+                    },
                     onNavigateToMain = { navigateToMain() }
                 )
             }

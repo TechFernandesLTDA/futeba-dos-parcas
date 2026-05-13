@@ -302,6 +302,7 @@ export const PlayersScreen: React.FC = () => {
                   onAvatarClick={setSelectedPlayerId}
                   getRoleColor={getRoleColor}
                   getRoleLabel={getRoleLabel}
+                  currentUserRole={currentUserRole}
                 />
               ))}
             </List>
@@ -346,6 +347,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   onAvatarClick,
   getRoleColor,
   getRoleLabel,
+  currentUserRole,
 }: {
   member: GroupMember;
   showDivider: boolean;
@@ -355,6 +357,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   onAvatarClick: (id: string) => void;
   getRoleColor: (role: string) => string;
   getRoleLabel: (role: string) => string;
+  currentUserRole: string | null;
 }) {
   return (
     <Box>
@@ -408,7 +411,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
               )}
             </Box>
           }
-          secondary={member.email}
+          secondary={['OWNER', 'ADMIN'].includes(currentUserRole ?? '') ? member.email : ''}
         />
       </ListItem>
     </Box>

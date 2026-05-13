@@ -205,18 +205,23 @@ class BadgesViewModel(
         return when (type) {
             BadgeType.HAT_TRICK,
             BadgeType.PAREDAO,
-            BadgeType.ARTILHEIRO_MES -> BadgeCategory.PERFORMANCE
+            BadgeType.ARTILHEIRO_MES,
+            BadgeType.MVP_1, BadgeType.MVP_10, BadgeType.MVP_50,
+            BadgeType.GOALS_10, BadgeType.GOALS_100, BadgeType.GOALS_500 -> BadgeCategory.PERFORMANCE
 
             BadgeType.FOMINHA,
-            BadgeType.STREAK_7,
-            BadgeType.STREAK_30 -> BadgeCategory.PRESENCA
+            BadgeType.STREAK_7, BadgeType.STREAK_30,
+            BadgeType.STREAK_3, BadgeType.FIRST_GAME,
+            BadgeType.GAMES_100, BadgeType.GAMES_500 -> BadgeCategory.PRESENCA
 
             BadgeType.ORGANIZADOR_MASTER,
             BadgeType.INFLUENCER -> BadgeCategory.COMUNIDADE
 
             BadgeType.LENDA,
             BadgeType.FAIXA_PRETA,
-            BadgeType.MITO -> BadgeCategory.NIVEL
+            BadgeType.MITO,
+            BadgeType.WINS_10, BadgeType.WINS_50,
+            BadgeType.ASSISTS_50, BadgeType.ASSISTS_200 -> BadgeCategory.NIVEL
         }
     }
 }

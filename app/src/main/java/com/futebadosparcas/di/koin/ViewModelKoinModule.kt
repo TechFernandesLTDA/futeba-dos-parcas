@@ -32,6 +32,7 @@ import com.futebadosparcas.ui.locations.FieldOwnerDashboardViewModel
 import com.futebadosparcas.ui.locations.LocationDetailViewModel
 import com.futebadosparcas.ui.locations.LocationsMapViewModel
 import com.futebadosparcas.ui.locations.ManageLocationsViewModel
+import com.futebadosparcas.ui.map.PublicGamesMapViewModel
 import com.futebadosparcas.ui.notifications.NotificationsViewModel
 import com.futebadosparcas.ui.payments.PaymentViewModel
 import com.futebadosparcas.ui.player.PlayerCardViewModel
@@ -325,18 +326,22 @@ val viewModelKoinModule = module {
 
     viewModel {
         UserManagementViewModel(
-            userRepository = get()
+            userRepository = get(),
+            firebaseFunctions = get()
         )
     }
 
     viewModel {
         LoginViewModel(
-            authRepository = get()
+            authRepository = get(),
+            androidAuthRepository = get()
         )
     }
 
     viewModel {
-        RegisterViewModel()
+        RegisterViewModel(
+            androidAuthRepository = get()
+        )
     }
 
     // Phone+CPF onboarding (Anti-Bot, spec SPEC_FEATURE_PHONE_CPF_VERIFICATION.md)
@@ -402,6 +407,12 @@ val viewModelKoinModule = module {
         PaymentViewModel(
             paymentRepository = get(),
             userRepository = get()
+        )
+    }
+
+    viewModel {
+        PublicGamesMapViewModel(
+            firestore = get()
         )
     }
 }

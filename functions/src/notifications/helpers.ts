@@ -363,7 +363,7 @@ async function getUserFcmTokens(
  * @param {string | undefined} groupId - ID do grupo (para mute_groups)
  * @return {Promise<boolean>} true se deve notificar
  */
-async function shouldNotifyUser(
+export async function shouldNotifyUser(
   userId: string,
   notificationType: string,
   groupId?: string,

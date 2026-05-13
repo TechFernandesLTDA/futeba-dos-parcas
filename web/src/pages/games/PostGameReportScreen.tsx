@@ -16,6 +16,8 @@ import {
   alpha,
   Chip,
   List,
+  CircularProgress,
+  LinearProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -23,8 +25,9 @@ import {
   EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
   Assessment as StatsIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -32,6 +35,7 @@ import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { getLevelForXp, getLevelEntry, getXpProgress } from '../../types/gamification';
 
 const logger = createLogger('PostGameReportScreen');
 
@@ -50,16 +54,40 @@ interface PostGameStats {
   participants: { userId: string; userName: string; team: 'A' | 'B' }[];
 }
 
+interface GamificationData {
+  xpEarned: number;
+  isMvp: boolean;
+  isWorstPlayer: boolean;
+}
+
+interface LevelData {
+  levelBefore: number;
+  levelAfter: number;
+  xpProgress: number;
+  leveledUp: boolean;
+  levelName: string;
+}
+
+interface FinancialData {
+  totalCollected: number;
+  totalPending: number;
+  paidCount: number;
+  unpaidCount: number;
+}
+
 export const PostGameReportScreen: React.FC = () => {
   useDocumentTitle('Relatório Pós-Jogo');
   const navigateBack = useNavigateBack('/games');
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
-  const { showError } = useToast();
+  const { user } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const [stats, setStats] = useState<PostGameStats | null>(null);
+  const [gamification, setGamification] = useState<GamificationData | null>(null);
+  const [levelData, setLevelData] = useState<LevelData | null>(null);
+  const [financialData, setFinancialData] = useState<FinancialData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,36 +96,90 @@ export const PostGameReportScreen: React.FC = () => {
     const fetchReport = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
+        if (!gameDoc.exists()) {
+          showError('Jogo não encontrado.');
+          navigate('/games', { replace: true });
+          return;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
+
+        if (data.status !== 'FINISHED') {
+          showError('Relatório só disponível após o jogo ser finalizado.');
+          navigate(`/game/${gameId}`, { replace: true });
+          return;
+        }
+
+        let mvpName = '';
+        if (data.mvpId) {
+          const mvpDoc = await getDoc(doc(db, 'users', data.mvpId));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
-
-          // Relatório só disponível após jogo finalizado
-          if (data.status !== 'FINISHED') {
-            showError('Relatório só disponível após o jogo ser finalizado.');
-            navigate(`/game/${gameId}`, { replace: true });
-            return;
-          }
-
-          let mvpName = '';
-          if (data.mvpId) {
-            const mvpDoc = await getDoc(doc(db, 'users', data.mvpId));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (mvpDoc.exists()) mvpName = (snakeToCamel(mvpDoc.data()) as Record<string, any>).name || '';
+        }
+
+        setStats({
+          teamAScore: data.teamAScore || data.team1Score || 0,
+          teamBScore: data.teamBScore || data.team2Score || 0,
+          teamAName: data.team1Name || data.teamAName || undefined,
+          teamBName: data.team2Name || data.teamBName || undefined,
+          winner: data.winnerTeam || 'DRAW',
+          mvpId: data.mvpId,
+          mvpName,
+          scorers: data.scorers || [],
+          assistants: data.assistants || [],
+          participants: data.participants || [],
+        });
+
+        const uid = user?.id;
+        if (uid) {
+          const confirmationsRef = collection(db, 'confirmations');
+          const confirmationQ = query(confirmationsRef, where('game_id', '==', gameId));
+          const confirmationsSnap = await getDocs(confirmationQ);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const confirmationsData = confirmationsSnap.docs.map((d) => snakeToCamel(d.data()) as Record<string, any>);
+
+          const myConfirmation = confirmationsData.find((c) => c.userId === uid);
+          if (myConfirmation) {
+            setGamification({
+              xpEarned: myConfirmation.xpEarned || 0,
+              isMvp: myConfirmation.isMvp || false,
+              isWorstPlayer: myConfirmation.isWorstPlayer || false,
+            });
           }
 
-          setStats({
-            teamAScore: data.teamAScore || data.team1Score || 0,
-            teamBScore: data.teamBScore || data.team2Score || 0,
-            teamAName: data.team1Name || data.teamAName || undefined,
-            teamBName: data.team2Name || data.teamBName || undefined,
-            winner: data.winnerTeam || 'DRAW',
-            mvpId: data.mvpId,
-            mvpName,
-            scorers: data.scorers || [],
-            assistants: data.assistants || [],
-            participants: data.participants || [],
+          const paidConfirmations = confirmationsData.filter(
+            (c) => c.paymentStatus === 'PAID' || c.paymentStatus === 'paid'
+          );
+          const unpaidConfirmations = confirmationsData.filter(
+            (c) => c.status === 'CONFIRMED' && c.paymentStatus !== 'PAID' && c.paymentStatus !== 'paid'
+          );
+
+          const dailyPrice = data.dailyPrice || 0;
+          setFinancialData({
+            totalCollected: paidConfirmations.length * dailyPrice,
+            totalPending: unpaidConfirmations.length * dailyPrice,
+            paidCount: paidConfirmations.length,
+            unpaidCount: unpaidConfirmations.length,
           });
+
+          const userDoc = await getDoc(doc(db, 'users', uid));
+          if (userDoc.exists()) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const userData = snakeToCamel(userDoc.data()) as Record<string, any>;
+            const currentXp = userData.xp || userData.totalXp || 0;
+            const xpEarned = myConfirmation?.xpEarned || 0;
+            const xpBefore = currentXp - xpEarned;
+            const levelBefore = getLevelForXp(xpBefore > 0 ? xpBefore : 0);
+            const levelAfter = getLevelForXp(currentXp);
+            setLevelData({
+              levelBefore,
+              levelAfter,
+              xpProgress: getXpProgress(currentXp),
+              leveledUp: levelAfter > levelBefore,
+              levelName: getLevelEntry(levelAfter).name,
+            });
+          }
         }
       } catch (error) {
         logger.error('Error fetching report:', error);
@@ -107,8 +189,30 @@ export const PostGameReportScreen: React.FC = () => {
     };
 
     fetchReport();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
+
+  const handleShare = async () => {
+    if (!stats) return;
+
+    const text = `⚽ Futeba dos Parças - Relatório do Jogo\n\n${stats.teamAName || 'Time A'} ${stats.teamAScore} x ${stats.teamBScore} ${stats.teamBName || 'Time B'}${stats.mvpName ? `\n\nMVP: ${stats.mvpName}` : ''}${gamification?.xpEarned ? `\nXP: +${gamification.xpEarned}` : ''}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Futeba dos Parças', text, url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(text);
+        showSuccess('Resultado copiado para a área de transferência!');
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(text);
+        showSuccess('Resultado copiado!');
+      } catch {
+        showError('Não foi possível compartilhar.');
+      }
+    }
+  };
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;
@@ -140,9 +244,12 @@ export const PostGameReportScreen: React.FC = () => {
           <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
+          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Relatório do Jogo
           </Typography>
+          <IconButton onClick={handleShare} aria-label="Compartilhar">
+            <ShareIcon />
+          </IconButton>
         </Box>
       </Box>
 
@@ -189,6 +296,105 @@ export const PostGameReportScreen: React.FC = () => {
             </Grid>
           </CardContent>
         </Card>
+
+        {gamification && gamification.xpEarned > 0 && (
+          <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.success.main, 0.06) }}>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Box
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  bgcolor: alpha(theme.palette.success.main, 0.12),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h4" fontWeight={700} color="success.main">
+                  +{gamification.xpEarned}
+                </Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                XP ganho nesta partida
+              </Typography>
+              {gamification.isMvp && (
+                <Chip
+                  icon={<TrophyIcon />}
+                  label="MVP da Partida"
+                  color="warning"
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {levelData?.leveledUp && (
+          <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.06) }}>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Typography variant="h6" color="primary" fontWeight={700} gutterBottom>
+                Level Up!
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <Chip label={`Nível ${levelData.levelBefore}`} size="small" variant="outlined" />
+                <Typography variant="h6" color="primary">
+                  →
+                </Typography>
+                <Chip label={`Nível ${levelData.levelAfter} - ${levelData.levelName}`} size="small" color="primary" />
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+
+        {levelData && !levelData.leveledUp && (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Nível {levelData.levelAfter} · {levelData.levelName}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={levelData.xpProgress * 100}
+                sx={{ height: 6, borderRadius: 3 }}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {Math.round(levelData.xpProgress * 100)}% para o próximo nível
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
+
+        {financialData && financialData.paidCount > 0 && (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                Resumo Financeiro
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Pagantes ({financialData.paidCount})
+                </Typography>
+                <Typography variant="body2" fontWeight={600} color="success.main">
+                  R$ {financialData.totalCollected.toFixed(2)}
+                </Typography>
+              </Box>
+              {financialData.unpaidCount > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Pendentes ({financialData.unpaidCount})
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600} color="warning.main">
+                    R$ {financialData.totalPending.toFixed(2)}
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {stats.mvpName && (
           <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.warning.main, 0.05) }}>

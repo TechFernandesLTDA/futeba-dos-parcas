@@ -30,7 +30,7 @@ import {
   EmojiEvents as TrophyIcon,
   SentimentVeryDissatisfied as BolaMurchaIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -113,7 +113,6 @@ export const MVPVoteScreen: React.FC = () => {
   const handleVote = async () => {
     if (!mvpVote || !gameId || !currentUser) return;
 
-    // Apenas jogadores confirmados podem votar
     const myConfirmation = confirmations.find(
       (c) => c.userId === currentUser.uid && c.status === 'CONFIRMED'
     );
@@ -125,18 +124,43 @@ export const MVPVoteScreen: React.FC = () => {
     setSubmitting(true);
 
     try {
-      // Doc ID: {gameId}_{voterId} (determinístico, previne voto duplicado)
-      const voteId = `${gameId}_${currentUser.uid}`;
-      const voteRef = doc(db, 'mvp_votes', voteId);
+      const batch = writeBatch(db);
 
-      await setDoc(voteRef, {
-        voter_id: currentUser.uid,
+      const mvpVoteId = `${gameId}_${currentUser.uid}_MVP`;
+      batch.set(doc(db, 'mvp_votes', mvpVoteId), {
+        id: mvpVoteId,
         game_id: gameId,
-        mvp_id: mvpVote,
-        best_gk_id: bestGkVote || null,
-        worst_player_id: worstPlayerVote || null,
+        voter_id: currentUser.uid,
+        voted_player_id: mvpVote,
+        category: 'MVP',
+        voted_at: serverTimestamp(),
+      });
+
+      if (bestGkVote) {
+        const bestGkVoteId = `${gameId}_${currentUser.uid}_BEST_GOALKEEPER`;
+        batch.set(doc(db, 'mvp_votes', bestGkVoteId), {
+          id: bestGkVoteId,
+          game_id: gameId,
+          voter_id: currentUser.uid,
+          voted_player_id: bestGkVote,
+          category: 'BEST_GOALKEEPER',
           voted_at: serverTimestamp(),
-      }, { merge: true });
+        });
+      }
+
+      if (worstPlayerVote) {
+        const worstVoteId = `${gameId}_${currentUser.uid}_WORST`;
+        batch.set(doc(db, 'mvp_votes', worstVoteId), {
+          id: worstVoteId,
+          game_id: gameId,
+          voter_id: currentUser.uid,
+          voted_player_id: worstPlayerVote,
+          category: 'WORST',
+          voted_at: serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
 
       setHasVoted(true);
 

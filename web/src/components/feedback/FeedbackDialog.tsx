@@ -124,14 +124,14 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
           {submitted ? 'Feedback Enviado' : 'Enviar Feedback'}
         </Typography>
         <IconButton onClick={handleClose} disabled={loading} aria-label="Fechar" size="small">
-          <CloseIcon />
+          <CloseIcon aria-hidden="true" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent dividers sx={{ pt: 2 }}>
         {submitted ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <SuccessIcon sx={{ fontSize: 64, color: theme.palette.success.main, mb: 2 }} />
+            <SuccessIcon sx={{ fontSize: 64, color: theme.palette.success.main, mb: 2 }} aria-hidden="true" />
             <Typography variant="h6" gutterBottom>
               Feedback enviado!
             </Typography>
@@ -279,7 +279,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
             variant="contained"
             onClick={handleSubmit}
             disabled={loading || !currentUser}
-            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SendIcon />}
+            startIcon={loading ? <CircularProgress size={18} color="inherit" aria-hidden="true" /> : <SendIcon aria-hidden="true" />}
             sx={{ borderRadius: 2 }}
           >
             {loading ? 'Enviando...' : 'Enviar'}

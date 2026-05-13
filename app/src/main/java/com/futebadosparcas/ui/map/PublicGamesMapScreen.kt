@@ -29,6 +29,7 @@ import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -49,13 +50,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
-/**
- * Tela de Mapa de Jogos Públicos.
- */
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 data class MapGameMarker(
     val gameId: String,
@@ -71,14 +79,6 @@ data class MapGameMarker(
     val hasVacancies: Boolean
 )
 
-data class MapUiState(
-    val games: List<MapGameMarker> = emptyList(),
-    val selectedGame: MapGameMarker? = null,
-    val userLocation: Pair<Double, Double>? = null,
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
-
 data class MapFilters(
     val showOnlyWithVacancies: Boolean = true,
     val showOnlyFree: Boolean = false,
@@ -89,11 +89,13 @@ data class MapFilters(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PublicGamesMapScreen(
+    viewModel: PublicGamesMapViewModel,
     onNavigateBack: () -> Unit,
     onGameClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var uiState by remember { mutableStateOf(MapUiState()) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var selectedGame by remember { mutableStateOf<MapGameMarker?>(null) }
     var filters by remember { mutableStateOf(MapFilters()) }
     var showFilters by remember { mutableStateOf(false) }
 
@@ -101,14 +103,8 @@ fun PublicGamesMapScreen(
         bottomSheetState = rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded)
     )
 
-    val sampleGames = remember {
-        listOf(
-            MapGameMarker("1", "Pelada de Sexta", "Arena Futeba", -23.550520, -46.633309,
-                "Sex, 20:00", 12, 14, 25.0, "SOCIETY", true),
-            MapGameMarker("2", "Futsal Domingo", "Ginásio Municipal", -23.561414, -46.655881,
-                "Dom, 10:00", 8, 10, 0.0, "FUTSAL", true)
-        )
-    }
+    val allGames = (uiState as? PublicGamesMapUiState.Success)?.games ?: emptyList()
+    val filteredGames = applyFilters(allGames, filters)
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -129,46 +125,143 @@ fun PublicGamesMapScreen(
             )
         },
         sheetContent = {
-            GameListSheet(sampleGames, uiState.selectedGame,
-                onGameSelect = { uiState = uiState.copy(selectedGame = it) },
-                onGameClick = onGameClick)
+            when (uiState) {
+                is PublicGamesMapUiState.Loading -> {
+                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is PublicGamesMapUiState.Error -> {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = (uiState as PublicGamesMapUiState.Error).message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = { viewModel.loadPublicGames() }) {
+                            Text(stringResource(R.string.retry))
+                        }
+                    }
+                }
+                is PublicGamesMapUiState.Empty -> {
+                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.empty_state_no_games_title), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                is PublicGamesMapUiState.Success -> {
+                    GameListSheet(filteredGames, selectedGame,
+                        onGameSelect = { selectedGame = it },
+                        onGameClick = onGameClick)
+                }
+            }
         },
         sheetPeekHeight = 200.dp,
         modifier = modifier
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            MapPlaceholder(sampleGames, uiState.selectedGame) { uiState = uiState.copy(selectedGame = it) }
+            when (uiState) {
+                is PublicGamesMapUiState.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is PublicGamesMapUiState.Error -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = (uiState as PublicGamesMapUiState.Error).message,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = { viewModel.loadPublicGames() }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                        }
+                    }
+                }
+                is PublicGamesMapUiState.Empty -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Map, contentDescription = null, Modifier.size(96.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                            Spacer(Modifier.height(16.dp))
+                            Text(stringResource(R.string.empty_state_no_games_title), style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                is PublicGamesMapUiState.Success -> {
+                    PublicGamesMapContent(
+                        games = filteredGames,
+                        selectedGame = selectedGame,
+                        onMarkerClick = { selectedGame = it }
+                    )
 
-            if (showFilters) {
-                MapFiltersOverlay(filters, { filters = it }, { showFilters = false },
-                    Modifier.align(Alignment.TopCenter).padding(16.dp))
-            }
+                    if (showFilters) {
+                        MapFiltersOverlay(filters, { filters = it }, { showFilters = false },
+                            Modifier.align(Alignment.TopCenter).padding(16.dp))
+                    }
 
-            FloatingActionButton(
-                onClick = { },
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 200.dp),
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.my_location),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    FloatingActionButton(
+                        onClick = { },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 200.dp),
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.my_location),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun MapPlaceholder(games: List<MapGameMarker>, selectedGame: MapGameMarker?, onMarkerClick: (MapGameMarker) -> Unit) {
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerLow),
-        contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.Map, contentDescription = null, Modifier.size(96.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-            Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.map_placeholder), style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.map_games_found, games.size), style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary)
+private fun PublicGamesMapContent(
+    games: List<MapGameMarker>,
+    selectedGame: MapGameMarker?,
+    onMarkerClick: (MapGameMarker) -> Unit
+) {
+    val curitiba = LatLng(-25.4284, -49.2733)
+
+    val initialPosition = games
+        .firstOrNull { it.latitude != 0.0 && it.longitude != 0.0 }
+        ?.let { LatLng(it.latitude, it.longitude) }
+        ?: curitiba
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(initialPosition, 12f)
+    }
+
+    val uiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                zoomControlsEnabled = true,
+                compassEnabled = true,
+                myLocationButtonEnabled = false,
+                mapToolbarEnabled = true
+            )
+        )
+    }
+
+    val validCount = games.count { it.latitude != 0.0 && it.longitude != 0.0 }
+    val mapDescription = stringResource(R.string.location_map_region_description, validCount)
+
+    GoogleMap(
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics { contentDescription = mapDescription },
+        cameraPositionState = cameraPositionState,
+        uiSettings = uiSettings
+    ) {
+        games.forEach { game ->
+            if (game.latitude != 0.0 && game.longitude != 0.0) {
+                Marker(
+                    state = MarkerState(position = LatLng(game.latitude, game.longitude)),
+                    title = game.title,
+                    snippet = "${game.dateTime} - ${game.confirmedPlayers}/${game.maxPlayers}"
+                )
+            }
         }
     }
 }
@@ -251,4 +344,18 @@ private fun MapFiltersOverlay(filters: MapFilters, onFiltersChange: (MapFilters)
             }
         }
     }
+}
+
+private fun applyFilters(games: List<MapGameMarker>, filters: MapFilters): List<MapGameMarker> {
+    var result = games
+    if (filters.showOnlyWithVacancies) {
+        result = result.filter { it.hasVacancies }
+    }
+    if (filters.showOnlyFree) {
+        result = result.filter { it.price == 0.0 }
+    }
+    if (filters.gameTypes.isNotEmpty()) {
+        result = result.filter { it.gameType in filters.gameTypes }
+    }
+    return result
 }

@@ -35,6 +35,7 @@ import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.Spacing
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
@@ -336,7 +337,7 @@ private fun GameCard(
 
                 // Badge de tipo de campo
                 Surface(
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(Spacing.sm),
                     color = getFieldTypeColor(game.game.gameType),
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
@@ -410,7 +411,7 @@ private fun GameCard(
                             text = getStatusText(game.game.status),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = 2.dp)
                         )
                     }
                 }
@@ -424,13 +425,13 @@ private fun GameCard(
  */
 @Composable
 private fun GamesLoadingState() {
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(6, key = { "shimmer_$it" }) {
+        repeat(6) {
             ShimmerGameCard()
         }
     }
@@ -484,7 +485,7 @@ private fun GamesEmptyState(
                 .fillMaxWidth(0.6f)
                 .height(48.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(Spacing.md))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.empty_state_no_games_action))
         }
@@ -530,7 +531,7 @@ private fun GamesErrorState(
         )
 
         Button(onClick = onRetry) {
-            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(Spacing.md))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.retry))
         }

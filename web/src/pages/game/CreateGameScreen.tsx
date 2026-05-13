@@ -18,9 +18,11 @@ import {
   Radio,
   RadioGroup,
   Checkbox,
+  Switch,
   InputAdornment,
   Alert,
   CircularProgress,
+  Typography,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -31,9 +33,9 @@ import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useCreateGame } from '../../hooks/useGames';
-import { useGroupDetail } from '../../hooks/useGroups';
+import { useGroupDetail, useGroups } from '../../hooks/useGroups';
 import { useLocations } from '../../hooks/useLocations';
-import { FieldType, PixKeyType } from '../../types/game';
+import { FieldType, PixKeyType, GameVisibility } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
 import { Field, FieldType as LocationFieldType } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -68,7 +70,9 @@ interface GameFormData {
   rules: string;
   groupId?: string;
   groupName?: string;
-  isPublic: boolean;
+  visibility: GameVisibility;
+  recurrenceEnabled: boolean;
+  recurrenceType: 'weekly' | 'biweekly' | 'monthly';
 }
 
 const steps = ['Local e Data', 'Configurações', 'Pagamento', 'Regras'];
@@ -95,7 +99,9 @@ const defaultFormData: GameFormData = {
   pixKeyType: 'RANDOM',
   pixBeneficiaryName: '',
   rules: '',
-  isPublic: false,
+  visibility: 'PUBLIC_CLOSED',
+  recurrenceEnabled: false,
+  recurrenceType: 'weekly',
 };
 
 export const CreateGameScreen: React.FC = () => {
@@ -105,6 +111,7 @@ export const CreateGameScreen: React.FC = () => {
   const groupId = searchParams.get('groupId') || undefined;
 
   const { group } = useGroupDetail(groupId || null);
+  const { groups: userGroups, loading: groupsLoading } = useGroups();
   const { createGame, loading, error } = useCreateGame();
   const { locations, loading: locationsLoading, error: locationsError } = useLocations();
   const { showSuccess, showError } = useToast();
@@ -120,6 +127,7 @@ export const CreateGameScreen: React.FC = () => {
     ...defaultFormData,
     groupId: groupId || undefined,
     groupName: group?.name || undefined,
+    visibility: groupId ? 'GROUP_ONLY' : 'PUBLIC_CLOSED',
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -315,8 +323,8 @@ export const CreateGameScreen: React.FC = () => {
         dailyPrice: formData.dailyPrice,
         pixPaymentEnabled: formData.pixPaymentEnabled,
         rules: formData.rules || '',
-        isPublic: formData.isPublic,
-        visibility: formData.groupId ? (formData.isPublic ? 'PUBLIC_CLOSED' : 'GROUP_ONLY') : 'PUBLIC_CLOSED',
+        visibility: formData.visibility,
+        recurrence: formData.recurrenceEnabled ? formData.recurrenceType : 'none',
         team1Name: 'Time 1',
         team2Name: 'Time 2',
         confirmationDeadlineHours: 0,
@@ -356,6 +364,34 @@ export const CreateGameScreen: React.FC = () => {
               <Alert severity="info">
                 Criando jogo para o grupo: <strong>{formData.groupName}</strong>
               </Alert>
+            )}
+
+            {!groupId && userGroups && userGroups.length > 0 && (
+              <TextField
+                select
+                label="Grupo"
+                value={formData.groupId || ''}
+                onChange={(e) => {
+                  const selectedGroup = userGroups.find((g) => g.id === e.target.value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    groupId: selectedGroup?.id,
+                    groupName: selectedGroup?.name,
+                    visibility: selectedGroup ? 'GROUP_ONLY' : prev.visibility,
+                  }));
+                }}
+                helperText={groupsLoading ? 'Carregando grupos...' : 'Selecione um grupo (opcional)'}
+                fullWidth
+              >
+                <MenuItem value="">
+                  <em>Sem grupo</em>
+                </MenuItem>
+                {userGroups.map((g) => (
+                  <MenuItem key={g.id} value={g.id}>
+                    {g.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             )}
 
             {/* Seletor de quadras cadastradas */}
@@ -576,21 +612,58 @@ export const CreateGameScreen: React.FC = () => {
             <FormControl>
               <FormLabel>Visibilidade</FormLabel>
               <RadioGroup
-                value={formData.isPublic ? 'public' : 'private'}
-                onChange={(e) => handleInputChange('isPublic', e.target.value === 'public')}
+                value={formData.visibility}
+                onChange={(e) => handleInputChange('visibility', e.target.value as GameVisibility)}
               >
                 <FormControlLabel
-                  value="private"
+                  value="GROUP_ONLY"
                   control={<Radio />}
                   label="Apenas membros do grupo"
                 />
                 <FormControlLabel
-                  value="public"
+                  value="PUBLIC_CLOSED"
                   control={<Radio />}
-                  label="Público (qualquer pessoa pode ver)"
+                  label="Público (lista fechada)"
+                />
+                <FormControlLabel
+                  value="PUBLIC_OPEN"
+                  control={<Radio />}
+                  label="Público (aceita solicitações)"
                 />
               </RadioGroup>
             </FormControl>
+
+            <Card sx={{ p: 1, bgcolor: 'action.hover' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Recorrência
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Criar jogos automaticamente
+                  </Typography>
+                </Box>
+                <Switch
+                  checked={formData.recurrenceEnabled}
+                  onChange={(e) => handleInputChange('recurrenceEnabled', e.target.checked)}
+                />
+              </Box>
+              {formData.recurrenceEnabled && (
+                <TextField
+                  select
+                  label="Frequência"
+                  value={formData.recurrenceType}
+                  onChange={(e) => handleInputChange('recurrenceType', e.target.value as 'weekly' | 'biweekly' | 'monthly')}
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 1 }}
+                >
+                  <MenuItem value="weekly">Semanal</MenuItem>
+                  <MenuItem value="biweekly">Quinzenal</MenuItem>
+                  <MenuItem value="monthly">Mensal</MenuItem>
+                </TextField>
+              )}
+            </Card>
           </Box>
         );
 

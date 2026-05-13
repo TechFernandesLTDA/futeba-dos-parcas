@@ -2,38 +2,37 @@ package com.futebadosparcas.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.BuildConfig
+import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.ui.theme.FutebaTheme
-import com.futebadosparcas.R
-/**
- * Activity de Registro (descontinuada).
- *
- * Nota: O registro agora é feito via Google Sign-In.
- * Esta Activity mostra um Toast informativo e redireciona para o Login.
- *
- * Modernizada para Jetpack Compose.
- */
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
 class RegisterActivityCompose : AppCompatActivity() {
+
+    private val viewModel: RegisterViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             FutebaTheme {
-                RegisterScreen(
-                    versionName = BuildConfig.VERSION_NAME,
-                    onNavigateToLogin = {
-                        // Mostrar Toast informativo
-                        Toast.makeText(
-                            this@RegisterActivityCompose,
-                            getString(R.string.register_use_google_button),
-                            Toast.LENGTH_LONG
-                        ).show()
+                val uiState by viewModel.registerState.collectAsStateWithLifecycle()
 
-                        // Voltar para a tela anterior (geralmente Login)
+                RegisterScreen(
+                    uiState = uiState,
+                    versionName = BuildConfig.VERSION_NAME,
+                    onRegisterWithEmail = { email, password, name ->
+                        viewModel.registerWithEmailAndPassword(email, password, name)
+                    },
+                    onNavigateToLogin = { finish() },
+                    onNavigateToMain = {
+                        val intent = Intent(this, MainActivityCompose::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
                         finish()
                     }
                 )

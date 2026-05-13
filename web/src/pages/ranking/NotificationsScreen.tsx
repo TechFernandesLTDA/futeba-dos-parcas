@@ -28,6 +28,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { EmptyState } from '../../components/common/EmptyState';
 
 export const NotificationsScreen: React.FC = () => {
   useDocumentTitle('Notificações');
@@ -92,7 +93,7 @@ export const NotificationsScreen: React.FC = () => {
             <Badge badgeContent={unreadCount} color="error" sx={{ mr: 1 }} />
           )}
           {unreadCount > 0 && (
-            <IconButton onClick={markAllAsRead} aria-label="Marcar todas como lidas" sx={{ padding: '10px' }}>
+            <IconButton onClick={markAllAsRead} aria-label="Marcar todas como lidas" sx={{ padding: theme.spacing(1.25) }}>
               <CheckIcon fontSize="small" />
             </IconButton>
           )}
@@ -115,12 +116,11 @@ export const NotificationsScreen: React.FC = () => {
             </Card>
           ))
         ) : notifications.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <NotificationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhuma notificação
-            </Typography>
-          </Box>
+            <EmptyState
+              icon={<NotificationIcon />}
+              title="Nenhuma notificação"
+              description="Você receberá notificações sobre jogos, conquistas e convites"
+            />
         ) : (
           <List disablePadding aria-label="Lista de notificações">
             {notifications.map((notification) => (
@@ -148,7 +148,7 @@ export const NotificationsScreen: React.FC = () => {
                       </Typography>
                     </Box>
                     {!notification.read && (
-                      <IconButton onClick={() => markAsRead(notification.id)} aria-label="Marcar como lida" sx={{ padding: '10px' }}>
+                      <IconButton onClick={() => markAsRead(notification.id)} aria-label="Marcar como lida" sx={{ padding: theme.spacing(1.25) }}>
                         <CheckIcon fontSize="small" color="success" />
                       </IconButton>
                     )}

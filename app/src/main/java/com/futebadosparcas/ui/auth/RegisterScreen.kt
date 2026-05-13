@@ -1,101 +1,259 @@
 package com.futebadosparcas.ui.auth
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
-/**
- * Tela de Registro (descontinuada).
- *
- * Nota: O registro agora é feito via Google Sign-In.
- * Esta tela mostra uma mensagem informativa e redireciona para o Login.
- *
- * A Activity é finalizada imediatamente após mostrar a mensagem.
- */
+
 @Composable
 fun RegisterScreen(
+    uiState: RegisterState,
     versionName: String = BuildConfig.VERSION_NAME,
-    onNavigateToLogin: () -> Unit
+    onRegisterWithEmail: (email: String, password: String, name: String) -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onNavigateToMain: () -> Unit
 ) {
-    // Navegar para o Login imediatamente
-    LaunchedEffect(Unit) {
-        onNavigateToLogin()
+    LaunchedEffect(uiState) {
+        if (uiState is RegisterState.Success) {
+            onNavigateToMain()
+        }
     }
 
-    // Mostrar diálogo informativo durante navegação
-    Dialog(
-        onDismissRequest = { },
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false
-        )
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        Surface(
+        Box(
             modifier = Modifier
-                .padding(32.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = colorScheme.surface
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(1000f, 1000f)
+                    )
+                )
         ) {
             Column(
                 modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Logo
-                AsyncImage(
-                    model = R.mipmap.ic_launcher,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Text(
                     text = stringResource(R.string.auth_register_title),
-                    style = typography.titleLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = stringResource(R.string.auth_register_message),
-                    style = typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = colorScheme.onSurface
+                    text = stringResource(R.string.auth_register_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                Text(
-                    text = stringResource(R.string.auth_register_redirect),
-                    style = typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    color = colorScheme.onSurfaceVariant
+                RegisterForm(
+                    uiState = uiState,
+                    onRegisterWithEmail = onRegisterWithEmail
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = onNavigateToLogin) {
+                    Text(stringResource(R.string.auth_already_have_account))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RegisterForm(
+    uiState: RegisterState,
+    onRegisterWithEmail: (email: String, password: String, name: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.auth_name_label)) },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.auth_email_label)) },
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.auth_password_label)) },
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (passwordVisible) "Ocultar senha" else "Mostrar senha"
+                        )
+                    }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+
+            Button(
+                onClick = { onRegisterWithEmail(email, password, name) },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                enabled = email.isNotBlank() && password.isNotBlank() && name.isNotBlank() && uiState !is RegisterState.Loading
+            ) {
+                Text(stringResource(R.string.auth_register_button))
+            }
+
+            AnimatedVisibility(
+                visible = uiState is RegisterState.Loading,
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut() + slideOutVertically()
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 4.dp
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = uiState is RegisterState.Error,
+                enter = fadeIn() + scaleIn() + slideInVertically(),
+                exit = fadeOut() + scaleOut() + slideOutVertically()
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = (uiState as? RegisterState.Error)?.message ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
     }

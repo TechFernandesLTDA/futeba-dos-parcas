@@ -167,7 +167,7 @@ private fun BadgesSuccessContent(
         // Header com progresso
         BadgeProgressHeader(
             totalUnlocked = state.totalUnlocked,
-            totalAvailable = 11 // Total de BadgeType disponíveis
+            totalAvailable = 25 // Total de BadgeType disponíveis (11 originais + 14 web parity)
         )
 
         // Filtros por categoria
@@ -816,6 +816,20 @@ private fun getBadgeEmoji(type: BadgeType): String {
         BadgeType.LENDA -> "🏆"
         BadgeType.FAIXA_PRETA -> "🥋"
         BadgeType.MITO -> "💎"
+        BadgeType.FIRST_GAME -> "⚽"
+        BadgeType.STREAK_3 -> "🔥"
+        BadgeType.MVP_1 -> "⭐"
+        BadgeType.MVP_10 -> "🌟"
+        BadgeType.MVP_50 -> "👑"
+        BadgeType.GOALS_10 -> "🥅"
+        BadgeType.GOALS_100 -> "⚽"
+        BadgeType.GOALS_500 -> "🎯"
+        BadgeType.ASSISTS_50 -> "👟"
+        BadgeType.ASSISTS_200 -> "🎭"
+        BadgeType.WINS_10 -> "🏅"
+        BadgeType.WINS_50 -> "🏆"
+        BadgeType.GAMES_100 -> "🎖️"
+        BadgeType.GAMES_500 -> "🏟️"
     }
 }
 

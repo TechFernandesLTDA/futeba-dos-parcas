@@ -3,18 +3,16 @@ import xpConstants from '../../../shared/xp-constants.json';
 
 export type LeagueDivision = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'CHAMPION';
 
-export type BadgeType = 
-  | 'HAT_TRICK' 
-  | 'PAREDAO' 
-  | 'ARTILHEIRO_MES'
-  | 'FOMINHA' 
-  | 'STREAK_7' 
-  | 'STREAK_30'
-  | 'ORGANIZADOR_MASTER' 
-  | 'INFLUENCER'
-  | 'LENDA' 
-  | 'FAIXA_PRETA' 
-  | 'MITO';
+export type BadgeType =
+  | 'HAT_TRICK' | 'PAREDAO' | 'ARTILHEIRO_MES'
+  | 'FOMINHA' | 'STREAK_7' | 'STREAK_30'
+  | 'ORGANIZADOR_MASTER' | 'INFLUENCER'
+  | 'LENDA' | 'FAIXA_PRETA' | 'MITO'
+  | 'FIRST_GAME' | 'STREAK_3' | 'MVP_1' | 'MVP_10' | 'MVP_50'
+  | 'GOALS_10' | 'GOALS_100' | 'GOALS_500'
+  | 'ASSISTS_50' | 'ASSISTS_200'
+  | 'WINS_10' | 'WINS_50'
+  | 'GAMES_100' | 'GAMES_500';
 
 export type BadgeRarity = 'COMUM' | 'RARO' | 'EPICO' | 'LENDARIO';
 
@@ -210,6 +208,15 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: 'wins_50', name: 'Campeão', description: 'Vença 50 jogos', icon: '🏆', category: 'wins', rarity: 'RARO', requirement: '50 vitórias', xpReward: 400 },
   { id: 'games_100', name: 'Veterano', description: 'Participe de 100 jogos', icon: '🎖️', category: 'participation', rarity: 'EPICO', requirement: '100 jogos', xpReward: 500 },
   { id: 'games_500', name: 'Lenda Viva', description: 'Participe de 500 jogos', icon: '🏟️', category: 'participation', rarity: 'LENDARIO', requirement: '500 jogos', xpReward: 2000 },
+  { id: 'HAT_TRICK', name: 'Hat-Trick', description: 'Marque 3+ gols em uma única partida', icon: '⚽', category: 'performance', rarity: 'RARO', requirement: '3+ gols em uma partida', xpReward: 150 },
+  { id: 'PAREDAO', name: 'Paredão', description: 'Termine uma partida sem sofrer gols como goleiro', icon: '🧤', category: 'performance', rarity: 'RARO', requirement: 'Clean sheet como goleiro', xpReward: 150 },
+  { id: 'ARTILHEIRO_MES', name: 'Artilheiro do Mês', description: 'Seja o maior goleador do mês', icon: '👑', category: 'performance', rarity: 'EPICO', requirement: 'Mais gols no mês', xpReward: 300 },
+  { id: 'FOMINHA', name: 'Fominha', description: 'Jogue 3 partidas na mesma semana', icon: '🔥', category: 'presence', rarity: 'COMUM', requirement: '3 jogos na mesma semana', xpReward: 50 },
+  { id: 'ORGANIZADOR_MASTER', name: 'Organizador Master', description: 'Organize 10 jogos', icon: '📋', category: 'community', rarity: 'RARO', requirement: '10 jogos organizados', xpReward: 200 },
+  { id: 'INFLUENCER', name: 'Influencer', description: 'Convide 5 novos jogadores para o App', icon: '✨', category: 'community', rarity: 'RARO', requirement: '5 novos jogadores convidados', xpReward: 200 },
+  { id: 'LENDA', name: 'Lenda', description: 'Alcance o nível máximo', icon: '🏆', category: 'level', rarity: 'LENDARIO', requirement: 'Nível 20', xpReward: 1000 },
+  { id: 'FAIXA_PRETA', name: 'Faixa Preta', description: 'Participe de 200 jogos', icon: '🥋', category: 'level', rarity: 'EPICO', requirement: '200 jogos', xpReward: 800 },
+  { id: 'MITO', name: 'Mito', description: 'Seja eleito MVP 20 vezes', icon: '💎', category: 'level', rarity: 'LENDARIO', requirement: '20 MVPs', xpReward: 1000 },
 ];
 
 export const BADGE_RARITY_CONFIG: Record<BadgeRarity, { label: string; color: string }> = {

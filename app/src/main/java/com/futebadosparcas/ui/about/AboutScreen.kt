@@ -7,70 +7,155 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
-/**
- * Tela Sobre o aplicativo
- *
- * Features:
- * - Logo e nome do app
- * - Versão atual
- * - Descrição do app
- * - Links úteis (GitHub, Contato, Avaliar)
- * - Licenças e créditos
- */
 @Composable
 fun AboutScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onDeleteAccount: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val context = LocalContext.current
+    var showFirstStepDialog by remember { mutableStateOf(false) }
+    var showSecondStepDialog by remember { mutableStateOf(false) }
+    var confirmEmail by remember { mutableStateOf("") }
+    var isDeleting by remember { mutableStateOf(false) }
+    var deleteError by remember { mutableStateOf<String?>(null) }
+
+    if (showFirstStepDialog) {
+        AlertDialog(
+            onDismissRequest = { showFirstStepDialog = false },
+            icon = { Icon(Icons.Default.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text(stringResource(R.string.about_delete_account)) },
+            text = { Text(stringResource(R.string.about_delete_account_warning)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showFirstStepDialog = false
+                        showSecondStepDialog = true
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.about_delete_account_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFirstStepDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showSecondStepDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isDeleting) showSecondStepDialog = false
+            },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text(stringResource(R.string.about_delete_account_confirm_title)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.about_delete_account_confirm_message))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = confirmEmail,
+                        onValueChange = { confirmEmail = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.about_delete_account_type_email)) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Done
+                        ),
+                        singleLine = true,
+                        shape = MaterialTheme.shapes.medium,
+                        enabled = !isDeleting
+                    )
+                    if (deleteError != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = deleteError!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    if (isDeleting) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isDeleting = true
+                        deleteError = null
+                        onDeleteAccount()
+                    },
+                    enabled = confirmEmail.isNotBlank() && !isDeleting,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.about_delete_account_confirm_button))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showSecondStepDialog = false },
+                    enabled = !isDeleting
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header com logo
         item {
             AboutHeader()
         }
 
-        // Card de Versão
         item {
             VersionCard()
         }
 
-        // Card de Descrição
         item {
             DescriptionCard()
         }
 
-        // Card de Links
         item {
             LinksCard(
                 onRateClick = {
-                    // Link para Play Store
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
                     }
                     context.startActivity(intent)
                 },
                 onContactClick = {
-                    // Abrir email
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = Uri.parse("mailto:techfernandesltda@gmail.com")
                         putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.about_feedback_subject))
@@ -78,28 +163,21 @@ fun AboutScreen(
                     context.startActivity(intent)
                 },
                 onPrivacyClick = {
-                    // Link para politica de privacidade
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://futebadosparcas.web.app/privacy_policy.html")
                     }
                     context.startActivity(intent)
                 },
                 onTermsClick = {
-                    // Link para termos de uso
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://futebadosparcas.web.app/terms_of_service.html")
                     }
                     context.startActivity(intent)
                 },
                 onDeleteAccountClick = {
-                    // Link para exclusão de conta (Play Store mandatory)
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://futebadosparcas.web.app/delete_account.html")
-                    }
-                    context.startActivity(intent)
+                    showFirstStepDialog = true
                 },
                 onChildSafetyClick = {
-                    // Link para padrões de segurança infantil (Play Store mandatory desde 2024)
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://futebadosparcas.web.app/child_safety.html")
                     }
@@ -108,12 +186,10 @@ fun AboutScreen(
             )
         }
 
-        // Card de Créditos
         item {
             CreditsCard()
         }
 
-        // Footer
         item {
             Text(
                 text = stringResource(R.string.about_footer_text),

@@ -1,15 +1,12 @@
 package com.futebadosparcas.ui.auth
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,17 +18,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,28 +52,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
-/**
- * Tela de login moderna em Jetpack Compose.
- *
- * Design:
- * - Material Design 3
- * - Espaçamento vertical equilibrado
- * - Animações sutis de entrada
- * - Card elevado para login
- * - Gradiente sutil no background
- */
 @Composable
 fun LoginScreen(
     uiState: LoginState,
     versionName: String = BuildConfig.VERSION_NAME,
     onGoogleSignInClick: () -> Unit,
+    onEmailPasswordSignIn: (email: String, password: String) -> Unit,
+    onForgotPassword: (email: String) -> Unit,
+    onNavigateToRegister: () -> Unit,
     onNavigateToMain: () -> Unit
 ) {
     val context = LocalContext.current
@@ -144,7 +150,10 @@ fun LoginScreen(
                 // Middle Section: Login Card
                 LoginCard(
                     uiState = uiState,
-                    onGoogleSignInClick = onGoogleSignInClick
+                    onGoogleSignInClick = onGoogleSignInClick,
+                    onEmailPasswordSignIn = onEmailPasswordSignIn,
+                    onForgotPassword = onForgotPassword,
+                    onNavigateToRegister = onNavigateToRegister
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -187,8 +196,16 @@ private fun AppLogo() {
 @Composable
 private fun LoginCard(
     uiState: LoginState,
-    onGoogleSignInClick: () -> Unit
+    onGoogleSignInClick: () -> Unit,
+    onEmailPasswordSignIn: (email: String, password: String) -> Unit,
+    onForgotPassword: (email: String) -> Unit,
+    onNavigateToRegister: () -> Unit
 ) {
+    var showEmailForm by remember { mutableStateOf(false) }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -202,9 +219,8 @@ private fun LoginCard(
                 .fillMaxWidth()
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Título do Card
             Text(
                 text = stringResource(R.string.auth_sign_in_title),
                 style = MaterialTheme.typography.headlineSmall.copy(
@@ -214,7 +230,6 @@ private fun LoginCard(
                 textAlign = TextAlign.Center
             )
 
-            // Descrição
             Text(
                 text = stringResource(R.string.auth_sign_in_description),
                 style = MaterialTheme.typography.bodyMedium,
@@ -222,15 +237,83 @@ private fun LoginCard(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Botão Google Sign-In ou Loading
-            AnimatedVisibility(
-                visible = uiState !is LoginState.Loading,
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut() + scaleOut()
-            ) {
-                GoogleSignInButton(onClick = onGoogleSignInClick)
+            if (!showEmailForm) {
+                AnimatedVisibility(
+                    visible = uiState !is LoginState.Loading,
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut()
+                ) {
+                    GoogleSignInButton(onClick = onGoogleSignInClick)
+                }
+
+                TextButton(onClick = { showEmailForm = true }) {
+                    Text(stringResource(R.string.auth_sign_in_with_email))
+                }
+            } else {
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.auth_email_label)) },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    ),
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.medium
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.auth_password_label)) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (passwordVisible) "Ocultar senha" else "Mostrar senha"
+                            )
+                        }
+                    },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.medium
+                )
+
+                Button(
+                    onClick = { onEmailPasswordSignIn(email, password) },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = email.isNotBlank() && password.isNotBlank() && uiState !is LoginState.Loading
+                ) {
+                    Text(stringResource(R.string.auth_sign_in_title))
+                }
+
+                TextButton(
+                    onClick = {
+                        if (email.isNotBlank()) onForgotPassword(email)
+                    },
+                    enabled = email.isNotBlank()
+                ) {
+                    Text(stringResource(R.string.auth_forgot_password))
+                }
+
+                TextButton(onClick = { showEmailForm = false }) {
+                    Text(stringResource(R.string.auth_back_to_google))
+                }
+            }
+
+            TextButton(onClick = onNavigateToRegister) {
+                Text(stringResource(R.string.auth_no_account_register))
             }
 
             AnimatedVisibility(
@@ -255,7 +338,6 @@ private fun LoginCard(
                 }
             }
 
-            // Mensagem de erro
             AnimatedVisibility(
                 visible = uiState is LoginState.Error,
                 enter = fadeIn() + scaleIn(),
