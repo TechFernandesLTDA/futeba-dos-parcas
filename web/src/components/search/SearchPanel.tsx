@@ -36,6 +36,7 @@ import { LoadingState } from '../common/GameCard';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp } from '../../types/gamification';
+import { useToast } from '../../contexts';
 
 const logger = createLogger('SearchPanel');
 
@@ -79,6 +80,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { showError } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -159,8 +161,9 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       if (requestIdRef.current !== requestId) return;
       setResults(all);
     } catch (err) {
-      if (requestIdRef.current !== requestId) return;
       logger.error('Erro ao buscar:', err);
+      if (requestIdRef.current !== requestId) return;
+      showError('Erro ao buscar. Tente novamente.');
     } finally {
       if (requestIdRef.current === requestId) setLoading(false);
     }
