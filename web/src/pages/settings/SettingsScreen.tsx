@@ -32,6 +32,7 @@ import {
   EmojiEvents as TrophyIcon,
   RateReview as FeedbackIcon,
   DeleteForever as DeleteForeverIcon,
+  Notifications as NotificationsIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -237,6 +238,13 @@ export const SettingsScreen: React.FC = () => {
                     <PaletteIcon />
                   </ListItemIcon>
                   <ListItemText primary={t('theme.title')} secondary="Personalizar aparência" />
+                </ListItemButton>
+                <Divider />
+                <ListItemButton onClick={() => navigate('/settings/notifications')}>
+                  <ListItemIcon>
+                    <NotificationsIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Notificações" secondary="Preferências de notificações" />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/settings/gamification')}>

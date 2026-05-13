@@ -7,14 +7,20 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useNotificationPermission');
 
+interface BackgroundNotificationPayload {
+  type: string;
+  data: Record<string, unknown>;
+  notification: Record<string, unknown>;
+}
+
 export function useNotificationPermission() {
   const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
   const [loading, setLoading] = useState(false);
+  const [backgroundNotificationTick, setBackgroundNotificationTick] = useState(0);
 
-  // Escutar notificações em foreground
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     let mounted = true;
@@ -35,6 +41,23 @@ export function useNotificationPermission() {
       mounted = false;
       if (unsubscribe) unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      const payload = event.data as BackgroundNotificationPayload;
+      if (payload?.type === 'FCM_BACKGROUND_NOTIFICATION') {
+        logger.info('Background notification received from SW:', payload);
+        setBackgroundNotificationTick((prev) => prev + 1);
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      };
+    }
   }, []);
 
   const requestPermission = useCallback(async () => {
@@ -61,24 +84,16 @@ export function useNotificationPermission() {
 
         const token = await getToken(messaging, { vapidKey });
         if (token) {
-          // Salvar token no Firestore usando arrayUnion
-          // e limitar o array a 5 tokens para evitar
-          // crescimento ilimitado (#921)
           const MAX_FCM_TOKENS = 5;
           const userRef = doc(db, 'users', user.id);
           await updateDoc(userRef, {
             fcmTokens: arrayUnion(token),
           });
-          // Verificar se ultrapassou o limite e remover
-          // tokens mais antigos (além do novo)
           const snap = await getDoc(userRef);
           if (snap.exists()) {
             const tokens: string[] =
               (snap.data()?.fcmTokens as string[]) || [];
             if (tokens.length > MAX_FCM_TOKENS) {
-              // Remover tokens excedentes (os mais antigos,
-              // que são os primeiros no array) — 1 único
-              // updateDoc com spread para evitar N writes (#978)
               const tokensToRemove =
                 tokens.slice(0, tokens.length - MAX_FCM_TOKENS);
               await updateDoc(userRef, {
@@ -90,10 +105,11 @@ export function useNotificationPermission() {
       }
     } catch (error) {
       logger.error('Erro ao solicitar permissão de notificação:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   }, [user?.id]);
 
-  return { permission, requestPermission, loading };
+  return { permission, requestPermission, loading, backgroundNotificationTick };
 }
