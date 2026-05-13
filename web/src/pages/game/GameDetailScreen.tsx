@@ -12,6 +12,8 @@ import {
   IconButton,
   Tab,
   Tabs,
+  TextField,
+  Stack,
   List,
   ListItem,
   ListItemAvatar,
@@ -40,7 +42,11 @@ import {
   Share as ShareIcon,
   Navigation as NavIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
+import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppBreadcrumbs } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { softDeleteGame } from '../../services/cloudFunctions';
@@ -91,6 +97,15 @@ export const GameDetailScreen: React.FC = () => {
   const [positionDialogOpen, setPositionDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editForm, setEditForm] = useState({
+    date: '',
+    time: '',
+    maxPlayers: 0,
+    rules: '',
+  });
+  const queryClient = useQueryClient();
 
   const myConfirmation = confirmations.find((c) => c.userId === currentUser?.uid);
   const isConfirmed = myConfirmation?.status === 'CONFIRMED';
@@ -172,6 +187,60 @@ export const GameDetailScreen: React.FC = () => {
     }
   };
 
+  // Abre dialog de edição populando form com valores atuais
+  const openEditDialog = () => {
+    if (!game) return;
+    setEditForm({
+      date: game.date ?? '',
+      time: game.time ?? '',
+      maxPlayers: game.maxPlayers ?? 0,
+      rules: game.rules ?? '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  // Salva edição: atualiza date/time/dateTime sincronizados + max_players + rules
+  const handleSaveEdit = async () => {
+    if (!gameId || !game) return;
+
+    // Validação mínima
+    if (!editForm.date || !editForm.time) {
+      showError('Informe data e horário');
+      return;
+    }
+    if (editForm.maxPlayers < 2 || editForm.maxPlayers > 50) {
+      showError('Número máximo de jogadores deve ser entre 2 e 50');
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      // Reconstruir dateTime Timestamp pra manter date/time/date_time consistentes
+      // (mesmo padrão de CreateGameScreen.handleSubmit)
+      const [year, month, day] = editForm.date.split('-').map(Number);
+      const [hours, minutes] = editForm.time.split(':').map(Number);
+      const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
+
+      const gameRef = doc(db, 'games', gameId);
+      await updateDoc(gameRef, {
+        date: editForm.date,
+        time: editForm.time,
+        date_time: dateTime,
+        max_players: editForm.maxPlayers,
+        rules: editForm.rules,
+        updated_at: serverTimestamp(),
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
+      setEditDialogOpen(false);
+      showSuccess('Jogo atualizado');
+    } catch (err) {
+      showError(getFirestoreErrorMessage(err));
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
@@ -221,10 +290,9 @@ export const GameDetailScreen: React.FC = () => {
           </IconButton>
           {canManage && (
             <>
-              {/* TODO: Implementar tela de edição de jogo */}
-              {/* <IconButton onClick={() => navigate(`/game/${gameId}/edit`)} aria-label="Editar jogo">
+              <IconButton onClick={openEditDialog} aria-label="Editar jogo">
                 <EditIcon />
-              </IconButton> */}
+              </IconButton>
               <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label="Excluir jogo">
                 <DeleteIcon />
               </IconButton>
@@ -687,6 +755,68 @@ export const GameDetailScreen: React.FC = () => {
           <Button onClick={() => setCancelDialogOpen(false)}>Não</Button>
           <Button onClick={handleCancelPresence} color="error" variant="contained">
             Sim, cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="edit-game-dialog-title"
+      >
+        <DialogTitle id="edit-game-dialog-title">Editar Jogo</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField
+              label="Data"
+              type="date"
+              value={editForm.date}
+              onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              disabled={editLoading}
+            />
+            <TextField
+              label="Horário"
+              type="time"
+              value={editForm.time}
+              onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              disabled={editLoading}
+            />
+            <TextField
+              label="Máximo de jogadores"
+              type="number"
+              value={editForm.maxPlayers}
+              onChange={(e) =>
+                setEditForm({ ...editForm, maxPlayers: parseInt(e.target.value, 10) || 0 })
+              }
+              inputProps={{ min: 2, max: 50 }}
+              fullWidth
+              disabled={editLoading}
+              helperText="Entre 2 e 50"
+            />
+            <TextField
+              label="Regras"
+              multiline
+              rows={3}
+              value={editForm.rules}
+              onChange={(e) => setEditForm({ ...editForm, rules: e.target.value })}
+              fullWidth
+              disabled={editLoading}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)} disabled={editLoading}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSaveEdit} variant="contained" disabled={editLoading}>
+            {editLoading ? 'Salvando...' : 'Salvar'}
           </Button>
         </DialogActions>
       </Dialog>
