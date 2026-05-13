@@ -23,11 +23,19 @@ import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PreferredPosition } from '../../types/user';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('EditProfileScreen');
+
+// Limites para upload do avatar (alinhados com storage.rules: 2MB, image/*)
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+const AVATAR_ACCEPTED_PREFIX = 'image/';
 
 const POSITIONS: { value: PreferredPosition; label: string }[] = [
   { value: 'GOLEIRO', label: 'Goleiro' },
@@ -71,16 +79,45 @@ export const EditProfileScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const handlePhotoClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+    if (!file) return;
+
+    // Valida tipo (storage.rules exige image/*)
+    if (!file.type.startsWith(AVATAR_ACCEPTED_PREFIX)) {
+      showError('Arquivo inválido. Selecione uma imagem.');
+      return;
     }
+
+    // Valida tamanho (storage.rules limita a 2MB)
+    if (file.size > AVATAR_MAX_BYTES) {
+      showError('Imagem muito grande. Máximo: 2MB.');
+      return;
+    }
+
+    // Revoga URL anterior pra evitar memory leak
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setSelectedFile(file);
   };
+
+  // Cleanup de blob URL ao desmontar
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const loadProfile = useCallback(async () => {
     if (!currentUser) return;
@@ -139,12 +176,37 @@ export const EditProfileScreen: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const uploadAvatar = async (file: File, uid: string): Promise<string> => {
+    // Path alinhado com storage.rules: users/{uid}/{fileName}
+    const fileRef = storageRef(storage, `users/${uid}/avatar.jpg`);
+    await uploadBytes(fileRef, file, { contentType: file.type });
+    return getDownloadURL(fileRef);
+  };
+
   const handleSave = async () => {
     if (!validate() || !currentUser) return;
 
     setSaving(true);
     setError(null);
 
+    // 1) Upload do avatar (se houver arquivo selecionado)
+    let uploadedPhotoUrl: string | null = null;
+    if (selectedFile) {
+      setUploadingAvatar(true);
+      try {
+        uploadedPhotoUrl = await uploadAvatar(selectedFile, currentUser.uid);
+      } catch (err) {
+        logger.error('Falha ao enviar foto de perfil:', err);
+        setError('Falha ao enviar foto. Tente novamente.');
+        showError('Falha ao enviar foto. Tente novamente.');
+        setUploadingAvatar(false);
+        setSaving(false);
+        return;
+      }
+      setUploadingAvatar(false);
+    }
+
+    // 2) Persiste demais campos do perfil no Firestore
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         name: formData.name,
@@ -156,14 +218,24 @@ export const EditProfileScreen: React.FC = () => {
         updated_at: serverTimestamp(),
       });
 
+      // 3) Atualiza Firebase Auth profile (displayName e/ou photoURL)
+      const profileUpdate: { displayName?: string; photoURL?: string } = {};
       if (formData.name !== currentUser.displayName) {
-        await updateUserProfile?.({ displayName: formData.name });
+        profileUpdate.displayName = formData.name;
+      }
+      if (uploadedPhotoUrl) {
+        profileUpdate.photoURL = uploadedPhotoUrl;
+      }
+      if (Object.keys(profileUpdate).length > 0) {
+        await updateUserProfile?.(profileUpdate);
       }
 
       setSuccess(true);
+      setSelectedFile(null); // limpa file pendente após sucesso
       setInitialData(formData); // sync para evitar dirty guard após save
       setTimeout(() => navigate('/profile'), 1500);
     } catch (err) {
+      logger.error('Falha ao salvar perfil:', err);
       setError(getFirestoreErrorMessage(err));
       showError('Erro ao salvar perfil. Tente novamente.');
     } finally {
@@ -187,7 +259,7 @@ export const EditProfileScreen: React.FC = () => {
       formData.preferredPosition !== initialData.preferredPosition ||
       formData.bio !== initialData.bio ||
       formData.favoriteTeam !== initialData.favoriteTeam ||
-      previewUrl !== null);
+      selectedFile !== null);
 
   return (
     <FormScaffold
@@ -195,7 +267,7 @@ export const EditProfileScreen: React.FC = () => {
       closeDestination="/profile"
       closeVariant="X"
       isDirty={isDirty}
-      loading={saving}
+      loading={saving || uploadingAvatar}
     >
       <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         {error && (
@@ -324,10 +396,10 @@ export const EditProfileScreen: React.FC = () => {
           fullWidth
           size="large"
           onClick={handleSave}
-          disabled={saving}
-          startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+          disabled={saving || uploadingAvatar}
+          startIcon={saving || uploadingAvatar ? <CircularProgress size={20} /> : <SaveIcon />}
         >
-          Salvar Alterações
+          {uploadingAvatar ? 'Enviando foto...' : 'Salvar Alterações'}
         </Button>
       </Container>
     </FormScaffold>
