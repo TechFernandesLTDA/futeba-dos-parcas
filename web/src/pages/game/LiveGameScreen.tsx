@@ -189,10 +189,14 @@ export const LiveGameScreen: React.FC = () => {
     };
   }, [gameId]);
 
+  // Extrai o timestamp (number) para estabilizar a dep array do effect:
+  // `score?.startedAt` é uma instância de Date nova a cada snapshot, recriando
+  // o interval e gerando thrash. `getTime()` retorna number primitivo estável.
+  const startedAtMs = score?.startedAt?.getTime();
   useEffect(() => {
-    if (isRunning && score?.startedAt) {
+    if (isRunning && startedAtMs) {
       timerRef.current = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - score.startedAt.getTime()) / 1000));
+        setElapsedTime(Math.floor((Date.now() - startedAtMs) / 1000));
       }, 1000);
     }
     return () => {
@@ -200,7 +204,7 @@ export const LiveGameScreen: React.FC = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning, score?.startedAt]);
+  }, [isRunning, startedAtMs]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
