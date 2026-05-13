@@ -4,7 +4,6 @@ export * from './useBadges';
 export * from './useLeague';
 export * from './useLocations';
 export * from './usePlayers';
-export * from './useSearch';
 export * from './useNotifications';
 export * from './useRealtime';
 export * from './usePaginatedQuery';
