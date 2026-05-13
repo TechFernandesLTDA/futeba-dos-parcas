@@ -18,6 +18,7 @@ import {
 import {
   Search as SearchIcon,
   PersonAdd as PersonAddIcon,
+  PersonOff as PersonOffIcon,
 } from '@mui/icons-material';
 import { FormScaffold } from '../../components/layout';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
@@ -25,7 +26,7 @@ import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { LoadingState, PlayerAvatar } from '../../components/common/GameCard';
+import { LoadingState, PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -55,6 +56,7 @@ export const InvitePlayersScreen: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
@@ -116,6 +118,7 @@ export const InvitePlayersScreen: React.FC = () => {
     if (!searchQuery.trim()) return;
 
     setSearching(true);
+    setHasSearched(true);
     try {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('name', '>=', searchQuery), where('name', '<=', searchQuery + '\uf8ff'));
@@ -184,7 +187,11 @@ export const InvitePlayersScreen: React.FC = () => {
           fullWidth
           placeholder="Buscar por nome..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            // Resetar empty state quando o usuário digitar novamente (#1125)
+            if (hasSearched) setHasSearched(false);
+          }}
           aria-label="Buscar jogador por nome"
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           InputProps={{
@@ -196,6 +203,17 @@ export const InvitePlayersScreen: React.FC = () => {
           }}
           sx={{ mb: 2 }}
         />
+
+        {/* Empty state quando a busca foi executada e não retornou resultados (#1125) */}
+        {hasSearched && !searching && searchResults.length === 0 && (
+          <Box sx={{ mb: 2 }}>
+            <EmptyState
+              icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
+              title="Nenhum jogador encontrado"
+              description={`Não encontramos jogadores para "${searchQuery}". Tente outro nome.`}
+            />
+          </Box>
+        )}
 
         {searchResults.length > 0 && (
           <Card sx={{ mb: 2 }}>

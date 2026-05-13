@@ -28,6 +28,8 @@ import {
   ArrowBack as BackIcon,
   AdminPanelSettings as AdminIcon,
   Search as SearchIcon,
+  SearchOff as SearchOffIcon,
+  PersonOff as PersonOffIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, limit, getDocs, startAfter, DocumentSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -37,7 +39,7 @@ import { setUserRole as setUserRoleCallable } from '../../services/cloudFunction
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
-import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { PlayerAvatar, LoadingState, EmptyState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -205,6 +207,25 @@ export const UserManagementScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {loading ? (
           <LoadingState shimmerCount={8} itemType="LIST" />
+        ) : filteredUsers.length === 0 ? (
+          // Empty state — diferencia busca vazia de DB vazio (#1125)
+          searchQuery ? (
+            <EmptyState
+              icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
+              title="Nenhum usuário encontrado"
+              description={`Não encontramos usuários para "${searchQuery}". Tente outro termo.`}
+              action={{
+                label: 'Limpar busca',
+                onClick: () => setSearchQuery(''),
+              }}
+            />
+          ) : (
+            <EmptyState
+              icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
+              title="Nenhum usuário cadastrado"
+              description="Ainda não há usuários no sistema."
+            />
+          )
         ) : (
           <>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
