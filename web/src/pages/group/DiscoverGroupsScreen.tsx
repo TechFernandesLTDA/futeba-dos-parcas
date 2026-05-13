@@ -8,10 +8,10 @@ import {
   CardActionArea,
   CardContent,
   Chip,
-  CircularProgress,
   Container,
   IconButton,
   InputAdornment,
+  Skeleton,
   Stack,
   TextField,
   Typography,
@@ -85,9 +85,24 @@ export const DiscoverGroupsScreen: React.FC = () => {
       />
 
       {loading && (
-        <Stack alignItems="center" spacing={2} mt={6}>
-          <CircularProgress />
-          <Typography color="text.secondary">Buscando grupos públicos…</Typography>
+        <Stack spacing={2} aria-busy="true" aria-label="Carregando grupos públicos">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Skeleton variant="circular" width={56} height={56} />
+                  <Box flex={1} minWidth={0}>
+                    <Skeleton variant="text" width="60%" height={28} />
+                    <Skeleton variant="text" width="90%" />
+                    <Stack direction="row" spacing={1} mt={1}>
+                      <Skeleton variant="rounded" width={80} height={24} />
+                      <Skeleton variant="rounded" width={100} height={24} />
+                    </Stack>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
         </Stack>
       )}
 
