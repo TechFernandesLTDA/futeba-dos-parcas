@@ -8,6 +8,7 @@ import {
   query,
   where,
   orderBy,
+  limit as fsLimit,
   onSnapshot,
   Timestamp,
   serverTimestamp,
@@ -98,14 +99,14 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
  * Filtra deleted_at no cliente (a maioria dos grupos publicos NAO esta
  * soft-deleted, entao nao vale criar um composite index).
  */
-async function fetchPublicGroups(limit = 100): Promise<Group[]> {
+async function fetchPublicGroups(maxResults = 100): Promise<Group[]> {
   const groupsRef = collection(db, 'groups');
-  const q = query(groupsRef, where('is_public', '==', true));
+  // FIX #1129: limit() server-side para evitar full-scan da collection.
+  const q = query(groupsRef, where('is_public', '==', true), fsLimit(maxResults));
   const snapshot = await getDocs(q);
 
   const groups: Group[] = [];
   for (const docSnap of snapshot.docs) {
-    if (groups.length >= limit) break;
     const raw = docSnap.data();
     // Skip soft-deleted (filtrado no cliente — sem composite index)
     if (raw.deleted_at) continue;
@@ -117,12 +118,20 @@ async function fetchPublicGroups(limit = 100): Promise<Group[]> {
     });
   }
 
-  // Ordenar por created_at DESC (mais novos primeiro)
-  groups.sort((a, b) => {
-    const aTs = (a as any).createdAt?.seconds ?? 0;
-    const bTs = (b as any).createdAt?.seconds ?? 0;
-    return bTs - aTs;
-  });
+  // Ordenar por createdAt DESC (mais novos primeiro).
+  // FIX #1118: aceita Date (getTime), Firestore Timestamp (.toMillis ou .seconds).
+  // Antes: só .seconds — quebrava quando createdAt já era Date.
+  const tsOf = (g: Group): number => {
+    const c = g.createdAt as unknown as
+      | { getTime?: () => number; seconds?: number; toMillis?: () => number }
+      | undefined;
+    if (!c) return 0;
+    if (typeof c.getTime === 'function') return c.getTime();
+    if (typeof c.toMillis === 'function') return c.toMillis();
+    if (typeof c.seconds === 'number') return c.seconds * 1000;
+    return 0;
+  };
+  groups.sort((a, b) => tsOf(b) - tsOf(a));
 
   return groups;
 }
