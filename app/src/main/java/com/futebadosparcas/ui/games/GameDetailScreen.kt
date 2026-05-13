@@ -53,6 +53,7 @@ import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ShareCardHelper
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.team.TeamBadgeById
+import com.futebadosparcas.ui.games.components.WaitlistSection
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -278,6 +279,9 @@ fun GameDetailContent(
     var showPositionDialog by remember { mutableStateOf(false) }
     var showMovePlayerDialog by remember { mutableStateOf<Pair<String,String>?>(null) }
 
+    // Lista de espera (Issue #32 / #1136): coleta o estado exposto pelo VM
+    val waitlistState by viewModel.waitlistState.collectAsStateWithLifecycle()
+
     if (showCancelDialog) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
@@ -410,6 +414,24 @@ fun GameDetailContent(
                     Text(stringResource(R.string.attendance_list), style = MaterialTheme.typography.titleLarge)
                     Text("${state.confirmations.size}/${state.game.maxPlayers}")
                 }
+            }
+
+            // Lista de espera (Issue #1136): renderiza secao com estado vindo do VM.
+            // O componente decide internamente se exibe (jogo cheio + canConfirm, ou lista nao vazia).
+            item {
+                val confirmedCount = state.confirmations.count { it.status == "CONFIRMED" }
+                val gameFull = confirmedCount >= state.game.maxPlayers
+                val canConfirm = !state.isUserConfirmed && !state.isUserPending && state.currentUserId != null
+
+                WaitlistSection(
+                    waitlistState = waitlistState,
+                    currentUserId = state.currentUserId,
+                    gameFull = gameFull,
+                    canConfirm = canConfirm,
+                    onJoinWaitlist = { viewModel.addToWaitlist(gameId, "ANY") },
+                    onLeaveWaitlist = { viewModel.removeFromWaitlist(gameId) },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
             }
 
             items(state.confirmations, key = { it.userId }) { confirmation ->
