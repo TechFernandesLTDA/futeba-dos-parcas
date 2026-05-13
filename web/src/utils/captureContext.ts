@@ -16,7 +16,7 @@ interface FeedbackContext {
 export function captureContext(): FeedbackContext {
   return {
     platform: 'web',
-    app_version: '1.21.3',
+    app_version: import.meta.env.VITE_APP_VERSION ?? 'dev',
     screen_route: typeof window !== 'undefined' ? window.location.pathname : '',
     device_info: {
       userAgent: navigator.userAgent,
