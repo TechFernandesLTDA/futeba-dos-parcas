@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { collection, query, orderBy, getDocs, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -9,9 +9,10 @@ import { createLogger } from '../utils/logger';
 const logger = createLogger('useLocations');
 
 // Busca todas as localizações
+// FIX #1129: limit(200) server-side para evitar full-scan da collection.
 async function fetchLocations(): Promise<Location[]> {
   const locRef = collection(db, 'locations');
-  const q = query(locRef, orderBy('name', 'asc'));
+  const q = query(locRef, orderBy('name', 'asc'), limit(200));
   const snapshot = await getDocs(q);
 
   return snapshot.docs.map((d) => ({
@@ -39,9 +40,10 @@ export const useLocations = () => {
   });
 
   // Listener real-time para invalidar cache quando localizações mudam
+  // FIX #1129: limit(200) server-side, alinhado com fetchLocations.
   useEffect(() => {
     const locRef = collection(db, 'locations');
-    const q = query(locRef, orderBy('name', 'asc'));
+    const q = query(locRef, orderBy('name', 'asc'), limit(200));
     let isFirstSnapshot = true;
 
     const unsubscribe = onSnapshot(
