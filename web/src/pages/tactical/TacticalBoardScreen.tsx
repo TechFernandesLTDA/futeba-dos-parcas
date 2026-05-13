@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
+  ButtonBase,
   Container,
   Typography,
   IconButton,
@@ -239,9 +240,12 @@ export const TacticalBoardScreen: React.FC = () => {
 
           {/* Players */}
           {players.map((player) => (
-            <Box
+            <ButtonBase
               key={player.id}
               onClick={() => setSelectedPlayer(player.id)}
+              aria-label={`Selecionar jogador ${player.name}`}
+              aria-pressed={selectedPlayer === player.id}
+              focusRipple
               sx={{
                 position: 'absolute',
                 left: `${player.x}%`,
@@ -249,6 +253,15 @@ export const TacticalBoardScreen: React.FC = () => {
                 transform: 'translate(-50%, -50%)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
+                borderRadius: '50%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                p: 0.5,
+                '&:focus-visible': {
+                  outline: `2px solid ${theme.palette.common.white}`,
+                  outlineOffset: 2,
+                },
               }}
             >
               <Avatar
@@ -276,7 +289,7 @@ export const TacticalBoardScreen: React.FC = () => {
               >
                 {player.name.split(' ')[0]}
               </Typography>
-            </Box>
+            </ButtonBase>
           ))}
 
           {/* Ball */}
