@@ -10,7 +10,9 @@ import { ToastProvider } from './contexts/ToastContext';
 import { ConnectionStatus, useOnlineStatus } from './components/common/ConnectionStatus';
 import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
+import { NotificationBell } from './components/common/NotificationBell';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
+import { useNotifications } from './hooks/useNotifications';
 import { AppLayout } from './components/layout';
 import { CommandPalette } from './components/search/CommandPalette';
 import { useIsGroupMember } from './hooks/useGroups';
@@ -451,6 +453,9 @@ function AppRoutes() {
 const SafeScreen = withErrorBoundary(AppRoutes);
 
 function MobileShell({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const { unreadCount } = useNotifications(user?.id);
+
   return (
     <Box
       sx={{
@@ -478,6 +483,20 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}
       >
+        {/* NotificationBell visível em mobile (xs) onde sidebar fica oculta */}
+        {user && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: 8,
+              right: 8,
+              zIndex: 1200,
+              display: { xs: 'block', lg: 'none' },
+            }}
+          >
+            <NotificationBell unreadCount={unreadCount} />
+          </Box>
+        )}
         {children}
       </Box>
     </Box>
