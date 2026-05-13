@@ -5,7 +5,6 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   IconButton,
   List,
   ListItem,
@@ -17,7 +16,6 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
-  alpha,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -195,6 +193,14 @@ export const SchedulesScreen: React.FC = () => {
             <Typography variant="body2" color="text.disabled">
               Crie agendamentos para jogos recorrentes
             </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setDialogOpen(true)}
+              sx={{ mt: 2 }}
+            >
+              Criar primeiro agendamento
+            </Button>
           </Box>
         ) : (
           <Card>
@@ -205,9 +211,12 @@ export const SchedulesScreen: React.FC = () => {
                   <ListItem
                     secondaryAction={
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => handleToggleActive(schedule)}>
-                          <Switch checked={schedule.isActive} size="small" />
-                        </IconButton>
+                        <Switch
+                          checked={schedule.isActive}
+                          onChange={() => handleToggleActive(schedule)}
+                          size="small"
+                          inputProps={{ 'aria-label': `${schedule.isActive ? 'Desativar' : 'Ativar'} ${schedule.name}` }}
+                        />
                         <IconButton onClick={() => handleDeleteClick(schedule)} aria-label={`Excluir ${schedule.name}`}>
                           <DeleteIcon color="error" />
                         </IconButton>
