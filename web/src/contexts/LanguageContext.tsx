@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -32,16 +32,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [i18n]);
 
   useEffect(() => {
-    i18n.on('languageChanged', (lng) => {
-      setLanguageState(lng as SupportedLanguage);
-    });
+    const handler = (lng: string) => setLanguageState(lng as SupportedLanguage);
+    i18n.on('languageChanged', handler);
     return () => {
-      i18n.off('languageChanged');
+      i18n.off('languageChanged', handler);
     };
   }, [i18n]);
 
+  const value = useMemo(() => ({ language, setLanguage }), [language, setLanguage]);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
