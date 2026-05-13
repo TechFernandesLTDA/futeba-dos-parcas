@@ -26,31 +26,12 @@ export async function generateGameFinishedActivityDirect(
   gameData: FirebaseFirestore.DocumentData,
   db: admin.firestore.Firestore
 ): Promise<void> {
-  // Idempotência: verificar se atividade já foi gerada
-  if (gameData.activity_generated) {
-    logger.info(
-      "[ACTIVITY_DIRECT] Atividade para game " +
-      `${gameId} já gerada.`
-    );
-    return;
-  }
+  logger.info(
+    "[ACTIVITY_DIRECT] Gerando atividade " +
+    `para game ${gameId}...`
+  );
 
-  // Validar que o jogo (parent) ainda existe
-  // e nao foi deletado desde o trigger
-  const gameSnap = await db
-    .collection("games")
-    .doc(gameId)
-    .get();
-  if (!gameSnap.exists) {
-    logger.warn(
-      "[ACTIVITY_DIRECT] Game " +
-      `${gameId} nao existe mais. ` +
-      "Atividade orfa evitada."
-    );
-    return;
-  }
-
-  // Verificar owner_id existe e eh valido
+  // Validate owner_id exists and is valid (read outside tx, non-critical)
   const ownerId = gameData.owner_id;
   if (!ownerId || typeof ownerId !== "string") {
     logger.warn(
@@ -61,88 +42,90 @@ export async function generateGameFinishedActivityDirect(
     return;
   }
 
-  logger.info(
-    "[ACTIVITY_DIRECT] Gerando atividade " +
-    `para game ${gameId}...`
-  );
+  // FIX #1145: Run idempotency check + write inside transaction
+  // with deterministic doc ID to prevent duplicate activities
+  // from at-least-once trigger deliveries.
+  try {
+    await db.runTransaction(async (tx) => {
+      const gameRef = db.collection("games").doc(gameId);
+      const freshSnap = await tx.get(gameRef);
+      if (!freshSnap.exists) return;
+      const fresh = freshSnap.data()!;
 
-  // Buscar detalhes adicionais em paralelo
-  const [liveScoreDoc, userDoc] = await Promise.all([
-    db.collection("live_scores").doc(gameId).get(),
-    db.collection("users").doc(gameData.owner_id).get(),
-  ]);
-  let description =
-    "Jogo finalizado! Confira os resultados e estatísticas.";
+      // Re-check activity_generated on fresh data (TOCTOU guard)
+      if (fresh.activity_generated) {
+        logger.info(
+          "[ACTIVITY_DIRECT] Atividade para game " +
+          `${gameId} já gerada (detected in transaction).`
+        );
+        return;
+      }
 
-  const userData = userDoc.data();
-  const userName = userData ? userData.name : "Alguém";
-  // FIX #992: Firestore canonico usa snake_case (photo_url),
-  // mas suporta camelCase (photoUrl) como fallback legacy.
-  const userPhoto = userData ?
-    (userData.photo_url ?? userData.photoUrl ?? null) :
-    null;
+      // Read user data outside tx (idempotent, non-critical)
+      const [liveScoreDoc, userDoc] = await Promise.all([
+        db.collection("live_scores").doc(gameId).get(),
+        db.collection("users").doc(ownerId).get(),
+      ]);
 
-  if (liveScoreDoc.exists) {
-    const score = liveScoreDoc.data();
-    if (score) {
-      // Suportar ambos os formatos: snake_case
-      // (Firestore) e camelCase (legado)
-      const t1Score =
-        score.team1_score ?? score.team1Score ?? 0;
-      const t2Score =
-        score.team2_score ?? score.team2Score ?? 0;
-      description =
-        `Placar Final: Time A ${t1Score}` +
-        ` x ${t2Score} Time B`;
-    }
+      let description = "Jogo finalizado! Confira os resultados e estatisticas.";
+      const userData = userDoc.data();
+      const userName = userData ? userData.name : "Alguem";
+      const userPhoto = userData ?
+        (userData.photo_url ?? userData.photoUrl ?? null) : null;
+
+      if (liveScoreDoc.exists) {
+        const score = liveScoreDoc.data();
+        if (score) {
+          const t1Score = score.team1_score ?? score.team1Score ?? 0;
+          const t2Score = score.team2_score ?? score.team2Score ?? 0;
+          description = `Placar Final: Time A ${t1Score} x ${t2Score} Time B`;
+        }
+      }
+
+      let visibility = "PUBLIC";
+      if (
+        fresh.visibility === "GROUP_ONLY" ||
+        fresh.visibility === "PRIVATE"
+      ) {
+        visibility = "FRIENDS";
+      } else if (fresh.is_public === false) {
+        visibility = "FRIENDS";
+      }
+
+      const activity = {
+        type: "GAME_FINISHED",
+        title: fresh.name || "Futebol dos Parcas",
+        description,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        reference_id: gameId,
+        reference_type: "GAME",
+        user_id: ownerId,
+        user_name: userName,
+        user_photo: userPhoto,
+        visibility,
+        metadata: {
+          location: fresh.location_name ?? fresh.locationName ?? "",
+          game_id: gameId,
+        },
+      };
+
+      // Use deterministic doc ID = gameId for idempotency
+      // If triggered twice, second write fails (doc already exists)
+      // or is no-op with merge:false
+      tx.set(db.collection("activities").doc(gameId), activity);
+      tx.update(gameRef, {activity_generated: true});
+    });
+
+    logger.info(
+      `[ACTIVITY_DIRECT] Atividade gerada para ${gameId}.`
+    );
+  } catch (error) {
+    logger.error(
+      "[ACTIVITY_DIRECT] Erro ao gerar atividade:",
+      error
+    );
+    throw error;
   }
-
-  // Determinar visibilidade baseada na visibilidade
-  // do jogo
-  let visibility = "PUBLIC";
-  if (
-    gameData.visibility === "GROUP_ONLY" ||
-    gameData.visibility === "PRIVATE"
-  ) {
-    visibility = "FRIENDS";
-  } else if (gameData.is_public === false) {
-    visibility = "FRIENDS";
-  }
-
-  const activity = {
-    type: "GAME_FINISHED",
-    title: gameData.name || "Futebol dos Parças",
-    description: description,
-    created_at:
-      admin.firestore.FieldValue.serverTimestamp(),
-    reference_id: gameId,
-    reference_type: "GAME",
-    user_id: gameData.owner_id,
-    user_name: userName,
-    user_photo: userPhoto,
-    visibility: visibility,
-    metadata: {
-      // FIX #992: Firestore canonico usa location_name (snake_case);
-      // fallback para locationName (camelCase legacy).
-      location:
-        gameData.location_name ?? gameData.locationName ?? "",
-      game_id: gameId,
-    },
-  };
-
-  const batch = db.batch();
-  const activityRef = db.collection("activities").doc();
-
-  batch.set(activityRef, activity);
-  batch.update(
-    db.collection("games").doc(gameId),
-    {activity_generated: true}
-  );
-
-  await batch.commit();
-  logger.info(
-    `[ACTIVITY_DIRECT] Atividade gerada para ${gameId}.`
-  );
 }
 
 /**

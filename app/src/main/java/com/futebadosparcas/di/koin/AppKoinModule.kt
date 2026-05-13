@@ -86,7 +86,7 @@ val appKoinModule = module {
 
     // Repositórios Android (camada de dados Android, não KMP)
     single<AndroidAuthRepository> {
-        AndroidAuthRepository(get(), get())
+        AndroidAuthRepository(get(), get(), get())
     }
 
     single<AndroidGroupRepository> {

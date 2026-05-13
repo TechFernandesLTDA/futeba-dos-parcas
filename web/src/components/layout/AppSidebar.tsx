@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Box,
   Drawer,
@@ -74,7 +75,7 @@ export function AppSidebar() {
           role="link"
           aria-label="Ir para Início"
         >
-          <SportsSoccer sx={{ color: 'primary.main', fontSize: 32 }} />
+          <SportsSoccer sx={{ color: 'primary.main', fontSize: 32 }} aria-hidden="true" />
         </Box>
         <List sx={{ pt: 1 }}>
           {NAV_ITEMS.map((item) => {
@@ -94,7 +95,7 @@ export function AppSidebar() {
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
-                    {item.icon}
+                    {React.cloneElement(item.icon as React.ReactElement, { 'aria-hidden': true })}
                   </ListItemIcon>
                   <Typography
                     variant="caption"
@@ -142,7 +143,7 @@ export function AppSidebar() {
           role="link"
           aria-label="Ir para Início"
         >
-          <SportsSoccer sx={{ color: 'primary.main', fontSize: 28 }} />
+          <SportsSoccer sx={{ color: 'primary.main', fontSize: 28 }} aria-hidden="true" />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>
@@ -169,7 +170,7 @@ export function AppSidebar() {
                   },
                 }}
               >
-                <ListItemIcon sx={{ color: 'text.secondary' }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: 'text.secondary' }}>{React.cloneElement(item.icon as React.ReactElement, { 'aria-hidden': true })}</ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItemButton>
             );

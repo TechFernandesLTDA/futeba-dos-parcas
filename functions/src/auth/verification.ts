@@ -245,6 +245,8 @@ export const setUserVerified = onCall(
       verified: true,
     });
 
+    await admin.auth().revokeRefreshTokens(targetUid);
+
     // Mirror em users/{uid} para listeners cliente (refletir verifiedAt)
     await db.doc(`users/${targetUid}`).set(
       {
@@ -363,6 +365,8 @@ export const bulkSetVerifiedForExistingUsers = onCall(
                 ...currentClaims,
                 verified: true,
               });
+
+              await auth.revokeRefreshTokens(userRecord.uid);
 
               // Mirror em users/{uid} para listeners cliente
               await db.doc(`users/${userRecord.uid}`).set(

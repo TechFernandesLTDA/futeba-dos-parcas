@@ -139,7 +139,7 @@ export const JoinByInviteScreen: React.FC = () => {
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
-              <LoginIcon sx={{ fontSize: 64, color: 'primary.main' }} />
+              <LoginIcon sx={{ fontSize: 64, color: 'primary.main' }} aria-hidden="true" />
               <Typography variant="h6">Faça login para aceitar o convite</Typography>
               <Button
                 variant="contained"
@@ -173,7 +173,7 @@ export const JoinByInviteScreen: React.FC = () => {
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
-              <ErrorIcon sx={{ fontSize: 64, color: 'error.main' }} />
+              <ErrorIcon sx={{ fontSize: 64, color: 'error.main' }} aria-hidden="true" />
               <Typography variant="h6">Convite inválido</Typography>
               <Typography color="text.secondary" textAlign="center">
                 {error || 'Este convite não existe.'}
@@ -194,7 +194,7 @@ export const JoinByInviteScreen: React.FC = () => {
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
-              <ErrorIcon sx={{ fontSize: 64, color: 'warning.main' }} />
+              <ErrorIcon sx={{ fontSize: 64, color: 'warning.main' }} aria-hidden="true" />
               <Typography variant="h6">
                 {preview.used ? 'Convite já usado' : 'Convite expirado'}
               </Typography>
@@ -219,7 +219,7 @@ export const JoinByInviteScreen: React.FC = () => {
         <CardContent>
           <Stack alignItems="center" spacing={3}>
             <Avatar sx={{ bgcolor: 'primary.main', width: 72, height: 72 }}>
-              <GroupIcon sx={{ fontSize: 40 }} />
+              <GroupIcon sx={{ fontSize: 40 }} aria-hidden="true" />
             </Avatar>
 
             <Stack alignItems="center" spacing={1}>
@@ -247,7 +247,7 @@ export const JoinByInviteScreen: React.FC = () => {
               <Button
                 fullWidth
                 variant="contained"
-                startIcon={joining ? <CircularProgress size={16} /> : <CheckIcon />}
+                startIcon={joining ? <CircularProgress size={16} aria-hidden="true" /> : <CheckIcon aria-hidden="true" />}
                 onClick={handleJoin}
                 disabled={joining}
               >

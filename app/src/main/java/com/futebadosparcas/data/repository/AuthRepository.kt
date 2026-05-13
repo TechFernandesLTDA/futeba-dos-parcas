@@ -4,7 +4,9 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +22,8 @@ import kotlinx.coroutines.withContext
 
 class AuthRepository constructor(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions
 ) {
     companion object {
         private const val TAG = "AuthRepository"
@@ -148,15 +151,52 @@ class AuthRepository constructor(
         FirebaseCrashlytics.getInstance().setUserId("")
     }
 
-    // TODO #938 — deleteAccount() ainda não implementado no Android.
-    // Quando for implementado, OBRIGATORIAMENTE seguir este fluxo:
-    //   1. Exibir diálogo pedindo senha (ou credential Google/Phone)
-    //   2. Chamar user.reauthenticateWithCredential(credential).await()
-    //      → Firebase exige re-autenticação recente (< 5 min) para operações
-    //        sensíveis como delete; sem isso: throws FirebaseAuthRecentLoginRequiredException
-    //   3. Só então chamar user.delete().await()
-    //   4. Limpar cache local (Room, SharedPreferences, TanStack Query equivalente)
-    //   5. Navegar para tela de login
-    // NUNCA chamar user.delete() sem reauthenticate — é uma vulnerabilidade
-    // (session hijack poderia deletar conta de outro usuário).
+    suspend fun createUserWithEmailAndPassword(email: String, password: String, name: String): Result<User> {
+        return try {
+            val result = auth.createUserWithEmailAndPassword(email, password).await()
+            val profileUpdates = UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .build()
+            result.user?.updateProfile(profileUpdates)?.await()
+            getCurrentUser()
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "createUserWithEmailAndPassword failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun signInWithEmailAndPassword(email: String, password: String): Result<User> {
+        return try {
+            auth.signInWithEmailAndPassword(email, password).await()
+            getCurrentUser()
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "signInWithEmailAndPassword failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            auth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "sendPasswordResetEmail failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            functions
+                .getHttpsCallable("deleteAccount")
+                .call()
+                .await()
+            auth.signOut()
+            FirebaseCrashlytics.getInstance().setUserId("")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "deleteAccount failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }

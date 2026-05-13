@@ -134,9 +134,35 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     const currentRole = targetUserDoc.data()?.role;
 
     // ==========================================
-    // 5. SYNC TO FIRESTORE FIRST
-    //    (Firestore deve persistir antes do
-    //     Custom Claim para manter consistência)
+    // 5. SET CUSTOM CLAIM FIRST (Auth is source of truth for rules)
+    //    If crash after this: Auth says correct role, Firestore lags.
+    //    Rules depend on Auth → correct behavior.
+    //    If crash before this: nothing persisted → safe.
+    // ==========================================
+    const existingClaims =
+      (await admin.auth().getUser(uid))
+        .customClaims || {};
+    await admin
+      .auth()
+      .setCustomUserClaims(uid, {
+        ...existingClaims,
+        role,
+      });
+
+    // Invalida JWT antigo (TTL 1h).
+    // Forca re-auth do cliente apos mudanca de role.
+    await admin.auth().revokeRefreshTokens(uid);
+
+    logger.info(
+      "[CUSTOM_CLAIMS] " +
+      `Set role=${role} for user ${uid} ` +
+      `by admin ${request.auth!.uid} ` +
+      "(refresh tokens revoked)"
+    );
+
+    // ==========================================
+    // 6. SYNC TO FIRESTORE SECOND
+    //    (Firestore mirror for client listeners)
     // ==========================================
     await db()
       .collection("users")
@@ -150,32 +176,6 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     logger.info(
       "[CUSTOM_CLAIMS] Synced role to " +
       `Firestore for user ${uid}`
-    );
-
-    // ==========================================
-    // 6. SET CUSTOM CLAIM
-    //    (only after Firestore sync succeeds)
-    // ==========================================
-    const existingClaims =
-      (await admin.auth().getUser(uid))
-        .customClaims || {};
-    await admin
-      .auth()
-      .setCustomUserClaims(uid, {
-        ...existingClaims,
-        role,
-      });
-
-    // SECFIX #429: invalida JWT antigo (TTL 1h).
-    // Sem isso, token de role anterior continua valido ate expirar.
-    // Forca re-auth do cliente apos mudanca de role.
-    await admin.auth().revokeRefreshTokens(uid);
-
-    logger.info(
-      "[CUSTOM_CLAIMS] " +
-      `Set role=${role} for user ${uid} ` +
-      `by admin ${request.auth!.uid} ` +
-      "(refresh tokens revoked)"
     );
 
     // ==========================================

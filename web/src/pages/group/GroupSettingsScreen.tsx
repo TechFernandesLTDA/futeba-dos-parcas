@@ -21,6 +21,8 @@ import {
   DialogActions,
   Alert,
   Stack,
+  Menu,
+  MenuItem,
   useTheme,
   useMediaQuery,
   alpha,
@@ -34,6 +36,7 @@ import {
   Delete as DeleteIcon,
   Check as CheckIcon,
   Close as CloseIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { doc, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -67,6 +70,13 @@ export const GroupSettingsScreen: React.FC = () => {
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const [memberMenuAnchor, setMemberMenuAnchor] = useState<HTMLElement | null>(null);
+  const [selectedMember, setSelectedMember] = useState<(typeof members)[0] | null>(null);
+  const [kickDialogOpen, setKickDialogOpen] = useState(false);
+  const [kickLoading, setKickLoading] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferLoading, setTransferLoading] = useState(false);
 
   const uid = firebaseUser?.uid || user?.id;
   const myMember = members.find((m) => m.userId === uid);
@@ -120,6 +130,80 @@ export const GroupSettingsScreen: React.FC = () => {
       showError((err as Error)?.message || 'Erro ao excluir grupo. Tente novamente.');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handlePromoteMember = async (memberId: string) => {
+    if (!groupId) return;
+    setMemberMenuAnchor(null);
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'groups', groupId, 'members', memberId), { role: 'ADMIN' as GroupRole });
+      batch.update(doc(db, 'users', memberId, 'groups', groupId), { role: 'ADMIN' });
+      await batch.commit();
+      showSuccess('Membro promovido a Admin.');
+    } catch (err) {
+      logger.error('Erro ao promover membro:', err);
+      showError('Erro ao promover membro. Tente novamente.');
+    }
+  };
+
+  const handleDemoteMember = async (memberId: string) => {
+    if (!groupId) return;
+    setMemberMenuAnchor(null);
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'groups', groupId, 'members', memberId), { role: 'MEMBER' as GroupRole });
+      batch.update(doc(db, 'users', memberId, 'groups', groupId), { role: 'MEMBER' });
+      await batch.commit();
+      showSuccess('Membro rebaixado a Membro.');
+    } catch (err) {
+      logger.error('Erro ao rebaixar membro:', err);
+      showError('Erro ao rebaixar membro. Tente novamente.');
+    }
+  };
+
+  const handleKickMember = async () => {
+    if (!groupId || !selectedMember) return;
+    setKickLoading(true);
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'groups', groupId, 'members', selectedMember.userId));
+      batch.delete(doc(db, 'users', selectedMember.userId, 'groups', groupId));
+      await batch.commit();
+      showSuccess(`${selectedMember.userName} foi removido do grupo.`);
+      setKickDialogOpen(false);
+      setSelectedMember(null);
+    } catch (err) {
+      logger.error('Erro ao remover membro:', err);
+      showError('Erro ao remover membro. Tente novamente.');
+    } finally {
+      setKickLoading(false);
+    }
+  };
+
+  const handleTransferOwnership = async () => {
+    if (!groupId || !selectedMember || !uid) return;
+    setTransferLoading(true);
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'groups', groupId), {
+        owner_id: selectedMember.userId,
+        owner_name: selectedMember.userName,
+      });
+      batch.update(doc(db, 'groups', groupId, 'members', uid), { role: 'ADMIN' as GroupRole });
+      batch.update(doc(db, 'users', uid, 'groups', groupId), { role: 'ADMIN' });
+      batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { role: 'OWNER' as GroupRole });
+      batch.update(doc(db, 'users', selectedMember.userId, 'groups', groupId), { role: 'OWNER' });
+      await batch.commit();
+      showSuccess(`Propriedade transferida para ${selectedMember.userName}.`);
+      setTransferDialogOpen(false);
+      setSelectedMember(null);
+    } catch (err) {
+      logger.error('Erro ao transferir propriedade:', err);
+      showError('Erro ao transferir propriedade. Tente novamente.');
+    } finally {
+      setTransferLoading(false);
     }
   };
 
@@ -313,7 +397,21 @@ export const GroupSettingsScreen: React.FC = () => {
             <List disablePadding aria-label="Lista de membros do grupo">
               {members.map((member, index) => (
                 <React.Fragment key={member.userId}>
-                  <ListItem sx={{ py: 1.5 }}>
+                  <ListItem
+                    sx={{ py: 1.5 }}
+                    secondaryAction={
+                      <IconButton
+                        edge="end"
+                        aria-label={`Ações para ${member.userName}`}
+                        onClick={(e) => {
+                          setSelectedMember(member);
+                          setMemberMenuAnchor(e.currentTarget);
+                        }}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    }
+                  >
                     <ListItemAvatar>
                       <PlayerAvatar
                         name={member.userName}
@@ -450,6 +548,107 @@ export const GroupSettingsScreen: React.FC = () => {
             startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}
           >
             {actionLoading ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Menu
+        anchorEl={memberMenuAnchor}
+        open={Boolean(memberMenuAnchor)}
+        onClose={() => setMemberMenuAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        {selectedMember && isOwner && selectedMember.role === 'MEMBER' && (
+          <MenuItem onClick={() => handlePromoteMember(selectedMember.userId)}>
+            Promover a Admin
+          </MenuItem>
+        )}
+        {selectedMember && isOwner && selectedMember.role === 'ADMIN' && (
+          <MenuItem onClick={() => handleDemoteMember(selectedMember.userId)}>
+            Rebaixar a Membro
+          </MenuItem>
+        )}
+        {selectedMember && selectedMember.userId !== uid && (isOwner || myMember?.role === 'ADMIN') && (
+          <MenuItem
+            onClick={() => {
+              setMemberMenuAnchor(null);
+              setKickDialogOpen(true);
+            }}
+            sx={{ color: 'error.main' }}
+          >
+            Remover do Grupo
+          </MenuItem>
+        )}
+        {selectedMember && isOwner && selectedMember.userId !== uid && (
+          <MenuItem
+            onClick={() => {
+              setMemberMenuAnchor(null);
+              setTransferDialogOpen(true);
+            }}
+          >
+            Transferir Propriedade
+          </MenuItem>
+        )}
+      </Menu>
+
+      <Dialog
+        open={kickDialogOpen}
+        onClose={() => setKickDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="kick-member-dialog-title"
+      >
+        <DialogTitle id="kick-member-dialog-title">Remover Membro</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Tem certeza que deseja remover {selectedMember?.userName} do grupo &quot;{group.name}&quot;?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setKickDialogOpen(false)} disabled={kickLoading}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleKickMember}
+            color="error"
+            variant="contained"
+            disabled={kickLoading}
+            startIcon={kickLoading ? <CircularProgress size={16} /> : undefined}
+          >
+            {kickLoading ? 'Removendo...' : 'Remover'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={transferDialogOpen}
+        onClose={() => setTransferDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="transfer-ownership-dialog-title"
+      >
+        <DialogTitle id="transfer-ownership-dialog-title">Transferir Propriedade</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Tem certeza que deseja transferir a propriedade do grupo &quot;{group.name}&quot; para {selectedMember?.userName}?
+            Você se tornará Admin do grupo.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTransferDialogOpen(false)} disabled={transferLoading}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleTransferOwnership}
+            color="warning"
+            variant="contained"
+            disabled={transferLoading}
+            startIcon={transferLoading ? <CircularProgress size={16} /> : undefined}
+          >
+            {transferLoading ? 'Transferindo...' : 'Transferir'}
           </Button>
         </DialogActions>
       </Dialog>

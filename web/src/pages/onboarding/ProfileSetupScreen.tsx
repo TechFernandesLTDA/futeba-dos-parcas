@@ -9,6 +9,12 @@ import {
   IconButton,
   Avatar,
   CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup,
+  FormControlLabel,
+  Checkbox,
+  FormGroup,
+  FormLabel,
   useTheme,
 } from '@mui/material';
 import {
@@ -35,7 +41,10 @@ export const ProfileSetupScreen: React.FC = () => {
   const { showError } = useToast();
 
   const [name, setName] = useState(firebaseUser?.displayName || '');
+  const [nickname, setNickname] = useState('');
   const [favoriteTeam, setFavoriteTeam] = useState<string | null>(null);
+  const [preferredPosition, setPreferredPosition] = useState<string | null>(null);
+  const [preferredFieldTypes, setPreferredFieldTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -49,7 +58,7 @@ export const ProfileSetupScreen: React.FC = () => {
         name,
         email: firebaseUser.email,
         photo_url: firebaseUser.photoURL || '',
-        nickname: '',
+        nickname: nickname.trim(),
         role: 'PLAYER',
         level: 1,
         experience_points: 0,
@@ -57,8 +66,8 @@ export const ProfileSetupScreen: React.FC = () => {
         mid_rating: 3,
         defender_rating: 3,
         gk_rating: 3,
-        preferred_position: null,
-        preferred_field_types: [],
+        preferred_position: preferredPosition,
+        preferred_field_types: preferredFieldTypes,
         favorite_team: favoriteTeam,
         total_games: 0,
         total_goals: 0,
@@ -162,6 +171,64 @@ export const ProfileSetupScreen: React.FC = () => {
             onChange={setFavoriteTeam}
             optional
           />
+        </Box>
+
+        <TextField
+          fullWidth
+          label="Apelido"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          placeholder="Como você quer ser chamado?"
+          sx={{ mb: 3 }}
+        />
+
+        <Box sx={{ mb: 3 }}>
+          <FormLabel component="legend" sx={{ mb: 1, display: 'block', color: 'text.secondary', fontSize: '0.875rem' }}>
+            Posição Preferida
+          </FormLabel>
+          <ToggleButtonGroup
+            value={preferredPosition}
+            exclusive
+            onChange={(_, val) => setPreferredPosition(val)}
+            aria-label="Posição preferida"
+            size="small"
+            fullWidth
+          >
+            <ToggleButton value="GK" aria-label="Goleiro">GK</ToggleButton>
+            <ToggleButton value="DEF" aria-label="Defensor">DEF</ToggleButton>
+            <ToggleButton value="MID" aria-label="Meio-campo">MID</ToggleButton>
+            <ToggleButton value="STR" aria-label="Atacante">STR</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <FormLabel component="legend" sx={{ mb: 0.5, display: 'block', color: 'text.secondary', fontSize: '0.875rem' }}>
+            Tipos de Campo Preferidos
+          </FormLabel>
+          <FormGroup row>
+            {[
+              { value: 'SOCIETY', label: 'Society' },
+              { value: 'FUTSAL', label: 'Futsal' },
+              { value: 'CAMPO', label: 'Campo' },
+            ].map((ft) => (
+              <FormControlLabel
+                key={ft.value}
+                control={
+                  <Checkbox
+                    checked={preferredFieldTypes.includes(ft.value)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setPreferredFieldTypes([...preferredFieldTypes, ft.value]);
+                      } else {
+                        setPreferredFieldTypes(preferredFieldTypes.filter((v) => v !== ft.value));
+                      }
+                    }}
+                  />
+                }
+                label={ft.label}
+              />
+            ))}
+          </FormGroup>
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>

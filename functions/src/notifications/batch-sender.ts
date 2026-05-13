@@ -44,6 +44,7 @@ import {
 import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
+import {shouldNotifyUser} from "./helpers";
 
 const getDb = () => admin.firestore();
 const getFcm = () => admin.messaging();
@@ -309,9 +310,31 @@ async function processNotificationQueue():
 
     totalTargeted = allUserIds.size;
 
+    // FIX #1143: Filter userIds by notification preferences
+    // before fetching tokens (respects push_enabled, mute_groups, etc.)
+    const typeForFilter = (pendingSnap.docs[0]?.data()?.type as string) || "GAME_REMINDER";
+    const filteredUserIds: string[] = [];
+    for (const uid of allUserIds) {
+      try {
+        const ok = await shouldNotifyUser(uid, typeForFilter, undefined);
+        if (ok) filteredUserIds.push(uid);
+      } catch {
+        // Fail-open: if preference check fails, include user
+        filteredUserIds.push(uid);
+      }
+    }
+    const skippedCount = allUserIds.size - filteredUserIds.length;
+    if (skippedCount > 0) {
+      console.log(
+        `[BATCH_FCM] Filtrados ${skippedCount} usuarios ` +
+        "por preferencias de notificacao"
+      );
+    }
+    totalTargeted = filteredUserIds.length;
+
     // 4. Buscar tokens FCM em batch
     const tokenMap = await fetchTokensInBatch(
-      Array.from(allUserIds)
+      filteredUserIds
     );
 
     // 5. Processar cada notificação na fila

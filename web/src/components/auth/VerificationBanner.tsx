@@ -55,7 +55,7 @@ export const VerificationBanner: React.FC = () => {
       <Box sx={{ position: 'sticky', top: 0, zIndex: 1100 }}>
         <Alert
           severity={urgent ? 'error' : 'warning'}
-          icon={<ShieldIcon fontSize="small" />}
+          icon={<ShieldIcon fontSize="small" aria-hidden="true" />}
           action={
             <Button
               color="inherit"

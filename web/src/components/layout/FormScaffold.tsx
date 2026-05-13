@@ -94,7 +94,7 @@ export function FormScaffold({
             aria-label={closeVariant === 'X' ? 'Fechar' : 'Voltar'}
             sx={{ mr: 1 }}
           >
-            <CloseIconComponent />
+            <CloseIconComponent aria-hidden="true" />
           </IconButton>
           <Typography
             variant="h6"

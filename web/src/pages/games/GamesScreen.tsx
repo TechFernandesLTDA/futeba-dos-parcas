@@ -26,6 +26,7 @@ import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { GameCard, LoadingState } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { Game, GameStatus } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -164,15 +165,16 @@ export const GamesScreen: React.FC = () => {
           {loading ? (
             <LoadingState shimmerCount={8} itemType="GAME" />
           ) : filteredGames.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <SoccerIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                {t('games.noGames')}
-              </Typography>
-              <Typography variant="body2" color="text.disabled">
-                {tabValue === 0 ? 'Crie um novo jogo para começar!' : 'Não há jogos nesta categoria'}
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<SoccerIcon />}
+              title={t('games.noGames')}
+              description={tabValue === 0 ? 'Crie um novo jogo para começar!' : 'Não há jogos nesta categoria'}
+              {...(tabValue === 0 ? {
+                actionLabel: t('games.createGame'),
+                actionIcon: <AddIcon />,
+                onAction: () => navigate('/game/create'),
+              } : {})}
+            />
           ) : filteredGames.length > 20 ? (
             <Grid container spacing={2}>
               {filteredGames.map((game) => (

@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -140,87 +142,82 @@ private fun StatisticsContent(
 private fun StatisticsLoadingState(
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .adaptiveContentWidth()
-            .background(MaterialTheme.colorScheme.surface),
-        contentPadding = PaddingValues(16.dp),
+            .background(MaterialTheme.colorScheme.surface)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Título shimmer
-        item {
-            ShimmerBox(
-                modifier = Modifier
-                    .width(200.dp)
-                    .height(32.dp),
-                cornerRadius = 8.dp
-            )
-        }
+        ShimmerBox(
+            modifier = Modifier
+                .width(200.dp)
+                .height(32.dp),
+            cornerRadius = 8.dp
+        )
 
         // Botões de navegação shimmer
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                repeat(2) {
-                    ShimmerBox(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        cornerRadius = 8.dp
-                    )
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            repeat(2) {
+                ShimmerBox(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    cornerRadius = 8.dp
+                )
             }
         }
 
         // Card de estatísticas shimmer
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ShimmerBox(
+                    modifier = Modifier
+                        .width(150.dp)
+                        .height(24.dp),
+                    cornerRadius = 8.dp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    ShimmerBox(
-                        modifier = Modifier
-                            .width(150.dp)
-                            .height(24.dp),
-                        cornerRadius = 8.dp
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        repeat(2) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                ShimmerBox(
-                                    modifier = Modifier.size(32.dp),
-                                    cornerRadius = 16.dp
-                                )
-                                ShimmerBox(
-                                    modifier = Modifier
-                                        .width(60.dp)
-                                        .height(32.dp),
-                                    cornerRadius = 8.dp
-                                )
-                                ShimmerBox(
-                                    modifier = Modifier
-                                        .width(50.dp)
-                                        .height(16.dp),
-                                    cornerRadius = 4.dp
-                                )
-                            }
+                    repeat(2) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ShimmerBox(
+                                modifier = Modifier.size(32.dp),
+                                cornerRadius = 16.dp
+                            )
+                            ShimmerBox(
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(32.dp),
+                                cornerRadius = 8.dp
+                            )
+                            ShimmerBox(
+                                modifier = Modifier
+                                    .width(50.dp)
+                                    .height(16.dp),
+                                cornerRadius = 4.dp
+                            )
                         }
                     }
                 }
@@ -228,7 +225,7 @@ private fun StatisticsLoadingState(
         }
 
         // Rankings shimmer
-        items(3) {
+        repeat(3) {
             ShimmerBox(
                 modifier = Modifier
                     .fillMaxWidth()

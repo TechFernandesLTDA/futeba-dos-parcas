@@ -37,14 +37,6 @@ import {
 import { getLevelColor } from '../../types/user';
 import { gamificationColors } from '../../theme';
 
-// Cores intencionais do design — figurinha de futebol com textura de campo.
-// Estes gradients são identidade visual da figurinha e NÃO seguem o tema
-// claro/escuro do MUI (o card sempre tem fundo verde independente do theme.mode).
-const CARD_GRADIENT = 'linear-gradient(160deg, #1B5E20 0%, #2E7D32 35%, #388E3C 60%, #43A047 100%)';
-const CARD_BADGE_BORDER = '#1B5E20';
-const XP_BAR_GRADIENT = `linear-gradient(90deg, #00C853, ${gamificationColors.gold})`;
-const OVERALL_BAR_GRADIENT = `linear-gradient(90deg, ${gamificationColors.gold}, #FF8C00)`;
-
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
   GOLEIRO: 'Goleiro',
@@ -111,12 +103,17 @@ interface PlayerCardProps {
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const theme = useTheme();
+
+  const CARD_GRADIENT = `linear-gradient(160deg, ${theme.palette.success.dark} 0%, ${alpha(theme.palette.success.main, 0.85)} 35%, ${theme.palette.success.main} 60%, ${theme.palette.success.light} 100%)`;
+  const CARD_BADGE_BORDER = theme.palette.success.dark;
+  const XP_BAR_GRADIENT = `linear-gradient(90deg, ${theme.palette.primary.main}, ${gamificationColors.gold})`;
+  const OVERALL_BAR_GRADIENT = `linear-gradient(90deg, ${gamificationColors.gold}, ${theme.palette.warning.main})`;
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const { showError } = useToast();
   const { data: player, isLoading, isError, refetch } = usePlayerCard(userId);
 
-  const levelColor = player ? getLevelColor(player.level) : '#78909C';
+  const levelColor = player ? getLevelColor(player.level) : theme.palette.grey[500];
   const levelEntry = player ? getLevelEntry(player.level) : null;
   const xpProgress = player ? getXpProgress(player.experiencePoints) : 0;
   const xpRemaining = player ? getXpRemaining(player.experiencePoints) : 0;

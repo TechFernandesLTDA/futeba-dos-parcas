@@ -34,6 +34,11 @@ vi.mock('../../hooks/useGroups', () => ({
     loading: false,
     error: null,
   }),
+  useGroups: () => ({
+    groups: [],
+    loading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('../../hooks/useGames', () => ({

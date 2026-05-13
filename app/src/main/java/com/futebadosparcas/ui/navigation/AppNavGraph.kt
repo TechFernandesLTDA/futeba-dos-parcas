@@ -18,7 +18,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -26,6 +28,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.ui.about.AboutScreen
 import com.futebadosparcas.ui.badges.BadgesScreen
@@ -752,12 +755,36 @@ fun AppNavHost(
         }
 
         composable(Screen.About.route) {
-            // AboutScreen tem sua própria navegação - não usa SecondaryScreenWrapper
+            val context = LocalContext.current
+            val androidAuthRepo: com.futebadosparcas.data.repository.AuthRepository = koinInject()
+            var deleteAccountTrigger by remember { mutableStateOf(false) }
+
+            LaunchedEffect(deleteAccountTrigger) {
+                if (deleteAccountTrigger) {
+                    val result = androidAuthRepo.deleteAccount()
+                    if (result.isSuccess) {
+                        val intent = android.content.Intent(context, com.futebadosparcas.ui.auth.LoginActivityCompose::class.java)
+                        intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(intent)
+                    }
+                    deleteAccountTrigger = false
+                }
+            }
+
             SecondaryScreenWrapper(
                 titleResId = Screen.About.titleResId,
                 onNavigateBack = { navController.popBackStack() }
             ) {
-                AboutScreen(onNavigateBack = { navController.popBackStack() })
+                AboutScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onDeleteAccount = { deleteAccountTrigger = true },
+                    onLogout = {
+                        androidAuthRepo.logout()
+                        val intent = android.content.Intent(context, com.futebadosparcas.ui.auth.LoginActivityCompose::class.java)
+                        intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(intent)
+                    }
+                )
             }
         }
 

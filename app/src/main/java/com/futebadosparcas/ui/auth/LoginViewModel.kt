@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.data.repository.AuthRepository as AndroidAuthRepository
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.util.AppLogger
@@ -10,14 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel para o fluxo de login.
- *
- * Gerencia o estado de autenticacao e recupera os dados do usuario
- * apos o login com Google.
- */
 class LoginViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val androidAuthRepository: AndroidAuthRepository
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -25,9 +21,6 @@ class LoginViewModel(
 
     private var loginJob: Job? = null
 
-    /**
-     * Verifica se ha um usuario logado e carrega seus dados.
-     */
     fun checkExistingUser() {
         loginJob?.cancel()
         loginJob = viewModelScope.launch {
@@ -45,10 +38,6 @@ class LoginViewModel(
         }
     }
 
-    /**
-     * Processa o sucesso do login com Google.
-     * Recupera os dados do usuario do repositorio.
-     */
     fun onGoogleSignInSuccess() {
         loginJob?.cancel()
         loginJob = viewModelScope.launch {
@@ -72,16 +61,34 @@ class LoginViewModel(
         }
     }
 
-    /**
-     * Processa erro no login com Google.
-     */
+    fun signInWithEmailAndPassword(email: String, password: String) {
+        loginJob?.cancel()
+        loginJob = viewModelScope.launch {
+            _loginState.value = LoginState.Loading
+            val result = androidAuthRepository.signInWithEmailAndPassword(email, password)
+            result.fold(
+                onSuccess = { user ->
+                    _loginState.value = LoginState.Success(user)
+                },
+                onFailure = { error ->
+                    _loginState.value = LoginState.Error(
+                        error.message ?: "Erro ao fazer login"
+                    )
+                }
+            )
+        }
+    }
+
+    fun sendPasswordResetEmail(email: String) {
+        viewModelScope.launch {
+            androidAuthRepository.sendPasswordResetEmail(email)
+        }
+    }
+
     fun onGoogleSignInError(message: String) {
         _loginState.value = LoginState.Error(message)
     }
 
-    /**
-     * Reseta o estado para Idle.
-     */
     fun resetState() {
         _loginState.value = LoginState.Idle
     }

@@ -8,6 +8,7 @@ import android.graphics.Color as AndroidColor
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.net.Uri
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.core.net.toUri
 import androidx.compose.foundation.layout.*
@@ -118,6 +119,10 @@ fun PostGameReportScreen(
             )
         }
     ) { paddingValues ->
+        Crossfade(
+            targetState = report.game.id,
+            label = "postGameReportCrossfade"
+        ) { _ ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -245,6 +250,7 @@ fun PostGameReportScreen(
                 }
             }
         }
+        }
     }
 }
 
@@ -349,7 +355,7 @@ private fun MvpCard(player: GameConfirmation) {
         ) {
             Icon(
                 imageVector = Icons.Filled.Star,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.owner_mvp_title),
                 tint = GamificationColors.Gold,
                 modifier = Modifier.size(32.dp)
             )

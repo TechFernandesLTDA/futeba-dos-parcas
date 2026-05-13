@@ -4,13 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.UserRepository
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class UserManagementViewModel(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val firebaseFunctions: FirebaseFunctions
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UserManagementUiState>(UserManagementUiState.Loading)
@@ -69,24 +72,23 @@ class UserManagementViewModel(
     }
 
     fun updateUserRole(user: User, newRole: String) {
-        // Validar role antes de enviar para o backend
         val validRoles = setOf("ADMIN", "PLAYER", "MODERATOR")
         if (newRole !in validRoles) {
             _uiState.value = UserManagementUiState.Error("Role inválida: $newRole")
             return
         }
 
-        // Cancelar atualização anterior para evitar race conditions
         updateRoleJob?.cancel()
         updateRoleJob = viewModelScope.launch {
-            userRepository.updateUserRole(user.id, newRole).fold(
-                onSuccess = {
-                    loadUsers() // Recarregar para refletir mudanças
-                },
-                onFailure = { error ->
-                    _uiState.value = UserManagementUiState.Error(error.message ?: "Erro ao atualizar permissão")
-                }
-            )
+            try {
+                firebaseFunctions
+                    .getHttpsCallable("setUserRole")
+                    .call(mapOf("uid" to user.id, "role" to newRole))
+                    .await()
+                loadUsers()
+            } catch (e: Exception) {
+                _uiState.value = UserManagementUiState.Error(e.message ?: "Erro ao atualizar permissão")
+            }
         }
     }
 

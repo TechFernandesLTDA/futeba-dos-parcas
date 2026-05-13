@@ -183,128 +183,170 @@ export const onUserDeleted = auth
         // confirmations, mvp_votes, xp_logs, statistics, season_participation,
         // activities, user_badges — dados pessoais que devem ser apagados.
 
-        // 8. FIX #786: confirmations (user_id == uid)
-        const confirmationsSnap = await db
-          .collection("confirmations")
-          .where("user_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of confirmationsSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 8. FIX #786: confirmations (user_id == uid) — loop to handle >500
+        let confirmationsTotal = 0;
+        while (true) {
+          const confirmationsSnap = await db
+            .collection("confirmations")
+            .where("user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (confirmationsSnap.empty) break;
+          for (const doc of confirmationsSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          confirmationsTotal += confirmationsSnap.size;
+          if (confirmationsSnap.size < 500) break;
         }
-        if (confirmationsSnap.size > 0) {
+        if (confirmationsTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${confirmationsSnap.size} ` +
+            `[ACCOUNT_CLEANUP] Deletando ${confirmationsTotal} ` +
             `confirmations do usuário ${uid}`
           );
         }
 
-        // 9. FIX #786: mvp_votes (voter_id == uid)
-        const mvpVotesSnap = await db
-          .collection("mvp_votes")
-          .where("voter_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of mvpVotesSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 9. FIX #786: mvp_votes (voter_id == uid) — loop to handle >500
+        let mvpVotesTotal = 0;
+        while (true) {
+          const mvpVotesSnap = await db
+            .collection("mvp_votes")
+            .where("voter_id", "==", uid)
+            .limit(500)
+            .get();
+          if (mvpVotesSnap.empty) break;
+          for (const doc of mvpVotesSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          mvpVotesTotal += mvpVotesSnap.size;
+          if (mvpVotesSnap.size < 500) break;
         }
-        if (mvpVotesSnap.size > 0) {
+        if (mvpVotesTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${mvpVotesSnap.size} ` +
+            `[ACCOUNT_CLEANUP] Deletando ${mvpVotesTotal} ` +
             `mvp_votes do usuário ${uid}`
           );
         }
 
-        // 10. FIX #786: xp_logs (user_id == uid)
-        const xpLogsSnap = await db
-          .collection("xp_logs")
-          .where("user_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of xpLogsSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 10. FIX #786: xp_logs (user_id == uid) — loop to handle >500
+        let xpLogsTotal = 0;
+        while (true) {
+          const xpLogsSnap = await db
+            .collection("xp_logs")
+            .where("user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (xpLogsSnap.empty) break;
+          for (const doc of xpLogsSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          xpLogsTotal += xpLogsSnap.size;
+          if (xpLogsSnap.size < 500) break;
         }
-        if (xpLogsSnap.size > 0) {
+        if (xpLogsTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${xpLogsSnap.size} ` +
+            `[ACCOUNT_CLEANUP] Deletando ${xpLogsTotal} ` +
             `xp_logs do usuário ${uid}`
           );
         }
 
-        // 11. FIX #786: statistics (user_id == uid)
-        const statisticsSnap = await db
-          .collection("statistics")
-          .where("user_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of statisticsSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 11. FIX #786: statistics (user_id == uid) — loop to handle >500
+        let statisticsTotal = 0;
+        while (true) {
+          const statisticsSnap = await db
+            .collection("statistics")
+            .where("user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (statisticsSnap.empty) break;
+          for (const doc of statisticsSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          statisticsTotal += statisticsSnap.size;
+          if (statisticsSnap.size < 500) break;
         }
-        if (statisticsSnap.size > 0) {
+        if (statisticsTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${statisticsSnap.size} ` +
+            `[ACCOUNT_CLEANUP] Deletando ${statisticsTotal} ` +
             `statistics do usuário ${uid}`
           );
         }
 
-        // 12. FIX #786: season_participation (user_id == uid)
-        const seasonPartSnap = await db
-          .collection("season_participation")
-          .where("user_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of seasonPartSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 12. FIX #786: season_participation (user_id == uid) — loop to handle >500
+        let seasonPartTotal = 0;
+        while (true) {
+          const seasonPartSnap = await db
+            .collection("season_participation")
+            .where("user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (seasonPartSnap.empty) break;
+          for (const doc of seasonPartSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          seasonPartTotal += seasonPartSnap.size;
+          if (seasonPartSnap.size < 500) break;
         }
-        if (seasonPartSnap.size > 0) {
+        if (seasonPartTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${seasonPartSnap.size} ` +
+            `[ACCOUNT_CLEANUP] Deletando ${seasonPartTotal} ` +
             `season_participation do usuário ${uid}`
           );
         }
 
-        // 13. FIX #786: activities (user_id == uid)
-        const activitiesSnap = await db
-          .collection("activities")
-          .where("user_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of activitiesSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 13. FIX #786: activities (user_id == uid) — loop to handle >500
+        let activitiesTotal = 0;
+        while (true) {
+          const activitiesSnap = await db
+            .collection("activities")
+            .where("user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (activitiesSnap.empty) break;
+          for (const doc of activitiesSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          activitiesTotal += activitiesSnap.size;
+          if (activitiesSnap.size < 500) break;
         }
-        if (activitiesSnap.size > 0) {
+        if (activitiesTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${activitiesSnap.size} ` +
+            `[ACCOUNT_CLEANUP] Deletando ${activitiesTotal} ` +
             `activities do usuário ${uid}`
           );
         }
 
-        // 14. FIX #786: user_badges (user_id == uid)
-        const userBadgesSnap = await db
-          .collection("user_badges")
-          .where("user_id", "==", uid)
-          .limit(500)
-          .get();
-        for (const doc of userBadgesSnap.docs) {
-          batch.delete(doc.ref);
-          batchOps++;
-          if (batchOps >= 450) await commitBatch();
+        // 14. FIX #786: user_badges (user_id == uid) — loop to handle >500
+        let userBadgesTotal = 0;
+        while (true) {
+          const userBadgesSnap = await db
+            .collection("user_badges")
+            .where("user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (userBadgesSnap.empty) break;
+          for (const doc of userBadgesSnap.docs) {
+            batch.delete(doc.ref);
+            batchOps++;
+            if (batchOps >= 450) await commitBatch();
+          }
+          userBadgesTotal += userBadgesSnap.size;
+          if (userBadgesSnap.size < 500) break;
         }
-        if (userBadgesSnap.size > 0) {
+        if (userBadgesTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${userBadgesSnap.size} ` +
+            `[ACCOUNT_CLEANUP] Deletando ${userBadgesTotal} ` +
             `user_badges do usuário ${uid}`
           );
         }
@@ -314,28 +356,37 @@ export const onUserDeleted = auth
           `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
         );
 
-        // 15. Limpar thumbnails órfãos do Storage
+        // 15. Limpar arquivos órfãos do Storage (profile photos + thumbnails)
         try {
           const storage = getStorage();
           const bucketName =
             process.env.STORAGE_BUCKET ||
             `${process.env.GCLOUD_PROJECT}.appspot.com`;
           const bucket = storage.bucket(bucketName);
-          const [thumbFiles] = await bucket.getFiles({
-            prefix: `profile_photos/thumbnails/${uid}_thumb`,
-          });
-          if (thumbFiles.length > 0) {
-            for (const file of thumbFiles) {
-              await file.delete();
-              logger.info(
-                `[ACCOUNT_CLEANUP] Thumbnail orfao deletado: ${file.name}`
-              );
+          const prefixes = [
+            `users/${uid}/`, // current upload path
+            `profile_photos/thumbnails/${uid}_thumb`, // legacy thumbnail
+            `profile_photos/${uid}.`, // legacy profile photo
+          ];
+          for (const prefix of prefixes) {
+            try {
+              const [files] = await bucket.getFiles({prefix});
+              if (files.length > 0) {
+                for (const file of files) {
+                  await file.delete();
+                  logger.info(
+                    `[ACCOUNT_CLEANUP] Arquivo orfao deletado: ${file.name}`
+                  );
+                }
+              }
+            } catch {
+              // Non-fatal: some prefixes may not exist
             }
           }
         } catch (storageError) {
           logger.warn(
-            "[ACCOUNT_CLEANUP] Erro ao limpar thumbnails " +
-            `do Storage para ${uid} (non-fatal):`,
+            "[ACCOUNT_CLEANUP] Erro ao limpar Storage " +
+            `para ${uid} (non-fatal):`,
             storageError
           );
         }

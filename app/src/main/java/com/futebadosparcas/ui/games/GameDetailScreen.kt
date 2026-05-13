@@ -513,7 +513,7 @@ fun GameHeaderSection(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Outlined.Place, contentDescription = stringResource(R.string.create_game_cd_location_icon), tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(game.locationName, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.clickable { onLocationClick() })
             }
@@ -599,7 +599,7 @@ fun ConfirmationCard(
                     Text(confirmation.userName, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.width(4.dp))
                     TeamBadgeById(
-                        teamId = null,
+                        teamId = confirmation.teamId,
                         iconSize = 18
                     )
                 }
@@ -659,7 +659,7 @@ fun TeamCard(
                             Text(player.userName)
                             Spacer(modifier = Modifier.width(4.dp))
                             TeamBadgeById(
-                                teamId = null,
+                                teamId = player.teamId,
                                 iconSize = 18
                             )
                         }
@@ -919,7 +919,7 @@ fun LiveMatchSection(
                     ) {
                         Icon(
                             painter = painterResource(getEventIcon(event.eventType)),
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.cd_event_type_icon),
                             tint = getEventColor(event.eventType),
                             modifier = Modifier.size(24.dp)
                         )
