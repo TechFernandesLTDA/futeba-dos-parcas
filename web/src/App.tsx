@@ -459,6 +459,8 @@ const SafeScreen = withErrorBoundary(AppRoutes);
 function MobileShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
+  const location = useLocation();
+  const isHomeScreen = location.pathname === '/';
 
   return (
     <Box
@@ -474,11 +476,6 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         id="mobile-shell"
         sx={{
           width: '100%',
-          // Largura máxima responsiva:
-          // - xs: full width (mobile)
-          // - sm: 480 (mobile centralizado)
-          // - md: 800 (80px rail + 720 content)
-          // - lg: 1200 (240px drawer + 960 content)
           maxWidth: { xs: '100%', sm: 480, md: 800, lg: 1200 },
           minHeight: '100vh',
           bgcolor: 'background.default',
@@ -487,15 +484,15 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}
       >
-        {/* NotificationBell visível em mobile (xs) onde sidebar fica oculta */}
-        {user && (
+        {/* NotificationBell em mobile (xs/sm) — exceção: HomeScreen tem seu próprio AppBar com bell */}
+        {user && !isHomeScreen && (
           <Box
             sx={{
               position: 'fixed',
               top: 8,
               right: 8,
-              zIndex: 1200,
-              display: { xs: 'block', lg: 'none' },
+              zIndex: 1100,
+              display: { xs: 'block', md: 'none' },
             }}
           >
             <NotificationBell unreadCount={unreadCount} />
