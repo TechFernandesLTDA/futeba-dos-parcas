@@ -20,6 +20,8 @@ import {
   IconButton,
   Tooltip,
   Fade,
+  Alert,
+  Button,
 } from '@mui/material';
 import {
   EmojiEvents as TrophyIcon,
@@ -104,6 +106,7 @@ export function RankingsTab() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
+  const [errorState, setErrorState] = useState<string | null>(null);
 
   // Buscar temporada ativa para filtrar season_participation (#1204)
   useEffect(() => {
@@ -208,10 +211,16 @@ export function RankingsTab() {
           const deduplicated = Array.from(uniqueMap.values())
             .sort((a, b) => b.points - a.points);
 
-          if (!cancelled) setPlayers(deduplicated);
+          if (!cancelled) {
+            setPlayers(deduplicated);
+            setErrorState(null);
+          }
         } catch (err) {
           logger.error('Erro ao carregar rankings:', err);
-          if (!cancelled) showError('Erro ao processar dados do ranking.');
+          if (!cancelled) {
+            showError('Erro ao processar dados do ranking.');
+            setErrorState('Erro ao processar dados do ranking.');
+          }
         } finally {
           if (!cancelled) {
             setLoading(false);
@@ -222,6 +231,7 @@ export function RankingsTab() {
       (err) => {
         logger.error('Error in rankings listener:', err);
         showError('Erro ao carregar ranking.');
+        setErrorState('Erro ao carregar ranking.');
         setLoading(false);
         setRefreshing(false);
       }
@@ -274,7 +284,7 @@ export function RankingsTab() {
           </Typography>
           <Tooltip title="Atualizar">
             <IconButton
-              onClick={() => { setLoading(true); unsubscribeRef.current?.(); unsubscribeRef.current = loadData(); }}
+              onClick={() => { setLoading(true); setErrorState(null); unsubscribeRef.current?.(); unsubscribeRef.current = loadData(); }}
               size="small"
               aria-label="Atualizar rankings"
             >
@@ -296,6 +306,20 @@ export function RankingsTab() {
       </Box>
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+        {errorState && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={() => { setLoading(true); unsubscribeRef.current?.(); unsubscribeRef.current = loadData(); }}>
+                Tentar novamente
+              </Button>
+            }
+          >
+            {errorState}
+          </Alert>
+        )}
+
         {/* Card de posição do usuário atual */}
         {tabValue !== 2 && currentPlayer && (
           <Fade in>
@@ -343,7 +367,7 @@ export function RankingsTab() {
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography variant="h5" fontWeight={700}>
-                      {tabValue === 1 ? currentPlayer.experiencePoints : currentPlayer.points}
+                      {(tabValue === 1 ? currentPlayer.experiencePoints : currentPlayer.points)?.toLocaleString('pt-BR')}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {tabValue === 1 ? 'XP Total' : t('ranking.points')}
@@ -370,7 +394,7 @@ export function RankingsTab() {
                         {t('profile.level')} {currentPlayer.level}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {currentPlayer.experiencePoints} XP
+                        {currentPlayer.experiencePoints?.toLocaleString('pt-BR')} XP
                       </Typography>
                     </Box>
                     <LinearProgress
@@ -503,9 +527,12 @@ export function RankingsTab() {
               <Typography variant="h6" color="text.secondary">
                 Nenhum jogador no ranking
               </Typography>
-              <Typography variant="body2" color="text.disabled">
-                Participe de jogos para entrar no ranking!
+              <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
+                Os 100 melhores jogadores aparecem aqui. Participe de jogos para entrar no ranking!
               </Typography>
+              <Button variant="outlined" onClick={() => navigate('/games')}>
+                Ver jogos disponíveis
+              </Button>
             </Box>
           ) : (
             sortedPlayers.map((player, index) => (
@@ -602,7 +629,7 @@ const RankingCard = React.memo(function RankingCard({
                 variant="body2"
                 fontWeight={600}
                 noWrap
-                sx={{ maxWidth: player.isCurrentUser ? 100 : 140 }}
+                sx={{ maxWidth: { xs: 80, sm: 140, md: 200 } }}
               >
                 {player.userName}
               </Typography>
@@ -613,7 +640,7 @@ const RankingCard = React.memo(function RankingCard({
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="caption" color="text.secondary" noWrap>
-                {player.gamesPlayed}J · {player.wins}V · {player.goals}G
+                {player.gamesPlayed.toLocaleString('pt-BR')}J · {player.wins.toLocaleString('pt-BR')}V · {player.goals.toLocaleString('pt-BR')}G
               </Typography>
             </Box>
           </Box>
@@ -621,7 +648,7 @@ const RankingCard = React.memo(function RankingCard({
           {/* Pontuação */}
           <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
             <Typography variant="subtitle1" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color}>
-              {showXP ? (player.experiencePoints || 0) : player.points}
+              {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString('pt-BR')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {showXP ? 'XP' : divisionConfig.label}

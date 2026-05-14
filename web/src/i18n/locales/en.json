@@ -21,7 +21,9 @@
     "portuguese": "Português",
     "english": "English",
     "spanish": "Español",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "later": "Later",
+    "activate": "Activate"
   },
   "nav": {
     "home": "Home",
@@ -239,6 +241,9 @@
     "notFound": "Not found",
     "unauthorized": "Unauthorized",
     "tryAgain": "Please try again later"
+  },
+  "notifications": {
+    "bannerMessage": "Enable notifications to receive game alerts!"
   },
   "onboarding": {
     "welcome": "Welcome to Futeba dos Parças!",

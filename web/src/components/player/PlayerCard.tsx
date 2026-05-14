@@ -349,7 +349,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     sx={{
                       borderRadius: '50%',
                       p: '3px',
-                      background: `linear-gradient(135deg, ${gamificationColors.gold}, #FFA000, ${gamificationColors.gold})`,
+                       background: `linear-gradient(135deg, ${gamificationColors.gold}, ${gamificationColors.gold}, ${gamificationColors.gold})`,
                       boxShadow: `0 0 20px ${alpha(gamificationColors.gold, 0.4)}`,
                     }}
                   >

@@ -56,7 +56,7 @@ import { TeamBadge } from '../../../components/team/TeamBadge';
 const logger = createLogger('ProfileTab');
 
 export function ProfileTab() {
-  const { user, logout, loading, refreshUser } = useAuth();
+  const { user, firebaseUser, logout, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -183,7 +183,23 @@ export function ProfileTab() {
     );
   }
 
-  if (!user && !loading) {
+  if (!firebaseUser && !loading) {
+    return (
+      <Box sx={{ pb: 8, px: 2, pt: 4, textAlign: 'center' }}>
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+        >
+          Faça login para acessar seu perfil
+        </Alert>
+        <Button variant="contained" onClick={() => navigate('/login')} sx={{ borderRadius: 3 }}>
+          Ir para o login
+        </Button>
+      </Box>
+    );
+  }
+
+  if (firebaseUser && !user && !loading) {
     return (
       <Box sx={{ pb: 8, px: 2, pt: 4 }}>
         <Alert

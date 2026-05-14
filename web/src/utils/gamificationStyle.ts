@@ -11,6 +11,6 @@ export function getPositionBadgeStyle(position: number, theme: Theme) {
     case 3:
       return { bgcolor: gamificationColors.bronze, color: palette.getContrastText(gamificationColors.bronze) };
     default:
-      return { bgcolor: theme.palette.grey[300], color: theme.palette.text.primary };
+      return { bgcolor: theme.palette.action.disabledBackground, color: theme.palette.text.primary };
   }
 }

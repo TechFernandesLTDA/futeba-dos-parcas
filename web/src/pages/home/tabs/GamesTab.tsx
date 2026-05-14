@@ -35,6 +35,14 @@ import { useGames } from '../../../hooks/useGames';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';
 
+const livePulseKeyframes = {
+  '@keyframes livePulse': {
+    '0%': { opacity: 1 },
+    '50%': { opacity: 0.3 },
+    '100%': { opacity: 1 },
+  },
+};
+
 type FilterStatus = 'all' | GameStatus;
 
 export function GamesTab() {
@@ -260,11 +268,7 @@ export function GamesTab() {
                                       borderRadius: '50%',
                                       bgcolor: theme.palette.error.main,
                                       animation: 'livePulse 1.5s ease-in-out infinite',
-                                      '@keyframes livePulse': {
-                                        '0%': { opacity: 1 },
-                                        '50%': { opacity: 0.3 },
-                                        '100%': { opacity: 1 },
-                                      },
+                                      ...livePulseKeyframes,
                                     }}
                                   />
                                 )}
@@ -364,8 +368,9 @@ export function GamesTab() {
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',
-          bottom: 80,
-          right: { xs: 16, sm: 'calc(50% - 240px + 16px)' },
+          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+          right: 16,
+          pb: 'env(safe-area-inset-bottom, 16px)',
         }}
       >
         <Add />
