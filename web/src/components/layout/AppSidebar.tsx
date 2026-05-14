@@ -56,7 +56,7 @@ export function AppSidebar() {
   const { unreadCount } = useNotifications(user?.id);
 
   const NAV_ITEMS: NavItem[] = [
-    { icon: <HomeIcon />, label: t('nav.home'), path: '/?tab=0', matchPaths: ['/'] },
+    { icon: <HomeIcon />, label: t('nav.home'), path: '/?tab=0', matchPaths: [] },
     { icon: <SportsSoccer />, label: t('nav.games'), path: '/?tab=1', matchPaths: ['/games', '/game'] },
     { icon: <Groups />, label: t('nav.groups'), path: '/?tab=2', matchPaths: ['/groups', '/group'] },
     { icon: <EmojiEvents />, label: t('nav.league'), path: '/?tab=3', matchPaths: ['/ranking', '/league'] },
