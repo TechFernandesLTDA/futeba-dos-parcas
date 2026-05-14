@@ -40,6 +40,72 @@ import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('LocationsMapScreen');
 
+function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
+  locations: Location[];
+  selectedLocation: Location | null;
+  onLocationSelect: (loc: Location | null) => void;
+}) {
+  const theme = useTheme();
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
+
+  if (!mapsLoaded || !apiKey) {
+    return (
+      <Box
+        sx={{
+          height: '100%',
+          bgcolor: alpha(theme.palette.primary.main, 0.1),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+        }}
+      >
+        <MapIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+        <Typography variant="body2" color="text.secondary">
+          {apiKey ? 'Carregando mapa...' : 'Configure VITE_GOOGLE_MAPS_API_KEY para ver o mapa'}
+        </Typography>
+        <Typography variant="caption" color="text.disabled">
+          {locations.length} quadras cadastradas
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <GoogleMap
+      mapContainerStyle={{ width: '100%', height: '100%' }}
+      center={
+        locations.length > 0 && locations[0].latitude
+          ? { lat: locations[0].latitude, lng: locations[0].longitude || 0 }
+          : { lat: -23.55, lng: -46.63 }
+      }
+      zoom={12}
+    >
+      {locations
+        .filter(loc => loc.latitude && loc.longitude)
+        .map(loc => (
+          <MarkerF
+            key={loc.id}
+            position={{ lat: loc.latitude!, lng: loc.longitude! }}
+            onClick={() => onLocationSelect(loc)}
+          />
+        ))}
+      {selectedLocation && selectedLocation.latitude && (
+        <InfoWindowF
+          position={{ lat: selectedLocation.latitude, lng: selectedLocation.longitude! }}
+          onCloseClick={() => onLocationSelect(null)}
+        >
+          <Box sx={{ p: 0.5, maxWidth: 200 }}>
+            <Typography variant="subtitle2" fontWeight={600}>{selectedLocation.name}</Typography>
+            <Typography variant="caption" color="text.secondary">{selectedLocation.address}</Typography>
+          </Box>
+        </InfoWindowF>
+      )}
+    </GoogleMap>
+  );
+}
+
 export const LocationsMapScreen: React.FC = () => {
   useDocumentTitle('Mapa de Locais');
   const navigate = useNavigate();
@@ -54,9 +120,6 @@ export const LocationsMapScreen: React.FC = () => {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
-
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-  const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
 
   useEffect(() => {
     const locRef = collection(db, 'locations');
@@ -135,57 +198,7 @@ export const LocationsMapScreen: React.FC = () => {
 
       {/* Mapa */}
       <Box sx={{ height: 300, position: 'relative' }}>
-        {mapsLoaded && apiKey ? (
-          <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={
-              filteredLocations.length > 0 && filteredLocations[0].latitude
-                ? { lat: filteredLocations[0].latitude, lng: filteredLocations[0].longitude || 0 }
-                : { lat: -23.55, lng: -46.63 }
-            }
-            zoom={12}
-          >
-            {filteredLocations
-              .filter(loc => loc.latitude && loc.longitude)
-              .map(loc => (
-                <MarkerF
-                  key={loc.id}
-                  position={{ lat: loc.latitude!, lng: loc.longitude! }}
-                  onClick={() => setSelectedLocation(loc)}
-                />
-              ))}
-            {selectedLocation && selectedLocation.latitude && (
-              <InfoWindowF
-                position={{ lat: selectedLocation.latitude, lng: selectedLocation.longitude! }}
-                onCloseClick={() => setSelectedLocation(null)}
-              >
-                <Box sx={{ p: 0.5, maxWidth: 200 }}>
-                  <Typography variant="subtitle2" fontWeight={600}>{selectedLocation.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">{selectedLocation.address}</Typography>
-                </Box>
-              </InfoWindowF>
-            )}
-          </GoogleMap>
-        ) : (
-          <Box
-            sx={{
-              height: '100%',
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-            }}
-          >
-            <MapIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              {apiKey ? 'Carregando mapa...' : 'Configure VITE_GOOGLE_MAPS_API_KEY para ver o mapa'}
-            </Typography>
-            <Typography variant="caption" color="text.disabled">
-              {filteredLocations.length} quadras cadastradas
-            </Typography>
-          </Box>
-        )}
+        <LocationsMapView locations={filteredLocations} selectedLocation={selectedLocation} onLocationSelect={setSelectedLocation} />
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
@@ -220,6 +233,7 @@ export const LocationsMapScreen: React.FC = () => {
                           component="img"
                           src={location.photoUrl}
                           alt={location.name}
+                          loading="lazy"
                           sx={{ width: 80, height: 80, borderRadius: 1, objectFit: 'cover' }}
                         />
                       ) : (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -22,19 +22,13 @@ import {
   FilterList as FilterIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGames } from '../../hooks/useGames';
 import { GameCard, LoadingState } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
-import { Game, GameStatus } from '../../types/game';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
+import { GameStatus } from '../../types/game';
 import { useTranslation } from 'react-i18next';
-import { useToast } from '../../contexts/ToastContext';
-import { createLogger } from '../../utils/logger';
-
-const logger = createLogger('GamesScreen');
 
 export const GamesScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -45,44 +39,10 @@ export const GamesScreen: React.FC = () => {
   const { t } = useTranslation();
 
   const [tabValue, setTabValue] = useState(0);
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { showError } = useToast();
-  const showErrorRef = useRef(showError);
-  showErrorRef.current = showError;
+  const refreshingRef = useRef(false);
 
-  const fetchGames = useCallback(() => {
-    return new Promise<void>((resolve) => {
-      const gamesRef = collection(db, 'games');
-      const q = query(gamesRef, orderBy('date', 'desc'));
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const gamesData = snapshot.docs.map((doc) => ({
-          ...snakeToCamel<Game>(doc.data()),
-          id: doc.id,
-        }));
-        setGames(gamesData);
-        setLoading(false);
-        setRefreshing(false);
-        resolve();
-      },       (err) => {
-        logger.error('Error in games listener:', err);
-        showErrorRef.current('Erro ao carregar jogos. Verifique sua conexão.');
-        setLoading(false);
-        setRefreshing(false);
-        resolve();
-      });
-
-      return unsubscribe;
-    });
-  }, []);
-
-  useEffect(() => {
-    const unsub = fetchGames();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- fetchGames retorna Promise<void>, padrão de cleanup legado
-    return () => { unsub.then((fn: any) => fn && fn()); };
-  }, [fetchGames]);
+  const { games: rawGames, loading, error, refetch } = useGames();
 
   const getStatusFilter = (): GameStatus | null => {
     switch (tabValue) {
@@ -95,11 +55,23 @@ export const GamesScreen: React.FC = () => {
     }
   };
 
-  const filteredGames = games.filter((game) => {
+  const filteredGames = rawGames.filter((game) => {
     const status = getStatusFilter();
     if (!status) return true;
     return game.status === status;
   });
+
+  const handleRefresh = async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      refreshingRef.current = false;
+      setRefreshing(false);
+    }
+  };
 
   return (
     <Box sx={{ pb: 8 }}>
@@ -124,7 +96,7 @@ export const GamesScreen: React.FC = () => {
           </IconButton>
           <IconButton
             aria-label="Atualizar jogos"
-            onClick={() => setRefreshing(true)}
+            onClick={handleRefresh}
             disabled={refreshing}
             sx={{ ml: 0.5 }}
           >
@@ -155,15 +127,24 @@ export const GamesScreen: React.FC = () => {
       </Box>
 
       <PullToRefresh
-        onRefresh={async () => {
-          setRefreshing(true);
-          await fetchGames();
-        }}
+        onRefresh={handleRefresh}
         disabled={loading}
       >
         <Container maxWidth={isMd ? 'xl' : 'sm'} sx={{ py: 2 }}>
           {loading ? (
             <LoadingState shimmerCount={8} itemType="GAME" />
+          ) : error ? (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Typography variant="h6" color="error" gutterBottom>
+                Erro ao carregar jogos
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {error}
+              </Typography>
+              <Button variant="contained" onClick={handleRefresh} sx={{ mt: 2 }}>
+                Tentar novamente
+              </Button>
+            </Box>
           ) : filteredGames.length === 0 ? (
             <EmptyState
               icon={<SoccerIcon />}
@@ -175,17 +156,6 @@ export const GamesScreen: React.FC = () => {
                 onAction: () => navigate('/game/create'),
               } : {})}
             />
-          ) : filteredGames.length > 20 ? (
-            <Grid container spacing={2}>
-              {filteredGames.map((game) => (
-                <Grid item xs={12} md={6} key={game.id}>
-                  <GameCard
-                    game={game}
-                    onClick={() => navigate(`/game/${game.id}`)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
           ) : (
             <Grid container spacing={2}>
               {filteredGames.map((game) => (

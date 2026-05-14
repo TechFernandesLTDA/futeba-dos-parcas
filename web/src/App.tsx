@@ -111,6 +111,13 @@ const DevToolsScreen = lazy(() => import('./pages/devtools/DevToolsScreen').then
 // Error pages
 const NotFoundScreen = lazy(() => import('./pages/error/NotFoundScreen').then(m => ({ default: m.NotFoundScreen })));
 
+const spinnerKeyframes = {
+  '@keyframes spin': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' },
+  },
+};
+
 function RouteFallback() {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -123,10 +130,7 @@ function RouteFallback() {
           borderTopColor: 'transparent',
           borderRadius: '50%',
           animation: 'spin 0.6s linear infinite',
-          '@keyframes spin': {
-            '0%': { transform: 'rotate(0deg)' },
-            '100%': { transform: 'rotate(360deg)' },
-          },
+          ...spinnerKeyframes,
         }}
         role="status"
         aria-label="Carregando página"

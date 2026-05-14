@@ -28,6 +28,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/react') || id.includes('react-router-dom')) return 'vendor-react'
+          if (id.includes('@mui/icons-material')) return 'vendor-mui-icons'
           if (id.includes('@mui/') || id.includes('@emotion/')) return 'vendor-mui'
           if (id.includes('firebase/')) return 'vendor-firebase'
           if (id.includes('@tanstack/react-query')) return 'vendor-query'

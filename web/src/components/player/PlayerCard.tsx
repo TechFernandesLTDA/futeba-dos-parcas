@@ -356,6 +356,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     <Avatar
                       src={player.photoUrl}
                       alt={player.name}
+                      slotProps={{ img: { loading: 'lazy' } }}
                       sx={{
                         width: 120,
                         height: 120,

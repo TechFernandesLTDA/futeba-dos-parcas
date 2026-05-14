@@ -215,6 +215,7 @@ export function ProfileTab() {
         <Box sx={{ position: 'relative', display: 'inline-block' }}>
           <Avatar
             src={user?.photoUrl}
+            slotProps={{ img: { loading: 'lazy' } }}
             sx={{
               width: 100,
               height: 100,
@@ -244,6 +245,7 @@ export function ProfileTab() {
             <Box
               component="img"
               src={getLevelBadgeImage(currentLevel)}
+              loading="lazy"
               alt={getLevelBadgeDescription(currentLevel, currentEntry.name)}
               sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />

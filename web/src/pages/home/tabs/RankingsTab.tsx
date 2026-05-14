@@ -297,6 +297,7 @@ export function RankingsTab() {
                       <Box
                         component="img"
                         src={getLevelBadgeImage(currentPlayer.level)}
+                        loading="lazy"
                         alt={`Nível ${currentPlayer.level}`}
                         sx={{
                           position: 'absolute',
