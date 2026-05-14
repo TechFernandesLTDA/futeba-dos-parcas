@@ -430,8 +430,9 @@ export function RankingsTab() {
       },
       (err) => {
         logger.error('Error in rankings listener:', err);
-        showError('Erro ao carregar ranking.');
-        setErrorState('Erro ao carregar ranking.');
+        const message = (err as { message?: string })?.message || 'Erro ao carregar ranking.';
+        showError(message);
+        setErrorState(message);
         setLoading(false);
         setRefreshing(false);
       }

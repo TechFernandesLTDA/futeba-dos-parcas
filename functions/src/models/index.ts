@@ -20,6 +20,7 @@ export interface Game {
     status: string; // "FINISHED"
     mvp_id?: string;
     owner_id: string;
+    group_id?: string;
     date?: string;
     dateTime?: admin.firestore.Timestamp;
 }

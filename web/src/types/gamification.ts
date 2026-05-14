@@ -41,6 +41,7 @@ export interface SeasonParticipation {
   id: string;
   userId: string;
   seasonId: string;
+  groupId?: string;
   division: LeagueDivision;
   points: number;
   gamesPlayed: number;
