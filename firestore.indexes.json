@@ -1365,6 +1365,38 @@
       ]
     },
     {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "season_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "group_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "points",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "group_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "points",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "saved_formations",
       "queryScope": "COLLECTION",
       "fields": [

@@ -977,7 +977,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
               activeSeason,
               result,
               conf,
-              isMvp
+              isMvp,
+              gameData.group_id
             );
             currentBatchOps++;
           }

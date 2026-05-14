@@ -547,6 +547,8 @@ export function updateRankingDeltas(
  * @param {string} result Resultado do jogo.
  * @param {GameConfirmation} conf Confirmação.
  * @param {boolean} isMvp Se é MVP.
+ * @param {string | null} groupId ID do grupo
+ *   (opcional, para filtro por grupo no ranking).
  */
 export function updateSeasonParticipation(
   batch: admin.firestore.WriteBatch,
@@ -554,46 +556,53 @@ export function updateSeasonParticipation(
   seasonId: string,
   result: string,
   conf: GameConfirmation,
-  isMvp: boolean
+  isMvp: boolean,
+  groupId?: string | null
 ) {
   const partId = `${seasonId}_${uid}`;
   const pointsToAdd = result === "WIN" ?
     3 :
     (result === "DRAW" ? 1 : 0);
 
+  const data: Record<string, unknown> = {
+    user_id: uid,
+    season_id: seasonId,
+    points: admin.firestore
+      .FieldValue.increment(pointsToAdd),
+    games_played: admin.firestore
+      .FieldValue.increment(1),
+    wins: admin.firestore
+      .FieldValue.increment(
+        result === "WIN" ? 1 : 0
+      ),
+    draws: admin.firestore
+      .FieldValue.increment(
+        result === "DRAW" ? 1 : 0
+      ),
+    losses: admin.firestore
+      .FieldValue.increment(
+        result === "LOSS" ? 1 : 0
+      ),
+    goals_scored: admin.firestore
+      .FieldValue.increment(conf.goals),
+    assists: admin.firestore
+      .FieldValue.increment(conf.assists),
+    mvp_count: admin.firestore
+      .FieldValue.increment(
+        isMvp ? 1 : 0
+      ),
+    last_calculated_at: admin.firestore
+      .FieldValue.serverTimestamp(),
+  };
+
+  if (groupId) {
+    data.group_id = groupId;
+  }
+
   batch.set(
     db().collection("season_participation")
       .doc(partId),
-    {
-      user_id: uid,
-      season_id: seasonId,
-      points: admin.firestore
-        .FieldValue.increment(pointsToAdd),
-      games_played: admin.firestore
-        .FieldValue.increment(1),
-      wins: admin.firestore
-        .FieldValue.increment(
-          result === "WIN" ? 1 : 0
-        ),
-      draws: admin.firestore
-        .FieldValue.increment(
-          result === "DRAW" ? 1 : 0
-        ),
-      losses: admin.firestore
-        .FieldValue.increment(
-          result === "LOSS" ? 1 : 0
-        ),
-      goals_scored: admin.firestore
-        .FieldValue.increment(conf.goals),
-      assists: admin.firestore
-        .FieldValue.increment(conf.assists),
-      mvp_count: admin.firestore
-        .FieldValue.increment(
-          isMvp ? 1 : 0
-        ),
-      last_calculated_at: admin.firestore
-        .FieldValue.serverTimestamp(),
-    },
+    data,
     {merge: true}
   );
 }
