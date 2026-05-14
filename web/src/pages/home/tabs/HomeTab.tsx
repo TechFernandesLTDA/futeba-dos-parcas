@@ -688,10 +688,7 @@ export function HomeTab() {
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* NextGameWidget — acima do hub header */}
-      <NextGameWidget />
-
-      {/* Hub Header */}
+      {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
         sx={{
           mb: 3,
@@ -834,6 +831,9 @@ export function HomeTab() {
           </CardContent>
         </CardActionArea>
       </Card>
+
+      {/* Próximo Jogo — abaixo das informações do jogador */}
+      <NextGameWidget />
 
       {/* StreakWidget */}
       {(user?.currentStreak || 0) > 0 ? (
