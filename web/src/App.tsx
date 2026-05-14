@@ -460,7 +460,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
   const location = useLocation();
-  const isHomeScreen = location.pathname === '/';
+  const isHomeScreen = location.pathname === '/' || location.pathname === '';
 
   return (
     <Box
