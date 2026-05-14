@@ -79,7 +79,7 @@ export const GameDetailScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentUser } = useAuth();
+  const { currentUser, user } = useAuth();
   const { showSuccess, showError } = useToast();
 
   // Breakpoints para layout responsivo
@@ -110,7 +110,8 @@ export const GameDetailScreen: React.FC = () => {
   const myConfirmation = confirmations.find((c) => c.userId === currentUser?.uid);
   const isConfirmed = myConfirmation?.status === 'CONFIRMED';
   const isOwner = game?.ownerId === currentUser?.uid;
-  const canManage = game && (isOwner || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
+  const isCurrentUserAdmin = user?.role === 'ADMIN';
+  const canManage = game && (isOwner || isCurrentUserAdmin || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
 
   const confirmedPlayers = confirmations.filter((c) => c.status === 'CONFIRMED');
   const goalkeepers = confirmedPlayers.filter((c) => c.position === 'GOALKEEPER');
