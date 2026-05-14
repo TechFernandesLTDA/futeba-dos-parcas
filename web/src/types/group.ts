@@ -32,6 +32,9 @@ export interface Group {
   members: GroupMember[];
   memberCount: number;
   
+  // Role do usuário atual (da subcoleção users/{uid}/groups)
+  role?: GroupRole;
+  
   // Config
   defaultFieldType?: string;
   defaultMaxPlayers?: number;

@@ -102,12 +102,33 @@ export function RankingsTab() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
+
+  // Buscar temporada ativa para filtrar season_participation (#1204)
+  useEffect(() => {
+    const fetchSeason = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1)));
+        setActiveSeasonId(snap.docs[0]?.id || null);
+      } catch (err) {
+        logger.error('Error fetching active season:', err);
+      }
+    };
+    fetchSeason();
+  }, []);
 
   const loadData = useCallback(() => {
     setRefreshing(true);
     let cancelled = false;
     const seasonRef = collection(db, 'season_participation');
-    const q = query(seasonRef, orderBy('points', 'desc'), limit(100));
+
+    let q;
+    if (activeSeasonId) {
+      q = query(seasonRef, where('season_id', '==', activeSeasonId), orderBy('points', 'desc'), limit(100));
+    } else {
+      q = query(seasonRef, orderBy('points', 'desc'), limit(100));
+    }
 
     // Alias local para que o ESLint reconheça o padrão showError no catch
     const showError = showErrorRef.current;
@@ -210,11 +231,12 @@ export function RankingsTab() {
       cancelled = true;
       unsubscribe();
     };
-  }, [user?.id]);
+  }, [user?.id, activeSeasonId]);
 
   useEffect(() => {
-    const unsubscribe = loadData();
-    return () => unsubscribe();
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = loadData();
+    return () => unsubscribeRef.current?.();
   }, [loadData]);
 
   // Posição do usuário atual
@@ -252,7 +274,7 @@ export function RankingsTab() {
           </Typography>
           <Tooltip title="Atualizar">
             <IconButton
-              onClick={() => { setLoading(true); loadData(); }}
+              onClick={() => { setLoading(true); unsubscribeRef.current?.(); unsubscribeRef.current = loadData(); }}
               size="small"
               aria-label="Atualizar rankings"
             >
