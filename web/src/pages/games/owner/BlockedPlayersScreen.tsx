@@ -102,7 +102,7 @@ export const BlockedPlayersScreen: React.FC = () => {
     };
 
     fetchBlocked();
-  }, [gameId]);
+  }, [gameId, navigate, showError, user]);
 
   const handleUnblock = async (playerId: string) => {
     if (!gameId || !user) return;

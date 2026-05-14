@@ -27,6 +27,7 @@ import {
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
@@ -60,6 +61,7 @@ export const EvolutionScreen: React.FC = () => {
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
+  const { showError } = useToast();
 
   const [tabValue, setTabValue] = useState(0);
   const [evolutionData, setEvolutionData] = useState<EvolutionData[]>([]);
@@ -123,6 +125,7 @@ export const EvolutionScreen: React.FC = () => {
         setEvolutionData(data);
       } catch (err) {
         logger.error('Error fetching evolution data:', err);
+        showError('Não foi possível carregar os dados de evolução. Tente novamente.');
         setError('Não foi possível carregar os dados de evolução. Tente novamente.');
       } finally {
         setLoading(false);
@@ -130,7 +133,7 @@ export const EvolutionScreen: React.FC = () => {
     };
 
     fetchData();
-  }, [targetUserId, reloadKey]);
+  }, [targetUserId, reloadKey, showError]);
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;

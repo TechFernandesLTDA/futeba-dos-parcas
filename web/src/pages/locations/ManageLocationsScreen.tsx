@@ -90,7 +90,7 @@ export const ManageLocationsScreen: React.FC = () => {
     );
 
     return () => unsubscribe();
-  }, [reloadKey]);
+  }, [reloadKey, isAdmin, user?.id]);
 
   const filteredLocations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

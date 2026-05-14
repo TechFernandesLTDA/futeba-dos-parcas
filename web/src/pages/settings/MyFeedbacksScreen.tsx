@@ -10,13 +10,11 @@ import {
   IconButton,
   List,
   ListItemButton,
-  ListItemText,
   Divider,
   Chip,
   Alert,
   Button,
   useTheme,
-  alpha,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -29,7 +27,7 @@ import {
   RateReview as EmptyIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useFeedback, UserFeedback } from '../../hooks/useFeedback';
+import { useFeedback } from '../../hooks/useFeedback';
 import { LoadingState } from '../../components/common/GameCard';
 
 const STATUS_CONFIG: Record<string, { label: string; color: 'default' | 'info' | 'success' | 'error' | 'warning' }> = {

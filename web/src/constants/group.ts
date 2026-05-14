@@ -17,5 +17,9 @@ export const ROLE_CONFIG: Record<GroupRole, { label: string; paletteKey: string 
 
 export function getRoleColor(theme: Theme, role: GroupRole): string {
   const [category, variant] = ROLE_CONFIG[role].paletteKey.split('.');
-  return (theme.palette as any)[category]?.[variant] || theme.palette.text.secondary;
+  const paletteSection = theme.palette[category as keyof typeof theme.palette];
+  if (paletteSection && typeof paletteSection === 'object' && variant in paletteSection) {
+    return (paletteSection as Record<string, unknown>)[variant] as string;
+  }
+  return theme.palette.text.secondary;
 }

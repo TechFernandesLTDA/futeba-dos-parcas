@@ -32,7 +32,6 @@ import {
   getLevelEntry,
   getXpProgress,
   getXpRemaining,
-  LEVEL_TABLE,
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
 import { gamificationColors } from '../../theme';
@@ -117,9 +116,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const levelEntry = player ? getLevelEntry(player.level) : null;
   const xpProgress = player ? getXpProgress(player.experiencePoints) : 0;
   const xpRemaining = player ? getXpRemaining(player.experiencePoints) : 0;
-  const nextLevelXp = player && player.level < 20
-    ? LEVEL_TABLE[player.level + 1]?.xpRequired ?? 0
-    : 0;
 
   // Captura o card como PNG e compartilha ou faz download
   const handleShare = useCallback(async () => {
@@ -153,7 +149,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               text: `Olha minha figurinha no Futeba dos Parças! Nível ${player.level} • ${player.experiencePoints} XP`,
               files: [file],
             });
-          } catch (_e) {
+          } catch {
             // Usuário cancelou — sem erro
           }
         } else {
@@ -172,7 +168,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       showError('Erro ao gerar imagem do card. Tente novamente.');
       setSharing(false);
     }
-  }, [player]);
+  }, [player, showError]);
 
   const winRate = player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)

@@ -91,10 +91,11 @@ export const SettingsScreen: React.FC = () => {
       }
     } catch (error) {
       logger.error('Error loading settings:', error);
+      showError('Erro ao carregar configurações.');
       showErrorRef.current('Erro ao carregar configurações.');
     }
     setLoading(false);
-  }, [user]);
+  }, [user, showError]);
 
   useEffect(() => {
     if (user) {

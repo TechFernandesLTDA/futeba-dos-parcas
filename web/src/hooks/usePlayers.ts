@@ -65,24 +65,24 @@ export const usePlayers = (groupId?: string) => {
           const allUserDocs = chunkSnaps.flatMap((snap) => snap.docs);
           const playersData = allUserDocs.map((userDoc) => {
             const raw = userDoc.data();
-            const data = snakeToCamel(raw) as Record<string, any>;
-            return {
-              id: userDoc.id,
-              name: data.name || 'Jogador',
-              email: data.email || '',
-              photoUrl: data.photoUrl || raw.photo_url,
-              favoriteTeam: data.favoriteTeam ?? raw.favorite_team ?? undefined,
-              level: data.level || 1,
-              xp: data.experiencePoints ?? data.xp ?? 0,
-              division: data.division || 'BRONZE',
-              gamesPlayed: data.gamesPlayed || raw.games_played || 0,
-              wins: data.wins || 0,
-              goals: data.goals || 0,
-              assists: data.assists || 0,
-              mvpCount: data.mvpCount || raw.mvp_count || 0,
-              streak: data.streak || 0,
-              createdAt: raw.created_at?.toDate?.() || (data.createdAt as any)?.toDate?.(),
-            } as Player;
+          const data = snakeToCamel(raw) as Record<string, unknown>;
+          return {
+            id: userDoc.id,
+            name: (data.name as string) || 'Jogador',
+            email: (data.email as string) || '',
+            photoUrl: (data.photoUrl as string) || raw.photo_url || '',
+            favoriteTeam: (data.favoriteTeam as string) ?? raw.favorite_team ?? undefined,
+            level: (data.level as number) || 1,
+            xp: (data.experiencePoints as number) ?? (data.xp as number) ?? 0,
+            division: (data.division as string) || 'BRONZE',
+            gamesPlayed: (data.gamesPlayed as number) || (raw.games_played as number) || 0,
+            wins: (data.wins as number) || 0,
+            goals: (data.goals as number) || 0,
+            assists: (data.assists as number) || 0,
+            mvpCount: (data.mvpCount as number) || (raw.mvp_count as number) || 0,
+            streak: (data.streak as number) || 0,
+            createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
+          } as Player;
           });
 
           if (cancelled) return;
@@ -125,24 +125,24 @@ export const usePlayerDetail = (userId?: string) => {
         if (cancelled) return;
         if (userDoc.exists()) {
           const raw = userDoc.data();
-          const data = snakeToCamel(raw) as Record<string, any>;
+          const data = snakeToCamel(raw) as Record<string, unknown>;
           if (!cancelled) {
             setPlayer({
               id: userId,
-              name: data.name || 'Jogador',
-              email: data.email || '',
-              photoUrl: data.photoUrl || raw.photo_url,
-              favoriteTeam: data.favoriteTeam ?? raw.favorite_team ?? undefined,
-              level: data.level || 1,
-              xp: data.experiencePoints ?? data.xp ?? 0,
-              division: data.division || 'BRONZE',
-              gamesPlayed: data.gamesPlayed || raw.games_played || 0,
-              wins: data.wins || 0,
-              goals: data.goals || 0,
-              assists: data.assists || 0,
-              mvpCount: data.mvpCount || raw.mvp_count || 0,
-              streak: data.streak || 0,
-              createdAt: raw.created_at?.toDate?.() || data.createdAt,
+              name: (data.name as string) || 'Jogador',
+              email: (data.email as string) || '',
+              photoUrl: (data.photoUrl as string) || raw.photo_url || '',
+              favoriteTeam: (data.favoriteTeam as string) ?? raw.favorite_team ?? undefined,
+              level: (data.level as number) || 1,
+              xp: (data.experiencePoints as number) ?? (data.xp as number) ?? 0,
+              division: (data.division as string) || 'BRONZE',
+              gamesPlayed: (data.gamesPlayed as number) || (raw.games_played as number) || 0,
+              wins: (data.wins as number) || 0,
+              goals: (data.goals as number) || 0,
+              assists: (data.assists as number) || 0,
+              mvpCount: (data.mvpCount as number) || (raw.mvp_count as number) || 0,
+              streak: (data.streak as number) || 0,
+              createdAt: raw.created_at?.toDate?.() || (data.createdAt as Date | undefined),
             });
           }
         }

@@ -271,12 +271,14 @@ export function RankingsTab() {
 
   // Buscar temporada ativa para filtrar season_participation (#1204)
   useEffect(() => {
+    const showError = showErrorRef.current;
     const fetchSeason = async () => {
       try {
         const snap = await getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1)));
         setActiveSeasonId(snap.docs[0]?.id || null);
       } catch (err) {
         logger.error('Error fetching active season:', err);
+        showError('Erro ao buscar temporada ativa.');
       }
     };
     fetchSeason();

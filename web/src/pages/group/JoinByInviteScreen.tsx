@@ -100,6 +100,7 @@ export const JoinByInviteScreen: React.FC = () => {
       } catch (err) {
         if (cancelled) return;
         logger.error('Erro ao buscar convite:', err);
+        showError('Não foi possível carregar o convite. Tente novamente.');
         setError('Não foi possível carregar o convite. Tente novamente.');
         setLoading(false);
       }
@@ -109,7 +110,7 @@ export const JoinByInviteScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [code]);
+  }, [code, showError]);
 
   const handleJoin = async () => {
     if (!code || !preview) return;

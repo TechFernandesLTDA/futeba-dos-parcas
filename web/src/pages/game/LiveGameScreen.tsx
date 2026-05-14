@@ -42,7 +42,7 @@ import {
   SaveAlt as SaveIcon,
   SwapHoriz as SubstitutionIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -187,7 +187,7 @@ export const LiveGameScreen: React.FC = () => {
       unsubscribeEvents();
       unsubscribeConfirmations();
     };
-  }, [gameId]);
+  }, [gameId, showError]);
 
   // Extrai o timestamp (number) para estabilizar a dep array do effect:
   // `score?.startedAt` é uma instância de Date nova a cada snapshot, recriando

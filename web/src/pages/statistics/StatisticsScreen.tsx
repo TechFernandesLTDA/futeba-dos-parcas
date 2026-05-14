@@ -29,6 +29,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { getLevelTitle, getLevelColor } from '../../types/user';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
@@ -62,6 +63,7 @@ export const StatisticsScreen: React.FC = () => {
     const theme = useTheme();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
+  const { showError } = useToast();
 
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,10 +80,11 @@ export const StatisticsScreen: React.FC = () => {
       }
     } catch (err) {
       logger.error('Error loading stats:', err);
+      showError('Erro ao carregar estatísticas. Tente novamente.');
       setError('Erro ao carregar estatísticas');
     }
     setLoading(false);
-  }, [user]);
+  }, [user, showError]);
 
   useEffect(() => {
     if (user) {

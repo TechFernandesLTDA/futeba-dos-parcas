@@ -26,7 +26,7 @@ import {
   Link as LinkIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
-import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, getStatusChipColors, ConfirmationPaletteKey } from '../../types/game';
+import { Game, FIELD_TYPE_LABELS, getStatusChipColors, ConfirmationPaletteKey } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { InteractiveCard } from './InteractiveCard';
 import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';

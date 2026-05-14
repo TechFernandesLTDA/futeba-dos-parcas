@@ -133,7 +133,7 @@ export const WeeklyRecapScreen: React.FC = () => {
     };
 
     fetchData();
-  }, [targetUserId]);
+  }, [targetUserId, showError]);
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;

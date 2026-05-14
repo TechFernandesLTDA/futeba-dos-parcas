@@ -112,7 +112,7 @@ export const InvitePlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId]);
+  }, [groupId, showError]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -173,8 +173,6 @@ export const InvitePlayersScreen: React.FC = () => {
       setInviting(null);
     }
   };
-
-  const _existingMemberIds = new Set(members.map((m) => m.id));
 
   return (
     <FormScaffold

@@ -24,7 +24,6 @@ import {
   LocalFireDepartment as FireIcon,
   Lock as LockIcon,
   CheckCircle as CheckIcon,
-  SportsSoccer as SoccerIcon,
   EmojiEvents as TrophyIcon,
   Star as StarIcon,
   ExpandMore as ExpandMoreIcon,
@@ -86,8 +85,9 @@ export const LevelJourneyScreen: React.FC = () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', targetUserId));
         if (userDoc.exists()) {
-          const data = snakeToCamel(userDoc.data()) as Record<string, any>;
-          const xp = data.experiencePoints || data.xp || 0;
+          const raw = userDoc.data();
+          const data = snakeToCamel(raw) as Record<string, unknown>;
+          const xp = (data.experiencePoints as number) || (data.xp as number) || 0;
           setCurrentXp(xp);
           setCurrentLevel(getLevelForXp(xp));
         }
@@ -97,12 +97,13 @@ export const LevelJourneyScreen: React.FC = () => {
         const snapshot = await getDocs(q);
 
         const historyData = snapshot.docs.map((d) => {
-          const logData = snakeToCamel(d.data()) as Record<string, any>;
+          const rawLog = d.data();
+          const logData = snakeToCamel(rawLog) as Record<string, unknown>;
           return {
-            level: logData.newLevel || 0,
-            achievedAt: logData.createdAt?.toDate?.() || new Date(),
-            xpGained: logData.xpGained || 0,
-            source: logData.source || 'Jogo',
+            level: (logData.newLevel as number) || 0,
+            achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
+            xpGained: (logData.xpGained as number) || 0,
+            source: (logData.source as string) || 'Jogo',
           };
         });
 
@@ -116,7 +117,7 @@ export const LevelJourneyScreen: React.FC = () => {
     };
 
     fetchLevelData();
-  }, [targetUserId]);
+  }, [targetUserId, showError]);
 
   const progress = getXpProgress(currentXp);
   const xpRemaining = getXpRemaining(currentXp);

@@ -22,7 +22,7 @@ import {
   Shuffle as ShuffleIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, updateDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
@@ -119,13 +119,14 @@ export const TeamFormationScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching game:', error);
+        showError('Erro ao carregar dados. Tente novamente.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchGame();
-  }, [gameId]);
+  }, [gameId, navigate, showError, user]);
 
   const shuffleTeams = () => {
     const allPlayers = [...teamA, ...teamB];

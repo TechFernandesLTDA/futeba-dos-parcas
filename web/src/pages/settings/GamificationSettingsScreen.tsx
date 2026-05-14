@@ -94,11 +94,12 @@ export const GamificationSettingsScreen: React.FC = () => {
       }
     } catch (error) {
       logger.error('Erro ao carregar preferências de gamificação:', error);
+      showError('Erro ao carregar configurações de gamificação.');
       showErrorRef.current('Erro ao carregar configurações de gamificação.');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, showError]);
 
   useEffect(() => {
     if (user) {

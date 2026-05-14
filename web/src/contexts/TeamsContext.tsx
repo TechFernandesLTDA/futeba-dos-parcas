@@ -26,6 +26,7 @@ export function TeamsProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTeams() {
   const context = useContext(TeamsContext);
   if (!context) {

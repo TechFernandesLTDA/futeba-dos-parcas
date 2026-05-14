@@ -46,7 +46,7 @@ export const PhoneVerificationScreen: React.FC = () => {
   useDocumentTitle('Verificar telefone');
   const navigate = useNavigate();
   const { firebaseUser } = useAuth();
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const [phone, setPhone] = useState('+55');
   const [otp, setOtp] = useState('');
@@ -165,9 +165,8 @@ export const PhoneVerificationScreen: React.FC = () => {
           updated_at: serverTimestamp(),
         });
       } catch (firestoreErr) {
-        // Non-fatal: phone está no Auth, app continua funcionando.
-        // Logamos pra investigar mas seguimos o fluxo de onboarding.
         logger.error('Failed to persist phone to users doc (non-fatal):', firestoreErr);
+        showError('Telefone verificado, mas houve um erro ao salvar. Se o problema persistir, contate o suporte.');
       }
 
       setStep('success');
@@ -196,6 +195,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       } else if (code === 'auth/credential-already-in-use') {
         msg = 'Este telefone já está vinculado a outra conta.';
       }
+      showError(msg);
       setError(msg);
     } finally {
       setLoading(false);

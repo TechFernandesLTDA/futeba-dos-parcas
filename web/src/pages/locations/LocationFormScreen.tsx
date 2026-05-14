@@ -114,13 +114,14 @@ export const LocationFormScreen: React.FC = () => {
         setFetchError(null);
       } catch (err) {
         logger.error('Erro ao carregar local:', err);
+        showError('Erro ao carregar local. Tente novamente.');
         setFetchError('Erro ao carregar local. Tente novamente.');
       } finally {
         setFetchLoading(false);
       }
     };
     load();
-  }, [isEdit, locationId]);
+  }, [isEdit, locationId, showError]);
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(defaultForm);
 
