@@ -69,20 +69,24 @@ export const softDeleteGame =
     }
 
     // Rate Limiting: 5 deleções/min por usuário
-    const {
-      allowed: rlAllowed,
-      resetAt: rlResetAt,
-    } = await checkRateLimit(userId, {
-      maxRequests: 5,
-      windowMs: 60 * 1000,
-      keyPrefix: "soft_delete_game",
-    });
-    if (!rlAllowed) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Rate limit excedido. Tente após " +
-        new Date(rlResetAt).toISOString()
-      );
+    // Admin bypass rate limit (não aplicável a admins)
+    const isAdmin = request.auth?.token?.role === "ADMIN";
+    if (!isAdmin) {
+      const {
+        allowed: rlAllowed,
+        resetAt: rlResetAt,
+      } = await checkRateLimit(userId, {
+        maxRequests: 5,
+        windowMs: 60 * 1000,
+        keyPrefix: "soft_delete_game",
+      });
+      if (!rlAllowed) {
+        throw new functions.https.HttpsError(
+          "resource-exhausted",
+          "Rate limit excedido. Tente após " +
+          new Date(rlResetAt).toISOString()
+        );
+      }
     }
 
     if (!gameId) {
@@ -107,11 +111,11 @@ export const softDeleteGame =
 
       const gameData = gameDoc.data();
 
-      // Verificar proprietário
-      if (gameData?.owner_id !== userId) {
+      // Verificar proprietário ou admin
+      if (!isAdmin && gameData?.owner_id !== userId) {
         throw new functions.https.HttpsError(
           "permission-denied",
-          "Apenas o dono do jogo pode deletar"
+          "Apenas o dono do jogo ou ADMIN pode deletar"
         );
       }
 
