@@ -12,6 +12,7 @@ import {
   List,
   ListItem,
   ListItemAvatar,
+  ListItemButton,
   ListItemText,
   Skeleton,
   LinearProgress,
@@ -32,6 +33,8 @@ import {
   TrendingUp,
   EmojiEvents,
   LocalFireDepartment,
+  Star,
+  GroupAdd,
 } from '@mui/icons-material';
 import { gamificationColors } from '../../../theme';
 import { useGames } from '../../../hooks/useGames';
@@ -51,9 +54,16 @@ const logger = createLogger('HomeTab');
 interface Activity {
   id: string;
   type: string;
-  text: string;
+  title: string;
+  message: string;
   time: string;
   createdAt?: Date;
+  actorName?: string;
+  actorPhoto?: string;
+  referenceType?: string;
+  referenceId?: string;
+  groupId?: string;
+  senderId?: string;
 }
 
 export function HomeTab() {
@@ -116,9 +126,16 @@ export function HomeTab() {
           return {
             id: doc.id,
             type: d.type || 'notification',
-            text: d.title || d.message || d.body || 'Notificação',
+            title: d.title || '',
+            message: d.message || d.body || '',
             time: createdAt ? formatTimeAgoUtil(createdAt) : '',
             createdAt,
+            actorName: d.senderName || '',
+            actorPhoto: d.senderPhoto || '',
+            referenceType: d.referenceType || '',
+            referenceId: d.referenceId || '',
+            groupId: d.groupId || '',
+            senderId: d.senderId || '',
           } as Activity;
         });
         setActivities(data);
@@ -137,19 +154,45 @@ export function HomeTab() {
   // Usa utilitários centralizados de dateFormatters
 
   const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'goal':
-      case 'GOAL':
-        return <SportsSoccer color="success" />;
-      case 'mvp':
-      case 'MVP':
-        return <EmojiEvents sx={{ color: gamificationColors.gold }} />;
-      case 'level':
-      case 'LEVEL_UP':
-        return <TrendingUp color="primary" />;
-      default:
-        return <Notifications />;
+    const upper = type.toUpperCase();
+    if (upper.includes('GOAL') || upper === 'GOAL_SCORED') {
+      return <SportsSoccer color="success" />;
     }
+    if (upper.includes('MVP') || upper === 'MVP_WON' || upper === 'MVP_RECEIVED' || upper === 'MVP_VOTE') {
+      return <EmojiEvents sx={{ color: gamificationColors.gold }} />;
+    }
+    if (upper === 'LEVEL_UP') {
+      return <TrendingUp sx={{ color: levelColor }} />;
+    }
+    if (upper === 'BADGE_UNLOCKED' || upper === 'ACHIEVEMENT') {
+      return <Star sx={{ color: gamificationColors.gold }} />;
+    }
+    if (upper === 'GROUP_INVITE' || upper === 'GROUP_INVITE_ACCEPTED' || upper === 'MEMBER_JOINED' || upper === 'GROUP_JOINED' || upper === 'JOIN_GROUP') {
+      return <GroupAdd color="primary" />;
+    }
+    if (upper === 'GAME_SCHEDULED' || upper === 'GAME_CREATED' || upper === 'GAME_CONFIRMED' || upper === 'GAME_UPDATED' || upper === 'GAME_REMINDER' || upper === 'GAME_WIN' || upper.includes('GAME')) {
+      return <CalendarMonth />;
+    }
+    return <Notifications />;
+  };
+
+  const getActivityColor = (type: string) => {
+    const upper = type.toUpperCase();
+    if (upper.includes('MVP') || upper === 'MVP_WON' || upper === 'MVP_RECEIVED') return gamificationColors.gold;
+    if (upper === 'LEVEL_UP') return levelColor;
+    if (upper === 'BADGE_UNLOCKED' || upper === 'ACHIEVEMENT') return gamificationColors.gold;
+    return undefined;
+  };
+
+  const getActivityNavTarget = (activity: Activity): string | null => {
+    if (activity.referenceType === 'game' && activity.referenceId) return `/game/${activity.referenceId}`;
+    if (activity.referenceType === 'group' || (activity.groupId && !activity.referenceId)) {
+      return `/group/${activity.referenceId || activity.groupId}`;
+    }
+    if (activity.referenceType === 'badge') return '/badges';
+    if (activity.referenceType === 'level') return '/level-journey';
+    if (activity.senderId && !activity.referenceId && !activity.groupId) return `/profile/${activity.senderId}`;
+    return null;
   };
 
   return (
@@ -432,36 +475,85 @@ export function HomeTab() {
                   <Typography variant="body2" color="text.secondary">
                     Nenhuma atividade recente
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => navigate('/games')}
-                    sx={{ mt: 1.5 }}
-                  >
-                    Ver Jogos
-                  </Button>
+                  <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                    Participe de grupos ou crie jogos para ver atividades aqui
+                  </Typography>
+                  <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => navigate('/groups')}
+                    >
+                      Ver Grupos
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => navigate('/games')}
+                    >
+                      Criar Jogo
+                    </Button>
+                  </Box>
                 </Box>
               </CardContent>
             ) : (
               <List disablePadding>
-                {activities.map((activity, index) => (
-                  <ListItem
-                    key={activity.id}
-                    divider={index < activities.length - 1}
-                    secondaryAction={
-                      <Typography variant="caption" color="text.secondary">
-                        {activity.time}
-                      </Typography>
-                    }
-                  >
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'action.hover' }} aria-hidden="true">
-                        {getActivityIcon(activity.type)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText primary={activity.text} />
-                  </ListItem>
-                ))}
+                {activities.map((activity, index) => {
+                  const navTarget = getActivityNavTarget(activity);
+                  const avatarColor = getActivityColor(activity.type);
+                  return (
+                    <ListItem
+                      key={activity.id}
+                      disablePadding
+                      divider={index < activities.length - 1}
+                    >
+                      <ListItemButton
+                        onClick={() => navTarget && navigate(navTarget)}
+                        disabled={!navTarget}
+                        sx={{ py: 1.5 }}
+                      >
+                        <ListItemAvatar>
+                          {activity.actorPhoto ? (
+                            <Avatar src={activity.actorPhoto} alt={activity.actorName || ''} />
+                          ) : (
+                            <Avatar
+                              sx={{
+                                bgcolor: avatarColor
+                                  ? alpha(avatarColor, 0.15)
+                                  : 'action.hover',
+                              }}
+                              aria-hidden="true"
+                            >
+                              {getActivityIcon(activity.type)}
+                            </Avatar>
+                          )}
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={activity.title || activity.actorName || 'Atividade'}
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            noWrap: true,
+                          }}
+                          secondary={
+                            activity.message || activity.actorName
+                              ? `${activity.actorName ? `${activity.actorName}  ·  ` : ''}${activity.message}`
+                              : ''
+                          }
+                          secondaryTypographyProps={{
+                            noWrap: true,
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ ml: 1, alignSelf: 'flex-start', mt: 0.5, whiteSpace: 'nowrap' }}
+                        >
+                          {activity.time}
+                        </Typography>
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
               </List>
             )}
           </Card>
