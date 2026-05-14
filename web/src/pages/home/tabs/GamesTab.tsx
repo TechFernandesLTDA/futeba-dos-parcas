@@ -148,6 +148,7 @@ export function GamesTab() {
           >
             <Tab value="all" label="Todos" sx={{ minHeight: 36, py: 0 }} />
             <Tab value="SCHEDULED" label="Abertos" sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="CONFIRMED" label="Fechado" sx={{ minHeight: 36, py: 0 }} />
             <Tab value="LIVE" label="Ao Vivo" sx={{ minHeight: 36, py: 0 }} />
             <Tab value="FINISHED" label="Finalizados" sx={{ minHeight: 36, py: 0 }} />
           </Tabs>
@@ -214,7 +215,7 @@ export function GamesTab() {
               >
                 Limpar Filtros
               </Button>
-            ) : statusFilter === 'all' ? null : (
+            ) : (
               <Button
                 variant="contained"
                 startIcon={<Add />}
@@ -226,8 +227,8 @@ export function GamesTab() {
           </Box>
         ) : (
           filteredGames.map((game) => {
-            const progress = (game.playersCount / game.maxPlayers) * 100;
-            const isFull = game.playersCount >= game.maxPlayers;
+            const progress = game.maxPlayers > 0 ? Math.min((game.playersCount / game.maxPlayers) * 100, 100) : 0;
+            const isFull = game.maxPlayers > 0 && game.playersCount >= game.maxPlayers;
 
             return (
               <Card key={game.id} sx={{ mb: 2 }}>
@@ -289,7 +290,7 @@ export function GamesTab() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <CalendarMonth fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
-                          {formatGameDate(game.date)} às {game.time}
+                          {formatGameDate(game.date)}{game.time ? ` às ${game.time}` : ''}
                         </Typography>
                       </Box>
                       {game.locationAddress && (
@@ -321,7 +322,7 @@ export function GamesTab() {
                         )}
                         {(game.status === 'LIVE' || game.status === 'FINISHED') && (
                           <Typography variant="h6" fontWeight="bold">
-                            {game.team1Score} - {game.team2Score}
+                            {game.team1Score ?? 0} - {game.team2Score ?? 0}
                           </Typography>
                         )}
                       </Box>

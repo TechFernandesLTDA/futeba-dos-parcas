@@ -15,6 +15,9 @@ import {
   Typography,
   Tooltip,
   Skeleton,
+  AppBar,
+  Toolbar,
+  IconButton,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -37,6 +40,7 @@ const RankingsTab = lazy(() => import('./tabs/RankingsTab').then(m => ({ default
 const ProfileTab = lazy(() => import('./tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
 const NotificationsScreenLazy = lazy(() => import('../ranking/NotificationsScreen').then(m => ({ default: m.NotificationsScreen })));
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
+import { NotificationBell } from '../../components/common/NotificationBell';
 
 // Larguras dos navs adaptativos (Material 3 spec)
 const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
@@ -85,6 +89,9 @@ export function HomeScreen() {
     { icon: <Person />, label: t('nav.profile') },
     { icon: notificationIcon, label: t('nav.notifications', 'Notificações') },
   ], [t, notificationIcon]);
+
+  // Bottom nav mobile: 5 itens (sem Notificações, igual Android) (#1211)
+  const bottomNavConfigs = useMemo(() => tabConfigs.slice(0, 5), [tabConfigs]);
 
   // Estabilizado com useCallback para evitar recriação a cada render
   const handleTabChange = useCallback((idx: number) => {
@@ -223,6 +230,29 @@ export function HomeScreen() {
           pb: { xs: '72px', md: 0 },
         }}
       >
+        {/* AppBar mobile com NotificationBell (#1214) */}
+        <AppBar
+          position="sticky"
+          elevation={0}
+          sx={{
+            display: { xs: 'flex', md: 'none' },
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Toolbar variant="dense">
+            <SportsSoccer sx={{ color: 'primary.main', mr: 1 }} />
+            <Typography variant="h6" fontWeight={700} color="primary.main" sx={{ flex: 1 }}>
+              {t('common.appName')}
+            </Typography>
+            <IconButton onClick={() => handleTabChange(5)} aria-label="Notificações" size="small">
+              <NotificationBell unreadCount={unreadCount} />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+
         {/* Suspense local: evita desmontar o nav ao carregar chunk da tab */}
         <Suspense fallback={<TabSkeleton />}>
           {tabValue === 0 && <HomeTab />}
@@ -253,7 +283,7 @@ export function HomeScreen() {
         elevation={3}
       >
         <BottomNavigation
-          value={tabValue}
+          value={tabValue < 5 ? tabValue : 99}
           onChange={handleBottomNavChange}
           showLabels
           aria-label="Navegação principal"
@@ -272,7 +302,7 @@ export function HomeScreen() {
             },
           }}
         >
-          {tabConfigs.map((config) => (
+          {bottomNavConfigs.map((config) => (
             <BottomNavigationAction
               key={config.label}
               icon={config.icon}

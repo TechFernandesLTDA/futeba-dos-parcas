@@ -13,6 +13,7 @@ import {
   Timestamp,
   serverTimestamp,
   writeBatch,
+  documentId,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -37,7 +38,8 @@ function parseGroupDoc(docId: string, raw: Record<string, unknown>): Group {
   } as Group;
 }
 
-// Busca grupos do usuário via subcoleção users/{uid}/groups como fonte primária
+// Busca grupos do usuário via subcoleção users/{uid}/groups como fonte primária,
+// com follow-up read dos docs completos para dados como type, description, nextGameDate.
 async function fetchUserGroups(uid: string): Promise<Group[]> {
   const userGroupsRef = collection(db, 'users', uid, 'groups');
   const q = query(userGroupsRef, orderBy('joined_at', 'desc'));
@@ -45,15 +47,53 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
 
   if (snapshot.empty) return [];
 
-  return snapshot.docs
-    .map((d) => {
-      const data = d.data();
+  const entries = snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      groupId: (data.group_id as string) || d.id,
+      role: data.role as GroupRole,
+      fallbackName: (data.group_name as string) || 'Grupo',
+      fallbackPhoto: (data.group_photo as string) || null,
+      fallbackMemberCount: (data.member_count as number) || 0,
+    };
+  });
+
+  const groupIds = entries.map((e) => e.groupId);
+
+  // Follow-up read: buscar docs completos dos grupos (aceitável para ≤10 grupos)
+  const groupsMap = new Map<string, Group>();
+  const chunks: string[][] = [];
+  for (let i = 0; i < groupIds.length; i += 10) {
+    chunks.push(groupIds.slice(i, i + 10));
+  }
+
+  const settled = await Promise.allSettled(
+    chunks.map((chunk) =>
+      getDocs(query(collection(db, 'groups'), where(documentId(), 'in', chunk)))
+    )
+  );
+
+  for (const result of settled) {
+    if (result.status === 'rejected') continue;
+    for (const docSnap of result.value.docs) {
+      const raw = docSnap.data();
+      groupsMap.set(docSnap.id, parseGroupDoc(docSnap.id, raw));
+    }
+  }
+
+  // Merge: dados completos do grupo + dados da subcoleção (role, fallback)
+  return entries
+    .map((entry) => {
+      const groupDoc = groupsMap.get(entry.groupId);
+      if (groupDoc) {
+        return { ...groupDoc, role: entry.role, memberCount: groupDoc.memberCount || entry.fallbackMemberCount };
+      }
       return {
-        id: (data.group_id as string) || d.id,
-        name: (data.group_name as string) || 'Grupo',
-        photoUrl: (data.group_photo as string) || null,
-        memberCount: (data.member_count as number) || 0,
-        role: data.role as GroupRole,
+        id: entry.groupId,
+        name: entry.fallbackName,
+        photoUrl: entry.fallbackPhoto,
+        memberCount: entry.fallbackMemberCount,
+        role: entry.role,
       } as unknown as Group;
     })
     .filter((g) => !g.deletedAt);

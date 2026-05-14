@@ -159,7 +159,7 @@ export function GroupsTab() {
           </Box>
         ) : (
           filteredGroups.map((group) => {
-            const isOwner = group.ownerId === (user?.id || '');
+            const isOwner = group.role === 'OWNER';
 
             return (
               <Card key={group.id} sx={{ mb: 2 }}>

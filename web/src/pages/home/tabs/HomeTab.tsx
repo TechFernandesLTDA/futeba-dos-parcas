@@ -170,7 +170,7 @@ export function HomeTab() {
                   sx={{
                     width: 60,
                     height: 60,
-                    bgcolor: 'rgba(255,255,255,0.2)',
+                    bgcolor: alpha(theme.palette.common.white, 0.2),
           color: 'primary.contrastText',
                     fontWeight: 'bold',
                     fontSize: '1.5rem',
@@ -232,10 +232,10 @@ export function HomeTab() {
                 sx={{
                   height: 8,
                   borderRadius: 4,
-                  bgcolor: 'rgba(255,255,255,0.15)',
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
                   '& .MuiLinearProgress-bar': {
                     borderRadius: 4,
-                    bgcolor: 'rgba(255,255,255,0.9)',
+                    bgcolor: alpha(theme.palette.common.white, 0.9),
                   },
                 }}
               />
@@ -249,9 +249,9 @@ export function HomeTab() {
             {/* Stats rápidos */}
             <Box sx={{ display: 'flex', gap: 2 }}>
               {[
-                { value: user?.totalGames || 0, label: 'Jogos', icon: <SportsSoccer sx={{ fontSize: 16, opacity: 0.9 }} />, color: 'rgba(255,255,255,0.15)' },
-                { value: user?.totalGoals || 0, label: 'Gols', icon: <SportsScore sx={{ fontSize: 16, opacity: 0.9 }} />, color: 'rgba(76,175,80,0.25)' },
-                { value: user?.mvpCount || 0, label: 'MVPs', icon: <EmojiEvents sx={{ fontSize: 16, opacity: 0.9 }} />, color: 'rgba(255,193,7,0.25)' },
+                { value: user?.totalGames || 0, label: 'Jogos', icon: <SportsSoccer sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15) },
+                { value: user?.totalGoals || 0, label: 'Gols', icon: <SportsScore sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25) },
+                { value: user?.mvpCount || 0, label: 'MVPs', icon: <EmojiEvents sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gamificationColors.gold, 0.25) },
               ].map((stat) => (
                 <Box
                   key={stat.label}
