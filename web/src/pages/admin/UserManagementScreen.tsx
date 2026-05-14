@@ -112,7 +112,7 @@ export const UserManagementScreen: React.FC = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [showError]);
 
   const handleLoadMore = async () => {
     if (!lastDoc || loadingMore) return;

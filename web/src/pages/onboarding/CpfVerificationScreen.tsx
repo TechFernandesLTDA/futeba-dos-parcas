@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import {
   Box,
   Button,
@@ -36,7 +36,6 @@ const logger = createLogger('CpfVerification');
  */
 export const CpfVerificationScreen: React.FC = () => {
   useDocumentTitle('Verificar CPF');
-  const navigate = useNavigate();
   const { firebaseUser } = useAuth();
   const { showError, showSuccess } = useToast();
 
@@ -94,7 +93,7 @@ export const CpfVerificationScreen: React.FC = () => {
         await firebaseUser.getIdToken(true);
       } catch (refreshErr) {
         logger.error('Failed to refresh ID token before verifyCpf:', refreshErr);
-        // Continue mesmo se refresh falhar — callable vai dar erro melhor.
+        showError('Erro ao renovar sessão. Tente novamente.');
       }
 
       logger.info('Calling verifyCpf', { uid: firebaseUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });

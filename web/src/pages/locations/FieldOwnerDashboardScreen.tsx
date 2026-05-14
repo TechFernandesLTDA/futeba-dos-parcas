@@ -37,6 +37,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -68,6 +69,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const navigateBack = useNavigateBack('/locations');
   const theme = useTheme();
   const { user } = useAuth();
+  const { showError } = useToast();
 
   const [stats, setStats] = useState<LocationStats | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
@@ -113,11 +115,12 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       });
     } catch (err) {
       logger.error('Error fetching dashboard:', err);
+      showError('Erro ao carregar dashboard. Tente novamente.');
       setError(getFirestoreErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, showError]);
 
   useEffect(() => {
     fetchDashboard();

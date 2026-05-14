@@ -26,7 +26,6 @@ import {
   Close,
 } from '@mui/icons-material';
 import { useGroups } from '../../../hooks/useGroups';
-import { useAuth } from '../../../contexts/AuthContext';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateShort } from '../../../utils/dateFormatters';
 
@@ -34,7 +33,6 @@ export function GroupsTab() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const { user } = useAuth();
   const { groups, loading, error, refetch } = useGroups();
 
   const filteredGroups = useMemo(() => {

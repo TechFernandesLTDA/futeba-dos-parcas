@@ -71,7 +71,7 @@ vi.mock('../../utils/logger', () => ({
 }));
 
 vi.mock('../../utils/firestoreHelpers', () => ({
-  snakeToCamel: (obj: any) => obj,
+  snakeToCamel: (obj: Record<string, unknown>) => obj as Record<string, unknown>,
 }));
 
 vi.mock('../../services/firebase', () => ({

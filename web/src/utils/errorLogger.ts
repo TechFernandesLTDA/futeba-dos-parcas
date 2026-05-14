@@ -89,7 +89,7 @@ function saveToLocalStorage(entry: ErrorLogEntry): void {
     // Mantém apenas os mais recentes
     const trimmed = existing.slice(-MAX_LOCAL_LOGS);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(trimmed));
-  } catch (storageErr) {
+  } catch {
     // QuotaExceededError ou JSON parse error — tenta limpar metade e reinserir
     try {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -177,7 +177,8 @@ export async function logError(
 
     // Persiste no Firestore de forma assíncrona (best-effort)
     try {
-      const { createdAt: _iso, ...firestoreFields } = entry;
+      const firestoreFields = { ...entry } as Partial<ErrorLogEntry>;
+      delete firestoreFields.createdAt;
       await addDoc(collection(db, 'error_logs'), {
         ...firestoreFields,
         createdAt: serverTimestamp(),

@@ -32,6 +32,7 @@ import {
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
@@ -62,6 +63,7 @@ export const LiveStatsScreen: React.FC = () => {
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
+  const { showError } = useToast();
 
   const [tabValue, setTabValue] = useState(0);
   const [stats, setStats] = useState<LiveStats | null>(null);
@@ -100,13 +102,14 @@ export const LiveStatsScreen: React.FC = () => {
         setEvents(eventsData);
       } catch (error) {
         logger.error('Error fetching stats:', error);
+        showError('Erro ao carregar estatísticas. Tente novamente.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [gameId]);
+  }, [gameId, showError]);
 
   const getEventIcon = (type: string) => {
     switch (type) {

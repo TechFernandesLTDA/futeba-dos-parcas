@@ -48,6 +48,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
@@ -56,6 +57,7 @@ export function useLanguage() {
   return context;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function syncLanguageToFirestore(uid: string, language: SupportedLanguage) {
   try {
     const prefRef = doc(db, 'users', uid, 'preferences', 'language');
@@ -68,6 +70,7 @@ export async function syncLanguageToFirestore(uid: string, language: SupportedLa
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadLanguageFromFirestore(uid: string): Promise<SupportedLanguage | null> {
   try {
     const prefRef = doc(db, 'users', uid, 'preferences', 'language');

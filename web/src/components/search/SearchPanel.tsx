@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, KeyboardEvent } from 'react';
+import React, { useState, useEffect, useRef, useCallback, KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -99,13 +99,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
 
   useEffect(() => { setSelectedIndex(-1); }, [navigableItems.length, searchQuery]);
 
-  useEffect(() => {
-    if (!searchQuery.trim()) { setResults([]); return; }
-    const t = setTimeout(() => doSearch(searchQuery, tabValue), 300);
-    return () => clearTimeout(t);
-  }, [searchQuery, tabValue]);
-
-  const doSearch = async (q: string, tab: number) => {
+  const doSearch = useCallback(async (q: string, tab: number) => {
     // Gera ID único para este request; requests antigos são descartados ao retornar
     const requestId = ++requestIdRef.current;
     setLoading(true);
@@ -167,7 +161,13 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     } finally {
       if (requestIdRef.current === requestId) setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) { setResults([]); return; }
+    const t = setTimeout(() => doSearch(searchQuery, tabValue), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery, tabValue, doSearch]);
 
   const navToResult = (result: SearchResult) => {
     if (result.type === 'quick') {

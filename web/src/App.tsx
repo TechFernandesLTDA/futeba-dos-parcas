@@ -344,7 +344,7 @@ function useFocusOnNavigate() {
       pathname: location.pathname,
       search: location.search,
     });
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 }
 
 function AppRoutes() {
@@ -484,12 +484,11 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}
       >
-        {/* NotificationBell em mobile (xs/sm) — exceção: HomeScreen tem seu próprio AppBar com bell */}
         {user && !isHomeScreen && (
           <Box
             sx={{
               position: 'fixed',
-              top: 8,
+              top: 56,
               right: 8,
               zIndex: 1100,
               display: { xs: 'block', md: 'none' },

@@ -12,6 +12,7 @@
 import { seedE2EUsers } from '../../scripts/seed-e2e-users';
 
 export default async function globalSetup(): Promise<void> {
+  // eslint-disable-next-line no-console
   console.log('\n[globalSetup] Iniciando setup global dos testes E2E...');
 
   // Validação explícita: o emulador DEVE estar rodando antes dos testes
@@ -29,5 +30,6 @@ export default async function globalSetup(): Promise<void> {
   // Executa o seed dos usuários de teste no emulador
   await seedE2EUsers();
 
+  // eslint-disable-next-line no-console
   console.log('[globalSetup] Setup global concluído. Testes podem iniciar.\n');
 }

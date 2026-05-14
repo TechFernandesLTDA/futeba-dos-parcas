@@ -17,6 +17,7 @@
  * Fonte: specs/PERMISSION_MATRIX.md (Seção 1 — Telas Web)
  */
 
+import { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 
 // ==========================================
@@ -216,7 +217,7 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
  * @param selector String do selector (texto ou role)
  * @param type Tipo: 'text', 'role', ou 'heading'
  */
-function selectLocator(page: any, selector: string, type: string | undefined) {
+function selectLocator(page: Page, selector: string, type: string | undefined) {
   switch (type) {
     case 'role':
       return page.getByRole(selector);

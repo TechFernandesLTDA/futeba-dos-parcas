@@ -25,6 +25,18 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+// Duração padrão por severidade:
+// success → 4s (confirmação rápida)
+// info    → 5s (informativo)
+// warning → 8s (requer atenção)
+// error   → 10s + anchor bottom/center (erro crítico, sempre visível mesmo com scroll)
+const DEFAULT_DURATIONS: Record<AlertColor, number> = {
+  success: 4000,
+  info: 5000,
+  warning: 8000,
+  error: 10000,
+};
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const useToast = () => {
   const context = useContext(ToastContext);
@@ -36,18 +48,6 @@ export const useToast = () => {
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
-
-  // Duração padrão por severidade:
-  // success → 4s (confirmação rápida)
-  // info    → 5s (informativo)
-  // warning → 8s (requer atenção)
-  // error   → 10s + anchor bottom/center (erro crítico, sempre visível mesmo com scroll)
-  const DEFAULT_DURATIONS: Record<AlertColor, number> = {
-    success: 4000,
-    info: 5000,
-    warning: 8000,
-    error: 10000,
-  };
 
   const showToast = useCallback((message: string, severity: AlertColor = 'info', duration?: number) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;

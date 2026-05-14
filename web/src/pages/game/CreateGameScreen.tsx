@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -37,7 +37,7 @@ import { useGroupDetail, useGroups } from '../../hooks/useGroups';
 import { useLocations } from '../../hooks/useLocations';
 import { FieldType, PixKeyType, GameVisibility } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
-import { Field, FieldType as LocationFieldType } from '../../types/location';
+import { Field } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
@@ -115,8 +115,6 @@ export const CreateGameScreen: React.FC = () => {
   const { createGame, loading, error } = useCreateGame();
   const { locations, loading: locationsLoading, error: locationsError } = useLocations();
   const { showSuccess, showError } = useToast();
-  const showErrorRef = useRef(showError);
-  showErrorRef.current = showError;
   const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [fields, setFields] = useState<Field[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
@@ -187,7 +185,7 @@ export const CreateGameScreen: React.FC = () => {
         if (cancelled) return;
         logger.error('Erro ao carregar quadras:', err);
         setFieldsError('Erro ao carregar quadras. Tente novamente.');
-        showErrorRef.current('Erro ao carregar quadras. Tente novamente.');
+        showError('Erro ao carregar quadras. Tente novamente.');
       } finally {
         if (!cancelled) setFieldsLoading(false);
       }
@@ -195,7 +193,7 @@ export const CreateGameScreen: React.FC = () => {
 
     loadFields();
     return () => { cancelled = true; };
-  }, [formData.locationId, useCustomLocation]);
+  }, [formData.locationId, useCustomLocation, showError]);
 
   useEffect(() => {
     if (group && !formData.groupId) {
@@ -205,7 +203,7 @@ export const CreateGameScreen: React.FC = () => {
         groupName: group.name,
       }));
     }
-  }, [group, groupId]);
+  }, [group, groupId, formData.groupId]);
 
   const handleInputChange = <K extends keyof GameFormData>(field: K, value: GameFormData[K]) => {
     setUserInteracted(true);
@@ -308,7 +306,7 @@ export const CreateGameScreen: React.FC = () => {
       }
 
       // Montar dados limpos (sem campos undefined)
-      const gamePayload: Record<string, any> = {
+      const gamePayload: Record<string, unknown> = {
         locationName: formData.locationName,
         locationAddress: formData.locationAddress,
         date: formData.date,
@@ -346,7 +344,7 @@ export const CreateGameScreen: React.FC = () => {
         gamePayload.pixBeneficiaryName = formData.pixBeneficiaryName;
       }
 
-      const gameId = await createGame(gamePayload as any);
+      const gameId = await createGame(gamePayload as Partial<import('../../types/game').Game>);
       showSuccess('Jogo criado com sucesso!');
       navigate(`/game/${gameId}`);
     } catch (err: unknown) {

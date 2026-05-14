@@ -69,7 +69,7 @@ export const CashboxScreen: React.FC = () => {
   const { user } = useAuth();
 
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
-  const [_members, setMembers] = useState<GroupMember[]>([]);
+  const [, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
@@ -164,7 +164,7 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId]);
+  }, [groupId, showError, user]);
 
   const handleAddTransaction = async () => {
     const parsedAmount = parseFloat(amount);

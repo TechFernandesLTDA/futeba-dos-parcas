@@ -16,7 +16,6 @@ import {
   alpha,
   Chip,
   List,
-  CircularProgress,
   LinearProgress,
 } from '@mui/material';
 import {
@@ -183,6 +182,7 @@ export const PostGameReportScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching report:', error);
+        showError('Erro ao carregar dados. Tente novamente.');
       } finally {
         setLoading(false);
       }

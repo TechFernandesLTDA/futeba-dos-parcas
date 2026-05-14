@@ -113,6 +113,7 @@ export const LocationDetailScreen: React.FC = () => {
       } catch (err) {
         logger.error('Erro ao carregar local:', err);
         if (!cancelled) {
+          showError('Não foi possível carregar este local. Verifique sua conexão e tente novamente.');
           setError('Não foi possível carregar este local. Verifique sua conexão e tente novamente.');
           setLoading(false);
         }
@@ -123,7 +124,7 @@ export const LocationDetailScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [locationId, reloadKey]);
+  }, [locationId, reloadKey, showError]);
 
   // Editar: ADMIN ou owner do local podem editar
   const userCanEdit =

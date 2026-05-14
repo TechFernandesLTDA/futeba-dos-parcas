@@ -30,7 +30,7 @@ import {
   PersonRemove as PersonRemoveIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, getDocs, query, collection, where, documentId, writeBatch, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, query, collection, where, documentId, writeBatch, arrayRemove } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -160,7 +160,7 @@ export const PlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId, user]);
+  }, [groupId, user, showError]);
 
   const handleRemoveMember = async (memberId: string) => {
     if (!groupId || !user || currentUserRole !== 'OWNER') return;

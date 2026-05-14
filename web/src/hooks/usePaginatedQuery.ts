@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
+import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('usePaginatedQuery');
@@ -34,6 +35,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
     whereClauses = [],
   } = options;
 
+  const { showError } = useToast();
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -87,11 +89,12 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
     } catch (err) {
       logger.error(`Error fetching ${collectionName}:`, err);
       setError(err as Error);
+      showError('Erro ao carregar dados. Tente novamente.');
     } finally {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [collectionName, pageSize, orderByField, orderDirection, whereClauses]);
+  }, [collectionName, pageSize, orderByField, orderDirection, whereClauses, showError]);
 
   const loadMore = useCallback(() => {
     if (hasMore && !loading) {

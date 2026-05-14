@@ -130,7 +130,7 @@ export const GroupDetailScreen: React.FC = () => {
     try {
       await navigator.clipboard.writeText(link);
       showSuccess('Link copiado!');
-    } catch (err) {
+    } catch {
       showError('Erro ao copiar link');
     }
   };

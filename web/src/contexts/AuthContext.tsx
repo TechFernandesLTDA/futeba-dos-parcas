@@ -94,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } as User;
     } catch (err) {
       logger.error('Error fetching user data:', err);
+      setError('Erro ao carregar dados. Tente novamente.');
       return null;
     }
   };
@@ -144,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { id: firebaseUser.uid, ...snakeToCamel<Omit<User, 'id'>>(userData) } as User;
       } catch (err) {
         logger.error('Error creating user document:', err);
+        setError('Erro ao criar conta. Tente novamente.');
         return null;
       }
     }
@@ -208,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (lastFetchUid === currentUid) {
           setUser(null);
           setLoading(false);
+          setError('Erro ao verificar autenticação. Tente novamente.');
         }
       }
     });

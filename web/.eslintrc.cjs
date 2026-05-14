@@ -42,7 +42,7 @@ module.exports = {
       {
         // Rule 2: catch com logger.error mas sem feedback ao usuário (showError/setError/throw)
         // Correto: catch(err) { logger.error(...); showError('mensagem') }
-        selector: "CatchClause:has(CallExpression[callee.object.name='logger'][callee.property.name='error']):not(:has(CallExpression[callee.name='showError'])):not(:has(ThrowStatement)):not(:has(CallExpression[callee.property.name='setError']))",
+        selector: "CatchClause:has(CallExpression[callee.object.name='logger'][callee.property.name='error']):not(:has(CallExpression[callee.name='showError'])):not(:has(CallExpression[callee.name='setError'])):not(:has(CallExpression[callee.property.name='setError'])):not(:has(ThrowStatement))",
         message: '`catch { logger.error }` sem `showError`, `setError` ou `throw` engole o erro pro usuário. Adicione feedback UI — vide auditoria #601.',
       },
     ],

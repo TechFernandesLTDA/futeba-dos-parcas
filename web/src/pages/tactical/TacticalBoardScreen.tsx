@@ -105,7 +105,7 @@ export const TacticalBoardScreen: React.FC = () => {
     };
 
     fetchPlayers();
-  }, [gameId]);
+  }, [gameId, showError]);
 
   const applyFormation = (formationIndex: number) => {
     setSelectedFormation(formationIndex);

@@ -140,7 +140,7 @@ export const VoteResultScreen: React.FC = () => {
     };
 
     fetchData();
-  }, [gameId]);
+  }, [gameId, showError]);
 
   if (loading) {
     return <LoadingState shimmerCount={4} itemType="CARD" />;

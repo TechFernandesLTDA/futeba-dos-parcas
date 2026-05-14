@@ -4,7 +4,6 @@ import {
   doc,
   setDoc,
   deleteDoc,
-  getDoc,
   onSnapshot,
   query,
   where,
@@ -13,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useJoinRequests');
@@ -45,6 +45,7 @@ export interface JoinRequest {
  */
 export function useMyJoinRequest(groupId: string | undefined) {
   const { user, firebaseUser } = useAuth();
+  const { showError } = useToast();
   const uid = firebaseUser?.uid || user?.id;
 
   const [request, setRequest] = useState<JoinRequest | null>(null);
@@ -107,10 +108,11 @@ export function useMyJoinRequest(groupId: string | undefined) {
       const err = e as Error;
       logger.error('requestJoin failed', err);
       setError(err.message);
+      showError('Erro ao solicitar entrada no grupo. Tente novamente.');
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, user]);
+  }, [groupId, uid, user, showError]);
 
   const cancelRequest = useCallback(async () => {
     if (!groupId || !uid) return;
@@ -122,10 +124,11 @@ export function useMyJoinRequest(groupId: string | undefined) {
       const err = e as Error;
       logger.error('cancelRequest failed', err);
       setError(err.message);
+      showError('Erro ao cancelar solicitação. Tente novamente.');
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid]);
+  }, [groupId, uid, showError]);
 
   return {
     request,
@@ -151,6 +154,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
  */
 export function usePendingJoinRequests(groupId: string | undefined) {
   const { user, firebaseUser } = useAuth();
+  const { showError } = useToast();
   const uid = firebaseUser?.uid || user?.id;
 
   const [requests, setRequests] = useState<JoinRequest[]>([]);
@@ -214,9 +218,10 @@ export function usePendingJoinRequests(groupId: string | undefined) {
         const err = e as Error;
         logger.error('approve failed', err);
         setError(err.message);
+        showError('Erro ao aprovar solicitação. Tente novamente.');
       }
     },
-    [groupId, uid]
+    [groupId, uid, showError]
   );
 
   const reject = useCallback(
@@ -232,9 +237,10 @@ export function usePendingJoinRequests(groupId: string | undefined) {
         const err = e as Error;
         logger.error('reject failed', err);
         setError(err.message);
+        showError('Erro ao rejeitar solicitação. Tente novamente.');
       }
     },
-    [groupId, uid]
+    [groupId, uid, showError]
   );
 
   return { requests, loading, error, approve, reject };

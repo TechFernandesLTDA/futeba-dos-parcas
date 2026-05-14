@@ -21,7 +21,6 @@ import {
   LinearProgress,
   Tabs,
   Tab,
-  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -33,7 +32,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
-import { BADGE_DEFINITIONS, BadgeDefinition, BadgeRarity } from '../../types/gamification';
+import { BADGE_DEFINITIONS, BadgeDefinition } from '../../types/gamification';
 import { rarityColors } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 

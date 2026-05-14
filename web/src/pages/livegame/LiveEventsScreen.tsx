@@ -92,11 +92,12 @@ export const LiveEventsScreen: React.FC = () => {
         }
       } catch (err) {
         logger.error('Erro ao verificar permissão de gerenciamento:', err);
+        showError('Erro ao verificar permissões. Tente novamente.');
       }
     };
 
     checkManagePermission();
-  }, [gameId, user]);
+  }, [gameId, user, showError]);
 
   useEffect(() => {
     if (!gameId) return;
