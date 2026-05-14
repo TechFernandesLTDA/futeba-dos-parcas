@@ -36,6 +36,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (profile: { displayName?: string; photoURL?: string }) => Promise<void>;
+  updatingProfile: boolean;
 
   // User methods
   refreshUser: () => Promise<void>;
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingProfile, setUpdatingProfile] = useState(false);
   const prevUserRef = useRef<FirebaseUser | null>(null);
   const firebaseUserRef = useRef(firebaseUser);
   firebaseUserRef.current = firebaseUser;
@@ -336,8 +338,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Update profile
   const updateUserProfile = useCallback(async (profile: { displayName?: string; photoURL?: string }) => {
-    if (firebaseUser && user) {
-      await updateProfile(firebaseUser, profile);
+    const currentUser = firebaseUserRef.current;
+    if (!currentUser || !user) return;
+    setError(null);
+    setUpdatingProfile(true);
+    try {
+      await updateProfile(currentUser, profile);
       const userRef = doc(db, 'users', user.id);
       await updateDoc(userRef, {
         name: profile.displayName || user.name,
@@ -345,8 +351,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updated_at: serverTimestamp(),
       });
       await refreshUser();
+    } catch (err) {
+      logger.error('Error updating profile:', err);
+      setError((err as Error).message || 'Erro ao atualizar perfil');
+      throw err;
+    } finally {
+      setUpdatingProfile(false);
     }
-  }, [firebaseUser, refreshUser]);
+  }, [user, refreshUser]);
 
   const value = useMemo<AuthContextType>(() => ({
     firebaseUser,
@@ -360,9 +372,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     resetPassword,
     updateUserProfile,
+    updatingProfile,
     refreshUser,
     refreshClaims,
-  }), [firebaseUser, user, loading, error, signIn, signInWithGoogle, signUp, logout, resetPassword, updateUserProfile, refreshUser, refreshClaims]);
+  }), [firebaseUser, user, loading, error, updatingProfile, signIn, signInWithGoogle, signUp, logout, resetPassword, updateUserProfile, refreshUser, refreshClaims]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

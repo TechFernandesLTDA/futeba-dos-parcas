@@ -18,6 +18,7 @@ import {
   Fab,
   Button,
   Grid,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -117,6 +118,7 @@ export const LocationsMapScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [errorState, setErrorState] = useState<string | null>(null);
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
@@ -138,6 +140,7 @@ export const LocationsMapScreen: React.FC = () => {
       (err) => {
         logger.error('Error in locations map listener:', err);
         showErrorRef.current('Erro ao carregar locais no mapa.');
+        setErrorState('Erro ao carregar locais no mapa.');
         setLoading(false);
       }
     );
@@ -202,6 +205,14 @@ export const LocationsMapScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
+        {errorState && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+          >
+            {errorState}
+          </Alert>
+        )}
         {loading ? (
           <LoadingState shimmerCount={6} itemType="CARD" />
         ) : filteredLocations.length === 0 ? (

@@ -11,6 +11,7 @@ import {
   doc,
   getDocs,
   writeBatch,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -129,7 +130,7 @@ export const useNotifications = (userId?: string) => {
         sender_photo: notification.senderPhoto || null,
         group_id: notification.groupId || null,
         action_type: notification.actionType || null,
-        created_at: notification.createdAt || new Date(),
+        created_at: notification.createdAt || serverTimestamp(),
       });
       showSuccess('Notificação restaurada.');
     } catch (err) {

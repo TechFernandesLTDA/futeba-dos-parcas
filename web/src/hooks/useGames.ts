@@ -19,6 +19,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { Game, GameConfirmation, GameStatus, ConfirmationStatus } from '../types/game';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { camelToSnake } from '../utils/camelToSnake';
 import { createLogger } from '../utils/logger';
@@ -206,6 +207,7 @@ export function useGameDetail(gameId: string | null) {
 
 export function useConfirmPresence() {
   const { user, firebaseUser } = useAuth();
+  const { showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,10 +247,11 @@ export function useConfirmPresence() {
         logger.error('Error confirming presence:', err);
         setError((err as Error).message);
         setLoading(false);
+        showError((err as Error).message || 'Erro ao confirmar presença.');
         throw err;
       }
     },
-    [firebaseUser, user]
+    [firebaseUser, user, showError]
   );
 
   const cancelPresence = useCallback(
@@ -278,10 +281,11 @@ export function useConfirmPresence() {
         logger.error('Error cancelling presence:', err);
         setError((err as Error).message);
         setLoading(false);
+        showError((err as Error).message || 'Erro ao cancelar presença.');
         throw err;
       }
     },
-    [firebaseUser, user]
+    [firebaseUser, user, showError]
   );
 
   return { confirmPresence, cancelPresence, loading, error };
@@ -289,6 +293,7 @@ export function useConfirmPresence() {
 
 export function useCreateGame() {
   const { user, firebaseUser } = useAuth();
+  const { showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -344,16 +349,18 @@ export function useCreateGame() {
         logger.error('Error creating game:', err);
         setError((err as Error).message);
         setLoading(false);
+        showError((err as Error).message || 'Erro ao criar jogo.');
         throw err;
       }
     },
-    [firebaseUser, user, queryClient]
+    [firebaseUser, user, queryClient, showError]
   );
 
   return { createGame, loading, error };
 }
 
 export function useUpdateGameStatus() {
+  const { showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -398,10 +405,11 @@ export function useUpdateGameStatus() {
         logger.error('Error updating game status:', err);
         setError((err as Error).message);
         setLoading(false);
+        showError((err as Error).message || 'Erro ao atualizar status do jogo.');
         throw err;
       }
     },
-    [queryClient]
+    [queryClient, showError]
   );
 
   return { updateStatus, loading, error };

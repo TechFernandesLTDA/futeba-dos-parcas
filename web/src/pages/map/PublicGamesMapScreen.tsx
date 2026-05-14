@@ -12,6 +12,7 @@ import {
   alpha,
   Fab,
   Button,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -108,10 +109,10 @@ export const PublicGamesMapScreen: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { games, loading } = usePublicGames();
+  const { games, loading, error, refetch } = usePublicGames();
 
   const filteredGames = games.filter((game) =>
-    game.locationName?.toLowerCase().includes(searchQuery.toLowerCase())
+    (game.locationName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleGameClick = (game: Game) => {
@@ -170,6 +171,19 @@ export const PublicGamesMapScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
+        {error && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={() => refetch()}>
+                Tentar novamente
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        )}
         {loading ? (
           <LoadingState shimmerCount={6} itemType="GAME" />
         ) : filteredGames.length === 0 ? (
