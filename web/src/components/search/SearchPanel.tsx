@@ -342,7 +342,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                 >
                   <ListItemAvatar>
                     {result.photoUrl ? (
-                      <Avatar src={result.photoUrl} alt={result.name} sx={{ width: 36, height: 36 }} />
+                      <Avatar src={result.photoUrl} alt={result.name} slotProps={{ img: { loading: 'lazy' } }} sx={{ width: 36, height: 36 }} />
                     ) : (
                       <Avatar sx={{ width: 36, height: 36, bgcolor: alpha(typeColor(result.type), 0.15), color: typeColor(result.type) }}>
                         {typeIcon(result.type)}

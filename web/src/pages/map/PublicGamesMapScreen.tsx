@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -20,18 +20,84 @@ import {
   Map as MapIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
-import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePublicGames } from '../../hooks/useGames';
 import { LoadingState, GameCard } from '../../components/common/GameCard';
 import { Game } from '../../types/game';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { useToast } from '../../contexts/ToastContext';
-import { createLogger } from '../../utils/logger';
 
-const logger = createLogger('PublicGamesMapScreen');
+function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick: (game: Game) => void }) {
+  const theme = useTheme();
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+
+  if (!mapsLoaded || !apiKey) {
+    return (
+      <Box
+        sx={{
+          height: '100%',
+          bgcolor: alpha(theme.palette.primary.main, 0.1),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+        }}
+      >
+        <MapIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+        <Typography variant="body2" color="text.secondary">
+          {apiKey ? 'Carregando mapa...' : 'Configure VITE_GOOGLE_MAPS_API_KEY para ver o mapa'}
+        </Typography>
+        <Typography variant="caption" color="text.disabled">
+          {games.length} jogos públicos encontrados
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <GoogleMap
+      mapContainerStyle={{ width: '100%', height: '100%' }}
+      center={
+        games.length > 0 && games[0].locationLat
+          ? { lat: games[0].locationLat, lng: games[0].locationLng || 0 }
+          : { lat: -23.55, lng: -46.63 }
+      }
+      zoom={12}
+    >
+      {games
+        .filter(g => g.locationLat && g.locationLng)
+        .map(game => (
+          <MarkerF
+            key={game.id}
+            position={{ lat: game.locationLat!, lng: game.locationLng! }}
+            onClick={() => setSelectedGame(game)}
+          />
+        ))}
+      {selectedGame && selectedGame.locationLat && (
+        <InfoWindowF
+          position={{ lat: selectedGame.locationLat, lng: selectedGame.locationLng! }}
+          onCloseClick={() => setSelectedGame(null)}
+        >
+          <Box
+            sx={{ p: 0.5, maxWidth: 200, cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
+            aria-label="Abrir detalhes do jogo"
+            onClick={() => onGameClick(selectedGame)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onGameClick(selectedGame)}
+          >
+            <Typography variant="subtitle2" fontWeight={600}>{selectedGame.locationName}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {selectedGame.date} às {selectedGame.time} • {selectedGame.playersCount}/{selectedGame.maxPlayers}
+            </Typography>
+          </Box>
+        </InfoWindowF>
+      )}
+    </GoogleMap>
+  );
+}
 
 export const PublicGamesMapScreen: React.FC = () => {
   useDocumentTitle('Jogos Públicos');
@@ -40,50 +106,17 @@ export const PublicGamesMapScreen: React.FC = () => {
   const theme = useTheme();
   useAuth();
 
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const { showError } = useToast();
-  const showErrorRef = useRef(showError);
-  showErrorRef.current = showError;
 
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-  const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
-
-  useEffect(() => {
-    const gamesRef = collection(db, 'games');
-    const q = query(
-      gamesRef,
-      where('is_public', '==', true),
-      where('status', 'in', ['SCHEDULED', 'CONFIRMED']),
-      orderBy('date', 'asc'),
-      limit(50)
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const gamesData = snapshot.docs.map((d) => ({
-          ...snakeToCamel<Game>(d.data()),
-          id: d.id,
-        }));
-        setGames(gamesData);
-        setLoading(false);
-      },
-      (err) => {
-        logger.error('Error in public games map listener:', err);
-        showErrorRef.current('Erro ao carregar jogos no mapa.');
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, []);
+  const { games, loading } = usePublicGames();
 
   const filteredGames = games.filter((game) =>
     game.locationName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleGameClick = (game: Game) => {
+    navigate(`/game/${game.id}`);
+  };
 
   return (
     <Box sx={{ pb: 8 }}>
@@ -133,66 +166,7 @@ export const PublicGamesMapScreen: React.FC = () => {
 
       {/* Mapa */}
       <Box sx={{ height: 250, position: 'relative' }}>
-        {mapsLoaded && apiKey ? (
-          <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={
-              filteredGames.length > 0 && filteredGames[0].locationLat
-                ? { lat: filteredGames[0].locationLat, lng: filteredGames[0].locationLng || 0 }
-                : { lat: -23.55, lng: -46.63 }
-            }
-            zoom={12}
-          >
-            {filteredGames
-              .filter(g => g.locationLat && g.locationLng)
-              .map(game => (
-                <MarkerF
-                  key={game.id}
-                  position={{ lat: game.locationLat!, lng: game.locationLng! }}
-                  onClick={() => setSelectedGame(game)}
-                />
-              ))}
-            {selectedGame && selectedGame.locationLat && (
-              <InfoWindowF
-                position={{ lat: selectedGame.locationLat, lng: selectedGame.locationLng! }}
-                onCloseClick={() => setSelectedGame(null)}
-              >
-                <Box
-                  sx={{ p: 0.5, maxWidth: 200, cursor: 'pointer' }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Abrir detalhes do jogo"
-                  onClick={() => navigate(`/game/${selectedGame.id}`)}
-                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/game/${selectedGame.id}`)}
-                >
-                  <Typography variant="subtitle2" fontWeight={600}>{selectedGame.locationName}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {selectedGame.date} às {selectedGame.time} • {selectedGame.playersCount}/{selectedGame.maxPlayers}
-                  </Typography>
-                </Box>
-              </InfoWindowF>
-            )}
-          </GoogleMap>
-        ) : (
-          <Box
-            sx={{
-              height: '100%',
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-            }}
-          >
-            <MapIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              {apiKey ? 'Carregando mapa...' : 'Configure VITE_GOOGLE_MAPS_API_KEY para ver o mapa'}
-            </Typography>
-            <Typography variant="caption" color="text.disabled">
-              {filteredGames.length} jogos públicos encontrados
-            </Typography>
-          </Box>
-        )}
+        <PublicGamesMapView games={filteredGames} onGameClick={handleGameClick} />
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>

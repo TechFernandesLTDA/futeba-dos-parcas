@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // FIX #578: PII (email, fcm_token, birth_date, height_cm, weight_kg, gender)
   // está em `users_private/{uid}` (only owner reads). Merge users + users_private
   // pra construir User completo (apenas pro próprio user — owner-only access).
-  const fetchUserData = async (uid: string): Promise<User | null> => {
+  const fetchUserData = async (uid: string, includePrivate = false): Promise<User | null> => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (!userDoc.exists()) return null;
@@ -71,24 +71,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = userDoc.data();
       const converted = snakeToCamel(raw);
 
-      // Tentativa de ler PII de users_private (only owner). Não-fatal:
-      // se permission denied (não é owner) ou doc não existe, retorna apenas
-      // dados públicos de users.
       let piiData: Record<string, unknown> = {};
-      try {
-        const privateDoc = await getDoc(doc(db, 'users_private', uid));
-        if (privateDoc.exists()) {
-          piiData = snakeToCamel(privateDoc.data());
+      if (includePrivate) {
+        try {
+          const privateDoc = await getDoc(doc(db, 'users_private', uid));
+          if (privateDoc.exists()) {
+            piiData = snakeToCamel(privateDoc.data());
+          }
+        } catch (privateErr) {
+          logger.debug('users_private read denied:', privateErr);
         }
-      } catch (privateErr) {
-        // Esperado pra não-owner — silently skip.
-        logger.debug('users_private read denied (expected for non-owner):', privateErr);
       }
 
       return {
         id: userDoc.id,
         ...converted,
-        ...piiData, // PII fields override (users_private é authoritative)
+        ...piiData,
         createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
         updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
       } as User;
@@ -179,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setFirebaseUser(firebaseUser);
 
         if (firebaseUser) {
-          let userData = await fetchUserData(firebaseUser.uid);
+          let userData = await fetchUserData(firebaseUser.uid, true);
 
           // FIX #584/H4: descarta resultado se uid mudou durante fetch
           if (lastFetchUid !== firebaseUser.uid) {
@@ -318,7 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     const currentUser = firebaseUserRef.current;
     if (!currentUser) return;
-    const userData = await fetchUserData(currentUser.uid);
+    const userData = await fetchUserData(currentUser.uid, true);
     setUser(userData);
   }, []);
 

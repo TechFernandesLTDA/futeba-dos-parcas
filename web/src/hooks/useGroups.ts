@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   collection,
   doc,
@@ -13,7 +13,6 @@ import {
   Timestamp,
   serverTimestamp,
   writeBatch,
-  documentId,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -38,56 +37,25 @@ function parseGroupDoc(docId: string, raw: Record<string, unknown>): Group {
   } as Group;
 }
 
-// Busca grupos do usuário via subcoleção users/{uid}/groups, com batch reads
+// Busca grupos do usuário via subcoleção users/{uid}/groups como fonte primária
 async function fetchUserGroups(uid: string): Promise<Group[]> {
-  // 1. Buscar IDs dos grupos na subcoleção do usuário
   const userGroupsRef = collection(db, 'users', uid, 'groups');
   const q = query(userGroupsRef, orderBy('joined_at', 'desc'));
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) return [];
 
-  // 2. Coletar IDs e dados de fallback
-  const groupEntries = snapshot.docs.map((d) => {
-    const data = d.data();
-    return {
-      groupId: (data.group_id as string) || d.id,
-      fallback: {
+  return snapshot.docs
+    .map((d) => {
+      const data = d.data();
+      return {
         id: (data.group_id as string) || d.id,
         name: (data.group_name as string) || 'Grupo',
         photoUrl: (data.group_photo as string) || null,
         memberCount: (data.member_count as number) || 0,
-      } as Group,
-    };
-  });
-
-  const groupIds = groupEntries.map((e) => e.groupId);
-
-  // 3. Batch fetch em chunks de 10 (limite do whereIn)
-  const groupsMap = new Map<string, Group>();
-  const chunks: string[][] = [];
-  for (let i = 0; i < groupIds.length; i += 10) {
-    chunks.push(groupIds.slice(i, i + 10));
-  }
-
-  // Usar allSettled para que falha em um chunk não derrube os demais
-  const settled = await Promise.allSettled(
-    chunks.map((chunk) =>
-      getDocs(query(collection(db, 'groups'), where(documentId(), 'in', chunk)))
-    )
-  );
-
-  for (const result of settled) {
-    if (result.status === 'rejected') continue;
-    for (const docSnap of result.value.docs) {
-      const raw = docSnap.data();
-      groupsMap.set(docSnap.id, parseGroupDoc(docSnap.id, raw));
-    }
-  }
-
-  // 4. Montar lista final com fallback para grupos que falharam
-  return groupEntries
-    .map((entry) => groupsMap.get(entry.groupId) || entry.fallback)
+        role: data.role as GroupRole,
+      } as unknown as Group;
+    })
     .filter((g) => !g.deletedAt);
 }
 

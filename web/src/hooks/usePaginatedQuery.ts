@@ -38,7 +38,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const lastDocRef = useRef<DocumentSnapshot | null>(null);
   const loadingRef = useRef(false);
 
   const fetchData = useCallback(async (reset = false) => {
@@ -59,8 +59,8 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
         constraints.push(orderBy(orderByField, orderDirection));
       }
 
-      if (lastDoc && !reset) {
-        constraints.push(startAfter(lastDoc));
+      if (lastDocRef.current && !reset) {
+        constraints.push(startAfter(lastDocRef.current));
       }
 
       constraints.push(limit(pageSize + 1));
@@ -75,9 +75,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
       }
       setHasMore(hasMoreItems);
 
-      if (docs.length > 0) {
-        setLastDoc(docs[docs.length - 1]);
-      }
+      lastDocRef.current = docs.length > 0 ? docs[docs.length - 1] : null;
 
       const items = docs.map((d) => ({ id: d.id, ...snakeToCamel(d.data()) })) as T[];
 
@@ -93,7 +91,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [collectionName, pageSize, orderByField, orderDirection, lastDoc]);
+  }, [collectionName, pageSize, orderByField, orderDirection]);
 
   const loadMore = useCallback(() => {
     if (hasMore && !loading) {
@@ -102,14 +100,14 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
   }, [hasMore, loading, fetchData]);
 
   const refresh = useCallback(() => {
-    setLastDoc(null);
+    lastDocRef.current = null;
     setHasMore(true);
     fetchData(true);
   }, [fetchData]);
 
   const reset = useCallback(() => {
     setData([]);
-    setLastDoc(null);
+    lastDocRef.current = null;
     setHasMore(true);
     setError(null);
   }, []);

@@ -178,6 +178,7 @@ export const LevelJourneyScreen: React.FC = () => {
                     <Box
                       component="img"
                       src={getLevelBadgeImage(currentLevel)}
+                      loading="lazy"
                       alt={getLevelBadgeDescription(currentLevel, currentEntry.name)}
                       sx={{
                         width: '100%',
@@ -465,6 +466,7 @@ function LevelRow({
           <Box
             component="img"
             src={getLevelBadgeImage(entry.level)}
+            loading="lazy"
             alt={getLevelBadgeDescription(entry.level, entry.name)}
             sx={{
               width: '100%',
