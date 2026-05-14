@@ -81,19 +81,14 @@ function NextGameWidget() {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
-  const { games: scheduledGames, loading: sLoad } = useGames({ status: 'SCHEDULED', limitCount: 1 });
-  const { games: confirmedGames, loading: cLoad } = useGames({ status: 'CONFIRMED', limitCount: 1 });
-  const { games: liveGames, loading: lLoad } = useGames({ status: 'LIVE', limitCount: 1 });
+  const { games: allGames, loading: gamesLoading } = useGames();
 
-  const allGames = useMemo(
+  const nextGame = useMemo(
     () =>
-      [...scheduledGames, ...confirmedGames, ...liveGames]
-        .filter((g) => !g.deletedAt)
-        .sort((a, b) => (a.dateTime?.getTime() || 0) - (b.dateTime?.getTime() || 0)),
-    [scheduledGames, confirmedGames, liveGames],
+      allGames
+        .find((g) => ['SCHEDULED', 'CONFIRMED', 'LIVE'].includes(g.status)) || null,
+    [allGames],
   );
-  const nextGame = allGames[0] || null;
-  const gamesLoading = sLoad || cLoad || lLoad;
 
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
 
@@ -594,6 +589,8 @@ export function HomeTab() {
       return;
     }
 
+    let cancelled = false;
+
     const notificationsRef = collection(db, 'notifications');
     const q = query(
       notificationsRef,
@@ -605,6 +602,7 @@ export function HomeTab() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        if (cancelled) return;
         const data = snapshot.docs.map((docSnap) => {
           const raw = docSnap.data();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -625,17 +623,23 @@ export function HomeTab() {
             senderId: d.senderId || '',
           } as Activity;
         });
-        setActivities(data);
-        setActivitiesLoading(false);
+        if (!cancelled) {
+          setActivities(data);
+          setActivitiesLoading(false);
+        }
       },
       (err) => {
+        if (cancelled) return;
         logger.error('Error in recent activities listener:', err);
         showErrorRef.current('Erro ao carregar atividades recentes.');
         setActivitiesLoading(false);
       },
     );
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [user?.id]);
 
   const getActivityIcon = (type: string) => {
@@ -706,6 +710,15 @@ export function HomeTab() {
                   src={user?.photoUrl}
                   alt={user?.name || 'Usuário'}
                   onClick={(e) => { e.stopPropagation(); setIsPlayerCardOpen(true); }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.stopPropagation();
+                      setIsPlayerCardOpen(true);
+                    }
+                  }}
+                  aria-label="Abrir card do jogador"
                   sx={{
                     width: 60,
                     height: 60,

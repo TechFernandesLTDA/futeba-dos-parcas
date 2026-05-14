@@ -19,6 +19,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { Group, GroupMember, GroupRole, CashboxTransaction } from '../types/group';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
@@ -163,6 +164,7 @@ export function useDiscoverPublicGroups() {
 // Busca grupos do usuário via subcoleção users/{uid}/groups (igual ao Android)
 export function useGroups() {
   const { user, firebaseUser } = useAuth();
+  const { showError } = useToast();
   const uid = firebaseUser?.uid || user?.id;
   const queryClient = useQueryClient();
 
@@ -191,10 +193,11 @@ export function useGroups() {
       queryClient.invalidateQueries({ queryKey: ['groups', uid] });
     }, (err) => {
       logger.error('Error in groups listener:', err);
+      showError('Erro ao sincronizar grupos.');
     });
 
     return () => unsubscribe();
-  }, [uid, queryClient]);
+  }, [uid, queryClient, showError]);
 
   const error = queryError ? (queryError as Error).message : null;
 
@@ -276,6 +279,7 @@ export function useGroupDetail(groupId: string | null) {
 
 export function useCreateGroup() {
   const { user, firebaseUser } = useAuth();
+  const { showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -342,10 +346,11 @@ export function useCreateGroup() {
         logger.error('Error creating group:', err);
         setError((err as Error).message);
         setLoading(false);
+        showError((err as Error).message || 'Erro ao criar grupo.');
         throw err;
       }
     },
-    [firebaseUser, user, queryClient]
+    [firebaseUser, user, queryClient, showError]
   );
 
   return { createGroup, loading, error };
@@ -403,6 +408,7 @@ export function useCashbox(groupId: string | null) {
 
 export function useInvitePlayers() {
   const { user, firebaseUser } = useAuth();
+  const { showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -435,10 +441,11 @@ export function useInvitePlayers() {
         logger.error('Error generating invite:', err);
         setError((err as Error).message);
         setLoading(false);
+        showError((err as Error).message || 'Erro ao gerar código de convite.');
         throw err;
       }
     },
-    [firebaseUser, user]
+    [firebaseUser, user, showError]
   );
 
   const joinByInviteCode = useCallback(
@@ -513,10 +520,11 @@ export function useInvitePlayers() {
         logger.error('Error joining group:', err);
         setError((err as Error).message);
         setLoading(false);
+        showError((err as Error).message || 'Erro ao entrar no grupo.');
         throw err;
       }
     },
-    [firebaseUser, user, queryClient]
+    [firebaseUser, user, queryClient, showError]
   );
 
   return { generateInviteCode, joinByInviteCode, loading, error };

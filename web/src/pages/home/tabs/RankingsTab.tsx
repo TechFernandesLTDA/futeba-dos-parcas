@@ -61,6 +61,12 @@ import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('RankingsTab');
 
+const spinnerKeyframes = {
+  '@keyframes spin': {
+    '100%': { transform: 'rotate(360deg)' },
+  },
+};
+
 interface RankingPlayer {
   id: string;
   userId: string;
@@ -375,8 +381,14 @@ export function RankingsTab() {
             setErrorState(null);
 
             // #1238 - Position change tracking via localStorage
-            const prevLiga = JSON.parse(localStorage.getItem('rankings_prev_positions_liga') || '{}') as Record<string, number>;
-            const prevXp = JSON.parse(localStorage.getItem('rankings_prev_positions_xp') || '{}') as Record<string, number>;
+            let prevLiga: Record<string, number> = {};
+            let prevXp: Record<string, number> = {};
+            try {
+              prevLiga = JSON.parse(localStorage.getItem('rankings_prev_positions_liga') || '{}') as Record<string, number>;
+              prevXp = JSON.parse(localStorage.getItem('rankings_prev_positions_xp') || '{}') as Record<string, number>;
+            } catch {
+              // corrupt data, reset
+            }
             const currentLiga: Record<string, number> = {};
             deduplicated.forEach((p, i) => { currentLiga[p.userId] = i + 1; });
             const xpSorted = [...deduplicated].sort((a, b) => (b.experiencePoints || 0) - (a.experiencePoints || 0));
@@ -392,8 +404,12 @@ export function RankingsTab() {
               const prev = prevXp[uid];
               xpChanges[uid] = prev !== undefined ? prev - pos : null;
             }
-            localStorage.setItem('rankings_prev_positions_liga', JSON.stringify(currentLiga));
-            localStorage.setItem('rankings_prev_positions_xp', JSON.stringify(currentXp));
+            try {
+              localStorage.setItem('rankings_prev_positions_liga', JSON.stringify(currentLiga));
+              localStorage.setItem('rankings_prev_positions_xp', JSON.stringify(currentXp));
+            } catch {
+              // quota exceeded or storage unavailable
+            }
             setLigaPositionChanges(ligaChanges);
             setXpPositionChanges(xpChanges);
           }
@@ -472,7 +488,7 @@ export function RankingsTab() {
               size="small"
               aria-label="Atualizar rankings"
             >
-              <RefreshIcon sx={{ animation: refreshing ? 'spin 1s linear infinite' : 'none', '@keyframes spin': { '100%': { transform: 'rotate(360deg)' } } }} />
+              <RefreshIcon sx={{ animation: refreshing ? 'spin 1s linear infinite' : 'none', ...spinnerKeyframes }} />
             </IconButton>
           </Tooltip>
         </Box>

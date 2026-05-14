@@ -177,6 +177,7 @@ export function GroupsTab() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Avatar
                         src={group.photoUrl || undefined}
+                        alt={group.name}
                         sx={{
                           width: 56,
                           height: 56,
@@ -265,7 +266,7 @@ export function GroupsTab() {
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',
-          bottom: 80,
+          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
           right: { xs: 16, sm: 'calc(50% - 240px + 16px)' },
         }}
       >

@@ -91,7 +91,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [collectionName, pageSize, orderByField, orderDirection]);
+  }, [collectionName, pageSize, orderByField, orderDirection, whereClauses]);
 
   const loadMore = useCallback(() => {
     if (hasMore && !loading) {
