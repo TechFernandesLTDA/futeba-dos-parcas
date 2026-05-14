@@ -53,10 +53,6 @@ const RETENTION_DAYS = 30;
 export const softDeleteGame =
   functions.https.onCall({
     region: "southamerica-east1",
-    // SECFIX #437: App Check enforce em production
-    // (era ausente, permitia chamadas externas com token roubado)
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: true,
   }, async (request) => {
     const userId = request.auth?.uid;
     const {gameId, reason} = request.data;
@@ -203,10 +199,6 @@ export const softDeleteGame =
 export const softDeleteGroup =
   functions.https.onCall({
     region: "southamerica-east1",
-    // SECFIX #437: App Check enforce em production
-    // (era ausente, permitia chamadas externas com token roubado)
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: true,
   }, async (request) => {
     const userId = request.auth?.uid;
     const {groupId, reason} = request.data;
@@ -357,10 +349,6 @@ export const softDeleteGroup =
 export const restoreDeletedGame =
   functions.https.onCall({
     region: "southamerica-east1",
-    // SECFIX #437: App Check enforce em production
-    // (era ausente, permitia chamadas externas com token roubado)
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: true,
   }, async (request) => {
     const userId = request.auth?.uid;
     const {gameId} = request.data;
@@ -496,10 +484,6 @@ export const restoreDeletedGame =
 export const restoreDeletedGroup =
   functions.https.onCall({
     region: "southamerica-east1",
-    // SECFIX #437: App Check enforce em production
-    // (era ausente, permitia chamadas externas com token roubado)
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: true,
   }, async (request) => {
     const userId = request.auth?.uid;
     const {groupId} = request.data;
