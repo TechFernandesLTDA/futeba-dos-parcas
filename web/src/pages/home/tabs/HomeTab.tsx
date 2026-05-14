@@ -17,6 +17,8 @@ import {
   LinearProgress,
   Grid,
   Link,
+  Button,
+  ButtonBase,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -42,6 +44,7 @@ import { getLevelColor } from '../../../types/user';
 import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
 import { TeamBadge } from '../../../components/team/TeamBadge';
+import PlayerCard from '../../../components/player/PlayerCard';
 
 const logger = createLogger('HomeTab');
 
@@ -71,6 +74,8 @@ export function HomeTab() {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+
+  const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
 
   // Dados de nível usando LevelTable
   const currentXp = user?.experiencePoints || 0;
@@ -160,13 +165,15 @@ export function HomeTab() {
           position: 'relative',
         }}
       >
-        <CardActionArea onClick={() => navigate('/level-journey')} sx={{ borderRadius: 3 }}>
+        <CardActionArea onClick={() => navigate('/level-journey')} aria-label={`Ver jornada de nível - Nível ${currentLevel}`} sx={{ borderRadius: 3 }}>
           <CardContent sx={{ p: 2.5 }}>
             {/* Saudação + Avatar */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
               <Box sx={{ position: 'relative' }}>
                 <Avatar
                   src={user?.photoUrl}
+                  alt={user?.name || 'Usuário'}
+                  onClick={(e) => { e.stopPropagation(); setIsPlayerCardOpen(true); }}
                   sx={{
                     width: 60,
                     height: 60,
@@ -176,6 +183,7 @@ export function HomeTab() {
                     fontSize: '1.5rem',
                     border: '3px solid',
                     borderColor: 'primary.contrastText',
+                    cursor: 'pointer',
                   }}
                 >
                   {user?.name?.charAt(0)?.toUpperCase() || '?'}
@@ -203,14 +211,14 @@ export function HomeTab() {
                   </Typography>
                 </Box>
               </Box>
-              <Box sx={{ ml: 2, flex: 1 }}>
+              <Box sx={{ ml: 2, flex: 1, maxWidth: '100%', minWidth: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="h6" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
+                  <Typography variant="h6" fontWeight="bold" noWrap sx={{ lineHeight: 1.2, textOverflow: 'ellipsis' }}>
                     Olá, {user?.name?.split(' ')[0] || 'Jogador'}!
                   </Typography>
                   <TeamBadge teamId={user?.favoriteTeam} size={28} />
                 </Box>
-                <Typography variant="body2" sx={{ opacity: 0.85, mt: 0.25 }}>
+                <Typography variant="body2" noWrap sx={{ opacity: 0.85, mt: 0.25, textOverflow: 'ellipsis' }}>
                   {levelEntry.name} • {currentXp.toLocaleString('pt-BR')} XP
                 </Typography>
               </Box>
@@ -229,6 +237,7 @@ export function HomeTab() {
               <LinearProgress
                 variant="determinate"
                 value={progress * 100}
+                aria-label="Progresso de nível"
                 sx={{
                   height: 8,
                   borderRadius: 4,
@@ -249,12 +258,16 @@ export function HomeTab() {
             {/* Stats rápidos */}
             <Box sx={{ display: 'flex', gap: 2 }}>
               {[
-                { value: user?.totalGames || 0, label: 'Jogos', icon: <SportsSoccer sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15) },
-                { value: user?.totalGoals || 0, label: 'Gols', icon: <SportsScore sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25) },
-                { value: user?.mvpCount || 0, label: 'MVPs', icon: <EmojiEvents sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gamificationColors.gold, 0.25) },
+                { value: user?.totalGames || 0, label: 'Jogos', icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/games' },
+                { value: user?.totalGoals || 0, label: 'Gols', icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
+                { value: user?.mvpCount || 0, label: 'MVPs', icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gamificationColors.gold, 0.25), navigateTo: '/statistics' },
               ].map((stat) => (
-                <Box
+                <ButtonBase
                   key={stat.label}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(stat.navigateTo);
+                  }}
                   sx={{
                     flex: 1,
                     textAlign: 'center',
@@ -262,15 +275,18 @@ export function HomeTab() {
                     borderRadius: 2,
                     py: 1,
                     px: 0.5,
+                    display: 'flex',
+                    flexDirection: 'column',
                   }}
                 >
-                  <Typography variant="h6" fontWeight="bold">
+                  <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                    {stat.icon}
                     {stat.value}
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>
                     {stat.label}
                   </Typography>
-                </Box>
+                </ButtonBase>
               ))}
             </Box>
           </CardContent>
@@ -375,6 +391,14 @@ export function HomeTab() {
                   <Typography variant="body2" color="text.secondary">
                     Nenhum jogo agendado
                   </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => navigate('/games')}
+                    sx={{ mt: 1.5 }}
+                  >
+                    Criar Jogo
+                  </Button>
                 </Box>
               </CardContent>
             </Card>
@@ -408,6 +432,14 @@ export function HomeTab() {
                   <Typography variant="body2" color="text.secondary">
                     Nenhuma atividade recente
                   </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => navigate('/games')}
+                    sx={{ mt: 1.5 }}
+                  >
+                    Ver Jogos
+                  </Button>
                 </Box>
               </CardContent>
             ) : (
@@ -423,7 +455,7 @@ export function HomeTab() {
                     }
                   >
                     <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'action.hover' }}>
+                      <Avatar sx={{ bgcolor: 'action.hover' }} aria-hidden="true">
                         {getActivityIcon(activity.type)}
                       </Avatar>
                     </ListItemAvatar>
@@ -435,6 +467,9 @@ export function HomeTab() {
           </Card>
         </Grid>
       </Grid>
+      {isPlayerCardOpen && (
+        <PlayerCard userId={user?.id || null} onClose={() => setIsPlayerCardOpen(false)} />
+      )}
     </Box>
   );
 }

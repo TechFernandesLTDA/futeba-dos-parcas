@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -62,9 +62,11 @@ export function HomeScreen() {
   const tabValue = parseInt(searchParams.get('tab') || '0');
   const { permission, requestPermission } = useNotificationPermission();
   const [showNotifBanner, setShowNotifBanner] = useState(false);
+  const [mountedTabs, setMountedTabs] = useState<Set<number>>(() => new Set([tabValue]));
   const { t } = useTranslation();
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const notificationIcon = useMemo(() => (
     <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0} max={99}>
@@ -79,6 +81,14 @@ export function HomeScreen() {
       return () => clearTimeout(timer);
     }
   }, [permission]);
+
+  // Marca tab como montada na primeira visita para preservar estado (#1220)
+  useEffect(() => {
+    setMountedTabs(prev => {
+      if (prev.has(tabValue)) return prev;
+      return new Set([...prev, tabValue]);
+    });
+  }, [tabValue]);
 
   // Memoizado para evitar recriação dos objetos JSX a cada render
   const tabConfigs = useMemo(() => [
@@ -132,6 +142,7 @@ export function HomeScreen() {
           {tabConfigs.map((config, idx) => (
             <Tooltip key={config.label} title={config.label} placement="right">
               <ListItemButton
+                id={`tab-${idx}`}
                 selected={tabValue === idx}
                 onClick={() => handleTabChange(idx)}
                 sx={{
@@ -194,6 +205,7 @@ export function HomeScreen() {
         <List>
           {tabConfigs.map((config, idx) => (
             <ListItemButton
+              id={`tab-${idx}`}
               key={config.label}
               selected={tabValue === idx}
               onClick={() => handleTabChange(idx)}
@@ -226,8 +238,8 @@ export function HomeScreen() {
           flex: 1,
           overflow: 'auto',
           WebkitOverflowScrolling: 'touch',
-          // pb apenas em mobile pra não ficar sob a bottom nav
-          pb: { xs: '72px', md: 0 },
+          // pb apenas em mobile pra não ficar sob a bottom nav + safe area
+          pb: { xs: 'calc(72px + env(safe-area-inset-bottom, 0px))', md: 0 },
         }}
       >
         {/* AppBar mobile com NotificationBell (#1214) */}
@@ -253,15 +265,24 @@ export function HomeScreen() {
           </Toolbar>
         </AppBar>
 
+        {/* Conteúdo com role tabpanel — SkipNav (#1241) já está em App.tsx via <SkipNav /> */}
+        <Box
+          ref={contentRef}
+          role="tabpanel"
+          id="main-tabpanel"
+          aria-labelledby={`tab-${tabValue}`}
+          sx={{ flex: 1 }}
+        >
         {/* Suspense local: evita desmontar o nav ao carregar chunk da tab */}
         <Suspense fallback={<TabSkeleton />}>
-          {tabValue === 0 && <HomeTab />}
-          {tabValue === 1 && <GamesTab />}
-          {tabValue === 2 && <GroupsTab />}
-          {tabValue === 3 && <RankingsTab />}
-          {tabValue === 4 && <ProfileTab />}
-          {tabValue === 5 && <NotificationsScreenLazy />}
+          {mountedTabs.has(0) && <Box sx={{ display: tabValue === 0 ? 'block' : 'none' }}><HomeTab /></Box>}
+          {mountedTabs.has(1) && <Box sx={{ display: tabValue === 1 ? 'block' : 'none' }}><GamesTab /></Box>}
+          {mountedTabs.has(2) && <Box sx={{ display: tabValue === 2 ? 'block' : 'none' }}><GroupsTab /></Box>}
+          {mountedTabs.has(3) && <Box sx={{ display: tabValue === 3 ? 'block' : 'none' }}><RankingsTab /></Box>}
+          {mountedTabs.has(4) && <Box sx={{ display: tabValue === 4 ? 'block' : 'none' }}><ProfileTab /></Box>}
+          {mountedTabs.has(5) && <Box sx={{ display: tabValue === 5 ? 'block' : 'none' }}><NotificationsScreenLazy /></Box>}
         </Suspense>
+        </Box>
       </Box>
 
       {/* Mobile (xs/sm): BottomNavigation - 5 botões (igual ao Android) */}
@@ -323,14 +344,14 @@ export function HomeScreen() {
       {/* Banner de notificações */}
       <Snackbar
         open={showNotifBanner}
-        message="Ative as notificações para receber alertas de jogos!"
+        message={t('notifications.bannerMessage', 'Ative as notificações para receber alertas de jogos!')}
         action={
           <>
             <Button color="secondary" size="small" onClick={() => setShowNotifBanner(false)}>
-              Depois
+              {t('common.later', 'Depois')}
             </Button>
             <Button color="primary" size="small" onClick={() => { requestPermission(); setShowNotifBanner(false); }}>
-              Ativar
+              {t('common.activate', 'Ativar')}
             </Button>
           </>
         }

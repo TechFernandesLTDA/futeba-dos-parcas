@@ -35,7 +35,7 @@ export function GroupsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { user } = useAuth();
-  const { groups, loading, error } = useGroups();
+  const { groups, loading, error, refetch } = useGroups();
 
   const filteredGroups = useMemo(() => {
     if (!debouncedSearch) return groups;
@@ -105,14 +105,22 @@ export function GroupsTab() {
       {/* Lista de grupos */}
       <Box sx={{ px: 2 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={() => refetch()}>
+                Tentar novamente
+              </Button>
+            }
+          >
             {error}
           </Alert>
         )}
 
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} sx={{ mb: 2, borderRadius: 3 }}>
+            <Card key={i} sx={{ mb: 2 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Skeleton variant="circular" width={56} height={56} />
@@ -185,9 +193,9 @@ export function GroupsTab() {
                             {group.name}
                           </Typography>
                           {group.type === 'PUBLIC' ? (
-                            <Public fontSize="small" color="action" />
+                            <Public fontSize="small" color="action" aria-label="Grupo público" />
                           ) : (
-                            <Lock fontSize="small" color="action" />
+                            <Lock fontSize="small" color="action" aria-label="Grupo privado" />
                           )}
                         </Box>
 

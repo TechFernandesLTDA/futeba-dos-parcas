@@ -21,7 +21,9 @@
     "portuguese": "Português",
     "english": "English",
     "spanish": "Español",
-    "appearance": "Aparência"
+    "appearance": "Aparência",
+    "later": "Depois",
+    "activate": "Ativar"
   },
   "nav": {
     "home": "Início",
@@ -239,6 +241,9 @@
     "notFound": "Não encontrado",
     "unauthorized": "Não autorizado",
     "tryAgain": "Tente novamente mais tarde"
+  },
+  "notifications": {
+    "bannerMessage": "Ative as notificações para receber alertas de jogos!"
   },
   "onboarding": {
     "welcome": "Bem-vindo ao Futeba dos Parças!",
