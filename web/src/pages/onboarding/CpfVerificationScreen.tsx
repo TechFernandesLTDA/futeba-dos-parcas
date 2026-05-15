@@ -89,11 +89,22 @@ export const CpfVerificationScreen: React.FC = () => {
       // Causa raiz provável: ID token expirou entre login+phone-verify e click no CPF;
       // App Check + auth token desync. getIdToken(true) renova token + força App Check
       // refresh ANTES da callable, eliminando a janela onde token está expirando.
+      //
+      // FIX 2026-05-15: se o refresh FALHAR, ABORTA aqui. Antes apenas logava +
+      // toast e SEGUIA chamando verifyCpf com token stale → a callable rejeitava
+      // com functions/unauthenticated, mostrando "Não foi possível validar sua
+      // sessão" (erro reportado, duplicado em Alert + toast). Falhar cedo com
+      // mensagem acionável evita o estado confuso.
       try {
         await firebaseUser.getIdToken(true);
       } catch (refreshErr) {
         logger.error('Failed to refresh ID token before verifyCpf:', refreshErr);
-        showError('Erro ao renovar sessão. Tente novamente.');
+        const msg =
+          'Não foi possível renovar sua sessão. Verifique sua conexão e ' +
+          'tente novamente.';
+        setError(msg);
+        showError(msg);
+        return;
       }
 
       logger.info('Calling verifyCpf', { uid: firebaseUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });
@@ -102,7 +113,22 @@ export const CpfVerificationScreen: React.FC = () => {
         throw new Error('Falha ao verificar CPF');
       }
       await setUserVerified({});
-      await firebaseUser.getIdToken(true);
+
+      // FIX 2026-05-15: setUserVerified faz revokeRefreshTokens() no servidor.
+      // Um getIdToken(true) logo em seguida corre contra o refresh token recém
+      // revogado e pode lançar (auth/user-token-expired), caindo no catch e
+      // mostrando "Não foi possível validar sua sessão" MESMO com a verificação
+      // já concluída com sucesso no servidor. Aqui o refresh é best-effort: o
+      // window.location.href = '/' abaixo recarrega a página e re-autentica,
+      // relendo o custom claim verified=true. Logo, falha de refresh é não-fatal.
+      try {
+        await firebaseUser.getIdToken(true);
+      } catch (postVerifyRefreshErr) {
+        logger.warn(
+          'Post-verify token refresh failed (não-fatal — hard reload re-autentica):',
+          postVerifyRefreshErr,
+        );
+      }
 
       setSuccess(true);
       showSuccess('Conta verificada!');
