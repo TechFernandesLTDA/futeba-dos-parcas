@@ -111,10 +111,10 @@ class MatchFinalizationService constructor(
     /**
      * Implementação legacy de processGame (DESABILITADA per #580).
      * Mantida pra testes unitários e fallback caso CF caia.
-     * Renomeada com underscore prefix pra indicar uso interno apenas.
+     * Uso interno apenas (nao chamada externamente).
      */
     @Suppress("unused")
-    suspend fun _processGameLegacy(gameId: String): GameProcessingResult {
+    suspend fun processGameLegacy(gameId: String): GameProcessingResult {
         AppLogger.d(TAG) { "Iniciando processamento do jogo $gameId" }
 
         return try {

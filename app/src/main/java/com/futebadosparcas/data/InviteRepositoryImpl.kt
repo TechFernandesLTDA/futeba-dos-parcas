@@ -220,7 +220,7 @@ class InviteRepositoryImpl constructor(
     }
 
     @Suppress("unused")
-    private fun _legacyGetMyPendingInvitesFlow(): Flow<List<GroupInvite>> = callbackFlow {
+    private fun legacyGetMyPendingInvitesFlow(): Flow<List<GroupInvite>> = callbackFlow {
         val userId = auth.currentUser?.uid
         if (userId == null) {
             trySend(emptyList())

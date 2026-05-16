@@ -49,11 +49,9 @@ class ConfirmPresenceUseCase constructor(
 
         // 2. Buscar detalhes do jogo
         val gameResult = firebaseDataSource.getGameById(gameId)
-        if (gameResult.isFailure) {
-            return Result.failure(gameResult.exceptionOrNull() ?: Exception("Erro ao buscar jogo"))
-        }
-        val game = gameResult.getOrNull()
-            ?: return Result.failure(Exception("Jogo nao encontrado"))
+        val game = gameResult.getOrNull() ?: return Result.failure(
+            gameResult.exceptionOrNull() ?: Exception("Jogo nao encontrado")
+        )
 
         // 3. Validar status do jogo
         if (game.getStatusEnum() !in listOf(GameStatus.SCHEDULED, GameStatus.CONFIRMED)) {
