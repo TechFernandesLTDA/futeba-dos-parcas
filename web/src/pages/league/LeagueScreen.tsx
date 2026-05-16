@@ -59,7 +59,7 @@ export const LeagueScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label={t('common.back')}>
+          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -121,7 +121,7 @@ export const LeagueScreen: React.FC = () => {
                 : 'Participe de jogos para entrar na liga e acumular pontos.'}
             </Typography>
             {!selectedDivision && (
-              <Button variant="outlined" onClick={() => navigate(-1)}>
+              <Button variant="outlined" onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }}>
                 Ver temporada anterior
               </Button>
             )}

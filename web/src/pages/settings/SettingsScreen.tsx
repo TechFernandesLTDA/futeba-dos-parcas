@@ -15,6 +15,7 @@ import {
   FormControlLabel,
   Divider,
   Button,
+  CircularProgress,
   Skeleton,
   Dialog,
   DialogTitle,
@@ -284,6 +285,7 @@ export const SettingsScreen: React.FC = () => {
                 fullWidth
                 onClick={handleSaveSettings}
                 disabled={saving}
+                startIcon={saving ? <CircularProgress size={20} /> : undefined}
               >
                 {saving ? 'Salvando...' : 'Salvar Configurações'}
               </Button>

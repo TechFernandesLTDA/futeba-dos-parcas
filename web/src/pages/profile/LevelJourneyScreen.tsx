@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -66,6 +66,8 @@ export const LevelJourneyScreen: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [currentXp, setCurrentXp] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(0);
@@ -81,20 +83,27 @@ export const LevelJourneyScreen: React.FC = () => {
       return;
     }
 
+    let cancelled = false;
+
     const fetchLevelData = async () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', targetUserId));
+        if (cancelled) return;
         if (userDoc.exists()) {
           const raw = userDoc.data();
           const data = snakeToCamel(raw) as Record<string, unknown>;
           const xp = (data.experiencePoints as number) || (data.xp as number) || 0;
-          setCurrentXp(xp);
-          setCurrentLevel(getLevelForXp(xp));
+          if (!cancelled) {
+            setCurrentXp(xp);
+            setCurrentLevel(getLevelForXp(xp));
+          }
         }
 
         const xpLogsRef = collection(db, 'xp_logs');
         const q = query(xpLogsRef, where('user_id', '==', targetUserId), orderBy('created_at', 'desc'), limit(10));
         const snapshot = await getDocs(q);
+
+        if (cancelled) return;
 
         const historyData = snapshot.docs.map((d) => {
           const rawLog = d.data();
@@ -107,23 +116,28 @@ export const LevelJourneyScreen: React.FC = () => {
           };
         });
 
-        setHistory(historyData);
+        if (!cancelled) {
+          setHistory(historyData);
+        }
       } catch (error) {
-        logger.error('Error fetching level data:', error);
-        showError('Erro ao carregar histórico de nível.');
+        if (!cancelled) {
+          logger.error('Error fetching level data:', error);
+          showErrorRef.current('Erro ao carregar histórico de nível.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchLevelData();
-  }, [targetUserId, showError]);
+    return () => { cancelled = true; };
+  }, [targetUserId]);
 
   const progress = getXpProgress(currentXp);
   const xpRemaining = getXpRemaining(currentXp);
   const currentEntry = LEVEL_TABLE[currentLevel];
   const nextEntry = currentLevel < 20 ? LEVEL_TABLE[currentLevel + 1] : null;
-  const color = getLevelColor(currentLevel);
+  const color = getLevelColor(currentLevel, theme);
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -430,7 +444,7 @@ function LevelRow({
   isCurrent: boolean;
 }) {
   const theme = useTheme();
-  const color = getLevelColor(entry.level);
+  const color = getLevelColor(entry.level, theme);
 
   return (
     <Card

@@ -22,6 +22,7 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -74,6 +75,14 @@ export const SchedulesScreen: React.FC = () => {
   const [newScheduleDay, setNewScheduleDay] = useState(0);
   const [newScheduleTime, setNewScheduleTime] = useState('');
   const [newScheduleMaxPlayers, setNewScheduleMaxPlayers] = useState(14);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!groupId) return;
@@ -93,13 +102,14 @@ export const SchedulesScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in schedules listener:', err);
+        setError('Erro ao carregar agendas.');
         showErrorRef.current('Erro ao carregar agendas.');
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [groupId]);
+  }, [groupId, retryCount]);
 
   const handleToggleActive = async (schedule: Schedule) => {
     try {
@@ -182,7 +192,15 @@ export const SchedulesScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
-        {loading ? (
+        {error ? (
+          <Alert severity="error" action={
+            <Button color="inherit" size="small" onClick={handleRetry}>
+              Tentar novamente
+            </Button>
+          }>
+            {error}
+          </Alert>
+        ) : loading ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : schedules.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>

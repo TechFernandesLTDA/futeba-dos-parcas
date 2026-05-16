@@ -30,6 +30,7 @@ import {
   ArrowBack,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material';
+import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -120,6 +121,7 @@ export function RegisterScreen() {
 
     try {
       await signInWithGoogle();
+      if (!getAuth().currentUser) return;
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));

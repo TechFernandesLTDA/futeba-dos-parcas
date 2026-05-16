@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { Location } from '../types/location';
 import { createLogger } from '../utils/logger';
+import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useLocations');
 
@@ -39,6 +40,9 @@ export const useLocations = () => {
     refetchOnWindowFocus: false, // localizações são dados estáticos — não refetch ao focar
   });
 
+  const { showError } = useToast();
+  const [listenerError, setListenerError] = useState<string | null>(null);
+
   // Listener real-time para invalidar cache quando localizações mudam
   // FIX #1129: limit(200) server-side, alinhado com fetchLocations.
   useEffect(() => {
@@ -57,13 +61,15 @@ export const useLocations = () => {
       },
       (err) => {
         logger.error('Error in locations listener:', err);
+        setListenerError(err.message);
+        showError('Erro ao carregar localizações em tempo real');
       }
     );
 
     return () => unsubscribe();
-  }, [queryClient]);
+  }, [queryClient, showError]);
 
-  const error = queryError ? (queryError as Error).message : null;
+  const error = listenerError || (queryError ? (queryError as Error).message : null);
 
   return { locations, loading, error };
 };

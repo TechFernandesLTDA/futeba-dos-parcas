@@ -22,6 +22,7 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -69,6 +70,14 @@ export const PlayersScreen: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!groupId || !user) return;
@@ -150,6 +159,7 @@ export const PlayersScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching members:', error);
+          setError('Erro ao carregar membros.');
           showError('Erro ao carregar membros.');
         }
       } finally {
@@ -160,7 +170,7 @@ export const PlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId, user, showError]);
+  }, [groupId, user, showError, retryCount]);
 
   const handleRemoveMember = async (memberId: string) => {
     if (!groupId || !user || currentUserRole !== 'OWNER') return;
@@ -211,6 +221,40 @@ export const PlayersScreen: React.FC = () => {
         return 'Membro';
     }
   };
+
+  if (error) {
+    return (
+      <Box sx={{ pb: 4 }}>
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            bgcolor: 'background.paper',
+            zIndex: 10,
+            borderBottom: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+            <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
+              <BackIcon />
+            </IconButton>
+            <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
+              Jogadores
+            </Typography>
+          </Box>
+        </Box>
+        <Container maxWidth="sm" sx={{ py: 2 }}>
+          <Alert severity="error" action={
+            <Button color="inherit" size="small" onClick={handleRetry}>
+              Tentar novamente
+            </Button>
+          }>
+            {error}
+          </Alert>
+        </Container>
+      </Box>
+    );
+  }
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="LIST" />;
@@ -329,6 +373,8 @@ export const PlayersScreen: React.FC = () => {
             onClick={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
             color="error"
             variant="contained"
+            disabled={actionLoading === confirmRemoveId}
+            startIcon={actionLoading === confirmRemoveId ? <CircularProgress size={20} /> : undefined}
           >
             Remover
           </Button>

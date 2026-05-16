@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -15,9 +15,9 @@ import {
   Divider,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction,
   ListItemAvatar,
   Button,
   Alert,
@@ -70,6 +70,8 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [stats, setStats] = useState<LocationStats | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
@@ -115,12 +117,12 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       });
     } catch (err) {
       logger.error('Error fetching dashboard:', err);
-      showError('Erro ao carregar dashboard. Tente novamente.');
+      showErrorRef.current('Erro ao carregar dashboard. Tente novamente.');
       setError(getFirestoreErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [user, showError]);
+  }, [user]);
 
   useEffect(() => {
     fetchDashboard();
@@ -260,29 +262,31 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                   <Box key={loc.id}>
                     {index > 0 && <Divider />}
                     <ListItem
-                      button
-                      onClick={() => navigate(`/location/${loc.id}`)}
-                    >
-                      <ListItemAvatar>
-                        <Avatar
-                          src={loc.photoUrl}
-                          variant="rounded"
-                          sx={{ bgcolor: theme.palette.primary.main }}
-                        >
-                          <SoccerIcon />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={loc.name}
-                        secondary={`${loc.city || ''} • ${loc.fieldCount || 1} campos`}
-                      />
-                      <ListItemSecondaryAction>
+                      secondaryAction={
                         <Chip
                           icon={<StarIcon />}
                           label={loc.rating?.toFixed(1) || 'N/A'}
                           size="small"
                         />
-                      </ListItemSecondaryAction>
+                      }
+                    >
+                      <ListItemButton
+                        onClick={() => navigate(`/location/${loc.id}`)}
+                      >
+                        <ListItemAvatar>
+                          <Avatar
+                            src={loc.photoUrl}
+                            variant="rounded"
+                            sx={{ bgcolor: theme.palette.primary.main }}
+                          >
+                            <SoccerIcon />
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={loc.name}
+                          secondary={`${loc.city || ''} • ${loc.fieldCount || 1} campos`}
+                        />
+                      </ListItemButton>
                     </ListItem>
                   </Box>
                 ))}
@@ -297,26 +301,26 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
               Ações Rápidas
             </Typography>
             <List disablePadding aria-label="Ações rápidas">
-              <ListItem button onClick={() => navigate('/location/create')}>
+              <ListItemButton onClick={() => navigate('/location/create')}>
                 <ListItemIcon>
                   <LocationIcon />
                 </ListItemIcon>
                 <ListItemText primary="Adicionar Nova Quadra" />
-              </ListItem>
+              </ListItemButton>
               <Divider />
-              <ListItem button>
+              <ListItemButton>
                 <ListItemIcon>
                   <CalendarIcon />
                 </ListItemIcon>
                 <ListItemText primary="Ver Agenda" />
-              </ListItem>
+              </ListItemButton>
               <Divider />
-              <ListItem button>
+              <ListItemButton>
                 <ListItemIcon>
                   <PeopleIcon />
                 </ListItemIcon>
                 <ListItemText primary="Gerenciar Jogadores" />
-              </ListItem>
+              </ListItemButton>
             </List>
           </CardContent>
         </Card>

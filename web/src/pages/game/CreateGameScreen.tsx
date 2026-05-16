@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -115,6 +115,8 @@ export const CreateGameScreen: React.FC = () => {
   const { createGame, loading, error } = useCreateGame();
   const { locations, loading: locationsLoading, error: locationsError } = useLocations();
   const { showSuccess, showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
   const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [fields, setFields] = useState<Field[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
@@ -183,9 +185,9 @@ export const CreateGameScreen: React.FC = () => {
         }
       } catch (err) {
         if (cancelled) return;
-        logger.error('Erro ao carregar quadras:', err);
-        setFieldsError('Erro ao carregar quadras. Tente novamente.');
-        showError('Erro ao carregar quadras. Tente novamente.');
+          logger.error('Erro ao carregar quadras:', err);
+          setFieldsError('Erro ao carregar quadras. Tente novamente.');
+          showErrorRef.current('Erro ao carregar quadras. Tente novamente.');
       } finally {
         if (!cancelled) setFieldsLoading(false);
       }
@@ -193,7 +195,7 @@ export const CreateGameScreen: React.FC = () => {
 
     loadFields();
     return () => { cancelled = true; };
-  }, [formData.locationId, useCustomLocation, showError]);
+  }, [formData.locationId, useCustomLocation]);
 
   useEffect(() => {
     if (group && !formData.groupId) {
@@ -431,7 +433,7 @@ export const CreateGameScreen: React.FC = () => {
                 </MenuItem>
               ))}
               <MenuItem value={CUSTOM_LOCATION}>
-                ✏️ Outro local (digitar manualmente)
+                Outro local (digitar manualmente)
               </MenuItem>
             </TextField>
 

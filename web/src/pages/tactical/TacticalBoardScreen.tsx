@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -15,6 +15,8 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
+  Alert,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -64,11 +66,21 @@ export const TacticalBoardScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [players, setPlayers] = useState<TacticalPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFormation, setSelectedFormation] = useState(0);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!gameId) return;
@@ -98,14 +110,15 @@ export const TacticalBoardScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching players:', error);
-        showError('Erro ao carregar quadro tático.');
+        setError('Erro ao carregar quadro tático.');
+        showErrorRef.current('Erro ao carregar quadro tático.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchPlayers();
-  }, [gameId, showError]);
+  }, [gameId, retryCount]);
 
   const applyFormation = (formationIndex: number) => {
     setSelectedFormation(formationIndex);
@@ -131,6 +144,20 @@ export const TacticalBoardScreen: React.FC = () => {
       return [...teamA, ...teamB];
     });
   };
+
+  if (error) {
+    return (
+      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={handleRetry}>
+            Tentar novamente
+          </Button>
+        }>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   if (loading) {
     return <LoadingState shimmerCount={3} itemType="CARD" />;
@@ -282,7 +309,7 @@ export const TacticalBoardScreen: React.FC = () => {
                   display: 'block',
                   textAlign: 'center',
                   color: 'common.white',
-                  fontSize: 10,
+                  fontSize: theme.typography.caption.fontSize,
                   mt: 0.5,
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                 }}

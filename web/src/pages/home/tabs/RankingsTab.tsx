@@ -271,17 +271,22 @@ export function RankingsTab() {
 
   // Buscar temporada ativa para filtrar season_participation (#1204)
   useEffect(() => {
-    const showError = showErrorRef.current;
+    let cancelled = false;
     const fetchSeason = async () => {
       try {
         const snap = await getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1)));
-        setActiveSeasonId(snap.docs[0]?.id || null);
+        if (!cancelled) {
+          setActiveSeasonId(snap.docs[0]?.id || null);
+        }
       } catch (err) {
-        logger.error('Error fetching active season:', err);
-        showError('Erro ao buscar temporada ativa.');
+        if (!cancelled) {
+          logger.error('Error fetching active season:', err);
+          showErrorRef.current('Erro ao buscar temporada ativa.');
+        }
       }
     };
     fetchSeason();
+    return () => { cancelled = true; };
   }, []);
 
   const loadData = useCallback(() => {

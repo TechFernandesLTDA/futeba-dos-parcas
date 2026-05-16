@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -14,6 +14,7 @@ import {
   useTheme,
   alpha,
   Chip,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -72,10 +73,20 @@ export const VoteResultScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [voteResult, setVoteResult] = useState<VoteResult | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!gameId) return;
@@ -133,14 +144,29 @@ export const VoteResultScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching vote results:', error);
-        showError('Erro ao carregar resultado da votação.');
+        setError('Erro ao carregar resultado da votação.');
+        showErrorRef.current('Erro ao carregar resultado da votação.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [gameId, showError]);
+  }, [gameId, retryCount]);
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={handleRetry}>
+            Tentar novamente
+          </Button>
+        }>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   if (loading) {
     return <LoadingState shimmerCount={4} itemType="CARD" />;

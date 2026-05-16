@@ -13,7 +13,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Radio,
   RadioGroup,
   FormControl,
@@ -286,6 +285,12 @@ export const MVPVoteScreen: React.FC = () => {
                       key={player.userId}
                       dense
                       onClick={() => setMvpVote(player.userId)}
+                      secondaryAction={
+                        <Radio
+                          checked={mvpVote === player.userId}
+                          value={player.userId}
+                        />
+                      }
                       sx={{
                         borderRadius: 2,
                         mb: 1,
@@ -312,12 +317,6 @@ export const MVPVoteScreen: React.FC = () => {
                         }
                         secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
                       />
-                      <ListItemSecondaryAction>
-                        <Radio
-                          checked={mvpVote === player.userId}
-                          value={player.userId}
-                        />
-                      </ListItemSecondaryAction>
                     </ListItem>
                   ))}
                 </List>
@@ -347,6 +346,12 @@ export const MVPVoteScreen: React.FC = () => {
                           key={player.userId}
                           dense
                           onClick={() => setBestGkVote(player.userId)}
+                          secondaryAction={
+                            <Radio
+                              checked={bestGkVote === player.userId}
+                              value={player.userId}
+                            />
+                          }
                         sx={{
                           borderRadius: 2,
                           mb: 1,
@@ -372,12 +377,6 @@ export const MVPVoteScreen: React.FC = () => {
                               </Box>
                             }
                           />
-                          <ListItemSecondaryAction>
-                            <Radio
-                              checked={bestGkVote === player.userId}
-                              value={player.userId}
-                            />
-                          </ListItemSecondaryAction>
                         </ListItem>
                       ))}
                     {confirmations.filter((p) => p.position === 'GOALKEEPER').length === 0 && (
@@ -429,6 +428,12 @@ export const MVPVoteScreen: React.FC = () => {
                           key={player.userId}
                           dense
                           onClick={() => setWorstPlayerVote(player.userId)}
+                          secondaryAction={
+                            <Radio
+                              checked={worstPlayerVote === player.userId}
+                              value={player.userId}
+                            />
+                          }
                         sx={{
                           borderRadius: 2,
                           mb: 1,
@@ -455,12 +460,6 @@ export const MVPVoteScreen: React.FC = () => {
                             }
                             secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
                           />
-                          <ListItemSecondaryAction>
-                            <Radio
-                              checked={worstPlayerVote === player.userId}
-                              value={player.userId}
-                            />
-                          </ListItemSecondaryAction>
                         </ListItem>
                       ))}
                   </List>

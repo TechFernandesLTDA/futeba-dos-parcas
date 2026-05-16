@@ -73,7 +73,7 @@ if (import.meta.env.VITE_USE_EMULATOR === 'true' && typeof window !== 'undefined
   const host = '127.0.0.1';
   try {
     connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
-    connectFirestoreEmulator(db, host, 8080);
+    connectFirestoreEmulator(db, host, 8085);
     connectStorageEmulator(storage, host, 9199);
     connectFunctionsEmulator(functions, host, 5001);
   } catch (err) {

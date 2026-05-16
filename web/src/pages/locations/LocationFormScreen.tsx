@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -73,6 +73,8 @@ export const LocationFormScreen: React.FC = () => {
   const { locationId } = useParams<{ locationId: string }>();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const isEdit = !!locationId;
   useDocumentTitle(isEdit ? 'Editar Local' : 'Criar Local');
@@ -86,42 +88,49 @@ export const LocationFormScreen: React.FC = () => {
   // Carrega dados existentes quando em modo edição
   useEffect(() => {
     if (!isEdit || !locationId) return;
+    let cancelled = false;
     const load = async () => {
       try {
         const snap = await getDoc(doc(db, 'locations', locationId));
+        if (cancelled) return;
         if (!snap.exists()) {
           setFetchError('Local não encontrado');
           setFetchLoading(false);
           return;
         }
         const data = snakeToCamel<Location>(snap.data());
-        setForm({
-          name: data.name || '',
-          address: data.address || '',
-          city: data.city || '',
-          state: data.state || '',
-          district: data.district || '',
-          phone: data.phone || '',
-          website: data.website || '',
-          fieldType: data.fieldType || 'SOCIETY',
-          playersPerTeam: data.playersPerTeam || 7,
-          fieldCount: data.fieldCount || 1,
-          description: data.description || '',
-          hasLighting: !!data.hasLighting,
-          hasParking: !!data.hasParking,
-          hasShowers: !!data.hasShowers,
-        });
-        setFetchError(null);
+        if (!cancelled) {
+          setForm({
+            name: data.name || '',
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            district: data.district || '',
+            phone: data.phone || '',
+            website: data.website || '',
+            fieldType: data.fieldType || 'SOCIETY',
+            playersPerTeam: data.playersPerTeam || 7,
+            fieldCount: data.fieldCount || 1,
+            description: data.description || '',
+            hasLighting: !!data.hasLighting,
+            hasParking: !!data.hasParking,
+            hasShowers: !!data.hasShowers,
+          });
+          setFetchError(null);
+        }
       } catch (err) {
-        logger.error('Erro ao carregar local:', err);
-        showError('Erro ao carregar local. Tente novamente.');
-        setFetchError('Erro ao carregar local. Tente novamente.');
+        if (!cancelled) {
+          logger.error('Erro ao carregar local:', err);
+          showErrorRef.current('Erro ao carregar local. Tente novamente.');
+          setFetchError('Erro ao carregar local. Tente novamente.');
+        }
       } finally {
-        setFetchLoading(false);
+        if (!cancelled) setFetchLoading(false);
       }
     };
     load();
-  }, [isEdit, locationId, showError]);
+    return () => { cancelled = true; };
+  }, [isEdit, locationId]);
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(defaultForm);
 

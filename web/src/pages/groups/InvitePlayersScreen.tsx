@@ -14,6 +14,8 @@ import {
   Chip,
   Divider,
   CircularProgress,
+  Alert,
+  Button,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -62,6 +64,14 @@ export const InvitePlayersScreen: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
   const [groupName, setGroupName] = useState('Grupo');
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!groupId) return;
@@ -102,6 +112,7 @@ export const InvitePlayersScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching members:', error);
+          setError('Erro ao carregar membros.');
           showError('Erro ao carregar membros.');
         }
       } finally {
@@ -112,7 +123,7 @@ export const InvitePlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId, showError]);
+  }, [groupId, showError, retryCount]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -253,7 +264,15 @@ export const InvitePlayersScreen: React.FC = () => {
           Membros do Grupo ({members.length})
         </Typography>
 
-        {loading ? (
+        {error ? (
+          <Alert severity="error" action={
+            <Button color="inherit" size="small" onClick={handleRetry}>
+              Tentar novamente
+            </Button>
+          }>
+            {error}
+          </Alert>
+        ) : loading ? (
           <LoadingState shimmerCount={5} itemType="LIST" />
         ) : (
           <Card>

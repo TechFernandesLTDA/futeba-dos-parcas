@@ -71,7 +71,7 @@ export function ProfileTab() {
   const nextEntry = currentLevel < 20 ? getLevelEntry(currentLevel + 1) : null;
   const xpInLevel = currentXp - currentEntry.xpRequired;
   const xpNeededForNext = nextEntry ? nextEntry.xpRequired - currentEntry.xpRequired : 0;
-  const levelColor = getLevelColor(currentLevel);
+  const levelColor = getLevelColor(currentLevel, theme);
 
   const handleLogout = async () => {
     try {

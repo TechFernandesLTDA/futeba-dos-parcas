@@ -92,12 +92,12 @@ export const LiveEventsScreen: React.FC = () => {
         }
       } catch (err) {
         logger.error('Erro ao verificar permissão de gerenciamento:', err);
-        showError('Erro ao verificar permissões. Tente novamente.');
+        showErrorRef.current('Erro ao verificar permissões. Tente novamente.');
       }
     };
 
     checkManagePermission();
-  }, [gameId, user, showError]);
+  }, [gameId, user]);
 
   useEffect(() => {
     if (!gameId) return;
@@ -280,10 +280,10 @@ export const LiveEventsScreen: React.FC = () => {
               sx={{ mb: 2 }}
               aria-label="Tipo de evento"
             >
-              <ToggleButton value="GOAL">⚽ Gol</ToggleButton>
-              <ToggleButton value="ASSIST">👟 Assist</ToggleButton>
-              <ToggleButton value="YELLOW_CARD">🟨 Amarelo</ToggleButton>
-              <ToggleButton value="RED_CARD">🟥 Vermelho</ToggleButton>
+              <ToggleButton value="GOAL">Gol</ToggleButton>
+              <ToggleButton value="ASSIST">Assist</ToggleButton>
+              <ToggleButton value="YELLOW_CARD">Amarelo</ToggleButton>
+              <ToggleButton value="RED_CARD">Vermelho</ToggleButton>
             </ToggleButtonGroup>
 
             <ToggleButtonGroup

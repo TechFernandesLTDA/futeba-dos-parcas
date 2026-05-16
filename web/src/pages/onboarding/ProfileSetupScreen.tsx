@@ -37,7 +37,7 @@ export const ProfileSetupScreen: React.FC = () => {
   useDocumentTitle('Configurar Perfil');
   const navigate = useNavigate();
   const theme = useTheme();
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, refreshUser } = useAuth();
   const { showError } = useToast();
 
   const [name, setName] = useState(firebaseUser?.displayName || '');
@@ -86,6 +86,8 @@ export const ProfileSetupScreen: React.FC = () => {
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       }, { merge: true });
+
+      await refreshUser();
 
       navigate('/');
     } catch (error) {

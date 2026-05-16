@@ -23,6 +23,7 @@ import {
   DialogContentText,
   DialogActions,
   Slide,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -153,6 +154,7 @@ export const NotificationsScreen: React.FC = () => {
   const {
     notifications,
     loading,
+    error,
     markAsRead,
     markAllAsRead,
     deleteNotification,
@@ -303,7 +305,9 @@ export const NotificationsScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
-        {loading ? (
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        ) : loading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} sx={{ mb: 1 }}>
               <CardContent>

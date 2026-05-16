@@ -28,6 +28,7 @@ import {
   SportsSoccer,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material';
+import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -100,6 +101,7 @@ export function LoginScreen() {
 
     try {
       await signInWithGoogle();
+      if (!getAuth().currentUser) return;
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
@@ -142,7 +144,7 @@ export function LoginScreen() {
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 2,
-                boxShadow: `0 4px 12px ${theme.palette.primary.main}66`,
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
               }}
             >
               <SportsSoccer sx={{ fontSize: 40, color: theme.palette.primary.contrastText }} />

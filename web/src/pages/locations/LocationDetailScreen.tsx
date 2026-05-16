@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -65,6 +65,8 @@ export const LocationDetailScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const { showSuccess, showError, showInfo } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
   const { locationId } = useParams<{ locationId: string }>();
 
   const [location, setLocation] = useState<Location | null>(null);
@@ -113,7 +115,7 @@ export const LocationDetailScreen: React.FC = () => {
       } catch (err) {
         logger.error('Erro ao carregar local:', err);
         if (!cancelled) {
-          showError('Não foi possível carregar este local. Verifique sua conexão e tente novamente.');
+          showErrorRef.current('Não foi possível carregar este local. Verifique sua conexão e tente novamente.');
           setError('Não foi possível carregar este local. Verifique sua conexão e tente novamente.');
           setLoading(false);
         }
@@ -124,7 +126,7 @@ export const LocationDetailScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [locationId, reloadKey, showError]);
+  }, [locationId, reloadKey]);
 
   // Editar: ADMIN ou owner do local podem editar
   const userCanEdit =
