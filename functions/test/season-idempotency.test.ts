@@ -180,6 +180,11 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
         // participações da season
         empty: false,
         docs: participants,
+      })
+      .mockResolvedValueOnce({
+        // FIX #1290: standings já existentes (1º run = nenhum)
+        empty: true,
+        docs: [],
       });
 
     await checkSeasonEndHandlerRef!();
@@ -206,7 +211,8 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
     const makeQueryMock = () =>
       mockQueryGet
         .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
-        .mockResolvedValueOnce({empty: false, docs: participants});
+        .mockResolvedValueOnce({empty: false, docs: participants})
+        .mockResolvedValueOnce({empty: true, docs: []});
 
     // Primeiro run
     makeQueryMock();
@@ -242,7 +248,8 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
 
     mockQueryGet
       .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
-      .mockResolvedValueOnce({empty: false, docs: participants});
+      .mockResolvedValueOnce({empty: false, docs: participants})
+      .mockResolvedValueOnce({empty: true, docs: []});
 
     await checkSeasonEndHandlerRef!();
 
@@ -252,6 +259,64 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
         season_id: seasonId,
         user_id: "player-epsilon",
       })
+    );
+  });
+
+  test("REGRESSÃO #1290: frozen_at original é preservado em re-run", async () => {
+    const seasonId = "monthly_2026_06";
+    const expiredSeason = makeExpiredSeason(seasonId);
+    const participants = [makeParticipationDoc("player-zeta")];
+    const originalFrozenAt = {_type: "OriginalTimestamp"};
+
+    mockQueryGet
+      .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
+      .mockResolvedValueOnce({empty: false, docs: participants})
+      .mockResolvedValueOnce({
+        // standing já gravada num run anterior, com frozen_at original
+        empty: false,
+        docs: [
+          {
+            id: `${seasonId}_player-zeta`,
+            data: () => ({frozen_at: originalFrozenAt}),
+          },
+        ],
+      });
+
+    await checkSeasonEndHandlerRef!();
+
+    // frozen_at deve ser o ORIGINAL, não um novo serverTimestamp()
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({frozen_at: originalFrozenAt})
+    );
+  });
+
+  test("REGRESSÃO #1291: participação com user_id inválido é ignorada", async () => {
+    const seasonId = "monthly_2026_07";
+    const expiredSeason = makeExpiredSeason(seasonId);
+    const participants = [
+      makeParticipationDoc("player-valid"),
+      {data: () => ({user_id: "", division: "OURO", points: 0})},
+      {data: () => ({user_id: undefined, division: "OURO", points: 0})},
+    ];
+
+    mockQueryGet
+      .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
+      .mockResolvedValueOnce({empty: false, docs: participants})
+      .mockResolvedValueOnce({empty: true, docs: []});
+
+    await checkSeasonEndHandlerRef!();
+
+    // Só o participante válido vira standing; inválidos são pulados
+    expect(capturedStandingDocIds).toEqual([`${seasonId}_player-valid`]);
+    // Nenhum batch.set de standing com user_id inválido
+    expect(mockBatchSet).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({user_id: ""})
+    );
+    expect(mockBatchSet).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({user_id: undefined})
     );
   });
 });

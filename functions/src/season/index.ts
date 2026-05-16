@@ -138,6 +138,23 @@ export const checkSeasonEnd = onSchedule(
         .where("season_id", "==", seasonId)
         .get();
 
+      // FIX #1290: preservar frozen_at original em re-runs idempotentes.
+      // Como o ID é determinístico (#1281) e o set() faz overwrite total,
+      // um re-run (timeout no meio dos chunks ou erro transitório antes de
+      // is_active=false) reescrevia frozen_at com o timestamp da re-execução,
+      // perdendo a data real de congelamento da temporada. Lemos os standings
+      // já gravados (uma query season-scoped) e reaproveitamos o frozen_at.
+      const existingStandingsSnap = await db()
+        .collection("season_final_standings")
+        .where("season_id", "==", seasonId)
+        .get();
+      const existingFrozenAt =
+        new Map<string, admin.firestore.Timestamp>();
+      for (const d of existingStandingsSnap.docs || []) {
+        const fa = d.data().frozen_at;
+        if (fa) existingFrozenAt.set(d.id, fa);
+      }
+
       if (!participationsSnap.empty) {
         // Processar em chunks se necessário
         // 100 participações por vez
@@ -165,27 +182,48 @@ export const checkSeasonEnd = onSchedule(
           for (const partDoc of chunk) {
             const p = partDoc.data();
 
+            // FIX #1291: validar user_id antes de compor o doc ID.
+            // user_id inválido (undefined/null/vazio) geraria IDs colidentes
+            // (`${seasonId}_undefined`) → standings sobrescritas e perda de
+            // dados; com "/" o ID seria inválido e abortaria o batch.
+            const rawUserId = p.user_id;
+            if (
+              typeof rawUserId !== "string" ||
+              rawUserId.trim() === ""
+            ) {
+              logger.error(
+                `[SEASON] Participação ${partDoc.id} com ` +
+                `user_id inválido (${JSON.stringify(rawUserId)}) ` +
+                `na season ${seasonId} — standing ignorada`
+              );
+              continue;
+            }
+            const safeUserId = rawUserId.replace(/\//g, "_");
+
             // Create Final Standing Record
             // FIX #1281: ID determinístico `${seasonId}_${user_id}` torna a
             // escrita idempotente (batch.set = upsert pelo mesmo doc ID).
             // Com auto-ID (.doc()), re-runs por timeout ou erro transitório
             // gravavam um segundo conjunto completo de standings com novos IDs
             // → duplicatas permanentes no histórico de temporadas.
+            const standingId = `${seasonId}_${safeUserId}`;
             const standingRef = db()
               .collection("season_final_standings")
-              .doc(`${seasonId}_${p.user_id}`);
+              .doc(standingId);
             batch.set(standingRef, {
               season_id: seasonId,
-              user_id: p.user_id,
+              user_id: rawUserId,
               final_division: p.division,
               final_rating: p.league_rating || 0,
               points: p.points,
               wins: p.wins,
               draws: p.draws,
               losses: p.losses,
+              // FIX #1290: mantém o frozen_at original se já existe;
+              // só usa serverTimestamp() na primeira gravação.
               frozen_at:
-                admin.firestore.FieldValue
-                  .serverTimestamp(),
+                existingFrozenAt.get(standingId) ??
+                admin.firestore.FieldValue.serverTimestamp(),
             });
             operationCount++;
             if (operationCount >= BATCH_LIMIT) {

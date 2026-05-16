@@ -72,6 +72,21 @@ export const onUserDeleted = auth
           }
         };
 
+        // FIX #1292: guard de limite centralizado. Antes, a checagem
+        // `batchOps >= 450` só existia DENTRO dos loops; deletes avulsos
+        // (users, users_private, cpf_index, sessions) incrementavam batchOps
+        // sem checar limite. Padrão frágil: adicionar novas coleções avulsas
+        // poderia estourar o teto de 500 ops/batch do Firestore e abortar o
+        // cleanup com dados pessoais residuais (LGPD Art. 18 VI). Todo delete
+        // passa por aqui agora.
+        const queueDelete = async (
+          ref: admin.firestore.DocumentReference
+        ) => {
+          batch.delete(ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        };
+
         // FIX #935: Tokens FCM ficam no campo `fcm_token` de users/{uid}.
         // Ao deletar o documento abaixo, o campo é removido implicitamente,
         // impedindo envio de notificações ao dispositivo do ex-usuário.
@@ -82,8 +97,7 @@ export const onUserDeleted = auth
 
         // 1. Remove users/{uid} (user profile + fcm_token implícito)
         const userRef = db.doc(`users/${uid}`);
-        batch.delete(userRef);
-        batchOps++;
+        await queueDelete(userRef);
         logger.info(`[ACCOUNT_CLEANUP] Deletando users/${uid} (inclui fcm_token)`);
 
         // 2. Remove users_private/{uid} (PII data + cpfHash lookup)
@@ -92,15 +106,13 @@ export const onUserDeleted = auth
         const cpfHash = userPrivateSnap.data()?.cpfHash as string | undefined;
 
         if (userPrivateSnap.exists) {
-          batch.delete(userPrivateRef);
-          batchOps++;
+          await queueDelete(userPrivateRef);
           logger.info(`[ACCOUNT_CLEANUP] Deletando users_private/${uid}`);
         }
 
         // 3. Remove cpf_index/{cpfHash} → libera dedup para re-registro
         if (cpfHash) {
-          batch.delete(db.doc(`cpf_index/${cpfHash}`));
-          batchOps++;
+          await queueDelete(db.doc(`cpf_index/${cpfHash}`));
           logger.info(
             `[ACCOUNT_CLEANUP] Deletando cpf_index/${cpfHash} ` +
             `do usuário ${uid}`
@@ -119,9 +131,7 @@ export const onUserDeleted = auth
             .get();
           if (auditLogsSnap.empty) break;
           for (const doc of auditLogsSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           auditLogsTotal += auditLogsSnap.size;
           if (auditLogsSnap.size < 500) break;
@@ -134,8 +144,7 @@ export const onUserDeleted = auth
         }
 
         // 5. FIX #652-B3: Cleanup sessions/{uid}
-        batch.delete(db.doc(`sessions/${uid}`));
-        batchOps++;
+        await queueDelete(db.doc(`sessions/${uid}`));
         logger.info(`[ACCOUNT_CLEANUP] Deletando sessions/${uid}`);
 
         // 6. FIX #652-B3 + #994: Cleanup verification_failures (loop)
@@ -148,9 +157,7 @@ export const onUserDeleted = auth
             .get();
           if (verifyFailSnap.empty) break;
           for (const doc of verifyFailSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           verifyFailTotal += verifyFailSnap.size;
           if (verifyFailSnap.size < 500) break;
@@ -173,9 +180,7 @@ export const onUserDeleted = auth
             .get();
           if (notificationsSnap.empty) break;
           for (const doc of notificationsSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           notificationsTotal += notificationsSnap.size;
           if (notificationsSnap.size < 500) break;
@@ -202,9 +207,7 @@ export const onUserDeleted = auth
             .get();
           if (confirmationsSnap.empty) break;
           for (const doc of confirmationsSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           confirmationsTotal += confirmationsSnap.size;
           if (confirmationsSnap.size < 500) break;
@@ -226,9 +229,7 @@ export const onUserDeleted = auth
             .get();
           if (mvpVotesSnap.empty) break;
           for (const doc of mvpVotesSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           mvpVotesTotal += mvpVotesSnap.size;
           if (mvpVotesSnap.size < 500) break;
@@ -250,9 +251,7 @@ export const onUserDeleted = auth
             .get();
           if (xpLogsSnap.empty) break;
           for (const doc of xpLogsSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           xpLogsTotal += xpLogsSnap.size;
           if (xpLogsSnap.size < 500) break;
@@ -274,9 +273,7 @@ export const onUserDeleted = auth
             .get();
           if (statisticsSnap.empty) break;
           for (const doc of statisticsSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           statisticsTotal += statisticsSnap.size;
           if (statisticsSnap.size < 500) break;
@@ -298,9 +295,7 @@ export const onUserDeleted = auth
             .get();
           if (seasonPartSnap.empty) break;
           for (const doc of seasonPartSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           seasonPartTotal += seasonPartSnap.size;
           if (seasonPartSnap.size < 500) break;
@@ -322,9 +317,7 @@ export const onUserDeleted = auth
             .get();
           if (activitiesSnap.empty) break;
           for (const doc of activitiesSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           activitiesTotal += activitiesSnap.size;
           if (activitiesSnap.size < 500) break;
@@ -346,9 +339,7 @@ export const onUserDeleted = auth
             .get();
           if (userBadgesSnap.empty) break;
           for (const doc of userBadgesSnap.docs) {
-            batch.delete(doc.ref);
-            batchOps++;
-            if (batchOps >= 450) await commitBatch();
+            await queueDelete(doc.ref);
           }
           userBadgesTotal += userBadgesSnap.size;
           if (userBadgesSnap.size < 500) break;
