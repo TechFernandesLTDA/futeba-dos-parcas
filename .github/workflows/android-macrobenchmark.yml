@@ -95,13 +95,14 @@ jobs:
 
       - name: Upload resultados dos benchmarks
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: macrobenchmark-results-${{ env.COMMIT_SHA }}
           path: |
             macrobenchmark/build/outputs/connected_android_test_additional_output/
             macrobenchmark/build/outputs/androidTest-results/
-          retention-days: 30
+          retention-days: 7
 
       - name: Resumo no GitHub Step Summary
         if: always()

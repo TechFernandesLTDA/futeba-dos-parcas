@@ -85,13 +85,14 @@ jobs:
 
       - name: Upload Lint Report
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: lint-report
           path: |
             app/build/reports/lint-results-debug.html
             app/build/reports/lint-results-debug.xml
-          retention-days: 14
+          retention-days: 7
 
   detekt:
     name: Detekt Static Analysis
@@ -150,13 +151,14 @@ jobs:
 
       - name: Upload Detekt Report
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: detekt-report
           path: |
             app/build/reports/detekt/
             build/reports/detekt/
-          retention-days: 14
+          retention-days: 7
 
   test:
     name: Unit Tests
@@ -207,13 +209,14 @@ jobs:
 
       - name: Upload Test Results
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
             app/build/reports/tests/
             app/build/test-results/
-          retention-days: 14
+          retention-days: 7
 
       # Publicar resultados dos testes como check no PR
       - name: Publish Test Results
@@ -272,12 +275,15 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
+      # APK so e util para review em PR; em master apenas valida o build (sem upload — evitava ~24GB de quota)
       - name: Upload Debug APK
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
+          retention-days: 3
 
       # Tamanho do APK como comentario no PR
       - name: Report APK Size
