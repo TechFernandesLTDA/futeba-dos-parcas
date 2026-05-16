@@ -41,6 +41,16 @@ interface AnalyticsEventMap {
     value: number;
     rating: 'good' | 'needs-improvement' | 'poor';
   };
+
+  // Onboarding Tour — Fase 1 (spec feat-2026-05-16-modern-onboarding-tour §3.7)
+  onboarding_started: Record<string, never>;
+  onboarding_slide_viewed: { slide_index: number; slide_id: string };
+  onboarding_skipped: { at_slide_index: number };
+  onboarding_carousel_completed: { duration_ms: number };
+  checklist_step_completed: { step_id: string; time_since_start_ms: number };
+  checklist_completed: { total_duration_ms: number };
+  checklist_dismissed: { steps_done: number; steps_total: number };
+  onboarding_reward_granted: { reward_type: string };
 }
 
 type EventName = keyof AnalyticsEventMap;
