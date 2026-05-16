@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { FavoriteTeam } from '../types/team';
 import { createLogger } from '../utils/logger';
+import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useTeams');
 
@@ -35,6 +36,9 @@ export function useTeams() {
     gcTime: 7 * 24 * 60 * 60 * 1000,
   });
 
+  const { showError } = useToast();
+  const [listenerError, setListenerError] = useState<string | null>(null);
+
   useEffect(() => {
     const coll = collection(db, COLLECTION);
     const q = query(coll, orderBy('name', 'asc'));
@@ -51,11 +55,13 @@ export function useTeams() {
       },
       (err) => {
         logger.error('Error in teams listener:', err);
+        setListenerError(err.message);
+        showError('Erro ao carregar times em tempo real');
       }
     );
 
     return () => unsubscribe();
-  }, [queryClient]);
+  }, [queryClient, showError]);
 
   const teamsById = useMemo(() => {
     const map = new Map<string, FavoriteTeam>();
@@ -65,7 +71,7 @@ export function useTeams() {
     return map;
   }, [teams]);
 
-  const error = queryError ? (queryError as Error).message : null;
+  const error = listenerError || (queryError ? (queryError as Error).message : null);
 
   return { teams, teamsById, loading, error };
 }

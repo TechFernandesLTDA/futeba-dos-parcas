@@ -1,5 +1,6 @@
 // Source of truth: shared/xp-constants.json — keep in sync
 import xpConstants from '../../../shared/xp-constants.json';
+import { gamificationColors } from '../theme';
 
 export type LeagueDivision = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'CHAMPION';
 
@@ -173,11 +174,11 @@ export interface RankingPlayer {
 
 // Cores alinhadas com gamificationColors em theme/index.ts (single source of truth)
 export const DIVISION_CONFIG: Record<LeagueDivision, { label: string; color: string; minPoints: number }> = {
-  BRONZE: { label: 'Bronze', color: '#CD7F32', minPoints: 0 },        // gamificationColors.bronze
-  SILVER: { label: 'Prata', color: '#C0C0C0', minPoints: 100 },       // gamificationColors.silver
-  GOLD: { label: 'Ouro', color: '#FFD700', minPoints: 300 },          // gamificationColors.gold
+  BRONZE: { label: 'Bronze', color: gamificationColors.bronze, minPoints: 0 },
+  SILVER: { label: 'Prata', color: gamificationColors.silver, minPoints: 100 },
+  GOLD: { label: 'Ouro', color: gamificationColors.gold, minPoints: 300 },
   PLATINUM: { label: 'Platina', color: '#00E676', minPoints: 600 },
-  DIAMOND: { label: 'Diamante', color: '#00BCD4', minPoints: 1000 },  // gamificationColors.level
+  DIAMOND: { label: 'Diamante', color: gamificationColors.level, minPoints: 1000 },
   CHAMPION: { label: 'Campeão', color: '#E91E63', minPoints: 2000 },
 };
 

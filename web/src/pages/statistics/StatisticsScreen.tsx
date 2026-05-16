@@ -180,7 +180,7 @@ export const StatisticsScreen: React.FC = () => {
                       Nível {stats.level} • {getLevelTitle(stats.level)}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                      <TrophyIcon sx={{ fontSize: 16, color: getLevelColor(stats.level) }} />
+                      <TrophyIcon sx={(theme) => ({ fontSize: 16, color: getLevelColor(stats.level, theme) })} />
                       <Typography variant="caption" fontWeight={600}>
                         {stats.experiencePoints} XP
                       </Typography>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -17,6 +17,7 @@ import {
   Chip,
   List,
   LinearProgress,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -82,22 +83,37 @@ export const PostGameReportScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
 
   const [stats, setStats] = useState<PostGameStats | null>(null);
   const [gamification, setGamification] = useState<GamificationData | null>(null);
   const [levelData, setLevelData] = useState<LevelData | null>(null);
   const [financialData, setFinancialData] = useState<FinancialData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!gameId) return;
 
+    let cancelled = false;
+
     const fetchReport = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
+        if (cancelled) return;
         if (!gameDoc.exists()) {
-          showError('Jogo não encontrado.');
-          navigate('/games', { replace: true });
+          showErrorRef.current('Jogo não encontrado.');
+          navigateRef.current('/games', { replace: true });
           return;
         }
 
@@ -105,17 +121,20 @@ export const PostGameReportScreen: React.FC = () => {
         const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
 
         if (data.status !== 'FINISHED') {
-          showError('Relatório só disponível após o jogo ser finalizado.');
-          navigate(`/game/${gameId}`, { replace: true });
+          showErrorRef.current('Relatório só disponível após o jogo ser finalizado.');
+          navigateRef.current(`/game/${gameId}`, { replace: true });
           return;
         }
 
         let mvpName = '';
         if (data.mvpId) {
           const mvpDoc = await getDoc(doc(db, 'users', data.mvpId));
+          if (cancelled) return;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (mvpDoc.exists()) mvpName = (snakeToCamel(mvpDoc.data()) as Record<string, any>).name || '';
         }
+
+        if (cancelled) return;
 
         setStats({
           teamAScore: data.teamAScore || data.team1Score || 0,
@@ -135,6 +154,7 @@ export const PostGameReportScreen: React.FC = () => {
           const confirmationsRef = collection(db, 'confirmations');
           const confirmationQ = query(confirmationsRef, where('game_id', '==', gameId));
           const confirmationsSnap = await getDocs(confirmationQ);
+          if (cancelled) return;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const confirmationsData = confirmationsSnap.docs.map((d) => snakeToCamel(d.data()) as Record<string, any>);
 
@@ -163,6 +183,7 @@ export const PostGameReportScreen: React.FC = () => {
           });
 
           const userDoc = await getDoc(doc(db, 'users', uid));
+          if (cancelled) return;
           if (userDoc.exists()) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const userData = snakeToCamel(userDoc.data()) as Record<string, any>;
@@ -181,16 +202,19 @@ export const PostGameReportScreen: React.FC = () => {
           }
         }
       } catch (error) {
-        logger.error('Error fetching report:', error);
-        showError('Erro ao carregar dados. Tente novamente.');
+        if (!cancelled) {
+          logger.error('Error fetching report:', error);
+          setError('Erro ao carregar dados. Tente novamente.');
+          showErrorRef.current('Erro ao carregar dados. Tente novamente.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchReport();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId]);
+    return () => { cancelled = true; };
+  }, [gameId, user?.id, retryCount]);
 
   const handleShare = async () => {
     if (!stats) return;
@@ -213,6 +237,20 @@ export const PostGameReportScreen: React.FC = () => {
       }
     }
   };
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={handleRetry}>
+            Tentar novamente
+          </Button>
+        }>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;

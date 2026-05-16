@@ -110,9 +110,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const { showError } = useToast();
-  const { data: player, isLoading, isError, refetch } = usePlayerCard(userId);
+  const { playerCard: player, loading, error, refetch } = usePlayerCard(userId);
 
-  const levelColor = player ? getLevelColor(player.level) : theme.palette.grey[500];
+  const levelColor = player ? getLevelColor(player.level, theme) : theme.palette.grey[500];
   const levelEntry = player ? getLevelEntry(player.level) : null;
   const xpProgress = player ? getXpProgress(player.experiencePoints) : 0;
   const xpRemaining = player ? getXpRemaining(player.experiencePoints) : 0;
@@ -217,7 +217,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             <span>
               <IconButton
                 onClick={handleShare}
-                disabled={sharing || isLoading || !player}
+                disabled={sharing || loading || !player}
                 aria-label="Compartilhar card do jogador"
                 sx={{
                   bgcolor: alpha(theme.palette.primary.main, 0.9),
@@ -310,13 +310,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               pb: 2,
             }}
           >
-            {isLoading ? (
+            {loading ? (
               <>
                 <Skeleton variant="circular" width={120} height={120} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1) }} />
                 <Skeleton variant="text" width={160} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), mt: 1.5 }} />
                 <Skeleton variant="text" width={100} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), mt: 0.5 }} />
               </>
-            ) : isError ? (
+            ) : error ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography color="error" gutterBottom>Erro ao carregar jogador</Typography>
                 {/* SECFIX #492: Button (não IconButton) — IconButton é semanticamente

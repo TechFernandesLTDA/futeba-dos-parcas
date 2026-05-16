@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -78,7 +79,15 @@ export const CashboxScreen: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const { showError } = useToast();
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!groupId) return;
@@ -110,6 +119,7 @@ export const CashboxScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in cashbox transactions listener:', err);
+        setError('Erro ao carregar transações do caixa.');
         showError('Erro ao carregar transações do caixa.');
         setLoading(false);
       }
@@ -154,6 +164,7 @@ export const CashboxScreen: React.FC = () => {
       } catch (err) {
         if (!cancelled) {
           logger.error('Error fetching members:', err);
+          setError('Erro ao carregar membros do grupo.');
           showError('Erro ao carregar membros do grupo.');
         }
       }
@@ -164,7 +175,7 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId, showError, user]);
+  }, [groupId, showError, user, retryCount]);
 
   const handleAddTransaction = async () => {
     const parsedAmount = parseFloat(amount);
@@ -265,7 +276,17 @@ export const CashboxScreen: React.FC = () => {
           </Box>
         )}
 
-        {loading ? (
+        {error ? (
+          <Container maxWidth="sm" sx={{ py: 2 }}>
+            <Alert severity="error" action={
+              <Button color="inherit" size="small" onClick={handleRetry}>
+                Tentar novamente
+              </Button>
+            }>
+              {error}
+            </Alert>
+          </Container>
+        ) : loading ? (
           <LoadingState shimmerCount={5} itemType="LIST" />
         ) : transactions.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>

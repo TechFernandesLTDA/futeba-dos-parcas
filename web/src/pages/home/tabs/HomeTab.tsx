@@ -580,7 +580,7 @@ export function HomeTab() {
   const levelEntry = getLevelEntry(currentLevel);
   const progress = getXpProgress(currentXp);
   const xpRemaining = getXpRemaining(currentXp);
-  const levelColor = getLevelColor(currentLevel);
+  const levelColor = getLevelColor(currentLevel, theme);
 
   useEffect(() => {
     const uid = user?.id;

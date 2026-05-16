@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -21,6 +21,8 @@ import {
   Chip,
   useTheme,
   alpha,
+  Alert,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -64,11 +66,21 @@ export const LiveStatsScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [tabValue, setTabValue] = useState(0);
   const [stats, setStats] = useState<LiveStats | null>(null);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!gameId) return;
@@ -102,14 +114,15 @@ export const LiveStatsScreen: React.FC = () => {
         setEvents(eventsData);
       } catch (error) {
         logger.error('Error fetching stats:', error);
-        showError('Erro ao carregar estatísticas. Tente novamente.');
+        setError('Erro ao carregar estatísticas. Tente novamente.');
+        showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [gameId, showError]);
+  }, [gameId, retryCount]);
 
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -127,6 +140,20 @@ export const LiveStatsScreen: React.FC = () => {
         return <PersonIcon />;
     }
   };
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={handleRetry}>
+            Tentar novamente
+          </Button>
+        }>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   if (loading) {
     return <LoadingState shimmerCount={4} itemType="CARD" />;

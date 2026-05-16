@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -10,7 +10,7 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
+  ListItemButton,
   Divider,
   Button,
   Chip,
@@ -64,6 +64,8 @@ export const UserManagementScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const PAGE_SIZE = 50;
 
@@ -77,6 +79,14 @@ export const UserManagementScreen: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setFetchError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   const parseUserDoc = (d: DocumentSnapshot) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,25 +104,32 @@ export const UserManagementScreen: React.FC = () => {
   };
 
   useEffect(() => {
+    let cancelled = false;
     const fetchUsers = async () => {
       try {
         const usersRef = collection(db, 'users');
         const q = query(usersRef, orderBy('created_at', 'desc'), limit(PAGE_SIZE));
         const snapshot = await getDocs(q);
 
+        if (cancelled) return;
+
         setUsers(snapshot.docs.map(parseUserDoc));
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
         setHasMore(snapshot.docs.length === PAGE_SIZE);
       } catch (error) {
-        logger.error('Error fetching users:', error);
-        showError('Erro ao carregar usuários.');
+        if (!cancelled) {
+          logger.error('Error fetching users:', error);
+          setFetchError('Erro ao carregar usuários.');
+          showErrorRef.current('Erro ao carregar usuários.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchUsers();
-  }, [showError]);
+    return () => { cancelled = true; };
+  }, [retryCount]);
 
   const handleLoadMore = async () => {
     if (!lastDoc || loadingMore) return;
@@ -127,6 +144,7 @@ export const UserManagementScreen: React.FC = () => {
       setHasMore(snapshot.docs.length === PAGE_SIZE);
     } catch (error) {
       logger.error('Error loading more users:', error);
+      setFetchError('Erro ao carregar mais usuários.');
       showError('Erro ao carregar mais usuários.');
     } finally {
       setLoadingMore(false);
@@ -205,7 +223,15 @@ export const UserManagementScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        {loading ? (
+        {fetchError ? (
+          <Alert severity="error" action={
+            <Button color="inherit" size="small" onClick={handleRetry}>
+              Tentar novamente
+            </Button>
+          }>
+            {fetchError}
+          </Alert>
+        ) : loading ? (
           <LoadingState shimmerCount={8} itemType="LIST" />
         ) : filteredUsers.length === 0 ? (
           // Empty state — diferencia busca vazia de DB vazio (#1125)
@@ -238,36 +264,38 @@ export const UserManagementScreen: React.FC = () => {
                   <Box key={u.id}>
                     {index > 0 && <Divider />}
                     <ListItem
-                      button
-                      onClick={() => {
-                        setSelectedUser(u);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      <ListItemAvatar>
-                        <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {u.name}
-                            <Chip
-                              label={u.role}
-                              size="small"
-                              sx={{
-                                bgcolor: alpha(getRoleColor(u.role), 0.1),
-                                color: getRoleColor(u.role),
-                              }}
-                            />
-                          </Box>
-                        }
-                        secondary={`${u.email} • ${u.gamesPlayed} jogos`}
-                      />
-                      <ListItemSecondaryAction>
+                      secondaryAction={
                         <IconButton edge="end" aria-label="Gerenciar permissões">
                           <AdminIcon />
                         </IconButton>
-                      </ListItemSecondaryAction>
+                      }
+                    >
+                      <ListItemButton
+                        onClick={() => {
+                          setSelectedUser(u);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <ListItemAvatar>
+                          <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {u.name}
+                              <Chip
+                                label={u.role}
+                                size="small"
+                                sx={{
+                                  bgcolor: alpha(getRoleColor(u.role), 0.1),
+                                  color: getRoleColor(u.role),
+                                }}
+                              />
+                            </Box>
+                          }
+                          secondary={`${u.email} • ${u.gamesPlayed} jogos`}
+                        />
+                      </ListItemButton>
                     </ListItem>
                   </Box>
                 ))}

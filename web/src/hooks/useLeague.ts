@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   collection,
   query,
@@ -14,6 +14,7 @@ import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { LeagueDivision } from '../types/gamification';
 import { createLogger } from '../utils/logger';
+import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useLeague');
 
@@ -125,6 +126,9 @@ export const useLeague = (currentUserId?: string, division?: LeagueDivision) => 
     gcTime: 10 * 60 * 1000,
   });
 
+  const { showError } = useToast();
+  const [listenerError, setListenerError] = useState<string | null>(null);
+
   // Listener real-time para invalidar cache quando rankings mudam
   useEffect(() => {
     const seasonRef = collection(db, 'season_participation');
@@ -139,12 +143,14 @@ export const useLeague = (currentUserId?: string, division?: LeagueDivision) => 
       queryClient.invalidateQueries({ queryKey: ['league'] });
     }, (err) => {
       logger.error('Error in league listener:', err);
+      setListenerError(err.message);
+      showError('Erro ao carregar ranking em tempo real');
     });
 
     return () => unsubscribe();
-  }, [queryClient]);
+  }, [queryClient, showError]);
 
-  const error = queryError ? (queryError as Error).message : null;
+  const error = listenerError || (queryError ? (queryError as Error).message : null);
 
   return { players, loading, error };
 };

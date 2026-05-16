@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -13,7 +13,8 @@ import {
   Button,
   useTheme,
   alpha,
-  Skeleton,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -59,11 +60,25 @@ export const TeamFormationScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const userRef = useRef(user);
+  userRef.current = user;
 
   const [teamA, setTeamA] = useState<TeamPlayer[]>([]);
   const [teamB, setTeamB] = useState<TeamPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!gameId) return;
@@ -76,9 +91,10 @@ export const TeamFormationScreen: React.FC = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
           const ownerId = gameData.ownerId || gameData.owner_id;
-          if (user && user.id !== ownerId) {
-            showError('Apenas o dono do jogo pode formar os times.');
-            navigate(`/game/${gameId}`);
+          const currentUser = userRef.current;
+          if (currentUser && currentUser.id !== ownerId) {
+            showErrorRef.current('Apenas o dono do jogo pode formar os times.');
+            navigateRef.current(`/game/${gameId}`);
             return;
           }
         }
@@ -119,14 +135,15 @@ export const TeamFormationScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching game:', error);
-        showError('Erro ao carregar dados. Tente novamente.');
+        setError('Erro ao carregar dados. Tente novamente.');
+        showErrorRef.current('Erro ao carregar dados. Tente novamente.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchGame();
-  }, [gameId, navigate, showError, user]);
+  }, [gameId, retryCount]);
 
   const shuffleTeams = () => {
     const allPlayers = [...teamA, ...teamB];
@@ -178,6 +195,20 @@ export const TeamFormationScreen: React.FC = () => {
       setSaving(false);
     }
   };
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={handleRetry}>
+            Tentar novamente
+          </Button>
+        }>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;
@@ -306,7 +337,7 @@ export const TeamFormationScreen: React.FC = () => {
           sx={{ mt: 2 }}
           onClick={handleSaveTeams}
           disabled={saving}
-          startIcon={saving ? <Skeleton width={20} /> : <SaveIcon />}
+          startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
         >
           {saving ? 'Salvando...' : 'Confirmar Times'}
         </Button>

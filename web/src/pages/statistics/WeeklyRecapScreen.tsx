@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -19,6 +19,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Alert,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -69,10 +71,20 @@ export const WeeklyRecapScreen: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
 
   const targetUserId = userId || currentUser?.id;
 
@@ -126,14 +138,29 @@ export const WeeklyRecapScreen: React.FC = () => {
         setRecentGames(gamesData);
       } catch (error) {
         logger.error('Error fetching weekly recap:', error);
-        showError('Erro ao carregar recap semanal.');
+        setError('Erro ao carregar recap semanal.');
+        showErrorRef.current('Erro ao carregar recap semanal.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [targetUserId, showError]);
+  }, [targetUserId, retryCount]);
+
+  if (error) {
+    return (
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={handleRetry}>
+            Tentar novamente
+          </Button>
+        }>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;

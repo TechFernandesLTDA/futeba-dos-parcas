@@ -11,10 +11,15 @@ export const SplashScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { firebaseUser, loading } = useAuth();
+  const { firebaseUser, loading, error } = useAuth();
 
   useEffect(() => {
     if (loading) return;
+
+    if (error) {
+      navigate('/login');
+      return;
+    }
 
     const timer = setTimeout(() => {
       if (firebaseUser) {
@@ -34,7 +39,7 @@ export const SplashScreen: React.FC = () => {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [firebaseUser, loading, navigate]);
+  }, [firebaseUser, loading, navigate, error]);
 
   return (
     <Box

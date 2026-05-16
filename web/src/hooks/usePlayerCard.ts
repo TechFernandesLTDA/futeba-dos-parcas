@@ -75,11 +75,20 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
 }
 
 export function usePlayerCard(userId: string | null) {
-  return useQuery({
+  const {
+    data,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useQuery({
     queryKey: ['playerCard', userId],
     queryFn: () => fetchPlayerCardData(userId!),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutos
     refetchOnWindowFocus: false, // dados estáticos do jogador — não buscar ao focar janela
   });
+
+  const error = queryError ? (queryError as Error).message : null;
+
+  return { playerCard: data ?? null, loading, error, refetch };
 }

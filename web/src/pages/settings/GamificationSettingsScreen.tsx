@@ -296,6 +296,7 @@ export const GamificationSettingsScreen: React.FC = () => {
             onClick={handleSave}
             disabled={saving}
             sx={{ mt: 1 }}
+            startIcon={saving ? <CircularProgress size={20} /> : undefined}
           >
             {saving ? 'Salvando...' : 'Salvar Configurações'}
           </Button>

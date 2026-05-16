@@ -18,7 +18,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -467,7 +466,13 @@ export const GameDetailScreen: React.FC = () => {
                 ) : (
                   <List disablePadding aria-label="Jogadores confirmados">
                     {confirmedPlayers.map((player, index) => (
-                      <ListItem key={player.id} divider={index < confirmedPlayers.length - 1}>
+                      <ListItem
+                        key={player.id}
+                        divider={index < confirmedPlayers.length - 1}
+                        secondaryAction={
+                          <StatusChip status={player.paymentStatus} config={PAYMENT_STATUS_CONFIG} />
+                        }
+                      >
                         <ListItemAvatar>
                           <PlayerAvatar
                             name={player.userName}
@@ -487,9 +492,6 @@ export const GameDetailScreen: React.FC = () => {
                           }
                           secondary={`#${player.confirmationOrder ?? (index + 1)}`}
                         />
-                        <ListItemSecondaryAction>
-                          <StatusChip status={player.paymentStatus} config={PAYMENT_STATUS_CONFIG} />
-                        </ListItemSecondaryAction>
                       </ListItem>
                     ))}
                   </List>
