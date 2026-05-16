@@ -2,10 +2,11 @@ package com.futebadosparcas.platform
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import platform.Foundation.NSItemProvider
+import platform.Foundation.NSData
 import platform.Foundation.NSURL
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSUUID
+import platform.Foundation.NSFileManager
 import platform.PhotosUI.PHPickerConfiguration
 import platform.PhotosUI.PHPickerFilter
 import platform.PhotosUI.PHPickerResult
@@ -20,6 +21,7 @@ import platform.UIKit.UINavigationControllerDelegateProtocol
 import platform.UIKit.UIViewController
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
+import platform.UniformTypeIdentifiers.UTTypeImage
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 
@@ -27,12 +29,13 @@ import kotlin.coroutines.resume
  * Implementação iOS de ImagePicker.
  *
  * - Seleção de galeria: PHPickerViewController (moderno, iOS 14+, sem permissão prévia)
+ *   Usa `loadFileRepresentationForTypeIdentifier` para compatibilidade com Kotlin/Native.
  * - Captura de câmera: UIImagePickerController (câmera nativa)
  *
  * Requer que [ImagePickerFactory.initialize] seja chamado com um provider de
  * UIViewController raiz antes de usar.
  *
- * PHPickerViewController requer iOS 14+. O projeto tem deployment target 15.0.
+ * Deployment target 15.0 ≥ PHPickerViewController mínimo (14.0). OK.
  */
 @OptIn(ExperimentalForeignApi::class)
 class IOSImagePicker(private val viewControllerProvider: () -> UIViewController) : ImagePicker {
@@ -68,18 +71,22 @@ class IOSImagePicker(private val viewControllerProvider: () -> UIViewController)
                     var pendingCount = results.size
 
                     results.forEach { result ->
-                        val provider: NSItemProvider = result.itemProvider
-                        if (provider.canLoadObjectOfClass(UIImage)) {
-                            provider.loadObjectOfClass(UIImage) { obj, _ ->
-                                val image = obj as? UIImage
-                                if (image != null) {
-                                    val fileUrl = salvarImagemTemporaria(image)
-                                    if (fileUrl != null) {
+                        val provider = result.itemProvider
+                        // Usar loadFileRepresentationForTypeIdentifier para evitar problemas
+                        // de tipagem com canLoadObjectOfClass/loadObjectOfClass em Kotlin/Native.
+                        // UTTypeImage.identifier = "public.image"
+                        val typeIdentifier = UTTypeImage.identifier
+                        if (provider.hasItemConformingToTypeIdentifier(typeIdentifier)) {
+                            provider.loadFileRepresentationForTypeIdentifier(typeIdentifier) { url, error ->
+                                if (url != null && error == null) {
+                                    // Copiar para tmpDir (URL original pode ser temporária e ser removida)
+                                    val tmpUrl = copiarParaTmp(url)
+                                    if (tmpUrl != null) {
                                         pickedItems.add(
                                             ImagePickerResult(
-                                                uri = PlatformUri(fileUrl),
+                                                uri = PlatformUri(tmpUrl),
                                                 mimeType = "image/jpeg",
-                                                fileName = fileUrl.lastPathComponent
+                                                fileName = tmpUrl.lastPathComponent
                                             )
                                         )
                                     }
@@ -132,7 +139,7 @@ class IOSImagePicker(private val viewControllerProvider: () -> UIViewController)
                     val image = (didFinishPickingMediaWithInfo[UIImagePickerControllerEditedImage]
                         ?: didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage]) as? UIImage
                     if (image != null) {
-                        val fileUrl = salvarImagemTemporaria(image)
+                        val fileUrl = salvarImagemCapturada(image)
                         continuation.resume(
                             fileUrl?.let {
                                 ImagePickerResult(
@@ -169,16 +176,39 @@ class IOSImagePicker(private val viewControllerProvider: () -> UIViewController)
         )
 
     /**
-     * Salva UIImage como JPEG no diretório temporário e retorna o NSURL do arquivo.
-     * Retorna null se a conversão ou gravação falhar.
+     * Copia arquivo de imagem para NSTemporaryDirectory com nome único.
+     * Necessário pois a URL fornecida pelo PHPicker pode ser removida após o callback.
      */
-    private fun salvarImagemTemporaria(image: UIImage): NSURL? {
-        val jpegData = UIImageJPEGRepresentation(image, 0.85) ?: return null
+    private fun copiarParaTmp(sourceUrl: NSURL): NSURL? {
         val fileName = "${NSUUID().UUIDString()}.jpg"
-        val tmpDir = NSTemporaryDirectory()
-        val filePath = "$tmpDir$fileName"
-        val fileUrl = NSURL.fileURLWithPath(filePath)
-        return if (jpegData.writeToURL(fileUrl, atomically = true)) fileUrl else null
+        val tmpPath = "${NSTemporaryDirectory()}$fileName"
+        val destUrl = NSURL.fileURLWithPath(tmpPath)
+        return try {
+            val fileManager = NSFileManager.defaultManager()
+            // Remover destino caso já exista
+            if (fileManager.fileExistsAtPath(tmpPath)) {
+                fileManager.removeItemAtURL(destUrl, null)
+            }
+            if (fileManager.copyItemAtURL(sourceUrl, toURL = destUrl, error = null)) {
+                destUrl
+            } else null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Salva UIImage capturada pela câmera como JPEG em NSTemporaryDirectory.
+     * Usa NSFileManager.createFileAtPath para evitar ambiguidade de binding NSData.writeToURL.
+     */
+    private fun salvarImagemCapturada(image: UIImage): NSURL? {
+        val jpegData: NSData = UIImageJPEGRepresentation(image, 0.85) ?: return null
+        val fileName = "${NSUUID().UUIDString()}.jpg"
+        val tmpPath = "${NSTemporaryDirectory()}$fileName"
+        val fileUrl = NSURL.fileURLWithPath(tmpPath)
+        val criado = NSFileManager.defaultManager()
+            .createFileAtPath(tmpPath, contents = jpegData, attributes = null)
+        return if (criado) fileUrl else null
     }
 }
 
@@ -188,7 +218,7 @@ class IOSImagePicker(private val viewControllerProvider: () -> UIViewController)
  * Inicializar com um provider de UIViewController antes de usar qualquer ImagePicker:
  *
  * ```swift
- * // Em ContentView.swift (Swift side):
+ * // Em ContentView.swift ou AppDelegate (Swift side):
  * ImagePickerFactory.shared.doInitialize {
  *     UIApplication.shared.connectedScenes
  *         .compactMap { $0 as? UIWindowScene }
