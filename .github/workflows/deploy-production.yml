@@ -116,11 +116,16 @@ jobs:
           status: completed
           inAppUpdatePriority: 2
 
+      # AAB ja foi enviado ao Play Store no passo anterior; este upload e so backup.
+      # continue-on-error evita que falha de quota de artifact marque o deploy como vermelho
+      # depois que o Play Store ja recebeu o release com sucesso.
       - name: Upload AAB artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
