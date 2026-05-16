@@ -68,7 +68,7 @@ class CpfVerificationViewModel(
                 val data = verifyResult.data as? Map<String, Any?>
                 val success = data?.get("success") as? Boolean ?: false
                 if (!success) {
-                    throw IllegalStateException("verifyCpf returned success=false")
+                    error("verifyCpf returned success=false")
                 }
 
                 // Marca usuario como verified=true (custom claim)
