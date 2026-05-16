@@ -213,8 +213,10 @@ fun AppNavHost(
 
         composable(Screen.Home.route) {
             val viewModel: com.futebadosparcas.ui.home.HomeViewModel = koinViewModel()
+            val onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel = koinViewModel()
             HomeScreen(
                 viewModel = viewModel,
+                onboardingViewModel = onboardingViewModel,
                 onGameClick = { gameId ->
                     navController.navigate(Screen.GameDetail.createRoute(gameId))
                 },

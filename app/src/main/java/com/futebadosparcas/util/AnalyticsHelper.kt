@@ -154,4 +154,57 @@ class AnalyticsHelper constructor() {
     fun setUserId(userId: String) {
         analytics.setUserId(userId)
     }
+
+    // ============================================
+    // Onboarding Tour Events (Fase 1)
+    // ============================================
+
+    fun logOnboardingStarted() {
+        analytics.logEvent("onboarding_started", Bundle())
+    }
+
+    fun logOnboardingSlideViewed(slideIndex: Int, slideId: String) {
+        analytics.logEvent("onboarding_slide_viewed", Bundle().apply {
+            putInt("slide_index", slideIndex)
+            putString("slide_id", slideId)
+        })
+    }
+
+    fun logOnboardingSkipped(atSlideIndex: Int) {
+        analytics.logEvent("onboarding_skipped", Bundle().apply {
+            putInt("at_slide_index", atSlideIndex)
+        })
+    }
+
+    fun logOnboardingCarouselCompleted(durationMs: Long) {
+        analytics.logEvent("onboarding_carousel_completed", Bundle().apply {
+            putLong("duration_ms", durationMs)
+        })
+    }
+
+    fun logChecklistStepCompleted(stepId: String, timeSinceStartMs: Long) {
+        analytics.logEvent("checklist_step_completed", Bundle().apply {
+            putString("step_id", stepId)
+            putLong("time_since_start_ms", timeSinceStartMs)
+        })
+    }
+
+    fun logChecklistCompleted(totalDurationMs: Long) {
+        analytics.logEvent("checklist_completed", Bundle().apply {
+            putLong("total_duration_ms", totalDurationMs)
+        })
+    }
+
+    fun logChecklistDismissed(stepsDone: Int, stepsTotal: Int) {
+        analytics.logEvent("checklist_dismissed", Bundle().apply {
+            putInt("steps_done", stepsDone)
+            putInt("steps_total", stepsTotal)
+        })
+    }
+
+    fun logOnboardingRewardGranted(rewardType: String) {
+        analytics.logEvent("onboarding_reward_granted", Bundle().apply {
+            putString("reward_type", rewardType)
+        })
+    }
 }

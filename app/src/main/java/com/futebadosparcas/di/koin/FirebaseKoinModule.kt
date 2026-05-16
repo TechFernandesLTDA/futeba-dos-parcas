@@ -1,6 +1,7 @@
 package com.futebadosparcas.di.koin
 
 import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
+import com.futebadosparcas.util.AnalyticsHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MemoryCacheSettings
@@ -81,5 +82,10 @@ val firebaseKoinModule = module {
     // CMD-06: Provider para ProfilePhotoDataSource
     single<ProfilePhotoDataSource> {
         ProfilePhotoDataSource(get(), androidApplication())
+    }
+
+    // Analytics Helper (singleton — usa Firebase.analytics internamente)
+    single<AnalyticsHelper> {
+        AnalyticsHelper()
     }
 }

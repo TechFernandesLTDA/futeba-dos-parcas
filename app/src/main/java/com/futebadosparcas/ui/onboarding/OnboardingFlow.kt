@@ -20,13 +20,22 @@ import com.futebadosparcas.util.PreferencesManager
  * 1. Boas-vindas - Apresentação do app
  * 2. Permissões - Solicita permissões do sistema
  * 3. Configuração de Perfil - Coleta informações básicas
- * 4. Guia do App - Orientação sobre funcionalidades
+ * 4. Carrossel de boas-vindas - [WelcomeCarousel] (4 slides, spec feat-2026-05-16)
+ *
+ * Nota: [AppGuideScreen] foi substituído por [WelcomeCarousel] no passo 3.
+ * O userId é opcional — quando nulo, o estado não é persistido no Firestore
+ * (usuário ainda não autenticado neste ponto do fluxo).
+ *
+ * @param viewModel ViewModel de onboarding para analytics/persistência (opcional)
+ * @param userId UID do usuário autenticado (pode ser null se auth ainda não concluída)
  */
 @Composable
 fun OnboardingFlow(
     preferencesManager: PreferencesManager,
     onComplete: () -> Unit,
-    onProfileSetup: (ProfileSetupData) -> Unit
+    onProfileSetup: (ProfileSetupData) -> Unit,
+    viewModel: OnboardingViewModel? = null,
+    userId: String? = null
 ) {
     var currentStep by remember { mutableIntStateOf(0) }
 
@@ -59,12 +68,28 @@ fun OnboardingFlow(
                 },
                 onSkip = { currentStep = 3 }
             )
-            3 -> AppGuideScreen(
-                onComplete = {
-                    preferencesManager.setPermissionOnboardingCompleted(true)
-                    onComplete()
-                }
-            )
+            3 -> {
+                // Carrossel de boas-vindas (substitui AppGuideScreen — Fase 1)
+                WelcomeCarousel(
+                    onComplete = {
+                        // Mantém flag local para compatibilidade retroativa
+                        preferencesManager.setPermissionOnboardingCompleted(true)
+                        // Persiste no Firestore se userId disponível
+                        userId?.let { uid ->
+                            viewModel?.onCarouselCompleted(uid)
+                        }
+                        onComplete()
+                    },
+                    onSlideViewed = { slideIndex, slideId ->
+                        viewModel?.onSlideViewed(slideIndex, slideId)
+                    },
+                    onSkip = { atSlideIndex ->
+                        userId?.let { uid ->
+                            viewModel?.onCarouselSkipped(uid, atSlideIndex)
+                        }
+                    }
+                )
+            }
         }
     }
 }

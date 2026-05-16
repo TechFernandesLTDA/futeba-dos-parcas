@@ -24,6 +24,7 @@ import com.futebadosparcas.data.repository.MeteredLocationRepository
 import com.futebadosparcas.data.repository.PaymentRepositoryImpl
 import com.futebadosparcas.data.repository.UserRepositoryImpl
 import com.futebadosparcas.data.repository.TeamsRepositoryImpl
+import com.futebadosparcas.data.repository.OnboardingRepositoryImpl
 import com.futebadosparcas.data.repository.WaitlistRepositoryImpl
 import com.futebadosparcas.db.FutebaDatabase
 import com.futebadosparcas.domain.repository.ActivityRepository
@@ -86,6 +87,11 @@ val repositoryKoinModule = module {
 
     single<com.futebadosparcas.data.repository.PaymentRepository> {
         PaymentRepositoryImpl(get())
+    }
+
+    // Onboarding Repository (Fase 1 — spec feat-2026-05-16)
+    single<com.futebadosparcas.data.repository.OnboardingRepository> {
+        OnboardingRepositoryImpl(get())
     }
 
     single<GamificationRepository> {

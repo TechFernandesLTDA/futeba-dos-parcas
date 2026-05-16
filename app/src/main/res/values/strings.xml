@@ -4010,4 +4010,56 @@ subir no ranking!</string>
     <string name="cpf_finish">Concluir verificação</string>
     <string name="cpf_privacy_terms">Ao continuar, você concorda com a Política de Privacidade e os Termos de Uso.</string>
 
+    <!-- ==================== ONBOARDING TOUR — CARROSSEL (Fase 1) ==================== -->
+
+    <!-- Slide 1: Organização -->
+    <string name="onboarding_slide1_title">Sua pelada, organizada</string>
+    <string name="onboarding_slide1_subtitle">Crie jogos, convoque os parças e acompanhe tudo em um só lugar — sem grupo de WhatsApp bagunçado.</string>
+
+    <!-- Slide 2: XP e gamificação -->
+    <string name="onboarding_slide2_title">Jogou, pontuou</string>
+    <string name="onboarding_slide2_subtitle">Cada jogo te dá XP. Suba de nível, desbloqueie badges e dispute o ranking mensal da liga.</string>
+
+    <!-- Slide 3: Convite social -->
+    <string name="onboarding_slide3_title">Chame os parças</string>
+    <string name="onboarding_slide3_subtitle">Envie convites, gerencie confirmações e monte os times automaticamente com equilíbrio.</string>
+
+    <!-- Slide 4: CTA final -->
+    <string name="onboarding_slide4_title">Bora começar!</string>
+    <string name="onboarding_slide4_subtitle">Tudo pronto para sua primeira pelada. Crie seu grupo, convide a galera e bora jogar!</string>
+
+    <!-- Ações do carrossel -->
+    <string name="onboarding_skip">Pular</string>
+    <string name="onboarding_next">Próximo</string>
+    <string name="onboarding_start">Bora jogar!</string>
+    <string name="onboarding_slide_indicator_cd">Slide %1$d de %2$d</string>
+
+    <!-- ==================== ONBOARDING TOUR — CHECKLIST (Fase 1) ==================== -->
+
+    <string name="onboarding_checklist_title">Primeiros Passos</string>
+    <string name="onboarding_checklist_subtitle">Complete os passos para dominar o app</string>
+    <string name="onboarding_checklist_dismiss">Fechar</string>
+    <string name="onboarding_checklist_completed_label">Concluído!</string>
+
+    <!-- Passos do checklist (derivados de eventos de domínio — não são checkboxes manuais) -->
+    <string name="onboarding_step_complete_profile">Complete seu perfil</string>
+    <string name="onboarding_step_complete_profile_subtitle">Adicione foto, apelido e posição favorita</string>
+    <string name="onboarding_step_join_group">Entre ou crie um grupo</string>
+    <string name="onboarding_step_join_group_subtitle">Participe de uma pelada com seus amigos</string>
+    <string name="onboarding_step_confirm_presence">Confirme presença em um jogo</string>
+    <string name="onboarding_step_confirm_presence_subtitle">Diga que vai aparecer na próxima partida</string>
+    <string name="onboarding_step_play_game">Jogue sua primeira partida</string>
+    <string name="onboarding_step_play_game_subtitle">Participe de um jogo que foi encerrado</string>
+
+    <!-- Deep-link action labels -->
+    <string name="onboarding_action_go_to_profile">Ir para Perfil</string>
+    <string name="onboarding_action_find_group">Encontrar Grupo</string>
+    <string name="onboarding_action_see_games">Ver Jogos</string>
+
+    <!-- Celebração / recompensa -->
+    <string name="onboarding_celebration_title">Missão cumprida! 🏆</string>
+    <string name="onboarding_celebration_subtitle">Você ganhou o badge "Bem-vindo" e está pronto para dominar o campo!</string>
+    <string name="onboarding_celebration_cta">Continuar</string>
+    <string name="onboarding_badge_welcome_name">Bem-vindo</string>
+
 </resources>
