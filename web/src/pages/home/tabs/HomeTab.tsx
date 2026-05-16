@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useOnboarding } from '../../../hooks/useOnboarding';
+import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsChecklist';
+import type { ChecklistStep } from '../../../components/onboarding/FirstStepsChecklist';
 import {
   Box,
   Typography,
@@ -575,6 +578,56 @@ export function HomeTab() {
 
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
 
+  // ─── Checklist de Primeiros Passos (Fase 1) ──────────────────────────────────
+  const {
+    state: onboardingState,
+    loading: onboardingLoading,
+    onChecklistDismissed,
+  } = useOnboarding();
+  const { groups } = useGroups();
+
+  // Deriva passos de dados de domínio existentes — não são checkboxes manuais
+  const checklistSteps: ChecklistStep[] = useMemo(() => [
+    {
+      id: 'complete_profile',
+      label: 'Complete seu perfil',
+      subtitle: 'Adicione foto, apelido e posição favorita',
+      actionLabel: 'Ir ao Perfil',
+      navigateTo: '/profile',
+      completed: !!(user?.nickname || user?.photoUrl),
+    },
+    {
+      id: 'join_or_create_group',
+      label: 'Entre ou crie um grupo',
+      subtitle: 'Participe de uma pelada com seus amigos',
+      actionLabel: 'Ver Grupos',
+      navigateTo: '/groups',
+      completed: (groups?.length ?? 0) > 0,
+    },
+    {
+      id: 'confirm_presence',
+      label: 'Confirme presença em um jogo',
+      subtitle: 'Diga que vai aparecer na próxima partida',
+      actionLabel: 'Ver Jogos',
+      navigateTo: '/games',
+      completed: false, // TODO: derivar de confirmations quando HomeTab expuser este dado
+    },
+    {
+      id: 'play_first_game',
+      label: 'Jogue sua primeira partida',
+      subtitle: 'Participe de um jogo encerrado',
+      actionLabel: 'Ver Jogos',
+      navigateTo: '/games',
+      completed: false, // TODO: derivar de gamesPlayed quando exposto no User type
+    },
+  ], [user, groups]);
+
+  const checklistVisible =
+    !onboardingLoading &&
+    !onboardingState.checklistDismissed &&
+    onboardingState.checklistCompletedAt === null &&
+    checklistSteps.some(s => !s.completed);
+
   const currentXp = user?.experiencePoints || 0;
   const currentLevel = getLevelForXp(currentXp);
   const levelEntry = getLevelEntry(currentLevel);
@@ -831,6 +884,16 @@ export function HomeTab() {
           </CardContent>
         </CardActionArea>
       </Card>
+
+      {/* Checklist de Primeiros Passos (Fase 1 — antes do próximo jogo) */}
+      <FirstStepsChecklist
+        steps={checklistSteps}
+        visible={checklistVisible}
+        onDismiss={() => {
+          const stepsDone = checklistSteps.filter(s => s.completed).length;
+          onChecklistDismissed(stepsDone, checklistSteps.length);
+        }}
+      />
 
       {/* Próximo Jogo — abaixo das informações do jogador */}
       <NextGameWidget />

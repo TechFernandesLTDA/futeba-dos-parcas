@@ -415,4 +415,12 @@ val viewModelKoinModule = module {
             firestore = get()
         )
     }
+
+    // Onboarding ViewModel (Fase 1 — spec feat-2026-05-16)
+    viewModel {
+        com.futebadosparcas.ui.onboarding.OnboardingViewModel(
+            onboardingRepository = get(),
+            analyticsHelper = get()
+        )
+    }
 }

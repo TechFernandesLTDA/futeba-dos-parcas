@@ -85,7 +85,9 @@ fun HomeScreen(
     onCreateGameClick: () -> Unit = {},    // Navegacao para criar novo jogo
     onJoinGroupClick: () -> Unit = {},     // Navegacao para entrar em grupo
     onSeeAllGamesClick: () -> Unit = {},   // Navegacao para ver todos os jogos
-    hapticManager: HapticManager? = null
+    hapticManager: HapticManager? = null,
+    /** ViewModel de onboarding para checklist de primeiros passos (Fase 1). */
+    onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
@@ -149,7 +151,8 @@ fun HomeScreen(
                             onLevelJourneyClick = onLevelJourneyClick,
                             onCreateGameClick = onCreateGameClick,
                             onJoinGroupClick = onJoinGroupClick,
-                            onSeeAllGamesClick = onSeeAllGamesClick
+                            onSeeAllGamesClick = onSeeAllGamesClick,
+                            onboardingViewModel = onboardingViewModel
                         )
                     }
                     is HomeUiState.Error -> {
@@ -215,7 +218,8 @@ private fun HomeSuccessContent(
     onLevelJourneyClick: () -> Unit,
     onCreateGameClick: () -> Unit,
     onJoinGroupClick: () -> Unit,
-    onSeeAllGamesClick: () -> Unit
+    onSeeAllGamesClick: () -> Unit,
+    onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
@@ -247,11 +251,45 @@ private fun HomeSuccessContent(
 
     val windowSizeClass = rememberWindowSizeClass()
 
+    // ---- Checklist de Primeiros Passos (Fase 1) ----
+    // Deriva os passos a partir de dados de domínio existentes (não são checkboxes manuais)
+    val checklistSteps = remember(
+        state.user,
+        state.games
+    ) {
+        onboardingViewModel?.deriveChecklistSteps(
+            hasNickname = state.user.nickname?.isNotBlank() == true,
+            hasPhoto = state.user.photoUrl?.isNotBlank() == true,
+            groupCount = 0, // TODO: expor groupCount no HomeUiState (fase futura)
+            confirmationCount = state.games.size, // proxy: tem jogos confirmados
+            gamesPlayedCount = 0  // TODO: expor gamesPlayedCount no HomeUiState (fase futura)
+        )
+    }
+    var checklistDismissed by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val checklistVisible = onboardingViewModel != null &&
+        !checklistDismissed &&
+        checklistSteps != null &&
+        checklistSteps.values.any { !it } // oculta quando tudo concluído
+
+    // Verifica se todos os passos foram concluídos para exibir celebração
+    val showCelebration by (onboardingViewModel?.showCelebration
+        ?: kotlinx.coroutines.flow.MutableStateFlow(false))
+        .collectAsStateWithLifecycle()
+
     // Em tablets, centraliza o conteúdo com largura máxima para leitura confortável
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
+
+    // CelebrationSheet fora do LazyColumn
+    if (onboardingViewModel != null) {
+        com.futebadosparcas.ui.home.components.CelebrationSheet(
+            visible = showCelebration,
+            onDismiss = { onboardingViewModel.onCelebrationDismissed() }
+        )
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -280,6 +318,36 @@ private fun HomeSuccessContent(
                 onProfileClick = onShowPlayerCard,
                 onLevelClick = onLevelJourneyClick  // Abre Rumo ao Estrelato ao clicar no nível
             )
+        }
+
+        // Checklist de Primeiros Passos (Fase 1 — exibido antes do streak)
+        if (checklistVisible && checklistSteps != null) {
+            item(key = "first_steps_checklist") {
+                com.futebadosparcas.ui.home.components.FirstStepsChecklist(
+                    steps = checklistSteps,
+                    visible = true,
+                    onDismiss = {
+                        checklistDismissed = true
+                        onboardingViewModel?.onChecklistDismissed(
+                            userId = viewModel.getCurrentUserId() ?: "",
+                            stepsDone = checklistSteps.values.count { it },
+                            stepsTotal = checklistSteps.size
+                        )
+                    },
+                    onStepClick = { step ->
+                        when (step) {
+                            com.futebadosparcas.domain.model.onboarding.OnboardingStep.COMPLETE_PROFILE ->
+                                onShowPlayerCard() // Abre PlayerCard sheet para editar perfil
+                            com.futebadosparcas.domain.model.onboarding.OnboardingStep.JOIN_OR_CREATE_GROUP ->
+                                onJoinGroupClick()
+                            com.futebadosparcas.domain.model.onboarding.OnboardingStep.CONFIRM_PRESENCE,
+                            com.futebadosparcas.domain.model.onboarding.OnboardingStep.PLAY_FIRST_GAME ->
+                                onSeeAllGamesClick()
+                        }
+                    },
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
         }
 
         // Streak Widget

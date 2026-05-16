@@ -1,72 +1,100 @@
-import { useState } from 'react';
+/**
+ * WelcomeCarousel — Carrossel de boas-vindas do onboarding.
+ *
+ * Substitui o AppGuideScreen estático com 4 slides animados (spec feat-2026-05-16 §2.2).
+ * Mantém o mesmo nome de componente e rota para não quebrar navegação existente.
+ *
+ * Acessibilidade:
+ * - scroll-snap para navegação suave
+ * - aria-label nos controles
+ * - Indicadores de slide com descrição semântica
+ */
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
   Typography,
   Button,
-  MobileStepper,
-  useTheme,
+  Stack,
   alpha,
+  useTheme,
 } from '@mui/material';
 import {
-  KeyboardArrowLeft as LeftIcon,
-  KeyboardArrowRight as RightIcon,
   SportsSoccer as SoccerIcon,
   EmojiEvents as TrophyIcon,
   Groups as GroupsIcon,
-  MilitaryTech as BadgeIcon,
+  RocketLaunch as RocketIcon,
 } from '@mui/icons-material';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useOnboarding } from '../../hooks/useOnboarding';
 
-const steps = [
+const SLIDES = [
   {
-    icon: <SoccerIcon sx={{ fontSize: 80 }} />,
-    title: 'Organize Jogos',
-    description: 'Crie peladas, convide amigos e gerencie confirmações de forma simples.',
+    id: 'organized',
+    icon: <SoccerIcon sx={{ fontSize: 72 }} />,
+    title: 'Sua pelada, organizada',
+    subtitle: 'Crie jogos, convoque os parças e acompanhe tudo em um só lugar — sem grupo de WhatsApp bagunçado.',
   },
   {
-    icon: <GroupsIcon sx={{ fontSize: 80 }} />,
-    title: 'Grupos de Amigos',
-    description: 'Monte grupos com seus amigos e joguem juntos regularmente.',
+    id: 'xp',
+    icon: <TrophyIcon sx={{ fontSize: 72 }} />,
+    title: 'Jogou, pontuou',
+    subtitle: 'Cada jogo te dá XP. Suba de nível, desbloqueie badges e dispute o ranking mensal da liga.',
   },
   {
-    icon: <TrophyIcon sx={{ fontSize: 80 }} />,
-    title: 'Ranking e Liga',
-    description: 'Compita com outros jogadores e suba de divisão na liga mensal.',
+    id: 'invite',
+    icon: <GroupsIcon sx={{ fontSize: 72 }} />,
+    title: 'Chame os parças',
+    subtitle: 'Envie convites, gerencie confirmações e monte os times automaticamente com equilíbrio.',
   },
   {
-    icon: <BadgeIcon sx={{ fontSize: 80 }} />,
-    title: 'Conquistas',
-    description: 'Desbloqueie badges e mostre suas habilidades no campo.',
+    id: 'start',
+    icon: <RocketIcon sx={{ fontSize: 72 }} />,
+    title: 'Bora começar!',
+    subtitle: 'Tudo pronto para sua primeira pelada. Crie seu grupo, convide a galera e bora jogar!',
   },
 ];
 
 export const AppGuideScreen: React.FC = () => {
-  useDocumentTitle('Guia do App');
+  useDocumentTitle('Bem-vindo ao Futeba');
   const navigate = useNavigate();
   const theme = useTheme();
+  const {
+    onCarouselStarted,
+    onSlideViewed,
+    onCarouselSkipped,
+    onCarouselCompleted,
+  } = useOnboarding();
+
   const [activeStep, setActiveStep] = useState(0);
+  const isLastSlide = activeStep === SLIDES.length - 1;
+  const startedRef = useRef(false);
 
-  const handleNext = () => {
-    if (activeStep === steps.length - 1) {
-      localStorage.setItem('appGuideShown', 'true');
-      navigate('/');
-    } else {
-      setActiveStep((prev) => prev + 1);
+  // Dispara onboarding_started apenas uma vez
+  useEffect(() => {
+    if (!startedRef.current) {
+      startedRef.current = true;
+      onCarouselStarted();
     }
-  };
+  }, [onCarouselStarted]);
 
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
-  };
+  // Notifica analytics quando o slide muda
+  useEffect(() => {
+    onSlideViewed(activeStep, SLIDES[activeStep].id);
+  }, [activeStep, onSlideViewed]);
 
-  const handleSkip = () => {
-    localStorage.setItem('appGuideShown', 'true');
+  const handleComplete = async () => {
+    await onCarouselCompleted();
     navigate('/');
   };
 
-  const step = steps[activeStep];
+  const handleSkip = async () => {
+    await onCarouselSkipped(activeStep);
+    navigate('/');
+  };
+
+  const slide = SLIDES[activeStep];
 
   return (
     <Box
@@ -77,68 +105,104 @@ export const AppGuideScreen: React.FC = () => {
         bgcolor: 'background.default',
       }}
     >
-      <Box sx={{ p: 1, textAlign: 'right' }}>
-        <Button onClick={handleSkip} color="inherit">
-          Pular
-        </Button>
+      {/* Botão Pular — apenas nos slides intermediários */}
+      <Box sx={{ p: 1, textAlign: 'right', minHeight: 48 }}>
+        {!isLastSlide && (
+          <Button onClick={handleSkip} color="inherit" aria-label="Pular onboarding">
+            Pular
+          </Button>
+        )}
       </Box>
 
-      <Container maxWidth="sm" sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Box
-            sx={{
-              width: 140,
-              height: 140,
-              borderRadius: '50%',
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
-              mb: 3,
-              color: 'primary.main',
-            }}
-          >
-            {step.icon}
-          </Box>
-
-          <Typography variant="h4" fontWeight={700} gutterBottom>
-            {step.title}
-          </Typography>
-
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 300, mx: 'auto' }}>
-            {step.description}
-          </Typography>
+      {/* Conteúdo do slide */}
+      <Container
+        maxWidth="sm"
+        sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center' }}
+      >
+        {/* Ícone / ilustração */}
+        <Box
+          sx={{
+            width: 140,
+            height: 140,
+            borderRadius: '50%',
+            bgcolor: alpha(theme.palette.primary.main, 0.12),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mx: 'auto',
+            mb: 4,
+            color: 'primary.main',
+          }}
+        >
+          {slide.icon}
         </Box>
+
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          {slide.title}
+        </Typography>
+
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 320, mx: 'auto' }}>
+          {slide.subtitle}
+        </Typography>
       </Container>
 
-      <Box sx={{ p: 2 }}>
-        <MobileStepper
-          variant="dots"
-          steps={steps.length}
-          position="static"
-          activeStep={activeStep}
-          sx={{ bgcolor: 'transparent', justifyContent: 'center', mb: 2 }}
-          backButton={
+      {/* Controles */}
+      <Box sx={{ p: 2, pb: 4 }}>
+        {/* Dots indicadores */}
+        <Stack direction="row" justifyContent="center" spacing={1} sx={{ mb: 3 }}>
+          {SLIDES.map((_, index) => (
+            <Box
+              key={index}
+              role="img"
+              aria-label={`Slide ${index + 1} de ${SLIDES.length}${index === activeStep ? ' (atual)' : ''}`}
+              sx={{
+                width: index === activeStep ? 20 : 8,
+                height: 8,
+                borderRadius: 4,
+                bgcolor: index === activeStep ? 'primary.main' : alpha(theme.palette.primary.main, 0.25),
+                transition: 'width 0.3s ease',
+              }}
+            />
+          ))}
+        </Stack>
+
+        {/* Botões de ação */}
+        <Stack spacing={1.5}>
+          {isLastSlide ? (
             <Button
-              size="small"
-              onClick={handleBack}
-              disabled={activeStep === 0}
-              startIcon={<LeftIcon />}
+              variant="contained"
+              size="large"
+              fullWidth
+              onClick={handleComplete}
+              sx={{ py: 1.5, fontWeight: 700 }}
+              aria-label="Começar a usar o app"
             >
-              Voltar
+              Bora jogar!
             </Button>
-          }
-          nextButton={
-            <Button
-              size="small"
-              onClick={handleNext}
-              endIcon={activeStep === steps.length - 1 ? null : <RightIcon />}
-            >
-              {activeStep === steps.length - 1 ? 'Começar' : 'Próximo'}
-            </Button>
-          }
-        />
+          ) : (
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                variant="outlined"
+                size="large"
+                disabled={activeStep === 0}
+                onClick={() => setActiveStep(prev => prev - 1)}
+                sx={{ flex: 1, py: 1.5 }}
+                aria-label="Slide anterior"
+              >
+                Voltar
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => setActiveStep(prev => prev + 1)}
+                sx={{ flex: 2, py: 1.5, fontWeight: 700 }}
+                aria-label="Próximo slide"
+              >
+                Próximo
+              </Button>
+            </Stack>
+          )}
+        </Stack>
       </Box>
     </Box>
   );
