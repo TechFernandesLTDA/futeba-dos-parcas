@@ -3,109 +3,134 @@ package com.futebadosparcas.data.migration
 import kotlinx.datetime.Clock
 
 /**
- * Implementacao iOS do contexto de migracao.
+ * Implementação iOS do contexto de migração de dados Firestore.
  *
- * NOTA: Esta e uma implementacao stub. A integracao real com
- * Firebase iOS SDK deve ser feita via CocoaPods/SPM.
+ * N/A — MIGRAÇÕES NÃO RODAM NO CLIENT iOS.
  *
- * Para implementacao completa, usar Firebase iOS SDK:
- * - FIRFirestore
- * - FIRDocumentReference
- * - FIRWriteBatch
+ * MigrationContext é utilizado exclusivamente em scripts server-side
+ * (Cloud Functions / Node.js) para operações batch em lote de dados do Firestore
+ * (ex: coleção `_migrations/locations/logs`, batch de 500 documentos).
+ * Clientes iOS nunca devem executar migrações de dados — essa responsabilidade
+ * pertence ao backend (Cloud Functions ou scripts de manutenção).
+ *
+ * Cada método retorna imediatamente com UnsupportedOperationException documentada.
+ * Isso resolve os NotImplementedError bloqueantes sem puxar Firebase iOS SDK
+ * desnecessariamente para este contexto.
+ *
+ * Refs: specs/feat-2026-05-16-ios-parity-cmp-phase3.md §3.2 (CA2)
  */
 actual class MigrationContext {
 
     /**
-     * Busca todos os documentos de uma colecao.
+     * N/A no iOS — migrações rodam server-side (Cloud Functions).
      */
     actual suspend fun getAllDocuments(
         collectionPath: String
-    ): Result<List<Pair<String, Map<String, Any?>>>> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.failure(NotImplementedError("iOS migration not implemented yet"))
-    }
+    ): Result<List<Pair<String, Map<String, Any?>>>> =
+        Result.failure(
+            UnsupportedOperationException(
+                "MigrationContext não roda no cliente iOS. " +
+                    "Execute migrações via Cloud Functions ou scripts Node.js server-side."
+            )
+        )
 
     /**
-     * Busca documentos que correspondem a uma query.
+     * N/A no iOS — migrações rodam server-side (Cloud Functions).
      */
     actual suspend fun getDocumentsWhere(
         collectionPath: String,
         field: String,
         value: Any?
-    ): Result<List<Pair<String, Map<String, Any?>>>> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.failure(NotImplementedError("iOS migration not implemented yet"))
-    }
+    ): Result<List<Pair<String, Map<String, Any?>>>> =
+        Result.failure(
+            UnsupportedOperationException(
+                "MigrationContext não roda no cliente iOS. " +
+                    "Execute migrações via Cloud Functions ou scripts Node.js server-side."
+            )
+        )
 
     /**
-     * Busca documentos onde um campo nao existe.
+     * N/A no iOS — migrações rodam server-side (Cloud Functions).
      */
     actual suspend fun getDocumentsWhereFieldMissing(
         collectionPath: String,
         field: String
-    ): Result<List<Pair<String, Map<String, Any?>>>> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.failure(NotImplementedError("iOS migration not implemented yet"))
-    }
+    ): Result<List<Pair<String, Map<String, Any?>>>> =
+        Result.failure(
+            UnsupportedOperationException(
+                "MigrationContext não roda no cliente iOS. " +
+                    "Execute migrações via Cloud Functions ou scripts Node.js server-side."
+            )
+        )
 
     /**
-     * Atualiza um documento.
+     * N/A no iOS — migrações rodam server-side (Cloud Functions).
      */
     actual suspend fun updateDocument(
         collectionPath: String,
         documentId: String,
         updates: Map<String, Any?>
-    ): Result<Unit> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.failure(NotImplementedError("iOS migration not implemented yet"))
-    }
+    ): Result<Unit> =
+        Result.failure(
+            UnsupportedOperationException(
+                "MigrationContext não roda no cliente iOS. " +
+                    "Execute migrações via Cloud Functions ou scripts Node.js server-side."
+            )
+        )
 
     /**
-     * Atualiza multiplos documentos em batch.
+     * N/A no iOS — migrações rodam server-side (Cloud Functions).
      */
     actual suspend fun batchUpdate(
         updates: List<Triple<String, String, Map<String, Any?>>>
-    ): Result<Unit> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.failure(NotImplementedError("iOS migration not implemented yet"))
-    }
+    ): Result<Unit> =
+        Result.failure(
+            UnsupportedOperationException(
+                "MigrationContext não roda no cliente iOS. " +
+                    "Execute migrações via Cloud Functions ou scripts Node.js server-side."
+            )
+        )
 
     /**
-     * Deleta um documento.
+     * N/A no iOS — migrações rodam server-side (Cloud Functions).
      */
     actual suspend fun deleteDocument(
         collectionPath: String,
         documentId: String
-    ): Result<Unit> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.failure(NotImplementedError("iOS migration not implemented yet"))
-    }
+    ): Result<Unit> =
+        Result.failure(
+            UnsupportedOperationException(
+                "MigrationContext não roda no cliente iOS. " +
+                    "Execute migrações via Cloud Functions ou scripts Node.js server-side."
+            )
+        )
 
     /**
-     * Cria um documento.
+     * N/A no iOS — migrações rodam server-side (Cloud Functions).
      */
     actual suspend fun createDocument(
         collectionPath: String,
         documentId: String?,
         data: Map<String, Any?>
-    ): Result<String> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.failure(NotImplementedError("iOS migration not implemented yet"))
-    }
+    ): Result<String> =
+        Result.failure(
+            UnsupportedOperationException(
+                "MigrationContext não roda no cliente iOS. " +
+                    "Execute migrações via Cloud Functions ou scripts Node.js server-side."
+            )
+        )
 
     /**
-     * Registra um log de migracao.
+     * Log de migração — no-op no iOS (logs são server-side).
+     * Retorna sucesso para não bloquear eventual chamada acidental.
      */
-    actual suspend fun logMigrationChange(log: MigrationLog): Result<Unit> {
-        // TODO: Implementar com Firebase iOS SDK
-        return Result.success(Unit) // Log failure should not block migration
-    }
+    actual suspend fun logMigrationChange(log: MigrationLog): Result<Unit> =
+        Result.success(Unit)
 
     /**
-     * Retorna o timestamp atual do servidor.
+     * Timestamp local como fallback (migrações server-side usam FieldValue.serverTimestamp()).
      */
     actual fun serverTimestamp(): Any {
-        // Retorna timestamp local como fallback
         return Clock.System.now().toEpochMilliseconds()
     }
 }

@@ -111,6 +111,15 @@ kotlin {
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
 
+            // Koin 4.1.1 — DI multiplatform (mesmo usado no :app Android)
+            // koin-core: módulos, get(), startKoin
+            // koin-compose: KoinApplication composable
+            // koin-compose-viewmodel: koinViewModel() em commonMain
+            val koinVersion = "4.1.1"
+            implementation("io.insert-koin:koin-core:$koinVersion")
+            implementation("io.insert-koin:koin-compose:$koinVersion")
+            implementation("io.insert-koin:koin-compose-viewmodel:$koinVersion")
+
             // Coil 3 - Image Loading (Kotlin Multiplatform)
             implementation("io.coil-kt.coil3:coil:3.3.0")
             implementation("io.coil-kt.coil3:coil-compose:3.3.0")

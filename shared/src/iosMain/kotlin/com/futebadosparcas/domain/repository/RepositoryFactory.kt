@@ -1,33 +1,26 @@
 package com.futebadosparcas.domain.repository
 
 /**
- * Factory para criar instancias de repositorios no iOS.
+ * Factory de repositórios para iOS.
  *
- * NOTA: No iOS, estas implementacoes usarao o Firebase iOS SDK.
+ * No iOS, a injeção de dependência ocorre via Koin no módulo composeApp,
+ * espelhando exatamente o padrão do Android (onde o DI real fica em
+ * app/.../di/koin/ e AndroidRepositoryFactory é apenas placeholder).
  *
- * Exemplo de implementacao futura:
+ * As implementações reais de repositório usam o GitLive Firebase SDK
+ * (dev.gitlive:firebase-*) que suporta Android e iOS nativamente via
+ * fontes em nativeAndAndroidMain — veja shared/src/nativeAndAndroidMain/.
  *
- * class IosUserRepository(
- *     private val firestore: FIRFirestore,
- *     private val auth: FIRAuth
- * ) : UserRepository {
- *     override suspend fun getCurrentUser(): Result<User> {
- *         // Implementacao usando Firebase iOS SDK
- *     }
- * }
+ * Este objeto é mantido para organização da estrutura KMP e documentação.
+ * Não instancie repositórios diretamente aqui — use Koin via koinViewModel()
+ * ou get() nas telas Compose.
  */
 object IosRepositoryFactory {
 
-    // TODO: Implementar repositorios usando Firebase iOS SDK
-    // Requer ambiente Mac/Xcode
-
-    /**
-     * Exemplo de criacao de repositorios no iOS:
-     *
-     * func createUserRepository() -> UserRepository {
-     *     let firestore = Firestore.firestore()
-     *     let auth = Auth.auth()
-     *     return IosUserRepository(firestore: firestore, auth: auth)
-     * }
-     */
+    // Repositórios iOS são providos via Koin (composeApp/iosMain ou shared Koin modules).
+    // Padrão de wiring:
+    //   module {
+    //       single<UserRepository> { UserRepositoryImpl(get(), get()) }
+    //   }
+    // onde UserRepositoryImpl reside em shared/src/nativeAndAndroidMain (GitLive SDK).
 }

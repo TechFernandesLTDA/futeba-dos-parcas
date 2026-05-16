@@ -220,4 +220,90 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ---
 
+## 2026-05-16 — Onboarding Moderno: North Star & Phasing
+
+**Contexto:** Pedido de "onboarding completo e moderno, dicas de tela de primeira vez,
+cobrindo todos os recursos". Risco: virar spec gigante que não embarca. Spec:
+`/specs/feat-2026-05-16-modern-onboarding-tour.md`.
+
+**Decisão 1 — North Star = time-to-first-game (TTFG).**
+Todo item de onboarding é avaliado por "isso aproxima o usuário de jogar/entrar num
+grupo mais rápido?". "% de slides vistos" NÃO é métrica de sucesso. Critério mata
+discussão de escopo futura.
+
+**Decisão 2 — "Todos os recursos" filtrado em 4 buckets:**
+- **Core** (Home, Jogos, Grupos, Perfil) → slide no carousel + item na checklist
+- **Gamificação** (XP, Badges, MVP, Liga/Season, Streak) → 1 slide consolidado + tip contextual
+- **Descoberta** (Locations/Mapa, Search, Schedules) → empty states modernos (tour passivo), SEM slide/coach mark
+- **Power** (LiveGame, Cashbox, Tática, Notificações) → tip contextual só na 1ª ação, SEM slide
+
+> Consequência explícita: **Locations/Mapa, Cashbox e Tática NÃO ganham slide** no
+> carousel — quem precisa descobre via menu/empty state. Evita carousel inchado.
+
+**Decisão 3 — Phasing (a spec só embarca fatiada):**
+- Fase 1: carousel moderno (substitui `AppGuideScreen` estático) + checklist gamificada no Home + analytics de funil. Paridade Android + Web.
+- Fase 2: dicas one-shot em 3–4 telas de alto valor (estilo Linear/Notion, não wizard intrusivo).
+- Fase 3: replay do tour em Ajuda/Settings + Remote Config + A/B.
+
+**Decisão 4 — Reuso, não redesenho.** `OnboardingFlow` (Welcome→Permissões→Perfil→Guia)
+é mantido; só o passo Guia é trocado. Verificação CPF/telefone é escopo separado,
+intocada. Strings `welcome_step_*` reaproveitadas como conteúdo da checklist.
+
+**Decisão 5 — iOS:** apenas o *state model* KMP (`OnboardingState` em
+`shared/commonMain`) é especificado agora. UI iOS = follow-up (scaffold/TestFlight
+bloqueado — specar UI agora seria premature).
+
+**Decisão 6 — Recompensa de boas-vindas:** default é **badge "Bem-vindo"** (sistema
+de badges isolado, sem efeito em ranking/season). XP de boas-vindas só após validação
+com `xp-engine-guardian` e, se aprovado, concessão **server-side** (nunca client) por
+causa de anti-cheat/`xp_logs`/season.
+
+**Consequências:**
+- (+) Spec tem chance real de embarcar (Fase 1 ≈ 38h, fatiável).
+- (+) Critério TTFG + buckets travam escopo em revisões futuras.
+- (-) Cobertura "todos os recursos" é deliberadamente parcial no carousel (por design).
+
+**Relacionado:** `/specs/feat-2026-05-16-modern-onboarding-tour.md`,
+`app/.../ui/onboarding/OnboardingFlow.kt`, `AppGuideScreen.kt`,
+`functions/src/badges/badge-helper.ts`.
+
+---
+
+## 2026-05-16 — Arquitetura 4-plataformas (web desktop + web mobile + iOS + Android)
+
+**Contexto:** Usuário quer publicar e manter em paridade: web desktop, web mobile,
+iOS (App Store), Android (Play Store). Investigação do iOS revelou que o app que
+**compila** é `iosApp/iosApp/` (shell SwiftUI → `ComposeView` → `MainViewControllerKt`
+= UI **Compose Multiplatform** de `composeApp`). `iosApp/FutebaDosParcas-ios/` é
+tentativa SwiftUI nativa **morta** (não compila: `let xp: Long`). `composeApp/commonMain`
+tem ~2 telas; Android tem 56 `*Screen.kt` em `:app` (Android-only).
+
+**Decisão:** 1 backend + 1 núcleo lógico + **2 codebases de UI** (não 4).
+
+| Camada | Decisão |
+|--------|---------|
+| Backend | 1 só: Firebase + Cloud Functions + Firestore rules (garantidor real de paridade) |
+| Núcleo lógico | 1 só: `shared/` KMP (domínio, modelos, validação, contratos de repo) |
+| UI mobile (iOS+Android) | **1 só: Compose Multiplatform** (`composeApp`) — CMP Fase 3 |
+| UI web (desktop+mobile) | **1 só: React+MUI responsivo** (`web/`) — breakpoints, não 2 apps |
+
+**Rejeitado:**
+- **SwiftUI nativo p/ iOS** → seria 4º codebase eterno; já foi tentado e morreu (`FutebaDosParcas-ios/`).
+- **Compose-for-Web/wasm** → imaturo; React de vocês é maduro, melhor SEO/a11y/UX desktop.
+- **App "web mobile" separado** → desktop vs mobile é responsividade, não codebase.
+
+**Consequências:**
+- (+) Paridade iOS+Android com 1 codebase; paridade web com 1 codebase responsivo.
+- (+) "Paridade iOS" = CMP Fase 3 = portar telas Android → `composeApp/commonMain`
+  (também moderniza Android p/ UI compartilhada incremental).
+- (+) DeepSeek p/ iOS gera **Kotlin Compose commonMain**, não Swift; verify loop = gradle.
+- (-) CMP Fase 3 é grande (56 telas a portar) — fatiar por buckets (Core→Gamif→Descoberta→Power).
+- (-) `FutebaDosParcas-ios/` será deletado (em branch, reversível via git).
+
+**Relacionado:** `specs/feat-2026-05-16-ios-parity-cmp-phase3.md`,
+`specs/CMP_MULTIPLATFORM_MIGRATION.md` (Phase 3), `iosApp/project.yml`,
+`composeApp/`, memória `project_ios_real_target_composeapp`.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

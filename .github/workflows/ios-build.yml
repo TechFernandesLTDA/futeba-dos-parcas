@@ -60,6 +60,7 @@ jobs:
 
       - name: Upload test results
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: kmp-test-results
@@ -102,6 +103,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload framework artifacts
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: shared-frameworks
