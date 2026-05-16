@@ -23,6 +23,12 @@ const mockGetUser = jest.fn().mockResolvedValue({
   customClaims: {},
   phoneNumber: "+5511999999999",
 });
+// FIX #1280-tests: revokeRefreshTokens foi adicionado em setUserVerified
+// (PR #1064) para invalidar tokens após claim verified=true, mas o mock
+// de firebase-admin não incluía o método → 4 testes falhavam com
+// "TypeError: admin.auth(...).revokeRefreshTokens is not a function".
+// O source está correto — o mock é que estava incompleto.
+const mockRevokeRefreshTokens = jest.fn().mockResolvedValue(undefined);
 
 const mockDocGet = jest.fn();
 const mockDocSet = jest.fn().mockResolvedValue(undefined);
@@ -67,6 +73,7 @@ jest.mock("firebase-admin", () => {
     auth: jest.fn(() => ({
       setCustomUserClaims: mockSetCustomUserClaims,
       getUser: mockGetUser,
+      revokeRefreshTokens: mockRevokeRefreshTokens,
     })),
     initializeApp: jest.fn(),
   };

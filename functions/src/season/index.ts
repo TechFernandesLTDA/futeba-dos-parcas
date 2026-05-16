@@ -166,9 +166,14 @@ export const checkSeasonEnd = onSchedule(
             const p = partDoc.data();
 
             // Create Final Standing Record
+            // FIX #1281: ID determinístico `${seasonId}_${user_id}` torna a
+            // escrita idempotente (batch.set = upsert pelo mesmo doc ID).
+            // Com auto-ID (.doc()), re-runs por timeout ou erro transitório
+            // gravavam um segundo conjunto completo de standings com novos IDs
+            // → duplicatas permanentes no histórico de temporadas.
             const standingRef = db()
               .collection("season_final_standings")
-              .doc();
+              .doc(`${seasonId}_${p.user_id}`);
             batch.set(standingRef, {
               season_id: seasonId,
               user_id: p.user_id,
