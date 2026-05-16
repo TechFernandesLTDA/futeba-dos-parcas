@@ -52,13 +52,22 @@ export const onUserDeleted = auth
       const db = getDb();
 
       try {
-        const batch = db.batch();
+        // FIX #1280: `let` em vez de `const` para permitir reatribuição
+        // após cada commit. Sem isso, após o primeiro commitBatch() o batch
+        // fica em estado "committed" e qualquer batch.delete() subsequente
+        // lança "Cannot modify a WriteBatch that has been committed" →
+        // trigger aborta com dados pessoais residuais (violação LGPD Art. 18 VI).
+        // Padrão espelhado de functions/src/notifications/batch-sender.ts.
+        let batch = db.batch();
         let batchOps = 0;
 
-        // FIX #652-B3: helper to commit batch and refresh
+        // FIX #652-B3 + #1280: helper to commit batch and recreate instance
         const commitBatch = async () => {
           if (batchOps > 0) {
             await batch.commit();
+            // FIX #1280: recriar batch após commit — WriteBatch não pode ser
+            // reutilizado após committed (firebase-admin semântica imutável).
+            batch = db.batch();
             batchOps = 0;
           }
         };

@@ -137,6 +137,16 @@ jobs:
           fi
           firebase --version
 
+      # FIX #1282-CI: runners macOS self-hosted reutilizam o mesmo processo
+      # entre runs. Emuladores de um run anterior podem manter as portas
+      # ocupadas → "Could not start Firestore Emulator, port taken".
+      # Matar qualquer processo nas portas dos emuladores antes de iniciar
+      # (lsof -ti retorna PIDs; || true garante que o step nunca falha
+      # mesmo que a porta já esteja livre).
+      - name: Liberar portas dos emuladores (cleanup stale processes)
+        run: lsof -ti:8085,9099,9199,4000,5001 | xargs kill -9 2>/dev/null || true
+        working-directory: .
+
       - name: Run Firestore Query Performance Tests
         env:
           FIRESTORE_EMULATOR_HOST: "127.0.0.1:8085"
