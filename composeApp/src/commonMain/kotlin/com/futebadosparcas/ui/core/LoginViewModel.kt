@@ -63,17 +63,28 @@ class LoginViewModel(
     }
 
     /**
-     * Tenta fazer login com email e senha.
-     * @note O contrato KMP de AuthRepository não expõe signInWithEmailAndPassword,
-     *        portanto retorna erro informativo.
+     * Tenta fazer login com email e senha via contrato KMP AuthRepository.
      */
     fun signInWithEmailAndPassword(email: String, password: String) {
         loginJob?.cancel()
         loginJob = viewModelScope.launch {
             _loginState.value = LoginState.Loading
-            // log: signInWithEmailAndPassword not implemented
-            _loginState.value = LoginState.Error(
-                "Login por email/senha ainda não disponível nesta versão."
+            authRepository.signIn(email, password).fold(
+                onSuccess = {
+                    authRepository.getCurrentUser().fold(
+                        onSuccess = { user -> _loginState.value = LoginState.Success(user) },
+                        onFailure = { error ->
+                            _loginState.value = LoginState.Error(
+                                error.message ?: "Login efetuado, mas falha ao carregar perfil"
+                            )
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    _loginState.value = LoginState.Error(
+                        error.message ?: "Erro ao fazer login"
+                    )
+                }
             )
         }
     }

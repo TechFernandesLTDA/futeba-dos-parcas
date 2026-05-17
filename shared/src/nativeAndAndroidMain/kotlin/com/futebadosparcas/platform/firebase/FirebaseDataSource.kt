@@ -1079,6 +1079,28 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun signInWithEmailPassword(email: String, password: String): Result<String> {
+        return try {
+            val result = auth.signInWithEmailAndPassword(email.trim(), password)
+            val uid = result.user?.uid
+                ?: return Result.failure(Exception("Falha ao autenticar: usuário nulo"))
+            Result.success(uid)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun signUpWithEmailPassword(email: String, password: String): Result<String> {
+        return try {
+            val result = auth.createUserWithEmailAndPassword(email.trim(), password)
+            val uid = result.user?.uid
+                ?: return Result.failure(Exception("Falha ao criar conta: usuário nulo"))
+            Result.success(uid)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun logout() {
         auth.signOut()
     }
