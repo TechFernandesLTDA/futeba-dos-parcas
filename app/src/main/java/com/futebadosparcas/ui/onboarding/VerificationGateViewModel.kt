@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,8 +38,13 @@ sealed class VerifiedState {
      * Exibir mensagem + botao de retry sem loop automatico.
      *
      * @param message Mensagem de erro legivel para o usuario.
+     * @param postVerify true se a falha veio de [VerificationGateViewModel.recheckAfterVerify]
+     *   (pos-fluxo CPF); false se veio de [VerificationGateViewModel.check] (pre-fluxo).
+     *   O composable usa esse flag para decidir qual metodo chamar no retry:
+     *   - postVerify=true  => recheckAfterVerify() (re-tenta refresh forcado, sem re-rodar CPF)
+     *   - postVerify=false => check() (re-verifica sessao normalmente)
      */
-    data class Failed(val message: String) : VerifiedState()
+    data class Failed(val message: String, val postVerify: Boolean = false) : VerifiedState()
 }
 
 /**
@@ -64,6 +71,31 @@ class VerificationGateViewModel(
 
     private val _state = MutableStateFlow<VerifiedState>(VerifiedState.Unknown)
     val state: StateFlow<VerifiedState> = _state.asStateFlow()
+
+    /**
+     * Tenta refresh forcado do token com backoff exponencial (ate 3 tentativas).
+     *
+     * Espelha o padrao [CpfVerificationViewModel.refreshTokenWithRetry] para cobrir
+     * a janela transiente pos-revokeRefreshTokens (chamado por setUserVerified server-side).
+     * Sem retry aqui, a janela transiente poderia fazer recheckAfterVerify() falhar mesmo
+     * apos o fluxo CPF ter sido concluido com sucesso.
+     *
+     * Backoff: 600ms / 1200ms entre tentativas (attempt+1 * 600ms).
+     * Se todas as 3 tentativas falharem, propaga a excecao da ultima.
+     *
+     * Fix: spec §3.2 passo 4 / §3.3 "Gate do claim le token stale" (#1302)
+     */
+    internal suspend fun refreshTokenWithRetry(user: FirebaseUser) {
+        repeat(3) { attempt ->
+            try {
+                user.getIdToken(true).await()
+                return
+            } catch (e: Exception) {
+                if (attempt == 2) throw e
+                delay((attempt + 1) * 600L)
+            }
+        }
+    }
 
     /**
      * Verifica claim `verified` usando token cacheado (getIdToken(false)).
@@ -102,11 +134,14 @@ class VerificationGateViewModel(
 
     /**
      * Revalida o claim `verified` apos o usuario concluir o fluxo CPF.
-     * Usa getIdToken(true) para garantir que o claim recentemente concedido seja refletido.
+     * Usa [refreshTokenWithRetry] (ate 3 tentativas com backoff) para cobrir a janela
+     * transiente pos-revokeRefreshTokens. Single-shot era regressao do fix #1303:
+     * o budget de retry do CpfVerificationViewModel ja estava esgotado nessa camada.
      *
      * Chamado exatamente UMA vez pelo callback onSuccess da [CpfVerificationScreen].
      * Se o token ainda nao tiver verified=true: transiciona para [VerifiedState.Failed]
-     * (nao re-roteia automaticamente para evitar loop).
+     * com postVerify=true (nao re-roteia automaticamente para evitar loop; o composable
+     * usa postVerify=true para chamar recheckAfterVerify() novamente ao inves de check()).
      */
     fun recheckAfterVerify() {
         viewModelScope.launch {
@@ -114,11 +149,17 @@ class VerificationGateViewModel(
             val user = auth.currentUser
             if (user == null) {
                 AppLogger.w("VerificationGate") { "recheckAfterVerify(): usuario nulo" }
-                _state.value = VerifiedState.Failed("Sessao expirou. Faca login novamente.")
+                _state.value = VerifiedState.Failed(
+                    "Sessao expirou. Faca login novamente.",
+                    postVerify = true,
+                )
                 return@launch
             }
             try {
-                val result = user.getIdToken(true).await()
+                // Usa retry/backoff para cobrir janela transiente pos-revokeRefreshTokens.
+                // Fix spec §3.2 passo 4 / §3.3 "Gate do claim le token stale" (#1302)
+                refreshTokenWithRetry(user)
+                val result = user.getIdToken(false).await()
                 val verified = result?.claims?.get("verified") == true
                 if (verified) {
                     AppLogger.d("VerificationGate") {
@@ -131,11 +172,15 @@ class VerificationGateViewModel(
                     }
                     _state.value = VerifiedState.Failed(
                         "Verificacao nao confirmada. Aguarde alguns segundos e tente novamente.",
+                        postVerify = true,
                     )
                 }
             } catch (e: Exception) {
                 AppLogger.e("VerificationGate", "recheckAfterVerify(): falha ao refrescar token", e)
-                _state.value = VerifiedState.Failed("Erro ao confirmar verificacao. Tente novamente.")
+                _state.value = VerifiedState.Failed(
+                    "Erro ao confirmar verificacao. Tente novamente.",
+                    postVerify = true,
+                )
             }
         }
     }

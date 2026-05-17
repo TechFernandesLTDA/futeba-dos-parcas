@@ -274,6 +274,11 @@ private fun AntiBotGate(
 
         is VerifiedState.Failed -> {
             // Falha irrecuperavel — exibe mensagem e botao de retry sem loop automatico.
+            // postVerify=true => falha veio de recheckAfterVerify (pos-fluxo CPF):
+            //   retry chama recheckAfterVerify() para re-tentar so o refresh forcado,
+            //   sem re-rodar phone/CPF/setUserVerified (evita perpetuar janela transiente).
+            // postVerify=false => falha veio de check (pre-fluxo, sessao invalida):
+            //   retry chama check() normalmente.
             Box(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
                 contentAlignment = Alignment.Center,
@@ -288,7 +293,15 @@ private fun AntiBotGate(
                         color = MaterialTheme.colorScheme.error,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { verificationGateViewModel.check() }) {
+                    Button(
+                        onClick = {
+                            if (state.postVerify) {
+                                verificationGateViewModel.recheckAfterVerify()
+                            } else {
+                                verificationGateViewModel.check()
+                            }
+                        },
+                    ) {
                         Text("Tentar novamente")
                     }
                 }

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Testes unitarios para VerificationGateViewModel.
@@ -84,7 +85,10 @@ class VerificationGateViewModelTest {
         every { auth.currentUser } returns user
         every { user.phoneNumber } returns null
         val tokenResult = makeTokenResult(if (verified) mapOf("verified" to true) else emptyMap())
+        // getIdToken(true) = refresh forcado via refreshTokenWithRetry (sucesso em 1 tentativa)
         every { user.getIdToken(true) } returns Tasks.forResult(tokenResult)
+        // getIdToken(false) = leitura de cache do claim apos retry bem-sucedido
+        every { user.getIdToken(false) } returns Tasks.forResult(tokenResult)
     }
 
     // ─── check() ──────────────────────────────────────────────────────────────────
@@ -185,5 +189,34 @@ class VerificationGateViewModelTest {
         advanceUntilIdle()
 
         assertInstanceOf(VerifiedState.Failed::class.java, viewModel.state.value)
+    }
+
+    @Test
+    @DisplayName("recheckAfterVerify(): 2 falhas de getIdToken(true) seguidas de sucesso com verified=true => Verified")
+    fun recheckAfterVerify_twoFailuresThenSuccess_returnsVerified() = runTest {
+        // Configura usuario com telefone nulo
+        every { auth.currentUser } returns user
+        every { user.phoneNumber } returns null
+
+        val successToken = makeTokenResult(mapOf("verified" to true))
+        // getIdToken(false) retorna token com verified=true (leitura de cache apos retry bem-sucedido)
+        every { user.getIdToken(false) } returns Tasks.forResult(successToken)
+
+        // getIdToken(true) falha nas 2 primeiras chamadas e tem sucesso na 3a (retry/backoff)
+        val callCount = AtomicInteger(0)
+        every { user.getIdToken(true) } answers {
+            val attempt = callCount.getAndIncrement()
+            if (attempt < 2) {
+                Tasks.forException(RuntimeException("transient error attempt $attempt"))
+            } else {
+                Tasks.forResult(successToken)
+            }
+        }
+
+        viewModel.recheckAfterVerify()
+        advanceUntilIdle()
+
+        // Apos 2 falhas e 1 sucesso no retry, o claim verified=true deve liberar o app
+        assertInstanceOf(VerifiedState.Verified::class.java, viewModel.state.value)
     }
 }
