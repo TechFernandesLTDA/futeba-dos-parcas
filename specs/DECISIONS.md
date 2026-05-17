@@ -306,4 +306,37 @@ tem ~2 telas; Android tem 56 `*Screen.kt` em `:app` (Android-only).
 
 ---
 
+## 2026-05-17 — Hash de CPF: aceitar determinístico+salt global no curto prazo; HMAC-KMS como follow-up (D1 / #1311)
+
+**Contexto:** Auditoria CPF 2026-05-17 item D1 (`#1311`, design note — não-bug).
+`cpf.ts:56-62` deriva `cpf_index` por hash determinístico com `CPF_SALT`
+global único. CPF tem ~10⁹ valores → se `CPF_SALT` vazar, todo `cpf_index`
+fica enumerável (rainbow table trivial), **sem caminho de rotação** (o CPF
+plaintext nunca é armazenado, então não dá pra re-hashear).
+
+**Decisão:** Manter o esquema atual no curto prazo. O risco está **mitigado em
+defense-in-depth** pelas Firestore rules — `cpf_index` nega 100% de acesso
+client-side (`firestore.rules:1951-1953`); o hash só é legível via Admin SDK.
+O determinismo é **requisito funcional** (lookup de duplicidade de CPF sem
+guardar plaintext — LGPD), então não é "bug a corrigir" e sim trade-off aceito.
+
+**Rejeitado (agora):**
+- **Salt por-usuário** → quebra o lookup de duplicidade (todo o ponto do índice).
+- **Remover o índice** → reintroduz necessidade de plaintext ou full scan.
+
+**Consequências:**
+- (+) Sem mudança de schema/migração urgente; risco residual baixo enquanto
+  as rules seguram `cpf_index` e o `CPF_SALT` é secret gerenciado.
+- (-) Single point of failure no `CPF_SALT`; sem rotação.
+- (→) **Follow-up rastreado (#1311, prioridade baixa):** migrar para HMAC-SHA256
+  com **pepper em KMS** (Cloud KMS / Secret Manager com versão), permitindo
+  rotação de versão de chave + dual-read durante migração. Não bloqueia a
+  wave atual; reavaliar quando houver janela de migração de dados.
+
+**Relacionado:** `#1311`, `.claude/audits/cpf-validation-audit-2026-05-17.md`,
+`functions/src/**/cpf.ts`, `firestore.rules` (deny `cpf_index`),
+memória `project_cpf_audit_2026_05_17`.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
