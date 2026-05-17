@@ -513,9 +513,9 @@ function App() {
       <ThemeProvider>
         <BrowserRouter>
           <AuthProvider>
+            <ToastProvider>
             <TeamsProvider>
             <LanguageProvider>
-            <ToastProvider>
               <SkipNav />
               {/* CommandPalette montado fora do MobileShell para não sofrer restrição
                   de largura, mas wrapped em ErrorBoundary próprio — se SearchPanel
@@ -536,9 +536,9 @@ function App() {
                 </Box>
                 <ConnectionStatusWrapper />
               </MobileShell>
-            </ToastProvider>
             </LanguageProvider>
             </TeamsProvider>
+            </ToastProvider>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>
