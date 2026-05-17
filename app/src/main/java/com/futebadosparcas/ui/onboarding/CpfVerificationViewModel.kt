@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.futebadosparcas.domain.util.CpfValidator
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.Job
@@ -127,7 +128,31 @@ class CpfVerificationViewModel(
         }
     }
 
+    /**
+     * Mapeia excecao para mensagem amigavel.
+     *
+     * #1310 L4: usa FirebaseFunctionsException.code (estavel) em vez de match
+     * fragil na message. Fallback para parsing de string apenas quando a
+     * excecao NAO e FirebaseFunctionsException (ex.: erro de rede, mocks).
+     */
     private fun parseError(e: Exception): String {
+        val ffe = e as? FirebaseFunctionsException
+            ?: e.cause as? FirebaseFunctionsException
+        if (ffe != null) {
+            return when (ffe.code) {
+                FirebaseFunctionsException.Code.ALREADY_EXISTS ->
+                    "Este CPF ja esta cadastrado em outra conta"
+                FirebaseFunctionsException.Code.INVALID_ARGUMENT -> "CPF invalido"
+                FirebaseFunctionsException.Code.PERMISSION_DENIED ->
+                    "CPF ja cadastrado. Entre em contato com o suporte."
+                FirebaseFunctionsException.Code.UNAUTHENTICATED ->
+                    "Login expirou. Faca login novamente."
+                else -> "Erro ao verificar CPF. Tente novamente."
+            }
+        }
+
+        // Fallback: excecao nao-Functions (rede, runtime). Mantem parsing por
+        // string para compatibilidade com casos sem code estruturado.
         val msg = e.message.orEmpty()
         return when {
             msg.contains("already-exists") ->

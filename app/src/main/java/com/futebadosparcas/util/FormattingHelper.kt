@@ -1,5 +1,6 @@
 package com.futebadosparcas.util
 
+import com.futebadosparcas.domain.util.CpfValidator
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -112,14 +113,12 @@ class FormattingHelper constructor() {
     }
 
     /**
-     * Format Brazilian CPF (000.000.000-00)
+     * Format Brazilian CPF (000.000.000-00).
+     *
+     * Delega a [CpfValidator.format] (fonte unica de formatacao CPF — #1310 L5).
+     * Mantem o comportamento de retornar o input original quando length != 11.
      */
-    fun formatCPF(cpf: String): String {
-        val clean = cpf.replace(Regex("[^0-9]"), "")
-        if (clean.length != 11) return cpf
-
-        return "${clean.substring(0, 3)}.${clean.substring(3, 6)}.${clean.substring(6, 9)}-${clean.substring(9)}"
-    }
+    fun formatCPF(cpf: String): String = CpfValidator.format(cpf)
 
     /**
      * Format Brazilian phone number ((00) 00000-0000 or (00) 0000-0000)

@@ -29,6 +29,16 @@ describe('isValidCpf', () => {
     expect(isValidCpf(undefined as unknown as string)).toBe(false);
   });
 
+  it('rejeita strings só com whitespace (paridade com CpfValidatorTest.kt:40)', () => {
+    expect(isValidCpf('   ')).toBe(false);
+    expect(isValidCpf('\t\n ')).toBe(false);
+  });
+
+  it('rejeita inputs non-string sem crashar (#1310 L3)', () => {
+    expect(isValidCpf(12345678909 as unknown as string)).toBe(false);
+    expect(isValidCpf({} as unknown as string)).toBe(false);
+  });
+
   it('rejeita CPFs com tamanho errado', () => {
     expect(isValidCpf('123')).toBe(false);
     expect(isValidCpf('123456789012')).toBe(false);
