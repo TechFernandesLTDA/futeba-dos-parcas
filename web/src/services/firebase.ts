@@ -68,8 +68,15 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app, 'southamerica-east1');
 
 // Wiring de emuladores para Playwright E2E e dev local (follow-up de #1079).
-// Ativa só quando VITE_USE_EMULATOR='true' — produção nunca toca esses hosts.
-if (import.meta.env.VITE_USE_EMULATOR === 'true' && typeof window !== 'undefined') {
+// Guarda estrutural: `import.meta.env.DEV` é substituído por `false` no build
+// de produção (`vite build`) e este bloco inteiro é eliminado por dead-code —
+// produção fica IMUNE a vazamento de VITE_USE_EMULATOR via .env. E2E usa
+// `npm run dev` (Vite dev mode, DEV=true), então o emulador continua ativo lá.
+if (
+  import.meta.env.DEV &&
+  import.meta.env.VITE_USE_EMULATOR === 'true' &&
+  typeof window !== 'undefined'
+) {
   const host = '127.0.0.1';
   try {
     connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
