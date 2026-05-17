@@ -30,6 +30,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 /**
+ * Dados coletados na configuração inicial do perfil.
+ */
+data class ProfileSetupData(
+    val name: String,
+    val nickname: String?,
+    val preferredPosition: String?,
+    val preferredFieldTypes: List<String>
+)
+
+/**
  * Tela de configuração inicial do perfil.
  * Coleta informações básicas do jogador.
  */
@@ -47,16 +57,11 @@ fun ProfileSetupScreen(
     var futsalSelected by remember { mutableStateOf(false) }
     var campoSelected by remember { mutableStateOf(false) }
 
-    // Rótulos em PT-BR (substituem stringResource)
-    val goalkeeperLabel = "Goleiro"
-    val defenderLabel = "Zagueiro"
-    val midfielderLabel = "Meio-campo"
-    val attackerLabel = "Atacante"
     val positions = listOf(
-        goalkeeperLabel to "goalkeeper",
-        defenderLabel to "defender",
-        midfielderLabel to "midfielder",
-        attackerLabel to "striker"
+        "Goleiro" to "goalkeeper",
+        "Defensor" to "defender",
+        "Meio-campo" to "midfielder",
+        "Atacante" to "striker"
     )
 
     Surface(
@@ -74,7 +79,7 @@ fun ProfileSetupScreen(
 
             // Título
             Text(
-                text = "Configurar Perfil",
+                text = "Configure seu Perfil",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -84,7 +89,7 @@ fun ProfileSetupScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Conte um pouco sobre você para melhorar sua experiência",
+                text = "Preencha suas informações para personalizar sua experiência",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -97,7 +102,7 @@ fun ProfileSetupScreen(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Nome") },
-                placeholder = { Text("Seu nome completo") },
+                placeholder = { Text("Como você quer ser chamado") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -110,7 +115,7 @@ fun ProfileSetupScreen(
                 value = nickname,
                 onValueChange = { nickname = it },
                 label = { Text("Apelido") },
-                placeholder = { Text("Como quer ser chamado") },
+                placeholder = { Text("Opcional - Ex.: Furacão") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -120,7 +125,7 @@ fun ProfileSetupScreen(
 
             // Posição Preferida
             Text(
-                text = "Posição preferida",
+                text = "Posição Preferida",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.fillMaxWidth()
@@ -162,7 +167,7 @@ fun ProfileSetupScreen(
 
             // Tipo de Campo Preferido
             Text(
-                text = "Tipo de campo",
+                text = "Tipo de Campo Preferido",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.fillMaxWidth()
@@ -230,7 +235,7 @@ fun ProfileSetupScreen(
             // Botão Pular
             TextButton(onClick = onSkip) {
                 Text(
-                    text = "Pular",
+                    text = "Pular esta etapa",
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -239,10 +244,3 @@ fun ProfileSetupScreen(
         }
     }
 }
-
-data class ProfileSetupData(
-    val name: String,
-    val nickname: String?,
-    val preferredPosition: String?,
-    val preferredFieldTypes: List<String>
-)
