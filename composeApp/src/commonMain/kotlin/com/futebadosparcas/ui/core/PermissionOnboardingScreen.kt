@@ -34,31 +34,39 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Tela de onboarding para solicitar permissões do sistema.
  * Exibida na primeira abertura do app para solicitar:
- * - Notificações (se necessário)
+ * - Notificações
  * - Localização (para encontrar jogos próximos)
  * - Câmera (para foto de perfil)
- * - Microfone (para mensagens de voz)
+ * - Microfone (mensagens de voz)
+ *
+ * Em versão multiplataforma, as permissões são simuladas,
+ * permitindo ao usuário marcar cada item como concedido.
  */
 @Composable
 fun PermissionOnboardingScreen(
-    onComplete: () -> Unit,
-    viewModel: PermissionOnboardingViewModel = koinViewModel()
+    onComplete: () -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
     val scrollState = rememberScrollState()
+
+    // Estados das permissões (simulados)
+    var notificationGranted by remember { mutableStateOf(false) }
+    var locationGranted by remember { mutableStateOf(false) }
+    var cameraGranted by remember { mutableStateOf(false) }
+    var microphoneGranted by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -85,7 +93,7 @@ fun PermissionOnboardingScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Para a melhor experiência, permita o acesso aos recursos abaixo",
+                text = "Para uma experiência completa, conceda as permissões abaixo",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -93,47 +101,46 @@ fun PermissionOnboardingScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Card de Notificações (condicional)
-            if (state.showNotificationPermission) {
-                PermissionCard(
-                    icon = Icons.Filled.Notifications,
-                    title = "Notificações",
-                    description = "Receba convites para jogos e atualizações",
-                    isGranted = state.notificationGranted,
-                    onRequest = { viewModel.requestNotification() }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            // Card de Notificações
+            PermissionCard(
+                icon = Icons.Default.Notifications,
+                title = "Notificações",
+                description = "Receba alertas de jogos, convites e atualizações",
+                isGranted = notificationGranted,
+                onRequest = { notificationGranted = true }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Card de Localização
             PermissionCard(
-                icon = Icons.Filled.LocationOn,
+                icon = Icons.Default.LocationOn,
                 title = "Localização",
-                description = "Encontre jogos perto de você",
-                isGranted = state.locationGranted,
-                onRequest = { viewModel.requestLocation() }
+                description = "Encontre campos e jogos próximos a você",
+                isGranted = locationGranted,
+                onRequest = { locationGranted = true }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Card de Câmera
             PermissionCard(
-                icon = Icons.Filled.Camera,
+                icon = Icons.Default.Camera,
                 title = "Câmera",
-                description = "Tire fotos para seu perfil",
-                isGranted = state.cameraGranted,
-                onRequest = { viewModel.requestCamera() }
+                description = "Tire fotos para seu perfil e compartilhe momentos",
+                isGranted = cameraGranted,
+                onRequest = { cameraGranted = true }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Card de Microfone (Mensagens de Voz)
+            // Card de Microfone
             PermissionCard(
-                icon = Icons.Filled.Mic,
+                icon = Icons.Default.Mic,
                 title = "Microfone",
-                description = "Envie mensagens de voz",
-                isGranted = state.microphoneGranted,
-                onRequest = { viewModel.requestMicrophone() }
+                description = "Envie mensagens de voz para seus amigos",
+                isGranted = microphoneGranted,
+                onRequest = { microphoneGranted = true }
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -156,7 +163,7 @@ fun PermissionOnboardingScreen(
 
             // Texto informativo
             Text(
-                text = "Você pode permitir depois nas configurações.",
+                text = "Você pode ajustar as permissões depois nas configurações do sistema",
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -207,7 +214,7 @@ private fun PermissionCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (isGranted) Icons.Filled.Check else icon,
+                    imageVector = if (isGranted) Icons.Default.Check else icon,
                     contentDescription = null,
                     tint = if (isGranted) {
                         MaterialTheme.colorScheme.onPrimary
