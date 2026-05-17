@@ -1,0 +1,262 @@
+package com.futebadosparcas.ui.core
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+
+/**
+ * Tela de onboarding para solicitar permissões do sistema.
+ * Exibida na primeira abertura do app para solicitar:
+ * - Notificações
+ * - Localização (para encontrar jogos próximos)
+ * - Câmera (para foto de perfil)
+ * - Microfone (mensagens de voz)
+ *
+ * Em versão multiplataforma, as permissões são simuladas,
+ * permitindo ao usuário marcar cada item como concedido.
+ */
+@Composable
+fun PermissionOnboardingScreen(
+    onComplete: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    // Estados das permissões (simulados)
+    var notificationGranted by remember { mutableStateOf(false) }
+    var locationGranted by remember { mutableStateOf(false) }
+    var cameraGranted by remember { mutableStateOf(false) }
+    var microphoneGranted by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Título
+            Text(
+                text = "Permissões necessárias",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Para uma experiência completa, conceda as permissões abaixo",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Card de Notificações
+            PermissionCard(
+                icon = Icons.Default.Notifications,
+                title = "Notificações",
+                description = "Receba alertas de jogos, convites e atualizações",
+                isGranted = notificationGranted,
+                onRequest = { notificationGranted = true }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Card de Localização
+            PermissionCard(
+                icon = Icons.Default.LocationOn,
+                title = "Localização",
+                description = "Encontre campos e jogos próximos a você",
+                isGranted = locationGranted,
+                onRequest = { locationGranted = true }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Card de Câmera
+            PermissionCard(
+                icon = Icons.Default.Camera,
+                title = "Câmera",
+                description = "Tire fotos para seu perfil e compartilhe momentos",
+                isGranted = cameraGranted,
+                onRequest = { cameraGranted = true }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Card de Microfone
+            PermissionCard(
+                icon = Icons.Default.Mic,
+                title = "Microfone",
+                description = "Envie mensagens de voz para seus amigos",
+                isGranted = microphoneGranted,
+                onRequest = { microphoneGranted = true }
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Botão Continuar
+            Button(
+                onClick = onComplete,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = "Continuar",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Texto informativo
+            Text(
+                text = "Você pode ajustar as permissões depois nas configurações do sistema",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+private fun PermissionCard(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    isGranted: Boolean,
+    onRequest: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isGranted) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            }
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Ícone
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = if (isGranted) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isGranted) Icons.Default.Check else icon,
+                    contentDescription = null,
+                    tint = if (isGranted) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Textos
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Botão
+            AnimatedVisibility(
+                visible = !isGranted,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                OutlinedButton(
+                    onClick = onRequest,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Permitir")
+                }
+            }
+        }
+    }
+}

@@ -97,6 +97,9 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            // Material Icons extended — telas portadas do :app usam Icons.Filled.*
+            // (necessário para a frota CMP Fase 3; não vem com material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
