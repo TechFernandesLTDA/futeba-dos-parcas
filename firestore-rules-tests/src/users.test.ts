@@ -252,6 +252,33 @@ describe("users — campos imutáveis (atualização)", () => {
     );
   });
 
+  // CPF-audit #1306: campos mirror gravados exclusivamente por Cloud Function
+  it("CPF-audit #1306: Player NÃO pode escrever 'cpfVerifiedAt' diretamente", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`users/${UID_PLAYER_A}`).update({ cpfVerifiedAt: new Date() })
+    );
+  });
+
+  it("CPF-audit #1306: Player NÃO pode escrever 'verifiedAt' diretamente", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`users/${UID_PLAYER_A}`).update({ verifiedAt: new Date() })
+    );
+  });
+
+  it("CPF-audit #1306: Player PODE atualizar campos básicos normalmente (regressão)", async () => {
+    // Garante que as novas restricoes nao quebraram o caminho legítimo de edicao de perfil
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`users/${UID_PLAYER_A}`).update({
+        name: "Jogador A Regressao",
+        nickname: "joga_a",
+        striker_rating: 4.0,
+      })
+    );
+  });
+
   it("Admin pode atualizar qualquer campo do perfil", async () => {
     const db = asAdmin(testEnv);
     await assertSucceeds(

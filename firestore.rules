@@ -438,6 +438,11 @@ service cloud.firestore {
            fieldUnchanged('height_cm') &&
            fieldUnchanged('weight_kg') &&
            fieldUnchanged('gender') &&
+           // CPF-audit #1306: campos mirror gravados SOMENTE por Cloud Function via Admin SDK
+           // (verifyCpf grava cpfVerifiedAt; setUserVerified grava verifiedAt em users/{uid})
+           // Cliente nao pode espoofar esses campos para enganar listeners/badges
+           fieldUnchanged('verifiedAt') &&
+           fieldUnchanged('cpfVerifiedAt') &&
            // Apenas updated_at e protegido (gerenciado por Cloud Functions)
            fieldUnchanged('updated_at') &&
            // Validacao de dados no update
