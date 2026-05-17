@@ -344,6 +344,13 @@ val viewModelKoinModule = module {
         )
     }
 
+    // Gate anti-bot pos-login (spec SPEC_BUGFIX_2026-05-17_C1_ANDROID_ANTIBOT_ENFORCEMENT.md, #1302)
+    viewModel {
+        com.futebadosparcas.ui.onboarding.VerificationGateViewModel(
+            auth = get(),
+        )
+    }
+
     // Phone+CPF onboarding (Anti-Bot, spec SPEC_FEATURE_PHONE_CPF_VERIFICATION.md)
     viewModel {
         PhoneVerificationViewModel(
