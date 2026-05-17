@@ -145,9 +145,25 @@ export const StatisticsScreen: React.FC = () => {
 
       <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
+          // Skeleton espelha o layout real: card de perfil + 2 cards de conteúdo
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+            {/* Skeleton do card de perfil (avatar + nome + nível + XP) */}
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Skeleton variant="circular" width={64} height={64} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" height={32} />
+                    <Skeleton variant="text" width="40%" height={20} sx={{ mt: 0.5 }} />
+                    <Skeleton variant="text" width="30%" height={20} sx={{ mt: 0.5 }} />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+            {/* Skeleton do primeiro card de conteúdo da aba */}
+            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+            {/* Skeleton do segundo card de conteúdo da aba */}
+            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
           </Box>
         ) : error ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
