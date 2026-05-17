@@ -123,6 +123,10 @@ export const onUserDocUpdated = onDocumentUpdated(
   {
     region: FUNCTION_REGION,
     document: "users/{userId}",
+    // FIX #1309-M5: onDocumentUpdated v2 NÃO retenta automaticamente sem
+    // retry:true. O catch abaixo faz `throw err` para sinalizar falha;
+    // sem este flag o throw seria engolido e a PII ficaria dessincronizada.
+    retry: true,
   },
   async (event) => {
     const userId = event.params.userId;
@@ -152,8 +156,9 @@ export const onUserDocUpdated = onDocumentUpdated(
         `[PII_SYNC] Failed to sync PII update for ${userId}:`,
         err
       );
-      // #1030: Relança o erro — onUserDocUpdated deve falhar para
-      // garantir retry automático do Firebase e evitar PII desincronizada
+      // #1030 + FIX #1309-M5: relança o erro. O retry só acontece porque
+      // o trigger declara `retry: true` (config acima) — sem esse flag o
+      // onDocumentUpdated v2 NÃO retenta e o throw seria perdido.
       throw err;
     }
   }
@@ -170,7 +175,8 @@ export const migratePiiToUsersPrivate = onCall(
     region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable manipula PII
     // de todos os usuários via batch — não deve aceitar chamada não-verificada.
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
     timeoutSeconds: 540, // 9min — pode ter muitos users
     memory: "512MiB",
@@ -327,7 +333,8 @@ export const updateUserPii = onCall(
     region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable escreve PII
     // em users_private — exige verificação de app em prod.
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
@@ -397,7 +404,8 @@ export const removePiiFromUsers = onCall(
     region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable ADMIN deleta
     // PII em batch — operação destrutiva irreversível, exige verificação.
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
     timeoutSeconds: 540,
     memory: "512MiB",

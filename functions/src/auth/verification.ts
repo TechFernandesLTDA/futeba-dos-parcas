@@ -11,6 +11,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
+import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 
 /**
@@ -49,7 +50,10 @@ export const verifyCpf = onCall(
     // FIX SEC-2026-05-08: enforce App Check em prod. Antes hardcoded false
     // como "debug" temporário (web SDK não anexava token) — debug virou prod.
     // Web App Check já está configurado (reCAPTCHA Enterprise ativo).
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    // FIX #1307: NODE_ENV não é garantido pelo runtime GCF v2 → usar
+    // FUNCTIONS_EMULATOR (setada pelo Emulator Suite). Enforce sempre,
+    // exceto no emulador local.
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
     // CRITICAL: secret precisa ser declarada em onCall pra
     // ser acessivel via process.env.CPF_SALT em runtime.
@@ -77,6 +81,29 @@ export const verifyCpf = onCall(
         "Possible causes: expired ID token, App Check rejection, or missing token."
       );
       throw new HttpsError("unauthenticated", "Login obrigatório");
+    }
+
+    // FIX #1304: rate limit por uid (5/hora). Sem isto, atacante autenticado
+    // pode enumerar CPFs já registrados via timing differential do duplicate
+    // check (transaction com tx.get em cpf_index).
+    const rl = await checkRateLimit(auth.uid, {
+      maxRequests: 5,
+      windowMs: 60 * 60 * 1000,
+      keyPrefix: "verify_cpf",
+    });
+    if (!rl.allowed) {
+      const retryAfterSec = Math.ceil(
+        (rl.resetAt.getTime() - Date.now()) / 1000,
+      );
+      logger.warn("[VERIFY_CPF] Rate limit excedido", {
+        uid: auth.uid,
+        retryAfterSec,
+      });
+      throw new HttpsError(
+        "resource-exhausted",
+        "Muitas tentativas. Tente novamente mais tarde.",
+        {retryAfter: retryAfterSec},
+      );
     }
 
     const cpfRaw: unknown = data?.cpf;
@@ -147,13 +174,16 @@ export const verifyCpf = onCall(
         {merge: true},
       );
 
+      // FIX #1310-L1: merge:true preserva createdAt original. Antes
+      // (merge:false) a reverificação do MESMO uid reescrevia o doc
+      // inteiro e resetava createdAt a cada chamada.
       tx.set(
         indexRef,
         {
           uid,
           createdAt: now,
         },
-        {merge: false},
+        {merge: true},
       );
 
       tx.set(
@@ -187,7 +217,8 @@ export const setUserVerified = onCall(
     // FIX SEC-2026-05-08: enforce App Check em prod. Antes hardcoded false
     // como "debug" temporário (web SDK não anexava token) — debug virou prod.
     // Web App Check já está configurado (reCAPTCHA Enterprise ativo).
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
@@ -222,6 +253,22 @@ export const setUserVerified = onCall(
     // Phone verificado via Firebase Auth linkWithCredential
     // (Firebase popula phone_number no UserRecord automaticamente).
     const userRecord = await admin.auth().getUser(targetUid);
+
+    // FIX #1308: idempotência. Se o usuário JÁ está verified=true, retornar
+    // cedo SEM revogar refresh tokens nem reescrever claims/mirrors. Revogar
+    // tokens forçava reauth no cliente → nova chamada de setUserVerified →
+    // loop self-perpetuating cross-platform (web + Android #1313).
+    if (userRecord.customClaims?.verified === true) {
+      logger.info("[SET_VERIFIED] No-op: usuário já verificado", {
+        uid: targetUid,
+      });
+      return {
+        success: true,
+        uid: targetUid,
+        alreadyVerified: true,
+      };
+    }
+
     if (!userRecord.phoneNumber) {
       throw new HttpsError(
         "failed-precondition",
@@ -280,8 +327,9 @@ export const setUserVerified = onCall(
 export const bulkSetVerifiedForExistingUsers = onCall(
   {
     region: FUNCTION_REGION,
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: process.env.NODE_ENV === "production",
+    // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
     // Timeout maior para processar muitos usuários em lote
     timeoutSeconds: 540,
   },
