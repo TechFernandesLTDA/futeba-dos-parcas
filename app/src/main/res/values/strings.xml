@@ -4008,6 +4008,8 @@ subir no ranking!</string>
     <string name="cpf_supporting_text">Apenas números, com ou sem máscara</string>
     <string name="cpf_verifying">Verificando...</string>
     <string name="cpf_finish">Concluir verificação</string>
+    <string name="cpf_success_message">Conta verificada!</string>
+    <string name="cpf_success_icon_desc">Verificação concluída com sucesso</string>
     <string name="cpf_privacy_terms">Ao continuar, você concorda com a Política de Privacidade e os Termos de Uso.</string>
 
     <!-- ==================== ONBOARDING TOUR — CARROSSEL (Fase 1) ==================== -->

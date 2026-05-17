@@ -19,7 +19,8 @@ object CpfValidator {
     fun isValid(cpf: String?): Boolean {
         if (cpf.isNullOrBlank()) return false
 
-        val digits = cpf.filter { it.isDigit() }
+        // Apenas digitos ASCII 0-9: isDigit() aceitaria digitos Unicode (#1310 L2)
+        val digits = cpf.filter { it in '0'..'9' }
         if (digits.length != 11) return false
 
         // Sequencias todas iguais sao invalidas
@@ -68,5 +69,5 @@ object CpfValidator {
     /**
      * Remove caracteres nao-digito.
      */
-    fun strip(cpf: String): String = cpf.filter { it.isDigit() }
+    fun strip(cpf: String): String = cpf.filter { it in '0'..'9' }
 }

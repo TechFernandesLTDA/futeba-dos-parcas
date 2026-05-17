@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,7 +36,14 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.util.CpfValidator
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
+
+/**
+ * Tempo de exibicao do estado de sucesso antes de prosseguir (#1310 L7).
+ * Paridade com o web (CheckCircle ~1,4s antes de navegar).
+ */
+private const val SUCCESS_DISPLAY_MS = 1400L
 
 /**
  * Tela 2/2 do onboarding obrigatorio: verificacao de CPF.
@@ -50,7 +58,11 @@ fun CpfVerificationScreen(
     var cpf by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(state) {
-        if (state is CpfVerificationUiState.Success) onSuccess()
+        if (state is CpfVerificationUiState.Success) {
+            // #1310 L7: mostra feedback de sucesso antes de prosseguir (paridade web)
+            delay(SUCCESS_DISPLAY_MS)
+            onSuccess()
+        }
     }
 
     Surface(
@@ -68,6 +80,30 @@ fun CpfVerificationScreen(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             ) {
+                if (state is CpfVerificationUiState.Success) {
+                    // #1310 L7: estado visual de sucesso (paridade com web — CheckCircle ~1,4s)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            Icons.Filled.CheckCircle,
+                            contentDescription = stringResource(
+                                R.string.cpf_success_icon_desc,
+                            ),
+                            modifier = Modifier.size(72.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.cpf_success_message),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                } else {
                 Column(modifier = Modifier.padding(24.dp)) {
                     Box(
                         modifier = Modifier.size(48.dp),
@@ -145,6 +181,7 @@ fun CpfVerificationScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
                 }
             }
         }

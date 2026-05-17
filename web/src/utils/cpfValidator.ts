@@ -7,6 +7,8 @@
  * @returns true se CPF válido, false caso contrário.
  */
 export function isValidCpf(cpf: string): boolean {
+  // Guard contra inputs non-string (number/object via `as unknown`) — #1310 L3
+  if (typeof cpf !== 'string') return false;
   if (!cpf) return false;
 
   const digits = cpf.replace(/\D/g, '');
