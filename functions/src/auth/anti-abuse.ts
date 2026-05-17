@@ -18,6 +18,28 @@ import {FUNCTION_REGION} from "../constants";
 const SMS_RATE_LIMIT_PER_PHONE_HOUR = 3;
 const SMS_RATE_LIMIT_PER_IP_HOUR = 10;
 const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
+// FIX #1310-L8: limite generoso (log legítimo de falha de verificação é
+// esperado), mas barra spam que infla verification_failures/audit_logs.
+const LOG_FAIL_RATE_LIMIT_PER_HOUR = 20;
+
+/**
+ * Extrai o IP real do cliente em GCF v2 atrás de Load Balancer.
+ *
+ * FIX #1309-M4: rawRequest.ip retorna o IP do LB (constante) — inútil para
+ * rate limit por IP. O 1º hop de x-forwarded-for é o IP do cliente.
+ *
+ * @param {CallableRequest} request - Requisição callable.
+ * @return {string} IP do cliente, ou "unknown".
+ */
+function clientIp(request: {rawRequest?: {
+  ip?: string;
+  headers?: Record<string, string | string[] | undefined>;
+}}): string {
+  const xff = request.rawRequest?.headers?.["x-forwarded-for"];
+  const firstHop =
+    typeof xff === "string" ? xff.split(",")[0]?.trim() : "";
+  return firstHop || request.rawRequest?.ip || "unknown";
+}
 
 /**
  * Valida se phone E.164 pode receber SMS OTP agora.
@@ -42,7 +64,8 @@ const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
 export const canSendSmsOtp = onCall(
   {
     region: FUNCTION_REGION,
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
@@ -63,7 +86,7 @@ export const canSendSmsOtp = onCall(
       );
     }
 
-    const ip = request.rawRequest?.ip || "unknown";
+    const ip = clientIp(request);
 
     const phoneCheck = await checkRateLimit(phone, {
       maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR,
@@ -109,13 +132,33 @@ export const canSendSmsOtp = onCall(
 export const logVerificationFailure = onCall(
   {
     region: FUNCTION_REGION,
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
     const {auth} = request;
     if (!auth) {
       throw new HttpsError("unauthenticated", "Login obrigatorio");
+    }
+
+    // FIX #1310-L8: rate limit por uid. Sem isto, um cliente pode chamar
+    // logVerificationFailure em loop e inflar verification_failures/
+    // audit_logs (custo de storage + ruído nos alerts).
+    const logRl = await checkRateLimit(auth.uid, {
+      maxRequests: LOG_FAIL_RATE_LIMIT_PER_HOUR,
+      windowMs: 60 * 60 * 1000,
+      keyPrefix: "log_verif_fail",
+    });
+    if (!logRl.allowed) {
+      const retryAfterSec = Math.ceil(
+        (logRl.resetAt.getTime() - Date.now()) / 1000,
+      );
+      throw new HttpsError(
+        "resource-exhausted",
+        "Muitas tentativas. Tente novamente mais tarde.",
+        {retryAfter: retryAfterSec},
+      );
     }
 
     const reason: unknown = request.data?.reason;
@@ -141,7 +184,7 @@ export const logVerificationFailure = onCall(
       throw new HttpsError("invalid-argument", "Valores invalidos");
     }
 
-    const ip = request.rawRequest?.ip || "unknown";
+    const ip = clientIp(request);
     const uid = auth.uid;
     const now = admin.firestore.FieldValue.serverTimestamp();
 

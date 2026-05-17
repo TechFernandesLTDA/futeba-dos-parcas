@@ -405,6 +405,201 @@ describe("verifyCpf - sem role gate (apenas auth)", () => {
 });
 
 // ==========================================
+// verifyCpf — branches de segurança (#1305)
+// Cobre: duplicate CPF, CPF-change block, salt ausente/curto,
+// rate limit (#1304). O mock global de checkRateLimit retorna
+// {allowed:true}; sobrescrevemos por-teste via jest.requireMock.
+// ==========================================
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const rateLimiterMock = require("../src/middleware/rate-limiter");
+
+describe("verifyCpf - branches de seguranca (#1305)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Restaura o mock global default (allowed) — clearAllMocks não
+    // remove a implementação setada via jest.mock factory, mas testes
+    // que sobrescrevem rateLimiterMock.checkRateLimit precisam de reset.
+    rateLimiterMock.checkRateLimit = () =>
+      Promise.resolve({
+        allowed: true,
+        resetAt: new Date(Date.now() + 60000),
+      });
+  });
+
+  test("rejeita duplicate CPF (cpf_index de OUTRO uid)", async () => {
+    mockRunTransaction.mockImplementation(async (fn: any) => {
+      const tx = {
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({uid: "other-user"}),
+        }),
+        set: jest.fn(),
+      };
+      return await fn(tx);
+    });
+
+    await expect(
+      verifyCpfHandler({
+        auth: PLAYER_AUTH,
+        data: {cpf: "12345678909"},
+      })
+    ).rejects.toThrow(/Verification code sent/);
+  });
+
+  test("rejeita mudanca de CPF (privateRef com cpfHash diferente)", async () => {
+    let call = 0;
+    mockRunTransaction.mockImplementation(async (fn: any) => {
+      const tx = {
+        get: jest.fn().mockImplementation(() => {
+          call++;
+          // 1ª get = cpf_index (não existe), 2ª get = users_private
+          // com cpfHash divergente → bloqueia CPF-change.
+          if (call === 1) {
+            return Promise.resolve({exists: false, data: () => null});
+          }
+          return Promise.resolve({
+            exists: true,
+            data: () => ({cpfHash: "hash-antigo-diferente"}),
+          });
+        }),
+        set: jest.fn(),
+      };
+      return await fn(tx);
+    });
+
+    await expect(
+      verifyCpfHandler({
+        auth: PLAYER_AUTH,
+        data: {cpf: "12345678909"},
+      })
+    ).rejects.toThrow(/Verification code sent/);
+  });
+
+  test("rejeita quando CPF_SALT ausente", async () => {
+    const saved = process.env.CPF_SALT;
+    delete process.env.CPF_SALT;
+    try {
+      await expect(
+        verifyCpfHandler({
+          auth: PLAYER_AUTH,
+          data: {cpf: "12345678909"},
+        })
+      ).rejects.toThrow(/CPF_SALT not configured/);
+    } finally {
+      process.env.CPF_SALT = saved;
+    }
+  });
+
+  test("rejeita quando CPF_SALT curto (< 16 chars)", async () => {
+    const saved = process.env.CPF_SALT;
+    process.env.CPF_SALT = "short";
+    try {
+      await expect(
+        verifyCpfHandler({
+          auth: PLAYER_AUTH,
+          data: {cpf: "12345678909"},
+        })
+      ).rejects.toThrow(/CPF_SALT not configured/);
+    } finally {
+      process.env.CPF_SALT = saved;
+    }
+  });
+
+  test("FIX #1304: rejeita quando rate limit excedido", async () => {
+    rateLimiterMock.checkRateLimit = jest.fn().mockResolvedValue({
+      allowed: false,
+      resetAt: new Date(Date.now() + 3600000),
+    });
+
+    await expect(
+      verifyCpfHandler({
+        auth: PLAYER_AUTH,
+        data: {cpf: "12345678909"},
+      })
+    ).rejects.toThrow(/Muitas tentativas/);
+  });
+
+  test("FIX #1304: rate limit é checado com keyPrefix verify_cpf", async () => {
+    const spy = jest.fn().mockResolvedValue({
+      allowed: true,
+      resetAt: new Date(Date.now() + 60000),
+    });
+    rateLimiterMock.checkRateLimit = spy;
+    mockRunTransaction.mockImplementation(async (fn: any) => {
+      const tx = {
+        get: jest.fn().mockResolvedValue({exists: false, data: () => null}),
+        set: jest.fn(),
+      };
+      return await fn(tx);
+    });
+
+    await verifyCpfHandler({
+      auth: PLAYER_AUTH,
+      data: {cpf: "12345678909"},
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      PLAYER_AUTH.uid,
+      expect.objectContaining({keyPrefix: "verify_cpf", maxRequests: 5})
+    );
+  });
+});
+
+// ==========================================
+// setUserVerified — idempotência (#1308)
+// ==========================================
+
+describe("setUserVerified - idempotencia (#1308)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDocGet.mockImplementation(() =>
+      Promise.resolve({
+        exists: true,
+        data: () => ({cpfVerifiedAt: "2026-01-01T00:00:00Z"}),
+      })
+    );
+  });
+
+  test("no-op quando usuario JA verified (nao revoga tokens)", async () => {
+    mockGetUser.mockResolvedValue({
+      customClaims: {verified: true, role: "PLAYER"},
+      phoneNumber: "+5511999999999",
+    });
+
+    const result = await setUserVerifiedHandler({
+      auth: PLAYER_AUTH,
+      data: {uid: PLAYER_AUTH.uid},
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({success: true, alreadyVerified: true})
+    );
+    // Idempotente: NÃO revoga tokens nem reescreve claims.
+    expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
+    expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  test("primeira verificacao (verified ausente) revoga tokens normalmente", async () => {
+    mockGetUser.mockResolvedValue({
+      customClaims: {role: "PLAYER"},
+      phoneNumber: "+5511999999999",
+    });
+
+    await setUserVerifiedHandler({
+      auth: PLAYER_AUTH,
+      data: {uid: PLAYER_AUTH.uid},
+    });
+
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
+      PLAYER_AUTH.uid,
+      expect.objectContaining({verified: true})
+    );
+    expect(mockRevokeRefreshTokens).toHaveBeenCalledWith(PLAYER_AUTH.uid);
+  });
+});
+
+// ==========================================
 // checkInToGame — qualquer auth (ownership-based)
 // ==========================================
 
