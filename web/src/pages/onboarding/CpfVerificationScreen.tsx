@@ -95,10 +95,36 @@ export const CpfVerificationScreen: React.FC = () => {
       // com functions/unauthenticated, mostrando "Não foi possível validar sua
       // sessão" (erro reportado, duplicado em Alert + toast). Falhar cedo com
       // mensagem acionável evita o estado confuso.
-      try {
-        await firebaseUser.getIdToken(true);
-      } catch (refreshErr) {
-        logger.error('Failed to refresh ID token before verifyCpf:', refreshErr);
+      // FIX 2026-05-17: refresh com retry. getIdToken(true) faz round-trip ao
+      // secure-token service + (com App Check) exige token reCAPTCHA fresco —
+      // falha transitória (blip de rede, App Check ainda mintando) é comum e
+      // antes abortava na 1ª tentativa ("Não foi possível renovar sua sessão"
+      // recorrente reportado). Retry com backoff resolve o transitório; só
+      // aborta se TODAS falharem (mantém o fail-fast do #1285: nunca chama
+      // verifyCpf com token stale).
+      let tokenRefreshed = false;
+      let lastRefreshErr: unknown;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await firebaseUser.getIdToken(true);
+          tokenRefreshed = true;
+          break;
+        } catch (refreshErr) {
+          lastRefreshErr = refreshErr;
+          logger.warn(
+            `getIdToken(true) tentativa ${attempt}/3 falhou antes de verifyCpf`,
+            refreshErr,
+          );
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, attempt * 600));
+          }
+        }
+      }
+      if (!tokenRefreshed) {
+        logger.error(
+          'Failed to refresh ID token before verifyCpf (3 tentativas):',
+          lastRefreshErr,
+        );
         const msg =
           'Não foi possível renovar sua sessão. Verifique sua conexão e ' +
           'tente novamente.';
