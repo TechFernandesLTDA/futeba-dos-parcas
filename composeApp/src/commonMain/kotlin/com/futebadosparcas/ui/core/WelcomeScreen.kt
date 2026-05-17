@@ -44,19 +44,19 @@ fun WelcomeScreen(
         ) {
             Spacer(modifier = Modifier.weight(0.5f))
 
-            // Logo do app – substituído por ícone futebol (paridade visual)
+            // Logo do app (substituído por ícone esportivo)
             Icon(
                 imageVector = Icons.Filled.SportsSoccer,
                 contentDescription = null,
-                modifier = Modifier.size(150.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(150.dp)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Título
             Text(
-                text = "Futeba dos Parças",
+                text = "Futeba dos Parcas",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -77,20 +77,20 @@ fun WelcomeScreen(
 
             // Features
             WelcomeFeatureItem(
-                emoji = "\u26BD", // ⚽
-                text = "Jogue partidas organizadas"
+                emoji = "\u26BD",
+                text = "Jogos"
             )
             WelcomeFeatureItem(
-                emoji = "\uD83C\uDFC6", // 🏆
-                text = "Ranking e competitividade"
+                emoji = "\uD83C\uDFC6",
+                text = "Ranking"
             )
             WelcomeFeatureItem(
-                emoji = "\uD83D\uDCCA", // 📊
-                text = "Estatísticas detalhadas"
+                emoji = "\uD83D\uDCCA",
+                text = "Estatísticas"
             )
             WelcomeFeatureItem(
-                emoji = "\uD83E\uDD1D", // 🤝
-                text = "Times balanceados automaticamente"
+                emoji = "\uD83E\uDD1D",
+                text = "Equilíbrio"
             )
 
             Spacer(modifier = Modifier.weight(1f))
