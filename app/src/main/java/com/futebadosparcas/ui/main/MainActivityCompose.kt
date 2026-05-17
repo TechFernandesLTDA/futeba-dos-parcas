@@ -6,13 +6,16 @@ import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -45,10 +48,15 @@ import com.futebadosparcas.ui.navigation.Screen
 import com.futebadosparcas.ui.theme.CoilConfig
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.ui.onboarding.OnboardingFlow
+import com.futebadosparcas.ui.onboarding.PhoneVerificationScreen
+import com.futebadosparcas.ui.onboarding.CpfVerificationScreen
+import com.futebadosparcas.ui.onboarding.VerificationGateViewModel
+import com.futebadosparcas.ui.onboarding.VerifiedState
 import com.futebadosparcas.util.PreferencesManager
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
@@ -137,47 +145,16 @@ class MainActivityCompose : AppCompatActivity() {
                 themeConfig = themeConfig,
                 darkTheme = isDark
             ) {
-                if (showPermissionOnboarding) {
-                    OnboardingFlow(
-                        preferencesManager = preferencesManager,
-                        onComplete = {
-                            showPermissionOnboarding = false
-                        },
-                        onProfileSetup = { profileData ->
-                            // Salvar dados do perfil no Firestore
-                            lifecycleScope.launch {
-                                try {
-                                    val currentUserId = authRepository.getCurrentUserId()
-                                    if (currentUserId != null && (profileData.name.isNotBlank() || profileData.nickname != null || profileData.preferredPosition != null || profileData.preferredFieldTypes.isNotEmpty())) {
-                                        val fieldTypes = profileData.preferredFieldTypes.mapNotNull {
-                                            try { com.futebadosparcas.domain.model.FieldType.valueOf(it) } catch (e: Exception) { null }
-                                        }
-                                        val params = com.futebadosparcas.domain.usecase.user.UpdateProfileParams(
-                                            userId = currentUserId,
-                                            name = profileData.name.takeIf { it.isNotBlank() },
-                                            nickname = profileData.nickname,
-                                            primaryPosition = profileData.preferredPosition,
-                                            preferredFieldTypes = fieldTypes.takeIf { it.isNotEmpty() }
-                                        )
-                                        updateProfileUseCase(params)
-                                        com.futebadosparcas.util.AppLogger.d("Onboarding") { "Profile saved successfully" }
-                                    }
-                                } catch (e: Exception) {
-                                    com.futebadosparcas.util.AppLogger.e("Onboarding", "Error saving profile: ${e.message}", e)
-                                }
-                            }
-                        }
-                    )
-                } else {
-                    MainScreen(
-                        themeConfig = themeConfig,
-                        onThemeChange = { recreate() },
-                        badgeAwarder = badgeAwarder,
-                        notificationRepository = notificationRepository,
-                        deepLinkTarget = deepLinkTarget.value,
-                        onDeepLinkConsumed = { deepLinkTarget.value = null }
-                    )
-                }
+                // Gate anti-bot pos-login (opcao b).
+                // Spec: SPEC_BUGFIX_2026-05-17_C1_ANDROID_ANTIBOT_ENFORCEMENT.md (#1302)
+                AntiBotGate(
+                    showPermissionOnboarding = showPermissionOnboarding,
+                    onPermissionOnboardingComplete = { showPermissionOnboarding = false },
+                    themeConfig = themeConfig,
+                    onThemeChange = { recreate() },
+                    deepLinkTarget = deepLinkTarget.value,
+                    onDeepLinkConsumed = { deepLinkTarget.value = null },
+                )
             }
         }
 
@@ -229,6 +206,159 @@ private fun SetupSystemBars(isDark: Boolean) {
             WindowInsetsControllerCompat(window, view).apply {
                 isAppearanceLightStatusBars = !isDark
                 isAppearanceLightNavigationBars = !isDark
+            }
+        }
+    }
+}
+
+/**
+ * Gate anti-bot pos-login (Opcao b, spec #1302).
+ *
+ * Executa ANTES do onboarding de permissoes e do app principal:
+ *   Unknown     => loading (CircularProgressIndicator)
+ *   Unverified  => fluxo phone-verify → CPF (phone pulado se ja vinculado, atalho #1024)
+ *   Failed      => tela de erro com botao de retry (sem loop automatico)
+ *   Verified    => fluxo normal (onboarding de permissoes ou MainScreen)
+ *
+ * Prevencao de loop:
+ * - check() usa getIdToken(false) — token cacheado, sem roundtrip de rede.
+ * - recheckAfterVerify() usa getIdToken(true) e e chamado UMA vez pelo onSuccess do CPF.
+ * - Se recheckAfterVerify() retornar ainda nao-verificado => Failed (nao re-roteia).
+ */
+@Composable
+private fun AntiBotGate(
+    showPermissionOnboarding: Boolean,
+    onPermissionOnboardingComplete: () -> Unit,
+    themeConfig: com.futebadosparcas.domain.model.AppThemeConfig,
+    onThemeChange: () -> Unit,
+    deepLinkTarget: String?,
+    onDeepLinkConsumed: () -> Unit,
+    verificationGateViewModel: VerificationGateViewModel = koinViewModel(),
+    preferencesManager: PreferencesManager = org.koin.compose.koinInject(),
+    authRepository: com.futebadosparcas.data.repository.AuthRepository = org.koin.compose.koinInject(),
+    updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase = org.koin.compose.koinInject(),
+    badgeAwarder: BadgeAwarder = org.koin.compose.koinInject(),
+    notificationRepository: NotificationRepository = org.koin.compose.koinInject(),
+) {
+    val gateState by verificationGateViewModel.state.collectAsStateWithLifecycle()
+
+    // Dispara verificacao inicial uma unica vez por composicao.
+    LaunchedEffect(Unit) {
+        verificationGateViewModel.check()
+    }
+
+    when (val state = gateState) {
+        is VerifiedState.Unknown -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
+        is VerifiedState.Unverified -> {
+            // Atalho #1024: pula telefone se usuario ja tem numero vinculado.
+            if (state.hasPhone) {
+                CpfVerificationScreen(
+                    onSuccess = { verificationGateViewModel.recheckAfterVerify() },
+                )
+            } else {
+                var showCpf by remember { mutableStateOf(false) }
+                if (showCpf) {
+                    CpfVerificationScreen(
+                        onSuccess = { verificationGateViewModel.recheckAfterVerify() },
+                    )
+                } else {
+                    PhoneVerificationScreen(onSuccess = { showCpf = true })
+                }
+            }
+        }
+
+        is VerifiedState.Failed -> {
+            // Falha irrecuperavel — exibe mensagem e botao de retry sem loop automatico.
+            // postVerify=true => falha veio de recheckAfterVerify (pos-fluxo CPF):
+            //   retry chama recheckAfterVerify() para re-tentar so o refresh forcado,
+            //   sem re-rodar phone/CPF/setUserVerified (evita perpetuar janela transiente).
+            // postVerify=false => falha veio de check (pre-fluxo, sessao invalida):
+            //   retry chama check() normalmente.
+            Box(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            if (state.postVerify) {
+                                verificationGateViewModel.recheckAfterVerify()
+                            } else {
+                                verificationGateViewModel.check()
+                            }
+                        },
+                    ) {
+                        Text("Tentar novamente")
+                    }
+                }
+            }
+        }
+
+        is VerifiedState.Verified -> {
+            // Claim verified=true confirmado — fluxo normal do app.
+            if (showPermissionOnboarding) {
+                val scope = androidx.compose.runtime.rememberCoroutineScope()
+                OnboardingFlow(
+                    preferencesManager = preferencesManager,
+                    onComplete = onPermissionOnboardingComplete,
+                    onProfileSetup = { profileData ->
+                        scope.launch {
+                            runCatching {
+                                val uid = authRepository.getCurrentUserId() ?: return@runCatching
+                                if (profileData.name.isBlank() &&
+                                    profileData.nickname == null &&
+                                    profileData.preferredPosition == null &&
+                                    profileData.preferredFieldTypes.isEmpty()
+                                ) return@runCatching
+                                val fieldTypes = profileData.preferredFieldTypes.mapNotNull {
+                                    try {
+                                        com.futebadosparcas.domain.model.FieldType.valueOf(it)
+                                    } catch (_: Exception) {
+                                        null
+                                    }
+                                }
+                                val params = com.futebadosparcas.domain.usecase.user.UpdateProfileParams(
+                                    userId = uid,
+                                    name = profileData.name.takeIf { it.isNotBlank() },
+                                    nickname = profileData.nickname,
+                                    primaryPosition = profileData.preferredPosition,
+                                    preferredFieldTypes = fieldTypes.takeIf { it.isNotEmpty() },
+                                )
+                                updateProfileUseCase(params)
+                                com.futebadosparcas.util.AppLogger.d("Onboarding") { "Perfil salvo com sucesso" }
+                            }.onFailure { e ->
+                                com.futebadosparcas.util.AppLogger.e(
+                                    "Onboarding",
+                                    "Erro ao salvar perfil: ${e.message}",
+                                    e,
+                                )
+                            }
+                        }
+                    },
+                )
+            } else {
+                MainScreen(
+                    themeConfig = themeConfig,
+                    onThemeChange = onThemeChange,
+                    badgeAwarder = badgeAwarder,
+                    notificationRepository = notificationRepository,
+                    deepLinkTarget = deepLinkTarget,
+                    onDeepLinkConsumed = onDeepLinkConsumed,
+                )
             }
         }
     }
