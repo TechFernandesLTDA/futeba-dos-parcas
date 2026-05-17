@@ -39,6 +39,16 @@ interface AuthRepository {
     suspend fun getCurrentUser(): Result<User>
 
     /**
+     * Autentica com email e senha. Retorna o uid do usuário em caso de sucesso.
+     */
+    suspend fun signIn(email: String, password: String): Result<String>
+
+    /**
+     * Cria uma conta com email e senha. Retorna o uid do usuário em caso de sucesso.
+     */
+    suspend fun signUp(email: String, password: String): Result<String>
+
+    /**
      * Realiza logout do usuário.
      *
      * Suspend para evitar runBlocking em iOS (deadlock garantido se chamado da main thread).

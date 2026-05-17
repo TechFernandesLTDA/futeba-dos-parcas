@@ -246,6 +246,16 @@ expect class FirebaseDataSource() {
     suspend fun getCurrentAuthUser(): Result<User>
 
     /**
+     * Autentica com email e senha. Retorna o uid em caso de sucesso.
+     */
+    suspend fun signInWithEmailPassword(email: String, password: String): Result<String>
+
+    /**
+     * Cria conta com email e senha. Retorna o uid em caso de sucesso.
+     */
+    suspend fun signUpWithEmailPassword(email: String, password: String): Result<String>
+
+    /**
      * Realiza logout do usuário.
      *
      * Suspend para evitar runBlocking em iOS (deadlock garantido se chamado da main thread).

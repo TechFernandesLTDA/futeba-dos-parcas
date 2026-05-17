@@ -32,6 +32,14 @@ class AuthRepositoryImpl(
         return firebaseDataSource.getCurrentAuthUser()
     }
 
+    override suspend fun signIn(email: String, password: String): Result<String> {
+        return firebaseDataSource.signInWithEmailPassword(email, password)
+    }
+
+    override suspend fun signUp(email: String, password: String): Result<String> {
+        return firebaseDataSource.signUpWithEmailPassword(email, password)
+    }
+
     override suspend fun logout() {
         firebaseDataSource.logout()
     }

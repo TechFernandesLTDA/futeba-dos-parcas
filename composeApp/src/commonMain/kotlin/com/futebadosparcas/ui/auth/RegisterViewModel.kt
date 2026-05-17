@@ -3,15 +3,14 @@ package com.futebadosparcas.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.repository.AuthRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(
-    // TODO: FALTA_CONTRATO — AuthRepository não expõe criação de conta no contrato atual.
-    // Idealmente usar authRepository.createUserWithEmailAndPassword(email, password, name)
-    // Por enquanto, a chamada real é substituída por TODO.
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _registerState = MutableStateFlow<RegisterState>(RegisterState.Idle)
@@ -23,13 +22,26 @@ class RegisterViewModel(
         registerJob?.cancel()
         registerJob = viewModelScope.launch {
             _registerState.value = RegisterState.Loading
-            TODO("FALTA_CONTRATO: AuthRepository.createUserWithEmailAndPassword não disponível")
-            // Exemplo do que seria a chamada com a interface desejada:
-            // val result = authRepository.createUserWithEmailAndPassword(email, password, name)
-            // result.fold(
-            //     onSuccess = { user -> _registerState.value = RegisterState.Success(user) },
-            //     onFailure = { error -> _registerState.value = RegisterState.Error(error.message ?: "Erro ao criar conta") }
-            // )
+            // Cria a conta de autenticação; o documento do usuário (incl. nome) é
+            // criado pela Cloud Function onUserCreated. Atualização de nome/perfil
+            // é fluxo de profile separado.
+            authRepository.signUp(email, password).fold(
+                onSuccess = {
+                    authRepository.getCurrentUser().fold(
+                        onSuccess = { user -> _registerState.value = RegisterState.Success(user) },
+                        onFailure = { error ->
+                            _registerState.value = RegisterState.Error(
+                                error.message ?: "Conta criada, mas falha ao carregar perfil"
+                            )
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    _registerState.value = RegisterState.Error(
+                        error.message ?: "Erro ao criar conta"
+                    )
+                }
+            )
         }
     }
 
