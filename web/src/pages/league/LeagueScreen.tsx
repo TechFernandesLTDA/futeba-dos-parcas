@@ -25,6 +25,7 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { VirtualList } from '../../components/common/VirtualList';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -39,11 +40,15 @@ export const LeagueScreen: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
 
+  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
   const divisions: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
   const selectedDivision = tabValue > 0 ? divisions[tabValue - 1] : undefined;
 
   const { players, loading, error } = useLeague(user?.id, selectedDivision);
+
+  // Soft retry: invalida o cache da query sem recarregar a página
+  const handleRetry = () => queryClient.invalidateQueries({ queryKey: ['league'] });
 
   const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
 
@@ -99,7 +104,7 @@ export const LeagueScreen: React.FC = () => {
           <Alert
             severity="error"
             action={
-              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={handleRetry}>
                 {t('common.retry')}
               </Button>
             }
