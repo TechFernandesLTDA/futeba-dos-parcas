@@ -134,6 +134,15 @@ export const PostGameReportScreen: React.FC = () => {
           if (mvpDoc.exists()) mvpName = (snakeToCamel(mvpDoc.data()) as Record<string, any>).name || '';
         }
 
+        // Busca o nome do jogador "Bola Murcha" do Firestore, igual ao padrão do MVP
+        let bolaMurchaName = '';
+        if (data.bolaMurchaId) {
+          const bolaMurchaDoc = await getDoc(doc(db, 'users', data.bolaMurchaId));
+          if (cancelled) return;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if (bolaMurchaDoc.exists()) bolaMurchaName = (snakeToCamel(bolaMurchaDoc.data()) as Record<string, any>).name || '';
+        }
+
         if (cancelled) return;
 
         setStats({
@@ -144,6 +153,8 @@ export const PostGameReportScreen: React.FC = () => {
           winner: data.winnerTeam || 'DRAW',
           mvpId: data.mvpId,
           mvpName,
+          bolaMurchaId: data.bolaMurchaId,
+          bolaMurchaName,
           scorers: data.scorers || [],
           assistants: data.assistants || [],
           participants: data.participants || [],
@@ -446,6 +457,25 @@ export const PostGameReportScreen: React.FC = () => {
                     MVP
                   </Typography>
                   <Typography variant="h6">{stats.mvpName}</Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Card do Bola Murcha — exibido apenas quando o nome foi buscado do Firestore */}
+        {stats.bolaMurchaName && (
+          <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.error.main, 0.05) }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: theme.palette.error.main }}>
+                  <SoccerIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="error.main" fontWeight={600}>
+                    Bola Murcha
+                  </Typography>
+                  <Typography variant="h6">{stats.bolaMurchaName}</Typography>
                 </Box>
               </Box>
             </CardContent>
