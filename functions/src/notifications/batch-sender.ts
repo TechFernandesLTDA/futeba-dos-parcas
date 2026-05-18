@@ -310,31 +310,12 @@ async function processNotificationQueue():
 
     totalTargeted = allUserIds.size;
 
-    // FIX #1143: Filter userIds by notification preferences
-    // before fetching tokens (respects push_enabled, mute_groups, etc.)
-    const typeForFilter = (pendingSnap.docs[0]?.data()?.type as string) || "GAME_REMINDER";
-    const filteredUserIds: string[] = [];
-    for (const uid of allUserIds) {
-      try {
-        const ok = await shouldNotifyUser(uid, typeForFilter, undefined);
-        if (ok) filteredUserIds.push(uid);
-      } catch {
-        // Fail-open: if preference check fails, include user
-        filteredUserIds.push(uid);
-      }
-    }
-    const skippedCount = allUserIds.size - filteredUserIds.length;
-    if (skippedCount > 0) {
-      console.log(
-        `[BATCH_FCM] Filtrados ${skippedCount} usuarios ` +
-        "por preferencias de notificacao"
-      );
-    }
-    totalTargeted = filteredUserIds.length;
-
-    // 4. Buscar tokens FCM em batch
+    // 4. Buscar tokens FCM em batch para todos os usuários únicos.
+    // O filtro de preferências é aplicado por doc (dentro do loop),
+    // pois a fila é multi-tipo e cada doc tem seu próprio type/groupId.
+    // FIX #1282: bloco centralizado com docs[0].type removido — era tipo único para fila multi-tipo.
     const tokenMap = await fetchTokensInBatch(
-      filteredUserIds
+      Array.from(allUserIds)
     );
 
     // 5. Processar cada notificação na fila
@@ -351,13 +332,36 @@ async function processNotificationQueue():
       const imageUrl =
         data.imageUrl as string | undefined;
 
+      // FIX #1282: filtrar preferências de notificação por doc,
+      // usando o type e groupId corretos deste doc específico.
+      // Fail-open: em caso de erro na verificação, inclui o usuário.
+      const docGroupId = notifData?.groupId;
+      const filteredDocUserIds: string[] = [];
+      for (const uid of userIds) {
+        try {
+          const ok = await shouldNotifyUser(uid, type, docGroupId);
+          if (ok) filteredDocUserIds.push(uid);
+        } catch {
+          filteredDocUserIds.push(uid);
+        }
+      }
+      const skippedCount = userIds.length - filteredDocUserIds.length;
+      if (skippedCount > 0) {
+        console.log(
+          `[BATCH_FCM] Filtrados ${skippedCount} usuarios ` +
+          `por preferencias (tipo: ${type}, doc: ${doc.id})`
+        );
+      }
+      totalTargeted =
+        totalTargeted - userIds.length + filteredDocUserIds.length;
+
       // Filtrar tokens válidos — inclui todos os tokens por usuário
       // para suportar múltiplos dispositivos (#978)
       const tokens: string[] = [];
       const tokenToUser =
         new Map<string, string>();
 
-      for (const userId of userIds) {
+      for (const userId of filteredDocUserIds) {
         const userTokens = tokenMap.get(userId);
         if (userTokens && userTokens.length > 0) {
           for (const token of userTokens) {
