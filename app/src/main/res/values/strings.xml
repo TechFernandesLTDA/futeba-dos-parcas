@@ -4064,4 +4064,23 @@ subir no ranking!</string>
     <string name="onboarding_celebration_cta">Continuar</string>
     <string name="onboarding_badge_welcome_name">Bem-vindo</string>
 
+    <!-- ==================== TEAM PICKER DIALOG ==================== -->
+    <string name="team_picker_title">Escolha seu time</string>
+    <string name="team_picker_search_placeholder">Buscar time...</string>
+    <string name="team_picker_none_option">Nenhum</string>
+
+    <!-- ==================== EDIT PROFILE — SEÇÃO TIME DO CORAÇÃO ==================== -->
+    <string name="edit_profile_favorite_team_section_title">Time do Coração</string>
+    <string name="edit_profile_favorite_team_select_hint">Selecionar time</string>
+
+    <!-- ==================== HEAD TO HEAD SECTION ==================== -->
+    <string name="head_to_head_first_match_subtitle">O primeiro confronto entre estes times!</string>
+
+    <!-- ==================== CASHBOX SCREEN ==================== -->
+    <string name="cashbox_entry_status_voided">ESTORNADO</string>
+
+    <!-- ==================== GAMES LIST ==================== -->
+    <!-- %1$.2f = valor numérico com 2 casas decimais (ex: 15,00) -->
+    <string name="games_list_daily_price">R$ %1$.2f</string>
+
 </resources>

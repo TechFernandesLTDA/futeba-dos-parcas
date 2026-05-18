@@ -469,7 +469,7 @@ private fun FavoriteTeamSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "Time do Coração",
+            text = stringResource(R.string.edit_profile_favorite_team_section_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -490,7 +490,7 @@ private fun FavoriteTeamSection(
                 )
             } else {
                 Text(
-                    text = "Selecionar time",
+                    text = stringResource(R.string.edit_profile_favorite_team_select_hint),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

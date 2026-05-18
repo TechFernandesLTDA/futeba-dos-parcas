@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameStatus
 import java.util.*
@@ -277,7 +279,7 @@ private fun GameCardFooter(game: Game, vacancyColor: Color) {
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "R$ %.2f".format(game.dailyPrice),
+                    text = stringResource(R.string.games_list_daily_price, game.dailyPrice),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,

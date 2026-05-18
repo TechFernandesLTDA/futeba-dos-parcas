@@ -691,7 +691,7 @@ private fun EntryCard(
                             color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Text(
-                                text = "ESTORNADO",
+                                text = stringResource(R.string.cashbox_entry_status_voided),
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer

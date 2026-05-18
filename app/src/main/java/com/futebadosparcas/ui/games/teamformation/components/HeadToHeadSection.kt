@@ -339,7 +339,7 @@ private fun NoHistoryCard(modifier: Modifier = Modifier) {
             )
 
             Text(
-                text = "O primeiro confronto entre estes times!",
+                text = stringResource(R.string.head_to_head_first_match_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
