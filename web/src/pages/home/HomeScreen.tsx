@@ -17,7 +17,6 @@ import {
   Skeleton,
   AppBar,
   Toolbar,
-  IconButton,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -259,9 +258,8 @@ export function HomeScreen() {
             <Typography variant="h6" fontWeight={700} color="primary.main" sx={{ flex: 1 }}>
               {t('common.appName')}
             </Typography>
-            <IconButton onClick={() => handleTabChange(5)} aria-label="Notificações" size="small">
-              <NotificationBell unreadCount={unreadCount} />
-            </IconButton>
+            {/* NotificationBell já é um IconButton — não aninhar dentro de outro (#1321) */}
+            <NotificationBell unreadCount={unreadCount} />
           </Toolbar>
         </AppBar>
 

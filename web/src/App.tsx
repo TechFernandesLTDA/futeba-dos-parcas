@@ -10,7 +10,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { ConnectionStatus, useOnlineStatus } from './components/common/ConnectionStatus';
 import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
-import { NotificationBell } from './components/common/NotificationBell';
+import { MobileTopBar } from './components/layout/MobileTopBar';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { useNotifications } from './hooks/useNotifications';
 import { AppLayout } from './components/layout';
@@ -484,18 +484,10 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}
       >
+        {/* Topbar mobile canônica: sino ancorado ao fluxo (sticky),
+            não flutuante — evita sobreposição de conteúdo (#1321) */}
         {user && !isHomeScreen && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 56,
-              right: 8,
-              zIndex: 1100,
-              display: { xs: 'block', md: 'none' },
-            }}
-          >
-            <NotificationBell unreadCount={unreadCount} />
-          </Box>
+          <MobileTopBar unreadCount={unreadCount} />
         )}
         {children}
       </Box>
