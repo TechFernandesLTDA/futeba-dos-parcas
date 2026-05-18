@@ -222,18 +222,20 @@ export const maintainStreaksData = onSchedule(
 
         // 2.3: Verificar expiracao
         // (streak quebrado > 30 dias)
+        // FIX #1283: new Date() nunca lança — o try/catch era código morto.
+        // Substituído por checagem explícita de isNaN para detectar datas corrompidas.
         let lastGameDate: Date | null = null;
         if (data.last_game_date) {
-          try {
-            lastGameDate =
-              new Date(data.last_game_date);
-          } catch {
+          lastGameDate =
+            new Date(data.last_game_date);
+          if (isNaN(lastGameDate.getTime())) {
             console.warn(
               "[STREAK_MAINTENANCE] " +
               "Data invalida para " +
               `${userId}: ` +
               `${data.last_game_date}`
             );
+            lastGameDate = null;
           }
         }
 

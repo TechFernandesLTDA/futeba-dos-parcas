@@ -1235,24 +1235,8 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
-    actual suspend fun updateStreak(userId: String, streak: Int, lastGameDate: Long): Result<Unit> {
-        return try {
-            firestore.collection("user_streaks")
-                .document(userId)
-                .set(
-                    mapOf(
-                        "user_id" to userId,
-                        "current_streak" to streak,
-                        "last_game_date" to lastGameDate,
-                        "updated_at" to FieldValue.serverTimestamp
-                    ),
-                    merge = true
-                )
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    // REMOVIDO #1283: actual updateStreak(Long) gravava epoch-ms violando contrato String "yyyy-MM-dd"
+    // de user_streaks.last_game_date. Sem caller vivo. Path vivo: GamificationRepositoryImpl.updateStreak(String).
 
     actual suspend fun unlockMilestone(userId: String, milestoneId: String): Result<Unit> {
         return try {
