@@ -118,11 +118,11 @@ export const GamesScreen: React.FC = () => {
           scrollButtons="auto"
           aria-label="Filtrar por status do jogo"
         >
-          <Tab label="Todos" />
-          <Tab label="Agendados" />
-          <Tab label="Confirmados" />
-          <Tab label="Ao Vivo" />
-          <Tab label="Finalizados" />
+          <Tab label={t('games.tabs.all')} />
+          <Tab label={t('games.tabs.scheduled')} />
+          <Tab label={t('games.tabs.confirmed')} />
+          <Tab label={t('games.tabs.live')} />
+          <Tab label={t('games.tabs.finished')} />
         </Tabs>
       </Box>
 

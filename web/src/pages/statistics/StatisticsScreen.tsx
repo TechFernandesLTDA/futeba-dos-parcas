@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { gamificationColors } from '../../theme';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -231,6 +232,7 @@ export const StatisticsScreen: React.FC = () => {
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showError } = useToast();
+  const { t } = useTranslation();
 
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -304,9 +306,9 @@ export const StatisticsScreen: React.FC = () => {
           variant="fullWidth"
           aria-label="Categorias de estatísticas"
         >
-          <Tab label="Geral" />
-          <Tab label="Gols" />
-          <Tab label="Conquistas" />
+          <Tab label={t('statistics.tabs.general')} />
+          <Tab label={t('statistics.tabs.goals')} />
+          <Tab label={t('statistics.tabs.achievements')} />
         </Tabs>
       </Box>
 
