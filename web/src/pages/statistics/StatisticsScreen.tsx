@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { gamificationColors } from '../../theme';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -39,6 +40,173 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 
 const logger = createLogger('StatisticsScreen');
 
+/**
+ * Props do componente de gráfico donut de resultado (V/E/D).
+ */
+interface DonutChartProps {
+  wins: number;
+  draws: number;
+  losses: number;
+  total: number;
+}
+
+/**
+ * Gráfico donut SVG puro para exibir proporção de vitórias, empates e derrotas.
+ * Usa a técnica de stroke-dasharray/stroke-dashoffset — sem bibliotecas externas.
+ */
+const DonutChart: React.FC<DonutChartProps> = ({ wins, draws, losses, total }) => {
+  const theme = useTheme();
+
+  // Raio e circunferência do anel
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const strokeWidth = 18;
+  const size = 120;
+  const center = size / 2;
+
+  // Sem jogos: exibe anel cinza com texto "Sem dados"
+  if (total === 0) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1 }}>
+        <svg width={size} height={size} aria-label="Sem dados de resultado">
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={theme.palette.action.disabledBackground}
+            strokeWidth={strokeWidth}
+          />
+          <text
+            x={center}
+            y={center + 5}
+            textAnchor="middle"
+            fontSize="11"
+            fill={theme.palette.text.disabled}
+          >
+            Sem dados
+          </text>
+        </svg>
+      </Box>
+    );
+  }
+
+  // Calcula o comprimento de cada arco proporcional ao total
+  const winArc = (wins / total) * circumference;
+  const drawArc = (draws / total) * circumference;
+  const lossArc = (losses / total) * circumference;
+
+  // Offsets acumulados: o SVG desenha no sentido horário a partir das 3h
+  // Rotacionamos -90° para começar do topo
+  const winOffset = 0;
+  const drawOffset = winArc;
+  const lossOffset = winArc + drawArc;
+
+  const corVitoria = theme.palette.success.main;
+  const corEmpate = theme.palette.warning.main;
+  const corDerrota = theme.palette.error.main;
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1 }}>
+      <svg
+        width={size}
+        height={size}
+        aria-label={`Gráfico de resultados: ${wins} vitórias, ${draws} empates, ${losses} derrotas`}
+      >
+        {/* Fundo do anel */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={theme.palette.action.disabledBackground}
+          strokeWidth={strokeWidth}
+        />
+        {/* Arco de vitórias */}
+        {wins > 0 && (
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={corVitoria}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${winArc} ${circumference}`}
+            strokeDashoffset={-winOffset}
+            transform={`rotate(-90 ${center} ${center})`}
+            strokeLinecap="butt"
+          />
+        )}
+        {/* Arco de empates */}
+        {draws > 0 && (
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={corEmpate}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${drawArc} ${circumference}`}
+            strokeDashoffset={-drawOffset}
+            transform={`rotate(-90 ${center} ${center})`}
+            strokeLinecap="butt"
+          />
+        )}
+        {/* Arco de derrotas */}
+        {losses > 0 && (
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={corDerrota}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${lossArc} ${circumference}`}
+            strokeDashoffset={-lossOffset}
+            transform={`rotate(-90 ${center} ${center})`}
+            strokeLinecap="butt"
+          />
+        )}
+        {/* Label central com total de jogos */}
+        <text
+          x={center}
+          y={center - 6}
+          textAnchor="middle"
+          fontSize="18"
+          fontWeight="bold"
+          fill={theme.palette.text.primary}
+        >
+          {total}
+        </text>
+        <text
+          x={center}
+          y={center + 10}
+          textAnchor="middle"
+          fontSize="10"
+          fill={theme.palette.text.secondary}
+        >
+          jogos
+        </text>
+      </svg>
+      {/* Legenda compacta abaixo do donut */}
+      <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'success.main' }} />
+          <Typography variant="caption">V: {wins}</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'warning.main' }} />
+          <Typography variant="caption">E: {draws}</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'error.main' }} />
+          <Typography variant="caption">D: {losses}</Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
 interface UserStats {
   totalGames: number;
   totalGoals: number;
@@ -64,6 +232,7 @@ export const StatisticsScreen: React.FC = () => {
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showError } = useToast();
+  const { t } = useTranslation();
 
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,17 +306,33 @@ export const StatisticsScreen: React.FC = () => {
           variant="fullWidth"
           aria-label="Categorias de estatísticas"
         >
-          <Tab label="Geral" />
-          <Tab label="Gols" />
-          <Tab label="Conquistas" />
+          <Tab label={t('statistics.tabs.general')} />
+          <Tab label={t('statistics.tabs.goals')} />
+          <Tab label={t('statistics.tabs.achievements')} />
         </Tabs>
       </Box>
 
       <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
+          // Skeleton espelha o layout real: card de perfil + 2 cards de conteúdo
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+            {/* Skeleton do card de perfil (avatar + nome + nível + XP) */}
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Skeleton variant="circular" width={64} height={64} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" height={32} />
+                    <Skeleton variant="text" width="40%" height={20} sx={{ mt: 0.5 }} />
+                    <Skeleton variant="text" width="30%" height={20} sx={{ mt: 0.5 }} />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+            {/* Skeleton do primeiro card de conteúdo da aba */}
+            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+            {/* Skeleton do segundo card de conteúdo da aba */}
+            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
           </Box>
         ) : error ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -239,7 +424,14 @@ export const StatisticsScreen: React.FC = () => {
                         </Box>
                       </Grid>
                     </Grid>
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    {/* Gráfico donut V/E/D — SVG puro, sem bibliotecas externas */}
+                    <DonutChart
+                      wins={stats.totalWins}
+                      draws={stats.totalDraws}
+                      losses={stats.totalLosses}
+                      total={stats.totalGames}
+                    />
+                    <Box sx={{ mt: 1, textAlign: 'center' }}>
                       <Typography variant="body2" color="text.secondary">
                         Taxa de vitória: <strong>{getWinRate()}%</strong>
                       </Typography>

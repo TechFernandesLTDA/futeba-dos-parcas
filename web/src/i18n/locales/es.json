@@ -142,7 +142,14 @@
     "teamA": "Equipo A",
     "teamB": "Equipo B",
     "sortTeams": "Sortear Equipos",
-    "noPlayers": "Sin jugadores confirmados"
+    "noPlayers": "Sin jugadores confirmados",
+    "tabs": {
+      "all": "Todos",
+      "scheduled": "Programados",
+      "confirmed": "Confirmados",
+      "live": "En Vivo",
+      "finished": "Finalizados"
+    }
   },
   "ranking": {
     "title": "Ranking",
@@ -188,7 +195,12 @@
     "rankingsGeneral": "Rankings Generales",
     "topScorers": "Goleadores",
     "topGoalkeepers": "Mejores Porteros",
-    "topPlayers": "Mejores Jugadores"
+    "topPlayers": "Mejores Jugadores",
+    "tabs": {
+      "general": "General",
+      "goals": "Goles",
+      "achievements": "Logros"
+    }
   },
   "groups": {
     "title": "Grupos",
