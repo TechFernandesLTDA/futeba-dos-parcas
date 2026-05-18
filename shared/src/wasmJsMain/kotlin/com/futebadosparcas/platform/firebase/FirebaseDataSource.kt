@@ -111,7 +111,7 @@ actual class FirebaseDataSource {
     actual suspend fun createXpLog(xpLog: XpLog): Result<XpLog> = stubResult()
     actual suspend fun updateUserLevel(userId: String, level: Int, xp: Long): Result<Unit> = stubResult()
     actual suspend fun awardBadge(userId: String, badgeId: String): Result<Unit> = stubResult()
-    actual suspend fun updateStreak(userId: String, streak: Int, lastGameDate: Long): Result<Unit> = stubResult()
+    // REMOVIDO #1283: stub updateStreak(Long) removido junto com a declaração expect e o actual Android.
     actual suspend fun unlockMilestone(userId: String, milestoneId: String): Result<Unit> = stubResult()
 
     // ========== LIVE GAME ==========

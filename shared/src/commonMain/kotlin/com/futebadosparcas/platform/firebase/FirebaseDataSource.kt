@@ -120,7 +120,8 @@ expect class FirebaseDataSource() {
     suspend fun createXpLog(xpLog: XpLog): Result<XpLog>
     suspend fun updateUserLevel(userId: String, level: Int, xp: Long): Result<Unit>
     suspend fun awardBadge(userId: String, badgeId: String): Result<Unit>
-    suspend fun updateStreak(userId: String, streak: Int, lastGameDate: Long): Result<Unit>
+    // REMOVIDO #1283: overload updateStreak(Long) violava contrato String de user_streaks.last_game_date
+    // e não tinha caller vivo. Path vivo: GamificationRepositoryImpl.updateStreak(userId, gameDate: String)
     suspend fun unlockMilestone(userId: String, milestoneId: String): Result<Unit>
 
     // ========== LIVE GAME ==========
