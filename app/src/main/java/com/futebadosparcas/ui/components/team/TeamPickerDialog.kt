@@ -28,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.FavoriteTeam
 import com.futebadosparcas.domain.repository.TeamsRepository
 import org.koin.compose.koinInject
@@ -68,7 +70,7 @@ fun TeamPickerDialog(
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             Text(
-                text = "Escolha seu time",
+                text = stringResource(R.string.team_picker_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -79,7 +81,7 @@ fun TeamPickerDialog(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Buscar time...") },
+                placeholder = { Text(stringResource(R.string.team_picker_search_placeholder)) },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
             )
@@ -102,7 +104,7 @@ fun TeamPickerDialog(
                         TeamBadge(team = null, iconSize = 28)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Nenhum",
+                            text = stringResource(R.string.team_picker_none_option),
                             style = MaterialTheme.typography.bodyLarge,
                             color = if (currentTeamId == null)
                                 MaterialTheme.colorScheme.primary
