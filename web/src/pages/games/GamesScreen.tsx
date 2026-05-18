@@ -14,6 +14,8 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -41,6 +43,8 @@ export const GamesScreen: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const refreshingRef = useRef(false);
+  // Âncora do menu de filtro rápido (espelha as abas de status)
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
 
   const { games: rawGames, loading, error, refetch } = useGames();
 
@@ -91,9 +95,25 @@ export const GamesScreen: React.FC = () => {
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
             {t('games.title')}
           </Typography>
-          <IconButton aria-label="Filtrar jogos">
+          <IconButton aria-label="Filtrar jogos" onClick={(e) => setFilterAnchorEl(e.currentTarget)}>
             <FilterIcon />
           </IconButton>
+          {/* Menu de filtro rápido — espelha as abas de status existentes */}
+          <Menu
+            anchorEl={filterAnchorEl}
+            open={Boolean(filterAnchorEl)}
+            onClose={() => setFilterAnchorEl(null)}
+          >
+            {['Todos', 'Agendados', 'Confirmados', 'Ao Vivo', 'Finalizados'].map((label, idx) => (
+              <MenuItem
+                key={label}
+                selected={tabValue === idx}
+                onClick={() => { setTabValue(idx); setFilterAnchorEl(null); }}
+              >
+                {label}
+              </MenuItem>
+            ))}
+          </Menu>
           <IconButton
             aria-label="Atualizar jogos"
             onClick={handleRefresh}
