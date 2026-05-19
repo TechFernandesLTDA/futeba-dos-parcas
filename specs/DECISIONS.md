@@ -381,7 +381,7 @@ gap real era a rule + UI web.
 
 ---
 
-## 2026-05-19 — Auditoria `backend/` Express: ARQUIVAR (recomendado) — #1356
+## 2026-05-19 — Auditoria `backend/` Express: **ARQUIVADO** (decidido pelo PO) — #1356
 
 **Contexto:** auditoria read-only de `backend/` (Express+TypeORM+PostgreSQL,
 ~5.6k LOC) por 3 agentes paralelos, Phase-0 validada. Descoberta de escopo:
@@ -404,12 +404,20 @@ nada executa — anti-churn). 3 agentes convergiram independentemente em
 XP/level/season+desestubar+testes+CI), não correção incremental, para
 substituir um backend Cloud Functions que já funciona em produção.
 
-**Status:** aguardando product owner em #1356 (opções A arquivar /
-B reviver via spec dedicada / C manter como referência documentada).
+**Status:** ✅ **DECIDIDO — Opção A (ARQUIVAR)**, escolhida pelo product
+owner em 2026-05-19 (#1356). O PO inicialmente cogitou B por achar que o iOS
+usava o Express; esclarecido que iOS usa Firestore+Cloud Functions via KMP
+`shared` (zero consumidores em qualquer plataforma) → reconfirmou **A**.
+Ação: `git mv backend/ → archive/backend/`; README "Production-ready" →
+banner "ARQUIVADO/dormente"; refs em CLAUDE.md/AGENTS.md marcadas; #1352-#1355
+fechadas `wontfix` (gated por #1356); #1356 fechada.
 
-**Rejeitado:** fix-wave multi-PR + deploy/live-verify — não se aplica a
-código dormente sem alvo de hospedagem nem consumidor (regras anti-churn
-do projeto). Reconciliado: "nunca auditado" → já houve #379/#974.
+**Rejeitado:** (a) Opção B reviver — exigiria spec SDD com caso de uso
+concreto + rewrite de meses (migrations/indexes/transações/paridade
+XP/level/season/desestubar/testes/CI) para substituir um backend Cloud
+Functions que já roda em produção, sem nenhum cliente pedindo. (b) fix-wave
+multi-PR + deploy — não se aplica a código dormente sem consumidor (anti-churn).
+Reconciliado: "nunca auditado" → já houve #379/#974.
 
 **Relacionado:** `#1356`, `#1280-#1283` (audit Cloud Functions).
 
