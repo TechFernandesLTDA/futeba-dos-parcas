@@ -550,6 +550,43 @@ service cloud.firestore {
 
       // Apenas o dono ou admin pode deletar
       allow delete: if isAdmin() || canManageGame(resource.data);
+
+      // ============================================
+      // SUBCOLECAO: waitlist (games/{gameId}/waitlist/{waitlistId})
+      // ============================================
+      // #1336: lista de espera. ANTES nao existia regra para esta
+      // subcolecao -> o catch-all `match /{document=**} {allow: if false}`
+      // negava o JOIN em TODOS os clientes (Android incluso, que escreve
+      // direto via WaitlistRepositoryImpl). So a sweep server-side
+      // (CF processExpiredWaitlistEntries, Admin SDK) funcionava.
+      //
+      // Schema em paridade com Android (GameWaitlist.kt, snake_case).
+      // Arquitetura anti-race (spec feat-2026-05-18-web-waitlist §3.1):
+      // promocao/notificacao/expiracao e SERVER-ONLY (Admin SDK bypassa
+      // rules). Cliente so ENTRA (create da propria) e SAI (delete da
+      // propria); nunca atualiza status (nao pode auto-promover).
+      match /waitlist/{waitlistId} {
+        // Qualquer autenticado pode ler a fila (exibir posicao/contagem)
+        allow read: if isAuthenticated();
+
+        // Entrar: somente a propria entrada, status inicial WAITING,
+        // game_id coerente com o path, campos minimos validados.
+        // Impede forjar status PROMOTED/queue_position de terceiros.
+        allow create: if isAuthenticated() &&
+          request.resource.data.user_id == userId() &&
+          request.resource.data.game_id == gameId &&
+          request.resource.data.status == 'WAITING' &&
+          request.resource.data.user_name is string &&
+          request.resource.data.queue_position is number &&
+          request.resource.data.added_at is number;
+
+        // Sair: somente a propria entrada (ou admin para moderacao).
+        allow delete: if isAuthenticated() &&
+          (resource.data.user_id == userId() || isAdmin());
+
+        // Promocao/expiracao NUNCA no cliente (server-only, anti-race).
+        allow update: if false;
+      }
     }
 
     // ============================================

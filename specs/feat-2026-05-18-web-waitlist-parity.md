@@ -1,10 +1,24 @@
 # SPEC: Web — Lista de Espera (Waitlist) com paridade Android
 
-> **Status:** `DRAFT`
+> **Status:** `APPROVED` (aprovado pelo product owner em 2026-05-19 via AskUserQuestion)
 > **Autor:** Claude (auditoria web 2026-05-18)
-> **Data:** 2026-05-18
+> **Data:** 2026-05-18 · **Aprovação:** 2026-05-19
 > **PR:** #xxx (preencher quando criar)
 > **Issues:** #1336 (umbrella), #1344 (epic auditoria web)
+
+> **⚠️ Fase 0 (descoberta de escopo, 2026-05-19):** A estimativa original de
+> ~19h estava errada. Auditoria do código real revelou:
+> - **CF auto-promote/expiry JÁ EXISTE** (`functions/src/reminders.ts`
+>   `processExpiredWaitlistEntries`, `onSchedule every 5 minutes`, transacional).
+> - **Android waitlist JÁ EXISTE** (`WaitlistRepositoryImpl`, `GameWaitlist`,
+>   `WaitlistSection.kt`) — escreve direto em `games/{id}/waitlist`.
+> - **Web JÁ EXIBE** a aba de espera (`GameDetailScreen` L117/456/529).
+> - **BUG REAL CROSS-PLATFORM:** `firestore.rules` **não tem** match para
+>   `games/{gameId}/waitlist/*` → catch-all `allow read, write: if false`
+>   **nega join em TODOS os clientes** (Android inclusive). Só a sweep CF
+>   (Admin SDK, bypassa rules) funciona. Logo waitlist join nunca funcionou.
+> - **Delta real:** (a) rule `games/{gameId}/waitlist/{id}`; (b) hook web
+>   `useWaitlist` + fim do stub HomeTab/GameDetailScreen. Tasks 1/3/6 já existem.
 
 ---
 

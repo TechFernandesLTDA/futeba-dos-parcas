@@ -47,6 +47,7 @@ import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, getD
 import { db } from '../../../services/firebase';
 import { gamificationColors } from '../../../theme';
 import { useGames, useConfirmPresence } from '../../../hooks/useGames';
+import { useWaitlist } from '../../../hooks/useWaitlist';
 import { useGroups } from '../../../hooks/useGroups';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { formatGameDateLong, formatTimeAgo as formatTimeAgoUtil } from '../../../utils/dateFormatters';
@@ -94,6 +95,15 @@ function NextGameWidget() {
   );
 
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
+
+  // #1336: lista de espera (subcoleção games/{id}/waitlist, paridade
+  // Android + CF). Chamado antes de qualquer early return (rules of hooks).
+  const {
+    myEntry: waitlistEntry,
+    acting: waitlistActing,
+    joinWaitlist,
+    leaveWaitlist,
+  } = useWaitlist(nextGame?.id ?? null);
 
   const { data: userConfirmation, isLoading: confCheckLoading } = useQuery({
     queryKey: ['confirmation', nextGame?.id, user?.id],
@@ -150,6 +160,22 @@ function NextGameWidget() {
       }
     },
     [nextGame, cancelPresence, queryClient, user?.id, showSuccess, showError],
+  );
+
+  const handleJoinWaitlist = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      await joinWaitlist();
+    },
+    [joinWaitlist],
+  );
+
+  const handleLeaveWaitlist = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      await leaveWaitlist();
+    },
+    [leaveWaitlist],
   );
 
   const statusColors: Record<string, string> = {
@@ -342,23 +368,55 @@ function NextGameWidget() {
               </Button>
             </Box>
           ) : isFull ? (
-            <Box
-              sx={{
-                py: 1,
-                px: 2,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.warning.main, 0.08),
-                textAlign: 'center',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Typography variant="body2" color="warning.main" fontWeight={500}>
-                Jogo lotado! Entre na lista de espera
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                (em breve)
-              </Typography>
-            </Box>
+            // #1336: lista de espera funcional (era stub "(em breve)").
+            waitlistEntry ? (
+              <Box
+                sx={{
+                  py: 1,
+                  px: 2,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.warning.main, 0.08),
+                  textAlign: 'center',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Typography
+                  variant="body2"
+                  color="warning.main"
+                  fontWeight={600}
+                >
+                  Na lista de espera (posição {waitlistEntry.queuePosition})
+                </Typography>
+                <Button
+                  size="small"
+                  variant="text"
+                  color="warning"
+                  onClick={handleLeaveWaitlist}
+                  disabled={waitlistActing}
+                  sx={{ fontSize: '0.75rem' }}
+                >
+                  {waitlistActing ? 'Saindo...' : 'Sair da lista'}
+                </Button>
+              </Box>
+            ) : (
+              <Button
+                variant="outlined"
+                color="warning"
+                fullWidth
+                onClick={handleJoinWaitlist}
+                disabled={waitlistActing}
+                startIcon={
+                  waitlistActing ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : undefined
+                }
+                sx={{ fontWeight: 700 }}
+              >
+                {waitlistActing
+                  ? 'Entrando...'
+                  : 'Jogo lotado — Entrar na lista de espera'}
+              </Button>
+            )
           ) : (
             <Button
               variant="contained"
