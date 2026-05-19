@@ -381,4 +381,38 @@ gap real era a rule + UI web.
 
 ---
 
+## 2026-05-19 — Auditoria `backend/` Express: ARQUIVAR (recomendado) — #1356
+
+**Contexto:** auditoria read-only de `backend/` (Express+TypeORM+PostgreSQL,
+~5.6k LOC) por 3 agentes paralelos, Phase-0 validada. Descoberta de escopo:
+o backend está **dormente** — nenhum cliente vivo o consome (web/Android/iOS
+usam Firestore+Cloud Functions direto), sem CI, sem testes, sem deploy. A
+nota de memória "backend nunca auditado" estava **errada**: git mostra waves
+prévias (#379, #974, #797-#960, #801-#813 em comentários).
+
+**Achados (read-confirmed):** 1 CRIT (`StatisticsService` conta todo placar
+>0 como vitória — `game.teams` nunca carregado), 3 HIGH (N+1; `submitStats`
+sem transação; `xp_processed` sem idempotência), drift de schema vs Firestore
+(XP/level/game-state/season), e forte sinal de abandono (sem migrations, 0
+`@Index`/28 entities, `TeamBalancerService` stub, WebSocket/multer anunciados
+mas inexistentes, 0 testes/CI). Segurança e API surface **sem CRIT/HIGH** —
+waves prévias landaram; só hardening de config (JWT/CORS/body-size).
+
+**Decisão:** auditar para **decidir o destino** (não fix-wave em código que
+nada executa — anti-churn). 3 agentes convergiram independentemente em
+**ARQUIVAR**: reviver = rewrite (migrations+indexes+transações+paridade
+XP/level/season+desestubar+testes+CI), não correção incremental, para
+substituir um backend Cloud Functions que já funciona em produção.
+
+**Status:** aguardando product owner em #1356 (opções A arquivar /
+B reviver via spec dedicada / C manter como referência documentada).
+
+**Rejeitado:** fix-wave multi-PR + deploy/live-verify — não se aplica a
+código dormente sem alvo de hospedagem nem consumidor (regras anti-churn
+do projeto). Reconciliado: "nunca auditado" → já houve #379/#974.
+
+**Relacionado:** `#1356`, `#1280-#1283` (audit Cloud Functions).
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
