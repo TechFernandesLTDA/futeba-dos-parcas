@@ -172,6 +172,13 @@ export const EditProfileScreen: React.FC = () => {
       errors.nickname = 'Apelido deve ter no máximo 20 caracteres';
     }
 
+    // #1339: telefone é opcional, mas se preenchido deve ter DDD + número
+    // (10 fixo, 11 celular). Não força máscara (mudança de UX maior).
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      errors.phone = 'Telefone inválido (use DDD + número)';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -350,6 +357,8 @@ export const EditProfileScreen: React.FC = () => {
                 label="Telefone"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
+                error={!!formErrors.phone}
+                helperText={formErrors.phone}
                 fullWidth
                 placeholder="(11) 99999-9999"
               />
