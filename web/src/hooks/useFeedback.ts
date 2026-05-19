@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -48,7 +48,9 @@ export function useFeedback() {
     const q = query(
       collection(db, 'user_feedback'),
       where('user_id', '==', currentUser.uid),
-      orderBy('created_at', 'desc')
+      orderBy('created_at', 'desc'),
+      // #1330: limita leitura realtime do feedback do usuário (evita ler todo o histórico)
+      limit(50)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {

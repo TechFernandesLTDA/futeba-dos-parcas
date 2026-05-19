@@ -482,6 +482,10 @@ export const GroupDetailScreen: React.FC = () => {
         );
       })()}
 
+      {/* #1328: spacer p/ a barra fixa "Criar Jogo" nunca sobrepor o último
+          conteúdo (mobile bottom-bar e barra flutuante desktop). */}
+      <Box aria-hidden sx={{ height: { xs: 80, sm: 88 } }} />
+
       <Box
         sx={{
           position: 'fixed',
