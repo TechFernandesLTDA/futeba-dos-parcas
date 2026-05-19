@@ -79,7 +79,7 @@ export const ProfileScreen: React.FC = () => {
             </Box>
             <Grid container spacing={2}>
               {[0, 1, 2].map((i) => (
-                <Grid key={i} xs={4}>
+                <Grid item key={i} xs={4}>
                   <Paper variant="outlined" sx={{ p: 1.5 }}>
                     <Skeleton variant="text" width="50%" height={32} sx={{ mx: 'auto' }} />
                     <Skeleton variant="text" width="60%" height={16} sx={{ mx: 'auto' }} />
@@ -96,7 +96,7 @@ export const ProfileScreen: React.FC = () => {
             <Skeleton variant="text" width="40%" height={28} sx={{ mb: 1.5 }} />
             <Grid container spacing={2}>
               {[0, 1, 2, 3].map((i) => (
-                <Grid key={i} xs={6}>
+                <Grid item key={i} xs={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Skeleton variant="circular" width={24} height={24} />
                     <Box sx={{ flex: 1 }}>
@@ -227,7 +227,7 @@ export const ProfileScreen: React.FC = () => {
                 </Box>
 
                 <Grid container spacing={2}>
-                  <Grid xs={4}>
+                  <Grid item xs={4}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="primary">
                         {profile.level}
@@ -237,7 +237,7 @@ export const ProfileScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={4}>
+                  <Grid item xs={4}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="secondary">
                         {profile.xp}
@@ -247,7 +247,7 @@ export const ProfileScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={4}>
+                  <Grid item xs={4}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="warning.main">
                         {profile.mvpCount}
@@ -267,7 +267,7 @@ export const ProfileScreen: React.FC = () => {
                   {t('profile.statistics')}
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid xs={6}>
+                  <Grid item xs={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SoccerIcon color="action" />
                       <Box>
@@ -278,7 +278,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid item xs={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TrophyIcon color="action" />
                       <Box>
@@ -289,7 +289,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid item xs={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SoccerIcon color="success" />
                       <Box>
@@ -300,7 +300,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid item xs={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TrendingIcon color="info" />
                       <Box>
