@@ -258,7 +258,7 @@ export const GameDetailScreen: React.FC = () => {
             Voltar
           </Button>
           {error && (
-            <Button variant="contained" onClick={() => window.location.reload()}>
+            <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
               Tentar novamente
             </Button>
           )}

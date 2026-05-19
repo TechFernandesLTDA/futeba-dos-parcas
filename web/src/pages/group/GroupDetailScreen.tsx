@@ -44,6 +44,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { AppBreadcrumbs } from '../../components/layout';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
 import { useMyJoinRequest } from '../../hooks/useJoinRequests';
 import { useGames } from '../../hooks/useGames';
@@ -80,6 +81,7 @@ export const GroupDetailScreen: React.FC = () => {
   const theme = useTheme();
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
+  const queryClient = useQueryClient();
 
   // Breakpoints para layout responsivo
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -183,7 +185,7 @@ export const GroupDetailScreen: React.FC = () => {
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
             Voltar
           </Button>
-          <Button variant="contained" onClick={() => window.location.reload()}>
+          <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
             Tentar novamente
           </Button>
         </Box>

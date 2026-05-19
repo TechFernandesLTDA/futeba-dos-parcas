@@ -29,6 +29,7 @@ import {
   Refresh as RefreshIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
@@ -59,6 +60,7 @@ export const BadgesScreen: React.FC = () => {
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { unlockedIds, loading, error } = useBadges(user?.id);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
@@ -107,7 +109,7 @@ export const BadgesScreen: React.FC = () => {
           <Alert
             severity="error"
             action={
-              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => queryClient.invalidateQueries()}>
                 Tentar novamente
               </Button>
             }
