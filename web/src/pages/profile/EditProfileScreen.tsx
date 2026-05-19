@@ -30,6 +30,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PreferredPosition } from '../../types/user';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('EditProfileScreen');
 
@@ -37,13 +38,13 @@ const logger = createLogger('EditProfileScreen');
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 const AVATAR_ACCEPTED_PREFIX = 'image/';
 
-const POSITIONS: { value: PreferredPosition; label: string }[] = [
-  { value: 'GOLEIRO', label: 'Goleiro' },
-  { value: 'ZAGUEIRO', label: 'Zagueiro' },
-  { value: 'LATERAL', label: 'Lateral' },
-  { value: 'VOLANTE', label: 'Volante' },
-  { value: 'MEIA', label: 'Meia' },
-  { value: 'ATACANTE', label: 'Atacante' },
+const POSITION_VALUES: PreferredPosition[] = [
+  'GOLEIRO',
+  'ZAGUEIRO',
+  'LATERAL',
+  'VOLANTE',
+  'MEIA',
+  'ATACANTE',
 ];
 
 interface UserProfile {
@@ -57,10 +58,21 @@ interface UserProfile {
 
 export const EditProfileScreen: React.FC = () => {
   useDocumentTitle('Editar Perfil');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentUser, updateUserProfile } = useAuth();
   const { showError } = useToast();
   const [initialData, setInitialData] = useState<UserProfile | null>(null);
+
+  // Posições traduzidas — derivadas dentro do componente para usar t()
+  const POSITION_LABELS: Record<PreferredPosition, string> = {
+    GOLEIRO: t('profile.positionGoalkeeper'),
+    ZAGUEIRO: t('profile.positionDefender'),
+    LATERAL: t('profile.positionFullback'),
+    VOLANTE: t('profile.positionDefMidfielder'),
+    MEIA: t('profile.positionMidfielder'),
+    ATACANTE: t('profile.positionForward'),
+  };
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -90,13 +102,13 @@ export const EditProfileScreen: React.FC = () => {
 
     // Valida tipo (storage.rules exige image/*)
     if (!file.type.startsWith(AVATAR_ACCEPTED_PREFIX)) {
-      showError('Arquivo inválido. Selecione uma imagem.');
+      showError(t('profile.avatarInvalidType'));
       return;
     }
 
     // Valida tamanho (storage.rules limita a 2MB)
     if (file.size > AVATAR_MAX_BYTES) {
-      showError('Imagem muito grande. Máximo: 2MB.');
+      showError(t('profile.avatarTooLarge'));
       return;
     }
 
@@ -163,20 +175,20 @@ export const EditProfileScreen: React.FC = () => {
     const errors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      errors.name = 'Nome é obrigatório';
+      errors.name = t('profile.errorNameRequired');
     } else if (formData.name.length < 2) {
-      errors.name = 'Nome deve ter pelo menos 2 caracteres';
+      errors.name = t('profile.errorNameMinLength');
     }
 
     if (formData.nickname && formData.nickname.length > 20) {
-      errors.nickname = 'Apelido deve ter no máximo 20 caracteres';
+      errors.nickname = t('profile.errorNicknameMaxLength');
     }
 
     // #1339: telefone é opcional, mas se preenchido deve ter DDD + número
     // (10 fixo, 11 celular). Não força máscara (mudança de UX maior).
     const phoneDigits = formData.phone.replace(/\D/g, '');
     if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      errors.phone = 'Telefone inválido (use DDD + número)';
+      errors.phone = t('profile.errorInvalidPhone');
     }
 
     setFormErrors(errors);
@@ -204,8 +216,8 @@ export const EditProfileScreen: React.FC = () => {
         uploadedPhotoUrl = await uploadAvatar(selectedFile, currentUser.uid);
       } catch (err) {
         logger.error('Falha ao enviar foto de perfil:', err);
-        setError('Falha ao enviar foto. Tente novamente.');
-        showError('Falha ao enviar foto. Tente novamente.');
+        setError(t('profile.avatarUploadError'));
+        showError(t('profile.avatarUploadError'));
         setUploadingAvatar(false);
         setSaving(false);
         return;
@@ -244,7 +256,7 @@ export const EditProfileScreen: React.FC = () => {
     } catch (err) {
       logger.error('Falha ao salvar perfil:', err);
       setError(getFirestoreErrorMessage(err));
-      showError('Erro ao salvar perfil. Tente novamente.');
+      showError(t('profile.editProfileError'));
     } finally {
       setSaving(false);
     }
@@ -270,7 +282,7 @@ export const EditProfileScreen: React.FC = () => {
 
   return (
     <FormScaffold
-      title="Editar Perfil"
+      title={t('profile.editProfile')}
       closeDestination="/profile"
       closeVariant="X"
       isDirty={isDirty}
@@ -284,7 +296,7 @@ export const EditProfileScreen: React.FC = () => {
         )}
         {success && (
           <Alert severity="success" sx={{ mb: 2 }} aria-live="polite">
-            Perfil atualizado com sucesso!
+            {t('profile.updatedSuccess')}
           </Alert>
         )}
 
@@ -297,7 +309,7 @@ export const EditProfileScreen: React.FC = () => {
                   accept="image/*"
                   ref={fileInputRef}
                   hidden
-                  aria-label="Selecionar foto de perfil"
+                  aria-label={t('profile.selectPhotoAria')}
                   onChange={handleFileChange}
                 />
                 <Avatar
@@ -322,19 +334,19 @@ export const EditProfileScreen: React.FC = () => {
                     '&:hover': { bgcolor: 'grey.100' },
                   }}
                   size="small"
-                  aria-label="Alterar foto de perfil"
+                  aria-label={t('profile.changePhotoAria')}
                 >
                   <CameraIcon fontSize="small" />
                 </IconButton>
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                Toque para alterar a foto
+                {t('profile.tapToChangePhoto')}
               </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
-                label="Nome Completo"
+                label={t('profile.fullNameLabel')}
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 error={!!formErrors.name}
@@ -344,17 +356,17 @@ export const EditProfileScreen: React.FC = () => {
               />
 
               <TextField
-                label="Apelido (como te chamam na pelada)"
+                label={t('profile.nicknameLabel')}
                 value={formData.nickname}
                 onChange={(e) => handleInputChange('nickname', e.target.value)}
                 error={!!formErrors.nickname}
-                helperText={formErrors.nickname || 'Ex: "Zé", "Bomba", "Gordo"'}
+                helperText={formErrors.nickname || t('profile.nicknameHelper')}
                 fullWidth
                 inputProps={{ maxLength: 20 }}
               />
 
               <TextField
-                label="Telefone"
+                label={t('profile.phoneLabel')}
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 error={!!formErrors.phone}
@@ -365,17 +377,17 @@ export const EditProfileScreen: React.FC = () => {
 
               <TextField
                 select
-                label="Posição Preferida"
+                label={t('profile.preferredPosition')}
                 value={formData.preferredPosition || ''}
                 onChange={(e) => handleInputChange('preferredPosition', e.target.value || undefined)}
                 fullWidth
               >
                 <MenuItem value="">
-                  <em>Nenhuma</em>
+                  <em>{t('profile.positionNone')}</em>
                 </MenuItem>
-                {POSITIONS.map((pos) => (
-                  <MenuItem key={pos.value} value={pos.value}>
-                    {pos.label}
+                {POSITION_VALUES.map((pos) => (
+                  <MenuItem key={pos} value={pos}>
+                    {POSITION_LABELS[pos]}
                   </MenuItem>
                 ))}
               </TextField>
@@ -387,13 +399,13 @@ export const EditProfileScreen: React.FC = () => {
               />
 
               <TextField
-                label="Bio"
+                label={t('profile.bioLabel')}
                 value={formData.bio}
                 onChange={(e) => handleInputChange('bio', e.target.value)}
                 fullWidth
                 multiline
                 rows={3}
-                placeholder="Conte um pouco sobre você..."
+                placeholder={t('profile.bioPlaceholder')}
                 inputProps={{ maxLength: 200 }}
               />
             </Box>
@@ -408,7 +420,7 @@ export const EditProfileScreen: React.FC = () => {
           disabled={saving || uploadingAvatar}
           startIcon={saving || uploadingAvatar ? <CircularProgress size={20} /> : <SaveIcon />}
         >
-          {uploadingAvatar ? 'Enviando foto...' : 'Salvar Alterações'}
+          {uploadingAvatar ? t('profile.uploadingPhoto') : t('profile.saveChanges')}
         </Button>
       </Container>
     </FormScaffold>

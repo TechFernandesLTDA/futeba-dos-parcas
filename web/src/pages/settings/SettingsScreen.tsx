@@ -92,11 +92,11 @@ export const SettingsScreen: React.FC = () => {
       }
     } catch (error) {
       logger.error('Error loading settings:', error);
-      showError('Erro ao carregar configurações.');
-      showErrorRef.current('Erro ao carregar configurações.');
+      showError(t('settings.loadError'));
+      showErrorRef.current(t('settings.loadError'));
     }
     setLoading(false);
-  }, [user, showError]);
+  }, [user, showError, t]);
 
   useEffect(() => {
     if (user) {
@@ -116,10 +116,10 @@ export const SettingsScreen: React.FC = () => {
         game_reminders: settings.gameReminders,
         updated_at: serverTimestamp(),
       }, { merge: true });
-      showSuccess('Configurações salvas com sucesso!');
+      showSuccess(t('settings.saveSuccess'));
     } catch (error) {
       logger.error('Error saving settings:', error);
-      showError('Erro ao salvar configurações.');
+      showError(t('settings.saveError'));
     }
     setSaving(false);
   };
@@ -140,10 +140,10 @@ export const SettingsScreen: React.FC = () => {
       // Limpar cache e encerrar sessão — a CF já apagou os dados no backend
       await logout();
       navigate('/login', { replace: true });
-      showSuccess('Conta excluída com sucesso.');
+      showSuccess(t('settings.deleteAccountSuccess'));
     } catch (err) {
       logger.error('Error deleting account:', err);
-      showError(getFunctionErrorMessage(err, 'deleteAccount', 'Erro ao excluir conta. Tente novamente.'));
+      showError(getFunctionErrorMessage(err, 'deleteAccount', t('settings.deleteAccountError')));
     } finally {
       setDeleting(false);
       setDeleteStep2Open(false);
@@ -186,7 +186,7 @@ export const SettingsScreen: React.FC = () => {
                   <Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant="subtitle1" fontWeight={600}>
-                        {user?.name || 'Usuário'}
+                        {user?.name || t('settings.defaultUserName')}
                       </Typography>
                       <TeamBadge teamId={user?.favoriteTeam} size={24} />
                     </Box>
@@ -234,47 +234,47 @@ export const SettingsScreen: React.FC = () => {
             </Card>
 
             <Card sx={{ mb: 2 }}>
-              <List disablePadding aria-label="Opções de configuração">
+              <List disablePadding aria-label={t('settings.configOptionsAria')}>
                 <ListItemButton onClick={() => navigate('/settings/theme')}>
                   <ListItemIcon>
                     <PaletteIcon />
                   </ListItemIcon>
-                  <ListItemText primary={t('theme.title')} secondary="Personalizar aparência" />
+                  <ListItemText primary={t('theme.title')} secondary={t('settings.customizeAppearance')} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/settings/notifications')}>
                   <ListItemIcon>
                     <NotificationsIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Notificações" secondary="Preferências de notificações" />
+                  <ListItemText primary={t('nav.notifications')} secondary={t('settings.notificationsPrefs')} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/settings/gamification')}>
                   <ListItemIcon>
                     <TrophyIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Gamificação" secondary="XP, Níveis, Badges" />
+                  <ListItemText primary={t('settings.gamification')} secondary={t('settings.gamificationDesc')} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/about')}>
                   <ListItemIcon>
                     <InfoIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Sobre o App" secondary={`Versão ${import.meta.env.VITE_APP_VERSION ?? 'dev'}`} />
+                  <ListItemText primary={t('settings.aboutApp')} secondary={t('settings.appVersion', { version: import.meta.env.VITE_APP_VERSION ?? 'dev' })} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => setFeedbackOpen(true)}>
                   <ListItemIcon>
                     <FeedbackIcon />
                   </ListItemIcon>
-                  <ListItemText primary={t('feedback.sendFeedback')} secondary="Reportar bugs ou sugerir melhorias" />
+                  <ListItemText primary={t('feedback.sendFeedback')} secondary={t('settings.feedbackDesc')} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/settings/feedbacks')}>
                   <ListItemIcon>
                     <FeedbackIcon />
                   </ListItemIcon>
-                  <ListItemText primary={t('feedback.myFeedbacks')} secondary="Acompanhe seus feedbacks enviados" />
+                  <ListItemText primary={t('feedback.myFeedbacks')} secondary={t('settings.myFeedbacksDesc')} />
                 </ListItemButton>
               </List>
             </Card>
@@ -287,7 +287,7 @@ export const SettingsScreen: React.FC = () => {
                 disabled={saving}
                 startIcon={saving ? <CircularProgress size={20} /> : undefined}
               >
-                {saving ? 'Salvando...' : 'Salvar Configurações'}
+                {saving ? t('common.saving') : t('settings.saveSettings')}
               </Button>
             </Box>
 
@@ -299,9 +299,9 @@ export const SettingsScreen: React.FC = () => {
                 fullWidth
                 onClick={() => setDeleteStep1Open(true)}
                 startIcon={<DeleteForeverIcon />}
-                aria-label="Excluir minha conta permanentemente"
+                aria-label={t('settings.deleteAccountAria')}
               >
-                Excluir conta
+                {t('settings.deleteAccount')}
               </Button>
             </Box>
           </>
@@ -320,18 +320,18 @@ export const SettingsScreen: React.FC = () => {
         aria-labelledby="delete-step1-title"
         aria-describedby="delete-step1-desc"
       >
-        <DialogTitle id="delete-step1-title">Excluir conta permanentemente?</DialogTitle>
+        <DialogTitle id="delete-step1-title">{t('settings.deleteStep1Title')}</DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-step1-desc" sx={{ mb: 2 }}>
-            Esta ação é <strong>irreversível</strong>. Todos os seus dados serão apagados definitivamente, incluindo:
+            {t('settings.deleteStep1Desc')}
           </DialogContentText>
           <Box component="ul" sx={{ pl: 3, m: 0, color: 'text.secondary' }}>
             {[
-              'Perfil e informações pessoais',
-              'Histórico de jogos e estatísticas',
-              'XP, nível e badges conquistados',
-              'Fotos de perfil',
-              'Configurações e preferências',
+              t('settings.deleteItemProfile'),
+              t('settings.deleteItemHistory'),
+              t('settings.deleteItemXp'),
+              t('settings.deleteItemPhotos'),
+              t('settings.deleteItemPrefs'),
             ].map((item) => (
               <Box component="li" key={item} sx={{ mb: 0.5 }}>
                 <DialogContentText component="span" variant="body2">{item}</DialogContentText>
@@ -339,12 +339,12 @@ export const SettingsScreen: React.FC = () => {
             ))}
           </Box>
           <DialogContentText sx={{ mt: 2 }} color="error">
-            Após a exclusão você não poderá recuperar sua conta.
+            {t('settings.deleteStep1Warning')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteStep1Open(false)} autoFocus>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleDeleteStep1Continue}
@@ -352,7 +352,7 @@ export const SettingsScreen: React.FC = () => {
             variant="outlined"
             startIcon={<DeleteForeverIcon />}
           >
-            Continuar
+            {t('common.continue')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -368,27 +368,27 @@ export const SettingsScreen: React.FC = () => {
         aria-describedby="delete-step2-desc"
       >
         <DialogTitle id="delete-step2-title" color="error">
-          Confirmar exclusão definitiva
+          {t('settings.deleteStep2Title')}
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-step2-desc" sx={{ mb: 2 }}>
-            Digite o seu email <strong>{user?.email}</strong> para confirmar a exclusão da conta.
+            {t('settings.deleteStep2Desc', { email: user?.email })}
           </DialogContentText>
           <TextField
             autoFocus
             fullWidth
-            label="Seu email"
+            label={t('settings.deleteEmailLabel')}
             type="email"
             value={deleteEmailInput}
             onChange={(e) => setDeleteEmailInput(e.target.value)}
             disabled={deleting}
-            aria-label="Confirmar email para excluir conta"
+            aria-label={t('settings.deleteEmailAria')}
             inputProps={{ 'aria-describedby': 'delete-step2-desc' }}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteStep2Open(false)} disabled={deleting}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleDeleteAccountConfirm}
@@ -399,9 +399,9 @@ export const SettingsScreen: React.FC = () => {
               deleting ||
               deleteEmailInput.trim().toLowerCase() !== user?.email?.toLowerCase()
             }
-            aria-label="Excluir minha conta definitivamente"
+            aria-label={t('settings.deleteConfirmAria')}
           >
-            {deleting ? 'Excluindo...' : 'Excluir definitivamente'}
+            {deleting ? t('common.deleting') : t('settings.deleteConfirmBtn')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -83,7 +83,7 @@ export function LoginScreen() {
     const normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail !== email) setEmail(normalizedEmail);
     if (!normalizedEmail || !password) {
-      setError('Preencha todos os campos');
+      setError(t('common.fillAllFields'));
       return;
     }
 
@@ -94,7 +94,7 @@ export function LoginScreen() {
       await signIn(normalizedEmail, password);
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
-      setError(getAuthErrorMessage(err, 'Erro ao fazer login. Tente novamente'));
+      setError(getAuthErrorMessage(err, t('auth.loginFailed')));
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export function LoginScreen() {
       if (!getAuth().currentUser) return;
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
-      setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
+      setError(getAuthErrorMessage(err, t('auth.googleLoginFailed')));
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ export function LoginScreen() {
                 {t('common.appName')}
               </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Organize suas peladas!
+              {t('auth.tagline')}
             </Typography>
           </Box>
 
@@ -168,10 +168,10 @@ export function LoginScreen() {
             </Alert>
           )}
 
-          <form onSubmit={handleLogin} aria-label="Formulário de login">
+          <form onSubmit={handleLogin} aria-label={t('auth.login')}>
             <TextField
               fullWidth
-              label="Email"
+              label={t('auth.email')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -189,7 +189,7 @@ export function LoginScreen() {
 
             <TextField
               fullWidth
-              label="Senha"
+              label={t('auth.password')}
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -207,7 +207,7 @@ export function LoginScreen() {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       disabled={loading}
-                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -232,7 +232,7 @@ export function LoginScreen() {
                 },
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.login')}
             </Button>
           </form>
 
@@ -243,11 +243,11 @@ export function LoginScreen() {
               variant="body2"
               underline="hover"
             >
-              Esqueceu a senha?
+              {t('auth.forgotPassword')}
             </Link>
           </Box>
 
-          <Divider sx={{ my: 3 }}>ou</Divider>
+          <Divider sx={{ my: 3 }}>{t('common.or')}</Divider>
 
           <Button
             fullWidth
@@ -266,14 +266,14 @@ export function LoginScreen() {
               },
             }}
           >
-            Continuar com Google
+            {t('auth.continueWithGoogle')}
           </Button>
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              Não tem conta?{' '}
+              {t('auth.noAccount')}{' '}
               <Link component={RouterLink} to="/register" underline="hover">
-                Criar conta
+                {t('auth.createAccount')}
               </Link>
             </Typography>
           </Box>

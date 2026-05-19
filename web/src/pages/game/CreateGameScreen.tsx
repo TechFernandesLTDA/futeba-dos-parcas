@@ -43,6 +43,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('CreateGameScreen');
 
@@ -75,8 +76,6 @@ interface GameFormData {
   recurrenceType: 'weekly' | 'biweekly' | 'monthly';
 }
 
-const steps = ['Local e Data', 'Configurações', 'Pagamento', 'Regras'];
-
 const CUSTOM_LOCATION = '__custom__';
 
 const defaultFormData: GameFormData = {
@@ -106,9 +105,17 @@ const defaultFormData: GameFormData = {
 
 export const CreateGameScreen: React.FC = () => {
   useDocumentTitle('Criar Jogo');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const groupId = searchParams.get('groupId') || undefined;
+
+  const steps = [
+    t('games.create.stepLocationDate'),
+    t('games.create.stepSettings'),
+    t('games.create.stepPayment'),
+    t('games.create.stepRules'),
+  ];
 
   const { group } = useGroupDetail(groupId || null);
   const { groups: userGroups, loading: groupsLoading } = useGroups();
@@ -117,6 +124,9 @@ export const CreateGameScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  // Ref para t() — usado dentro do useEffect de loadFields sem re-disparar
+  const tRef = useRef(t);
+  tRef.current = t;
   const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [fields, setFields] = useState<Field[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
@@ -186,8 +196,8 @@ export const CreateGameScreen: React.FC = () => {
       } catch (err) {
         if (cancelled) return;
           logger.error('Erro ao carregar quadras:', err);
-          setFieldsError('Erro ao carregar quadras. Tente novamente.');
-          showErrorRef.current('Erro ao carregar quadras. Tente novamente.');
+          setFieldsError(tRef.current('games.create.errorLoadFields'));
+          showErrorRef.current(tRef.current('games.create.errorLoadFields'));
       } finally {
         if (!cancelled) setFieldsLoading(false);
       }
@@ -221,28 +231,28 @@ export const CreateGameScreen: React.FC = () => {
     switch (step) {
       case 0:
         if (!formData.locationName.trim()) {
-          errors.locationName = useCustomLocation ? 'Nome do local é obrigatório' : 'Selecione um local';
+          errors.locationName = useCustomLocation ? t('games.create.errorLocationNameRequired') : t('games.create.errorSelectLocation');
         }
-        if (useCustomLocation && !formData.locationAddress.trim()) errors.locationAddress = 'Endereço é obrigatório';
+        if (useCustomLocation && !formData.locationAddress.trim()) errors.locationAddress = t('games.create.errorAddressRequired');
         if (!useCustomLocation && formData.locationId && fields.length > 0 && !formData.fieldId) {
-          errors.fieldId = 'Selecione uma quadra';
+          errors.fieldId = t('games.create.errorSelectField');
         }
-        if (!formData.date) errors.date = 'Data é obrigatória';
-        if (!formData.time) errors.time = 'Horário é obrigatório';
+        if (!formData.date) errors.date = t('games.create.errorDateRequired');
+        if (!formData.time) errors.time = t('games.create.errorTimeRequired');
         break;
       case 1:
         if (formData.maxPlayers < 2 || formData.maxPlayers > 50) {
-          errors.maxPlayers = 'Mínimo 2, máximo 50 jogadores';
+          errors.maxPlayers = t('games.create.errorPlayersRange');
         }
         if (formData.maxGoalkeepers < 0 || formData.maxGoalkeepers > 10) {
-          errors.maxGoalkeepers = 'Máximo 10 goleiros';
+          errors.maxGoalkeepers = t('games.create.errorMaxGoalkeepers');
         }
         break;
       case 2:
         if (formData.pixPaymentEnabled) {
-          if (!formData.pixKey.trim()) errors.pixKey = 'Chave Pix é obrigatória';
+          if (!formData.pixKey.trim()) errors.pixKey = t('games.create.errorPixKeyRequired');
           if (!formData.pixBeneficiaryName.trim()) {
-            errors.pixBeneficiaryName = 'Nome do beneficiário é obrigatório';
+            errors.pixBeneficiaryName = t('games.create.errorPixBeneficiaryRequired');
           }
         }
         break;
@@ -299,7 +309,7 @@ export const CreateGameScreen: React.FC = () => {
           });
           if (conflicting) {
             const g = conflicting.data();
-            showError(`Já existe um jogo nesta quadra às ${g.time}. Escolha outro horário.`);
+            showError(t('games.create.conflictExists', { time: g.time }));
             return;
           }
         } catch (overlapErr) {
@@ -308,10 +318,7 @@ export const CreateGameScreen: React.FC = () => {
           // transiente não deve impedir um jogo legítimo — mas avisamos o
           // usuário em vez de falhar em silêncio (risco de double-booking).
           logger.error('Erro ao verificar sobreposição de horários:', overlapErr);
-          showError(
-            'Não foi possível verificar conflitos de horário nesta quadra. ' +
-              'Confira manualmente se já existe outro jogo no mesmo horário.'
-          );
+          showError(t('games.create.conflictCheckFailed'));
         }
       }
 
@@ -355,11 +362,11 @@ export const CreateGameScreen: React.FC = () => {
       }
 
       const gameId = await createGame(gamePayload as Partial<import('../../types/game').Game>);
-      showSuccess('Jogo criado com sucesso!');
+      showSuccess(t('games.create.createSuccess'));
       navigate(`/game/${gameId}`);
     } catch (err: unknown) {
       logger.error('Error creating game:', err);
-      showError(getFunctionsErrorMessage(err, 'createGame', 'Erro ao criar jogo'));
+      showError(getFunctionsErrorMessage(err, 'createGame', t('games.create.createError')));
     }
   };
 
@@ -370,14 +377,14 @@ export const CreateGameScreen: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {formData.groupName && (
               <Alert severity="info">
-                Criando jogo para o grupo: <strong>{formData.groupName}</strong>
+                {t('games.create.creatingForGroup')} <strong>{formData.groupName}</strong>
               </Alert>
             )}
 
             {!groupId && userGroups && userGroups.length > 0 && (
               <TextField
                 select
-                label="Grupo"
+                label={t('games.create.group')}
                 value={formData.groupId || ''}
                 onChange={(e) => {
                   const selectedGroup = userGroups.find((g) => g.id === e.target.value);
@@ -388,11 +395,11 @@ export const CreateGameScreen: React.FC = () => {
                     visibility: selectedGroup ? 'GROUP_ONLY' : prev.visibility,
                   }));
                 }}
-                helperText={groupsLoading ? 'Carregando grupos...' : 'Selecione um grupo (opcional)'}
+                helperText={groupsLoading ? t('games.create.loadingGroups') : t('games.create.selectGroupOptional')}
                 fullWidth
               >
                 <MenuItem value="">
-                  <em>Sem grupo</em>
+                  <em>{t('games.create.noGroup')}</em>
                 </MenuItem>
                 {userGroups.map((g) => (
                   <MenuItem key={g.id} value={g.id}>
@@ -405,7 +412,7 @@ export const CreateGameScreen: React.FC = () => {
             {/* Seletor de quadras cadastradas */}
             <TextField
               select
-              label="Quadra / Local"
+              label={t('games.create.fieldOrLocation')}
               value={useCustomLocation ? CUSTOM_LOCATION : formData.locationId}
               onChange={(e) => {
                 const val = e.target.value;
@@ -431,7 +438,7 @@ export const CreateGameScreen: React.FC = () => {
                 }
               }}
               error={!!formErrors.locationName}
-              helperText={formErrors.locationName || (locationsLoading ? 'Carregando quadras...' : `${locations.length} quadras disponíveis`)}
+              helperText={formErrors.locationName || (locationsLoading ? t('games.create.loadingFields') : t('games.create.fieldsAvailable', { count: locations.length }))}
               fullWidth
               required
             >
@@ -441,7 +448,7 @@ export const CreateGameScreen: React.FC = () => {
                 </MenuItem>
               ))}
               <MenuItem value={CUSTOM_LOCATION}>
-                Outro local (digitar manualmente)
+                {t('games.create.otherLocation')}
               </MenuItem>
             </TextField>
 
@@ -449,25 +456,25 @@ export const CreateGameScreen: React.FC = () => {
             {useCustomLocation && (
               <>
                 <TextField
-                  label="Nome do Local"
+                  label={t('games.create.locationName')}
                   value={formData.locationName}
                   onChange={(e) => handleInputChange('locationName', e.target.value)}
                   error={!!formErrors.locationName}
                   helperText={formErrors.locationName}
                   fullWidth
                   required
-                  placeholder="Ex: Quadra do Parque, Ginásio Municipal"
+                  placeholder={t('games.create.locationNamePlaceholder')}
                 />
 
                 <TextField
-                  label="Endereço Completo"
+                  label={t('games.create.fullAddress')}
                   value={formData.locationAddress}
                   onChange={(e) => handleInputChange('locationAddress', e.target.value)}
                   error={!!formErrors.locationAddress}
                   helperText={formErrors.locationAddress}
                   fullWidth
                   required
-                  placeholder="Ex: Rua das Flores, 123 - Centro"
+                  placeholder={t('games.create.fullAddressPlaceholder')}
                 />
               </>
             )}
@@ -476,7 +483,7 @@ export const CreateGameScreen: React.FC = () => {
             {!useCustomLocation && formData.locationId && (
               fieldsLoading ? (
                 <Alert severity="info" icon={false}>
-                  Carregando quadras...
+                  {t('games.create.loadingFields')}
                 </Alert>
               ) : fieldsError ? (
                 <Alert severity="error" icon={false}>
@@ -485,7 +492,7 @@ export const CreateGameScreen: React.FC = () => {
               ) : fields.length > 0 ? (
                 <TextField
                   select
-                  label="Quadra"
+                  label={t('games.create.field')}
                   value={formData.fieldId}
                   onChange={(e) => {
                     const field = fields.find((f) => f.id === e.target.value);
@@ -501,7 +508,7 @@ export const CreateGameScreen: React.FC = () => {
                     }
                   }}
                   error={!!formErrors.fieldId}
-                  helperText={formErrors.fieldId || `${fields.length} quadra(s) neste local`}
+                  helperText={formErrors.fieldId || t('games.create.fieldsAtLocation', { count: fields.length })}
                   fullWidth
                   required
                 >
@@ -509,13 +516,13 @@ export const CreateGameScreen: React.FC = () => {
                     <MenuItem key={f.id} value={f.id}>
                       {f.name} — {FIELD_TYPE_LABELS[f.type as FieldType] || f.type}
                       {f.hourlyPrice ? ` (R$ ${f.hourlyPrice})` : ''}
-                      {f.isCovered ? ' · Coberta' : ''}
+                      {f.isCovered ? ` · ${t('games.create.covered')}` : ''}
                     </MenuItem>
                   ))}
                 </TextField>
               ) : (
                 <Alert severity="warning" icon={false}>
-                  Nenhuma quadra cadastrada neste local. As informações do local serão usadas.
+                  {t('games.create.noFieldsAtLocation')}
                 </Alert>
               )
             )}
@@ -531,7 +538,7 @@ export const CreateGameScreen: React.FC = () => {
             )}
 
             <TextField
-              label="Data"
+              label={t('games.create.date')}
               type="date"
               value={formData.date}
               onChange={(e) => handleInputChange('date', e.target.value)}
@@ -544,7 +551,7 @@ export const CreateGameScreen: React.FC = () => {
 
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
-                label="Horário de Início"
+                label={t('games.create.startTime')}
                 type="time"
                 value={formData.time}
                 onChange={(e) => handleInputChange('time', e.target.value)}
@@ -556,7 +563,7 @@ export const CreateGameScreen: React.FC = () => {
               />
 
               <TextField
-                label="Horário de Término"
+                label={t('games.create.endTime')}
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => handleInputChange('endTime', e.target.value)}
@@ -572,7 +579,7 @@ export const CreateGameScreen: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
               select
-              label="Tipo de Quadra"
+              label={t('games.create.fieldTypeLabel')}
               value={formData.fieldType}
               onChange={(e) => { handleInputChange('fieldType', e.target.value as FieldType); }}
               fullWidth
@@ -586,7 +593,7 @@ export const CreateGameScreen: React.FC = () => {
 
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
-                label="Máx. Jogadores"
+                label={t('games.create.maxPlayers')}
                 type="number"
                 value={formData.maxPlayers}
                 onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('maxPlayers', isNaN(v) ? 14 : v); }}
@@ -597,7 +604,7 @@ export const CreateGameScreen: React.FC = () => {
               />
 
               <TextField
-                label="Máx. Goleiros"
+                label={t('games.create.maxGoalkeepers')}
                 type="number"
                 value={formData.maxGoalkeepers}
                 onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('maxGoalkeepers', isNaN(v) ? 2 : v); }}
@@ -609,7 +616,7 @@ export const CreateGameScreen: React.FC = () => {
             </Box>
 
             <TextField
-              label="Número de Times"
+              label={t('games.create.numberOfTeams')}
               type="number"
               value={formData.numberOfTeams}
               onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('numberOfTeams', isNaN(v) ? 2 : v); }}
@@ -618,7 +625,7 @@ export const CreateGameScreen: React.FC = () => {
             />
 
             <FormControl>
-              <FormLabel>Visibilidade</FormLabel>
+              <FormLabel>{t('games.create.visibility')}</FormLabel>
               <RadioGroup
                 value={formData.visibility}
                 onChange={(e) => handleInputChange('visibility', e.target.value as GameVisibility)}
@@ -626,17 +633,17 @@ export const CreateGameScreen: React.FC = () => {
                 <FormControlLabel
                   value="GROUP_ONLY"
                   control={<Radio />}
-                  label="Apenas membros do grupo"
+                  label={t('games.create.visibilityGroupOnly')}
                 />
                 <FormControlLabel
                   value="PUBLIC_CLOSED"
                   control={<Radio />}
-                  label="Público (lista fechada)"
+                  label={t('games.create.visibilityPublicClosed')}
                 />
                 <FormControlLabel
                   value="PUBLIC_OPEN"
                   control={<Radio />}
-                  label="Público (aceita solicitações)"
+                  label={t('games.create.visibilityPublicOpen')}
                 />
               </RadioGroup>
             </FormControl>
@@ -645,10 +652,10 @@ export const CreateGameScreen: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
                   <Typography variant="body2" fontWeight={600}>
-                    Recorrência
+                    {t('games.create.recurrence')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Criar jogos automaticamente
+                    {t('games.create.recurrenceDesc')}
                   </Typography>
                 </Box>
                 <Switch
@@ -659,16 +666,16 @@ export const CreateGameScreen: React.FC = () => {
               {formData.recurrenceEnabled && (
                 <TextField
                   select
-                  label="Frequência"
+                  label={t('games.create.frequency')}
                   value={formData.recurrenceType}
                   onChange={(e) => handleInputChange('recurrenceType', e.target.value as 'weekly' | 'biweekly' | 'monthly')}
                   fullWidth
                   size="small"
                   sx={{ mt: 1 }}
                 >
-                  <MenuItem value="weekly">Semanal</MenuItem>
-                  <MenuItem value="biweekly">Quinzenal</MenuItem>
-                  <MenuItem value="monthly">Mensal</MenuItem>
+                  <MenuItem value="weekly">{t('games.create.frequencyWeekly')}</MenuItem>
+                  <MenuItem value="biweekly">{t('games.create.frequencyBiweekly')}</MenuItem>
+                  <MenuItem value="monthly">{t('games.create.frequencyMonthly')}</MenuItem>
                 </TextField>
               )}
             </Card>
@@ -679,7 +686,7 @@ export const CreateGameScreen: React.FC = () => {
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
-              label="Valor por Jogador"
+              label={t('games.create.pricePerPlayer')}
               type="number"
               value={formData.dailyPrice}
               onChange={(e) => { const v = parseFloat(e.target.value); handleInputChange('dailyPrice', isNaN(v) ? 0 : v); }}
@@ -697,14 +704,14 @@ export const CreateGameScreen: React.FC = () => {
                   onChange={(e) => handleInputChange('pixPaymentEnabled', e.target.checked)}
                 />
               }
-              label="Aceitar pagamento via Pix"
+              label={t('games.create.acceptPix')}
             />
 
             {formData.pixPaymentEnabled && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pl: 2 }}>
                 <TextField
                   select
-                  label="Tipo de Chave Pix"
+                  label={t('games.create.pixKeyType')}
                   value={formData.pixKeyType}
                   onChange={(e) => handleInputChange('pixKeyType', e.target.value as PixKeyType)}
                   fullWidth
@@ -717,7 +724,7 @@ export const CreateGameScreen: React.FC = () => {
                 </TextField>
 
                 <TextField
-                  label="Chave Pix"
+                  label={t('games.create.pixKey')}
                   value={formData.pixKey}
                   onChange={(e) => handleInputChange('pixKey', e.target.value)}
                   error={!!formErrors.pixKey}
@@ -727,7 +734,7 @@ export const CreateGameScreen: React.FC = () => {
                 />
 
                 <TextField
-                  label="Nome do Beneficiário"
+                  label={t('games.create.pixBeneficiaryName')}
                   value={formData.pixBeneficiaryName}
                   onChange={(e) => handleInputChange('pixBeneficiaryName', e.target.value)}
                   error={!!formErrors.pixBeneficiaryName}
@@ -744,20 +751,17 @@ export const CreateGameScreen: React.FC = () => {
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
-              label="Regras do Jogo"
+              label={t('games.create.gameRules')}
               value={formData.rules}
               onChange={(e) => handleInputChange('rules', e.target.value)}
               fullWidth
               multiline
               rows={6}
-              placeholder="Ex: Jogadores devem chegar 15min antes...
-- Não é permitido chute a gol sem camisa
-- Cartão vermelho = R$10 a mais
-- Bebidas não permitidas na quadra..."
+              placeholder={t('games.create.gameRulesPlaceholder')}
             />
 
             <Alert severity="info">
-              As regras serão exibidas para todos os jogadores confirmados.
+              {t('games.create.rulesShownInfo')}
             </Alert>
           </Box>
         );
@@ -770,7 +774,7 @@ export const CreateGameScreen: React.FC = () => {
   return (
     <AdaptiveFormSheet closeDestination={closeDestination} isDirty={isDirty}>
     <FormScaffold
-      title="Criar Jogo"
+      title={t('games.createGame')}
       closeDestination={closeDestination}
       closeVariant="X"
       isDirty={isDirty}
@@ -784,11 +788,11 @@ export const CreateGameScreen: React.FC = () => {
         )}
         {locationsError && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            Erro ao carregar locais: {locationsError}. Tente recarregar a página.
+            {t('games.create.errorLoadLocations', { error: locationsError })}
           </Alert>
         )}
 
-        <Stepper activeStep={activeStep} orientation="vertical" aria-label="Etapas de criação do jogo">
+        <Stepper activeStep={activeStep} orientation="vertical" aria-label={t('games.create.stepperLabel')}>
           {steps.map((label, index) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -803,7 +807,7 @@ export const CreateGameScreen: React.FC = () => {
                     onClick={handleBack}
                     startIcon={<BackIcon />}
                   >
-                    Voltar
+                    {t('common.back')}
                   </Button>
                   <Box sx={{ flex: 1 }} />
                   {activeStep === steps.length - 1 ? (
@@ -813,7 +817,7 @@ export const CreateGameScreen: React.FC = () => {
                       disabled={loading}
                       endIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
                     >
-                      Criar Jogo
+                      {t('games.createGame')}
                     </Button>
                   ) : (
                     <Button
@@ -821,7 +825,7 @@ export const CreateGameScreen: React.FC = () => {
                       onClick={handleNext}
                       endIcon={<NextIcon />}
                     >
-                      Próximo
+                      {t('common.next')}
                     </Button>
                   )}
                 </Box>

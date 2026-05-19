@@ -34,9 +34,11 @@ import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export function RegisterScreen() {
   useDocumentTitle('Cadastro');
+  const { t } = useTranslation();
   const theme = useTheme();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -75,16 +77,16 @@ export function RegisterScreen() {
 
   const validate = (emailVal: string) => {
     const errs: typeof fieldErrors = {};
-    if (!name.trim()) errs.name = 'Digite seu nome';
-    else if (name.trim().length < 3) errs.name = 'Nome deve ter pelo menos 3 caracteres';
+    if (!name.trim()) errs.name = t('auth.errorEnterName');
+    else if (name.trim().length < 3) errs.name = t('auth.errorNameMinLength');
 
-    if (!emailVal) errs.email = 'Digite seu email';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) errs.email = 'Digite um email válido';
+    if (!emailVal) errs.email = t('auth.errorEnterEmail');
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) errs.email = t('auth.errorInvalidEmail');
 
-    if (!password) errs.password = 'Digite sua senha';
-    else if (password.length < 6) errs.password = 'Senha deve ter pelo menos 6 caracteres';
+    if (!password) errs.password = t('auth.errorEnterPassword');
+    else if (password.length < 6) errs.password = t('auth.errorPasswordMinLength');
 
-    if (password !== confirmPassword) errs.confirmPassword = 'As senhas não coincidem';
+    if (password !== confirmPassword) errs.confirmPassword = t('auth.errorPasswordMismatch');
 
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -105,7 +107,7 @@ export function RegisterScreen() {
       await signUp(normalizedEmail, password, name.trim());
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
-      setError(getAuthErrorMessage(err, 'Erro ao criar conta. Tente novamente'));
+      setError(getAuthErrorMessage(err, t('auth.registerFailed')));
     } finally {
       setLoading(false);
     }
@@ -120,7 +122,7 @@ export function RegisterScreen() {
       if (!getAuth().currentUser) return;
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
-      setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
+      setError(getAuthErrorMessage(err, t('auth.googleLoginFailed')));
     } finally {
       setLoading(false);
     }
@@ -152,7 +154,7 @@ export function RegisterScreen() {
             <IconButton
               onClick={() => navigate('/login')}
               sx={{ position: 'absolute', left: 16, top: 16 }}
-              aria-label="Voltar para login"
+              aria-label={t('auth.backToLogin')}
             >
               <ArrowBack />
             </IconButton>
@@ -173,10 +175,10 @@ export function RegisterScreen() {
               <SportsSoccer sx={{ fontSize: 32, color: theme.palette.primary.contrastText }} />
             </Box>
             <Typography component="h1" variant="h5" fontWeight="bold">
-              Criar Conta
+              {t('auth.createAccountTitle')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Junte-se à pelada!
+              {t('auth.joinTagline')}
             </Typography>
           </Box>
 
@@ -186,10 +188,10 @@ export function RegisterScreen() {
             </Alert>
           )}
 
-          <form onSubmit={handleRegister} aria-label="Formulário de cadastro">
+          <form onSubmit={handleRegister} aria-label={t('auth.createAccountTitle')}>
             <TextField
               fullWidth
-              label="Nome completo"
+              label={t('auth.fullName')}
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -211,7 +213,7 @@ export function RegisterScreen() {
 
             <TextField
               fullWidth
-              label="Email"
+              label={t('auth.email')}
               type="email"
               value={email}
               onChange={(e) => {
@@ -234,7 +236,7 @@ export function RegisterScreen() {
 
             <TextField
               fullWidth
-              label="Senha"
+              label={t('auth.password')}
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => {
@@ -257,7 +259,7 @@ export function RegisterScreen() {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       disabled={loading}
-                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -269,7 +271,7 @@ export function RegisterScreen() {
 
             <TextField
               fullWidth
-              label="Confirmar senha"
+              label={t('auth.confirmPasswordField')}
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => {
@@ -306,11 +308,11 @@ export function RegisterScreen() {
                 },
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Criar conta'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.createAccount')}
             </Button>
           </form>
 
-          <Divider sx={{ my: 3 }}>ou</Divider>
+          <Divider sx={{ my: 3 }}>{t('common.or')}</Divider>
 
           <Button
             fullWidth
@@ -329,14 +331,14 @@ export function RegisterScreen() {
               },
             }}
           >
-            Continuar com Google
+            {t('auth.continueWithGoogle')}
           </Button>
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              Já tem conta?{' '}
+              {t('auth.alreadyHaveAccount')}{' '}
               <Link component={RouterLink} to="/login" underline="hover">
-                Entrar
+                {t('auth.login')}
               </Link>
             </Typography>
           </Box>
