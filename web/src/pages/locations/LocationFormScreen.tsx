@@ -80,6 +80,10 @@ export const LocationFormScreen: React.FC = () => {
   useDocumentTitle(isEdit ? 'Editar Local' : 'Criar Local');
 
   const [form, setForm] = useState<FormState>(defaultForm);
+  // #1339: baseline para isDirty. Em criação = defaultForm; em edição é
+  // sobrescrito pelos dados carregados (senão isDirty fica sempre true e
+  // dispara prompt falso de "alterações não salvas").
+  const [initialForm, setInitialForm] = useState<FormState>(defaultForm);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(isEdit);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -100,7 +104,9 @@ export const LocationFormScreen: React.FC = () => {
         }
         const data = snakeToCamel<Location>(snap.data());
         if (!cancelled) {
-          setForm({
+          // #1339: um único literal nomeado alimenta form E baseline, para
+          // não divergirem se FormState crescer.
+          const loaded: FormState = {
             name: data.name || '',
             address: data.address || '',
             city: data.city || '',
@@ -115,7 +121,9 @@ export const LocationFormScreen: React.FC = () => {
             hasLighting: !!data.hasLighting,
             hasParking: !!data.hasParking,
             hasShowers: !!data.hasShowers,
-          });
+          };
+          setForm(loaded);
+          setInitialForm(loaded);
           setFetchError(null);
         }
       } catch (err) {
@@ -132,7 +140,7 @@ export const LocationFormScreen: React.FC = () => {
     return () => { cancelled = true; };
   }, [isEdit, locationId]);
 
-  const isDirty = JSON.stringify(form) !== JSON.stringify(defaultForm);
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormState, string>> = {};
@@ -143,6 +151,12 @@ export const LocationFormScreen: React.FC = () => {
     if (form.fieldCount < 1) e.fieldCount = 'Mínimo 1 campo';
     if (form.playersPerTeam < 3 || form.playersPerTeam > 11) {
       e.playersPerTeam = 'Entre 3 e 11';
+    }
+    // #1339: telefone é opcional, mas se preenchido deve ter DDD + número
+    // (10 dígitos fixo, 11 celular). Não força máscara (mudança de UX maior).
+    const phoneDigits = form.phone.replace(/\D/g, '');
+    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      e.phone = 'Telefone inválido (use DDD + número)';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -236,7 +250,7 @@ export const LocationFormScreen: React.FC = () => {
       <AdaptiveFormSheet closeDestination={closeDestination}>
         <FormScaffold title="Editar Local" closeDestination={closeDestination} closeVariant="X">
           <Container maxWidth="sm" sx={{ py: 4 }}>
-            <Alert severity="error" sx={{ mb: 2 }}>{fetchError}</Alert>
+            <Alert severity="error" sx={{ mb: 2 }} role="alert" aria-live="assertive">{fetchError}</Alert>
             <Button variant="outlined" fullWidth onClick={() => navigate('/locations')}>
               Voltar para Locais
             </Button>
@@ -388,6 +402,8 @@ export const LocationFormScreen: React.FC = () => {
                     fullWidth
                     value={form.phone}
                     onChange={(e) => handleChange('phone', e.target.value)}
+                    error={!!errors.phone}
+                    helperText={errors.phone}
                     placeholder="(00) 00000-0000"
                   />
                   <TextField

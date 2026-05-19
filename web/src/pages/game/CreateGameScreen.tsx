@@ -778,7 +778,7 @@ export const CreateGameScreen: React.FC = () => {
     >
       <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }} role="alert" aria-live="assertive">
             {error}
           </Alert>
         )}
