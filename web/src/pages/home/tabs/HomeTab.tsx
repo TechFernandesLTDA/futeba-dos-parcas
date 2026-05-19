@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining, XP_VALUES } from '../../../types/gamification';
+import { getLevelColor } from '../../../types/user';
+import { useConfirmPresence } from '../../../hooks/useGames';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
 import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsChecklist';
@@ -52,8 +55,6 @@ import { useWaitlist } from '../../../hooks/useWaitlist';
 import { useGroups } from '../../../hooks/useGroups';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { formatGameDateLong, formatTimeAgo as formatTimeAgoUtil } from '../../../utils/dateFormatters';
-import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../../../types/gamification';
-import { getLevelColor } from '../../../types/user';
 import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
 import { TeamBadge } from '../../../components/team/TeamBadge';

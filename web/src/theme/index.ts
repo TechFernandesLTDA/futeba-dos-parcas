@@ -234,10 +234,10 @@ export const futebaDarkTheme = createTheme({
     ...futebaTheme.components,
     MuiCard: {
       styleOverrides: {
-        root: {
-          backgroundColor: '#1E293B',
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          backgroundColor: theme.palette.background.paper,
           boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-        },
+        }),
       },
     },
     MuiBottomNavigation: {
