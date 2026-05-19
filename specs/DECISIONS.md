@@ -339,4 +339,46 @@ memória `project_cpf_audit_2026_05_17`.
 
 ---
 
+## 2026-05-19 — Waitlist #1336: feature aprovada + escopo corrigido por Fase 0
+
+**Contexto:** Auditoria web #1336 ("Waitlist functionality not implemented").
+SDD Regra #1 exige spec aprovada antes de implementar feature. Product owner
+aprovou shipar via AskUserQuestion (2026-05-19); spec
+`specs/feat-2026-05-18-web-waitlist-parity.md` → `APPROVED`.
+
+**Decisão:** Implementar o **delta real**, não os ~19h estimados.
+
+**Fase 0 (auditoria do código real) revelou:**
+- `processExpiredWaitlistEntries` (`functions/src/reminders.ts`) já faz
+  expiry/promote transacional via `onSchedule every 5 minutes` (Admin SDK).
+- Android já tem waitlist completa (`WaitlistRepositoryImpl` escreve direto
+  em `games/{gameId}/waitlist`, schema `GameWaitlist`).
+- Web já **exibe** a aba de espera (`GameDetailScreen`).
+- **Bug raiz cross-platform:** `firestore.rules` não tinha match para
+  `games/{gameId}/waitlist/*`; o catch-all `match /{document=**} {allow
+  read,write: if false}` **nega join em todos os clientes** (Android também).
+  Só a sweep CF funciona (Admin SDK bypassa rules). Waitlist join nunca
+  funcionou em produção em nenhuma plataforma.
+
+**Escopo aprovado (delta):**
+1. `firestore.rules`: regra `games/{gameId}/waitlist/{waitlistId}` —
+   read autenticado; create só do próprio `user_id` + validação de schema;
+   delete próprio/admin; **promote/update NUNCA no cliente** (server-only,
+   mantém arquitetura anti-race do spec §3.1).
+2. Web `useWaitlist` (join/leave/position) espelhando schema Android.
+3. Fim do stub `HomeTab` ("(em breve)") + ação em `GameDetailScreen`.
+4. Testes emulador (rules) + Vitest (hook).
+
+**Rejeitado:** promoção client-side (viola spec §3.1 anti-race; CF server-side
+já existe e é a fonte de verdade — paridade com Android).
+
+**Consequências:** (+) conserta waitlist nas DUAS plataformas com 1 regra;
+(+) sem reescrever CF/Android. (→) Finding #1336 "auto-promotion not
+implemented" reconciliado como **server-side by-design** (CF pré-existe);
+gap real era a rule + UI web.
+
+**Relacionado:** `#1336`, `#1344`, `specs/feat-2026-05-18-web-waitlist-parity.md`.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
