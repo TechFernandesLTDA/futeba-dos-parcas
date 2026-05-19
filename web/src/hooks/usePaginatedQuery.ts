@@ -54,6 +54,25 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
       const constraints: QueryConstraint[] = [];
 
       whereClauses.forEach(([field, op, value]) => {
+        // #1331: Firestore limita `in`/`not-in`/`array-contains-any` a 10
+        // valores. Chunkar aqui (como sugeria a auditoria) é INCOMPATÍVEL
+        // com este hook: ele é cursor-paginado (startAfter + limit) — N
+        // queries paralelas teriam cursores independentes, quebrando a
+        // paginação e a ordenação. Fail-fast com erro claro de dev é o
+        // comportamento correto (o caller deve chunkar antes ou usar outro
+        // hook); evita o erro críptico do SDK em runtime de produção.
+        if (
+          (op === 'in' || op === 'not-in' || op === 'array-contains-any') &&
+          Array.isArray(value) &&
+          value.length > 10
+        ) {
+          throw new Error(
+            `usePaginatedQuery: operador '${op}' em '${field}' excede 10 ` +
+              `valores (${value.length}). Este hook é cursor-paginado e não ` +
+              `pode chunkar sem quebrar a paginação. Pré-filtre/chunke no ` +
+              `caller ou use uma query não-paginada.`
+          );
+        }
         constraints.push(where(field, op as WhereFilterOp, value));
       });
 
