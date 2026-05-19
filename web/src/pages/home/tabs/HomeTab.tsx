@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining, XP_VALUES } from '../../../types/gamification';
 import { getLevelColor } from '../../../types/user';
-import { useConfirmPresence } from '../../../hooks/useGames';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
 import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsChecklist';
@@ -449,10 +448,17 @@ function MiniRankingWidget() {
   const primaryGroup = groups?.[0];
 
   const { data: players = [], isLoading } = useQuery<LeaguePlayer[]>({
-    queryKey: ['miniRanking', user?.id],
+    queryKey: ['miniRanking', user?.id, primaryGroup?.id],
     queryFn: async () => {
+      if (!primaryGroup?.id) return [];
       const seasonRef = collection(db, 'season_participation');
-      const q = query(seasonRef, orderBy('points', 'desc'), limit(3));
+      // Escopa o mini-ranking ao grupo primário (evita misturar grupos)
+      const q = query(
+        seasonRef,
+        where('group_id', '==', primaryGroup.id),
+        orderBy('points', 'desc'),
+        limit(3),
+      );
       const snapshot = await getDocs(q);
       if (snapshot.empty) return [];
 
@@ -508,7 +514,7 @@ function MiniRankingWidget() {
         };
       });
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!primaryGroup?.id,
     staleTime: 3 * 60 * 1000,
   });
 
@@ -804,7 +810,14 @@ export function HomeTab() {
     return null;
   };
 
-  const streakBonus = (user?.currentStreak || 0) >= 10 ? 30 : (user?.currentStreak || 0) >= 7 ? 20 : 10;
+  // Streak XP bonus alinhado com XP_VALUES (shared/xp-constants.json) — fonte única
+  const streak = user?.currentStreak || 0;
+  const streakBonus =
+    streak >= 10 ? XP_VALUES.STREAK_10
+    : streak >= 7 ? XP_VALUES.STREAK_7
+    : streak >= 5 ? XP_VALUES.STREAK_5
+    : streak >= 3 ? XP_VALUES.STREAK_3
+    : 0;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -991,11 +1004,13 @@ export function HomeTab() {
                 </Typography>
               )}
             </Box>
-            <Chip
-              label={`+${streakBonus} XP`}
-              size="small"
-              sx={{ bgcolor: alpha(gamificationColors.streak, 0.15), color: gamificationColors.streak, fontWeight: 600 }}
-            />
+            {streakBonus > 0 && (
+              <Chip
+                label={`+${streakBonus} XP`}
+                size="small"
+                sx={{ bgcolor: alpha(gamificationColors.streak, 0.15), color: gamificationColors.streak, fontWeight: 600 }}
+              />
+            )}
           </CardContent>
         </Card>
       ) : (
