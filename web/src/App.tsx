@@ -389,8 +389,11 @@ function AppRoutes() {
         <Route path="/group/:groupId/edit" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/settings" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/cashbox" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense></GroupMemberRoute>} />
-        <Route path="/group/:groupId/players" element={<Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense>} />
-        <Route path="/group/:groupId/schedules" element={<Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense>} />
+        {/* #1332: rotas de grupo exigem GroupMemberRoute (consistente com
+            /edit, /settings, /invite). Sem o guard, não-membros caíam em
+            permission-denied cru das rules em vez de redirect gracioso. */}
+        <Route path="/group/:groupId/players" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense></GroupMemberRoute>} />
+        <Route path="/group/:groupId/schedules" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/invite" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense>} />
         <Route path="/groups/discover" element={<Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense>} />
