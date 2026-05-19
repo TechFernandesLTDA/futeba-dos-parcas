@@ -841,7 +841,8 @@ const RankingCard = React.memo(function RankingCard({
               ...positionStyle,
             }}
           >
-            {position <= 3 ? <TrophyIcon sx={{ fontSize: 16 }} /> : position}
+            {/* Troféu apenas no 1º; 2/3 mostram numeral sobre bg prata/bronze (#1360) */}
+            {position === 1 ? <TrophyIcon sx={{ fontSize: 16 }} /> : position}
           </Box>
 
           {/* Avatar — clique abre a figurinha do jogador */}
