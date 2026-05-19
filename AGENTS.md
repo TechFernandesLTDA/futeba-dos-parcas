@@ -66,7 +66,7 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 
 **Key boundaries**:
 - Web app does NOT use the KMP `:shared` module. All Firebase queries are via `web/src/hooks/` → `web/src/services/firebase.ts`.
-- `backend/` is a separate Express.js + TypeORM + PostgreSQL REST API/WebSocket server, **distinct from** `functions/` (Firebase Cloud Functions). Do not confuse them.
+- `archive/backend/` is an 🗄️ **ARCHIVED/dormant** Express.js + TypeORM + PostgreSQL REST API, **with zero consumers** (web/Android/iOS all use Firestore + Cloud Functions directly). Audit decision #1356 (2026-05-19) → archived. Distinct from `functions/` (the real Firebase Cloud Functions backend). Do not develop here without an SDD spec; do not treat as production.
 
 ---
 

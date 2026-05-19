@@ -94,14 +94,9 @@ firebase deploy --only functions           # Deploy
 # jest.mock("../src/middleware/rate-limiter")
 # See functions/test/ for existing test suites
 
-# Backend REST API (in /backend, Express + TypeORM + PostgreSQL — separate from Cloud Functions)
-cd backend && npm install                  # Install deps
-npm run dev                                # Start dev server (ts-node-dev, hot reload)
-npm run build                              # Compile TypeScript → dist/
-npm start                                  # Run compiled server
-npm run migration:generate -- src/migrations/<Name>  # Generate TypeORM migration
-npm run migration:run                      # Apply pending migrations
-npm run migration:revert                   # Rollback last migration
+# Backend REST API — ⚠️ ARQUIVADO (archive/backend/, dormente, NÃO usado em produção)
+# Decisão #1356 (2026-05-19): web/Android/iOS usam Firestore + Cloud Functions
+# direto. Sem consumidor, CI, testes ou deploy. Não desenvolva aqui sem spec SDD.
 
 # iOS App (CocoaPods + KMP framework consumer)
 cd iosApp && ./build_shared.sh             # Build shared KMP framework first
@@ -139,7 +134,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 | Contributing guide | `CONTRIBUTING.md` |
 | Security policy | `SECURITY.md` |
 | Changelog | `CHANGELOG.md` (release notes per version) |
-| Backend REST API | `backend/` (Express + TypeORM + PostgreSQL — `backend/ARCHITECTURE.md`) |
+| Backend REST API | 🗄️ **ARQUIVADO** `archive/backend/` (dormente, sem consumidor — decisão #1356) |
 | iOS app scaffold | `iosApp/` (CocoaPods + `build_shared.sh`, see `iosApp/SETUP.md`) |
 | Fastlane lanes | `fastlane/Fastfile` (test, build_debug, build_release, build_aab, beta) |
 | Commit lint config | `commitlint.config.js` (Conventional Commits enforced) |
@@ -212,7 +207,7 @@ The project uses a multi-module setup:
 - **`:composeApp`** - Compose Multiplatform UI (shared UI components for Android/iOS)
 - **`:baselineprofile`** - Baseline profiles for performance optimization
 - **`web/`** - React web application (React 18 + TypeScript + MUI 5 + Vite 5)
-- **`backend/`** - REST API + WebSocket server (Express.js + TypeORM + PostgreSQL) - separate from Cloud Functions
+- **`archive/backend/`** - 🗄️ ARQUIVADO/dormente: REST API Express + TypeORM + PostgreSQL sem nenhum consumidor (web/Android/iOS usam Firestore + Cloud Functions). Decisão #1356 (2026-05-19). Não tratar como produção.
 - **`iosApp/`** - iOS app scaffold (CocoaPods, consumes KMP framework via `build_shared.sh`)
 - **`functions/`** - Firebase Cloud Functions v2 (Node 20, TypeScript, 12 Jest test suites)
 - **`fastlane/`** - Android release automation (Firebase App Distribution beta + Play Store)

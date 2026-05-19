@@ -1,8 +1,20 @@
-# 🚀 Futeba dos Parças - Backend API
+> # ⚠️ ARQUIVADO — CÓDIGO DORMENTE, NÃO USADO EM PRODUÇÃO
+>
+> Este backend Express **não tem nenhum consumidor**: web, Android e iOS usam
+> **Firestore + Cloud Functions** diretamente (no iOS via módulo KMP `shared`).
+> Não há CI, testes, deploy nem alvo de hospedagem. As menções a "WebSocket" e
+> uploads (`multer`) abaixo descrevem features **inexistentes** no código.
+>
+> Auditoria 2026-05-19 (#1356) → decisão do product owner: **ARQUIVAR**.
+> Mantido em `archive/backend/` apenas como referência histórica. Para revivê-lo
+> seria necessária uma spec SDD com caso de uso concreto (Regra #1). Não
+> dependa deste código nem o trate como produção.
 
-API REST + WebSocket para o Futeba dos Parças. Backend em Express.js + TypeORM + PostgreSQL.
+# 🚀 Futeba dos Parças - Backend API (ARQUIVADO)
 
-**Version:** 1.0.0 | **Node:** 18+ | **Status:** Production-ready
+API REST para o Futeba dos Parças. Backend em Express.js + TypeORM + PostgreSQL.
+
+**Version:** 1.0.0 | **Node:** 18+ | **Status:** 🗄️ Dormant / archived — não usado em produção
 
 ## 📋 Índice
 
