@@ -53,7 +53,13 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name
   );
 
   for (const result of settled) {
-    if (result.status === 'rejected') continue;
+    if (result.status === 'rejected') {
+      // #1334: não engolir falha de chunk em silêncio (mesmo pattern já
+      // corrigido em useGroups no PR #1345). Liga segue com dados parciais
+      // — usuários ausentes caem no fallback 'Jogador', mas o erro é logado.
+      logger.error('Falha ao ler chunk de usuários da liga (dados parciais):', result.reason);
+      continue;
+    }
     for (const docSnap of result.value.docs) {
       const d = docSnap.data();
       usersMap.set(docSnap.id, {

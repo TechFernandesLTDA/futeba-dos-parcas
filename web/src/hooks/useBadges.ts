@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, limit } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -9,13 +9,18 @@ import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useBadges');
 
+// #1330: cap deliberado na leitura de badges. Um usuário detém no máx 1 badge
+// por definição (BADGE_DEFINITIONS = 25); 50 dá folga p/ futuras badges sem
+// risco de perda silenciosa de dados. Evita query Firestore ilimitada.
+const BADGES_QUERY_LIMIT = 50;
+
 // Busca badges desbloqueadas do usuário
 async function fetchUserBadges(userId: string): Promise<{
   userBadges: UserBadge[];
   unlockedIds: Set<string>;
 }> {
   const badgesRef = collection(db, 'user_badges');
-  const q = query(badgesRef, where('user_id', '==', userId));
+  const q = query(badgesRef, where('user_id', '==', userId), limit(BADGES_QUERY_LIMIT));
   const snapshot = await getDocs(q);
 
   const data = snapshot.docs.map((d) => {
@@ -54,7 +59,7 @@ export const useBadges = (userId?: string) => {
     if (!userId) return;
 
     const badgesRef = collection(db, 'user_badges');
-    const q = query(badgesRef, where('user_id', '==', userId));
+    const q = query(badgesRef, where('user_id', '==', userId), limit(BADGES_QUERY_LIMIT));
     let isFirstSnapshot = true;
 
     const unsubscribe = onSnapshot(q, () => {

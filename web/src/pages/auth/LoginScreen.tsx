@@ -77,7 +77,12 @@ export function LoginScreen() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    // #1339: normaliza email (trim + lowercase) — evita mismatch de auth por
+    // espaços/caixa. Validação de FORMATO fica com o Firebase Auth
+    // (getAuthErrorMessage traduz auth/invalid-email); sem regex divergente aqui.
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail !== email) setEmail(normalizedEmail);
+    if (!normalizedEmail || !password) {
       setError('Preencha todos os campos');
       return;
     }
@@ -86,7 +91,7 @@ export function LoginScreen() {
     setError('');
 
     try {
-      await signIn(email, password);
+      await signIn(normalizedEmail, password);
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login. Tente novamente'));
