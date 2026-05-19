@@ -239,8 +239,16 @@ export const CashboxScreen: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">
                   Saldo Atual
                 </Typography>
-                <Typography variant="h4" fontWeight={700} color={balance >= 0 ? 'success.main' : 'error.main'}>
-                  {formatCurrency(balance)}
+                {/* #1343 (a11y): saldo não pode depender só de cor. Prefixo
+                    "+" no positivo (negativo já vem com "-" do Intl) + label
+                    textual para leitores de tela = sinal não-cromático. */}
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  color={balance >= 0 ? 'success.main' : 'error.main'}
+                  aria-label={`Saldo ${balance >= 0 ? 'positivo' : 'negativo'}: ${formatCurrency(balance)}`}
+                >
+                  {balance >= 0 ? '+' : ''}{formatCurrency(balance)}
                 </Typography>
               </Box>
             </Box>

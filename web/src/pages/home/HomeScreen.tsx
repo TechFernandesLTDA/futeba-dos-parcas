@@ -195,7 +195,34 @@ export function HomeScreen() {
         }}
         aria-label="Navegação principal"
       >
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        {/* #1342: logo/nome clicável → volta para o início (tab 0).
+            Padrão SaaS: header brand sempre leva à home. Acessível via
+            teclado (role=button + Enter/Espaço) e foco visível. */}
+        <Box
+          onClick={() => handleTabChange(0)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleTabChange(0);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={`${t('common.appName')} — ir para o início`}
+          sx={{
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            borderRadius: 1,
+            '&:hover': { bgcolor: 'action.hover' },
+            '&:focus-visible': {
+              outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: 2,
+            },
+          }}
+        >
           <SportsSoccer sx={{ color: 'primary.main', fontSize: 28 }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
