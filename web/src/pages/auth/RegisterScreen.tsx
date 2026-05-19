@@ -73,13 +73,13 @@ export function RegisterScreen() {
       : '/';
   };
 
-  const validate = () => {
+  const validate = (emailVal: string) => {
     const errs: typeof fieldErrors = {};
     if (!name.trim()) errs.name = 'Digite seu nome';
     else if (name.trim().length < 3) errs.name = 'Nome deve ter pelo menos 3 caracteres';
 
-    if (!email) errs.email = 'Digite seu email';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Digite um email válido';
+    if (!emailVal) errs.email = 'Digite seu email';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) errs.email = 'Digite um email válido';
 
     if (!password) errs.password = 'Digite sua senha';
     else if (password.length < 6) errs.password = 'Senha deve ter pelo menos 6 caracteres';
@@ -92,13 +92,17 @@ export function RegisterScreen() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    // #1339: normaliza email (trim + lowercase) antes de validar e enviar,
+    // evitando mismatch de autenticação por espaços/caixa (ex: " User@X.com ").
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail !== email) setEmail(normalizedEmail);
+    if (!validate(normalizedEmail)) return;
 
     setLoading(true);
     setError('');
 
     try {
-      await signUp(email, password, name.trim());
+      await signUp(normalizedEmail, password, name.trim());
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao criar conta. Tente novamente'));
