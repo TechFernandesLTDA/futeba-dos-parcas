@@ -23,6 +23,7 @@ import {
   EmojiEvents as TrophyIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { VirtualList } from '../../components/common/VirtualList';
@@ -39,6 +40,7 @@ export const RankingScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const [tabValue, setTabValue] = useState(0);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -97,7 +99,7 @@ export const RankingScreen: React.FC = () => {
           <Alert
             severity="error"
             action={
-              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => queryClient.invalidateQueries()}>
                 {t('common.retry')}
               </Button>
             }

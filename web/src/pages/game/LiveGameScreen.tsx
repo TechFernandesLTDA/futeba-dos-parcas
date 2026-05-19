@@ -44,6 +44,7 @@ import {
 } from '@mui/icons-material';
 import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
@@ -83,6 +84,7 @@ export const LiveGameScreen: React.FC = () => {
   const navigateBack = useNavigateBack('/games');
   const { currentUser } = useAuth();
   const { showError } = useToast();
+  const queryClient = useQueryClient();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
@@ -294,7 +296,7 @@ export const LiveGameScreen: React.FC = () => {
             Voltar
           </Button>
           {error && (
-            <Button variant="contained" onClick={() => window.location.reload()}>
+            <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
               Tentar novamente
             </Button>
           )}

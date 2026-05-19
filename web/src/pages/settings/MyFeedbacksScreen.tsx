@@ -26,6 +26,7 @@ import {
   Refresh as RefreshIcon,
   RateReview as EmptyIcon,
 } from '@mui/icons-material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeedback } from '../../hooks/useFeedback';
 import { LoadingState } from '../../components/common/GameCard';
@@ -51,6 +52,7 @@ export const MyFeedbacksScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
   const { myFeedbacks, fetching, error } = useFeedback();
 
   if (!currentUser) {
@@ -88,7 +90,7 @@ export const MyFeedbacksScreen: React.FC = () => {
         ) : error ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => queryClient.invalidateQueries()}>
               Tentar novamente
             </Button>
           </Box>

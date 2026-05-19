@@ -29,6 +29,7 @@ import {
   VolumeOff as MuteIcon,
   Timer as TimerIcon,
 } from '@mui/icons-material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -53,6 +54,7 @@ export const NotificationSettingsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const {
     settings,
@@ -99,7 +101,7 @@ export const NotificationSettingsScreen: React.FC = () => {
             title="Erro ao carregar"
             description={error}
             actionLabel="Tentar novamente"
-            onAction={() => window.location.reload()}
+            onAction={() => queryClient.invalidateQueries()}
           />
         </Container>
       </Box>

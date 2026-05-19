@@ -35,6 +35,7 @@ import {
   WorkspacePremium as BadgeIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerDetail } from '../../hooks/usePlayers';
 import { PlayerAvatar } from '../../components/common/GameCard';
@@ -50,6 +51,7 @@ export const ProfileScreen: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const isOwnProfile = !userId || userId === currentUser?.id;
   const targetUserId = userId || currentUser?.id;
@@ -129,7 +131,7 @@ export const ProfileScreen: React.FC = () => {
         <Alert
           severity="error"
           action={
-            <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+            <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => queryClient.invalidateQueries()}>
               {t('common.retry')}
             </Button>
           }

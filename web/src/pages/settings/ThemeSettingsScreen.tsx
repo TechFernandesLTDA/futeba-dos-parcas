@@ -30,6 +30,7 @@ import {
   Storage as StorageIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeContext } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -46,6 +47,7 @@ export const ThemeSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const queryClient = useQueryClient();
 
   const handleLanguageChange = (lang: SupportedLanguage) => {
     setLanguage(lang);
@@ -67,7 +69,9 @@ export const ThemeSettingsScreen: React.FC = () => {
   };
 
   const handleSyncData = () => {
-    window.location.reload();
+    // Invalida o cache do React Query para forçar refetch de todos os dados
+    queryClient.invalidateQueries();
+    showSuccess('Dados sincronizados');
   };
 
   return (
