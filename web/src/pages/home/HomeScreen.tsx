@@ -223,7 +223,13 @@ export function HomeScreen() {
             },
           }}
         >
-          <SportsSoccer sx={{ color: 'primary.main', fontSize: 28 }} />
+          {/* Logo da marca em vez de ícone genérico Material (#1364) */}
+          <Box
+            component="img"
+            src="/icons/icon-192.png"
+            alt={t('common.appName')}
+            sx={{ width: 32, height: 32, borderRadius: 1 }}
+          />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>
@@ -281,7 +287,13 @@ export function HomeScreen() {
           }}
         >
           <Toolbar variant="dense">
-            <SportsSoccer sx={{ color: 'primary.main', mr: 1 }} />
+            {/* Logo da marca em vez de ícone genérico Material (#1364) */}
+            <Box
+              component="img"
+              src="/icons/icon-192.png"
+              alt={t('common.appName')}
+              sx={{ width: 28, height: 28, borderRadius: 1, mr: 1 }}
+            />
             <Typography variant="h6" fontWeight={700} color="primary.main" sx={{ flex: 1 }}>
               {t('common.appName')}
             </Typography>
