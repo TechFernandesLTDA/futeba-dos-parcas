@@ -303,7 +303,15 @@ export const CreateGameScreen: React.FC = () => {
             return;
           }
         } catch (overlapErr) {
-          logger.warn('Erro ao verificar sobreposição:', overlapErr);
+          // #1334: a verificação de conflito de horário falhou (ex.: erro
+          // transiente do Firestore). NÃO bloqueamos a criação — um erro
+          // transiente não deve impedir um jogo legítimo — mas avisamos o
+          // usuário em vez de falhar em silêncio (risco de double-booking).
+          logger.error('Erro ao verificar sobreposição de horários:', overlapErr);
+          showError(
+            'Não foi possível verificar conflitos de horário nesta quadra. ' +
+              'Confira manualmente se já existe outro jogo no mesmo horário.'
+          );
         }
       }
 

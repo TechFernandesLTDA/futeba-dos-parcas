@@ -45,6 +45,13 @@ export function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // #1339: erros por campo (highlight + helperText) em vez de um único Alert genérico
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
 
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
@@ -67,35 +74,20 @@ export function RegisterScreen() {
   };
 
   const validate = () => {
-    if (!name.trim()) {
-      setError('Digite seu nome');
-      return false;
-    }
-    if (name.trim().length < 3) {
-      setError('Nome deve ter pelo menos 3 caracteres');
-      return false;
-    }
-    if (!email) {
-      setError('Digite seu email');
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Digite um email válido');
-      return false;
-    }
-    if (!password) {
-      setError('Digite sua senha');
-      return false;
-    }
-    if (password.length < 6) {
-      setError('Senha deve ter pelo menos 6 caracteres');
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setError('As senhas não coincidem');
-      return false;
-    }
-    return true;
+    const errs: typeof fieldErrors = {};
+    if (!name.trim()) errs.name = 'Digite seu nome';
+    else if (name.trim().length < 3) errs.name = 'Nome deve ter pelo menos 3 caracteres';
+
+    if (!email) errs.email = 'Digite seu email';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Digite um email válido';
+
+    if (!password) errs.password = 'Digite sua senha';
+    else if (password.length < 6) errs.password = 'Senha deve ter pelo menos 6 caracteres';
+
+    if (password !== confirmPassword) errs.confirmPassword = 'As senhas não coincidem';
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -195,7 +187,12 @@ export function RegisterScreen() {
               fullWidth
               label="Nome completo"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
+              }}
+              error={!!fieldErrors.name}
+              helperText={fieldErrors.name}
               disabled={loading}
               inputProps={{ autoComplete: 'name' }}
               InputProps={{
@@ -213,7 +210,12 @@ export function RegisterScreen() {
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: undefined }));
+              }}
+              error={!!fieldErrors.email}
+              helperText={fieldErrors.email}
               disabled={loading}
               inputProps={{ autoComplete: 'email' }}
               InputProps={{
@@ -231,7 +233,12 @@ export function RegisterScreen() {
               label="Senha"
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: undefined }));
+              }}
+              error={!!fieldErrors.password}
+              helperText={fieldErrors.password}
               disabled={loading}
               inputProps={{ autoComplete: 'new-password' }}
               InputProps={{
@@ -261,7 +268,13 @@ export function RegisterScreen() {
               label="Confirmar senha"
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (fieldErrors.confirmPassword)
+                  setFieldErrors((p) => ({ ...p, confirmPassword: undefined }));
+              }}
+              error={!!fieldErrors.confirmPassword}
+              helperText={fieldErrors.confirmPassword}
               disabled={loading}
               inputProps={{ autoComplete: 'new-password' }}
               InputProps={{

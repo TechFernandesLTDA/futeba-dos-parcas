@@ -75,7 +75,13 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
   );
 
   for (const result of settled) {
-    if (result.status === 'rejected') continue;
+    if (result.status === 'rejected') {
+      // #1334: não engolir falha de chunk em silêncio. A tela ainda renderiza
+      // com os dados de fallback da subcoleção (nome/foto/contagem), então não
+      // é perda total — mas a falha precisa ser observável (Pattern 2 web-react).
+      logger.error('Falha ao ler chunk de grupos (usando fallback):', result.reason);
+      continue;
+    }
     for (const docSnap of result.value.docs) {
       const raw = docSnap.data();
       groupsMap.set(docSnap.id, parseGroupDoc(docSnap.id, raw));
