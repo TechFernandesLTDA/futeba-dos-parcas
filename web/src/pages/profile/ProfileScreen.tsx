@@ -208,12 +208,18 @@ export const ProfileScreen: React.FC = () => {
                       </Typography>
                       <TeamBadge teamId={profile.favoriteTeam} size={24} />
                     </Box>
+                    {/* Chip da divisão: identidade via border + bg sutil, texto sempre legível (#1380)
+                        Antes usava color: divisionConfig.color como foreground, mas SILVER (#C0C0C0)
+                        sobre paper escuro dava contraste ~1.4:1 (WCAG fail). */}
                     <Chip
                       label={divisionConfig.label}
                       size="small"
+                      variant="outlined"
                       sx={{
-                        bgcolor: alpha(divisionConfig.color, 0.1),
-                        color: divisionConfig.color,
+                        bgcolor: alpha(divisionConfig.color, 0.12),
+                        color: 'text.primary',
+                        borderColor: divisionConfig.color,
+                        fontWeight: 600,
                         mt: 0.5,
                       }}
                     />

@@ -331,7 +331,8 @@ export const EditProfileScreen: React.FC = () => {
                     right: 0,
                     bgcolor: 'background.paper',
                     boxShadow: 1,
-                    '&:hover': { bgcolor: 'grey.100' },
+                    // action.hover adapta light/dark; grey.100 era quase branco em dark (#1379)
+                    '&:hover': { bgcolor: 'action.hover' },
                   }}
                   size="small"
                   aria-label={t('profile.changePhotoAria')}
