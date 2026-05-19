@@ -198,7 +198,8 @@ const RankingItem = React.memo(function RankingItem({
               ...positionStyle,
             }}
           >
-            {position <= 3 ? <TrophyIcon fontSize="small" /> : position}
+            {/* Troféu apenas no 1º; 2/3 mostram numeral sobre bg prata/bronze (#1360) */}
+            {position === 1 ? <TrophyIcon fontSize="small" /> : position}
           </Box>
 
           <Box
