@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
 import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsChecklist';
@@ -79,6 +80,7 @@ interface Activity {
 // ─── NextGameWidget ──────────────────────────────────────────────────────────
 
 function NextGameWidget() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -134,14 +136,14 @@ function NextGameWidget() {
         await confirmPresence(nextGame.id);
         queryClient.invalidateQueries({ queryKey: ['confirmation', nextGame.id, user?.id] });
         queryClient.invalidateQueries({ queryKey: ['games'] });
-        showSuccess('Presença confirmada! ✓');
+        showSuccess(t('games.presenceConfirmed'));
       } catch (err) {
         setOptimisticConfirmed(false);
-        showError('Erro ao confirmar presença. Tente novamente.');
+        showError(t('games.presenceConfirmError'));
         logger.error('Confirm presence failed:', err);
       }
     },
-    [nextGame, confirmPresence, queryClient, user?.id, showSuccess, showError],
+    [nextGame, confirmPresence, queryClient, user?.id, showSuccess, showError, t],
   );
 
   const handleCancel = useCallback(
@@ -153,13 +155,13 @@ function NextGameWidget() {
         await cancelPresence(nextGame.id);
         queryClient.invalidateQueries({ queryKey: ['confirmation', nextGame.id, user?.id] });
         queryClient.invalidateQueries({ queryKey: ['games'] });
-        showSuccess('Presença cancelada.');
+        showSuccess(t('games.presenceCanceled'));
       } catch (err) {
-        showError('Erro ao cancelar presença.');
+        showError(t('games.presenceCancelError'));
         logger.error('Cancel presence failed:', err);
       }
     },
-    [nextGame, cancelPresence, queryClient, user?.id, showSuccess, showError],
+    [nextGame, cancelPresence, queryClient, user?.id, showSuccess, showError, t],
   );
 
   const handleJoinWaitlist = useCallback(
@@ -184,9 +186,9 @@ function NextGameWidget() {
     LIVE: theme.palette.error.main,
   };
   const statusLabels: Record<string, string> = {
-    SCHEDULED: 'Aberto',
-    CONFIRMED: 'Fechado',
-    LIVE: 'Ao Vivo',
+    SCHEDULED: t('games.statusOpen'),
+    CONFIRMED: t('games.statusClosed'),
+    LIVE: t('games.statusLive'),
   };
 
   // ── Loading ──
@@ -219,10 +221,10 @@ function NextGameWidget() {
             <CalendarMonth sx={{ fontSize: 36, color: 'text.disabled' }} />
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" fontWeight={600}>
-                Nenhum jogo agendado
+                {t('games.noGameScheduled')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Crie ou entre em um jogo para começar
+                {t('games.noGameScheduledDesc')}
               </Typography>
             </Box>
             <Button
@@ -235,7 +237,7 @@ function NextGameWidget() {
               }}
               sx={{ flexShrink: 0 }}
             >
-              Criar Jogo
+              {t('games.createGame')}
             </Button>
           </Box>
         </CardContent>
@@ -260,14 +262,14 @@ function NextGameWidget() {
               <LiveTv sx={{ fontSize: 36, color: theme.palette.error.main }} />
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle2" fontWeight={600}>
-                  Jogo ao vivo!
+                  {t('games.liveNow')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {nextGame.locationName} • {nextGame.playersCount}/{nextGame.maxPlayers} jogadores
+                  {nextGame.locationName} • {t('games.playersCount', { current: nextGame.playersCount, max: nextGame.maxPlayers })}
                 </Typography>
               </Box>
               <Button variant="contained" color="error" size="small" startIcon={<LiveTv />}>
-                Ver ao vivo
+                {t('games.watchLive')}
               </Button>
             </Box>
           </CardContent>
@@ -294,7 +296,7 @@ function NextGameWidget() {
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
               <Typography variant="subtitle1" fontWeight={700} noWrap>
-                Próximo Jogo
+                {t('games.nextGame')}
               </Typography>
               <Chip
                 label={statusLabels[nextGame.status]}
@@ -309,7 +311,7 @@ function NextGameWidget() {
               {isConfirmed && (
                 <Chip
                   icon={<CheckCircle sx={{ fontSize: 14 }} />}
-                  label="Confirmado"
+                  label={t('games.confirmed_chip')}
                   size="small"
                   sx={{
                     bgcolor: alpha(theme.palette.success.main, 0.12),
@@ -352,7 +354,7 @@ function NextGameWidget() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Chip
                 icon={<CheckCircle />}
-                label="Confirmado ✓"
+                label={t('games.confirmedCheck')}
                 color="success"
                 size="small"
                 sx={{ fontWeight: 600 }}
@@ -364,7 +366,7 @@ function NextGameWidget() {
                 disabled={confirmLoading}
                 sx={{ fontSize: '0.75rem' }}
               >
-                Mudar resposta
+                {t('games.changeResponse')}
               </Button>
             </Box>
           ) : isFull ? (
@@ -385,7 +387,7 @@ function NextGameWidget() {
                   color="warning.main"
                   fontWeight={600}
                 >
-                  Na lista de espera (posição {waitlistEntry.queuePosition})
+                  {t('games.waitlistPosition', { position: waitlistEntry.queuePosition })}
                 </Typography>
                 <Button
                   size="small"
@@ -395,7 +397,7 @@ function NextGameWidget() {
                   disabled={waitlistActing}
                   sx={{ fontSize: '0.75rem' }}
                 >
-                  {waitlistActing ? 'Saindo...' : 'Sair da lista'}
+                  {waitlistActing ? t('games.leavingWaitlist') : t('games.leaveWaitlist')}
                 </Button>
               </Box>
             ) : (
@@ -413,8 +415,8 @@ function NextGameWidget() {
                 sx={{ fontWeight: 700 }}
               >
                 {waitlistActing
-                  ? 'Entrando...'
-                  : 'Jogo lotado — Entrar na lista de espera'}
+                  ? t('games.joiningWaitlist')
+                  : t('games.gameFullJoinWaitlist')}
               </Button>
             )
           ) : (
@@ -426,7 +428,7 @@ function NextGameWidget() {
               startIcon={confirmLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
               sx={{ fontWeight: 700 }}
             >
-              {confirmLoading ? 'Confirmando...' : 'Confirmar Presença'}
+              {confirmLoading ? t('games.confirming') : t('games.confirmPresenceBtn')}
             </Button>
           )}
         </CardContent>
@@ -438,6 +440,7 @@ function NextGameWidget() {
 // ─── MiniRankingWidget ───────────────────────────────────────────────────────
 
 function MiniRankingWidget() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { groups } = useGroups();
@@ -517,7 +520,7 @@ function MiniRankingWidget() {
           <Box sx={{ textAlign: 'center' }}>
             <EmojiEvents sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
             <Typography variant="body2" color="text.secondary">
-              Entre em um grupo para ver o ranking
+              {t('groups.noRankingMembers')}
             </Typography>
             <Button
               variant="outlined"
@@ -525,7 +528,7 @@ function MiniRankingWidget() {
               onClick={() => navigate('/groups')}
               sx={{ mt: 1 }}
             >
-              Ver Grupos
+              {t('common.viewGroups')}
             </Button>
           </Box>
         </CardContent>
@@ -540,7 +543,7 @@ function MiniRankingWidget() {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <EmojiEvents sx={{ fontSize: 18, color: gamificationColors.gold }} />
-              Ranking
+              {t('ranking.title')}
             </Typography>
             <Link
               component="button"
@@ -550,7 +553,7 @@ function MiniRankingWidget() {
               fontWeight={600}
               onClick={() => navigate('/league')}
             >
-              Ver completo
+              {t('ranking.viewFull')}
             </Link>
           </Box>
           {isLoading ? (
@@ -563,7 +566,7 @@ function MiniRankingWidget() {
             ))
           ) : players.length === 0 ? (
             <Typography variant="caption" color="text.secondary">
-              Nenhum jogador no ranking ainda
+              {t('ranking.noPlayersYet')}
             </Typography>
           ) : (
             <List disablePadding dense>
@@ -604,7 +607,7 @@ function MiniRankingWidget() {
                         {player.points}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        pts
+                        {t('ranking.pts')}
                       </Typography>
                     </Box>
                   </ListItemButton>
@@ -624,6 +627,7 @@ function MiniRankingWidget() {
 // ─── HomeTab ─────────────────────────────────────────────────────────────────
 
 export function HomeTab() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -633,6 +637,10 @@ export function HomeTab() {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  // Ref para t() — usado dentro do listener (useEffect dep [user?.id]) sem
+  // re-subscrever ao trocar idioma
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
 
@@ -648,37 +656,37 @@ export function HomeTab() {
   const checklistSteps: ChecklistStep[] = useMemo(() => [
     {
       id: 'complete_profile',
-      label: 'Complete seu perfil',
-      subtitle: 'Adicione foto, apelido e posição favorita',
-      actionLabel: 'Ir ao Perfil',
+      label: t('onboarding.checklistCompleteProfile'),
+      subtitle: t('onboarding.checklistCompleteProfileDesc'),
+      actionLabel: t('onboarding.checklistGoToProfile'),
       navigateTo: '/profile',
       completed: !!(user?.nickname || user?.photoUrl),
     },
     {
       id: 'join_or_create_group',
-      label: 'Entre ou crie um grupo',
-      subtitle: 'Participe de uma pelada com seus amigos',
-      actionLabel: 'Ver Grupos',
+      label: t('onboarding.checklistJoinGroup'),
+      subtitle: t('onboarding.checklistJoinGroupDesc'),
+      actionLabel: t('common.viewGroups'),
       navigateTo: '/groups',
       completed: (groups?.length ?? 0) > 0,
     },
     {
       id: 'confirm_presence',
-      label: 'Confirme presença em um jogo',
-      subtitle: 'Diga que vai aparecer na próxima partida',
-      actionLabel: 'Ver Jogos',
+      label: t('onboarding.checklistConfirmPresence'),
+      subtitle: t('onboarding.checklistConfirmPresenceDesc'),
+      actionLabel: t('common.viewGames'),
       navigateTo: '/games',
       completed: false, // TODO: derivar de confirmations quando HomeTab expuser este dado
     },
     {
       id: 'play_first_game',
-      label: 'Jogue sua primeira partida',
-      subtitle: 'Participe de um jogo encerrado',
-      actionLabel: 'Ver Jogos',
+      label: t('onboarding.checklistPlayFirstGame'),
+      subtitle: t('onboarding.checklistPlayFirstGameDesc'),
+      actionLabel: t('common.viewGames'),
       navigateTo: '/games',
       completed: false, // TODO: derivar de gamesPlayed quando exposto no User type
     },
-  ], [user, groups]);
+  ], [user, groups, t]);
 
   const checklistVisible =
     !onboardingLoading &&
@@ -742,7 +750,7 @@ export function HomeTab() {
       (err) => {
         if (cancelled) return;
         logger.error('Error in recent activities listener:', err);
-        showErrorRef.current('Erro ao carregar atividades recentes.');
+        showErrorRef.current(tRef.current('ranking.loadActivitiesError'));
         setActivitiesLoading(false);
       },
     );
@@ -810,13 +818,13 @@ export function HomeTab() {
           position: 'relative',
         }}
       >
-        <CardActionArea onClick={() => navigate('/level-journey')} aria-label={`Ver jornada de nível - Nível ${currentLevel}`} sx={{ borderRadius: 3 }}>
+        <CardActionArea onClick={() => navigate('/level-journey')} aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })} sx={{ borderRadius: 3 }}>
           <CardContent sx={{ p: 2.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
               <Box sx={{ position: 'relative' }}>
                 <Avatar
                   src={user?.photoUrl}
-                  alt={user?.name || 'Usuário'}
+                  alt={user?.name || t('profile.defaultUserName')}
                   onClick={(e) => { e.stopPropagation(); setIsPlayerCardOpen(true); }}
                   role="button"
                   tabIndex={0}
@@ -826,7 +834,7 @@ export function HomeTab() {
                       setIsPlayerCardOpen(true);
                     }
                   }}
-                  aria-label="Abrir card do jogador"
+                  aria-label={t('profile.openPlayerCardAria')}
                   sx={{
                     width: 60,
                     height: 60,
@@ -866,7 +874,7 @@ export function HomeTab() {
               <Box sx={{ ml: 2, flex: 1, maxWidth: '100%', minWidth: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="h6" fontWeight="bold" noWrap sx={{ lineHeight: 1.2, textOverflow: 'ellipsis' }}>
-                    Olá, {user?.name?.split(' ')[0] || 'Jogador'}!
+                    {t('profile.greeting', { name: user?.name?.split(' ')[0] || t('profile.defaultPlayerName') })}
                   </Typography>
                   <TeamBadge teamId={user?.favoriteTeam} size={28} />
                 </Box>
@@ -879,16 +887,16 @@ export function HomeTab() {
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                 <Typography variant="caption" sx={{ opacity: 0.85 }}>
-                  Nível {currentLevel}
+                  {t('profile.levelLabel', { level: currentLevel })}
                 </Typography>
                 <Typography variant="caption" sx={{ opacity: 0.85 }}>
-                  {currentLevel < 20 ? `Nível ${currentLevel + 1}` : 'MAX'}
+                  {currentLevel < 20 ? t('profile.levelLabel', { level: currentLevel + 1 }) : t('profile.levelMax')}
                 </Typography>
               </Box>
               <LinearProgress
                 variant="determinate"
                 value={progress * 100}
-                aria-label="Progresso de nível"
+                aria-label={t('profile.levelProgressAria')}
                 sx={{
                   height: 8,
                   borderRadius: 4,
@@ -901,16 +909,16 @@ export function HomeTab() {
               />
               {currentLevel < 20 && (
                 <Typography variant="caption" sx={{ opacity: 0.7, mt: 0.5, display: 'block' }}>
-                  Faltam {xpRemaining.toLocaleString('pt-BR')} XP para {getLevelEntry(currentLevel + 1).name}
+                  {t('profile.xpToNextLevel', { xp: xpRemaining.toLocaleString('pt-BR'), levelName: getLevelEntry(currentLevel + 1).name })}
                 </Typography>
               )}
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>
               {[
-                { value: user?.totalGames || 0, label: 'Jogos', icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/games' },
-                { value: user?.totalGoals || 0, label: 'Gols', icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
-                { value: user?.mvpCount || 0, label: 'MVPs', icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gamificationColors.gold, 0.25), navigateTo: '/statistics' },
+                { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/games' },
+                { value: user?.totalGoals || 0, label: t('profile.goals'), icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
+                { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gamificationColors.gold, 0.25), navigateTo: '/statistics' },
               ].map((stat) => (
                 <ButtonBase
                   key={stat.label}
@@ -970,15 +978,15 @@ export function HomeTab() {
             <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" fontWeight="bold">
-                {user?.currentStreak} jogos seguidos!
+                {t('profile.streakGamesInARow', { count: user?.currentStreak || 0 })}
               </Typography>
               {(user?.currentStreak || 0) >= (user?.bestStreak || 0) ? (
                 <Typography variant="caption" sx={{ color: gamificationColors.gold, fontWeight: 600 }}>
-                  🏆 Sua melhor sequência! (recorde: {user?.bestStreak || 0})
+                  {t('profile.streakBestRecord', { record: user?.bestStreak || 0 })}
                 </Typography>
               ) : (
                 <Typography variant="caption" color="text.secondary">
-                  Recorde: {user?.bestStreak || 0} jogos
+                  {t('profile.streakRecord', { record: user?.bestStreak || 0 })}
                 </Typography>
               )}
             </Box>
@@ -1002,10 +1010,10 @@ export function HomeTab() {
             <LocalFireDepartment sx={{ fontSize: 32, color: 'text.disabled' }} />
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" fontWeight="bold">
-                Comece uma sequência!
+                {t('profile.startStreak')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Confirme presença no próximo jogo para iniciar sua streak 🔥
+                {t('profile.startStreakDesc')}
               </Typography>
             </Box>
           </CardContent>
@@ -1018,7 +1026,7 @@ export function HomeTab() {
       {/* Atividade Recente — full width já que NextGameWidget substitui o Próximo Jogo */}
       <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <Notifications fontSize="small" color="primary" />
-        Atividade Recente
+        {t('profile.recentActivity')}
       </Typography>
       <Card sx={{ borderRadius: 3 }}>
         {activitiesLoading ? (
@@ -1040,10 +1048,10 @@ export function HomeTab() {
             <Box sx={{ textAlign: 'center', py: 2 }}>
               <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
               <Typography variant="body2" color="text.secondary">
-                Nenhuma atividade recente
+                {t('profile.noRecentActivity')}
               </Typography>
               <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
-                Participe de grupos ou crie jogos para ver atividades aqui
+                {t('profile.noRecentActivityDesc')}
               </Typography>
               <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>
                 <Button
@@ -1051,14 +1059,14 @@ export function HomeTab() {
                   size="small"
                   onClick={() => navigate('/groups')}
                 >
-                  Ver Grupos
+                  {t('common.viewGroups')}
                 </Button>
                 <Button
                   variant="outlined"
                   size="small"
                   onClick={() => navigate('/games')}
                 >
-                  Criar Jogo
+                  {t('games.createGame')}
                 </Button>
               </Box>
             </Box>
@@ -1096,7 +1104,7 @@ export function HomeTab() {
                       )}
                     </ListItemAvatar>
                     <ListItemText
-                      primary={activity.title || activity.actorName || 'Atividade'}
+                      primary={activity.title || activity.actorName || t('profile.defaultActivityTitle')}
                       primaryTypographyProps={{
                         fontWeight: 500,
                         noWrap: true,

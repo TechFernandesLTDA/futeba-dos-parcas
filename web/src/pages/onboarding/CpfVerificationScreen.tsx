@@ -27,6 +27,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('CpfVerification');
 
@@ -36,6 +37,7 @@ const logger = createLogger('CpfVerification');
  */
 export const CpfVerificationScreen: React.FC = () => {
   useDocumentTitle('Verificar CPF');
+  const { t } = useTranslation();
   const { firebaseUser } = useAuth();
   const { showError, showSuccess } = useToast();
 
@@ -74,11 +76,11 @@ export const CpfVerificationScreen: React.FC = () => {
     setError(null);
 
     if (!isValidCpf(cpf)) {
-      setError('CPF inválido. Confira os dígitos.');
+      setError(t('onboarding.errorInvalidCpf'));
       return;
     }
     if (!firebaseUser) {
-      setError('Sessão expirou. Faça login novamente.');
+      setError(t('onboarding.errorSessionExpired'));
       return;
     }
 
@@ -125,9 +127,7 @@ export const CpfVerificationScreen: React.FC = () => {
           'Failed to refresh ID token before verifyCpf (3 tentativas):',
           lastRefreshErr,
         );
-        const msg =
-          'Não foi possível renovar sua sessão. Verifique sua conexão e ' +
-          'tente novamente.';
+        const msg = t('onboarding.errorRenewSession');
         setError(msg);
         showError(msg);
         return;
@@ -136,7 +136,7 @@ export const CpfVerificationScreen: React.FC = () => {
       logger.info('Calling verifyCpf', { uid: firebaseUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });
       const verifyResult = await verifyCpf({ cpf: stripCpf(cpf) });
       if (!verifyResult.data.success) {
-        throw new Error('Falha ao verificar CPF');
+        throw new Error(t('onboarding.verifyFailed'));
       }
       await setUserVerified({});
 
@@ -157,7 +157,7 @@ export const CpfVerificationScreen: React.FC = () => {
       }
 
       setSuccess(true);
-      showSuccess('Conta verificada!');
+      showSuccess(t('onboarding.accountVerifiedToast'));
       // Hard reload pra ProtectedRoute re-ler custom claim verified=true.
       // navigate() mantem instancia React e o cache de verified em memoria.
       setTimeout(() => {
@@ -174,21 +174,20 @@ export const CpfVerificationScreen: React.FC = () => {
         uid: firebaseUser?.uid,
       });
 
-      let userMsg = 'Não foi possível verificar agora. Tente novamente em instantes.';
+      let userMsg = t('onboarding.errorGeneric');
 
       if (code === 'functions/already-exists') {
-        userMsg = 'Este CPF já está em outra conta. Use seu próprio CPF.';
+        userMsg = t('onboarding.errorCpfInUse');
       } else if (code === 'functions/invalid-argument') {
-        userMsg = 'CPF inválido. Confira os dígitos.';
+        userMsg = t('onboarding.errorInvalidCpf');
       } else if (code === 'functions/permission-denied') {
-        userMsg = 'Complete a verificação de telefone antes de continuar.';
+        userMsg = t('onboarding.errorCompletePhoneFirst');
       } else if (code === 'functions/unauthenticated') {
         // Mensagem mais informativa: pode ser App Check rejection (web em modo
         // privado, AdBlock bloqueando reCAPTCHA, etc.) ou token expirado.
-        userMsg = 'Não foi possível validar sua sessão. Recarregue a página e tente novamente. ' +
-          'Se persistir, desabilite extensões/AdBlock ou tente em outro navegador.';
+        userMsg = t('onboarding.errorValidateSession');
       } else if (code === 'functions/failed-precondition') {
-        userMsg = 'Conclua a verificação de telefone primeiro.';
+        userMsg = t('onboarding.errorConcludePhoneFirst');
       }
 
       setError(userMsg);
@@ -202,10 +201,10 @@ export const CpfVerificationScreen: React.FC = () => {
     <Box sx={{ mb: 3 }}>
       <Stepper activeStep={1} alternativeLabel sx={{ mb: 1 }}>
         <Step completed>
-          <StepLabel>Telefone</StepLabel>
+          <StepLabel>{t('onboarding.stepPhone')}</StepLabel>
         </Step>
         <Step completed={success}>
-          <StepLabel>CPF</StepLabel>
+          <StepLabel>{t('onboarding.stepCpf')}</StepLabel>
         </Step>
       </Stepper>
     </Box>
@@ -216,13 +215,13 @@ export const CpfVerificationScreen: React.FC = () => {
       <Box sx={{ textAlign: 'center', py: 6 }}>
         <CheckCircleIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
         <Typography variant="h5" fontWeight={700} gutterBottom>
-          Tudo pronto! 🎉
+          {t('onboarding.allSet')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Sua conta está verificada.
+          {t('onboarding.accountVerified')}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Bora jogar uma pelada!
+          {t('onboarding.letsPlay')}
         </Typography>
         <LinearProgress sx={{ mt: 3, borderRadius: 1 }} />
       </Box>
@@ -265,16 +264,16 @@ export const CpfVerificationScreen: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography component="h1" variant="h6" fontWeight={700}>
-                      Quase lá! Verificar CPF
+                      {t('onboarding.almostThere')}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Etapa 2 de 2
+                      {t('onboarding.stepNofN')}
                     </Typography>
                   </Box>
                 </Box>
 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Seu CPF garante 1 conta por pessoa — sem bots ou contas falsas no ranking.
+                  {t('onboarding.cpfReason')}
                 </Typography>
 
                 <Fade in={!!error} timeout={250} unmountOnExit>
@@ -285,7 +284,7 @@ export const CpfVerificationScreen: React.FC = () => {
 
                 <TextField
                   fullWidth
-                  label="CPF"
+                  label={t('onboarding.cpfFieldLabel')}
                   placeholder="999.999.999-99"
                   value={cpf}
                   onChange={handleChange}
@@ -300,11 +299,11 @@ export const CpfVerificationScreen: React.FC = () => {
                       fontWeight: 600,
                     },
                   }}
-                  helperText="Apenas você verá seu CPF completo"
+                  helperText={t('onboarding.cpfHelper')}
                   inputProps={{
                     inputMode: 'numeric',
                     maxLength: 14,
-                    'aria-label': 'Número do CPF',
+                    'aria-label': t('onboarding.cpfAria'),
                   }}
                 />
 
@@ -317,7 +316,7 @@ export const CpfVerificationScreen: React.FC = () => {
                   sx={{ py: 1.5, borderRadius: 2 }}
                   startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                 >
-                  {loading ? 'Verificando...' : 'Concluir verificação'}
+                  {loading ? t('onboarding.verifying') : t('onboarding.finishVerification')}
                 </Button>
 
                 <Box
@@ -333,11 +332,10 @@ export const CpfVerificationScreen: React.FC = () => {
                   <ShieldIcon fontSize="small" color="action" />
                   <Box>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      <strong>Como protegemos seu CPF:</strong>
+                      <strong>{t('onboarding.howWeProtect')}</strong>
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Nunca exposto, mostrado mascarado para outros usuários (***.456.789-**),
-                      criptografado em nossos servidores. LGPD-compliant.
+                      {t('onboarding.protectDesc')}
                     </Typography>
                   </Box>
                 </Box>
@@ -347,13 +345,13 @@ export const CpfVerificationScreen: React.FC = () => {
                   color="text.secondary"
                   sx={{ display: 'block', mt: 2, textAlign: 'center' }}
                 >
-                  Ao continuar, você concorda com a{' '}
+                  {t('onboarding.termsPrefix')}{' '}
                   <a href="/privacy_policy.html" target="_blank" rel="noopener noreferrer">
-                    Política de Privacidade
+                    {t('onboarding.privacyPolicy')}
                   </a>{' '}
-                  e os{' '}
+                  {t('onboarding.termsConnector')}{' '}
                   <a href="/terms_of_service.html" target="_blank" rel="noopener noreferrer">
-                    Termos de Uso
+                    {t('onboarding.termsOfUse')}
                   </a>
                   .
                 </Typography>

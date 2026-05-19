@@ -26,11 +26,13 @@ import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { validateGroupForm } from '../../utils/groupValidation';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('CreateGroupScreen');
 
 export const CreateGroupScreen: React.FC = () => {
   useDocumentTitle('Criar Grupo');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -63,24 +65,24 @@ export const CreateGroupScreen: React.FC = () => {
 
     // Defesa em profundidade: apenas FIELD_OWNER e ADMIN podem criar grupos
     if (user && user.role !== 'FIELD_OWNER' && user.role !== 'ADMIN') {
-      showError('Apenas Field Owners e Admins podem criar grupos.');
+      showError(t('groups.onlyOwnersCanCreate'));
       return;
     }
 
     try {
       const groupId = await createGroup(formData);
-      showSuccess('Grupo criado com sucesso!');
+      showSuccess(t('groups.createdSuccess'));
       navigate(`/group/${groupId}`);
     } catch (err) {
       logger.error('Error creating group:', err);
-      showError('Erro ao criar grupo. Tente novamente.');
+      showError(t('groups.createError'));
     }
   };
 
   return (
     <AdaptiveFormSheet closeDestination="/groups" isDirty={isDirty}>
     <FormScaffold
-      title="Criar Grupo"
+      title={t('groups.createGroup')}
       closeDestination="/groups"
       closeVariant="X"
       isDirty={isDirty}
@@ -118,7 +120,7 @@ export const CreateGroupScreen: React.FC = () => {
                       '&:hover': { bgcolor: 'background.paper' },
                     }}
                     size="small"
-                    aria-label="Alterar foto do grupo"
+                    aria-label={t('groups.changePhotoAria')}
                   >
                     <CameraIcon />
                   </IconButton>
@@ -126,26 +128,26 @@ export const CreateGroupScreen: React.FC = () => {
               </Box>
 
               <TextField
-                label="Nome do Grupo *"
+                label={t('groups.groupNameRequired')}
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 error={!!formErrors.name}
-                helperText={formErrors.name || `${formData.name.length}/50 caracteres`}
+                helperText={formErrors.name || t('common.charCount', { current: formData.name.length, max: 50 })}
                 fullWidth
                 required
-                placeholder="Ex: Pelada dos Amigos, Futebol do Sábado"
+                placeholder={t('groups.groupNamePlaceholder')}
               />
 
               <TextField
-                label="Descrição"
+                label={t('groups.description')}
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 error={!!formErrors.description}
-                helperText={formErrors.description || `${formData.description.length}/500 caracteres`}
+                helperText={formErrors.description || t('common.charCount', { current: formData.description.length, max: 500 })}
                 fullWidth
                 multiline
                 rows={4}
-                placeholder="Descreva seu grupo, horários habituais, nível dos jogadores..."
+                placeholder={t('groups.descriptionPlaceholder')}
               />
 
               <FormControlLabel
@@ -157,9 +159,9 @@ export const CreateGroupScreen: React.FC = () => {
                 }
                 label={
                   <Box>
-                    <Typography variant="body1">Grupo Público</Typography>
+                    <Typography variant="body1">{t('groups.publicGroup')}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Grupos públicos podem ser encontrados na busca
+                      {t('groups.publicGroupDesc')}
                     </Typography>
                   </Box>
                 }
@@ -167,7 +169,7 @@ export const CreateGroupScreen: React.FC = () => {
 
               <Alert severity="info">
                 <Typography variant="body2">
-                  Você será o <strong>donor</strong> do grupo e poderá convidar outros jogadores.
+                  {t('groups.ownerInfo')}
                 </Typography>
               </Alert>
 
@@ -177,7 +179,7 @@ export const CreateGroupScreen: React.FC = () => {
                   onClick={() => navigate('/groups')}
                   fullWidth
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="contained"
@@ -186,7 +188,7 @@ export const CreateGroupScreen: React.FC = () => {
                   fullWidth
                   startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
                 >
-                  Criar Grupo
+                  {t('groups.createGroup')}
                 </Button>
               </Box>
             </Box>
