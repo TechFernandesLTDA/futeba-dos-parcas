@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -75,7 +76,8 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 import { ROLE_CONFIG, getRoleColor } from '../../constants/group';
 
 export const GroupDetailScreen: React.FC = () => {
-  useDocumentTitle('Detalhes do Grupo');
+  const { t } = useTranslation();
+  useDocumentTitle(t('group.detailTitle'));
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -125,21 +127,21 @@ export const GroupDetailScreen: React.FC = () => {
   const handleCopyInvite = async () => {
     // Guard issue #514: sem codigo o link sai /join/ (sem param)
     if (!inviteCode) {
-      showError('Gere um convite primeiro');
+      showError(t('group.generateInviteFirst'));
       return;
     }
     const link = `${window.location.origin}/join/${inviteCode}`;
     try {
       await navigator.clipboard.writeText(link);
-      showSuccess('Link copiado!');
+      showSuccess(t('group.linkCopied'));
     } catch {
-      showError('Erro ao copiar link');
+      showError(t('group.copyLinkError'));
     }
   };
 
   const handleShare = async () => {
     if (!inviteCode) {
-      showError('Gere um convite primeiro');
+      showError(t('group.generateInviteFirst'));
       return;
     }
     const link = `${window.location.origin}/join/${inviteCode}`;
@@ -287,7 +289,7 @@ export const GroupDetailScreen: React.FC = () => {
                       {group.memberCount ?? 0} membros
                     </Typography>
                     {group.isPublic && (
-                      <Chip label="Público" size="small" variant="outlined" />
+                      <Chip label={t('group.public')} size="small" variant="outlined" />
                     )}
                   </Box>
                 </Box>
@@ -308,13 +310,13 @@ export const GroupDetailScreen: React.FC = () => {
                       onClick={requestJoin}
                       disabled={joinSubmitting}
                     >
-                      {joinSubmitting ? 'Enviando…' : 'Pedir entrada'}
+                      {joinSubmitting ? t('group.sending') : t('group.requestJoin')}
                     </Button>
                   )}
                   {joinRequest?.status === 'PENDING' && (
                     <Stack spacing={1}>
                       <Alert severity="info" icon={false}>
-                        Aguardando aprovação do organizador
+                        {t('group.awaitingApproval')}
                       </Alert>
                       <Button
                         variant="outlined"
@@ -322,13 +324,13 @@ export const GroupDetailScreen: React.FC = () => {
                         onClick={cancelRequest}
                         disabled={joinSubmitting}
                       >
-                        {joinSubmitting ? 'Cancelando…' : 'Cancelar pedido'}
+                        {joinSubmitting ? t('group.cancelling') : t('group.cancelRequest')}
                       </Button>
                     </Stack>
                   )}
                   {joinRequest?.status === 'REJECTED' && (
                     <Alert severity="warning" icon={false}>
-                      Seu pedido foi recusado
+                      {t('group.requestRejected')}
                     </Alert>
                   )}
                 </Box>
@@ -346,9 +348,9 @@ export const GroupDetailScreen: React.FC = () => {
               aria-label="Seções do grupo"
               sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
             >
-              <Tab label="Membros" />
-              <Tab label="Jogos" />
-              <Tab label="Caixa" />
+              <Tab label={t('group.tabMembers')} />
+              <Tab label={t('group.tabGames')} />
+              <Tab label={t('group.tabCashbox')} />
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
@@ -375,7 +377,7 @@ export const GroupDetailScreen: React.FC = () => {
                   }}
                 />
               ) : (
-                <List disablePadding aria-label="Membros do grupo">
+                <List disablePadding aria-label={t('group.membersAria')}>
                   {members.map((member, index) => (
                     <GroupMemberItem
                       key={member.userId}
