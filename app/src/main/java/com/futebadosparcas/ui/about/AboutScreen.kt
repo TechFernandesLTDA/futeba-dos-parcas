@@ -26,6 +26,9 @@ import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import com.futebadosparcas.ui.components.design.AppLogo
+import com.futebadosparcas.ui.components.design.AppLogoShape
+import com.futebadosparcas.ui.components.design.AppLogoSize
 @Composable
 fun AboutScreen(
     onNavigateBack: () -> Unit,
@@ -222,13 +225,10 @@ private fun AboutHeader() {
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo do app
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
+            // Logo do app — componente padronizado AppLogo
+            AppLogo(
+                size = AppLogoSize.Large,
+                shape = AppLogoShape.Circle
             )
 
             Spacer(modifier = Modifier.height(16.dp))

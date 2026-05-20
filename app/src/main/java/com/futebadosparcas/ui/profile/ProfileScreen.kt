@@ -370,10 +370,11 @@ private fun ProfileContent(
 
         // Versão do App
         item(key = "version") {
+            // Dark mode: onSurface (alta ênfase) garante leitura clara da versão
             Text(
                 text = stringResource(R.string.version_format, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
@@ -470,11 +471,12 @@ private fun ProfileHeader(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Email
+            // Email — dark mode: usar onSurface + peso médio (era onSurfaceVariant, ficava "reto")
             Text(
                 text = user.email,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             // Role Badge
@@ -550,10 +552,11 @@ private fun StaticLevelCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
+                    // Dark mode: remover alpha 0.7f (subtítulo do nível some no escuro)
                     Text(
                         text = levelTitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
 
@@ -598,11 +601,11 @@ private fun StaticLevelCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Mensagem motivacional
+            // Mensagem motivacional — dark mode: alpha 0.9f (italic já reduz legibilidade; antes 0.8f sumia)
             Text(
                 text = motivationalMessage,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
             )
         }
@@ -873,10 +876,12 @@ private fun RowScope.StatItem(label: String, value: String) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
+        // Labels de stats — dark mode: onSurface + Medium para não sumirem ao lado dos valores
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
     }
@@ -984,10 +989,12 @@ private fun BadgeItem(badge: UserBadge) {
 
         Spacer(modifier = Modifier.height(4.dp))
 
+        // Nome do badge — dark mode: onSurface + Medium (era onSurfaceVariant sem weight, invisível)
         Text(
             text = badgeType?.name ?: badge.badgeId,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -1176,7 +1183,8 @@ private fun AdminSection(
                     title = stringResource(R.string.profile_section_manage_users),
                     onClick = onUserManagementClick
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+                // Dark mode: outlineVariant é o token oficial M3 para divisores; alpha 0.2f invisível
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 
             if (isFieldOwner) {
@@ -1190,7 +1198,8 @@ private fun AdminSection(
                     },
                     onClick = onMyLocationsClick
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+                // Dark mode: outlineVariant é o token oficial M3 para divisores; alpha 0.2f invisível
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 
             if (isAdmin) {
@@ -1199,7 +1208,8 @@ private fun AdminSection(
                     title = stringResource(R.string.profile_section_league_settings),
                     onClick = onGamificationSettingsClick
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+                // Dark mode: outlineVariant é o token oficial M3 para divisores; alpha 0.2f invisível
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 AdminMenuItem(
                     icon = Icons.Default.LocationOn,
