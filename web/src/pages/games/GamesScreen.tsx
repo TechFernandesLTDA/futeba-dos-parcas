@@ -16,6 +16,9 @@ import {
   useMediaQuery,
   Menu,
   MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -26,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGames } from '../../hooks/useGames';
+import { useGroups } from '../../hooks/useGroups';
 import { GameCard, LoadingState } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
@@ -46,7 +50,13 @@ export const GamesScreen: React.FC = () => {
   // Âncora do menu de filtro rápido (espelha as abas de status)
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
 
-  const { games: rawGames, loading, error, refetch } = useGames();
+  // Filtro por grupo: '' = todos os grupos do usuário (#1366)
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const { groups: userGroups } = useGroups();
+
+  const { games: rawGames, loading, error, refetch } = useGames(
+    selectedGroupId ? { groupId: selectedGroupId } : undefined,
+  );
 
   const getStatusFilter = (): GameStatus | null => {
     switch (tabValue) {
@@ -131,6 +141,29 @@ export const GamesScreen: React.FC = () => {
             {t('games.createGame')}
           </Button>
         </Box>
+        {/* Filtro por grupo (#1366) — só aparece se usuário tem >=1 grupo */}
+        {userGroups.length > 0 && (
+          <Box sx={{ px: 2, pb: 1 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel id="games-group-filter-label">
+                {t('games.filterByGroup')}
+              </InputLabel>
+              <Select
+                labelId="games-group-filter-label"
+                value={selectedGroupId}
+                label={t('games.filterByGroup')}
+                onChange={(e) => setSelectedGroupId(e.target.value)}
+              >
+                <MenuItem value="">{t('games.allGroups')}</MenuItem>
+                {userGroups.map((g) => (
+                  <MenuItem key={g.id} value={g.id}>
+                    {g.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
         <Tabs
           value={tabValue}
           onChange={(_, v) => setTabValue(v)}

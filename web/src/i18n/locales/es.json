@@ -367,7 +367,9 @@
     "presenceConfirmError": "Error al confirmar la asistencia. Inténtalo de nuevo.",
     "presenceCanceled": "Asistencia cancelada.",
     "presenceCancelError": "Error al cancelar la asistencia.",
-    "liveTitle": "Partido en Vivo"
+    "liveTitle": "Partido en Vivo",
+    "filterByGroup": "Filtrar por grupo",
+    "allGroups": "Todos los grupos"
   },
   "ranking": {
     "title": "Ranking",

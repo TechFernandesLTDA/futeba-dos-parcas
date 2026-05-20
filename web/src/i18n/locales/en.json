@@ -367,7 +367,9 @@
     "presenceConfirmError": "Failed to confirm presence. Please try again.",
     "presenceCanceled": "Presence canceled.",
     "presenceCancelError": "Failed to cancel presence.",
-    "liveTitle": "Live Game"
+    "liveTitle": "Live Game",
+    "filterByGroup": "Filter by group",
+    "allGroups": "All groups"
   },
   "ranking": {
     "title": "Ranking",
