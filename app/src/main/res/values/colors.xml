@@ -142,4 +142,9 @@
     <color name="widget_text_secondary">#49454F</color>
     <color name="widget_accent">#58CC02</color>
     <color name="widget_divider">#E7E0EC</color>
+
+    <!-- Tactical Board (#1403): light theme defaults; values-night override em dark mode -->
+    <color name="tactical_field">#4CAF50</color>
+    <color name="tactical_lines">#FFFFFF</color>
+    <color name="tactical_draw">#000000</color>
 </resources>

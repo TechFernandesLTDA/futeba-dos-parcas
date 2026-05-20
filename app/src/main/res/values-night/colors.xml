@@ -36,4 +36,9 @@
     <color name="success">#4ADE80</color>
     <color name="warning">#F7D87A</color>
     <color name="info">#5CC8FF</color>
+
+    <!-- Tactical Board (#1403) dark variants: grama mais escura, linhas off-white, traço claro -->
+    <color name="tactical_field">#2E5C32</color>
+    <color name="tactical_lines">#D6D6D6</color>
+    <color name="tactical_draw">#FFFFFF</color>
 </resources>

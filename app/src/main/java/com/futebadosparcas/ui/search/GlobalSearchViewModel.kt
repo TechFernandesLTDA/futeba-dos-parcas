@@ -1,6 +1,10 @@
 package com.futebadosparcas.ui.search
 
 import com.futebadosparcas.util.AppLogger
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.repository.GameRepository
@@ -15,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 // ==================== ViewModel-specific Models ====================
@@ -63,7 +68,8 @@ class GlobalSearchViewModel(
     private val gameRepository: GameRepository,
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val dataStore: DataStore<Preferences>
 ) : ViewModel() {
 
     companion object {
@@ -71,6 +77,12 @@ class GlobalSearchViewModel(
         private const val DEBOUNCE_MS = 300L
         private const val MAX_RECENT_SEARCHES = 10
         private const val MIN_QUERY_LENGTH = 2
+        // FIX #1406: persistência via DataStore (reusa DataStore "theme_settings"
+        // já registrado em DataStoreKoinModule). Sem migração necessária — key
+        // namespaced com prefixo evita colisão. Separador "\n" não pode aparecer
+        // em queries (input UI valida MIN_QUERY_LENGTH e bloqueia newlines).
+        private val RECENT_SEARCHES_KEY = stringPreferencesKey("search_history_recent")
+        private const val SEPARATOR = "\n"
     }
 
     private val _uiState = MutableStateFlow<GlobalSearchUiState>(GlobalSearchUiState.Idle)
@@ -146,7 +158,14 @@ class GlobalSearchViewModel(
      */
     fun clearHistory() {
         _recentSearches.value = emptyList()
-        // TODO: Persistir no SharedPreferences/DataStore
+        // FIX #1406: persiste limpeza no DataStore
+        viewModelScope.launch {
+            runCatching {
+                dataStore.edit { prefs -> prefs.remove(RECENT_SEARCHES_KEY) }
+            }.onFailure { e ->
+                AppLogger.e(TAG, "Falha ao limpar histórico de buscas", e)
+            }
+        }
     }
 
     /**
@@ -312,16 +331,36 @@ class GlobalSearchViewModel(
         val current = _recentSearches.value.toMutableList()
         current.remove(query)
         current.add(0, query)
-        _recentSearches.value = current.take(MAX_RECENT_SEARCHES)
-        // TODO: Persistir no SharedPreferences/DataStore
+        val updated = current.take(MAX_RECENT_SEARCHES)
+        _recentSearches.value = updated
+        // FIX #1406: persistir no DataStore (serializado como string separada por \n)
+        viewModelScope.launch {
+            runCatching {
+                dataStore.edit { prefs ->
+                    prefs[RECENT_SEARCHES_KEY] = updated.joinToString(SEPARATOR)
+                }
+            }.onFailure { e ->
+                AppLogger.e(TAG, "Falha ao salvar histórico de buscas", e)
+            }
+        }
     }
 
     /**
-     * Carrega histórico de buscas.
+     * Carrega histórico de buscas do DataStore (#1406).
      */
     private fun loadRecentSearches() {
-        // TODO: Carregar do SharedPreferences/DataStore
-        _recentSearches.value = emptyList()
+        viewModelScope.launch {
+            runCatching {
+                val prefs = dataStore.data.first()
+                val raw = prefs[RECENT_SEARCHES_KEY].orEmpty()
+                val list = if (raw.isEmpty()) emptyList()
+                    else raw.split(SEPARATOR).filter { it.isNotBlank() }.take(MAX_RECENT_SEARCHES)
+                _recentSearches.value = list
+            }.onFailure { e ->
+                AppLogger.e(TAG, "Falha ao carregar histórico de buscas", e)
+                _recentSearches.value = emptyList()
+            }
+        }
     }
 
     override fun onCleared() {

@@ -23,19 +23,21 @@ class TacticalBoardView @JvmOverloads constructor(
     private var drawCanvas: Canvas? = null
     private var canvasBitmap: Bitmap? = null
 
-    private var paintColor = Color.BLACK
+    // FIX #1403: cores via resources (R.color.tactical_*) com variantes em
+    // values-night/, evita campo/linhas/traço fixos que ignoram dark mode.
+    private var paintColor = ContextCompat.getColor(context, R.color.tactical_draw)
     private var strokeWidth = 10f
 
     // Store paths for Undo functionality (not fully implemented in MVP but structure is here)
-    private val paths = ArrayList<Pair<Path, Int>>() 
-    
+    private val paths = ArrayList<Pair<Path, Int>>()
+
     // Field Background
     private val fieldPaint = Paint().apply {
-        color = Color.parseColor("#4CAF50") // Grass Green
+        color = ContextCompat.getColor(context, R.color.tactical_field)
         style = Paint.Style.FILL
     }
     private val linesPaint = Paint().apply {
-        color = Color.WHITE
+        color = ContextCompat.getColor(context, R.color.tactical_lines)
         style = Paint.Style.STROKE
         strokeWidth = 5f
     }
