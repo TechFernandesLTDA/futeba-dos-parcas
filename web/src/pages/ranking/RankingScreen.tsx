@@ -84,11 +84,11 @@ export const RankingScreen: React.FC = () => {
           value={tabValue}
           onChange={(_, v) => setTabValue(v)}
           variant="fullWidth"
-          aria-label="Categorias do ranking"
+          aria-label={t('ranking.categoriesAria')}
         >
-          <Tab label="Geral" />
-          <Tab label="MVPs" />
-          <Tab label="Artilheiros" />
+          <Tab label={t('ranking.tabAll')} />
+          <Tab label={t('ranking.tabMvps')} />
+          <Tab label={t('ranking.tabScorers')} />
         </Tabs>
       </Box>
 
@@ -105,20 +105,20 @@ export const RankingScreen: React.FC = () => {
             }
             sx={{ mb: 2 }}
           >
-            Erro ao carregar ranking: {error}
+            {t('ranking.loadError', { error })}
           </Alert>
         ) : ranked.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <TrophyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              Nenhum jogador no ranking
+              {t('ranking.emptyTitle')}
             </Typography>
             <Typography variant="body2" color="text.disabled">
-              Participe de jogos para entrar no ranking!
+              {t('ranking.emptyDesc')}
             </Typography>
           </Box>
         ) : (
-          <List disablePadding aria-label="Classificação do ranking">
+          <List disablePadding aria-label={t('ranking.standingsAria')}>
             {ranked.length > 20 ? (
               <VirtualList
                 items={ranked}
@@ -225,7 +225,7 @@ const RankingItem = React.memo(function RankingItem({
               </Typography>
               <TeamBadge teamId={player.favoriteTeam} size={18} />
               {player.isCurrentUser && (
-                <Chip label="Você" size="small" color="primary" />
+                <Chip label={t('ranking.you')} size="small" color="primary" />
               )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

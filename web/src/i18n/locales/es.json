@@ -367,7 +367,16 @@
     "viewFull": "Ver completo",
     "noPlayersYet": "Ningún jugador en el ranking todavía",
     "pts": "pts",
-    "loadActivitiesError": "Error al cargar las actividades recientes."
+    "loadActivitiesError": "Error al cargar las actividades recientes.",
+    "tabAll": "General",
+    "tabMvps": "MVPs",
+    "tabScorers": "Goleadores",
+    "categoriesAria": "Categorías del ranking",
+    "loadError": "Error al cargar ranking: {{error}}",
+    "emptyTitle": "No hay jugadores en el ranking",
+    "emptyDesc": "¡Participa en partidos para entrar en el ranking!",
+    "standingsAria": "Clasificación del ranking",
+    "you": "Tú"
   },
   "league": {
     "title": "Liga",
@@ -385,7 +394,15 @@
     "goals": "Goles",
     "assists": "Asistencias",
     "mvpCount": "MVPs",
-    "saldo": "Saldo"
+    "saldo": "Saldo",
+    "tabAll": "General",
+    "loadError": "Error al cargar liga: {{error}}",
+    "emptyDivisionTitle": "Aún no hay jugadores en esta división",
+    "seasonNotStartedTitle": "La temporada aún no ha empezado.",
+    "emptyDivisionDesc": "¡Juega más para subir de división!",
+    "seasonNotStartedDesc": "Participa en partidos para entrar en la liga y ganar puntos.",
+    "viewPreviousSeason": "Ver temporada anterior",
+    "standingsAria": "Clasificación de la liga"
   },
   "statistics": {
     "title": "Estadísticas",
@@ -521,5 +538,22 @@
     "checklistConfirmPresenceDesc": "Di que vas a aparecer en el próximo partido",
     "checklistPlayFirstGame": "Juega tu primer partido",
     "checklistPlayFirstGameDesc": "Participa en un partido finalizado"
+  },
+  "group": {
+    "detailTitle": "Detalles del Grupo",
+    "generateInviteFirst": "Genera una invitación primero",
+    "linkCopied": "¡Enlace copiado!",
+    "copyLinkError": "Error al copiar enlace",
+    "public": "Público",
+    "sending": "Enviando…",
+    "requestJoin": "Solicitar entrada",
+    "cancelling": "Cancelando…",
+    "cancelRequest": "Cancelar solicitud",
+    "tabMembers": "Miembros",
+    "tabGames": "Partidos",
+    "tabCashbox": "Caja",
+    "membersAria": "Miembros del grupo",
+    "awaitingApproval": "Esperando aprobación del organizador",
+    "requestRejected": "Tu solicitud fue rechazada"
   }
 }

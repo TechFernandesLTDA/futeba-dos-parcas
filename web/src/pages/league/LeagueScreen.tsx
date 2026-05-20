@@ -78,7 +78,7 @@ export const LeagueScreen: React.FC = () => {
           scrollButtons="auto"
           aria-label="Divisões da liga"
         >
-          <Tab label="Geral" />
+          <Tab label={t('league.tabAll')} />
           {divisions.map((div) => (
             <Tab
               key={div}
@@ -120,29 +120,29 @@ export const LeagueScreen: React.FC = () => {
             }
             sx={{ mb: 2 }}
           >
-            Erro ao carregar liga: {error}
+            {t('league.loadError', { error })}
           </Alert>
         ) : players.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <MilitaryTechIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               {selectedDivision
-                ? 'Nenhum jogador nesta divisão ainda'
-                : 'Temporada ainda não iniciada.'}
+                ? t('league.emptyDivisionTitle')
+                : t('league.seasonNotStartedTitle')}
             </Typography>
             <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
               {selectedDivision
-                ? 'Jogue mais para subir de divisão!'
-                : 'Participe de jogos para entrar na liga e acumular pontos.'}
+                ? t('league.emptyDivisionDesc')
+                : t('league.seasonNotStartedDesc')}
             </Typography>
             {!selectedDivision && (
               <Button variant="outlined" onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }}>
-                Ver temporada anterior
+                {t('league.viewPreviousSeason')}
               </Button>
             )}
           </Box>
         ) : (
-          <List disablePadding aria-label="Classificação da liga">
+          <List disablePadding aria-label={t('league.standingsAria')}>
             {players.length > 20 ? (
               <VirtualList
                 items={players}

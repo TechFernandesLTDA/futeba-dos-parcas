@@ -367,7 +367,16 @@
     "viewFull": "View full",
     "noPlayersYet": "No players in the ranking yet",
     "pts": "pts",
-    "loadActivitiesError": "Failed to load recent activities."
+    "loadActivitiesError": "Failed to load recent activities.",
+    "tabAll": "Overall",
+    "tabMvps": "MVPs",
+    "tabScorers": "Top Scorers",
+    "categoriesAria": "Ranking categories",
+    "loadError": "Error loading ranking: {{error}}",
+    "emptyTitle": "No players in the ranking",
+    "emptyDesc": "Join games to enter the ranking!",
+    "standingsAria": "Ranking standings",
+    "you": "You"
   },
   "league": {
     "title": "League",
@@ -385,7 +394,15 @@
     "goals": "Goals",
     "assists": "Assists",
     "mvpCount": "MVPs",
-    "saldo": "Balance"
+    "saldo": "Balance",
+    "tabAll": "Overall",
+    "loadError": "Error loading league: {{error}}",
+    "emptyDivisionTitle": "No players in this division yet",
+    "seasonNotStartedTitle": "Season hasn't started yet.",
+    "emptyDivisionDesc": "Play more games to climb divisions!",
+    "seasonNotStartedDesc": "Join games to enter the league and earn points.",
+    "viewPreviousSeason": "View previous season",
+    "standingsAria": "League standings"
   },
   "statistics": {
     "title": "Statistics",
@@ -521,5 +538,22 @@
     "checklistConfirmPresenceDesc": "Say you'll show up for the next match",
     "checklistPlayFirstGame": "Play your first match",
     "checklistPlayFirstGameDesc": "Take part in a finished game"
+  },
+  "group": {
+    "detailTitle": "Group Details",
+    "generateInviteFirst": "Generate an invite first",
+    "linkCopied": "Link copied!",
+    "copyLinkError": "Error copying link",
+    "public": "Public",
+    "sending": "Sending…",
+    "requestJoin": "Request to join",
+    "cancelling": "Cancelling…",
+    "cancelRequest": "Cancel request",
+    "tabMembers": "Members",
+    "tabGames": "Games",
+    "tabCashbox": "Cashbox",
+    "membersAria": "Group members",
+    "awaitingApproval": "Awaiting organizer approval",
+    "requestRejected": "Your request was rejected"
   }
 }

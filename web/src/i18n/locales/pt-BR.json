@@ -367,7 +367,16 @@
     "viewFull": "Ver completo",
     "noPlayersYet": "Nenhum jogador no ranking ainda",
     "pts": "pts",
-    "loadActivitiesError": "Erro ao carregar atividades recentes."
+    "loadActivitiesError": "Erro ao carregar atividades recentes.",
+    "tabAll": "Geral",
+    "tabMvps": "MVPs",
+    "tabScorers": "Artilheiros",
+    "categoriesAria": "Categorias do ranking",
+    "loadError": "Erro ao carregar ranking: {{error}}",
+    "emptyTitle": "Nenhum jogador no ranking",
+    "emptyDesc": "Participe de jogos para entrar no ranking!",
+    "standingsAria": "Classificação do ranking",
+    "you": "Você"
   },
   "league": {
     "title": "Liga",
@@ -385,7 +394,15 @@
     "goals": "Gols",
     "assists": "Assistências",
     "mvpCount": "MVPs",
-    "saldo": "Saldo"
+    "saldo": "Saldo",
+    "tabAll": "Geral",
+    "loadError": "Erro ao carregar liga: {{error}}",
+    "emptyDivisionTitle": "Nenhum jogador nesta divisão ainda",
+    "seasonNotStartedTitle": "Temporada ainda não iniciada.",
+    "emptyDivisionDesc": "Jogue mais para subir de divisão!",
+    "seasonNotStartedDesc": "Participe de jogos para entrar na liga e acumular pontos.",
+    "viewPreviousSeason": "Ver temporada anterior",
+    "standingsAria": "Classificação da liga"
   },
   "statistics": {
     "title": "Estatísticas",
@@ -521,5 +538,22 @@
     "checklistConfirmPresenceDesc": "Diga que vai aparecer na próxima partida",
     "checklistPlayFirstGame": "Jogue sua primeira partida",
     "checklistPlayFirstGameDesc": "Participe de um jogo encerrado"
+  },
+  "group": {
+    "detailTitle": "Detalhes do Grupo",
+    "generateInviteFirst": "Gere um convite primeiro",
+    "linkCopied": "Link copiado!",
+    "copyLinkError": "Erro ao copiar link",
+    "public": "Público",
+    "sending": "Enviando…",
+    "requestJoin": "Pedir entrada",
+    "cancelling": "Cancelando…",
+    "cancelRequest": "Cancelar pedido",
+    "tabMembers": "Membros",
+    "tabGames": "Jogos",
+    "tabCashbox": "Caixa",
+    "membersAria": "Membros do grupo",
+    "awaitingApproval": "Aguardando aprovação do organizador",
+    "requestRejected": "Seu pedido foi recusado"
   }
 }
