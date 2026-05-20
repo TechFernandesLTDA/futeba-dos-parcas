@@ -219,7 +219,15 @@
     "recentActivity": "Actividad Reciente",
     "noRecentActivity": "Ninguna actividad reciente",
     "noRecentActivityDesc": "Únete a grupos o crea partidos para ver actividad aquí",
-    "defaultActivityTitle": "Actividad"
+    "defaultActivityTitle": "Actividad",
+    "loadError": "Error al cargar perfil: {{error}}",
+    "notFound": "Perfil no encontrado",
+    "totalXp": "XP Total",
+    "mvps": "MVPs",
+    "menuOptions": "Opciones del perfil",
+    "detailedStats": "Estadísticas Detalladas",
+    "editTitle": "Editar Perfil",
+    "phonePlaceholder": "(11) 99999-9999"
   },
   "games": {
     "title": "Juegos",

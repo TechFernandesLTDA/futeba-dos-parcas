@@ -136,7 +136,7 @@ export const ProfileScreen: React.FC = () => {
             </Button>
           }
         >
-          Erro ao carregar perfil: {error}
+          {t('profile.loadError', { error })}
         </Alert>
         <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
           {t('common.back')}
@@ -151,11 +151,11 @@ export const ProfileScreen: React.FC = () => {
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
-            Perfil não encontrado
+            {t('profile.notFound')}
           </Typography>
         </Box>
         <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Container>
     );
@@ -243,7 +243,7 @@ export const ProfileScreen: React.FC = () => {
                         {profile.xp}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        XP Total
+                        {t('profile.totalXp')}
                       </Typography>
                     </Paper>
                   </Grid>
@@ -253,7 +253,7 @@ export const ProfileScreen: React.FC = () => {
                         {profile.mvpCount}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        MVPs
+                        {t('profile.mvps')}
                       </Typography>
                     </Paper>
                   </Grid>
@@ -305,7 +305,7 @@ export const ProfileScreen: React.FC = () => {
                       <TrendingIcon color="info" />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Assists
+                          {t('profile.assists')}
                         </Typography>
                         <Typography variant="h6">{profile.assists}</Typography>
                       </Box>
@@ -319,12 +319,12 @@ export const ProfileScreen: React.FC = () => {
           {isOwnProfile && (
             <Grid item xs={12} md={7}>
               <Card>
-                <List disablePadding aria-label="Opções do perfil">
+                <List disablePadding aria-label={t('profile.menuOptions')}>
                   <ListItemButton onClick={() => navigate('/statistics')}>
                     <ListItemIcon>
                       <StatsIcon />
                     </ListItemIcon>
-                    <ListItemText primary="Estatísticas Detalhadas" />
+                    <ListItemText primary={t('profile.detailedStats')} />
                   </ListItemButton>
                   <Divider />
                   <ListItemButton onClick={() => navigate('/badges')}>
