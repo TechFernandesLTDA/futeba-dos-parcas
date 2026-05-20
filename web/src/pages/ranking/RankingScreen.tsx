@@ -175,6 +175,7 @@ const RankingItem = React.memo(function RankingItem({
   onAvatarClick: (userId: string) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   return (
     <Card
       sx={{
