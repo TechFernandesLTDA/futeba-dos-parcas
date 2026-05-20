@@ -254,9 +254,10 @@ export const EditProfileScreen: React.FC = () => {
       setInitialData(formData); // sync para evitar dirty guard após save
       setTimeout(() => navigate('/profile'), 1500);
     } catch (err) {
+      // FIX 2026-05-20: usar somente Alert (setError) — antes duplicava
+      // Alert + Toast com a mesma mensagem (mesmo pattern do #1420).
       logger.error('Falha ao salvar perfil:', err);
-      setError(getFirestoreErrorMessage(err));
-      showError(t('profile.editProfileError'));
+      setError(getFirestoreErrorMessage(err, t('profile.editProfileError')));
     } finally {
       setSaving(false);
     }
