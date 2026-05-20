@@ -82,14 +82,24 @@ export const LeagueScreen: React.FC = () => {
           {divisions.map((div) => (
             <Tab
               key={div}
+              // Dot colorido antes do label dá identidade no estado idle; cor de texto no selecionado
+              // marca a divisão atual. Removido o borderTop conflitante com TabIndicator do MUI (#1369).
+              iconPosition="start"
+              icon={
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    bgcolor: DIVISION_CONFIG[div]?.color ?? 'transparent',
+                  }}
+                />
+              }
               label={DIVISION_CONFIG[div]?.label ?? div}
               sx={{
-                borderTop: tabValue === divisions.indexOf(div) + 1 ? 3 : 0,
-                borderColor: DIVISION_CONFIG[div]?.color ?? 'transparent',
+                minHeight: 48,
                 '&.Mui-selected': {
                   color: DIVISION_CONFIG[div]?.color,
-                  borderTop: 3,
-                  borderColor: DIVISION_CONFIG[div]?.color,
                 },
               }}
             />

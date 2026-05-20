@@ -194,7 +194,14 @@ export const GamesScreen: React.FC = () => {
       <Fab
         color="primary"
         aria-label="Criar novo jogo"
-        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+        // FAB ancorada na viewport (max p/ não passar do edge do container sm=600px) (#1372)
+        // Antes o calc usava 240px assumindo container=480px, mas maxWidth='sm' é 600px → desalinhava.
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          position: 'fixed',
+          bottom: 16,
+          right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' },
+        }}
         onClick={() => navigate('/game/create')}
       >
         <AddIcon />
