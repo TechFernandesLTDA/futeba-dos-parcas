@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -76,7 +77,8 @@ function canManageGame(game: Game | null, uid?: string): boolean {
 }
 
 export const LiveGameScreen: React.FC = () => {
-  useDocumentTitle('Jogo ao Vivo');
+  const { t } = useTranslation();
+  useDocumentTitle(t('games.liveTitle'));
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -321,7 +323,7 @@ export const LiveGameScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>
-            Jogo ao Vivo
+            {t('games.liveTitle')}
           </Typography>
           <Chip
             icon={<TimerIcon />}
@@ -335,27 +337,51 @@ export const LiveGameScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-              <Box sx={{ textAlign: 'center', flex: 1 }}>
-                <Typography variant="h5" fontWeight={600} color="text.secondary">
-                  {game.team1Name || 'Time 1'}
-                </Typography>
-                <Typography variant="h2" fontWeight={700} color="primary">
-                  {score?.team1Score || 0}
-                </Typography>
-              </Box>
-              <Typography variant="h4" color="text.secondary">
-                vs
-              </Typography>
-              <Box sx={{ textAlign: 'center', flex: 1 }}>
-                <Typography variant="h5" fontWeight={600} color="text.secondary">
-                  {game.team2Name || 'Time 2'}
-                </Typography>
-                <Typography variant="h2" fontWeight={700} color="primary">
-                  {score?.team2Score || 0}
-                </Typography>
-              </Box>
-            </Box>
+            {/* Placar com cores distintas por time + destaque no líder (#1363) */}
+            {(() => {
+              const s1 = score?.team1Score || 0;
+              const s2 = score?.team2Score || 0;
+              const leader: 1 | 2 | 0 = s1 > s2 ? 1 : s2 > s1 ? 2 : 0;
+              return (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                  <Box sx={{ textAlign: 'center', flex: 1 }}>
+                    <Typography variant="h5" fontWeight={600} color="text.secondary">
+                      {game.team1Name || t('games.teamA')}
+                    </Typography>
+                    <Typography
+                      variant="h2"
+                      fontWeight={leader === 1 ? 800 : 600}
+                      sx={{
+                        color: 'primary.main',
+                        opacity: leader === 2 ? 0.6 : 1,
+                        transition: 'opacity 0.2s, font-weight 0.2s',
+                      }}
+                    >
+                      {s1}
+                    </Typography>
+                  </Box>
+                  <Typography variant="h4" color="text.secondary">
+                    vs
+                  </Typography>
+                  <Box sx={{ textAlign: 'center', flex: 1 }}>
+                    <Typography variant="h5" fontWeight={600} color="text.secondary">
+                      {game.team2Name || t('games.teamB')}
+                    </Typography>
+                    <Typography
+                      variant="h2"
+                      fontWeight={leader === 2 ? 800 : 600}
+                      sx={{
+                        color: 'secondary.main',
+                        opacity: leader === 1 ? 0.6 : 1,
+                        transition: 'opacity 0.2s, font-weight 0.2s',
+                      }}
+                    >
+                      {s2}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })()}
           </CardContent>
         </Card>
 

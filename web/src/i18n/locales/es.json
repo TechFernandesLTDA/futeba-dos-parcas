@@ -345,7 +345,8 @@
     "presenceConfirmed": "¡Asistencia confirmada! ✓",
     "presenceConfirmError": "Error al confirmar la asistencia. Inténtalo de nuevo.",
     "presenceCanceled": "Asistencia cancelada.",
-    "presenceCancelError": "Error al cancelar la asistencia."
+    "presenceCancelError": "Error al cancelar la asistencia.",
+    "liveTitle": "Partido en Vivo"
   },
   "ranking": {
     "title": "Ranking",
