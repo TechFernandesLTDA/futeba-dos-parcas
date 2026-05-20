@@ -40,6 +40,7 @@ const ProfileTab = lazy(() => import('./tabs/ProfileTab').then(m => ({ default: 
 const NotificationsScreenLazy = lazy(() => import('../ranking/NotificationsScreen').then(m => ({ default: m.NotificationsScreen })));
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { NotificationBell } from '../../components/common/NotificationBell';
+import { AppLogo } from '../../components/common/AppLogo';
 
 // Larguras dos navs adaptativos (Material 3 spec)
 const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
@@ -223,13 +224,10 @@ export function HomeScreen() {
             },
           }}
         >
-          {/* Logo da marca em vez de ícone genérico Material (#1364) */}
-          <Box
-            component="img"
-            src="/icons/icon-192.png"
-            alt={t('common.appName')}
-            sx={{ width: 32, height: 32, borderRadius: 1 }}
-          />
+          {/* Logo padronizada (AppLogo /logo.png circular) — alinhado a
+              AppSidebar/MobileTopBar. Antes usava /icons/icon-192.png
+              (PWA icon quadrado), divergente do resto do app. */}
+          <AppLogo size="small" shape="circle" alt={t('common.appName')} sx={{ width: 32, height: 32 }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>
@@ -287,13 +285,9 @@ export function HomeScreen() {
           }}
         >
           <Toolbar variant="dense">
-            {/* Logo da marca em vez de ícone genérico Material (#1364) */}
-            <Box
-              component="img"
-              src="/icons/icon-192.png"
-              alt={t('common.appName')}
-              sx={{ width: 28, height: 28, borderRadius: 1, mr: 1 }}
-            />
+            {/* Logo padronizada (AppLogo /logo.png circular) — alinhado a
+                MobileTopBar das demais telas. */}
+            <AppLogo size="small" shape="circle" alt={t('common.appName')} sx={{ width: 28, height: 28, mr: 1 }} />
             <Typography variant="h6" fontWeight={700} color="primary.main" sx={{ flex: 1 }}>
               {t('common.appName')}
             </Typography>
