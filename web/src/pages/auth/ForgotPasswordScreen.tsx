@@ -16,11 +16,11 @@ import {
 import {
   Email,
   ArrowBack,
-  SportsSoccer,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { AppLogo } from '../../components/common/AppLogo';
 
 export function ForgotPasswordScreen() {
   useDocumentTitle('Recuperar Senha');
@@ -91,21 +91,13 @@ export function ForgotPasswordScreen() {
           </Box>
 
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-              }}
-            >
-              <SportsSoccer sx={{ fontSize: 40, color: theme.palette.primary.contrastText }} />
-            </Box>
+            {/* Logo padronizada — AppLogo (PNG canônico do app) */}
+            <AppLogo
+              size="large"
+              shape="circle"
+              alt="Futeba dos Parças"
+              sx={{ mx: 'auto', mb: 2 }}
+            />
             <Typography variant="h5" fontWeight="bold">
               Recuperar Senha
             </Typography>
