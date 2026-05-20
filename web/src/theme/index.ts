@@ -240,6 +240,48 @@ export const futebaDarkTheme = createTheme({
         }),
       },
     },
+    // Sombras do light (rgba 0,0,0,0.08) ficam invisíveis no #0F172A → densificar no dark
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+        },
+      },
+    },
+    // Button/Fab usavam constante `primary.main` (verde light #00852A) — no dark precisa o primary do tema (#4ADE80)
+    MuiButton: {
+      styleOverrides: {
+        contained: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          boxShadow: `0 2px 4px ${theme.palette.primary.main}33`,
+          '&:hover': {
+            boxShadow: `0 4px 8px ${theme.palette.primary.main}4D`,
+          },
+        }),
+      },
+    },
+    MuiFab: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          boxShadow: `0 4px 12px ${theme.palette.primary.main}4D`,
+        }),
+      },
+    },
+    MuiBottomNavigationAction: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          '&.Mui-selected': {
+            color: theme.palette.primary.main,
+          },
+        }),
+      },
+    },
     MuiBottomNavigation: {
       styleOverrides: {
         // Fix #413: dark mode também usa palette tokens

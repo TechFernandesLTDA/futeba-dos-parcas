@@ -415,7 +415,8 @@ export const LiveGameScreen: React.FC = () => {
                         >
                           {/* Ícones vetoriais por tipo de evento — fix #762 */}
                           {event.eventType === 'GOAL' && <SoccerIcon aria-label="Gol" />}
-                          {event.eventType === 'YELLOW_CARD' && <YellowCardIcon aria-label="Cartão Amarelo" sx={{ color: 'warning.light' }} />}
+                          {/* warning.light sobre warning.main = ~1.7:1 no dark; warning.main isolado mantém amarelo legível */}
+                          {event.eventType === 'YELLOW_CARD' && <YellowCardIcon aria-label="Cartão Amarelo" sx={{ color: 'warning.main' }} />}
                           {event.eventType === 'RED_CARD' && <RedCardIcon aria-label="Cartão Vermelho" />}
                           {event.eventType === 'ASSIST' && <AssistIcon aria-label="Assistência" />}
                           {event.eventType === 'SAVE' && <SaveIcon aria-label="Defesa" />}
