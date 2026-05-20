@@ -44,7 +44,7 @@ export const SplashScreen: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -78,7 +78,7 @@ export const SplashScreen: React.FC = () => {
       </Typography>
 
       <Typography variant="body1" sx={{ color: alpha(theme.palette.primary.contrastText, 0.8), mb: 4 }}>
-        Organize suas peladas
+        {t('splash.tagline')}
       </Typography>
 
       <CircularProgress sx={{ color: 'primary.contrastText' }} />

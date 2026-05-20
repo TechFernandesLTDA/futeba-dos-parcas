@@ -240,7 +240,8 @@
     "streakRecord_one": "Record: {{count}} game",
     "streakRecord_other": "Record: {{count}} games",
     "skillsByPosition": "Skills by Position",
-    "scaleLabel": "Scale: 0 to 5"
+    "scaleLabel": "Scale: 0 to 5",
+    "signOutError": "Sign out failed. Try again."
   },
   "games": {
     "title": "Games",
@@ -369,7 +370,8 @@
     "presenceCancelError": "Failed to cancel presence.",
     "liveTitle": "Live Game",
     "filterByGroup": "Filter by group",
-    "allGroups": "All groups"
+    "allGroups": "All groups",
+    "loadError": "Failed to load games"
   },
   "ranking": {
     "title": "Ranking",
@@ -391,7 +393,9 @@
     "emptyTitle": "No players in the ranking",
     "emptyDesc": "Join games to enter the ranking!",
     "standingsAria": "Ranking standings",
-    "you": "You"
+    "you": "You",
+    "noPlayers": "No players in ranking",
+    "joinGamesAction": "See available games"
   },
   "league": {
     "title": "League",
@@ -441,7 +445,10 @@
       "general": "General",
       "goals": "Goals",
       "achievements": "Achievements"
-    }
+    },
+    "loadEvolutionError": "Could not load evolution data. Try again.",
+    "loadError": "Error loading statistics. Try again.",
+    "joinGamesPrompt": "Join games to see your stats!"
   },
   "groups": {
     "title": "Groups",
@@ -508,7 +515,8 @@
     "tryAgain": "Please try again later"
   },
   "notifications": {
-    "bannerMessage": "Enable notifications to receive game alerts!"
+    "bannerMessage": "Enable notifications to receive game alerts!",
+    "acceptError": "Failed to accept. Try again."
   },
   "onboarding": {
     "welcome": "Welcome to Futeba dos Parças!",
@@ -570,5 +578,11 @@
     "membersAria": "Group members",
     "awaitingApproval": "Awaiting organizer approval",
     "requestRejected": "Your request was rejected"
+  },
+  "splash": {
+    "tagline": "Organize your games"
+  },
+  "badges": {
+    "title": "Achievements"
   }
 }

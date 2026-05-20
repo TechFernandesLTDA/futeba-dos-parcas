@@ -240,7 +240,8 @@
     "streakRecord_one": "Récord: {{count}} partido",
     "streakRecord_other": "Récord: {{count}} partidos",
     "skillsByPosition": "Habilidades por Posición",
-    "scaleLabel": "Escala: 0 a 5"
+    "scaleLabel": "Escala: 0 a 5",
+    "signOutError": "Error al cerrar sesión. Intenta de nuevo."
   },
   "games": {
     "title": "Juegos",
@@ -369,7 +370,8 @@
     "presenceCancelError": "Error al cancelar la asistencia.",
     "liveTitle": "Partido en Vivo",
     "filterByGroup": "Filtrar por grupo",
-    "allGroups": "Todos los grupos"
+    "allGroups": "Todos los grupos",
+    "loadError": "Error al cargar partidos"
   },
   "ranking": {
     "title": "Ranking",
@@ -391,7 +393,9 @@
     "emptyTitle": "No hay jugadores en el ranking",
     "emptyDesc": "¡Participa en partidos para entrar en el ranking!",
     "standingsAria": "Clasificación del ranking",
-    "you": "Tú"
+    "you": "Tú",
+    "noPlayers": "Sin jugadores en el ranking",
+    "joinGamesAction": "Ver partidos disponibles"
   },
   "league": {
     "title": "Liga",
@@ -441,7 +445,10 @@
       "general": "General",
       "goals": "Goles",
       "achievements": "Logros"
-    }
+    },
+    "loadEvolutionError": "No se pudieron cargar los datos de evolución. Intenta de nuevo.",
+    "loadError": "Error al cargar estadísticas. Intenta de nuevo.",
+    "joinGamesPrompt": "¡Participa en partidos para ver tus estadísticas!"
   },
   "groups": {
     "title": "Grupos",
@@ -508,7 +515,8 @@
     "tryAgain": "Intenta de nuevo más tarde"
   },
   "notifications": {
-    "bannerMessage": "¡Activa las notificaciones para recibir alertas de juegos!"
+    "bannerMessage": "¡Activa las notificaciones para recibir alertas de juegos!",
+    "acceptError": "Error al aceptar. Intenta de nuevo."
   },
   "onboarding": {
     "welcome": "¡Bienvenido a Futeba dos Parças!",
@@ -570,5 +578,11 @@
     "membersAria": "Miembros del grupo",
     "awaitingApproval": "Esperando aprobación del organizador",
     "requestRejected": "Tu solicitud fue rechazada"
+  },
+  "splash": {
+    "tagline": "Organiza tus partidos"
+  },
+  "badges": {
+    "title": "Logros"
   }
 }

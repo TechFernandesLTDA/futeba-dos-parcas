@@ -240,7 +240,8 @@
     "streakRecord_one": "Recorde: {{count}} jogo",
     "streakRecord_other": "Recorde: {{count}} jogos",
     "skillsByPosition": "Habilidades por Posição",
-    "scaleLabel": "Escala: 0 a 5"
+    "scaleLabel": "Escala: 0 a 5",
+    "signOutError": "Erro ao sair. Tente novamente."
   },
   "games": {
     "title": "Jogos",
@@ -369,7 +370,8 @@
     "presenceCancelError": "Erro ao cancelar presença.",
     "liveTitle": "Jogo ao Vivo",
     "filterByGroup": "Filtrar por grupo",
-    "allGroups": "Todos os grupos"
+    "allGroups": "Todos os grupos",
+    "loadError": "Erro ao carregar jogos"
   },
   "ranking": {
     "title": "Ranking",
@@ -391,7 +393,9 @@
     "emptyTitle": "Nenhum jogador no ranking",
     "emptyDesc": "Participe de jogos para entrar no ranking!",
     "standingsAria": "Classificação do ranking",
-    "you": "Você"
+    "you": "Você",
+    "noPlayers": "Nenhum jogador no ranking",
+    "joinGamesAction": "Ver jogos disponíveis"
   },
   "league": {
     "title": "Liga",
@@ -441,7 +445,10 @@
       "general": "Geral",
       "goals": "Gols",
       "achievements": "Conquistas"
-    }
+    },
+    "loadEvolutionError": "Não foi possível carregar os dados de evolução. Tente novamente.",
+    "loadError": "Erro ao carregar estatísticas. Tente novamente.",
+    "joinGamesPrompt": "Participe de jogos para ver suas estatísticas!"
   },
   "groups": {
     "title": "Grupos",
@@ -508,7 +515,8 @@
     "tryAgain": "Tente novamente mais tarde"
   },
   "notifications": {
-    "bannerMessage": "Ative as notificações para receber alertas de jogos!"
+    "bannerMessage": "Ative as notificações para receber alertas de jogos!",
+    "acceptError": "Erro ao aceitar. Tente novamente."
   },
   "onboarding": {
     "welcome": "Bem-vindo ao Futeba dos Parças!",
@@ -570,5 +578,11 @@
     "membersAria": "Membros do grupo",
     "awaitingApproval": "Aguardando aprovação do organizador",
     "requestRejected": "Seu pedido foi recusado"
+  },
+  "splash": {
+    "tagline": "Organize suas peladas"
+  },
+  "badges": {
+    "title": "Conquistas"
   }
 }

@@ -11,6 +11,7 @@ import {
   Fab,
   Button,
   Grid,
+  Alert,
   CircularProgress,
   useTheme,
   useMediaQuery,
@@ -187,17 +188,17 @@ export const GamesScreen: React.FC = () => {
           {loading ? (
             <LoadingState shimmerCount={8} itemType="GAME" />
           ) : error ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <Typography variant="h6" color="error" gutterBottom>
-                Erro ao carregar jogos
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {error}
-              </Typography>
-              <Button variant="contained" onClick={handleRefresh} sx={{ mt: 2 }}>
-                Tentar novamente
-              </Button>
-            </Box>
+            <Alert
+              severity="error"
+              action={
+                <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={handleRefresh}>
+                  {t('common.retry')}
+                </Button>
+              }
+              sx={{ mb: 2 }}
+            >
+              {t('games.loadError')}: {error}
+            </Alert>
           ) : filteredGames.length === 0 ? (
             <EmptyState
               icon={<SoccerIcon />}

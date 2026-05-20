@@ -42,7 +42,7 @@ export const NotFoundScreen: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
+        minHeight: '100dvh',
         gap: 2,
         px: 3,
         bgcolor: theme.palette.background.default,

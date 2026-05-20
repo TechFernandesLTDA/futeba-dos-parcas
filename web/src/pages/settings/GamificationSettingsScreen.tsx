@@ -33,6 +33,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import {
@@ -71,6 +72,7 @@ const DEFAULT_PREFS: GamificationPrefs = {
 };
 
 export const GamificationSettingsScreen: React.FC = () => {
+  const { t } = useTranslation();
   useDocumentTitle('Gamificação');
   const navigate = useNavigate();
   const theme = useTheme();
@@ -125,7 +127,7 @@ export const GamificationSettingsScreen: React.FC = () => {
       showSuccess('Configurações de gamificação salvas!');
     } catch (error) {
       logger.error('Erro ao salvar preferências de gamificação:', error);
-      showError('Erro ao salvar configurações. Tente novamente.');
+      showError(t('settings.saveError'));
     } finally {
       setSaving(false);
     }

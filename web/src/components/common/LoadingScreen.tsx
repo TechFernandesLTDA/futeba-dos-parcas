@@ -22,7 +22,7 @@ export const LoadingScreen = React.memo(function LoadingScreen({
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '100vh',
+          height: '100dvh',
           gap: 2,
         }}
         role="status"

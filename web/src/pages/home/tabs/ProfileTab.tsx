@@ -81,7 +81,7 @@ export function ProfileTab() {
       navigate('/login');
     } catch (error) {
       logger.error('Erro ao sair:', error);
-      showError('Erro ao sair. Tente novamente.');
+      showError(t('profile.signOutError'));
     }
   };
 

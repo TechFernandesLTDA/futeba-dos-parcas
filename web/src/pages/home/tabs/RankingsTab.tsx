@@ -753,7 +753,7 @@ export function RankingsTab() {
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <TrophyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                Nenhum jogador no ranking
+                {t('ranking.noPlayers')}
               </Typography>
               <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
                 Os 100 melhores jogadores aparecem aqui. Participe de jogos para entrar no ranking!

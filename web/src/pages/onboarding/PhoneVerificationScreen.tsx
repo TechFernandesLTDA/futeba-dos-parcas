@@ -233,7 +233,7 @@ export const PhoneVerificationScreen: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         bgcolor: 'background.default',
