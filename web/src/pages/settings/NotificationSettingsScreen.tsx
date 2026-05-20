@@ -33,6 +33,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { EmptyState } from '../../components/common/EmptyState';
 
 const MUTE_OPTIONS = [
@@ -50,6 +51,7 @@ const REMINDER_OPTIONS = [
 ];
 
 export const NotificationSettingsScreen: React.FC = () => {
+  const { t } = useTranslation();
   useDocumentTitle('Notificações');
   const navigate = useNavigate();
   const theme = useTheme();
@@ -98,7 +100,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         <Container maxWidth="sm" sx={{ py: 4 }}>
           <EmptyState
             icon={<NotificationsIcon />}
-            title="Erro ao carregar"
+            title={t('settings.loadError')}
             description={error}
             actionLabel="Tentar novamente"
             onAction={() => queryClient.invalidateQueries()}

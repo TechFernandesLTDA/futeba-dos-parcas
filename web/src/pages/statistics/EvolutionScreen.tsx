@@ -32,6 +32,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('EvolutionScreen');
 
@@ -55,6 +56,7 @@ interface StatsSummary {
 }
 
 export const EvolutionScreen: React.FC = () => {
+  const { t } = useTranslation();
   useDocumentTitle('Evolução');
   const navigate = useNavigate();
     const theme = useTheme();
@@ -125,8 +127,8 @@ export const EvolutionScreen: React.FC = () => {
         setEvolutionData(data);
       } catch (err) {
         logger.error('Error fetching evolution data:', err);
-        showError('Não foi possível carregar os dados de evolução. Tente novamente.');
-        setError('Não foi possível carregar os dados de evolução. Tente novamente.');
+        showError(t('statistics.loadEvolutionError'));
+        setError(t('statistics.loadEvolutionError'));
       } finally {
         setLoading(false);
       }

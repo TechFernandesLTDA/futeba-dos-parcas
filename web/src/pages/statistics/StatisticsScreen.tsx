@@ -249,7 +249,7 @@ export const StatisticsScreen: React.FC = () => {
       }
     } catch (err) {
       logger.error('Error loading stats:', err);
-      showError('Erro ao carregar estatísticas. Tente novamente.');
+      showError(t('statistics.loadError'));
       setError('Erro ao carregar estatísticas');
     }
     setLoading(false);
@@ -634,7 +634,7 @@ export const StatisticsScreen: React.FC = () => {
               Nenhuma estatística disponível
             </Typography>
             <Typography variant="body2" color="text.disabled">
-              Participe de jogos para ver suas estatísticas!
+              {t('statistics.joinGamesPrompt')}
             </Typography>
           </Box>
         )}

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -55,8 +56,9 @@ const CATEGORY_LABELS: Record<CategoryFilter, string> = {
 };
 
 export const BadgesScreen: React.FC = () => {
-  useDocumentTitle('Conquistas');
-  const navigate = useNavigate();
+  const { t } = useTranslation();
+  useDocumentTitle(t('badges.title'));
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
@@ -95,11 +97,11 @@ export const BadgesScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Conquistas
+            {t('badges.title')}
           </Typography>
         </Box>
       </Box>

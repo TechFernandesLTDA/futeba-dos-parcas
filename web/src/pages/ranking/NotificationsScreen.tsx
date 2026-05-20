@@ -50,6 +50,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useConfirmPresence } from '../../hooks/useGames';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
 import type { NotificationType } from '../../types';
@@ -144,6 +145,7 @@ function getTimeAgo(date: Date): string {
 }
 
 export const NotificationsScreen: React.FC = () => {
+  const { t } = useTranslation();
   useDocumentTitle('Notificações');
   const navigate = useNavigate();
   const theme = useTheme();
@@ -201,7 +203,7 @@ export const NotificationsScreen: React.FC = () => {
         showSuccess('Presença confirmada!');
       }
     } catch {
-      showError('Erro ao aceitar. Tente novamente.');
+      showError(t('notifications.acceptError'));
     }
   }, [confirmPresence, markAsRead, showSuccess, showError, navigate]);
 

@@ -113,9 +113,12 @@ export const RankingScreen: React.FC = () => {
             <Typography variant="h6" color="text.secondary">
               {t('ranking.emptyTitle')}
             </Typography>
-            <Typography variant="body2" color="text.disabled">
+            <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
               {t('ranking.emptyDesc')}
             </Typography>
+            <Button variant="contained" onClick={() => navigate('/games')}>
+              {t('ranking.joinGamesAction')}
+            </Button>
           </Box>
         ) : (
           <List disablePadding aria-label={t('ranking.standingsAria')}>

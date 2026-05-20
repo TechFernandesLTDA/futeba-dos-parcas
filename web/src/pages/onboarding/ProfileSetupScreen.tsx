@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -36,6 +37,7 @@ const logger = createLogger('ProfileSetupScreen');
 export const ProfileSetupScreen: React.FC = () => {
   useDocumentTitle('Configurar Perfil');
   const navigate = useNavigate();
+  const goBack = useNavigateBack('/welcome');
   const theme = useTheme();
   const { firebaseUser, refreshUser } = useAuth();
   const { showError } = useToast();
@@ -99,7 +101,7 @@ export const ProfileSetupScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default' }}>
       <Box
         sx={{
           position: 'sticky',
@@ -110,7 +112,7 @@ export const ProfileSetupScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
