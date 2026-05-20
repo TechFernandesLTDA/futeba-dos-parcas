@@ -319,30 +319,33 @@ export const ProfileScreen: React.FC = () => {
           {isOwnProfile && (
             <Grid item xs={12} md={7}>
               <Card>
+                {/* Ícones tintados com primary.main p/ consistência com AppSidebar
+                    e melhor vibrância em ambos os modos (default action.active fica
+                    apagado: rgba(0,0,0,.54) no light, rgba(255,255,255,.56) no dark). */}
                 <List disablePadding aria-label={t('profile.menuOptions')}>
                   <ListItemButton onClick={() => navigate('/statistics')}>
-                    <ListItemIcon>
+                    <ListItemIcon sx={{ color: 'primary.main' }}>
                       <StatsIcon />
                     </ListItemIcon>
                     <ListItemText primary={t('profile.detailedStats')} />
                   </ListItemButton>
                   <Divider />
                   <ListItemButton onClick={() => navigate('/badges')}>
-                    <ListItemIcon>
+                    <ListItemIcon sx={{ color: 'primary.main' }}>
                       <BadgeIcon />
                     </ListItemIcon>
                     <ListItemText primary={t('profile.achievements')} />
                   </ListItemButton>
                   <Divider />
                   <ListItemButton onClick={() => navigate('/level-journey')}>
-                    <ListItemIcon>
+                    <ListItemIcon sx={{ color: 'primary.main' }}>
                       <MilitaryTechIcon />
                     </ListItemIcon>
                     <ListItemText primary={t('profile.levelJourney')} />
                   </ListItemButton>
                   <Divider />
                   <ListItemButton onClick={() => navigate('/settings')}>
-                    <ListItemIcon>
+                    <ListItemIcon sx={{ color: 'primary.main' }}>
                       <SettingsIcon />
                     </ListItemIcon>
                     <ListItemText primary={t('nav.settings')} />
