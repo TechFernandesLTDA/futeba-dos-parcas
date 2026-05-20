@@ -90,6 +90,10 @@ export const GroupDetailScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
 
+  // FIX #1411: maxWidth unificado entre loading/erro/conteúdo para evitar CLS
+  // (loading antes era sempre 'sm', conteúdo expandia para 'md'/'xl' → salto visual ao terminar carregamento).
+  const containerMaxWidth: 'sm' | 'md' | 'xl' = isLg ? 'xl' : isMd ? 'md' : 'sm';
+
   const { group, groupDeleted, members, loading, error } = useGroupDetail(groupId || null);
   const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 5 });
   const { generateInviteCode, loading: inviteLoading } = useInvitePlayers();
@@ -173,7 +177,7 @@ export const GroupDetailScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <ShimmerLoading count={3} type="card" />
       </Container>
     );
@@ -181,7 +185,7 @@ export const GroupDetailScreen: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <Alert severity="error">{error}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
@@ -197,7 +201,7 @@ export const GroupDetailScreen: React.FC = () => {
 
   if (groupDeleted) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <Alert severity="warning">Este grupo foi encerrado.</Alert>
         <Box sx={{ mt: 2 }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
@@ -210,7 +214,7 @@ export const GroupDetailScreen: React.FC = () => {
 
   if (!group) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <Alert severity="info">Grupo não encontrado.</Alert>
         <Box sx={{ mt: 2 }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
