@@ -284,17 +284,29 @@ export function ProfileTab() {
           {user?.email}
         </Typography>
 
-        {/* Level Card */}
+        {/* Level Card — glassmorphism para integrar com gradiente do header (#1370) */}
         <Card
-          sx={{ mt: 3, mx: 'auto', maxWidth: 300, borderRadius: 3, cursor: 'pointer' }}
+          sx={{
+            mt: 3,
+            mx: 'auto',
+            maxWidth: 300,
+            borderRadius: 3,
+            cursor: 'pointer',
+            bgcolor: (theme) => alpha(theme.palette.common.white, 0.15),
+            border: '1px solid',
+            borderColor: (theme) => alpha(theme.palette.common.white, 0.25),
+            backdropFilter: 'blur(8px)',
+            boxShadow: 'none',
+            color: 'primary.contrastText',
+          }}
           onClick={() => navigate('/level-journey')}
         >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="subtitle2" color="text.secondary">
+              <Typography variant="subtitle2" sx={{ color: 'primary.contrastText', opacity: 0.9 }}>
                 Nível {currentLevel}
               </Typography>
-              <Typography variant="caption" fontWeight={600} color={levelColor}>
+              <Typography variant="caption" fontWeight={600} sx={{ color: 'primary.contrastText' }}>
                 {currentEntry.name}
               </Typography>
             </Box>
@@ -305,7 +317,7 @@ export function ProfileTab() {
               sx={{
                 height: 8,
                 borderRadius: 4,
-                bgcolor: 'action.hover',
+                bgcolor: (theme) => alpha(theme.palette.common.white, 0.2),
                 '& .MuiLinearProgress-bar': {
                   borderRadius: 4,
                   background: `linear-gradient(90deg, ${levelColor}, ${alpha(levelColor, 0.7)})`,
@@ -313,7 +325,10 @@ export function ProfileTab() {
               }}
             />
 
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            <Typography
+              variant="caption"
+              sx={{ display: 'block', mt: 1, color: 'primary.contrastText', opacity: 0.85 }}
+            >
               {Math.max(0, xpInLevel)} / {xpNeededForNext} XP
             </Typography>
           </CardContent>
