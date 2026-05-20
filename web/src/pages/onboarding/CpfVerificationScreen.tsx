@@ -39,7 +39,17 @@ export const CpfVerificationScreen: React.FC = () => {
   useDocumentTitle('Verificar CPF');
   const { t } = useTranslation();
   const { firebaseUser } = useAuth();
-  const { showError, showSuccess } = useToast();
+  const { showSuccess } = useToast();
+
+  // FIX 2026-05-20: iOS Safari Private Mode/ITP frequentemente bloqueia
+  // reCAPTCHA Enterprise → App Check token vazio → functions/unauthenticated.
+  // Mensagem genérica antiga ("desabilite AdBlock") confunde no iOS Safari
+  // (não há AdBlock nesse contexto). Detecta UA pra dar dica acionável.
+  const isIosSafari =
+    typeof navigator !== 'undefined' &&
+    /iP(hone|ad|od)/.test(navigator.userAgent) &&
+    /Safari/.test(navigator.userAgent) &&
+    !/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
 
   const [cpf, setCpf] = useState('');
   const [loading, setLoading] = useState(false);
@@ -127,9 +137,9 @@ export const CpfVerificationScreen: React.FC = () => {
           'Failed to refresh ID token before verifyCpf (3 tentativas):',
           lastRefreshErr,
         );
-        const msg = t('onboarding.errorRenewSession');
-        setError(msg);
-        showError(msg);
+        // FIX 2026-05-20: usar somente Alert (setError) — antes duplicava
+        // Alert + Toast com a mesma mensagem (ver screenshot bug 2026-05-20).
+        setError(t('onboarding.errorRenewSession'));
         return;
       }
 
@@ -185,13 +195,18 @@ export const CpfVerificationScreen: React.FC = () => {
       } else if (code === 'functions/unauthenticated') {
         // Mensagem mais informativa: pode ser App Check rejection (web em modo
         // privado, AdBlock bloqueando reCAPTCHA, etc.) ou token expirado.
-        userMsg = t('onboarding.errorValidateSession');
+        // FIX 2026-05-20: iOS Safari Private Mode é o caso mais comum em mobile
+        // — mensagem direcionada evita confundir usuário ("não tenho AdBlock").
+        userMsg = isIosSafari
+          ? t('onboarding.errorValidateSessionIos')
+          : t('onboarding.errorValidateSession');
       } else if (code === 'functions/failed-precondition') {
         userMsg = t('onboarding.errorConcludePhoneFirst');
       }
 
+      // FIX 2026-05-20: somente Alert no card (setError) — antes duplicava
+      // com Toast (showError) exibindo a mesma mensagem na base da tela.
       setError(userMsg);
-      showError(userMsg);
     } finally {
       setLoading(false);
     }
