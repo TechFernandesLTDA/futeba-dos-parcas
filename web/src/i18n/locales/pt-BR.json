@@ -551,6 +551,7 @@
     "errorCpfInUse": "Este CPF já está em outra conta. Use seu próprio CPF.",
     "errorCompletePhoneFirst": "Complete a verificação de telefone antes de continuar.",
     "errorValidateSession": "Não foi possível validar sua sessão. Recarregue a página e tente novamente. Se persistir, desabilite extensões/AdBlock ou tente em outro navegador.",
+    "errorValidateSessionIos": "Não foi possível validar sua sessão. Se você está em uma aba privada/anônima do Safari, saia do modo privado e tente novamente. Alternativa: abra em outro navegador (Chrome).",
     "errorConcludePhoneFirst": "Conclua a verificação de telefone primeiro.",
     "checklistCompleteProfile": "Complete seu perfil",
     "checklistCompleteProfileDesc": "Adicione foto, apelido e posição favorita",
