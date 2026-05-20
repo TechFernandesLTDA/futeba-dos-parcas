@@ -1029,11 +1029,17 @@ class GameDetailViewModel(
     fun updateCheckinSettings(gameId: String, required: Boolean, radiusMeters: Int) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            // TODO: requireCheckin e checkinRadiusMeters foram removidos do modelo Game
-            // Implementar via Group settings ou outro mecanismo
-            _uiState.value = currentState.copy(
-                userMessage = "Funcionalidade em desenvolvimento"
+            // FIX #1410: campos JÁ existem no modelo Game (Game.kt L140-141).
+            val updatedGame = currentState.game.copy(
+                requireCheckin = required,
+                checkinRadiusMeters = radiusMeters.toDouble()
             )
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar check-in: ${result.exceptionOrNull()?.message}"
+                )
+            }
         }
     }
 
@@ -1077,11 +1083,14 @@ class GameDetailViewModel(
     fun updateAutoCloseHours(gameId: String, hours: Int?) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            // TODO: autoCloseHours foi removido do modelo Game (existe no Group)
-            // Implementar via Group settings
-            _uiState.value = currentState.copy(
-                userMessage = "Funcionalidade em desenvolvimento"
-            )
+            // FIX #1410: campo existe no modelo Game (Game.kt L139) e no Group.
+            val updatedGame = currentState.game.copy(autoCloseHours = hours)
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar auto-fechamento: ${result.exceptionOrNull()?.message}"
+                )
+            }
         }
     }
 
@@ -1091,11 +1100,14 @@ class GameDetailViewModel(
     fun updateGameRules(gameId: String, rules: String) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            // TODO: rules foi removido do modelo Game
-            // Implementar via Group settings ou outro mecanismo
-            _uiState.value = currentState.copy(
-                userMessage = "Funcionalidade em desenvolvimento"
-            )
+            // FIX #1410: campo existe no modelo Game (Game.kt L142).
+            val updatedGame = currentState.game.copy(rules = rules)
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar regras: ${result.exceptionOrNull()?.message}"
+                )
+            }
         }
     }
 

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import com.futebadosparcas.ui.components.design.AppTopBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -124,7 +125,8 @@ fun BadgesScreen(
 private fun BadgesTopBar(
     onBackClick: (() -> Unit)?
 ) {
-    TopAppBar(
+    // FIX #1405: migrado para AppTopBar unificado
+    AppTopBar(
         title = {
             Text(
                 text = stringResource(R.string.badges_title),
@@ -132,8 +134,8 @@ private fun BadgesTopBar(
                 fontWeight = FontWeight.Bold
             )
         },
-        navigationIcon = {
-            if (onBackClick != null) {
+        navigationIcon = if (onBackClick != null) {
+            {
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -141,11 +143,7 @@ private fun BadgesTopBar(
                     )
                 }
             }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        )
+        } else null
     )
 }
 
