@@ -39,6 +39,9 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
+import { EmptyState } from '../../components/common/EmptyState';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 
 const logger = createLogger('WeeklyRecapScreen');
 
@@ -64,8 +67,10 @@ interface GameRecord {
 }
 
 export const WeeklyRecapScreen: React.FC = () => {
-  useDocumentTitle('Resumo Semanal');
+  const { t } = useTranslation();
+  useDocumentTitle(t('weeklyRecap.title'));
   const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
     const theme = useTheme();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
@@ -138,8 +143,8 @@ export const WeeklyRecapScreen: React.FC = () => {
         setRecentGames(gamesData);
       } catch (error) {
         logger.error('Error fetching weekly recap:', error);
-        setError('Erro ao carregar recap semanal.');
-        showErrorRef.current('Erro ao carregar recap semanal.');
+        setError(t('weeklyRecap.loadError'));
+        showErrorRef.current(t('weeklyRecap.loadError'));
       } finally {
         setLoading(false);
       }
@@ -153,7 +158,7 @@ export const WeeklyRecapScreen: React.FC = () => {
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         <Alert severity="error" action={
           <Button color="inherit" size="small" onClick={handleRetry}>
-            Tentar novamente
+            {t('weeklyRecap.retry')}
           </Button>
         }>
           {error}
@@ -168,12 +173,10 @@ export const WeeklyRecapScreen: React.FC = () => {
 
   if (!weeklyStats) {
     return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <TimelineIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-        <Typography variant="h6" color="text.secondary">
-          Nenhum dado disponível
-        </Typography>
-      </Box>
+      <EmptyState
+        icon={<TimelineIcon />}
+        title={t('weeklyRecap.noDataAvailable')}
+      />
     );
   }
 
@@ -189,11 +192,11 @@ export const WeeklyRecapScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Resumo Semanal
+            {t('weeklyRecap.title')}
           </Typography>
         </Box>
       </Box>
@@ -202,7 +205,7 @@ export const WeeklyRecapScreen: React.FC = () => {
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Últimos 7 dias
+              {t('weeklyRecap.last7Days')}
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={4}>
@@ -211,7 +214,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                     {weeklyStats.gamesPlayed}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Jogos
+                    {t('weeklyRecap.games')}
                   </Typography>
                 </Box>
               </Grid>
@@ -221,7 +224,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                     {weeklyStats.wins}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Vitórias
+                    {t('weeklyRecap.wins')}
                   </Typography>
                 </Box>
               </Grid>
@@ -231,7 +234,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                     +{weeklyStats.xpEarned}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    XP
+                    {t('weeklyRecap.xp')}
                   </Typography>
                 </Box>
               </Grid>
@@ -242,7 +245,7 @@ export const WeeklyRecapScreen: React.FC = () => {
         <Card sx={{ mb: 2 }}>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-              Estatísticas da Semana
+              {t('weeklyRecap.weekStats')}
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={6}>
@@ -252,7 +255,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                     {weeklyStats.goals}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Gols
+                    {t('weeklyRecap.goals')}
                   </Typography>
                 </Paper>
               </Grid>
@@ -263,7 +266,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                     {weeklyStats.assists}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Assistências
+                    {t('weeklyRecap.assists')}
                   </Typography>
                 </Paper>
               </Grid>
@@ -274,7 +277,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                     {weeklyStats.mvpCount}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    MVPs
+                    {t('weeklyRecap.mvps')}
                   </Typography>
                 </Paper>
               </Grid>
@@ -285,7 +288,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                     {weeklyStats.streak}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Sequência
+                    {t('weeklyRecap.streak')}
                   </Typography>
                 </Paper>
               </Grid>
@@ -296,15 +299,17 @@ export const WeeklyRecapScreen: React.FC = () => {
         <Card>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-              Jogos Recentes
+              {t('weeklyRecap.recentGames')}
             </Typography>
             {recentGames.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 3 }}>
-                <CalendarIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Nenhum jogo esta semana
-                </Typography>
-              </Box>
+              <EmptyState
+                icon={<CalendarIcon />}
+                title={t('weeklyRecap.noGamesThisWeek')}
+                description={t('weeklyRecap.startPlayingPrompt')}
+                actionLabel={t('weeklyRecap.goToGames')}
+                onAction={() => navigate('/?tab=1')}
+                sx={{ py: 3 }}
+              />
             ) : (
               <List disablePadding aria-label="Jogos recentes">
                 {recentGames.map((game, index) => (

@@ -584,5 +584,24 @@
   },
   "badges": {
     "title": "Logros"
+  },
+  "weeklyRecap": {
+    "title": "Resumen Semanal",
+    "last7Days": "Últimos 7 días",
+    "games": "Juegos",
+    "wins": "Victorias",
+    "xp": "XP",
+    "weekStats": "Estadísticas de la semana",
+    "goals": "Goles",
+    "assists": "Asistencias",
+    "mvps": "MVPs",
+    "streak": "Racha",
+    "recentGames": "Juegos Recientes",
+    "noGamesThisWeek": "Sin juegos esta semana",
+    "startPlayingPrompt": "Únete a juegos para ver tu resumen aquí",
+    "goToGames": "Ir a juegos",
+    "noDataAvailable": "No hay datos disponibles",
+    "loadError": "Error al cargar el resumen semanal.",
+    "retry": "Reintentar"
   }
 }
