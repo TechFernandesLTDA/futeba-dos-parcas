@@ -227,7 +227,20 @@
     "menuOptions": "Opções do perfil",
     "detailedStats": "Estatísticas Detalhadas",
     "editTitle": "Editar Perfil",
-    "phonePlaceholder": "(11) 99999-9999"
+    "phonePlaceholder": "(11) 99999-9999",
+    "starRoad": "Rumo ao Estrelato",
+    "badges": "Badges",
+    "settings": "Configurações",
+    "positionStriker": "Atacante",
+    "signInPrompt": "Faça login para acessar seu perfil",
+    "goToLogin": "Ir para o login",
+    "loadErrorSimple": "Erro ao carregar perfil",
+    "streakActive_one": "{{count}} jogo seguido!",
+    "streakActive_other": "{{count}} jogos seguidos!",
+    "streakRecord_one": "Recorde: {{count}} jogo",
+    "streakRecord_other": "Recorde: {{count}} jogos",
+    "skillsByPosition": "Habilidades por Posição",
+    "scaleLabel": "Escala: 0 a 5"
   },
   "games": {
     "title": "Jogos",
