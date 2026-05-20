@@ -345,7 +345,8 @@
     "presenceConfirmed": "Presence confirmed! ✓",
     "presenceConfirmError": "Failed to confirm presence. Please try again.",
     "presenceCanceled": "Presence canceled.",
-    "presenceCancelError": "Failed to cancel presence."
+    "presenceCancelError": "Failed to cancel presence.",
+    "liveTitle": "Live Game"
   },
   "ranking": {
     "title": "Ranking",

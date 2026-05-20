@@ -345,7 +345,8 @@
     "presenceConfirmed": "Presença confirmada! ✓",
     "presenceConfirmError": "Erro ao confirmar presença. Tente novamente.",
     "presenceCanceled": "Presença cancelada.",
-    "presenceCancelError": "Erro ao cancelar presença."
+    "presenceCancelError": "Erro ao cancelar presença.",
+    "liveTitle": "Jogo ao Vivo"
   },
   "ranking": {
     "title": "Ranking",
