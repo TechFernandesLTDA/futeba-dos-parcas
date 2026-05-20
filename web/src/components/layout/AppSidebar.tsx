@@ -23,6 +23,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import { AppLogo } from '../common/AppLogo';
 
 const pulse = keyframes`
   0% { transform: scale(1); }
@@ -98,7 +99,8 @@ export function AppSidebar() {
           role="link"
           aria-label="Ir para Início"
         >
-          <SportsSoccer sx={{ color: 'primary.main', fontSize: 32 }} aria-hidden="true" />
+          {/* Logo padronizada — substitui ícone SportsSoccer (não era brand asset) */}
+          <AppLogo size="small" shape="circle" alt="Futeba dos Parças" />
         </Box>
         <List sx={{ pt: 1 }}>
           {NAV_ITEMS.map((item) => {
@@ -174,7 +176,8 @@ export function AppSidebar() {
           role="link"
           aria-label="Ir para Início"
         >
-          <SportsSoccer sx={{ color: 'primary.main', fontSize: 28 }} aria-hidden="true" />
+          {/* Logo padronizada — sidebar expandida */}
+          <AppLogo size="small" shape="circle" alt="Futeba dos Parças" sx={{ width: 28, height: 28 }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>

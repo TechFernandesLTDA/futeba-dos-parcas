@@ -23,6 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.components.design.AppLogo
+import com.futebadosparcas.ui.components.design.AppLogoShape
+import com.futebadosparcas.ui.components.design.AppLogoSize
 /**
  * Tela de boas-vindas do onboarding.
  * Apresenta o app e seus principais recursos.
@@ -44,11 +47,11 @@ fun WelcomeScreen(
         ) {
             Spacer(modifier = Modifier.weight(0.5f))
 
-            // Logo do app
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = null,
-                modifier = Modifier.size(150.dp)
+            // Logo do app — componente padronizado AppLogo
+            AppLogo(
+                size = AppLogoSize.XLarge,
+                shape = AppLogoShape.Rounded,
+                contentDescription = null
             )
 
             Spacer(modifier = Modifier.height(32.dp))

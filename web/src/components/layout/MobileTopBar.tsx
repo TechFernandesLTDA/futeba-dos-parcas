@@ -1,7 +1,7 @@
 import { AppBar, Toolbar, Typography } from '@mui/material';
-import { SportsSoccer } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { NotificationBell } from '../common/NotificationBell';
+import { AppLogo } from '../common/AppLogo';
 
 interface MobileTopBarProps {
   /** Número de notificações não lidas para exibir no badge do sino */
@@ -39,7 +39,8 @@ export function MobileTopBar({ unreadCount, title }: MobileTopBarProps) {
       }}
     >
       <Toolbar variant="dense">
-        <SportsSoccer sx={{ color: 'primary.main', mr: 1 }} />
+        {/* Logo padronizada — brand asset (não ícone Material genérico) */}
+        <AppLogo size="small" shape="circle" sx={{ width: 28, height: 28, mr: 1 }} />
         <Typography
           variant="h6"
           fontWeight={700}
