@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import com.futebadosparcas.ui.components.design.AppTopBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -141,16 +142,14 @@ fun UserManagementScreen(
 private fun UserManagementTopBar(
     onNavigateBack: () -> Unit
 ) {
-    TopAppBar(
+    // FIX #1405: migrado para AppTopBar unificado
+    AppTopBar(
         title = { Text(stringResource(R.string.admin_manage_users)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
             }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        }
     )
 }
 
