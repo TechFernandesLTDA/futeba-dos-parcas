@@ -25,7 +25,6 @@ import {
   Visibility,
   VisibilityOff,
   Google,
-  SportsSoccer,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material';
 import { getAuth } from 'firebase/auth';
@@ -33,6 +32,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { AppLogo } from '../../components/common/AppLogo';
 
 export function LoginScreen() {
   useDocumentTitle('Login');
@@ -138,22 +138,17 @@ export function LoginScreen() {
         <CardContent sx={{ p: 4 }}>
           {/* Logo */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Box
+            {/* Logo padronizada — AppLogo (PNG canônico do app) */}
+            <AppLogo
+              size="large"
+              shape="circle"
+              alt="Futeba dos Parças"
               sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 mx: 'auto',
                 mb: 2,
                 boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
               }}
-            >
-              <SportsSoccer sx={{ fontSize: 40, color: theme.palette.primary.contrastText }} />
-            </Box>
+            />
               <Typography component="h1" variant="h4" fontWeight="bold" color="primary">
                 {t('common.appName')}
               </Typography>

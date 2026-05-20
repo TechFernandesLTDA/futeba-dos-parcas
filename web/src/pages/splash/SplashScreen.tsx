@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography, useTheme, alpha } from '@mui/material';
-import { SportsSoccer as SoccerIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { AppLogo } from '../../components/common/AppLogo';
 
 export const SplashScreen: React.FC = () => {
   useDocumentTitle();
@@ -52,16 +52,14 @@ export const SplashScreen: React.FC = () => {
         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
-      <Box
+      {/* Logo padronizada — AppLogo (PNG canônico do app) com pulse */}
+      <AppLogo
+        size="xlarge"
+        shape="circle"
+        alt="Futeba dos Parças"
         sx={{
-          width: 120,
-          height: 120,
-          borderRadius: '50%',
-          bgcolor: alpha(theme.palette.common.white, 0.2),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
           mb: 3,
+          bgcolor: alpha(theme.palette.common.white, 0.2),
           animation: 'pulse 2s infinite',
           '@keyframes pulse': {
             '0%': { transform: 'scale(1)', opacity: 1 },
@@ -69,9 +67,7 @@ export const SplashScreen: React.FC = () => {
             '100%': { transform: 'scale(1)', opacity: 1 },
           },
         }}
-      >
-        <SoccerIcon sx={{ fontSize: 64, color: 'primary.contrastText' }} />
-      </Box>
+      />
 
       <Typography variant="h4" fontWeight={700} color="primary.contrastText" gutterBottom>
         {t('common.appName')}

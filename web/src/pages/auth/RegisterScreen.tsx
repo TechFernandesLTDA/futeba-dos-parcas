@@ -26,7 +26,6 @@ import {
   Visibility,
   VisibilityOff,
   Google,
-  SportsSoccer,
   ArrowBack,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material';
@@ -35,6 +34,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { AppLogo } from '../../components/common/AppLogo';
 
 export function RegisterScreen() {
   useDocumentTitle('Cadastro');
@@ -159,21 +159,13 @@ export function RegisterScreen() {
               <ArrowBack />
             </IconButton>
             
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: '50%',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-              }}
-            >
-              <SportsSoccer sx={{ fontSize: 32, color: theme.palette.primary.contrastText }} />
-            </Box>
+            {/* Logo padronizada — AppLogo (PNG canônico do app) */}
+            <AppLogo
+              size="medium"
+              shape="circle"
+              alt="Futeba dos Parças"
+              sx={{ mx: 'auto', mb: 2 }}
+            />
             <Typography component="h1" variant="h5" fontWeight="bold">
               {t('auth.createAccountTitle')}
             </Typography>
