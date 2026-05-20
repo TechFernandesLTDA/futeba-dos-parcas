@@ -255,14 +255,21 @@ private fun HomeSuccessContent(
     // Deriva os passos a partir de dados de domínio existentes (não são checkboxes manuais)
     val checklistSteps = remember(
         state.user,
-        state.games
+        state.games,
+        state.statistics?.totalGames
     ) {
         onboardingViewModel?.deriveChecklistSteps(
             hasNickname = state.user.nickname?.isNotBlank() == true,
             hasPhoto = state.user.photoUrl?.isNotBlank() == true,
-            groupCount = 0, // TODO: expor groupCount no HomeUiState (fase futura)
-            confirmationCount = state.games.size, // proxy: tem jogos confirmados
-            gamesPlayedCount = 0  // TODO: expor gamesPlayedCount no HomeUiState (fase futura)
+            // FIX #1404: derivar contadores de dados já carregados em HomeUiState.
+            // - groupCount: distinct groupIds dos jogos que o usuário participa
+            //   (proxy razoável p/ "entrou em pelo menos 1 grupo"; só fica 0 se
+            //   usuário não tem nenhum jogo confirmado nem upcoming).
+            // - gamesPlayedCount: statistics.totalGames vem do StatisticsRepository
+            //   carregado em FASE 2; nullable até carregar → 0 como fallback.
+            groupCount = state.games.mapNotNull { it.game.groupId }.distinct().size,
+            confirmationCount = state.games.size,
+            gamesPlayedCount = state.statistics?.totalGames ?: 0
         )
     }
     var checklistDismissed by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }

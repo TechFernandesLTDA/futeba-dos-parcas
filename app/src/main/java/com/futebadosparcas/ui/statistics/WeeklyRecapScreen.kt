@@ -32,6 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
+import com.futebadosparcas.ui.components.gamification.FlameColors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -152,15 +153,17 @@ fun WeeklyRecapScreen(
         }
     }
 
+    // FIX #1402: derivar gradiente do tema dinâmico (Dynamic Color Android 12+),
+    // em vez de cores fixas que ignoram preferência do usuário e podem ter
+    // contraste inadequado em dark mode.
+    val gradientStart = MaterialTheme.colorScheme.primary
+    val gradientEnd = MaterialTheme.colorScheme.tertiary
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        RecapColors.GradientStart,
-                        RecapColors.GradientEnd
-                    )
+                    colors = listOf(gradientStart, gradientEnd)
                 )
             )
     ) {
@@ -786,7 +789,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
         if (data.streakDays > 0) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFF6B35).copy(alpha = 0.3f)
+                    containerColor = FlameColors.FireOrange.copy(alpha = 0.3f) // FIX #1402: dedup constante
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()

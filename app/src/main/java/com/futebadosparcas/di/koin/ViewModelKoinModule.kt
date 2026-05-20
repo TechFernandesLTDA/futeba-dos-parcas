@@ -399,7 +399,8 @@ val viewModelKoinModule = module {
             gameRepository = get(),
             groupRepository = get(),
             userRepository = get(),
-            locationRepository = get()
+            locationRepository = get(),
+            dataStore = get() // FIX #1406: persiste histórico de buscas
         )
     }
 
