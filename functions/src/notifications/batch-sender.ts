@@ -1052,21 +1052,25 @@ export const cleanupNotificationQueue =
 
         const snapshot = await query.get();
 
-        if (snapshot.empty) {
+        // FIX #1400: não early-return quando snapshot.empty — o rescue de
+        // PROCESSING travadas abaixo precisa rodar SEMPRE, independente de
+        // haver SENT/FAILED a limpar. Antes: em apps com baixo volume ou
+        // logo após primeira execução, o rescue ficava unreachable e docs
+        // PROCESSING ficavam stuck indefinidamente.
+        if (!snapshot.empty) {
+          const batch = db.batch();
+          snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+          });
+
+          await batch.commit();
+          totalDeleted = snapshot.size;
+        } else {
           console.log(
             "[BATCH_FCM_CLEANUP] Nenhuma" +
             " notificacao antiga para limpar"
           );
-          return;
         }
-
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-        totalDeleted = snapshot.size;
 
         // Limpar PROCESSING travadas (> 10 min)
         const tenMinAgo = new Date();

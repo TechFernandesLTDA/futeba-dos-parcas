@@ -97,6 +97,20 @@ export const onJoinRequestApproved = onDocumentUpdated(
     const groupPhoto = (groupMeta.photo_url as string | null) ?? null;
 
     await db().runTransaction(async (tx) => {
+      // FIX #1399: checar existência do member DENTRO da transação para
+      // garantir idempotência sob entrega duplicada (Firestore triggers são
+      // at-least-once). O early-exit fora da transação é otimização barata,
+      // mas só esta checagem garante atomicidade contra retries do Cloud
+      // Functions scheduler / restart de instância.
+      const txMemberSnap = await tx.get(memberRef);
+      if (txMemberSnap.exists) {
+        logger.info("join_request member already exists (idempotent retry)", {
+          groupId,
+          userId,
+        });
+        return;
+      }
+
       // Re-ler group DENTRO da transação — garante member_count consistente
       // mesmo com aprovações concorrentes de admins diferentes
       const freshGroupSnap = await tx.get(groupRef);
