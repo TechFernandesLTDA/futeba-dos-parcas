@@ -57,8 +57,8 @@ interface UserProfile {
 }
 
 export const EditProfileScreen: React.FC = () => {
-  useDocumentTitle('Editar Perfil');
   const { t } = useTranslation();
+  useDocumentTitle(t('profile.editTitle'));
   const navigate = useNavigate();
   const { currentUser, updateUserProfile } = useAuth();
   const { showError } = useToast();
@@ -373,7 +373,7 @@ export const EditProfileScreen: React.FC = () => {
                 error={!!formErrors.phone}
                 helperText={formErrors.phone}
                 fullWidth
-                placeholder="(11) 99999-9999"
+                placeholder={t('profile.phonePlaceholder')}
               />
 
               <TextField
