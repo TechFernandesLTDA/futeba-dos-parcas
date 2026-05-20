@@ -227,7 +227,20 @@
     "menuOptions": "Opciones del perfil",
     "detailedStats": "Estadísticas Detalladas",
     "editTitle": "Editar Perfil",
-    "phonePlaceholder": "(11) 99999-9999"
+    "phonePlaceholder": "(11) 99999-9999",
+    "starRoad": "Camino al Estrellato",
+    "badges": "Insignias",
+    "settings": "Configuración",
+    "positionStriker": "Delantero",
+    "signInPrompt": "Inicia sesión para acceder a tu perfil",
+    "goToLogin": "Ir al inicio de sesión",
+    "loadErrorSimple": "Error al cargar perfil",
+    "streakActive_one": "¡{{count}} partido seguido!",
+    "streakActive_other": "¡{{count}} partidos seguidos!",
+    "streakRecord_one": "Récord: {{count}} partido",
+    "streakRecord_other": "Récord: {{count}} partidos",
+    "skillsByPosition": "Habilidades por Posición",
+    "scaleLabel": "Escala: 0 a 5"
   },
   "games": {
     "title": "Juegos",

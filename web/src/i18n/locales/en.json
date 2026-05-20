@@ -227,7 +227,20 @@
     "menuOptions": "Profile options",
     "detailedStats": "Detailed Statistics",
     "editTitle": "Edit Profile",
-    "phonePlaceholder": "(11) 99999-9999"
+    "phonePlaceholder": "(11) 99999-9999",
+    "starRoad": "Road to Stardom",
+    "badges": "Badges",
+    "settings": "Settings",
+    "positionStriker": "Striker",
+    "signInPrompt": "Sign in to access your profile",
+    "goToLogin": "Go to login",
+    "loadErrorSimple": "Error loading profile",
+    "streakActive_one": "{{count}} game in a row!",
+    "streakActive_other": "{{count}} games in a row!",
+    "streakRecord_one": "Record: {{count}} game",
+    "streakRecord_other": "Record: {{count}} games",
+    "skillsByPosition": "Skills by Position",
+    "scaleLabel": "Scale: 0 to 5"
   },
   "games": {
     "title": "Games",

@@ -49,6 +49,7 @@ import { getLevelBadgeImage, getLevelBadgeDescription } from '../../../utils/lev
 import { getLevelForXp, getXpProgress, getLevelEntry } from '../../../types/gamification';
 import { gamificationColors } from '../../../theme';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
 import { TeamBadge } from '../../../components/team/TeamBadge';
@@ -56,6 +57,7 @@ import { TeamBadge } from '../../../components/team/TeamBadge';
 const logger = createLogger('ProfileTab');
 
 export function ProfileTab() {
+  const { t } = useTranslation();
   const { user, firebaseUser, logout, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -93,10 +95,10 @@ export function ProfileTab() {
 
   // Memoizado: recriado apenas quando navigate muda (estável por sessão)
   const menuItems = useMemo(() => [
-    { icon: <Timeline />, label: 'Rumo ao Estrelato', onClick: () => navigate('/level-journey') },
-    { icon: <MilitaryTech />, label: 'Badges', onClick: () => navigate('/badges') },
-    { icon: <TrendingUp />, label: 'Estatísticas', onClick: () => navigate('/statistics') },
-    { icon: <Settings />, label: 'Configurações', onClick: () => navigate('/settings') },
+    { icon: <Timeline />, label: t('profile.starRoad'), onClick: () => navigate('/level-journey') },
+    { icon: <MilitaryTech />, label: t('profile.badges'), onClick: () => navigate('/badges') },
+    { icon: <TrendingUp />, label: t('profile.statistics'), onClick: () => navigate('/statistics') },
+    { icon: <Settings />, label: t('profile.settings'), onClick: () => navigate('/settings') },
   ], [navigate]);
 
   // Itens condicionais por role
@@ -142,10 +144,10 @@ export function ProfileTab() {
 
   // Memoizado: recriado apenas quando ratings do usuário ou tema mudam
   const positionRatings = useMemo(() => [
-    { icon: <SportsSoccer fontSize="small" />, label: 'Atacante', value: user?.strikerRating || 0, color: theme.palette.error.main },
-    { icon: <DirectionsRun fontSize="small" />, label: 'Meia', value: user?.midRating || 0, color: theme.palette.warning.main },
-    { icon: <Shield fontSize="small" />, label: 'Zagueiro', value: user?.defenderRating || 0, color: theme.palette.info.main },
-    { icon: <SportsKabaddi fontSize="small" />, label: 'Goleiro', value: user?.gkRating || 0, color: theme.palette.success.main },
+    { icon: <SportsSoccer fontSize="small" />, label: t('profile.positionStriker'), value: user?.strikerRating || 0, color: theme.palette.error.main },
+    { icon: <DirectionsRun fontSize="small" />, label: t('profile.positionMidfielder'), value: user?.midRating || 0, color: theme.palette.warning.main },
+    { icon: <Shield fontSize="small" />, label: t('profile.positionDefender'), value: user?.defenderRating || 0, color: theme.palette.info.main },
+    { icon: <SportsKabaddi fontSize="small" />, label: t('profile.positionGoalkeeper'), value: user?.gkRating || 0, color: theme.palette.success.main },
   ], [user?.strikerRating, user?.midRating, user?.defenderRating, user?.gkRating, theme.palette]);
 
   if (loading) {
@@ -189,10 +191,10 @@ export function ProfileTab() {
           severity="warning"
           sx={{ mb: 2 }}
         >
-          Faça login para acessar seu perfil
+          {t('profile.signInPrompt')}
         </Alert>
         <Button variant="contained" onClick={() => navigate('/login')} sx={{ borderRadius: 3 }}>
-          Ir para o login
+          {t('profile.goToLogin')}
         </Button>
       </Box>
     );
@@ -205,11 +207,11 @@ export function ProfileTab() {
           severity="error"
           action={
             <Button color="inherit" size="small" onClick={() => refreshUser()}>
-              Tentar novamente
+              {t('common.retry')}
             </Button>
           }
         >
-          Erro ao carregar perfil
+          {t('profile.loadErrorSimple')}
         </Alert>
       </Box>
     );
@@ -345,7 +347,7 @@ export function ProfileTab() {
                 {user?.totalGames || 0}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Jogos
+                {t('profile.games')}
               </Typography>
             </CardContent>
           </Card>
@@ -357,7 +359,7 @@ export function ProfileTab() {
                 {user?.totalGoals || 0}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Gols
+                {t('profile.goals')}
               </Typography>
             </CardContent>
           </Card>
@@ -369,7 +371,7 @@ export function ProfileTab() {
                 {user?.mvpCount || 0}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                MVPs
+                {t('profile.mvps')}
               </Typography>
             </CardContent>
           </Card>
@@ -390,10 +392,10 @@ export function ProfileTab() {
               <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
               <Box>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  {user?.currentStreak || 0} jogos seguidos!
+                  {t('profile.streakActive', { count: user?.currentStreak || 0 })}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Recorde: {user?.bestStreak || 0} jogos
+                  {t('profile.streakRecord', { count: user?.bestStreak || 0 })}
                 </Typography>
               </Box>
             </CardContent>
@@ -406,7 +408,7 @@ export function ProfileTab() {
         <Card sx={{ borderRadius: 3 }}>
           <CardContent>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
-              Habilidades por Posição
+              {t('profile.skillsByPosition')}
             </Typography>
             {positionRatings.map((pos, index) => (
               <Box key={pos.label} sx={{ mb: index < positionRatings.length - 1 ? 1.5 : 0 }}>
@@ -435,7 +437,7 @@ export function ProfileTab() {
               </Box>
             ))}
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'right' }}>
-              Escala: 0 a 5
+              {t('profile.scaleLabel')}
             </Typography>
           </CardContent>
         </Card>
