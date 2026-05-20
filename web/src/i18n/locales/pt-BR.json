@@ -367,7 +367,9 @@
     "presenceConfirmError": "Erro ao confirmar presença. Tente novamente.",
     "presenceCanceled": "Presença cancelada.",
     "presenceCancelError": "Erro ao cancelar presença.",
-    "liveTitle": "Jogo ao Vivo"
+    "liveTitle": "Jogo ao Vivo",
+    "filterByGroup": "Filtrar por grupo",
+    "allGroups": "Todos os grupos"
   },
   "ranking": {
     "title": "Ranking",
