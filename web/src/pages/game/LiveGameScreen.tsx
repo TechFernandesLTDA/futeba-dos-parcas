@@ -292,10 +292,10 @@ export const LiveGameScreen: React.FC = () => {
   if (error || !game) {
     return (
       <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
+        <Alert severity="error">{error || t('games.notFound')}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
           <Button startIcon={<BackIcon />} onClick={navigateBack}>
-            Voltar
+            {t('common.back')}
           </Button>
           {error && (
             <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
@@ -319,7 +319,7 @@ export const LiveGameScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>

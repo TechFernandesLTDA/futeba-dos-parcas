@@ -18,6 +18,8 @@ import {
   Button,
   alpha,
   useTheme,
+  useMediaQuery,
+  Grid,
   IconButton,
 } from '@mui/material';
 import {
@@ -34,6 +36,7 @@ import { FIELD_TYPE_LABELS, GameStatus, getStatusChipColors } from '../../../typ
 import { useGames } from '../../../hooks/useGames';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';
+import { useTranslation } from 'react-i18next';
 
 const livePulseKeyframes = {
   '@keyframes livePulse': {
@@ -48,6 +51,8 @@ type FilterStatus = 'all' | GameStatus;
 export function GamesTab() {
   const navigate = useNavigate();
   const theme = useTheme();
+  const isLg = useMediaQuery(theme.breakpoints.up('lg'));
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -110,24 +115,24 @@ export function GamesTab() {
           }}
         >
           <Typography variant="h6" fontWeight={600}>
-            Jogos
+            {t('games.title')}
           </Typography>
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => navigate('/game/create')}
           >
-            Criar Jogo
+            {t('games.createGame')}
           </Button>
         </Box>
 
         <TextField
           fullWidth
           size="small"
-          placeholder="Buscar jogos..."
+          placeholder={t('games.search.placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label="Buscar jogos"
+          aria-label={t('games.search.placeholder')}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -136,7 +141,7 @@ export function GamesTab() {
             ),
             endAdornment: searchQuery ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label="Limpar busca">
+                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label={t('games.search.clear')}>
                   <Close fontSize="small" />
                 </IconButton>
               </InputAdornment>
@@ -149,19 +154,19 @@ export function GamesTab() {
           <Tabs
             value={statusFilter}
             onChange={(_, value) => setStatusFilter(value)}
-            aria-label="Filtrar por status do jogo"
+            aria-label={t('games.search.filterByStatus')}
             variant="scrollable"
             scrollButtons="auto"
             sx={{ minHeight: 36, flex: 1 }}
           >
-            <Tab value="all" label="Todos" sx={{ minHeight: 36, py: 0 }} />
-            <Tab value="SCHEDULED" label="Abertos" sx={{ minHeight: 36, py: 0 }} />
-            <Tab value="CONFIRMED" label="Fechado" sx={{ minHeight: 36, py: 0 }} />
-            <Tab value="LIVE" label="Ao Vivo" sx={{ minHeight: 36, py: 0 }} />
-            <Tab value="FINISHED" label="Finalizados" sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="all" label={t('games.tabs.all')} sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="SCHEDULED" label={t('games.tabs.scheduled')} sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="CONFIRMED" label={t('games.tabs.confirmed')} sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="LIVE" label={t('games.tabs.live')} sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="FINISHED" label={t('games.tabs.finished')} sx={{ minHeight: 36, py: 0 }} />
           </Tabs>
           {hasActiveFilters && (
-            <IconButton size="small" onClick={clearFilters} sx={{ ml: 0.5 }} aria-label="Limpar filtros">
+            <IconButton size="small" onClick={clearFilters} sx={{ ml: 0.5 }} aria-label={t('games.search.clearFilters')}>
               <FilterListOff fontSize="small" />
             </IconButton>
           )}
@@ -234,12 +239,15 @@ export function GamesTab() {
             )}
           </Box>
         ) : (
-          filteredGames.map((game) => {
+          <Box sx={{ px: isLg ? 2 : 0 }}>
+            <Grid container spacing={2}>
+          {filteredGames.map((game) => {
             const progress = game.maxPlayers > 0 ? Math.min((game.playersCount / game.maxPlayers) * 100, 100) : 0;
             const isFull = game.maxPlayers > 0 && game.playersCount >= game.maxPlayers;
 
             return (
-              <Card key={game.id} sx={{ mb: 2 }}>
+              <Grid item xs={12} lg={6} key={game.id}>
+              <Card sx={{ mb: 2 }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
@@ -356,14 +364,17 @@ export function GamesTab() {
                   </CardContent>
                 </CardActionArea>
               </Card>
+              </Grid>
             );
-          })
+          })}
+            </Grid>
+          </Box>
         )}
       </Box>
 
       <Fab
         color="primary"
-        aria-label="Criar novo jogo"
+        aria-label={t('games.createGame')}
         onClick={() => navigate('/game/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },

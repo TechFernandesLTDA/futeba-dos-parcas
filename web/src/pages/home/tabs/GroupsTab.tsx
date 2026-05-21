@@ -10,10 +10,13 @@ import {
   Fab,
   TextField,
   InputAdornment,
+  Grid,
   Skeleton,
   Alert,
   Button,
   IconButton,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Add,
@@ -31,6 +34,8 @@ import { formatDateShort } from '../../../utils/dateFormatters';
 
 export function GroupsTab() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { groups, loading, error, refetch } = useGroups();
@@ -164,11 +169,13 @@ export function GroupsTab() {
             )}
           </Box>
         ) : (
-          filteredGroups.map((group) => {
+          <Grid container spacing={2}>
+          {filteredGroups.map((group) => {
             const isOwner = group.role === 'OWNER';
 
             return (
-              <Card key={group.id} sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6} lg={4} key={group.id}>
+              <Card sx={isMd ? { height: '100%' } : { mb: 2 }}>
                 <CardActionArea onClick={() => navigate(`/group/${group.id}`)}>
                   <CardContent>
                     {/* Header */}
@@ -251,8 +258,10 @@ export function GroupsTab() {
                   </CardContent>
                 </CardActionArea>
               </Card>
+              </Grid>
             );
-          })
+          })}
+          </Grid>
         )}
       </Box>
 

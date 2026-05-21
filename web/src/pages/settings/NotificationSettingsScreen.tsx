@@ -16,6 +16,7 @@ import {
   Select,
   MenuItem,
   useTheme,
+  useMediaQuery,
   Divider,
   alpha,
 } from '@mui/material';
@@ -55,6 +56,7 @@ export const NotificationSettingsScreen: React.FC = () => {
   useDocumentTitle('Notificações');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -89,7 +91,7 @@ export const NotificationSettingsScreen: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-            <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+            <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
               <BackIcon />
             </IconButton>
             <Typography variant="h6" sx={{ ml: 1 }}>
@@ -97,12 +99,12 @@ export const NotificationSettingsScreen: React.FC = () => {
             </Typography>
           </Box>
         </Box>
-        <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 4 }}>
           <EmptyState
             icon={<NotificationsIcon />}
             title={t('settings.loadError')}
             description={error}
-            actionLabel="Tentar novamente"
+            actionLabel={t('common.retry')}
             onAction={() => queryClient.invalidateQueries()}
           />
         </Container>
@@ -123,7 +125,7 @@ export const NotificationSettingsScreen: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-            <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+            <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
               <BackIcon />
             </IconButton>
             <Typography variant="h6" sx={{ ml: 1 }}>
@@ -131,7 +133,7 @@ export const NotificationSettingsScreen: React.FC = () => {
             </Typography>
           </Box>
         </Box>
-        <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} sx={{ mb: 2 }}>
               <CardContent>
@@ -173,7 +175,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {muted && (
           <Card
             sx={{
@@ -187,14 +189,14 @@ export const NotificationSettingsScreen: React.FC = () => {
                 <MuteIcon color="warning" />
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="body2" fontWeight={600}>
-                    Notificações silenciadas
+                    {t('settings.notifications.muteActive')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Restam {muteRemaining}h de silêncio
+                    {t('settings.notifications.muteRemaining', { hours: muteRemaining })}
                   </Typography>
                 </Box>
                 <Button size="small" variant="outlined" color="warning" onClick={clearMute}>
-                  Reativar
+                  {t('settings.notifications.muteReactivate')}
                 </Button>
               </Box>
             </CardContent>
@@ -203,15 +205,15 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <SectionHeader icon={<NotificationsIcon />} title="Push notifications" />
+            <SectionHeader icon={<NotificationsIcon />} title={t('settings.notifications.pushTitle')} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Receber notificações push no navegador
+                {t('settings.notifications.pushDescription')}
               </Typography>
               <Switch
                 checked={settings.pushEnabled}
                 onChange={(e) => setPreference('pushEnabled', e.target.checked)}
-                aria-label="Ativar notificações push"
+                aria-label={t('settings.notifications.pushToggle')}
               />
             </Box>
           </CardContent>
@@ -219,26 +221,26 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <SectionHeader icon={<GameIcon />} title="Jogos" />
+            <SectionHeader icon={<GameIcon />} title={t('settings.notifications.gamesTitle')} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Convites para jogos
+                {t('settings.notifications.gameInvitesDescription')}
               </Typography>
               <Switch
                 checked={settings.gameInvites}
                 onChange={(e) => setPreference('gameInvites', e.target.checked)}
-                aria-label="Notificações de convites para jogos"
+                aria-label={t('settings.notifications.gameInvites')}
               />
             </Box>
             <Divider sx={{ my: 1 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Lembretes de jogos
+                {t('settings.notifications.gameRemindersDescription')}
               </Typography>
               <Switch
                 checked={settings.gameReminders}
                 onChange={(e) => setPreference('gameReminders', e.target.checked)}
-                aria-label="Lembretes de jogos"
+                aria-label={t('settings.notifications.gameReminders')}
               />
             </Box>
           </CardContent>
@@ -246,15 +248,15 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <SectionHeader icon={<GroupsIcon />} title="Grupos" />
+            <SectionHeader icon={<GroupsIcon />} title={t('settings.notifications.groupsTitle')} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Convites para grupos
+                {t('settings.notifications.groupInvitesDescription')}
               </Typography>
               <Switch
                 checked={settings.groupInvites}
                 onChange={(e) => setPreference('groupInvites', e.target.checked)}
-                aria-label="Convites para grupos"
+                aria-label={t('settings.notifications.groupInvites')}
               />
             </Box>
           </CardContent>
@@ -262,37 +264,37 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <SectionHeader icon={<AchievementIcon />} title="Conquistas" />
+            <SectionHeader icon={<AchievementIcon />} title={t('settings.notifications.achievementsTitle')} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Conquistas e badges
+                {t('settings.notifications.achievementsDescription')}
               </Typography>
               <Switch
                 checked={settings.achievements}
                 onChange={(e) => setPreference('achievements', e.target.checked)}
-                aria-label="Notificações de conquistas"
+                aria-label={t('settings.notifications.achievements')}
               />
             </Box>
             <Divider sx={{ my: 1 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Votações MVP
+                {t('settings.notifications.mvpVotesDescription')}
               </Typography>
               <Switch
                 checked={settings.mvpVotes}
                 onChange={(e) => setPreference('mvpVotes', e.target.checked)}
-                aria-label="Votações MVP"
+                aria-label={t('settings.notifications.mvpVotes')}
               />
             </Box>
             <Divider sx={{ my: 1 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Subida de nível
+                {t('settings.notifications.levelUpDescription')}
               </Typography>
               <Switch
                 checked={settings.levelUp}
                 onChange={(e) => setPreference('levelUp', e.target.checked)}
-                aria-label="Notificações de nível"
+                aria-label={t('settings.notifications.levelUp')}
               />
             </Box>
           </CardContent>
@@ -300,15 +302,15 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <SectionHeader icon={<AnnouncementIcon />} title="Sistema" />
+            <SectionHeader icon={<AnnouncementIcon />} title={t('settings.notifications.systemTitle')} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Anúncios do sistema
+                {t('settings.notifications.systemAnnouncementsDescription')}
               </Typography>
               <Switch
                 checked={settings.systemAnnouncements}
                 onChange={(e) => setPreference('systemAnnouncements', e.target.checked)}
-                aria-label="Anúncios do sistema"
+                aria-label={t('settings.notifications.systemAnnouncements')}
               />
             </Box>
           </CardContent>
@@ -316,15 +318,15 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <SectionHeader icon={<TimerIcon />} title="Lembrete de jogo" />
+            <SectionHeader icon={<TimerIcon />} title={t('settings.notifications.reminderTitle')} />
             <FormControl fullWidth size="small">
-              <InputLabel id="reminder-time-label">Notificar com antecedência</InputLabel>
+              <InputLabel id="reminder-time-label">{t('settings.notifications.reminderLabel')}</InputLabel>
               <Select
                 labelId="reminder-time-label"
                 value={settings.reminderTime}
-                label="Notificar com antecedência"
+                label={t('settings.notifications.reminderLabel')}
                 onChange={(e) => setPreference('reminderTime', Number(e.target.value))}
-                aria-label="Tempo de antecedência do lembrete"
+                aria-label={t('settings.notifications.reminderTime')}
               >
                 {REMINDER_OPTIONS.map((opt) => (
                   <MenuItem key={opt.value} value={opt.value}>
@@ -338,16 +340,16 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <SectionHeader icon={<MuteIcon />} title="Silenciar notificações" />
+            <SectionHeader icon={<MuteIcon />} title={t('settings.notifications.muteTitle')} />
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Silenciar todas as notificações por um período
+              {t('settings.notifications.muteDescription')}
             </Typography>
-            <ButtonGroup variant="outlined" fullWidth aria-label="Opções de silenciar">
+            <ButtonGroup variant="outlined" fullWidth aria-label={t('settings.notifications.muteOptions')}>
               {MUTE_OPTIONS.map((opt) => (
                 <Button
                   key={opt.hours}
                   onClick={() => setMuteUntil(opt.hours)}
-                  aria-label={`Silenciar por ${opt.label}`}
+                  aria-label={t('settings.notifications.muteFor', { period: opt.label })}
                 >
                   {opt.label}
                 </Button>

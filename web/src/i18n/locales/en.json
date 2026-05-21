@@ -139,7 +139,62 @@
     "deleteEmailLabel": "Your email",
     "deleteEmailAria": "Confirm email to delete account",
     "deleteConfirmBtn": "Delete permanently",
-    "deleteConfirmAria": "Delete my account permanently"
+    "deleteConfirmAria": "Delete my account permanently",
+    "theme": {
+      "title": "Theme",
+      "lightDesc": "Light mode",
+      "darkDesc": "Dark mode",
+      "systemDesc": "Auto (system)",
+      "selection": "Theme selection",
+      "pushNotifications": "Push Notifications",
+      "pushNotificationsDesc": "Receive browser notifications",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive email updates",
+      "clearCache": "Clear Cache",
+      "clearCacheDesc": "Remove locally stored data",
+      "syncData": "Sync Data",
+      "syncDataDesc": "Force server synchronization",
+      "clearCacheSuccess": "Cache cleared successfully",
+      "clearCacheError": "Error clearing cache",
+      "syncDataSuccess": "Data synchronized"
+    },
+    "notifications": {
+      "pushTitle": "Push notifications",
+      "pushDescription": "Receive push notifications in the browser",
+      "pushToggle": "Enable push notifications",
+      "gamesTitle": "Games",
+      "gameInvites": "Game invite notifications",
+      "gameInvitesDescription": "Game invites",
+      "gameReminders": "Game reminders",
+      "gameRemindersDescription": "Game reminders",
+      "groupsTitle": "Groups",
+      "groupInvites": "Group invites",
+      "groupInvitesDescription": "Group invites",
+      "achievementsTitle": "Achievements",
+      "achievements": "Achievement notifications",
+      "achievementsDescription": "Achievements and badges",
+      "mvpVotes": "MVP votes",
+      "mvpVotesDescription": "MVP votes",
+      "levelUp": "Level up notifications",
+      "levelUpDescription": "Level up",
+      "systemTitle": "System",
+      "systemAnnouncements": "System announcements",
+      "systemAnnouncementsDescription": "System announcements",
+      "reminderTitle": "Game reminder",
+      "reminderLabel": "Notify in advance",
+      "reminderTime": "Reminder advance time",
+      "muteTitle": "Mute notifications",
+      "muteDescription": "Mute all notifications for a period",
+      "muteActive": "Notifications muted",
+      "muteRemaining": "{{hours}}h of silence remaining",
+      "muteReactivate": "Reactivate",
+      "muteOptions": "Mute options",
+      "muteFor": "Mute for {{period}}"
+    },
+    "gamification": {
+      "animationsSpeed": "Animation Speed",
+      "saveSuccess": "Gamification settings saved!"
+    }
   },
   "profile": {
     "title": "Profile",
@@ -268,9 +323,15 @@
     "noGamesDesc": "How about creating the first game?",
     "createFirst": "Create Game",
     "position": "Position",
-    "teams": "Teams",
+    "teams": {
+      "title": "Teams",
+      "A": "Team A",
+      "B": "Team B",
+      "saveError": "Error saving teams. Reload the page and try again."
+    },
     "teamA": "Team A",
     "teamB": "Team B",
+    "notFound": "Game not found",
     "sortTeams": "Sort Teams",
     "noPlayers": "No confirmed players",
     "tabs": {
@@ -371,6 +432,12 @@
     "liveTitle": "Live Game",
     "filterByGroup": "Filter by group",
     "allGroups": "All groups",
+    "search": {
+      "placeholder": "Search games...",
+      "clear": "Clear search",
+      "filterByStatus": "Filter by game status",
+      "clearFilters": "Clear filters"
+    },
     "loadError": "Failed to load games"
   },
   "ranking": {

@@ -24,6 +24,7 @@ import {
   DialogActions,
   TextField,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -58,6 +59,7 @@ interface Settings {
 export const SettingsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -171,7 +173,7 @@ export const SettingsScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2 }} />

@@ -26,7 +26,9 @@ import {
   Button,
   ButtonBase,
   CircularProgress,
+  Grid,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -638,6 +640,7 @@ export function HomeTab() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
@@ -965,189 +968,383 @@ export function HomeTab() {
         </CardActionArea>
       </Card>
 
-      {/* Checklist de Primeiros Passos (Fase 1 — antes do próximo jogo) */}
-      <FirstStepsChecklist
-        steps={checklistSteps}
-        visible={checklistVisible}
-        onDismiss={() => {
-          const stepsDone = checklistSteps.filter(s => s.completed).length;
-          onChecklistDismissed(stepsDone, checklistSteps.length);
-        }}
-      />
+      {isMd ? (
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={7}>
+            {/* Checklist de Primeiros Passos (Fase 1 — antes do próximo jogo) */}
+            <FirstStepsChecklist
+              steps={checklistSteps}
+              visible={checklistVisible}
+              onDismiss={() => {
+                const stepsDone = checklistSteps.filter(s => s.completed).length;
+                onChecklistDismissed(stepsDone, checklistSteps.length);
+              }}
+            />
 
-      {/* Próximo Jogo — abaixo das informações do jogador */}
-      <NextGameWidget />
+            {/* Próximo Jogo — abaixo das informações do jogador */}
+            <NextGameWidget />
 
-      {/* StreakWidget */}
-      {(user?.currentStreak || 0) > 0 ? (
-        <Card
-          sx={{
-            mb: 3,
-            bgcolor: alpha(gamificationColors.streak, 0.08),
-            border: `1px solid ${alpha(gamificationColors.streak, 0.3)}`,
-            borderRadius: 3,
-          }}
-        >
-          <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-            <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" fontWeight="bold">
-                {t('profile.streakGamesInARow', { count: user?.currentStreak || 0 })}
-              </Typography>
-              {(user?.currentStreak || 0) >= (user?.bestStreak || 0) ? (
-                <Typography variant="caption" sx={{ color: gamificationColors.gold, fontWeight: 600 }}>
-                  {t('profile.streakBestRecord', { record: user?.bestStreak || 0 })}
-                </Typography>
-              ) : (
-                <Typography variant="caption" color="text.secondary">
-                  {t('profile.streakRecord', { record: user?.bestStreak || 0 })}
-                </Typography>
-              )}
-            </Box>
-            {streakBonus > 0 && (
-              <Chip
-                label={`+${streakBonus} XP`}
-                size="small"
-                sx={{ bgcolor: alpha(gamificationColors.streak, 0.15), color: gamificationColors.streak, fontWeight: 600 }}
-              />
+            {/* StreakWidget */}
+            {(user?.currentStreak || 0) > 0 ? (
+              <Card
+                sx={{
+                  mb: 2,
+                  bgcolor: alpha(gamificationColors.streak, 0.08),
+                  border: `1px solid ${alpha(gamificationColors.streak, 0.3)}`,
+                  borderRadius: 3,
+                }}
+              >
+                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {t('profile.streakGamesInARow', { count: user?.currentStreak || 0 })}
+                    </Typography>
+                    {(user?.currentStreak || 0) >= (user?.bestStreak || 0) ? (
+                      <Typography variant="caption" sx={{ color: gamificationColors.gold, fontWeight: 600 }}>
+                        {t('profile.streakBestRecord', { record: user?.bestStreak || 0 })}
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        {t('profile.streakRecord', { record: user?.bestStreak || 0 })}
+                      </Typography>
+                    )}
+                  </Box>
+                  {streakBonus > 0 && (
+                    <Chip
+                      label={`+${streakBonus} XP`}
+                      size="small"
+                      sx={{ bgcolor: alpha(gamificationColors.streak, 0.15), color: gamificationColors.streak, fontWeight: 600 }}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card
+                sx={{
+                  mb: 2,
+                  bgcolor: alpha(theme.palette.action.hover, 0.3),
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: 3,
+                }}
+              >
+                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <LocalFireDepartment sx={{ fontSize: 32, color: 'text.disabled' }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {t('profile.startStreak')}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('profile.startStreakDesc')}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card
-          sx={{
-            mb: 3,
-            bgcolor: alpha(theme.palette.action.hover, 0.3),
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 3,
-          }}
-        >
-          <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-            <LocalFireDepartment sx={{ fontSize: 32, color: 'text.disabled' }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" fontWeight="bold">
-                {t('profile.startStreak')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t('profile.startStreakDesc')}
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* MiniRankingWidget */}
-      <MiniRankingWidget />
+            {/* MiniRankingWidget */}
+            <MiniRankingWidget />
+          </Grid>
 
-      {/* Atividade Recente — full width já que NextGameWidget substitui o Próximo Jogo */}
-      <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Notifications fontSize="small" color="primary" />
-        {t('profile.recentActivity')}
-      </Typography>
-      <Card sx={{ borderRadius: 3 }}>
-        {activitiesLoading ? (
-          <List disablePadding>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <ListItem key={i} divider={i < 2}>
-                <ListItemAvatar>
-                  <Skeleton variant="circular" width={40} height={40} />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={<Skeleton variant="text" width="60%" />}
-                  secondary={<Skeleton variant="text" width="30%" />}
-                />
-              </ListItem>
-            ))}
-          </List>
-        ) : activities.length === 0 ? (
-          <CardContent>
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-              <Typography variant="body2" color="text.secondary">
-                {t('profile.noRecentActivity')}
-              </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
-                {t('profile.noRecentActivityDesc')}
-              </Typography>
-              <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate('/groups')}
-                >
-                  {t('common.viewGroups')}
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate('/games')}
-                >
-                  {t('games.createGame')}
-                </Button>
-              </Box>
-            </Box>
-          </CardContent>
-        ) : (
-          <List disablePadding>
-            {activities.map((activity, index) => {
-              const navTarget = getActivityNavTarget(activity);
-              const avatarColor = getActivityColor(activity.type);
-              return (
-                <ListItem
-                  key={activity.id}
-                  disablePadding
-                  divider={index < activities.length - 1}
-                >
-                  <ListItemButton
-                    onClick={() => navTarget && navigate(navTarget)}
-                    disabled={!navTarget}
-                    sx={{ py: 1.5 }}
-                  >
-                    <ListItemAvatar>
-                      {activity.actorPhoto ? (
-                        <Avatar src={activity.actorPhoto} alt={activity.actorName || ''} />
-                      ) : (
-                        <Avatar
-                          sx={{
-                            bgcolor: avatarColor
-                              ? alpha(avatarColor, 0.15)
-                              : 'action.hover',
-                          }}
-                          aria-hidden="true"
+          <Grid item xs={12} md={5}>
+            {/* Atividade Recente */}
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Notifications fontSize="small" color="primary" />
+              {t('profile.recentActivity')}
+            </Typography>
+            <Card sx={{ borderRadius: 3 }}>
+              {activitiesLoading ? (
+                <List disablePadding>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <ListItem key={i} divider={i < 2}>
+                      <ListItemAvatar>
+                        <Skeleton variant="circular" width={40} height={40} />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={<Skeleton variant="text" width="60%" />}
+                        secondary={<Skeleton variant="text" width="30%" />}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : activities.length === 0 ? (
+                <CardContent>
+                  <Box sx={{ textAlign: 'center', py: 2 }}>
+                    <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      {t('profile.noRecentActivity')}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                      {t('profile.noRecentActivityDesc')}
+                    </Typography>
+                    <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => navigate('/groups')}
+                      >
+                        {t('common.viewGroups')}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => navigate('/games')}
+                      >
+                        {t('games.createGame')}
+                      </Button>
+                    </Box>
+                  </Box>
+                </CardContent>
+              ) : (
+                <List disablePadding>
+                  {activities.map((activity, index) => {
+                    const navTarget = getActivityNavTarget(activity);
+                    const avatarColor = getActivityColor(activity.type);
+                    return (
+                      <ListItem
+                        key={activity.id}
+                        disablePadding
+                        divider={index < activities.length - 1}
+                      >
+                        <ListItemButton
+                          onClick={() => navTarget && navigate(navTarget)}
+                          disabled={!navTarget}
+                          sx={{ py: 1.5 }}
                         >
-                          {getActivityIcon(activity.type)}
-                        </Avatar>
-                      )}
+                          <ListItemAvatar>
+                            {activity.actorPhoto ? (
+                              <Avatar src={activity.actorPhoto} alt={activity.actorName || ''} />
+                            ) : (
+                              <Avatar
+                                sx={{
+                                  bgcolor: avatarColor
+                                    ? alpha(avatarColor, 0.15)
+                                    : 'action.hover',
+                                }}
+                                aria-hidden="true"
+                              >
+                                {getActivityIcon(activity.type)}
+                              </Avatar>
+                            )}
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={activity.title || activity.actorName || t('profile.defaultActivityTitle')}
+                            primaryTypographyProps={{
+                              fontWeight: 500,
+                              noWrap: true,
+                            }}
+                            secondary={
+                              activity.message || activity.actorName
+                                ? `${activity.actorName ? `${activity.actorName}  ·  ` : ''}${activity.message}`
+                                : ''
+                            }
+                            secondaryTypographyProps={{
+                              noWrap: true,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: 1, alignSelf: 'flex-start', mt: 0.5, whiteSpace: 'nowrap' }}
+                          >
+                            {activity.time}
+                          </Typography>
+                        </ListItemButton>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              )}
+            </Card>
+          </Grid>
+        </Grid>
+      ) : (
+        <>
+          {/* Checklist de Primeiros Passos (Fase 1 — antes do próximo jogo) */}
+          <FirstStepsChecklist
+            steps={checklistSteps}
+            visible={checklistVisible}
+            onDismiss={() => {
+              const stepsDone = checklistSteps.filter(s => s.completed).length;
+              onChecklistDismissed(stepsDone, checklistSteps.length);
+            }}
+          />
+
+          {/* Próximo Jogo — abaixo das informações do jogador */}
+          <NextGameWidget />
+
+          {/* StreakWidget */}
+          {(user?.currentStreak || 0) > 0 ? (
+            <Card
+              sx={{
+                mb: 3,
+                bgcolor: alpha(gamificationColors.streak, 0.08),
+                border: `1px solid ${alpha(gamificationColors.streak, 0.3)}`,
+                borderRadius: 3,
+              }}
+            >
+              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {t('profile.streakGamesInARow', { count: user?.currentStreak || 0 })}
+                  </Typography>
+                  {(user?.currentStreak || 0) >= (user?.bestStreak || 0) ? (
+                    <Typography variant="caption" sx={{ color: gamificationColors.gold, fontWeight: 600 }}>
+                      {t('profile.streakBestRecord', { record: user?.bestStreak || 0 })}
+                    </Typography>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      {t('profile.streakRecord', { record: user?.bestStreak || 0 })}
+                    </Typography>
+                  )}
+                </Box>
+                {streakBonus > 0 && (
+                  <Chip
+                    label={`+${streakBonus} XP`}
+                    size="small"
+                    sx={{ bgcolor: alpha(gamificationColors.streak, 0.15), color: gamificationColors.streak, fontWeight: 600 }}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card
+              sx={{
+                mb: 3,
+                bgcolor: alpha(theme.palette.action.hover, 0.3),
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 3,
+              }}
+            >
+              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <LocalFireDepartment sx={{ fontSize: 32, color: 'text.disabled' }} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {t('profile.startStreak')}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('profile.startStreakDesc')}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* MiniRankingWidget */}
+          <MiniRankingWidget />
+
+          {/* Atividade Recente — full width já que NextGameWidget substitui o Próximo Jogo */}
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Notifications fontSize="small" color="primary" />
+            {t('profile.recentActivity')}
+          </Typography>
+          <Card sx={{ borderRadius: 3 }}>
+            {activitiesLoading ? (
+              <List disablePadding>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <ListItem key={i} divider={i < 2}>
+                    <ListItemAvatar>
+                      <Skeleton variant="circular" width={40} height={40} />
                     </ListItemAvatar>
                     <ListItemText
-                      primary={activity.title || activity.actorName || t('profile.defaultActivityTitle')}
-                      primaryTypographyProps={{
-                        fontWeight: 500,
-                        noWrap: true,
-                      }}
-                      secondary={
-                        activity.message || activity.actorName
-                          ? `${activity.actorName ? `${activity.actorName}  ·  ` : ''}${activity.message}`
-                          : ''
-                      }
-                      secondaryTypographyProps={{
-                        noWrap: true,
-                      }}
+                      primary={<Skeleton variant="text" width="60%" />}
+                      secondary={<Skeleton variant="text" width="30%" />}
                     />
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ ml: 1, alignSelf: 'flex-start', mt: 0.5, whiteSpace: 'nowrap' }}
+                  </ListItem>
+                ))}
+              </List>
+            ) : activities.length === 0 ? (
+              <CardContent>
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    {t('profile.noRecentActivity')}
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                    {t('profile.noRecentActivityDesc')}
+                  </Typography>
+                  <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => navigate('/groups')}
                     >
-                      {activity.time}
-                    </Typography>
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
-          </List>
-        )}
-      </Card>
+                      {t('common.viewGroups')}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => navigate('/games')}
+                    >
+                      {t('games.createGame')}
+                    </Button>
+                  </Box>
+                </Box>
+              </CardContent>
+            ) : (
+              <List disablePadding>
+                {activities.map((activity, index) => {
+                  const navTarget = getActivityNavTarget(activity);
+                  const avatarColor = getActivityColor(activity.type);
+                  return (
+                    <ListItem
+                      key={activity.id}
+                      disablePadding
+                      divider={index < activities.length - 1}
+                    >
+                      <ListItemButton
+                        onClick={() => navTarget && navigate(navTarget)}
+                        disabled={!navTarget}
+                        sx={{ py: 1.5 }}
+                      >
+                        <ListItemAvatar>
+                          {activity.actorPhoto ? (
+                            <Avatar src={activity.actorPhoto} alt={activity.actorName || ''} />
+                          ) : (
+                            <Avatar
+                              sx={{
+                                bgcolor: avatarColor
+                                  ? alpha(avatarColor, 0.15)
+                                  : 'action.hover',
+                              }}
+                              aria-hidden="true"
+                            >
+                              {getActivityIcon(activity.type)}
+                            </Avatar>
+                          )}
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={activity.title || activity.actorName || t('profile.defaultActivityTitle')}
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            noWrap: true,
+                          }}
+                          secondary={
+                            activity.message || activity.actorName
+                              ? `${activity.actorName ? `${activity.actorName}  ·  ` : ''}${activity.message}`
+                              : ''
+                          }
+                          secondaryTypographyProps={{
+                            noWrap: true,
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ ml: 1, alignSelf: 'flex-start', mt: 0.5, whiteSpace: 'nowrap' }}
+                        >
+                          {activity.time}
+                        </Typography>
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
+          </Card>
+        </>
+      )}
       {isPlayerCardOpen && (
         <PlayerCard userId={user?.id || null} onClose={() => setIsPlayerCardOpen(false)} />
       )}

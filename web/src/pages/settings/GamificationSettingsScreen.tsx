@@ -15,6 +15,7 @@ import {
   Switch,
   Slider,
   useTheme,
+  useMediaQuery,
   Chip,
   Button,
   CircularProgress,
@@ -76,6 +77,7 @@ export const GamificationSettingsScreen: React.FC = () => {
   useDocumentTitle('Gamificação');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -124,7 +126,7 @@ export const GamificationSettingsScreen: React.FC = () => {
         animations_speed: prefs.animationsSpeed,
         updated_at: serverTimestamp(),
       }, { merge: true });
-      showSuccess('Configurações de gamificação salvas!');
+      showSuccess(t('settings.gamification.saveSuccess'));
     } catch (error) {
       logger.error('Erro ao salvar preferências de gamificação:', error);
       showError(t('settings.saveError'));
@@ -147,7 +149,7 @@ export const GamificationSettingsScreen: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
           <IconButton
             onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }}
-            aria-label="Voltar"
+            aria-label={t('common.back')}
           >
             <BackIcon />
           </IconButton>
@@ -162,7 +164,7 @@ export const GamificationSettingsScreen: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
@@ -273,7 +275,7 @@ export const GamificationSettingsScreen: React.FC = () => {
               <Box sx={{ px: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <SpeedIcon color="action" />
-                  <Typography>Velocidade das Animações</Typography>
+                  <Typography>{t('settings.gamification.animationsSpeed')}</Typography>
                 </Box>
                 <Slider
                   value={prefs.animationsSpeed}

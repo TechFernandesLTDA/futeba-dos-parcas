@@ -222,7 +222,7 @@ export const futebaDarkTheme = createTheme({
     },
     text: {
       primary: '#F1F5F9',
-      secondary: '#94A3B8',
+      secondary: '#B0BEC5',
     },
     error: { main: '#EF5350', light: '#FF8A80', dark: '#C62828' },
     warning: { main: '#FFA726', light: '#FFB74D', dark: '#E65100' },

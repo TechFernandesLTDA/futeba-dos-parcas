@@ -18,6 +18,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
+  useMediaQuery,
   Chip,
 } from '@mui/material';
 import {
@@ -39,12 +40,13 @@ import { syncLanguageToFirestore } from '../../contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
 
 export const ThemeSettingsScreen: React.FC = () => {
-  useDocumentTitle('Tema');
+  const { t } = useTranslation();
+  useDocumentTitle(t('settings.theme.title'));
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { mode, setMode } = useThemeContext();
   const { language, setLanguage } = useLanguage();
-  const { t } = useTranslation();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
@@ -62,16 +64,16 @@ export const ThemeSettingsScreen: React.FC = () => {
   const handleClearCache = () => {
     try {
       localStorage.clear();
-      showSuccess('Cache limpo com sucesso');
+      showSuccess(t('settings.theme.clearCacheSuccess'));
     } catch {
-      showError('Erro ao limpar cache');
+      showError(t('settings.theme.clearCacheError'));
     }
   };
 
   const handleSyncData = () => {
     // Invalida o cache do React Query para forçar refetch de todos os dados
     queryClient.invalidateQueries();
-    showSuccess('Dados sincronizados');
+    showSuccess(t('settings.theme.syncDataSuccess'));
   };
 
   return (
@@ -86,7 +88,7 @@ export const ThemeSettingsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -95,7 +97,7 @@ export const ThemeSettingsScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {/* Seletor de tema com 3 opções: claro, escuro, sistema.
             Substituímos o Switch binário que estava acoplado ao toggleTheme
             (ciclo light→dark→system), causando dessincronização entre estado
@@ -114,13 +116,13 @@ export const ThemeSettingsScreen: React.FC = () => {
                 )}
               </ListItemIcon>
               <ListItemText
-                primary="Tema"
+                primary={t('settings.theme.title')}
                 secondary={
                   mode === 'dark'
-                    ? 'Modo escuro'
+                    ? t('settings.theme.darkDesc')
                     : mode === 'light'
-                    ? 'Modo claro'
-                    : 'Automático (sistema)'
+                    ? t('settings.theme.lightDesc')
+                    : t('settings.theme.systemDesc')
                 }
               />
             </ListItem>
@@ -132,21 +134,21 @@ export const ThemeSettingsScreen: React.FC = () => {
                   // Ignora clique no botão já selecionado (newMode seria null)
                   if (newMode !== null) setMode(newMode);
                 }}
-                aria-label="Seleção de tema"
+                aria-label={t('settings.theme.selection')}
                 fullWidth
                 size="small"
               >
-                <ToggleButton value="light" aria-label="Tema claro">
+                <ToggleButton value="light" aria-label={t('theme.light')}>
                   <LightModeIcon sx={{ mr: 0.5 }} fontSize="small" />
-                  Claro
+                  {t('theme.light')}
                 </ToggleButton>
-                <ToggleButton value="system" aria-label="Tema do sistema">
+                <ToggleButton value="system" aria-label={t('theme.system')}>
                   <SystemIcon sx={{ mr: 0.5 }} fontSize="small" />
-                  Sistema
+                  {t('theme.system')}
                 </ToggleButton>
-                <ToggleButton value="dark" aria-label="Tema escuro">
+                <ToggleButton value="dark" aria-label={t('theme.dark')}>
                   <DarkModeIcon sx={{ mr: 0.5 }} fontSize="small" />
-                  Escuro
+                  {t('theme.dark')}
                 </ToggleButton>
               </ToggleButtonGroup>
             </ListItem>
@@ -160,8 +162,8 @@ export const ThemeSettingsScreen: React.FC = () => {
                 <NotificationsIcon />
               </ListItemIcon>
               <ListItemText
-                primary="Notificações Push"
-                secondary="Receber notificações no navegador"
+                primary={t('settings.theme.pushNotifications')}
+                secondary={t('settings.theme.pushNotificationsDesc')}
               />
               <Switch
                 checked={notifications}
@@ -174,8 +176,8 @@ export const ThemeSettingsScreen: React.FC = () => {
                 <LanguageIcon />
               </ListItemIcon>
               <ListItemText
-                primary="Notificações por Email"
-                secondary="Receber atualizações por email"
+                primary={t('settings.theme.emailNotifications')}
+                secondary={t('settings.theme.emailNotificationsDesc')}
               />
               <Switch
                 checked={emailNotifications}
@@ -215,8 +217,8 @@ export const ThemeSettingsScreen: React.FC = () => {
                 <StorageIcon />
               </ListItemIcon>
               <ListItemText
-                primary="Limpar Cache"
-                secondary="Remover dados armazenados localmente"
+                primary={t('settings.theme.clearCache')}
+                secondary={t('settings.theme.clearCacheDesc')}
               />
             </ListItemButton>
             <Divider />
@@ -225,8 +227,8 @@ export const ThemeSettingsScreen: React.FC = () => {
                 <RefreshIcon />
               </ListItemIcon>
               <ListItemText
-                primary="Sincronizar Dados"
-                secondary="Forçar sincronização com servidor"
+                primary={t('settings.theme.syncData')}
+                secondary={t('settings.theme.syncDataDesc')}
               />
             </ListItemButton>
           </List>

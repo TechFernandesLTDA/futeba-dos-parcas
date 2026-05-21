@@ -33,6 +33,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { useToast } from '../../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('TeamFormationScreen');
 
@@ -60,6 +61,7 @@ export const TeamFormationScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const { showError } = useToast();
+  const { t } = useTranslation();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const navigateRef = useRef(navigate);
@@ -176,13 +178,13 @@ export const TeamFormationScreen: React.FC = () => {
       // falha e o usuário recebe feedback para recarregar a página.
       await runTransaction(db, async (tx) => {
         const gameSnap = await tx.get(gameRef);
-        if (!gameSnap.exists()) throw new Error('Jogo não encontrado.');
+        if (!gameSnap.exists()) throw new Error(t('games.notFound'));
         const currentVersion = gameSnap.data()?.team_formation_version ?? 0;
         tx.update(gameRef, {
           team1_players: teamA.map(p => p.id),
           team2_players: teamB.map(p => p.id),
-          team1_name: 'Time A',
-          team2_name: 'Time B',
+          team1_name: t('games.teams.A'),
+          team2_name: t('games.teams.B'),
           team_formation_version: currentVersion + 1,
           updated_at: serverTimestamp(),
         });
@@ -190,7 +192,7 @@ export const TeamFormationScreen: React.FC = () => {
       navigateBack();
     } catch (error) {
       logger.error('Error saving teams:', error);
-      showError('Erro ao salvar os times. Recarregue a página e tente novamente.');
+      showError(t('games.teams.saveError'));
     } finally {
       setSaving(false);
     }
@@ -226,7 +228,7 @@ export const TeamFormationScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>

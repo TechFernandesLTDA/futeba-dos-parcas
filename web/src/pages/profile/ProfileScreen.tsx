@@ -267,7 +267,7 @@ export const ProfileScreen: React.FC = () => {
                   {t('profile.statistics')}
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={3}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SoccerIcon color="action" />
                       <Box>
@@ -278,7 +278,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={3}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TrophyIcon color="action" />
                       <Box>
@@ -289,7 +289,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={3}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SoccerIcon color="success" />
                       <Box>
@@ -300,7 +300,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={3}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TrendingIcon color="info" />
                       <Box>

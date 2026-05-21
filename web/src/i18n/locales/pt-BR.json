@@ -139,7 +139,62 @@
     "deleteEmailLabel": "Seu email",
     "deleteEmailAria": "Confirmar email para excluir conta",
     "deleteConfirmBtn": "Excluir definitivamente",
-    "deleteConfirmAria": "Excluir minha conta definitivamente"
+    "deleteConfirmAria": "Excluir minha conta definitivamente",
+    "theme": {
+      "title": "Tema",
+      "lightDesc": "Modo claro",
+      "darkDesc": "Modo escuro",
+      "systemDesc": "Automático (sistema)",
+      "selection": "Seleção de tema",
+      "pushNotifications": "Notificações Push",
+      "pushNotificationsDesc": "Receber notificações no navegador",
+      "emailNotifications": "Notificações por Email",
+      "emailNotificationsDesc": "Receber atualizações por email",
+      "clearCache": "Limpar Cache",
+      "clearCacheDesc": "Remover dados armazenados localmente",
+      "syncData": "Sincronizar Dados",
+      "syncDataDesc": "Forçar sincronização com servidor",
+      "clearCacheSuccess": "Cache limpo com sucesso",
+      "clearCacheError": "Erro ao limpar cache",
+      "syncDataSuccess": "Dados sincronizados"
+    },
+    "notifications": {
+      "pushTitle": "Push notifications",
+      "pushDescription": "Receber notificações push no navegador",
+      "pushToggle": "Ativar notificações push",
+      "gamesTitle": "Jogos",
+      "gameInvites": "Notificações de convites para jogos",
+      "gameInvitesDescription": "Convites para jogos",
+      "gameReminders": "Lembretes de jogos",
+      "gameRemindersDescription": "Lembretes de jogos",
+      "groupsTitle": "Grupos",
+      "groupInvites": "Convites para grupos",
+      "groupInvitesDescription": "Convites para grupos",
+      "achievementsTitle": "Conquistas",
+      "achievements": "Notificações de conquistas",
+      "achievementsDescription": "Conquistas e badges",
+      "mvpVotes": "Votações MVP",
+      "mvpVotesDescription": "Votações MVP",
+      "levelUp": "Notificações de nível",
+      "levelUpDescription": "Subida de nível",
+      "systemTitle": "Sistema",
+      "systemAnnouncements": "Anúncios do sistema",
+      "systemAnnouncementsDescription": "Anúncios do sistema",
+      "reminderTitle": "Lembrete de jogo",
+      "reminderLabel": "Notificar com antecedência",
+      "reminderTime": "Tempo de antecedência do lembrete",
+      "muteTitle": "Silenciar notificações",
+      "muteDescription": "Silenciar todas as notificações por um período",
+      "muteActive": "Notificações silenciadas",
+      "muteRemaining": "Restam {{hours}}h de silêncio",
+      "muteReactivate": "Reativar",
+      "muteOptions": "Opções de silenciar",
+      "muteFor": "Silenciar por {{period}}"
+    },
+    "gamification": {
+      "animationsSpeed": "Velocidade das Animações",
+      "saveSuccess": "Configurações de gamificação salvas!"
+    }
   },
   "profile": {
     "title": "Perfil",
@@ -268,9 +323,15 @@
     "noGamesDesc": "Que tal criar o primeiro jogo?",
     "createFirst": "Criar Jogo",
     "position": "Posição",
-    "teams": "Times",
+    "teams": {
+      "title": "Times",
+      "A": "Time A",
+      "B": "Time B",
+      "saveError": "Erro ao salvar os times. Recarregue a página e tente novamente."
+    },
     "teamA": "Time A",
     "teamB": "Time B",
+    "notFound": "Jogo não encontrado",
     "sortTeams": "Sortear Times",
     "noPlayers": "Nenhum jogador confirmado",
     "tabs": {
@@ -371,6 +432,12 @@
     "liveTitle": "Jogo ao Vivo",
     "filterByGroup": "Filtrar por grupo",
     "allGroups": "Todos os grupos",
+    "search": {
+      "placeholder": "Buscar jogos...",
+      "clear": "Limpar busca",
+      "filterByStatus": "Filtrar por status do jogo",
+      "clearFilters": "Limpar filtros"
+    },
     "loadError": "Erro ao carregar jogos"
   },
   "ranking": {
