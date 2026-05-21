@@ -115,6 +115,7 @@ jobs:
           track: internal
           status: completed
           inAppUpdatePriority: 2
+          changesNotSentForReview: true
 
       # AAB ja foi enviado ao Play Store no passo anterior; este upload e so backup.
       # continue-on-error evita que falha de quota de artifact marque o deploy como vermelho
