@@ -499,17 +499,12 @@ export async function isTransactionAlreadyProcessed(
   transactionId: string
 ): Promise<boolean> {
   try {
-    const existingLog = await db()
+    const docSnap = await db()
       .collection("xp_logs")
-      .where(
-        "transaction_id",
-        "==",
-        transactionId
-      )
-      .limit(1)
+      .doc(transactionId)
       .get();
 
-    return !existingLog.empty;
+    return docSnap.exists;
   } catch (error) {
     logger.error(
       "[XP_IDEMPOTENCY] Erro ao verificar " +
@@ -602,21 +597,16 @@ export async function processXpIdempotent(
   try {
     await db().runTransaction(
       async (transaction) => {
-        // 2.1: Re-verificar idempotência
+        // 2.1: Re-verificar idempotência com doc ID determinístico
+        //      (SECFIX #1453: doc read é lockado na transaction,
+        //       query read com zero docs não cria range-lock)
         const xpLogsRef = db()
           .collection("xp_logs");
-        const existingCheck =
-          await transaction.get(
-            xpLogsRef
-              .where(
-                "transaction_id",
-                "==",
-                transactionId
-              )
-              .limit(1)
-          );
+        const logRef = xpLogsRef.doc(transactionId);
+        const existingSnap =
+          await transaction.get(logRef);
 
-        if (!existingCheck.empty) {
+        if (existingSnap.exists) {
           logger.info(
             "[XP_IDEMPOTENCY] Transação " +
             `${transactionId} já processada ` +
@@ -663,8 +653,7 @@ export async function processXpIdempotent(
           });
         }
 
-        // 2.4: Criar XP log com transaction_id
-        const logRef = xpLogsRef.doc();
+        // 2.4: Criar XP log com doc ID determinístico (transaction_id)
         transaction.set(
           logRef,
           buildXpLogData(transactionId, data)
