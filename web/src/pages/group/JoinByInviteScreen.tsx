@@ -18,7 +18,7 @@ import {
   Error as ErrorIcon,
   Login as LoginIcon,
 } from '@mui/icons-material';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -86,7 +86,8 @@ export const JoinByInviteScreen: React.FC = () => {
 
         const data = snapshot.docs[0].data();
         const expiresAt = data.expires_at?.toDate?.() ?? null;
-        const expired = expiresAt && expiresAt < new Date();
+        const now = Timestamp.now();
+        const expired = expiresAt ? expiresAt.getTime() < now.toMillis() : true;
         const used = data.used === true;
 
         setPreview({
