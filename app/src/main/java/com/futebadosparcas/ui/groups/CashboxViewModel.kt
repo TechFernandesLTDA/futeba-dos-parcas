@@ -151,9 +151,20 @@ class CashboxViewModel(
         viewModelScope.launch {
             _actionState.value = CashboxActionState.Loading
 
+            val userId = groupRepository.getCurrentUserId() ?: run {
+                _actionState.value = CashboxActionState.Error("Usuário não autenticado")
+                return@launch
+            }
+            val userName = groupRepository.getCurrentUserName().getOrElse {
+                _actionState.value = CashboxActionState.Error(it.message ?: "Erro ao obter nome do usuário")
+                return@launch
+            }
+
             val androidEntry = createAndroidCashboxEntry(
                 type = type.name,
                 category = category.name,
+                createdById = userId,
+                createdByName = userName,
                 customCategory = customCategory,
                 amount = amount,
                 description = description,

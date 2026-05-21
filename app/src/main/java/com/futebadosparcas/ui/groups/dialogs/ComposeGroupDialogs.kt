@@ -513,10 +513,15 @@ fun AddCashboxEntryDialog(
                 )
 
                 // Description
+                val descriptionError = selectedCategory == CashboxCategory.OTHER && description.isBlank()
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text(stringResource(R.string.label_description)) },
+                    isError = descriptionError,
+                    supportingText = if (descriptionError) {
+                        { Text("Descrição obrigatória para categoria 'Outro'", color = MaterialTheme.colorScheme.error) }
+                    } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -550,25 +555,20 @@ fun AddCashboxEntryDialog(
             }
         },
         confirmButton = {
+            val isOtherWithoutDescription = selectedCategory == CashboxCategory.OTHER && description.isBlank()
             Button(
                 onClick = {
                     val amountVal = amount.replace(",", ".").toDoubleOrNull()
                     val category = selectedCategory
 
-                    // Validação: categoria e valor são obrigatórios
                     if (amountVal != null && amountVal > 0 && category != null) {
-                        // Validação: se categoria é "OTHER", descrição é obrigatória
-                        if (category == CashboxCategory.OTHER && description.isBlank()) {
-                            // Usuário será notificado visualmente no campo de descrição
-                            // Por enquanto, não salvamos
-                        } else {
-                            onSave(description, amountVal, category, selectedReceiptUri)
-                            onDismiss()
-                        }
+                        onSave(description, amountVal, category, selectedReceiptUri)
+                        onDismiss()
                     }
                 },
                 enabled = amount.isNotBlank() && selectedCategory != null &&
-                    amount.replace(",", ".").toDoubleOrNull()?.let { it > 0 } ?: false
+                    amount.replace(",", ".").toDoubleOrNull()?.let { it > 0 } ?: false &&
+                    !isOtherWithoutDescription
             ) {
                 Icon(Icons.Default.Save, contentDescription = stringResource(R.string.cd_save), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
