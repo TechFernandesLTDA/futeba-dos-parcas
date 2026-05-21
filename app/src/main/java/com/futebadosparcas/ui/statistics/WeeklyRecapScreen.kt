@@ -56,10 +56,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.futebadosparcas.R
@@ -421,10 +423,13 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val fontScale = LocalConfiguration.current.fontScale
+        val heroFontSize = if (fontScale > 1.5f) 72.sp else 120.sp
+
         Text(
             text = "$animatedGames",
             style = MaterialTheme.typography.displayLarge.copy(
-                fontSize = 120.sp
+                fontSize = heroFontSize
             ),
             fontWeight = FontWeight.Bold,
             color = GamificationColors.Gold

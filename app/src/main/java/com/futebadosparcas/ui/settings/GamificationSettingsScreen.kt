@@ -107,7 +107,7 @@ fun SettingsForm(
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(stringResource(R.string.edit_profile_save_changes).uppercase(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(R.string.edit_profile_save_changes).uppercase(), fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.bodyLarge.fontSize)
         }
         
         Spacer(modifier = Modifier.height(32.dp))
@@ -138,7 +138,7 @@ fun SectionCard(
                 Text(
                     title,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    fontSize = MaterialTheme.typography.titleMedium.fontSize,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -177,7 +177,7 @@ fun SettingsInput(
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 label,
-                fontSize = 14.sp,
+                fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -193,7 +193,7 @@ fun SettingsInput(
             modifier = Modifier.width(80.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
-            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            textStyle = LocalTextStyle.current.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize, fontWeight = FontWeight.Bold),
             shape = RoundedCornerShape(8.dp)
         )
     }
