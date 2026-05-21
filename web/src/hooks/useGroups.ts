@@ -10,7 +10,6 @@ import {
   orderBy,
   limit as fsLimit,
   onSnapshot,
-  Timestamp,
   serverTimestamp,
   writeBatch,
   documentId,
@@ -117,7 +116,8 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
 async function fetchPublicGroups(maxResults = 100): Promise<Group[]> {
   const groupsRef = collection(db, 'groups');
   // FIX #1129: limit() server-side para evitar full-scan da collection.
-  const q = query(groupsRef, where('is_public', '==', true), fsLimit(maxResults));
+  // Requer composite index: is_public ASC, created_at DESC
+  const q = query(groupsRef, where('is_public', '==', true), orderBy('created_at', 'desc'), fsLimit(maxResults));
   const snapshot = await getDocs(q);
 
   const groups: Group[] = [];
@@ -222,6 +222,8 @@ export function useGroupDetail(groupId: string | null) {
       setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const groupRef = doc(db, 'groups', groupId);
     const membersRef = collection(db, 'groups', groupId, 'members');
@@ -374,6 +376,8 @@ export function useCashbox(groupId: string | null) {
       return;
     }
 
+    setLoading(true);
+
     const cashboxRef = collection(db, 'groups', groupId, 'cashbox');
 
     const unsubscribe = onSnapshot(
@@ -437,7 +441,7 @@ export function useInvitePlayers() {
           inviter_id: uid,
           inviter_name: displayName,
           created_at: serverTimestamp(),
-          expires_at: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+          expires_at: serverTimestamp(),
           used: false,
         });
 
@@ -541,17 +545,17 @@ export function useInvitePlayers() {
  * Usado por <GroupMemberRoute> para guardar rotas /group/:id/{edit,settings,cashbox,invite}.
  *
  * Retorna:
- * - undefined: checando (loading)
- * - true: é membro
- * - false: não é membro (UI deve redirecionar)
+ * - loading: true enquanto checa (UI deve mostrar fallback)
+ * - isMember: true se é membro, false se não é (UI deve redirecionar)
+ * - error: erro de leitura, se houver
  *
  * Usa TanStack Query — cacheia por (uid, groupId) e reaproveita entre rotas.
  */
-export function useIsGroupMember(groupId: string | null | undefined): boolean | undefined {
+export function useIsGroupMember(groupId: string | null | undefined): { isMember: boolean; loading: boolean; error: Error | null } {
   const { firebaseUser } = useAuth();
   const uid = firebaseUser?.uid;
 
-  const { data, isLoading } = useQuery<boolean>({
+  const { data, isLoading, error } = useQuery<boolean>({
     queryKey: ['groupMember', uid, groupId],
     queryFn: async () => {
       if (!uid || !groupId) return false;
@@ -564,6 +568,5 @@ export function useIsGroupMember(groupId: string | null | undefined): boolean | 
     staleTime: 60_000, // 1 min — membership não muda frequentemente
   });
 
-  if (isLoading) return undefined;
-  return data ?? false;
+  return { isMember: data ?? false, loading: isLoading, error: error instanceof Error ? error : null };
 }

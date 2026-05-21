@@ -55,22 +55,15 @@ interface CashboxTransaction {
   createdAt: Date;
 }
 
-interface GroupMember {
-  id: string;
-  name: string;
-  photoUrl?: string;
-}
-
 export const CashboxScreen: React.FC = () => {
   useDocumentTitle('Caixinha');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
 
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
-  const [, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
@@ -125,52 +118,20 @@ export const CashboxScreen: React.FC = () => {
       }
     );
 
-    const fetchMembers = async () => {
-      try {
-        const groupDoc = await getDoc(doc(db, 'groups', groupId));
-        if (cancelled) return;
-        if (groupDoc.exists()) {
-          const groupData = groupDoc.data();
-          const memberIds = groupData.members || [];
-
-          // Verificar se o usuário atual é admin ou owner do grupo
-          if (user) {
-            const ownerId = groupData.owner_id || groupData.ownerId;
-            if (user.id === ownerId) {
-              if (!cancelled) setIsAdminOrOwner(true);
-            } else {
-              // Ler papel do membro na subcoleção members
-              const memberDoc = await getDoc(doc(db, 'groups', groupId, 'members', user.id));
-              if (!cancelled && memberDoc.exists()) {
-                const memberRole = memberDoc.data().role as string | undefined;
-                setIsAdminOrOwner(memberRole === 'ADMIN' || memberRole === 'OWNER');
-              }
-            }
+    // Check if user is admin/owner via members subcollection
+    if (user) {
+      getDoc(doc(db, 'groups', groupId, 'members', user.id))
+        .then((memberDoc) => {
+          if (!cancelled && memberDoc.exists()) {
+            const memberRole = memberDoc.data().role as string | undefined;
+            setIsAdminOrOwner(memberRole === 'ADMIN' || memberRole === 'OWNER');
           }
+        })
+        .catch((err) => {
+          logger.error('Error checking admin status:', err);
+        });
+    }
 
-          const membersData = await Promise.all(
-            memberIds.slice(0, 20).map(async (uid: string) => {
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists()) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const d = snakeToCamel(userDoc.data()) as Record<string, any>;
-                return { id: uid, name: d.name || 'Jogador', photoUrl: d.photoUrl };
-              }
-              return { id: uid, name: 'Jogador' };
-            })
-          );
-          if (!cancelled) setMembers(membersData);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('Error fetching members:', err);
-          setError('Erro ao carregar membros do grupo.');
-          showError('Erro ao carregar membros do grupo.');
-        }
-      }
-    };
-
-    fetchMembers();
     return () => {
       cancelled = true;
       unsubscribe();
@@ -182,15 +143,14 @@ export const CashboxScreen: React.FC = () => {
     if (!groupId || !user || !description || isNaN(parsedAmount) || parsedAmount <= 0) return;
     setSubmitting(true);
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.id));
-      const userName = userDoc.exists() ? userDoc.data().name : 'Usuário';
+      const userName = firebaseUser?.displayName || user?.name || 'Usuário';
 
       await addDoc(collection(db, 'groups', groupId, 'cashbox'), {
         group_id: groupId,
         type: transactionType,
         amount: parsedAmount,
         description,
-        created_by: user.id,
+        created_by: user?.id,
         created_by_name: userName,
         created_at: serverTimestamp(),
       });
