@@ -42,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 /**
@@ -372,10 +373,10 @@ private fun estimateQuality(
 @Composable
 private fun getQualityColor(quality: ConnectionQuality): Color {
     return when (quality) {
-        ConnectionQuality.EXCELLENT -> Color(0xFF4CAF50)  // Verde
-        ConnectionQuality.GOOD -> Color(0xFF8BC34A)       // Verde claro
-        ConnectionQuality.FAIR -> Color(0xFFFFC107)       // Amarelo
-        ConnectionQuality.POOR -> Color(0xFFFF9800)       // Laranja
+        ConnectionQuality.EXCELLENT -> GamificationColors.ConnectionExcellent
+        ConnectionQuality.GOOD -> GamificationColors.ConnectionGood
+        ConnectionQuality.FAIR -> GamificationColors.ConnectionFair
+        ConnectionQuality.POOR -> GamificationColors.ConnectionPoor
         ConnectionQuality.OFFLINE -> MaterialTheme.colorScheme.error
     }
 }

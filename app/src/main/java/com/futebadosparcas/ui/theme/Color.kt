@@ -392,6 +392,29 @@ object GamificationColors {
     // Gradient Variants
     val GoldLight = Color(0xFFFFE082)
     val BronzeLight = Color(0xFFE6A370)
+
+    val Streak = Color(0xFFFF5722)
+    val Xp = Color(0xFF9C27B0)
+    val Level = Color(0xFF00BCD4)
+
+    val FireOrange = Color(0xFFFF6B35)
+    val FireYellow = Color(0xFFFFD93D)
+    val FireRed = Color(0xFFFF3131)
+    val FireCore = Color(0xFFFFFFFF)
+
+    val Level1 = listOf(Color(0xFFFF9500), Color(0xFFFF6B00))
+    val Level2 = listOf(Color(0xFFFF6B35), Color(0xFFFF3D00))
+    val Level3 = listOf(Color(0xFFFF3131), Color(0xFFCC0000))
+    val Level4 = listOf(Color(0xFF9400D3), Color(0xFF4B0082))
+    val Level5 = listOf(Color(0xFF00BFFF), Color(0xFF1E90FF))
+
+    val ConnectionExcellent = Color(0xFF4CAF50)
+    val ConnectionGood = Color(0xFF8BC34A)
+    val ConnectionFair = Color(0xFFFFC107)
+    val ConnectionPoor = Color(0xFFFF9800)
+
+    val AccentBlue = Color(0xFF2196F3)
+    val AccentPurple = Color(0xFFAB47BC)
 }
 
 /**

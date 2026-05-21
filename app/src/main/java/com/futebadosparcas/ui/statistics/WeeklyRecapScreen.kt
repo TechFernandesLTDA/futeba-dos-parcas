@@ -32,7 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
-import com.futebadosparcas.ui.components.gamification.FlameColors
+import com.futebadosparcas.ui.theme.GamificationColors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -105,17 +105,6 @@ data class PersonalBest(
     val value: String,
     val previousBest: String
 )
-
-// ==================== Cores do Recap ====================
-
-object RecapColors {
-    val GradientStart = Color(0xFF667eea)
-    val GradientEnd = Color(0xFF764ba2)
-    val AccentGold = Color(0xFFFFD700)
-    // AccentGreen removido — fix #778: usar MaterialTheme.colorScheme.primary (WCAG AA)
-    val AccentBlue = Color(0xFF2196F3)
-    val AccentPurple = Color(0xFFAB47BC)
-}
 
 // ==================== Overlay Constants ====================
 
@@ -438,7 +427,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
                 fontSize = 120.sp
             ),
             fontWeight = FontWeight.Bold,
-            color = RecapColors.AccentGold
+            color = GamificationColors.Gold
         )
 
         Text(
@@ -571,7 +560,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
         // XP ganho
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = RecapColors.AccentGold.copy(alpha = 0.2f)
+                containerColor = GamificationColors.Gold.copy(alpha = 0.2f)
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -584,7 +573,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                     painter = painterResource(id = R.drawable.ic_star),
                     // Decorativo — texto de XP ao lado fornece semântica
                     contentDescription = null,
-                    tint = RecapColors.AccentGold,
+                    tint = GamificationColors.Gold,
                     modifier = Modifier.size(32.dp)
                 )
                 Column {
@@ -689,7 +678,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background(RecapColors.AccentPurple),
+                            .background(GamificationColors.AccentPurple),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -712,7 +701,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                     Text(
                         text = stringResource(R.string.recap_games_together, data.topPartnerGames),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = RecapColors.AccentGold
+                        color = GamificationColors.Gold
                     )
                 }
             }
@@ -736,7 +725,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_location),
                         contentDescription = null,
-                        tint = RecapColors.AccentBlue,
+                        tint = GamificationColors.AccentBlue,
                         modifier = Modifier.size(40.dp)
                     )
 
@@ -760,7 +749,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                         text = "${data.favoriteLocationGames}x",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = RecapColors.AccentBlue
+                        color = GamificationColors.AccentBlue
                     )
                 }
             }
@@ -789,7 +778,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
         if (data.streakDays > 0) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = FlameColors.FireOrange.copy(alpha = 0.3f) // FIX #1402: dedup constante
+                    containerColor = GamificationColors.FireOrange.copy(alpha = 0.3f) // FIX #1402: dedup constante
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -828,7 +817,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
         if (data.mvpCount > 0) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = RecapColors.AccentGold.copy(alpha = 0.3f)
+                    containerColor = GamificationColors.Gold.copy(alpha = 0.3f)
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -1077,7 +1066,7 @@ private fun SummarySlide(
             onClick = onShare,
             colors = ButtonDefaults.buttonColors(
                 containerColor = RecapOverlayText,
-                contentColor = RecapColors.GradientStart
+                contentColor = MaterialTheme.colorScheme.primary
             ),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier

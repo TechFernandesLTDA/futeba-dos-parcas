@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
+import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -45,23 +46,6 @@ import androidx.compose.ui.res.stringResource
  * Componentes visuais para exibir sequências (streaks) de jogos.
  * Inclui animação de chama que intensifica baseada no número de jogos consecutivos.
  */
-
-// ==================== Cores do Fogo ====================
-
-object FlameColors {
-    val FireOrange = Color(0xFFFF6B35)
-    val FireYellow = Color(0xFFFFD93D)
-    val FireRed = Color(0xFFFF3131)
-    val FireCore = Color(0xFFFFFFFF)
-
-    // Cores por intensidade de streak
-    val Level1 = listOf(Color(0xFFFF9500), Color(0xFFFF6B00)) // 1-3 jogos
-    val Level2 = listOf(Color(0xFFFF6B35), Color(0xFFFF3D00)) // 4-6 jogos
-    val Level3 = listOf(Color(0xFFFF3131), Color(0xFFCC0000)) // 7-9 jogos
-    val Level4 = listOf(Color(0xFF9400D3), Color(0xFF4B0082)) // 10+ jogos (roxo épico)
-    val Level5 = listOf(Color(0xFF00BFFF), Color(0xFF1E90FF)) // 20+ jogos (azul lendário)
-}
-
 /**
  * Nível da chama baseado no streak.
  */
@@ -73,11 +57,11 @@ enum class FlameLevel(
     val intensity: Float
 ) {
     NONE(0, "Sem sequência", listOf(Color.Gray), 0, 0f),
-    WARMING(1, "Esquentando", FlameColors.Level1, 3, 0.5f),
-    HOT(4, "Em chamas", FlameColors.Level2, 5, 0.7f),
-    BURNING(7, "Pegando fogo", FlameColors.Level3, 8, 0.85f),
-    INFERNO(10, "Inferno", FlameColors.Level4, 12, 1.0f),
-    LEGENDARY(20, "Lendário", FlameColors.Level5, 15, 1.2f);
+    WARMING(1, "Esquentando", GamificationColors.Level1, 3, 0.5f),
+    HOT(4, "Em chamas", GamificationColors.Level2, 5, 0.7f),
+    BURNING(7, "Pegando fogo", GamificationColors.Level3, 8, 0.85f),
+    INFERNO(10, "Inferno", GamificationColors.Level4, 12, 1.0f),
+    LEGENDARY(20, "Lendário", GamificationColors.Level5, 15, 1.2f);
 
     companion object {
         fun fromStreak(streak: Int): FlameLevel {
@@ -241,8 +225,8 @@ private fun DrawScope.drawFlame(
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
-                FlameColors.FireCore.copy(alpha = 0.9f),
-                FlameColors.FireYellow.copy(alpha = 0.5f),
+                GamificationColors.FireCore.copy(alpha = 0.9f),
+                GamificationColors.FireYellow.copy(alpha = 0.5f),
                 Color.Transparent
             ),
             center = coreCenter,
@@ -479,7 +463,7 @@ fun StreakCard(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (currentStreak >= bestStreak && currentStreak > 0) {
-                    FlameColors.FireOrange
+                    GamificationColors.FireOrange
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 }
