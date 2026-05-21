@@ -555,9 +555,7 @@ data class Game(
      */
     @Exclude
     fun softDelete(userId: String) {
-        deletedAt = Date()
         deletedBy = userId
-        updatedAt = Date()
     }
 
     /**

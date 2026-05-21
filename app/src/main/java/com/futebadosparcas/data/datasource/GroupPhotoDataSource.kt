@@ -121,14 +121,16 @@ class GroupPhotoDataSource constructor(
 
             val uploadTask = storageRef.putBytes(processedData.bytes, metadata)
 
-            // Listener de progresso
-            uploadTask.addOnProgressListener { snapshot ->
+            // Listeners de progresso/sucesso/falha
+            val progressListener = com.google.firebase.storage.OnProgressListener<com.google.firebase.storage.UploadTask.TaskSnapshot> { snapshot ->
                 val progress = UploadResult.Progress(
                     bytesTransferred = snapshot.bytesTransferred,
                     totalBytes = snapshot.totalByteCount
                 )
                 trySend(progress)
-            }.addOnSuccessListener {
+            }
+
+            val successListener = com.google.android.gms.tasks.OnSuccessListener<com.google.firebase.storage.UploadTask.TaskSnapshot> {
                 // Upload completo - obter URL
                 storageRef.downloadUrl.addOnSuccessListener { uri ->
                     // Upload do thumbnail em background
@@ -143,15 +145,24 @@ class GroupPhotoDataSource constructor(
                     trySend(UploadResult.Error(errorMessage.first, errorMessage.second))
                     close()
                 }
-            }.addOnFailureListener { e ->
+            }
+
+            val failureListener = com.google.android.gms.tasks.OnFailureListener { e: Exception ->
                 AppLogger.e(TAG, "Upload failed", e)
                 val errorMessage = parseStorageError(e)
                 trySend(UploadResult.Error(errorMessage.first, errorMessage.second))
                 close()
             }
 
+            uploadTask.addOnProgressListener(progressListener)
+            uploadTask.addOnSuccessListener(successListener)
+            uploadTask.addOnFailureListener(failureListener)
+
             // FIX #584/H8: pause() não libera recursos. Use cancel() pra abort.
             awaitClose {
+                uploadTask.removeOnProgressListener(progressListener)
+                uploadTask.removeOnSuccessListener(successListener)
+                uploadTask.removeOnFailureListener(failureListener)
                 uploadTask.cancel()
             }
 
@@ -319,12 +330,12 @@ class GroupPhotoDataSource constructor(
      * Processa a imagem: redimensiona, comprime e otimiza.
      */
     private fun processImage(uri: Uri): ProcessedImageData {
-        val inputStream = context.contentResolver.openInputStream(uri)
-            ?: throw IllegalStateException("Não foi possível abrir a imagem")
-        val originalSize = inputStream.available()
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)
-            ?: throw IllegalStateException("Não foi possível decodificar a imagem")
-        inputStream.close()
+        val (originalSize, originalBitmap) = context.contentResolver.openInputStream(uri)?.use { stream ->
+            val size = stream.available()
+            val bitmap = BitmapFactory.decodeStream(stream)
+                ?: throw IllegalStateException("Não foi possível decodificar a imagem")
+            size to bitmap
+        } ?: throw IllegalStateException("Não foi possível abrir a imagem")
 
         AppLogger.d(TAG) { "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB" }
 

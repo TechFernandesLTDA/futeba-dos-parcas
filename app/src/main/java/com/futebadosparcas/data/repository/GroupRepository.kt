@@ -177,25 +177,36 @@ class GroupRepository constructor(
      * Observa os grupos do usuário atual em tempo real
      */
     fun getMyGroupsFlow(): Flow<List<UserGroup>> = callbackFlow {
-        val userId = auth.currentUser?.uid ?: run {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
+        var firestoreListener: com.google.firebase.firestore.ListenerRegistration? = null
+
+        val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            firestoreListener?.remove()
+            firestoreListener = null
+
+            val uid = firebaseAuth.currentUser?.uid
+            if (uid == null) {
+                trySend(emptyList())
+            } else {
+                firestoreListener = usersCollection.document(uid)
+                    .collection("groups")
+                    .orderBy("joined_at", Query.Direction.DESCENDING)
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        val groups = snapshot?.toObjects(UserGroup::class.java) ?: emptyList()
+                        trySend(groups)
+                    }
+            }
         }
 
-        val listener = usersCollection.document(userId)
-            .collection("groups")
-            .orderBy("joined_at", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                val groups = snapshot?.toObjects(UserGroup::class.java) ?: emptyList()
-                trySend(groups)
-            }
+        auth.addAuthStateListener(authListener)
 
-        awaitClose { listener.remove() }
+        awaitClose {
+            auth.removeAuthStateListener(authListener)
+            firestoreListener?.remove()
+        }
     }
 
     /**
@@ -985,27 +996,28 @@ class GroupRepository constructor(
                 return Result.failure(Exception("Sem permissão para bloquear jogadores"))
             }
 
-            // Adicionar na lista de bloqueados
-            val blockedRef = groupsCollection.document(groupId)
-                .collection("blocked_players").document(userId)
+            // Adicionar na lista de bloqueados e atualizar status do membro em transação
+            firestore.runTransaction { transaction ->
+                val blockedRef = groupsCollection.document(groupId)
+                    .collection("blocked_players").document(userId)
 
-            val blockedData = mapOf(
-                "user_id" to userId,
-                "user_name" to userName,
-                "reason" to reason,
-                "blocked_by" to blockedBy,
-                "blocked_at" to FieldValue.serverTimestamp()
-            )
+                val blockedData = mapOf(
+                    "user_id" to userId,
+                    "user_name" to userName,
+                    "reason" to reason,
+                    "blocked_by" to blockedBy,
+                    "blocked_at" to FieldValue.serverTimestamp()
+                )
+                transaction.set(blockedRef, blockedData)
 
-            blockedRef.set(blockedData).await()
-
-            // Remover da lista de membros se ainda for membro
-            val memberRef = groupsCollection.document(groupId)
-                .collection("members").document(userId)
-            val memberDoc = memberRef.get().await()
-            if (memberDoc.exists()) {
-                memberRef.update("status", GroupMemberStatus.BLOCKED.name).await()
-            }
+                // Remover da lista de membros se ainda for membro
+                val memberRef = groupsCollection.document(groupId)
+                    .collection("members").document(userId)
+                val memberDoc = transaction.get(memberRef)
+                if (memberDoc.exists()) {
+                    transaction.update(memberRef, "status", GroupMemberStatus.BLOCKED.name)
+                }
+            }.await()
 
             Result.success(Unit)
         } catch (e: Exception) {

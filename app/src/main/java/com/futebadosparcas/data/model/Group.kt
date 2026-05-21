@@ -121,7 +121,6 @@ data class Group(
      */
     @Exclude
     fun softDelete(userId: String) {
-        deletedAt = java.util.Date()
         deletedBy = userId
     }
 
