@@ -83,6 +83,7 @@ export const LiveGameScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const navigateBack = useNavigateBack('/games');
   const { currentUser } = useAuth();
   const { showError } = useToast();
@@ -282,7 +283,7 @@ export const LiveGameScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 4, textAlign: 'center' }}>
         <Skeleton variant="rectangular" height={200} sx={{ mb: 2 }} />
         <Skeleton variant="text" />
       </Container>
@@ -291,7 +292,7 @@ export const LiveGameScreen: React.FC = () => {
 
   if (error || !game) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 4 }}>
         <Alert severity="error">{error || t('games.notFound')}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
           <Button startIcon={<BackIcon />} onClick={navigateBack}>
@@ -334,7 +335,7 @@ export const LiveGameScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 2 }}>
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
           <CardContent>
             {/* Placar com cores distintas por time + destaque no líder (#1363) */}
@@ -455,7 +456,7 @@ export const LiveGameScreen: React.FC = () => {
             zIndex: 10,
           }}
         >
-          <Container maxWidth="sm">
+          <Container maxWidth={isDesktop ? 'md' : 'sm'}>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {isRunning ? (
                 <>

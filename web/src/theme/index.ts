@@ -291,5 +291,14 @@ export const futebaDarkTheme = createTheme({
         }),
       },
     },
+    // Fix #1475: Dialog Paper must use dark background.paper in dark mode
+    MuiDialog: {
+      styleOverrides: {
+        paper: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          backgroundColor: theme.palette.background.paper,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        }),
+      },
+    },
   },
 });
