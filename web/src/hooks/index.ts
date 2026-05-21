@@ -13,3 +13,4 @@ export * from './useLocalStorage';
 export * from './useNetworkStatus';
 export * from './useDocumentTitle';
 export * from './useFirestoreQuery';
+export * from './useJoinRequests';

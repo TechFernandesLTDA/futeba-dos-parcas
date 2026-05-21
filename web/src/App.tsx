@@ -276,7 +276,7 @@ function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
 function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   const { groupId } = useParams<{ groupId: string }>();
   const { user, firebaseUser, loading } = useAuth();
-  const isMember = useIsGroupMember(groupId);
+  const { isMember, loading: memberLoading } = useIsGroupMember(groupId);
   const { showError } = useToast();
   const [notified, setNotified] = useState(false);
 
@@ -287,7 +287,7 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   if (user?.role === 'ADMIN') return <>{children}</>;
 
   // Checagem em curso — mostra fallback (não bloqueia children desnecessariamente)
-  if (isMember === undefined) return <AppLoadingFallback />;
+  if (memberLoading) return <AppLoadingFallback />;
 
   if (!isMember) {
     if (!notified) {

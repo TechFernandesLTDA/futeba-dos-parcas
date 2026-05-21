@@ -194,7 +194,7 @@ export const GroupSettingsScreen: React.FC = () => {
       batch.update(doc(db, 'groups', groupId, 'members', uid), { role: 'ADMIN' as GroupRole });
       batch.update(doc(db, 'users', uid, 'groups', groupId), { role: 'ADMIN' });
       batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { role: 'OWNER' as GroupRole });
-      batch.update(doc(db, 'users', selectedMember.userId, 'groups', groupId), { role: 'OWNER' });
+      batch.update(doc(db, 'users', selectedMember.userId, 'groups', groupId), { role: 'OWNER', group_name: group!.name });
       await batch.commit();
       showSuccess(`Propriedade transferida para ${selectedMember.userName}.`);
       setTransferDialogOpen(false);
