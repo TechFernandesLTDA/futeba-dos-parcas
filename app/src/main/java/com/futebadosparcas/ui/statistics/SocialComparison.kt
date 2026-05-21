@@ -42,8 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import com.futebadosparcas.ui.theme.GamificationColors
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -463,16 +463,16 @@ private fun LeaderboardItem(
 ) {
     val backgroundColor = when {
         isCurrentUser -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        position == 1 -> GoldColor.copy(alpha = 0.1f)
-        position == 2 -> SilverColor.copy(alpha = 0.1f)
-        position == 3 -> BronzeColor.copy(alpha = 0.1f)
+        position == 1 -> GamificationColors.Gold.copy(alpha = 0.1f)
+        position == 2 -> GamificationColors.Silver.copy(alpha = 0.1f)
+        position == 3 -> GamificationColors.Bronze.copy(alpha = 0.1f)
         else -> MaterialTheme.colorScheme.surface
     }
 
     val positionColor = when (position) {
-        1 -> GoldColor
-        2 -> SilverColor
-        3 -> BronzeColor
+        1 -> GamificationColors.Gold
+        2 -> GamificationColors.Silver
+        3 -> GamificationColors.Bronze
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -731,9 +731,4 @@ private fun ComparisonRow(
     }
 }
 
-// ==================== Cores ====================
 
-// MaterialTheme.colorScheme.tertiary/MaterialTheme.colorScheme.error removidos — fix #779: usar MaterialTheme.colorScheme.tertiary/error
-private val GoldColor = Color(0xFFFFD700)
-private val SilverColor = Color(0xFFC0C0C0)
-private val BronzeColor = Color(0xFFCD7F32)
