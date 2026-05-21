@@ -150,20 +150,22 @@ export const onConfirmationCreated = onDocumentCreated(
       },
     );
 
-    // Marca confirmation suspeita + audit log
-    await Promise.all([
-      event.data?.ref.set(
-        {suspicious_overlap: true},
-        {merge: true},
-      ),
-      db().collection("audit_logs").add({
+    // Marca confirmation suspeita + audit log (atómicas via batch)
+    const confRef = event.data?.ref;
+    if (!confRef) return;
+
+    const batch = db().batch();
+    batch.set(confRef, {suspicious_overlap: true}, {merge: true});
+    batch.set(
+      db().doc(`audit_logs/overlap_${event.params.confId}`),
+      {
         type: "CONFIRMATION_OVERLAP",
         target_user_id: userId,
         target_game_id: gameId,
         conflict_conf_ids: overlaps,
-        timestamp: admin.firestore
-          .FieldValue.serverTimestamp(),
-      }),
-    ]);
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      },
+    );
+    await batch.commit();
   },
 );
