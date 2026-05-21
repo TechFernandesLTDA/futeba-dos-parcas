@@ -337,12 +337,12 @@ fun LeagueHeader(
                         Text(
                             text = stringResource(R.string.league_my_position),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 14.sp
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
                         )
                         Text(
                             text = if (myPosition != null) "#$myPosition" else "—",
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 42.sp,
+                            fontSize = MaterialTheme.typography.displayMedium.fontSize,
                             fontWeight = FontWeight.Black
                         )
                     }
@@ -360,13 +360,13 @@ fun LeagueHeader(
                         ) {
                             Text(
                                 text = getDivisionEmoji(myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE),
-                                fontSize = 18.sp
+                                fontSize = MaterialTheme.typography.titleMedium.fontSize
                             )
                             Text(
                                 text = (myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE).name,
                                 color = divisionColor,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                fontSize = MaterialTheme.typography.bodySmall.fontSize
                             )
                         }
                     }
@@ -393,13 +393,13 @@ fun LeagueHeader(
                             Text(
                                 text = stringResource(R.string.league_rating_format, "%.1f".format(currentRating)),
                                 color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 12.sp,
+                                fontSize = MaterialTheme.typography.bodySmall.fontSize,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = stringResource(R.string.league_next_threshold, nextThreshold.toInt()),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 12.sp
+                                fontSize = MaterialTheme.typography.bodySmall.fontSize
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
@@ -446,8 +446,8 @@ fun LeagueHeader(
 @Composable
 fun MiniStatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
-        Text(text = value, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = MaterialTheme.typography.bodySmall.fontSize)
+        Text(text = value, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.titleMedium.fontSize)
     }
 }
 
@@ -482,7 +482,7 @@ fun DivisionSelector(
             TextButton(onClick = { showInfo = !showInfo }) {
                 Text(
                     if (showInfo) stringResource(R.string.league_rules_hide) else stringResource(R.string.league_rules_show),
-                    fontSize = 12.sp
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize
                 )
             }
         }
@@ -599,14 +599,14 @@ fun DivisionInfoItem(
     ) {
         Text(
             text = emoji,
-            fontSize = 16.sp,
+            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
             modifier = Modifier.width(32.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = name,
                 fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
+                fontSize = MaterialTheme.typography.bodySmall.fontSize,
                 color = color
             )
             Text(
@@ -677,7 +677,7 @@ fun RankingListItem(
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
-                    fontSize = 14.sp
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize
                 )
             }
 
@@ -698,7 +698,7 @@ fun RankingListItem(
                     Text(
                         text = item.user.name,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
+                        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -711,7 +711,7 @@ fun RankingListItem(
                 if (!item.user.nickname.isNullOrEmpty()) {
                     Text(
                         text = item.user.nickname ?: "",
-                        fontSize = 12.sp,
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -723,7 +723,7 @@ fun RankingListItem(
                     text = stringResource(R.string.league_points_format, item.participation.points),
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = 16.sp
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize
                 )
                 Text(
                     text = stringResource(R.string.league_rating_format, "%.1f".format(item.participation.leagueRating)),

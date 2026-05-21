@@ -139,13 +139,13 @@ private fun RankingHeader(
             Column {
                 Text(
                     text = stringResource(R.string.statistics_rankings_general),
-                    fontSize = 24.sp,
+                    fontSize = MaterialTheme.typography.headlineSmall.fontSize,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 Text(
                     text = stringResource(R.string.league_ranking_title),
-                    fontSize = 12.sp,
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                 )
             }
@@ -169,7 +169,7 @@ private fun RankingHeader(
                 FilterChip(
                     selected = category == selectedCategory,
                     onClick = { onCategorySelected(category) },
-                    label = { Text(getCategoryLabel(category), fontSize = 14.sp, maxLines = 2) },
+                    label = { Text(getCategoryLabel(category), fontSize = MaterialTheme.typography.bodyMedium.fontSize, maxLines = 2) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.onPrimary,
                         selectedLabelColor = MaterialTheme.colorScheme.primary,
@@ -353,7 +353,7 @@ private fun PodiumPlayer(
 ) {
     val baseSize = 70.dp * scale
     val badgeSize = 24.dp * scale
-    val fontSize = 14.sp * scale
+    val fontSize = MaterialTheme.typography.bodyMedium.fontSize * scale
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -395,7 +395,7 @@ private fun PodiumPlayer(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = player.playerName,
-                fontSize = 12.sp,
+                fontSize = MaterialTheme.typography.bodySmall.fontSize,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -416,7 +416,7 @@ private fun PodiumPlayer(
         // Value
         Text(
             text = "${player.value} ${getCategoryUnit(category)}",
-            fontSize = 14.sp,
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
             fontWeight = FontWeight.Bold,
             color = badgeColor
         )
@@ -481,7 +481,7 @@ private fun RankingItem(
                 ) {
                     Text(
                         text = player.playerName,
-                        fontSize = 15.sp,
+                        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
                         fontWeight = if (isCurrentUser) FontWeight.Bold else FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -537,7 +537,7 @@ private fun RankingItem(
             ) {
                 Text(
                     text = "${player.value}",
-                    fontSize = 18.sp,
+                    fontSize = MaterialTheme.typography.titleMedium.fontSize,
                     fontWeight = FontWeight.Bold,
                     color = when (rank) {
                         1 -> GamificationColors.Gold
@@ -579,7 +579,7 @@ private fun RankBadge(rank: Int) {
     ) {
         Text(
             text = "$rank",
-            fontSize = 14.sp,
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
             fontWeight = FontWeight.Bold,
             color = contentColor
         )
@@ -627,7 +627,7 @@ private fun PlayerAvatar(
 @Composable
 private fun LevelBadge(level: Int, size: String = "normal") {
     val padding = if (size == "small") 2.dp else 4.dp
-    val fontSize = if (size == "small") 8.sp else 10.sp
+    val fontSize = if (size == "small") MaterialTheme.typography.labelSmall.fontSize else MaterialTheme.typography.bodySmall.fontSize
     val iconSize = if (size == "small") Spacing.sm else 12.dp
 
     Surface(
@@ -697,7 +697,7 @@ private fun MyPositionCard(
                 )
                 Text(
                     text = stringResource(R.string.your_position),
-                    fontSize = 14.sp,
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -708,7 +708,7 @@ private fun MyPositionCard(
             ) {
                 Text(
                     text = "#$position",
-                    fontSize = 20.sp,
+                    fontSize = MaterialTheme.typography.titleLarge.fontSize,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.secondary
                 )
@@ -716,7 +716,7 @@ private fun MyPositionCard(
                 if (userData != null) {
                     Text(
                         text = "${userData.value} ${getCategoryUnit(category)}",
-                        fontSize = 12.sp,
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
