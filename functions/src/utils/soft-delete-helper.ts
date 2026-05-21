@@ -387,15 +387,17 @@ export async function cleanupSoftDeleted(
   let batchCount = 0;
 
   try {
-    const query = db
-      .collection(collection)
-      .where("deleted_at", "<", cutoffTimestamp)
-      .orderBy("deleted_at")
-      .limit(batchSize);
-
+    let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
     let hasMore = true;
 
     while (hasMore && batchCount < maxBatches) {
+      let query = db
+        .collection(collection)
+        .where("deleted_at", "<", cutoffTimestamp)
+        .orderBy("deleted_at")
+        .limit(batchSize);
+      if (lastDoc) query = query.startAfter(lastDoc);
+
       const snapshot = await query.get();
 
       if (snapshot.empty) {
@@ -422,6 +424,8 @@ export async function cleanupSoftDeleted(
 
       if (snapshot.size < batchSize) {
         hasMore = false;
+      } else {
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
       }
     }
 
@@ -525,6 +529,7 @@ export async function softDeleteGroupCascade(
       updated_at: now,
     });
     let firstBatchOps = 1; // 1 op = group update
+    let overflowBatch: admin.firestore.WriteBatch | null = null;
 
     // Processar jogos em páginas de 500 docs
     while (true) {
@@ -551,8 +556,8 @@ export async function softDeleteGroupCascade(
         for (const gameDoc of chunk) {
           // No primeiro chunk, respeitar slot do group update
           if (chunkBatch === firstBatch && firstBatchOps >= GAME_CHUNK) {
-            // Overflow para novo batch
-            const overflowBatch = db.batch();
+            // Overflow para batch separado, commitado APÓS o firstBatch
+            if (!overflowBatch) overflowBatch = db.batch();
             overflowBatch.update(gameDoc.ref, {
               deleted_at: now,
               deleted_by: deletedBy,
@@ -560,7 +565,6 @@ export async function softDeleteGroupCascade(
               status: "DELETED",
               updated_at: now,
             });
-            await overflowBatch.commit();
           } else {
             chunkBatch.update(gameDoc.ref, {
               deleted_at: now,
@@ -583,8 +587,13 @@ export async function softDeleteGroupCascade(
       if (gamesSnap.size < 500) break;
     }
 
-    // Commit do primeiro batch (group + primeiros jogos)
+    // Commit do primeiro batch (group + primeiros jogos) ANTES do overflow
     await firstBatch.commit();
+
+    // Commit do overflow batch (best-effort — grupo já está deletado)
+    if (overflowBatch) {
+      await overflowBatch.commit();
+    }
 
     console.log(
       "[SOFT_DELETE_CASCADE] Grupo " +

@@ -1697,6 +1697,23 @@ export const onGroupDeleted = onDocumentDeleted(
         })
       );
 
+      // 3.5 Delete join_requests
+      const joinRequestsSnap = await db()
+        .collection("groups")
+        .doc(groupId)
+        .collection("join_requests")
+        .get();
+      joinRequestsSnap.docs.forEach(
+        (doc) => allOps.push({
+          type: "delete", ref: doc.ref,
+        })
+      );
+      console.log(
+        "[CASCADE DELETE] Found " +
+        `${joinRequestsSnap.size} ` +
+        "join_requests to delete"
+      );
+
       // 4. Delete group invites
       const invitesSnap = await db()
         .collection("group_invites")
@@ -1729,25 +1746,37 @@ export const onGroupDeleted = onDocumentDeleted(
         "schedules to delete"
       );
 
-      // 6. Update users who had this group
-      const usersWithGroup = await db()
-        .collectionGroup("groups")
-        .where(
-          admin.firestore
-            .FieldPath.documentId(),
-          "==",
-          groupId
-        )
-        .limit(500)
-        .get();
-      usersWithGroup.docs.forEach(
+      // 6. Update users who had this group (paginated)
+      const usersWithGroupDocs: admin.firestore.QueryDocumentSnapshot[] = [];
+      let lastUserDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+
+      while (true) {
+        let q = db()
+          .collectionGroup("groups")
+          .where(
+            admin.firestore
+              .FieldPath.documentId(),
+            "==",
+            groupId
+          )
+          .limit(500);
+        if (lastUserDoc) q = q.startAfter(lastUserDoc);
+
+        const snap = await q.get();
+        if (snap.empty) break;
+
+        usersWithGroupDocs.push(...snap.docs);
+        lastUserDoc = snap.docs[snap.docs.length - 1];
+        if (snap.size < 500) break;
+      }
+      usersWithGroupDocs.forEach(
         (doc) => allOps.push({
           type: "delete", ref: doc.ref,
         })
       );
       console.log(
         "[CASCADE DELETE] Found " +
-        `${usersWithGroup.size} ` +
+        `${usersWithGroupDocs.length} ` +
         "user group references to delete"
       );
 

@@ -211,20 +211,24 @@ export const softDeleteGroup =
     }
 
     // Rate Limiting: 3 deleções de grupo/min
-    const {
-      allowed: rlAllowed,
-      resetAt: rlResetAt,
-    } = await checkRateLimit(userId, {
-      maxRequests: 3,
-      windowMs: 60 * 1000,
-      keyPrefix: "soft_delete_group",
-    });
-    if (!rlAllowed) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Rate limit excedido. Tente após " +
-        new Date(rlResetAt).toISOString()
-      );
+    // Admin bypass rate limit (paridade com softDeleteGame)
+    const isAdmin = request.auth?.token?.role === "ADMIN";
+    if (!isAdmin) {
+      const {
+        allowed: rlAllowed,
+        resetAt: rlResetAt,
+      } = await checkRateLimit(userId, {
+        maxRequests: 3,
+        windowMs: 60 * 1000,
+        keyPrefix: "soft_delete_group",
+      });
+      if (!rlAllowed) {
+        throw new functions.https.HttpsError(
+          "resource-exhausted",
+          "Rate limit excedido. Tente após " +
+          new Date(rlResetAt).toISOString()
+        );
+      }
     }
 
     if (!groupId) {
@@ -472,7 +476,8 @@ export const restoreDeletedGame =
 
 /**
  * Restaura um grupo soft-deleted.
- * Apenas quem deletou ou admin pode restaurar.
+ * Apenas quem deletou, o dono ou admin pode
+ * restaurar.
  * Nota: Jogos do grupo NÃO são restaurados
  * automaticamente.
  *
@@ -544,17 +549,19 @@ export const restoreDeletedGroup =
       }
 
       // Verificar permissão
-      if (groupData.deleted_by !== userId) {
-        // Verificar se é admin via custom claims
-        const isAdmin =
-          request.auth?.token?.role === "ADMIN";
-        if (!isAdmin) {
-          throw new functions.https.HttpsError(
-            "permission-denied",
-            "Apenas quem deletou ou admin " +
-            "pode restaurar"
-          );
-        }
+      // Paridade com restoreDeletedGame: owner_id também pode restaurar
+      const isAdmin =
+        request.auth?.token?.role === "ADMIN";
+      if (
+        !isAdmin &&
+        groupData.deleted_by !== userId &&
+        groupData.owner_id !== userId
+      ) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Apenas quem deletou, o dono ou admin " +
+          "pode restaurar"
+        );
       }
 
       const result = await restoreSoftDeleted(
