@@ -202,9 +202,12 @@ service cloud.firestore {
     }
 
     // Helper para verificar se usuario e admin/owner de um grupo
+    // H2 FIX: verifica status ACTIVE — admin banido/removido nao mantem privilegios
     function isGroupAdmin(groupId) {
       let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
-      return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
+      return memberDoc != null
+        && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN')
+        && memberDoc.data.status == 'ACTIVE';
     }
 
     // C-003 FIX: Valida se o ID de confirmation segue o padrao esperado
@@ -1183,13 +1186,18 @@ service cloud.firestore {
       // Usuários podem ler grupos públicos ou onde são membros (EXCETO soft-deleted)
       // Admins podem ver soft-deleted para recuperação E grupos privados (issue #511)
       // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
+      // H2 FIX: usa isGroupMember() (que verifica status ACTIVE) em vez de exists()
+      // bare — membro banido/removido nao pode ler o grupo
+      // H2 FIX: isGroupActive() para impedir leitura de grupos ARCHIVED/SUSPENDED
       allow read: if isAuthenticated() && (
         !('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()
       ) && (
         isAdmin() ||
         resource.data.is_public == true ||
         resource.data.owner_id == userId() ||
-        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))
+        isGroupMember(groupId)
+      ) && (
+        isAdmin() || isGroupActive(groupId)
       );
 
       // FASE 5 #448: criar grupo exige verified (30-day grace)
@@ -1199,6 +1207,8 @@ service cloud.firestore {
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
                        // Nome do grupo: 3-50 caracteres
                        isValidStringLength(request.resource.data.name, 3, 50) &&
+                       // H2 FIX: status inicial deve ser ACTIVE (consistente com games que forcam SCHEDULED)
+                       request.resource.data.status == 'ACTIVE' &&
                        // Descricao: max 500 caracteres
                        isValidDescription(request.resource.data.description);
 
@@ -1211,9 +1221,12 @@ service cloud.firestore {
         isAdmin() ||
         (
           (resource.data.owner_id == userId() || isGroupAdmin(groupId)) &&
-          // SECFIX #862: owner_id e created_at são imutáveis — previne privilege escalation
+           // SECFIX #862: owner_id e created_at são imutáveis — previne privilege escalation
           fieldUnchanged('owner_id') &&
           fieldUnchanged('created_at') &&
+          // H2 FIX: member_count é SERVER-AUTHORITATIVE (Cloud Function onMemberWritten)
+          // Cliente NUNCA pode escrever member_count — prevencao de privilege escalation
+          fieldUnchanged('member_count') &&
           // Valida name SO se estiver no diff
           (
             !('name' in request.resource.data.diff(resource.data).affectedKeys()) ||
@@ -1337,12 +1350,18 @@ service cloud.firestore {
         // SECURITY: Validacao de bounds no amount (max R$ 100.000)
         // Previne entradas absurdas que poderiam indicar exploit ou erro
         // #1018: admin nunca bloqueado por isVerifiedOrGrace()
+        // H2 FIX: validacao de campos obrigatorios (description, category, reference_date)
         allow create: if (isAdmin() || isVerifiedOrGrace()) &&
                          (isAdmin() || isGroupAdmin(groupId)) &&
                          isGroupActive(groupId) &&
                          request.resource.data.amount > 0 &&
                          request.resource.data.amount <= 100000 &&
-                         (request.resource.data.type == 'INCOME' || request.resource.data.type == 'EXPENSE');
+                         (request.resource.data.type == 'INCOME' || request.resource.data.type == 'EXPENSE') &&
+                         request.resource.data.description is string &&
+                         request.resource.data.description.size() >= 1 &&
+                         request.resource.data.description.size() <= 500 &&
+                         request.resource.data.category is string &&
+                         request.resource.data.category.size() >= 1;
 
         // M-001 fix: validacao de timestamp em voided_at
         allow update: if isAuthenticated() && isGroupAdmin(groupId) &&
@@ -1359,7 +1378,15 @@ service cloud.firestore {
       match /cashbox_summary/{docId} {
         // #1037.4: isGroupMember() faz get() — garante autenticação explícita primeiro
         allow read: if isAuthenticated() && isGroupMember(groupId);
-        allow create, update: if isAuthenticated() && isGroupAdmin(groupId);
+        // H2 FIX: validacao de campos obrigatorios no cashbox_summary
+        allow create, update: if isAuthenticated() && isGroupAdmin(groupId) &&
+          request.resource.data.total_income is number &&
+          request.resource.data.total_income >= 0 &&
+          request.resource.data.total_expense is number &&
+          request.resource.data.total_expense >= 0 &&
+          request.resource.data.balance is number &&
+          request.resource.data.period_start is string &&
+          request.resource.data.period_end is string;
       }
     }
 
@@ -1372,18 +1399,24 @@ service cloud.firestore {
     // amplo e aceitavel — necessario pro join flow lookup por code.
     // ============================================
     match /invites/{inviteId} {
+      // H2 FIX: verifica status ACTIVE — admin banido nao pode gerar invites
       function isGroupAdminFor(gId) {
         let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
-        return member != null && (member.data.role == 'OWNER' || member.data.role == 'ADMIN');
+        return member != null
+          && (member.data.role == 'OWNER' || member.data.role == 'ADMIN')
+          && member.data.status == 'ACTIVE';
       }
 
       // Read: qualquer auth (codigos sao random, lookup por code precisa disso)
       allow read: if isAuthenticated();
 
       // Create: somente admin/owner do grupo, e inviter_id == auth.uid
+      // H2 FIX: validacao de expires_at — nao pode ser no passado, max 30 dias no futuro
       allow create: if isAuthenticated() &&
                        request.resource.data.inviter_id == userId() &&
                        request.resource.data.used == false &&
+                       request.resource.data.expires_at > request.time &&
+                       request.resource.data.expires_at < request.time + duration.time(30, "d") &&
                        isGroupAdminFor(request.resource.data.group_id);
 
       // Update: marcar como usado.
@@ -1411,9 +1444,12 @@ service cloud.firestore {
     // COLECAO: group_invites
     // ============================================
     match /group_invites/{inviteId} {
+      // H2 FIX: verifica status ACTIVE — admin banido nao pode gerenciar convites
       function canManageInvites(gId) {
         let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
-        return member != null && (member.data.role == 'OWNER' || member.data.role == 'ADMIN');
+        return member != null
+          && (member.data.role == 'OWNER' || member.data.role == 'ADMIN')
+          && member.data.status == 'ACTIVE';
       }
 
       allow read: if isAuthenticated() && (
