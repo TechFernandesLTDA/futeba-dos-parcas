@@ -755,11 +755,14 @@ export async function validateGameExists(
  *
  * @param {admin.firestore.Firestore} db - DB
  * @param {string} groupId - ID do grupo
+ * @param {boolean} allowSoftDeleted - Permite
+ *   grupos soft-deleted (padrão: false)
  * @return {Promise<ValidationResult>} Erro ou null
  */
 export async function validateGroupExists(
   db: admin.firestore.Firestore,
-  groupId: string
+  groupId: string,
+  allowSoftDeleted = false
 ): Promise<ValidationResult> {
   if (!groupId || groupId.trim() === "") {
     return {
@@ -778,6 +781,16 @@ export async function validateGroupExists(
     return {
       field: "group_id",
       message: "Grupo não encontrado",
+      code:
+        ValidationErrorCode
+          .FOREIGN_KEY_NOT_FOUND,
+    };
+  }
+
+  if (!allowSoftDeleted && groupDoc.data()?.deleted_at) {
+    return {
+      field: "group_id",
+      message: "Grupo foi deletado",
       code:
         ValidationErrorCode
           .FOREIGN_KEY_NOT_FOUND,

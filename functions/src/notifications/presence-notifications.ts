@@ -105,7 +105,7 @@ export const onGameConfirmed = onDocumentCreated(
  */
 export const onGroupInviteCreated =
   onDocumentCreated(
-    "group_invites/{inviteId}",
+    {document: "group_invites/{inviteId}", region: FUNCTION_REGION},
     async (event) => {
       const invite = event.data?.data();
       if (!invite) return;
@@ -290,7 +290,7 @@ export const cleanupExpiredInvites = onSchedule(
  */
 export const onGroupInviteResponse =
   onDocumentUpdated(
-    "group_invites/{inviteId}",
+    {document: "group_invites/{inviteId}", region: FUNCTION_REGION},
     async (event) => {
       const before = event.data?.before.data();
       const after = event.data?.after.data();
