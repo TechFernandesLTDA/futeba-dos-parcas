@@ -302,29 +302,35 @@ export const checkSeasonEnd = onSchedule(
 
           const nextSeasonRef =
             seasonsRef.doc(nextId);
-          const nextSeasonSnap =
-            await nextSeasonRef.get();
+          const nextSeasonData = {
+            name: nextName,
+            start_date: nextStartDateStr,
+            end_date: nextEndDateStr,
+            is_active: true,
+            created_at:
+              admin.firestore.FieldValue
+                .serverTimestamp(),
+            type: "MONTHLY",
+          };
 
-          if (!nextSeasonSnap.exists) {
-            batch.set(nextSeasonRef, {
-              name: nextName,
-              start_date: nextStartDateStr,
-              end_date: nextEndDateStr,
-              is_active: true,
-              created_at:
-                admin.firestore.FieldValue
-                  .serverTimestamp(),
-              type: "MONTHLY",
-            });
-            logger.info(
-              "[SEASON] Scheduled creation of " +
-              `next season: ${nextId}`
-            );
-            operationCount++;
-            if (operationCount >= BATCH_LIMIT) {
-              await commitBatch();
+          // FIX #1470: atomic read-then-write via transaction
+          // to prevent concurrent runs from creating duplicate seasons
+          await db().runTransaction(
+            async (transaction) => {
+              const nextSeasonSnap =
+                await transaction.get(nextSeasonRef);
+              if (!nextSeasonSnap.exists) {
+                transaction.set(
+                  nextSeasonRef,
+                  nextSeasonData
+                );
+                logger.info(
+                  "[SEASON] Created next " +
+                  `season: ${nextId}`
+                );
+              }
             }
-          }
+          );
         } catch (e) {
           logger.error(
             "[SEASON] Error calculating " +
