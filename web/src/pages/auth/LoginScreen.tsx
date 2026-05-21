@@ -26,7 +26,7 @@ import {
   VisibilityOff,
   Google,
 } from '@mui/icons-material';
-import { useTheme, alpha } from '@mui/material';
+import { useTheme, useMediaQuery, alpha } from '@mui/material';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
@@ -38,6 +38,7 @@ export function LoginScreen() {
   useDocumentTitle('Login');
   const { t } = useTranslation();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -119,26 +120,62 @@ export function LoginScreen() {
     <Box
       sx={{
         minHeight: '100dvh',
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         display: 'flex',
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        justifyContent: 'center',
-        p: 2,
-        py: { xs: 2, sm: 2 },
+        flexDirection: { xs: 'column', md: 'row' },
       }}
     >
+      {isMd && (
+        <Box
+          sx={{
+            flex: 1,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 4,
+          }}
+        >
+          <AppLogo
+            size="large"
+            shape="circle"
+            alt="Futeba dos Parças"
+            sx={{ mb: 2, boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}` }}
+          />
+          <Typography component="h1" variant="h4" fontWeight="bold" color="primary.contrastText">
+            {t('common.appName')}
+          </Typography>
+          <Typography variant="body1" sx={{ color: alpha(theme.palette.primary.contrastText, 0.8), mt: 0.5 }}>
+            {t('auth.tagline')}
+          </Typography>
+        </Box>
+      )}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: { xs: 'flex-start', md: 'center' },
+          justifyContent: 'center',
+          p: 2,
+          ...(isMd
+            ? { bgcolor: 'background.paper' }
+            : {
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                minHeight: '100dvh',
+              }),
+        }}
+      >
       <Card
         sx={{
           maxWidth: 420,
           width: '100%',
           borderRadius: 4,
-          boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+          boxShadow: isMd ? undefined : `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
         }}
       >
         <CardContent sx={{ p: 4 }}>
-          {/* Logo */}
+          {!isMd && (
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            {/* Logo padronizada — AppLogo (PNG canônico do app) */}
             <AppLogo
               size="large"
               shape="circle"
@@ -156,6 +193,7 @@ export function LoginScreen() {
               {t('auth.tagline')}
             </Typography>
           </Box>
+          )}
 
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} role="alert" aria-live="assertive">
@@ -274,6 +312,7 @@ export function LoginScreen() {
           </Box>
         </CardContent>
       </Card>
+      </Box>
     </Box>
   );
 }

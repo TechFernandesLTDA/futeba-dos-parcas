@@ -97,7 +97,7 @@ export const BadgesScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -167,7 +167,7 @@ export const BadgesScreen: React.FC = () => {
             ) : (
               <Grid container spacing={2}>
                 {filteredBadges.map((badge) => (
-                  <Grid item xs={6} sm={4} md={3} key={badge.id}>
+                  <Grid item xs={6} sm={4} md={3} lg={2} key={badge.id}>
                     <BadgeItem
                       badge={badge}
                       isUnlocked={unlockedIds.has(badge.id)}

@@ -15,6 +15,7 @@ import {
   Alert,
   Button,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -51,6 +52,7 @@ export const MyFeedbacksScreen: React.FC = () => {
   useDocumentTitle('Meus Feedbacks');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
   const { myFeedbacks, fetching, error } = useFeedback();
@@ -84,7 +86,7 @@ export const MyFeedbacksScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {fetching ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : error ? (

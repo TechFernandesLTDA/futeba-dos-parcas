@@ -17,7 +17,7 @@ import {
   Email,
   ArrowBack,
 } from '@mui/icons-material';
-import { useTheme, alpha } from '@mui/material';
+import { useTheme, useMediaQuery, alpha } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { AppLogo } from '../../components/common/AppLogo';
@@ -25,6 +25,7 @@ import { AppLogo } from '../../components/common/AppLogo';
 export function ForgotPasswordScreen() {
   useDocumentTitle('Recuperar Senha');
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -68,22 +69,62 @@ export function ForgotPasswordScreen() {
     <Box
       sx={{
         minHeight: '100dvh',
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 2,
+        flexDirection: { xs: 'column', md: 'row' },
       }}
     >
+      {isMd && (
+        <Box
+          sx={{
+            flex: 1,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 4,
+          }}
+        >
+          <AppLogo
+            size="large"
+            shape="circle"
+            alt="Futeba dos Parças"
+            sx={{ mb: 2 }}
+          />
+          <Typography variant="h5" fontWeight="bold" color="primary.contrastText">
+            Recuperar Senha
+          </Typography>
+          <Typography variant="body1" sx={{ color: alpha(theme.palette.primary.contrastText, 0.8), mt: 0.5 }}>
+            Digite seu email e enviaremos um link para redefinir sua senha
+          </Typography>
+        </Box>
+      )}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2,
+          ...(isMd
+            ? { bgcolor: 'background.paper' }
+            : {
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                minHeight: '100dvh',
+              }),
+        }}
+      >
       <Card
         sx={{
           maxWidth: 420,
           width: '100%',
           borderRadius: 4,
-          boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+          boxShadow: isMd ? undefined : `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
         }}
       >
         <CardContent sx={{ p: 4 }}>
+          {!isMd && (
+          <>
           <Box sx={{ mb: 2 }}>
             <IconButton onClick={() => navigate('/login')} sx={{ ml: -1 }} aria-label="Voltar para login">
               <ArrowBack />
@@ -105,6 +146,8 @@ export function ForgotPasswordScreen() {
               Digite seu email e enviaremos um link para redefinir sua senha
             </Typography>
           </Box>
+          </>
+          )}
 
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} role="alert" aria-live="assertive">
@@ -174,6 +217,7 @@ export function ForgotPasswordScreen() {
           </Box>
         </CardContent>
       </Card>
+      </Box>
     </Box>
   );
 }

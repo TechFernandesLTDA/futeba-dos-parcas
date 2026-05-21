@@ -252,9 +252,12 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
             <Chip
               label={divisionConfig.label}
               size="small"
+              variant="outlined"
               sx={{
-                bgcolor: alpha(divisionConfig.color, 0.1),
-                color: divisionConfig.color,
+                bgcolor: alpha(divisionConfig.color, 0.12),
+                color: 'text.primary',
+                borderColor: divisionConfig.color,
+                fontWeight: 600,
                 fontSize: '0.75rem',
                 height: 20,
               }}
