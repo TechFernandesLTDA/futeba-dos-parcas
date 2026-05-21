@@ -18,11 +18,11 @@ import {
   Divider,
   Dialog,
   DialogTitle,
+  CircularProgress,
   DialogContent,
   DialogActions,
   TextField,
   Alert,
-  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -358,27 +358,28 @@ export const GroupDetailScreen: React.FC = () => {
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
-                <Button
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    setInviteDialogOpen(true);
-                    handleGenerateInvite();
-                  }}
-                >
-                  Convidar
-                </Button>
-              </Box>
+              {isAdmin && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
+                  <Button
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      setInviteDialogOpen(true);
+                    }}
+                  >
+                    Convidar
+                  </Button>
+                </Box>
+              )}
 
               {members.length === 0 ? (
                 <EmptyState
                   icon={<PersonIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
                   title="Nenhum membro"
                   description="O grupo ainda não tem membros. Convide amigos pra começar!"
-                  action={{
+                  action={isAdmin ? {
                     label: 'Convidar',
                     onClick: () => setInviteDialogOpen(true),
-                  }}
+                  } : undefined}
                 />
               ) : (
                 <List disablePadding aria-label={t('group.membersAria')}>
@@ -521,14 +522,14 @@ export const GroupDetailScreen: React.FC = () => {
         </Container>
       </Box>
 
-      <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">
+      <Dialog open={inviteDialogOpen} onClose={() => { setInviteDialogOpen(false); setInviteCode(''); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">
         <DialogTitle id="invite-dialog-title">Convidar Jogadores</DialogTitle>
         <DialogContent>
           {inviteLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <Skeleton variant="rectangular" width="100%" height={100} />
+              <CircularProgress />
             </Box>
-          ) : (
+          ) : inviteCode ? (
             <Box sx={{ pt: 1 }}>
               <Alert severity="info" sx={{ mb: 2 }}>
                 Compartilhe o link abaixo para convidar jogadores
@@ -558,17 +559,32 @@ export const GroupDetailScreen: React.FC = () => {
                 }}
               />
             </Box>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Gere um código de convite para compartilhar com seus amigos
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={handleGenerateInvite}
+                startIcon={<AddIcon />}
+              >
+                Gerar Convite
+              </Button>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setInviteDialogOpen(false)}>Fechar</Button>
-          <Button
-            variant="contained"
-            startIcon={<ShareIcon />}
-            onClick={handleShare}
-          >
-            Compartilhar
-          </Button>
+          <Button onClick={() => { setInviteDialogOpen(false); setInviteCode(''); }}>Fechar</Button>
+          {inviteCode && (
+            <Button
+              variant="contained"
+              startIcon={<ShareIcon />}
+              onClick={handleShare}
+            >
+              Compartilhar
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

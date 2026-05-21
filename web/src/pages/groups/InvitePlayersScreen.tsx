@@ -23,7 +23,7 @@ import {
   PersonOff as PersonOffIcon,
 } from '@mui/icons-material';
 import { FormScaffold } from '../../components/layout';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -85,12 +85,18 @@ export const InvitePlayersScreen: React.FC = () => {
         if (groupDoc.exists()) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
-          const memberIds = groupData.members || [];
 
           setGroupName(groupData.name || 'Grupo');
 
+          // Query members from subcollection (schema: groups/{id}/members/{uid})
+          const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
+          if (cancelled) return;
+
+          const memberDocs = membersSnap.docs;
           const membersData = await Promise.all(
-            memberIds.map(async (uid: string) => {
+            memberDocs.map(async (memberDoc) => {
+              const uid = memberDoc.id;
+              const memberRole = (memberDoc.data().role as string) || 'MEMBER';
               const userDoc = await getDoc(doc(db, 'users', uid));
               if (userDoc.exists()) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,7 +106,7 @@ export const InvitePlayersScreen: React.FC = () => {
                   name: d.name || 'Jogador',
                   email: d.email || '',
                   photoUrl: d.photoUrl,
-                  role: groupData.ownerId === uid ? 'OWNER' : 'MEMBER',
+                  role: memberRole,
                 };
               }
               return null;
@@ -173,7 +179,7 @@ export const InvitePlayersScreen: React.FC = () => {
         from_user_id: user.id,
         to_user_id: targetUser.id,
         status: 'PENDING',
-        expires_at: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+        expires_at: serverTimestamp(),
         created_at: serverTimestamp(),
       });
       setSearchResults((prev) => prev.filter((r) => r.id !== targetUser.id));
