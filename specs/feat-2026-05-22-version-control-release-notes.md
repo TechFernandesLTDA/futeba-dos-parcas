@@ -441,18 +441,18 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 ### Fase A — Fundação de versionamento
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 1 | Criar `versions.json` + `versions.schema.json` com versões reais atuais | 1h | ⬜ |
-| 2 | Reescrever `scripts/bump-version.js` (multi-plataforma + atualiza `versions.json`) | 3h | ⬜ |
-| 3 | Web/Functions derivam versão de `versions.json` no build (Vite injeta `VITE_APP_VERSION`) | 2h | ⬜ |
-| 4 | Atualizar `version-bump.yml` para o novo fluxo | 1h | ⬜ |
+| 1 | Criar `versions.json` + `versions.schema.json` com versões reais atuais | 1h | ✅ |
+| 2 | Reescrever `scripts/bump-version.js` (multi-plataforma + atualiza `versions.json`) | 3h | ✅ |
+| 3 | Web/Functions derivam versão de `versions.json` no build (Vite injeta `VITE_APP_VERSION`) | 2h | ✅ |
+| 4 | Atualizar `version-bump.yml` para o novo fluxo | 1h | ✅ |
 
 ### Fase B — Fonte de release notes + pipeline
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 5 | Definir/documentar formato `release-notes/<platform>/<version>.md` + criar arquivos iniciais | 2h | ⬜ |
-| 6 | Criar `scripts/release-notes.js` (`validate`, `changelog`, `bundle`, `publish`) | 5h | ⬜ |
-| 7 | Regenerar `CHANGELOG.md` segmentado por plataforma + backfill das últimas 3 versões de cada plataforma | 3h | ⬜ |
-| 8 | Criar `docs/RELEASE_PROCESS.md` | 1h | ⬜ |
+| 5 | Definir/documentar formato `release-notes/<platform>/<version>.md` + criar arquivos iniciais | 2h | ✅ |
+| 6 | Criar `scripts/release-notes.js` (`validate`, `changelog`, `bundle`, `publish`) | 5h | ✅ |
+| 7 | Regenerar `CHANGELOG.md` segmentado por plataforma + backfill das últimas 3 versões de cada plataforma | 3h | ✅ |
+| 8 | Criar `docs/RELEASE_PROCESS.md` | 1h | ✅ |
 
 ### Fase C — Backend
 | # | Task | Est. | Status |
