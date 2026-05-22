@@ -431,4 +431,13 @@ val viewModelKoinModule = module {
             analyticsHelper = get()
         )
     }
+
+    // Novidades / What's New ViewModel (spec feat-2026-05-22 — Fase E)
+    viewModel {
+        com.futebadosparcas.ui.whatsnew.WhatsNewViewModel(
+            getUnseenReleaseNotes = get(),
+            releaseNotesRepository = get(),
+            analytics = get()
+        )
+    }
 }

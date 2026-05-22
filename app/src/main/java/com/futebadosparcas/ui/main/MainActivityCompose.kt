@@ -414,6 +414,16 @@ fun MainScreen(
     val notificationCount by notificationRepository.getUnreadCountFlow()
         .collectAsStateWithLifecycle(initialValue = 0)
 
+    // Pop-up "Novidades" pós-atualização (spec feat-2026-05-22 — Fase E).
+    // Instância scoped à Activity — não interfere com a Tela "Novidades".
+    val whatsNewViewModel: com.futebadosparcas.ui.whatsnew.WhatsNewViewModel = koinViewModel()
+    val whatsNewPopup by whatsNewViewModel.popupNote.collectAsStateWithLifecycle()
+
+    // Verifica uma única vez se há nota não vista a exibir; nunca bloqueia o boot.
+    LaunchedEffect(Unit) {
+        whatsNewViewModel.checkForPopup()
+    }
+
     // Navega para o destino de deep link proveniente de notificação FCM.
     // deepLinkTarget é não-nulo apenas quando o Intent contém extras de notificação.
     LaunchedEffect(deepLinkTarget) {
@@ -499,6 +509,18 @@ fun MainScreen(
                     AppNavHost(navController = navController)
                 }
             }
+        }
+    }
+
+    // Pop-up "Novidades" — só aparece quando o usuário está numa tela raiz, para
+    // não cobrir abruptamente um fluxo de detalhe. Se a verificação resolver fora
+    // de uma raiz, o pop-up aguarda o retorno (ou reaparece no próximo boot).
+    whatsNewPopup?.let { note ->
+        if (showNavigation) {
+            com.futebadosparcas.ui.whatsnew.WhatsNewBottomSheet(
+                note = note,
+                onDismiss = { whatsNewViewModel.dismissPopup() }
+            )
         }
     }
 }
