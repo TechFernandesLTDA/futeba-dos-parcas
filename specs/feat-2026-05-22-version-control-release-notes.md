@@ -472,10 +472,10 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 ### Fase E — UI Android (`:app`)
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 16 | `WhatsNewViewModel` + `WhatsNewUiState` (Loading/Empty/Error/Success) | 2h | ⬜ |
-| 17 | `WhatsNewScreen` + `WhatsNewBottomSheet` (estados, responsividade, a11y) | 5h | ⬜ |
-| 18 | Pop-up no boot (`MainActivityCompose`) + entrada em Ajustes/Sobre | 2h | ⬜ |
-| 19 | `strings.xml` + testes (ViewModel + UI) | 2h | ⬜ |
+| 16 | `WhatsNewViewModel` + `WhatsNewUiState` (Loading/Empty/Error/Success) | 2h | ✅ |
+| 17 | `WhatsNewScreen` + `WhatsNewBottomSheet` (estados, responsividade, a11y) | 5h | ✅ |
+| 18 | Pop-up no boot (`MainActivityCompose`) + entrada em Ajustes/Sobre | 2h | ✅ |
+| 19 | `strings.xml` + testes (ViewModel + UI) | 2h | ✅ |
 
 ### Fase F — UI Web
 | # | Task | Est. | Status |

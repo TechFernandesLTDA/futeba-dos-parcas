@@ -33,7 +33,8 @@ import com.futebadosparcas.ui.components.design.AppLogoSize
 fun AboutScreen(
     onNavigateBack: () -> Unit,
     onDeleteAccount: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToWhatsNew: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var showFirstStepDialog by remember { mutableStateOf(false) }
@@ -152,6 +153,7 @@ fun AboutScreen(
 
         item {
             LinksCard(
+                onWhatsNewClick = onNavigateToWhatsNew,
                 onRateClick = {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
@@ -387,6 +389,7 @@ private fun FeatureItem(
  */
 @Composable
 private fun LinksCard(
+    onWhatsNewClick: () -> Unit,
     onRateClick: () -> Unit,
     onContactClick: () -> Unit,
     onPrivacyClick: () -> Unit,
@@ -408,6 +411,13 @@ private fun LinksCard(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
+            LinkMenuItem(
+                icon = Icons.Default.NewReleases,
+                title = stringResource(R.string.whats_new_settings_title),
+                subtitle = stringResource(R.string.whats_new_settings_desc),
+                onClick = onWhatsNewClick
+            )
+            HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.Star,
                 title = stringResource(R.string.about_rate_app),

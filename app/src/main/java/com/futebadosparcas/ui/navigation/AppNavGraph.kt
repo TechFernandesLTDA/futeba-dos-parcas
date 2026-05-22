@@ -31,6 +31,7 @@ import androidx.navigation.navArgument
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.ui.about.AboutScreen
+import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
 import com.futebadosparcas.ui.badges.BadgesScreen
 import com.futebadosparcas.ui.statistics.EvolutionScreen
 import com.futebadosparcas.ui.groups.CashboxScreen
@@ -142,6 +143,7 @@ sealed class Screen(
     data object Developer : Screen("developer", titleResId = R.string.developer)
     data object LevelJourney : Screen("level_journey", titleResId = R.string.level_journey)
     data object About : Screen("about", titleResId = R.string.about)
+    data object WhatsNew : Screen("whats_new", titleResId = R.string.whats_new_title)
     data object Schedules : Screen("schedules", titleResId = R.string.schedules)
 
     // Notifications
@@ -780,6 +782,7 @@ fun AppNavHost(
                 AboutScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onDeleteAccount = { deleteAccountTrigger = true },
+                    onNavigateToWhatsNew = { navController.navigate(Screen.WhatsNew.route) },
                     onLogout = {
                         androidAuthRepo.logout()
                         val intent = android.content.Intent(context, com.futebadosparcas.ui.auth.LoginActivityCompose::class.java)
@@ -787,6 +790,17 @@ fun AppNavHost(
                         context.startActivity(intent)
                     }
                 )
+            }
+        }
+
+        // Tela "Novidades" (spec feat-2026-05-22 — Fase E)
+        composable(Screen.WhatsNew.route) {
+            val viewModel: com.futebadosparcas.ui.whatsnew.WhatsNewViewModel = koinViewModel()
+            SecondaryScreenWrapper(
+                titleResId = Screen.WhatsNew.titleResId,
+                onNavigateBack = { navController.popBackStack() }
+            ) {
+                WhatsNewScreen(viewModel = viewModel)
             }
         }
 

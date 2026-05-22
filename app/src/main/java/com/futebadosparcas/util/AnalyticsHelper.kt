@@ -207,4 +207,30 @@ class AnalyticsHelper constructor() {
             putString("reward_type", rewardType)
         })
     }
+
+    // ============================================
+    // Novidades / What's New (spec feat-2026-05-22)
+    // ============================================
+
+    /** Pop-up "Novidades" exibido automaticamente no boot pós-atualização. */
+    fun logWhatsNewPopupShown(version: String, platform: String) {
+        analytics.logEvent("whats_new_popup_shown", Bundle().apply {
+            putString("version", version)
+            putString("platform", platform)
+        })
+    }
+
+    /** Tela "Novidades" aberta manualmente (ex.: via Ajustes/Sobre). */
+    fun logWhatsNewOpened(source: String) {
+        analytics.logEvent("whats_new_opened", Bundle().apply {
+            putString("source", source)
+        })
+    }
+
+    /** Pop-up "Novidades" fechado pelo usuário. */
+    fun logWhatsNewDismissed(version: String) {
+        analytics.logEvent("whats_new_dismissed", Bundle().apply {
+            putString("version", version)
+        })
+    }
 }
