@@ -26,6 +26,7 @@ const mockQueryGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
+const mockStartAfter = jest.fn().mockReturnThis();
 
 // Referência ao doc mock para capturar o doc id
 const mockDocRef = jest.fn().mockImplementation((id: string) => ({
@@ -40,6 +41,7 @@ const mockDocRef = jest.fn().mockImplementation((id: string) => ({
     where: mockWhere,
     orderBy: mockOrderBy,
     limit: mockLimit,
+    startAfter: mockStartAfter,
     get: mockQueryGet,
   }),
 }));
@@ -70,6 +72,7 @@ jest.mock("firebase-admin", () => {
         where: mockWhere,
         orderBy: mockOrderBy,
         limit: mockLimit,
+        startAfter: mockStartAfter,
         get: mockQueryGet,
       }),
       batch: jest.fn(() => ({

@@ -19,6 +19,20 @@ const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
 const mockQueryGet = jest.fn();
 const mockDocGet = jest.fn();
 
+// Mock de transação (FIX #1470: criação atômica da próxima season monthly).
+const mockTransactionGet = jest.fn().mockResolvedValue({exists: true});
+const mockTransactionSet = jest.fn();
+const mockRunTransaction = jest.fn(
+  async (cb: (tx: unknown) => Promise<unknown>) => {
+    await cb({
+      get: mockTransactionGet,
+      set: mockTransactionSet,
+      update: jest.fn(),
+      delete: jest.fn(),
+    });
+  }
+);
+
 // Capturar todos os IDs de doc passados a collection().doc(id)
 const capturedStandingDocIds: string[] = [];
 const mockStandingsDoc = jest.fn().mockImplementation((id?: string) => {
@@ -61,6 +75,7 @@ jest.mock("firebase-admin", () => {
         set: mockBatchSet,
         commit: mockBatchCommit,
       })),
+      runTransaction: mockRunTransaction,
     })),
     initializeApp: jest.fn(),
   };
@@ -156,6 +171,7 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
     capturedStandingDocIds.length = 0;
     mockBatchCommit.mockResolvedValue(undefined);
     mockDocGet.mockResolvedValue({exists: false});
+    mockTransactionGet.mockResolvedValue({exists: true});
   });
 
   test("handler registrado pelo onSchedule", () => {

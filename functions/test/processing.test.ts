@@ -69,12 +69,10 @@ describe("XP Processing - Idempotência", () => {
 
   describe("isTransactionAlreadyProcessed", () => {
     test("deve retornar false se transação não existe", async () => {
-      // Mock: collection().where().limit().get() retorna empty
+      // Mock: collection().doc().get() retorna doc inexistente
       mockDb.collection.mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue({ empty: true, docs: [] }),
-          }),
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({ exists: false }),
         }),
       });
 
@@ -85,20 +83,10 @@ describe("XP Processing - Idempotência", () => {
     });
 
     test("deve retornar true se transação já foi processada", async () => {
-      const mockDoc = {
-        transaction_id: "game_game123_user_user456",
-        xp_earned: 100,
-      };
-
-      // Mock: collection().where().limit().get() retorna documento
+      // Mock: collection().doc().get() retorna doc existente
       mockDb.collection.mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue({
-              empty: false,
-              docs: [{ data: () => mockDoc }],
-            }),
-          }),
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({ exists: true }),
         }),
       });
 
@@ -108,12 +96,10 @@ describe("XP Processing - Idempotência", () => {
     });
 
     test("deve retornar false em caso de erro (fail-safe)", async () => {
-      // Mock: query falha com erro
+      // Mock: collection().doc().get() falha com erro
       mockDb.collection.mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            get: jest.fn().mockRejectedValue(new Error("Firestore error")),
-          }),
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockRejectedValue(new Error("Firestore error")),
         }),
       });
 
@@ -252,13 +238,8 @@ describe("XP Processing - Idempotência", () => {
 
       // Mock isTransactionAlreadyProcessed = true (já processada)
       mockDb.collection.mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue({
-              empty: false,
-              docs: [{ data: () => { return {} } }],
-            }),
-          }),
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({ exists: true }),
         }),
       });
 
@@ -303,18 +284,12 @@ describe("XP Processing - Idempotência", () => {
       };
 
       // Mock setup
-      const mockWhereQuery = {
-        limit: jest.fn().mockReturnValue({
-          get: jest.fn().mockResolvedValue({ empty: true, docs: [] }),
-        }),
-      };
-
       mockDb.collection.mockImplementation((collectionName: string) => {
         if (collectionName === "xp_logs") {
           return {
-            where: jest.fn().mockReturnValue(mockWhereQuery),
             doc: jest.fn().mockReturnValue({
-              id: "doc_id",
+              id: "xp_log_doc",
+              get: jest.fn().mockResolvedValue({ exists: false }),
             }),
           };
         }
@@ -332,7 +307,11 @@ describe("XP Processing - Idempotência", () => {
 
       const mockTransaction = {
         get: jest.fn().mockImplementation((refOrQuery) => {
-          // Se for um document reference, retorna documento
+          // xp_logs logRef — transação nova, ainda não existe
+          if (refOrQuery && refOrQuery.id === "xp_log_doc") {
+            return Promise.resolve({ exists: false });
+          }
+          // user docRef — usuário existe
           if (refOrQuery && typeof refOrQuery === "object" && refOrQuery.id) {
             return Promise.resolve({
               exists: true,
