@@ -1,88 +1,76 @@
 #!/usr/bin/env node
 /**
- * Bump de versão automático baseado em commits convencionais.
+ * Bump de versao multi-plataforma baseado em Conventional Commits.
  *
- * Regras de bump:
- *   BREAKING CHANGE ou feat!  → major
- *   feat                       → minor
- *   fix / perf / refactor / …  → patch
+ * Uso:
+ *   node scripts/bump-version.js <android|web|ios|functions> [major|minor|patch]
  *
- * Atualiza app/build.gradle.kts: versionName e versionCode (+1).
+ * Sem o tipo explicito, o bump e inferido pelos commits convencionais desde a
+ * ultima tag. Recomenda-se passar o tipo explicito em bumps manuais (web/ios/
+ * functions); o fluxo de CI usa a inferencia para "android".
+ *
+ * Fonte de verdade: versions.json (raiz). O script atualiza versions.json E o
+ * arquivo nativo da plataforma:
+ *   android   -> app/build.gradle.kts      (versionName + versionCode +1)
+ *   web       -> web/package.json          (version)
+ *   ios       -> iosApp/iosApp/Info.plist  (CFBundleShortVersionString + CFBundleVersion +1)
+ *   functions -> functions/package.json    (version)
+ *
+ * Regras de inferencia:
+ *   BREAKING CHANGE ou tipo!  -> major
+ *   feat                      -> minor
+ *   fix/perf/refactor/...     -> patch
  */
 
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
+
+const ROOT = path.resolve(__dirname, '..');
+const VERSIONS_PATH = path.join(ROOT, 'versions.json');
+const PLATFORMS = ['android', 'web', 'ios', 'functions'];
+const BUMP_TYPES = ['major', 'minor', 'patch'];
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function run(cmd) {
-  return execSync(cmd, { encoding: 'utf8' }).trim();
+/**
+ * Executa `git` com argumentos como array (execFile, sem shell — sem risco de
+ * injecao de comando).
+ */
+function git(args) {
+  return execFileSync('git', args, { encoding: 'utf8' }).trim();
 }
 
-function getCurrentVersion(gradlePath) {
-  const content = fs.readFileSync(gradlePath, 'utf8');
-  const nameMatch = content.match(/versionName\s*=\s*"([^"]+)"/);
-  const codeMatch = content.match(/versionCode\s*=\s*(\d+)/);
-  if (!nameMatch || !codeMatch) {
-    throw new Error('Não foi possível extrair versionName/versionCode de ' + gradlePath);
+function fail(msg) {
+  console.error('Erro: ' + msg);
+  process.exit(1);
+}
+
+function usage() {
+  console.error('Uso: node scripts/bump-version.js <android|web|ios|functions> [major|minor|patch]');
+}
+
+function readVersions() {
+  if (!fs.existsSync(VERSIONS_PATH)) {
+    fail('versions.json nao encontrado na raiz do projeto.');
   }
-  return {
-    name: nameMatch[1],
-    code: parseInt(codeMatch[1], 10),
-  };
+  return JSON.parse(fs.readFileSync(VERSIONS_PATH, 'utf8'));
+}
+
+function writeVersions(obj) {
+  fs.writeFileSync(VERSIONS_PATH, JSON.stringify(obj, null, 2) + '\n', 'utf8');
 }
 
 function parseVersion(versionString) {
-  const parts = versionString.split('.').map(Number);
-  if (parts.length !== 3 || parts.some(isNaN)) {
-    throw new Error('versionName inválido: ' + versionString);
+  const parts = String(versionString).split('.').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) {
+    fail('Versao invalida: ' + versionString);
   }
   return { major: parts[0], minor: parts[1], patch: parts[2] };
-}
-
-function getLastTag() {
-  try {
-    return run('git describe --tags --abbrev=0');
-  } catch {
-    // Sem tags: considera todos os commits
-    return null;
-  }
-}
-
-function getCommitsSinceTag(tag) {
-  const range = tag ? `${tag}..HEAD` : 'HEAD';
-  try {
-    return run(`git log ${range} --pretty=format:"%s"`).split('\n').filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-function determineBumpType(commits) {
-  let bump = null; // null = sem mudança
-
-  for (const msg of commits) {
-    // BREAKING CHANGE → major
-    if (/BREAKING[\s-]CHANGE/i.test(msg) || /^[a-z]+(\(.+\))?!:/.test(msg)) {
-      return 'major';
-    }
-    // feat → minor (mas continua olhando por breaking)
-    if (/^feat(\(.+\))?:/.test(msg)) {
-      bump = 'minor';
-      continue;
-    }
-    // fix/perf/refactor/chore/ci/docs/test/style/build → patch (se ainda sem minor)
-    if (/^(fix|perf|refactor|chore|ci|docs|test|style|build|revert)(\(.+\))?:/.test(msg)) {
-      if (bump !== 'minor') bump = 'patch';
-    }
-  }
-
-  return bump;
 }
 
 function applyBump(version, bumpType) {
@@ -97,54 +85,148 @@ function applyBump(version, bumpType) {
   } else {
     v.patch += 1;
   }
-  return v;
+  return `${v.major}.${v.minor}.${v.patch}`;
 }
 
-function updateGradleFile(gradlePath, newName, newCode) {
-  let content = fs.readFileSync(gradlePath, 'utf8');
+function getLastTag() {
+  try {
+    return git(['describe', '--tags', '--abbrev=0']);
+  } catch {
+    return null;
+  }
+}
+
+function getCommitsSinceTag(tag) {
+  const range = tag ? `${tag}..HEAD` : 'HEAD';
+  try {
+    return git(['log', range, '--pretty=format:%s']).split('\n').filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function inferBumpType(commits) {
+  let bump = null; // null = sem mudanca relevante
+  for (const msg of commits) {
+    if (/BREAKING[\s-]CHANGE/i.test(msg) || /^[a-z]+(\(.+\))?!:/.test(msg)) {
+      return 'major';
+    }
+    if (/^feat(\(.+\))?:/.test(msg)) {
+      bump = 'minor';
+      continue;
+    }
+    if (/^(fix|perf|refactor|chore|ci|docs|test|style|build|revert)(\(.+\))?:/.test(msg)) {
+      if (bump !== 'minor') bump = 'patch';
+    }
+  }
+  return bump;
+}
+
+// ---------------------------------------------------------------------------
+// Atualizadores de arquivo nativo
+// ---------------------------------------------------------------------------
+
+function updateAndroid(newVersion, newBuild) {
+  const filePath = path.join(ROOT, 'app', 'build.gradle.kts');
+  let content = fs.readFileSync(filePath, 'utf8');
+  content = content.replace(/(versionName\s*=\s*")[^"]+(")/, `$1${newVersion}$2`);
+  content = content.replace(/(versionCode\s*=\s*)\d+/, `$1${newBuild}`);
+  fs.writeFileSync(filePath, content, 'utf8');
+  return 'app/build.gradle.kts';
+}
+
+function updateIos(newVersion, newBuild) {
+  const filePath = path.join(ROOT, 'iosApp', 'iosApp', 'Info.plist');
+  let content = fs.readFileSync(filePath, 'utf8');
   content = content.replace(
-    /(versionName\s*=\s*")[^"]+(")/,
-    `$1${newName}$2`
+    /(<key>CFBundleShortVersionString<\/key>\s*<string>)[^<]+(<\/string>)/,
+    `$1${newVersion}$2`
   );
   content = content.replace(
-    /(versionCode\s*=\s*)\d+/,
-    `$1${newCode}`
+    /(<key>CFBundleVersion<\/key>\s*<string>)[^<]+(<\/string>)/,
+    `$1${newBuild}$2`
   );
-  fs.writeFileSync(gradlePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, 'utf8');
+  return 'iosApp/iosApp/Info.plist';
+}
+
+function updatePackageJson(relPath, newVersion) {
+  const filePath = path.join(ROOT, relPath);
+  let content = fs.readFileSync(filePath, 'utf8');
+  if (!/"version"\s*:\s*"[^"]+"/.test(content)) {
+    fail(`Campo "version" ausente em ${relPath} — adicione-o antes de usar o bump.`);
+  }
+  content = content.replace(/("version"\s*:\s*")[^"]+(")/, `$1${newVersion}$2`);
+  fs.writeFileSync(filePath, content, 'utf8');
+  return relPath;
 }
 
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
-const GRADLE_PATH = path.resolve(__dirname, '..', 'app', 'build.gradle.kts');
+const [platform, explicitType] = process.argv.slice(2);
 
-const current = getCurrentVersion(GRADLE_PATH);
-console.log(`Versão atual: ${current.name} (code ${current.code})`);
-
-const lastTag = getLastTag();
-console.log(`Última tag: ${lastTag ?? '(nenhuma)'}`);
-
-const commits = getCommitsSinceTag(lastTag);
-console.log(`Commits desde a última tag: ${commits.length}`);
-
-if (commits.length === 0) {
-  console.log('Nenhum commit novo — sem bump.');
-  process.exit(0);
+if (!platform || !PLATFORMS.includes(platform)) {
+  usage();
+  fail('plataforma invalida ou ausente: ' + (platform || '(vazio)'));
+}
+if (explicitType && !BUMP_TYPES.includes(explicitType)) {
+  usage();
+  fail('tipo de bump invalido: ' + explicitType);
 }
 
-const bumpType = determineBumpType(commits);
+const versions = readVersions();
+const entry = versions[platform];
+if (!entry || !entry.version) {
+  fail(`versions.json nao tem entrada valida para "${platform}".`);
+}
+
+console.log(`Plataforma: ${platform}`);
+console.log(
+  `Versao atual: ${entry.version}` +
+  (entry.buildNumber != null ? ` (build ${entry.buildNumber})` : '')
+);
+
+let bumpType = explicitType;
 if (!bumpType) {
-  console.log('Nenhum commit relevante para bump — sem alteração.');
-  process.exit(0);
+  const lastTag = getLastTag();
+  const commits = getCommitsSinceTag(lastTag);
+  console.log(`Ultima tag: ${lastTag ?? '(nenhuma)'} — ${commits.length} commit(s) desde entao`);
+  bumpType = inferBumpType(commits);
+  if (!bumpType) {
+    console.log('Nenhum commit relevante para bump — sem alteracao.');
+    process.exit(0);
+  }
+  console.log(`Tipo inferido: ${bumpType}`);
+} else {
+  console.log(`Tipo explicito: ${bumpType}`);
 }
 
-const parsed = parseVersion(current.name);
-const bumped = applyBump(parsed, bumpType);
-const newName = `${bumped.major}.${bumped.minor}.${bumped.patch}`;
-const newCode = current.code + 1;
+const oldVersion = entry.version;
+const newVersion = applyBump(parseVersion(oldVersion), bumpType);
+const hasBuild = entry.buildNumber != null;
+const newBuild = hasBuild ? entry.buildNumber + 1 : undefined;
 
-console.log(`Bump: ${bumpType} → ${current.name} → ${newName} (code ${newCode})`);
+// Atualiza versions.json (fonte de verdade)
+entry.version = newVersion;
+if (hasBuild) entry.buildNumber = newBuild;
+writeVersions(versions);
 
-updateGradleFile(GRADLE_PATH, newName, newCode);
-console.log(`app/build.gradle.kts atualizado com sucesso.`);
+// Atualiza o arquivo nativo da plataforma
+let nativeFile;
+if (platform === 'android') {
+  nativeFile = updateAndroid(newVersion, newBuild);
+} else if (platform === 'ios') {
+  nativeFile = updateIos(newVersion, newBuild);
+} else if (platform === 'web') {
+  nativeFile = updatePackageJson('web/package.json', newVersion);
+} else {
+  nativeFile = updatePackageJson('functions/package.json', newVersion);
+}
+
+console.log(
+  `\nBump ${bumpType}: ${platform} ${oldVersion} -> ${newVersion}` +
+  (hasBuild ? ` (build ${newBuild})` : '')
+);
+console.log(`Arquivos atualizados: versions.json, ${nativeFile}`);

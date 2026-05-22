@@ -2,11 +2,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import pkg from './package.json'
+import fs from 'fs'
 
-// Versão lida de package.json em build time (single source of truth).
+// Versão lida de versions.json (raiz) em build time — fonte única de verdade.
 // Build number vem do CI (GITHUB_RUN_NUMBER) ou 'dev' em local.
-const appVersion = pkg.version
+const versions = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '../versions.json'), 'utf-8'),
+) as { web: { version: string } }
+const appVersion = versions.web.version
 const appBuild = process.env.GITHUB_RUN_NUMBER ?? 'dev'
 
 export default defineConfig({
