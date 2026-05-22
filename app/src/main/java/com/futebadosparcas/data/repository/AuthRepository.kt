@@ -13,10 +13,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
@@ -62,6 +65,41 @@ class AuthRepository constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = auth.currentUser
         )
+
+    private val _profileComplete = MutableStateFlow<Boolean?>(null)
+    val profileComplete: StateFlow<Boolean?> = _profileComplete.asStateFlow()
+
+    fun checkProfileComplete() {
+        authScope.launch {
+            val user = auth.currentUser
+            if (user == null) {
+                _profileComplete.value = false
+                return@launch
+            }
+            try {
+                val result = user.getIdToken(false).await()
+                _profileComplete.value = result?.claims?.get("profileComplete") == true
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "checkProfileComplete failed: ${e.message}", e)
+                _profileComplete.value = false
+            }
+        }
+    }
+
+    suspend fun refreshProfileComplete() {
+        val user = auth.currentUser
+        if (user == null) {
+            _profileComplete.value = false
+            return
+        }
+        try {
+            val result = user.getIdToken(true).await()
+            _profileComplete.value = result?.claims?.get("profileComplete") == true
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "refreshProfileComplete failed: ${e.message}", e)
+            _profileComplete.value = false
+        }
+    }
 
     fun isLoggedIn(): Boolean = auth.currentUser != null
 

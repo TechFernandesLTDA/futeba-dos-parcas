@@ -290,6 +290,8 @@ describe("cashbox_summary — permissões", () => {
         balance: 200,
         total_income: 250,
         total_expense: 50,
+        period_start: "2026-05-01",
+        period_end: "2026-05-31",
         updated_at: new Date(),
       })
     );

@@ -22,7 +22,7 @@ import {
   ShieldOutlined as ShieldIcon,
 } from '@mui/icons-material';
 import { isValidCpf, formatCpf, stripCpf } from '../../utils/cpfValidator';
-import { verifyCpf, setUserVerified } from '../../services/cloudFunctions';
+import { verifyCpf, setUserVerified, recomputeMyProfileClaim } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -149,6 +149,13 @@ export const CpfVerificationScreen: React.FC = () => {
         throw new Error(t('onboarding.verifyFailed'));
       }
       await setUserVerified({});
+
+      // #1485: recompute profileComplete claim para ProfileGate
+      try {
+        await recomputeMyProfileClaim();
+      } catch (recomputeErr) {
+        logger.warn('recomputeMyProfileClaim failed (non-fatal):', recomputeErr);
+      }
 
       // FIX 2026-05-15: setUserVerified faz revokeRefreshTokens() no servidor.
       // Um getIdToken(true) logo em seguida corre contra o refresh token recém

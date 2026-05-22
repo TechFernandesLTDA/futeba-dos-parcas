@@ -53,10 +53,12 @@ beforeAll(async () => {
   await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_PLAYER_A}`, {
     user_id: UID_PLAYER_A,
     role: "OWNER",
+    status: "ACTIVE",
   });
   await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_PLAYER_B}`, {
     user_id: UID_PLAYER_B,
     role: "MEMBER",
+    status: "ACTIVE",
   });
 
   // Convite valido criado por Player A

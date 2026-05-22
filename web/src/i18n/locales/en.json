@@ -296,7 +296,12 @@
     "streakRecord_other": "Record: {{count}} games",
     "skillsByPosition": "Skills by Position",
     "scaleLabel": "Scale: 0 to 5",
-    "signOutError": "Sign out failed. Try again."
+    "signOutError": "Sign out failed. Try again.",
+    "gate": {
+      "title": "Complete your Profile",
+      "message": "To create and join games, you need to complete your profile with CPF and phone.",
+      "action": "Complete Profile"
+    }
   },
   "games": {
     "title": "Games",
@@ -542,6 +547,9 @@
     "createError": "Failed to create group. Please try again.",
     "onlyOwnersCanCreate": "Only Field Owners and Admins can create groups.",
     "changePhotoAria": "Change group photo",
+    "photoInvalidType": "Invalid file. Select a JPEG, PNG, or WEBP image.",
+    "photoTooLarge": "Image too large. Maximum: 2MB.",
+    "photoUploadError": "Failed to upload group photo. Please try again.",
     "noRankingMembers": "Join a group to see the ranking"
   },
   "schedule": {

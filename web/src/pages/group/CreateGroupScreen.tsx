@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -30,6 +30,9 @@ import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('CreateGroupScreen');
 
+const GROUP_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
+const GROUP_PHOTO_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 export const CreateGroupScreen: React.FC = () => {
   useDocumentTitle('Criar Grupo');
   const { t } = useTranslation();
@@ -44,8 +47,11 @@ export const CreateGroupScreen: React.FC = () => {
     description: '',
     isPublic: false,
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const isDirty = !!formData.name || !!formData.description || formData.isPublic;
+  const isDirty = !!formData.name || !!formData.description || formData.isPublic || !!selectedFile;
 
   const handleInputChange = <K extends keyof typeof formData>(field: K, value: typeof formData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -60,6 +66,39 @@ export const CreateGroupScreen: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const handlePhotoClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!GROUP_PHOTO_ACCEPTED_TYPES.includes(file.type)) {
+      showError(t('groups.photoInvalidType'));
+      return;
+    }
+
+    if (file.size > GROUP_PHOTO_MAX_BYTES) {
+      showError(t('groups.photoTooLarge'));
+      return;
+    }
+
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedFile(file);
+    setPreviewUrl(objectUrl);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleSubmit = async () => {
     if (!validate()) return;
 
@@ -70,7 +109,7 @@ export const CreateGroupScreen: React.FC = () => {
     }
 
     try {
-      const groupId = await createGroup(formData);
+      const groupId = await createGroup(formData, selectedFile);
       showSuccess(t('groups.createdSuccess'));
       navigate(`/group/${groupId}`);
     } catch (err) {
@@ -100,7 +139,16 @@ export const CreateGroupScreen: React.FC = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Box sx={{ position: 'relative' }}>
+                  <input
+                    type="file"
+                    accept={GROUP_PHOTO_ACCEPTED_TYPES.join(',')}
+                    ref={fileInputRef}
+                    hidden
+                    aria-label={t('groups.changePhotoAria')}
+                    onChange={handleFileChange}
+                  />
                   <Avatar
+                    src={previewUrl || undefined}
                     sx={{
                       width: 100,
                       height: 100,
@@ -121,6 +169,8 @@ export const CreateGroupScreen: React.FC = () => {
                     }}
                     size="small"
                     aria-label={t('groups.changePhotoAria')}
+                    onClick={handlePhotoClick}
+                    disabled={loading}
                   >
                     <CameraIcon />
                   </IconButton>

@@ -410,6 +410,8 @@ describe("groups/cashbox — permissões", () => {
       db.doc(`groups/${GROUP_FOR_CASHBOX}/cashbox/entry-new`).set({
         type: "INCOME",
         amount: 100,
+        description: "Mensalidade",
+        category: "MONTHLY_FEE",
         status: "ACTIVE",
         created_at: new Date(),
       })

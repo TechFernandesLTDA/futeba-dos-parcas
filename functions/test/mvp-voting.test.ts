@@ -152,12 +152,21 @@ describe("submitMvpVote - autenticação e validação", () => {
       data: { gameId: "game1", votedPlayerId: "player2", category: "MVP" },
     };
 
-    await expect(submitMvpVoteHandler!(request)).rejects.toThrow("não autenticado");
+    await expect(submitMvpVoteHandler!(request)).rejects.toThrow("auth required");
+  });
+
+  test("deve rejeitar token sem profileComplete", async () => {
+    const request = {
+      auth: { uid: "player1", token: {} },
+      data: { gameId: "game1", votedPlayerId: "player2", category: "MVP" },
+    };
+
+    await expect(submitMvpVoteHandler!(request)).rejects.toThrow("profile.incomplete");
   });
 
   test("deve rejeitar voto em si mesmo", async () => {
     const request = {
-      auth: { uid: "player1" },
+      auth: { uid: "player1", token: { profileComplete: true } },
       data: { gameId: "game1", votedPlayerId: "player1", category: "MVP" },
     };
 
@@ -168,7 +177,7 @@ describe("submitMvpVote - autenticação e validação", () => {
 
   test("deve rejeitar gameId inválido (vazio)", async () => {
     const request = {
-      auth: { uid: "player1" },
+      auth: { uid: "player1", token: { profileComplete: true } },
       data: { gameId: "", votedPlayerId: "player2", category: "MVP" },
     };
 
@@ -177,7 +186,7 @@ describe("submitMvpVote - autenticação e validação", () => {
 
   test("deve rejeitar categoria inválida", async () => {
     const request = {
-      auth: { uid: "player1" },
+      auth: { uid: "player1", token: { profileComplete: true } },
       data: { gameId: "game1", votedPlayerId: "player2", category: "INVALID_CAT" },
     };
 
@@ -186,7 +195,7 @@ describe("submitMvpVote - autenticação e validação", () => {
 
   test("deve rejeitar IDs com barra (path traversal)", async () => {
     const request = {
-      auth: { uid: "player1" },
+      auth: { uid: "player1", token: { profileComplete: true } },
       data: { gameId: "game1/subpath", votedPlayerId: "player2", category: "MVP" },
     };
 
@@ -238,7 +247,7 @@ describe("submitMvpVote - submissão bem-sucedida", () => {
     });
 
     const request = {
-      auth: { uid: "voter1" },
+      auth: { uid: "voter1", token: { profileComplete: true } },
       data: { gameId: "game1", votedPlayerId: "player2", category: "MVP" },
     };
 
@@ -289,7 +298,7 @@ describe("submitMvpVote - rejeições via transaction", () => {
     });
 
     const request = {
-      auth: { uid: "voter1" },
+      auth: { uid: "voter1", token: { profileComplete: true } },
       data: { gameId: "game1", votedPlayerId: "player2", category: "MVP" },
     };
 
@@ -315,7 +324,7 @@ describe("submitMvpVote - rejeições via transaction", () => {
     });
 
     const request = {
-      auth: { uid: "voter1" },
+      auth: { uid: "voter1", token: { profileComplete: true } },
       data: { gameId: "game1", votedPlayerId: "player2", category: "MVP" },
     };
 
@@ -344,7 +353,7 @@ describe("submitMvpVote - rejeições via transaction", () => {
     });
 
     const request = {
-      auth: { uid: "voter1" },
+      auth: { uid: "voter1", token: { profileComplete: true } },
       data: { gameId: "game1", votedPlayerId: "player2", category: "MVP" },
     };
 
@@ -374,12 +383,20 @@ describe("concludeMvpVoting - validações", () => {
 
   test("deve rejeitar request sem autenticação", async () => {
     const request = { auth: null, data: { gameId: "game1" } };
-    await expect(concludeMvpVotingHandler!(request)).rejects.toThrow("não autenticado");
+    await expect(concludeMvpVotingHandler!(request)).rejects.toThrow("auth required");
+  });
+
+  test("deve rejeitar token sem profileComplete", async () => {
+    const request = {
+      auth: { uid: "owner1", token: {} },
+      data: { gameId: "game1" },
+    };
+    await expect(concludeMvpVotingHandler!(request)).rejects.toThrow("profile.incomplete");
   });
 
   test("deve rejeitar gameId inválido", async () => {
     const request = {
-      auth: { uid: "owner1", token: {} },
+      auth: { uid: "owner1", token: { profileComplete: true } },
       data: { gameId: "" },
     };
     await expect(concludeMvpVotingHandler!(request)).rejects.toThrow("gameId");
@@ -446,7 +463,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     });
 
     const request = {
-      auth: { uid: "owner1", token: { role: undefined } },
+      auth: { uid: "owner1", token: { profileComplete: true } },
       data: { gameId: "game1" },
     };
 
@@ -498,7 +515,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     });
 
     const request = {
-      auth: { uid: "owner1", token: { role: undefined } },
+      auth: { uid: "owner1", token: { profileComplete: true } },
       data: { gameId: "game1" },
     };
 
@@ -539,7 +556,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     });
 
     const request = {
-      auth: { uid: "owner1", token: { role: undefined } },
+      auth: { uid: "owner1", token: { profileComplete: true } },
       data: { gameId: "game1" },
     };
 
@@ -582,7 +599,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     });
 
     const request = {
-      auth: { uid: "owner1", token: { role: undefined } },
+      auth: { uid: "owner1", token: { profileComplete: true } },
       data: { gameId: "game1" },
     };
 
@@ -621,7 +638,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     });
 
     const request = {
-      auth: { uid: "other_user", token: { role: "PLAYER" } },
+      auth: { uid: "other_user", token: { role: "PLAYER", profileComplete: true } },
       data: { gameId: "game1" },
     };
 
