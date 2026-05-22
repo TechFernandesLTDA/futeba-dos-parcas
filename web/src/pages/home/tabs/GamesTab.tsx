@@ -92,7 +92,7 @@ export function GamesTab() {
   }, [navigate]);
 
   return (
-    <Box sx={{ pb: 10 }}>
+    <Box sx={{ pb: 10, maxWidth: { xs: '100%', lg: 1200 }, mx: 'auto' }}>
       {/* Sticky search + filters bar */}
       <Box
         sx={{

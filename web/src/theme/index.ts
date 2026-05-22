@@ -134,7 +134,7 @@ export const futebaTheme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
           borderRadius: 16,
         },
       },
@@ -142,7 +142,7 @@ export const futebaTheme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
         },
       },
     },
@@ -168,11 +168,11 @@ export const futebaTheme = createTheme({
     },
     MuiBottomNavigationAction: {
       styleOverrides: {
-        root: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           '&.Mui-selected': {
-            color: primary.main,
+            color: theme.palette.primary.main,
           },
-        },
+        }),
       },
     },
     MuiChip: {
@@ -297,6 +297,18 @@ export const futebaDarkTheme = createTheme({
         paper: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           backgroundColor: theme.palette.background.paper,
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        }),
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 12,
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.divider,
+            },
+          },
         }),
       },
     },
