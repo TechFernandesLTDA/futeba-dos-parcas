@@ -33,6 +33,11 @@ targets:
     type: application
     platform: iOS
     sources:
+      # O glob de `iosApp/` inclui `release-notes.json` automaticamente — o
+      # xcodegen categoriza .json como recurso e o adiciona à fase Copy Bundle
+      # Resources. É o fallback offline das "Novidades", lido por
+      # ReleaseNotesAssetReader (iosMain) via NSBundle.mainBundle.
+      # Gerado por scripts/release-notes.js (BUNDLE_TARGETS.ios).
       - path: iosApp
         excludes:
           - "**/*.md"

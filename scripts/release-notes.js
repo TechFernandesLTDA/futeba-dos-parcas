@@ -53,10 +53,18 @@ const PLATFORM_LABEL = {
   functions: 'Cloud Functions',
 };
 
+// Cada plataforma pode ter mais de um destino para o JSON de fallback.
+// iOS: o leitor (`ReleaseNotesAssetReader` iosMain) usa `NSBundle.mainBundle`,
+// ou seja, o app bundle principal do target Xcode `iosApp` — o recurso em
+// `composeResources` é empacotado na ComposeApp.framework e não chega lá.
+// Por isso o JSON é gravado também em `iosApp/iosApp/release-notes.json`.
 const BUNDLE_TARGETS = {
-  android: 'app/src/main/assets/release-notes.json',
-  web: 'web/public/release-notes.json',
-  ios: 'composeApp/src/commonMain/composeResources/files/release-notes.json',
+  android: ['app/src/main/assets/release-notes.json'],
+  web: ['web/public/release-notes.json'],
+  ios: [
+    'composeApp/src/commonMain/composeResources/files/release-notes.json',
+    'iosApp/iosApp/release-notes.json',
+  ],
 };
 
 const AUTOGEN_START = '<!-- AUTOGEN:START -->';
@@ -388,10 +396,13 @@ function cmdBundle() {
       generatedAt: new Date().toISOString(),
       notes: platformNotes,
     };
-    const target = path.join(ROOT, BUNDLE_TARGETS[platform]);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`);
-    console.log(`bundle: ${BUNDLE_TARGETS[platform]} — ${platformNotes.length} nota(s).`);
+    const json = `${JSON.stringify(payload, null, 2)}\n`;
+    for (const relativePath of BUNDLE_TARGETS[platform]) {
+      const target = path.join(ROOT, relativePath);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, json);
+      console.log(`bundle: ${relativePath} — ${platformNotes.length} nota(s).`);
+    }
   }
 }
 

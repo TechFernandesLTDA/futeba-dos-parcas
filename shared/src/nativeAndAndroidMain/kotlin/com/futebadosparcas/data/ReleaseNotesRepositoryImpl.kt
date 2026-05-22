@@ -34,7 +34,13 @@ class ReleaseNotesRepositoryImpl(
     private val assetReader: ReleaseNotesAssetReader,
 ) : ReleaseNotesRepository {
 
-    private val firestore = Firebase.firestore
+    // `by lazy` evita tocar o Firebase na construção do repositório: em builds
+    // iOS sem `GoogleService-Info.plist` (smoke-test mode), `Firebase.firestore`
+    // lança `FIRIllegalStateException` por falta de `FirebaseApp.configure()`.
+    // Adiado para o 1º uso (dentro do `try` de `getReleaseNotes`), a falha é
+    // capturada e o repositório degrada para o fallback embarcado — honrando o
+    // contrato de "degrada para o fallback" descrito acima.
+    private val firestore by lazy { Firebase.firestore }
 
     override suspend fun getReleaseNotes(
         platform: String,
