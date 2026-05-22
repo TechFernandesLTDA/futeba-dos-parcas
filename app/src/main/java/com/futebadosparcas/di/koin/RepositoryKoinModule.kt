@@ -15,6 +15,7 @@ import com.futebadosparcas.data.GroupRepositoryImpl
 import com.futebadosparcas.data.LocationRepositoryImpl
 import com.futebadosparcas.data.NotificationRepositoryImpl
 import com.futebadosparcas.data.RankingRepositoryImpl
+import com.futebadosparcas.data.ReleaseNotesRepositoryImpl
 import com.futebadosparcas.data.StatisticsRepositoryImpl
 import com.futebadosparcas.data.database.DatabaseDriverFactory
 import com.futebadosparcas.data.database.DatabaseFactory
@@ -43,10 +44,13 @@ import com.futebadosparcas.domain.repository.LiveGameRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.RankingRepository
+import com.futebadosparcas.domain.repository.ReleaseNotesRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.TeamsRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
+import com.futebadosparcas.platform.releasenotes.ReleaseNotesAssetReader
+import com.futebadosparcas.platform.storage.LastSeenVersionStore
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.data.datasource.FirebaseDataSource as AndroidFirebaseDataSource
 import com.futebadosparcas.data.datasource.FirebaseDataSourceImpl
@@ -71,6 +75,19 @@ val repositoryKoinModule = module {
 
     single<PreferencesService> {
         PreferencesService(androidContext())
+    }
+
+    // Release notes / "Novidades" (spec feat-2026-05-22 — Fase D)
+    single<ReleaseNotesAssetReader> {
+        ReleaseNotesAssetReader(androidContext())
+    }
+
+    single<LastSeenVersionStore> {
+        LastSeenVersionStore(androidContext())
+    }
+
+    single<ReleaseNotesRepository> {
+        ReleaseNotesRepositoryImpl(get())
     }
 
     single<UserRepository> {
