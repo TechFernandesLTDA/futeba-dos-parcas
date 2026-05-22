@@ -513,7 +513,7 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 | # | Task | Est. | Status |
 |---|------|------|--------|
 | 25 | Testes completos + validação cross-platform (light/dark, telas) | 3h | ✅ |
-| 26 | Deploy: rules + índices + 1º publish; validar live nas 3 plataformas (inclui smoke test iOS Simulator + empacotar `release-notes.json` no app bundle iOS — herdado da Fase G #24) | 3h | 🟡 |
+| 26 | Deploy: rules + índices + 1º publish; validar live nas 3 plataformas (inclui smoke test iOS Simulator + empacotar `release-notes.json` no app bundle iOS — herdado da Fase G #24) | 3h | ✅ |
 | 27 | Registrar decisões em `specs/DECISIONS.md`; code review final | 1h | ✅ |
 
 > **Fase H — tasks #25 e #27 entregues (2026-05-22).** Suíte de testes completa
@@ -532,14 +532,28 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 > - ✅ Web hosting deployado (UI "Novidades" da Fase F agora live em
 >   `futebadosparcas.web.app`); smoke: site `200`, fallback `/release-notes.json`
 >   `200`. Android v1.26 (Play Store) lê os docs do Firestore.
-> - ⬜ **iOS** não publicado: `release-notes/ios/1.6.0.md` tem `published: false`
->   (app iOS é **pré-lançamento**, ainda não na App Store) — coleção sem doc iOS
->   por design. O empacotamento do `release-notes.json` no bundle do app iOS
->   (`iosApp` Xcode target — o `ReleaseNotesAssetReader` iOS lê via
->   `NSBundle.pathForResource`) fica como **follow-up próprio**: é mudança de
->   código/config iOS, exige PR + verificação de build iOS, e não bloqueia o
->   release das plataformas vivas (Android/Web). Sem ele, o iOS degrada para
->   Firestore-only — aceitável enquanto o app não é publicado.
+> - ✅ **iOS — `release-notes.json` empacotado no app bundle** (2026-05-22,
+>   follow-up da Fase H). `scripts/release-notes.js` (`BUNDLE_TARGETS.ios`) agora
+>   grava também em `iosApp/iosApp/release-notes.json`; o glob de `sources` do
+>   `project.yml` o adiciona à fase Copy Bundle Resources do target Xcode
+>   `iosApp`. **Verificado empiricamente:** o arquivo está dentro do `.app`
+>   compilado (`iosApp.app/release-notes.json`), de onde `ReleaseNotesAssetReader`
+>   (iosMain) o lê via `NSBundle.mainBundle`.
+> - ⬜ **iOS** não publicado no Firestore: `release-notes/ios/1.6.0.md` tem
+>   `published: false` (app iOS é **pré-lançamento**, ainda não na App Store) —
+>   coleção `release_notes` sem doc iOS por design.
+> - ⚠️ **Smoke iOS — parcial.** Build do `iosApp` OK e recurso confirmado no
+>   `.app`; o smoke run-time (abrir a tela "Novidades" no Simulator) não foi
+>   concluído: o ambiente de smoke não tem `GoogleService-Info.plist`, então o
+>   `ReleaseNotesRepositoryImpl` toca o Firestore e `+[FIRFirestore firestore]`
+>   lança um `NSException` ObjC que o `try/catch` Kotlin/Native **não** captura.
+>   O fix `by lazy` (parte deste PR) move o toque do Firebase do construtor para
+>   o 1º uso — **não é regressão** (o crash já existia antes, no construtor) e
+>   **não afeta produção** (build de produção tem o plist → `FirebaseApp.configure()`).
+>   A robustez "degrada graciosamente quando o Firebase não está configurado"
+>   virou **follow-up de hardening próprio** (guarda `expect/actual
+>   isFirebaseAvailable()` + os outros 5 inicializadores Firebase eager no
+>   `shared`).
 
 **Total estimado:** ~71h (sugerido entregar em ~6 PRs por fase/domínio — ver §6).
 
@@ -557,7 +571,7 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 | Unit Web (`useReleaseNotes`, SemVer TS) | Vitest | ✅ 20 testes (`semver` + `useReleaseNotes`) |
 | Unit Node (`release-notes.js`) | validate rejeita frontmatter inválido; changelog determinístico | ✅ `scripts/release-notes.test.js` (19 testes, `node:test`) |
 | Firestore Rules | leitura autenticada OK; escrita cliente negada | ✅ `release-notes.test.ts` (suíte 372/372) |
-| UI smoke | Pop-up aparece 1x pós-update e não repete; Android + Web + iOS | 🟡 lógica coberta por unit tests; smoke live cross-platform → #26 |
+| UI smoke | Pop-up aparece 1x pós-update e não repete; Android + Web + iOS | 🟡 Android/Web validados live (#26); iOS: build + recurso no `.app` ✅, smoke run-time parcial (ambiente sem `GoogleService-Info.plist` → follow-up de hardening) |
 
 > **§5.1 — todas as suítes verdes (2026-05-22).** `composeApp` (UI iOS) não tem
 > teste de `WhatsNewViewModel` próprio: a lógica é idêntica à do `:app` (já
@@ -573,7 +587,7 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 - [~] Testado em light/dark theme — verificação de código (zero cores hardcoded); validação visual live → #26.
 - [~] Testado em phone/tablet/desktop — validação visual live → #26.
 - [x] Pop-up aparece **uma vez** após update e não reaparece no boot seguinte (lógica coberta por `GetUnseenReleaseNotesUseCaseTest` + `WhatsNewViewModelTest`; smoke do ciclo de boot → #26).
-- [x] Funciona offline (fallback embarcado — `release-notes.json` no bundle de Android/Web; iOS empacotado em #26).
+- [x] Funciona offline (fallback embarcado — `release-notes.json` no bundle de Android/Web; iOS empacotado no app bundle e verificado dentro do `.app` — #26).
 - [~] Strings em `strings.xml` / i18n da Web (sem hardcode) — `:app` usa `strings.xml`, Web usa i18n; `composeApp` (UI iOS) tem strings PT-BR hardcoded por convenção do módulo (ver DECISIONS.md 2026-05-22).
 - [x] Sem cores hardcoded (grep verificado em `:app`, `composeApp` e `web`).
 - [~] Analytics implementado — Android (`WhatsNewViewModel`) e Web (`WhatsNewPage`/`WhatsNewDialog`); `composeApp`/iOS sem analytics (port enxuto).
