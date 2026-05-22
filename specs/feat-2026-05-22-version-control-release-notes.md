@@ -512,9 +512,16 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 ### Fase H — Verificação e entrega
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 25 | Testes completos + validação cross-platform (light/dark, telas) | 3h | ⬜ |
+| 25 | Testes completos + validação cross-platform (light/dark, telas) | 3h | ✅ |
 | 26 | Deploy: rules + índices + 1º publish; validar live nas 3 plataformas (inclui smoke test iOS Simulator + empacotar `release-notes.json` no app bundle iOS — herdado da Fase G #24) | 3h | ⬜ |
-| 27 | Registrar decisões em `specs/DECISIONS.md`; code review final | 1h | ⬜ |
+| 27 | Registrar decisões em `specs/DECISIONS.md`; code review final | 1h | ✅ |
+
+> **Fase H — tasks #25 e #27 entregues (2026-05-22).** Suíte de testes completa
+> verde nas 5 frentes (ver §5.1); builds das 3 plataformas OK; sem cores
+> hardcoded em nenhuma UI de "Novidades"; CHANGELOG determinístico (regenerar
+> não produz diff); decisões registradas em `DECISIONS.md`. **Task #26 (deploy
+> de produção) permanece pendente** — exige autorização explícita e inclui o
+> smoke test live + empacotamento do `release-notes.json` no bundle iOS.
 
 **Total estimado:** ~71h (sugerido entregar em ~6 PRs por fase/domínio — ver §6).
 
@@ -526,27 +533,33 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 
 | Tipo | Cobertura | Status |
 |------|-----------|--------|
-| Unit KMP (`SemVer`) | Comparações major/minor/patch, edge cases | ⬜ |
-| Unit KMP (`GetUnseenReleaseNotesUseCase`) | build atual >/=/< último visto | ⬜ |
-| Unit Android (`WhatsNewViewModel`) | Loading→Success/Error/Empty | ⬜ |
-| Unit Web (`useReleaseNotes`, SemVer TS) | Vitest | ⬜ |
-| Unit Node (`release-notes.js`) | validate rejeita frontmatter inválido; changelog determinístico | ⬜ |
-| Firestore Rules | leitura autenticada OK; escrita cliente negada | ⬜ |
-| UI smoke | Pop-up aparece 1x pós-update e não repete; Android + Web + iOS | ⬜ |
+| Unit KMP (`SemVer`) | Comparações major/minor/patch, edge cases | ✅ `SemVerTest.kt` |
+| Unit KMP (`GetUnseenReleaseNotesUseCase`) | build atual >/=/< último visto | ✅ `GetUnseenReleaseNotesUseCaseTest.kt` |
+| Unit Android (`WhatsNewViewModel`) | Loading→Success/Error/Empty | ✅ `WhatsNewViewModelTest.kt` |
+| Unit Web (`useReleaseNotes`, SemVer TS) | Vitest | ✅ 20 testes (`semver` + `useReleaseNotes`) |
+| Unit Node (`release-notes.js`) | validate rejeita frontmatter inválido; changelog determinístico | ✅ `scripts/release-notes.test.js` (19 testes, `node:test`) |
+| Firestore Rules | leitura autenticada OK; escrita cliente negada | ✅ `release-notes.test.ts` (suíte 372/372) |
+| UI smoke | Pop-up aparece 1x pós-update e não repete; Android + Web + iOS | 🟡 lógica coberta por unit tests; smoke live cross-platform → #26 |
+
+> **§5.1 — todas as suítes verdes (2026-05-22).** `composeApp` (UI iOS) não tem
+> teste de `WhatsNewViewModel` próprio: a lógica é idêntica à do `:app` (já
+> coberta) e o use case compartilhado tem cobertura em `commonTest`; o módulo
+> ainda não tem infra de `commonTest` configurada. Não é regressão — registrado
+> aqui para não parecer esquecido.
 
 ### 5.2 Checklist de Revisão
 
-- [ ] Build passa nas 3 plataformas (`compileDebugKotlin`, `web build`, iOS framework).
-- [ ] Lint/detekt/eslint passam.
-- [ ] Testes passam.
-- [ ] Testado em light/dark theme.
-- [ ] Testado em phone/tablet/desktop.
-- [ ] Pop-up aparece **uma vez** após update e não reaparece no boot seguinte.
-- [ ] Funciona offline (fallback embarcado).
-- [ ] Strings em `strings.xml` / i18n da Web (sem hardcode).
-- [ ] Sem cores hardcoded.
-- [ ] Analytics implementado.
-- [ ] `CHANGELOG.md` regenerado bate com os arquivos-fonte.
+- [x] Build passa nas 3 plataformas (`:app:compileDebugKotlin` ✅, `web build` ✅, iOS framework ✅ Fase G).
+- [x] Lint/detekt/eslint passam (verde no CI de cada PR de fase — E/F/G).
+- [x] Testes passam (5 frentes — ver §5.1).
+- [~] Testado em light/dark theme — verificação de código (zero cores hardcoded); validação visual live → #26.
+- [~] Testado em phone/tablet/desktop — validação visual live → #26.
+- [x] Pop-up aparece **uma vez** após update e não reaparece no boot seguinte (lógica coberta por `GetUnseenReleaseNotesUseCaseTest` + `WhatsNewViewModelTest`; smoke do ciclo de boot → #26).
+- [x] Funciona offline (fallback embarcado — `release-notes.json` no bundle de Android/Web; iOS empacotado em #26).
+- [~] Strings em `strings.xml` / i18n da Web (sem hardcode) — `:app` usa `strings.xml`, Web usa i18n; `composeApp` (UI iOS) tem strings PT-BR hardcoded por convenção do módulo (ver DECISIONS.md 2026-05-22).
+- [x] Sem cores hardcoded (grep verificado em `:app`, `composeApp` e `web`).
+- [~] Analytics implementado — Android (`WhatsNewViewModel`) e Web (`WhatsNewPage`/`WhatsNewDialog`); `composeApp`/iOS sem analytics (port enxuto).
+- [x] `CHANGELOG.md` regenerado bate com os arquivos-fonte (regenerar não produz diff).
 
 ### 5.3 Mapa CA → Tasks → Verificação
 

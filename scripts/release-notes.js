@@ -526,4 +526,19 @@ function main() {
   }
 }
 
-main();
+// Roda o CLI apenas quando executado direto (`node scripts/release-notes.js`).
+// Sob `require()` (testes), apenas exporta as funcoes puras — ver release-notes.test.js.
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  parseScalar,
+  parseFrontmatter,
+  parseBody,
+  parseHighlight,
+  validateNote,
+  buildAutogen,
+  toClientNote,
+  compareVersionsDesc,
+};

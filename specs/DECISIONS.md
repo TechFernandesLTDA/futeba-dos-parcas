@@ -423,4 +423,65 @@ Reconciliado: "nunca auditado" → já houve #379/#974.
 
 ---
 
+## 2026-05-22 — Sistema de version control / release notes ("Novidades")
+
+**Contexto:** spec `feat-2026-05-22-version-control-release-notes.md` (APPROVED)
+— entregue em 8 fases (A–H), PRs #1517–#1522. Sistema unificado de
+versionamento, CHANGELOG, e tela/pop-up "Novidades" nas 3 plataformas
+(Android `:app`, Web React, iOS `composeApp`).
+
+**Decisões:**
+
+1. **Versionamento independente por plataforma.** Cada plataforma mantém sua
+   própria cadência e número de versão; `versions.json` na raiz é o registro
+   central. Não há tentativa de sincronizar Android × Web × iOS — o drift é
+   esperado e legítimo.
+
+2. **`release-notes/<plataforma>/<versão>.md` como fonte única.** Um único
+   arquivo-fonte (frontmatter YAML + corpo "Para o usuário" / "Técnico") gera os
+   três artefatos: bloco AUTOGEN do `CHANGELOG.md`, bundle de fallback embarcado
+   (`release-notes.json`) e o documento Firestore. Pipeline em
+   `scripts/release-notes.js` (`validate` / `changelog` / `bundle` / `publish`).
+
+3. **Canal dinâmico = Firestore + fallback embarcado.** A tela "Novidades" lê da
+   coleção `release_notes` do Firestore; se indisponível (offline / primeiro
+   boot), degrada para o `release-notes.json` empacotado no app. Sem Remote
+   Config e sem Cloud Function callable — a publicação é feita via
+   `firebase-admin` + service account no job `publish-release-notes` do
+   `release.yml`. `firestore.rules`: `read` para autenticados, `write` negada
+   para todos os clientes.
+
+4. **"Último build visto" persistido por dispositivo, não por usuário.** O
+   pop-up pós-update dispara comparando o build atual com o último build visto
+   gravado localmente (`LastSeenVersionStore` — Android `SharedPreferences`,
+   iOS `NSUserDefaults`). Não é sincronizado por conta — trocar de dispositivo
+   mostra o pop-up de novo, o que é o comportamento desejado.
+
+5. **Schema i18n-ready, entrega PT-BR only.** O campo `content` do documento
+   Firestore é chaveado por locale (`content["pt-BR"]`) desde o dia 1, mas só
+   PT-BR é populado. Adicionar um idioma no futuro não exige migração de schema.
+
+6. **UI iOS em `composeApp` com strings PT-BR hardcoded.** A UI de "Novidades"
+   para iOS vive em `composeApp` (Compose-MP), separada do `:app` Android — o
+   que mantém a convenção do projeto. As strings em `composeApp/commonMain` são
+   PT-BR hardcoded (espelham o `strings.xml` do `:app`): é a convenção de-facto
+   do módulo — zero arquivos de `composeApp/commonMain` usam `stringResource` /
+   `compose.components.resources`. Wirar i18n no `composeApp` é trabalho próprio,
+   fora do escopo desta spec.
+
+**Status:** ✅ **IMPLEMENTADO.** Fases A–G entregues e mergeadas; Fase H tasks
+#25 (testes/verificação) e #27 (esta decisão + code review) concluídas. Task #26
+(deploy de produção — rules/índices + 1º publish + smoke live nas 3 plataformas
++ empacotar `release-notes.json` no bundle iOS) **pendente de autorização**.
+
+**Rejeitado:** (a) Remote Config / Cloud Function callable para o canal dinâmico
+— Firestore + service account na CI é mais simples e sem custo de invocação.
+(b) Versão única cross-platform — as plataformas têm cadências de release
+genuinamente diferentes; forçar sincronia criaria versões "fantasma".
+
+**Relacionado:** `specs/feat-2026-05-22-version-control-release-notes.md`,
+PRs #1517–#1522.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
