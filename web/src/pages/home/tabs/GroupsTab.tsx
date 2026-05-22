@@ -52,7 +52,7 @@ export function GroupsTab() {
   }, [groups, debouncedSearch]);
 
   return (
-    <Box sx={{ pb: 8 }}>
+    <Box sx={{ pb: 8, maxWidth: { xs: '100%', lg: 1200 }, mx: 'auto' }}>
       {/* Barra de busca */}
       <Box sx={{ p: 2, pb: 0 }}>
         {/* Header com título + Criar (md+) */}

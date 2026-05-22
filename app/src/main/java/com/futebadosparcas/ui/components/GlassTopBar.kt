@@ -18,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -47,12 +48,14 @@ data class GlassConfig(
     val backgroundAlpha: Float = 0.7f,
     val borderAlpha: Float = 0.3f,
     val shadowElevation: Dp = 4.dp,
-    val gradientOverlay: Boolean = true
+    val gradientOverlay: Boolean = true,
+    val gradientColor: Color = Color.White
 )
 
 /**
  * Configuração para tema escuro.
  */
+@Deprecated("Usar rememberGlassConfig() que respeita ThemeMode do usuário")
 val DarkGlassConfig = GlassConfig(
     backgroundColor = Color.Black,
     contentColor = Color.White,
@@ -63,6 +66,7 @@ val DarkGlassConfig = GlassConfig(
 /**
  * Configuração para tema claro.
  */
+@Deprecated("Usar rememberGlassConfig() que respeita ThemeMode do usuário")
 val LightGlassConfig = GlassConfig(
     backgroundColor = Color.White,
     contentColor = Color.Black,
@@ -72,10 +76,22 @@ val LightGlassConfig = GlassConfig(
 
 /**
  * Retorna a configuração glass adequada ao tema atual.
+ * Usa MaterialTheme.colorScheme — respeita ThemeMode.LIGHT/DARK/SYSTEM configurado pelo usuário.
  */
 @Composable
 fun rememberGlassConfig(): GlassConfig {
-    return if (isSystemInDarkTheme()) DarkGlassConfig else LightGlassConfig
+    val colorScheme = MaterialTheme.colorScheme
+    return remember(colorScheme) {
+        val surface = colorScheme.surface
+        val isDark = (0.299f * surface.red + 0.587f * surface.green + 0.114f * surface.blue) < 0.5f
+        GlassConfig(
+            backgroundColor = colorScheme.surface,
+            contentColor = colorScheme.onSurface,
+            backgroundAlpha = if (isDark) 0.6f else 0.8f,
+            borderAlpha = if (isDark) 0.2f else 0.3f,
+            gradientColor = Color.White
+        )
+    }
 }
 
 // ==================== Main Composable ====================
@@ -89,7 +105,7 @@ fun GlassTopBar(
     modifier: Modifier = Modifier,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    glassConfig: GlassConfig = LightGlassConfig,
+    glassConfig: GlassConfig = rememberGlassConfig(),
     scrollOffset: Float = 0f  // 0-1, para ajustar opacidade com scroll
 ) {
     val adjustedAlpha = (glassConfig.backgroundAlpha + (scrollOffset * 0.2f))
@@ -120,7 +136,7 @@ fun GlassTopBar(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.1f),
+                                glassConfig.gradientColor.copy(alpha = 0.1f),
                                 Color.Transparent
                             )
                         )
@@ -183,7 +199,7 @@ fun GlassTopBarWithBack(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
-    glassConfig: GlassConfig = LightGlassConfig,
+    glassConfig: GlassConfig = rememberGlassConfig(),
     scrollOffset: Float = 0f
 ) {
     GlassTopBar(
@@ -217,7 +233,7 @@ fun CollapsingGlassTopBar(
     expandedTitle: String = title,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    glassConfig: GlassConfig = LightGlassConfig,
+    glassConfig: GlassConfig = rememberGlassConfig(),
     expandedHeight: Dp = 200.dp,
     collapsedHeight: Dp = 64.dp
 ) {
@@ -293,7 +309,7 @@ fun CollapsingGlassTopBar(
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    glassConfig: GlassConfig = LightGlassConfig,
+    glassConfig: GlassConfig = rememberGlassConfig(),
     content: @Composable () -> Unit
 ) {
     Box(
@@ -315,7 +331,7 @@ fun GlassCard(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.15f),
+                                glassConfig.gradientColor.copy(alpha = 0.15f),
                                 Color.Transparent
                             )
                         ),
