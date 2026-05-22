@@ -126,6 +126,10 @@ kotlin {
             // Coil 3 - Image Loading (Kotlin Multiplatform)
             implementation("io.coil-kt.coil3:coil:3.3.0")
             implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+
+            // kotlinx-datetime — formatação de datas na feature "Novidades" (Fase G).
+            // Mesma versão usada no :shared.
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
         }
 
         androidMain.dependencies {

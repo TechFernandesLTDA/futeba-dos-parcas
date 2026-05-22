@@ -1,5 +1,6 @@
 package com.futebadosparcas.compose
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -11,6 +12,8 @@ import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
 import com.futebadosparcas.ui.HomeScreen
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.ui.whatsnew.WhatsNewPopupHost
+import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
 import org.koin.compose.KoinApplication
 
 /**
@@ -41,7 +44,12 @@ fun App() {
 private fun AppContent() {
     FutebaTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            AppNavigation()
+            Box {
+                AppNavigation()
+                // Pop-up "Novidades" pós-update — overlay global, montado acima
+                // do NavHost. Não emite layout enquanto não há nota a exibir.
+                WhatsNewPopupHost()
+            }
         }
     }
 }
@@ -68,7 +76,14 @@ fun AppNavigation(
     ) {
         // Tela inicial — placeholder até o Bucket Core portar HomeScreen real do :app
         composable(AppRoutes.HOME) {
-            HomeScreen()
+            HomeScreen(
+                onOpenWhatsNew = { navController.navigate(AppRoutes.WHATS_NEW) },
+            )
+        }
+
+        // Tela "Novidades" — histórico de release notes (spec feat-2026-05-22, Fase G)
+        composable(AppRoutes.WHATS_NEW) {
+            WhatsNewScreen(onBack = { navController.popBackStack() })
         }
 
         // ─── Bucket Core (frota adiciona aqui) ────────────────────────────────
