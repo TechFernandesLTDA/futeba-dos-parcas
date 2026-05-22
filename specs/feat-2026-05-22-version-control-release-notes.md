@@ -487,14 +487,33 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 ### Fase G — UI iOS (`composeApp`)
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 23 | `WhatsNewScreen` + pop-up em `composeApp` (Compose-MP), consumindo o use case compartilhado | 4h | ⬜ |
-| 24 | Wire no app iOS + smoke test no iOS Simulator | 2h | ⬜ |
+| 23 | `WhatsNewScreen` + pop-up em `composeApp` (Compose-MP), consumindo o use case compartilhado | 4h | ✅ |
+| 24 | Wire no app iOS + smoke test no iOS Simulator | 2h | 🟡 |
+
+> **Fase G entregue (2026-05-22) — PR #1522.** `WhatsNewScreen` + `WhatsNewBottomSheet`
+> + `WhatsNewPopupHost` + `WhatsNewViewModel` em `composeApp/commonMain/.../ui/whatsnew/`,
+> consumindo `GetUnseenReleaseNotesUseCase` (real no iOS). Wiring `expect/actual` da DI por
+> plataforma (`releaseNotesModule()`): iOS = fiação real (Firestore + fallback do bundle);
+> Android/wasmJs = stub (targets só de build — o app Android real é `:app`, Fase E).
+> Rota `WHATS_NEW` no NavHost, pop-up montado no boot (`AppContent`), entrada na `HomeScreen`.
+>
+> **Gate verificado:** `:composeApp:compileKotlinIosSimulatorArm64` ✅ +
+> `:composeApp:linkDebugFrameworkIosSimulatorArm64` ✅ + `:composeApp:compileDebugKotlinAndroid` ✅.
+> wasmJs não compila por limitação **pré-existente** do `:shared` (GitLive Firebase sem suporte
+> wasmJs — CMP Fase 0, target não-shipping); não é regressão da Fase G.
+>
+> **Task #24 — parcial (🟡):** wire no app iOS feito (o `iosApp` consome `MainViewController()`
+> do `composeApp`). O **smoke test live no iOS Simulator** + o **empacotamento do
+> `release-notes.json` como recurso do app bundle iOS** (hoje o fallback é um recurso CMP em
+> `composeResources/files/`, mas `ReleaseNotesAssetReader` iOS lê via `NSBundle.pathForResource`
+> — degrada para Firestore-only se ausente) ficam para a **Fase H, task #26**
+> ("validar live nas 3 plataformas").
 
 ### Fase H — Verificação e entrega
 | # | Task | Est. | Status |
 |---|------|------|--------|
 | 25 | Testes completos + validação cross-platform (light/dark, telas) | 3h | ⬜ |
-| 26 | Deploy: rules + índices + 1º publish; validar live nas 3 plataformas | 2h | ⬜ |
+| 26 | Deploy: rules + índices + 1º publish; validar live nas 3 plataformas (inclui smoke test iOS Simulator + empacotar `release-notes.json` no app bundle iOS — herdado da Fase G #24) | 3h | ⬜ |
 | 27 | Registrar decisões em `specs/DECISIONS.md`; code review final | 1h | ⬜ |
 
 **Total estimado:** ~71h (sugerido entregar em ~6 PRs por fase/domínio — ver §6).

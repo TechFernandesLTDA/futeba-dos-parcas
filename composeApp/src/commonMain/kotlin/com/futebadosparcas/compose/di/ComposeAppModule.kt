@@ -1,5 +1,6 @@
 package com.futebadosparcas.compose.di
 
+import com.futebadosparcas.ui.whatsnew.releaseNotesModule
 import org.koin.dsl.module
 
 /**
@@ -28,5 +29,10 @@ val composeAppModule = module {
     //   viewModel { GamesViewModel(get()) }
 }
 
-/** Lista de módulos Koin do composeApp para uso em startKoin / KoinApplication */
-val composeAppKoinModules = listOf(composeAppModule)
+/**
+ * Lista de módulos Koin do composeApp para uso em startKoin / KoinApplication.
+ *
+ * Inclui [releaseNotesModule] — fiação `expect/actual` por plataforma da feature
+ * "Novidades" (iOS real; Android/wasmJs stub). Spec feat-2026-05-22, Fase G.
+ */
+val composeAppKoinModules = listOf(composeAppModule, releaseNotesModule())

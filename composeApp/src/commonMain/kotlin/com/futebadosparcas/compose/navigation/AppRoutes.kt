@@ -13,6 +13,9 @@ object AppRoutes {
     /** Tela inicial — placeholder até o Bucket Core portar HomeScreen real */
     const val HOME = "home"
 
+    /** Tela "Novidades" — histórico de release notes (spec feat-2026-05-22, Fase G) */
+    const val WHATS_NEW = "whats_new"
+
     // ─── Bucket Core (a ser adicionado pela frota) ────────────────────────────
     // const val GAMES = "games"
     // const val GAME_DETAIL = "game/{gameId}"

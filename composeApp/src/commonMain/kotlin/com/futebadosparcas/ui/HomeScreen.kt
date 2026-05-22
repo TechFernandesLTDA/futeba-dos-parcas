@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,13 +12,24 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onOpenWhatsNew: () -> Unit = {},
+) {
     var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Futeba dos Parças - ${getPlatformName()}") },
+                actions = {
+                    // Entrada para a tela "Novidades" (spec feat-2026-05-22, Fase G).
+                    IconButton(onClick = onOpenWhatsNew) {
+                        Icon(
+                            imageVector = Icons.Default.NewReleases,
+                            contentDescription = "Novidades",
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
