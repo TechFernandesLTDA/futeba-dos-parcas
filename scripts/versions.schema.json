@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Futeba dos Parcas — registro central de versoes",
+  "description": "Schema de versions.json. Cada plataforma tem sua versao independente.",
+  "type": "object",
+  "required": ["android", "web", "ios", "functions"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "_comment": { "type": "string" },
+    "android": { "$ref": "#/definitions/platformWithBuild" },
+    "web": { "$ref": "#/definitions/platform" },
+    "ios": { "$ref": "#/definitions/platformWithBuild" },
+    "functions": { "$ref": "#/definitions/platform" }
+  },
+  "definitions": {
+    "platform": {
+      "type": "object",
+      "required": ["version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Versao semantica MAJOR.MINOR.PATCH"
+        },
+        "buildNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Numero de build monotonico (opcional para esta plataforma)"
+        }
+      }
+    },
+    "platformWithBuild": {
+      "type": "object",
+      "required": ["version", "buildNumber"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Versao semantica MAJOR.MINOR.PATCH"
+        },
+        "buildNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Numero de build monotonico (versionCode no Android, CFBundleVersion no iOS)"
+        }
+      }
+    }
+  }
+}
