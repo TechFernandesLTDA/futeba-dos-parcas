@@ -296,7 +296,12 @@
     "streakRecord_other": "Recorde: {{count}} jogos",
     "skillsByPosition": "Habilidades por Posição",
     "scaleLabel": "Escala: 0 a 5",
-    "signOutError": "Erro ao sair. Tente novamente."
+    "signOutError": "Erro ao sair. Tente novamente.",
+    "gate": {
+      "title": "Complete seu Perfil",
+      "message": "Para criar e participar de jogos, você precisa completar seu perfil com CPF e telefone.",
+      "action": "Completar Perfil"
+    }
   },
   "games": {
     "title": "Jogos",
@@ -542,6 +547,9 @@
     "createError": "Erro ao criar grupo. Tente novamente.",
     "onlyOwnersCanCreate": "Apenas Field Owners e Admins podem criar grupos.",
     "changePhotoAria": "Alterar foto do grupo",
+    "photoInvalidType": "Arquivo invalido. Selecione uma imagem JPEG, PNG ou WEBP.",
+    "photoTooLarge": "Imagem muito grande. Maximo: 2MB.",
+    "photoUploadError": "Falha ao enviar foto do grupo. Tente novamente.",
     "noRankingMembers": "Entre em um grupo para ver o ranking"
   },
   "schedule": {

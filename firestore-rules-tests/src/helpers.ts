@@ -58,6 +58,7 @@ export function asAdmin(testEnv: RulesTestEnvironment) {
     .authenticatedContext(UID_ADMIN, {
       role: "ADMIN",
       verified: true,
+      profileComplete: true,
     })
     .firestore();
 }
@@ -70,6 +71,7 @@ export function asFieldOwner(testEnv: RulesTestEnvironment) {
     .authenticatedContext(UID_FIELD_OWNER, {
       role: "FIELD_OWNER",
       verified: true,
+      profileComplete: true,
     })
     .firestore();
 }
@@ -83,6 +85,7 @@ export function asPlayerA(testEnv: RulesTestEnvironment) {
     .authenticatedContext(UID_PLAYER_A, {
       role: "PLAYER",
       verified: true,
+      profileComplete: true,
     })
     .firestore();
 }
@@ -95,6 +98,7 @@ export function asPlayerB(testEnv: RulesTestEnvironment) {
     .authenticatedContext(UID_PLAYER_B, {
       role: "PLAYER",
       verified: true,
+      profileComplete: true,
     })
     .firestore();
 }
@@ -107,6 +111,7 @@ export function asPlayerC(testEnv: RulesTestEnvironment) {
     .authenticatedContext(UID_PLAYER_C, {
       role: "PLAYER",
       verified: true,
+      profileComplete: true,
     })
     .firestore();
 }
@@ -117,7 +122,11 @@ export function asPlayerC(testEnv: RulesTestEnvironment) {
 export function asUser(
   testEnv: RulesTestEnvironment,
   uid: string,
-  claims: Record<string, unknown> = { role: "PLAYER", verified: true }
+  claims: Record<string, unknown> = {
+    role: "PLAYER",
+    verified: true,
+    profileComplete: true,
+  }
 ) {
   return testEnv.authenticatedContext(uid, claims).firestore();
 }

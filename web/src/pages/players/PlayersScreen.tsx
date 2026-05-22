@@ -184,7 +184,7 @@ export const PlayersScreen: React.FC = () => {
       });
 
       const memberRef = doc(db, 'groups', groupId, 'members', memberId);
-      batch.delete(memberRef);
+      batch.update(memberRef, { status: 'REMOVED' });
 
       const userGroupRef = doc(db, 'users', memberId, 'groups', groupId);
       batch.delete(userGroupRef);

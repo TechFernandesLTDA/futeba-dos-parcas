@@ -106,6 +106,20 @@ class CpfVerificationViewModel(
                     .getHttpsCallable("setUserVerified")
                     .call(emptyMap<String, Any?>())
                     .await()
+
+                // Recomputa claim profileComplete apos salvar CPF + phone.
+                // Spec: feat-2026-05-21-profile-complete-gate.md (#1485)
+                runCatching {
+                    com.google.firebase.functions.FirebaseFunctions
+                        .getInstance("southamerica-east1")
+                        .getHttpsCallable("recomputeMyProfileClaim")
+                        .call(emptyMap<String, Any?>())
+                        .await()
+                }.onFailure { e ->
+                    AppLogger.w("CpfVerification") {
+                        "recomputeMyProfileClaim failed (non-fatal): ${e.message}"
+                    }
+                }
             } catch (e: Exception) {
                 AppLogger.e("CpfVerification", "verifyCpf failed", e)
                 val msg = parseError(e)

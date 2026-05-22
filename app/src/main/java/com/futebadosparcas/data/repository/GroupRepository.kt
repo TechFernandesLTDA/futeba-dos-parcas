@@ -10,9 +10,13 @@ import com.futebadosparcas.data.model.GroupMemberStatus
 import com.futebadosparcas.data.model.GroupStatus
 import com.futebadosparcas.data.model.UserGroup
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.storage.FirebaseStorage
 import android.net.Uri
 import com.futebadosparcas.util.AppLogger
@@ -97,30 +101,22 @@ class GroupRepository constructor(
             val groupRef = groupsCollection.document()
             val groupId = groupRef.id
 
-            // Upload da foto se houver
-            var photoUrl: String? = null
-            if (photoUri != null) {
-                val uri = Uri.parse(photoUri)
-                val uploadResult = uploadGroupPhoto(groupId, uri)
-                photoUrl = uploadResult.getOrElse { return Result.failure(it) }
-            }
-
             val group = Group(
                 id = groupId,
                 name = name,
                 description = description,
                 ownerId = userId,
                 ownerName = userName,
-                photoUrl = photoUrl,
+                photoUrl = null,
                 membersCount = 1
             )
 
-            // Transação para criar grupo e adicionar owner como membro
+            // 1. Transação para criar grupo e adicionar owner como membro (sem foto)
             firestore.runTransaction { transaction ->
-                // 1. Criar grupo
+                // Criar grupo
                 transaction.set(groupRef, group)
 
-                // 2. Adicionar owner como membro
+                // Adicionar owner como membro
                 val memberRef = groupRef.collection("members").document(userId)
                 val member = GroupMember(
                     id = userId,
@@ -132,19 +128,38 @@ class GroupRepository constructor(
                 )
                 transaction.set(memberRef, member)
 
-                // 3. Adicionar referência no usuário
+                // Adicionar referência no usuário
                 val userGroupRef = usersCollection.document(userId)
                     .collection("groups").document(groupRef.id)
                 val userGroup = UserGroup(
                     id = groupRef.id,
                     groupId = groupRef.id,
                     groupName = name,
-                    groupPhoto = photoUrl,
+                    groupPhoto = null,
                     role = GroupMemberRole.OWNER.name,
-                    memberCount = 1
+                    memberCount = 1,
+                    groupStatus = GroupStatus.ACTIVE.name
                 )
                 transaction.set(userGroupRef, userGroup)
             }.await()
+
+            // 2. Upload da foto depois que o grupo já existe no Firestore
+            if (photoUri != null) {
+                val uri = Uri.parse(photoUri)
+                val uploadResult = uploadGroupPhoto(groupId, uri)
+                uploadResult.fold(
+                    onSuccess = { url ->
+                        groupsCollection.document(groupId)
+                            .update("photo_url", url).await()
+                        usersCollection.document(userId)
+                            .collection("groups").document(groupId)
+                            .update("group_photo", url).await()
+                    },
+                    onFailure = {
+                        AppLogger.w(TAG) { "Foto não subiu, grupo criado sem foto: ${it.message}" }
+                    }
+                )
+            }
 
             Result.success(group)
         } catch (e: Exception) {
@@ -167,6 +182,7 @@ class GroupRepository constructor(
                 .await()
 
             val groups = snapshot.toObjects(UserGroup::class.java)
+                .filter { it.groupStatus == GroupStatus.ACTIVE.name }
             Result.success(groups)
         } catch (e: Exception) {
             Result.failure(e)
@@ -195,7 +211,9 @@ class GroupRepository constructor(
                             close(error)
                             return@addSnapshotListener
                         }
-                        val groups = snapshot?.toObjects(UserGroup::class.java) ?: emptyList()
+                        val groups = snapshot?.toObjects(UserGroup::class.java)
+                            ?.filter { it.groupStatus == GroupStatus.ACTIVE.name }
+                            ?: emptyList()
                         trySend(groups)
                     }
             }
@@ -434,18 +452,20 @@ class GroupRepository constructor(
             val pageSize = 500L
             var lastDoc: com.google.firebase.firestore.DocumentSnapshot? = null
 
-            do {
-                var query = membersCollection.limit(pageSize)
+            while (true) {
+                var query: Query = membersCollection
+                    .orderBy(FieldPath.documentId())
+                    .limit(pageSize)
                 if (lastDoc != null) {
                     query = query.startAfter(lastDoc)
                 }
 
-                val membersSnapshot = query.get().await()
-                if (membersSnapshot.isEmpty) break
+                val snap = query.get().await()
+                if (snap.isEmpty) break
 
                 // Processar em batches de 400 operações
                 val batchSize = 400
-                val docs = membersSnapshot.documents
+                val docs = snap.documents
 
                 for (i in docs.indices step batchSize) {
                     val batch = firestore.batch()
@@ -467,10 +487,17 @@ class GroupRepository constructor(
                     batch.commit().await()
                 }
 
-                lastDoc = docs.lastOrNull()
-            } while (membersSnapshot.size() >= pageSize.toInt())
+                lastDoc = snap.documents.last()
+                if (snap.size() < pageSize) break
+            }
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -502,6 +529,12 @@ class GroupRepository constructor(
             }.await()
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -533,6 +566,12 @@ class GroupRepository constructor(
             }.await()
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -586,6 +625,12 @@ class GroupRepository constructor(
             // quando necessário (abordagem eventual consistency).
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -622,6 +667,12 @@ class GroupRepository constructor(
             }.await()
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -648,44 +699,79 @@ class GroupRepository constructor(
             )
             groupsCollection.document(groupId).update(updates).await()
 
+            // Propagar ARCHIVED para UserGroups de todos os membros (denormalizacao)
+            val membersCollection = groupsCollection.document(groupId).collection("members")
+            val pageSize = 500L
+            var lastDoc: com.google.firebase.firestore.DocumentSnapshot? = null
+
+            while (true) {
+                var query: Query = membersCollection
+                    .orderBy(FieldPath.documentId())
+                    .limit(pageSize)
+                if (lastDoc != null) {
+                    query = query.startAfter(lastDoc)
+                }
+
+                val snap = query.get().await()
+                if (snap.isEmpty) break
+
+                val batchSize = 400
+                val docs = snap.documents
+
+                for (i in docs.indices step batchSize) {
+                    val batch = firestore.batch()
+                    val chunk = docs.subList(i, minOf(i + batchSize, docs.size))
+
+                    chunk.forEach { memberDoc ->
+                        val memberId = memberDoc.getString("user_id") ?: return@forEach
+                        val userGroupRef = usersCollection.document(memberId)
+                            .collection("groups").document(groupId)
+                        batch.update(userGroupRef, "group_status", GroupStatus.ARCHIVED.name)
+                    }
+                    batch.commit().await()
+                }
+
+                lastDoc = snap.documents.last()
+                if (snap.size() < pageSize) break
+            }
+
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     /**
-     * Deleta o grupo (soft delete - apenas owner).
-     * Atualiza status para DELETED e marca deleted_at/deleted_by (P2 #40).
+     * Deleta o grupo via Cloud Function (soft delete com cascade - P2 #40).
      */
     suspend fun deleteGroup(groupId: String): Result<Unit> {
         return try {
             val userId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            // Verificar se é owner
-            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
-            if (role != GroupMemberRole.OWNER) {
-                return Result.failure(Exception("Apenas o dono pode deletar o grupo"))
-            }
+            // Chamar Cloud Function para cascade soft delete
+            // A CF faz: verificação de permissão, rate limiting, marcação do grupo + jogos
+            val functions = FirebaseFunctions.getInstance("southamerica-east1")
+            functions
+                .getHttpsCallable("softDeleteGroup")
+                .call(mapOf("groupId" to groupId))
+                .await()
 
-            // Soft delete do grupo com campos deleted_at e deleted_by (P2 #40)
-            val updates = mapOf(
-                "status" to GroupStatus.DELETED.name,
-                "updated_at" to FieldValue.serverTimestamp(),
-                "deleted_at" to FieldValue.serverTimestamp(),
-                "deleted_by" to userId
-            )
-            groupsCollection.document(groupId).update(updates).await()
-
-            // Remover referências de todos os membros com paginação
-            // Evita carregar todos na memória de uma vez em grupos grandes
+            // Remover referências denormalized de todos os membros (CF não trata isso)
             val membersCol = groupsCollection.document(groupId).collection("members")
             val deletePageSize = 500L
             var lastMemberDoc: com.google.firebase.firestore.DocumentSnapshot? = null
 
-            do {
-                var memberQuery = membersCol.limit(deletePageSize)
+            while (true) {
+                var memberQuery: Query = membersCol
+                    .orderBy(FieldPath.documentId())
+                    .limit(deletePageSize)
                 if (lastMemberDoc != null) {
                     memberQuery = memberQuery.startAfter(lastMemberDoc)
                 }
@@ -709,10 +795,23 @@ class GroupRepository constructor(
                 }
 
                 lastMemberDoc = docs.lastOrNull()
-            } while (membersPage.size() >= deletePageSize.toInt())
+                if (membersPage.size() < deletePageSize) break
+            }
 
             AppLogger.i(TAG) { "Grupo $groupId soft-deletado por $userId" }
             Result.success(Unit)
+        } catch (e: FirebaseFunctionsException) {
+            if (e.code == FirebaseFunctionsException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -732,7 +831,8 @@ class GroupRepository constructor(
     /**
      * Restaura um grupo soft-deletado ou arquivado (P2 #40).
      * Limpa deleted_at e deleted_by (se existirem) e restaura o status para ACTIVE.
-     * Funciona tanto para grupos soft-deletados quanto arquivados.
+     * Recria os documentos UserGroup (users/{m}/groups/{g}) para membros ativos,
+     * que foram removidos durante o soft delete.
      *
      * @param groupId ID do grupo a ser restaurado
      * @return Result<Unit>
@@ -748,6 +848,13 @@ class GroupRepository constructor(
                 return Result.failure(Exception("Apenas o dono pode restaurar o grupo"))
             }
 
+            // Ler dados do grupo para recriar os UserGroups
+            val groupDoc = groupsCollection.document(groupId).get().await()
+            val groupName = groupDoc.getString("name") ?: ""
+            val groupPhoto = groupDoc.getString("photo_url")
+            val memberCount = groupDoc.getLong("member_count")?.toInt() ?: 0
+
+            // Restaurar documento principal do grupo
             val updates = mapOf<String, Any>(
                 "deleted_at" to FieldValue.delete(),
                 "deleted_by" to FieldValue.delete(),
@@ -755,6 +862,50 @@ class GroupRepository constructor(
                 "updated_at" to FieldValue.serverTimestamp()
             )
             groupsCollection.document(groupId).update(updates).await()
+
+            // Recriar UserGroup subdocs para membros ativos (removidos pelo deleteGroup)
+            val membersCol = groupsCollection.document(groupId).collection("members")
+            val pageSize = 500L
+            var lastMemberDoc: com.google.firebase.firestore.DocumentSnapshot? = null
+
+            while (true) {
+                var memberQuery: Query = membersCol
+                    .whereEqualTo("status", GroupMemberStatus.ACTIVE.name)
+                    .orderBy(FieldPath.documentId())
+                    .limit(pageSize)
+                if (lastMemberDoc != null) {
+                    memberQuery = memberQuery.startAfter(lastMemberDoc)
+                }
+
+                val membersPage = memberQuery.get().await()
+                if (membersPage.isEmpty) break
+
+                val docs = membersPage.documents
+                for (i in docs.indices step 400) {
+                    val batch = firestore.batch()
+                    val chunk = docs.subList(i, minOf(i + 400, docs.size))
+
+                    chunk.forEach { memberDoc ->
+                        val memberId = memberDoc.getString("user_id") ?: return@forEach
+                        val userGroupRef = usersCollection.document(memberId)
+                            .collection("groups").document(groupId)
+
+                        val userGroupData = mapOf(
+                            "group_id" to groupId,
+                            "group_name" to groupName,
+                            "group_photo" to groupPhoto,
+                            "role" to (memberDoc.getString("role") ?: GroupMemberRole.MEMBER.name),
+                            "member_count" to memberCount,
+                            "joined_at" to FieldValue.serverTimestamp()
+                        )
+                        batch.set(userGroupRef, userGroupData)
+                    }
+                    batch.commit().await()
+                }
+
+                lastMemberDoc = docs.lastOrNull()
+                if (membersPage.size() < pageSize) break
+            }
 
             AppLogger.i(TAG) { "Grupo $groupId restaurado com sucesso" }
             Result.success(Unit)
@@ -853,6 +1004,12 @@ class GroupRepository constructor(
             }.await()
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -904,17 +1061,20 @@ class GroupRepository constructor(
             val allMemberIds = mutableListOf<String>()
             var lastDoc: com.google.firebase.firestore.DocumentSnapshot? = null
 
-            do {
-                var query = membersCol.limit(500)
+            while (true) {
+                var query: Query = membersCol
+                    .orderBy(FieldPath.documentId())
+                    .limit(500)
                 if (lastDoc != null) {
                     query = query.startAfter(lastDoc)
                 }
-                val snapshot = query.get().await()
-                if (snapshot.isEmpty) break
+                val snap = query.get().await()
+                if (snap.isEmpty) break
 
-                snapshot.documents.mapNotNullTo(allMemberIds) { it.getString("user_id") }
-                lastDoc = snapshot.documents.lastOrNull()
-            } while (snapshot.size() >= 500)
+                snap.documents.mapNotNullTo(allMemberIds) { it.getString("user_id") }
+                lastDoc = snap.documents.last()
+                if (snap.size() < 500) break
+            }
 
             val correctMemberCount = allMemberIds.size
 
@@ -1020,6 +1180,12 @@ class GroupRepository constructor(
             }.await()
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -1046,6 +1212,12 @@ class GroupRepository constructor(
             blockedRef.delete().await()
 
             Result.success(Unit)
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Result.failure(Exception("Você não tem permissão para esta ação"))
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

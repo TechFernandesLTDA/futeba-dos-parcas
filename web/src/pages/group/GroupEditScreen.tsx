@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,14 +12,18 @@ import {
   Switch,
   Alert,
   CircularProgress,
+  IconButton,
+  Avatar,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Save as SaveIcon,
+  PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
 import { FormScaffold } from '../../components/layout';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { doc, updateDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../services/firebase';
 import { useGroupDetail } from '../../hooks/useGroups';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -27,11 +31,16 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ShimmerLoading } from '../../components/common/GameCard';
 import { validateGroupForm } from '../../utils/groupValidation';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('GroupEditScreen');
 
+const GROUP_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
+const GROUP_PHOTO_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 export const GroupEditScreen: React.FC = () => {
   useDocumentTitle('Editar Grupo');
+  const { t } = useTranslation();
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { firebaseUser, user } = useAuth();
@@ -48,6 +57,10 @@ export const GroupEditScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Verificar permissão: apenas owner ou admin pode editar
   const uid = firebaseUser?.uid || user?.id;
@@ -80,29 +93,105 @@ export const GroupEditScreen: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const handlePhotoClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!GROUP_PHOTO_ACCEPTED_TYPES.includes(file.type)) {
+      showError(t('groups.photoInvalidType'));
+      return;
+    }
+
+    if (file.size > GROUP_PHOTO_MAX_BYTES) {
+      showError(t('groups.photoTooLarge'));
+      return;
+    }
+
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedFile(file);
+    setPreviewUrl(objectUrl);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleUploadPhoto = async (file: File): Promise<string> => {
+    const groupPhotoRef = storageRef(storage, `groups/${groupId}/logo.jpg`);
+    await uploadBytes(groupPhotoRef, file, { contentType: file.type });
+    return getDownloadURL(groupPhotoRef);
+  };
+
   const handleSubmit = async () => {
     if (!validate() || !groupId || !uid) return;
 
     setSaving(true);
     try {
+      let photoUrl: string | null = null;
+      if (selectedFile && groupId) {
+        setUploadingPhoto(true);
+        try {
+          photoUrl = await handleUploadPhoto(selectedFile);
+        } catch (uploadErr) {
+          logger.error('Erro ao fazer upload da foto:', uploadErr);
+          showError(t('groups.photoUploadError'));
+          setUploadingPhoto(false);
+          setSaving(false);
+          return;
+        }
+        setUploadingPhoto(false);
+      }
+
       // Atualizar documento principal do grupo
       const groupRef = doc(db, 'groups', groupId);
-      await updateDoc(groupRef, {
+      const updateData: Record<string, unknown> = {
         name: formData.name.trim(),
         description: formData.description.trim(),
         is_public: formData.isPublic,
         type: formData.isPublic ? 'PUBLIC' : 'PRIVATE',
         updated_at: serverTimestamp(),
-      });
+      };
+      if (photoUrl) {
+        updateData.photo_url = photoUrl;
+      }
+      await updateDoc(groupRef, updateData);
 
-      // Atualizar subcoleção users/{uid}/groups (denormalização, não-crítico)
+      // Broadcast denormalized data to ALL group members (non-critical)
       try {
-        const userGroupRef = doc(db, 'users', uid, 'groups', groupId);
-        await updateDoc(userGroupRef, {
-          group_name: formData.name.trim(),
-        });
+        const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
+        const memberIds = membersSnap.docs.map(d => d.id);
+
+        for (let i = 0; i < memberIds.length; i += 500) {
+          const batch = writeBatch(db);
+          const chunk = memberIds.slice(i, i + 500);
+
+          chunk.forEach(memberId => {
+            const memberGroupRef = doc(db, 'users', memberId, 'groups', groupId);
+            const memberUpdate: Record<string, unknown> = {
+              group_name: formData.name.trim(),
+            };
+            if (photoUrl) {
+              memberUpdate.group_photo = photoUrl;
+            }
+            batch.update(memberGroupRef, memberUpdate);
+          });
+
+          await batch.commit();
+        }
+
+        logger.info('Denormalização propagada', { groupId, memberCount: memberIds.length });
       } catch (subErr) {
-        logger.warn('Falha ao atualizar subcoleção do usuário (não-crítico):', subErr);
+        logger.warn('Falha ao propagar denormalização (não-crítico):', subErr);
       }
 
       logger.info('Grupo atualizado com sucesso', { groupId });
@@ -156,7 +245,8 @@ export const GroupEditScreen: React.FC = () => {
     group !== null &&
     (formData.name !== (group.name || '') ||
       formData.description !== (group.description || '') ||
-      formData.isPublic !== (group.isPublic || false));
+      formData.isPublic !== (group.isPublic || false) ||
+      !!selectedFile);
 
   return (
     <FormScaffold
@@ -170,6 +260,46 @@ export const GroupEditScreen: React.FC = () => {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ position: 'relative' }}>
+                  <input
+                    type="file"
+                    accept={GROUP_PHOTO_ACCEPTED_TYPES.join(',')}
+                    ref={fileInputRef}
+                    hidden
+                    aria-label={t('groups.changePhotoAria')}
+                    onChange={handleFileChange}
+                  />
+                  <Avatar
+                    src={previewUrl || group.photoUrl || undefined}
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      bgcolor: 'primary.main',
+                      fontSize: '2.5rem',
+                    }}
+                  >
+                    {formData.name.charAt(0).toUpperCase() || 'G'}
+                  </Avatar>
+                  <IconButton
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      bgcolor: 'background.paper',
+                      boxShadow: 1,
+                      '&:hover': { bgcolor: 'background.paper' },
+                    }}
+                    size="small"
+                    aria-label={t('groups.changePhotoAria')}
+                    onClick={handlePhotoClick}
+                    disabled={saving || uploadingPhoto}
+                  >
+                    {uploadingPhoto ? <CircularProgress size={20} /> : <CameraIcon />}
+                  </IconButton>
+                </Box>
+              </Box>
+
               <TextField
                 label="Nome do Grupo *"
                 value={formData.name}
@@ -218,16 +348,16 @@ export const GroupEditScreen: React.FC = () => {
                   variant="outlined"
                   onClick={() => navigate(closeDestination)}
                   fullWidth
-                  disabled={saving}
+                  disabled={saving || uploadingPhoto}
                 >
                   Cancelar
                 </Button>
                 <Button
                   variant="contained"
                   onClick={handleSubmit}
-                  disabled={saving}
+                  disabled={saving || uploadingPhoto}
                   fullWidth
-                  startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+                  startIcon={saving || uploadingPhoto ? <CircularProgress size={20} /> : <SaveIcon />}
                   aria-label="Salvar alterações do grupo"
                 >
                   Salvar

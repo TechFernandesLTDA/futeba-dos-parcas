@@ -14,8 +14,9 @@ import {
   writeBatch,
   documentId,
 } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { db } from '../services/firebase';
+import { db, storage } from '../services/firebase';
 import { Group, GroupMember, GroupRole, CashboxTransaction } from '../types/group';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -293,7 +294,10 @@ export function useCreateGroup() {
   const queryClient = useQueryClient();
 
   const createGroup = useCallback(
-    async (groupData: { name: string; description?: string; isPublic?: boolean }) => {
+    async (
+      groupData: { name: string; description?: string; isPublic?: boolean },
+      photoFile?: File | null
+    ) => {
       const uid = firebaseUser?.uid || user?.id;
       if (!uid) throw new Error('User not authenticated');
       setLoading(true);
@@ -306,10 +310,17 @@ export function useCreateGroup() {
         const memberRef = doc(collection(db, 'groups', groupRef.id, 'members'), uid);
         const displayName = firebaseUser?.displayName || user?.name || 'Dono';
 
+        let photoUrl: string | null = null;
+        if (photoFile) {
+          const groupPhotoRef = storageRef(storage, `groups/${groupRef.id}/logo.jpg`);
+          await uploadBytes(groupPhotoRef, photoFile, { contentType: photoFile.type });
+          photoUrl = await getDownloadURL(groupPhotoRef);
+        }
+
         const newGroup = {
           name: groupData.name,
           description: groupData.description || '',
-          photo_url: null,
+          photo_url: photoUrl,
           type: groupData.isPublic ? 'PUBLIC' : 'PRIVATE',
           is_public: groupData.isPublic || false,
           owner_id: uid,
@@ -339,7 +350,7 @@ export function useCreateGroup() {
         batch.set(userGroupRef, {
           group_id: groupRef.id,
           group_name: groupData.name,
-          group_photo: null,
+          group_photo: photoUrl,
           role: 'OWNER',
           member_count: 1,
           joined_at: serverTimestamp(),

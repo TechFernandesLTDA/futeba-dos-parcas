@@ -415,6 +415,10 @@ data class UserGroup(
     @set:PropertyName("member_count")
     var memberCount: Int = 0,
 
+    @get:PropertyName("group_status")
+    @set:PropertyName("group_status")
+    var groupStatus: String = GroupStatus.ACTIVE.name,
+
     @ServerTimestamp
     @get:PropertyName("joined_at")
     @set:PropertyName("joined_at")

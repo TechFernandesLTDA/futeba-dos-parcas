@@ -62,6 +62,11 @@ service cloud.firestore {
       return request.auth.uid;
     }
 
+    // Retorna o documento do usuario autenticado (evita repeticao de get() paths)
+    function getUser() {
+      return get(/databases/$(database)/documents/users/$(userId()));
+    }
+
     // Verifica se o usuario e o dono do documento
     function isOwner(ownerId) {
       return isAuthenticated() && userId() == ownerId;
@@ -166,6 +171,26 @@ service cloud.firestore {
       return isAuthenticated() && (
         request.auth.token.verified == true ||
         request.time < timestamp.date(2026, 6, 4)
+      );
+    }
+
+    // Profile Complete Gate: CPF + telefone obrigatorios para writes de criacao.
+    // Claim e a fonte autoritativa. Fallback em users/{uid} e temporario para
+    // rollout enquanto clientes antigos atualizam o token apos preencher perfil.
+    function hasProfileCompleteFallback() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(userId())) &&
+        getUser().data.phone != null &&
+        (
+          getUser().data.cpf != null ||
+          getUser().data.cpfVerifiedAt != null
+        );
+    }
+
+    function isProfileComplete() {
+      return isAuthenticated() && (
+        request.auth.token.profileComplete == true ||
+        hasProfileCompleteFallback()
       );
     }
 
@@ -493,13 +518,13 @@ service cloud.firestore {
                       (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
                       isAdmin());
 
-      // FASE 5 #448: criar jogo exige verified (com 30-day grace)
+      // Profile Complete Gate: criar jogo exige CPF + telefone completos.
       // SECFIX #422: rejeita criacao de jogo com data no passado
       // SECFIX #424: criar jogo em grupo exige ser membro daquele grupo
       // Qualquer usuario autenticado pode criar jogos
       // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
-      allow create: if isVerifiedOrGrace() &&
+      allow create: if isProfileComplete() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
                        // SECFIX #866: status inicial deve ser SCHEDULED para prevenir criação em estado inválido
                        request.resource.data.status == 'SCHEDULED' &&
@@ -1200,10 +1225,10 @@ service cloud.firestore {
         isAdmin() || isGroupActive(groupId)
       );
 
-      // FASE 5 #448: criar grupo exige verified (30-day grace)
+      // Profile Complete Gate: criar grupo exige CPF + telefone completos.
       // Validacoes na criacao de grupo
-      // #1018: admin nunca bloqueado por isVerifiedOrGrace()
-      allow create: if (isAdmin() || isVerifiedOrGrace()) &&
+      // Admin nao tem bypass do gate, mas pode criar para qualquer owner se completo.
+      allow create: if isProfileComplete() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
                        // Nome do grupo: 3-50 caracteres
                        isValidStringLength(request.resource.data.name, 3, 50) &&
@@ -1221,9 +1246,17 @@ service cloud.firestore {
         isAdmin() ||
         (
           (resource.data.owner_id == userId() || isGroupAdmin(groupId)) &&
-           // SECFIX #862: owner_id e created_at são imutáveis — previne privilege escalation
-          fieldUnchanged('owner_id') &&
+           // SECFIX #862: created_at é imutável — previne privilege escalation
+          // #1486: owner_id pode mudar SOMENTE pelo owner atual transferindo pra membro ACTIVE
           fieldUnchanged('created_at') &&
+          (
+            fieldUnchanged('owner_id') ||
+            (
+              resource.data.owner_id == userId() &&
+              exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)) &&
+              get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.status == 'ACTIVE'
+            )
+          ) &&
           // H2 FIX: member_count é SERVER-AUTHORITATIVE (Cloud Function onMemberWritten)
           // Cliente NUNCA pode escrever member_count — prevencao de privilege escalation
           fieldUnchanged('member_count') &&
@@ -1275,9 +1308,9 @@ service cloud.firestore {
         // sendo criado no MESMO batch tenha owner_id == userId.
         // Isto impede atacante de pre-criar member OWNER em groupId
         // previsivel/arbitrario sem owner do group ser o atacante.
-        allow create, update: if isAuthenticated() && (
-           isGroupAdmin(groupId) ||
-           (memberId == userId() && isGroupOwnerById(groupId)) ||
+        allow create: if isAuthenticated() && (
+           // Admin can create member docs but NOT with elevated roles (OWNER/ADMIN) — only owner can
+           (isGroupAdmin(groupId) && request.resource.data.role == 'MEMBER') ||
            (request.resource.data.role == 'OWNER' &&
             request.resource.data.user_id == userId() &&
             memberId == userId() &&
@@ -1285,6 +1318,15 @@ service cloud.firestore {
             getAfter(/databases/$(database)/documents/groups/$(groupId)) != null &&
             getAfter(/databases/$(database)/documents/groups/$(groupId)).data.owner_id == userId()) ||
            (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId() && memberId == userId())
+        );
+
+        // #1491: OWNER nao pode alterar o proprio status (sair do grupo).
+        // Deve transferir a propriedade antes. Mesmo guard do Android (LeaveGroupUseCase).
+        // Aplica tanto pra isGroupAdmin quanto isGroupOwnerById em self-update.
+        // #1496: Admin nao pode alterar o role de membros — somente o OWNER pode promover/rebaixar.
+        allow update: if isAuthenticated() && (
+           (isGroupAdmin(groupId) && (fieldUnchanged('role') || isGroupOwnerById(groupId)) && (memberId != userId() || resource.data.role != 'OWNER' || fieldUnchanged('status'))) ||
+           (memberId == userId() && isGroupOwnerById(groupId) && (resource.data.role != 'OWNER' || fieldUnchanged('status')))
         );
 
         allow delete: if isAuthenticated() && (
@@ -1325,8 +1367,10 @@ service cloud.firestore {
           // Grupo precisa ser publico e existir (#540)
           exists(/databases/$(database)/documents/groups/$(groupId)) &&
           get(/databases/$(database)/documents/groups/$(groupId)).data.is_public == true &&
-          // Nao pode ja ser membro
-          !exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
+          // Nao pode ja ser membro ativo, removido ou bloqueado
+          // #1488: checka status alem de existence — previne rejoin apos kick
+          (!exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId())) ||
+           get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId())).data.status == 'INACTIVE');
 
         // Update: owner/admin transiciona PENDING -> APPROVED|REJECTED
         allow update: if isAuthenticated() &&
@@ -1416,7 +1460,7 @@ service cloud.firestore {
                        request.resource.data.inviter_id == userId() &&
                        request.resource.data.used == false &&
                        request.resource.data.expires_at > request.time &&
-                       request.resource.data.expires_at < request.time + duration.time(30, "d") &&
+                        request.resource.data.expires_at < request.time + duration.value(30, "d") &&
                        isGroupAdminFor(request.resource.data.group_id);
 
       // Update: marcar como usado.

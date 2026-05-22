@@ -36,6 +36,9 @@ import {
   checkRateLimit,
 } from "../middleware/rate-limiter";
 import {
+  requireProfileComplete,
+} from "../middleware/require-profile-complete";
+import {
   MVP_VOTE_WINDOW_HOURS,
   XP_ACTIONS,
   LEVEL_TABLE,
@@ -117,17 +120,9 @@ export const submitMvpVote =
       consumeAppCheckToken: true,
     },
     async (request) => {
-      // ======================================
-      // 1. AUTENTICAÇÃO
-      // ======================================
-      if (!request.auth) {
-        throw new HttpsError(
-          "unauthenticated",
-          "Usuário não autenticado"
-        );
-      }
+      requireProfileComplete(request);
 
-      const voterId = request.auth.uid;
+      const voterId = request.auth!.uid;
 
       // ======================================
       // 1.5. RATE LIMITING (20 votos/min)
@@ -489,17 +484,9 @@ export const concludeMvpVoting =
       consumeAppCheckToken: true,
     },
     async (request) => {
-      // ======================================
-      // 1. AUTENTICAÇÃO E VALIDAÇÃO
-      // ======================================
-      if (!request.auth) {
-        throw new HttpsError(
-          "unauthenticated",
-          "Usuário não autenticado"
-        );
-      }
+      requireProfileComplete(request);
 
-      const userId = request.auth.uid;
+      const userId = request.auth!.uid;
 
       // ======================================
       // 1.5. RATE LIMITING (5 conclusões/min)

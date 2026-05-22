@@ -2002,6 +2002,8 @@ export {migrateGroupsInviteCodeToInvites}
 // Referência:
 //   specs/PERF_001_SECURITY_RULES_...md
 export * from "./auth/custom-claims";
+export * from "./auth/profile-complete-claim";
+export * from "./middleware/require-profile-complete";
 
 // ==========================================
 // Phone + CPF Verification (Anti-Bot)

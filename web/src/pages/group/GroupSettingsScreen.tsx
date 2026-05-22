@@ -91,14 +91,20 @@ export const GroupSettingsScreen: React.FC = () => {
   } = usePendingJoinRequests(isAdminOrOwner ? groupId : undefined);
   const [pendingActioningId, setPendingActioningId] = useState<string | null>(null);
 
-  // Sair do grupo: remover membro e subcoleção do usuário
+  // Sair do grupo: marcar membro como INACTIVE e remover subcoleção do usuário
   const handleLeaveGroup = async () => {
     if (!groupId || !uid) return;
+
+    if (isOwner) {
+      showError('O dono não pode sair do grupo. Transfira a propriedade primeiro.');
+      return;
+    }
+
     setActionLoading(true);
 
     try {
       const batch = writeBatch(db);
-      batch.delete(doc(db, 'groups', groupId, 'members', uid));
+      batch.update(doc(db, 'groups', groupId, 'members', uid), { status: 'INACTIVE' });
       batch.delete(doc(db, 'users', uid, 'groups', groupId));
       await batch.commit();
 
@@ -135,6 +141,10 @@ export const GroupSettingsScreen: React.FC = () => {
 
   const handlePromoteMember = async (memberId: string) => {
     if (!groupId) return;
+    if (!isOwner) {
+      showError('Apenas o dono pode promover administradores.');
+      return;
+    }
     setMemberMenuAnchor(null);
     try {
       const batch = writeBatch(db);
@@ -150,6 +160,10 @@ export const GroupSettingsScreen: React.FC = () => {
 
   const handleDemoteMember = async (memberId: string) => {
     if (!groupId) return;
+    if (!isOwner) {
+      showError('Apenas o dono pode rebaixar administradores.');
+      return;
+    }
     setMemberMenuAnchor(null);
     try {
       const batch = writeBatch(db);
@@ -168,7 +182,7 @@ export const GroupSettingsScreen: React.FC = () => {
     setKickLoading(true);
     try {
       const batch = writeBatch(db);
-      batch.delete(doc(db, 'groups', groupId, 'members', selectedMember.userId));
+      batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { status: 'REMOVED' });
       batch.delete(doc(db, 'users', selectedMember.userId, 'groups', groupId));
       await batch.commit();
       showSuccess(`${selectedMember.userName} foi removido do grupo.`);

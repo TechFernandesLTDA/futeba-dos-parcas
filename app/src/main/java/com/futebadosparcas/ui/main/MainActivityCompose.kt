@@ -309,56 +309,71 @@ private fun AntiBotGate(
         }
 
         is VerifiedState.Verified -> {
-            // Claim verified=true confirmado — fluxo normal do app.
-            if (showPermissionOnboarding) {
-                val scope = androidx.compose.runtime.rememberCoroutineScope()
-                OnboardingFlow(
-                    preferencesManager = preferencesManager,
-                    onComplete = onPermissionOnboardingComplete,
-                    onProfileSetup = { profileData ->
-                        scope.launch {
-                            runCatching {
-                                val uid = authRepository.getCurrentUserId() ?: return@runCatching
-                                if (profileData.name.isBlank() &&
-                                    profileData.nickname == null &&
-                                    profileData.preferredPosition == null &&
-                                    profileData.preferredFieldTypes.isEmpty()
-                                ) return@runCatching
-                                val fieldTypes = profileData.preferredFieldTypes.mapNotNull {
-                                    try {
-                                        com.futebadosparcas.domain.model.FieldType.valueOf(it)
-                                    } catch (_: Exception) {
-                                        null
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
+
+            // ProfileGate: verifica claim profileComplete apos gate anti-bot.
+            // Spec: feat-2026-05-21-profile-complete-gate.md (#1485 PR-D)
+            val profileComplete by authRepository.profileComplete.collectAsStateWithLifecycle()
+
+            LaunchedEffect(state) {
+                authRepository.checkProfileComplete()
+            }
+
+            com.futebadosparcas.ui.components.gate.ProfileGate(
+                isProfileComplete = profileComplete,
+                onRefreshProfileComplete = {
+                    scope.launch { authRepository.refreshProfileComplete() }
+                },
+            ) {
+                if (showPermissionOnboarding) {
+                    OnboardingFlow(
+                        preferencesManager = preferencesManager,
+                        onComplete = onPermissionOnboardingComplete,
+                        onProfileSetup = { profileData ->
+                            scope.launch {
+                                runCatching {
+                                    val uid = authRepository.getCurrentUserId() ?: return@runCatching
+                                    if (profileData.name.isBlank() &&
+                                        profileData.nickname == null &&
+                                        profileData.preferredPosition == null &&
+                                        profileData.preferredFieldTypes.isEmpty()
+                                    ) return@runCatching
+                                    val fieldTypes = profileData.preferredFieldTypes.mapNotNull {
+                                        try {
+                                            com.futebadosparcas.domain.model.FieldType.valueOf(it)
+                                        } catch (_: Exception) {
+                                            null
+                                        }
                                     }
+                                    val params = com.futebadosparcas.domain.usecase.user.UpdateProfileParams(
+                                        userId = uid,
+                                        name = profileData.name.takeIf { it.isNotBlank() },
+                                        nickname = profileData.nickname,
+                                        primaryPosition = profileData.preferredPosition,
+                                        preferredFieldTypes = fieldTypes.takeIf { it.isNotEmpty() },
+                                    )
+                                    updateProfileUseCase(params)
+                                    com.futebadosparcas.util.AppLogger.d("Onboarding") { "Perfil salvo com sucesso" }
+                                }.onFailure { e ->
+                                    com.futebadosparcas.util.AppLogger.e(
+                                        "Onboarding",
+                                        "Erro ao salvar perfil: ${e.message}",
+                                        e,
+                                    )
                                 }
-                                val params = com.futebadosparcas.domain.usecase.user.UpdateProfileParams(
-                                    userId = uid,
-                                    name = profileData.name.takeIf { it.isNotBlank() },
-                                    nickname = profileData.nickname,
-                                    primaryPosition = profileData.preferredPosition,
-                                    preferredFieldTypes = fieldTypes.takeIf { it.isNotEmpty() },
-                                )
-                                updateProfileUseCase(params)
-                                com.futebadosparcas.util.AppLogger.d("Onboarding") { "Perfil salvo com sucesso" }
-                            }.onFailure { e ->
-                                com.futebadosparcas.util.AppLogger.e(
-                                    "Onboarding",
-                                    "Erro ao salvar perfil: ${e.message}",
-                                    e,
-                                )
                             }
-                        }
-                    },
-                )
-            } else {
-                MainScreen(
-                    themeConfig = themeConfig,
-                    onThemeChange = onThemeChange,
-                    badgeAwarder = badgeAwarder,
-                    notificationRepository = notificationRepository,
-                    deepLinkTarget = deepLinkTarget,
-                    onDeepLinkConsumed = onDeepLinkConsumed,
-                )
+                        },
+                    )
+                } else {
+                    MainScreen(
+                        themeConfig = themeConfig,
+                        onThemeChange = onThemeChange,
+                        badgeAwarder = badgeAwarder,
+                        notificationRepository = notificationRepository,
+                        deepLinkTarget = deepLinkTarget,
+                        onDeepLinkConsumed = onDeepLinkConsumed,
+                    )
+                }
             }
         }
     }

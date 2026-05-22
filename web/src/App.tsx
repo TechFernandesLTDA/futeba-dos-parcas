@@ -17,6 +17,7 @@ import { AppLayout } from './components/layout';
 import { CommandPalette } from './components/search/CommandPalette';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
+import { ProfileGate } from './components/gate/ProfileGate';
 
 
 // Splash & Onboarding
@@ -352,6 +353,7 @@ function AppRoutes() {
   useScrollRestoration();
 
   return (
+    <ProfileGate>
     <Routes>
       {/* Splash & Onboarding */}
       {/* FIX #1024: /splash restrito a não-logados; usuário logado é redirecionado pelo PublicRoute */}
@@ -454,6 +456,7 @@ function AppRoutes() {
       {/* Fallback */}
       <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundScreen /></Suspense>} />
     </Routes>
+    </ProfileGate>
   );
 }
 

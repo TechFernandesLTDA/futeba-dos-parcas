@@ -18,6 +18,7 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {requireProfileComplete} from "../middleware/require-profile-complete";
 import {FUNCTION_REGION} from "../constants";
 
 const DEFAULT_RADIUS_METERS = 200;
@@ -64,11 +65,10 @@ export const checkInToGame = onCall(
     consumeAppCheckToken: true,
   },
   async (request) => {
+    requireProfileComplete(request);
+
     const {auth, data} = request;
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "Login obrigatorio");
-    }
-    const uid = auth.uid;
+    const uid = auth!.uid;
 
     // FIX #584/H12: rate limit pra prevenir GPS coordinate enumeration.
     // Antes: sem rate limit, atacante binary-searchearia coordenadas

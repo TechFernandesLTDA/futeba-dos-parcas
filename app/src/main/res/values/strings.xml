@@ -868,6 +868,11 @@ subir no ranking!</string>
     <!-- MVP Voting -->
     <string name="mvp_category_description">O melhor jogador da partida</string>
 
+    <!-- Profile Gate -->
+    <string name="profile_gate_title">Complete seu Perfil</string>
+    <string name="profile_gate_message">Para criar e participar de jogos, você precisa completar seu perfil com CPF e telefone.</string>
+    <string name="profile_gate_action">Completar Perfil</string>
+
     <!-- Biometric Auth -->
     <string name="biometric_subtitle">Use sua digital para entrar</string>
     <string name="biometric_negative_button">Usar Google</string>

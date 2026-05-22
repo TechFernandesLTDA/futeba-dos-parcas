@@ -148,15 +148,15 @@ process.env.CPF_SALT = "test_salt_minimum_16_chars_long_xyz";
 
 const ADMIN_AUTH = {
   uid: "admin-1",
-  token: {role: "ADMIN"},
+  token: {role: "ADMIN", profileComplete: true},
 };
 const FIELD_OWNER_AUTH = {
   uid: "fo-1",
-  token: {role: "FIELD_OWNER"},
+  token: {role: "FIELD_OWNER", profileComplete: true},
 };
 const PLAYER_AUTH = {
   uid: "player-1",
-  token: {role: "PLAYER"},
+  token: {role: "PLAYER", profileComplete: true},
 };
 
 // ==========================================
@@ -627,7 +627,7 @@ describe("checkInToGame - sem role gate (ownership da confirmation)", () => {
         auth: null,
         data: {gameId: "g1", lat: -23.5, lng: -46.6},
       })
-    ).rejects.toThrow(/Login obrigat/);
+    ).rejects.toThrow(/auth required/);
   });
 
   test("rejeita coordenadas invalidas (lat fora de range)", async () => {
