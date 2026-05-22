@@ -1,0 +1,49 @@
+{
+  "platform": "web",
+  "generatedAt": "2026-05-22T14:03:58.704Z",
+  "notes": [
+    {
+      "version": "1.26.0",
+      "buildNumber": null,
+      "releaseDate": "2026-05-22",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "App web mais polido, traduzido e com modo escuro impecável",
+      "highlights": [
+        {
+          "icon": "translate",
+          "title": "Tudo em português",
+          "description": "Telas que ainda tinham textos soltos agora estão totalmente traduzidas."
+        },
+        {
+          "icon": "dark_mode",
+          "title": "Modo escuro consistente",
+          "description": "Sombras, cores e contrastes ajustados em dezenas de telas."
+        },
+        {
+          "icon": "devices",
+          "title": "Visual responsivo",
+          "description": "Layouts que se adaptam melhor a celular, tablet e desktop."
+        }
+      ],
+      "added": [
+        "Tela \"Novidades\" para acompanhar o que muda a cada atualização."
+      ],
+      "improved": [
+        "Logo padronizada em splash, login, cadastro e recuperação de senha.",
+        "Jogo ao vivo com largura adequada no desktop e diálogos no tema escuro."
+      ],
+      "fixed": [
+        "Removidas mensagens de erro duplicadas (alerta + toast) em vários formulários.",
+        "Corrigidos contrastes e tokens de cor no modo escuro."
+      ],
+      "issueRefs": [
+        1465,
+        1479,
+        1421,
+        1420
+      ]
+    }
+  ]
+}

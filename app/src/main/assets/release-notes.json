@@ -1,0 +1,101 @@
+{
+  "platform": "android",
+  "generatedAt": "2026-05-22T14:03:58.702Z",
+  "notes": [
+    {
+      "version": "1.26.0",
+      "buildNumber": 50,
+      "releaseDate": "2026-05-22",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Visual mais consistente e modo escuro mais bonito",
+      "highlights": [
+        {
+          "icon": "palette",
+          "title": "Identidade visual unificada",
+          "description": "A logo do Futeba dos Parças agora aparece igual em todas as telas."
+        },
+        {
+          "icon": "dark_mode",
+          "title": "Modo escuro caprichado",
+          "description": "Telas e gráficos ajustados para ficarem nítidos no tema escuro."
+        }
+      ],
+      "added": [
+        "O histórico de busca agora fica salvo entre sessões.",
+        "Contadores de progresso na checklist de primeiros passos."
+      ],
+      "improved": [
+        "Resumo semanal com tema dinâmico e gradiente adaptado às suas cores.",
+        "Cabeçalho padronizado em mais telas, com navegação mais previsível.",
+        "Tela de Caixa do grupo mais estável."
+      ],
+      "fixed": [
+        "Corrigido o corte do destaque no resumo semanal.",
+        "Corrigido o contraste do perfil no modo escuro.",
+        "Corrigidos vazamentos de memória em telas de tempo real."
+      ],
+      "issueRefs": [
+        1405,
+        1410,
+        1402,
+        1403,
+        1404,
+        1406
+      ]
+    },
+    {
+      "version": "1.25.0",
+      "buildNumber": 49,
+      "releaseDate": "2026-05-17",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Boas-vindas renovadas para quem está começando",
+      "highlights": [
+        {
+          "icon": "celebration",
+          "title": "Tour de boas-vindas",
+          "description": "Um carrossel apresenta o app para novos jogadores."
+        },
+        {
+          "icon": "checklist",
+          "title": "Primeiros passos",
+          "description": "Uma checklist gamificada guia você nas primeiras ações."
+        }
+      ],
+      "added": [
+        "Carrossel de boas-vindas na primeira abertura.",
+        "Checklist de primeiros passos com recompensa de XP."
+      ],
+      "improved": [
+        "Verificação anti-bot (telefone + CPF) mais robusta logo após o login."
+      ],
+      "fixed": [
+        "Corrigida a verificação que podia ficar incompleta ao trocar de tela."
+      ],
+      "issueRefs": [
+        443,
+        1303,
+        1310
+      ]
+    },
+    {
+      "version": "1.24.0",
+      "buildNumber": 48,
+      "releaseDate": "2026-05-11",
+      "type": "minor",
+      "showPopup": false,
+      "published": true,
+      "headline": "Versão de manutenção",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Ajustes internos de estabilidade entre ondas de correção."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    }
+  ]
+}

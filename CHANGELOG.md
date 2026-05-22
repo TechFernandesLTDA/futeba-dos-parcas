@@ -5,6 +5,111 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+> O bloco entre os marcadores `AUTOGEN` abaixo é **gerado automaticamente** a
+> partir de `release-notes/<plataforma>/<versão>.md` por
+> `node scripts/release-notes.js changelog`. **Não edite esse bloco à mão** —
+> edite os arquivos-fonte. Versões anteriores à adoção do sistema (2026-05-22)
+> estão preservadas em "Histórico anterior", mais abaixo.
+
+<!-- AUTOGEN:START -->
+
+## Android
+
+### [1.26.0] - 2026-05-22
+
+#### Adicionado
+- Histórico de busca persistente e contadores na checklist de onboarding (#1413).
+
+#### Mudado
+- WeeklyRecap com tema dinâmico; GamificationColors consolidado (#1466).
+- 3 telas migradas para AppTopBar; 3 TODOs do GameDetailViewModel reconectados (#1414).
+- Logo padronizada entre Android e Web; contraste do perfil no dark mode (#1415).
+
+#### Corrigido
+- fontSize via MaterialTheme e overflow do hero no WeeklyRecap (#1480).
+- TacticalBoard no dark mode; persistência do histórico de busca (#1413).
+- Cashbox Android, getMyGroupsFlow, blockPlayer atômico e memory leaks.
+
+_Issues: #1405, #1410, #1402, #1403, #1404, #1406 · PRs: #1480, #1466, #1415, #1414, #1413_
+
+### [1.25.0] - 2026-05-17
+
+#### Adicionado
+- Onboarding moderno: welcome carousel + checklist gamificada, Fase 1 (#1295).
+
+#### Mudado
+- Gate anti-bot pós-login via VerificationGateViewModel (#1313).
+
+#### Corrigido
+- Saga de token refresh do CPF portada de web para Android (#1312).
+- Falhas de CI: badge helper, testes desatualizados, avisos do detekt (#1286).
+
+_Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
+
+### [1.24.0] - 2026-05-11
+
+#### Mudado
+- Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
+
+## Web
+
+### [1.26.0] - 2026-05-22
+
+#### Adicionado
+- Tela "Novidades" / release notes (spec feat-2026-05-22).
+
+#### Mudado
+- i18n, responsividade e dark mode em 14+ telas (#1465).
+- Logo padronizada em splash/login/register/forgot-password (#1417).
+
+#### Corrigido
+- LiveGameScreen com maxWidth no desktop e MuiDialog no tema escuro (#1479).
+- Erros duplicados Alert+Toast em EditProfile e no fluxo de CPF (#1421, #1420).
+
+_Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
+
+## iOS
+
+### [1.6.0] - 2026-05-22
+
+#### Adicionado
+- Fundação iOS: shared/iosMain e scaffold composeApp com navegação e Koin (#1294).
+- CMP Fase 3: 8 telas Core portadas para composeApp/commonMain (#1298).
+- Contrato AuthRepository com signIn/signUp; VMs de Login/Register conectadas (#1299).
+
+#### Mudado
+- Entrada com published false — o app iOS ainda não está disponível para usuários finais, então não vai ao Firestore.
+
+#### Corrigido
+- Geração dos 9 PNGs de AppIcon a partir do logo da marca (#1468).
+
+_Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
+
+## Cloud Functions
+
+### [1.0.0] - 2026-05-22
+
+#### Adicionado
+- Versão 1.0.0 definida como linha de base das Cloud Functions no versions.json.
+- Fundação de versionamento multi-plataforma (#1501).
+
+#### Corrigido
+- Atomicidade no temporal-overlap e get-then-set de season (#1478).
+- processXpIdempotent usa doc ID determinístico contra race condition (#1467).
+- Mocks de testes desatualizados restaurados (#1516).
+
+_Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
+
+<!-- AUTOGEN:END -->
+
+---
+
+## Histórico anterior
+
+> Conteúdo anterior à adoção do sistema de release notes (2026-05-22). Mantido
+> verbatim; **não** é regenerado pelo pipeline.
+
+<!-- LEGACY:START -->
 ## [1.22.0] - 2026-05-11
 
 ### Corrigido (mega audit wave 2026-05-10 — 14 PRs merged, 141 fixes, 219 issues fechadas)
@@ -313,43 +418,6 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Interface**: Melhorias na consistência visual do cabeçalho da "Liga" em relação às outras telas principais.
 - **Gamification**: Ajustes nas regras de segurança do Firestore para permitir que donos de jogos validem partidas e atualizem XP.
 
-## [Unreleased]
-
-### Adicionado
-- Componentes modernos UI/UX (Material 3):
-  - `ShimmerLoading.kt` - Skeleton loading states com animação shimmer
-  - `ErrorState.kt` - Estados de erro com retry e ícones ilustrativos (5 tipos)
-  - `EmptyState.kt` - Estados vazios com CTAs (7 variantes pré-configuradas)
-  - `LoadingButton.kt` - Botões com loading interno (6 variantes)
-  - `AdaptiveNavigation.kt` - Navegação responsiva (bottom bar/rail/drawer)
-  - `PullToRefreshContainer.kt` - Pull-to-refresh moderno Material 3
-- Spec completa com 30 melhorias de UI/UX (`specs/UI_UX_IMPROVEMENTS_30.md`)
-- Documentação consolidada para LLMs (`.claude/PROJECT_CONTEXT.md`)
-- `.gitattributes` para padronização de line endings cross-platform
-
-### Melhorado
-- README.md atualizado para versão 1.8.0
-- Documentação otimizada para Claude Code e outros LLMs
-
-### Removido
-- Arquivos temporários obsoletos (`build_errors*.txt`, `nul`)
-
-### Segurança
-- **PR #378**: Atualizações de dependências raiz (firebase-admin 10→13, jsonwebtoken, uuid, gaxios). Resolveu 12 alertas de segurança Dependabot (2 críticos, 1 alto, 9 moderados).
-- **PR #379**: Atualizações backend (firebase-admin 10→13, multer 1→2 com DoS fixes, typeorm 0.3.19→0.3.28, node-cron 3→4). Resolveu 15 alertas (5 críticos, 2 altos, 8 moderados; 9 restantes são false positives de npm audit).
-- **PR #380**: Resolução de dependências wasmJs via yarn overrides no build.gradle.kts. Resolveu 21 GHSAs de segurança.
-
-### Planejado
-- [ ] Aplicar componentes modernos em telas existentes (Fase 2)
-- [ ] Animações de transição e micro-interações (Fase 3)
-- [ ] Gráficos modernos com Vico Charts (Fase 3)
-- [ ] Onboarding interativo (Fase 4)
-- [ ] Check-in automático via geofence (v1.8.0)
-- [ ] App iOS completo (v2.0.0)
-- [ ] Widgets iOS (v2.1.0)
-- [ ] Modo offline completo
-- [ ] Sincronização multi-device
-
 ---
 
 ## Tipos de Mudanças
@@ -361,8 +429,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Corrigido** - Correção de bugs
 - **Segurança** - Vulnerabilidades corrigidas
 
----
-
 [1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/compare/v1.7.0...v1.7.2
 [1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases/tag/v1.6.0
+<!-- LEGACY:END -->
