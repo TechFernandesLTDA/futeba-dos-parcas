@@ -41,6 +41,7 @@ const NotificationsScreenLazy = lazy(() => import('../ranking/NotificationsScree
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { NotificationBell } from '../../components/common/NotificationBell';
 import { AppLogo } from '../../components/common/AppLogo';
+import { WhatsNewPopupHost } from '../../components/whatsnew/WhatsNewPopupHost';
 
 // Larguras dos navs adaptativos (Material 3 spec)
 const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
@@ -389,6 +390,9 @@ export function HomeScreen() {
         onClose={() => setShowNotifBanner(false)}
         sx={{ bottom: { xs: 80, md: 16 } }}
       />
+
+      {/* Pop-up automático "Novidades" — aparece 1x após atualização do app */}
+      <WhatsNewPopupHost />
     </Box>
   );
 }

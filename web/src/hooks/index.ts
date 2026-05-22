@@ -14,3 +14,4 @@ export * from './useNetworkStatus';
 export * from './useDocumentTitle';
 export * from './useFirestoreQuery';
 export * from './useJoinRequests';
+export * from './useReleaseNotes';

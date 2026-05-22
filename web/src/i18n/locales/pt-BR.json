@@ -679,5 +679,21 @@
     "noDataAvailable": "Nenhum dado disponível",
     "loadError": "Erro ao carregar recap semanal.",
     "retry": "Tentar novamente"
+  },
+  "whatsNew": {
+    "title": "Novidades",
+    "settingsTitle": "Novidades",
+    "settingsDesc": "Veja o que mudou nas últimas atualizações",
+    "emptyTitle": "Nenhuma novidade ainda",
+    "emptyDesc": "As notas de versão aparecerão aqui assim que houver uma atualização.",
+    "error": "Não foi possível carregar as novidades.",
+    "popupEyebrow": "Novidades da versão {{version}}",
+    "popupDismiss": "Entendi",
+    "sectionAdded": "Novidades",
+    "sectionImproved": "Melhorias",
+    "sectionFixed": "Correções",
+    "typeMajor": "Atualização principal",
+    "typeMinor": "Novidades",
+    "typePatch": "Correções"
   }
 }

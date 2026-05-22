@@ -674,5 +674,21 @@
     "noDataAvailable": "No hay datos disponibles",
     "loadError": "Error al cargar el resumen semanal.",
     "retry": "Reintentar"
+  },
+  "whatsNew": {
+    "title": "Novedades",
+    "settingsTitle": "Novedades",
+    "settingsDesc": "Mira qué cambió en las últimas actualizaciones",
+    "emptyTitle": "Aún no hay novedades",
+    "emptyDesc": "Las notas de versión aparecerán aquí cuando haya una actualización.",
+    "error": "No se pudieron cargar las novedades.",
+    "popupEyebrow": "Novedades de la versión {{version}}",
+    "popupDismiss": "Entendido",
+    "sectionAdded": "Novedades",
+    "sectionImproved": "Mejoras",
+    "sectionFixed": "Correcciones",
+    "typeMajor": "Actualización principal",
+    "typeMinor": "Novedades",
+    "typePatch": "Correcciones"
   }
 }

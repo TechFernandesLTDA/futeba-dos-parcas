@@ -679,5 +679,21 @@
     "noDataAvailable": "No data available",
     "loadError": "Failed to load weekly recap.",
     "retry": "Retry"
+  },
+  "whatsNew": {
+    "title": "What's New",
+    "settingsTitle": "What's New",
+    "settingsDesc": "See what changed in recent updates",
+    "emptyTitle": "Nothing new yet",
+    "emptyDesc": "Release notes will appear here once there is an update.",
+    "error": "Could not load what's new.",
+    "popupEyebrow": "What's new in version {{version}}",
+    "popupDismiss": "Got it",
+    "sectionAdded": "New",
+    "sectionImproved": "Improvements",
+    "sectionFixed": "Fixes",
+    "typeMajor": "Major update",
+    "typeMinor": "New features",
+    "typePatch": "Fixes"
   }
 }
