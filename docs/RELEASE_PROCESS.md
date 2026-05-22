@@ -92,27 +92,37 @@ Depois do merge em `master`, crie a tag `vX.Y.Z`. O push da tag dispara
 
 1. constrói o AAB/APK assinados;
 2. cria o GitHub Release;
-3. **(Fase C)** roda `release-notes.js validate`, `changelog`, `bundle` e
-   `publish --platform <p> --version <v>`, publicando no Firestore via Admin SDK
-   com a service account vinda de GitHub Secret.
+3. no job `publish-release-notes`, roda `release-notes.js validate` e
+   `publish --platform android --version <v>`, publicando a nota no Firestore
+   via Admin SDK com a service account do secret `PLAY_STORE_SERVICE_ACCOUNT_JSON`.
 
-> **Pendente (Fase C):** a integração do `publish` no `release.yml` e as
-> `firestore.rules`/índice da coleção `release_notes` ainda não foram entregues.
-> Até lá, a publicação no Firestore é manual (ver abaixo).
+O job de publish deriva a versão do nome da tag (`vX.Y.Z` → `X.Y.Z`) e assume
+plataforma `android` — `release.yml` dispara apenas em tags de release Android.
+Se `release-notes/android/<versão>.md` não existir, o job emite um *warning* e
+**pula** o publish (não falha o release). `changelog` e `bundle` **não** rodam
+aqui: os artefatos gerados já entraram no commit do release (passo 4).
+
+> **Permissões da service account.** O `publish` escreve em `release_notes` via
+> Admin SDK. Se o job falhar com `PERMISSION_DENIED`, garanta que a SA do secret
+> `PLAY_STORE_SERVICE_ACCOUNT_JSON` tem `roles/datastore.user` no projeto Firebase.
 
 ## Publicar no Firestore manualmente
 
-`publish` carrega `firebase-admin` sob demanda. Rode de um contexto que tenha a
-dependência (ex.: `functions/`) com credenciais de service account:
+Fallback caso a CI não tenha rodado o `publish`. O `package.json` da raiz já traz
+`firebase-admin` como dependência — instale e rode da raiz do repo com
+credenciais de service account:
 
 ```bash
+npm ci   # instala firebase-admin na raiz
 export GOOGLE_APPLICATION_CREDENTIALS=/caminho/para/service-account.json
-cd functions && node ../scripts/release-notes.js publish --platform android --version 1.27.0
+node scripts/release-notes.js publish --platform android --version 1.27.0
 ```
 
 - Doc id no Firestore: `<plataforma>_<versão>` (ex.: `android_1.27.0`).
 - `set(..., { merge: true })` — re-rodar é seguro (upsert idempotente).
 - Notas com `published: false` no frontmatter são **recusadas** pelo `publish`.
+- A coleção `release_notes` é read-only para clientes (escrita só via Admin SDK);
+  ver `firestore.rules` + índice composto `platform` ASC / `buildNumber` DESC.
 
 ## Notas e limitações conhecidas
 

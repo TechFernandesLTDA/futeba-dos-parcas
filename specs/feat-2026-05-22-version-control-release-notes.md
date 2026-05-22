@@ -457,8 +457,8 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 ### Fase C — Backend
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 9 | `firestore.rules` + índice composto para `release_notes` | 1h | ⬜ |
-| 10 | Integrar `release-notes.js publish` no `release.yml` (Admin SDK + SA secret) | 2h | ⬜ |
+| 9 | `firestore.rules` + índice composto para `release_notes` | 1h | ✅ |
+| 10 | Integrar `release-notes.js publish` no `release.yml` (Admin SDK + SA secret) | 2h | ✅ |
 
 ### Fase D — Camada compartilhada (KMP)
 | # | Task | Est. | Status |

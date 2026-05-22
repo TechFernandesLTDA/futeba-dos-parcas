@@ -159,3 +159,63 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-release-notes:
+    name: Publish Release Notes
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    needs: create-release
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Resolve version from tag
+        id: ver
+        # release.yml dispara em tags v*.*.* — que sao releases Android.
+        # A versao e o nome da tag sem o prefixo "v".
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Check release notes source file
+        id: notes
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          FILE="release-notes/android/${VERSION}.md"
+          if [ -f "$FILE" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "OK: $FILE encontrado"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::$FILE nao existe — pulando publish da nota no Firestore."
+          fi
+
+      - name: Install dependencies (firebase-admin)
+        if: steps.notes.outputs.exists == 'true'
+        env:
+          HUSKY: '0'
+        run: npm ci
+
+      - name: Write service account credentials
+        if: steps.notes.outputs.exists == 'true'
+        env:
+          # SA Firebase reaproveitada (mesmo secret do deploy Play Store).
+          # Requer roles/datastore.user para escrever em release_notes.
+          SA_JSON: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+        run: printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
+
+      - name: Validate and publish release notes
+        if: steps.notes.outputs.exists == 'true'
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          node scripts/release-notes.js validate
+          node scripts/release-notes.js publish --platform android --version "$VERSION"
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
