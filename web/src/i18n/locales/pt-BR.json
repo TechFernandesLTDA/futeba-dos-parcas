@@ -550,7 +550,29 @@
     "photoInvalidType": "Arquivo invalido. Selecione uma imagem JPEG, PNG ou WEBP.",
     "photoTooLarge": "Imagem muito grande. Maximo: 2MB.",
     "photoUploadError": "Falha ao enviar foto do grupo. Tente novamente.",
-    "noRankingMembers": "Entre em um grupo para ver o ranking"
+    "noRankingMembers": "Entre em um grupo para ver o ranking",
+    "search": {
+      "placeholder": "Buscar grupos...",
+      "clear": "Limpar busca",
+      "ariaLabel": "Buscar grupos"
+    },
+    "count": "{{count}} grupo",
+    "count_plural": "{{count}} grupos",
+    "noResults": "Nenhum grupo encontrado",
+    "noResultsSearch": "Nenhum grupo com essa busca",
+    "tryDifferentSearch": "Tente alterar o termo de busca",
+    "createOrJoin": "Crie ou entre em um grupo para começar!",
+    "clearSearch": "Limpar Busca",
+    "owner": "Dono",
+    "membersCount": "{{count}} membro",
+    "membersCount_plural": "{{count}} membros",
+    "gamesCount": "{{count}} jogo",
+    "gamesCount_plural": "{{count}} jogos",
+    "nextGame": "Próximo",
+    "publicGroupLabel": "Grupo público",
+    "privateGroupLabel": "Grupo privado",
+    "createNewGroup": "Criar novo grupo",
+    "retry": "Tentar novamente"
   },
   "schedule": {
     "title": "Horários",
