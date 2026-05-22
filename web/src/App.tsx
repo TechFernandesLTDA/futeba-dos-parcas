@@ -106,6 +106,7 @@ const GlobalSearchScreen = lazy(() => import('./pages/search/GlobalSearchScreen'
 
 // About & Admin
 const AboutScreen = lazy(() => import('./pages/about/AboutScreen').then(m => ({ default: m.AboutScreen })));
+const WhatsNewPage = lazy(() => import('./pages/whatsnew/WhatsNewPage').then(m => ({ default: m.WhatsNewPage })));
 const UserManagementScreen = lazy(() => import('./pages/admin/UserManagementScreen').then(m => ({ default: m.UserManagementScreen })));
 const DevToolsScreen = lazy(() => import('./pages/devtools/DevToolsScreen').then(m => ({ default: m.DevToolsScreen })));
 
@@ -434,6 +435,7 @@ function AppRoutes() {
         <Route path="/notifications" element={<Suspense fallback={<RouteFallback />}><NotificationsScreen /></Suspense>} />
         <Route path="/search" element={<Suspense fallback={<RouteFallback />}><GlobalSearchScreen /></Suspense>} />
         <Route path="/about" element={<Suspense fallback={<RouteFallback />}><AboutScreen /></Suspense>} />
+        <Route path="/whats-new" element={<Suspense fallback={<RouteFallback />}><WhatsNewPage /></Suspense>} />
         {/* Admin */}
         <Route path="/admin/users" element={<AdminRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></AdminRoute>} />
         <Route path="/dev" element={<AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute>} />

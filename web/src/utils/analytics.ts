@@ -51,6 +51,11 @@ interface AnalyticsEventMap {
   checklist_completed: { total_duration_ms: number };
   checklist_dismissed: { steps_done: number; steps_total: number };
   onboarding_reward_granted: { reward_type: string };
+
+  // Novidades / What's New (spec feat-2026-05-22-version-control-release-notes §3.7)
+  whats_new_popup_shown: { version: string; platform: string };
+  whats_new_opened: { source: string };
+  whats_new_dismissed: { version: string };
 }
 
 type EventName = keyof AnalyticsEventMap;

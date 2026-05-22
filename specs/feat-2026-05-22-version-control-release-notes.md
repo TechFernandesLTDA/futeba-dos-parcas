@@ -480,9 +480,9 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 ### Fase F — UI Web
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 20 | `useReleaseNotes` hook + service Firestore + SemVer TS + fallback JSON | 3h | ⬜ |
-| 21 | `WhatsNewDialog` + `WhatsNewPage` + entrada em Ajustes/Sobre | 4h | ⬜ |
-| 22 | Pop-up no boot + chaves i18n + testes Vitest | 2h | ⬜ |
+| 20 | `useReleaseNotes` hook + service Firestore + SemVer TS + fallback JSON | 3h | ✅ |
+| 21 | `WhatsNewDialog` + `WhatsNewPage` + entrada em Ajustes/Sobre | 4h | ✅ |
+| 22 | Pop-up no boot + chaves i18n + testes Vitest | 2h | ✅ |
 
 ### Fase G — UI iOS (`composeApp`)
 | # | Task | Est. | Status |

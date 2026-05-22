@@ -35,6 +35,7 @@ import {
   RateReview as FeedbackIcon,
   DeleteForever as DeleteForeverIcon,
   Notifications as NotificationsIcon,
+  NewReleases as NewReleasesIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -256,6 +257,13 @@ export const SettingsScreen: React.FC = () => {
                     <TrophyIcon />
                   </ListItemIcon>
                   <ListItemText primary={t('settings.gamification')} secondary={t('settings.gamificationDesc')} />
+                </ListItemButton>
+                <Divider />
+                <ListItemButton onClick={() => navigate('/whats-new')}>
+                  <ListItemIcon>
+                    <NewReleasesIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={t('whatsNew.settingsTitle')} secondary={t('whatsNew.settingsDesc')} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/about')}>
