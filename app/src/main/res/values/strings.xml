@@ -4110,4 +4110,15 @@ subir no ranking!</string>
     <!-- %1$.2f = valor numérico com 2 casas decimais (ex: 15,00) -->
     <string name="games_list_daily_price">R$ %1$.2f</string>
 
+    <!-- ==================== STATISTICS / EVOLUTION ==================== -->
+    <string name="stats_rating_elite">Elite</string>
+    <string name="stats_rating_good">Boa fase</string>
+    <string name="stats_rating_stable">Estável</string>
+    <string name="stats_rating_at_risk">Em risco</string>
+    <string name="stats_player_fallback">Jogador</string>
+
+    <!-- ==================== RANKING ==================== -->
+    <string name="ranking_error_not_authenticated">Usuário não autenticado</string>
+    <string name="ranking_error_load_user">Erro ao carregar usuário</string>
+
 </resources>

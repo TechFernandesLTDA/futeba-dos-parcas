@@ -45,6 +45,7 @@ import com.futebadosparcas.ui.settings.SettingsViewModel
 import com.futebadosparcas.ui.statistics.RankingViewModel
 import com.futebadosparcas.ui.statistics.StatisticsViewModel
 import com.futebadosparcas.ui.theme.ThemeViewModel
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -115,7 +116,8 @@ val viewModelKoinModule = module {
     viewModel {
         StatisticsViewModel(
             statisticsRepository = get(),
-            userRepository = get()
+            userRepository = get(),
+            context = androidContext()
         )
     }
 
@@ -127,7 +129,8 @@ val viewModelKoinModule = module {
             leagueService = get(),
             gamificationRepository = get(),
             auth = get(),
-            memoryCache = get()
+            memoryCache = get(),
+            context = androidContext()
         )
     }
 

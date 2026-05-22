@@ -449,16 +449,36 @@ object GameStatusColors {
  * Cores para eventos de partida ao vivo
  */
 object MatchEventColors {
-    // Backgrounds claros para eventos
-    val GoalBackground = Color(0xFFE8F5E9) // Verde claro
-    val SubstitutionBackground = Color(0xFFFFF3E0) // Laranja claro
-    val YellowCardBackground = Color(0xFFFFFDE7) // Amarelo claro
-    val RedCardBackground = Color(0xFFFFEBEE) // Vermelho claro
-    val FoulBackground = Color(0xFFF3E5F5) // Roxo claro
+    // Backgrounds claros para eventos (legacy — use MatchEventTheme para dark mode)
+    val GoalBackground = Color(0xFFE8F5E9)
+    val SubstitutionBackground = Color(0xFFFFF3E0)
+    val YellowCardBackground = Color(0xFFFFFDE7)
+    val RedCardBackground = Color(0xFFFFEBEE)
+    val FoulBackground = Color(0xFFF3E5F5)
 
-    // Cores de ícones/badges
-    val YellowCard = Color(0xFFFDD835) // Cartão amarelo
-    val RedCard = Color(0xFFE53935) // Cartão vermelho
+    val YellowCard = Color(0xFFFDD835)
+    val RedCard = Color(0xFFE53935)
+}
+
+/**
+ * Cores de eventos de partida adaptáveis ao tema (light/dark/OLED).
+ * Usa MaterialTheme.colorScheme.*Container para semântica cromática consistente.
+ */
+object MatchEventTheme {
+    @androidx.compose.runtime.Composable
+    fun backgroundFor(eventType: String): Color {
+        val cs = androidx.compose.material3.MaterialTheme.colorScheme
+        return when (eventType.lowercase()) {
+            "goal", "gol" -> cs.primaryContainer.copy(alpha = 0.55f)
+            "yellowcard", "yellow_card", "cartao_amarelo" -> cs.tertiaryContainer.copy(alpha = 0.55f)
+            "redcard", "red_card", "cartao_vermelho" -> cs.errorContainer.copy(alpha = 0.55f)
+            "substitution", "substituicao" -> cs.secondaryContainer.copy(alpha = 0.55f)
+            "foul", "falta" -> cs.surfaceVariant
+            "assist", "assistencia" -> cs.secondaryContainer.copy(alpha = 0.55f)
+            "save", "defesa" -> cs.secondaryContainer.copy(alpha = 0.55f)
+            else -> cs.surfaceContainerHigh
+        }
+    }
 }
 
 /**

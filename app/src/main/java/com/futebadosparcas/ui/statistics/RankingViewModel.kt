@@ -1,7 +1,9 @@
 package com.futebadosparcas.ui.statistics
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.domain.repository.StatisticsRepository
@@ -31,7 +33,8 @@ class RankingViewModel(
     private val leagueService: LeagueService,
     private val gamificationRepository: com.futebadosparcas.domain.repository.GamificationRepository,
     private val auth: FirebaseAuth,
-    private val memoryCache: MemoryCache
+    private val memoryCache: MemoryCache,
+    private val context: Context
 ) : ViewModel() {
 
     companion object {
@@ -187,7 +190,7 @@ class RankingViewModel(
 
             try {
                 val uid = currentUserId ?: run {
-                    _evolutionState.value = EvolutionUiState.Error("Usuario nao autenticado")
+                    _evolutionState.value = EvolutionUiState.Error(context.getString(R.string.ranking_error_not_authenticated))
                     return@launch
                 }
 
@@ -200,7 +203,7 @@ class RankingViewModel(
 
                 // Aguardar usuario (critico - falha se nao encontrar)
                 val user = userDeferred.await().getOrElse {
-                    _evolutionState.value = EvolutionUiState.Error("Erro ao carregar usuario")
+                    _evolutionState.value = EvolutionUiState.Error(context.getString(R.string.ranking_error_load_user))
                     return@launch
                 }
 

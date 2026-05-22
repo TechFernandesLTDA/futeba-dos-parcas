@@ -56,7 +56,7 @@ enum class FlameLevel(
     val particleCount: Int,
     val intensity: Float
 ) {
-    NONE(0, "Sem sequência", listOf(Color.Gray), 0, 0f),
+    NONE(0, "Iniciar sequência", listOf(Color.Gray), 0, 0f),
     WARMING(1, "Esquentando", GamificationColors.Level1, 3, 0.5f),
     HOT(4, "Em chamas", GamificationColors.Level2, 5, 0.7f),
     BURNING(7, "Pegando fogo", GamificationColors.Level3, 8, 0.85f),
@@ -150,12 +150,14 @@ fun StreakFlame(
 
 /**
  * Chama inativa (sem streak).
+ * Usa MaterialTheme.colorScheme para respeitar o tema do usuário (light/dark).
  */
 @Composable
 private fun InactiveFlame(
     modifier: Modifier = Modifier,
     size: Dp = 48.dp
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center
@@ -164,18 +166,18 @@ private fun InactiveFlame(
             val centerX = size.toPx() / 2
             val centerY = size.toPx() / 2
 
-            // Chama apagada (cinza)
+            // Chama apagada com cor do tema (subtle)
             val path = createFlamePath(centerX, centerY, size.toPx() * 0.4f, 0f)
             drawPath(
                 path = path,
-                color = Color.Gray.copy(alpha = 0.3f)
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
             )
         }
 
         Text(
             text = "0",
             style = MaterialTheme.typography.labelMedium,
-            color = Color.Gray
+            color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         )
     }
 }
@@ -304,7 +306,8 @@ fun StreakBadge(
                     colors = if (level != FlameLevel.NONE) {
                         level.colors.map { it.copy(alpha = 0.2f) }
                     } else {
-                        listOf(Color.Gray.copy(alpha = 0.1f), Color.Gray.copy(alpha = 0.1f))
+                        val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+                        listOf(subtle.copy(alpha = 0.08f), subtle.copy(alpha = 0.08f))
                     }
                 )
             )
