@@ -513,15 +513,33 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 | # | Task | Est. | Status |
 |---|------|------|--------|
 | 25 | Testes completos + validação cross-platform (light/dark, telas) | 3h | ✅ |
-| 26 | Deploy: rules + índices + 1º publish; validar live nas 3 plataformas (inclui smoke test iOS Simulator + empacotar `release-notes.json` no app bundle iOS — herdado da Fase G #24) | 3h | ⬜ |
+| 26 | Deploy: rules + índices + 1º publish; validar live nas 3 plataformas (inclui smoke test iOS Simulator + empacotar `release-notes.json` no app bundle iOS — herdado da Fase G #24) | 3h | 🟡 |
 | 27 | Registrar decisões em `specs/DECISIONS.md`; code review final | 1h | ✅ |
 
 > **Fase H — tasks #25 e #27 entregues (2026-05-22).** Suíte de testes completa
 > verde nas 5 frentes (ver §5.1); builds das 3 plataformas OK; sem cores
 > hardcoded em nenhuma UI de "Novidades"; CHANGELOG determinístico (regenerar
-> não produz diff); decisões registradas em `DECISIONS.md`. **Task #26 (deploy
-> de produção) permanece pendente** — exige autorização explícita e inclui o
-> smoke test live + empacotamento do `release-notes.json` no bundle iOS.
+> não produz diff); decisões registradas em `DECISIONS.md`.
+>
+> **Task #26 — parcial (🟡), deploy de produção feito em 2026-05-22** (autorizado
+> pelo PO):
+> - ✅ `firestore.rules` + `firestore.indexes.json` deployados em produção
+>   (`futebadosparcas`) — coleção `release_notes` (read autenticado / write
+>   negada) + índice composto `platform`+`buildNumber`.
+> - ✅ 1º publish: 4 documentos em `release_notes` via `scripts/release-notes.js
+>   publish` (Admin SDK) — `android_1.24.0`, `android_1.25.0`, `android_1.26.0`,
+>   `web_1.26.0`, todos `published: true`.
+> - ✅ Web hosting deployado (UI "Novidades" da Fase F agora live em
+>   `futebadosparcas.web.app`); smoke: site `200`, fallback `/release-notes.json`
+>   `200`. Android v1.26 (Play Store) lê os docs do Firestore.
+> - ⬜ **iOS** não publicado: `release-notes/ios/1.6.0.md` tem `published: false`
+>   (app iOS é **pré-lançamento**, ainda não na App Store) — coleção sem doc iOS
+>   por design. O empacotamento do `release-notes.json` no bundle do app iOS
+>   (`iosApp` Xcode target — o `ReleaseNotesAssetReader` iOS lê via
+>   `NSBundle.pathForResource`) fica como **follow-up próprio**: é mudança de
+>   código/config iOS, exige PR + verificação de build iOS, e não bloqueia o
+>   release das plataformas vivas (Android/Web). Sem ele, o iOS degrada para
+>   Firestore-only — aceitável enquanto o app não é publicado.
 
 **Total estimado:** ~71h (sugerido entregar em ~6 PRs por fase/domínio — ver §6).
 
