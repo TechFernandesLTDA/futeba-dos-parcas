@@ -463,11 +463,11 @@ não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como vi
 ### Fase D — Camada compartilhada (KMP)
 | # | Task | Est. | Status |
 |---|------|------|--------|
-| 11 | `ReleaseNote`, `ReleaseHighlight`, `ReleaseType` em `commonMain` | 1h | ⬜ |
-| 12 | `SemVer` comparador + testes em `commonTest` | 1h | ⬜ |
-| 13 | `ReleaseNotesRepository` interface + impl Android/iOS (Firestore + fallback) | 4h | ⬜ |
-| 14 | `LastSeenVersionStore` expect/actual (DataStore / UserDefaults) | 2h | ⬜ |
-| 15 | `GetUnseenReleaseNotesUseCase` + registro nos módulos Koin | 1h | ⬜ |
+| 11 | `ReleaseNote`, `ReleaseHighlight`, `ReleaseType` em `commonMain` | 1h | ✅ |
+| 12 | `SemVer` comparador + testes em `commonTest` | 1h | ✅ |
+| 13 | `ReleaseNotesRepository` interface + impl Android/iOS (Firestore + fallback) | 4h | ✅ |
+| 14 | `LastSeenVersionStore` expect/actual (SharedPreferences / NSUserDefaults) | 2h | ✅ |
+| 15 | `GetUnseenReleaseNotesUseCase` + registro nos módulos Koin | 1h | ✅ |
 
 ### Fase E — UI Android (`:app`)
 | # | Task | Est. | Status |

@@ -4,6 +4,7 @@ import com.futebadosparcas.domain.usecase.CalculateTeamBalanceUseCase
 import com.futebadosparcas.domain.usecase.ConfirmPresenceUseCase
 import com.futebadosparcas.domain.usecase.GetLeagueRankingUseCase
 import com.futebadosparcas.domain.usecase.GetPlayerStatisticsUseCase
+import com.futebadosparcas.domain.usecase.GetUnseenReleaseNotesUseCase
 import com.futebadosparcas.domain.usecase.GetUpcomingGamesUseCase
 import com.futebadosparcas.domain.usecase.ConfirmationUseCase
 import com.futebadosparcas.domain.usecase.livegame.AddGameEventUseCase
@@ -51,6 +52,9 @@ val useCaseKoinModule = module {
 
     // Notification use cases
     single<ObserveUnreadCountUseCase> { ObserveUnreadCountUseCase(get()) }
+
+    // Release notes / "Novidades" (spec feat-2026-05-22 — Fase D)
+    single<GetUnseenReleaseNotesUseCase> { GetUnseenReleaseNotesUseCase(get(), get()) }
 
     // Group use cases (todos têm @Inject constructor)
     single<CreateGroupUseCase> { CreateGroupUseCase(get()) }
