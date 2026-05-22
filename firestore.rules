@@ -2141,6 +2141,17 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: release_notes (notas de versao / "Novidades")
+    // ============================================
+    // Leitura: qualquer usuario autenticado consulta as notas no app.
+    // Escrita: somente via Admin SDK na CI (release.yml) — bloqueada nas rules.
+    // ============================================
+    match /release_notes/{noteId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ============================================
     // REGRA PADRAO: Negar tudo que nao foi explicitamente permitido
     // ============================================
     match /{document=**} {
