@@ -13,6 +13,20 @@ const mockQueryGet = jest.fn();
 const mockDocGet = jest.fn();
 const mockDocRef = { id: "next_season_ref" };
 
+// Mock de transação (FIX #1470: criação atômica da próxima season monthly).
+// transaction.get reusa mockDocGet — testes controlam "exists" via mockDocGet.
+const mockTransactionSet = jest.fn();
+const mockRunTransaction = jest.fn(
+  async (cb: (tx: unknown) => Promise<unknown>) => {
+    await cb({
+      get: mockDocGet,
+      set: mockTransactionSet,
+      update: jest.fn(),
+      delete: jest.fn(),
+    });
+  }
+);
+
 jest.mock("firebase-admin", () => {
   const mockFieldValue = {
     serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
@@ -34,6 +48,7 @@ jest.mock("firebase-admin", () => {
         set: mockBatchSet,
         commit: mockBatchCommit,
       })),
+      runTransaction: mockRunTransaction,
     })),
     initializeApp: jest.fn(),
   };
@@ -275,8 +290,8 @@ describe("checkSeasonEnd - encerramento de season expirada", () => {
 
     await checkSeasonEndHandler!();
 
-    // Deve ter criado a próxima season
-    expect(mockBatchSet).toHaveBeenCalledWith(
+    // Deve ter criado a próxima season via transaction.set (FIX #1470)
+    expect(mockTransactionSet).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         is_active: true,
@@ -306,8 +321,8 @@ describe("checkSeasonEnd - encerramento de season expirada", () => {
 
     await checkSeasonEndHandler!();
 
-    // Não deve ter tentado criar nova season via set com is_active
-    const setCallsWithNewSeason = (mockBatchSet.mock.calls as any[]).filter(
+    // Não deve ter tentado criar nova season via transaction.set (FIX #1470)
+    const setCallsWithNewSeason = (mockTransactionSet.mock.calls as any[]).filter(
       ([, data]) => data?.is_active === true && data?.type === "MONTHLY"
     );
     expect(setCallsWithNewSeason).toHaveLength(0);
@@ -380,8 +395,8 @@ describe("checkSeasonEnd - seasons não mensais", () => {
       expect.objectContaining({ is_active: false })
     );
 
-    // Mas não deve criar próxima season
-    const setCallsWithNewSeason = (mockBatchSet.mock.calls as any[]).filter(
+    // Mas não deve criar próxima season (transaction nem é chamada p/ não-mensal)
+    const setCallsWithNewSeason = (mockTransactionSet.mock.calls as any[]).filter(
       ([, data]) => data?.is_active === true
     );
     expect(setCallsWithNewSeason).toHaveLength(0);
