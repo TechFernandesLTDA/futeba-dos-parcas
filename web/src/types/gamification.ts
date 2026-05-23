@@ -177,9 +177,9 @@ export const DIVISION_CONFIG: Record<LeagueDivision, { label: string; color: str
   BRONZE: { label: 'Bronze', color: gamificationColors.bronze, minPoints: 0 },
   SILVER: { label: 'Prata', color: gamificationColors.silver, minPoints: 100 },
   GOLD: { label: 'Ouro', color: gamificationColors.gold, minPoints: 300 },
-  PLATINUM: { label: 'Platina', color: '#00E676', minPoints: 600 },
+  PLATINUM: { label: 'Platina', color: gamificationColors.platinum, minPoints: 600 },
   DIAMOND: { label: 'Diamante', color: gamificationColors.level, minPoints: 1000 },
-  CHAMPION: { label: 'Campeão', color: '#E91E63', minPoints: 2000 },
+  CHAMPION: { label: 'Campeão', color: gamificationColors.champion, minPoints: 2000 },
 };
 
 export interface BadgeDefinition {

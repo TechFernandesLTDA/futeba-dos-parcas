@@ -32,14 +32,30 @@ export const rarityColors: Record<string, string> = {
 };
 
 // Gamification colors
+// #1574: adicionados platinum e champion para centralizar cores de divisão
 export const gamificationColors = {
   gold: '#FFD700',
   silver: '#C0C0C0',
   bronze: '#CD7F32',
+  platinum: '#00E676',
+  champion: '#E91E63',
   xp: '#9C27B0',
   level: '#00BCD4',
   mvp: '#FFD700',
   streak: '#FF5722',
+};
+
+// #1554: variantes para dark mode — mesmas cores com maior saturação/brilho para
+// manter contraste adequado sobre fundos escuros (#0F172A / #1E293B)
+export const gamificationColorsDark = {
+  ...gamificationColors,
+  gold: '#FFE033',
+  silver: '#D4D4D4',
+  bronze: '#E8924A',
+  xp: '#CE93D8',
+  level: '#4DD0E1',
+  mvp: '#FFE033',
+  streak: '#FF7043',
 };
 
 export const futebaTheme = createTheme({
@@ -95,6 +111,18 @@ export const futebaTheme = createTheme({
   },
   shape: {
     borderRadius: 12,
+  },
+  // #1570: tokens de transição para animações consistentes entre telas
+  transitions: {
+    duration: {
+      shortest: 150,
+      shorter: 200,
+      short: 250,
+      standard: 300,
+      complex: 375,
+      enteringScreen: 225,
+      leavingScreen: 195,
+    },
   },
   components: {
     MuiButton: {
