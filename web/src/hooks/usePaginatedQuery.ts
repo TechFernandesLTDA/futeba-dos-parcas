@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   collection,
   query,
@@ -43,6 +43,11 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
   const lastDocRef = useRef<DocumentSnapshot | null>(null);
   const loadingRef = useRef(false);
 
+  // FIX #1595: useRef para whereClauses evita recriar fetchData quando o caller
+  // passa um array inline (nova referência a cada render)
+  const whereClausesRef = useRef(whereClauses);
+  useEffect(() => { whereClausesRef.current = whereClauses; }, [whereClauses]);
+
   const fetchData = useCallback(async (reset = false) => {
     if (loadingRef.current) return;
     
@@ -53,7 +58,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
     try {
       const constraints: QueryConstraint[] = [];
 
-      whereClauses.forEach(([field, op, value]) => {
+      whereClausesRef.current.forEach(([field, op, value]) => {
         // #1331: Firestore limita `in`/`not-in`/`array-contains-any` a 10
         // valores. Chunkar aqui (como sugeria a auditoria) é INCOMPATÍVEL
         // com este hook: ele é cursor-paginado (startAfter + limit) — N
@@ -113,7 +118,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [collectionName, pageSize, orderByField, orderDirection, whereClauses, showError]);
+  }, [collectionName, pageSize, orderByField, orderDirection, showError]);
 
   const loadMore = useCallback(() => {
     if (hasMore && !loading) {

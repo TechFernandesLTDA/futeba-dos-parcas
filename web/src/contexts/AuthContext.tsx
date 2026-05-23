@@ -10,7 +10,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
 import { User } from '../types';
@@ -21,6 +21,26 @@ import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
 
 const logger = createLogger('AuthContext');
+
+// FIX #1568: helper que aplica defaults defensivos antes dos casts "as User"
+// para evitar crashes downstream em campos undefined vindos do Firestore
+type FirestoreTimestamp = { toDate?: () => Date };
+function toDate(val: unknown): Date | undefined {
+  if (val && typeof val === 'object' && typeof (val as FirestoreTimestamp).toDate === 'function') {
+    return (val as FirestoreTimestamp).toDate!();
+  }
+  return undefined;
+}
+function normalizeUserData(converted: Record<string, unknown>, id: string, raw: Record<string, unknown>): User {
+  return {
+    ...converted,
+    id,
+    name: (converted.name as string) || 'Usuário',
+    level: typeof converted.level === 'number' ? converted.level : 1,
+    createdAt: toDate(raw.created_at) ?? toDate(raw.createdAt),
+    updatedAt: toDate(raw.updated_at) ?? toDate(raw.updatedAt),
+  } as User;
+}
 
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
@@ -85,13 +105,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      return {
-        id: userDoc.id,
-        ...converted,
-        ...piiData,
-        createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-        updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
-      } as User;
+      return normalizeUserData(
+        { ...converted, ...piiData },
+        userDoc.id,
+        raw,
+      );
     } catch (err) {
       logger.error('Error fetching user data:', err);
       setError('Erro ao carregar dados. Tente novamente.');
@@ -100,64 +118,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Create user document if doesn't exist
+  // FIX #1555: usa runTransaction para evitar race condition em logins simultâneos
+  // (duas abas podiam fazer getDoc+setDoc independentes para o mesmo uid)
   const createUserDocument = async (firebaseUser: FirebaseUser, additionalData?: Partial<User>) => {
     const userRef = doc(db, 'users', firebaseUser.uid);
-    const userSnap = await getDoc(userRef);
 
-    if (!userSnap.exists()) {
-      const { email, displayName, photoURL } = firebaseUser;
-      const userData = {
-        email: email || '',
-        name: displayName || 'Usuário',
-        nickname: '',
-        photo_url: photoURL || '',
-        role: 'PLAYER',
-        level: 1,
-        experience_points: 0,
-        striker_rating: 0,
-        mid_rating: 0,
-        defender_rating: 0,
-        gk_rating: 0,
-        preferred_position: null,
-        preferred_field_types: [],
-        total_games: 0,
-        total_goals: 0,
-        total_assists: 0,
-        total_wins: 0,
-        total_draws: 0,
-        total_losses: 0,
-        total_saves: 0,
-        mvp_count: 0,
-        yellow_cards: 0,
-        red_cards: 0,
-        current_streak: 0,
-        best_streak: 0,
-        is_searchable: true,
-        is_verified: false,
-        favorite_team: null,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-        ...additionalData,
-      };
+    try {
+      return await runTransaction(db, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
 
-      try {
-        await setDoc(userRef, userData);
-        return { id: firebaseUser.uid, ...snakeToCamel<Omit<User, 'id'>>(userData) } as User;
-      } catch (err) {
-        logger.error('Error creating user document:', err);
-        setError('Erro ao criar conta. Tente novamente.');
-        return null;
-      }
+        if (!userSnap.exists()) {
+          const { email, displayName, photoURL } = firebaseUser;
+          const userData = {
+            email: email || '',
+            name: displayName || 'Usuário',
+            nickname: '',
+            photo_url: photoURL || '',
+            role: 'PLAYER',
+            level: 1,
+            experience_points: 0,
+            striker_rating: 0,
+            mid_rating: 0,
+            defender_rating: 0,
+            gk_rating: 0,
+            preferred_position: null,
+            preferred_field_types: [],
+            total_games: 0,
+            total_goals: 0,
+            total_assists: 0,
+            total_wins: 0,
+            total_draws: 0,
+            total_losses: 0,
+            total_saves: 0,
+            mvp_count: 0,
+            yellow_cards: 0,
+            red_cards: 0,
+            current_streak: 0,
+            best_streak: 0,
+            is_searchable: true,
+            is_verified: false,
+            favorite_team: null,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+            ...additionalData,
+          };
+
+          transaction.set(userRef, userData);
+          const convertedNew = snakeToCamel<Omit<User, 'id'>>(userData) as Record<string, unknown>;
+          return normalizeUserData(convertedNew, firebaseUser.uid, userData as Record<string, unknown>);
+        }
+
+        const raw = userSnap.data();
+        const converted = snakeToCamel(raw) as Record<string, unknown>;
+        return normalizeUserData(converted, userSnap.id, raw);
+      });
+    } catch (err) {
+      logger.error('Error creating user document:', err);
+      setError('Erro ao criar conta. Tente novamente.');
+      return null;
     }
-
-    const raw = userSnap.data();
-    const converted = snakeToCamel(raw) as Record<string, unknown>;
-    return {
-      ...converted,
-      id: userSnap.id,
-      createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-      updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
-    } as User;
   };
 
   // Listen for auth state changes
@@ -318,11 +337,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Refresh user data
+  // FIX #1567: não wipa user=null em falha — mantém estado anterior e seta erro
   const refreshUser = useCallback(async () => {
     const currentUser = firebaseUserRef.current;
     if (!currentUser) return;
-    const userData = await fetchUserData(currentUser.uid, true);
-    setUser(userData);
+    try {
+      const userData = await fetchUserData(currentUser.uid, true);
+      if (userData) {
+        setUser(userData);
+        setError(null);
+      } else {
+        // fetchUserData retornou null sem lançar — provavelmente doc não existe
+        setError('Não foi possível atualizar seus dados. Verifique a conexão e tente novamente.');
+        // mantém usuário anterior para evitar wipe da UI
+      }
+    } catch (err) {
+      logger.error('Error refreshing user:', err);
+      setError('Erro ao atualizar dados. Tente novamente.');
+      // mantém usuário anterior — não chama setUser(null)
+    }
   }, []);
 
   // Força refresh do ID token para capturar custom claims atualizados
@@ -340,28 +373,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Update profile
+  // FIX #1561: rollback do Auth se Firestore falhar para evitar inconsistência
   const updateUserProfile = useCallback(async (profile: { displayName?: string; photoURL?: string }) => {
     const currentUser = firebaseUserRef.current;
     if (!currentUser || !user) return;
     setError(null);
     setUpdatingProfile(true);
+
+    // Salva estado original do Auth para rollback
+    const originalDisplayName = currentUser.displayName;
+    const originalPhotoURL = currentUser.photoURL;
+
     try {
+      // 1. Atualiza Auth primeiro
       await updateProfile(currentUser, profile);
-      const userRef = doc(db, 'users', user.id);
-      await updateDoc(userRef, {
-        name: profile.displayName || user.name,
-        photo_url: profile.photoURL || user.photoUrl,
-        updated_at: serverTimestamp(),
-      });
+
+      // 2. Atualiza Firestore — se falhar, faz rollback do Auth
+      try {
+        const userRef = doc(db, 'users', user.id);
+        await updateDoc(userRef, {
+          name: profile.displayName || user.name,
+          photo_url: profile.photoURL || user.photoUrl,
+          updated_at: serverTimestamp(),
+        });
+      } catch (firestoreErr) {
+        // Firestore falhou — tenta reverter Auth para consistência
+        logger.error('Firestore update falhou, revertendo Auth:', firestoreErr);
+        try {
+          await updateProfile(currentUser, {
+            displayName: originalDisplayName ?? undefined,
+            photoURL: originalPhotoURL ?? undefined,
+          });
+        } catch (rollbackErr) {
+          // Rollback também falhou — estado pode estar inconsistente
+          logger.error('Rollback do Auth falhou:', rollbackErr);
+          setError('Perfil pode estar inconsistente. Recarregue o app e tente novamente.');
+          throw firestoreErr;
+        }
+        setError((firestoreErr as Error).message || 'Erro ao atualizar perfil');
+        throw firestoreErr;
+      }
+
       await refreshUser();
     } catch (err) {
       logger.error('Error updating profile:', err);
-      setError((err as Error).message || 'Erro ao atualizar perfil');
+      if (!error) {
+        setError((err as Error).message || 'Erro ao atualizar perfil');
+      }
       throw err;
     } finally {
       setUpdatingProfile(false);
     }
-  }, [user, refreshUser]);
+  }, [user, refreshUser, error]);
 
   const value = useMemo<AuthContextType>(() => ({
     firebaseUser,
