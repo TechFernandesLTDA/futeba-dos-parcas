@@ -66,13 +66,20 @@ function loadModule() {
   return moduleExports;
 }
 
-function userWriteEvent(data: Record<string, unknown> | undefined) {
+function userWriteEvent(
+  after: Record<string, unknown> | undefined,
+  before?: Record<string, unknown> | undefined
+) {
   return {
     params: {uid: "user1"},
     data: {
+      before: {
+        exists: before !== undefined,
+        data: () => before,
+      },
       after: {
-        exists: data !== undefined,
-        data: () => data,
+        exists: after !== undefined,
+        data: () => after,
       },
     },
   };
@@ -86,16 +93,16 @@ describe("Profile Complete Claim", () => {
     mockGetUser.mockResolvedValue({customClaims: {}});
     mockDocGet.mockResolvedValue({
       exists: true,
-      data: () => ({cpf: validCpf, phone: validPhone}),
+      data: () => ({cpfVerifiedAt: {seconds: 1}, phone: validPhone}),
     });
     loadModule();
   });
 
-  test("computeProfileComplete valida CPF e telefone BR", () => {
+  test("computeProfileComplete valida cpfVerifiedAt e telefone BR", () => {
     const {computeProfileComplete} = loadModule();
 
     expect(computeProfileComplete({
-      cpf: validCpf,
+      cpfVerifiedAt: {seconds: 1},
       phone: validPhone,
     })).toBe(true);
     expect(computeProfileComplete({
@@ -103,8 +110,11 @@ describe("Profile Complete Claim", () => {
       phone: "(41) 99999-9999",
     })).toBe(true);
     expect(computeProfileComplete({
-      cpf: validCpf,
+      cpfVerifiedAt: {seconds: 1},
       phone: "+55 41 88888-8888",
+    })).toBe(false);
+    expect(computeProfileComplete({
+      phone: validPhone,
     })).toBe(false);
   });
 
@@ -113,10 +123,10 @@ describe("Profile Complete Claim", () => {
       customClaims: {role: "ADMIN"},
     });
 
-    await onUserProfileWrittenHandler!(userWriteEvent({
-      cpf: validCpf,
-      phone: validPhone,
-    }));
+    await onUserProfileWrittenHandler!(userWriteEvent(
+      {cpfVerifiedAt: {seconds: 1}, phone: validPhone},
+      {phone: validPhone}
+    ));
 
     expect(mockSetCustomUserClaims).toHaveBeenCalledWith("user1", {
       role: "ADMIN",
@@ -132,10 +142,10 @@ describe("Profile Complete Claim", () => {
       },
     });
 
-    await onUserProfileWrittenHandler!(userWriteEvent({
-      cpf: validCpf,
-      phone: "",
-    }));
+    await onUserProfileWrittenHandler!(userWriteEvent(
+      {cpfVerifiedAt: {seconds: 1}, phone: ""},
+      {cpfVerifiedAt: {seconds: 1}, phone: validPhone}
+    ));
 
     expect(mockSetCustomUserClaims).toHaveBeenCalledWith("user1", {
       role: "FIELD_OWNER",
@@ -151,11 +161,21 @@ describe("Profile Complete Claim", () => {
       },
     });
 
-    await onUserProfileWrittenHandler!(userWriteEvent({
-      cpf: validCpf,
-      phone: validPhone,
-    }));
+    await onUserProfileWrittenHandler!(userWriteEvent(
+      {cpfVerifiedAt: {seconds: 1}, phone: validPhone},
+      {cpfVerifiedAt: {seconds: 1}, phone: validPhone}
+    ));
 
+    expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  test("trigger pula quando campos relevantes nao mudam", async () => {
+    await onUserProfileWrittenHandler!(userWriteEvent(
+      {cpfVerifiedAt: {seconds: 1}, phone: validPhone, displayName: "New"},
+      {cpfVerifiedAt: {seconds: 1}, phone: validPhone, displayName: "Old"}
+    ));
+
+    expect(mockGetUser).not.toHaveBeenCalled();
     expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
   });
 
