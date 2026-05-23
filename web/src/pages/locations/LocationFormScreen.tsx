@@ -15,6 +15,7 @@ import {
   MenuItem,
   Stack,
 } from '@mui/material';
+import { MyLocation as GeoIcon } from '@mui/icons-material';
 import {
   doc,
   getDoc,
@@ -49,6 +50,8 @@ interface FormState {
   hasLighting: boolean;
   hasParking: boolean;
   hasShowers: boolean;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 const defaultForm: FormState = {
@@ -66,6 +69,8 @@ const defaultForm: FormState = {
   hasLighting: false,
   hasParking: false,
   hasShowers: false,
+  latitude: null,
+  longitude: null,
 };
 
 export const LocationFormScreen: React.FC = () => {
@@ -80,14 +85,12 @@ export const LocationFormScreen: React.FC = () => {
   useDocumentTitle(isEdit ? 'Editar Local' : 'Criar Local');
 
   const [form, setForm] = useState<FormState>(defaultForm);
-  // #1339: baseline para isDirty. Em criação = defaultForm; em edição é
-  // sobrescrito pelos dados carregados (senão isDirty fica sempre true e
-  // dispara prompt falso de "alterações não salvas").
   const [initialForm, setInitialForm] = useState<FormState>(defaultForm);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(isEdit);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [geoLoading, setGeoLoading] = useState(false);
 
   // Carrega dados existentes quando em modo edição
   useEffect(() => {
@@ -121,6 +124,8 @@ export const LocationFormScreen: React.FC = () => {
             hasLighting: !!data.hasLighting,
             hasParking: !!data.hasParking,
             hasShowers: !!data.hasShowers,
+            latitude: data.latitude ?? null,
+            longitude: data.longitude ?? null,
           };
           setForm(loaded);
           setInitialForm(loaded);
@@ -162,6 +167,31 @@ export const LocationFormScreen: React.FC = () => {
     return Object.keys(e).length === 0;
   };
 
+  const captureGeolocation = () => {
+    if (!navigator.geolocation) {
+      showError('Geolocalização não suportada pelo navegador.');
+      return;
+    }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((prev) => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }));
+        showSuccess('Coordenadas capturadas com sucesso!');
+        setGeoLoading(false);
+      },
+      (err) => {
+        logger.error('Erro ao capturar geolocalização:', err);
+        showError('Erro ao capturar localização. Verifique as permissões.');
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleChange = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
@@ -187,6 +217,8 @@ export const LocationFormScreen: React.FC = () => {
         has_lighting: form.hasLighting,
         has_parking: form.hasParking,
         has_showers: form.hasShowers,
+        latitude: form.latitude,
+        longitude: form.longitude,
         is_active: true,
         updated_at: serverTimestamp(),
         updated_by: user.id,
@@ -320,6 +352,19 @@ export const LocationFormScreen: React.FC = () => {
                     value={form.district}
                     onChange={(e) => handleChange('district', e.target.value)}
                   />
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      startIcon={geoLoading ? <CircularProgress size={16} /> : <GeoIcon />}
+                      onClick={captureGeolocation}
+                      disabled={geoLoading}
+                      fullWidth
+                    >
+                      {form.latitude && form.longitude
+                        ? `Coordenadas: ${form.latitude.toFixed(6)}, ${form.longitude.toFixed(6)}`
+                        : 'Capturar coordenadas (GPS)'}
+                    </Button>
+                  </Box>
                 </Stack>
               </CardContent>
             </Card>

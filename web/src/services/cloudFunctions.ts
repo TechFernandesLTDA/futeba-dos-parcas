@@ -31,3 +31,9 @@ export const softDeleteGame = httpsCallable(functions, 'softDeleteGame');
 export const softDeleteGroup = httpsCallable(functions, 'softDeleteGroup');
 export const restoreDeletedGame = httpsCallable(functions, 'restoreDeletedGame');
 export const restoreDeletedGroup = httpsCallable(functions, 'restoreDeletedGroup');
+
+// Check-in
+export const checkInToGame = httpsCallable<
+  { gameId: string; latitude: number; longitude: number },
+  { success: boolean; distanceMeters?: number }
+>(functions, 'checkInToGame');

@@ -71,6 +71,18 @@ class CreateGameViewModel(
 
     companion object {
         private const val TAG = "CreateGameViewModel"
+        private const val AUTO_SAVE_DEBOUNCE_MS = 2000L
+        private const val DEFAULT_MAX_PLAYERS = 14
+        private const val RECENT_GAMES_LIMIT = 10
+        private const val ONE_HOUR_MS = 3_600_000L
+        private const val MIN_PLAYERS = 4
+        private const val MAX_PLAYERS = 100
+        private const val MIN_GAME_DURATION_MINUTES = 30
+        private const val MIN_NAME_LENGTH = 3
+        private const val MAX_NAME_LENGTH = 50
+        private const val DEFAULT_HOUR = 19
+        private const val DEFAULT_DURATION_MINUTES = 60
+        private const val MINUTES_IN_DAY = 24 * 60
     }
 
     private val _uiState = MutableStateFlow<CreateGameUiState>(CreateGameUiState.Idle)
@@ -268,7 +280,7 @@ class CreateGameViewModel(
     ) {
         autoSaveJob?.cancel()
         autoSaveJob = viewModelScope.launch {
-            delay(2000) // Debounce de 2 segundos
+            delay(AUTO_SAVE_DEBOUNCE_MS) // Debounce de 2 segundos
 
             val draft = GameDraft(
                 ownerName = ownerName,
@@ -443,7 +455,7 @@ class CreateGameViewModel(
                 _recentGames.value = games
                     .filter { it.status != "CANCELLED" }
                     .sortedByDescending { it.createdAt }
-                    .take(10)
+                    .take(RECENT_GAMES_LIMIT)
             }
         }
     }
@@ -520,7 +532,7 @@ class CreateGameViewModel(
         if (_isManualPriceEnabled.value) return
 
         val totalPrice = price ?: 0.0
-        val players = maxPlayers ?: 14
+        val players = maxPlayers ?: DEFAULT_MAX_PLAYERS
 
         _pricePerPlayer.value = if (players > 0) {
             totalPrice / players
@@ -576,7 +588,7 @@ class CreateGameViewModel(
                 date.atTime(endTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
             )
         } catch (e: Exception) {
-            Pair(System.currentTimeMillis(), System.currentTimeMillis() + 3600000)
+            Pair(System.currentTimeMillis(), System.currentTimeMillis() + ONE_HOUR_MS)
         }
 
         val intent = Intent(Intent.ACTION_INSERT).apply {
@@ -682,15 +694,14 @@ class CreateGameViewModel(
 
                    // Parse do horario com tratamento para campos vazios
                    if (game.time.isNotEmpty()) {
-                       try {
-                           val time = LocalTime.parse(game.time, DateTimeFormatter.ofPattern("HH:mm"))
-                           _selectedTime.value = time
-                       } catch (e: Exception) {
-                           // Usar horario padrao se parse falhar
-                           _selectedTime.value = LocalTime.of(19, 0)
-                       }
-                   } else {
-                       _selectedTime.value = LocalTime.of(19, 0)
+                        try {
+                            val time = LocalTime.parse(game.time, DateTimeFormatter.ofPattern("HH:mm"))
+                            _selectedTime.value = time
+                        } catch (e: Exception) {
+                            _selectedTime.value = LocalTime.of(DEFAULT_HOUR, 0)
+                        }
+                    } else {
+                        _selectedTime.value = LocalTime.of(DEFAULT_HOUR, 0)
                    }
 
                    if (game.endTime.isNotEmpty()){
@@ -792,8 +803,8 @@ class CreateGameViewModel(
             return
         }
 
-        if (ownerName.length < 3 || ownerName.length > 50) {
-            _uiState.value = CreateGameUiState.Error("Nome do responsavel deve ter entre 3 e 50 caracteres")
+        if (ownerName.length < MIN_NAME_LENGTH || ownerName.length > MAX_NAME_LENGTH) {
+            _uiState.value = CreateGameUiState.Error("Nome do responsavel deve ter entre $MIN_NAME_LENGTH e $MAX_NAME_LENGTH caracteres")
             return
         }
 
@@ -802,8 +813,8 @@ class CreateGameViewModel(
             return
         }
 
-        if (maxPlayers < 4 || maxPlayers > 100) {
-            _uiState.value = CreateGameUiState.Error("Numero de jogadores invalido (min 4, max 100)")
+        if (maxPlayers < MIN_PLAYERS || maxPlayers > MAX_PLAYERS) {
+            _uiState.value = CreateGameUiState.Error("Numero de jogadores invalido (min $MIN_PLAYERS, max $MAX_PLAYERS)")
             return
         }
 
@@ -836,11 +847,11 @@ class CreateGameViewModel(
         var endMinutes = selectedEndTime.hour * 60 + selectedEndTime.minute
         // Tratar virada de meia-noite
         if (endMinutes <= startMinutes) {
-            endMinutes += 24 * 60
+            endMinutes += MINUTES_IN_DAY
         }
         val durationMinutes = endMinutes - startMinutes
-        if (durationMinutes < 30) {
-            _uiState.value = CreateGameUiState.Error("A duracao minima do jogo e de 30 minutos")
+        if (durationMinutes < MIN_GAME_DURATION_MINUTES) {
+            _uiState.value = CreateGameUiState.Error("A duracao minima do jogo e de $MIN_GAME_DURATION_MINUTES minutos")
             return
         }
 
@@ -873,7 +884,7 @@ class CreateGameViewModel(
                     fieldName = field?.name ?: "",
                     fieldType = field?.type ?: "Society",
                     time = _selectedTime.value?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
-                    duration = 60,
+                    duration = DEFAULT_DURATION_MINUTES,
                     recurrenceType = when (recurrence) {
                         "weekly" -> RecurrenceType.weekly
                         "biweekly" -> RecurrenceType.biweekly
