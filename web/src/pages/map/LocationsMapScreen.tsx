@@ -33,13 +33,17 @@ import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-ma
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/GameCard';
-import { Location } from '../../types/location';
+import { FIELD_TYPE_CONFIG, FieldType, Location } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('LocationsMapScreen');
+
+function getFieldTypeLabel(type?: FieldType) {
+  return FIELD_TYPE_CONFIG[type || 'OUTROS']?.label || FIELD_TYPE_CONFIG.OUTROS.label;
+}
 
 function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
   locations: Location[];
@@ -119,6 +123,7 @@ export const LocationsMapScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [errorState, setErrorState] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
@@ -135,6 +140,7 @@ export const LocationsMapScreen: React.FC = () => {
           id: d.id,
         }));
         setLocations(data);
+        setErrorState(null);
         setLoading(false);
       },
       (err) => {
@@ -146,7 +152,7 @@ export const LocationsMapScreen: React.FC = () => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [retryCount]);
 
   const filteredLocations = locations.filter((loc) =>
     loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -210,7 +216,7 @@ export const LocationsMapScreen: React.FC = () => {
             severity="error"
             sx={{ mb: 2 }}
             action={
-              <Button color="inherit" size="small" onClick={() => { setErrorState(null); setLoading(true); }}>
+              <Button color="inherit" size="small" onClick={() => { setErrorState(null); setLoading(true); setRetryCount((count) => count + 1); }}>
                 Tentar novamente
               </Button>
             }
@@ -274,7 +280,7 @@ export const LocationsMapScreen: React.FC = () => {
                           </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                          <Chip label={location.fieldType || 'OUTROS'} size="small" />
+                          <Chip label={getFieldTypeLabel(location.primaryFieldType || location.fieldType)} size="small" />
                           <Chip label={`${location.fieldCount || 1} campos`} size="small" />
                         </Box>
                       </Box>

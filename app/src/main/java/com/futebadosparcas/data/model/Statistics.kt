@@ -109,11 +109,14 @@ data class UserStatistics(
     val totalCards: Int
         get() = totalYellowCards + totalRedCards
 
+    val weightedCards: Int
+        get() = totalYellowCards + (totalRedCards * 3)
+
     /**
      * Media de cartoes por jogo.
      */
     val avgCardsPerGame: Double
-        get() = if (totalGames > 0) totalCards.toDouble() / totalGames else 0.0
+        get() = if (totalGames > 0) weightedCards.toDouble() / totalGames else 0.0
 
     /**
      * Saldo de gols (considerando jogos de goleiro vs linha).

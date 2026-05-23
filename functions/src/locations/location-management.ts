@@ -14,6 +14,41 @@ interface CalculateAutoRatingsRequest {
   userId: string;
 }
 
+const DELETE_BATCH_SIZE = 500;
+const LOCATION_SUBCOLLECTIONS = [
+  "reviews",
+  "fields",
+  "availability",
+  "audit_logs",
+];
+
+export async function deleteLocationSubcollection(
+  locationId: string,
+  subcollection: string
+): Promise<number> {
+  let deletedCount = 0;
+
+  while (true) {
+    const snap = await db()
+      .collection("locations")
+      .doc(locationId)
+      .collection(subcollection)
+      .limit(DELETE_BATCH_SIZE)
+      .get();
+
+    if (snap.empty) break;
+
+    const batch = db().batch();
+    snap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+
+    deletedCount += snap.size;
+    if (snap.size < DELETE_BATCH_SIZE) break;
+  }
+
+  return deletedCount;
+}
+
 export const deleteLocation = secureCallable<DeleteLocationRequest>(
   {
     appCheck: !process.env.FUNCTIONS_EMULATOR,
@@ -38,22 +73,25 @@ export const deleteLocation = secureCallable<DeleteLocationRequest>(
       throw new HttpsError("not-found", `Location ${locationId} not found`);
     }
 
-    const subcollections = ["reviews", "fields", "availability", "audit_logs"];
+    const locData = locDoc.data() || {};
     let deletedCount = 0;
 
-    for (const sub of subcollections) {
-      const subRef = locRef.collection(sub);
-      const snap = await subRef.get();
-      if (snap.empty) continue;
-
-      const batch = db().batch();
-      snap.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-      deletedCount += snap.size;
+    for (const sub of LOCATION_SUBCOLLECTIONS) {
+      deletedCount += await deleteLocationSubcollection(locationId, sub);
     }
 
     await locRef.delete();
     deletedCount += 1;
+
+    await db().collection("audit_logs").add({
+      type: "LOCATION_DELETE",
+      target_location_id: locationId,
+      actor_user_id: request.auth!.uid,
+      location_name: locData.name || null,
+      deleted_docs_count: deletedCount,
+      subcollections: LOCATION_SUBCOLLECTIONS,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
     logger.info(`Location ${locationId} deleted (cascade: ${deletedCount} docs)`);
     return {success: true, deletedCount};

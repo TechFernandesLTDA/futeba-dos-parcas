@@ -65,6 +65,11 @@ interface UserProfile {
   midRating: number;
   defenderRating: number;
   gkRating: number;
+  autoStrikerRating: number;
+  autoMidRating: number;
+  autoDefenderRating: number;
+  autoGkRating: number;
+  autoRatingSamples: number;
 }
 
 export const EditProfileScreen: React.FC = () => {
@@ -101,6 +106,11 @@ export const EditProfileScreen: React.FC = () => {
     midRating: 0,
     defenderRating: 0,
     gkRating: 0,
+    autoStrikerRating: 0,
+    autoMidRating: 0,
+    autoDefenderRating: 0,
+    autoGkRating: 0,
+    autoRatingSamples: 0,
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -166,6 +176,11 @@ export const EditProfileScreen: React.FC = () => {
           midRating: data.midRating ?? data.mid_rating ?? 0,
           defenderRating: data.defenderRating ?? data.defender_rating ?? 0,
           gkRating: data.gkRating ?? data.gk_rating ?? 0,
+          autoStrikerRating: data.autoStrikerRating ?? data.auto_striker_rating ?? 0,
+          autoMidRating: data.autoMidRating ?? data.auto_mid_rating ?? 0,
+          autoDefenderRating: data.autoDefenderRating ?? data.auto_defender_rating ?? 0,
+          autoGkRating: data.autoGkRating ?? data.auto_gk_rating ?? 0,
+          autoRatingSamples: data.autoRatingSamples ?? data.auto_rating_samples ?? 0,
         };
         setFormData(loaded);
         setInitialData(loaded);
@@ -274,6 +289,10 @@ export const EditProfileScreen: React.FC = () => {
         mid_rating: formData.midRating,
         defender_rating: formData.defenderRating,
         gk_rating: formData.gkRating,
+        striker_rating_set: true,
+        mid_rating_set: true,
+        defender_rating_set: true,
+        gk_rating_set: true,
         updated_at: serverTimestamp(),
       });
 
@@ -319,6 +338,10 @@ export const EditProfileScreen: React.FC = () => {
       formData.preferredPosition !== initialData.preferredPosition ||
       formData.bio !== initialData.bio ||
       formData.favoriteTeam !== initialData.favoriteTeam ||
+      formData.strikerRating !== initialData.strikerRating ||
+      formData.midRating !== initialData.midRating ||
+      formData.defenderRating !== initialData.defenderRating ||
+      formData.gkRating !== initialData.gkRating ||
       selectedFile !== null);
 
   return (
@@ -465,26 +488,32 @@ export const EditProfileScreen: React.FC = () => {
               </Tooltip>
             </Box>
             {[
-              { key: 'strikerRating' as const, label: 'Atacante', autoKey: 'autoStrikerRating' },
-              { key: 'midRating' as const, label: 'Meio-campo', autoKey: 'autoMidRating' },
-              { key: 'defenderRating' as const, label: 'Zagueiro', autoKey: 'autoDefenderRating' },
-              { key: 'gkRating' as const, label: 'Goleiro', autoKey: 'autoGkRating' },
-            ].map(({ key, label }) => (
+              { key: 'strikerRating' as const, label: 'Atacante', autoKey: 'autoStrikerRating' as const },
+              { key: 'midRating' as const, label: 'Meio-campo', autoKey: 'autoMidRating' as const },
+              { key: 'defenderRating' as const, label: 'Zagueiro', autoKey: 'autoDefenderRating' as const },
+              { key: 'gkRating' as const, label: 'Goleiro', autoKey: 'autoGkRating' as const },
+            ].map(({ key, label, autoKey }) => (
               <Box key={key} sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {label}: {formData[key]?.toFixed(1) || '0.0'}
+                  {formData[autoKey] > 0 && (
+                    <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 1 }}>
+                      Auto: {formData[autoKey].toFixed(1)}
+                    </Typography>
+                  )}
                 </Typography>
                 <Slider
-                  value={formData[key] || 0}
-                  onChange={(_, v) => handleInputChange(key, v as number)}
+                  value={Math.round((formData[key] || 0) * 20)}
+                  onChange={(_, v) => handleInputChange(key, Number(v) / 20)}
                   min={0}
-                  max={5}
-                  step={0.5}
+                  max={100}
+                  step={1}
                   marks={[
                     { value: 0, label: '0' },
-                    { value: 2.5, label: '2.5' },
-                    { value: 5, label: '5' },
+                    { value: 50, label: '2.5' },
+                    { value: 100, label: '5' },
                   ]}
+                  valueLabelFormat={(value) => (value / 20).toFixed(1)}
                   valueLabelDisplay="auto"
                 />
               </Box>

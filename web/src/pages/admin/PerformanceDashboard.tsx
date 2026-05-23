@@ -15,11 +15,6 @@ import {
 import {
   ArrowBack as BackIcon,
   Speed as SpeedIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  CheckCircle as CheckIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -49,21 +44,9 @@ const PERFORMANCE_BUDGETS = {
 };
 
 function getScoreColor(value: number, good: number, poor: number): string {
-  if (value <= good) return '#0cce6b';
-  if (value <= poor) return '#ffa400';
-  return '#ff4e42';
-}
-
-function getScoreLabel(value: number, good: number, poor: number): string {
-  if (value <= good) return 'Good';
-  if (value <= poor) return 'Needs Improvement';
-  return 'Poor';
-}
-
-function getScoreIcon(value: number, good: number, poor: number) {
-  if (value <= good) return <CheckIcon sx={{ color: '#0cce6b' }} />;
-  if (value <= poor) return <WarningIcon sx={{ color: '#ffa400' }} />;
-  return <ErrorIcon sx={{ color: '#ff4e42' }} />;
+  if (value <= good) return 'success.main';
+  if (value <= poor) return 'warning.main';
+  return 'error.main';
 }
 
 export const PerformanceDashboard: React.FC = () => {
@@ -168,7 +151,7 @@ export const PerformanceDashboard: React.FC = () => {
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography variant="h6" fontWeight={700} gutterBottom>
-                  📊 Resumo Geral
+                  Resumo Geral
                 </Typography>
                 <Grid container spacing={2} sx={{ mt: 1 }}>
                   <Grid item xs={12} sm={6} md={3}>
@@ -217,7 +200,7 @@ export const PerformanceDashboard: React.FC = () => {
 
             {/* Performance por Tela */}
             <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mt: 4, mb: 2 }}>
-              📱 Performance por Tela
+              Performance por Tela
             </Typography>
             <Grid container spacing={2}>
               {sortedScreens.map(([screenName, stats]) => (
@@ -306,7 +289,7 @@ export const PerformanceDashboard: React.FC = () => {
 
             {/* Performance Budgets */}
             <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mt: 4, mb: 2 }}>
-              🎯 Performance Budgets
+              Performance Budgets
             </Typography>
             <Card>
               <CardContent>
@@ -321,7 +304,7 @@ export const PerformanceDashboard: React.FC = () => {
                           <Typography variant="caption" color="text.secondary">
                             Good:
                           </Typography>
-                          <Typography variant="caption" fontWeight={700} sx={{ color: '#0cce6b' }}>
+                          <Typography variant="caption" fontWeight={700} sx={{ color: 'success.main' }}>
                             ≤ {budget.good}{key === 'cls' ? '' : 'ms'}
                           </Typography>
                         </Box>
@@ -329,7 +312,7 @@ export const PerformanceDashboard: React.FC = () => {
                           <Typography variant="caption" color="text.secondary">
                             Poor:
                           </Typography>
-                          <Typography variant="caption" fontWeight={700} sx={{ color: '#ff4e42' }}>
+                          <Typography variant="caption" fontWeight={700} sx={{ color: 'error.main' }}>
                             {'>'} {budget.poor}{key === 'cls' ? '' : 'ms'}
                           </Typography>
                         </Box>

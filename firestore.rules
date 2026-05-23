@@ -2067,16 +2067,11 @@ service cloud.firestore {
     // ============================================
     // COLECAO: performance_metrics (monitoramento client-side)
     // ============================================
-    // (#1687) Escrito por clientes autenticados (instrumentacao de telas).
     // Admins leem para analise no PerformanceDashboard.
+    // Escrita client-side bloqueada; telemetria persistente deve vir de backend/Admin SDK.
     match /performance_metrics/{metricId} {
       allow read: if isAdmin();
-      allow create: if isAuthenticated()
-        && request.resource.data.screenName is string
-        && request.resource.data.screenName.size() > 0
-        && request.resource.data.screenName.size() <= 100
-        && request.resource.data.timestamp is number;
-      allow update, delete: if false;
+      allow write: if false;
     }
 
     // ============================================

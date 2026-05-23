@@ -27,13 +27,12 @@ import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
   LocationOn as LocationIcon,
-  AttachMoney as MoneyIcon,
   Star as StarIcon,
   CalendarMonth as CalendarIcon,
   People as PeopleIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -46,8 +45,8 @@ import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 const logger = createLogger('FieldOwnerDashboardScreen');
 
 interface LocationStats {
-  totalGames: number;
-  totalRevenue: number;
+  gamesLast30Days: number;
+  gamesThisWeek: number;
   averageRating: number;
   totalReviews: number;
   upcomingGames: number;
@@ -63,6 +62,73 @@ interface LocationData {
   ratingCount: number;
 }
 
+interface LocationGameData {
+  id: string;
+  status?: string;
+  dateTime?: Date | null;
+  deletedAt?: Date | null;
+}
+
+const chunkArray = <T,>(items: T[], size: number) => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+};
+
+const toDate = (value: unknown): Date | null => {
+  if (value instanceof Date) return value;
+  if (value instanceof Timestamp) return value.toDate();
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  return null;
+};
+
+const getGameDate = (data: Record<string, unknown>) => {
+  const explicitDate = toDate(data.date_time ?? data.dateTime);
+  if (explicitDate) return explicitDate;
+
+  if (typeof data.date === 'string' && data.date.trim()) {
+    const dateTime = `${data.date}T${typeof data.time === 'string' ? data.time : '00:00'}`;
+    const parsed = new Date(dateTime);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  return null;
+};
+
+const calculateStats = (locations: LocationData[], games: LocationGameData[]): LocationStats => {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(now.getDate() - 30);
+
+  const weekEnd = new Date(now);
+  weekEnd.setDate(now.getDate() + 7);
+
+  const activeGames = games.filter((game) => !game.deletedAt && game.status !== 'CANCELLED');
+  const gamesLast30Days = activeGames.filter((game) => game.dateTime && game.dateTime >= thirtyDaysAgo && game.dateTime <= now).length;
+  const upcomingGames = activeGames.filter((game) => game.dateTime && game.dateTime > now && ['SCHEDULED', 'CONFIRMED'].includes(game.status || '')).length;
+  const gamesThisWeek = activeGames.filter((game) => game.dateTime && game.dateTime >= now && game.dateTime <= weekEnd).length;
+  const totalReviews = locations.reduce((sum, location) => sum + (location.ratingCount || 0), 0);
+  const averageRating = totalReviews > 0
+    ? locations.reduce((sum, location) => sum + ((location.rating || 0) * (location.ratingCount || 0)), 0) / totalReviews
+    : 0;
+
+  return {
+    gamesLast30Days,
+    gamesThisWeek,
+    averageRating,
+    totalReviews,
+    upcomingGames,
+  };
+};
+
 export const FieldOwnerDashboardScreen: React.FC = () => {
   useDocumentTitle('Painel do Dono de Campo');
   const navigate = useNavigate();
@@ -75,57 +141,96 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
 
   const [stats, setStats] = useState<LocationStats | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
+  const [locationGames, setLocationGames] = useState<LocationGameData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const fetchDashboard = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
+  const retryDashboard = useCallback(() => {
     setError(null);
-    try {
-      const locationsRef = collection(db, 'locations');
-      const locQ = query(locationsRef, where('owner_id', '==', user.id));
-      const locSnap = await getDocs(locQ);
-
-      const locs = locSnap.docs.map((d) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = snakeToCamel(d.data()) as Record<string, any>;
-        return {
-          id: d.id,
-          name: data.name || 'Quadra',
-          city: data.city || '',
-          photoUrl: data.photoUrl,
-          fieldCount: data.fieldCount || 1,
-          rating: data.rating || 0,
-          ratingCount: data.ratingCount || 0,
-        };
-      });
-      setLocations(locs);
-
-      const totalGames = locs.reduce((sum, l) => sum + (l.fieldCount || 0), 0);
-      const avgRating = locs.length > 0
-        ? locs.reduce((sum, l) => sum + (l.rating || 0), 0) / locs.length
-        : 0;
-
-      setStats({
-        totalGames,
-        totalRevenue: 0,
-        averageRating: avgRating,
-        totalReviews: locs.reduce((sum, l) => sum + (l.ratingCount || 0), 0),
-        upcomingGames: 0,
-      });
-    } catch (err) {
-      logger.error('Error fetching dashboard:', err);
-      showErrorRef.current('Erro ao carregar dashboard. Tente novamente.');
-      setError(getFirestoreErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+    setLoading(true);
+    setRetryCount((count) => count + 1);
+  }, []);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+
+    const locationsRef = collection(db, 'locations');
+    const locQ = query(locationsRef, where('owner_id', '==', user.id));
+    const unsubscribe = onSnapshot(
+      locQ,
+      (locSnap) => {
+        const locs = locSnap.docs.map((d) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const data = snakeToCamel(d.data()) as Record<string, any>;
+          return {
+            id: d.id,
+            name: data.name || 'Quadra',
+            city: data.city || '',
+            photoUrl: data.photoUrl,
+            fieldCount: data.fieldCount || 1,
+            rating: data.rating || 0,
+            ratingCount: data.ratingCount || 0,
+          };
+        });
+        setLocations(locs);
+        setLoading(false);
+      },
+      (err) => {
+        logger.error('Error fetching owner locations:', err);
+        showErrorRef.current('Erro ao carregar dashboard. Tente novamente.');
+        setError(getFirestoreErrorMessage(err));
+        setLoading(false);
+      }
+    );
+
+    return unsubscribe;
+  }, [user, retryCount]);
+
+  useEffect(() => {
+    if (locations.length === 0) {
+      setLocationGames([]);
+      return;
+    }
+
+    const gamesByChunk = new Map<number, LocationGameData[]>();
+    const chunks = chunkArray(locations.map((location) => location.id), 10);
+    const unsubscribes = chunks.map((locationIds, index) => {
+      const gamesRef = collection(db, 'games');
+      const gamesQ = query(gamesRef, where('location_id', 'in', locationIds));
+      return onSnapshot(
+        gamesQ,
+        (gameSnap) => {
+          gamesByChunk.set(index, gameSnap.docs.map((d) => {
+            const data = d.data();
+            return {
+              id: d.id,
+              status: typeof data.status === 'string' ? data.status : undefined,
+              dateTime: getGameDate(data),
+              deletedAt: toDate(data.deleted_at ?? data.deletedAt),
+            };
+          }));
+          setLocationGames(Array.from(gamesByChunk.values()).flat());
+        },
+        (err) => {
+          logger.error('Error fetching location games:', err);
+          showErrorRef.current('Erro ao carregar jogos das quadras.');
+          setError(getFirestoreErrorMessage(err));
+        }
+      );
+    });
+
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+  }, [locations]);
+
+  useEffect(() => {
+    setStats(calculateStats(locations, locationGames));
+  }, [locations, locationGames]);
 
   if (loading) {
     return <LoadingState shimmerCount={4} itemType="CARD" />;
@@ -137,7 +242,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
         <Alert
           severity="error"
           action={
-            <Button color="inherit" size="small" onClick={fetchDashboard}>
+            <Button color="inherit" size="small" onClick={retryDashboard}>
               Tentar novamente
             </Button>
           }
@@ -181,21 +286,21 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                     <SoccerIcon color="primary" sx={{ mb: 0.5 }} />
                     <Typography variant="h5" fontWeight={600}>
-                      {stats.totalGames}
+                      {stats.gamesLast30Days}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Jogos Realizados
+                      Jogos nos últimos 30 dias
                     </Typography>
                   </Paper>
                 </Grid>
                 <Grid xs={6}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                    <MoneyIcon color="success" sx={{ mb: 0.5 }} />
+                    <CalendarIcon color="success" sx={{ mb: 0.5 }} />
                     <Typography variant="h5" fontWeight={600}>
-                      R$ {stats.totalRevenue}
+                      {stats.gamesThisWeek}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Receita Estimada
+                      Jogos esta semana
                     </Typography>
                   </Paper>
                 </Grid>
@@ -314,11 +419,11 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                 <ListItemText primary="Ver Agenda" />
               </ListItemButton>
               <Divider />
-              <ListItemButton onClick={() => navigate('/players')}>
+              <ListItemButton disabled>
                 <ListItemIcon>
                   <PeopleIcon />
                 </ListItemIcon>
-                <ListItemText primary="Gerenciar Jogadores" />
+                <ListItemText primary="Gerenciar Jogadores" secondary="Em breve" />
               </ListItemButton>
             </List>
           </CardContent>

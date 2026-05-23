@@ -248,6 +248,19 @@ class UserTest {
             val user = createUser(autoRatingSamples = -5)
             assertEquals(0.0, user.getAutoRatingConfidence(), 0.001)
         }
+
+        @Test
+        @DisplayName("Confiança de atacante deve considerar relevância da posição")
+        fun `striker confidence should consider position relevance`() {
+            val user = createUser(
+                autoStrikerRating = 0.1,
+                autoDefenderRating = 4.0,
+                autoRatingSamples = 20
+            )
+
+            assertEquals(0.04, user.getAutoRatingConfidence(PlayerRatingRole.STRIKER), 0.001)
+            assertEquals(1.0, user.getAutoRatingConfidence(PlayerRatingRole.DEFENDER), 0.001)
+        }
     }
 
     // ==================== TESTES DE getManualRating ====================
@@ -348,6 +361,18 @@ class UserTest {
             )
             assertTrue(user.getEffectiveRating(PlayerRatingRole.STRIKER) <= 5.0)
         }
+
+        @Test
+        @DisplayName("Auto rating baixo nao deve dominar rating manual por amostra global")
+        fun `low role auto rating should not dominate manual rating from global samples`() {
+            val user = createUser(
+                strikerRating = 5.0,
+                autoStrikerRating = 0.1,
+                autoRatingSamples = 20
+            )
+
+            assertEquals(4.804, user.getEffectiveRating(PlayerRatingRole.STRIKER), 0.001)
+        }
     }
 
     // ==================== TESTES DE getOverallRating ====================
@@ -383,14 +408,13 @@ class UserTest {
         }
 
         @Test
-        @DisplayName("Goleiro não entra na média geral")
-        fun `goalkeeper rating should not be included in overall`() {
+        @DisplayName("Goleiro entra na media geral")
+        fun `goalkeeper rating should be included in overall`() {
             val user = createUser(
                 strikerRating = 4.0,
                 gkRating = 5.0
             )
-            // Apenas striker conta (4.0)
-            assertEquals(4.0, user.getOverallRating(), 0.001)
+            assertEquals(4.5, user.getOverallRating(), 0.001)
         }
     }
 

@@ -34,8 +34,9 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, where, onSnapshot, deleteDoc, doc, limit } from 'firebase/firestore';
+import { collection, query, orderBy, where, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { deleteLocation } from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { Location, FIELD_TYPE_CONFIG, canManageLocation } from '../../types/location';
@@ -110,7 +111,7 @@ export const ManageLocationsScreen: React.FC = () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await deleteDoc(doc(db, 'locations', deleteTarget.id));
+      await deleteLocation({ locationId: deleteTarget.id });
       showSuccess(`Local "${deleteTarget.name}" excluído com sucesso.`);
       setDeleteTarget(null);
     } catch (err) {

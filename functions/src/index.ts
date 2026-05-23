@@ -2173,3 +2173,10 @@ export * from "./cache/leaderboard-cache";
 // - deleteLocation: Cascade delete com sub-coleções
 // - calculateAutoRatings: Auto-ratings server-side
 export * from "./locations/location-management";
+
+// ==========================================
+// AUTO RATINGS (#1697)
+// ==========================================
+// - onStatisticsWrittenForAutoRatings: recalcula auto-ratings server-side
+//   quando statistics/{userId} muda.
+export * from "./ratings/auto-ratings";
