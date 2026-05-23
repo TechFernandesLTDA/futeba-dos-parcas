@@ -1710,10 +1710,11 @@ service cloud.firestore {
       isValidScore(request.resource.data.get('team2_score', null));
 
       // SECURITY: No update, owner_id nao pode ser alterado (previne transferencia de ownership)
+      // SECFIX #1603: isConfirmedPlayer removido — jogador confirmado nao pode alterar placar (anti-fraude)
+      // Apenas admin ou game owner (owner_id) podem atualizar live_scores
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        resource.data.owner_id == userId() ||
-        isConfirmedPlayer(scoreId)
+        resource.data.owner_id == userId()
       ) &&
       fieldUnchanged('owner_id') &&
       // Validacao de bounds para placares
