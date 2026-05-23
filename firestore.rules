@@ -1416,8 +1416,18 @@ service cloud.firestore {
                       request.resource.data.voided_by == userId() &&
                       request.resource.data.voided_at == request.time;
 
-        allow delete: if false;
+      allow delete: if false;
+
+      // ============================================
+      // SUBCOLECAO: rating_history (histórico de ratings automáticos)
+      // ============================================
+      // (#1709) Cloud Functions escrevem ao recalcular ratings.
+      // Owner e admin podem ler para exibir no gráfico de evolução.
+      match /rating_history/{entryId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update, delete: if false;
       }
+    }
 
       match /cashbox_summary/{docId} {
         // #1037.4: isGroupMember() faz get() — garante autenticação explícita primeiro
@@ -2060,19 +2070,13 @@ service cloud.firestore {
     // (#1687) Escrito por clientes autenticados (instrumentacao de telas).
     // Admins leem para analise no PerformanceDashboard.
     match /performance_metrics/{metricId} {
-      allow read, write: if false;
-    }
-
-    match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow create: if false;
-      allow update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if false;
-
-      match /rating_history/{entryId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-        allow create, update, delete: if false;
-      }
+      allow read: if isAdmin();
+      allow create: if isAuthenticated()
+        && request.resource.data.screenName is string
+        && request.resource.data.screenName.size() > 0
+        && request.resource.data.screenName.size() <= 100
+        && request.resource.data.timestamp is number;
+      allow update, delete: if false;
     }
 
     // ============================================
