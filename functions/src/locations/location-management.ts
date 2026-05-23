@@ -22,6 +22,13 @@ const LOCATION_SUBCOLLECTIONS = [
   "audit_logs",
 ];
 
+/**
+ * Deletes every document in a location subcollection using paged batches.
+ *
+ * @param {string} locationId Location document id.
+ * @param {string} subcollection Child collection name.
+ * @return {Promise<number>} Number of deleted documents.
+ */
 export async function deleteLocationSubcollection(
   locationId: string,
   subcollection: string

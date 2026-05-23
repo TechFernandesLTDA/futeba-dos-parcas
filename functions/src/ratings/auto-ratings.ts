@@ -16,6 +16,14 @@ interface AutoRatings {
   sampleSize: number;
 }
 
+/**
+ * Reads a numeric stat from camelCase or snake_case fields.
+ *
+ * @param {FirebaseFirestore.DocumentData} data Source statistics document.
+ * @param {string} camelKey CamelCase field name.
+ * @param {string} snakeKey Snake_case field name.
+ * @return {number} Numeric value or zero when absent/invalid.
+ */
 function num(
   data: FirebaseFirestore.DocumentData,
   camelKey: string,
@@ -25,11 +33,24 @@ function num(
   return typeof value === "number" ? value : 0;
 }
 
+/**
+ * Converts a per-game average to a 0-5 rating.
+ *
+ * @param {number} value Per-game stat average.
+ * @param {number} max Average that maps to rating 5.0.
+ * @return {number} Clamped rating in the 0-5 scale.
+ */
 function scale(value: number, max: number): number {
   if (max <= 0) return 0;
   return Math.min(Math.max((value / max) * 5.0, 0), 5.0);
 }
 
+/**
+ * Calculates automatic positional ratings from aggregated user statistics.
+ *
+ * @param {FirebaseFirestore.DocumentData} data Aggregated statistics document.
+ * @return {AutoRatings} Calculated ratings and sample size.
+ */
 export function calculateAutoRatingsFromStats(
   data: FirebaseFirestore.DocumentData
 ): AutoRatings {
