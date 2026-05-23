@@ -21,4 +21,6 @@ export * from './useOfflineQueue';
 export * from './useOptimisticUpdate';
 export * from './useOnboarding';
 export * from './useScrollRestoration';
+export * from './useNextGame';
+export * from './usePrefetchHome';
 

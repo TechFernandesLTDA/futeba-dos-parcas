@@ -51,7 +51,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 import { gamificationColors } from '../../../theme';
-import { useGames, useConfirmPresence } from '../../../hooks/useGames';
+import { useConfirmPresence } from '../../../hooks/useGames';
+import { useNextGame } from '../../../hooks/useNextGame';
 import { useWaitlist } from '../../../hooks/useWaitlist';
 import { useGroups } from '../../../hooks/useGroups';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
@@ -89,14 +90,7 @@ function NextGameWidget() {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
-  const { games: allGames, loading: gamesLoading } = useGames();
-
-  const nextGame = useMemo(
-    () =>
-      allGames
-        .find((g) => ['SCHEDULED', 'CONFIRMED', 'LIVE'].includes(g.status)) || null,
-    [allGames],
-  );
+  const { nextGame, isLoading: gamesLoading } = useNextGame();
 
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
 

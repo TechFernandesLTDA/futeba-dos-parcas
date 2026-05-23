@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@mui/material';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePrefetchHome } from '../../hooks/usePrefetchHome';
 
 // Carregamento lazy das tabs para reduzir bundle inicial da HomeScreen
 const HomeTab = lazy(() => import('./tabs/HomeTab').then(m => ({ default: m.HomeTab })));
@@ -68,6 +69,9 @@ export function HomeScreen() {
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Prefetch de dados críticos da Home em paralelo
+  usePrefetchHome();
 
   const notificationIcon = useMemo(() => (
     <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0} max={99}>
