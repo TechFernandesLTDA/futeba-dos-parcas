@@ -8,7 +8,7 @@
  * Cobre:
  * - live_games: leitura para qualquer autenticado; write apenas owner ou admin
  * - live_games/events: leitura auth; create/update/delete owner/admin ou confirmed player (próprios eventos)
- * - live_scores: leitura auth; create owner_id==self ou admin; update owner/admin/confirmed player
+ * - live_scores: leitura auth; create owner_id==self ou admin; update owner/admin apenas (SECFIX #1603)
  * - live_player_stats: leitura auth; create owner/admin/confirmed player (próprias stats); update fieldUnchanged(game_id, player_id)
  */
 
@@ -342,13 +342,24 @@ describe("live_scores — leitura e escrita", () => {
     );
   });
 
-  it("Confirmed player pode atualizar live_score", async () => {
-    // Rule: isConfirmedPlayer(scoreId) — scoreId == gameId
+  it("Confirmed player NÃO pode atualizar live_score (anti-fraude #1603)", async () => {
+    // SECFIX #1603: isConfirmedPlayer removido da allow update — apenas admin/owner podem alterar placar
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_scores/${LIVE_GAME_ID}`).update({
         team1_score: 2,
         team2_score: 2,
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Admin pode atualizar live_score", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.doc(`live_scores/${LIVE_GAME_ID}`).update({
+        team1_score: 3,
+        team2_score: 1,
         updated_at: new Date(),
       })
     );
