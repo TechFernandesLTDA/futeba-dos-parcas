@@ -265,8 +265,12 @@ export async function processXpHybrid(
 
     legacyBatch.update(userRef, userUpdate);
 
-    // Criar log (sem transaction_id - código antigo)
-    const logRef = db().collection("xp_logs").doc();
+    // FIX #1584: ID determinístico pra idempotência em retries.
+    // doc() gerava ID aleatório — em retry criava log duplicado.
+    // game_{gameId}_user_{userId} garante unicidade por jogo+usuário.
+    const logRef = db().collection("xp_logs").doc(
+      `game_${params.gameId}_user_${params.userId}`
+    );
     const log = {
       user_id: params.userId,
       game_id: params.gameId,
