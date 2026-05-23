@@ -55,8 +55,8 @@ class CashboxSeeder constructor(
                 description = description,
                 createdById = memberId,
                 createdByName = memberName,
-                referenceDate = kotlinx.datetime.Instant.fromEpochMilliseconds(date.time),
-                createdAt = kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis()),
+                referenceDate = date.time,
+                createdAt = System.currentTimeMillis(),
                 playerId = if (isIncome) memberId else null,
                 playerName = if (isIncome) memberName else null,
                 status = CashboxAppStatus.ACTIVE.name

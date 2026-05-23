@@ -884,14 +884,14 @@ fun AndroidCashboxEntry.toKmpCashboxEntry(): KmpCashboxEntry {
         description = description,
         createdById = createdById,
         createdByName = createdByName,
-        referenceDate = kotlinx.datetime.Clock.System.now(), // Default to now, can be improved
-        createdAt = createdAt?.time?.let { Instant.fromEpochMilliseconds(it) },
+        referenceDate = referenceDate.time,
+        createdAt = createdAt?.time,
         playerId = playerId,
         playerName = playerName,
         gameId = gameId,
         receiptUrl = receiptUrl,
         status = status,
-        voidedAt = voidedAt?.time?.let { Instant.fromEpochMilliseconds(it) },
+        voidedAt = voidedAt?.time,
         voidedBy = voidedBy
     )
 }
@@ -909,14 +909,14 @@ fun KmpCashboxEntry.toAndroidCashboxEntry(): AndroidCashboxEntry {
         description = description,
         createdById = createdById,
         createdByName = createdByName,
-        referenceDate = java.util.Date(referenceDate.toEpochMilliseconds()),
-        createdAt = createdAt?.toEpochMilliseconds()?.let { java.util.Date(it) },
+        referenceDate = java.util.Date(referenceDate),
+        createdAt = createdAt?.let { java.util.Date(it) },
         playerId = playerId,
         playerName = playerName,
         gameId = gameId,
         receiptUrl = receiptUrl,
         status = status,
-        voidedAt = voidedAt?.toEpochMilliseconds()?.let { java.util.Date(it) },
+        voidedAt = voidedAt?.let { java.util.Date(it) },
         voidedBy = voidedBy
     )
 }
@@ -939,7 +939,7 @@ fun AndroidCashboxSummary.toKmpCashboxSummary(): KmpCashboxSummary {
         balance = balance,
         totalIncome = totalIncome,
         totalExpense = totalExpense,
-        lastEntryAt = lastEntryAt?.time?.let { Instant.fromEpochMilliseconds(it) },
+        lastEntryAt = lastEntryAt?.time,
         entryCount = entryCount
     )
 }
@@ -952,7 +952,7 @@ fun KmpCashboxSummary.toAndroidCashboxSummary(): AndroidCashboxSummary {
         balance = balance,
         totalIncome = totalIncome,
         totalExpense = totalExpense,
-        lastEntryAt = lastEntryAt?.toEpochMilliseconds()?.let { java.util.Date(it) },
+        lastEntryAt = lastEntryAt?.let { java.util.Date(it) },
         entryCount = entryCount
     )
 }
@@ -964,8 +964,8 @@ fun AndroidCashboxFilter.toKmpCashboxFilter(): KmpCashboxFilter {
     return KmpCashboxFilter(
         type = type, // AndroidCashboxFilter já usa domain.model enums
         category = category, // AndroidCashboxFilter já usa domain.model enums
-        startDate = startDate?.time?.let { Instant.fromEpochMilliseconds(it) },
-        endDate = endDate?.time?.let { Instant.fromEpochMilliseconds(it) },
+        startDate = startDate?.time,
+        endDate = endDate?.time,
         playerId = playerId
     )
 }
@@ -977,8 +977,8 @@ fun KmpCashboxFilter.toAndroidCashboxFilter(): AndroidCashboxFilter {
     return AndroidCashboxFilter(
         type = type, // AndroidCashboxFilter já usa domain.model enums
         category = category, // AndroidCashboxFilter já usa domain.model enums
-        startDate = startDate?.toEpochMilliseconds()?.let { java.util.Date(it) },
-        endDate = endDate?.toEpochMilliseconds()?.let { java.util.Date(it) },
+        startDate = startDate?.let { java.util.Date(it) },
+        endDate = endDate?.let { java.util.Date(it) },
         playerId = playerId
     )
 }
