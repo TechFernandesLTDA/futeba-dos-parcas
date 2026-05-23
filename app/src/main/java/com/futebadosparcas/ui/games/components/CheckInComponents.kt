@@ -45,7 +45,7 @@ import androidx.compose.ui.res.stringResource
 fun PlayerCheckInCard(
     game: Game,
     userConfirmation: GameConfirmation?,
-    onCheckIn: (latitude: Double, longitude: Double) -> Unit,
+    onCheckIn: (latitude: Double, longitude: Double, accuracy: Float) -> Unit,
     onCheckInError: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -61,16 +61,17 @@ fun PlayerCheckInCard(
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
 
-    // Launcher para solicitar permissão de localização
+    // Launcher para solicitar permissão de localização (FINE + COARSE)
     val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        if (fineGranted) {
             isLoading = true
-            getCurrentLocation(context) { lat, lng ->
+            getCurrentLocation(context) { lat, lng, accuracy ->
                 isLoading = false
-                if (lat != null && lng != null) {
-                    onCheckIn(lat, lng)
+                if (lat != null && lng != null && accuracy != null) {
+                    onCheckIn(lat, lng, accuracy)
                 } else {
                     onCheckInError("Não foi possível obter sua localização")
                 }
@@ -138,23 +139,32 @@ fun PlayerCheckInCard(
 
                 Button(
                     onClick = {
-                        val hasPermission = ContextCompat.checkSelfPermission(
+                        val hasFine = ContextCompat.checkSelfPermission(
                             context,
                             Manifest.permission.ACCESS_FINE_LOCATION
                         ) == PackageManager.PERMISSION_GRANTED
+                        val hasCoarse = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
 
-                        if (hasPermission) {
+                        if (hasFine && hasCoarse) {
                             isLoading = true
-                            getCurrentLocation(context) { lat, lng ->
+                            getCurrentLocation(context) { lat, lng, accuracy ->
                                 isLoading = false
-                                if (lat != null && lng != null) {
-                                    onCheckIn(lat, lng)
+                                if (lat != null && lng != null && accuracy != null) {
+                                    onCheckIn(lat, lng, accuracy)
                                 } else {
                                     onCheckInError("Não foi possível obter sua localização")
                                 }
                             }
                         } else {
-                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                            locationPermissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
                         }
                     },
                     enabled = !isLoading,
@@ -266,20 +276,20 @@ fun CheckInSettingsDialog(
                         Slider(
                             value = radius,
                             onValueChange = { radius = it },
-                            valueRange = 10f..500f,
-                            steps = 9 // 10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500
+                            valueRange = 50f..2000f,
+                            steps = 19
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "10m",
+                                text = "50m",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "500m",
+                                text = "2000m",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -445,7 +455,7 @@ private fun isMockLocation(location: android.location.Location): Boolean {
  */
 private fun getCurrentLocation(
     context: Context,
-    callback: (latitude: Double?, longitude: Double?) -> Unit
+    callback: (latitude: Double?, longitude: Double?, accuracy: Float?) -> Unit
 ) {
     try {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -455,29 +465,29 @@ private fun getCurrentLocation(
                 if (location != null) {
                     if (isMockLocation(location)) {
                         AppLogger.w("CheckIn") { "Mock GPS detected - blocking" }
-                        callback(null, null)
+                        callback(null, null, null)
                     } else {
-                        callback(location.latitude, location.longitude)
+                        callback(location.latitude, location.longitude, location.accuracy)
                     }
                 } else {
                     fusedLocationClient.lastLocation
                         .addOnSuccessListener { lastLocation ->
                             if (lastLocation != null && isMockLocation(lastLocation)) {
                                 AppLogger.w("CheckIn") { "Mock GPS lastLoc - blocking" }
-                                callback(null, null)
+                                callback(null, null, null)
                             } else {
-                                callback(lastLocation?.latitude, lastLocation?.longitude)
+                                callback(lastLocation?.latitude, lastLocation?.longitude, lastLocation?.accuracy)
                             }
                         }
                         .addOnFailureListener {
-                            callback(null, null)
+                            callback(null, null, null)
                         }
                 }
             }
             .addOnFailureListener {
-                callback(null, null)
+                callback(null, null, null)
             }
     } catch (e: SecurityException) {
-        callback(null, null)
+        callback(null, null, null)
     }
 }

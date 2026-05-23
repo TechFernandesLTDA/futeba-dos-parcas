@@ -680,10 +680,18 @@ private fun getLastLocationAndStartGame(context: Context, viewModel: GameDetailV
         client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
             .addOnSuccessListener { location ->
                 if (location != null) {
-                    viewModel.startGame(gameId, location.latitude, location.longitude)
+                    if (isMockLocation(location)) {
+                        viewModel.startGame(gameId, null, null)
+                    } else {
+                        viewModel.startGame(gameId, location.latitude, location.longitude)
+                    }
                 } else {
                     client.lastLocation.addOnSuccessListener { last ->
-                        viewModel.startGame(gameId, last?.latitude, last?.longitude)
+                        if (last != null && isMockLocation(last)) {
+                            viewModel.startGame(gameId, null, null)
+                        } else {
+                            viewModel.startGame(gameId, last?.latitude, last?.longitude)
+                        }
                     }
                 }
             }
@@ -692,6 +700,15 @@ private fun getLastLocationAndStartGame(context: Context, viewModel: GameDetailV
             }
     } catch (e: SecurityException) {
         viewModel.startGame(gameId, null, null)
+    }
+}
+
+private fun isMockLocation(location: android.location.Location): Boolean {
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        location.isMock
+    } else {
+        @Suppress("DEPRECATION")
+        location.isFromMockProvider
     }
 }
 

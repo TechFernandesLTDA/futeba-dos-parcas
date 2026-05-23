@@ -15,6 +15,7 @@ import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
@@ -34,16 +35,20 @@ class ConfirmationUseCase constructor(
     private val waitlistRepository: WaitlistRepository,
     private val notificationRepository: NotificationRepository,
     private val userRepository: UserRepository,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance("southamerica-east1")
 ) {
 
     companion object {
         private const val TAG = "ConfirmationUseCase"
 
-        // Raio padrao para check-in em metros
-        const val DEFAULT_CHECKIN_RADIUS_METERS = 100
+        const val CHECK_IN_RADIUS_METERS = 200
 
-        // Opcoes de deadline em horas
+        const val CHECK_IN_MAX_GPS_ACCURACY_METERS = 100f
+
+        @Deprecated("Use CHECK_IN_RADIUS_METERS", ReplaceWith("CHECK_IN_RADIUS_METERS"))
+        const val DEFAULT_CHECKIN_RADIUS_METERS = CHECK_IN_RADIUS_METERS
+
         val DEADLINE_OPTIONS = listOf(0, 1, 2, 4, 12, 24)
     }
 
@@ -314,79 +319,58 @@ class ConfirmationUseCase constructor(
      */
     suspend fun checkIn(gameId: String, userLocation: Location): Result<CheckInResult> {
         return try {
-            val user = userRepository.getCurrentUser().getOrNull()
-                ?: return Result.failure(Exception("Usuario nao autenticado"))
+            if (isMockLocation(userLocation)) {
+                AppLogger.w(TAG) { "Mock GPS detected - blocking check-in" }
+                return Result.failure(Exception("Localizacao mock detectada. Desative GPS simulado."))
+            }
 
-            val gameResult = gameRepository.getGameDetails(gameId)
-            val game = gameResult.getOrNull()
-                ?: return Result.failure(Exception("Jogo nao encontrado"))
-
-            // Verificar se o jogo tem coordenadas
-            val gameLat = game.locationLat
-            val gameLng = game.locationLng
-
-            if (gameLat == null || gameLng == null) {
-                return Result.success(
-                    CheckInResult(
-                        success = false,
-                        errorMessage = "Local do jogo nao possui coordenadas"
-                    )
+            if (userLocation.accuracy > CHECK_IN_MAX_GPS_ACCURACY_METERS) {
+                return Result.failure(
+                    Exception("Precisao GPS insuficiente (${userLocation.accuracy.toInt()}m). Maximo ${CHECK_IN_MAX_GPS_ACCURACY_METERS.toInt()}m.")
                 )
             }
 
-            // Calcular distancia
-            val gameLocation = Location("game").apply {
-                latitude = gameLat
-                longitude = gameLng
-            }
-
-            val distance = userLocation.distanceTo(gameLocation)
-            // TODO: KMP Game model não tem checkinRadiusMeters - usar default ou buscar do Group
-            val maxRadius = DEFAULT_CHECKIN_RADIUS_METERS
-
-            if (distance > maxRadius) {
-                return Result.success(
-                    CheckInResult(
-                        success = false,
-                        distance = distance,
-                        maxRadius = maxRadius.toFloat(),
-                        errorMessage = "Voce esta muito longe do local (${distance.toInt()}m)"
-                    )
-                )
-            }
-
-            // Realizar check-in
-            val updates = mapOf(
-                "checked_in" to true,
-                "checked_in_at" to Date(),
-                "is_on_the_way" to false,
-                "was_present" to true
+            val data = hashMapOf(
+                "gameId" to gameId,
+                "lat" to userLocation.latitude,
+                "lng" to userLocation.longitude,
+                "accuracy" to userLocation.accuracy.toDouble()
             )
 
-            firestore.collection("games")
-                .document(gameId)
-                .collection("confirmations")
-                .whereEqualTo("user_id", user.id)
-                .get()
+            val result = functions
+                .getHttpsCallable("checkInToGame")
+                .call(data)
                 .await()
-                .documents
-                .firstOrNull()
-                ?.reference
-                ?.update(updates)
-                ?.await()
 
-            AppLogger.i(TAG) { "Check-in realizado para usuario ${user.id} no jogo $gameId (distancia: ${distance.toInt()}m)" }
+            @Suppress("UNCHECKED_CAST")
+            val resultMap = result.data as? Map<String, Any>
+
+            val distance = (resultMap?.get("distance_m") as? Number)?.toFloat() ?: 0f
+
+            AppLogger.i(TAG) { "Check-in via Cloud Function para jogo $gameId (distancia: ${distance.toInt()}m)" }
 
             Result.success(
                 CheckInResult(
                     success = true,
                     distance = distance,
-                    maxRadius = maxRadius.toFloat()
+                    maxRadius = CHECK_IN_RADIUS_METERS.toFloat()
                 )
             )
+        } catch (e: com.google.firebase.functions.FirebaseFunctionsException) {
+            AppLogger.e(TAG, "Cloud Function check-in falhou", e)
+            Result.failure(Exception(e.message ?: "Erro no check-in"))
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao realizar check-in", e)
             Result.failure(e)
+        }
+    }
+
+    private fun isMockLocation(location: Location): Boolean {
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            location.isMock
+        } else {
+            @Suppress("DEPRECATION")
+            location.isFromMockProvider
         }
     }
 

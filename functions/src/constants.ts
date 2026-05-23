@@ -256,3 +256,16 @@ export const WAITLIST_RESPONSE_TIMEOUT_MS =
 
 /** Máximo de jogadores na waitlist a notificar */
 export const WAITLIST_NOTIFY_LIMIT = 5;
+
+// ==========================================
+// CHECK-IN
+// ==========================================
+
+/** Raio padrao de check-in em metros (source of truth) */
+export const CHECK_IN_RADIUS_METERS = 200;
+
+/** Raio maximo de check-in em metros */
+export const CHECK_IN_MAX_RADIUS_METERS = 2000;
+
+/** Precisao GPS maxima (metros) para aceitar check-in */
+export const CHECK_IN_MAX_GPS_ACCURACY_METERS = 100;

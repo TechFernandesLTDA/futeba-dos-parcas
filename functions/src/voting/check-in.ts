@@ -23,11 +23,13 @@ import {FUNCTION_REGION} from "../constants";
 
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
+const MAX_GPS_ACCURACY_METERS = 100;
 
 interface CheckInRequest {
   gameId: string;
   lat: number;
   lng: number;
+  accuracy?: number;
 }
 
 /**
@@ -89,7 +91,7 @@ export const checkInToGame = onCall(
       );
     }
 
-    const {gameId, lat, lng} =
+    const {gameId, lat, lng, accuracy} =
       (data ?? {}) as CheckInRequest;
     if (
       typeof gameId !== "string" ||
@@ -99,6 +101,16 @@ export const checkInToGame = onCall(
       throw new HttpsError(
         "invalid-argument",
         "gameId/lat/lng obrigatorios",
+      );
+    }
+    if (
+      typeof accuracy === "number" &&
+      accuracy > MAX_GPS_ACCURACY_METERS
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Precisao GPS insuficiente (${Math.round(accuracy)}m). ` +
+          `Maximo ${MAX_GPS_ACCURACY_METERS}m.`,
       );
     }
     // FIX #584/M8: gameId sem max-length permitia cliente passar 10MB
@@ -182,7 +194,7 @@ export const checkInToGame = onCall(
     const radiusRaw = (game.checkin_radius_meters as number) ??
       DEFAULT_RADIUS_METERS;
     const radius = Math.min(
-      Math.max(radiusRaw, 50),
+      Math.max(radiusRaw, DEFAULT_RADIUS_METERS),
       MAX_RADIUS_METERS,
     );
     // FIX #647: Loga quando radius foi clampado silenciosamente,
@@ -247,8 +259,14 @@ export const checkInToGame = onCall(
           checked_in: true,
           checked_in_at: admin.firestore
             .FieldValue.serverTimestamp(),
-          check_in_lat: lat,
-          check_in_lng: lng,
+          check_in_lat_approx:
+            Math.round(lat * 1000) / 1000,
+          check_in_lng_approx:
+            Math.round(lng * 1000) / 1000,
+          check_in_accuracy_m:
+            typeof accuracy === "number" ?
+              Math.round(accuracy) :
+              null,
           check_in_distance_m: Math.round(dist),
           was_present: true,
         },

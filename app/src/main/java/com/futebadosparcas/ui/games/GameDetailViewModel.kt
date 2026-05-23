@@ -909,13 +909,14 @@ class GameDetailViewModel(
     /**
      * Issue #36: Realiza check-in por GPS.
      */
-    fun checkIn(gameId: String, latitude: Double, longitude: Double) {
+    fun checkIn(gameId: String, latitude: Double, longitude: Double, accuracy: Float = 0f) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
 
             val location = android.location.Location("").apply {
                 this.latitude = latitude
                 this.longitude = longitude
+                this.accuracy = accuracy
             }
 
             val result = confirmationUseCase.checkIn(gameId, location)

@@ -27,6 +27,7 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -37,6 +38,7 @@ import {
   Payments as PaymentIcon,
   Check as CheckIcon,
   PlayArrow as PlayIcon,
+  HowToReg as CheckInIcon,
   HowToVote as VoteIcon,
   Share as ShareIcon,
   Navigation as NavIcon,
@@ -48,7 +50,7 @@ import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppBreadcrumbs } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
-import { softDeleteGame } from '../../services/cloudFunctions';
+import { softDeleteGame, checkInToGame } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
@@ -98,6 +100,7 @@ export const GameDetailScreen: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [checkInLoading, setCheckInLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     date: '',
     time: '',
@@ -239,6 +242,39 @@ export const GameDetailScreen: React.FC = () => {
     } finally {
       setEditLoading(false);
     }
+  };
+
+  const handleCheckIn = () => {
+    if (!gameId || !game) return;
+
+    if (!navigator.geolocation) {
+      showError('Geolocalização não suportada pelo navegador.');
+      return;
+    }
+
+    setCheckInLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const result = await checkInToGame({
+            gameId,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          showSuccess(`Check-in realizado com sucesso!${result.data.distanceMeters ? ` (${Math.round(result.data.distanceMeters)}m do local)` : ''}`);
+          queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+        } catch (err) {
+          showError((err as Error)?.message || 'Erro ao realizar check-in');
+        } finally {
+          setCheckInLoading(false);
+        }
+      },
+      (_err) => {
+        showError('Erro ao capturar localização. Verifique as permissões.');
+        setCheckInLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   if (loading) {
@@ -701,15 +737,28 @@ export const GameDetailScreen: React.FC = () => {
               )}
             </Box>
           ) : game.status === 'LIVE' ? (
-            <Button
-              variant="contained"
-              fullWidth
-              color="error"
-              startIcon={<SoccerIcon />}
-              onClick={() => navigate(`/game/${gameId}/live`)}
-            >
-              Ver Jogo ao Vivo
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {isConfirmed && myConfirmation?.status !== 'CHECKED_IN' && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={checkInLoading ? <CircularProgress size={16} color="inherit" /> : <CheckInIcon />}
+                  onClick={handleCheckIn}
+                  disabled={checkInLoading}
+                >
+                  Check-in
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                fullWidth
+                color="error"
+                startIcon={<SoccerIcon />}
+                onClick={() => navigate(`/game/${gameId}/live`)}
+              >
+                Ver Jogo ao Vivo
+              </Button>
+            </Box>
           ) : game.status === 'FINISHED' && !game.votingConcluded ? (
             <Button
               variant="contained"
