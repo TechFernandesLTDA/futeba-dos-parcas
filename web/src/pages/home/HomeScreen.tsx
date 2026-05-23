@@ -31,6 +31,8 @@ import { Badge } from '@mui/material';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePrefetchHome } from '../../hooks/usePrefetchHome';
+import { usePerformanceMonitoring } from '../../hooks/usePerformanceMonitoring';
+import { PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 
 // Carregamento lazy das tabs para reduzir bundle inicial da HomeScreen
 const HomeTab = lazy(() => import('./tabs/HomeTab').then(m => ({ default: m.HomeTab })));
@@ -72,6 +74,9 @@ export function HomeScreen() {
 
   // Prefetch de dados críticos da Home em paralelo
   usePrefetchHome();
+
+  // Monitoramento de performance
+  const { metrics } = usePerformanceMonitoring({ screenName: 'HomeScreen' });
 
   const notificationIcon = useMemo(() => (
     <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0} max={99}>
@@ -397,6 +402,9 @@ export function HomeScreen() {
 
       {/* Pop-up automático "Novidades" — aparece 1x após atualização do app */}
       <WhatsNewPopupHost />
+      
+      {/* Performance Overlay (dev mode apenas) */}
+      <PerformanceOverlay metrics={metrics} />
     </Box>
   );
 }

@@ -34,11 +34,15 @@ import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
 import { Group } from '../../types/group';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 
 export const GroupsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { t } = useTranslation();
+
+  // Monitoramento de performance
+  const { metrics } = usePerformanceMonitoring({ screenName: 'GroupsScreen' });
 
   const { groups, loading, error, refetch } = useGroups();
 
@@ -127,6 +131,9 @@ export const GroupsScreen: React.FC = () => {
       >
         <AddIcon />
       </Fab>
+
+      {/* Performance Overlay (dev mode apenas) */}
+      <PerformanceOverlay metrics={metrics} />
     </Box>
   );
 };

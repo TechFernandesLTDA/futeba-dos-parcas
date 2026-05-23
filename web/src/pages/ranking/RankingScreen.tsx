@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
 import { useNavigate } from 'react-router-dom';
+import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 import {
   Box,
   Container,
@@ -41,6 +42,9 @@ export const RankingScreen: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // Monitoramento de performance
+  const { metrics } = usePerformanceMonitoring({ screenName: 'RankingScreen' });
 
   const [tabValue, setTabValue] = useState(0);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -160,6 +164,9 @@ export const RankingScreen: React.FC = () => {
           />
         )}
       </Container>
+
+      {/* Performance Overlay (dev mode apenas) */}
+      <PerformanceOverlay metrics={metrics} />
     </Box>
   );
 };

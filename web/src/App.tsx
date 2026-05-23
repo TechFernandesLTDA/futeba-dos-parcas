@@ -116,6 +116,7 @@ const AboutScreen = lazy(() => import('./pages/about/AboutScreen').then(m => ({ 
 const WhatsNewPage = lazy(() => import('./pages/whatsnew/WhatsNewPage').then(m => ({ default: m.WhatsNewPage })));
 const UserManagementScreen = lazy(() => import('./pages/admin/UserManagementScreen').then(m => ({ default: m.UserManagementScreen })));
 const DevToolsScreen = lazy(() => import('./pages/devtools/DevToolsScreen').then(m => ({ default: m.DevToolsScreen })));
+const PerformanceDashboard = lazy(() => import('./pages/admin/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard })));
 
 // Error pages
 const NotFoundScreen = lazy(() => import('./pages/error/NotFoundScreen').then(m => ({ default: m.NotFoundScreen })));
@@ -455,6 +456,7 @@ function AppRoutes() {
         {/* Admin */}
         <Route path="/admin/users" element={<AdminRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></AdminRoute>} />
         <Route path="/dev" element={<AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute>} />
+        <Route path="/admin/performance" element={<AdminRoute><Suspense fallback={<RouteFallback />}><PerformanceDashboard /></Suspense></AdminRoute>} />
       </Route>
       <Route path="/game/:gameId/live" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveGameScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/vote" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MVPVoteScreen /></Suspense></ProtectedRoute>} />

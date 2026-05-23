@@ -36,6 +36,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { GameStatus } from '../../types/game';
 import { useTranslation } from 'react-i18next';
+import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 
 export const GamesScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -44,6 +45,9 @@ export const GamesScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   useAuth();
   const { t } = useTranslation();
+
+  // Monitoramento de performance
+  const { metrics } = usePerformanceMonitoring({ screenName: 'GamesScreen' });
 
   const [tabValue, setTabValue] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -240,6 +244,9 @@ export const GamesScreen: React.FC = () => {
       >
         <AddIcon />
       </Fab>
+
+      {/* Performance Overlay (dev mode apenas) */}
+      <PerformanceOverlay metrics={metrics} />
     </Box>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
 import { useNavigate } from 'react-router-dom';
+import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 import {
   Box,
   Container,
@@ -82,6 +83,9 @@ export const LeagueScreen: React.FC = () => {
   const [shareSnack, setShareSnack] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showSort, setShowSort] = useState(false);
+
+  // Monitoramento de performance
+  const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
 
   const userCardRef = useRef<HTMLDivElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
@@ -492,6 +496,9 @@ export const LeagueScreen: React.FC = () => {
         onClose={() => setShareSnack(false)}
         message="Posição copiada!"
       />
+
+      {/* Performance Overlay (dev mode apenas) */}
+      <PerformanceOverlay metrics={metrics} />
     </Box>
   );
 };

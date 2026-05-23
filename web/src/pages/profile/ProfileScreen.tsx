@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
+import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 import {
   Box,
   Container,
@@ -52,6 +53,9 @@ export const ProfileScreen: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // Monitoramento de performance
+  const { metrics } = usePerformanceMonitoring({ screenName: 'ProfileScreen' });
 
   const isOwnProfile = !userId || userId === currentUser?.id;
   const targetUserId = userId || currentUser?.id;
@@ -356,6 +360,9 @@ export const ProfileScreen: React.FC = () => {
           )}
         </Grid>
       </Container>
+
+      {/* Performance Overlay (dev mode apenas) */}
+      <PerformanceOverlay metrics={metrics} />
     </Box>
   );
 };
