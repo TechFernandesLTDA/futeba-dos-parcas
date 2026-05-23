@@ -32,7 +32,13 @@ vi.mock('../../../contexts/AuthContext', () => ({
       defenderRating: 2.0,
       gkRating: 1.0,
     },
+    firebaseUser: {
+      uid: 'user-1',
+      email: 'carlos@test.com',
+    },
     logout: vi.fn().mockResolvedValue(undefined),
+    loading: false,
+    refreshUser: vi.fn(),
   }),
 }));
 
