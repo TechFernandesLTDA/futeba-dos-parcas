@@ -3,6 +3,7 @@ package com.futebadosparcas.domain.usecase
 import com.futebadosparcas.domain.ai.BalancedTeams
 import com.futebadosparcas.domain.ai.PlayerForBalancing
 import com.futebadosparcas.domain.ai.GreedyTeamBalancer
+import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.User
 
@@ -37,8 +38,10 @@ class BalanceTeamsUseCase {
 
             // Converter User para PlayerForBalancing
             val players = users.map { user ->
-                val rating = user.getOverallRating().toFloat()
-                // Usa a posicao preferida do usuario; fallback para LINE se nao definida ou invalida
+                val attack = user.getEffectiveRating(PlayerRatingRole.STRIKER).toFloat()
+                val midfield = user.getEffectiveRating(PlayerRatingRole.MID).toFloat()
+                val defense = user.getEffectiveRating(PlayerRatingRole.DEFENDER).toFloat()
+                val gk = user.getEffectiveRating(PlayerRatingRole.GOALKEEPER).toFloat()
                 val position = user.preferredPosition?.let { pref ->
                     try { PlayerPosition.valueOf(pref.uppercase()) } catch (_: Exception) { null }
                 } ?: PlayerPosition.LINE
@@ -46,10 +49,10 @@ class BalanceTeamsUseCase {
                     id = user.id,
                     name = user.getDisplayName(),
                     position = position,
-                    attackSkill = rating,
-                    midfieldSkill = rating,
-                    defenseSkill = rating,
-                    goalkeeperSkill = if (position == PlayerPosition.GOALKEEPER) rating else rating * 0.8f
+                    attackSkill = attack,
+                    midfieldSkill = midfield,
+                    defenseSkill = defense,
+                    goalkeeperSkill = if (position == PlayerPosition.GOALKEEPER) gk else gk * 0.8f
                 )
             }
 

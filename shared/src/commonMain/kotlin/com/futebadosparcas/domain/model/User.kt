@@ -158,6 +158,11 @@ data class User(
         return (autoRatingSamples / 20.0).coerceIn(0.0, 1.0)
     }
 
+    fun getAutoRatingConfidence(role: PlayerRatingRole): Double {
+        if (autoRatingSamples <= 0) return 0.0
+        return (autoRatingSamples / 20.0).coerceIn(0.0, 1.0)
+    }
+
     /**
      * Retorna a nota manual do jogador para uma funcao.
      */
@@ -188,10 +193,10 @@ data class User(
     fun getEffectiveRating(role: PlayerRatingRole): Double {
         val manual = getManualRating(role)
         val auto = getAutoRating(role)
-        if (auto <= 0.0) return manual
-        if (manual <= 0.0) return auto
+        if (auto < 0.001) return manual
+        if (manual < 0.001) return auto
 
-        val confidence = getAutoRatingConfidence()
+        val confidence = getAutoRatingConfidence(role)
         return ((manual * (1.0 - confidence)) + (auto * confidence)).coerceIn(0.0, 5.0)
     }
 

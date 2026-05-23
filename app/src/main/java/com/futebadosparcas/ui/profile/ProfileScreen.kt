@@ -241,7 +241,11 @@ private fun ProfileContent(
     val midfielderLabel = stringResource(R.string.profile_position_midfielder)
     val defenderLabel = stringResource(R.string.profile_position_defender)
     val goalkeeperLabel = stringResource(R.string.profile_position_goalkeeper)
-    val ratings = remember(stableUser.id) {
+    val ratings = remember(
+        stableUser.strikerRating, stableUser.midRating, stableUser.defenderRating, stableUser.gkRating,
+        stableUser.autoStrikerRating, stableUser.autoMidRating, stableUser.autoDefenderRating, stableUser.autoGkRating,
+        stableUser.autoRatingSamples
+    ) {
         listOf(
             RatingData(attackerLabel, stableUser.getEffectiveRating(PlayerRatingRole.STRIKER), Icons.Default.SportsSoccer),
             RatingData(midfielderLabel, stableUser.getEffectiveRating(PlayerRatingRole.MID), Icons.AutoMirrored.Filled.DirectionsRun),

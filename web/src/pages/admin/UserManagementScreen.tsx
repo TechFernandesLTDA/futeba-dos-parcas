@@ -8,7 +8,6 @@ import {
   IconButton,
   List,
   ListItem,
-  ListItemAvatar,
   ListItemText,
   ListItemButton,
   Divider,
@@ -23,6 +22,8 @@ import {
   DialogActions,
   TextField,
   Alert,
+  Checkbox,
+  MenuItem,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -30,11 +31,10 @@ import {
   Search as SearchIcon,
   SearchOff as SearchOffIcon,
   PersonOff as PersonOffIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, limit, getDocs, startAfter, DocumentSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-// GAP-4: usar callable centralizada em services/cloudFunctions ao invés de
-// httpsCallable inline. Refator garante rename safety (string name num só lugar).
 import { setUserRole as setUserRoleCallable } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -62,8 +62,8 @@ export const UserManagementScreen: React.FC = () => {
   const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  useAuth();
-  const { showError } = useToast();
+  const { user: currentUser } = useAuth();
+  const { showError, showSuccess } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
@@ -75,12 +75,18 @@ export const UserManagementScreen: React.FC = () => {
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingRoleChange, setPendingRoleChange] = useState<{ user: UserWithRole; role: string } | null>(null);
 
   const handleRetry = () => {
     setFetchError(null);
@@ -151,19 +157,26 @@ export const UserManagementScreen: React.FC = () => {
     }
   };
 
-  const handleRoleChange = async (newRole: string) => {
-    if (!selectedUser) return;
+  const confirmRoleChange = (user: UserWithRole, newRole: string) => {
+    if (user.id === currentUser?.id && newRole !== 'ADMIN') {
+      setPendingRoleChange({ user, role: newRole });
+      setConfirmDialogOpen(true);
+      return;
+    }
+    executeRoleChange(user, newRole);
+  };
 
+  const executeRoleChange = async (user: UserWithRole, newRole: string) => {
     setActionLoading(true);
     setError(null);
     try {
-      // Usar callable centralizada (services/cloudFunctions) — atualiza Custom Claims + documento
-      await setUserRoleCallable({ uid: selectedUser.id, role: newRole });
+      await setUserRoleCallable({ uid: user.id, role: newRole });
       setUsers((prev) =>
-        prev.map((u) => (u.id === selectedUser.id ? { ...u, role: newRole } : u))
+        prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
       );
       setDialogOpen(false);
       setSelectedUser(null);
+      showSuccess(`Role de ${user.name} atualizado para ${newRole}.`);
     } catch (error) {
       setError(getFunctionsErrorMessage(error, 'setUserRole', 'Erro ao atualizar role'));
     } finally {
@@ -171,20 +184,50 @@ export const UserManagementScreen: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
+  const handleBulkRoleChange = async (newRole: string) => {
+    setBulkLoading(true);
+    let successCount = 0;
+    let errorCount = 0;
+    for (const uid of selectedUsers) {
+      if (uid === currentUser?.id) continue;
+      try {
+        await setUserRoleCallable({ uid, role: newRole });
+        setUsers((prev) =>
+          prev.map((u) => (u.id === uid ? { ...u, role: newRole } : u))
+        );
+        successCount++;
+      } catch {
+        errorCount++;
+      }
+    }
+    setBulkLoading(false);
+    setBulkDialogOpen(false);
+    setSelectedUsers(new Set());
+    if (successCount > 0) showSuccess(`${successCount} usuário(s) atualizado(s).`);
+    if (errorCount > 0) showError(`${errorCount} falha(s) na atualização.`);
+  };
+
+  const toggleSelect = (uid: string) => {
+    setSelectedUsers((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid); else next.add(uid);
+      return next;
+    });
+  };
+
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'ADMIN':
-        return theme.palette.error.main;
-      case 'MODERATOR':
-        return theme.palette.warning.main;
-      default:
-        return theme.palette.grey[500];
+      case 'ADMIN': return theme.palette.error.main;
+      case 'FIELD_OWNER': return theme.palette.warning.main;
+      default: return theme.palette.grey[500];
     }
   };
 
@@ -206,8 +249,19 @@ export const UserManagementScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1 }}>
             Gerenciar Usuários
           </Typography>
+          {selectedUsers.size > 0 && (
+            <Button
+              startIcon={<EditIcon />}
+              onClick={() => setBulkDialogOpen(true)}
+              sx={{ ml: 'auto' }}
+              variant="outlined"
+              size="small"
+            >
+              Alterar ({selectedUsers.size})
+            </Button>
+          )}
         </Box>
-        <Box sx={{ px: 2, pb: 2 }}>
+        <Box sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <TextField
             fullWidth
             size="small"
@@ -219,6 +273,18 @@ export const UserManagementScreen: React.FC = () => {
               startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
             }}
           />
+          <TextField
+            select
+            size="small"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            sx={{ minWidth: 150 }}
+          >
+            <MenuItem value="ALL">Todos os roles</MenuItem>
+            <MenuItem value="ADMIN">Admin</MenuItem>
+            <MenuItem value="FIELD_OWNER">Field Owner</MenuItem>
+            <MenuItem value="PLAYER">Player</MenuItem>
+          </TextField>
         </Box>
       </Box>
 
@@ -234,7 +300,6 @@ export const UserManagementScreen: React.FC = () => {
         ) : loading ? (
           <LoadingState shimmerCount={8} itemType="LIST" />
         ) : filteredUsers.length === 0 ? (
-          // Empty state — diferencia busca vazia de DB vazio (#1125)
           searchQuery ? (
             <EmptyState
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
@@ -265,24 +330,26 @@ export const UserManagementScreen: React.FC = () => {
                     {index > 0 && <Divider />}
                     <ListItem
                       secondaryAction={
-                        <IconButton edge="end" aria-label="Gerenciar permissões">
+                        <IconButton edge="end" aria-label="Gerenciar permissões" onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
                           <AdminIcon />
                         </IconButton>
                       }
                     >
+                      <Checkbox
+                        checked={selectedUsers.has(u.id)}
+                        onChange={() => toggleSelect(u.id)}
+                        disabled={u.id === currentUser?.id}
+                        sx={{ mr: 1 }}
+                      />
                       <ListItemButton
-                        onClick={() => {
-                          setSelectedUser(u);
-                          setDialogOpen(true);
-                        }}
+                        onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
                       >
-                        <ListItemAvatar>
-                          <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
-                        </ListItemAvatar>
+                        <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               {u.name}
+                              {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
                               <Chip
                                 label={u.role}
                                 size="small"
@@ -294,6 +361,7 @@ export const UserManagementScreen: React.FC = () => {
                             </Box>
                           }
                           secondary={`${u.email} • ${u.gamesPlayed} jogos`}
+                          sx={{ ml: 1 }}
                         />
                       </ListItemButton>
                     </ListItem>
@@ -301,7 +369,6 @@ export const UserManagementScreen: React.FC = () => {
                 ))}
               </List>
             </Card>
-            {/* Botão de paginação — só aparece quando não há filtro ativo e há mais dados */}
             {hasMore && !searchQuery && (
               <Button
                 fullWidth
@@ -338,25 +405,67 @@ export const UserManagementScreen: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
           <Button
-            onClick={() => handleRoleChange('PLAYER')}
-            disabled={actionLoading}
+            onClick={() => selectedUser && confirmRoleChange(selectedUser, 'PLAYER')}
+            disabled={actionLoading || selectedUser?.role === 'PLAYER'}
           >
             Player
           </Button>
           <Button
-            onClick={() => handleRoleChange('MODERATOR')}
-            disabled={actionLoading}
+            onClick={() => selectedUser && confirmRoleChange(selectedUser, 'FIELD_OWNER')}
+            disabled={actionLoading || selectedUser?.role === 'FIELD_OWNER'}
             color="warning"
           >
-            Moderator
+            Field Owner
           </Button>
           <Button
-            onClick={() => handleRoleChange('ADMIN')}
-            disabled={actionLoading}
+            onClick={() => selectedUser && confirmRoleChange(selectedUser, 'ADMIN')}
+            disabled={actionLoading || selectedUser?.role === 'ADMIN'}
             color="error"
           >
             Admin
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
+        <DialogTitle>Confirmar alteração de role</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Você está prestes a alterar seu próprio role de <strong>ADMIN</strong> para <strong>{pendingRoleChange?.role}</strong>.
+            Esta ação pode remover seu acesso administrativo. Tem certeza?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialogOpen(false)}>Cancelar</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              if (pendingRoleChange) {
+                executeRoleChange(pendingRoleChange.user, pendingRoleChange.role);
+              }
+              setConfirmDialogOpen(false);
+              setPendingRoleChange(null);
+            }}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={bulkDialogOpen} onClose={() => !bulkLoading && setBulkDialogOpen(false)}>
+        <DialogTitle>Alterar role em lote</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Alterar role de {selectedUsers.size} usuário(s) selecionado(s) para:
+          </Typography>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkDialogOpen(false)} disabled={bulkLoading}>Cancelar</Button>
+          <Button onClick={() => handleBulkRoleChange('PLAYER')} disabled={bulkLoading}>Player</Button>
+          <Button onClick={() => handleBulkRoleChange('FIELD_OWNER')} disabled={bulkLoading} color="warning">Field Owner</Button>
+          <Button onClick={() => handleBulkRoleChange('ADMIN')} disabled={bulkLoading} color="error">Admin</Button>
         </DialogActions>
       </Dialog>
     </Box>

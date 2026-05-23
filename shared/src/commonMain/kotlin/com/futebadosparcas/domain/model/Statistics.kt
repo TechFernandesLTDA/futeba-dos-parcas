@@ -108,7 +108,11 @@ data class Statistics(
      * Media de cartoes por jogo.
      */
     val avgCardsPerGame: Double
-        get() = if (totalGames == 0) 0.0 else totalCards.toDouble() / totalGames.toDouble()
+        get() {
+            if (totalGames == 0) return 0.0
+            val weighted = yellowCards + (redCards * 2)
+            return weighted.toDouble() / totalGames.toDouble()
+        }
 
     /**
      * Taxa de MVP (melhor jogador) - mvpCount / totalGames.

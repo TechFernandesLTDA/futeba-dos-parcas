@@ -21,6 +21,15 @@ export interface Player {
   assists: number;
   mvpCount: number;
   streak: number;
+  strikerRating: number;
+  midRating: number;
+  defenderRating: number;
+  gkRating: number;
+  autoStrikerRating: number;
+  autoMidRating: number;
+  autoDefenderRating: number;
+  autoGkRating: number;
+  autoRatingSamples: number;
   createdAt?: Date;
 }
 
@@ -92,6 +101,15 @@ export const usePlayers = (groupId?: string) => {
             assists: (data.assists as number) || 0,
             mvpCount: (data.mvpCount as number) || (raw.mvp_count as number) || 0,
             streak: (data.streak as number) || 0,
+            strikerRating: (data.strikerRating as number) ?? (raw.striker_rating as number) ?? 0,
+            midRating: (data.midRating as number) ?? (raw.mid_rating as number) ?? 0,
+            defenderRating: (data.defenderRating as number) ?? (raw.defender_rating as number) ?? 0,
+            gkRating: (data.gkRating as number) ?? (raw.gk_rating as number) ?? 0,
+            autoStrikerRating: (data.autoStrikerRating as number) ?? (raw.auto_striker_rating as number) ?? 0,
+            autoMidRating: (data.autoMidRating as number) ?? (raw.auto_mid_rating as number) ?? 0,
+            autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
+            autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
+            autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
             createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
           } as Player;
           });
@@ -153,6 +171,15 @@ export const usePlayerDetail = (userId?: string) => {
               assists: (data.assists as number) || 0,
               mvpCount: (data.mvpCount as number) || (raw.mvp_count as number) || 0,
               streak: (data.streak as number) || 0,
+              strikerRating: (data.strikerRating as number) ?? (raw.striker_rating as number) ?? 0,
+              midRating: (data.midRating as number) ?? (raw.mid_rating as number) ?? 0,
+              defenderRating: (data.defenderRating as number) ?? (raw.defender_rating as number) ?? 0,
+              gkRating: (data.gkRating as number) ?? (raw.gk_rating as number) ?? 0,
+              autoStrikerRating: (data.autoStrikerRating as number) ?? (raw.auto_striker_rating as number) ?? 0,
+              autoMidRating: (data.autoMidRating as number) ?? (raw.auto_mid_rating as number) ?? 0,
+              autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
+              autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
+              autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
               createdAt: raw.created_at?.toDate?.() || (data.createdAt as Date | undefined),
             });
           }

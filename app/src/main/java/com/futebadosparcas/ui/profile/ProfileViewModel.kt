@@ -55,7 +55,7 @@ class ProfileViewModel(
         private const val AUTO_RATING_DELTA_THRESHOLD = 0.3
 
         /** Mínimo de amostras adicionais antes de reavaliação */
-        private const val AUTO_RATING_MIN_SAMPLE_INCREMENT = 3
+        private const val AUTO_RATING_MIN_SAMPLE_INCREMENT = 1
     }
 
     private val _uiEvents = kotlinx.coroutines.channels.Channel<ProfileUiEvent>()
@@ -353,7 +353,7 @@ class ProfileViewModel(
     }
 
     private fun maybeUpdateAutoRatings(user: User, stats: com.futebadosparcas.domain.model.Statistics?) {
-        if (stats == null || stats.totalGames < 3) return
+        if (stats == null || stats.totalGames < 1) return
 
         val autoRatings = PerformanceRatingCalculator.fromStats(stats)
         if (!shouldUpdateAutoRatings(user, autoRatings)) return

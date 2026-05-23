@@ -23,12 +23,19 @@ export interface PlayerCardData {
   totalLosses: number;
   currentStreak: number;
   bestStreak: number;
-  // Rating calculado a partir das notas de posição
   overallRating: number;
+  strikerRating: number;
+  midRating: number;
+  defenderRating: number;
+  gkRating: number;
+  autoStrikerRating: number;
+  autoMidRating: number;
+  autoDefenderRating: number;
+  autoGkRating: number;
+  autoRatingSamples: number;
   favoriteTeam?: string;
 }
 
-// Busca dados completos do usuário para o Player Card
 async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
   const userDoc = await getDoc(doc(db, 'users', userId));
 
@@ -43,13 +50,18 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
   const totalXp = data.experiencePoints ?? raw.experience_points ?? 0;
   const level = data.level ?? getLevelForXp(totalXp);
 
-  // Calcula rating geral com base nas notas de posição (0-10 → 0-99)
-  const strikerRating = data.strikerRating ?? raw.striker_rating ?? 5;
-  const midRating = data.midRating ?? raw.mid_rating ?? 5;
-  const defenderRating = data.defenderRating ?? raw.defender_rating ?? 5;
-  const gkRating = data.gkRating ?? raw.gk_rating ?? 5;
-  const avgRating = (strikerRating + midRating + defenderRating + gkRating) / 4;
-  const overallRating = Math.round(avgRating * 9.9);
+  const strikerRating = data.strikerRating ?? raw.striker_rating ?? 0;
+  const midRating = data.midRating ?? raw.mid_rating ?? 0;
+  const defenderRating = data.defenderRating ?? raw.defender_rating ?? 0;
+  const gkRating = data.gkRating ?? raw.gk_rating ?? 0;
+  const autoStrikerRating = data.autoStrikerRating ?? raw.auto_striker_rating ?? 0;
+  const autoMidRating = data.autoMidRating ?? raw.auto_mid_rating ?? 0;
+  const autoDefenderRating = data.autoDefenderRating ?? raw.auto_defender_rating ?? 0;
+  const autoGkRating = data.autoGkRating ?? raw.auto_gk_rating ?? 0;
+  const autoRatingSamples = data.autoRatingSamples ?? raw.auto_rating_samples ?? 0;
+
+  const ratings = [strikerRating, midRating, defenderRating, gkRating, autoStrikerRating, autoMidRating, autoDefenderRating, autoGkRating].filter((r) => r > 0);
+  const overallRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
 
   return {
     id: userId,
@@ -70,6 +82,15 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
     currentStreak: data.currentStreak ?? raw.current_streak ?? 0,
     bestStreak: data.bestStreak ?? raw.best_streak ?? 0,
     overallRating,
+    strikerRating,
+    midRating,
+    defenderRating,
+    gkRating,
+    autoStrikerRating,
+    autoMidRating,
+    autoDefenderRating,
+    autoGkRating,
+    autoRatingSamples,
     favoriteTeam: data.favoriteTeam ?? raw.favorite_team ?? undefined,
   };
 }
@@ -84,8 +105,8 @@ export function usePlayerCard(userId: string | null) {
     queryKey: ['playerCard', userId],
     queryFn: () => fetchPlayerCardData(userId!),
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    refetchOnWindowFocus: false, // dados estáticos do jogador — não buscar ao focar janela
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const error = queryError ? (queryError as Error).message : null;

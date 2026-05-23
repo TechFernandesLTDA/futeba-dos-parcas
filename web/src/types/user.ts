@@ -14,13 +14,21 @@ export interface User {
   role: UserRole;
   level: number;
   experiencePoints: number;
-  
-  // Ratings
+
+  // Ratings manuais (0.0 - 5.0)
   strikerRating: number;
   midRating: number;
   defenderRating: number;
   gkRating: number;
-  
+
+  // Ratings automáticos calculados server-side (0.0 - 5.0)
+  autoStrikerRating: number;
+  autoMidRating: number;
+  autoDefenderRating: number;
+  autoGkRating: number;
+  autoRatingSamples: number;
+  autoRatingUpdatedAt?: Date;
+
   // Preferences
   preferredPosition?: PreferredPosition;
   preferredFieldTypes: FieldType[];
@@ -74,6 +82,50 @@ export interface Badge {
   badgeId: string;
   unlockedAt: Date;
   count: number;
+}
+
+export type PlayerRatingRole = 'STRIKER' | 'MID' | 'DEFENDER' | 'GOALKEEPER';
+
+export function getAutoRatingConfidence(autoRatingSamples: number): number {
+  if (autoRatingSamples <= 0) return 0.0;
+  return Math.min(autoRatingSamples / 20.0, 1.0);
+}
+
+export function getManualRating(user: Pick<User, 'strikerRating' | 'midRating' | 'defenderRating' | 'gkRating'>, role: PlayerRatingRole): number {
+  switch (role) {
+    case 'STRIKER': return user.strikerRating ?? 0;
+    case 'MID': return user.midRating ?? 0;
+    case 'DEFENDER': return user.defenderRating ?? 0;
+    case 'GOALKEEPER': return user.gkRating ?? 0;
+  }
+}
+
+export function getAutoRating(user: Pick<User, 'autoStrikerRating' | 'autoMidRating' | 'autoDefenderRating' | 'autoGkRating'>, role: PlayerRatingRole): number {
+  switch (role) {
+    case 'STRIKER': return user.autoStrikerRating ?? 0;
+    case 'MID': return user.autoMidRating ?? 0;
+    case 'DEFENDER': return user.autoDefenderRating ?? 0;
+    case 'GOALKEEPER': return user.autoGkRating ?? 0;
+  }
+}
+
+export function getEffectiveRating(user: User, role: PlayerRatingRole): number {
+  const manual = getManualRating(user, role);
+  const auto = getAutoRating(user, role);
+  if (auto <= 0) return manual;
+  if (manual <= 0) return auto;
+  const confidence = getAutoRatingConfidence(user.autoRatingSamples);
+  return Math.min(Math.max(manual * (1 - confidence) + auto * confidence, 0), 5);
+}
+
+export function getOverallRating(user: User): number {
+  const ratings = ([
+    'STRIKER', 'MID', 'DEFENDER', 'GOALKEEPER',
+  ] as PlayerRatingRole[])
+    .map((role) => getEffectiveRating(user, role))
+    .filter((r) => r > 0);
+  if (ratings.length === 0) return 0;
+  return ratings.reduce((a, b) => a + b, 0) / ratings.length;
 }
 
 import { type Theme } from '@mui/material/styles';

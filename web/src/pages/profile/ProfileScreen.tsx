@@ -22,6 +22,7 @@ import {
   alpha,
   Grid,
   Paper,
+  LinearProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -35,6 +36,10 @@ import {
   BarChart as StatsIcon,
   WorkspacePremium as BadgeIcon,
   Refresh as RefreshIcon,
+  Security as ShieldIcon,
+  DirectionsRun as RunnerIcon,
+  SportsHandball as MidIcon,
+  Sports as DefIcon,
 } from '@mui/icons-material';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
@@ -43,6 +48,7 @@ import { PlayerAvatar } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
+import { getEffectiveRating } from '../../types/user';
 
 export const ProfileScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -316,6 +322,47 @@ export const ProfileScreen: React.FC = () => {
                     </Box>
                   </Grid>
                 </Grid>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ mt: 2 }}>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+                  Habilidades por Posição
+                </Typography>
+                <Grid container spacing={2}>
+                  {([
+                    { role: 'STRIKER' as const, label: 'Atacante', icon: <RunnerIcon color="error" /> },
+                    { role: 'MID' as const, label: 'Meio-campo', icon: <MidIcon color="warning" /> },
+                    { role: 'DEFENDER' as const, label: 'Zagueiro', icon: <DefIcon color="info" /> },
+                    { role: 'GOALKEEPER' as const, label: 'Goleiro', icon: <ShieldIcon color="success" /> },
+                  ]).map(({ role, label, icon }) => {
+                    const rating = getEffectiveRating(profile as any, role);
+                    return (
+                      <Grid item xs={6} md={3} key={role}>
+                        <Paper variant="outlined" sx={{ p: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                            {icon}
+                            <Typography variant="caption" color="text.secondary">{label}</Typography>
+                          </Box>
+                          <Typography variant="h6" fontWeight={700}>
+                            {rating > 0 ? rating.toFixed(1) : '—'}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={rating > 0 ? (rating / 5) * 100 : 0}
+                            sx={{ height: 6, borderRadius: 3, mt: 0.5 }}
+                          />
+                        </Paper>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+                {profile.autoRatingSamples > 0 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Baseado em {profile.autoRatingSamples} jogo(s) avaliado(s) automaticamente
+                  </Typography>
+                )}
               </CardContent>
             </Card>
           </Grid>

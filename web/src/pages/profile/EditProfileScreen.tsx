@@ -13,10 +13,14 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Slider,
+  Tooltip,
+  Divider,
 } from '@mui/material';
 import {
   PhotoCamera as CameraIcon,
   Save as SaveIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { FormScaffold } from '../../components/layout';
 import { TeamSelector } from '../../components/team/TeamSelector';
@@ -54,6 +58,10 @@ interface UserProfile {
   preferredPosition?: PreferredPosition;
   bio: string;
   favoriteTeam?: string | null;
+  strikerRating: number;
+  midRating: number;
+  defenderRating: number;
+  gkRating: number;
 }
 
 export const EditProfileScreen: React.FC = () => {
@@ -86,6 +94,10 @@ export const EditProfileScreen: React.FC = () => {
     preferredPosition: undefined,
     bio: '',
     favoriteTeam: null,
+    strikerRating: 0,
+    midRating: 0,
+    defenderRating: 0,
+    gkRating: 0,
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -147,6 +159,10 @@ export const EditProfileScreen: React.FC = () => {
           preferredPosition: data.preferredPosition,
           bio: data.bio || '',
           favoriteTeam: data.favoriteTeam || null,
+          strikerRating: data.strikerRating ?? data.striker_rating ?? 0,
+          midRating: data.midRating ?? data.mid_rating ?? 0,
+          defenderRating: data.defenderRating ?? data.defender_rating ?? 0,
+          gkRating: data.gkRating ?? data.gk_rating ?? 0,
         };
         setFormData(loaded);
         setInitialData(loaded);
@@ -234,6 +250,10 @@ export const EditProfileScreen: React.FC = () => {
         preferred_position: formData.preferredPosition,
         bio: formData.bio,
         favorite_team: formData.favoriteTeam,
+        striker_rating: formData.strikerRating,
+        mid_rating: formData.midRating,
+        defender_rating: formData.defenderRating,
+        gk_rating: formData.gkRating,
         updated_at: serverTimestamp(),
       });
 
@@ -411,6 +431,48 @@ export const EditProfileScreen: React.FC = () => {
                 inputProps={{ maxLength: 200 }}
               />
             </Box>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Habilidades por Posição
+              </Typography>
+              <Tooltip title="Ajuste suas habilidades manualmente. O sistema também calcula ratings automáticos baseado nos seus jogos.">
+                <InfoIcon fontSize="small" color="action" />
+              </Tooltip>
+            </Box>
+            {[
+              { key: 'strikerRating' as const, label: 'Atacante', autoKey: 'autoStrikerRating' },
+              { key: 'midRating' as const, label: 'Meio-campo', autoKey: 'autoMidRating' },
+              { key: 'defenderRating' as const, label: 'Zagueiro', autoKey: 'autoDefenderRating' },
+              { key: 'gkRating' as const, label: 'Goleiro', autoKey: 'autoGkRating' },
+            ].map(({ key, label }) => (
+              <Box key={key} sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {label}: {formData[key]?.toFixed(1) || '0.0'}
+                </Typography>
+                <Slider
+                  value={formData[key] || 0}
+                  onChange={(_, v) => handleInputChange(key, v as number)}
+                  min={0}
+                  max={5}
+                  step={0.5}
+                  marks={[
+                    { value: 0, label: '0' },
+                    { value: 2.5, label: '2.5' },
+                    { value: 5, label: '5' },
+                  ]}
+                  valueLabelDisplay="auto"
+                />
+              </Box>
+            ))}
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="caption" color="text.secondary">
+              Nota: ratings automáticos são calculados com base nos seus últimos 50 jogos. Quanto mais jogos, maior a confiança do cálculo.
+            </Typography>
           </CardContent>
         </Card>
 

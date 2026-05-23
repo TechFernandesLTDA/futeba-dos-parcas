@@ -28,7 +28,7 @@ import {
   Map as MapIcon,
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -125,7 +125,7 @@ export const LocationsMapScreen: React.FC = () => {
 
   useEffect(() => {
     const locRef = collection(db, 'locations');
-    const q = query(locRef, orderBy('name', 'asc'));
+    const q = query(locRef, orderBy('name', 'asc'), limit(200));
 
     const unsubscribe = onSnapshot(
       q,
@@ -209,6 +209,11 @@ export const LocationsMapScreen: React.FC = () => {
           <Alert
             severity="error"
             sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={() => { setErrorState(null); setLoading(true); }}>
+                Tentar novamente
+              </Button>
+            }
           >
             {errorState}
           </Alert>
@@ -269,9 +274,7 @@ export const LocationsMapScreen: React.FC = () => {
                           </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                          {location.primaryFieldType && (
-                            <Chip label={location.primaryFieldType} size="small" />
-                          )}
+                          <Chip label={location.fieldType || 'OUTROS'} size="small" />
                           <Chip label={`${location.fieldCount || 1} campos`} size="small" />
                         </Box>
                       </Box>

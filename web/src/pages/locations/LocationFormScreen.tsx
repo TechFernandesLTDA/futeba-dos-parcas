@@ -24,7 +24,8 @@ import {
   collection,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -52,6 +53,8 @@ interface FormState {
   hasShowers: boolean;
   latitude: number | null;
   longitude: number | null;
+  photoFile: File | null;
+  photoPreview: string | null;
 }
 
 const defaultForm: FormState = {
@@ -71,6 +74,8 @@ const defaultForm: FormState = {
   hasShowers: false,
   latitude: null,
   longitude: null,
+  photoFile: null,
+  photoPreview: null,
 };
 
 export const LocationFormScreen: React.FC = () => {
@@ -126,6 +131,8 @@ export const LocationFormScreen: React.FC = () => {
             hasShowers: !!data.hasShowers,
             latitude: data.latitude ?? null,
             longitude: data.longitude ?? null,
+            photoFile: null,
+            photoPreview: data.photoUrl || null,
           };
           setForm(loaded);
           setInitialForm(loaded);
@@ -201,7 +208,14 @@ export const LocationFormScreen: React.FC = () => {
     if (!validate() || !user) return;
     setLoading(true);
     try {
-      const payload = {
+      let photoUrl: string | null = null;
+      if (form.photoFile) {
+        const ref = storageRef(storage, `locations/${isEdit ? locationId : crypto.randomUUID()}/photo.jpg`);
+        await uploadBytes(ref, form.photoFile, { contentType: form.photoFile.type });
+        photoUrl = await getDownloadURL(ref);
+      }
+
+      const payload: Record<string, unknown> = {
         name: form.name.trim(),
         address: form.address.trim(),
         city: form.city.trim(),
@@ -223,6 +237,8 @@ export const LocationFormScreen: React.FC = () => {
         updated_at: serverTimestamp(),
         updated_by: user.id,
       };
+
+      if (photoUrl) payload.photo_url = photoUrl;
 
       if (isEdit && locationId) {
         await updateDoc(doc(db, 'locations', locationId), payload);
@@ -364,6 +380,38 @@ export const LocationFormScreen: React.FC = () => {
                         ? `Coordenadas: ${form.latitude.toFixed(6)}, ${form.longitude.toFixed(6)}`
                         : 'Capturar coordenadas (GPS)'}
                     </Button>
+                  </Box>
+                  <Box>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      id="location-photo-input"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (!file.type.startsWith('image/')) { showError('Apenas imagens são aceitas.'); return; }
+                        if (file.size > 5 * 1024 * 1024) { showError('Imagem muito grande (máx 5MB).'); return; }
+                        const url = URL.createObjectURL(file);
+                        setForm((prev) => ({ ...prev, photoFile: file, photoPreview: url }));
+                      }}
+                    />
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      htmlFor="location-photo-input"
+                      fullWidth
+                    >
+                      {form.photoPreview ? 'Trocar foto' : 'Adicionar foto'}
+                    </Button>
+                    {form.photoPreview && (
+                      <Box
+                        component="img"
+                        src={form.photoPreview}
+                        alt="Preview"
+                        sx={{ mt: 1, width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }}
+                      />
+                    )}
                   </Box>
                 </Stack>
               </CardContent>

@@ -102,18 +102,17 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       });
       setLocations(locs);
 
-      const totalGames = locs.reduce((sum, l) => sum + (l.fieldCount || 0) * 10, 0);
-      const totalRevenue = locs.reduce((sum, l) => sum + (l.rating || 0) * 100, 0);
+      const totalGames = locs.reduce((sum, l) => sum + (l.fieldCount || 0), 0);
       const avgRating = locs.length > 0
         ? locs.reduce((sum, l) => sum + (l.rating || 0), 0) / locs.length
         : 0;
 
       setStats({
         totalGames,
-        totalRevenue,
+        totalRevenue: 0,
         averageRating: avgRating,
         totalReviews: locs.reduce((sum, l) => sum + (l.ratingCount || 0), 0),
-        upcomingGames: 5,
+        upcomingGames: 0,
       });
     } catch (err) {
       logger.error('Error fetching dashboard:', err);
@@ -308,14 +307,14 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                 <ListItemText primary="Adicionar Nova Quadra" />
               </ListItemButton>
               <Divider />
-              <ListItemButton>
+              <ListItemButton onClick={() => navigate('/games')}>
                 <ListItemIcon>
                   <CalendarIcon />
                 </ListItemIcon>
                 <ListItemText primary="Ver Agenda" />
               </ListItemButton>
               <Divider />
-              <ListItemButton>
+              <ListItemButton onClick={() => navigate('/players')}>
                 <ListItemIcon>
                   <PeopleIcon />
                 </ListItemIcon>

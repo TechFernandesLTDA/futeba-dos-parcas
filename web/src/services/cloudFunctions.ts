@@ -1,12 +1,24 @@
-import { httpsCallable } from 'firebase/functions';
+import { httpsCallable, HttpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
 
-// Admin
-// GAP-4: tipo explícito evita drift quando o callable for renomeado/refatorado.
+export function getCallable<T = unknown, R = unknown>(name: string): HttpsCallable<T, R> {
+  return httpsCallable<T, R>(functions, name);
+}
+
 export const setUserRole = httpsCallable<
   { uid: string; role: string },
   { success: boolean }
 >(functions, 'setUserRole');
+
+export const deleteLocation = httpsCallable<
+  { locationId: string },
+  { success: boolean; deletedCount: number }
+>(functions, 'deleteLocation');
+
+export const calculateAutoRatings = httpsCallable<
+  { userId: string },
+  { success: boolean }
+>(functions, 'calculateAutoRatings');
 
 // Phone + CPF Verification (Anti-Bot)
 // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md

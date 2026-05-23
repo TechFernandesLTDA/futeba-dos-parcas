@@ -2166,3 +2166,10 @@ export * from "./monitoring/alerting";
 //   specs/INFRASTRUCTURE_RECOMMENDATIONS.md
 //   - P2 #28
 export * from "./cache/leaderboard-cache";
+
+// ==========================================
+// LOCATION MANAGEMENT (#1684, #1704)
+// ==========================================
+// - deleteLocation: Cascade delete com sub-coleções
+// - calculateAutoRatings: Auto-ratings server-side
+export * from "./locations/location-management";
