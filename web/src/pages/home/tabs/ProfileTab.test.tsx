@@ -77,6 +77,14 @@ vi.mock('../../../utils/logger', () => ({
   }),
 }));
 
+vi.mock('../../../contexts/ToastContext', () => ({
+  useToast: () => ({
+    showError: vi.fn(),
+    showSuccess: vi.fn(),
+    showInfo: vi.fn(),
+  }),
+}));
+
 import { ProfileTab } from './ProfileTab';
 
 const theme = createTheme();
