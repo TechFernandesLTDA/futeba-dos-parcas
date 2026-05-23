@@ -16,6 +16,7 @@ import {
   useTheme,
   alpha,
   ListItemButton,
+  IconButton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -28,6 +29,8 @@ import {
   AccountCircle as ProfileIcon,
   EmojiEvents as RankingIcon,
   Bolt as QuickIcon,
+  History as HistoryIcon,
+  Close as ClearIcon,
 } from '@mui/icons-material';
 import { collection, query, where, limit, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -40,9 +43,41 @@ import { useToast } from '../../contexts';
 
 const logger = createLogger('SearchPanel');
 
+const SEARCH_HISTORY_KEY = 'futeba_search_history';
+const MAX_HISTORY = 10;
+
+function loadSearchHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSearchHistory(queries: string[]): void {
+  try {
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(queries));
+  } catch {
+    // quota exceeded
+  }
+}
+
+function addToSearchHistory(queryText: string): void {
+  const trimmed = queryText.trim();
+  if (!trimmed || trimmed.length < 2) return;
+  const history = loadSearchHistory().filter(q => q !== trimmed);
+  history.unshift(trimmed);
+  saveSearchHistory(history.slice(0, MAX_HISTORY));
+}
+
+function clearSearchHistory(): void {
+  localStorage.removeItem(SEARCH_HISTORY_KEY);
+}
+
 export interface SearchResult {
   id: string;
-  type: 'user' | 'group' | 'game' | 'location' | 'quick';
+  type: 'user' | 'group' | 'game' | 'location' | 'quick' | 'history';
   name: string;
   subtitle: string;
   photoUrl?: string;
@@ -87,6 +122,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [searchHistory, setSearchHistory] = useState<string[]>(loadSearchHistory);
 
   const listRef = useRef<HTMLUListElement>(null);
   // Referência de ID para descartar responses de requests stale (race condition)
@@ -98,6 +134,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     : results;
 
   useEffect(() => { setSelectedIndex(-1); }, [navigableItems.length, searchQuery]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchHistory(loadSearchHistory());
+    }
+  }, [searchQuery]);
 
   const doSearch = useCallback(async (q: string, tab: number) => {
     // Gera ID único para este request; requests antigos são descartados ao retornar
@@ -175,6 +217,11 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       if (r) { onClose?.(); navigate(r); }
       return;
     }
+    if (result.type === 'history') {
+      setSearchQuery(result.name);
+      return;
+    }
+    addToSearchHistory(result.name);
     onClose?.();
     const routes: Record<string, string> = {
       user: `/profile/${result.id}`,
@@ -185,12 +232,18 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     if (routes[result.type]) navigate(routes[result.type]);
   };
 
+  const handleClearHistory = () => {
+    clearSearchHistory();
+    setSearchHistory([]);
+  };
+
   const typeColor = (t: string): string => ({
     user: theme.palette.primary.main,
     group: theme.palette.secondary.main,
     game: theme.palette.success.main,
     location: theme.palette.warning.main,
     quick: theme.palette.info.main,
+    history: theme.palette.text.secondary,
   }[t] ?? theme.palette.grey[500]);
 
   const typeIcon = (t: string): React.ReactElement => {
@@ -200,12 +253,13 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       game: <SoccerIcon fontSize="small" />,
       location: <SportsIcon fontSize="small" />,
       quick: <QuickIcon fontSize="small" />,
+      history: <HistoryIcon fontSize="small" />,
     };
     return map[t] ?? <PersonIcon fontSize="small" />;
   };
 
   const typeLabel = (t: string): string =>
-    ({ user: 'Jogador', group: 'Grupo', game: 'Jogo', location: 'Local', quick: 'Ação' }[t] ?? '');
+    ({ user: 'Jogador', group: 'Grupo', game: 'Jogo', location: 'Local', quick: 'Ação', history: 'Recente' }[t] ?? '');
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!navigableItems.length) return;
@@ -273,6 +327,36 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           </Box>
         ) : showQuickCommands ? (
           <Box>
+            {searchHistory.length > 0 && (
+              <>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pt: 1.5, pb: 0.5 }}>
+                  <Typography variant="overline" color="text.secondary">
+                    Buscas recentes
+                  </Typography>
+                  <IconButton size="small" onClick={handleClearHistory} aria-label="Limpar histórico de busca">
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+                {searchHistory.slice(0, 5).map((q, idx) => (
+                  <ListItemButton
+                    key={`hist-${q}-${idx}`}
+                    onClick={() => setSearchQuery(q)}
+                    sx={{ py: 0.75 }}
+                  >
+                    <ListItemAvatar sx={{ minWidth: 36 }}>
+                      <Avatar sx={{ width: 24, height: 24, bgcolor: alpha(theme.palette.text.secondary, 0.1), color: 'text.secondary' }}>
+                        <HistoryIcon sx={{ fontSize: 14 }} />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={q}
+                      primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    />
+                  </ListItemButton>
+                ))}
+                <Divider sx={{ my: 1 }} />
+              </>
+            )}
             <Typography
               variant="overline"
               color="text.secondary"

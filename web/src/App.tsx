@@ -18,6 +18,13 @@ import { CommandPalette } from './components/search/CommandPalette';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
+import {
+  HomeScreenSkeleton,
+  GameDetailSkeleton,
+  GroupDetailSkeleton,
+  ProfileScreenSkeleton,
+  RankingScreenSkeleton,
+} from './components/common/ScreenSkeletons';
 
 
 // Splash & Onboarding
@@ -121,6 +128,15 @@ const spinnerKeyframes = {
 };
 
 function RouteFallback() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  if (path === '/' || path === '') return <HomeScreenSkeleton />;
+  if (path.startsWith('/game/')) return <GameDetailSkeleton />;
+  if (path.startsWith('/group/') && !path.includes('/edit') && !path.includes('/settings') && !path.includes('/cashbox')) return <GroupDetailSkeleton />;
+  if (path.startsWith('/profile')) return <ProfileScreenSkeleton />;
+  if (path === '/ranking' || path === '/league') return <RankingScreenSkeleton />;
+
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
       <Box
