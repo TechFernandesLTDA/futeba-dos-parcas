@@ -20,6 +20,11 @@ export const calculateAutoRatings = httpsCallable<
   { success: boolean }
 >(functions, 'calculateAutoRatings');
 
+export const recalculateAllAutoRatings = httpsCallable<
+  { batchSize?: number },
+  { success: boolean; processedCount: number }
+>(functions, 'recalculateAllAutoRatings');
+
 // Phone + CPF Verification (Anti-Bot)
 // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
 export const verifyCpf = httpsCallable<

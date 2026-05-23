@@ -34,7 +34,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, where, onSnapshot, deleteDoc, doc, limit } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
@@ -67,10 +67,9 @@ export const ManageLocationsScreen: React.FC = () => {
     setLoading(true);
     setError(null);
     const locRef = collection(db, 'locations');
-    // Privacidade: ADMIN vê todos os locais; FIELD_OWNER vê apenas seus próprios locais (#1032)
     const q = isAdmin
-      ? query(locRef, orderBy('name', 'asc'))
-      : query(locRef, where('owner_id', '==', user?.id ?? ''), orderBy('name', 'asc'));
+      ? query(locRef, orderBy('name', 'asc'), limit(200))
+      : query(locRef, where('owner_id', '==', user?.id ?? ''), orderBy('name', 'asc'), limit(200));
 
     const unsubscribe = onSnapshot(
       q,

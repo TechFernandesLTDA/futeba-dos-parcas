@@ -191,3 +191,87 @@ async function checkAndAwardRatingBadges(userId: string, ratings: {[key: string]
     });
   }
 }
+
+interface RecalculateAllAutoRatingsRequest {
+  batchSize?: number;
+}
+
+export const recalculateAllAutoRatings = secureCallable<RecalculateAllAutoRatingsRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {maxRequests: 1, windowMs: 300000, keyPrefix: "recalcAllRatings"},
+    enableAuditLog: true,
+  },
+  async (request) => {
+    const batchSize = request.data?.batchSize || 50;
+
+    const usersSnap = await db()
+      .collection("users")
+      .where("auto_rating_samples", ">", 0)
+      .limit(batchSize)
+      .get();
+
+    let processedCount = 0;
+    for (const userDoc of usersSnap.docs) {
+      const userId = userDoc.id;
+      try {
+        const gamesSnap = await db()
+          .collection("games")
+          .where("confirmed_players", "array-contains", userId)
+          .where("status", "==", "completed")
+          .orderBy("date", "desc")
+          .limit(50)
+          .get();
+
+        if (gamesSnap.empty) continue;
+
+        const ratings = {striker: [] as number[], mid: [] as number[], defender: [] as number[], gk: [] as number[]};
+
+        for (const gameDoc of gamesSnap.docs) {
+          const game = gameDoc.data();
+          // eslint-disable-next-line camelcase
+          const ratings_map = game.ratings_map || {};
+          // eslint-disable-next-line camelcase
+          const userRating = ratings_map[userId];
+          if (!userRating) continue;
+
+          if (userRating.striker > 0) ratings.striker.push(userRating.striker);
+          if (userRating.mid > 0) ratings.mid.push(userRating.mid);
+          if (userRating.defender > 0) ratings.defender.push(userRating.defender);
+          if (userRating.gk > 0) ratings.gk.push(userRating.gk);
+        }
+
+        const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+        const samples = Math.max(
+          ratings.striker.length, ratings.mid.length,
+          ratings.defender.length, ratings.gk.length
+        );
+
+        const autoRatings = {
+          auto_striker_rating: avg(ratings.striker),
+          auto_mid_rating: avg(ratings.mid),
+          auto_defender_rating: avg(ratings.defender),
+          auto_gk_rating: avg(ratings.gk),
+          auto_rating_samples: samples,
+          auto_rating_updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        await db().collection("users").doc(userId).update(autoRatings);
+        await checkAndAwardRatingBadges(userId, {
+          auto_striker_rating: autoRatings.auto_striker_rating,
+          auto_mid_rating: autoRatings.auto_mid_rating,
+          auto_defender_rating: autoRatings.auto_defender_rating,
+          auto_gk_rating: autoRatings.auto_gk_rating,
+        });
+        processedCount++;
+      } catch (err) {
+        logger.warn(`Failed to recalculate ratings for user ${userId}: ${err}`);
+      }
+    }
+
+    logger.info(`Recalculated auto-ratings for ${processedCount} users`);
+    return {success: true, processedCount};
+  }
+);

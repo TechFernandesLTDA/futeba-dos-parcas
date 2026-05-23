@@ -39,6 +39,9 @@ import { useTranslation } from 'react-i18next';
 const logger = createLogger('EditProfileScreen');
 
 // Limites para upload do avatar (alinhados com storage.rules: 2MB, image/*)
+const RATING_RATE_LIMIT_MS = 60_000;
+const RATING_RATE_LIMIT_KEY = 'rating_last_changed_at';
+
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 const AVATAR_ACCEPTED_PREFIX = 'image/';
 
@@ -223,6 +226,23 @@ export const EditProfileScreen: React.FC = () => {
 
     setSaving(true);
     setError(null);
+
+    const ratingsChanged =
+      initialData &&
+      (formData.strikerRating !== initialData.strikerRating ||
+        formData.midRating !== initialData.midRating ||
+        formData.defenderRating !== initialData.defenderRating ||
+        formData.gkRating !== initialData.gkRating);
+
+    if (ratingsChanged) {
+      const lastChanged = Number(localStorage.getItem(RATING_RATE_LIMIT_KEY) || 0);
+      if (Date.now() - lastChanged < RATING_RATE_LIMIT_MS) {
+        setSaving(false);
+        showError('Aguarde 1 minuto entre alterações de rating.');
+        return;
+      }
+      localStorage.setItem(RATING_RATE_LIMIT_KEY, String(Date.now()));
+    }
 
     // 1) Upload do avatar (se houver arquivo selecionado)
     let uploadedPhotoUrl: string | null = null;
