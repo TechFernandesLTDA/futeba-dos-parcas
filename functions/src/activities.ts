@@ -61,10 +61,14 @@ export async function generateGameFinishedActivityDirect(
         return;
       }
 
-      // Read user data outside tx (idempotent, non-critical)
+      // FIX #1569: lê liveScore e user dentro da transação (tx.get) pra
+      // evitar TOCTOU — dados lidos fora de tx podem ser stale ou inconsistentes
+      // com o estado do jogo lido acima via tx.get(gameRef).
+      const liveScoreRef = db.collection("live_scores").doc(gameId);
+      const userRef = db.collection("users").doc(ownerId);
       const [liveScoreDoc, userDoc] = await Promise.all([
-        db.collection("live_scores").doc(gameId).get(),
-        db.collection("users").doc(ownerId).get(),
+        tx.get(liveScoreRef),
+        tx.get(userRef),
       ]);
 
       let description = "Jogo finalizado! Confira os resultados e estatisticas.";

@@ -43,6 +43,7 @@ import {
   XP_ACTIONS,
   LEVEL_TABLE,
   MAX_XP_PER_GAME,
+  MIN_XP_PER_GAME,
 } from "../constants";
 
 const getDb = () => admin.firestore();
@@ -1076,7 +1077,10 @@ async function applyVotingXpDelta(
       const currentXp =
         (userDoc.data()
           ?.experience_points as number) || 0;
-      const newXp = Math.max(0, currentXp + xpDelta);
+      // FIX #1575: piso em MIN_XP_PER_GAME (-100) em vez de 0 pra Bola Murcha
+      // não ser absorvida silenciosamente quando o user tem menos XP que a
+      // penalidade. Math.max(0,...) zerava a penalidade — comportamento errado.
+      const newXp = Math.max(MIN_XP_PER_GAME, currentXp + xpDelta);
 
       // FIX #648/B3: recalcula level apos aplicar XP
       // (antes era feito sem atualizar level no user doc).

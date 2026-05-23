@@ -198,21 +198,37 @@ export const migratePiiToUsersPrivate = onCall(
     }
 
     const db = admin.firestore();
-    const usersSnap = await db.collection("users").get();
 
     let migrated = 0;
     let skipped = 0;
+    let total = 0;
     const errors: Array<{uid: string; error: string}> = [];
 
-    // Process em chunks pra não estourar memory
-    const CHUNK_SIZE = 100;
-    const docs = usersSnap.docs;
+    // FIX #1579: paginação com cursor (limit/startAfter) em vez de .get()
+    // irrestrito — .get() carrega todos os usuários em memória de uma vez,
+    // causando OOM em bases grandes (>10k usuários). Padrão de referência:
+    // functions/src/utils/soft-delete-helper.ts (lastDoc + startAfter loop).
+    const PAGE_SIZE = 500;
+    let lastDoc:
+      admin.firestore.QueryDocumentSnapshot | undefined = undefined;
+    let hasMore = true;
 
-    for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
-      const chunk = docs.slice(i, i + CHUNK_SIZE);
+    while (hasMore) {
+      let query = db
+        .collection("users")
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(PAGE_SIZE);
+      if (lastDoc) query = query.startAfter(lastDoc);
+
+      const usersSnap = await query.get();
+
+      if (usersSnap.empty) break;
+
+      total += usersSnap.size;
       const batch = db.batch();
+      let batchHasOps = false;
 
-      for (const doc of chunk) {
+      for (const doc of usersSnap.docs) {
         const userData = doc.data();
         const pii = extractPii(userData);
 
@@ -236,6 +252,7 @@ export const migratePiiToUsersPrivate = onCall(
             {merge: true}
           );
           migrated++;
+          batchHasOps = true;
         } catch (err) {
           errors.push({
             uid: doc.id,
@@ -244,20 +261,28 @@ export const migratePiiToUsersPrivate = onCall(
         }
       }
 
-      try {
-        await batch.commit();
-      } catch (err) {
-        logger.error(
-          `[PII_MIGRATION] Batch commit failed at chunk ${i}:`,
-          err
-        );
-        // Marca todos do chunk como erro
-        for (const doc of chunk) {
-          errors.push({
-            uid: doc.id,
-            error: (err as Error).message,
-          });
+      if (batchHasOps) {
+        try {
+          await batch.commit();
+        } catch (err) {
+          logger.error(
+            "[PII_MIGRATION] Batch commit failed:",
+            err
+          );
+          // Marca todos do chunk como erro
+          for (const doc of usersSnap.docs) {
+            errors.push({
+              uid: doc.id,
+              error: (err as Error).message,
+            });
+          }
         }
+      }
+
+      if (usersSnap.size < PAGE_SIZE) {
+        hasMore = false;
+      } else {
+        lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
       }
     }
 
@@ -271,7 +296,7 @@ export const migratePiiToUsersPrivate = onCall(
       migrated,
       skipped,
       errors,
-      total: docs.length,
+      total,
     };
   }
 );
@@ -423,21 +448,35 @@ export const removePiiFromUsers = onCall(
     }
 
     const db = admin.firestore();
-    const usersSnap = await db.collection("users").get();
 
     let cleaned = 0;
     let skipped = 0;
+    let total = 0;
     const errors: Array<{uid: string; error: string}> = [];
 
-    const CHUNK = 200;
-    const docs = usersSnap.docs;
+    // FIX #1579: paginação com cursor (limit/startAfter) em vez de .get()
+    // irrestrito — igual ao fix em migratePiiToPrivate acima.
+    const PAGE_SIZE = 500;
+    let lastDoc:
+      admin.firestore.QueryDocumentSnapshot | undefined = undefined;
+    let hasMore = true;
 
-    for (let i = 0; i < docs.length; i += CHUNK) {
-      const chunk = docs.slice(i, i + CHUNK);
+    while (hasMore) {
+      let query = db
+        .collection("users")
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(PAGE_SIZE);
+      if (lastDoc) query = query.startAfter(lastDoc);
+
+      const usersSnap = await query.get();
+
+      if (usersSnap.empty) break;
+
+      total += usersSnap.size;
       const batch = db.batch();
       let chunkCleans = 0;
 
-      for (const doc of chunk) {
+      for (const doc of usersSnap.docs) {
         const data = doc.data();
 
         // Verifica quais PII fields ainda estão em users
@@ -463,19 +502,32 @@ export const removePiiFromUsers = onCall(
         }
       }
 
-      if (chunkCleans === 0) continue;
+      if (chunkCleans === 0) {
+        if (usersSnap.size < PAGE_SIZE) {
+          hasMore = false;
+        } else {
+          lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
+        }
+        continue;
+      }
 
       try {
         await batch.commit();
         cleaned += chunkCleans;
       } catch (err) {
         logger.error(
-          `[PII_CLEANUP] Batch ${i} commit failed:`,
+          "[PII_CLEANUP] Batch commit failed:",
           err
         );
-        for (const doc of chunk) {
+        for (const doc of usersSnap.docs) {
           errors.push({uid: doc.id, error: (err as Error).message});
         }
+      }
+
+      if (usersSnap.size < PAGE_SIZE) {
+        hasMore = false;
+      } else {
+        lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
       }
     }
 
@@ -489,7 +541,7 @@ export const removePiiFromUsers = onCall(
       cleaned,
       skipped,
       errors,
-      total: docs.length,
+      total,
     };
   }
 );

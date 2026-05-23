@@ -491,11 +491,15 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
         // Mínimo de 6 jogadores (3v3) para
         // processar XP - sincronizado com Android
+        // FIX #1572: usar validConfirmations (já filtrado por userId válido)
+        // em vez de confirmations bruto — invalidConfirmations com userId vazio
+        // não seriam processados mas inflavam a contagem, permitindo processar
+        // jogos com menos de 6 jogadores reais válidos.
         const MIN_PLAYERS = 6;
-        if (confirmations.length < MIN_PLAYERS) {
+        if (validConfirmations.length < MIN_PLAYERS) {
           console.log(
             "Not enough players " +
-            `(${confirmations.length}` +
+            `(${validConfirmations.length}` +
             `/${MIN_PLAYERS}). ` +
             "Marking processed."
           );

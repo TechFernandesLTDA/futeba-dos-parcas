@@ -708,6 +708,104 @@ describe("onGameStatusUpdate", () => {
       expect(mockRunTransaction).toHaveBeenCalledTimes(1);
       expect(mockBatchCommit).toHaveBeenCalled();
     });
+
+    // FIX #1572: gate usa validConfirmations (userId válido), não confirmations bruto.
+    // Sem o fix: 5 jogadores reais + 1 com userId vazio = 6 total → gate passava,
+    // mas o 6º não era processado pois era inválido (filtrado por validConfirmations).
+    test(
+      "should reject game when valid player count < 6, even if raw confirmations >= 6",
+      async () => {
+        // 5 jogadores válidos + 1 com userId vazio = 6 no total bruto
+        setupStandardGameMocks({ playerCount: 5 });
+
+        // Override confirmations to add one with empty userId
+        const originalImpl =
+          mockCollection.getMockImplementation() as any;
+        mockCollection.mockImplementation((collectionName: string) => {
+          if (collectionName === "confirmations") {
+            return {
+              doc: jest.fn(() => ({
+                id: "mock",
+                update: jest.fn(),
+              })),
+              where: jest.fn().mockReturnThis(),
+              limit: jest.fn().mockReturnThis(),
+              get: jest.fn().mockResolvedValue({
+                docs: [
+                  ...Array.from({ length: 5 }, (_, i) => ({
+                    id: `game1_user${i + 1}`,
+                    data: () => ({
+                      user_id: `user${i + 1}`,
+                      status: "CONFIRMED",
+                      position: "STRIKER",
+                      goals: 1,
+                      assists: 0,
+                      saves: 0,
+                      yellow_cards: 0,
+                      red_cards: 0,
+                      game_id: "game1",
+                      is_worst_player: false,
+                    }),
+                  })),
+                  // Confirmação com userId vazio (inválida)
+                  {
+                    id: "game1_invalid",
+                    data: () => ({
+                      user_id: "",
+                      status: "CONFIRMED",
+                      position: "STRIKER",
+                      goals: 0,
+                      assists: 0,
+                      saves: 0,
+                      yellow_cards: 0,
+                      red_cards: 0,
+                      game_id: "game1",
+                      is_worst_player: false,
+                    }),
+                  },
+                ],
+                empty: false,
+              }),
+            };
+          }
+          if (originalImpl) return originalImpl(collectionName);
+          return {
+            doc: jest.fn(() => ({
+              id: "mock",
+              get: jest.fn().mockResolvedValue({
+                exists: true,
+                data: () => ({}),
+              }),
+              update: jest.fn(),
+            })),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockReturnThis(),
+            get: jest.fn().mockResolvedValue({
+              docs: [],
+              empty: true,
+            }),
+          };
+        });
+
+        const event = createMockEvent(
+          "game1",
+          { status: "LIVE", owner_id: "owner1" },
+          { status: "FINISHED", owner_id: "owner1" },
+        );
+
+        await (onGameStatusUpdate as any)(event);
+
+        // Gate deve rejeitar: apenas 5 userId válidos, não 6
+        expect(mockDocUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            xp_processed: true,
+            xp_processing: false,
+          })
+        );
+        // Nenhum XP deve ter sido commitado
+        expect(mockBatchCommit).not.toHaveBeenCalled();
+      }
+    );
   });
 
   // ==========================================
