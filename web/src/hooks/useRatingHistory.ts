@@ -35,9 +35,9 @@ export function useRatingHistory(userId: string | null | undefined) {
         })) as RatingHistoryEntry[];
 
         setHistory(entries);
-      } catch (err: any) {
+      } catch (err) {
         if (!cancelled) {
-          setError(err.message || 'Erro ao carregar histórico');
+          setError(err instanceof Error ? err.message : 'Erro ao carregar histórico');
         }
       } finally {
         if (!cancelled) setLoading(false);

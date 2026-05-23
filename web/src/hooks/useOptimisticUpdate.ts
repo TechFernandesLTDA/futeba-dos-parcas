@@ -25,7 +25,7 @@ export function useOptimisticUpdate() {
         await mutationFn();
         queryClient.invalidateQueries({ queryKey });
         if (successMessage) showSuccess(successMessage);
-      } catch (err) {
+      } catch {
         queryClient.setQueryData(queryKey, snapshotRef.current);
         showError(errorMessage || 'Erro ao salvar. Alteração revertida.');
       }

@@ -39,8 +39,6 @@ export function usePrefetchHome() {
         
         if (!snapshot.empty) {
           const gameDoc = snapshot.docs[0];
-          const raw = gameDoc.data();
-          
           // Prefetch confirmação do usuário para este jogo
           const confDocId = `${gameDoc.id}_${uid}`;
           queryClient.prefetchQuery({

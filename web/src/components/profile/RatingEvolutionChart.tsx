@@ -2,11 +2,13 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Box, Typography, Paper } from '@mui/material';
 import { useRatingHistory } from '../../hooks/useRatingHistory';
-import { RatingHistoryEntry } from '../../types/user';
+import { PlayerRatingRole } from '../../types/user';
 
 interface RatingEvolutionChartProps {
   userId: string;
 }
+
+type RatingChartRow = { date: string } & Partial<Record<PlayerRatingRole, number>>;
 
 export const RatingEvolutionChart: React.FC<RatingEvolutionChartProps> = ({ userId }) => {
   const { history, loading, error } = useRatingHistory(userId);
@@ -44,7 +46,7 @@ export const RatingEvolutionChart: React.FC<RatingEvolutionChartProps> = ({ user
       [entry.position]: entry.rating,
     }));
 
-  const aggregated = chartData.reduce((acc, curr) => {
+  const aggregated = chartData.reduce<RatingChartRow[]>((acc, curr) => {
     const existing = acc.find((item) => item.date === curr.date);
     if (existing) {
       Object.assign(existing, curr);
@@ -52,7 +54,7 @@ export const RatingEvolutionChart: React.FC<RatingEvolutionChartProps> = ({ user
       acc.push(curr);
     }
     return acc;
-  }, [] as any[]);
+  }, []);
 
   return (
     <Paper sx={{ p: 2 }}>

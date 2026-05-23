@@ -180,6 +180,7 @@ const SCREEN_SKELETONS: Record<string, React.FC> = {
   ranking: RankingScreenSkeleton,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getScreenSkeleton(screen: string): React.FC | undefined {
   return SCREEN_SKELETONS[screen];
 }

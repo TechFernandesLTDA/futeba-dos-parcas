@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { test, expect } from '@playwright/test';
 
 test('HomeScreen performance - carregamento inicial', async ({ page }) => {
@@ -91,8 +92,6 @@ test('Bundle size - verificar chunks', async ({ page }) => {
   
   const totalSize = chunks.reduce((sum, chunk) => sum + chunk.size, 0);
   const homeTabChunk = chunks.find(c => c.name.startsWith('HomeTab-'));
-  const nextGameChunk = chunks.find(c => c.name.includes('useNextGame'));
-  
   console.log('\n📦 Chunks carregados:');
   console.log(`  Total: ${(totalSize / 1024).toFixed(2)} KB`);
   console.log(`  HomeTab: ${homeTabChunk ? (homeTabChunk.size / 1024).toFixed(2) : 'N/A'} KB`);

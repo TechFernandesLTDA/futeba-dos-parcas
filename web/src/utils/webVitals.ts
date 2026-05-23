@@ -2,6 +2,9 @@ import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
 import { analytics } from '../services/firebase';
 import { logEvent } from 'firebase/analytics';
 import { trackEvent } from './analytics';
+import { createLogger } from './logger';
+
+const logger = createLogger('WebVitals');
 
 interface WebVitalMetric {
   name: string;
@@ -18,7 +21,7 @@ interface WebVitalMetric {
  */
 export function reportWebVitals() {
   if (import.meta.env.DEV) {
-    console.log('[WebVitals] Disabled in development mode');
+    logger.debug('Disabled in development mode');
     return;
   }
 
@@ -44,7 +47,7 @@ export function reportWebVitals() {
 
     // Log to console for debugging (only in dev)
     if (import.meta.env.DEV) {
-      console.log(`[WebVital] ${metric.name}:`, {
+      logger.debug(`[${metric.name}]`, {
         value: metric.value,
         rating: metric.rating,
         delta: metric.delta,
