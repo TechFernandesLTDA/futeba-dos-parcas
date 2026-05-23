@@ -207,7 +207,9 @@ class BadgesViewModel(
             BadgeType.PAREDAO,
             BadgeType.ARTILHEIRO_MES,
             BadgeType.MVP_1, BadgeType.MVP_10, BadgeType.MVP_50,
-            BadgeType.GOALS_10, BadgeType.GOALS_100, BadgeType.GOALS_500 -> BadgeCategory.PERFORMANCE
+            BadgeType.GOALS_10, BadgeType.GOALS_100, BadgeType.GOALS_500,
+            BadgeType.ELITE_STRIKER, BadgeType.ELITE_MID, BadgeType.ELITE_DEFENDER, BadgeType.ELITE_GOALKEEPER,
+            BadgeType.FIVE_STAR_STRIKER, BadgeType.FIVE_STAR_MID, BadgeType.FIVE_STAR_DEFENDER, BadgeType.FIVE_STAR_GOALKEEPER -> BadgeCategory.PERFORMANCE
 
             BadgeType.FOMINHA,
             BadgeType.STREAK_7, BadgeType.STREAK_30,

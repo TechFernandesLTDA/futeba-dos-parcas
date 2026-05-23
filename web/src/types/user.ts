@@ -91,6 +91,14 @@ export function getAutoRatingConfidence(autoRatingSamples: number): number {
   return Math.min(autoRatingSamples / 20.0, 1.0);
 }
 
+export interface RatingHistoryEntry {
+  id: string;
+  position: 'STRIKER' | 'MID' | 'DEFENDER' | 'GOALKEEPER';
+  rating: number;
+  samples: number;
+  calculatedAt: Date;
+}
+
 export function getManualRating(user: Pick<User, 'strikerRating' | 'midRating' | 'defenderRating' | 'gkRating'>, role: PlayerRatingRole): number {
   switch (role) {
     case 'STRIKER': return user.strikerRating ?? 0;

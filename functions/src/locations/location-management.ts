@@ -119,6 +119,75 @@ export const calculateAutoRatings = secureCallable<CalculateAutoRatingsRequest>(
       auto_rating_updated_at: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    const historyEntries = [
+      {position: "STRIKER", rating: avg(ratings.striker)},
+      {position: "MID", rating: avg(ratings.mid)},
+      {position: "DEFENDER", rating: avg(ratings.defender)},
+      {position: "GOALKEEPER", rating: avg(ratings.gk)},
+    ].filter((e) => e.rating > 0);
+
+    if (historyEntries.length > 0) {
+      const historyRef = db().collection("users").doc(userId).collection("rating_history");
+      const batch = db().batch();
+      historyEntries.forEach((entry) => {
+        const docRef = historyRef.doc();
+        batch.set(docRef, {
+          ...entry,
+          samples,
+          calculatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+      await batch.commit();
+    }
+
+    await checkAndAwardRatingBadges(userId, {
+      auto_striker_rating: avg(ratings.striker),
+      auto_mid_rating: avg(ratings.mid),
+      auto_defender_rating: avg(ratings.defender),
+      auto_gk_rating: avg(ratings.gk),
+    });
+
     return {success: true};
   }
 );
+
+/**
+ * Verifica e concede badges baseados em ratings automáticos.
+ * Badges concedidos: ELITE_* (4.5+), FIVE_STAR_* (5.0).
+ * @param {string} userId - ID do usuário
+ * @param {Object} ratings - Objeto com ratings por posição
+ * @return {Promise<void>}
+ */
+async function checkAndAwardRatingBadges(userId: string, ratings: {[key: string]: number}): Promise<void> {
+  const userRef = db().collection("users").doc(userId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) return;
+
+  const userData = userSnap.data()!;
+  const currentBadges: string[] = userData.badges || [];
+  const newBadges: string[] = [];
+
+  const badgeDefinitions = [
+    {id: "ELITE_STRIKER", field: "auto_striker_rating", threshold: 4.5},
+    {id: "ELITE_MID", field: "auto_mid_rating", threshold: 4.5},
+    {id: "ELITE_DEFENDER", field: "auto_defender_rating", threshold: 4.5},
+    {id: "ELITE_GOALKEEPER", field: "auto_gk_rating", threshold: 4.5},
+    {id: "FIVE_STAR_STRIKER", field: "auto_striker_rating", threshold: 5.0},
+    {id: "FIVE_STAR_MID", field: "auto_mid_rating", threshold: 5.0},
+    {id: "FIVE_STAR_DEFENDER", field: "auto_defender_rating", threshold: 5.0},
+    {id: "FIVE_STAR_GOALKEEPER", field: "auto_gk_rating", threshold: 5.0},
+  ];
+
+  badgeDefinitions.forEach((badge) => {
+    const rating = ratings[badge.field];
+    if (rating && rating >= badge.threshold && !currentBadges.includes(badge.id)) {
+      newBadges.push(badge.id);
+    }
+  });
+
+  if (newBadges.length > 0) {
+    await userRef.update({
+      badges: admin.firestore.FieldValue.arrayUnion(...newBadges),
+    });
+  }
+}

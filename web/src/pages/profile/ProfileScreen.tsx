@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
+import { RatingEvolutionChart } from '../../components/profile/RatingEvolutionChart';
 import {
   Box,
   Container,
@@ -195,13 +196,13 @@ export const ProfileScreen: React.FC = () => {
             <IconButton onClick={() => navigate('/profile/edit')} aria-label={t('profile.editProfile')}>
               <EditIcon />
             </IconButton>
-          )}
+            )}
         </Box>
       </Box>
 
       <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={5}>
+          <Grid item xs={12} md={8}>
             <Card sx={{ mb: 2 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -365,6 +366,10 @@ export const ProfileScreen: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+
+            {profile.autoRatingSamples > 0 && (
+              <RatingEvolutionChart userId={profile.id} />
+            )}
           </Grid>
 
           {isOwnProfile && (

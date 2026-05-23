@@ -828,6 +828,14 @@ private fun getBadgeEmoji(type: BadgeType): String {
         BadgeType.WINS_50 -> "🏆"
         BadgeType.GAMES_100 -> "🎖️"
         BadgeType.GAMES_500 -> "🏟️"
+        BadgeType.ELITE_STRIKER -> "⚡"
+        BadgeType.ELITE_MID -> "🎯"
+        BadgeType.ELITE_DEFENDER -> "🛡️"
+        BadgeType.ELITE_GOALKEEPER -> "🧤"
+        BadgeType.FIVE_STAR_STRIKER -> "⭐"
+        BadgeType.FIVE_STAR_MID -> "⭐"
+        BadgeType.FIVE_STAR_DEFENDER -> "⭐"
+        BadgeType.FIVE_STAR_GOALKEEPER -> "⭐"
     }
 }
 
