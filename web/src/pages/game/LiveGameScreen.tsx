@@ -43,7 +43,7 @@ import {
   SaveAlt as SaveIcon,
   SwapHoriz as SubstitutionIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
@@ -109,6 +109,7 @@ export const LiveGameScreen: React.FC = () => {
   const canManage = canManageGame(game, uid);
 
   const [actionLoading, setActionLoading] = useState(false);
+  const [scoreUpdating, setScoreUpdating] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -253,6 +254,44 @@ export const LiveGameScreen: React.FC = () => {
     }
 
     try {
+      // #1530 (Opção A): Antes de finalizar, agregar game_events por jogador
+      // e escrever nas confirmações individuais (goals/assists/saves).
+      // Isso garante que as estatísticas do jogo fiquem sincronizadas antes
+      // do Cloud Function de XP processar o jogo finalizado.
+      const eventsSnap = await getDocs(
+        query(collection(db, 'game_events'), where('game_id', '==', gameId))
+      );
+
+      // Agrega contagens por jogador
+      const aggregated = new Map<string, { goals: number; assists: number; saves: number }>();
+      for (const eventDoc of eventsSnap.docs) {
+        const raw = eventDoc.data();
+        const playerId: string = raw.player_id ?? raw.playerId ?? '';
+        if (!playerId) continue;
+        const type: string = raw.event_type ?? raw.eventType ?? '';
+        const current = aggregated.get(playerId) ?? { goals: 0, assists: 0, saves: 0 };
+        if (type === 'GOAL') current.goals += 1;
+        else if (type === 'ASSIST') current.assists += 1;
+        else if (type === 'SAVE') current.saves += 1;
+        aggregated.set(playerId, current);
+      }
+
+      // Escreve nas confirmações com Promise.allSettled para resiliência
+      if (aggregated.size > 0) {
+        const confirmationUpdates = Array.from(aggregated.entries()).map(([playerId, stats]) => {
+          const confirmRef = doc(db, 'confirmations', `${gameId}_${playerId}`);
+          return setDoc(confirmRef, stats, { merge: true });
+        });
+
+        const results = await Promise.allSettled(confirmationUpdates);
+        const failed = results.filter((r) => r.status === 'rejected');
+        if (failed.length > 0) {
+          failed.forEach((r) => logger.error('Falha ao sincronizar stats de jogador:', (r as PromiseRejectedResult).reason));
+          // Não bloquear o finish — o CF pode re-agregar via game_events se necessário
+        }
+      }
+
+      // Finaliza o jogo — o score já está populado via listener live_scores
       await updateDoc(doc(db, 'games', gameId), {
         status: 'FINISHED',
         team1_score: score?.team1Score || 0,
@@ -278,6 +317,23 @@ export const LiveGameScreen: React.FC = () => {
       showError(getFirestoreErrorMessage(err));
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // #1528: Incrementa ou decrementa o placar de um time no live_scores.
+  // Usa setDoc com merge para criar o documento caso ainda não exista.
+  const handleScoreUpdate = async (team: 1 | 2, delta: 1 | -1) => {
+    if (!gameId || !canManage) return;
+    setScoreUpdating(true);
+    try {
+      const scoreRef = doc(db, 'live_scores', gameId);
+      const field = team === 1 ? 'team1_score' : 'team2_score';
+      await setDoc(scoreRef, { [field]: increment(delta), updated_at: serverTimestamp() }, { merge: true });
+    } catch (err) {
+      logger.error('Erro ao atualizar placar:', err);
+      showError(getFirestoreErrorMessage(err, 'Erro ao atualizar placar'));
+    } finally {
+      setScoreUpdating(false);
     }
   };
 
@@ -383,6 +439,52 @@ export const LiveGameScreen: React.FC = () => {
                 </Box>
               );
             })()}
+
+            {/* #1528: Controles de placar — visíveis apenas para o organizador */}
+            {canManage && isRunning && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, justifyContent: 'center' }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleScoreUpdate(1, -1)}
+                    disabled={scoreUpdating || (score?.team1Score ?? 0) <= 0}
+                    aria-label={`Diminuir placar ${game.team1Name || 'Time A'}`}
+                  >
+                    −
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => handleScoreUpdate(1, 1)}
+                    disabled={scoreUpdating}
+                    aria-label={`Aumentar placar ${game.team1Name || 'Time A'}`}
+                  >
+                    +
+                  </Button>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, justifyContent: 'center' }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleScoreUpdate(2, -1)}
+                    disabled={scoreUpdating || (score?.team2Score ?? 0) <= 0}
+                    aria-label={`Diminuir placar ${game.team2Name || 'Time B'}`}
+                  >
+                    −
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => handleScoreUpdate(2, 1)}
+                    disabled={scoreUpdating}
+                    aria-label={`Aumentar placar ${game.team2Name || 'Time B'}`}
+                  >
+                    +
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </CardContent>
         </Card>
 

@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { collection, doc, documentId, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('usePlayers');
 
 export interface Player {
   id: string;
@@ -54,7 +57,9 @@ export const usePlayers = (groupId?: string) => {
             chunks.push(memberIds.slice(i, i + 10));
           }
 
-          const chunkSnaps = await Promise.all(
+          // #1547: Promise.allSettled garante que 1 chunk com falha não derruba
+          // a lista inteira — os chunks bem-sucedidos ainda são exibidos.
+          const chunkResults = await Promise.allSettled(
             chunks.map((chunk) =>
               getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
             )
@@ -62,7 +67,13 @@ export const usePlayers = (groupId?: string) => {
 
           if (cancelled) return;
 
-          const allUserDocs = chunkSnaps.flatMap((snap) => snap.docs);
+          const allUserDocs = chunkResults.flatMap((result) => {
+            if (result.status === 'rejected') {
+              logger.error('Falha ao ler chunk de jogadores:', result.reason);
+              return [];
+            }
+            return result.value.docs;
+          });
           const playersData = allUserDocs.map((userDoc) => {
             const raw = userDoc.data();
           const data = snakeToCamel(raw) as Record<string, unknown>;
