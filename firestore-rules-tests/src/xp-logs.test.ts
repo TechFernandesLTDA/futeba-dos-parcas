@@ -85,11 +85,11 @@ describe("xp_logs — leitura", () => {
     await assertFails(db.doc(`xp_logs/${LOG_PLAYER_B}`).get());
   });
 
-  it("Admin NÃO pode ler log de XP de outro usuário via rules (sem bypass isAdmin)", async () => {
-    // CRÍTICO: rule não tem exceção isAdmin() na leitura
-    // Admin SDK (Cloud Function) bypassa rules — mas regras do cliente negam mesmo admin
+  it("Admin pode ler log de XP de outro usuário (#1613: isAdmin bypass na leitura)", async () => {
+    // #1613: rule adicionou isAdmin() para permitir investigação de logs
+    // Admin SDK (Cloud Function) bypassa rules — e agora admin client também pode ler
     const db = asAdmin(testEnv);
-    await assertFails(db.doc(`xp_logs/${LOG_PLAYER_A}`).get());
+    await assertSucceeds(db.doc(`xp_logs/${LOG_PLAYER_A}`).get());
   });
 
   it("Admin pode ler apenas seu próprio log de XP (user_id == admin uid)", async () => {
