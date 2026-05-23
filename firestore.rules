@@ -1815,7 +1815,8 @@ service cloud.firestore {
     // COLECAO: xp_logs (historico de XP)
     // ============================================
     match /xp_logs/{logId} {
-      allow read: if isAuthenticated() && resource.data.user_id == userId();
+      // #1613: admin pode investigar logs de qualquer usuário (ownership check bloqueava investigação)
+      allow read: if isAuthenticated() && (resource.data.user_id == userId() || isAdmin());
       allow create: if isAdmin();
       allow update, delete: if false;
     }
