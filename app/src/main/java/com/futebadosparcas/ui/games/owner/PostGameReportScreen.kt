@@ -511,7 +511,7 @@ private fun ReportTopPlayersCard(
                             text = "${index + 1}",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = if (index == 1) Color.Black else Color.White
+                            color = ContrastHelper.getContrastingTextColor(medalColor)
                         )
                     }
 
