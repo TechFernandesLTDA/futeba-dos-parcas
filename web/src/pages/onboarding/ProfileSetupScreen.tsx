@@ -84,7 +84,6 @@ export const ProfileSetupScreen: React.FC = () => {
         current_streak: 0,
         best_streak: 0,
         is_searchable: true,
-        is_verified: false,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       }, { merge: true });

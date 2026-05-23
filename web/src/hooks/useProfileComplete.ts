@@ -1,34 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 export function useProfileComplete() {
   const { firebaseUser } = useAuth();
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    if (!firebaseUser) {
+  const check = useCallback(async (user: typeof firebaseUser, forceRefresh = false) => {
+    if (!user) {
       setProfileComplete(null);
       return;
     }
-
-    let cancelled = false;
-
-    async function check() {
-      try {
-        const tokenResult = await firebaseUser!.getIdTokenResult();
-        if (!cancelled) {
-          setProfileComplete(!!tokenResult.claims.profileComplete);
-        }
-      } catch {
-        if (!cancelled) {
-          setProfileComplete(null);
-        }
-      }
+    try {
+      const tokenResult = await user.getIdTokenResult(forceRefresh);
+      setProfileComplete(!!tokenResult.claims.profileComplete);
+    } catch {
+      setProfileComplete(null);
     }
+  }, []);
 
-    check();
-    return () => { cancelled = true; };
-  }, [firebaseUser]);
+  useEffect(() => {
+    check(firebaseUser);
+  }, [firebaseUser, check]);
 
-  return { profileComplete, loading: profileComplete === null };
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        check(user, true);
+      }
+    });
+    return () => unsubscribe();
+  }, [check]);
+
+  const refresh = useCallback(() => check(firebaseUser, true), [firebaseUser, check]);
+
+  return { profileComplete, loading: profileComplete === null, refresh };
 }
