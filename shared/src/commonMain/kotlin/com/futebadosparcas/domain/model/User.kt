@@ -197,12 +197,15 @@ data class User(
 
     /**
      * Retorna a media geral do jogador.
+     * Inclui a nota de goleiro para nao deflacionar jogadores que jogam
+     * exclusivamente nessa posicao.
      */
     fun getOverallRating(): Double {
         val ratings = listOf(
             getEffectiveRating(PlayerRatingRole.STRIKER),
             getEffectiveRating(PlayerRatingRole.MID),
-            getEffectiveRating(PlayerRatingRole.DEFENDER)
+            getEffectiveRating(PlayerRatingRole.DEFENDER),
+            getEffectiveRating(PlayerRatingRole.GOALKEEPER)
         ).filter { it > 0 }
 
         return if (ratings.isEmpty()) 0.0 else ratings.average()

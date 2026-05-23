@@ -18,12 +18,14 @@ import {
   ArrowBack,
 } from '@mui/icons-material';
 import { useTheme, useMediaQuery, alpha } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { AppLogo } from '../../components/common/AppLogo';
 
 export function ForgotPasswordScreen() {
-  useDocumentTitle('Recuperar Senha');
+  const { t } = useTranslation();
+  useDocumentTitle(t('auth.forgotPasswordTitle'));
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const [email, setEmail] = useState('');
@@ -37,7 +39,7 @@ export function ForgotPasswordScreen() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError('Preencha o email');
+      setError(t('auth.forgotPasswordFillEmail'));
       return;
     }
 
@@ -52,7 +54,7 @@ export function ForgotPasswordScreen() {
       // é seguro exibir. Qualquer outro erro é tratado genericamente.
       const code = (err as { code?: string })?.code;
       if (code === 'auth/invalid-email') {
-        setError('Email inválido');
+        setError(t('auth.forgotPasswordInvalidEmail'));
         setLoading(false);
         return;
       }
@@ -92,10 +94,10 @@ export function ForgotPasswordScreen() {
             sx={{ mb: 2 }}
           />
           <Typography variant="h5" fontWeight="bold" color="primary.contrastText">
-            Recuperar Senha
+            {t('auth.forgotPasswordTitle')}
           </Typography>
           <Typography variant="body1" sx={{ color: alpha(theme.palette.primary.contrastText, 0.8), mt: 0.5 }}>
-            Digite seu email e enviaremos um link para redefinir sua senha
+            {t('auth.forgotPasswordSubtitle')}
           </Typography>
         </Box>
       )}
@@ -126,7 +128,7 @@ export function ForgotPasswordScreen() {
           {!isMd && (
           <>
           <Box sx={{ mb: 2 }}>
-            <IconButton onClick={() => navigate('/login')} sx={{ ml: -1 }} aria-label="Voltar para login">
+            <IconButton onClick={() => navigate('/login')} sx={{ ml: -1 }} aria-label={t('auth.forgotPasswordBackAriaLabel')}>
               <ArrowBack />
             </IconButton>
           </Box>
@@ -140,10 +142,10 @@ export function ForgotPasswordScreen() {
               sx={{ mx: 'auto', mb: 2 }}
             />
             <Typography variant="h5" fontWeight="bold">
-              Recuperar Senha
+              {t('auth.forgotPasswordTitle')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Digite seu email e enviaremos um link para redefinir sua senha
+              {t('auth.forgotPasswordSubtitle')}
             </Typography>
           </Box>
           </>
@@ -158,7 +160,7 @@ export function ForgotPasswordScreen() {
           {success ? (
             <Box sx={{ textAlign: 'center' }}>
               <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }} aria-live="polite">
-                Email de recuperação enviado! Verifique sua caixa de entrada.
+                {t('auth.forgotPasswordEmailSent')}
               </Alert>
               <Button
                 variant="contained"
@@ -167,14 +169,14 @@ export function ForgotPasswordScreen() {
                 onClick={() => navigate('/login')}
                 sx={{ py: 1.5 }}
               >
-                Voltar ao Login
+                {t('auth.forgotPasswordBackToLogin')}
               </Button>
             </Box>
           ) : (
-            <form onSubmit={handleReset} aria-label="Formulário de recuperação de senha">
+            <form onSubmit={handleReset} aria-label={t('auth.forgotPasswordFormAriaLabel')}>
               <TextField
                 fullWidth
-                label="Email"
+                label={t('auth.forgotPasswordEmailLabel')}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -202,16 +204,16 @@ export function ForgotPasswordScreen() {
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Enviar Link'}
+                {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.forgotPasswordSendLink')}
               </Button>
             </form>
           )}
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              Lembrou a senha?{' '}
+              {t('auth.forgotPasswordRememberPassword')}{' '}
               <Link component={RouterLink} to="/login" underline="hover">
-                Entrar
+                {t('auth.forgotPasswordSignIn')}
               </Link>
             </Typography>
           </Box>
