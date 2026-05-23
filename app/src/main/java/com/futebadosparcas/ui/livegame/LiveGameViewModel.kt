@@ -107,8 +107,14 @@ class LiveGameViewModel(
                     // Qualquer usuário confirmado pode iniciar se score não existir
                     if (score == null && game.status == "LIVE" && !hasTriedToStartLiveGame) {
                         hasTriedToStartLiveGame = true
-                        // Iniciar placar ao vivo (qualquer um pode fazer isso se ainda não existe)
-                        liveGameRepository.startLiveGame(gameId, team1.id, team2.id)
+                        try {
+                            // Iniciar placar ao vivo (qualquer um pode fazer isso se ainda não existe)
+                            liveGameRepository.startLiveGame(gameId, team1.id, team2.id)
+                        } catch (e: Exception) {
+                            // Resetar flag para permitir nova tentativa em caso de falha (#1608)
+                            hasTriedToStartLiveGame = false
+                            com.futebadosparcas.util.AppLogger.e("LiveGameViewModel", "Falha ao iniciar jogo ao vivo: ${e.message}", e)
+                        }
                     }
 
                     // Buscar confirmações para mapear nomes dos jogadores

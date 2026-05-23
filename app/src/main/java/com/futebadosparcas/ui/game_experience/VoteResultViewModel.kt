@@ -108,6 +108,9 @@ class VoteResultViewModel(
         // Mapear jogadores por ID
         val playerMap = confirmations.associateBy { it.userId }
 
+        // TODO #1617: substituir simulação de votos por leitura real da coleção mvp_votes
+        //  quando GameRepository.getMvpVotes(gameId) for implementado. Votos fabricados com
+        //  percentuais fixos (60%/70%/50%) não refletem a votação real dos jogadores.
         // Simular votos com base nas flags de votação das confirmações
         // Isso é uma simplificação - idealmente buscamos da coleção mvp_votes
         val mvpResults = mutableListOf<MVPVoteResult>()
