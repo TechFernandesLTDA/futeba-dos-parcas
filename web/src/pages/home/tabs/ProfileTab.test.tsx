@@ -32,7 +32,13 @@ vi.mock('../../../contexts/AuthContext', () => ({
       defenderRating: 2.0,
       gkRating: 1.0,
     },
+    firebaseUser: {
+      uid: 'user-1',
+      email: 'carlos@test.com',
+    },
     logout: vi.fn().mockResolvedValue(undefined),
+    loading: false,
+    refreshUser: vi.fn(),
   }),
 }));
 
@@ -74,6 +80,14 @@ vi.mock('../../../utils/logger', () => ({
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../contexts/ToastContext', () => ({
+  useToast: () => ({
+    showError: vi.fn(),
+    showSuccess: vi.fn(),
+    showInfo: vi.fn(),
   }),
 }));
 
