@@ -30,7 +30,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -46,11 +46,6 @@ jobs:
         run: |
           STORE_PW=$(printf '%s' "$KEYSTORE_PASSWORD_B64" | base64 --decode)
           KEY_PW=$(printf '%s' "$KEY_PASSWORD_B64" | base64 --decode)
-          # Debug: SHA8 e len pra confirmar decode
-          STORE_SHA=$(printf '%s' "$STORE_PW" | shasum -a 256 | head -c 16)
-          STORE_LEN=${#STORE_PW}
-          B64_LEN=${#KEYSTORE_PASSWORD_B64}
-          echo "::notice::DEBUG b64_len=$B64_LEN store_pw_len=$STORE_LEN sha8=$STORE_SHA"
           {
             printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT"
             printf 'STORE_FILE=%s/release.jks\n' "$RUNNER_TEMP"
@@ -79,16 +74,14 @@ jobs:
             cat /tmp/kt.log
             exit 1
           fi
-          # Tambem testar com pwd lido de local.properties (igual Gradle faz)
+          # Verificar que local.properties foi gravado corretamente
           PW_FROM_FILE=$(grep '^STORE_PASSWORD=' local.properties | sed 's/^STORE_PASSWORD=//')
-          PW_FROM_FILE_LEN=${#PW_FROM_FILE}
-          PW_FROM_FILE_SHA=$(printf '%s' "$PW_FROM_FILE" | shasum -a 256 | head -c 16)
-          echo "::notice::pwd from local.properties: len=$PW_FROM_FILE_LEN sha8=$PW_FROM_FILE_SHA"
           if keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW_FROM_FILE" >/tmp/kt2.log 2>&1; then
             echo "✓ keytool list OK (pwd from local.properties grep)"
           else
             echo "✗ keytool failed (pwd from local.properties grep):"
             cat /tmp/kt2.log
+            exit 1
           fi
 
       - name: Create google-services.json

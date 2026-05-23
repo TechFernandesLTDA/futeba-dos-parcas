@@ -54,7 +54,7 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
@@ -112,7 +112,7 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
@@ -144,7 +144,7 @@ jobs:
 
       - name: Upload Detekt SARIF to GitHub Security
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@03e4368ac7daa2bd82b3e85262f3bf87ee112f57  # v3
         with:
           sarif_file: app/build/reports/detekt/detekt.sarif
         continue-on-error: true
@@ -178,7 +178,7 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
@@ -246,7 +246,7 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 

@@ -26,7 +26,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -66,6 +66,17 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
+      - name: Format release notes
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          printf '🚀 New Beta Build Available!\n\n' > /tmp/release-notes.txt
+          printf '**Version:** %s\n' "${{ github.ref_name }}" >> /tmp/release-notes.txt
+          printf '**Commit:** %s\n' "${{ github.sha }}" >> /tmp/release-notes.txt
+          printf '**Author:** %s\n\n' "${{ github.actor }}" >> /tmp/release-notes.txt
+          printf 'Changes in this build:\n' >> /tmp/release-notes.txt
+          printf '%s\n' "$COMMIT_MSG" >> /tmp/release-notes.txt
+
       - name: Upload APK to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@bd494989dd4bec0343f78adee87fe66e48279ad6  # v1
         with:
@@ -73,15 +84,7 @@ jobs:
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
           groups: beta-testers
           file: app/build/outputs/apk/release/app-release.apk
-          releaseNotes: |
-            🚀 New Beta Build Available!
-
-            **Version:** ${{ github.ref_name }}
-            **Commit:** ${{ github.sha }}
-            **Author:** ${{ github.actor }}
-
-            Changes in this build:
-            ${{ github.event.head_commit.message }}
+          releaseNotesFile: /tmp/release-notes.txt
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
