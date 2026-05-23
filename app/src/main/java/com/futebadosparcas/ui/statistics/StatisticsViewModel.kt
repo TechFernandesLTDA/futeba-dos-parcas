@@ -1,7 +1,9 @@
 package com.futebadosparcas.ui.statistics
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.repository.UserRepository
@@ -15,7 +17,8 @@ import kotlinx.coroutines.launch
 
 class StatisticsViewModel(
     private val statisticsRepository: StatisticsRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val context: Context
 ) : ViewModel() {
 
     companion object {
@@ -99,7 +102,7 @@ class StatisticsViewModel(
                     topScorers = topScorers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,
-                            playerName = userMap[stats.id]?.name ?: "Jogador",
+                            playerName = userMap[stats.id]?.name ?: context.getString(R.string.stats_player_fallback),
                             value = stats.totalGoals.toLong(),
                             photoUrl = userMap[stats.id]?.photoUrl,
                             userId = stats.id,
@@ -112,7 +115,7 @@ class StatisticsViewModel(
                     topGoalkeepers = topGoalkeepers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,
-                            playerName = userMap[stats.id]?.name ?: "Jogador",
+                            playerName = userMap[stats.id]?.name ?: context.getString(R.string.stats_player_fallback),
                             value = stats.totalSaves.toLong(),
                             photoUrl = userMap[stats.id]?.photoUrl,
                             userId = stats.id,
@@ -125,7 +128,7 @@ class StatisticsViewModel(
                     bestPlayers = bestPlayers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,
-                            playerName = userMap[stats.id]?.name ?: "Jogador",
+                            playerName = userMap[stats.id]?.name ?: context.getString(R.string.stats_player_fallback),
                             value = stats.mvpCount.toLong(),
                             photoUrl = userMap[stats.id]?.photoUrl,
                             userId = stats.id,

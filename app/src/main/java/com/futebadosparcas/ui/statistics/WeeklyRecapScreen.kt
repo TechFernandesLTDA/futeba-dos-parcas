@@ -109,6 +109,10 @@ data class PersonalBest(
 )
 
 // ==================== Overlay Constants ====================
+// INTENCIONAL: Color.White é usado aqui pois o WeeklyRecapScreen renderiza sobre
+// gradientes coloridos/escuros (estilo Spotify Wrapped). Branco garante contraste
+// legível independente do tema (light/dark). NÃO migrar para colorScheme sem
+// também garantir que o gradiente de fundo permaneça escuro.
 
 private val RecapOverlayText = Color.White
 private val RecapOverlayTextHigh = Color.White.copy(alpha = 0.9f)

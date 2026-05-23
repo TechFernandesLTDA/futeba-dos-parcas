@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -36,6 +37,7 @@ export function GroupsTab() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { groups, loading, error, refetch } = useGroups();
@@ -65,24 +67,24 @@ export function GroupsTab() {
           }}
         >
           <Typography variant="h6" fontWeight={600}>
-            Grupos
+            {t('groups.title')}
           </Typography>
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => navigate('/group/create')}
           >
-            Criar Grupo
+            {t('groups.createGroup')}
           </Button>
         </Box>
 
         <TextField
           fullWidth
           size="small"
-          placeholder="Buscar grupos..."
+          placeholder={t('groups.search.placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label="Buscar grupos"
+          aria-label={t('groups.search.ariaLabel')}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -91,7 +93,7 @@ export function GroupsTab() {
             ),
             endAdornment: searchQuery ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label="Limpar busca">
+                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label={t('groups.search.clear')}>
                   <Close fontSize="small" />
                 </IconButton>
               </InputAdornment>
@@ -101,7 +103,7 @@ export function GroupsTab() {
         />
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {filteredGroups.length} grupo{filteredGroups.length !== 1 ? 's' : ''}
+          {t('groups.count', { count: filteredGroups.length })}
         </Typography>
       </Box>
 
@@ -113,7 +115,7 @@ export function GroupsTab() {
             sx={{ mb: 2 }}
             action={
               <Button color="inherit" size="small" onClick={() => refetch()}>
-                Tentar novamente
+                {t('groups.retry')}
               </Button>
             }
           >
@@ -144,19 +146,19 @@ export function GroupsTab() {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <People sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              {searchQuery ? 'Nenhum grupo com essa busca' : 'Nenhum grupo encontrado'}
+              {searchQuery ? t('groups.noResultsSearch') : t('groups.noResults')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {searchQuery
-                ? 'Tente alterar o termo de busca'
-                : 'Crie ou entre em um grupo para começar!'}
+                ? t('groups.tryDifferentSearch')
+                : t('groups.createOrJoin')}
             </Typography>
             {searchQuery ? (
               <Button
                 variant="outlined"
                 onClick={() => setSearchQuery('')}
               >
-                Limpar Busca
+                {t('groups.clearSearch')}
               </Button>
             ) : (
               <Button
@@ -164,7 +166,7 @@ export function GroupsTab() {
                 startIcon={<Add />}
                 onClick={() => navigate('/group/create')}
               >
-                Criar Grupo
+                {t('groups.createGroup')}
               </Button>
             )}
           </Box>
@@ -199,9 +201,9 @@ export function GroupsTab() {
                             {group.name}
                           </Typography>
                           {group.type === 'PUBLIC' ? (
-                            <Public fontSize="small" color="action" aria-label="Grupo público" />
+                            <Public fontSize="small" color="action" aria-label={t('groups.publicGroupLabel')} />
                           ) : (
-                            <Lock fontSize="small" color="action" aria-label="Grupo privado" />
+                            <Lock fontSize="small" color="action" aria-label={t('groups.privateGroupLabel')} />
                           )}
                         </Box>
 
@@ -209,7 +211,7 @@ export function GroupsTab() {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                             <Star sx={{ fontSize: 16, color: 'warning.main' }} />
                             <Typography variant="caption" color="text.secondary">
-                              Dono
+                              {t('groups.owner')}
                             </Typography>
                           </Box>
                         )}
@@ -228,11 +230,11 @@ export function GroupsTab() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <People fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
-                          {group.memberCount || 0} membros
+                          {t('groups.membersCount', { count: group.memberCount || 0 })}
                         </Typography>
                       </Box>
                       <Typography variant="body2" color="text.secondary">
-                        {group.totalGamesPlayed || 0} jogos
+                        {t('groups.gamesCount', { count: group.totalGamesPlayed || 0 })}
                       </Typography>
                     </Box>
 
@@ -251,7 +253,7 @@ export function GroupsTab() {
                       >
                         <Event fontSize="small" color="primary" />
                         <Typography variant="body2" color="primary.main" fontWeight="medium">
-                          Próximo: {group.nextGameTitle || 'Jogo'} • {formatDateShort(group.nextGameDate)}
+                          {t('groups.nextGame')}: {group.nextGameTitle || 'Jogo'} • {formatDateShort(group.nextGameDate)}
                         </Typography>
                       </Box>
                     )}
@@ -266,10 +268,10 @@ export function GroupsTab() {
       </Box>
 
       {/* FAB (xs/sm only) */}
-      <Fab
-        color="primary"
-        aria-label="Criar novo grupo"
-        onClick={() => navigate('/group/create')}
+        <Fab
+          color="primary"
+          aria-label={t('groups.createNewGroup')}
+          onClick={() => navigate('/group/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',

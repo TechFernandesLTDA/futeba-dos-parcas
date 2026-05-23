@@ -454,9 +454,9 @@ private fun getComputedStatus(
 ): Pair<String, Color>? {
     if (leagueRating.isNaN()) return null
     return when {
-        leagueRating >= 90.0 -> "Elite" to successColor
-        leagueRating >= 70.0 -> "Boa fase" to successColor
-        leagueRating >= 50.0 -> "Estavel" to neutralColor
-        else -> "Em risco" to errorColor
+        leagueRating >= 90.0 -> stringResource(R.string.stats_rating_elite) to successColor
+        leagueRating >= 70.0 -> stringResource(R.string.stats_rating_good) to successColor
+        leagueRating >= 50.0 -> stringResource(R.string.stats_rating_stable) to neutralColor
+        else -> stringResource(R.string.stats_rating_at_risk) to errorColor
     }
 }

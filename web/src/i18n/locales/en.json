@@ -550,7 +550,29 @@
     "photoInvalidType": "Invalid file. Select a JPEG, PNG, or WEBP image.",
     "photoTooLarge": "Image too large. Maximum: 2MB.",
     "photoUploadError": "Failed to upload group photo. Please try again.",
-    "noRankingMembers": "Join a group to see the ranking"
+    "noRankingMembers": "Join a group to see the ranking",
+    "search": {
+      "placeholder": "Search groups...",
+      "clear": "Clear search",
+      "ariaLabel": "Search groups"
+    },
+    "count": "{{count}} group",
+    "count_plural": "{{count}} groups",
+    "noResults": "No groups found",
+    "noResultsSearch": "No groups matching this search",
+    "tryDifferentSearch": "Try changing the search term",
+    "createOrJoin": "Create or join a group to get started!",
+    "clearSearch": "Clear Search",
+    "owner": "Owner",
+    "membersCount": "{{count}} member",
+    "membersCount_plural": "{{count}} members",
+    "gamesCount": "{{count}} game",
+    "gamesCount_plural": "{{count}} games",
+    "nextGame": "Next",
+    "publicGroupLabel": "Public group",
+    "privateGroupLabel": "Private group",
+    "createNewGroup": "Create new group",
+    "retry": "Try again"
   },
   "schedule": {
     "title": "Schedules",

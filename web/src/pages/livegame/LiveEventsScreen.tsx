@@ -171,6 +171,41 @@ export const LiveEventsScreen: React.FC = () => {
     }
   };
 
+  const getEventStyle = (type: string) => {
+    switch (type) {
+      case 'GOAL':
+        return {
+          bgcolor: alpha(theme.palette.success.main, 0.12),
+          borderColor: alpha(theme.palette.success.main, 0.3),
+        };
+      case 'ASSIST':
+        return {
+          bgcolor: alpha(theme.palette.info.main, 0.12),
+          borderColor: alpha(theme.palette.info.main, 0.3),
+        };
+      case 'YELLOW_CARD':
+        return {
+          bgcolor: alpha(theme.palette.warning.main, 0.12),
+          borderColor: alpha(theme.palette.warning.main, 0.3),
+        };
+      case 'RED_CARD':
+        return {
+          bgcolor: alpha(theme.palette.error.main, 0.12),
+          borderColor: alpha(theme.palette.error.main, 0.3),
+        };
+      case 'SAVE':
+        return {
+          bgcolor: alpha(theme.palette.secondary.main, 0.12),
+          borderColor: alpha(theme.palette.secondary.main, 0.3),
+        };
+      default:
+        return {
+          bgcolor: 'background.paper',
+          borderColor: 'divider',
+        };
+    }
+  };
+
   const getEventLabel = (type: string) => {
     switch (type) {
       case 'GOAL': return 'Gol';
@@ -228,8 +263,10 @@ export const LiveEventsScreen: React.FC = () => {
           </Box>
         ) : (
           <List disablePadding aria-label="Eventos do jogo">
-            {events.map((event, _index) => (
-              <Card key={event.id} sx={{ mb: 1 }}>
+            {events.map((event, _index) => {
+              const eventStyle = getEventStyle(event.type);
+              return (
+              <Card key={event.id} sx={{ mb: 1, ...eventStyle, borderWidth: 1, borderStyle: 'solid' }}>
                 <ListItem sx={{ py: 1.5 }}>
                   <ListItemAvatar>
                     <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
@@ -252,7 +289,8 @@ export const LiveEventsScreen: React.FC = () => {
                   <Chip label={`${event.minute}'`} variant="outlined" />
                 </ListItem>
               </Card>
-            ))}
+              );
+            })}
           </List>
         )}
       </Container>

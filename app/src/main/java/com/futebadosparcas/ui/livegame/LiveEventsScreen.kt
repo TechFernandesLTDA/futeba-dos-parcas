@@ -219,18 +219,11 @@ private fun LiveEventsEmptyState() {
 }
 
 /**
- * Obtém a cor baseada no tipo de evento
+ * Obtém a cor baseada no tipo de evento (adaptável ao tema via MatchEventTheme).
  */
 @Composable
 private fun getEventColor(eventType: String): androidx.compose.ui.graphics.Color {
-    return when (eventType.lowercase()) {
-        "goal" -> com.futebadosparcas.ui.theme.MatchEventColors.GoalBackground
-        "substitution" -> com.futebadosparcas.ui.theme.MatchEventColors.SubstitutionBackground
-        "yellowcard" -> com.futebadosparcas.ui.theme.MatchEventColors.YellowCardBackground
-        "redcard" -> com.futebadosparcas.ui.theme.MatchEventColors.RedCardBackground
-        "foul" -> com.futebadosparcas.ui.theme.MatchEventColors.FoulBackground
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
+    return com.futebadosparcas.ui.theme.MatchEventTheme.backgroundFor(eventType)
 }
 
 /**

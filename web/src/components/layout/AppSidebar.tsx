@@ -31,7 +31,7 @@ const pulse = keyframes`
   100% { transform: scale(1); }
 `;
 
-const RAIL_WIDTH = 80;
+const RAIL_WIDTH = 88;
 const DRAWER_WIDTH = 240;
 
 interface NavItem {
