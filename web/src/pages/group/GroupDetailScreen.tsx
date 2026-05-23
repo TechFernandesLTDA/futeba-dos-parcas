@@ -167,7 +167,8 @@ export const GroupDetailScreen: React.FC = () => {
       await softDeleteGroup({ groupId });
       setDeleteDialogOpen(false);
       showSuccess('Grupo excluído com sucesso');
-      setTimeout(() => navigate('/?tab=2'), 1000);
+      // #1591: navega diretamente após await sem setTimeout frágil
+      navigate('/?tab=2');
     } catch (err) {
       showError(getFirestoreErrorMessage(err, 'Erro ao excluir grupo'));
     } finally {
