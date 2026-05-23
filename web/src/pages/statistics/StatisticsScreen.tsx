@@ -253,7 +253,7 @@ export const StatisticsScreen: React.FC = () => {
       setError('Erro ao carregar estatísticas');
     }
     setLoading(false);
-  }, [user, showError]);
+  }, [user, showError, t]);
 
   useEffect(() => {
     if (user) {

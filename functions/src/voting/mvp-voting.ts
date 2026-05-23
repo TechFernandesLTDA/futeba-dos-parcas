@@ -1105,8 +1105,12 @@ async function applyVotingXpDelta(
         created_at: admin.firestore.FieldValue
           .serverTimestamp(),
       });
+      // FIX #1532: usar FieldValue.increment em vez de valor absoluto
+      // pra evitar race condition com onGameStatusUpdate que também
+      // escreve experience_points. Increment é atômico no Firestore.
       txn.update(userRef, {
-        experience_points: newXp,
+        experience_points:
+          admin.firestore.FieldValue.increment(xpDelta),
         level: newLevel,
         updated_at: admin.firestore.FieldValue
           .serverTimestamp(),

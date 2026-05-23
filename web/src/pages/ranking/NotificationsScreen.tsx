@@ -205,7 +205,7 @@ export const NotificationsScreen: React.FC = () => {
     } catch {
       showError(t('notifications.acceptError'));
     }
-  }, [confirmPresence, markAsRead, showSuccess, showError, navigate]);
+  }, [confirmPresence, markAsRead, showSuccess, showError, navigate, t]);
 
   const handleDecline = useCallback(async (notification: typeof notifications[0]) => {
     try {

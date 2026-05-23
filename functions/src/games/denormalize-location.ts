@@ -154,7 +154,7 @@ export const denormalizeGameLocations = onCall(
     region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable ADMIN manipula
     // games em batch — não deve aceitar chamada não-verificada.
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    enforceAppCheck: !process.env.FUNCTIONS_EMULATOR,
     consumeAppCheckToken: true,
     timeoutSeconds: 540,
     memory: "512MiB",

@@ -124,7 +124,7 @@ export function getMvpBadges(
   newMvpStreak: number
 ): string[] {
   const badges: string[] = [];
-  if (isMvp && newMvpStreak === 3) {
+  if (isMvp && newMvpStreak >= 3) {
     badges.push("mvp_streak_3");
   }
   return badges;
@@ -141,9 +141,9 @@ export function getVeteranBadges(
   totalGames: number
 ): string[] {
   const badges: string[] = [];
-  if (totalGames === BADGE_VETERAN_THRESHOLDS.VETERAN_100) {
+  if (totalGames >= BADGE_VETERAN_THRESHOLDS.VETERAN_100) {
     badges.push("veteran_100");
-  } else if (totalGames === BADGE_VETERAN_THRESHOLDS.VETERAN_50) {
+  } else if (totalGames >= BADGE_VETERAN_THRESHOLDS.VETERAN_50) {
     badges.push("veteran_50");
   }
   return badges;
@@ -229,9 +229,9 @@ export function getWinnerBadges(
   const badges: string[] = [];
 
   if (result === "WIN") {
-    if (gamesWon === BADGE_WINNER_THRESHOLDS.WINNER_50) {
+    if (gamesWon >= BADGE_WINNER_THRESHOLDS.WINNER_50) {
       badges.push("winner_50");
-    } else if (gamesWon === BADGE_WINNER_THRESHOLDS.WINNER_25) {
+    } else if (gamesWon >= BADGE_WINNER_THRESHOLDS.WINNER_25) {
       badges.push("winner_25");
     }
   }

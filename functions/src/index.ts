@@ -105,35 +105,68 @@ export {
 
 // PERF_001: Lazy imports para otimizar cold start
 let leagueCalcImported = false;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let leagueCalcs: any = null;
+
+interface LeagueCalculationsModule {
+  calculateLeagueRating: (recentGames: Array<{
+    xp_earned?: number;
+    won?: boolean;
+    goal_diff?: number;
+    was_mvp?: boolean;
+  }>) => number;
+  calculateLeaguePromotion: (
+    currentState: {
+      division: string;
+      promotionProgress: number;
+      relegationProgress: number;
+      protectionGames: number;
+    },
+    newRating: number
+  ) => {
+    division: string;
+    promotionProgress: number;
+    relegationProgress: number;
+    protectionGames: number;
+  };
+  PROMOTION_GAMES_REQUIRED: number;
+  RELEGATION_GAMES_REQUIRED: number;
+}
+
+let leagueCalcs: LeagueCalculationsModule | null = null;
 
 /**
  * Lazy load do módulo de cálculos de liga.
- * @return {Promise<any>} Módulo de liga.
+ * @return {Promise<LeagueCalculationsModule>} Módulo de liga.
  */
-async function getLeagueCalculations(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any, max-len
+async function getLeagueCalculations(): Promise<LeagueCalculationsModule> {
   if (!leagueCalcImported) {
     leagueCalcs = await import("./league.js");
     leagueCalcImported = true;
   }
-  return leagueCalcs;
+  return leagueCalcs!;
 }
 
 let notificationImported = false;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let notificationModule: any = null;
+
+interface NotificationModule {
+  sendStreakNotificationIfMilestone: (
+    userId: string,
+    currentStreak: number,
+    previousStreak?: number
+  ) => Promise<boolean>;
+}
+
+let notificationModule: NotificationModule | null = null;
 
 /**
  * Lazy load do módulo de notificações.
- * @return {Promise<any>} Módulo de notificações.
+ * @return {Promise<NotificationModule>} Módulo de notificações.
  */
-async function getNotifications(): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any, max-len
+async function getNotifications(): Promise<NotificationModule> {
   if (!notificationImported) {
     notificationModule = await import("./notifications.js");
     notificationImported = true;
   }
-  return notificationModule;
+  return notificationModule!;
 }
 
 admin.initializeApp();
@@ -949,6 +982,17 @@ export const onGameStatusUpdate = onDocumentUpdated(
             was_clean_sheet: cleanSheetXp > 0,
             was_worst_player: isWorstPlayer,
             game_result: result,
+            // FIX #1576: armazenar placar real do time para goal_diff
+            my_team_score: team ?
+              (liveScore ?
+                (team.id === liveScore.team1Id ?
+                  liveScore.team1Score :
+                  liveScore.team2Score) :
+                team.score) :
+              0,
+            opponent_score: getOpponentScore(
+              team, liveScore, teams
+            ),
             // Armazenado para permitir filtro defensivo em recalculateLeagueRating (#954)
             game_status: "FINISHED",
             milestones_unlocked: newMilestones,
@@ -1316,9 +1360,11 @@ export const recalculateLeagueRating =
                 log.xp_earned || 0,
               won: won,
               drew: drew,
-              // Heurística simples
-              goal_diff: log.goals -
-                (won ? 0 : drew ? 0 : 1),
+              // FIX #1576/#1538: usar placar real do time em vez
+              // de heurística (player goals - fixed offset)
+              goal_diff:
+                (log.my_team_score ?? 0) -
+                (log.opponent_score ?? 0),
               was_mvp:
                 log.was_mvp || false,
               played_at: log.created_at,

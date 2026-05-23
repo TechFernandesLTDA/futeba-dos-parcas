@@ -35,7 +35,7 @@ const RATE_LIMIT_MS = 60 * 60 * 1000; // 1 hora
 export const migrateGroupsInviteCodeToInvites =
   secureCallable<unknown, MigrationResult>(
     {
-      appCheck: process.env.NODE_ENV === "production",
+      appCheck: !process.env.FUNCTIONS_EMULATOR,
       requireAuth: true,
       requiredRole: "ADMIN",
       rateLimit: {

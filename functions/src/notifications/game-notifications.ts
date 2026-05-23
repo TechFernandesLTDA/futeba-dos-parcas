@@ -336,10 +336,11 @@ export const onGameVacancy = onDocumentUpdated(
       const currentPlayers =
         confirmationsSnap.size;
 
-      // Se não estava cheio, não notifica
-      if (currentPlayers >= maxPlayers - 1) {
-        // Estava lotado, agora tem vaga
-
+      // Só notifica se há vaga real após cancelamento
+      // FIX #1582: condição era currentPlayers >= maxPlayers - 1,
+      // que disparava mesmo quando o jogo continuava cheio
+      // (ex: 15 confirmados, 1 cancela → 14 = maxPlayers, sem vaga).
+      if (currentPlayers < maxPlayers) {
         // 1. Notificar a waitlist
         // FIX #753: era .collection("waitlist") raiz inexistente.
         // Android escreve em games/{gameId}/waitlist/ (subcollection).

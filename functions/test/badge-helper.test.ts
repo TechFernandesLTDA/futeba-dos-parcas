@@ -119,7 +119,11 @@ describe("Badge Helper", () => {
         it("should return empty if MVP streak is not 3", () => {
             expect(getMvpBadges(true, 1)).toEqual([]);
             expect(getMvpBadges(true, 2)).toEqual([]);
-            expect(getMvpBadges(true, 4)).toEqual([]);
+        });
+
+        it("should return mvp_streak_3 for streak >= 3 (FIX #1590)", () => {
+            expect(getMvpBadges(true, 3)).toEqual(["mvp_streak_3"]);
+            expect(getMvpBadges(true, 4)).toEqual(["mvp_streak_3"]);
         });
     });
 
@@ -147,11 +151,14 @@ describe("Badge Helper", () => {
             expect(getVeteranBadges(50)).toEqual(["veteran_50"]);
         });
 
-        it("should return empty for non-milestone values", () => {
+        it("should return empty for below-threshold values", () => {
             expect(getVeteranBadges(49)).toEqual([]);
-            expect(getVeteranBadges(51)).toEqual([]);
-            expect(getVeteranBadges(99)).toEqual([]);
-            expect(getVeteranBadges(101)).toEqual([]);
+        });
+
+        it("should return veteran badge for >= threshold (FIX #1590)", () => {
+            expect(getVeteranBadges(51)).toEqual(["veteran_50"]);
+            expect(getVeteranBadges(99)).toEqual(["veteran_50"]);
+            expect(getVeteranBadges(101)).toEqual(["veteran_100"]);
         });
     });
 
@@ -227,10 +234,13 @@ describe("Badge Helper", () => {
             expect(getWinnerBadges("WIN", 25)).toEqual(["winner_25"]);
         });
 
-        it("should return empty for non-milestone wins", () => {
+        it("should return empty for below-threshold wins", () => {
             expect(getWinnerBadges("WIN", 24)).toEqual([]);
-            expect(getWinnerBadges("WIN", 26)).toEqual([]);
-            expect(getWinnerBadges("WIN", 49)).toEqual([]);
+        });
+
+        it("should return winner badge for >= threshold (FIX #1590)", () => {
+            expect(getWinnerBadges("WIN", 26)).toEqual(["winner_25"]);
+            expect(getWinnerBadges("WIN", 49)).toEqual(["winner_25"]);
         });
 
         it("should return empty for non-win results", () => {

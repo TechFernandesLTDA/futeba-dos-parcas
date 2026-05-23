@@ -76,7 +76,8 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
   {
     // SECFIX #429: appCheck enforce em production.
     // Token admin roubado/leaked nao serve fora do app oficial.
-    appCheck: process.env.NODE_ENV === "production",
+    // FIX #1577: FUNCTIONS_EMULATOR em vez de NODE_ENV
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {
@@ -254,10 +255,13 @@ export const onNewUserCreated = onDocumentCreated(
       // Pegar role do documento (ou default PLAYER)
       const role = userData.role || "PLAYER";
 
-      // Definir no Custom Claim
+      const existingUserClaims =
+        (await admin.auth().getUser(userId))
+          .customClaims || {};
       await admin
         .auth()
         .setCustomUserClaims(userId, {
+          ...existingUserClaims,
           role: role,
         });
 
@@ -303,7 +307,8 @@ export const onNewUserCreated = onDocumentCreated(
 export const migrateAllUsersToCustomClaims = secureCallable(
   {
     // SECFIX #429: appCheck enforce em production
-    appCheck: process.env.NODE_ENV === "production",
+    // FIX #1577: FUNCTIONS_EMULATOR em vez de NODE_ENV
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {

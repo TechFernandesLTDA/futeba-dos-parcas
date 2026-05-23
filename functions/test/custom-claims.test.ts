@@ -7,6 +7,9 @@
  * - migrateAllUsersToCustomClaims: Migração em lote
  */
 
+// FIX #1577: simular emulador pra desabilitar App Check nos testes
+process.env.FUNCTIONS_EMULATOR = "true";
+
 // Mock firebase-admin
 const mockSetCustomUserClaims = jest.fn().mockResolvedValue(undefined);
 const mockGetUser = jest.fn().mockResolvedValue({

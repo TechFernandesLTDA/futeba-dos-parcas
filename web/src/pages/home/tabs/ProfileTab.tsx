@@ -99,7 +99,7 @@ export function ProfileTab() {
     { icon: <MilitaryTech />, label: t('profile.badges'), onClick: () => navigate('/badges') },
     { icon: <TrendingUp />, label: t('profile.statistics'), onClick: () => navigate('/statistics') },
     { icon: <Settings />, label: t('profile.settings'), onClick: () => navigate('/settings') },
-  ], [navigate]);
+  ], [navigate, t]);
 
   // Itens condicionais por role
   const isAdmin = user?.role === 'ADMIN';
@@ -148,7 +148,7 @@ export function ProfileTab() {
     { icon: <DirectionsRun fontSize="small" />, label: t('profile.positionMidfielder'), value: user?.midRating || 0, color: theme.palette.warning.main },
     { icon: <Shield fontSize="small" />, label: t('profile.positionDefender'), value: user?.defenderRating || 0, color: theme.palette.info.main },
     { icon: <SportsKabaddi fontSize="small" />, label: t('profile.positionGoalkeeper'), value: user?.gkRating || 0, color: theme.palette.success.main },
-  ], [user?.strikerRating, user?.midRating, user?.defenderRating, user?.gkRating, theme.palette]);
+  ], [user?.strikerRating, user?.midRating, user?.defenderRating, user?.gkRating, theme.palette, t]);
 
   if (loading) {
     return (
