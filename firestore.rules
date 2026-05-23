@@ -714,7 +714,7 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
            'status', 'goals', 'assists', 'saves', 'goalkeeper',
            'is_mvp', 'is_best_gk', 'is_worst_player', 'was_present',
-           'checked_in', 'checked_in_at', 'team', 'updated_at',
+           'team', 'updated_at',
          ])) ||
         // Jogadores confirmados podem atualizar flags de MVP (para votação)
         (isConfirmedPlayer(resource.data.game_id) &&

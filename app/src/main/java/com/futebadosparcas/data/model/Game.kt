@@ -244,7 +244,7 @@ data class Game(
     // Raio maximo (em metros) para fazer check-in - Issue #36
     @get:PropertyName("checkin_radius_meters")
     @set:PropertyName("checkin_radius_meters")
-    var checkinRadiusMeters: Int = 100,
+    var checkinRadiusMeters: Int = 200,
 
     // === SOFT DELETE (P2 #40) ===
 
@@ -451,8 +451,8 @@ data class Game(
         }
 
         // Validação de raio de check-in (#36)
-        if (checkinRadiusMeters < 10 || checkinRadiusMeters > 1000) {
-            errors.add(ValidationResult.Invalid("checkin_radius_meters", "Raio de check-in deve ser entre 10 e 1000 metros"))
+        if (checkinRadiusMeters < 50 || checkinRadiusMeters > 2000) {
+            errors.add(ValidationResult.Invalid("checkin_radius_meters", "Raio de check-in deve ser entre 50 e 2000 metros"))
         }
 
         // Validação de formato de data (dd/MM/yyyy)
