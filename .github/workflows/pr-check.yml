@@ -3,6 +3,11 @@ name: PR Check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'specs/**'
+      - '.github/ISSUE_TEMPLATE/**'
 
 # Cancela execucoes anteriores do mesmo PR
 concurrency:
@@ -31,7 +36,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: true
 
