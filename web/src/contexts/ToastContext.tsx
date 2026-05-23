@@ -88,10 +88,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const handleClose = (id: string) => (_: React.SyntheticEvent | Event, reason?: string) => {
+  // FIX #1594: memoiza handleClose para evitar re-renders desnecessários dos Snackbars
+  const handleClose = useCallback((id: string) => (_: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') return;
     dismissToast(id);
-  };
+  }, [dismissToast]);
 
   return (
     <ToastContext.Provider

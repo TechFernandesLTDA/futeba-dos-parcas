@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
-import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { doc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db, messagingPromise } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { createLogger } from '../utils/logger';
@@ -25,6 +25,8 @@ export function useNotificationPermission() {
     let unsubscribe: (() => void) | undefined;
     let mounted = true;
 
+    // FIX #1562: adiciona .catch() para evitar unhandled promise rejection
+    // quando o service worker não está disponível ou o messaging falha ao inicializar
     messagingPromise.then((messaging) => {
       if (!mounted || !messaging) return;
       unsubscribe = onMessage(messaging, (payload) => {
@@ -35,6 +37,8 @@ export function useNotificationPermission() {
           });
         }
       });
+    }).catch((err) => {
+      logger.error('Falha ao inicializar messaging:', err);
     });
 
     return () => {
@@ -86,21 +90,21 @@ export function useNotificationPermission() {
         if (token) {
           const MAX_FCM_TOKENS = 5;
           const userRef = doc(db, 'users', user.id);
-          await updateDoc(userRef, {
-            fcmTokens: arrayUnion(token),
-          });
-          const snap = await getDoc(userRef);
-          if (snap.exists()) {
-            const tokens: string[] =
-              (snap.data()?.fcmTokens as string[]) || [];
-            if (tokens.length > MAX_FCM_TOKENS) {
-              const tokensToRemove =
-                tokens.slice(0, tokens.length - MAX_FCM_TOKENS);
-              await updateDoc(userRef, {
-                fcmTokens: arrayRemove(...tokensToRemove),
-              });
+          // FIX #1550: usa runTransaction para leitura+escrita atômica do array de tokens
+          // sem transaction: dois dispositivos simultâneos podiam exceder o limite de 5
+          await runTransaction(db, async (transaction) => {
+            const snap = await transaction.get(userRef);
+            const currentTokens: string[] = snap.exists()
+              ? (snap.data().fcmTokens as string[]) || []
+              : [];
+            const newTokens = [...new Set([...currentTokens, token])]; // dedup
+            if (newTokens.length > MAX_FCM_TOKENS) {
+              // mantém os mais recentes (slice do final)
+              transaction.update(userRef, { fcmTokens: newTokens.slice(-MAX_FCM_TOKENS) });
+            } else {
+              transaction.update(userRef, { fcmTokens: arrayUnion(token) });
             }
-          }
+          });
         }
       }
     } catch (error) {

@@ -67,7 +67,8 @@ export function useNotificationSettings(userId?: string) {
     } catch (err) {
       logger.error('Error loading notification settings:', err);
       setError(getFirestoreErrorMessage(err));
-      throw err;
+      // FIX #1557: não re-lança o erro para evitar unhandled promise rejection no useEffect
+      // O erro já está logado e disponível via state
     }
     setLoading(false);
   }, [userId]);

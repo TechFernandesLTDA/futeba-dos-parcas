@@ -72,7 +72,11 @@ export function useFeedback() {
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
+  // FIX #1540: usa currentUser?.uid como dep em vez do objeto inteiro
+  // evita re-subscrição desnecessária em token refreshes (que mudam o objeto
+  // FirebaseUser mas não o uid)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.uid]);
 
   const submitFeedback = async (input: SubmitFeedbackInput): Promise<string | null> => {
     if (!currentUser) {
