@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
 import { useNavigate } from 'react-router-dom';
 import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
@@ -25,15 +25,21 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useQueryClient } from '@tanstack/react-query';
+import { collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { VirtualList } from '../../components/common/VirtualList';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
-import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
+import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
 import { useTranslation } from 'react-i18next';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('RankingScreen');
 
 export const RankingScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -42,14 +48,41 @@ export const RankingScreen: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { showError } = useToast();
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'RankingScreen' });
 
   const [tabValue, setTabValue] = useState(0);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
 
-  const { players, loading, error } = useLeague(user?.id);
+  // BUG 1b fix: Buscar temporada ativa para filtrar season_participation
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSeason = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1)));
+        if (!cancelled) {
+          setActiveSeasonId(snap.docs[0]?.id || null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          logger.error('Error fetching active season:', err);
+          showError('Erro ao carregar temporada ativa');
+        }
+      }
+    };
+    fetchSeason();
+    return () => { cancelled = true; };
+  }, [showError]);
+
+  // BUG 1b fix: Passar filters com seasonId para evitar duplicação
+  const filters: LeagueFilters = useMemo(() => ({
+    seasonId: activeSeasonId,
+  }), [activeSeasonId]);
+
+  const { players, loading, error } = useLeague(user?.id, undefined, filters);
 
   const ranked = useMemo(() => {
     const sorted = [...players];

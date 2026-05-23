@@ -46,12 +46,17 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '../../contexts/ToastContext';
+import { collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
-import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
+import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('LeagueScreen');
 
 type SortField = 'points' | 'goals' | 'wins' | 'gamesPlayed' | 'assists' | 'mvpCount';
 
@@ -74,8 +79,8 @@ export const LeagueScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { showError } = useToast();
 
-  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('points');
@@ -84,6 +89,7 @@ export const LeagueScreen: React.FC = () => {
   const [shareSnack, setShareSnack] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showSort, setShowSort] = useState(false);
+  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
@@ -95,22 +101,58 @@ export const LeagueScreen: React.FC = () => {
   const [pullProgress, setPullProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // BUG 1 fix: Buscar temporada ativa para filtrar season_participation
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSeason = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1)));
+        if (!cancelled) {
+          setActiveSeasonId(snap.docs[0]?.id || null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          logger.error('Error fetching active season:', err);
+          showError('Erro ao carregar temporada ativa');
+        }
+      }
+    };
+    fetchSeason();
+    return () => { cancelled = true; };
+  }, [showError]);
+
   const selectedDivision = tabValue > 0 ? LEAGUE_DIVISIONS[tabValue - 1] : undefined;
 
-  const { players, loading, error } = useLeague(user?.id, selectedDivision);
+  // BUG 1 fix: Passar filters com seasonId para evitar duplicação
+  const filters: LeagueFilters = useMemo(() => ({
+    seasonId: activeSeasonId,
+  }), [activeSeasonId]);
 
+  // BUG 3 fix: Buscar dados sem filtro de divisão para contadores
+  const { players: allPlayers, loading, error, refetch } = useLeague(user?.id, undefined, filters);
+  // Dados filtrados por divisão (para exibição)
+  const { players } = useLeague(user?.id, selectedDivision, filters);
+
+  // BUG 3 + BUG 9 fix: Calcular contadores sobre allPlayers (sem filtro de divisão) usando reduce
   const divisionCounts = useMemo(() => {
-    const allPlayers = players;
     const counts: Record<string, number> = { ALL: allPlayers.length };
-    LEAGUE_DIVISIONS.forEach(d => { counts[d] = allPlayers.filter(p => p.division === d).length; });
+    LEAGUE_DIVISIONS.forEach(d => { counts[d] = 0; });
+    for (const p of allPlayers) {
+      if (counts[p.division] !== undefined) {
+        counts[p.division]++;
+      }
+    }
     return counts;
-  }, [players]);
+  }, [allPlayers]);
+
+  // BUG 14 fix: Normalizar acentos na busca
+  const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const filteredAndSorted = useMemo(() => {
     let result = players;
     if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      result = result.filter(p => p.userName.toLowerCase().includes(q));
+      const q = normalizeText(search.trim());
+      result = result.filter(p => normalizeText(p.userName).includes(q));
     }
     if (sortField !== 'points') {
       result = [...result].sort((a, b) => (b[sortField] || 0) - (a[sortField] || 0));
@@ -118,50 +160,73 @@ export const LeagueScreen: React.FC = () => {
     return result;
   }, [players, search, sortField]);
 
+  // BUG 4 fix: Calcular posição real no array completo (ordenado por pontos), não no filtrado
+  const realPositions = useMemo(() => {
+    const sorted = [...players].sort((a, b) => b.points - a.points);
+    const posMap = new Map<string, number>();
+    sorted.forEach((p, i) => posMap.set(p.id, i + 1));
+    return posMap;
+  }, [players]);
+
   const currentUserPlayer = useMemo(
     () => players.find(p => p.isCurrentUser),
     [players]
   );
 
   const currentUserPosition = useMemo(
-    () => currentUserPlayer ? players.indexOf(currentUserPlayer) + 1 : null,
-    [players, currentUserPlayer]
+    () => currentUserPlayer ? realPositions.get(currentUserPlayer.id) || null : null,
+    [currentUserPlayer, realPositions]
   );
 
   const pointsToNext = useMemo(() => {
     if (!currentUserPosition || currentUserPosition <= 1) return null;
-    const above = players[currentUserPosition - 2];
+    const sorted = [...players].sort((a, b) => b.points - a.points);
+    const above = sorted[currentUserPosition - 2];
     if (!above || !currentUserPlayer) return null;
     const diff = above.points - currentUserPlayer.points;
     return { name: above.userName, diff, position: currentUserPosition - 1 };
   }, [players, currentUserPosition, currentUserPlayer]);
 
-  const handleRetry = () => queryClient.invalidateQueries({ queryKey: ['league'] });
+  // BUG 8 fix: Memoizar callbacks para não quebrar React.memo
+  const handleRetry = useCallback(() => refetch(), [refetch]);
 
   const scrollToMe = useCallback(() => {
     userCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
 
+  // BUG 11 fix: Clipboard error handling
   const handleShare = useCallback(async () => {
     if (!currentUserPlayer || !currentUserPosition) return;
     const text = `Estou em ${currentUserPosition}º lugar na Liga ${DIVISION_CONFIG[currentUserPlayer.division]?.label || currentUserPlayer.division} com ${currentUserPlayer.points} pontos!`;
     if (navigator.share) {
       try { await navigator.share({ text }); } catch { /* cancelled */ }
     } else if (navigator.clipboard) {
-      await navigator.clipboard.writeText(text);
-      setShareSnack(true);
+      try {
+        await navigator.clipboard.writeText(text);
+        setShareSnack(true);
+      } catch (err) {
+        logger.error('Clipboard write failed:', err);
+        showError('Não foi possível copiar para a área de transferência');
+      }
     }
-  }, [currentUserPlayer, currentUserPosition]);
+  }, [currentUserPlayer, currentUserPosition, showError]);
 
+  // BUG 10 fix: IntersectionObserver com cleanup adequado e reset de state
   useEffect(() => {
     const el = userCardRef.current;
-    if (!el) return;
+    if (!el) {
+      setShowSticky(false);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => setShowSticky(!entry.isIntersecting),
       { threshold: 0 }
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      setShowSticky(false);
+    };
   }, [currentUserPlayer]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -179,17 +244,18 @@ export const LeagueScreen: React.FC = () => {
     }
   }, []);
 
+  // BUG 7 fix: Pull-to-refresh usa refetch() que retorna Promise resolvida quando completa
   const handleTouchEnd = useCallback(() => {
     if (pullDelta.current > 60 && !isRefreshing) {
       setIsRefreshing(true);
-      queryClient.invalidateQueries({ queryKey: ['league'] }).then(() => {
-        setTimeout(() => setIsRefreshing(false), 500);
+      refetch().finally(() => {
+        setIsRefreshing(false);
       });
     }
     pullStartY.current = null;
     pullDelta.current = 0;
     setPullProgress(0);
-  }, [isRefreshing, queryClient]);
+  }, [isRefreshing, refetch]);
 
   const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
 
@@ -329,7 +395,7 @@ export const LeagueScreen: React.FC = () => {
         <Box
           sx={{
             position: 'fixed',
-            top: 0,
+            top: 56, // BUG 5 fix: Posicionar abaixo do header (altura estimada do header)
             left: 0,
             right: 0,
             zIndex: 11,
@@ -453,10 +519,11 @@ export const LeagueScreen: React.FC = () => {
             )}
 
             <List disablePadding aria-label={t('league.standingsAria')}>
-              {filteredAndSorted.map((player, index) => {
-                const position = index + 1;
-                const isPromoZone = position <= PROMO_TOP;
-                const isRelegZone = position > players.length - RELEG_BOTTOM && players.length > RELEG_BOTTOM * 2;
+              {filteredAndSorted.map((player) => {
+                // BUG 4 fix: Usar posição real no ranking, não index do array filtrado
+                const position = realPositions.get(player.id) || 0;
+                const isPromoZone = position <= PROMO_TOP && position > 0;
+                const isRelegZone = position > players.length - RELEG_BOTTOM && players.length > RELEG_BOTTOM * 2 && position > 0;
                 return (
                   <LeaguePlayerItem
                     key={player.id}
@@ -494,7 +561,7 @@ export const LeagueScreen: React.FC = () => {
         open={shareSnack}
         autoHideDuration={3000}
         onClose={() => setShareSnack(false)}
-        message="Posição copiada!"
+        message={t('league.positionCopied', 'Posição copiada!')}
       />
 
       {/* Performance Overlay (dev mode apenas) */}
