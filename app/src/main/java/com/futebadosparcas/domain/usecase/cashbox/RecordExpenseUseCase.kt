@@ -89,8 +89,8 @@ class RecordExpenseUseCase constructor(
             description = params.description,
             createdById = params.createdByUserId,
             createdByName = params.createdByUserName,
-            referenceDate = Clock.System.now(),
-            createdAt = Clock.System.now(),
+            referenceDate = Clock.System.now().toEpochMilliseconds(),
+            createdAt = Clock.System.now().toEpochMilliseconds(),
             playerId = null, // Despesas gerais não são atribuídas a jogador
             playerName = null,
             gameId = params.gameId,

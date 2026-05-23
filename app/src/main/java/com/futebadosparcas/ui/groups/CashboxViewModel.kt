@@ -17,8 +17,6 @@ import com.futebadosparcas.data.model.toAndroidCashboxSummary
 import com.futebadosparcas.data.model.toKmpCashboxEntry
 import com.futebadosparcas.data.model.toKmpCashboxFilter
 import com.futebadosparcas.data.model.createAndroidCashboxEntry
-import com.futebadosparcas.data.model.toKotlinxInstant
-import com.futebadosparcas.data.model.toJavaDate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
