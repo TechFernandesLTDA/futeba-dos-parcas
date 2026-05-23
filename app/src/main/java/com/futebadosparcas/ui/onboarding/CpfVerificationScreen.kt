@@ -154,7 +154,7 @@ fun CpfVerificationScreen(
                         enabled = !loading,
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.NumberPassword,
+                            keyboardType = KeyboardType.Number,
                         ),
                         supportingText = { Text(stringResource(R.string.cpf_supporting_text)) },
                     )

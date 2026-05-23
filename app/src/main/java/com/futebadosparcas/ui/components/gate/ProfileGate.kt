@@ -18,6 +18,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.onboarding.CpfVerificationScreen
+import com.futebadosparcas.ui.onboarding.PhoneVerificationScreen
+import com.google.firebase.auth.FirebaseAuth
+
+private sealed interface OnboardingStep {
+    object None : OnboardingStep
+    object Phone : OnboardingStep
+    object Cpf : OnboardingStep
+}
 
 @Composable
 fun ProfileGate(
@@ -25,7 +33,7 @@ fun ProfileGate(
     onRefreshProfileComplete: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    var showCpfScreen by remember { mutableStateOf(false) }
+    var step by remember { mutableStateOf<OnboardingStep>(OnboardingStep.None) }
 
     when {
         isProfileComplete == null -> {
@@ -35,40 +43,55 @@ fun ProfileGate(
         }
 
         isProfileComplete == false -> {
-            if (showCpfScreen) {
-                CpfVerificationScreen(
-                    onSuccess = {
-                        onRefreshProfileComplete()
-                        showCpfScreen = false
-                    },
-                )
-            } else {
-                AlertDialog(
-                    onDismissRequest = { /* blocked — no-op */ },
-                    title = {
-                        Text(
-                            text = stringResource(R.string.profile_gate_title),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    },
-                    text = {
-                        Text(
-                            text = stringResource(R.string.profile_gate_message),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { showCpfScreen = true }) {
-                            Text(stringResource(R.string.profile_gate_action))
-                        }
-                    },
-                    properties = DialogProperties(
-                        dismissOnBackPress = false,
-                        dismissOnClickOutside = false
+            when (step) {
+                OnboardingStep.Phone -> {
+                    PhoneVerificationScreen(
+                        onSuccess = { step = OnboardingStep.Cpf },
                     )
-                )
+                }
+                OnboardingStep.Cpf -> {
+                    CpfVerificationScreen(
+                        onSuccess = {
+                            onRefreshProfileComplete()
+                            step = OnboardingStep.None
+                        },
+                    )
+                }
+                OnboardingStep.None -> {
+                    AlertDialog(
+                        onDismissRequest = { /* blocked — no-op */ },
+                        title = {
+                            Text(
+                                text = stringResource(R.string.profile_gate_title),
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = stringResource(R.string.profile_gate_message),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                val phone = FirebaseAuth.getInstance().currentUser?.phoneNumber
+                                step = if (phone.isNullOrEmpty()) {
+                                    OnboardingStep.Phone
+                                } else {
+                                    OnboardingStep.Cpf
+                                }
+                            }) {
+                                Text(stringResource(R.string.profile_gate_action))
+                            }
+                        },
+                        properties = DialogProperties(
+                            dismissOnBackPress = false,
+                            dismissOnClickOutside = false
+                        )
+                    )
+                }
             }
         }
 

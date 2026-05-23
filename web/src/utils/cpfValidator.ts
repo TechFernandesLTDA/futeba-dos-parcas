@@ -42,7 +42,7 @@ export function isValidCpf(cpf: string): boolean {
  */
 export function maskCpf(cpf: string): string {
   const digits = cpf.replace(/\D/g, '');
-  if (digits.length !== 11) return cpf;
+  if (digits.length !== 11) return '***';
   return `***.${digits.substring(3, 6)}.${digits.substring(6, 9)}-**`;
 }
 

@@ -55,6 +55,7 @@ export const CpfVerificationScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [claimConfirmed, setClaimConfirmed] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = stripCpf(e.target.value).slice(0, 11);
@@ -157,29 +158,38 @@ export const CpfVerificationScreen: React.FC = () => {
         logger.warn('recomputeMyProfileClaim failed (non-fatal):', recomputeErr);
       }
 
-      // FIX 2026-05-15: setUserVerified faz revokeRefreshTokens() no servidor.
-      // Um getIdToken(true) logo em seguida corre contra o refresh token recém
-      // revogado e pode lançar (auth/user-token-expired), caindo no catch e
-      // mostrando "Não foi possível validar sua sessão" MESMO com a verificação
-      // já concluída com sucesso no servidor. Aqui o refresh é best-effort: o
-      // window.location.href = '/' abaixo recarrega a página e re-autentica,
-      // relendo o custom claim verified=true. Logo, falha de refresh é não-fatal.
-      try {
-        await firebaseUser.getIdToken(true);
-      } catch (postVerifyRefreshErr) {
-        logger.warn(
-          'Post-verify token refresh failed (não-fatal — hard reload re-autentica):',
-          postVerifyRefreshErr,
-        );
+      // Retry getIdTokenResult(true) up to 3x with 500ms backoff to confirm
+      // the `verified` claim is set before redirecting. This avoids a loop where
+      // ProfileGate sends the user back to the CPF screen because the token
+      // hasn't refreshed yet after revokeRefreshTokens().
+      let claimOk = false;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const tokenResult = await firebaseUser.getIdTokenResult(true);
+          if (tokenResult.claims.verified === true) {
+            claimOk = true;
+            break;
+          }
+        } catch (refreshErr) {
+          logger.warn(
+            `Post-verify getIdTokenResult(true) tentativa ${attempt}/3 falhou`,
+            refreshErr,
+          );
+        }
+        if (attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+        }
       }
 
       setSuccess(true);
+      setClaimConfirmed(claimOk);
       showSuccess(t('onboarding.accountVerifiedToast'));
-      // Hard reload pra ProtectedRoute re-ler custom claim verified=true.
-      // navigate() mantem instancia React e o cache de verified em memoria.
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1400);
+
+      if (claimOk) {
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1400);
+      }
     } catch (err) {
       const code = (err as { code?: string }).code;
       const message = (err as { message?: string }).message || '';
@@ -245,7 +255,19 @@ export const CpfVerificationScreen: React.FC = () => {
         <Typography variant="caption" color="text.secondary">
           {t('onboarding.letsPlay')}
         </Typography>
-        <LinearProgress sx={{ mt: 3, borderRadius: 1 }} />
+        {claimConfirmed ? (
+          <LinearProgress sx={{ mt: 3, borderRadius: 1 }} />
+        ) : (
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{ mt: 3, borderRadius: 2 }}
+            onClick={() => { window.location.href = '/'; }}
+          >
+            Continuar
+          </Button>
+        )}
       </Box>
     </Fade>
   );
