@@ -110,6 +110,8 @@ export const LiveGameScreen: React.FC = () => {
 
   const [actionLoading, setActionLoading] = useState(false);
   const [scoreUpdating, setScoreUpdating] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -246,13 +248,20 @@ export const LiveGameScreen: React.FC = () => {
     }
   };
 
-  const handleFinishGame = async () => {
-    if (!gameId || !game) return;
+  // #1539: abre diálogo de confirmação antes de finalizar
+  const handleFinishGameClick = () => {
     if (!canManage) {
       showError('Apenas o organizador pode finalizar o jogo');
       return;
     }
+    setConfirmFinishOpen(true);
+  };
 
+  // #1537: finaliza o jogo com loading state via try/finally
+  const handleFinishGame = async () => {
+    if (!gameId || !game) return;
+    setConfirmFinishOpen(false);
+    setFinishing(true);
     try {
       // #1530 (Opção A): Antes de finalizar, agregar game_events por jogador
       // e escrever nas confirmações individuais (goals/assists/saves).
@@ -302,11 +311,18 @@ export const LiveGameScreen: React.FC = () => {
     } catch (err) {
       logger.error('Error finishing game:', err);
       showError(getFirestoreErrorMessage(err, 'Erro ao finalizar jogo'));
+    } finally {
+      setFinishing(false);
     }
   };
 
+  // #1529: guard de status — só inicia se o jogo estiver em CONFIRMED
   const handleStartGame = async () => {
     if (!gameId) return;
+    if (game?.status !== 'CONFIRMED') {
+      showError('O jogo precisa estar confirmado para ser iniciado');
+      return;
+    }
     setActionLoading(true);
     try {
       await updateDoc(doc(db, 'games', gameId), {
@@ -565,8 +581,15 @@ export const LiveGameScreen: React.FC = () => {
                   <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setAddEventDialog(true)} fullWidth>
                     Adicionar Evento
                   </Button>
-                  <Button variant="contained" color="error" startIcon={<StopIcon />} onClick={handleFinishGame} fullWidth>
-                    Finalizar Jogo
+                  <Button
+                    variant="contained"
+                    color="error"
+                    startIcon={finishing ? <CircularProgress size={20} color="inherit" /> : <StopIcon />}
+                    onClick={handleFinishGameClick}
+                    disabled={finishing}
+                    fullWidth
+                  >
+                    {finishing ? 'Finalizando...' : 'Finalizar Jogo'}
                   </Button>
                 </>
               ) : (
@@ -585,6 +608,22 @@ export const LiveGameScreen: React.FC = () => {
           </Container>
         </Box>
       )}
+
+      {/* #1539: Diálogo de confirmação para finalizar jogo */}
+      <Dialog open={confirmFinishOpen} onClose={() => setConfirmFinishOpen(false)} maxWidth="xs" fullWidth aria-labelledby="confirm-finish-dialog-title">
+        <DialogTitle id="confirm-finish-dialog-title">Finalizar Jogo</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tem certeza que deseja finalizar o jogo? O placar atual será salvo e os jogadores poderão votar no MVP.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmFinishOpen(false)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleFinishGame}>
+            Finalizar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={addEventDialog} onClose={() => setAddEventDialog(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">Adicionar Evento</DialogTitle>

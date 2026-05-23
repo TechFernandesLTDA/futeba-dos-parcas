@@ -598,7 +598,8 @@ export const GameDetailScreen: React.FC = () => {
                     <Box sx={{ mt: 2, textAlign: 'center' }}>
                       <Chip
                         icon={<SoccerIcon />}
-                        label={`MVP: ${game.mvpId}`}
+                        // #1535: exibe nome do MVP usando as confirmações já carregadas
+                        label={`MVP: ${confirmations.find((c) => c.userId === game.mvpId)?.userName ?? game.mvpId}`}
                         color="primary"
                         variant="outlined"
                       />
