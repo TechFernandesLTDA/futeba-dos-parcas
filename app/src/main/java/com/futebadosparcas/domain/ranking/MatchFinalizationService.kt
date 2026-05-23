@@ -537,11 +537,11 @@ class MatchFinalizationService constructor(
         val lastDate = existingStreak.lastGameDate
 
         val isConsecutive = try {
-            val lastParsed = dateFormat.parse(lastDate)
-            val currentParsed = dateFormat.parse(gameDate)
-            val diffInDays = ((currentParsed.time - lastParsed.time) / (24 * 60 * 60 * 1000)).toInt()
+            val lastLocalDate = LocalDate.parse(lastDate)
+            val currentLocalDate = LocalDate.parse(gameDate)
+            val diffInDays = java.time.temporal.ChronoUnit.DAYS.between(lastLocalDate, currentLocalDate)
             // Mesmo dia (0) ou dia seguinte (1) conta como consecutivo
-            diffInDays in 0..1
+            diffInDays in 0L..1L
         } catch (e: Exception) {
             AppLogger.w(TAG) { "Erro ao parsear datas para streak: $lastDate, $gameDate" }
             false

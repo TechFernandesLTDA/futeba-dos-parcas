@@ -321,10 +321,11 @@ class GameDetailViewModel(
                     // Trigger automated scheduling (fire and forget within scope)
                     // Must be inside success check
                     scheduleNextGame(state.game)
+
+                    // Só marca FINISHED se o write de scores teve sucesso
+                    gameRepository.updateGameStatus(gameId, GameStatus.FINISHED.name)
                 }
             }
-            
-            gameRepository.updateGameStatus(gameId, GameStatus.FINISHED.name)
         }
     }
 
