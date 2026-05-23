@@ -10,6 +10,7 @@ import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getMessaging, isSupported } from 'firebase/messaging';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
+import { getAnalytics, type Analytics } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBMzIKlfST4gJm3RM3QQXY-N0doVE6vMQE",
@@ -100,3 +101,13 @@ googleProvider.addScope('profile');
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
+
+// Analytics (optional, only in production and supported browsers)
+export let analytics: Analytics | null = null;
+if (typeof window !== 'undefined' && import.meta.env.PROD) {
+  try {
+    analytics = getAnalytics(app);
+  } catch (err) {
+    console.warn('Analytics initialization failed:', err);
+  }
+}

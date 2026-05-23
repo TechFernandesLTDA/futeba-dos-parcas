@@ -1,29 +1,87 @@
-import { onCLS, onINP, onLCP, onFCP, onTTFB, type Metric } from 'web-vitals';
+import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
+import { analytics } from '../services/firebase';
+import { logEvent } from 'firebase/analytics';
 import { trackEvent } from './analytics';
-import { createLogger } from './logger';
 
-const logger = createLogger('webVitals');
-
-function report(metric: Metric) {
-  trackEvent('web_vital', {
-    name: metric.name,
-    value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
-    rating: metric.rating,
-  });
-
-  if (import.meta.env.DEV) {
-    logger.info(`${metric.name}: ${metric.value} (${metric.rating})`);
-  }
+interface WebVitalMetric {
+  name: string;
+  value: number;
+  rating: 'good' | 'needs-improvement' | 'poor';
+  delta: number;
+  id: string;
+  navigationType: string;
 }
 
-// #1088 — Captura Core Web Vitals e envia ao Firebase Analytics via trackEvent.
-// As callbacks de onCLS/onINP/etc registram event listeners no PerformanceObserver;
-// não lançam exceções síncronas. Falhas no callback `report` são silenciosamente
-// engolidas pela própria biblioteca, então não há catch necessário aqui.
-export function initWebVitals() {
-  onCLS(report);
-  onINP(report);
-  onLCP(report);
-  onFCP(report);
-  onTTFB(report);
+/**
+ * Report Web Vitals to Firebase Analytics for Real User Monitoring (RUM)
+ * Only reports in production to avoid noise from development
+ */
+export function reportWebVitals() {
+  if (import.meta.env.DEV) {
+    console.log('[WebVitals] Disabled in development mode');
+    return;
+  }
+
+  const sendToAnalytics = (metric: WebVitalMetric) => {
+    // Send to Firebase Analytics
+    if (analytics) {
+      logEvent(analytics, 'web_vital', {
+        name: metric.name,
+        value: metric.value,
+        rating: metric.rating,
+        delta: metric.delta,
+        id: metric.id,
+        navigation_type: metric.navigationType,
+      });
+    }
+
+    // Also send to our analytics tracker (type-safe)
+    trackEvent('web_vital', {
+      name: metric.name as 'CLS' | 'INP' | 'LCP' | 'FCP' | 'TTFB' | 'FID',
+      value: metric.value,
+      rating: metric.rating,
+    });
+
+    // Log to console for debugging (only in dev)
+    if (import.meta.env.DEV) {
+      console.log(`[WebVital] ${metric.name}:`, {
+        value: metric.value,
+        rating: metric.rating,
+        delta: metric.delta,
+        navigationType: metric.navigationType,
+      });
+    }
+  };
+
+  // Core Web Vitals
+  onCLS(sendToAnalytics);
+  onFCP(sendToAnalytics);
+  onLCP(sendToAnalytics);
+  onINP(sendToAnalytics);
+  onTTFB(sendToAnalytics);
+}
+
+/**
+ * Performance budgets based on Web Vitals thresholds
+ * Used by PerformanceDashboard to show compliance
+ */
+export const PERFORMANCE_BUDGETS = {
+  CLS: { good: 0.1, poor: 0.25 },
+  FCP: { good: 1800, poor: 3000 },
+  LCP: { good: 2500, poor: 4000 },
+  TTFB: { good: 800, poor: 1800 },
+  INP: { good: 200, poor: 500 },
+} as const;
+
+/**
+ * Get performance rating based on metric value and thresholds
+ */
+export function getPerformanceRating(
+  metric: keyof typeof PERFORMANCE_BUDGETS,
+  value: number
+): 'good' | 'needs-improvement' | 'poor' {
+  const budget = PERFORMANCE_BUDGETS[metric];
+  if (value <= budget.good) return 'good';
+  if (value <= budget.poor) return 'needs-improvement';
+  return 'poor';
 }

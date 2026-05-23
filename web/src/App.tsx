@@ -18,6 +18,7 @@ import { CommandPalette } from './components/search/CommandPalette';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
+import { useResourcePreloading } from './hooks/useResourcePreloading';
 import {
   HomeScreenSkeleton,
   GameDetailSkeleton,
@@ -525,6 +526,9 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+
+  // Prefetch likely next routes based on current location
+  useResourcePreloading();
 
   return (
     <QueryClientProvider client={queryClient}>
