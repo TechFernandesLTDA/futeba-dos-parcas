@@ -8,11 +8,9 @@ import {
   onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import {FUNCTION_REGION} from "../constants";
-import {isValidCpf} from "../validation/cpf";
 import {isValidPhoneBR} from "../validation/phone-br";
 
 interface UserProfileData {
-  cpf?: unknown;
   cpfVerifiedAt?: unknown;
   phone?: unknown;
 }
@@ -23,9 +21,10 @@ interface ProfileClaimResult {
 }
 
 /**
- * Computa se o perfil tem CPF e telefone validos.
- * CPF puro eh aceito para testes/legado; em prod, CPF verificado eh
- * representado por users/{uid}.cpfVerifiedAt para evitar plaintext.
+ * Computa se o perfil tem CPF verificado e telefone valido.
+ * Apenas o campo server-side cpfVerifiedAt (gravado por verifyCpf)
+ * eh considerado; o campo raw cpf em users/{uid} eh client-writable
+ * e nao deve ser usado para autorizacao.
  *
  * @param {UserProfileData} data Dados publicos do usuario.
  * @return {boolean} true se cadastro completo.
@@ -35,9 +34,8 @@ export function computeProfileComplete(
 ): boolean {
   if (!data) return false;
 
-  const cpf = typeof data.cpf === "string" ? data.cpf : undefined;
   const phone = typeof data.phone === "string" ? data.phone : undefined;
-  const hasCpf = isValidCpf(cpf) || data.cpfVerifiedAt != null;
+  const hasCpf = data.cpfVerifiedAt != null;
 
   return hasCpf && isValidPhoneBR(phone);
 }
@@ -89,11 +87,22 @@ async function setProfileCompleteClaim(
 export const onUserProfileWritten = onDocumentWritten(
   {document: "users/{uid}", region: FUNCTION_REGION},
   async (event) => {
-    const uid = event.params.uid;
-    const data = event.data?.after.exists ?
+    const before = event.data?.before.exists ?
+      event.data.before.data() as UserProfileData :
+      undefined;
+    const after = event.data?.after.exists ?
       event.data.after.data() as UserProfileData :
       undefined;
-    const profileComplete = computeProfileComplete(data);
+
+    if (
+      before?.phone === after?.phone &&
+      before?.cpfVerifiedAt === after?.cpfVerifiedAt
+    ) {
+      return null;
+    }
+
+    const uid = event.params.uid;
+    const profileComplete = computeProfileComplete(after);
 
     await setProfileCompleteClaim(uid, profileComplete);
   }

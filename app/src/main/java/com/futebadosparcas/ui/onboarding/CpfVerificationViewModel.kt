@@ -127,18 +127,31 @@ class CpfVerificationViewModel(
                 return@launch
             }
 
-            // H2: sucesso server-side seta Success ANTES do refresh pos-verify.
-            // setUserVerified revoga refresh tokens — o refresh seguinte pode lancar
-            // user-token-expired. Isso NAO e um erro de negocio; isolamos em
-            // runCatching non-fatal para garantir que sucesso real nunca vire Error.
-            // (porta fix web #1285)
-            _uiState.value = CpfVerificationUiState.Success
-            runCatching { refreshTokenWithRetry(user) }
-                .onFailure { e ->
+            // Post-verify: force token refresh with 3x retry + 500ms backoff and
+            // check verified claim. Only set Success if token actually has verified=true.
+            // Fix: prevents showing success when revokeRefreshTokens caused refresh to
+            // fail, leaving the claim stale and causing redirect loops.
+            var tokenVerified = false
+            repeat(3) { attempt ->
+                try {
+                    val tokenResult = user.getIdToken(true).await()
+                    tokenVerified = tokenResult.claims["verified"] as? Boolean ?: false
+                    return@repeat
+                } catch (e: Exception) {
                     AppLogger.w("CpfVerification") {
-                        "Refresh pos-verify falhou (non-fatal): ${e.message}"
+                        "Post-verify refresh attempt $attempt failed: ${e.message}"
                     }
+                    if (attempt < 2) delay(500L)
                 }
+            }
+
+            if (tokenVerified) {
+                _uiState.value = CpfVerificationUiState.Success
+            } else {
+                _uiState.value = CpfVerificationUiState.Error(
+                    "Verificado! Aguarde alguns segundos e tente novamente.",
+                )
+            }
         }
     }
 
