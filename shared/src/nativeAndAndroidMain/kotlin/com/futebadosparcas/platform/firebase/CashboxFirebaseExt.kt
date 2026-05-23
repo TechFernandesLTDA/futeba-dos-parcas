@@ -3,13 +3,15 @@ package com.futebadosparcas.platform.firebase
 import com.futebadosparcas.domain.model.*
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.Timestamp
-import kotlinx.datetime.Instant
 
 /**
  * Extensão para converter DocumentSnapshot para CashboxEntry.
  *
  * NOTA: Os campos de data no Firestore podem ser Timestamp ou Long (millis),
  * dependendo de como foram salvos. Esta função trata ambos os casos.
+ *
+ * BUGFIX_CASHBOX_SERIALIZABLE (#1615): campos Instant migrados para Long (epoch ms)
+ * para compatibilidade com kotlinx.serialization sem dependências extras.
  */
 internal fun DocumentSnapshot.toCashboxEntryOrNull(): CashboxEntry? {
     if (!exists) return null
@@ -31,15 +33,15 @@ internal fun DocumentSnapshot.toCashboxEntryOrNull(): CashboxEntry? {
             description = get<String?>("description") ?: "",
             createdById = get<String?>("created_by_id") ?: "",
             createdByName = get<String?>("created_by_name") ?: "",
-            referenceDate = getDateFieldAsInstant("reference_date")
-                ?: Instant.fromEpochMilliseconds(kotlinx.datetime.Clock.System.now().toEpochMilliseconds()),
-            createdAt = getDateFieldAsInstant("created_at"),
+            referenceDate = getDateFieldAsEpochMs("reference_date")
+                ?: kotlinx.datetime.Clock.System.now().toEpochMilliseconds(),
+            createdAt = getDateFieldAsEpochMs("created_at"),
             playerId = get<String?>("player_id"),
             playerName = get<String?>("player_name"),
             gameId = get<String?>("game_id"),
             receiptUrl = get<String?>("receipt_url"),
             status = get<String?>("status") ?: CashboxAppStatus.ACTIVE.name,
-            voidedAt = getDateFieldAsInstant("voided_at"),
+            voidedAt = getDateFieldAsEpochMs("voided_at"),
             voidedBy = get<String?>("voided_by")
         )
     } catch (e: Exception) {
@@ -49,21 +51,23 @@ internal fun DocumentSnapshot.toCashboxEntryOrNull(): CashboxEntry? {
 }
 
 /**
- * Converte campo de data do Firestore para Instant.
+ * Converte campo de data do Firestore para Long (epoch ms).
  * Suporta Timestamp (preferido), Long (millis), String ISO-8601 ou String numérica legacy.
  *
  * Fase 1 BUGFIX_CASHBOX_DOUBLE_AND_TIMESTAMP: aceita Instant.toString() legacy.
  */
-private fun DocumentSnapshot.getDateFieldAsInstant(field: String): Instant? {
+private fun DocumentSnapshot.getDateFieldAsEpochMs(field: String): Long? {
     return try {
         val value = get<Any?>(field)
         when (value) {
-            is Timestamp -> Instant.fromEpochSeconds(value.seconds, value.nanoseconds)
-            is Number -> Instant.fromEpochMilliseconds(value.toLong())
+            is Timestamp -> value.seconds * 1000L + value.nanoseconds / 1_000_000L
+            is Number -> value.toLong()
             is String -> {
                 // String pode ser: 1) millis numérico, 2) ISO-8601 (Instant.toString())
-                value.toLongOrNull()?.let { Instant.fromEpochMilliseconds(it) }
-                    ?: runCatching { Instant.parse(value) }.getOrNull()
+                value.toLongOrNull()
+                    ?: runCatching {
+                        kotlinx.datetime.Instant.parse(value).toEpochMilliseconds()
+                    }.getOrNull()
             }
             else -> null
         }
@@ -84,7 +88,7 @@ internal fun DocumentSnapshot.toCashboxSummaryOrNull(): CashboxSummary? {
             balance = get<Double?>("balance") ?: 0.0,
             totalIncome = get<Double?>("total_income") ?: 0.0,
             totalExpense = get<Double?>("total_expense") ?: 0.0,
-            lastEntryAt = getDateFieldAsInstant("last_entry_at"),
+            lastEntryAt = getDateFieldAsEpochMs("last_entry_at"),
             entryCount = get<Long?>("entry_count")?.toInt() ?: 0
         )
     } catch (e: Exception) {

@@ -1,6 +1,7 @@
 package com.futebadosparcas.domain.model
 
 import kotlinx.datetime.Clock
+import kotlinx.serialization.Serializable
 
 /**
  * Representa uma notificação in-app para o usuário.
@@ -22,6 +23,7 @@ import kotlinx.datetime.Clock
  * @property createdAt Timestamp de criação da notificação
  * @property expiresAt Timestamp de expiração (para convites, convocações)
  */
+@Serializable
 data class AppNotification(
     val id: String = "",
     val userId: String = "",
@@ -167,6 +169,7 @@ data class AppNotification(
  *
  * Usado para categorizar e determinar a apresentação das notificações.
  */
+@Serializable
 enum class NotificationType(val displayName: String) {
     // Grupo
     GROUP_INVITE("Convite de grupo"),
@@ -211,6 +214,7 @@ enum class NotificationType(val displayName: String) {
  *
  * Define o tipo de interação esperada do usuário.
  */
+@Serializable
 enum class NotificationAction(val displayName: String) {
     ACCEPT_DECLINE("Aceitar/Recusar"),
     CONFIRM_POSITION("Confirmar Posição"),

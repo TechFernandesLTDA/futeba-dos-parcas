@@ -50,7 +50,7 @@ data class SeasonParticipation(
     @SerialName("season_id") val seasonId: String = "",
     @SerialName("user_id") val userId: String = "",
     val division: String = LeagueDivision.BRONZE.name,
-    @SerialName("league_rating") val leagueRating: Int = 1000,
+    @SerialName("league_rating") val leagueRating: Int = 0,
     val points: Int = 0,
     @SerialName("games_played") val gamesPlayed: Int = 0,
     val wins: Int = 0,

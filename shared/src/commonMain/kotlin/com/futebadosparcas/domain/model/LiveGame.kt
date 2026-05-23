@@ -45,6 +45,7 @@ data class GameEvent(
 /**
  * Tipos de eventos em um jogo.
  */
+@Serializable
 enum class GameEventType {
     GOAL,          // Gol
     OWN_GOAL,      // Gol contra
