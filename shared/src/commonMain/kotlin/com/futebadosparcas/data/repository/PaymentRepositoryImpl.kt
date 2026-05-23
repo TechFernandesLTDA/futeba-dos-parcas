@@ -3,8 +3,8 @@ package com.futebadosparcas.data.repository
 import com.futebadosparcas.domain.model.Payment
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.logging.PlatformLogger
+import com.futebadosparcas.platform.AppDispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import kotlin.math.roundToInt
 
 /**
@@ -30,7 +30,7 @@ class PaymentRepositoryImpl(
     }
 
     override suspend fun createPayment(payment: Payment): Result<Payment> {
-        return withContext(Dispatchers.Default) {
+        return withContext(AppDispatchers.io) {
             try {
                 PlatformLogger.d(TAG, "Criando pagamento: userId=${payment.userId}, amount=${payment.amount}")
 
@@ -64,7 +64,7 @@ class PaymentRepositoryImpl(
     }
 
     override suspend fun confirmPayment(paymentId: String): Result<Unit> {
-        return withContext(Dispatchers.Default) {
+        return withContext(AppDispatchers.io) {
             try {
                 PlatformLogger.d(TAG, "Confirmando pagamento: id=$paymentId")
 
@@ -83,7 +83,7 @@ class PaymentRepositoryImpl(
     }
 
     override suspend fun getPaymentsByUser(userId: String): Result<List<Payment>> {
-        return withContext(Dispatchers.Default) {
+        return withContext(AppDispatchers.io) {
             try {
                 PlatformLogger.d(TAG, "Buscando pagamentos do usuario: userId=$userId")
 

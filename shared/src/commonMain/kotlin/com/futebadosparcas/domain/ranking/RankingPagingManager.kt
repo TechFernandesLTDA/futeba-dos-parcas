@@ -29,10 +29,10 @@ class RankingPagingManager(
     // Cache LRU simples - usando LinkedHashMap compatível com KMP
     private val cache = LinkedHashMap<String, CachedRankingPage>()
 
-    // Mutex para controle de concorrência
+    // Mutex para controle de concorrencia (protege cache E loadingPages)
     private val loadMutex = Mutex()
 
-    // Estado de loading por página
+    // Estado de loading por página (acesso protegido por loadMutex)
     private val loadingPages = mutableSetOf<String>()
 
     /**
@@ -121,6 +121,7 @@ class RankingPagingManager(
 
     /**
      * Obtém uma página do cache se válida.
+     * Deve ser chamada dentro de loadMutex.withLock {}.
      */
     private fun getCachedPage(key: PageKey): CachedRankingPage? {
         val cached = cache[key.asString()] ?: return null
@@ -129,6 +130,7 @@ class RankingPagingManager(
 
     /**
      * Coloca uma página no cache.
+     * Deve ser chamada dentro de loadMutex.withLock {}.
      */
     private fun putCachedPage(key: PageKey, page: CachedRankingPage) {
         val cacheKey = key.asString()
@@ -161,23 +163,23 @@ class RankingPagingManager(
         val key = PageKey(category, period, page)
         val cacheKey = key.asString()
 
-        // Verificar cache primeiro
-        getCachedPage(key)?.let { cached ->
-            return PageResult.Success(
-                items = cached.items,
-                hasMore = cached.hasMore,
-                currentPage = page,
-                totalCount = null // Não temos total em cache
-            )
-        }
-
-        // Verificar se já está carregando
-        loadMutex.withLock {
-            if (cacheKey in loadingPages) {
-                return PageResult.Loading
+        // Verificar cache e estado de loading dentro do mutex para evitar race condition
+        val cachedOrLoading: PageResult? = loadMutex.withLock {
+            getCachedPage(key)?.let { cached ->
+                PageResult.Success(
+                    items = cached.items,
+                    hasMore = cached.hasMore,
+                    currentPage = page,
+                    totalCount = null
+                )
+            } ?: if (cacheKey in loadingPages) {
+                PageResult.Loading
+            } else {
+                loadingPages.add(cacheKey)
+                null // Sinal para prosseguir com o fetch
             }
-            loadingPages.add(cacheKey)
         }
+        if (cachedOrLoading != null) return cachedOrLoading
 
         return try {
             val offset = page * pageSize
@@ -187,7 +189,7 @@ class RankingPagingManager(
                 onSuccess = { items ->
                     val hasMore = items.size >= pageSize
                     val cachedPage = CachedRankingPage(items, hasMore = hasMore)
-                    putCachedPage(key, cachedPage)
+                    loadMutex.withLock { putCachedPage(key, cachedPage) }
 
                     PageResult.Success(
                         items = items,
@@ -252,10 +254,12 @@ class RankingPagingManager(
         period: RankingPeriod,
         fetch: suspend (offset: Int, limit: Int) -> Result<List<PlayerRankingItem>>
     ): PagingState {
-        // Limpar cache para essa categoria/periodo
-        val prefix = "${category.name}_${period.name}_"
-        val keysToRemove = cache.keys.filter { it.startsWith(prefix) }
-        keysToRemove.forEach { cache.remove(it) }
+        // Limpar cache para essa categoria/periodo dentro do mutex
+        loadMutex.withLock {
+            val prefix = "${category.name}_${period.name}_"
+            val keysToRemove = cache.keys.filter { it.startsWith(prefix) }
+            keysToRemove.forEach { cache.remove(it) }
+        }
 
         val result = loadPage(category, period, 0, fetch)
 
@@ -290,15 +294,17 @@ class RankingPagingManager(
 
     /**
      * Invalida todo o cache.
+     * Operacao thread-safe via loadMutex.
      */
-    fun invalidateAll() {
+    suspend fun invalidateAll() = loadMutex.withLock {
         cache.clear()
     }
 
     /**
      * Invalida cache para uma categoria específica.
+     * Operacao thread-safe via loadMutex.
      */
-    fun invalidateCategory(category: RankingCategory) {
+    suspend fun invalidateCategory(category: RankingCategory) = loadMutex.withLock {
         val prefix = "${category.name}_"
         val keys = cache.keys.filter { it.startsWith(prefix) }
         keys.forEach { cache.remove(it) }
@@ -306,8 +312,9 @@ class RankingPagingManager(
 
     /**
      * Invalida cache para uma categoria e período específicos.
+     * Operacao thread-safe via loadMutex.
      */
-    fun invalidate(category: RankingCategory, period: RankingPeriod) {
+    suspend fun invalidate(category: RankingCategory, period: RankingPeriod) = loadMutex.withLock {
         val prefix = "${category.name}_${period.name}_"
         val keys = cache.keys.filter { it.startsWith(prefix) }
         keys.forEach { cache.remove(it) }

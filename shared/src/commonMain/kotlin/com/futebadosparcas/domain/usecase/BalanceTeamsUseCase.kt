@@ -38,14 +38,18 @@ class BalanceTeamsUseCase {
             // Converter User para PlayerForBalancing
             val players = users.map { user ->
                 val rating = user.getOverallRating().toFloat()
+                // Usa a posicao preferida do usuario; fallback para LINE se nao definida ou invalida
+                val position = user.preferredPosition?.let { pref ->
+                    try { PlayerPosition.valueOf(pref.uppercase()) } catch (_: Exception) { null }
+                } ?: PlayerPosition.LINE
                 PlayerForBalancing(
                     id = user.id,
                     name = user.getDisplayName(),
-                    position = PlayerPosition.LINE, // Default to LINE, pode ser ajustado conforme necessario
+                    position = position,
                     attackSkill = rating,
                     midfieldSkill = rating,
                     defenseSkill = rating,
-                    goalkeeperSkill = rating * 0.8f // GK skill um pouco menor por padrao
+                    goalkeeperSkill = if (position == PlayerPosition.GOALKEEPER) rating else rating * 0.8f
                 )
             }
 

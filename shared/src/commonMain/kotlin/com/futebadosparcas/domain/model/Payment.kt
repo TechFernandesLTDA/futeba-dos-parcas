@@ -1,5 +1,7 @@
 package com.futebadosparcas.domain.model
 
+import com.futebadosparcas.domain.util.DateTimeUtils
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 /**
@@ -75,12 +77,18 @@ data class Payment(
 
     /**
      * Verifica se o pagamento está atrasado.
-     * NOTA: Como PaymentStatus em Game.kt não tem OVERDUE/CANCELLED,
-     * esta é uma implementação simplificada.
+     * Considera atrasado quando o status e PENDING e a data de vencimento
+     * ja passou (dueDate anterior a data atual).
      */
     fun isOverdue(): Boolean {
-        // Lógica simplificada - em produção compararia dueDate com data atual
-        return status == PaymentStatus.PENDING && dueDate.isNotEmpty()
+        if (status != PaymentStatus.PENDING) return false
+        if (dueDate.isEmpty()) return false
+        return try {
+            val due = LocalDate.parse(dueDate)
+            due < DateTimeUtils.today()
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**
