@@ -424,15 +424,23 @@ export const LeagueScreen: React.FC = () => {
             {players.length > 0 && (
               <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Chip
-                  icon={<TrophyIcon sx={{ color: `${theme.palette.success.main} !important` }} />}
-                  label={`Top ${PROMO_TOP}: Promoção`}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <TrophyIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
+                      Top {PROMO_TOP}: Promoção
+                    </Box>
+                  }
                   size="small"
                   sx={{ bgcolor: alpha(theme.palette.success.main, 0.08), color: 'text.primary' }}
                 />
                 {players.length > RELEG_BOTTOM * 2 && (
                   <Chip
-                    icon={<ArrowDownIcon sx={{ color: `${theme.palette.error.main} !important` }} />}
-                    label={`Últimos ${RELEG_BOTTOM}: Rebaixamento`}
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <ArrowDownIcon sx={{ fontSize: 16, color: theme.palette.error.main }} />
+                        Últimos {RELEG_BOTTOM}: Rebaixamento
+                      </Box>
+                    }
                     size="small"
                     sx={{ bgcolor: alpha(theme.palette.error.main, 0.08), color: 'text.primary' }}
                   />
