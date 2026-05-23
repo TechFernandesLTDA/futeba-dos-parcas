@@ -89,6 +89,7 @@ jobs:
           else
             echo "✗ keytool failed (pwd from local.properties grep):"
             cat /tmp/kt2.log
+            exit 1
           fi
 
       - name: Create google-services.json
