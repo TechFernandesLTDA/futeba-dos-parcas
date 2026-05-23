@@ -369,7 +369,7 @@ export const onMvpAwarded = onDocumentUpdated(
  */
 export const onDivisionChanged =
   onDocumentUpdated(
-    "season_participation/{partId}",
+    {document: "season_participation/{partId}", region: FUNCTION_REGION},
     async (event) => {
       const before = event.data?.before.data();
       const after = event.data?.after.data();

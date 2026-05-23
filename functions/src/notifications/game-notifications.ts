@@ -127,7 +127,7 @@ export const onGameCreated = onDocumentCreated(
  */
 export const onGameUpdatedNotification =
   onDocumentUpdated(
-    "games/{gameId}",
+    {document: "games/{gameId}", region: FUNCTION_REGION},
     async (event) => {
       const before = event.data?.before.data();
       const after = event.data?.after.data();

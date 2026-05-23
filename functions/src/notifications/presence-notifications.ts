@@ -595,7 +595,7 @@ export const onMemberLeft = onDocumentDeleted(
  */
 export const onCashboxTransaction =
   onDocumentCreated(
-    "groups/{groupId}/cashbox/{transactionId}",
+    {document: "groups/{groupId}/cashbox/{transactionId}", region: FUNCTION_REGION},
     async (event) => {
       const transaction = event.data?.data();
       if (!transaction) return;
