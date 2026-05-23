@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gamificationColors } from '../../../theme';
 import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
@@ -41,21 +41,21 @@ import {
   Shield,
   Star,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, onSnapshot, getDocs, where, documentId, QueryConstraint } from 'firebase/firestore';
+import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
-import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { PlayerAvatar } from '../../../components/common/GameCard';
 import { PlayerCard } from '../../../components/player/PlayerCard';
 import { TeamBadge } from '../../../components/team/TeamBadge';
-import { DIVISION_CONFIG, LeagueDivision, getLevelForXp, getXpProgress } from '../../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getXpProgress } from '../../../types/gamification';
 import { getLevelBadgeImage } from '../../../utils/levelBadge';
 import {
   XP_PARTICIPATION, XP_GOAL, XP_ASSIST, XP_SAVE,
   XP_MVP, XP_WIN, XP_DRAW, XP_STREAK_3, XP_STREAK_5, XP_STREAK_7, XP_STREAK_10,
 } from '../../../utils/constants';
 import { useGroups } from '../../../hooks/useGroups';
+import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague';
 import { createLogger } from '../../../utils/logger';
 import { useTranslation } from 'react-i18next';
 
@@ -66,24 +66,6 @@ const spinnerKeyframes = {
     '100%': { transform: 'rotate(360deg)' },
   },
 };
-
-interface RankingPlayer {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  favoriteTeam?: string;
-  level: number;
-  points: number;
-  gamesPlayed: number;
-  wins: number;
-  goals: number;
-  assists: number;
-  mvpCount: number;
-  division: LeagueDivision;
-  isCurrentUser?: boolean;
-  experiencePoints?: number;
-}
 
 // Tabela de XP por ação para referência rápida
 const XP_TABLE = [
@@ -102,7 +84,7 @@ const XP_TABLE = [
 
 // #1217 - Podium section for top 3 players with distinct visual hierarchy
 const PodiumSection: React.FC<{
-  players: RankingPlayer[];
+  players: LeaguePlayer[];
   showXP: boolean;
   positionChanges: Record<string, number | null>;
   onAvatarClick: (userId: string) => void;
@@ -252,22 +234,22 @@ export function RankingsTab() {
     const navigate = useNavigate();
   const { user } = useAuth();
   const { showError } = useToast();
-  const showErrorRef = useRef(showError);
-  showErrorRef.current = showError;
   const { t } = useTranslation();
 
-  const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=Ranking, 2=XP
-  const [players, setPlayers] = useState<RankingPlayer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=XP Global, 2=Sistema XP
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const unsubscribeRef = useRef<(() => void) | null>(null);
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
-  const [errorState, setErrorState] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [ligaPositionChanges, setLigaPositionChanges] = useState<Record<string, number | null>>({});
   const [xpPositionChanges, setXpPositionChanges] = useState<Record<string, number | null>>({});
   const { groups: userGroups } = useGroups();
+
+  const filters: LeagueFilters = useMemo(() => ({
+    groupId: selectedGroupId,
+    seasonId: activeSeasonId,
+  }), [selectedGroupId, activeSeasonId]);
+
+  const { players, loading, error: errorState, refetch } = useLeague(user?.id, undefined, filters);
 
   // Buscar temporada ativa para filtrar season_participation (#1204)
   useEffect(() => {
@@ -281,179 +263,54 @@ export function RankingsTab() {
       } catch (err) {
         if (!cancelled) {
           logger.error('Error fetching active season:', err);
-          showErrorRef.current('Erro ao buscar temporada ativa.');
+          showError('Erro ao buscar temporada ativa.');
         }
       }
     };
     fetchSeason();
     return () => { cancelled = true; };
-  }, []);
+  }, [showError]);
 
-  const loadData = useCallback(() => {
-    setRefreshing(true);
-    let cancelled = false;
-    const seasonRef = collection(db, 'season_participation');
-
-    const constraints: QueryConstraint[] = [];
-    if (activeSeasonId) {
-      constraints.push(where('season_id', '==', activeSeasonId));
-    }
-    if (selectedGroupId) {
-      constraints.push(where('group_id', '==', selectedGroupId));
-    }
-    constraints.push(orderBy('points', 'desc'));
-    constraints.push(limit(100));
-    const q = query(seasonRef, ...constraints);
-
-    // Alias local para que o ESLint reconheça o padrão showError no catch
-    const showError = showErrorRef.current;
-
-    const unsubscribe = onSnapshot(
-      q,
-      async (snapshot) => {
-        try {
-          // Extrair participação e user IDs do snapshot
-          const participationDocs = snapshot.docs.map((docSnapshot) => {
-            const raw = docSnapshot.data();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const data = snakeToCamel(raw) as Record<string, any>;
-            const userId = data.userId || raw.user_id || docSnapshot.id;
-            return { docSnapshot, data, userId };
-          });
-
-          // Batch fetch de usuários em chunks de 10 (whereIn limit)
-          // Privacidade: jogadores com is_searchable=false ficam ocultos no ranking (#1027 — Privacy by Default)
-          const userIds = [...new Set(participationDocs.map((p) => p.userId))];
-          const usersMap = new Map<string, { name: string; photoUrl: string | null; xp: number; favoriteTeam: string | null }>();
-          const userChunks: string[][] = [];
-          for (let i = 0; i < userIds.length; i += 10) {
-            userChunks.push(userIds.slice(i, i + 10));
-          }
-          const chunkResults = await Promise.allSettled(
-            userChunks.map((chunk) =>
-              getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk), where('is_searchable', '==', true)))
-            )
-          );
-
-          if (cancelled) return;
-
-          for (const result of chunkResults) {
-            if (result.status === 'rejected') continue;
-            for (const userDoc of result.value.docs) {
-              const d = userDoc.data();
-              const xp = (d.experience_points ?? d.experiencePoints ?? 0) as number;
-              usersMap.set(userDoc.id, {
-                name: (d.name as string) || 'Jogador',
-                photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
-                xp,
-                favoriteTeam: ((d.favorite_team as string) || (d.favoriteTeam as string) || null),
-              });
-            }
-          }
-
-          const playersData = participationDocs.map(({ docSnapshot, data, userId }) => {
-            const userData = usersMap.get(userId) ?? { name: 'Jogador', photoUrl: null, xp: 0, favoriteTeam: null };
-            return {
-              id: docSnapshot.id,
-              userId,
-              userName: userData.name,
-              userPhoto: userData.photoUrl || undefined,
-              favoriteTeam: userData.favoriteTeam || undefined,
-              level: getLevelForXp(userData.xp),
-              points: (data.points as number) || 0,
-              gamesPlayed: (data.gamesPlayed as number) || (data.games_played as number) || 0,
-              wins: (data.wins as number) || 0,
-              goals: (data.goals as number) || 0,
-              assists: (data.assists as number) || 0,
-              mvpCount: (data.mvpCount as number) || (data.mvp_count as number) || 0,
-              division: (data.division as string) || 'BRONZE',
-              isCurrentUser: userId === user?.id,
-              experiencePoints: userData.xp,
-            } as RankingPlayer;
-          });
-
-          // Deduplicar por userId (manter a entrada com mais pontos)
-          const uniqueMap = new Map<string, RankingPlayer>();
-          for (const p of playersData) {
-            const existing = uniqueMap.get(p.userId);
-            if (!existing || p.points > existing.points) {
-              uniqueMap.set(p.userId, p);
-            }
-          }
-          const deduplicated = Array.from(uniqueMap.values())
-            .sort((a, b) => b.points - a.points);
-
-          if (!cancelled) {
-            setPlayers(deduplicated);
-            setErrorState(null);
-
-            // #1238 - Position change tracking via localStorage
-            let prevLiga: Record<string, number> = {};
-            let prevXp: Record<string, number> = {};
-            try {
-              prevLiga = JSON.parse(localStorage.getItem('rankings_prev_positions_liga') || '{}') as Record<string, number>;
-              prevXp = JSON.parse(localStorage.getItem('rankings_prev_positions_xp') || '{}') as Record<string, number>;
-            } catch {
-              // corrupt data, reset
-            }
-            const currentLiga: Record<string, number> = {};
-            deduplicated.forEach((p, i) => { currentLiga[p.userId] = i + 1; });
-            const xpSorted = [...deduplicated].sort((a, b) => (b.experiencePoints || 0) - (a.experiencePoints || 0));
-            const currentXp: Record<string, number> = {};
-            xpSorted.forEach((p, i) => { currentXp[p.userId] = i + 1; });
-            const ligaChanges: Record<string, number | null> = {};
-            for (const [uid, pos] of Object.entries(currentLiga)) {
-              const prev = prevLiga[uid];
-              ligaChanges[uid] = prev !== undefined ? prev - pos : null;
-            }
-            const xpChanges: Record<string, number | null> = {};
-            for (const [uid, pos] of Object.entries(currentXp)) {
-              const prev = prevXp[uid];
-              xpChanges[uid] = prev !== undefined ? prev - pos : null;
-            }
-            try {
-              localStorage.setItem('rankings_prev_positions_liga', JSON.stringify(currentLiga));
-              localStorage.setItem('rankings_prev_positions_xp', JSON.stringify(currentXp));
-            } catch {
-              // quota exceeded or storage unavailable
-            }
-            setLigaPositionChanges(ligaChanges);
-            setXpPositionChanges(xpChanges);
-          }
-        } catch (err) {
-          logger.error('Erro ao carregar rankings:', err);
-          if (!cancelled) {
-            showError('Erro ao processar dados do ranking.');
-            setErrorState('Erro ao processar dados do ranking.');
-          }
-        } finally {
-          if (!cancelled) {
-            setLoading(false);
-            setRefreshing(false);
-          }
-        }
-      },
-      (err) => {
-        logger.error('Error in rankings listener:', err);
-        const message = (err as { message?: string })?.message || 'Erro ao carregar ranking.';
-        showError(message);
-        setErrorState(message);
-        setLoading(false);
-        setRefreshing(false);
-      }
-    );
-
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, [user?.id, activeSeasonId, selectedGroupId]);
-
+  // Position change tracking via localStorage (#1238)
   useEffect(() => {
-    unsubscribeRef.current?.();
-    unsubscribeRef.current = loadData();
-    return () => unsubscribeRef.current?.();
-  }, [loadData]);
+    if (loading || players.length === 0) return;
+
+    let prevLiga: Record<string, number> = {};
+    let prevXp: Record<string, number> = {};
+    try {
+      prevLiga = JSON.parse(localStorage.getItem('rankings_prev_positions_liga') || '{}') as Record<string, number>;
+      prevXp = JSON.parse(localStorage.getItem('rankings_prev_positions_xp') || '{}') as Record<string, number>;
+    } catch {
+      // corrupt data, reset
+    }
+    const currentLiga: Record<string, number> = {};
+    players.forEach((p, i) => { currentLiga[p.userId] = i + 1; });
+    const xpSorted = [...players].sort((a, b) => (b.experiencePoints || 0) - (a.experiencePoints || 0));
+    const currentXp: Record<string, number> = {};
+    xpSorted.forEach((p, i) => { currentXp[p.userId] = i + 1; });
+    const ligaChanges: Record<string, number | null> = {};
+    for (const [uid, pos] of Object.entries(currentLiga)) {
+      const prev = prevLiga[uid];
+      ligaChanges[uid] = prev !== undefined ? prev - pos : null;
+    }
+    const xpChanges: Record<string, number | null> = {};
+    for (const [uid, pos] of Object.entries(currentXp)) {
+      const prev = prevXp[uid];
+      xpChanges[uid] = prev !== undefined ? prev - pos : null;
+    }
+    try {
+      localStorage.setItem('rankings_prev_positions_liga', JSON.stringify(currentLiga));
+      localStorage.setItem('rankings_prev_positions_xp', JSON.stringify(currentXp));
+    } catch {
+      // quota exceeded or storage unavailable
+    }
+    setLigaPositionChanges(ligaChanges);
+    setXpPositionChanges(xpChanges);
+  }, [players, loading]);
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   // Posição do usuário atual
   const currentUserRank = players.findIndex(p => p.isCurrentUser) + 1;
@@ -492,11 +349,11 @@ export function RankingsTab() {
           </Typography>
           <Tooltip title="Atualizar">
             <IconButton
-              onClick={() => { setLoading(true); setErrorState(null); unsubscribeRef.current?.(); unsubscribeRef.current = loadData(); }}
+              onClick={handleRefresh}
               size="small"
               aria-label="Atualizar rankings"
             >
-              <RefreshIcon sx={{ animation: refreshing ? 'spin 1s linear infinite' : 'none', ...spinnerKeyframes }} />
+              <RefreshIcon sx={{ animation: loading ? 'spin 1s linear infinite' : 'none', ...spinnerKeyframes }} />
             </IconButton>
           </Tooltip>
         </Box>
@@ -539,7 +396,7 @@ export function RankingsTab() {
             severity="error"
             sx={{ mb: 2 }}
             action={
-              <Button color="inherit" size="small" onClick={() => { setLoading(true); unsubscribeRef.current?.(); unsubscribeRef.current = loadData(); }}>
+              <Button color="inherit" size="small" onClick={handleRefresh}>
                 Tentar novamente
               </Button>
             }
@@ -804,14 +661,14 @@ const RankingCard = React.memo(function RankingCard({
   onAvatarClick,
   positionChange,
 }: {
-  player: RankingPlayer;
+  player: LeaguePlayer;
   position: number;
   positionStyle: { bgcolor: string; color: string };
   showXP: boolean;
   onAvatarClick: (userId: string) => void;
   positionChange: number | null;
 }) {
-  const divisionConfig = DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE;
+  const divisionConfig = DIVISION_CONFIG[player.division as LeagueDivision] || DIVISION_CONFIG.BRONZE;
 
   return (
     <Card
