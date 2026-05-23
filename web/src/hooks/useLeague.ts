@@ -8,11 +8,12 @@ import {
   onSnapshot,
   documentId,
   where,
+  QueryConstraint,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
-import { LeagueDivision } from '../types/gamification';
+import { LeagueDivision, getLevelForXp } from '../types/gamification';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 
@@ -33,11 +34,13 @@ export interface LeaguePlayer {
   mvpCount: number;
   division: LeagueDivision;
   isCurrentUser?: boolean;
+  experiencePoints?: number;
 }
 
 // Busca dados de usuários em batch (chunks de 10)
-async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name: string; photoUrl: string | null; favoriteTeam?: string }>> {
-  const usersMap = new Map<string, { name: string; photoUrl: string | null; favoriteTeam?: string }>();
+// Privacy: jogadores com is_searchable=false ficam ocultos no ranking (#1027)
+async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name: string; photoUrl: string | null; xp: number; favoriteTeam?: string }>> {
+  const usersMap = new Map<string, { name: string; photoUrl: string | null; xp: number; favoriteTeam?: string }>();
   if (userIds.length === 0) return usersMap;
 
   const chunks: string[][] = [];
@@ -48,23 +51,22 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name
   // Usar allSettled para que falha em um chunk não derrube os demais
   const settled = await Promise.allSettled(
     chunks.map((chunk) =>
-      getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
+      getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk), where('is_searchable', '==', true)))
     )
   );
 
   for (const result of settled) {
     if (result.status === 'rejected') {
-      // #1334: não engolir falha de chunk em silêncio (mesmo pattern já
-      // corrigido em useGroups no PR #1345). Liga segue com dados parciais
-      // — usuários ausentes caem no fallback 'Jogador', mas o erro é logado.
       logger.error('Falha ao ler chunk de usuários da liga (dados parciais):', result.reason);
       continue;
     }
     for (const docSnap of result.value.docs) {
       const d = docSnap.data();
+      const xp = (d.experience_points ?? d.experiencePoints ?? 0) as number;
       usersMap.set(docSnap.id, {
         name: (d.name as string) || 'Jogador',
         photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
+        xp,
         favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
       });
     }
@@ -73,10 +75,28 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name
   return usersMap;
 }
 
+export interface LeagueFilters {
+  groupId?: string | null;
+  seasonId?: string | null;
+}
+
 // Busca ranking da liga com batch reads para dados de usuários
-async function fetchLeagueData(currentUserId?: string, division?: LeagueDivision): Promise<LeaguePlayer[]> {
+async function fetchLeagueData(
+  currentUserId?: string,
+  division?: LeagueDivision,
+  filters?: LeagueFilters
+): Promise<LeaguePlayer[]> {
   const seasonRef = collection(db, 'season_participation');
-  const q = query(seasonRef, orderBy('points', 'desc'), limit(100));
+
+  const constraints: QueryConstraint[] = [orderBy('points', 'desc'), limit(100)];
+  if (filters?.seasonId) {
+    constraints.push(where('season_id', '==', filters.seasonId));
+  }
+  if (filters?.groupId) {
+    constraints.push(where('group_id', '==', filters.groupId));
+  }
+
+  const q = query(seasonRef, ...constraints);
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) return [];
@@ -108,12 +128,14 @@ async function fetchLeagueData(currentUserId?: string, division?: LeagueDivision
 
   // Combinar dados
   const players: LeaguePlayer[] = participationData.map((p) => {
-    const userData = usersMap.get(p.userId) || { name: 'Jogador', photoUrl: null, favoriteTeam: undefined };
+    const userData = usersMap.get(p.userId) || { name: 'Jogador', photoUrl: null, xp: 0, favoriteTeam: undefined };
     return {
       ...p,
       userName: userData.name,
       userPhoto: userData.photoUrl || undefined,
       favoriteTeam: userData.favoriteTeam,
+      level: getLevelForXp(userData.xp),
+      experiencePoints: userData.xp,
       isCurrentUser: p.userId === currentUserId,
     };
   });
@@ -122,12 +144,16 @@ async function fetchLeagueData(currentUserId?: string, division?: LeagueDivision
   return division ? players.filter((p) => p.division === division) : players;
 }
 
-export const useLeague = (currentUserId?: string, division?: LeagueDivision) => {
+export const useLeague = (
+  currentUserId?: string,
+  division?: LeagueDivision,
+  filters?: LeagueFilters
+) => {
   const queryClient = useQueryClient();
 
-  const { data: players = [], isLoading: loading, error: queryError } = useQuery({
-    queryKey: ['league', currentUserId, division],
-    queryFn: () => fetchLeagueData(currentUserId, division),
+  const { data: players = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['league', currentUserId, division, filters?.groupId, filters?.seasonId],
+    queryFn: () => fetchLeagueData(currentUserId, division, filters),
     staleTime: 3 * 60 * 1000, // 3 minutos
     gcTime: 10 * 60 * 1000,
   });
@@ -158,5 +184,5 @@ export const useLeague = (currentUserId?: string, division?: LeagueDivision) => 
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 
-  return { players, loading, error };
+  return { players, loading, error, refetch };
 };
