@@ -1,10 +1,12 @@
 package com.futebadosparcas.domain.model
 
-import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Tipo de entrada no caixa
  */
+@Serializable
 enum class CashboxEntryType {
     INCOME,
     EXPENSE;
@@ -19,6 +21,7 @@ enum class CashboxEntryType {
 /**
  * Status da entrada no caixa
  */
+@Serializable
 enum class CashboxAppStatus {
     ACTIVE,
     VOIDED // Anulado/Estornado
@@ -27,6 +30,7 @@ enum class CashboxAppStatus {
 /**
  * Categorias de entrada/saída do caixa
  */
+@Serializable
 enum class CashboxCategory(val displayName: String, val type: CashboxEntryType, val icon: String) {
     // Entradas
     MONTHLY_FEE("Mensalidade", CashboxEntryType.INCOME, "💵"),
@@ -72,34 +76,35 @@ enum class CashboxCategory(val displayName: String, val type: CashboxEntryType, 
  * @property description Descrição da entrada
  * @property createdById ID do usuário que criou a entrada
  * @property createdByName Nome do usuário que criou a entrada
- * @property referenceDate Data de referência da entrada
- * @property createdAt Data de criação no servidor
+ * @property referenceDate Data de referência da entrada (epoch ms)
+ * @property createdAt Data de criação no servidor (epoch ms)
  * @property playerId ID do jogador (para mensalidades)
  * @property playerName Nome do jogador (para mensalidades)
  * @property gameId ID do jogo relacionado (opcional)
  * @property receiptUrl URL do comprovante de pagamento (opcional)
  * @property status Status da entrada (ACTIVE/VOIDED)
- * @property voidedAt Data em que foi estornada
+ * @property voidedAt Data em que foi estornada (epoch ms)
  * @property voidedBy ID do usuário que estornou
  */
+@Serializable
 data class CashboxEntry(
     val id: String = "",
     val type: String = CashboxEntryType.INCOME.name,
     val category: String = CashboxCategory.OTHER.name,
-    val customCategory: String? = null,
+    @SerialName("custom_category") val customCategory: String? = null,
     val amount: Double = 0.0,
     val description: String = "",
-    val createdById: String = "",
-    val createdByName: String = "",
-    val referenceDate: Instant,
-    val createdAt: Instant?,
-    val playerId: String? = null,
-    val playerName: String? = null,
-    val gameId: String? = null,
-    val receiptUrl: String? = null,
+    @SerialName("created_by_id") val createdById: String = "",
+    @SerialName("created_by_name") val createdByName: String = "",
+    @SerialName("reference_date") val referenceDate: Long = 0L,
+    @SerialName("created_at") val createdAt: Long? = null,
+    @SerialName("player_id") val playerId: String? = null,
+    @SerialName("player_name") val playerName: String? = null,
+    @SerialName("game_id") val gameId: String? = null,
+    @SerialName("receipt_url") val receiptUrl: String? = null,
     val status: String = CashboxAppStatus.ACTIVE.name,
-    val voidedAt: Instant? = null,
-    val voidedBy: String? = null
+    @SerialName("voided_at") val voidedAt: Long? = null,
+    @SerialName("voided_by") val voidedBy: String? = null
 ) {
     /**
      * Retorna o enum do tipo de entrada
@@ -178,15 +183,16 @@ data class CashboxEntry(
  * @property balance Saldo atual (receitas - despesas)
  * @property totalIncome Total de receitas
  * @property totalExpense Total de despesas
- * @property lastEntryAt Data da última entrada
+ * @property lastEntryAt Data da última entrada (epoch ms)
  * @property entryCount Número total de entradas ativas
  */
+@Serializable
 data class CashboxSummary(
     val balance: Double = 0.0,
-    val totalIncome: Double = 0.0,
-    val totalExpense: Double = 0.0,
-    val lastEntryAt: Instant? = null,
-    val entryCount: Int = 0
+    @SerialName("total_income") val totalIncome: Double = 0.0,
+    @SerialName("total_expense") val totalExpense: Double = 0.0,
+    @SerialName("last_entry_at") val lastEntryAt: Long? = null,
+    @SerialName("entry_count") val entryCount: Int = 0
 ) {
     /**
      * Verifica se há movimentações registradas
@@ -199,14 +205,14 @@ data class CashboxSummary(
  *
  * @property type Filtra por tipo (INCOME/EXPENSE)
  * @property category Filtra por categoria
- * @property startDate Data inicial do período
- * @property endDate Data final do período
+ * @property startDate Data inicial do período (epoch ms)
+ * @property endDate Data final do período (epoch ms)
  * @property playerId Filtra por jogador específico
  */
 data class CashboxFilter(
     val type: CashboxEntryType? = null,
     val category: CashboxCategory? = null,
-    val startDate: Instant? = null,
-    val endDate: Instant? = null,
+    val startDate: Long? = null,
+    val endDate: Long? = null,
     val playerId: String? = null
 )

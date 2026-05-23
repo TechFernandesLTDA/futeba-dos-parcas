@@ -2809,14 +2809,15 @@ actual class FirebaseDataSource actual constructor() {
                 println("FirebaseDataSource: AVISO — recalculateCashboxBalance truncou em $maxEntries entradas para o grupo $groupId; saldo pode estar incompleto")
             }
             val entries = allDocs.take(maxEntries)
-            val sortedEntries = entries.sortedByDescending { it.createdAt ?: Clock.System.now() }
+            val sortedEntries = entries.sortedByDescending { it.createdAt ?: 0L }
             sortedEntries.forEach { if (it.isIncome()) totalIncome += it.amount else totalExpense += it.amount }
-            val lastEntryDate: Timestamp? = sortedEntries.firstOrNull()?.createdAt?.let { inst ->
-                val millis = inst.toEpochMilliseconds(); Timestamp(millis / 1000, ((millis % 1000) * 1_000_000).toInt())
+            val lastEntryMillis: Long? = sortedEntries.firstOrNull()?.createdAt
+            val lastEntryDate: Timestamp? = lastEntryMillis?.let { millis ->
+                Timestamp(millis / 1000, ((millis % 1000) * 1_000_000).toInt())
             }
             val balance = totalIncome - totalExpense
             val summary = CashboxSummary(balance = balance, totalIncome = totalIncome, totalExpense = totalExpense,
-                lastEntryAt = lastEntryDate?.let { instantFromTimestamp(it) }, entryCount = entries.size)
+                lastEntryAt = lastEntryMillis, entryCount = entries.size)
             firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current")
                 .set(mapOf("balance" to balance, "total_income" to totalIncome, "total_expense" to totalExpense,
                     "last_entry_at" to (lastEntryDate ?: FieldValue.serverTimestamp), "entry_count" to entries.size))
