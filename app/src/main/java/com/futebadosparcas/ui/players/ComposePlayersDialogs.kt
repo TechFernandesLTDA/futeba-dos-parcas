@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -180,22 +181,27 @@ private fun RadarChart(
     color1: Color,
     color2: Color
 ) {
-    val labels = listOf("ATA", "MEI", "DEF", "GOL")
+    // Evitar alocação de lista constante a cada recomposição (#1548)
+    val labels = remember { listOf("ATA", "MEI", "DEF", "GOL") }
 
-    // Ratings
-    val ratings1 = listOf(
-        user1.getEffectiveRating(PlayerRatingRole.STRIKER).toFloat(),
-        user1.getEffectiveRating(PlayerRatingRole.MID).toFloat(),
-        user1.getEffectiveRating(PlayerRatingRole.DEFENDER).toFloat(),
-        user1.getEffectiveRating(PlayerRatingRole.GOALKEEPER).toFloat()
-    )
+    // Ratings variam com os parâmetros dos usuários
+    val ratings1 = remember(user1) {
+        listOf(
+            user1.getEffectiveRating(PlayerRatingRole.STRIKER).toFloat(),
+            user1.getEffectiveRating(PlayerRatingRole.MID).toFloat(),
+            user1.getEffectiveRating(PlayerRatingRole.DEFENDER).toFloat(),
+            user1.getEffectiveRating(PlayerRatingRole.GOALKEEPER).toFloat()
+        )
+    }
 
-    val ratings2 = listOf(
-        user2.getEffectiveRating(PlayerRatingRole.STRIKER).toFloat(),
-        user2.getEffectiveRating(PlayerRatingRole.MID).toFloat(),
-        user2.getEffectiveRating(PlayerRatingRole.DEFENDER).toFloat(),
-        user2.getEffectiveRating(PlayerRatingRole.GOALKEEPER).toFloat()
-    )
+    val ratings2 = remember(user2) {
+        listOf(
+            user2.getEffectiveRating(PlayerRatingRole.STRIKER).toFloat(),
+            user2.getEffectiveRating(PlayerRatingRole.MID).toFloat(),
+            user2.getEffectiveRating(PlayerRatingRole.DEFENDER).toFloat(),
+            user2.getEffectiveRating(PlayerRatingRole.GOALKEEPER).toFloat()
+        )
+    }
 
     // Capture theme color outside Canvas scope
     val gridColor = MaterialTheme.colorScheme.outlineVariant

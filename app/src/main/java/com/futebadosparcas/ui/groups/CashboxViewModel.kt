@@ -373,7 +373,9 @@ class CashboxViewModel(
                             CashboxCategory.OTHER
                         }
                         val currentAmount = totalsByCategory[category] ?: 0.0
-                        totalsByCategory[category] = currentAmount + entry.amount
+                        // Despesas reduzem o total da categoria (#1604)
+                        val delta = if (entry.type == "EXPENSE") -entry.amount else entry.amount
+                        totalsByCategory[category] = currentAmount + delta
                     }
                     _actionState.value = CashboxActionState.TotalsByCategory(totalsByCategory)
                 },

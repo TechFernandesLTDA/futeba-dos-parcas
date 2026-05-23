@@ -420,6 +420,8 @@ private fun CashboxTopBar(
 
 @Composable
 private fun SummaryCard(summary: AndroidCashboxSummary) {
+    // Evitar alocação de NumberFormat a cada recomposição (#1553)
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -476,7 +478,7 @@ private fun SummaryCard(summary: AndroidCashboxSummary) {
                         )
                     }
                     Text(
-                        text = "+ ${NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).format(summary.totalIncome)}",
+                        text = "+ ${currencyFormat.format(summary.totalIncome)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -502,7 +504,7 @@ private fun SummaryCard(summary: AndroidCashboxSummary) {
                         )
                     }
                     Text(
-                        text = "- ${NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).format(summary.totalExpense)}",
+                        text = "- ${currencyFormat.format(summary.totalExpense)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.error
@@ -613,7 +615,8 @@ private fun EntryCard(
 ) {
     // entry.getTypeEnum() retorna AndroidCashboxEntryType (data.model)
     val isIncome = entry.getTypeEnum() == AndroidCashboxEntryType.INCOME
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
+    // Evitar alocação de NumberFormat a cada recomposição (#1553)
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     Card(
         modifier = Modifier
@@ -752,7 +755,8 @@ private fun EntryDetailsDialog(
     entry: AndroidCashboxEntry,
     onDismiss: () -> Unit
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
+    // Evitar alocação de NumberFormat a cada recomposição (#1553)
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -827,7 +831,8 @@ private fun TotalsDialog(
     totals: Map<String, Double>,
     onDismiss: () -> Unit
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
+    // Evitar alocação de NumberFormat a cada recomposição (#1553)
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

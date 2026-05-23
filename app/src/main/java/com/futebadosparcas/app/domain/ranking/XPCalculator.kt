@@ -177,8 +177,9 @@ object XPCalculator {
             penalty = penaltyXp.toLong()
         )
 
-        // Garantir que XP total nunca seja negativo e aplica teto máximo
-        val totalXp = maxOf(0L, breakdown.total).coerceAtMost(MAX_XP_PER_GAME.toLong())
+        // Aplicar piso mínimo (MIN_XP_PER_GAME = -100) e teto máximo (#1533)
+        // Bola Murcha e penalidades podem resultar em XP negativo — piso é -100, não 0
+        val totalXp = breakdown.total.coerceIn(-100L, MAX_XP_PER_GAME.toLong())
 
         return XpCalculationResult(
             totalXp = totalXp,

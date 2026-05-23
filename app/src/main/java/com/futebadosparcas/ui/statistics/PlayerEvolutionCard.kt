@@ -282,13 +282,16 @@ private fun LeagueRatingBar(
     rating: Double,
     division: LeagueDivision
 ) {
-    val thresholds = listOf(0, 30, 50, 70, 100)
-    val colors = listOf(
-        GamificationColors.Bronze,
-        GamificationColors.Silver,
-        GamificationColors.Gold,
-        GamificationColors.DiamondDark
-    )
+    // Evitar alocação de lista a cada recomposição (#1548)
+    val thresholds = remember { listOf(0, 30, 50, 70, 100) }
+    val colors = remember {
+        listOf(
+            GamificationColors.Bronze,
+            GamificationColors.Silver,
+            GamificationColors.Gold,
+            GamificationColors.DiamondDark
+        )
+    }
 
     Column {
         // Bar

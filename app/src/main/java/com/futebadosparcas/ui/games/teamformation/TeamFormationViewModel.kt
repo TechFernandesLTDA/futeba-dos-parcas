@@ -86,6 +86,8 @@ class TeamFormationViewModel(
                         name = conf.userName,
                         photoUrl = conf.userPhoto,
                         position = position,
+                        // TODO #1621: substituir ratings padrão pelos ratings reais do perfil
+                        //  do jogador quando GameRepository.getPlayerRatings(userId) for implementado
                         overallRating = 3.0f, // Valor padrao, idealmente buscar do perfil
                         strikerRating = 3.0f,
                         midRating = 3.0f,
