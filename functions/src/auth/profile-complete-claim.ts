@@ -96,9 +96,9 @@ export const onUserProfileWritten = onDocumentWritten(
 
     if (
       before?.phone === after?.phone &&
-      before?.cpfVerifiedAt === after?.cpfVerifiedAt
+      (before?.cpfVerifiedAt != null) === (after?.cpfVerifiedAt != null)
     ) {
-      return null;
+      return;
     }
 
     const uid = event.params.uid;
