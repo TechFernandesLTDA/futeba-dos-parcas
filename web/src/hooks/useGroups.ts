@@ -13,6 +13,7 @@ import {
   serverTimestamp,
   writeBatch,
   documentId,
+  Timestamp,
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -445,6 +446,9 @@ export function useInvitePlayers() {
         const code = Math.random().toString(36).substring(2, 8).toUpperCase();
         const displayName = firebaseUser?.displayName || user?.name || 'Organizador';
 
+        // #1541: expires_at precisa ser 7 dias no futuro; serverTimestamp() criava
+        // convites já expirados imediatamente.
+        const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
         await addDoc(collection(db, 'invites'), {
           code,
           group_id: groupId,
@@ -452,7 +456,7 @@ export function useInvitePlayers() {
           inviter_id: uid,
           inviter_name: displayName,
           created_at: serverTimestamp(),
-          expires_at: serverTimestamp(),
+          expires_at: expiresAt,
           used: false,
         });
 
@@ -487,6 +491,12 @@ export function useInvitePlayers() {
 
         const inviteDoc = snapshot.docs[0];
         const inviteData = inviteDoc.data();
+
+        // #1541: verificar se o convite expirou
+        if (inviteData.expires_at && (inviteData.expires_at as Timestamp).toMillis() < Date.now()) {
+          throw new Error('Convite expirado');
+        }
+
         const groupId = inviteData.group_id || inviteData.groupId;
 
         const batch = writeBatch(db);
