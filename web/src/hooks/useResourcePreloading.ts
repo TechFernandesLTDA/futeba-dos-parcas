@@ -4,6 +4,38 @@ import { useLocation } from 'react-router-dom';
 // Route module cache to avoid re-importing
 const routeModuleCache = new Map<string, boolean>();
 
+const routePrefetchers: Record<string, () => Promise<unknown>> = {
+  '/games': () => import('../pages/games/GamesScreen'),
+  '/groups': () => import('../pages/groups/GroupsScreen'),
+  '/profile': () => import('../pages/profile/ProfileScreen'),
+  '/game/create': () => import('../pages/game/CreateGameScreen'),
+  '/group/create': () => import('../pages/group/CreateGroupScreen'),
+  '/profile/edit': () => import('../pages/profile/EditProfileScreen'),
+  '/level-journey': () => import('../pages/profile/LevelJourneyScreen'),
+  '/league': () => import('../pages/league/LeagueScreen'),
+  '/statistics': () => import('../pages/statistics/StatisticsScreen'),
+  '/ranking': () => import('../pages/ranking/RankingScreen'),
+};
+
+function preloadRouteModule(route: string): Promise<void> {
+  if (routeModuleCache.has(route)) {
+    return Promise.resolve();
+  }
+
+  const prefetcher = routePrefetchers[route];
+  if (!prefetcher) {
+    return Promise.resolve();
+  }
+
+  return prefetcher()
+    .then(() => {
+      routeModuleCache.set(route, true);
+    })
+    .catch(() => {
+      // Ignore prefetch errors. Navigation lazy-load remains authoritative.
+    });
+}
+
 /**
  * Preload critical resources for faster initial page load
  * - Preconnect to Firebase APIs
@@ -49,14 +81,7 @@ export function useResourcePreloading() {
 
     routesToPrefetch.forEach((route) => {
       if (!prefetchedRoutes.current.has(route) && !routeModuleCache.has(route)) {
-        // Import route modules dynamically
-        import(/* @vite-ignore */ `../pages${route}/index.tsx`)
-          .then(() => {
-            routeModuleCache.set(route, true);
-          })
-          .catch(() => {
-            // Route module not found or already loaded, ignore
-          })
+        preloadRouteModule(route)
           .finally(() => {
             prefetchedRoutes.current.add(route);
           });
@@ -70,17 +95,7 @@ export function useResourcePreloading() {
  * Call this on onMouseEnter/onFocus of navigation links
  */
 export function prefetchRoute(route: string): Promise<void> {
-  if (routeModuleCache.has(route)) {
-    return Promise.resolve();
-  }
-
-  return import(/* @vite-ignore */ `../pages${route}/index.tsx`)
-    .then(() => {
-      routeModuleCache.set(route, true);
-    })
-    .catch(() => {
-      // Ignore errors - route may not exist or already loaded
-    });
+  return preloadRouteModule(route);
 }
 
 /**

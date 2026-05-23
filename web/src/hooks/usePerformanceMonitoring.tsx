@@ -1,5 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('PerformanceMonitor');
@@ -31,13 +31,25 @@ interface UsePerformanceMonitoringOptions {
   sendDataToAnalytics?: boolean;
 }
 
+interface FirstInputPerformanceEntry extends PerformanceEntry {
+  processingStart: number;
+}
+
+interface LayoutShiftPerformanceEntry extends PerformanceEntry {
+  hadRecentInput: boolean;
+  value: number;
+}
+
+interface WindowWithGtag extends Window {
+  gtag?: (...args: unknown[]) => void;
+}
+
 /**
  * Hook de monitoramento de performance para telas
  * Coleta Web Vitals e métricas customizadas automaticamente
  */
 export function usePerformanceMonitoring(options: UsePerformanceMonitoringOptions) {
-  const { screenName, trackQueries = true, sendDataToAnalytics = true } = options;
-  const location = useLocation();
+  const { screenName, sendDataToAnalytics = true } = options;
   const startTimeRef = useRef<number>(performance.now());
   const metricsRef = useRef<Partial<PerformanceMetrics>>({
     screenName,
@@ -66,10 +78,11 @@ export function usePerformanceMonitoring(options: UsePerformanceMonitoringOption
             logger.info(`[${screenName}] LCP: ${entry.startTime.toFixed(2)}ms`);
           }
         } else if (entry.entryType === 'first-input') {
-          metricsRef.current.fid = (entry as any).processingStart - entry.startTime;
+          metricsRef.current.fid = (entry as FirstInputPerformanceEntry).processingStart - entry.startTime;
         } else if (entry.entryType === 'layout-shift') {
-          if (!(entry as any).hadRecentInput) {
-            metricsRef.current.cls = (metricsRef.current.cls || 0) + (entry as any).value;
+          const layoutShift = entry as LayoutShiftPerformanceEntry;
+          if (!layoutShift.hadRecentInput) {
+            metricsRef.current.cls = (metricsRef.current.cls || 0) + layoutShift.value;
           }
         } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
           metricsRef.current.fcp = entry.startTime;
@@ -79,7 +92,7 @@ export function usePerformanceMonitoring(options: UsePerformanceMonitoringOption
 
     try {
       observer.observe({ entryTypes: ['largest-contentful-paint', 'first-input', 'layout-shift', 'paint'] });
-    } catch (e) {
+    } catch {
       // Alguns navegadores não suportam todos os tipos
       logger.warn('PerformanceObserver não suporta todos os tipos de métricas');
     }
@@ -194,8 +207,10 @@ function sendToAnalytics(metrics: PerformanceMetrics) {
   }
 
   // Enviar evento para Firebase Analytics (se disponível)
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', 'screen_performance', {
+  if (typeof window !== 'undefined') {
+    const gtagWindow = window as WindowWithGtag;
+    if (!gtagWindow.gtag) return;
+    gtagWindow.gtag('event', 'screen_performance', {
       screen_name: metrics.screenName,
       tti: Math.round(metrics.timeToInteractive),
       lcp: metrics.lcp ? Math.round(metrics.lcp) : undefined,

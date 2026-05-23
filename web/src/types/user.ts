@@ -20,6 +20,10 @@ export interface User {
   midRating: number;
   defenderRating: number;
   gkRating: number;
+  strikerRatingSet?: boolean;
+  midRatingSet?: boolean;
+  defenderRatingSet?: boolean;
+  gkRatingSet?: boolean;
 
   // Ratings automáticos calculados server-side (0.0 - 5.0)
   autoStrikerRating: number;
@@ -91,6 +95,19 @@ export function getAutoRatingConfidence(autoRatingSamples: number): number {
   return Math.min(autoRatingSamples / 20.0, 1.0);
 }
 
+const POSITION_CONFIDENCE_FULL_RATING = 2.5;
+
+export function getAutoRatingConfidenceForRole(user: User, role: PlayerRatingRole): number {
+  const autoRating = getAutoRating(user, role);
+  if (user.autoRatingSamples <= 0 || autoRating <= 0) return 0.0;
+
+  const sampleConfidence = getAutoRatingConfidence(user.autoRatingSamples);
+  if (role === 'DEFENDER') return sampleConfidence;
+
+  const roleRelevance = Math.min(Math.max(autoRating / POSITION_CONFIDENCE_FULL_RATING, 0), 1);
+  return sampleConfidence * roleRelevance;
+}
+
 export interface RatingHistoryEntry {
   id: string;
   position: 'STRIKER' | 'MID' | 'DEFENDER' | 'GOALKEEPER';
@@ -120,9 +137,17 @@ export function getAutoRating(user: Pick<User, 'autoStrikerRating' | 'autoMidRat
 export function getEffectiveRating(user: User, role: PlayerRatingRole): number {
   const manual = getManualRating(user, role);
   const auto = getAutoRating(user, role);
+  const manualSet = role === 'STRIKER'
+    ? user.strikerRatingSet || manual > 0
+    : role === 'MID'
+      ? user.midRatingSet || manual > 0
+      : role === 'DEFENDER'
+        ? user.defenderRatingSet || manual > 0
+        : user.gkRatingSet || manual > 0;
+  if (manualSet && manual <= 0) return 0;
   if (auto <= 0) return manual;
-  if (manual <= 0) return auto;
-  const confidence = getAutoRatingConfidence(user.autoRatingSamples);
+  if (!manualSet) return auto;
+  const confidence = getAutoRatingConfidenceForRole(user, role);
   return Math.min(Math.max(manual * (1 - confidence) + auto * confidence, 0), 5);
 }
 

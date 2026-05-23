@@ -61,7 +61,8 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
   const autoRatingSamples = data.autoRatingSamples ?? raw.auto_rating_samples ?? 0;
 
   const ratings = [strikerRating, midRating, defenderRating, gkRating, autoStrikerRating, autoMidRating, autoDefenderRating, autoGkRating].filter((r) => r > 0);
-  const overallRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+  const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+  const overallRating = Math.round((avgRating / 5) * 99);
 
   return {
     id: userId,

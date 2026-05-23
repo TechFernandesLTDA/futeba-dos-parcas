@@ -370,6 +370,7 @@ function useFocusOnNavigate() {
 function AppRoutes() {
   useFocusOnNavigate();
   useScrollRestoration();
+  useResourcePreloading();
 
   return (
     <ProfileGate>
@@ -526,9 +527,6 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
-
-  // Prefetch likely next routes based on current location
-  useResourcePreloading();
 
   return (
     <QueryClientProvider client={queryClient}>

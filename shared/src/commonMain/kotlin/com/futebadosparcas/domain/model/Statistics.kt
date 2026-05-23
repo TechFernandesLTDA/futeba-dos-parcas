@@ -110,7 +110,7 @@ data class Statistics(
     val avgCardsPerGame: Double
         get() {
             if (totalGames == 0) return 0.0
-            val weighted = yellowCards + (redCards * 2)
+            val weighted = yellowCards + (redCards * 3)
             return weighted.toDouble() / totalGames.toDouble()
         }
 

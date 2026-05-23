@@ -101,6 +101,10 @@ data class User(
     @SerialName("mid_rating") val midRating: Double = 0.0,
     @SerialName("defender_rating") val defenderRating: Double = 0.0,
     @SerialName("gk_rating") val gkRating: Double = 0.0,
+    @SerialName("striker_rating_set") val strikerRatingSet: Boolean = false,
+    @SerialName("mid_rating_set") val midRatingSet: Boolean = false,
+    @SerialName("defender_rating_set") val defenderRatingSet: Boolean = false,
+    @SerialName("gk_rating_set") val gkRatingSet: Boolean = false,
 
     // Posicao preferida
     @SerialName("preferred_position") val preferredPosition: String? = null,
@@ -160,7 +164,23 @@ data class User(
 
     fun getAutoRatingConfidence(role: PlayerRatingRole): Double {
         if (autoRatingSamples <= 0) return 0.0
-        return (autoRatingSamples / 20.0).coerceIn(0.0, 1.0)
+        val autoRating = getAutoRating(role)
+        if (autoRating < 0.001) return 0.0
+
+        val sampleConfidence = getAutoRatingConfidence()
+        if (role == PlayerRatingRole.DEFENDER) return sampleConfidence
+
+        val roleRelevance = (autoRating / POSITION_CONFIDENCE_FULL_RATING).coerceIn(0.0, 1.0)
+        return sampleConfidence * roleRelevance
+    }
+
+    fun hasManualRating(role: PlayerRatingRole): Boolean {
+        return when (role) {
+            PlayerRatingRole.STRIKER -> strikerRatingSet || strikerRating > 0.0
+            PlayerRatingRole.MID -> midRatingSet || midRating > 0.0
+            PlayerRatingRole.DEFENDER -> defenderRatingSet || defenderRating > 0.0
+            PlayerRatingRole.GOALKEEPER -> gkRatingSet || gkRating > 0.0
+        }
     }
 
     /**
@@ -193,8 +213,9 @@ data class User(
     fun getEffectiveRating(role: PlayerRatingRole): Double {
         val manual = getManualRating(role)
         val auto = getAutoRating(role)
+        if (hasManualRating(role) && manual < 0.001) return 0.0
         if (auto < 0.001) return manual
-        if (manual < 0.001) return auto
+        if (!hasManualRating(role)) return auto
 
         val confidence = getAutoRatingConfidence(role)
         return ((manual * (1.0 - confidence)) + (auto * confidence)).coerceIn(0.0, 5.0)
@@ -214,5 +235,9 @@ data class User(
         ).filter { it > 0 }
 
         return if (ratings.isEmpty()) 0.0 else ratings.average()
+    }
+
+    companion object {
+        private const val POSITION_CONFIDENCE_FULL_RATING = 2.5
     }
 }

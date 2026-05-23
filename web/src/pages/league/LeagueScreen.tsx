@@ -66,6 +66,7 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
 
 const PROMO_TOP = 3;
 const RELEG_BOTTOM = 3;
+const LEAGUE_DIVISIONS: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
 
 export const LeagueScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -94,17 +95,16 @@ export const LeagueScreen: React.FC = () => {
   const [pullProgress, setPullProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const divisions: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
-  const selectedDivision = tabValue > 0 ? divisions[tabValue - 1] : undefined;
+  const selectedDivision = tabValue > 0 ? LEAGUE_DIVISIONS[tabValue - 1] : undefined;
 
   const { players, loading, error } = useLeague(user?.id, selectedDivision);
 
   const divisionCounts = useMemo(() => {
     const allPlayers = players;
     const counts: Record<string, number> = { ALL: allPlayers.length };
-    divisions.forEach(d => { counts[d] = allPlayers.filter(p => p.division === d).length; });
+    LEAGUE_DIVISIONS.forEach(d => { counts[d] = allPlayers.filter(p => p.division === d).length; });
     return counts;
-  }, [players, divisions]);
+  }, [players]);
 
   const filteredAndSorted = useMemo(() => {
     let result = players;
@@ -287,7 +287,7 @@ export const LeagueScreen: React.FC = () => {
               </Box>
             }
           />
-          {divisions.map((div) => (
+          {LEAGUE_DIVISIONS.map((div) => (
             <Tab
               key={div}
               iconPosition="start"
@@ -547,7 +547,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
         bgcolor: player.isCurrentUser
           ? (t) => alpha(t.palette.primary.main, 0.1)
           : zoneColor
-          ? (t) => alpha(zoneColor, 0.05)
+          ? alpha(zoneColor, 0.05)
           : 'background.paper',
         border: player.isCurrentUser
           ? (t) => `2px solid ${t.palette.primary.main}`

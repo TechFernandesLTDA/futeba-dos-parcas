@@ -158,12 +158,9 @@ export const UserManagementScreen: React.FC = () => {
   };
 
   const confirmRoleChange = (user: UserWithRole, newRole: string) => {
-    if (user.id === currentUser?.id && newRole !== 'ADMIN') {
-      setPendingRoleChange({ user, role: newRole });
-      setConfirmDialogOpen(true);
-      return;
-    }
-    executeRoleChange(user, newRole);
+    if (user.role === newRole) return;
+    setPendingRoleChange({ user, role: newRole });
+    setConfirmDialogOpen(true);
   };
 
   const executeRoleChange = async (user: UserWithRole, newRole: string) => {
@@ -222,6 +219,13 @@ export const UserManagementScreen: React.FC = () => {
     const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  const isPendingSelfDemotion =
+    pendingRoleChange?.user.id === currentUser?.id && pendingRoleChange?.role !== 'ADMIN';
+  const isPendingAdminDemotion =
+    pendingRoleChange?.user.role === 'ADMIN' && pendingRoleChange?.role !== 'ADMIN';
+  const isPendingAdminPromotion =
+    pendingRoleChange?.user.role !== 'ADMIN' && pendingRoleChange?.role === 'ADMIN';
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -430,19 +434,33 @@ export const UserManagementScreen: React.FC = () => {
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
         <DialogTitle>Confirmar alteração de role</DialogTitle>
         <DialogContent>
-          <Typography>
-            Você está prestes a alterar seu próprio role de <strong>ADMIN</strong> para <strong>{pendingRoleChange?.role}</strong>.
-            Esta ação pode remover seu acesso administrativo. Tem certeza?
+          {isPendingSelfDemotion ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Você está prestes a remover seu próprio acesso de administrador. Esta ação requer outro admin para reverter.
+            </Alert>
+          ) : isPendingAdminPromotion ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Admins têm acesso total ao sistema. Confirme apenas se este usuário deve administrar a plataforma.
+            </Alert>
+          ) : null}
+          <Typography sx={{ mb: 2 }}>
+            Alterar role de <strong>{pendingRoleChange?.user.name}</strong> de{' '}
+            <strong>{pendingRoleChange?.user.role}</strong> para <strong>{pendingRoleChange?.role}</strong>?
           </Typography>
+          <Alert severity="info">
+            O usuário precisará fazer login novamente após a alteração.
+          </Alert>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancelar</Button>
           <Button
-            color="error"
+            color={isPendingAdminDemotion ? 'error' : 'primary'}
             variant="contained"
+            disabled={actionLoading}
             onClick={() => {
-              if (pendingRoleChange) {
-                executeRoleChange(pendingRoleChange.user, pendingRoleChange.role);
+              const roleChange = pendingRoleChange;
+              if (roleChange) {
+                executeRoleChange(roleChange.user, roleChange.role);
               }
               setConfirmDialogOpen(false);
               setPendingRoleChange(null);
@@ -459,6 +477,9 @@ export const UserManagementScreen: React.FC = () => {
           <Typography sx={{ mb: 2 }}>
             Alterar role de {selectedUsers.size} usuário(s) selecionado(s) para:
           </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Usuários alterados precisarão fazer login novamente. Seu próprio usuário é ignorado em alterações em lote.
+          </Alert>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>

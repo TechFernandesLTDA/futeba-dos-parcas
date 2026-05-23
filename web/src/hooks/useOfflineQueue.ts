@@ -37,6 +37,7 @@ export function useOfflineQueue() {
   const { isOnline } = useNetworkStatus();
   const [queue, setQueue] = useState<QueuedMutation[]>(loadQueue);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const processingRef = useRef(false);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export function useOfflineQueue() {
     if (processingRef.current || queue.length === 0) return;
     processingRef.current = true;
     setProcessing(true);
+    setError(null);
 
     for (const mutation of queue) {
       try {
@@ -76,6 +78,7 @@ export function useOfflineQueue() {
         }
       } catch (err) {
         logger.error('Offline mutation failed:', err);
+        setError('Falha ao sincronizar alterações offline.');
       }
     }
 
@@ -94,6 +97,7 @@ export function useOfflineQueue() {
     enqueue,
     queueLength: queue.length,
     processing,
+    error,
     isOnline,
   };
 }

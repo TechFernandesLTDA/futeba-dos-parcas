@@ -36,6 +36,7 @@ export function PerformanceWrapper({
 /**
  * HOC para adicionar monitoramento de performance a componentes existentes
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function withPerformanceMonitoring<P extends object>(
   Component: React.ComponentType<P>,
   screenName: string

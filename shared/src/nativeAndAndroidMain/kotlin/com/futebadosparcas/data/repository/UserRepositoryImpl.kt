@@ -176,6 +176,10 @@ class UserRepositoryImpl(
                 publicUpdates["mid_rating"] = user.midRating
                 publicUpdates["defender_rating"] = user.defenderRating
                 publicUpdates["gk_rating"] = user.gkRating
+                publicUpdates["striker_rating_set"] = true
+                publicUpdates["mid_rating_set"] = true
+                publicUpdates["defender_rating_set"] = true
+                publicUpdates["gk_rating_set"] = true
 
                 // Atributos NÃO-PII (estilo de jogo / posições / perna dominante)
                 user.dominantFoot?.let { publicUpdates["dominant_foot"] = it }

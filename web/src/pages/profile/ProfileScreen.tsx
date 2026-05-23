@@ -49,7 +49,7 @@ import { PlayerAvatar } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
-import { getEffectiveRating } from '../../types/user';
+import { getEffectiveRating, type User } from '../../types/user';
 
 export const ProfileScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -338,7 +338,7 @@ export const ProfileScreen: React.FC = () => {
                     { role: 'DEFENDER' as const, label: 'Zagueiro', icon: <DefIcon color="info" /> },
                     { role: 'GOALKEEPER' as const, label: 'Goleiro', icon: <ShieldIcon color="success" /> },
                   ]).map(({ role, label, icon }) => {
-                    const rating = getEffectiveRating(profile as any, role);
+                    const rating = getEffectiveRating(profile as unknown as User, role);
                     return (
                       <Grid item xs={6} md={3} key={role}>
                         <Paper variant="outlined" sx={{ p: 1.5 }}>

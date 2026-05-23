@@ -41,7 +41,7 @@ import {
   Delete as DeleteIcon,
   Send as SendIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs, deleteDoc, addDoc, serverTimestamp, onSnapshot, startAfter, DocumentSnapshot } from 'firebase/firestore';
+import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
@@ -122,17 +122,24 @@ export const LocationDetailScreen: React.FC = () => {
     if (!locationId) return;
     const reviewsRef = collection(db, 'locations', locationId, 'reviews');
     const q = query(reviewsRef, orderBy('created_at', 'desc'), limit(50));
-    const unsubscribe = onSnapshot(q, (snap) => {
-      const data = snap.docs.map((d) => {
-        const raw = d.data();
-        return {
-          ...snakeToCamel(raw),
-          id: d.id,
-          createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
-        };
-      }) as LocationReview[];
-      setReviews(data);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snap) => {
+        const data = snap.docs.map((d) => {
+          const raw = d.data();
+          return {
+            ...snakeToCamel(raw),
+            id: d.id,
+            createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
+          };
+        }) as LocationReview[];
+        setReviews(data);
+      },
+      (err) => {
+        logger.error('Erro ao carregar avaliações:', err);
+        showErrorRef.current('Não foi possível carregar as avaliações.');
+      }
+    );
     return () => unsubscribe();
   }, [locationId]);
 

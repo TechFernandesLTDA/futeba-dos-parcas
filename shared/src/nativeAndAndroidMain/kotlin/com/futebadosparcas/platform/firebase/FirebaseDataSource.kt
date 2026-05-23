@@ -1060,6 +1060,10 @@ actual class FirebaseDataSource actual constructor() {
                     "mid_rating" to newUser.midRating,
                     "defender_rating" to newUser.defenderRating,
                     "gk_rating" to newUser.gkRating,
+                    "striker_rating_set" to newUser.strikerRatingSet,
+                    "mid_rating_set" to newUser.midRatingSet,
+                    "defender_rating_set" to newUser.defenderRatingSet,
+                    "gk_rating_set" to newUser.gkRatingSet,
                     "auto_striker_rating" to newUser.autoStrikerRating,
                     "auto_mid_rating" to newUser.autoMidRating,
                     "auto_defender_rating" to newUser.autoDefenderRating,
@@ -3617,6 +3621,10 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): User
         midRating = get<Double?>("mid_rating") ?: get<Double?>("midRating") ?: 0.0,
         defenderRating = get<Double?>("defender_rating") ?: get<Double?>("defenderRating") ?: 0.0,
         gkRating = get<Double?>("gk_rating") ?: get<Double?>("gkRating") ?: 0.0,
+        strikerRatingSet = get<Boolean?>("striker_rating_set") ?: get<Boolean?>("strikerRatingSet") ?: false,
+        midRatingSet = get<Boolean?>("mid_rating_set") ?: get<Boolean?>("midRatingSet") ?: false,
+        defenderRatingSet = get<Boolean?>("defender_rating_set") ?: get<Boolean?>("defenderRatingSet") ?: false,
+        gkRatingSet = get<Boolean?>("gk_rating_set") ?: get<Boolean?>("gkRatingSet") ?: false,
         preferredPosition = get<String?>("preferred_position") ?: get<String?>("preferredPosition"),
         preferredFieldTypes = ((get<List<*>?>("preferred_field_types") ?: get<List<*>?>("preferredFieldTypes")))?.mapNotNull { item ->
             (item as? String)?.let { name -> try { FieldType.valueOf(name) } catch (e: Exception) { null } }
