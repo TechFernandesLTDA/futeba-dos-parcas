@@ -98,6 +98,10 @@ export interface XpLog {
     game_result: string;
     /** Status do jogo no momento do processamento — sempre "FINISHED" (#954) */
     game_status: string;
+    /** FIX #1576: placar do time do jogador */
+    my_team_score: number;
+    /** FIX #1576: placar do adversário */
+    opponent_score: number;
     milestones_unlocked: string[];
     created_at: admin.firestore.FieldValue;
 }

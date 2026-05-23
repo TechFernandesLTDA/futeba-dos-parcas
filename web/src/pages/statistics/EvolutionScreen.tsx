@@ -135,7 +135,7 @@ export const EvolutionScreen: React.FC = () => {
     };
 
     fetchData();
-  }, [targetUserId, reloadKey, showError]);
+  }, [targetUserId, reloadKey, showError, t]);
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;

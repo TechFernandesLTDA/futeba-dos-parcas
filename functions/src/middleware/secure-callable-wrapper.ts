@@ -122,7 +122,7 @@ export function secureCallable<
   // Aplicar defaults
   const config = {
     appCheck: options.appCheck ??
-      (process.env.NODE_ENV === "production"),
+      (!process.env.FUNCTIONS_EMULATOR),
     rateLimit: options.rateLimit,
     requireAuth: options.requireAuth ?? true,
     requiredRole: options.requiredRole,

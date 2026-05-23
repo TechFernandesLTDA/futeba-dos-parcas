@@ -11,7 +11,18 @@ import {db} from "../_db";
 // para evitar cold start cost em todas as outras functions
 // (~10MB de binário nativo carregado apenas quando necessário)
 
-const storage = new Storage();
+let _storage: Storage | null = null;
+/**
+ * Lazy singleton do Storage client.
+ * FIX #1592: evita cold start overhead em todas as functions.
+ * @return {Storage} Storage client instance.
+ */
+function getStorage(): Storage {
+  if (!_storage) {
+    _storage = new Storage();
+  }
+  return _storage;
+}
 
 /**
  * Tamanho máximo permitido para upload de imagem
@@ -134,7 +145,7 @@ export const generateProfileThumbnail =
         return;
       }
 
-      const bucket = storage.bucket(object.bucket);
+      const bucket = getStorage().bucket(object.bucket);
       const fileName = path.basename(filePath);
       const fileDir = path.dirname(filePath);
 
@@ -345,7 +356,7 @@ export const generateGroupThumbnail =
         return;
       }
 
-      const bucket = storage.bucket(object.bucket);
+      const bucket = getStorage().bucket(object.bucket);
       const fileName = path.basename(filePath);
       const fileDir = path.dirname(filePath);
 

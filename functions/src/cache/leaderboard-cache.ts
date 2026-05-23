@@ -149,7 +149,7 @@ export const getLeaderboardCached =
     {
       region: "southamerica-east1",
       memory: "512MiB",
-      enforceAppCheck: process.env.NODE_ENV === "production",
+      enforceAppCheck: !process.env.FUNCTIONS_EMULATOR,
       consumeAppCheckToken: true,
     },
     async (request) => {

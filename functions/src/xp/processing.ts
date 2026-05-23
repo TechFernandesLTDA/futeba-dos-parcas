@@ -511,8 +511,7 @@ export async function isTransactionAlreadyProcessed(
       `transação ${transactionId}:`,
       error
     );
-    // Fail-safe: assumir não processado
-    return false;
+    throw error;
   }
 }
 

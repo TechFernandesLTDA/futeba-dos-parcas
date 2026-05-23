@@ -202,22 +202,30 @@ export const STREAK_MILESTONES = [
  * Envia notificação de streak milestone se o
  * jogador atingiu um marco.
  *
+ * FIX #1534: itera TODOS os milestones entre
+ * previousStreak e currentStreak para não perder
+ * milestones intermediários (ex: streak 6→8
+ * notifica milestone 7).
+ *
  * @param {string} userId - ID do usuário
  * @param {number} currentStreak - Streak atual
+ * @param {number} previousStreak - Streak anterior
  * @return {Promise<boolean>} true se enviou
  */
 export async function sendStreakNotificationIfMilestone(
   userId: string,
-  currentStreak: number
+  currentStreak: number,
+  previousStreak: number = currentStreak - 1
 ): Promise<boolean> {
-  // Verificar se atingiu algum milestone
-  const milestone = STREAK_MILESTONES.find(
-    (m) => currentStreak === m.streak
+  const reachedMilestones = STREAK_MILESTONES.filter(
+    (m) => m.streak > previousStreak && m.streak <= currentStreak
   );
 
-  if (!milestone) {
+  if (reachedMilestones.length === 0) {
     return false;
   }
+
+  const milestone = reachedMilestones[0];
 
   console.log(
     `[STREAK] User ${userId} reached streak` +

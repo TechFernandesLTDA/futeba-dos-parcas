@@ -151,7 +151,7 @@ export const WeeklyRecapScreen: React.FC = () => {
     };
 
     fetchData();
-  }, [targetUserId, retryCount]);
+  }, [targetUserId, retryCount, t]);
 
   if (error) {
     return (

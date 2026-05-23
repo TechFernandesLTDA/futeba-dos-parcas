@@ -93,22 +93,13 @@ export const onConfirmationCreated = onDocumentCreated(
       return;
     }
 
-    // FIX #796: filtrar por janela temporal relevante (±2 dias)
-    // evita carregar todo o histórico do usuário (N reads crescentes)
-    const TWO_DAYS_MS = 2 * 24 * 3600 * 1000;
-    const windowStart = admin.firestore.Timestamp.fromMillis(
-      window.start - TWO_DAYS_MS,
-    );
-    const windowEnd = admin.firestore.Timestamp.fromMillis(
-      window.end + TWO_DAYS_MS,
-    );
-
-    // Query confirmacoes do mesmo user em outros jogos (com filtro temporal)
+    // FIX #1593: game_date_time não existe em confirmations — filtro temporal
+    // removido. Overlap real é checado via game doc abaixo.
+    // Limit 50 pra evitar leitura excessiva em users com muito histórico.
     const userConfsSnap = await db()
       .collection("confirmations")
       .where("user_id", "==", userId)
-      .where("game_date_time", ">=", windowStart)
-      .where("game_date_time", "<=", windowEnd)
+      .limit(50)
       .get();
 
     const overlaps: string[] = [];

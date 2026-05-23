@@ -95,7 +95,7 @@ describe("XP Processing - Idempotência", () => {
       expect(result).toBe(true);
     });
 
-    test("deve retornar false em caso de erro (fail-safe)", async () => {
+    test("deve lançar erro em caso de falha (fail-closed, FIX #1599)", async () => {
       // Mock: collection().doc().get() falha com erro
       mockDb.collection.mockReturnValue({
         doc: jest.fn().mockReturnValue({
@@ -103,9 +103,9 @@ describe("XP Processing - Idempotência", () => {
         }),
       });
 
-      const result = await isTransactionAlreadyProcessed("game_game123_user_user456");
-
-      expect(result).toBe(false);
+      await expect(
+        isTransactionAlreadyProcessed("game_game123_user_user456")
+      ).rejects.toThrow("Firestore error");
     });
   });
 
@@ -156,6 +156,7 @@ describe("XP Processing - Idempotência", () => {
             where: jest.fn().mockReturnValue(mockWhereQuery),
             doc: jest.fn().mockReturnValue({
               id: "doc_id",
+              get: jest.fn().mockResolvedValue({ exists: false }),
             }),
           };
         }
