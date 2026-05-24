@@ -47,16 +47,12 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { collection, query, where, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
+import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
-import { createLogger } from '../../utils/logger';
-
-const logger = createLogger('LeagueScreen');
 
 type SortField = 'points' | 'goals' | 'wins' | 'gamesPlayed' | 'assists' | 'mvpCount';
 
@@ -72,6 +68,9 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
 const PROMO_TOP = 3;
 const RELEG_BOTTOM = 3;
 const LEAGUE_DIVISIONS: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
+
+// Normalização fora do componente (função pura, não recriada)
+const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export const LeagueScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -89,51 +88,44 @@ export const LeagueScreen: React.FC = () => {
   const [shareSnack, setShareSnack] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showSort, setShowSort] = useState(false);
-  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
 
   const userCardRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
   const pullStartY = useRef<number | null>(null);
   const pullDelta = useRef(0);
   const [pullProgress, setPullProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(96);
 
-  // BUG 1 fix: Buscar temporada ativa para filtrar season_participation
-  useEffect(() => {
-    let cancelled = false;
-    const fetchSeason = async () => {
-      try {
-        const snap = await getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1)));
-        if (!cancelled) {
-          setActiveSeasonId(snap.docs[0]?.id || null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('Error fetching active season:', err);
-          showError('Erro ao carregar temporada ativa');
-        }
-      }
-    };
-    fetchSeason();
-    return () => { cancelled = true; };
-  }, [showError]);
+  // Hook compartilhado: busca temporada ativa (cache 10min)
+  const { seasonId: activeSeasonId, loading: seasonLoading } = useActiveSeason();
 
   const selectedDivision = tabValue > 0 ? LEAGUE_DIVISIONS[tabValue - 1] : undefined;
 
-  // BUG 1 fix: Passar filters com seasonId para evitar duplicação
+  // Filtros memoizados
   const filters: LeagueFilters = useMemo(() => ({
     seasonId: activeSeasonId,
   }), [activeSeasonId]);
 
-  // BUG 3 fix: Buscar dados sem filtro de divisão para contadores
-  const { players: allPlayers, loading, error, refetch } = useLeague(user?.id, undefined, filters);
-  // Dados filtrados por divisão (para exibição)
-  const { players } = useLeague(user?.id, selectedDivision, filters);
+  // ÚNICA chamada useLeague - busca todos os jogadores (sem filtro de divisão)
+  // A filtragem por divisão é feita client-side via useMemo
+  const { players: allPlayers, loading, error, refetch } = useLeague(
+    user?.id,
+    filters,
+    { enabled: !!activeSeasonId } // Não faz query antes do seasonId estar pronto
+  );
 
-  // BUG 3 + BUG 9 fix: Calcular contadores sobre allPlayers (sem filtro de divisão) usando reduce
+  // Derivar players filtrados por divisão (client-side, sem query extra)
+  const players = useMemo(
+    () => selectedDivision ? allPlayers.filter(p => p.division === selectedDivision) : allPlayers,
+    [allPlayers, selectedDivision]
+  );
+
+  // Contadores por divisão (sobre allPlayers, não filtrado)
   const divisionCounts = useMemo(() => {
     const counts: Record<string, number> = { ALL: allPlayers.length };
     LEAGUE_DIVISIONS.forEach(d => { counts[d] = 0; });
@@ -144,9 +136,6 @@ export const LeagueScreen: React.FC = () => {
     }
     return counts;
   }, [allPlayers]);
-
-  // BUG 14 fix: Normalizar acentos na busca
-  const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const filteredAndSorted = useMemo(() => {
     let result = players;
@@ -160,17 +149,22 @@ export const LeagueScreen: React.FC = () => {
     return result;
   }, [players, search, sortField]);
 
-  // BUG 4 fix: Calcular posição real no array completo (ordenado por pontos), não no filtrado
+  // Sort consolidado: 1 único sort usado por realPositions E pointsToNext
+  const sortedByPoints = useMemo(
+    () => [...allPlayers].sort((a, b) => b.points - a.points),
+    [allPlayers]
+  );
+
+  // Posições reais baseadas em allPlayers (posição global, não por divisão)
   const realPositions = useMemo(() => {
-    const sorted = [...players].sort((a, b) => b.points - a.points);
     const posMap = new Map<string, number>();
-    sorted.forEach((p, i) => posMap.set(p.id, i + 1));
+    sortedByPoints.forEach((p, i) => posMap.set(p.id, i + 1));
     return posMap;
-  }, [players]);
+  }, [sortedByPoints]);
 
   const currentUserPlayer = useMemo(
-    () => players.find(p => p.isCurrentUser),
-    [players]
+    () => allPlayers.find(p => p.isCurrentUser),
+    [allPlayers]
   );
 
   const currentUserPosition = useMemo(
@@ -178,23 +172,35 @@ export const LeagueScreen: React.FC = () => {
     [currentUserPlayer, realPositions]
   );
 
+  // pointsToNext reutiliza sortedByPoints (sem sort duplicado)
   const pointsToNext = useMemo(() => {
     if (!currentUserPosition || currentUserPosition <= 1) return null;
-    const sorted = [...players].sort((a, b) => b.points - a.points);
-    const above = sorted[currentUserPosition - 2];
+    const above = sortedByPoints[currentUserPosition - 2];
     if (!above || !currentUserPlayer) return null;
     const diff = above.points - currentUserPlayer.points;
     return { name: above.userName, diff, position: currentUserPosition - 1 };
-  }, [players, currentUserPosition, currentUserPlayer]);
+  }, [sortedByPoints, currentUserPosition, currentUserPlayer]);
 
-  // BUG 8 fix: Memoizar callbacks para não quebrar React.memo
+  // Medir altura do header dinamicamente para sticky card
+  useEffect(() => {
+    if (headerRef.current) {
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setHeaderHeight(entry.contentRect.height);
+        }
+      });
+      observer.observe(headerRef.current);
+      return () => observer.disconnect();
+    }
+  }, []);
+
+  // Callbacks memoizados para não quebrar React.memo
   const handleRetry = useCallback(() => refetch(), [refetch]);
 
   const scrollToMe = useCallback(() => {
     userCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
 
-  // BUG 11 fix: Clipboard error handling
   const handleShare = useCallback(async () => {
     if (!currentUserPlayer || !currentUserPosition) return;
     const text = `Estou em ${currentUserPosition}º lugar na Liga ${DIVISION_CONFIG[currentUserPlayer.division]?.label || currentUserPlayer.division} com ${currentUserPlayer.points} pontos!`;
@@ -204,14 +210,19 @@ export const LeagueScreen: React.FC = () => {
       try {
         await navigator.clipboard.writeText(text);
         setShareSnack(true);
-      } catch (err) {
-        logger.error('Clipboard write failed:', err);
+      } catch {
         showError('Não foi possível copiar para a área de transferência');
       }
     }
   }, [currentUserPlayer, currentUserPosition, showError]);
 
-  // BUG 10 fix: IntersectionObserver com cleanup adequado e reset de state
+  // onToggleExpand memoizado: recebe id ao invés de closure inline
+  const handleToggleExpand = useCallback((id: string) => {
+    setExpandedId(prev => prev === id ? null : id);
+  }, []);
+
+  // IntersectionObserver depende do ID, não do objeto inteiro
+  const currentUserId = currentUserPlayer?.id ?? null;
   useEffect(() => {
     const el = userCardRef.current;
     if (!el) {
@@ -227,7 +238,7 @@ export const LeagueScreen: React.FC = () => {
       observer.disconnect();
       setShowSticky(false);
     };
-  }, [currentUserPlayer]);
+  }, [currentUserId]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (listContainerRef.current && listContainerRef.current.scrollTop === 0) {
@@ -244,11 +255,13 @@ export const LeagueScreen: React.FC = () => {
     }
   }, []);
 
-  // BUG 7 fix: Pull-to-refresh usa refetch() que retorna Promise resolvida quando completa
+  // Pull-to-refresh com timeout de proteção (10s)
   const handleTouchEnd = useCallback(() => {
     if (pullDelta.current > 60 && !isRefreshing) {
       setIsRefreshing(true);
+      const timeoutId = setTimeout(() => setIsRefreshing(false), 10000);
       refetch().finally(() => {
+        clearTimeout(timeoutId);
         setIsRefreshing(false);
       });
     }
@@ -257,20 +270,32 @@ export const LeagueScreen: React.FC = () => {
     setPullProgress(0);
   }, [isRefreshing, refetch]);
 
-  const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
+  // getPositionStyle memoizado com Map cache por position
+  const positionStyleCache = useRef(new Map<number, { bgcolor: string; color: string }>());
+  const getPositionStyle = useCallback((position: number) => {
+    const cached = positionStyleCache.current.get(position);
+    if (cached) return cached;
+    const style = getPositionBadgeStyle(position, theme);
+    positionStyleCache.current.set(position, style);
+    return style;
+  }, [theme]);
 
-  const getPositionTooltip = (position: number): string => {
+  const getPositionTooltip = useCallback((position: number): string => {
+    if (position <= 0) return 'Sem classificação';
     if (position === 1) return 'Líder da temporada!';
     if (position === 2) return 'Vice-líder, quase lá!';
     if (position === 3) return 'Top 3 - Zona de promoção';
     if (position <= PROMO_TOP) return 'Zona de promoção';
-    if (position > players.length - RELEG_BOTTOM && players.length > RELEG_BOTTOM * 2) return 'Zona de rebaixamento';
+    if (position > allPlayers.length - RELEG_BOTTOM && allPlayers.length > RELEG_BOTTOM * 2) return 'Zona de rebaixamento';
     return `${position}ª posição`;
-  };
+  }, [allPlayers.length]);
+
+  const isLoading = loading || seasonLoading;
 
   return (
     <Box sx={{ pb: 4 }}>
       <Box
+        ref={headerRef}
         sx={{
           position: 'sticky',
           top: 0,
@@ -395,7 +420,7 @@ export const LeagueScreen: React.FC = () => {
         <Box
           sx={{
             position: 'fixed',
-            top: 56, // BUG 5 fix: Posicionar abaixo do header (altura estimada do header)
+            top: headerHeight,
             left: 0,
             right: 0,
             zIndex: 11,
@@ -436,7 +461,7 @@ export const LeagueScreen: React.FC = () => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {loading ? (
+        {isLoading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
         ) : error ? (
           <Alert
@@ -450,7 +475,7 @@ export const LeagueScreen: React.FC = () => {
           >
             {t('league.loadError', { error })}
           </Alert>
-        ) : filteredAndSorted.length === 0 && search ? (
+        ) : filteredAndSorted.length === 0 && search.trim() ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <SearchIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">Nenhum jogador encontrado</Typography>
@@ -491,7 +516,7 @@ export const LeagueScreen: React.FC = () => {
               </Alert>
             )}
 
-            {players.length > 0 && (
+            {allPlayers.length > 0 && (
               <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Chip
                   label={
@@ -503,7 +528,7 @@ export const LeagueScreen: React.FC = () => {
                   size="small"
                   sx={{ bgcolor: alpha(theme.palette.success.main, 0.08), color: 'text.primary' }}
                 />
-                {players.length > RELEG_BOTTOM * 2 && (
+                {allPlayers.length > RELEG_BOTTOM * 2 && (
                   <Chip
                     label={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -520,10 +545,9 @@ export const LeagueScreen: React.FC = () => {
 
             <List disablePadding aria-label={t('league.standingsAria')}>
               {filteredAndSorted.map((player) => {
-                // BUG 4 fix: Usar posição real no ranking, não index do array filtrado
-                const position = realPositions.get(player.id) || 0;
-                const isPromoZone = position <= PROMO_TOP && position > 0;
-                const isRelegZone = position > players.length - RELEG_BOTTOM && players.length > RELEG_BOTTOM * 2 && position > 0;
+                const position = realPositions.get(player.id) ?? -1;
+                const isPromoZone = position >= 1 && position <= PROMO_TOP;
+                const isRelegZone = position > allPlayers.length - RELEG_BOTTOM && allPlayers.length > RELEG_BOTTOM * 2 && position > 0;
                 return (
                   <LeaguePlayerItem
                     key={player.id}
@@ -532,11 +556,11 @@ export const LeagueScreen: React.FC = () => {
                     positionStyle={getPositionStyle(position)}
                     positionTooltip={getPositionTooltip(position)}
                     isExpanded={expandedId === player.id}
-                    onToggleExpand={() => setExpandedId(expandedId === player.id ? null : player.id)}
+                    onToggleExpand={handleToggleExpand}
                     isPromoZone={isPromoZone}
                     isRelegZone={isRelegZone}
                     cardRef={player.isCurrentUser ? userCardRef : undefined}
-                    totalPlayers={players.length}
+                    totalPlayers={allPlayers.length}
                   />
                 );
               })}
@@ -587,7 +611,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   positionStyle: { bgcolor: string; color: string };
   positionTooltip: string;
   isExpanded: boolean;
-  onToggleExpand: () => void;
+  onToggleExpand: (id: string) => void;
   isPromoZone: boolean;
   isRelegZone: boolean;
   cardRef?: React.Ref<HTMLDivElement>;
@@ -603,10 +627,15 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
     ? theme.palette.error.main
     : undefined;
 
+  const handleToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleExpand(player.id);
+  }, [onToggleExpand, player.id]);
+
   return (
     <Card
       ref={cardRef}
-      onClick={onToggleExpand}
+      onClick={() => onToggleExpand(player.id)}
       sx={{
         mb: 1,
         cursor: 'pointer',
@@ -647,7 +676,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
                 ...positionStyle,
               }}
             >
-              {position <= 3 ? <TrophyIcon fontSize="small" /> : position}
+              {position >= 1 && position <= 3 ? <TrophyIcon fontSize="small" /> : position > 0 ? position : '—'}
             </Box>
           </Tooltip>
 
@@ -707,7 +736,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
             />
           </Box>
 
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}>
+          <IconButton size="small" onClick={handleToggle}>
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>
@@ -724,7 +753,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
           </Box>
           {player.isCurrentUser && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-              {position <= 3 ? 'Você está na zona de promoção!' : position > totalPlayers - RELEG_BOTTOM && totalPlayers > RELEG_BOTTOM * 2 ? 'Atenção: zona de rebaixamento' : 'Continue jogando para subir!'}
+              {position >= 1 && position <= 3 ? 'Você está na zona de promoção!' : position > totalPlayers - RELEG_BOTTOM && totalPlayers > RELEG_BOTTOM * 2 ? 'Atenção: zona de rebaixamento' : 'Continue jogando para subir!'}
             </Typography>
           )}
         </Collapse>
@@ -733,7 +762,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   );
 });
 
-function StatBox({ label, value, color }: { label: string; value: string | number; color: string }) {
+const StatBox = React.memo(function StatBox({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
     <Box>
       <Typography variant="h6" fontWeight={700} sx={{ color }}>
@@ -744,4 +773,4 @@ function StatBox({ label, value, color }: { label: string; value: string | numbe
       </Typography>
     </Box>
   );
-}
+});

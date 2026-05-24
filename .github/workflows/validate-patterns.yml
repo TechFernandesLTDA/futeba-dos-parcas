@@ -1,0 +1,170 @@
+name: Validate Patterns
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'web/**'
+      - 'functions/**'
+      - 'scripts/**'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'firebase.json'
+      - '.github/workflows/validate-patterns.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'web/**'
+      - 'functions/**'
+      - 'scripts/**'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'firebase.json'
+      - '.github/workflows/validate-patterns.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  audit-patterns:
+    name: Audit Patterns
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install ripgrep
+        run: |
+          if ! command -v rg &>/dev/null; then
+            brew install ripgrep
+          fi
+
+      - name: Run audit patterns
+        run: bash scripts/audit-patterns.sh
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-patterns-report
+          path: audit-report.txt
+          retention-days: 7
+
+  secrets-check:
+    name: Secrets Check
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install ripgrep
+        run: |
+          if ! command -v rg &>/dev/null; then
+            brew install ripgrep
+          fi
+
+      - name: Check secrets
+        run: bash scripts/check-secrets.sh
+
+  rules-catchall:
+    name: Rules Catch-All Deny
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify firestore.rules has catch-all deny
+        run: |
+          if tail -10 firestore.rules | grep -q 'allow read, write: if false'; then
+            echo "✅ firestore.rules: catch-all deny presente"
+          else
+            echo "❌ firestore.rules: catch-all deny NÃO encontrado no final do arquivo!"
+            exit 1
+          fi
+
+      - name: Verify storage.rules has catch-all deny
+        run: |
+          if tail -10 storage.rules | grep -q 'allow read, write: if false'; then
+            echo "✅ storage.rules: catch-all deny presente"
+          else
+            echo "❌ storage.rules: catch-all deny NÃO encontrado no final do arquivo!"
+            exit 1
+          fi
+
+  security-headers:
+    name: Firebase Security Headers
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check X-Content-Type-Options header
+        run: |
+          if grep -q 'X-Content-Type-Options' firebase.json; then
+            echo "✅ X-Content-Type-Options presente"
+          else
+            echo "❌ X-Content-Type-Options ausente em firebase.json"
+            exit 1
+          fi
+
+      - name: Check X-Frame-Options header
+        run: |
+          if grep -q 'X-Frame-Options' firebase.json; then
+            echo "✅ X-Frame-Options presente"
+          else
+            echo "❌ X-Frame-Options ausente em firebase.json"
+            exit 1
+          fi
+
+      - name: Check X-XSS-Protection header
+        run: |
+          if grep -q 'X-XSS-Protection' firebase.json; then
+            echo "✅ X-XSS-Protection presente"
+          else
+            echo "❌ X-XSS-Protection ausente em firebase.json"
+            exit 1
+          fi
+
+  validate-pre-push:
+    name: Pre-Push Validation
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install web dependencies
+        run: cd web && npm ci
+
+      - name: Install functions dependencies
+        run: cd functions && npm ci
+
+      - name: Web TypeScript check
+        run: cd web && npx tsc --noEmit --project tsconfig.dev.json
+
+      - name: Web ESLint
+        run: cd web && npm run lint
+
+      - name: Functions build
+        run: cd functions && npm run build
+
+      - name: Functions lint
+        run: cd functions && npm run lint

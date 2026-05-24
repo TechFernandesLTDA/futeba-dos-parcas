@@ -41,13 +41,12 @@ import {
   Shield,
   Star,
 } from '@mui/icons-material';
-import { collection, query, where, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useToast } from '../../../contexts/ToastContext';
 import { PlayerAvatar } from '../../../components/common/GameCard';
 import { PlayerCard } from '../../../components/player/PlayerCard';
 import { TeamBadge } from '../../../components/team/TeamBadge';
+import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague';
+import { useActiveSeason } from '../../../hooks/useActiveSeason';
 import { DIVISION_CONFIG, LeagueDivision, getXpProgress } from '../../../types/gamification';
 import { getLevelBadgeImage } from '../../../utils/levelBadge';
 import {
@@ -55,11 +54,7 @@ import {
   XP_MVP, XP_WIN, XP_DRAW, XP_STREAK_3, XP_STREAK_5, XP_STREAK_7, XP_STREAK_10,
 } from '../../../utils/constants';
 import { useGroups } from '../../../hooks/useGroups';
-import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague';
-import { createLogger } from '../../../utils/logger';
 import { useTranslation } from 'react-i18next';
-
-const logger = createLogger('RankingsTab');
 
 const spinnerKeyframes = {
   '@keyframes spin': {
@@ -233,43 +228,24 @@ export function RankingsTab() {
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
     const navigate = useNavigate();
   const { user } = useAuth();
-  const { showError } = useToast();
   const { t } = useTranslation();
 
   const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=XP Global, 2=Sistema XP
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [ligaPositionChanges, setLigaPositionChanges] = useState<Record<string, number | null>>({});
   const [xpPositionChanges, setXpPositionChanges] = useState<Record<string, number | null>>({});
   const { groups: userGroups } = useGroups();
+
+  // Hook compartilhado: busca temporada ativa (cache 10min)
+  const { seasonId: activeSeasonId, loading: seasonLoading } = useActiveSeason();
 
   const filters: LeagueFilters = useMemo(() => ({
     groupId: selectedGroupId,
     seasonId: activeSeasonId,
   }), [selectedGroupId, activeSeasonId]);
 
-  const { players, loading, error: errorState, refetch } = useLeague(user?.id, undefined, filters);
-
-  // Buscar temporada ativa para filtrar season_participation (#1204)
-  useEffect(() => {
-    let cancelled = false;
-    const fetchSeason = async () => {
-      try {
-        const snap = await getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1)));
-        if (!cancelled) {
-          setActiveSeasonId(snap.docs[0]?.id || null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('Error fetching active season:', err);
-          showError('Erro ao buscar temporada ativa.');
-        }
-      }
-    };
-    fetchSeason();
-    return () => { cancelled = true; };
-  }, [showError]);
+  const { players, loading, error: errorState, refetch } = useLeague(user?.id, filters, { enabled: !!activeSeasonId });
 
   // Position change tracking via localStorage (#1238)
   useEffect(() => {
@@ -590,7 +566,7 @@ export function RankingsTab() {
 
         {/* Lista de jogadores (Liga ou XP Global) */}
         {tabValue !== 2 && (
-          loading ? (
+          loading || seasonLoading ? (
             Array.from({ length: 8 }).map((_, i) => (
               <Card key={i} sx={{ mb: 1 }}>
                 <CardContent sx={{ py: 1.5 }}>

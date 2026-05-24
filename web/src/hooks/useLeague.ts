@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   collection,
   query,
@@ -81,25 +81,22 @@ export interface LeagueFilters {
 }
 
 // Busca ranking da liga com batch reads para dados de usuários
-// BUG 6 fix: remove limit(100) quando há filtro de divisão para não perder jogadores
+// Sempre aplica limit(200) para evitar queries ilimitadas
 async function fetchLeagueData(
   currentUserId?: string,
-  division?: LeagueDivision,
   filters?: LeagueFilters
 ): Promise<LeaguePlayer[]> {
   const seasonRef = collection(db, 'season_participation');
 
-  const constraints: QueryConstraint[] = [orderBy('points', 'desc')];
+  const constraints: QueryConstraint[] = [
+    orderBy('points', 'desc'),
+    limit(200)
+  ];
   if (filters?.seasonId) {
     constraints.push(where('season_id', '==', filters.seasonId));
   }
   if (filters?.groupId) {
     constraints.push(where('group_id', '==', filters.groupId));
-  }
-  // BUG 6 fix: só aplica limit quando NÃO há filtro de divisão
-  // (filtro de divisão é feito client-side, então limit(100) antes cortaria jogadores)
-  if (!division) {
-    constraints.push(limit(200));
   }
 
   const q = query(seasonRef, ...constraints);
@@ -154,44 +151,50 @@ async function fetchLeagueData(
       uniqueMap.set(p.userId, p);
     }
   }
-  const deduplicated = Array.from(uniqueMap.values());
+  return Array.from(uniqueMap.values());
+}
 
-  // Filtrar por divisão se especificado
-  return division ? deduplicated.filter((p) => p.division === division) : deduplicated;
+export interface UseLeagueOptions {
+  enabled?: boolean;
 }
 
 export const useLeague = (
   currentUserId?: string,
-  division?: LeagueDivision,
-  filters?: LeagueFilters
+  filters?: LeagueFilters,
+  options?: UseLeagueOptions
 ) => {
   const queryClient = useQueryClient();
-
-  const { data: players = [], isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: ['league', currentUserId, division, filters?.groupId, filters?.seasonId],
-    queryFn: () => fetchLeagueData(currentUserId, division, filters),
-    staleTime: 3 * 60 * 1000, // 3 minutos
-    gcTime: 10 * 60 * 1000,
-  });
-
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
   const [listenerError, setListenerError] = useState<string | null>(null);
 
-  // BUG 2 fix: Listener real-time respeita filtros (seasonId, groupId)
-  // Memoiza constraints para não recriar listener desnecessariamente
-  const listenerConstraints = useMemo(() => {
-    const constraints: QueryConstraint[] = [orderBy('points', 'desc'), limit(200)];
+  const enabled = options?.enabled ?? true;
+
+  const { data: players = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId],
+    queryFn: () => fetchLeagueData(currentUserId, filters),
+    staleTime: 3 * 60 * 1000, // 3 minutos
+    gcTime: 10 * 60 * 1000,
+    enabled,
+  });
+
+  // Listener real-time: único por seasonId/groupId (sem division)
+  // Usa showErrorRef para não recriar listener quando showError muda
+  useEffect(() => {
+    if (!enabled) return;
+
+    const seasonRef = collection(db, 'season_participation');
+    const listenerConstraints: QueryConstraint[] = [
+      orderBy('points', 'desc'),
+      limit(200)
+    ];
     if (filters?.seasonId) {
-      constraints.push(where('season_id', '==', filters.seasonId));
+      listenerConstraints.push(where('season_id', '==', filters.seasonId));
     }
     if (filters?.groupId) {
-      constraints.push(where('group_id', '==', filters.groupId));
+      listenerConstraints.push(where('group_id', '==', filters.groupId));
     }
-    return constraints;
-  }, [filters?.seasonId, filters?.groupId]);
-
-  useEffect(() => {
-    const seasonRef = collection(db, 'season_participation');
     const q = query(seasonRef, ...listenerConstraints);
     let isFirstSnapshot = true;
 
@@ -200,19 +203,17 @@ export const useLeague = (
         isFirstSnapshot = false;
         return;
       }
-      // Invalida apenas queries com os mesmos filtros
       queryClient.invalidateQueries({
-        queryKey: ['league', currentUserId, division, filters?.groupId, filters?.seasonId],
+        queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId],
       });
     }, (err) => {
       logger.error('Error in league listener:', err);
       setListenerError(err.message);
-      showError('Erro ao carregar ranking em tempo real');
+      showErrorRef.current('Erro ao carregar ranking em tempo real');
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryClient, showError, currentUserId, division, filters?.seasonId, filters?.groupId]);
+  }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, enabled]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 
