@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -37,7 +37,7 @@ import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 export const AboutScreen: React.FC = () => {
   useDocumentTitle('Sobre');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const { user } = useAuth();
 
@@ -57,7 +57,7 @@ export const AboutScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

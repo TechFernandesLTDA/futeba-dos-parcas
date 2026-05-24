@@ -16,7 +16,7 @@ import {
   ArrowBack as BackIcon,
   Speed as SpeedIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -50,7 +50,7 @@ function getScoreColor(value: number, good: number, poor: number): string {
 }
 
 export const PerformanceDashboard: React.FC = () => {
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const { user } = useAuth();
   const [records, setRecords] = useState<PerformanceRecord[]>([]);
@@ -120,7 +120,7 @@ export const PerformanceDashboard: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => navigate(-1)}>
+          <IconButton onClick={goBack}>
             <BackIcon />
           </IconButton>
           <SpeedIcon sx={{ color: 'primary.main' }} />

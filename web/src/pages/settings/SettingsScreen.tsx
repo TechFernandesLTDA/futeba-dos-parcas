@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -59,6 +60,7 @@ interface Settings {
 
 export const SettingsScreen: React.FC = () => {
   const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user, logout } = useAuth();
@@ -165,7 +167,7 @@ export const SettingsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
+          <IconButton onClick={goBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

@@ -61,8 +61,9 @@ const SchedulesScreen = lazy(() => import('./pages/schedules/SchedulesScreen').t
 const LiveStatsScreen = lazy(() => import('./pages/livegame/LiveStatsScreen').then(m => ({ default: m.LiveStatsScreen })));
 const LiveEventsScreen = lazy(() => import('./pages/livegame/LiveEventsScreen').then(m => ({ default: m.LiveEventsScreen })));
 
-// Groups
-const GroupsScreen = lazy(() => import('./pages/groups/GroupsScreen').then(m => ({ default: m.GroupsScreen })));
+
+
+// Groups — GroupsScreen removido (redireciona para /?tab=2)
 const GroupDetailScreen = lazy(() => import('./pages/group/GroupDetailScreen').then(m => ({ default: m.GroupDetailScreen })));
 const CreateGroupScreen = lazy(() => import('./pages/group/CreateGroupScreen').then(m => ({ default: m.CreateGroupScreen })));
 const GroupEditScreen = lazy(() => import('./pages/group/GroupEditScreen').then(m => ({ default: m.GroupEditScreen })));
@@ -86,7 +87,7 @@ const EvolutionScreen = lazy(() => import('./pages/statistics/EvolutionScreen').
 const HeadToHeadScreen = lazy(() => import('./pages/statistics/HeadToHeadScreen').then(m => ({ default: m.HeadToHeadScreen })));
 
 // Rankings & League
-const RankingScreen = lazy(() => import('./pages/ranking/RankingScreen').then(m => ({ default: m.RankingScreen })));
+
 const LeagueScreen = lazy(() => import('./pages/league/LeagueScreen').then(m => ({ default: m.LeagueScreen })));
 const BadgesScreen = lazy(() => import('./pages/badges/BadgesScreen').then(m => ({ default: m.BadgesScreen })));
 
@@ -139,7 +140,7 @@ function RouteFallback() {
   if (path.startsWith('/game/')) return <GameDetailSkeleton />;
   if (path.startsWith('/group/') && !path.includes('/edit') && !path.includes('/settings') && !path.includes('/cashbox')) return <GroupDetailSkeleton />;
   if (path.startsWith('/profile')) return <ProfileScreenSkeleton />;
-  if (path === '/ranking' || path === '/league') return <RankingScreenSkeleton />;
+  if (path === '/league') return <RankingScreenSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -420,10 +421,10 @@ function AppRoutes() {
         <Route path="/group/:groupId/schedules" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/invite" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/league" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupLeagueScreen /></Suspense></GroupMemberRoute>} />
-        <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense>} />
+        <Route path="/groups" element={<Navigate to="/?tab=2" replace />} />
         <Route path="/groups/discover" element={<Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense>} />
         {/* Profile + perfis públicos */}
-        <Route path="/profile" element={<Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense>} />
+        <Route path="/profile" element={<Navigate to="/?tab=4" replace />} />
         <Route path="/profile/:userId" element={<Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense>} />
         <Route path="/profile/edit" element={<Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense>} />
         <Route path="/level-journey" element={<Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense>} />
@@ -436,7 +437,7 @@ function AppRoutes() {
         <Route path="/evolution/:userId" element={<Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense>} />
         <Route path="/head-to-head" element={<Suspense fallback={<RouteFallback />}><HeadToHeadScreen /></Suspense>} />
         {/* Rankings */}
-        <Route path="/ranking" element={<Suspense fallback={<RouteFallback />}><RankingScreen /></Suspense>} />
+        <Route path="/ranking" element={<Navigate to="/?tab=3" replace />} />
         <Route path="/league" element={<Suspense fallback={<RouteFallback />}><LeagueScreen /></Suspense>} />
         <Route path="/badges" element={<Suspense fallback={<RouteFallback />}><BadgesScreen /></Suspense>} />
         {/* Locations */}

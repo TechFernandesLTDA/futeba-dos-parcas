@@ -46,6 +46,6 @@ describe('constants', () => {
     expect(ROUTES.HOME).toBe('/');
     expect(ROUTES.LOGIN).toBe('/login');
     expect(ROUTES.GAMES).toBe('/?tab=1');
-    expect(ROUTES.PROFILE).toBe('/profile');
+    expect(ROUTES.PROFILE).toBe('/?tab=4');
   });
 });
