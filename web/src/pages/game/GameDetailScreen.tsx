@@ -90,7 +90,7 @@ export const GameDetailScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
 
   const { game, confirmations, loading, error } = useGameDetail(gameId || null);
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
@@ -188,7 +188,7 @@ export const GameDetailScreen: React.FC = () => {
       await softDeleteGame({ gameId });
       setDeleteDialogOpen(false);
       showSuccess('Jogo excluído com sucesso');
-      navigate('/games', { replace: true });
+      navigate('/?tab=1', { replace: true });
     } catch (err) {
       showError((err as Error)?.message || 'Erro ao excluir jogo');
     } finally {

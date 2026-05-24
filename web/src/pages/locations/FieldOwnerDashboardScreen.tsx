@@ -412,7 +412,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                 <ListItemText primary="Adicionar Nova Quadra" />
               </ListItemButton>
               <Divider />
-              <ListItemButton onClick={() => navigate('/games')}>
+              <ListItemButton onClick={() => navigate('/?tab=1')}>
                 <ListItemIcon>
                   <CalendarIcon />
                 </ListItemIcon>

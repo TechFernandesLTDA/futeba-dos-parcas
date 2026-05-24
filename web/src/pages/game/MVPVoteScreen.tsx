@@ -46,7 +46,7 @@ export const MVPVoteScreen: React.FC = () => {
   useDocumentTitle('Votação MVP');
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { currentUser } = useAuth();
   const { showError } = useToast();

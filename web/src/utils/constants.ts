@@ -62,7 +62,7 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
-  GAMES: '/games',
+  GAMES: '/?tab=1',
   GAME_DETAIL: '/game/:gameId',
   GAME_CREATE: '/game/create',
   GROUPS: '/groups',

@@ -70,7 +70,7 @@ interface GameResult {
 
 export const VoteResultScreen: React.FC = () => {
   useDocumentTitle('Resultado da Votação');
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();

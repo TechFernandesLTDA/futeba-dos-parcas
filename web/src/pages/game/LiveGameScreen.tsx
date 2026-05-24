@@ -105,7 +105,7 @@ export const LiveGameScreen: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
   const { currentUser } = useAuth();
   const { showError } = useToast();
   const queryClient = useQueryClient();
