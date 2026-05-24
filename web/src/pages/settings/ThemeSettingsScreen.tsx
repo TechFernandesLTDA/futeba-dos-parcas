@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
   Box,
@@ -42,7 +42,7 @@ import { useTranslation } from 'react-i18next';
 export const ThemeSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('settings.theme.title'));
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { mode, setMode } = useThemeContext();
@@ -88,7 +88,7 @@ export const ThemeSettingsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
+          <IconButton onClick={goBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

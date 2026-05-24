@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -58,7 +59,7 @@ interface StatsSummary {
 export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Evolução');
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
     const theme = useTheme();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
@@ -183,7 +184,7 @@ export const EvolutionScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

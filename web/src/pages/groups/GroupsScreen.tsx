@@ -58,7 +58,7 @@ export const GroupsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate('/')} aria-label={t('common.back')}>
+          <IconButton onClick={() => navigate('/?tab=2')} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>

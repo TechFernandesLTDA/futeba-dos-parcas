@@ -1,5 +1,6 @@
 import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
 import {
   Box,
@@ -42,6 +43,7 @@ export const GroupLeagueScreen: React.FC = () => {
   useDocumentTitle('Liga do Grupo');
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
@@ -100,7 +102,7 @@ export const GroupLeagueScreen: React.FC = () => {
           <Alert severity="warning" sx={{ mb: 2 }}>
             Você precisa ser membro do grupo para ver a liga.
           </Alert>
-          <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+          <Button startIcon={<BackIcon />} onClick={goBack}>
             Voltar
           </Button>
         </Container>
@@ -121,13 +123,7 @@ export const GroupLeagueScreen: React.FC = () => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1, gap: 0.5 }}>
           <IconButton
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-              } else {
-                navigate('/', { replace: true });
-              }
-            }}
+            onClick={goBack}
             aria-label="Voltar"
           >
             <BackIcon />

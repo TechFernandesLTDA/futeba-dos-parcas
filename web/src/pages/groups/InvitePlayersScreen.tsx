@@ -54,7 +54,7 @@ export const InvitePlayersScreen: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
   const { showError } = useToast();
-  const closeDestination = groupId ? `/group/${groupId}` : '/groups';
+  const closeDestination = groupId ? `/group/${groupId}` : '/?tab=2';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);

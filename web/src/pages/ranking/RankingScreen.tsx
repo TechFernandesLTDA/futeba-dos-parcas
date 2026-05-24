@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 import {
   Box,
@@ -37,6 +38,7 @@ import { useTranslation } from 'react-i18next';
 
 export const RankingScreen: React.FC = () => {
   const navigate = useNavigate();
+  const goBack = useNavigateBack('/?tab=3');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
@@ -87,7 +89,7 @@ export const RankingScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
+          <IconButton onClick={goBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1 }}>

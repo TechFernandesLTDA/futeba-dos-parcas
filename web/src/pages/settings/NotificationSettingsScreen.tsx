@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -54,7 +54,7 @@ const REMINDER_OPTIONS = [
 export const NotificationSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Notificações');
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
@@ -91,7 +91,7 @@ export const NotificationSettingsScreen: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-            <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
+            <IconButton onClick={goBack} aria-label={t('common.back')}>
               <BackIcon />
             </IconButton>
             <Typography variant="h6" sx={{ ml: 1 }}>
@@ -125,7 +125,7 @@ export const NotificationSettingsScreen: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-            <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
+            <IconButton onClick={goBack} aria-label={t('common.back')}>
               <BackIcon />
             </IconButton>
             <Typography variant="h6" sx={{ ml: 1 }}>
@@ -166,7 +166,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

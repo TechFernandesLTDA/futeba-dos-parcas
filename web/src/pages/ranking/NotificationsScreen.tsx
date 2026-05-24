@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { gamificationColors } from '../../theme';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -148,6 +149,7 @@ export const NotificationsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Notificações');
   const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
@@ -259,7 +261,7 @@ export const NotificationsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>

@@ -53,7 +53,7 @@ import { getEffectiveRating, type User } from '../../types/user';
 
 export const ProfileScreen: React.FC = () => {
   const navigate = useNavigate();
-  const navigateBack = useNavigateBack('/');
+  const navigateBack = useNavigateBack('/?tab=4');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();

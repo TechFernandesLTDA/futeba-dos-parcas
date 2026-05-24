@@ -311,7 +311,7 @@ export const EditProfileScreen: React.FC = () => {
       setSuccess(true);
       setSelectedFile(null); // limpa file pendente após sucesso
       setInitialData(formData); // sync para evitar dirty guard após save
-      setTimeout(() => navigate('/profile'), 1500);
+      setTimeout(() => navigate('/?tab=4'), 1500);
     } catch (err) {
       // FIX 2026-05-20: usar somente Alert (setError) — antes duplicava
       // Alert + Toast com a mesma mensagem (mesmo pattern do #1420).
@@ -347,7 +347,7 @@ export const EditProfileScreen: React.FC = () => {
   return (
     <FormScaffold
       title={t('profile.editProfile')}
-      closeDestination="/profile"
+      closeDestination="/?tab=4"
       closeVariant="X"
       isDirty={isDirty}
       loading={saving || uploadingAvatar}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
   Box,
@@ -50,7 +50,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactElement }> =
 
 export const MyFeedbacksScreen: React.FC = () => {
   useDocumentTitle('Meus Feedbacks');
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { currentUser } = useAuth();
@@ -77,7 +77,7 @@ export const MyFeedbacksScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
