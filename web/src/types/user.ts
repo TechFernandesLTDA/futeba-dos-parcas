@@ -80,6 +80,8 @@ export interface UserStats {
   avgGoalsPerGame: number;
   avgAssistsPerGame: number;
   winRate: number;
+  level: number;
+  experiencePoints: number;
 }
 
 export interface Badge {
