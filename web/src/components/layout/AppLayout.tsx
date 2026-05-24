@@ -1,8 +1,11 @@
 import { Box } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
+import { ConnectionStatus, useOnlineStatus } from '../common/ConnectionStatus';
 
 export function AppLayout() {
+  const isOnline = useOnlineStatus();
+
   return (
     <Box
       sx={{
@@ -27,6 +30,7 @@ export function AppLayout() {
           overflow: 'auto',
         }}
       >
+        <ConnectionStatus isOnline={isOnline} />
         <Outlet />
       </Box>
     </Box>

@@ -332,7 +332,14 @@
       "title": "Times",
       "A": "Time A",
       "B": "Time B",
-      "saveError": "Erro ao salvar os times. Recarregue a página e tente novamente."
+      "saveError": "Erro ao salvar os times. Recarregue a página e tente novamente.",
+      "balancedDraw": "Sorteio Balanceado",
+      "balanced": "Equilibrado",
+      "unbalanced": "Desequilibrado",
+      "avgLevel": "Nível médio",
+      "balance": "Equilíbrio",
+      "snakeDraft": "Snake Draft",
+      "greedy": "Guloso"
     },
     "teamA": "Time A",
     "teamB": "Time B",

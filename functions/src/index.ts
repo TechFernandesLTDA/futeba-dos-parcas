@@ -2100,7 +2100,7 @@ export {onConfirmationCreated} from "./voting/temporal-overlap";
 export {onGameEventCreated} from "./voting/events-rate-limit";
 
 // SECFIX #426: server-side check-in com validacao GPS + distancia
-export {checkInToGame} from "./voting/check-in";
+export {checkInToGame, generateCheckinToken} from "./voting/check-in";
 
 // ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
@@ -2184,3 +2184,10 @@ export * from "./locations/location-management";
 // - onStatisticsWrittenForAutoRatings: recalcula auto-ratings server-side
 //   quando statistics/{userId} muda.
 export * from "./ratings/auto-ratings";
+
+// ==========================================
+// GROUP LEAGUE (#1783)
+// ==========================================
+// - onGameFinishedGroupLeague: atualiza standings da liga do grupo
+//   quando um jogo com group_id é finalizado.
+export {onGameFinishedGroupLeague} from "./group-league";

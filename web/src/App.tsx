@@ -55,6 +55,7 @@ const VoteResultScreen = lazy(() => import('./pages/game/VoteResultScreen').then
 const TeamFormationScreen = lazy(() => import('./pages/games/TeamFormationScreen').then(m => ({ default: m.TeamFormationScreen })));
 const PostGameReportScreen = lazy(() => import('./pages/games/PostGameReportScreen').then(m => ({ default: m.PostGameReportScreen })));
 const BlockedPlayersScreen = lazy(() => import('./pages/games/owner/BlockedPlayersScreen').then(m => ({ default: m.BlockedPlayersScreen })));
+const QrCheckInScreen = lazy(() => import('./pages/game/QrCheckInScreen').then(m => ({ default: m.QrCheckInScreen })));
 const SchedulesScreen = lazy(() => import('./pages/schedules/SchedulesScreen').then(m => ({ default: m.SchedulesScreen })));
 
 // Live Game
@@ -67,6 +68,7 @@ const GroupDetailScreen = lazy(() => import('./pages/group/GroupDetailScreen').t
 const CreateGroupScreen = lazy(() => import('./pages/group/CreateGroupScreen').then(m => ({ default: m.CreateGroupScreen })));
 const GroupEditScreen = lazy(() => import('./pages/group/GroupEditScreen').then(m => ({ default: m.GroupEditScreen })));
 const GroupSettingsScreen = lazy(() => import('./pages/group/GroupSettingsScreen').then(m => ({ default: m.GroupSettingsScreen })));
+const GroupLeagueScreen = lazy(() => import('./pages/group/GroupLeagueScreen').then(m => ({ default: m.GroupLeagueScreen })));
 const CashboxScreen = lazy(() => import('./pages/groups/CashboxScreen').then(m => ({ default: m.CashboxScreen })));
 const InvitePlayersScreen = lazy(() => import('./pages/groups/InvitePlayersScreen').then(m => ({ default: m.InvitePlayersScreen })));
 const JoinByInviteScreen = lazy(() => import('./pages/group/JoinByInviteScreen').then(m => ({ default: m.JoinByInviteScreen })));
@@ -82,6 +84,7 @@ const LevelJourneyScreen = lazy(() => import('./pages/profile/LevelJourneyScreen
 const StatisticsScreen = lazy(() => import('./pages/statistics/StatisticsScreen').then(m => ({ default: m.StatisticsScreen })));
 const WeeklyRecapScreen = lazy(() => import('./pages/statistics/WeeklyRecapScreen').then(m => ({ default: m.WeeklyRecapScreen })));
 const EvolutionScreen = lazy(() => import('./pages/statistics/EvolutionScreen').then(m => ({ default: m.EvolutionScreen })));
+const HeadToHeadScreen = lazy(() => import('./pages/statistics/HeadToHeadScreen').then(m => ({ default: m.HeadToHeadScreen })));
 
 // Rankings & League
 const RankingScreen = lazy(() => import('./pages/ranking/RankingScreen').then(m => ({ default: m.RankingScreen })));
@@ -417,6 +420,7 @@ function AppRoutes() {
         <Route path="/group/:groupId/players" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/schedules" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/invite" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense></GroupMemberRoute>} />
+        <Route path="/group/:groupId/league" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupLeagueScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense>} />
         <Route path="/groups/discover" element={<Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense>} />
         {/* Profile + perfis públicos */}
@@ -431,6 +435,7 @@ function AppRoutes() {
         <Route path="/weekly-recap/:userId" element={<Suspense fallback={<RouteFallback />}><WeeklyRecapScreen /></Suspense>} />
         <Route path="/evolution" element={<Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense>} />
         <Route path="/evolution/:userId" element={<Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense>} />
+        <Route path="/head-to-head" element={<Suspense fallback={<RouteFallback />}><HeadToHeadScreen /></Suspense>} />
         {/* Rankings */}
         <Route path="/ranking" element={<Suspense fallback={<RouteFallback />}><RankingScreen /></Suspense>} />
         <Route path="/league" element={<Suspense fallback={<RouteFallback />}><LeagueScreen /></Suspense>} />
@@ -468,6 +473,9 @@ function AppRoutes() {
       <Route path="/game/:gameId/blocked" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><BlockedPlayersScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/stats" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveStatsScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/events" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveEventsScreen /></Suspense></ProtectedRoute>} />
+
+      {/* QR Code Check-in */}
+      <Route path="/checkin/:gameId/:token" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><QrCheckInScreen /></Suspense></ProtectedRoute>} />
 
       {/* Issue #514: aceitar convite via link compartilhado /join/:code */}
       <Route path="/join/:code" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><JoinByInviteScreen /></Suspense></ProtectedRoute>} />

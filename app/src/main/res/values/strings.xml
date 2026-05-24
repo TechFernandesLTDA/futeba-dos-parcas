@@ -3091,6 +3091,8 @@ subir no ranking!</string>
     <string name="select_draft_mode">Modo de Sorteio</string>
     <string name="draft_mode_description">Escolha como os times serão formados</string>
     <string name="auto_draft">Sorteio Automático</string>
+    <string name="balanced_draw">Sorteio Balanceado</string>
+    <string name="balanced_draw_description">Distribui jogadores de forma equilibrada usando nível e posição</string>
     <string name="captain_picks">Escolha por Capitães</string>
     <string name="select_captains">Escolher Capitães</string>
     <string name="captain_1">Capitão 1</string>

@@ -43,6 +43,7 @@ import {
   ContentCopy as CopyIcon,
   Share as ShareIcon,
   Delete as DeleteIcon,
+  EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
 import { AppBreadcrumbs } from '../../components/layout';
 import { useQueryClient } from '@tanstack/react-query';
@@ -356,6 +357,7 @@ export const GroupDetailScreen: React.FC = () => {
               <Tab label={t('group.tabMembers')} />
               <Tab label={t('group.tabGames')} />
               <Tab label={t('group.tabCashbox')} />
+              <Tab label="Liga" icon={<TrophyIcon />} iconPosition="start" />
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
@@ -451,6 +453,25 @@ export const GroupDetailScreen: React.FC = () => {
                   onClick={() => navigate(`/group/${groupId}/cashbox`)}
                 >
                   Ver Detalhes
+                </Button>
+              </CardContent>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+              <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                <TrophyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+                <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                  Liga do Grupo
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Acompanhe a classificação e o desempenho dos membros na liga interna do grupo.
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<TrophyIcon />}
+                  onClick={() => navigate(`/group/${groupId}/league`)}
+                >
+                  Ver Classificação
                 </Button>
               </CardContent>
             </TabPanel>

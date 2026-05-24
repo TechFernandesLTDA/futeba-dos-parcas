@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -17,6 +17,7 @@ import {
   Alert,
   Chip,
   LinearProgress,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -25,6 +26,8 @@ import {
   Shuffle as ShuffleIcon,
   Save as SaveIcon,
   Balance as BalanceIcon,
+  DragIndicator as DragIcon,
+  AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -37,6 +40,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
+import { balancedDraw, PlayerForDraw } from '../../utils/balancedDraw';
 
 const logger = createLogger('TeamFormationScreen');
 
@@ -78,6 +82,11 @@ export const TeamFormationScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [draggedPlayer, setDraggedPlayer] = useState<TeamPlayer | null>(null);
+  const [dragFromTeam, setDragFromTeam] = useState<'A' | 'B' | null>(null);
+  const [dropTarget, setDropTarget] = useState<'A' | 'B' | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; player: TeamPlayer; team: 'A' | 'B' } | null>(null);
+  const touchCloneRef = useRef<HTMLDivElement | null>(null);
 
   const handleRetry = () => {
     setError(null);
@@ -132,11 +141,18 @@ export const TeamFormationScreen: React.FC = () => {
         );
 
         if (players.length > 0) {
-          // Sorteio automático: embaralhar e dividir em 2 times
-          const shuffled = [...players].sort(() => Math.random() - 0.5);
-          const half = Math.ceil(shuffled.length / 2);
-          setTeamA(shuffled.slice(0, half));
-          setTeamB(shuffled.slice(half));
+          const drawPlayers: PlayerForDraw[] = players.map((p) => ({
+            id: p.id,
+            name: p.name,
+            photoUrl: p.photoUrl,
+            level: p.level,
+            position: p.position === 'GOALKEEPER' ? 'GOALKEEPER' : 'FIELD',
+          }));
+          const result = balancedDraw(drawPlayers, 2, 1, 'SNAKE_DRAFT');
+          const teamAPlayers = players.filter((p) => result.teams[0].players.some((dp) => dp.id === p.id));
+          const teamBPlayers = players.filter((p) => result.teams[1].players.some((dp) => dp.id === p.id));
+          setTeamA(teamAPlayers);
+          setTeamB(teamBPlayers);
         }
       } catch (error) {
         logger.error('Error fetching game:', error);
@@ -161,7 +177,21 @@ export const TeamFormationScreen: React.FC = () => {
     setTeamB(allPlayers.slice(half));
   };
 
-  const movePlayer = (player: TeamPlayer, fromTeam: 'A' | 'B') => {
+  const runBalancedDraw = () => {
+    const allPlayers = [...teamA, ...teamB];
+    const drawPlayers: PlayerForDraw[] = allPlayers.map((p) => ({
+      id: p.id,
+      name: p.name,
+      photoUrl: p.photoUrl,
+      level: p.level,
+      position: (p.position === 'GOALKEEPER' ? 'GOALKEEPER' : 'FIELD') as 'GOALKEEPER' | 'FIELD',
+    }));
+    const result = balancedDraw(drawPlayers, 2, 1, 'SNAKE_DRAFT');
+    setTeamA(allPlayers.filter((p) => result.teams[0].players.some((dp) => dp.id === p.id)));
+    setTeamB(allPlayers.filter((p) => result.teams[1].players.some((dp) => dp.id === p.id)));
+  };
+
+  const movePlayer = useCallback((player: TeamPlayer, fromTeam: 'A' | 'B') => {
     if (fromTeam === 'A') {
       setTeamA(teamA.filter((p) => p.id !== player.id));
       setTeamB([...teamB, player]);
@@ -169,7 +199,102 @@ export const TeamFormationScreen: React.FC = () => {
       setTeamB(teamB.filter((p) => p.id !== player.id));
       setTeamA([...teamA, player]);
     }
-  };
+  }, [teamA, teamB]);
+
+  const handleDragStart = useCallback((player: TeamPlayer, team: 'A' | 'B') => {
+    setDraggedPlayer(player);
+    setDragFromTeam(team);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, team: 'A' | 'B') => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropTarget(team);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDropTarget(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetTeam: 'A' | 'B') => {
+    e.preventDefault();
+    setDropTarget(null);
+    if (!draggedPlayer || !dragFromTeam) return;
+    if (dragFromTeam === targetTeam) {
+      setDraggedPlayer(null);
+      setDragFromTeam(null);
+      return;
+    }
+    movePlayer(draggedPlayer, dragFromTeam);
+    setDraggedPlayer(null);
+    setDragFromTeam(null);
+  }, [draggedPlayer, dragFromTeam, movePlayer]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedPlayer(null);
+    setDragFromTeam(null);
+    setDropTarget(null);
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent, player: TeamPlayer, team: 'A' | 'B') => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, player, team };
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartRef.current.x);
+    const dy = Math.abs(touch.clientY - touchStartRef.current.y);
+    if (dx < 10 && dy < 10) return;
+
+    if (!touchCloneRef.current) {
+      const clone = document.createElement('div');
+      clone.style.position = 'fixed';
+      clone.style.zIndex = '10000';
+      clone.style.pointerEvents = 'none';
+      clone.style.opacity = '0.8';
+      clone.style.padding = '8px 16px';
+      clone.style.borderRadius = '8px';
+      clone.style.backgroundColor = theme.palette.background.paper;
+      clone.style.boxShadow = theme.shadows[6];
+      clone.textContent = touchStartRef.current.player.name;
+      document.body.appendChild(clone);
+      touchCloneRef.current = clone;
+      setDraggedPlayer(touchStartRef.current.player);
+      setDragFromTeam(touchStartRef.current.team);
+    }
+
+    if (touchCloneRef.current) {
+      touchCloneRef.current.style.left = `${touch.clientX - 50}px`;
+      touchCloneRef.current.style.top = `${touch.clientY - 20}px`;
+    }
+
+    const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const teamCard = elemBelow?.closest('[data-team]');
+    if (teamCard) {
+      setDropTarget(teamCard.getAttribute('data-team') as 'A' | 'B');
+    } else {
+      setDropTarget(null);
+    }
+  }, [theme]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchCloneRef.current) {
+      document.body.removeChild(touchCloneRef.current);
+      touchCloneRef.current = null;
+    }
+
+    if (draggedPlayer && dragFromTeam && dropTarget && dropTarget !== dragFromTeam) {
+      movePlayer(draggedPlayer, dragFromTeam);
+    }
+
+    touchStartRef.current = null;
+    setDraggedPlayer(null);
+    setDragFromTeam(null);
+    setDropTarget(null);
+  }, [draggedPlayer, dragFromTeam, dropTarget, movePlayer]);
 
   const handleSaveTeams = async () => {
     if (!gameId) return;
@@ -243,7 +368,12 @@ export const TeamFormationScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Formação de Times
           </Typography>
-          <IconButton onClick={shuffleTeams} aria-label="Sortear times">
+          <Tooltip title={t('games.teams.balancedDraw')}>
+            <IconButton onClick={runBalancedDraw} aria-label={t('games.teams.balancedDraw')}>
+              <AutoAwesomeIcon />
+            </IconButton>
+          </Tooltip>
+          <IconButton onClick={shuffleTeams} aria-label={t('games.sortTeams')}>
             <ShuffleIcon />
           </IconButton>
           <IconButton onClick={handleSaveTeams} disabled={saving} aria-label="Salvar times">
@@ -255,7 +385,17 @@ export const TeamFormationScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Grid container spacing={2}>
           <Grid xs={6}>
-            <Card sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+            <Card
+              data-team="A"
+              onDragOver={(e) => handleDragOver(e, 'A')}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, 'A')}
+              sx={{
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+                border: dropTarget === 'A' ? `2px dashed ${theme.palette.primary.main}` : '2px solid transparent',
+                transition: 'border-color 0.2s ease',
+              }}
+            >
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Avatar sx={{ bgcolor: theme.palette.primary.main }}>A</Avatar>
@@ -266,17 +406,26 @@ export const TeamFormationScreen: React.FC = () => {
                 {teamA.map((player) => (
                   <Box
                     key={player.id}
+                    draggable
+                    onDragStart={() => handleDragStart(player, 'A')}
+                    onDragEnd={handleDragEnd}
+                    onTouchStart={(e) => handleTouchStart(e, player, 'A')}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
                       py: 1,
                       borderBottom: `1px solid ${theme.palette.divider}`,
-                      cursor: 'pointer',
+                      cursor: 'grab',
+                      opacity: draggedPlayer?.id === player.id ? 0.4 : 1,
                       '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
+                      '&:active': { cursor: 'grabbing' },
                     }}
                     onClick={() => movePlayer(player, 'A')}
                   >
+                    <DragIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'grab' }} />
                     <PlayerAvatar name={player.name} photoUrl={player.photoUrl} size={32} level={player.level} />
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {player.name}
@@ -288,14 +437,24 @@ export const TeamFormationScreen: React.FC = () => {
                 ))}
                 {teamA.length === 0 && (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                    Clique para mover jogadores
+                    Arraste ou clique para mover jogadores
                   </Typography>
                 )}
               </CardContent>
             </Card>
           </Grid>
           <Grid xs={6}>
-            <Card sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.05) }}>
+            <Card
+              data-team="B"
+              onDragOver={(e) => handleDragOver(e, 'B')}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, 'B')}
+              sx={{
+                bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                border: dropTarget === 'B' ? `2px dashed ${theme.palette.secondary.main}` : '2px solid transparent',
+                transition: 'border-color 0.2s ease',
+              }}
+            >
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>B</Avatar>
@@ -306,14 +465,22 @@ export const TeamFormationScreen: React.FC = () => {
                 {teamB.map((player) => (
                   <Box
                     key={player.id}
+                    draggable
+                    onDragStart={() => handleDragStart(player, 'B')}
+                    onDragEnd={handleDragEnd}
+                    onTouchStart={(e) => handleTouchStart(e, player, 'B')}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
                       py: 1,
                       borderBottom: `1px solid ${theme.palette.divider}`,
-                      cursor: 'pointer',
+                      cursor: 'grab',
+                      opacity: draggedPlayer?.id === player.id ? 0.4 : 1,
                       '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.08) },
+                      '&:active': { cursor: 'grabbing' },
                     }}
                     onClick={() => movePlayer(player, 'B')}
                   >
@@ -324,11 +491,12 @@ export const TeamFormationScreen: React.FC = () => {
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {player.name}
                     </Typography>
+                    <DragIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'grab' }} />
                   </Box>
                 ))}
                 {teamB.length === 0 && (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                    Clique para mover jogadores
+                    Arraste ou clique para mover jogadores
                   </Typography>
                 )}
               </CardContent>
@@ -369,7 +537,7 @@ export const TeamFormationScreen: React.FC = () => {
 
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="caption" color="text.secondary">
-            Clique em um jogador para movê-lo para o outro time
+            Arraste os jogadores entre os times ou clique para mover
           </Typography>
         </Box>
 

@@ -332,7 +332,14 @@
       "title": "Teams",
       "A": "Team A",
       "B": "Team B",
-      "saveError": "Error saving teams. Reload the page and try again."
+      "saveError": "Error saving teams. Reload the page and try again.",
+      "balancedDraw": "Balanced Draw",
+      "balanced": "Balanced",
+      "unbalanced": "Unbalanced",
+      "avgLevel": "Avg. Level",
+      "balance": "Balance",
+      "snakeDraft": "Snake Draft",
+      "greedy": "Greedy"
     },
     "teamA": "Team A",
     "teamB": "Team B",

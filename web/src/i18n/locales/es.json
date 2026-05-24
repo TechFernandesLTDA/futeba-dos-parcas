@@ -327,7 +327,14 @@
       "title": "Equipos",
       "A": "Equipo A",
       "B": "Equipo B",
-      "saveError": "Error al guardar los equipos. Recarga la página e inténtalo de nuevo."
+      "saveError": "Error al guardar los equipos. Recarga la página e inténtalo de nuevo.",
+      "balancedDraw": "Sorteo Balanceado",
+      "balanced": "Equilibrado",
+      "unbalanced": "Desequilibrado",
+      "avgLevel": "Nivel promedio",
+      "balance": "Equilibrio",
+      "snakeDraft": "Snake Draft",
+      "greedy": "Voraz"
     },
     "teamA": "Equipo A",
     "teamB": "Equipo B",

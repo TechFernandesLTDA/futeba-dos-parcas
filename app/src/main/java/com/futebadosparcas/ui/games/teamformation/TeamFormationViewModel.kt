@@ -11,6 +11,8 @@ import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.ai.EnhancedTeamBalancer
 import com.futebadosparcas.domain.ai.PlayerForBalancing
 import com.futebadosparcas.domain.ai.SwapSuggestion
+import com.futebadosparcas.domain.ai.BalancedDrawAlgorithm
+import com.futebadosparcas.domain.ai.DrawStrategy
 import com.futebadosparcas.domain.ai.toPlayerForBalancing
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.util.AppLogger
@@ -261,6 +263,76 @@ class TeamFormationViewModel(
                 teamAStrength = result.teamAStrength,
                 teamBStrength = result.teamBStrength,
                 rotationSuggestions = result.rotationSuggestions
+            )
+
+            _draftAnimationState.value = DraftAnimationState.Completed
+        }
+    }
+
+    /**
+     * Executa o sorteio balanceado usando o algoritmo compartilhado.
+     * Usa snake draft com otimizacao por trocas para equilibrio maximo.
+     */
+    fun startBalancedDraw(strategy: DrawStrategy = DrawStrategy.SNAKE_DRAFT) {
+        val state = _uiState.value as? TeamFormationUiState.Ready ?: return
+
+        draftJob?.cancel()
+        draftJob = viewModelScope.launch {
+            _draftAnimationState.value = DraftAnimationState.Starting
+
+            val playersForBalancing = currentPlayers.map { it.toPlayerForBalancing() }
+
+            val result = BalancedDrawAlgorithm.balance(
+                players = playersForBalancing,
+                numberOfTeams = 2,
+                goalkeepersPerTeam = state.settings.goalkeepersPerTeam,
+                strategy = strategy
+            )
+
+            val allReveals = mutableListOf<DraftRevealAnimation>()
+            val maxSize = result.teams.maxOfOrNull { it.players.size } ?: 0
+
+            for (i in 0 until maxSize) {
+                for (team in result.teams) {
+                    if (i < team.players.size) {
+                        val player = team.players[i]
+                        val draftPlayer = currentPlayers.find { it.id == player.id }
+                        allReveals.add(
+                            DraftRevealAnimation(
+                                playerId = player.id,
+                                playerName = player.name,
+                                playerPhoto = draftPlayer?.photoUrl,
+                                teamIndex = team.index,
+                                teamName = team.name,
+                                teamColor = toAndroidTeamColor(if (team.index == 0) state.teamAColor else state.teamBColor),
+                                revealDelayMs = allReveals.size * DRAFT_REVEAL_DELAY_MS
+                            )
+                        )
+                    }
+                }
+            }
+
+            for (reveal in allReveals) {
+                delay(DRAFT_REVEAL_DELAY_MS)
+                _draftAnimationState.value = DraftAnimationState.Revealing(reveal)
+            }
+
+            delay(DRAFT_REVEAL_DELAY_MS)
+
+            val teamAPlayers = result.teams[0].players.mapNotNull { p -> currentPlayers.find { it.id == p.id } }
+            val teamBPlayers = result.teams[1].players.mapNotNull { p -> currentPlayers.find { it.id == p.id } }
+
+            val teamAForBalancing = result.teams[0].players
+            val teamBForBalancing = result.teams[1].players
+            val teamAStrength = enhancedBalancer.calculateTeamStrength("A", "Time A", teamAForBalancing)
+            val teamBStrength = enhancedBalancer.calculateTeamStrength("B", "Time B", teamBForBalancing)
+
+            _uiState.value = state.copy(
+                teamAPlayers = teamAPlayers,
+                teamBPlayers = teamBPlayers,
+                teamAStrength = teamAStrength,
+                teamBStrength = teamBStrength,
+                rotationSuggestions = emptyList()
             )
 
             _draftAnimationState.value = DraftAnimationState.Completed

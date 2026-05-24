@@ -14,6 +14,21 @@ export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM';
 
 export type GameEventType = 'GOAL' | 'ASSIST' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION';
 
+export interface GameTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  max_players: number;
+  max_goalkeepers: number;
+  location_id?: string;
+  location_name?: string;
+  field_id?: string;
+  field_name?: string;
+  field_type?: FieldType;
+  rules?: string;
+  created_at: Date;
+}
+
 export interface GameConfirmation {
   id: string;
   gameId: string;
@@ -183,6 +198,7 @@ export interface Game {
   // Check-in
   requireCheckin: boolean;
   checkinRadiusMeters: number;
+  checkinQrToken?: string;
   
   // Waitlist
   waitlistAutoPromoteMinutes: number;
