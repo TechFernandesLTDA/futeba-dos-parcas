@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -83,7 +83,7 @@ async function searchPlayers(term: string): Promise<PlayerSearchResult[]> {
 
 export const HeadToHeadScreen: React.FC = () => {
   useDocumentTitle('Confronto Direto');
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -137,13 +137,7 @@ export const HeadToHeadScreen: React.FC = () => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
           <IconButton
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-              } else {
-                navigate('/', { replace: true });
-              }
-            }}
+            onClick={goBack}
             aria-label="Voltar"
           >
             <BackIcon />

@@ -8,6 +8,7 @@ import {
   Dialog,
   CircularProgress,
   useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -263,9 +264,9 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
         maxWidth="lg"
         fullWidth
       >
-        <Box sx={{ position: 'relative', bgcolor: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ position: 'relative', bgcolor: theme.palette.common.black, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <IconButton
-            sx={{ position: 'absolute', top: 8, right: 8, color: theme.palette.common.white, zIndex: 1, bgcolor: 'rgba(0,0,0,0.5)' }}
+            sx={{ position: 'absolute', top: 8, right: 8, color: theme.palette.common.white, zIndex: 1, bgcolor: alpha(theme.palette.common.black, 0.5) }}
             onClick={() => setSelectedPhoto(null)}
           >
             <CloseIcon />

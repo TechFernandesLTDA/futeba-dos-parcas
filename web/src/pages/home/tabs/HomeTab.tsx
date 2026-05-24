@@ -528,7 +528,7 @@ function MiniRankingWidget() {
             <Button
               variant="outlined"
               size="small"
-              onClick={() => navigate('/groups')}
+              onClick={() => navigate('/?tab=2')}
               sx={{ mt: 1 }}
             >
               {t('common.viewGroups')}
@@ -554,7 +554,7 @@ function MiniRankingWidget() {
               variant="caption"
               color="primary"
               fontWeight={600}
-              onClick={() => navigate('/league')}
+              onClick={() => navigate('/?tab=3')}
             >
               {t('ranking.viewFull')}
             </Link>
@@ -671,7 +671,7 @@ export function HomeTab() {
       label: t('onboarding.checklistJoinGroup'),
       subtitle: t('onboarding.checklistJoinGroupDesc'),
       actionLabel: t('common.viewGroups'),
-      navigateTo: '/groups',
+      navigateTo: '/?tab=2',
       completed: (groups?.length ?? 0) > 0,
     },
     {
@@ -1262,7 +1262,7 @@ export function HomeTab() {
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={() => navigate('/groups')}
+                      onClick={() => navigate('/?tab=2')}
                     >
                       {t('common.viewGroups')}
                     </Button>

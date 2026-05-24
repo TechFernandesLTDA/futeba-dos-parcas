@@ -54,8 +54,8 @@ export const GameDetailSkeleton: React.FC = React.memo(function GameDetailSkelet
     <Box role="status" aria-label="Carregando detalhes do jogo">
       <Box sx={{ height: 200, bgcolor: alpha(theme.palette.primary.main, 0.08), display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', p: 3 }}>
         <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: 1, mb: 1 }} />
-        <Skeleton variant="text" width="70%" height={28} sx={{ bgcolor: 'rgba(255,255,255,0.3)' }} />
-        <Skeleton variant="text" width="50%" height={20} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
+        <Skeleton variant="text" width="70%" height={28} sx={{ bgcolor: alpha(theme.palette.common.white, 0.3) }} />
+        <Skeleton variant="text" width="50%" height={20} sx={{ bgcolor: alpha(theme.palette.common.white, 0.2) }} />
       </Box>
       <Box sx={{ p: 2 }}>
         {[1, 2, 3].map(i => (

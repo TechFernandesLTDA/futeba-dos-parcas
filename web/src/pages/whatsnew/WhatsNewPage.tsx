@@ -8,7 +8,7 @@
  */
 
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Accordion,
   AccordionDetails,
@@ -73,7 +73,7 @@ const VersionCard: React.FC<{ note: ReleaseNote; defaultExpanded: boolean }> = (
 export const WhatsNewPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigate = useNavigate();
+  const goBack = useNavigateBack('/settings');
   const { notes, loading, error, refetch } = useReleaseNotes();
 
   useDocumentTitle(t('whatsNew.title'));
@@ -96,7 +96,7 @@ export const WhatsNewPage: React.FC = () => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
           <IconButton
-            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/settings'))}
+            onClick={goBack}
             aria-label={t('common.back')}
           >
             <BackIcon />

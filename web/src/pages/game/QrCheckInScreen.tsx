@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -29,6 +30,7 @@ export const QrCheckInScreen: React.FC = () => {
   useDocumentTitle('Check-in por QR Code');
   const { gameId, token } = useParams<{ gameId: string; token: string }>();
   const navigate = useNavigate();
+  const goBack = useNavigateBack('/');
   const { currentUser } = useAuth();
   const { showError } = useToast();
 
@@ -104,7 +106,7 @@ export const QrCheckInScreen: React.FC = () => {
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Box sx={{ mb: 3 }}>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+        <Button startIcon={<BackIcon />} onClick={goBack}>
           Voltar
         </Button>
       </Box>
