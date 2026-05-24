@@ -75,7 +75,7 @@ describe('VirtualList', () => {
 
   it('renderiza container para scroll', () => {
     const items = [{ id: 1, name: 'X' }];
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <VirtualList
         items={items}
         renderItem={(item) => <div>{item.name}</div>}

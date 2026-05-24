@@ -108,7 +108,7 @@ describe('AppSidebar', () => {
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {
-    const { container } = renderWithTheme(<AppSidebar />);
+    renderWithTheme(<AppSidebar />);
 
     const logoElements = screen.getAllByTestId('app-logo');
     expect(logoElements.length).toBe(2);

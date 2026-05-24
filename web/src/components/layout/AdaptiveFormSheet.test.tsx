@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { AdaptiveFormSheet } from './AdaptiveFormSheet';
 
@@ -42,7 +41,7 @@ describe('AdaptiveFormSheet', () => {
   });
 
   it('mobile renderiza sem wrapper', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <AdaptiveFormSheet closeDestination="/">
         <div data-testid="child">Direto</div>
       </AdaptiveFormSheet>

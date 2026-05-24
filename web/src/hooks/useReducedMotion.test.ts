@@ -16,7 +16,7 @@ describe('useReducedMotion', () => {
   });
 
   function setupMatchMedia(matches: boolean) {
-    window.matchMedia = ((query: string) => ({
+    window.matchMedia = ((_query: string) => ({
       matches: query === '(prefers-reduced-motion: reduce)' ? matches : false,
       addEventListener: (_: string, handler: (e: { matches: boolean }) => void) => {
         listeners.push(handler);
@@ -51,7 +51,7 @@ describe('useReducedMotion', () => {
 
   it('remove listener no unmount', () => {
     const removeSpy = vi.fn();
-    window.matchMedia = ((query: string) => ({
+    window.matchMedia = ((_query: string) => ({
       matches: false,
       addEventListener: vi.fn(),
       removeEventListener: removeSpy,
