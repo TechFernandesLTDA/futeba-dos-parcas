@@ -68,9 +68,8 @@ export function useResourcePreloading() {
   useEffect(() => {
     // Prefetch likely next routes based on current route
     const prefetchMap: Record<string, string[]> = {
-      '/': ['/games', '/groups', '/profile'],
-      '/games': ['/game/create', '/groups'],
-      '/groups': ['/group/create', '/games'],
+      '/': ['/game/create', '/groups', '/profile'],
+      '/groups': ['/group/create', '/game/create'],
       '/profile': ['/profile/edit', '/level-journey'],
       '/ranking': ['/league', '/statistics'],
       '/league': ['/ranking', '/statistics'],

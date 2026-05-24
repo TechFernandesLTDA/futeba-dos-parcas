@@ -130,7 +130,7 @@ export const RankingScreen: React.FC = () => {
             <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
               {t('ranking.emptyDesc')}
             </Typography>
-            <Button variant="contained" onClick={() => navigate('/games')}>
+            <Button variant="contained" onClick={() => navigate('/?tab=1')}>
               {t('ranking.joinGamesAction')}
             </Button>
           </Box>

@@ -20,7 +20,7 @@ describe('AppBreadcrumbs', () => {
       <AppBreadcrumbs
         items={[
           { label: 'Home', to: '/' },
-          { label: 'Jogos', to: '/games' },
+          { label: 'Jogos', to: '/?tab=1' },
           { label: 'Detalhes' },
         ]}
       />
@@ -49,7 +49,7 @@ describe('AppBreadcrumbs', () => {
       <AppBreadcrumbs
         items={[
           { label: 'Home', to: '/' },
-          { label: 'Jogos', to: '/games' },
+          { label: 'Jogos', to: '/?tab=1' },
           { label: 'Atual' },
         ]}
       />
@@ -64,7 +64,7 @@ describe('AppBreadcrumbs', () => {
       <AppBreadcrumbs
         items={[
           { label: 'Home', to: '/' },
-          { label: 'Jogos', to: '/games' },
+          { label: 'Jogos', to: '/?tab=1' },
           { label: 'Detalhes' },
         ]}
       />

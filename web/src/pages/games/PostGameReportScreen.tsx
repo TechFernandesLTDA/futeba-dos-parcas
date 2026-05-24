@@ -77,7 +77,7 @@ interface FinancialData {
 
 export const PostGameReportScreen: React.FC = () => {
   useDocumentTitle('Relatório Pós-Jogo');
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
@@ -113,7 +113,7 @@ export const PostGameReportScreen: React.FC = () => {
         if (cancelled) return;
         if (!gameDoc.exists()) {
           showErrorRef.current('Jogo não encontrado.');
-          navigateRef.current('/games', { replace: true });
+          navigateRef.current('/?tab=1', { replace: true });
           return;
         }
 

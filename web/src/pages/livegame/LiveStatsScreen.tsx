@@ -61,7 +61,7 @@ interface LiveStats {
 
 export const LiveStatsScreen: React.FC = () => {
   useDocumentTitle('Estatísticas ao Vivo');
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();

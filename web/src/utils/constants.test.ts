@@ -45,7 +45,7 @@ describe('constants', () => {
   it('ROUTES contém rotas principais', () => {
     expect(ROUTES.HOME).toBe('/');
     expect(ROUTES.LOGIN).toBe('/login');
-    expect(ROUTES.GAMES).toBe('/games');
+    expect(ROUTES.GAMES).toBe('/?tab=1');
     expect(ROUTES.PROFILE).toBe('/profile');
   });
 });

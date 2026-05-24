@@ -60,7 +60,7 @@ const FORMATIONS = [
 
 export const TacticalBoardScreen: React.FC = () => {
   useDocumentTitle('Prancheta Tática');
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
     const theme = useTheme();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { gameId } = useParams<{ gameId: string }>();

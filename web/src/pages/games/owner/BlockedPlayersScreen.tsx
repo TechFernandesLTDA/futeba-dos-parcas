@@ -42,7 +42,7 @@ interface BlockedPlayer {
 
 export const BlockedPlayersScreen: React.FC = () => {
   useDocumentTitle('Jogadores Bloqueados');
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
