@@ -20,6 +20,7 @@ import {
 } from "./constants";
 import {
   sendNotificationToUser,
+  sendNotificationToUsers,
   NotificationType,
   saveNotificationToFirestore,
 } from "./notifications";
@@ -82,6 +83,7 @@ interface ConfirmationForReminder {
   status: string;
   reminder_24h_sent?: boolean;
   reminder_2h_sent?: boolean;
+  reminder_1h_sent?: boolean;
 }
 
 // ==========================================
@@ -346,12 +348,14 @@ async function fetchGamesInReminderWindow(
  */
 async function fetchPendingConfirmations(
   gameId: string,
-  reminderType: "24h" | "2h"
+  reminderType: "24h" | "2h" | "1h"
 ): Promise<ConfirmationForReminder[]> {
   const reminderField =
     reminderType === "24h" ?
       "reminder_24h_sent" :
-      "reminder_2h_sent";
+      reminderType === "2h" ?
+        "reminder_2h_sent" :
+        "reminder_1h_sent";
 
   // Buscar todas as confirmacoes do jogo
   const confirmationsSnap = await getDb()
@@ -409,12 +413,14 @@ async function fetchPendingConfirmations(
 async function fetchGroupMembersWithoutConfirmation(
   gameId: string,
   groupId: string,
-  reminderType: "24h" | "2h"
+  reminderType: "24h" | "2h" | "1h"
 ): Promise<string[]> {
   const reminderField =
     reminderType === "24h" ?
       "reminder_24h_sent" :
-      "reminder_2h_sent";
+      reminderType === "2h" ?
+        "reminder_2h_sent" :
+        "reminder_1h_sent";
 
   const membersSnap = await getDb()
     .collection("groups")
@@ -576,7 +582,7 @@ async function canSendReminderToUser(
 async function sendReminder(
   userId: string,
   game: GameForReminder,
-  reminderType: "24h" | "2h"
+  reminderType: "24h" | "2h" | "1h"
 ): Promise<boolean> {
   // Verificar preferencias do usuario antes de enviar
   const canSend = await canSendReminderToUser(
@@ -601,13 +607,18 @@ async function sendReminder(
 
   const title = reminderType === "24h" ?
     "Jogo amanha! Confirme sua presenca" :
-    "Jogo em 2 horas! Nao esqueca";
+    reminderType === "2h" ?
+      "Jogo em 2 horas! Nao esqueca" :
+      "Jogo em 1 hora! Prepare-se";
 
   const body = reminderType === "24h" ?
     `O jogo${locationInfo} acontecera ` +
     `${formattedDate}. Confirme!` :
-    `O jogo${locationInfo} comeca em ` +
-    `2 horas (${formattedDate}). Confirme!`;
+    reminderType === "2h" ?
+      `O jogo${locationInfo} comeca em ` +
+      `2 horas (${formattedDate}). Confirme!` :
+      `O jogo${locationInfo} comeca em ` +
+      `1 hora (${formattedDate}). Prepare-se!`;
 
   console.log(
     "[REMINDERS] Enviando lembrete " +
@@ -964,6 +975,197 @@ export const testGameReminders = onSchedule(
     console.log(
       "[REMINDERS TEST] Teste concluido!"
     );
+  }
+);
+
+// ==========================================
+// AUTO-CANCEL POR BAIXO QUÓRUM
+// ==========================================
+
+const AUTO_CANCEL_WINDOW_MS = 2 * 60 * 60 * 1000;
+const AUTO_CANCEL_MIN_PLAYERS = 6;
+
+/**
+ * Funcao agendada que roda a cada 30 minutos
+ * para cancelar automaticamente jogos com
+ * poucos jogadores confirmados dentro de 2h.
+ *
+ * Issue #1786: Cancelamento automático por
+ * baixo quórum.
+ */
+export const autoCancelLowQuorum = onSchedule(
+  {
+    schedule: "every 30 minutes",
+    timeZone: "America/Sao_Paulo",
+    region: FUNCTION_REGION,
+    retryCount: 3,
+    memory: "256MiB",
+  },
+  async () => {
+    console.log(
+      "\n====================================" +
+      "===="
+    );
+    console.log(
+      "[AUTO_CANCEL] Verificando jogos " +
+      "com baixo quórum"
+    );
+    const ts = new Date().toISOString();
+    console.log(
+      `[AUTO_CANCEL] Timestamp: ${ts}`
+    );
+    console.log(
+      "====================================" +
+      "====\n"
+    );
+
+    try {
+      const now = new Date();
+      const windowEnd = new Date(
+        now.getTime() + AUTO_CANCEL_WINDOW_MS
+      );
+
+      const nowTs =
+        admin.firestore.Timestamp.fromDate(now);
+      const endTs =
+        admin.firestore.Timestamp.fromDate(
+          windowEnd
+        );
+
+      const gamesSnap = await getDb()
+        .collection("games")
+        .where("status", "==", "CONFIRMED")
+        .where("dateTime", ">=", nowTs)
+        .where("dateTime", "<=", endTs)
+        .get();
+
+      console.log(
+        `[AUTO_CANCEL] ${gamesSnap.size} ` +
+        "jogos CONFIRMED dentro da janela de 2h"
+      );
+
+      let cancelledCount = 0;
+
+      for (const gameDoc of gamesSnap.docs) {
+        const gameData = gameDoc.data();
+        const gameId = gameDoc.id;
+
+        if (gameData.auto_cancelled === true) {
+          continue;
+        }
+
+        const minPlayers =
+          gameData.min_players ||
+          AUTO_CANCEL_MIN_PLAYERS;
+
+        const confirmationsSnap = await getDb()
+          .collection("confirmations")
+          .where("game_id", "==", gameId)
+          .where("status", "==", "CONFIRMED")
+          .get();
+
+        const confirmedCount =
+          confirmationsSnap.size;
+
+        console.log(
+          `[AUTO_CANCEL] Jogo ${gameId}: ` +
+          `${confirmedCount}/${minPlayers} ` +
+          "jogadores confirmados"
+        );
+
+        if (confirmedCount < minPlayers) {
+          await gameDoc.ref.update({
+            status: "CANCELLED",
+            auto_cancelled: true,
+            cancel_reason: "Baixo quórum",
+            cancelled_by: "system",
+            updated_at:
+              admin.firestore.FieldValue
+                .serverTimestamp(),
+          });
+
+          const confirmedUserIds =
+            confirmationsSnap.docs.map((d) => {
+              const data = d.data();
+              return data.user_id || data.userId;
+            });
+
+          if (confirmedUserIds.length > 0) {
+            const gameName =
+              gameData.location_name ||
+              gameData.field_name ||
+              "o jogo";
+            const gameDate =
+              gameData.date || "";
+
+            await sendNotificationToUsers(
+              confirmedUserIds,
+              {
+                title: "Jogo cancelado",
+                body:
+                  `${gameName} (${gameDate}) ` +
+                  "foi cancelado " +
+                  "automaticamente por " +
+                  "baixo quórum " +
+                  `(${confirmedCount}/` +
+                  `${minPlayers} jogadores).`,
+                type:
+                  NotificationType.GAME_CANCELLED,
+                data: {
+                  gameId: gameId,
+                  reason: "low_quorum",
+                },
+              }
+            );
+
+            for (const uid of confirmedUserIds) {
+              await saveNotificationToFirestore(
+                uid,
+                {
+                  userId: uid,
+                  title: "Jogo cancelado",
+                  body:
+                    `${gameName} (${gameDate}) ` +
+                    "foi cancelado " +
+                    "automaticamente por " +
+                    "baixo quórum.",
+                  type:
+                    NotificationType.GAME_CANCELLED,
+                  gameId: gameId,
+                  action:
+                    "game_detail/" + gameId,
+                }
+              );
+            }
+          }
+
+          cancelledCount++;
+          console.log(
+            `[AUTO_CANCEL] Jogo ${gameId} ` +
+            "cancelado por baixo quórum"
+          );
+        }
+      }
+
+      console.log(
+        "\n====================================" +
+        "===="
+      );
+      console.log(
+        "[AUTO_CANCEL] Concluído! " +
+        `${cancelledCount} jogo(s) cancelado(s)`
+      );
+      console.log(
+        "====================================" +
+        "====\n"
+      );
+    } catch (error) {
+      console.error(
+        "[AUTO_CANCEL] Erro fatal:",
+        error
+      );
+      throw error;
+    }
   }
 );
 

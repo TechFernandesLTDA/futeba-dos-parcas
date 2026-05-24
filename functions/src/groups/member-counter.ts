@@ -91,7 +91,7 @@ export const onMemberWritten = onDocumentWritten(
     // atomically in a transaction. Skip double-count on CREATE only.
     // FIX #1144: Subsequent writes (kicks, leaves) must go through delta
     // logic to decrement — flag was never cleared on those paths.
-    const beforeExists = !!event.data?.before?.data();
+    const beforeExists = !!event.data?.before?.exists;
     if (!beforeExists && isCountedByJoinRequest(after)) {
       console.log(
         `[MEMBER_COUNTER] Skipping CREATE for ${groupId}/${memberId} — ` +
@@ -125,13 +125,43 @@ export const onMemberWritten = onDocumentWritten(
     }
 
     try {
-      await db().doc(`groups/${groupId}`).update({
-        member_count: admin.firestore.FieldValue.increment(delta),
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      // #1751: transação para read-modify-write atômico do counter.
+      // Lê member_count atual, aplica delta e escreve valor absoluto —
+      // previne drift em triggers concorrentes (ex: múltiplos join/leave
+      // simultâneos no mesmo grupo).
+      const groupRef = db().doc(`groups/${groupId}`);
+      const newCount = await db().runTransaction(
+        async (tx) => {
+          const groupSnap = await tx.get(groupRef);
+          if (!groupSnap.exists) {
+            return null;
+          }
+          const groupData =
+            groupSnap.data() as Record<string, unknown>;
+          const currentCount =
+            typeof groupData.member_count === "number" ?
+              groupData.member_count : 0;
+          const updated = Math.max(
+            0, currentCount + delta
+          );
+          tx.update(groupRef, {
+            member_count: updated,
+            updated_at: admin.firestore
+              .FieldValue.serverTimestamp(),
+          });
+          return updated;
+        }
+      );
+      if (newCount === null) {
+        console.log(
+          `[MEMBER_COUNTER] Group ${groupId} not found, ` +
+          "skipping counter update"
+        );
+        return;
+      }
       console.log(
         `[MEMBER_COUNTER] ${reason}: groups/${groupId}.member_count ` +
-        `${delta > 0 ? "+" : ""}${delta} (member ${memberId})`
+        `${delta > 0 ? "+" : ""}${delta} → ${newCount} (member ${memberId})`
       );
     } catch (err) {
       // Group doc pode ter sido deleted enquanto trigger rodava (cascade).

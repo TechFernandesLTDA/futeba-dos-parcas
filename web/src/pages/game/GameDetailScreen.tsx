@@ -44,6 +44,7 @@ import {
   Navigation as NavIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  PhotoLibrary as PhotoIcon,
 } from '@mui/icons-material';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -62,6 +63,7 @@ import { PlayerAvatar, StatusChip, ShimmerLoading, EmptyState } from '../../comp
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { GamePhotosTab } from './GamePhotosTab';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -490,6 +492,7 @@ export const GameDetailScreen: React.FC = () => {
                 <Tab label={`Confirmados (${confirmedPlayers.length})`} />
                 <Tab label={`Goleiros (${goalkeepers.length})`} />
                 <Tab label={`Espera (${waitlist.length})`} />
+                {game.status === 'FINISHED' && <Tab icon={<PhotoIcon />} iconPosition="start" label="Fotos" />}
               </Tabs>
 
               <TabPanel value={tabValue} index={0}>
@@ -588,6 +591,17 @@ export const GameDetailScreen: React.FC = () => {
                   </List>
                 )}
               </TabPanel>
+
+              {game.status === 'FINISHED' && (
+                <TabPanel value={tabValue} index={3}>
+                  <GamePhotosTab
+                    gameId={gameId!}
+                    isFinished={game.status === 'FINISHED'}
+                    isConfirmedPlayer={!!myConfirmation && myConfirmation.status === 'CONFIRMED'}
+                    isOwner={isOwner}
+                  />
+                </TabPanel>
+              )}
             </Card>
 
             {game.rules && (

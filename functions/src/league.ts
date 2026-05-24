@@ -17,11 +17,19 @@
  */
 
 import {logger} from "firebase-functions/v2";
-import {LEAGUE_THRESHOLDS} from "./constants";
+import {
+  LEAGUE_THRESHOLDS,
+  LEAGUE_RATING_WEIGHTS,
+  LEAGUE_MAX_AVG_XP,
+  LEAGUE_MVP_RATE_CAP,
+  LEAGUE_PROMOTION_GAMES_REQUIRED,
+  LEAGUE_RELEGATION_GAMES_REQUIRED,
+  LEAGUE_PROTECTION_GAMES,
+} from "./constants";
 
-export const PROMOTION_GAMES_REQUIRED = 3;
-export const RELEGATION_GAMES_REQUIRED = 3;
-export const PROTECTION_GAMES = 5;
+export const PROMOTION_GAMES_REQUIRED = LEAGUE_PROMOTION_GAMES_REQUIRED;
+export const RELEGATION_GAMES_REQUIRED = LEAGUE_RELEGATION_GAMES_REQUIRED;
+export const PROTECTION_GAMES = LEAGUE_PROTECTION_GAMES;
 
 export interface LeagueState {
   division: string;
@@ -264,13 +272,13 @@ export function calculateLeagueRating(
   const gamesCount = recentGames.length;
 
   // PPJ - Pontos (XP) por Jogo
-  // (max 500 = 100 pontos)
+  // (max LEAGUE_MAX_AVG_XP = 100 pontos)
   const totalXp = recentGames.reduce(
     (sum, g) => sum + (g.xp_earned || 0), 0
   );
   const avgXp = totalXp / gamesCount;
   const ppjScore =
-    Math.min(avgXp / 500.0, 1.0) * 100;
+    Math.min(avgXp / LEAGUE_MAX_AVG_XP, 1.0) * 100;
 
   // WR - Win Rate (100% = 100 pontos)
   const wins = recentGames.filter(
@@ -288,20 +296,20 @@ export function calculateLeagueRating(
   const gdScore =
     Math.max(0, Math.min(1, gdNorm)) * 100;
 
-  // MVP Rate (50% = 100 pontos, cap)
+  // MVP Rate (LEAGUE_MVP_RATE_CAP = 100 pontos, cap)
   const mvpCount = recentGames.filter(
     (g) => g.was_mvp
   ).length;
   const mvpRate = mvpCount / gamesCount;
   const mvpScore =
-    Math.min(mvpRate / 0.5, 1.0) * 100;
+    Math.min(mvpRate / LEAGUE_MVP_RATE_CAP, 1.0) * 100;
 
   // Calcular e garantir bounds (0.0 - 100.0)
   const rating =
-    (ppjScore * 0.4) +
-    (winRate * 0.3) +
-    (gdScore * 0.2) +
-    (mvpScore * 0.1);
+    (ppjScore * LEAGUE_RATING_WEIGHTS.PPJ) +
+    (winRate * LEAGUE_RATING_WEIGHTS.WIN_RATE) +
+    (gdScore * LEAGUE_RATING_WEIGHTS.GOAL_DIFF) +
+    (mvpScore * LEAGUE_RATING_WEIGHTS.MVP_RATE);
   return Math.max(0, Math.min(100, rating));
 }
 

@@ -23,7 +23,7 @@ data class RecentGameData(
  * LR = (PPJ * 40%) + (WR * 30%) + (GD * 20%) + (MVP_Rate * 10%)
  *
  * Onde:
- * - PPJ = Pontos (XP) por Jogo (max 200 XP = 100 pontos)
+ * - PPJ = Pontos (XP) por Jogo (max 500 XP = 100 pontos)
  * - WR = Win Rate (100% = 100 pontos)
  * - GD = Goal Difference medio (+3 = 100, -3 = 0)
  * - MVP_Rate = Taxa de MVP (50% = 100 pontos, cap)
@@ -57,9 +57,9 @@ object LeagueRatingCalculator {
 
         val gamesCount = recentGames.size
 
-        // PPJ - Pontos (XP) por Jogo (max 200 = 100 pontos)
+        // PPJ - Pontos (XP) por Jogo (max 500 = 100 pontos)
         val avgXp = recentGames.map { it.xpEarned }.average()
-        val ppjScore = (avgXp / 200.0).coerceAtMost(1.0) * 100
+        val ppjScore = (avgXp / 500.0).coerceAtMost(1.0) * 100
 
         // WR - Win Rate (100% = 100 pontos)
         val winRate = recentGames.count { it.won }.toDouble() / gamesCount * 100

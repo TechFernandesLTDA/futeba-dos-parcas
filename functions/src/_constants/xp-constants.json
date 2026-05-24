@@ -32,6 +32,38 @@
     "MIN_XP_PER_GAME": -100
   },
 
+  "leagueThresholds": {
+    "_comment": "League division boundaries (0-100 scale). Source of truth for KMP LeagueDivision.kt, functions/src/constants.ts, and web/src/types/gamification.ts.",
+    "BRONZE_MAX": 30,
+    "PRATA_MAX": 50,
+    "OURO_MAX": 70,
+    "DIAMANTE_MAX": 100
+  },
+
+  "leagueRatingWeights": {
+    "_comment": "Weights for League Rating formula: 40% PPJ + 30% WR + 20% GD + 10% MVP.",
+    "PPJ": 0.40,
+    "WIN_RATE": 0.30,
+    "GOAL_DIFF": 0.20,
+    "MVP_RATE": 0.10
+  },
+
+  "leagueProgression": {
+    "_comment": "Promotion/relegation rules.",
+    "PROMOTION_GAMES_REQUIRED": 3,
+    "RELEGATION_GAMES_REQUIRED": 3,
+    "PROTECTION_GAMES": 5,
+    "MAX_RECENT_GAMES": 10
+  },
+
+  "divisionColors": {
+    "_comment": "Hex colors for each division. Source of truth for Android (LeagueDivision.kt colorHex), web (theme gamificationColors), and Cloud Functions.",
+    "BRONZE": "#5D4037",
+    "PRATA": "#757575",
+    "OURO": "#FFD700",
+    "DIAMANTE": "#00BCD4"
+  },
+
   "levelTable": {
     "_comment": "Level definitions. xpRequired is the ABSOLUTE total XP needed to reach this level. Progression: Levels 0-10 (~1.5 years playing 1x/week), Levels 11-20 (~1.5 additional years).",
     "levels": [

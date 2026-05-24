@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -35,6 +35,7 @@ import { GameCard, LoadingState } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { GameStatus } from '../../types/game';
+import { detectGameConflicts } from '../../utils/gameConflicts';
 import { useTranslation } from 'react-i18next';
 import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 
@@ -79,6 +80,8 @@ export const GamesScreen: React.FC = () => {
     if (!status) return true;
     return game.status === status;
   });
+
+  const conflictIds = useMemo(() => detectGameConflicts(rawGames), [rawGames]);
 
   const handleRefresh = async () => {
     if (refreshingRef.current) return;
@@ -221,6 +224,7 @@ export const GamesScreen: React.FC = () => {
                   <GameCard
                     game={game}
                     onClick={() => navigate(`/game/${game.id}`)}
+                    hasConflict={conflictIds.has(game.id)}
                   />
                 </Grid>
               ))}

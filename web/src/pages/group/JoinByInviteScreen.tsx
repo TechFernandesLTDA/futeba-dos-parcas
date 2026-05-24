@@ -17,6 +17,7 @@ import {
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
   Login as LoginIcon,
+  SportsSoccer as GameIcon,
 } from '@mui/icons-material';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -30,8 +31,11 @@ import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 const logger = createLogger('JoinByInviteScreen');
 
 interface InvitePreview {
+  type: 'GROUP' | 'GAME';
   groupId: string;
   groupName: string;
+  gameId?: string;
+  gameName?: string;
   inviterName: string;
   expired: boolean;
   used: boolean;
@@ -91,8 +95,11 @@ export const JoinByInviteScreen: React.FC = () => {
         const used = data.used === true;
 
         setPreview({
+          type: data.game_id ? 'GAME' : (data.type || 'GROUP'),
           groupId: data.group_id || '',
           groupName: data.group_name || 'Grupo',
+          gameId: data.game_id || undefined,
+          gameName: data.game_name || undefined,
           inviterName: data.inviter_name || 'Organizador',
           expired,
           used,
@@ -115,7 +122,6 @@ export const JoinByInviteScreen: React.FC = () => {
 
   const handleJoin = async () => {
     if (!code || !preview) return;
-    // Defesa em profundidade: bloquear join se convite inválido
     if (preview.expired) {
       showError('Este convite expirou. Peça um novo ao organizador.');
       return;
@@ -124,6 +130,12 @@ export const JoinByInviteScreen: React.FC = () => {
       showError('Este convite já foi utilizado. Peça um novo ao organizador.');
       return;
     }
+
+    if (preview.type === 'GAME' && preview.gameId) {
+      navigate(`/game/${preview.gameId}`, { replace: true });
+      return;
+    }
+
     try {
       await joinByInviteCode(code);
       showSuccess(`Você entrou no grupo ${preview.groupName}!`);
@@ -215,13 +227,15 @@ export const JoinByInviteScreen: React.FC = () => {
     );
   }
 
+  const isGameInvite = preview.type === 'GAME' && preview.gameId;
+
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
       <Card>
         <CardContent>
           <Stack alignItems="center" spacing={3}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 72, height: 72 }}>
-              <GroupIcon sx={{ fontSize: 40 }} aria-hidden="true" />
+            <Avatar sx={{ bgcolor: isGameInvite ? 'success.main' : 'primary.main', width: 72, height: 72 }}>
+              {isGameInvite ? <GameIcon sx={{ fontSize: 40 }} aria-hidden="true" /> : <GroupIcon sx={{ fontSize: 40 }} aria-hidden="true" />}
             </Avatar>
 
             <Stack alignItems="center" spacing={1}>
@@ -229,12 +243,19 @@ export const JoinByInviteScreen: React.FC = () => {
                 {preview.inviterName} convidou você para
               </Typography>
               <Typography variant="h5" textAlign="center" fontWeight="bold">
-                {preview.groupName}
+                {isGameInvite ? (preview.gameName || 'Jogo') : preview.groupName}
               </Typography>
+              {isGameInvite && preview.groupName && (
+                <Typography variant="body2" color="text.secondary">
+                  Grupo: {preview.groupName}
+                </Typography>
+              )}
             </Stack>
 
             <Alert severity="info" sx={{ width: '100%' }}>
-              Ao aceitar, você se torna membro deste grupo e pode participar dos jogos.
+              {isGameInvite
+                ? 'Ao aceitar, você será direcionado para os detalhes do jogo e poderá confirmar sua presença.'
+                : 'Ao aceitar, você se torna membro deste grupo e pode participar dos jogos.'}
             </Alert>
 
             <Box sx={{ width: '100%', display: 'flex', gap: 2 }}>
@@ -253,7 +274,7 @@ export const JoinByInviteScreen: React.FC = () => {
                 onClick={handleJoin}
                 disabled={joining}
               >
-                {joining ? 'Entrando…' : 'Aceitar e entrar'}
+                {joining ? 'Entrando…' : (isGameInvite ? 'Ver jogo' : 'Aceitar e entrar')}
               </Button>
             </Box>
           </Stack>

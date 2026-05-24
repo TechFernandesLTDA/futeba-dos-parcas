@@ -1407,26 +1407,30 @@ export const recalculateLeagueRating =
             leagueRating
           );
 
-        // Atualizar documento (não triggera
-        // loop pois games_played não muda)
-        await partRef.update({
-          league_rating: leagueRating,
-          division:
-            newLeagueState.division,
-          promotion_progress:
-            newLeagueState.promotionProgress,
-          relegation_progress:
-            newLeagueState
-              .relegationProgress,
-          protection_games:
-            newLeagueState.protectionGames,
-          recent_games: recentGames,
-          league_processing:
-            admin.firestore.FieldValue
-              .delete(),
-          league_processing_at:
-            admin.firestore.FieldValue
-              .delete(),
+        // #1741: Atomic result write + lock release via transaction.
+        // Garante que resultado e liberação do lock são commitados
+        // juntos — previne estado parcial se instância crashar entre
+        // escrita do resultado e liberação do lock.
+        await db().runTransaction(async (tx) => {
+          tx.update(partRef, {
+            league_rating: leagueRating,
+            division:
+              newLeagueState.division,
+            promotion_progress:
+              newLeagueState.promotionProgress,
+            relegation_progress:
+              newLeagueState
+                .relegationProgress,
+            protection_games:
+              newLeagueState.protectionGames,
+            recent_games: recentGames,
+            league_processing:
+              admin.firestore.FieldValue
+                .delete(),
+            league_processing_at:
+              admin.firestore.FieldValue
+                .delete(),
+          });
         });
 
         const promoReq = leagueModule

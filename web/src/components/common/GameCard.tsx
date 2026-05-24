@@ -15,6 +15,7 @@ import {
   ListItemText,
   useTheme,
   alpha,
+  Tooltip,
 } from '@mui/material';
 import {
   LocationOn as LocationIcon,
@@ -25,6 +26,7 @@ import {
   Share as ShareIcon,
   Link as LinkIcon,
   Cancel as CancelIcon,
+  Warning as ConflictIcon,
 } from '@mui/icons-material';
 import { Game, FIELD_TYPE_LABELS, getStatusChipColors, ConfirmationPaletteKey } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
@@ -39,6 +41,7 @@ interface GameCardProps {
   onCancel?: () => void;
   isConfirmed?: boolean;
   showActions?: boolean;
+  hasConflict?: boolean;
   // Props para menu de contexto
   currentUserId?: string;
   onCancelGame?: () => void;
@@ -53,6 +56,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   onCancel,
   isConfirmed,
   showActions = false,
+  hasConflict = false,
   currentUserId,
   onCancelGame,
   onShare,
@@ -136,6 +140,28 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   variant="outlined"
                   sx={{ fontSize: '0.75rem' }}
                 />
+                {hasConflict && (
+                  <Tooltip title="Jogo com horario conflitante" arrow>
+                    <Chip
+                      icon={<ConflictIcon sx={{ fontSize: 14 }} />}
+                      label="Conflito"
+                      size="small"
+                      sx={{
+                        backgroundColor: `${theme.palette.warning.main}1F`,
+                        color: theme.palette.mode === 'dark'
+                          ? theme.palette.warning.light
+                          : theme.palette.warning.dark,
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        '& .MuiChip-icon': {
+                          color: theme.palette.mode === 'dark'
+                            ? theme.palette.warning.light
+                            : theme.palette.warning.dark,
+                        },
+                      }}
+                    />
+                  </Tooltip>
+                )}
               </Box>
               <Typography variant="subtitle1" fontWeight={600}>
                 {game.locationName}
@@ -312,8 +338,10 @@ export const StatusChip: React.FC<{
       color = theme.palette.text.disabled;
       bgColor = theme.palette.action.hover;
     } else {
-      color = theme.palette[entry.paletteKey].main;
-      bgColor = entry.bgColor ?? `${color}1F`;
+      const paletteEntry = theme.palette[entry.paletteKey];
+      const isDark = theme.palette.mode === 'dark';
+      color = isDark ? paletteEntry.light : paletteEntry.dark;
+      bgColor = entry.bgColor ?? `${paletteEntry.main}1F`;
     }
   } else {
     label = entry.label;

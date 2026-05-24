@@ -300,6 +300,7 @@ fun AppNavHost(
             val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
             val availableSeasons by viewModel.availableSeasons.collectAsStateWithLifecycle()
             val selectedSeason by viewModel.selectedSeason.collectAsStateWithLifecycle()
+            val context = LocalContext.current
 
             LeagueScreen(
                 uiState = uiState,
@@ -312,7 +313,15 @@ fun AppNavHost(
                 onRefresh = { selectedSeason?.let { viewModel.selectSeason(it) } },
                 onNavigateNotifications = { navController.navigate(Screen.Notifications.route) },
                 onNavigateGroups = { navController.navigate(Screen.Groups.route) },
-                onNavigateMap = { navController.navigate(Screen.LocationsMap.route) }
+                onNavigateMap = { navController.navigate(Screen.LocationsMap.route) },
+                onPlayerClick = { userId ->
+                    val activity = context as? androidx.fragment.app.FragmentActivity
+                    activity?.let {
+                        com.futebadosparcas.ui.player.PlayerCardBottomSheet
+                            .newInstance(userId)
+                            .show(it.supportFragmentManager, "player_card")
+                    }
+                }
             )
         }
 

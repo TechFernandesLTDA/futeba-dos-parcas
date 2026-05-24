@@ -15,12 +15,14 @@ import {
   alpha,
   Chip,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
   ThumbDown as ThumbDownIcon,
   Star as StarIcon,
+  PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -81,11 +83,37 @@ export const VoteResultScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleRetry = () => {
     setError(null);
     setLoading(true);
     setRetryCount((n) => n + 1);
+  };
+
+  const handleExportPdf = async () => {
+    if (!contentRef.current) return;
+    setExporting(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(contentRef.current, {
+        backgroundColor: theme.palette.background.default,
+        scale: 2,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`resultado-jogo-${gameId}.pdf`);
+    } catch (err) {
+      logger.error('Error exporting PDF:', err);
+      showErrorRef.current('Erro ao exportar PDF');
+    } finally {
+      setExporting(false);
+    }
   };
 
   useEffect(() => {
@@ -194,6 +222,7 @@ export const VoteResultScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
+        <div ref={contentRef}>
         {gameResult && (
           <Card sx={{ mb: 2, textAlign: 'center' }}>
             <CardContent>
@@ -283,10 +312,22 @@ export const VoteResultScreen: React.FC = () => {
             </Typography>
           </Box>
         )}
+        </div>
 
-        <Button variant="outlined" fullWidth onClick={navigateBack}>
-          Voltar
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={exporting ? <CircularProgress size={20} /> : <PdfIcon />}
+            onClick={handleExportPdf}
+            disabled={exporting}
+            fullWidth
+          >
+            {exporting ? 'Exportando...' : 'Exportar PDF'}
+          </Button>
+          <Button variant="outlined" fullWidth onClick={navigateBack}>
+            Voltar
+          </Button>
+        </Box>
       </Container>
     </Box>
   );

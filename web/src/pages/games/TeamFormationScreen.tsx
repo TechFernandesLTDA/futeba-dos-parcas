@@ -15,6 +15,8 @@ import {
   alpha,
   CircularProgress,
   Alert,
+  Chip,
+  LinearProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -22,6 +24,7 @@ import {
   ArrowBack,
   Shuffle as ShuffleIcon,
   Save as SaveIcon,
+  Balance as BalanceIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -198,6 +201,12 @@ export const TeamFormationScreen: React.FC = () => {
     }
   };
 
+  const avgLevelA = teamA.length > 0 ? teamA.reduce((sum, p) => sum + p.level, 0) / teamA.length : 0;
+  const avgLevelB = teamB.length > 0 ? teamB.reduce((sum, p) => sum + p.level, 0) / teamB.length : 0;
+  const levelDiff = Math.abs(avgLevelA - avgLevelB);
+  const balanceRatio = (avgLevelA + avgLevelB) > 0 ? Math.min(avgLevelA, avgLevelB) / Math.max(avgLevelA, avgLevelB) : 1;
+  const isBalanced = levelDiff <= 1;
+
   if (error) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
@@ -326,6 +335,37 @@ export const TeamFormationScreen: React.FC = () => {
             </Card>
           </Grid>
         </Grid>
+
+        <Card sx={{ mt: 2, mb: 2 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <BalanceIcon color={isBalanced ? 'success' : 'warning'} />
+              <Typography variant="subtitle2" fontWeight={600}>
+                Equilíbrio dos Times
+              </Typography>
+              <Chip
+                label={isBalanced ? 'Equilibrado' : 'Desequilibrado'}
+                size="small"
+                color={isBalanced ? 'success' : 'warning'}
+                variant="outlined"
+              />
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                Time A: Nível médio {avgLevelA.toFixed(1)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Time B: Nível médio {avgLevelB.toFixed(1)}
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={balanceRatio * 100}
+              color={isBalanced ? 'success' : 'warning'}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
+          </CardContent>
+        </Card>
 
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="caption" color="text.secondary">

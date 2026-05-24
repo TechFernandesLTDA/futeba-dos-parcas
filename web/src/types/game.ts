@@ -202,7 +202,10 @@ export interface Game {
   // Cancel
   cancelledBy?: string;
   cancelReason?: string;
-  
+
+  // Live Stream
+  streamUrl?: string;
+
   // Soft Delete
   deletedAt?: Date;
   deletedBy?: string;
@@ -215,7 +218,7 @@ export interface Game {
  * Status com keys do MUI palette para suporte light/dark mode.
  * Use getStatusChipColors(theme, status) para obter color/bgColor resolvidos.
  */
-export type StatusPaletteKey = 'success' | 'info' | 'error' | 'default';
+export type StatusPaletteKey = 'success' | 'info' | 'error' | 'warning' | 'default';
 
 export const STATUS_CONFIG: Record<
   GameStatus,
@@ -224,8 +227,8 @@ export const STATUS_CONFIG: Record<
   SCHEDULED: { label: 'Aberto', paletteKey: 'success' },
   CONFIRMED: { label: 'Fechado', paletteKey: 'info' },
   LIVE: { label: 'Ao Vivo', paletteKey: 'error' },
-  FINISHED: { label: 'Finalizado', paletteKey: 'default' },
-  CANCELLED: { label: 'Cancelado', paletteKey: 'default' },
+  FINISHED: { label: 'Finalizado', paletteKey: 'info' },
+  CANCELLED: { label: 'Cancelado', paletteKey: 'error' },
 };
 
 /**
@@ -233,7 +236,17 @@ export const STATUS_CONFIG: Record<
  * Aceita Theme do MUI; usa indexer dinâmico para acessar palette[paletteKey].
  */
 export function getStatusChipColors(
-  theme: { palette: { success: { main: string }; info: { main: string }; error: { main: string }; text: { disabled: string }; action: { hover: string } } },
+  theme: {
+    palette: {
+      mode?: 'light' | 'dark';
+      success: { main: string; light: string; dark: string };
+      info: { main: string; light: string; dark: string };
+      error: { main: string; light: string; dark: string };
+      warning: { main: string; light: string; dark: string };
+      text: { disabled: string };
+      action: { hover: string };
+    };
+  },
   status: GameStatus,
 ): { label: string; color: string; bgColor: string } {
   const config = STATUS_CONFIG[status];
@@ -245,10 +258,10 @@ export function getStatusChipColors(
     };
   }
   const palette = theme.palette[config.paletteKey];
+  const isDark = theme.palette.mode === 'dark';
   return {
     label: config.label,
-    color: palette.main,
-    // alpha 0.12 funciona bem em ambos light e dark mode
+    color: isDark ? palette.light : palette.dark,
     bgColor: `${palette.main}1F`,
   };
 }
@@ -296,10 +309,11 @@ export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; palet
  */
 type PaletteTheme = {
   palette: {
-    success: { main: string };
-    warning: { main: string };
-    error: { main: string };
-    info: { main: string };
+    mode?: 'light' | 'dark';
+    success: { main: string; light: string; dark: string };
+    warning: { main: string; light: string; dark: string };
+    error: { main: string; light: string; dark: string };
+    info: { main: string; light: string; dark: string };
     text: { disabled: string };
     action: { hover: string };
   };
@@ -332,11 +346,12 @@ function resolvePaletteKeyColors(
       bgColor: theme.palette.action.hover,
     };
   }
-  const paletteColor = theme.palette[config.paletteKey].main;
+  const paletteColor = theme.palette[config.paletteKey];
+  const isDark = theme.palette.mode === 'dark';
   return {
     label: config.label,
-    color: paletteColor,
-    bgColor: `${paletteColor}1F`,
+    color: isDark ? paletteColor.light : paletteColor.dark,
+    bgColor: `${paletteColor.main}1F`,
   };
 }
 

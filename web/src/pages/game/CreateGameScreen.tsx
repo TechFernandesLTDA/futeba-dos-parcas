@@ -74,6 +74,7 @@ interface GameFormData {
   visibility: GameVisibility;
   recurrenceEnabled: boolean;
   recurrenceType: 'weekly' | 'biweekly' | 'monthly';
+  streamUrl: string;
 }
 
 const CUSTOM_LOCATION = '__custom__';
@@ -101,6 +102,7 @@ const defaultFormData: GameFormData = {
   visibility: 'PUBLIC_CLOSED',
   recurrenceEnabled: false,
   recurrenceType: 'weekly',
+  streamUrl: '',
 };
 
 export const CreateGameScreen: React.FC = () => {
@@ -131,6 +133,9 @@ export const CreateGameScreen: React.FC = () => {
   const [fields, setFields] = useState<Field[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
   const [fieldsError, setFieldsError] = useState<string | null>(null);
+  const [cep, setCep] = useState('');
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState<string | null>(null);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<GameFormData>({
@@ -216,6 +221,37 @@ export const CreateGameScreen: React.FC = () => {
       }));
     }
   }, [group, groupId, formData.groupId]);
+
+  const handleCepChange = async (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    setCep(digits);
+    setCepError(null);
+
+    if (digits.length === 8) {
+      setCepLoading(true);
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+        if (!response.ok) throw new Error('CEP não encontrado');
+        const data = await response.json();
+        if (data.erro) {
+          setCepError('CEP não encontrado');
+          return;
+        }
+        const street = [data.logradouro, data.complemento].filter(Boolean).join(', ');
+        const area = [data.bairro, data.localidade, data.uf].filter(Boolean).join(', ');
+        const fullAddress = area ? `${street} - ${area}` : street;
+        setFormData((prev) => ({
+          ...prev,
+          locationAddress: fullAddress,
+          locationName: prev.locationName || data.localidade || '',
+        }));
+      } catch {
+        setCepError('Erro ao buscar CEP. Preencha manualmente.');
+      } finally {
+        setCepLoading(false);
+      }
+    }
+  };
 
   const handleInputChange = <K extends keyof GameFormData>(field: K, value: GameFormData[K]) => {
     setUserInteracted(true);
@@ -360,6 +396,9 @@ export const CreateGameScreen: React.FC = () => {
         gamePayload.pixKeyType = formData.pixKeyType;
         gamePayload.pixBeneficiaryName = formData.pixBeneficiaryName;
       }
+      if (formData.streamUrl.trim()) {
+        gamePayload.streamUrl = formData.streamUrl.trim();
+      }
 
       const gameId = await createGame(gamePayload as Partial<import('../../types/game').Game>);
       showSuccess(t('games.create.createSuccess'));
@@ -455,6 +494,24 @@ export const CreateGameScreen: React.FC = () => {
             {/* Campos manuais (quando "Outro local" selecionado) */}
             {useCustomLocation && (
               <>
+                <TextField
+                  label="CEP"
+                  value={cep}
+                  onChange={(e) => handleCepChange(e.target.value)}
+                  fullWidth
+                  placeholder="00000000"
+                  error={!!cepError}
+                  helperText={cepError || (cepLoading ? 'Buscando endereço...' : 'Digite o CEP para preencher automaticamente')}
+                  InputProps={{
+                    endAdornment: cepLoading ? (
+                      <InputAdornment position="end">
+                        <CircularProgress size={20} />
+                      </InputAdornment>
+                    ) : undefined,
+                  }}
+                  inputProps={{ inputMode: 'numeric', maxLength: 8 }}
+                />
+
                 <TextField
                   label={t('games.create.locationName')}
                   value={formData.locationName}
@@ -758,6 +815,15 @@ export const CreateGameScreen: React.FC = () => {
               multiline
               rows={6}
               placeholder={t('games.create.gameRulesPlaceholder')}
+            />
+
+            <TextField
+              label="URL da Live Stream (YouTube/Twitch)"
+              value={formData.streamUrl}
+              onChange={(e) => handleInputChange('streamUrl', e.target.value)}
+              fullWidth
+              placeholder="https://youtube.com/watch?v=... ou https://twitch.tv/..."
+              helperText="Opcional. Cole uma URL do YouTube ou Twitch para transmitir ao vivo."
             />
 
             <Alert severity="info">

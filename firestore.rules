@@ -1866,7 +1866,8 @@ service cloud.firestore {
     // COLECAO: season_participation (Ligas)
     // ============================================
     match /season_participation/{partId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && !('deleted_at' in resource.data && resource.data.deleted_at != null);
       allow create, update: if isAdmin();
     }
 
@@ -2171,6 +2172,32 @@ service cloud.firestore {
     match /release_notes/{noteId} {
       allow read: if isAuthenticated();
       allow write: if false;
+    }
+
+    // ============================================
+    // COLECAO: game_photos (álbum de fotos pós-jogo)
+    // ============================================
+    // Issue #1784: Jogadores confirmados e owner do jogo podem
+    // subir fotos. Todos autenticados podem ver.
+    // Apenas uploader ou admin podem deletar.
+    match /game_photos/{photoId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.game_id is string &&
+        request.resource.data.uploaded_by == userId() &&
+        firestore.exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
+        firestore.get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
+        (firestore.exists(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) ||
+         firestore.get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.owner_id == userId());
+
+      allow update: if false;
+
+      allow delete: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.uploaded_by == userId() ||
+        isGameOwner(resource.data.game_id)
+      );
     }
 
     // ============================================

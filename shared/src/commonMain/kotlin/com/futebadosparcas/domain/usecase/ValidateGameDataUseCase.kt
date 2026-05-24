@@ -16,6 +16,7 @@ object ValidateGameDataUseCase {
     const val MAX_TEAMS = 4
     const val MIN_GOALKEEPERS = 0
     const val MAX_DAILY_PRICE = 500.0
+    const val MAX_LOCATION_NAME_LENGTH = 100
     const val DEFAULT_GOALKEEPERS = 3
     const val DEFAULT_TEAMS = 2
 
@@ -60,9 +61,10 @@ object ValidateGameDataUseCase {
     ): GameValidationResult {
         val errors = mutableListOf<String>()
 
-        // Validar data
         if (date.isBlank()) {
             errors.add("Data do jogo e obrigatoria")
+        } else if (!isFutureDate(date)) {
+            errors.add("Data do jogo deve ser no futuro")
         }
 
         // Validar horario
@@ -102,6 +104,13 @@ object ValidateGameDataUseCase {
         }
         if (dailyPrice > MAX_DAILY_PRICE) {
             errors.add("Preco maximo e R$ ${MAX_DAILY_PRICE.toInt()},00")
+        }
+
+        // Validar local
+        if (locationName.isBlank()) {
+            errors.add("Nome do local e obrigatorio")
+        } else if (locationName.length > MAX_LOCATION_NAME_LENGTH) {
+            errors.add("Nome do local deve ter no maximo $MAX_LOCATION_NAME_LENGTH caracteres")
         }
 
         return GameValidationResult(errors)
@@ -147,5 +156,18 @@ object ValidateGameDataUseCase {
      */
     private fun isValidTimeFormat(time: String): Boolean {
         return time.matches(TIME_FORMAT_REGEX)
+    }
+
+    private fun isFutureDate(date: String): Boolean {
+        val parts = date.split("/")
+        if (parts.size != 3) return true
+        val day = parts[0].toIntOrNull() ?: return true
+        val month = parts[1].toIntOrNull() ?: return true
+        val year = parts[2].toIntOrNull() ?: return true
+        val today = kotlinx.datetime.Clock.System.now()
+            .toEpochMilliseconds()
+        val inputDays = kotlinx.datetime.LocalDate(year, month, day).toEpochDays()
+        val todayDays = (today / (24 * 60 * 60 * 1000)).toInt()
+        return inputDays >= todayDays - 1
     }
 }

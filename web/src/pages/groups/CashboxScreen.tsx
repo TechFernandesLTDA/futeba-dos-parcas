@@ -24,6 +24,7 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -31,6 +32,7 @@ import {
   TrendingUp as TrendingIcon,
   TrendingDown as TrendingDownIcon,
   History as HistoryIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -67,6 +69,7 @@ export const CashboxScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
+  const [isConfirmedMember, setIsConfirmedMember] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
   const [amount, setAmount] = useState('');
@@ -123,12 +126,15 @@ export const CashboxScreen: React.FC = () => {
       getDoc(doc(db, 'groups', groupId, 'members', user.id))
         .then((memberDoc) => {
           if (!cancelled && memberDoc.exists()) {
-            const memberRole = memberDoc.data().role as string | undefined;
+            const memberData = memberDoc.data();
+            const memberRole = memberData.role as string | undefined;
+            const memberStatus = memberData.status as string | undefined;
             setIsAdminOrOwner(memberRole === 'ADMIN' || memberRole === 'OWNER');
+            setIsConfirmedMember(memberStatus === 'ACTIVE');
           }
         })
         .catch((err) => {
-          logger.error('Error checking admin status:', err);
+          logger.error('Error checking member status:', err);
         });
     }
 
@@ -184,9 +190,18 @@ export const CashboxScreen: React.FC = () => {
           <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
+          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Caixa do Grupo
           </Typography>
+          {isConfirmedMember && !isAdminOrOwner && (
+            <Chip
+              icon={<VisibilityIcon />}
+              label="Somente leitura"
+              size="small"
+              color="info"
+              variant="outlined"
+            />
+          )}
         </Box>
       </Box>
 
