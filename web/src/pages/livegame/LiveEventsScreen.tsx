@@ -59,7 +59,7 @@ interface GameEvent {
 
 export const LiveEventsScreen: React.FC = () => {
   useDocumentTitle('Eventos ao Vivo');
-  const navigateBack = useNavigateBack('/games');
+  const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();

@@ -593,7 +593,7 @@ export function RankingsTab() {
               <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
                 Os 100 melhores jogadores aparecem aqui. Participe de jogos para entrar no ranking!
               </Typography>
-              <Button variant="outlined" onClick={() => navigate('/games')}>
+              <Button variant="outlined" onClick={() => navigate('/?tab=1')}>
                 Ver jogos disponíveis
               </Button>
             </Box>

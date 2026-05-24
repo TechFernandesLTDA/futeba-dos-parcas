@@ -111,7 +111,7 @@ export const GroupSettingsScreen: React.FC = () => {
       logger.info('Usuário saiu do grupo', { groupId, uid });
       showSuccess('Você saiu do grupo.');
       setLeaveDialogOpen(false);
-      navigate('/groups');
+      navigate('/?tab=2');
     } catch (err) {
       logger.error('Erro ao sair do grupo:', err);
       showError('Erro ao sair do grupo. Tente novamente.');
@@ -130,7 +130,7 @@ export const GroupSettingsScreen: React.FC = () => {
       logger.info('Grupo excluído com sucesso', { groupId });
       showSuccess('Grupo excluído com sucesso.');
       setDeleteDialogOpen(false);
-      setTimeout(() => navigate('/groups'), 500);
+      setTimeout(() => navigate('/?tab=2'), 500);
     } catch (err) {
       logger.error('Erro ao excluir grupo:', err);
       showError((err as Error)?.message || 'Erro ao excluir grupo. Tente novamente.');

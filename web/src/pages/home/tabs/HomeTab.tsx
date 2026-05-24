@@ -229,7 +229,7 @@ function NextGameWidget() {
               startIcon={<AddIcon />}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate('/games');
+                navigate('/?tab=1');
               }}
               sx={{ flexShrink: 0 }}
             >
@@ -679,7 +679,7 @@ export function HomeTab() {
       label: t('onboarding.checklistConfirmPresence'),
       subtitle: t('onboarding.checklistConfirmPresenceDesc'),
       actionLabel: t('common.viewGames'),
-      navigateTo: '/games',
+      navigateTo: '/?tab=1',
       completed: false, // TODO: derivar de confirmations quando HomeTab expuser este dado
     },
     {
@@ -687,7 +687,7 @@ export function HomeTab() {
       label: t('onboarding.checklistPlayFirstGame'),
       subtitle: t('onboarding.checklistPlayFirstGameDesc'),
       actionLabel: t('common.viewGames'),
-      navigateTo: '/games',
+      navigateTo: '/?tab=1',
       completed: false, // TODO: derivar de gamesPlayed quando exposto no User type
     },
   ], [user, groups, t]);
@@ -927,7 +927,7 @@ export function HomeTab() {
 
             <Box sx={{ display: 'flex', gap: 2 }}>
               {[
-                { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/games' },
+                { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/?tab=1' },
                 { value: user?.totalGoals || 0, label: t('profile.goals'), icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
                 { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gamificationColors.gold, 0.25), navigateTo: '/statistics' },
               ].map((stat) => (
@@ -1075,14 +1075,14 @@ export function HomeTab() {
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => navigate('/groups')}
+                        onClick={() => navigate('/?tab=2')}
                       >
                         {t('common.viewGroups')}
                       </Button>
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => navigate('/games')}
+                        onClick={() => navigate('/?tab=1')}
                       >
                         {t('games.createGame')}
                       </Button>
@@ -1269,7 +1269,7 @@ export function HomeTab() {
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={() => navigate('/games')}
+                      onClick={() => navigate('/?tab=1')}
                     >
                       {t('games.createGame')}
                     </Button>

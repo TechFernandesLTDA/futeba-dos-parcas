@@ -379,7 +379,7 @@ export const CreateGameScreen: React.FC = () => {
   };
 
   // Saída agora tratada por FormScaffold (closeDestination + useDirtyGuard)
-  const closeDestination = groupId ? `/group/${groupId}` : '/games';
+  const closeDestination = groupId ? `/group/${groupId}` : '/?tab=1';
 
   const handleSubmit = async () => {
     if (!validateStep(activeStep)) return;

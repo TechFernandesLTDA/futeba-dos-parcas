@@ -45,8 +45,7 @@ const ForgotPasswordScreen = lazy(() => import('./pages/auth/ForgotPasswordScree
 // Home
 const HomeScreen = lazy(() => import('./pages/home/HomeScreen').then(m => ({ default: m.HomeScreen })));
 
-// Games
-const GamesScreen = lazy(() => import('./pages/games/GamesScreen').then(m => ({ default: m.GamesScreen })));
+
 const GameDetailScreen = lazy(() => import('./pages/game/GameDetailScreen').then(m => ({ default: m.GameDetailScreen })));
 const CreateGameScreen = lazy(() => import('./pages/game/CreateGameScreen').then(m => ({ default: m.CreateGameScreen })));
 const LiveGameScreen = lazy(() => import('./pages/game/LiveGameScreen').then(m => ({ default: m.LiveGameScreen })));
@@ -398,8 +397,8 @@ function AppRoutes() {
       {/* Home */}
       <Route path="/" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense></ProtectedRoute>} />
 
-      {/* Games */}
-      <Route path="/games" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GamesScreen /></Suspense></ProtectedRoute>} />
+      {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
+      <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         {/* Games */}

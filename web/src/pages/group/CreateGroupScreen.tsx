@@ -119,10 +119,10 @@ export const CreateGroupScreen: React.FC = () => {
   };
 
   return (
-    <AdaptiveFormSheet closeDestination="/groups" isDirty={isDirty}>
+    <AdaptiveFormSheet closeDestination="/?tab=2" isDirty={isDirty}>
     <FormScaffold
       title={t('groups.createGroup')}
-      closeDestination="/groups"
+      closeDestination="/?tab=2"
       closeVariant="X"
       isDirty={isDirty}
       loading={loading}
@@ -226,7 +226,7 @@ export const CreateGroupScreen: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate('/groups')}
+                   onClick={() => navigate('/?tab=2')}
                   fullWidth
                 >
                   {t('common.cancel')}
