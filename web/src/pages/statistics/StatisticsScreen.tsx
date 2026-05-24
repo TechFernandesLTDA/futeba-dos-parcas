@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { gamificationColors } from '../../theme';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -23,263 +23,58 @@ import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
-  SportsSoccer as SoccerIcon,
+  SportsSoccer,
   MilitaryTech as MedalIcon,
   Whatshot as FireIcon,
+  ShieldOutlined as ShieldIcon,
+  StyleOutlined as CardIcon,
 } from '@mui/icons-material';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
+import { useStatistics } from '../../hooks/useStatistics';
 import { getLevelTitle, getLevelColor } from '../../types/user';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { createLogger } from '../../utils/logger';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
+import { AppBreadcrumbs } from '../../components/layout/AppBreadcrumbs';
 import { TeamBadge } from '../../components/team/TeamBadge';
-
-const logger = createLogger('StatisticsScreen');
-
-/**
- * Props do componente de gráfico donut de resultado (V/E/D).
- */
-interface DonutChartProps {
-  wins: number;
-  draws: number;
-  losses: number;
-  total: number;
-}
-
-/**
- * Gráfico donut SVG puro para exibir proporção de vitórias, empates e derrotas.
- * Usa a técnica de stroke-dasharray/stroke-dashoffset — sem bibliotecas externas.
- */
-const DonutChart: React.FC<DonutChartProps> = ({ wins, draws, losses, total }) => {
-  const theme = useTheme();
-
-  // Raio e circunferência do anel
-  const radius = 45;
-  const circumference = 2 * Math.PI * radius;
-  const strokeWidth = 18;
-  const size = 120;
-  const center = size / 2;
-
-  // Sem jogos: exibe anel cinza com texto "Sem dados"
-  if (total === 0) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1 }}>
-        <svg width={size} height={size} aria-label="Sem dados de resultado">
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={theme.palette.action.disabledBackground}
-            strokeWidth={strokeWidth}
-          />
-          <text
-            x={center}
-            y={center + 5}
-            textAnchor="middle"
-            fontSize="11"
-            fill={theme.palette.text.disabled}
-          >
-            Sem dados
-          </text>
-        </svg>
-      </Box>
-    );
-  }
-
-  // Calcula o comprimento de cada arco proporcional ao total
-  const winArc = (wins / total) * circumference;
-  const drawArc = (draws / total) * circumference;
-  const lossArc = (losses / total) * circumference;
-
-  // Offsets acumulados: o SVG desenha no sentido horário a partir das 3h
-  // Rotacionamos -90° para começar do topo
-  const winOffset = 0;
-  const drawOffset = winArc;
-  const lossOffset = winArc + drawArc;
-
-  const corVitoria = theme.palette.success.main;
-  const corEmpate = theme.palette.warning.main;
-  const corDerrota = theme.palette.error.main;
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1 }}>
-      <svg
-        width={size}
-        height={size}
-        aria-label={`Gráfico de resultados: ${wins} vitórias, ${draws} empates, ${losses} derrotas`}
-      >
-        {/* Fundo do anel */}
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke={theme.palette.action.disabledBackground}
-          strokeWidth={strokeWidth}
-        />
-        {/* Arco de vitórias */}
-        {wins > 0 && (
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={corVitoria}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${winArc} ${circumference}`}
-            strokeDashoffset={-winOffset}
-            transform={`rotate(-90 ${center} ${center})`}
-            strokeLinecap="butt"
-          />
-        )}
-        {/* Arco de empates */}
-        {draws > 0 && (
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={corEmpate}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${drawArc} ${circumference}`}
-            strokeDashoffset={-drawOffset}
-            transform={`rotate(-90 ${center} ${center})`}
-            strokeLinecap="butt"
-          />
-        )}
-        {/* Arco de derrotas */}
-        {losses > 0 && (
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={corDerrota}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${lossArc} ${circumference}`}
-            strokeDashoffset={-lossOffset}
-            transform={`rotate(-90 ${center} ${center})`}
-            strokeLinecap="butt"
-          />
-        )}
-        {/* Label central com total de jogos */}
-        <text
-          x={center}
-          y={center - 6}
-          textAnchor="middle"
-          fontSize="18"
-          fontWeight="bold"
-          fill={theme.palette.text.primary}
-        >
-          {total}
-        </text>
-        <text
-          x={center}
-          y={center + 10}
-          textAnchor="middle"
-          fontSize="10"
-          fill={theme.palette.text.secondary}
-        >
-          jogos
-        </text>
-      </svg>
-      {/* Legenda compacta abaixo do donut */}
-      <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'success.main' }} />
-          <Typography variant="caption">V: {wins}</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'warning.main' }} />
-          <Typography variant="caption">E: {draws}</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'error.main' }} />
-          <Typography variant="caption">D: {losses}</Typography>
-        </Box>
-      </Box>
-    </Box>
-  );
-};
-
-interface UserStats {
-  totalGames: number;
-  totalGoals: number;
-  totalAssists: number;
-  totalWins: number;
-  totalDraws: number;
-  totalLosses: number;
-  totalSaves: number;
-  mvpCount: number;
-  bestGkCount: number;
-  yellowCards: number;
-  redCards: number;
-  currentStreak: number;
-  bestStreak: number;
-  level: number;
-  experiencePoints: number;
-}
+import { DonutChart } from '../../components/charts/DonutChart';
 
 export const StatisticsScreen: React.FC = () => {
   useDocumentTitle('Estatísticas');
   const navigate = useNavigate();
-    const theme = useTheme();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
+  const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showError } = useToast();
   const { t } = useTranslation();
+  const navigateBack = useNavigateBack('/');
 
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabValue = parseInt(searchParams.get('tab') || '0');
 
-  const loadStats = useCallback(async () => {
-    if (!user) return;
-    try {
-      const userRef = doc(db, 'users', user!.id);
-      const docSnap = await getDoc(userRef);
-      if (docSnap.exists()) {
-        setStats(snakeToCamel(docSnap.data()) as UserStats);
-      }
-    } catch (err) {
-      logger.error('Error loading stats:', err);
-      showError(t('statistics.loadError'));
-      setError('Erro ao carregar estatísticas');
-    }
-    setLoading(false);
-  }, [user, showError, t]);
+  const { stats, loading, error, retry } = useStatistics(user?.id);
 
-  useEffect(() => {
-    if (user) {
-      loadStats();
-    }
-  }, [user, loadStats]);
+  const memoizedStats = useMemo(() => {
+    if (!stats) return null;
+    const games = stats.totalGames || 0;
+    const winRate = games > 0 ? ((stats.totalWins / games) * 100).toFixed(1) : '0';
+    const drawRate = games > 0 ? ((stats.totalDraws / games) * 100).toFixed(1) : '0';
+    const lossRate = games > 0 ? ((stats.totalLosses / games) * 100).toFixed(1) : '0';
+    const goalsPerGame = games > 0 ? (stats.totalGoals / games).toFixed(2) : '0.0';
+    const assistsPerGame = games > 0 ? (stats.totalAssists / games).toFixed(2) : '0.0';
+    const maxStreak = Math.max(stats.currentStreak, stats.bestStreak, 1);
+    const maxGa = Math.max(stats.totalGoals, stats.totalAssists, 1);
+    return { games, winRate, drawRate, lossRate, goalsPerGame, assistsPerGame, maxStreak, maxGa };
+  }, [stats]);
 
-  const getWinRate = () => {
-    if (!stats || stats.totalGames === 0) return 0;
-    return ((stats.totalWins / stats.totalGames) * 100).toFixed(1);
+  const handleTabChange = (_: React.SyntheticEvent, v: number) => {
+    setSearchParams({ tab: v.toString() });
   };
 
-  const getDrawRate = () => {
-    if (!stats || stats.totalGames === 0) return 0;
-    return ((stats.totalDraws / stats.totalGames) * 100).toFixed(1);
-  };
-
-  const getLossRate = () => {
-    if (!stats || stats.totalGames === 0) return 0;
-    return ((stats.totalLosses / stats.totalGames) * 100).toFixed(1);
-  };
-
-  const getGoalsPerGame = () => {
-    if (!stats || stats.totalGames === 0) return '0.0';
-    return (stats.totalGoals / stats.totalGames).toFixed(2);
-  };
+  if (error) {
+    showError(error);
+  }
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -289,22 +84,23 @@ export const StatisticsScreen: React.FC = () => {
           top: 0,
           bgcolor: 'background.paper',
           zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          borderBottom: 1,
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+        <Box sx={{ display: 'flex', alignItems: 'center', px: 1, py: 0.5 }}>
+          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1 }}>
-            Estatísticas
+            {t('statistics.title')}
           </Typography>
         </Box>
         <Tabs
-          value={tabValue}
-          onChange={(_, v) => setTabValue(v)}
+          value={tabValue > 2 ? 0 : tabValue}
+          onChange={handleTabChange}
           variant="fullWidth"
-          aria-label="Categorias de estatísticas"
+          aria-label={t('statistics.title')}
         >
           <Tab label={t('statistics.tabs.general')} />
           <Tab label={t('statistics.tabs.goals')} />
@@ -313,10 +109,15 @@ export const StatisticsScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
+        <AppBreadcrumbs
+          items={[
+            { label: t('common.home'), to: '/' },
+            { label: t('statistics.title') },
+          ]}
+        />
+
         {loading ? (
-          // Skeleton espelha o layout real: card de perfil + 2 cards de conteúdo
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Skeleton do card de perfil (avatar + nome + nível + XP) */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -329,23 +130,53 @@ export const StatisticsScreen: React.FC = () => {
                 </Box>
               </CardContent>
             </Card>
-            {/* Skeleton do primeiro card de conteúdo da aba */}
-            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
-            {/* Skeleton do segundo card de conteúdo da aba */}
-            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+            <Card>
+              <CardContent>
+                <Skeleton variant="text" width={100} height={24} />
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Skeleton variant="circular" width={120} height={120} />
+                </Box>
+                <Grid container spacing={2} sx={{ mt: 2 }}>
+                  {[1, 2, 3, 4].map(i => (
+                    <Grid item xs={3} key={i}>
+                      <Skeleton variant="text" width="100%" height={48} />
+                      <Skeleton variant="text" width="60%" height={16} sx={{ mx: 'auto' }} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <Skeleton variant="text" width={120} height={24} />
+                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                  <Skeleton variant="rectangular" width={40} height={40} sx={{ borderRadius: 1 }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="30%" height={32} />
+                    <Skeleton variant="text" width="50%" height={16} />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </Box>
-        ) : error ? (
+        ) : error && !stats ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-            <Button variant="outlined" onClick={() => { setError(null); setLoading(true); loadStats(); }}>
-              Tentar novamente
-            </Button>
+            <Button variant="outlined" onClick={retry}>{t('statistics.retry')}</Button>
           </Box>
-        ) : stats === null ? (
-          <EmptyState title="Sem estatísticas ainda" description="Jogue suas primeiras partidas pra começar." />
-        ) : stats ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Card sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+        ) : !stats ? (
+          <EmptyState
+            icon={<SportsSoccer sx={{ fontSize: 64, color: 'text.disabled' }} />}
+            title={t('statistics.noStatsYet')}
+            description={t('statistics.noStatsYetDesc')}
+            action={{
+              label: t('statistics.browseGames'),
+              onClick: () => navigate('/?tab=1'),
+            }}
+          />
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Card sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <PlayerAvatar
@@ -362,10 +193,10 @@ export const StatisticsScreen: React.FC = () => {
                       <TeamBadge teamId={user?.favoriteTeam} size={24} />
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      Nível {stats.level} • {getLevelTitle(stats.level)}
+                      {t('statistics.level')} {stats.level} &bull; {getLevelTitle(stats.level)}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                      <TrophyIcon sx={(theme) => ({ fontSize: 16, color: getLevelColor(stats.level, theme) })} />
+                      <TrophyIcon sx={{ fontSize: 16, color: getLevelColor(stats.level, theme) }} />
                       <Typography variant="caption" fontWeight={600}>
                         {stats.experiencePoints} XP
                       </Typography>
@@ -375,77 +206,77 @@ export const StatisticsScreen: React.FC = () => {
               </CardContent>
             </Card>
 
-            {tabValue === 0 && (
+            {tabValue === 0 && memoizedStats && (
               <>
                 <Card>
                   <CardContent>
-                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                      Jogos
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      {t('statistics.totalGames')}
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={3}>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h5" fontWeight={700} color="primary">
+                          <Typography variant="h4" fontWeight={700} color="primary">
                             {stats.totalGames}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Total
+                            {t('statistics.total')}
                           </Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={3}>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h5" fontWeight={700} color="success.main">
+                          <Typography variant="h4" fontWeight={700} color="success.main">
                             {stats.totalWins}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Vitórias
+                            {t('statistics.wins')}
                           </Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={3}>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h5" fontWeight={700} color="warning.main">
+                          <Typography variant="h4" fontWeight={700} color="warning.main">
                             {stats.totalDraws}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Empates
+                            {t('statistics.draws')}
                           </Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={3}>
                         <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h5" fontWeight={700} color="error.main">
+                          <Typography variant="h4" fontWeight={700} color="error.main">
                             {stats.totalLosses}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Derrotas
+                            {t('statistics.losses')}
                           </Typography>
                         </Box>
                       </Grid>
                     </Grid>
-                    {/* Gráfico donut V/E/D — SVG puro, sem bibliotecas externas */}
                     <DonutChart
                       wins={stats.totalWins}
                       draws={stats.totalDraws}
                       losses={stats.totalLosses}
                       total={stats.totalGames}
+                      noDataLabel={t('statistics.noStatsAvailable')}
                     />
                     <Box sx={{ mt: 1, textAlign: 'center' }}>
                       <Typography variant="body2" color="text.secondary">
-                        Taxa de vitória: <strong>{getWinRate()}%</strong>
+                        {t('statistics.winRate')}: <strong>{memoizedStats.winRate}%</strong>
                       </Typography>
                     </Box>
                     <Box sx={{ mt: 1.5 }}>
                       <Box sx={{ display: 'flex', borderRadius: 1, overflow: 'hidden', height: 8 }}>
-                        <Box sx={{ width: `${getWinRate()}%`, bgcolor: 'success.main' }} />
-                        <Box sx={{ width: `${getDrawRate()}%`, bgcolor: 'warning.main' }} />
-                        <Box sx={{ width: `${getLossRate()}%`, bgcolor: 'error.main' }} />
+                        <Box sx={{ width: `${memoizedStats.winRate}%`, bgcolor: 'success.main', transition: 'width 0.5s ease' }} />
+                        <Box sx={{ width: `${memoizedStats.drawRate}%`, bgcolor: 'warning.main', transition: 'width 0.5s ease' }} />
+                        <Box sx={{ width: `${memoizedStats.lossRate}%`, bgcolor: 'error.main', transition: 'width 0.5s ease' }} />
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-                        <Typography variant="caption">V: {getWinRate()}%</Typography>
-                        <Typography variant="caption">E: {getDrawRate()}%</Typography>
-                        <Typography variant="caption">D: {getLossRate()}%</Typography>
+                        <Typography variant="caption">V: {memoizedStats.winRate}%</Typography>
+                        <Typography variant="caption">E: {memoizedStats.drawRate}%</Typography>
+                        <Typography variant="caption">D: {memoizedStats.lossRate}%</Typography>
                       </Box>
                     </Box>
                   </CardContent>
@@ -453,32 +284,51 @@ export const StatisticsScreen: React.FC = () => {
 
                 <Card>
                   <CardContent>
-                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                    Streak
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      {t('statistics.streak')}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <FireIcon sx={{ fontSize: 40, color: theme.palette.warning.main }} />
+                      <Box
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: stats.currentStreak > 0
+                            ? alpha(theme.palette.warning.main, 0.15)
+                            : alpha(theme.palette.action.disabledBackground, 0.5),
+                        }}
+                      >
+                        <FireIcon
+                          sx={{
+                            fontSize: 32,
+                            color: stats.currentStreak > 0 ? theme.palette.warning.main : theme.palette.text.disabled,
+                          }}
+                        />
+                      </Box>
                       <Box>
                         <Typography variant="h4" fontWeight={700}>
-                          {stats.currentStreak} jogos
+                          {stats.currentStreak} {t('statistics.totalGames').toLowerCase()}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Sequência atual • Recorde: {stats.bestStreak}
+                          {t('statistics.currentStreak')} &bull; {t('statistics.bestStreak')}: {stats.bestStreak}
                         </Typography>
                       </Box>
                     </Box>
                     <Box sx={{ mt: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography variant="caption" sx={{ width: 70 }}>Atual</Typography>
+                        <Typography variant="caption" sx={{ width: 70 }}>{t('statistics.currentStreak')}</Typography>
                         <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${Math.min(100, (stats.currentStreak / Math.max(stats.currentStreak, stats.bestStreak, 1)) * 100)}%`, bgcolor: 'warning.main', borderRadius: 1 }} />
+                          <Box sx={{ height: '100%', width: `${(stats.currentStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'warning.main', borderRadius: 1, transition: 'width 0.5s ease' }} />
                         </Box>
                         <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.currentStreak}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="caption" sx={{ width: 70 }}>Recorde</Typography>
+                        <Typography variant="caption" sx={{ width: 70 }}>{t('statistics.bestStreak')}</Typography>
                         <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.success.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${Math.min(100, (stats.bestStreak / Math.max(stats.currentStreak, stats.bestStreak, 1)) * 100)}%`, bgcolor: 'success.main', borderRadius: 1 }} />
+                          <Box sx={{ height: '100%', width: `${(stats.bestStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'success.main', borderRadius: 1, transition: 'width 0.5s ease' }} />
                         </Box>
                         <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.bestStreak}</Typography>
                       </Box>
@@ -488,54 +338,71 @@ export const StatisticsScreen: React.FC = () => {
               </>
             )}
 
-            {tabValue === 1 && (
+            {tabValue === 1 && memoizedStats && (
               <>
                 <Card>
                   <CardContent>
-                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                    Gols e Assistências
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      {t('statistics.goalsAndAssists')}
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
-                          <SoccerIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />
+                        <Box
+                          sx={{
+                            textAlign: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: alpha(theme.palette.primary.main, 0.06),
+                          }}
+                        >
+                          <SportsSoccer sx={{ fontSize: 40, color: theme.palette.primary.main }} />
                           <Typography variant="h4" fontWeight={700}>
                             {stats.totalGoals}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Gols
+                            {t('statistics.goals')}
                           </Typography>
                           <Typography variant="caption" color="text.disabled">
-                            {getGoalsPerGame()} por jogo
+                            {memoizedStats.goalsPerGame} {t('statistics.perGame')}
                           </Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={6}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
+                        <Box
+                          sx={{
+                            textAlign: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: alpha(theme.palette.secondary.main, 0.06),
+                          }}
+                        >
                           <TrendingIcon sx={{ fontSize: 40, color: theme.palette.secondary.main }} />
                           <Typography variant="h4" fontWeight={700}>
                             {stats.totalAssists}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Assistências
+                            {t('statistics.assists')}
+                          </Typography>
+                          <Typography variant="caption" color="text.disabled">
+                            {memoizedStats.assistsPerGame} {t('statistics.perGame')}
                           </Typography>
                         </Box>
                       </Grid>
                     </Grid>
                     <Box sx={{ mt: 2 }}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="caption" sx={{ width: 100 }}>Gols</Typography>
-                          <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
-                            <Box sx={{ height: '100%', width: `${Math.min(100, (stats.totalGoals / Math.max(stats.totalGoals, stats.totalAssists, 1)) * 100)}%`, bgcolor: 'primary.main', borderRadius: 1 }} />
-                          </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Typography variant="caption" sx={{ width: 100 }}>{t('statistics.goals')}</Typography>
+                        <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                          <Box sx={{ height: '100%', width: `${(stats.totalGoals / memoizedStats.maxGa) * 100}%`, bgcolor: 'primary.main', borderRadius: 1, transition: 'width 0.5s ease' }} />
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="caption" sx={{ width: 100 }}>Assistências</Typography>
-                          <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
-                            <Box sx={{ height: '100%', width: `${Math.min(100, (stats.totalAssists / Math.max(stats.totalGoals, stats.totalAssists, 1)) * 100)}%`, bgcolor: 'secondary.main', borderRadius: 1 }} />
-                          </Box>
+                        <Typography variant="caption" fontWeight={600}>{stats.totalGoals}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="caption" sx={{ width: 100 }}>{t('statistics.assists')}</Typography>
+                        <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                          <Box sx={{ height: '100%', width: `${(stats.totalAssists / memoizedStats.maxGa) * 100}%`, bgcolor: 'secondary.main', borderRadius: 1, transition: 'width 0.5s ease' }} />
                         </Box>
+                        <Typography variant="caption" fontWeight={600}>{stats.totalAssists}</Typography>
                       </Box>
                     </Box>
                   </CardContent>
@@ -544,16 +411,31 @@ export const StatisticsScreen: React.FC = () => {
                 {stats.totalSaves > 0 && (
                   <Card>
                     <CardContent>
-                      <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                        Defesas (Goleiro)
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                        {t('statistics.savesGoalkeeper')}
                       </Typography>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h3" fontWeight={700} color="info.main">
-                          {stats.totalSaves}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Defesas realizadas
-                        </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                          sx={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: alpha(theme.palette.info.main, 0.15),
+                          }}
+                        >
+                          <ShieldIcon sx={{ fontSize: 32, color: 'info.main' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="h3" fontWeight={700} color="info.main">
+                            {stats.totalSaves}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('statistics.savesMade')}
+                          </Typography>
+                        </Box>
                       </Box>
                     </CardContent>
                   </Card>
@@ -565,8 +447,8 @@ export const StatisticsScreen: React.FC = () => {
               <>
                 <Card>
                   <CardContent>
-                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                      Prêmios
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      {t('statistics.awards')}
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
@@ -576,7 +458,7 @@ export const StatisticsScreen: React.FC = () => {
                             {stats.mvpCount}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            MVP
+                            {t('statistics.mvp')}
                           </Typography>
                         </Box>
                       </Grid>
@@ -587,7 +469,7 @@ export const StatisticsScreen: React.FC = () => {
                             {stats.bestGkCount || 0}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Melhor Goleiro
+                            {t('statistics.bestGoalkeeper')}
                           </Typography>
                         </Box>
                       </Grid>
@@ -597,27 +479,43 @@ export const StatisticsScreen: React.FC = () => {
 
                 <Card>
                   <CardContent>
-                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                      Cartões
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      {t('statistics.cards')}
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
+                        <Box
+                          sx={{
+                            textAlign: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: alpha(theme.palette.warning.main, 0.08),
+                          }}
+                        >
+                          <CardIcon sx={{ fontSize: 32, color: 'warning.main', mb: 1 }} />
                           <Typography variant="h4" fontWeight={700} color="warning.main">
                             {stats.yellowCards}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Amarelos
+                            {t('statistics.yellow')}
                           </Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={6}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
+                        <Box
+                          sx={{
+                            textAlign: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: alpha(theme.palette.error.main, 0.08),
+                          }}
+                        >
+                          <CardIcon sx={{ fontSize: 32, color: 'error.main', mb: 1 }} />
                           <Typography variant="h4" fontWeight={700} color="error.main">
                             {stats.redCards}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Vermelhos
+                            {t('statistics.red')}
                           </Typography>
                         </Box>
                       </Grid>
@@ -626,16 +524,6 @@ export const StatisticsScreen: React.FC = () => {
                 </Card>
               </>
             )}
-          </Box>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <SoccerIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhuma estatística disponível
-            </Typography>
-            <Typography variant="body2" color="text.disabled">
-              {t('statistics.joinGamesPrompt')}
-            </Typography>
           </Box>
         )}
       </Container>
