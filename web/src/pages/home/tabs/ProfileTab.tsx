@@ -144,11 +144,11 @@ export function ProfileTab() {
 
   // Memoizado: recriado apenas quando ratings do usuário ou tema mudam
   const positionRatings = useMemo(() => [
-    { icon: <SportsSoccer fontSize="small" />, label: t('profile.positionStriker'), value: user?.strikerRating || 0, color: theme.palette.error.main },
-    { icon: <DirectionsRun fontSize="small" />, label: t('profile.positionMidfielder'), value: user?.midRating || 0, color: theme.palette.warning.main },
-    { icon: <Shield fontSize="small" />, label: t('profile.positionDefender'), value: user?.defenderRating || 0, color: theme.palette.info.main },
-    { icon: <SportsKabaddi fontSize="small" />, label: t('profile.positionGoalkeeper'), value: user?.gkRating || 0, color: theme.palette.success.main },
-  ], [user?.strikerRating, user?.midRating, user?.defenderRating, user?.gkRating, theme.palette, t]);
+    { icon: <SportsSoccer fontSize="small" />, label: t('profile.positionStriker'), value: user?.strikerRating || 0, autoValue: user?.autoStrikerRating || 0, color: theme.palette.error.main },
+    { icon: <DirectionsRun fontSize="small" />, label: t('profile.positionMidfielder'), value: user?.midRating || 0, autoValue: user?.autoMidRating || 0, color: theme.palette.warning.main },
+    { icon: <Shield fontSize="small" />, label: t('profile.positionDefender'), value: user?.defenderRating || 0, autoValue: user?.autoDefenderRating || 0, color: theme.palette.info.main },
+    { icon: <SportsKabaddi fontSize="small" />, label: t('profile.positionGoalkeeper'), value: user?.gkRating || 0, autoValue: user?.autoGkRating || 0, color: theme.palette.success.main },
+  ], [user?.strikerRating, user?.midRating, user?.defenderRating, user?.gkRating, user?.autoStrikerRating, user?.autoMidRating, user?.autoDefenderRating, user?.autoGkRating, theme.palette, t]);
 
   if (loading) {
     return (
@@ -417,9 +417,16 @@ export function ProfileTab() {
                     <Box sx={{ color: pos.color }}>{pos.icon}</Box>
                     <Typography variant="body2">{pos.label}</Typography>
                   </Box>
-                  <Typography variant="body2" fontWeight={600} color={pos.color}>
-                    {pos.value.toFixed(1)}
-                  </Typography>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600} color={pos.color}>
+                      {pos.value.toFixed(1)}
+                    </Typography>
+                    {pos.autoValue > 0 && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'right' }}>
+                        Auto: {pos.autoValue.toFixed(1)}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
                 <LinearProgress
                   variant="determinate"
