@@ -60,7 +60,7 @@ export function AppSidebar() {
     { icon: <HomeIcon />, label: t('nav.home'), path: '/?tab=0', matchPaths: [] },
     { icon: <SportsSoccer />, label: t('nav.games'), path: '/?tab=1', matchPaths: ['/games', '/game'] },
     { icon: <Groups />, label: t('nav.groups'), path: '/?tab=2', matchPaths: ['/groups', '/group'] },
-    { icon: <EmojiEvents />, label: t('nav.league'), path: '/?tab=3', matchPaths: ['/ranking', '/league'] },
+    { icon: <EmojiEvents />, label: t('nav.league'), path: '/?tab=3', matchPaths: ['/ranking', '/league', '/statistics', '/evolution', '/weekly-recap', '/head-to-head'] },
     {
       icon: (
         <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
