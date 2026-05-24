@@ -6,32 +6,33 @@ import com.futebadosparcas.R
 /**
  * Helper object para gerenciar os brasões de nível do jogador
  *
- * Brasões disponíveis:
- * - Níveis 0-10: Brasões únicos para cada nível
- * - Níveis 11-20: Usam o mesmo brasão do nível 10 (Imortal)
+ * Brasões disponíveis (0-20):
+ * - Níveis 0-10: Brasões únicos built-in (Progressão Base)
+ * - Níveis 11-20: Brasões cartoon das Lendas do Futebol (resolvidos dinamicamente,
+ *   com fallback automático para o badge 10 enquanto os drawables não existirem)
  *
  * Jogadores lendas (11-20):
- * - 11: Garrincha
- * - 12: Zico
- * - 13: Cruyff
- * - 14: Beckham
- * - 15: Ronaldinho
- * - 16: Ronaldo Fenômeno
- * - 17: Messi
- * - 18: Cristiano Ronaldo
- * - 19: Diego Maradona
- * - 20: Pelé (O Deus dos Deuses)
+ * - 11: Garrincha          - "Alegria do Povo! Dribla até o vento!"
+ * - 12: Zico               - "O Galinho de Quintino! Craque nato!"
+ * - 13: Cruyff             - "Futebol Total! Visão de jogo única!"
+ * - 14: Beckham            - "Precisão cirúrgica nos passes!"
+ * - 15: Ronaldinho         - "Joga bonito! O sorriso do futebol!"
+ * - 16: Ronaldo Fenômeno   - "Fenômeno! Velocidade e gols!"
+ * - 17: Messi              - "La Pulga! Gênio da bola!"
+ * - 18: Cristiano Ronaldo  - "CR7! Determinação e excelência!"
+ * - 19: Diego Maradona     - "La Mano de Dios! Pura magia!"
+ * - 20: Pelé               - "O Rei do Futebol! Nível máximo!"
  */
 object LevelBadgeHelper {
 
-    private const val MAX_LEVEL_WITH_UNIQUE_BADGE = 10
     private const val MAX_LEVEL = 20
 
     /**
-     * Retorna o drawable resource ID do brasão para o nível especificado
+     * Retorna o drawable resource ID do brasão para o nível especificado.
      *
-     * Níveis 11-20 usam o mesmo brasão do nível 10 (Imortal),
-     * pois representam a elite do futebol mundial.
+     * Níveis 0-10: retorna o drawable built-in diretamente.
+     * Níveis 11-20: tenta resolver `ic_level_badge_{N}` via reflection;
+     *               se o recurso não existir, faz fallback para badge 10.
      *
      * @param level O nível do jogador (0-20)
      * @return Resource ID do drawable do brasão
@@ -49,8 +50,27 @@ object LevelBadgeHelper {
             7 -> R.drawable.ic_level_badge_7
             8 -> R.drawable.ic_level_badge_8
             9 -> R.drawable.ic_level_badge_9
-            10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 -> R.drawable.ic_level_badge_10
-            else -> R.drawable.ic_level_badge_0
+            10 -> R.drawable.ic_level_badge_10
+            else -> resolveBadgeOrFallback(level)
+        }
+    }
+
+    /**
+     * Tenta resolver o drawable `ic_level_badge_{level}` via reflection.
+     * Se o campo não existir no R.drawable, retorna o badge 10 como fallback.
+     *
+     * Isso permite que o código compile sem os drawables cartoon (11-20) e
+     * funcione automaticamente quando eles forem adicionados ao projeto.
+     */
+    @DrawableRes
+    private fun resolveBadgeOrFallback(level: Int): Int {
+        return try {
+            val field = R.drawable::class.java.getField("ic_level_badge_$level")
+            field.getInt(null)
+        } catch (_: NoSuchFieldException) {
+            R.drawable.ic_level_badge_10
+        } catch (_: Exception) {
+            R.drawable.ic_level_badge_10
         }
     }
 
@@ -75,31 +95,32 @@ object LevelBadgeHelper {
     }
 
     /**
-     * Verifica se o nível usa o brasão do Imortal (nível 10+)
+     * Verifica se o nível está na faixa Lendas do Futebol (11+)
      *
      * @param level O nível a ser verificado
-     * @return true se o nível usa o brasão do Imortal
+     * @return true se o nível é uma lenda (11 ou superior)
      */
-    fun isImmortalBadge(level: Int): Boolean {
-        return level >= MAX_LEVEL_WITH_UNIQUE_BADGE
+    fun isLegendBadge(level: Int): Boolean {
+        return level >= 11
     }
 
     /**
-     * Retorna todos os brasões disponíveis em ordem
-     * Útil para preview ou seleção de brasões
+     * Retorna todos os badges built-in (0-10) em ordem.
+     * Útil para preview ou seleção de brasões da progressão base.
      *
-     * @return Lista de resource IDs dos brasões
+     * @return Lista de resource IDs dos brasões 0-10
      */
-    fun getAllBadges(): List<Int> {
-        return (0..MAX_LEVEL_WITH_UNIQUE_BADGE).map { getBadgeForLevel(it) }
+    fun getAllBuiltInBadges(): List<Int> {
+        return (0..10).map { getBadgeForLevel(it) }
     }
 
     /**
-     * Retorna o resource ID do brasão do Imortal
-     * Usado para níveis 10-20
+     * Retorna o resource ID do brasão do Imortal (nível 10).
+     * Usado como fallback para níveis 11-20 quando os drawables
+     * cartoon ainda não foram adicionados.
      */
     @DrawableRes
-    fun getImmortalBadge(): Int {
+    fun getFallbackBadge(): Int {
         return R.drawable.ic_level_badge_10
     }
 }

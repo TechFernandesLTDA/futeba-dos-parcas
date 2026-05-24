@@ -44,7 +44,7 @@ import {
   XP_VALUES,
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
-import { getLevelBadgeImage, getLevelBadgeDescription } from '../../utils/levelBadge';
+import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../utils/levelBadge';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -193,6 +193,7 @@ export const LevelJourneyScreen: React.FC = () => {
                     <Box
                       component="img"
                       src={getLevelBadgeImage(currentLevel)}
+                      onError={handleBadgeImageError}
                       loading="lazy"
                       alt={getLevelBadgeDescription(currentLevel, currentEntry.name)}
                       sx={{
@@ -481,6 +482,7 @@ function LevelRow({
           <Box
             component="img"
             src={getLevelBadgeImage(entry.level)}
+            onError={handleBadgeImageError}
             loading="lazy"
             alt={getLevelBadgeDescription(entry.level, entry.name)}
             sx={{
