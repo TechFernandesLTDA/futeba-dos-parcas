@@ -21,6 +21,47 @@ data class LeagueUpdateResult(
 )
 
 /**
+ * Interface para o sistema de ligas (Dependency Inversion Principle).
+ * Implementacao concreta: [LeagueServiceImpl].
+ */
+interface LeagueService {
+
+    /**
+     * Atualiza a liga de um jogador apos um jogo.
+     */
+    suspend fun updateLeague(
+        batch: com.google.firebase.firestore.WriteBatch,
+        userId: String,
+        seasonId: String,
+        xpEarned: Long,
+        won: Boolean,
+        drew: Boolean,
+        goalDiff: Int,
+        wasMvp: Boolean,
+        gameId: String
+    ): Result<LeagueUpdateResult>
+
+    /**
+     * Busca participacao de um jogador em uma temporada.
+     */
+    suspend fun getParticipation(userId: String, seasonId: String): Result<SeasonParticipation?>
+
+    /**
+     * Busca ranking da liga (ordenado por pontos).
+     */
+    suspend fun getLeagueRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipation>>
+
+    /**
+     * Busca jogadores de uma divisao especifica.
+     */
+    suspend fun getPlayersByDivision(
+        seasonId: String,
+        division: SharedLeagueDivision,
+        limit: Int = 50
+    ): Result<List<SeasonParticipation>>
+}
+
+/**
  * Service responsavel por gerenciar o sistema de ligas.
  *
  * Regras:
@@ -36,9 +77,9 @@ data class LeagueUpdateResult(
  * NOTA: O calculador de League Rating foi movido para o shared module (KMP).
  * Este service converte entre os modelos Android e shared.
  */
-class LeagueService constructor(
+class LeagueServiceImpl constructor(
     private val firestore: FirebaseFirestore
-) {
+) : LeagueService {
     companion object {
         private const val TAG = "LeagueService"
         private const val PROMOTION_GAMES_REQUIRED = 3
@@ -78,7 +119,7 @@ class LeagueService constructor(
     /**
      * Atualiza a liga de um jogador apos um jogo.
      */
-    suspend fun updateLeague(
+    override suspend fun updateLeague(
         batch: com.google.firebase.firestore.WriteBatch,
         userId: String,
         seasonId: String,
@@ -182,7 +223,7 @@ class LeagueService constructor(
     /**
      * Busca participacao de um jogador em uma temporada.
      */
-    suspend fun getParticipation(userId: String, seasonId: String): Result<SeasonParticipation?> {
+    override suspend fun getParticipation(userId: String, seasonId: String): Result<SeasonParticipation?> {
         return try {
             val docId = "${seasonId}_$userId"
             val doc = seasonParticipationCollection.document(docId).get().await()
@@ -203,7 +244,7 @@ class LeagueService constructor(
     /**
      * Busca ranking da liga (ordenado por pontos).
      */
-    suspend fun getLeagueRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipation>> {
+    override suspend fun getLeagueRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipation>> {
         return try {
             val snapshot = seasonParticipationCollection
                 .whereEqualTo("season_id", seasonId)
@@ -223,7 +264,7 @@ class LeagueService constructor(
     /**
      * Busca jogadores de uma divisao especifica.
      */
-    suspend fun getPlayersByDivision(
+    override suspend fun getPlayersByDivision(
         seasonId: String,
         division: SharedLeagueDivision,
         limit: Int = 50

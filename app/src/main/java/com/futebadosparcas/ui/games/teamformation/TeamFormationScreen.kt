@@ -136,6 +136,7 @@ fun TeamFormationScreen(
                         state = state,
                         draftAnimationState = draftAnimationState,
                         onStartAutoDraft = viewModel::startAutoDraft,
+                        onStartBalancedDraw = viewModel::startBalancedDraw,
                         onStartCaptainPicks = viewModel::startCaptainPicks,
                         onCaptainPick = viewModel::captainPickPlayer,
                         onMovePlayer = viewModel::movePlayerToTeam,
@@ -172,6 +173,7 @@ private fun TeamFormationContent(
     state: TeamFormationUiState.Ready,
     draftAnimationState: DraftAnimationState,
     onStartAutoDraft: () -> Unit,
+    onStartBalancedDraw: () -> Unit,
     onStartCaptainPicks: (String, String) -> Unit,
     onCaptainPick: (String) -> Unit,
     onMovePlayer: (String, Int) -> Unit,
@@ -300,6 +302,10 @@ private fun TeamFormationContent(
             onAutoDraft = {
                 showDraftModeDialog = false
                 onStartAutoDraft()
+            },
+            onBalancedDraw = {
+                showDraftModeDialog = false
+                onStartBalancedDraw()
             },
             onCaptainPicks = {
                 showDraftModeDialog = false
@@ -1226,6 +1232,7 @@ private fun DraftRevealOverlay(reveal: DraftRevealAnimation) {
 private fun DraftModeSelectionDialog(
     onDismiss: () -> Unit,
     onAutoDraft: () -> Unit,
+    onBalancedDraw: () -> Unit,
     onCaptainPicks: () -> Unit
 ) {
     AlertDialog(
@@ -1242,6 +1249,15 @@ private fun DraftModeSelectionDialog(
         confirmButton = {
             Column {
                 Button(
+                    onClick = onBalancedDraw,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Balance, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.balanced_draw))
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
                     onClick = onAutoDraft,
                     modifier = Modifier.fillMaxWidth()
                 ) {

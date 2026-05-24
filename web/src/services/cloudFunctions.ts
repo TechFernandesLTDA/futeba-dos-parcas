@@ -51,6 +51,11 @@ export const restoreDeletedGroup = httpsCallable(functions, 'restoreDeletedGroup
 
 // Check-in
 export const checkInToGame = httpsCallable<
-  { gameId: string; latitude: number; longitude: number },
-  { success: boolean; distanceMeters?: number }
+  { gameId: string; latitude?: number; longitude?: number; qr_token?: string },
+  { success: boolean; distanceMeters?: number | null; method?: 'gps' | 'qr' }
 >(functions, 'checkInToGame');
+
+export const generateCheckinToken = httpsCallable<
+  { gameId: string },
+  { success: boolean; token: string }
+>(functions, 'generateCheckinToken');

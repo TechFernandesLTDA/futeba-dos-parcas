@@ -42,6 +42,8 @@ import {
   EmojiEvents as AssistIcon,
   SaveAlt as SaveIcon,
   SwapHoriz as SubstitutionIcon,
+  VolumeUp as SoundOnIcon,
+  VolumeOff as SoundOffIcon,
 } from '@mui/icons-material';
 import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -76,6 +78,25 @@ function canManageGame(game: Game | null, uid?: string): boolean {
   return false;
 }
 
+function getStreamEmbedUrl(streamUrl: string): string | null {
+  try {
+    const url = new URL(streamUrl);
+    if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
+      const videoId = url.hostname.includes('youtu.be')
+        ? url.pathname.slice(1)
+        : url.searchParams.get('v');
+      if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    }
+    if (url.hostname.includes('twitch.tv')) {
+      const channel = url.pathname.split('/').filter(Boolean)[0];
+      if (channel) return `https://player.twitch.tv/?channel=${channel}&parent=${window.location.hostname}`;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export const LiveGameScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('games.liveTitle'));
@@ -104,6 +125,7 @@ export const LiveGameScreen: React.FC = () => {
   const [addEventDialog, setAddEventDialog] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<GameEventType>('GOAL');
   const [selectedPlayer, setSelectedPlayer] = useState('');
+  const [showStream, setShowStream] = useState(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const canManage = canManageGame(game, uid);
@@ -112,6 +134,12 @@ export const LiveGameScreen: React.FC = () => {
   const [scoreUpdating, setScoreUpdating] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const stored = localStorage.getItem('live_sound_enabled');
+    return stored !== 'false';
+  });
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const prevEventCountRef = useRef(0);
 
   useEffect(() => {
     if (!gameId) return;
@@ -220,6 +248,54 @@ export const LiveGameScreen: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
+  const playTone = useCallback((frequency: number, duration: number, type: OscillatorType = 'sine') => {
+    if (!soundEnabled) return;
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext();
+      }
+      const ctx = audioCtxRef.current;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration / 1000);
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + duration / 1000);
+    } catch {
+      /* Web Audio API not available */
+    }
+  }, [soundEnabled]);
+
+  const triggerFeedback = useCallback((eventType: string) => {
+    if (eventType === 'GOAL') {
+      if (navigator.vibrate) navigator.vibrate(100);
+      playTone(880, 300, 'sine');
+    } else if (eventType === 'YELLOW_CARD' || eventType === 'RED_CARD') {
+      if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+      playTone(1200, 150, 'square');
+    }
+  }, [playTone]);
+
+  useEffect(() => {
+    if (events.length > prevEventCountRef.current && prevEventCountRef.current > 0) {
+      const newEvents = events.slice(0, events.length - prevEventCountRef.current);
+      newEvents.forEach((event) => triggerFeedback(event.eventType));
+    }
+    prevEventCountRef.current = events.length;
+  }, [events, triggerFeedback]);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('live_sound_enabled', String(next));
+      return next;
+    });
   }, []);
 
   const handleAddEvent = async () => {
@@ -398,6 +474,9 @@ export const LiveGameScreen: React.FC = () => {
           <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>
             {t('games.liveTitle')}
           </Typography>
+          <IconButton onClick={toggleSound} aria-label={soundEnabled ? 'Desativar sons' : 'Ativar sons'}>
+            {soundEnabled ? <SoundOnIcon /> : <SoundOffIcon />}
+          </IconButton>
           <Chip
             icon={<TimerIcon />}
             label={formatTime(elapsedTime)}
@@ -556,6 +635,43 @@ export const LiveGameScreen: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {game.streamUrl && (() => {
+          const embedUrl = getStreamEmbedUrl(game.streamUrl);
+          return embedUrl ? (
+            <Card sx={{ mb: 2 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Live Stream
+                  </Typography>
+                  <Button size="small" onClick={() => setShowStream(!showStream)}>
+                    {showStream ? 'Ocultar' : 'Mostrar'}
+                  </Button>
+                </Box>
+                {showStream && (
+                  <Box sx={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
+                    <iframe
+                      src={embedUrl}
+                      title="Live Stream"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          ) : null;
+        })()}
       </Container>
 
       {canManage && (

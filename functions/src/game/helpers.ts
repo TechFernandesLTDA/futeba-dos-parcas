@@ -593,6 +593,10 @@ export function updateSeasonParticipation(
       ),
     last_calculated_at: admin.firestore
       .FieldValue.serverTimestamp(),
+    created_at: admin.firestore
+      .FieldValue.serverTimestamp(),
+    updated_at: admin.firestore
+      .FieldValue.serverTimestamp(),
   };
 
   if (groupId) {

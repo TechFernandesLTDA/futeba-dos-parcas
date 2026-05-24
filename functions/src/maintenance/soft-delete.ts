@@ -153,6 +153,15 @@ export const softDeleteGame =
         `soft-deleted por ${userId}`
       );
 
+      await db().collection("audit_logs").add({
+        action: "SOFT_DELETE_GAME",
+        target_id: gameId,
+        performed_by: userId,
+        performed_at: admin.firestore.FieldValue.serverTimestamp(),
+        reason: reason || null,
+        previous_status: gameData?.status || null,
+      });
+
       return {
         success: true,
         gameId,
@@ -309,6 +318,15 @@ export const softDeleteGroup =
         `soft-deleted por ${userId}: ` +
         `${result.gamesDeleted} jogos afetados`
       );
+
+      await db().collection("audit_logs").add({
+        action: "SOFT_DELETE_GROUP",
+        target_id: groupId,
+        performed_by: userId,
+        performed_at: admin.firestore.FieldValue.serverTimestamp(),
+        reason: reason || null,
+        games_affected: result.gamesDeleted,
+      });
 
       return {
         success: true,

@@ -28,6 +28,10 @@ import {
   Snackbar,
   LinearProgress,
   Divider,
+  Fade,
+  FormControl,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -49,8 +53,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
+import { useSeasons } from '../../hooks/useSeasons';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 
@@ -88,6 +94,8 @@ export const LeagueScreen: React.FC = () => {
   const [shareSnack, setShareSnack] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showSort, setShowSort] = useState(false);
+  const [maxResults, setMaxResults] = useState(200);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
@@ -101,22 +109,28 @@ export const LeagueScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(96);
 
-  // Hook compartilhado: busca temporada ativa (cache 10min)
   const { seasonId: activeSeasonId, loading: seasonLoading } = useActiveSeason();
+  const { seasons } = useSeasons();
+
+  useEffect(() => {
+    if (!selectedSeasonId && activeSeasonId) {
+      setSelectedSeasonId(activeSeasonId);
+    }
+  }, [activeSeasonId, selectedSeasonId]);
+
+  const effectiveSeasonId = selectedSeasonId || activeSeasonId;
 
   const selectedDivision = tabValue > 0 ? LEAGUE_DIVISIONS[tabValue - 1] : undefined;
 
-  // Filtros memoizados
   const filters: LeagueFilters = useMemo(() => ({
-    seasonId: activeSeasonId,
-  }), [activeSeasonId]);
+    seasonId: effectiveSeasonId,
+    maxResults,
+  }), [effectiveSeasonId, maxResults]);
 
-  // ÚNICA chamada useLeague - busca todos os jogadores (sem filtro de divisão)
-  // A filtragem por divisão é feita client-side via useMemo
   const { players: allPlayers, loading, error, refetch } = useLeague(
     user?.id,
     filters,
-    { enabled: !!activeSeasonId } // Não faz query antes do seasonId estar pronto
+    { enabled: !!effectiveSeasonId }
   );
 
   // Derivar players filtrados por divisão (client-side, sem query extra)
@@ -181,7 +195,27 @@ export const LeagueScreen: React.FC = () => {
     return { name: above.userName, diff, position: currentUserPosition - 1 };
   }, [sortedByPoints, currentUserPosition, currentUserPlayer]);
 
-  // Medir altura do header dinamicamente para sticky card
+  const divisionProgress = useMemo(() => {
+    if (!currentUserPlayer) return null;
+    const currentDiv = currentUserPlayer.division;
+    const divOrder: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
+    const idx = divOrder.indexOf(currentDiv);
+    if (idx < 0 || idx >= divOrder.length - 1) return null;
+    const nextDiv = divOrder[idx + 1];
+    const currentMin = DIVISION_CONFIG[currentDiv]?.minPoints ?? 0;
+    const nextMin = DIVISION_CONFIG[nextDiv]?.minPoints ?? 0;
+    const range = nextMin - currentMin;
+    if (range <= 0) return null;
+    const progress = ((currentUserPlayer.points - currentMin) / range);
+    return {
+      progress: Math.max(0, Math.min(progress, 1)),
+      currentLabel: DIVISION_CONFIG[currentDiv]?.label ?? currentDiv,
+      nextLabel: DIVISION_CONFIG[nextDiv]?.label ?? nextDiv,
+      nextThreshold: nextMin,
+      currentPoints: currentUserPlayer.points,
+    };
+  }, [currentUserPlayer]);
+
   useEffect(() => {
     if (headerRef.current) {
       const observer = new ResizeObserver((entries) => {
@@ -203,12 +237,14 @@ export const LeagueScreen: React.FC = () => {
 
   const handleShare = useCallback(async () => {
     if (!currentUserPlayer || !currentUserPosition) return;
+    const divParam = currentUserPlayer.division.toLowerCase();
+    const url = `https://futebadosparcas.web.app/league?division=${divParam}`;
     const text = `Estou em ${currentUserPosition}º lugar na Liga ${DIVISION_CONFIG[currentUserPlayer.division]?.label || currentUserPlayer.division} com ${currentUserPlayer.points} pontos!`;
     if (navigator.share) {
-      try { await navigator.share({ text }); } catch { /* cancelled */ }
+      try { await navigator.share({ text, url }); } catch { /* cancelled */ }
     } else if (navigator.clipboard) {
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(`${text}\n${url}`);
         setShareSnack(true);
       } catch {
         showError('Não foi possível copiar para a área de transferência');
@@ -292,6 +328,15 @@ export const LeagueScreen: React.FC = () => {
 
   const isLoading = loading || seasonLoading;
 
+  const handleLoadMore = useCallback(() => {
+    setMaxResults((prev) => prev + 200);
+  }, []);
+
+  const handleSeasonChange = useCallback((seasonId: string) => {
+    setSelectedSeasonId(seasonId);
+    setMaxResults(200);
+  }, []);
+
   return (
     <Box sx={{ pb: 4 }}>
       <Box
@@ -323,6 +368,25 @@ export const LeagueScreen: React.FC = () => {
             </IconButton>
           )}
         </Box>
+
+        {seasons.length > 1 && (
+          <Box sx={{ px: 2, pb: 1 }}>
+            <FormControl size="small" fullWidth>
+              <Select
+                value={effectiveSeasonId || ''}
+                onChange={(e) => handleSeasonChange(e.target.value)}
+                variant="outlined"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                {seasons.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.name}{s.isActive ? ' (Ativa)' : ''}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
 
         <Collapse in={showSearch}>
           <Box sx={{ px: 2, pb: 1 }}>
@@ -485,31 +549,21 @@ export const LeagueScreen: React.FC = () => {
             <Button variant="outlined" onClick={() => setSearch('')}>Limpar busca</Button>
           </Box>
         ) : filteredAndSorted.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <MilitaryTechIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              {selectedDivision
-                ? t('league.emptyDivisionTitle')
-                : t('league.seasonNotStartedTitle')}
-            </Typography>
-            <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
-              {selectedDivision
-                ? t('league.emptyDivisionDesc')
-                : t('league.seasonNotStartedDesc')}
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
-              {!selectedDivision && (
-                <Button variant="outlined" onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }}>
-                  {t('league.viewPreviousSeason')}
-                </Button>
-              )}
-              <Button variant="contained" startIcon={<SoccerIcon />} onClick={() => navigate('/games/create')}>
-                Criar jogo
-              </Button>
-            </Box>
-          </Box>
+          <EmptyState
+            icon={<MilitaryTechIcon />}
+            title={selectedDivision
+              ? t('league.emptyDivisionTitle')
+              : t('league.seasonNotStartedTitle')}
+            description={selectedDivision
+              ? t('league.emptyDivisionDesc')
+              : t('league.seasonNotStartedDesc')}
+            actionLabel="Criar jogo"
+            actionIcon={<SoccerIcon />}
+            onAction={() => navigate('/games/create')}
+          />
         ) : (
-          <>
+          <Fade in key={tabValue}>
+          <Box>
             {pointsToNext && currentUserPlayer && (
               <Alert severity="info" sx={{ mb: 2 }} icon={<ArrowUpIcon />}>
                 Faltam <strong>{pointsToNext.diff} pts</strong> para ultrapassar <strong>{pointsToNext.name}</strong> ({pointsToNext.position}º)
@@ -543,6 +597,41 @@ export const LeagueScreen: React.FC = () => {
               </Box>
             )}
 
+            {divisionProgress && (
+              <Card sx={{ mb: 2, border: `1px solid ${alpha(DIVISION_CONFIG[
+                LEAGUE_DIVISIONS[LEAGUE_DIVISIONS.indexOf(currentUserPlayer!.division) + 1]
+              ]?.color ?? theme.palette.divider, 0.3)}` }}>
+                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="caption" fontWeight={600}>
+                      {divisionProgress.currentLabel}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {divisionProgress.nextLabel} ({divisionProgress.nextThreshold} pts)
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={divisionProgress.progress * 100}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 4,
+                        bgcolor: DIVISION_CONFIG[
+                          LEAGUE_DIVISIONS[LEAGUE_DIVISIONS.indexOf(currentUserPlayer!.division) + 1]
+                        ]?.color ?? theme.palette.primary.main,
+                      },
+                    }}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, textAlign: 'center' }}>
+                    {divisionProgress.currentPoints} / {divisionProgress.nextThreshold} pts
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+
             <List disablePadding aria-label={t('league.standingsAria')}>
               {filteredAndSorted.map((player) => {
                 const position = realPositions.get(player.id) ?? -1;
@@ -565,7 +654,20 @@ export const LeagueScreen: React.FC = () => {
                 );
               })}
             </List>
-          </>
+
+            {filteredAndSorted.length >= maxResults && (
+              <Box sx={{ textAlign: 'center', py: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleLoadMore}
+                  disabled={loading}
+                >
+                  {loading ? 'Carregando...' : 'Carregar mais'}
+                </Button>
+              </Box>
+            )}
+          </Box>
+          </Fade>
         )}
       </Container>
 

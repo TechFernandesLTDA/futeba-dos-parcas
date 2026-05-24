@@ -47,15 +47,6 @@ class GameDetailViewModel(
 
     private var gameId: String? = null
     private var gameDetailsJob: Job? = null
-    private var waitlistJob: Job? = null
-
-    // Estado da lista de espera (Issue #32)
-    private val _waitlistState = MutableStateFlow<WaitlistState>(WaitlistState.Empty)
-    val waitlistState: StateFlow<WaitlistState> = _waitlistState
-
-    // Estado do deadline de confirmacao (Issue #31)
-    private val _confirmationDeadline = MutableStateFlow<ConfirmationDeadlineState?>(null)
-    val confirmationDeadline: StateFlow<ConfirmationDeadlineState?> = _confirmationDeadline
 
     @OptIn(kotlinx.coroutines.FlowPreview::class)
     fun loadGameDetails(id: String) {
@@ -71,18 +62,20 @@ class GameDetailViewModel(
         gameDetailsJob = viewModelScope.launch {
             _uiState.value = GameDetailUiState.Loading
 
-            // Carregar lista de espera uma vez, fora do collect (Issue #32)
-            loadWaitlist(id)
-
             try {
                 combine(
                     gameRepository.getGameDetailsFlow(id),
                     gameRepository.getGameConfirmationsFlow(id),
                     gameRepository.getGameEventsFlow(id),
                     gameRepository.getGameTeamsFlow(id),
-                    gameRepository.getLiveScoreFlow(id)
-                ) { gameResult, confirmationsResult, eventsResult, teamsResult, liveScore ->
-                    CombinedData(gameResult, confirmationsResult, eventsResult, teamsResult, liveScore)
+                    combine(
+                        gameRepository.getLiveScoreFlow(id),
+                        waitlistRepository.getWaitlistFlow(id)
+                    ) { liveScore, waitlistResult ->
+                        liveScore to waitlistResult
+                    }
+                ) { gameResult, confirmationsResult, eventsResult, teamsResult, (liveScore, waitlistResult) ->
+                    CombinedData(gameResult, confirmationsResult, eventsResult, teamsResult, liveScore, waitlistResult)
                 }
                 .catch { e ->
                     AppLogger.e(TAG, "Erro no combine de Flows", e)
@@ -94,6 +87,7 @@ class GameDetailViewModel(
                     val eventsResult = data.eventsResult
                     val teamsResult = data.teamsResult
                     val liveScore = data.liveScore
+                    val waitlistResult = data.waitlistResult
 
                     val game = gameResult.getOrElse {
                         _uiState.value = GameDetailUiState.Error(it.message ?: "Erro ao carregar jogo")
@@ -111,6 +105,12 @@ class GameDetailViewModel(
                     val confirmations = confirmationsResult.getOrNull() ?: emptyList()
                     val events = eventsResult.getOrNull() ?: emptyList()
                     val teams = teamsResult.getOrNull()?.sortedBy { it.name } ?: emptyList()
+                    val waitlistEntries = waitlistResult.getOrNull() ?: emptyList()
+                    val waitlistState = if (waitlistEntries.isEmpty()) {
+                        WaitlistState.Empty
+                    } else {
+                        WaitlistState.Loaded(waitlistEntries)
+                    }
 
                     val currentUserResult = authRepository.getCurrentUser()
                     val currentUserObj = currentUserResult.getOrNull()
@@ -126,9 +126,6 @@ class GameDetailViewModel(
                     val isUserInWaitlist = isConfirmed?.status == ConfirmationStatus.WAITLIST.name
                     val isOwner = game.ownerId == currentUserId
                     val canLogEvents = canManageGame || isUserConfirmed
-
-                    // Verificar deadline de confirmacao (Issue #31)
-                    updateConfirmationDeadlineState(game)
 
                     val currentMessage = (_uiState.value as? GameDetailUiState.Success)?.userMessage
 
@@ -167,7 +164,8 @@ class GameDetailViewModel(
                         userMessage = currentMessage,
                         currentUserId = currentUserId,
                         hasVoted = hasVoted,
-                        isSoftDeleted = gameWithLiveScore.isSoftDeleted // P2 #40
+                        isSoftDeleted = gameWithLiveScore.isSoftDeleted,
+                        waitlistState = waitlistState
                     )
                 }
             } catch (e: Exception) {
@@ -802,43 +800,6 @@ class GameDetailViewModel(
     // === PRESENCE & CONFIRMATION FEATURES (Issues #31-40) ===
 
     /**
-     * Issue #31: Atualiza o estado do deadline de confirmacao.
-     */
-    private fun updateConfirmationDeadlineState(game: Game) {
-        // TODO: getConfirmationDeadline() foi removido do modelo Game
-        // Implementar cálculo de deadline baseado em configurações do Group
-        _confirmationDeadline.value = null
-    }
-
-    /**
-     * Issue #32: Carrega a lista de espera do jogo.
-     */
-    private fun loadWaitlist(gameId: String) {
-        waitlistJob?.cancel()
-        waitlistJob = viewModelScope.launch {
-            waitlistRepository.getWaitlistFlow(gameId)
-                .catch { e ->
-                    AppLogger.e(TAG, "Erro ao carregar lista de espera", e)
-                    _waitlistState.value = WaitlistState.Error(e.message ?: "Erro")
-                }
-                .collect { result ->
-                    result.fold(
-                        onSuccess = { list ->
-                            _waitlistState.value = if (list.isEmpty()) {
-                                WaitlistState.Empty
-                            } else {
-                                WaitlistState.Loaded(list)
-                            }
-                        },
-                        onFailure = { e ->
-                            _waitlistState.value = WaitlistState.Error(e.message ?: "Erro")
-                        }
-                    )
-                }
-        }
-    }
-
-    /**
      * Issue #32: Adiciona jogador a lista de espera.
      */
     fun addToWaitlist(gameId: String, position: String) {
@@ -983,20 +944,6 @@ class GameDetailViewModel(
             createdById = currentUserId,
             createdByName = currentUserName
         )
-    }
-
-    /**
-     * Issue #31: Atualiza deadline de confirmacao.
-     */
-    fun updateConfirmationDeadline(gameId: String, hours: Int) {
-        viewModelScope.launch {
-            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            // TODO: confirmationDeadlineHours foi removido do modelo Game
-            // Implementar via Group settings ou outro mecanismo
-            _uiState.value = currentState.copy(
-                userMessage = "Funcionalidade em desenvolvimento"
-            )
-        }
     }
 
     /**
@@ -1218,7 +1165,6 @@ class GameDetailViewModel(
     override fun onCleared() {
         super.onCleared()
         gameDetailsJob?.cancel()
-        waitlistJob?.cancel()
     }
 }
 
@@ -1229,29 +1175,6 @@ sealed class WaitlistState {
     object Empty : WaitlistState()
     data class Loaded(val entries: List<GameWaitlist>) : WaitlistState()
     data class Error(val message: String) : WaitlistState()
-}
-
-/**
- * Estado do deadline de confirmacao (Issue #31).
- */
-data class ConfirmationDeadlineState(
-    val deadline: java.util.Date,
-    val isPassed: Boolean,
-    val timeRemainingMs: Long
-) {
-    fun getTimeRemainingDisplay(): String {
-        if (timeRemainingMs <= 0) return "Encerrado"
-
-        val minutes = timeRemainingMs / (1000 * 60)
-        val hours = minutes / 60
-        val remainingMinutes = minutes % 60
-
-        return when {
-            hours > 24 -> "${hours / 24}d ${hours % 24}h"
-            hours > 0 -> "${hours}h ${remainingMinutes}min"
-            else -> "${remainingMinutes}min"
-        }
-    }
 }
 
 sealed class GameDetailUiState {
@@ -1273,7 +1196,8 @@ sealed class GameDetailUiState {
         val currentUserId: String? = null,
         val hasVoted: Boolean? = null,
         val schedulingEvent: SchedulingEvent? = null,
-        val isSoftDeleted: Boolean = false // P2 #40: Indica se o jogo foi soft-deletado
+        val isSoftDeleted: Boolean = false,
+        val waitlistState: WaitlistState = WaitlistState.Empty
     ) : GameDetailUiState()
     data class Error(val message: String) : GameDetailUiState()
 }
@@ -1289,5 +1213,6 @@ data class CombinedData(
     val confirmationsResult: Result<List<com.futebadosparcas.domain.model.GameConfirmation>>,
     val eventsResult: Result<List<com.futebadosparcas.domain.model.GameEvent>>,
     val teamsResult: Result<List<com.futebadosparcas.domain.model.Team>>,
-    val liveScore: com.futebadosparcas.domain.model.LiveScore?
+    val liveScore: com.futebadosparcas.domain.model.LiveScore?,
+    val waitlistResult: Result<List<GameWaitlist>>
 )

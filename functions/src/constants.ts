@@ -141,30 +141,39 @@ export const DEFAULT_GAME_HOUR = 20;
 // LEAGUE / DIVISÕES
 // ==========================================
 
-/** Thresholds das divisões de liga */
+/** Thresholds das divisões de liga — source of truth: shared/xp-constants.json */
 export const LEAGUE_THRESHOLDS = {
-  BRONZE_MAX: 30,
-  PRATA_MAX: 50,
-  OURO_MAX: 70,
-  DIAMANTE_MAX: 100,
+  BRONZE_MAX: xpConstants.leagueThresholds.BRONZE_MAX,
+  PRATA_MAX: xpConstants.leagueThresholds.PRATA_MAX,
+  OURO_MAX: xpConstants.leagueThresholds.OURO_MAX,
+  DIAMANTE_MAX: xpConstants.leagueThresholds.DIAMANTE_MAX,
 } as const;
 
 /**
- * Pesos da fórmula de League Rating.
+ * Pesos da fórmula de League Rating — source of truth: shared/xp-constants.json
  * Formula: 40% PPJ + 30% WR + 20% GD + 10% MVP
  */
 export const LEAGUE_RATING_WEIGHTS = {
-  PPJ: 0.40,
-  WIN_RATE: 0.30,
-  GOAL_DIFF: 0.20,
-  MVP_RATE: 0.10,
+  PPJ: xpConstants.leagueRatingWeights.PPJ,
+  WIN_RATE: xpConstants.leagueRatingWeights.WIN_RATE,
+  GOAL_DIFF: xpConstants.leagueRatingWeights.GOAL_DIFF,
+  MVP_RATE: xpConstants.leagueRatingWeights.MVP_RATE,
 } as const;
 
-/** XP máximo para normalização do PPJ */
-export const LEAGUE_MAX_AVG_XP = 500;
+/** XP máximo para normalização do PPJ — source of truth: shared/xp-constants.json antiCheatLimits */
+export const LEAGUE_MAX_AVG_XP = xpConstants.antiCheatLimits.MAX_XP_PER_GAME;
 
 /** MVP rate cap para normalização */
 export const LEAGUE_MVP_RATE_CAP = 0.5;
+
+/** Progression constants — source of truth: shared/xp-constants.json */
+export const LEAGUE_PROMOTION_GAMES_REQUIRED = xpConstants.leagueProgression.PROMOTION_GAMES_REQUIRED;
+export const LEAGUE_RELEGATION_GAMES_REQUIRED = xpConstants.leagueProgression.RELEGATION_GAMES_REQUIRED;
+export const LEAGUE_PROTECTION_GAMES = xpConstants.leagueProgression.PROTECTION_GAMES;
+export const LEAGUE_MAX_RECENT_GAMES = xpConstants.leagueProgression.MAX_RECENT_GAMES;
+
+/** Division colors — source of truth: shared/xp-constants.json */
+export const DIVISION_COLORS = xpConstants.divisionColors;
 
 // ==========================================
 // BADGES

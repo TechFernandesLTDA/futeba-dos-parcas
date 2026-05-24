@@ -279,8 +279,7 @@ fun GameDetailContent(
     var showPositionDialog by remember { mutableStateOf(false) }
     var showMovePlayerDialog by remember { mutableStateOf<Pair<String,String>?>(null) }
 
-    // Lista de espera (Issue #32 / #1136): coleta o estado exposto pelo VM
-    val waitlistState by viewModel.waitlistState.collectAsStateWithLifecycle()
+    val waitlistState = state.waitlistState
 
     if (showCancelDialog) {
         AlertDialog(

@@ -207,26 +207,28 @@ service firebase.storage {
     // ============================================
     // FOTOS DE JOGOS
     // Path: games/{gameId}/photos/{timestamp}.jpg
-    // Para uso futuro - jogadores confirmados podem postar fotos
+    // Jogadores confirmados podem postar fotos
     // ============================================
     match /games/{gameId}/photos/{fileName} {
-      // Apenas participantes de um jogo existente podem ver fotos
+      // Qualquer autenticado pode ver fotos de jogos
       allow read: if isAuthenticated() &&
-                     firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
-                     firestore.exists(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid));
+                     firestore.exists(/databases/(default)/documents/games/$(gameId));
 
-      // Apenas jogadores confirmados podem fazer upload em jogos CONFIRMADOS ou AO VIVO
+      // Jogadores confirmados ou dono do jogo podem fazer upload
+      // em jogos CONFIRMED, LIVE ou FINISHED
       // Máximo 10MB por foto, apenas imagem
       allow write: if isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
-                     firestore.get(/databases/(default)/documents/games/$(gameId)).data.status in ['CONFIRMED', 'LIVE'] &&
-                     firestore.exists(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) &&
+                     firestore.get(/databases/(default)/documents/games/$(gameId)).data.status in ['CONFIRMED', 'LIVE', 'FINISHED'] &&
+                     (firestore.exists(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) ||
+                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid) &&
                      isImage() && isUnderSize(10);
 
-      // Apenas o dono do jogo pode deletar fotos
+      // Uploader ou dono do jogo ou admin pode deletar fotos
       allow delete: if isAuthenticated() &&
                       firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
-                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid;
+                      (firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                       isAdmin());
     }
 
     // ============================================

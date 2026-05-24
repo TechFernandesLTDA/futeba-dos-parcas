@@ -48,7 +48,7 @@ import { TeamBadge } from '../../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague';
 import { useActiveSeason } from '../../../hooks/useActiveSeason';
 import { DIVISION_CONFIG, LeagueDivision, getXpProgress } from '../../../types/gamification';
-import { getLevelBadgeImage } from '../../../utils/levelBadge';
+import { getLevelBadgeImage, handleBadgeImageError } from '../../../utils/levelBadge';
 import {
   XP_PARTICIPATION, XP_GOAL, XP_ASSIST, XP_SAVE,
   XP_MVP, XP_WIN, XP_DRAW, XP_STREAK_3, XP_STREAK_5, XP_STREAK_7, XP_STREAK_10,
@@ -170,6 +170,7 @@ const PodiumSection: React.FC<{
                     <Box
                       component="img"
                       src={getLevelBadgeImage(player.level)}
+                      onError={handleBadgeImageError}
                       loading="lazy"
                       alt={`Nível ${player.level}`}
                       sx={{
@@ -404,6 +405,7 @@ export function RankingsTab() {
                       <Box
                         component="img"
                         src={getLevelBadgeImage(currentPlayer.level)}
+                        onError={handleBadgeImageError}
                         loading="lazy"
                         alt={`Nível ${currentPlayer.level}`}
                         sx={{

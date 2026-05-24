@@ -14,6 +14,7 @@ import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GameRepositoryImpl
 import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.domain.ranking.LeagueService
+import com.futebadosparcas.domain.ranking.LeagueServiceImpl
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
 import com.futebadosparcas.domain.ranking.PostGameEventEmitter
 import com.futebadosparcas.domain.repository.GameQueryRepository
@@ -65,7 +66,7 @@ val appKoinModule = module {
     }
 
     single<LeagueService> {
-        LeagueService(get())
+        LeagueServiceImpl(get())
     }
 
     single<InviteRepository> {

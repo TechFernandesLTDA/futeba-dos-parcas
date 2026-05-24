@@ -1,8 +1,12 @@
 package com.futebadosparcas.ui.league
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,7 +64,8 @@ fun LeagueScreen(
     onRefresh: () -> Unit,
     onNavigateNotifications: () -> Unit,
     onNavigateGroups: () -> Unit,
-    onNavigateMap: () -> Unit
+    onNavigateMap: () -> Unit,
+    onPlayerClick: (String) -> Unit = {}
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
     
@@ -126,7 +132,8 @@ fun LeagueScreen(
                             availableSeasons = availableSeasons,
                             selectedSeason = selectedSeason,
                             onDivisionSelected = onDivisionSelected,
-                            onSeasonSelected = onSeasonSelected
+                            onSeasonSelected = onSeasonSelected,
+                            onPlayerClick = onPlayerClick
                         )
                     }
                 }
@@ -142,7 +149,8 @@ fun LeagueContent(
     availableSeasons: List<Season>,
     selectedSeason: Season?,
     onDivisionSelected: (LeagueDivision) -> Unit,
-    onSeasonSelected: (Season) -> Unit
+    onSeasonSelected: (Season) -> Unit,
+    onPlayerClick: (String) -> Unit = {}
 ) {
     // Usa derivedStateOf para evitar recálculos desnecessários durante scroll
     val filteredRanking by remember(state.allRankings, state.selectedDivision) {
@@ -193,7 +201,8 @@ fun LeagueContent(
                 Column {
                     DivisionSelector(
                         selectedDivision = state.selectedDivision,
-                        onDivisionSelected = onDivisionSelected
+                        onDivisionSelected = onDivisionSelected,
+                        isLoading = false
                     )
                     
                     // Título e Contador (Também fica fixo para contexto)
@@ -238,7 +247,8 @@ fun LeagueContent(
                 RankingListItem(
                     item = item,
                     position = index + 1,
-                    isMe = item.participation.userId == state.myParticipation?.userId
+                    isMe = item.participation.userId == state.myParticipation?.userId,
+                    onPlayerClick = onPlayerClick
                 )
             }
         }
@@ -454,7 +464,8 @@ fun MiniStatItem(label: String, value: String) {
 @Composable
 fun DivisionSelector(
     selectedDivision: LeagueDivision,
-    onDivisionSelected: (LeagueDivision) -> Unit
+    onDivisionSelected: (LeagueDivision) -> Unit,
+    isLoading: Boolean = false
 ) {
     var showInfo by remember { mutableStateOf(false) }
 
@@ -580,6 +591,14 @@ fun DivisionSelector(
                 )
             }
         }
+
+        if (isLoading) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+            )
+        }
     }
 }
 
@@ -628,13 +647,33 @@ fun DivisionInfoItem(
 fun RankingListItem(
     item: RankingItem,
     position: Int,
-    isMe: Boolean
+    isMe: Boolean,
+    onPlayerClick: (String) -> Unit = {}
 ) {
-    // Usa Card ao invés de Surface com tonalElevation dinâmico para melhor performance de scroll
+    val isPromotion = position <= 3
+    val isRelegation = position > 0 && position <= 3
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPromotion) 1.02f else 1f,
+        animationSpec = tween(durationMillis = 300),
+        label = "scale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = when {
+            isMe -> MaterialTheme.colorScheme.primary
+            isPromotion -> GamificationColors.Gold.copy(alpha = 0.5f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 400),
+        label = "borderColor"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .scale(scale)
+            .clickable { onPlayerClick(item.participation.userId) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isMe) {
@@ -645,8 +684,8 @@ fun RankingListItem(
         ),
         // Remove tonalElevation variável - causa jank no scroll
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = if (isMe) {
-            BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+        border = if (isMe || isPromotion) {
+            BorderStroke(1.dp, borderColor)
         } else null
     ) {
         Row(

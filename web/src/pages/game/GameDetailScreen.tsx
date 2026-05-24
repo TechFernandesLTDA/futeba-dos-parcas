@@ -44,13 +44,15 @@ import {
   Navigation as NavIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  PhotoLibrary as PhotoIcon,
+  QrCode2 as QrCodeIcon,
 } from '@mui/icons-material';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppBreadcrumbs } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
-import { softDeleteGame, checkInToGame } from '../../services/cloudFunctions';
+import { softDeleteGame, checkInToGame, generateCheckinToken } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
@@ -62,6 +64,7 @@ import { PlayerAvatar, StatusChip, ShimmerLoading, EmptyState } from '../../comp
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { GamePhotosTab } from './GamePhotosTab';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -101,6 +104,9 @@ export const GameDetailScreen: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrToken, setQrToken] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     date: '',
     time: '',
@@ -276,6 +282,24 @@ export const GameDetailScreen: React.FC = () => {
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
+
+  const handleGenerateQr = async () => {
+    if (!gameId) return;
+    setQrLoading(true);
+    try {
+      const result = await generateCheckinToken({ gameId });
+      setQrToken(result.data.token);
+      setQrDialogOpen(true);
+    } catch (err) {
+      showError((err as Error)?.message || 'Erro ao gerar QR Code');
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const qrCheckInUrl = qrToken && gameId
+    ? `${window.location.origin}/checkin/${gameId}/${qrToken}`
+    : null;
 
   if (loading) {
     return (
@@ -490,6 +514,7 @@ export const GameDetailScreen: React.FC = () => {
                 <Tab label={`Confirmados (${confirmedPlayers.length})`} />
                 <Tab label={`Goleiros (${goalkeepers.length})`} />
                 <Tab label={`Espera (${waitlist.length})`} />
+                {game.status === 'FINISHED' && <Tab icon={<PhotoIcon />} iconPosition="start" label="Fotos" />}
               </Tabs>
 
               <TabPanel value={tabValue} index={0}>
@@ -588,6 +613,17 @@ export const GameDetailScreen: React.FC = () => {
                   </List>
                 )}
               </TabPanel>
+
+              {game.status === 'FINISHED' && (
+                <TabPanel value={tabValue} index={3}>
+                  <GamePhotosTab
+                    gameId={gameId!}
+                    isFinished={game.status === 'FINISHED'}
+                    isConfirmedPlayer={!!myConfirmation && myConfirmation.status === 'CONFIRMED'}
+                    isOwner={isOwner}
+                  />
+                </TabPanel>
+              )}
             </Card>
 
             {game.rules && (
@@ -737,7 +773,7 @@ export const GameDetailScreen: React.FC = () => {
               )}
             </Box>
           ) : game.status === 'LIVE' ? (
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {isConfirmed && myConfirmation?.status !== 'CHECKED_IN' && (
                 <Button
                   variant="contained"
@@ -747,6 +783,16 @@ export const GameDetailScreen: React.FC = () => {
                   disabled={checkInLoading}
                 >
                   Check-in
+                </Button>
+              )}
+              {canManage && (
+                <Button
+                  variant="outlined"
+                  startIcon={qrLoading ? <CircularProgress size={16} color="inherit" /> : <QrCodeIcon />}
+                  onClick={handleGenerateQr}
+                  disabled={qrLoading}
+                >
+                  QR Code
                 </Button>
               )}
               <Button
@@ -888,6 +934,47 @@ export const GameDetailScreen: React.FC = () => {
           <Button onClick={handleDeleteGame} color="error" variant="contained" disabled={deleteLoading}>
             {deleteLoading ? 'Excluindo...' : 'Excluir'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)} fullWidth maxWidth="xs" aria-labelledby="qr-dialog-title">
+        <DialogTitle id="qr-dialog-title">QR Code de Check-in</DialogTitle>
+        <DialogContent>
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            {qrCheckInUrl && (
+              <>
+                <Box
+                  component="img"
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCheckInUrl)}`}
+                  alt="QR Code para check-in"
+                  sx={{
+                    width: 250,
+                    height: 250,
+                    mb: 2,
+                    bgcolor: 'common.white',
+                    p: 1,
+                    borderRadius: 1,
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Os jogadores podem escanear este QR code para fazer check-in
+                </Typography>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(qrCheckInUrl);
+                    showSuccess('Link copiado!');
+                  }}
+                >
+                  Copiar Link
+                </Button>
+              </>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setQrDialogOpen(false)}>Fechar</Button>
         </DialogActions>
       </Dialog>
     </Box>

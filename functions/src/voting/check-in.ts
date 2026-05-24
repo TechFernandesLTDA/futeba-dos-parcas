@@ -27,9 +27,10 @@ const MAX_GPS_ACCURACY_METERS = 100;
 
 interface CheckInRequest {
   gameId: string;
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   accuracy?: number;
+  qrToken?: string;
 }
 
 /**
@@ -91,19 +92,26 @@ export const checkInToGame = onCall(
       );
     }
 
-    const {gameId, lat, lng, accuracy} =
+    const {gameId, lat, lng, accuracy, qrToken} =
       (data ?? {}) as CheckInRequest;
-    if (
-      typeof gameId !== "string" ||
-      typeof lat !== "number" ||
-      typeof lng !== "number"
-    ) {
+    if (typeof gameId !== "string") {
       throw new HttpsError(
         "invalid-argument",
-        "gameId/lat/lng obrigatorios",
+        "gameId obrigatorio",
+      );
+    }
+
+    const hasQrToken = typeof qrToken === "string" && qrToken.length > 0;
+    const hasGps = typeof lat === "number" && typeof lng === "number";
+
+    if (!hasQrToken && !hasGps) {
+      throw new HttpsError(
+        "invalid-argument",
+        "lat/lng ou qr_token obrigatorios",
       );
     }
     if (
+      hasGps &&
       typeof accuracy === "number" &&
       accuracy > MAX_GPS_ACCURACY_METERS
     ) {
@@ -122,19 +130,19 @@ export const checkInToGame = onCall(
         "gameId deve ter entre 1 e 128 caracteres",
       );
     }
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      throw new HttpsError(
-        "invalid-argument",
-        "Coordenadas fora de range",
-      );
-    }
-    // FIX #647: Null-island bypass — rejeita coordenadas
-    // no ponto (0, 0) ou proximas, comum em GPS spoof.
-    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-      throw new HttpsError(
-        "invalid-argument",
-        "Localização inválida",
-      );
+    if (hasGps) {
+      if (lat! < -90 || lat! > 90 || lng! < -180 || lng! > 180) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Coordenadas fora de range",
+        );
+      }
+      if (Math.abs(lat!) < 0.01 && Math.abs(lng!) < 0.01) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Localização inválida",
+        );
+      }
     }
 
     const gameSnap = await db().doc(`games/${gameId}`).get();
@@ -177,49 +185,64 @@ export const checkInToGame = onCall(
       // Sem limite superior: jogo LIVE permite check-in a qualquer hora
     }
 
-    // Valida distancia ao campo
-    const gameLat = game.location_lat as number | undefined;
-    const gameLng = game.location_lng as number | undefined;
-    if (
-      typeof gameLat !== "number" ||
-      typeof gameLng !== "number"
-    ) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Jogo sem coordenadas",
-      );
+    let qrValid = false;
+    if (hasQrToken) {
+      const storedToken = game.checkin_qr_token as string | undefined;
+      if (typeof storedToken === "string" && storedToken === qrToken) {
+        qrValid = true;
+      } else {
+        throw new HttpsError(
+          "permission-denied",
+          "QR token inválido ou expirado",
+        );
+      }
     }
 
-    const dist = haversineMeters(lat, lng, gameLat, gameLng);
-    const radiusRaw = (game.checkin_radius_meters as number) ??
-      DEFAULT_RADIUS_METERS;
-    const radius = Math.min(
-      Math.max(radiusRaw, DEFAULT_RADIUS_METERS),
-      MAX_RADIUS_METERS,
-    );
-    // FIX #647: Loga quando radius foi clampado silenciosamente,
-    // evitando surpresas com configuracao incorreta de raio.
-    if (radiusRaw !== radius) {
-      logger.warn(
-        "[CHECKIN_RADIUS_CLAMP]",
-        {
-          gameId,
-          configured: radiusRaw,
-          used: radius,
-        },
-      );
-    }
+    let dist = 0;
+    let radius = DEFAULT_RADIUS_METERS;
 
-    if (dist > radius) {
-      logger.warn(
-        "[CHECKIN_OUT_OF_RANGE]",
-        {uid, gameId, dist: Math.round(dist), radius},
+    if (!qrValid) {
+      const gameLat = game.location_lat as number | undefined;
+      const gameLng = game.location_lng as number | undefined;
+      if (
+        typeof gameLat !== "number" ||
+        typeof gameLng !== "number"
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Jogo sem coordenadas",
+        );
+      }
+
+      dist = haversineMeters(lat!, lng!, gameLat, gameLng);
+      const radiusRaw = (game.checkin_radius_meters as number) ??
+        DEFAULT_RADIUS_METERS;
+      radius = Math.min(
+        Math.max(radiusRaw, DEFAULT_RADIUS_METERS),
+        MAX_RADIUS_METERS,
       );
-      throw new HttpsError(
-        "permission-denied",
-        `Voce esta a ${Math.round(dist)}m do campo ` +
-          `(limite ${radius}m)`,
-      );
+      if (radiusRaw !== radius) {
+        logger.warn(
+          "[CHECKIN_RADIUS_CLAMP]",
+          {
+            gameId,
+            configured: radiusRaw,
+            used: radius,
+          },
+        );
+      }
+
+      if (dist > radius) {
+        logger.warn(
+          "[CHECKIN_OUT_OF_RANGE]",
+          {uid, gameId, dist: Math.round(dist), radius},
+        );
+        throw new HttpsError(
+          "permission-denied",
+          `Voce esta a ${Math.round(dist)}m do campo ` +
+            `(limite ${radius}m)`,
+        );
+      }
     }
 
     // FIX #647: TOCTOU — leitura e escrita do doc de
@@ -260,14 +283,19 @@ export const checkInToGame = onCall(
           checked_in_at: admin.firestore
             .FieldValue.serverTimestamp(),
           check_in_lat_approx:
-            Math.round(lat * 1000) / 1000,
+            typeof lat === "number" ?
+              Math.round(lat * 1000) / 1000 :
+              null,
           check_in_lng_approx:
-            Math.round(lng * 1000) / 1000,
+            typeof lng === "number" ?
+              Math.round(lng * 1000) / 1000 :
+              null,
           check_in_accuracy_m:
             typeof accuracy === "number" ?
               Math.round(accuracy) :
               null,
-          check_in_distance_m: Math.round(dist),
+          check_in_distance_m: qrValid ? null : Math.round(dist),
+          check_in_method: qrValid ? "qr" : "gps",
           was_present: true,
         },
         {merge: true},
@@ -275,13 +303,76 @@ export const checkInToGame = onCall(
 
       return {
         success: true,
-        distance_m: Math.round(dist),
+        distance_m: qrValid ? null : Math.round(dist),
       };
     });
 
     return {
       success: true,
-      distance_m: Math.round(dist),
+      distance_m: qrValid ? null : Math.round(dist),
+      method: qrValid ? "qr" : "gps",
     };
+  },
+);
+
+export const generateCheckinToken = onCall(
+  {
+    region: FUNCTION_REGION,
+    enforceAppCheck: !process.env.FUNCTIONS_EMULATOR,
+    consumeAppCheckToken: true,
+  },
+  async (request) => {
+    requireProfileComplete(request);
+
+    const {auth, data} = request;
+    const uid = auth!.uid;
+
+    const {gameId} = (data ?? {}) as {gameId?: string};
+    if (typeof gameId !== "string" || gameId.length === 0 || gameId.length > 128) {
+      throw new HttpsError(
+        "invalid-argument",
+        "gameId obrigatorio",
+      );
+    }
+
+    const gameSnap = await db().doc(`games/${gameId}`).get();
+    if (!gameSnap.exists) {
+      throw new HttpsError("not-found", "Jogo nao encontrado");
+    }
+    const game = gameSnap.data() as Record<string, unknown>;
+
+    const ownerId = game.owner_id as string;
+    const coOrganizers = (game.co_organizers as string[]) ?? [];
+    const userSnap = await db().doc(`users/${uid}`).get();
+    const userRole = userSnap.exists ?
+      (userSnap.data() as Record<string, unknown>).role as string :
+      undefined;
+    const isAdmin = userRole === "ADMIN";
+
+    if (ownerId !== uid && !coOrganizers.includes(uid) && !isAdmin) {
+      throw new HttpsError(
+        "permission-denied",
+        "Apenas o dono ou admin pode gerar QR code",
+      );
+    }
+
+    const status = game.status as string;
+    if (status !== "CONFIRMED" && status !== "LIVE") {
+      throw new HttpsError(
+        "failed-precondition",
+        "QR code apenas em jogos CONFIRMED ou LIVE",
+      );
+    }
+
+    const token = crypto.randomUUID().replace(/-/g, "").slice(0, 24);
+
+    await db().doc(`games/${gameId}`).update({
+      checkin_qr_token: token,
+      checkin_qr_token_created_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    logger.info("[CHECKIN_QR_TOKEN_GENERATED]", {gameId, uid});
+
+    return {success: true, token};
   },
 );

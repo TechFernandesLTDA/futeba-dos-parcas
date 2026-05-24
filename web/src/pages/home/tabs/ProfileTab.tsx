@@ -45,7 +45,7 @@ import {
   Dashboard,
 } from '@mui/icons-material';
 import { getLevelColor } from '../../../types/user';
-import { getLevelBadgeImage, getLevelBadgeDescription } from '../../../utils/levelBadge';
+import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../../utils/levelBadge';
 import { getLevelForXp, getXpProgress, getLevelEntry } from '../../../types/gamification';
 import { gamificationColors } from '../../../theme';
 import { useNavigate } from 'react-router-dom';
@@ -262,6 +262,7 @@ export function ProfileTab() {
             <Box
               component="img"
               src={getLevelBadgeImage(currentLevel)}
+              onError={handleBadgeImageError}
               loading="lazy"
               alt={getLevelBadgeDescription(currentLevel, currentEntry.name)}
               sx={{ width: '100%', height: '100%', objectFit: 'contain' }}

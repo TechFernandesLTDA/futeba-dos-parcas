@@ -78,10 +78,9 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name
 export interface LeagueFilters {
   groupId?: string | null;
   seasonId?: string | null;
+  maxResults?: number;
 }
 
-// Busca ranking da liga com batch reads para dados de usuários
-// Sempre aplica limit(200) para evitar queries ilimitadas
 async function fetchLeagueData(
   currentUserId?: string,
   filters?: LeagueFilters
@@ -90,7 +89,7 @@ async function fetchLeagueData(
 
   const constraints: QueryConstraint[] = [
     orderBy('points', 'desc'),
-    limit(200)
+    limit(filters?.maxResults ?? 200)
   ];
   if (filters?.seasonId) {
     constraints.push(where('season_id', '==', filters.seasonId));
@@ -172,7 +171,7 @@ export const useLeague = (
   const enabled = options?.enabled ?? true;
 
   const { data: players = [], isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId],
+    queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults],
     queryFn: () => fetchLeagueData(currentUserId, filters),
     staleTime: 3 * 60 * 1000, // 3 minutos
     gcTime: 10 * 60 * 1000,
@@ -187,7 +186,7 @@ export const useLeague = (
     const seasonRef = collection(db, 'season_participation');
     const listenerConstraints: QueryConstraint[] = [
       orderBy('points', 'desc'),
-      limit(200)
+      limit(filters?.maxResults ?? 200)
     ];
     if (filters?.seasonId) {
       listenerConstraints.push(where('season_id', '==', filters.seasonId));
@@ -204,7 +203,7 @@ export const useLeague = (
         return;
       }
       queryClient.invalidateQueries({
-        queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId],
+        queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults],
       });
     }, (err) => {
       logger.error('Error in league listener:', err);
@@ -213,7 +212,7 @@ export const useLeague = (
     });
 
     return () => unsubscribe();
-  }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, enabled]);
+  }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, filters?.maxResults, enabled]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 

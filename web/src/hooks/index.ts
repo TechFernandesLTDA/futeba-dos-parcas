@@ -24,5 +24,5 @@ export * from './useScrollRestoration';
 export * from './useNextGame';
 export * from './usePrefetchHome';
 export * from './usePerformanceMonitoring';
-export * from './usePerformanceMonitoring';
+export * from './useSeasons';
 

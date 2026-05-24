@@ -18,6 +18,8 @@ module.exports = {
   moduleNameMapper: {
     "^@google-cloud/storage$": "<rootDir>/test/__mocks__/google-cloud-storage.ts",
     "^@google-cloud/logging$": "<rootDir>/test/__mocks__/google-cloud-logging.ts",
+    // Handle .js imports in TypeScript files (resolve to .ts)
+    "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   clearMocks: true,
   collectCoverageFrom: [

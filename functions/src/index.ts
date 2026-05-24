@@ -1407,26 +1407,30 @@ export const recalculateLeagueRating =
             leagueRating
           );
 
-        // Atualizar documento (não triggera
-        // loop pois games_played não muda)
-        await partRef.update({
-          league_rating: leagueRating,
-          division:
-            newLeagueState.division,
-          promotion_progress:
-            newLeagueState.promotionProgress,
-          relegation_progress:
-            newLeagueState
-              .relegationProgress,
-          protection_games:
-            newLeagueState.protectionGames,
-          recent_games: recentGames,
-          league_processing:
-            admin.firestore.FieldValue
-              .delete(),
-          league_processing_at:
-            admin.firestore.FieldValue
-              .delete(),
+        // #1741: Atomic result write + lock release via transaction.
+        // Garante que resultado e liberação do lock são commitados
+        // juntos — previne estado parcial se instância crashar entre
+        // escrita do resultado e liberação do lock.
+        await db().runTransaction(async (tx) => {
+          tx.update(partRef, {
+            league_rating: leagueRating,
+            division:
+              newLeagueState.division,
+            promotion_progress:
+              newLeagueState.promotionProgress,
+            relegation_progress:
+              newLeagueState
+                .relegationProgress,
+            protection_games:
+              newLeagueState.protectionGames,
+            recent_games: recentGames,
+            league_processing:
+              admin.firestore.FieldValue
+                .delete(),
+            league_processing_at:
+              admin.firestore.FieldValue
+                .delete(),
+          });
         });
 
         const promoReq = leagueModule
@@ -2096,7 +2100,7 @@ export {onConfirmationCreated} from "./voting/temporal-overlap";
 export {onGameEventCreated} from "./voting/events-rate-limit";
 
 // SECFIX #426: server-side check-in com validacao GPS + distancia
-export {checkInToGame} from "./voting/check-in";
+export {checkInToGame, generateCheckinToken} from "./voting/check-in";
 
 // ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
@@ -2180,3 +2184,10 @@ export * from "./locations/location-management";
 // - onStatisticsWrittenForAutoRatings: recalcula auto-ratings server-side
 //   quando statistics/{userId} muda.
 export * from "./ratings/auto-ratings";
+
+// ==========================================
+// GROUP LEAGUE (#1783)
+// ==========================================
+// - onGameFinishedGroupLeague: atualiza standings da liga do grupo
+//   quando um jogo com group_id é finalizado.
+export {onGameFinishedGroupLeague} from "./group-league";
