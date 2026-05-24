@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+bash "$(git rev-parse --show-toplevel)/scripts/validate-pre-push.sh"
