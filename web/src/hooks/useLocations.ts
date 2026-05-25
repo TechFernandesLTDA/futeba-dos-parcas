@@ -48,15 +48,16 @@ export const useLocations = () => {
   useEffect(() => {
     const locRef = collection(db, 'locations');
     const q = query(locRef, orderBy('name', 'asc'), limit(200));
-    let isFirstSnapshot = true;
+    let initialSnapshots = 0;
 
     const unsubscribe = onSnapshot(
       q,
-      () => {
-        if (isFirstSnapshot) {
-          isFirstSnapshot = false;
-          return;
-        }
+      (_snap) => {
+        // Pula os 2 primeiros snapshots: cache local + primeiro do servidor
+        // Evita invalidateQueries duplicado que causa flicker de dados
+        initialSnapshots++;
+        if (initialSnapshots <= 2) return;
+
         queryClient.invalidateQueries({ queryKey: ['locations'] });
       },
       (err) => {
