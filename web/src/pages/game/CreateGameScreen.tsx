@@ -165,12 +165,15 @@ export const CreateGameScreen: React.FC = () => {
 
   // Carregar quadras quando local é selecionado
   useEffect(() => {
+    // Sempre limpa campos anteriores para evitar duplicacao visual
+    setFields([]);
     if (!formData.locationId || useCustomLocation) {
-      setFields([]);
       return;
     }
 
     let cancelled = false;
+    let requestId = 0;
+    const currentRequestId = ++requestId;
 
     const loadFields = async () => {
       setFieldsLoading(true);
@@ -180,23 +183,28 @@ export const CreateGameScreen: React.FC = () => {
         const fieldsRef = collection(db, 'locations', formData.locationId, 'fields');
         const q = query(fieldsRef, orderBy('name', 'asc'));
         const snapshot = await getDocs(q);
-        if (cancelled) return;
+        if (cancelled || currentRequestId !== requestId) return;
         let fieldsData = snapshot.docs
           .map((d) => ({ ...snakeToCamel<Field>(d.data()), id: d.id }))
           .filter((f) => f.isActive !== false);
 
-        // Se não encontrou na subcoleção, tentar root collection
-        if (fieldsData.length === 0) {
-          const rootFieldsRef = collection(db, 'fields');
-          const rootQ = query(rootFieldsRef, where('location_id', '==', formData.locationId));
-          const rootSnapshot = await getDocs(rootQ);
-          if (cancelled) return;
-          fieldsData = rootSnapshot.docs
-            .map((d) => ({ ...snakeToCamel<Field>(d.data()), id: d.id }))
-            .filter((f) => f.isActive !== false);
-        }
+        // Buscar tambem da root collection e fazer merge deduplicado
+        const rootFieldsRef = collection(db, 'fields');
+        const rootQ = query(rootFieldsRef, where('location_id', '==', formData.locationId));
+        const rootSnapshot = await getDocs(rootQ);
+        if (cancelled || currentRequestId !== requestId) return;
 
-        if (cancelled) return;
+        const merged = new Map<string, Field>();
+        for (const f of fieldsData) merged.set(f.id, f);
+        for (const d of rootSnapshot.docs) {
+          const field = { ...snakeToCamel<Field>(d.data()), id: d.id };
+          if (field.isActive !== false && !merged.has(field.id)) {
+            merged.set(field.id, field);
+          }
+        }
+        fieldsData = Array.from(merged.values());
+
+        if (cancelled || currentRequestId !== requestId) return;
         setFields(fieldsData);
 
         // Se só tem 1 quadra, selecionar automaticamente
