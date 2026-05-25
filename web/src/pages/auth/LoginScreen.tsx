@@ -170,7 +170,7 @@ export function LoginScreen() {
           maxWidth: 420,
           width: '100%',
           borderRadius: 4,
-          boxShadow: isMd ? undefined : `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+          boxShadow: isMd ? undefined : (t) => t.shadows[16],
         }}
       >
         <CardContent sx={{ p: 4 }}>
@@ -209,6 +209,7 @@ export function LoginScreen() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              inputProps={{ maxLength: 254 }}
               autoComplete="email"
               InputProps={{
                 startAdornment: (
@@ -227,6 +228,7 @@ export function LoginScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              inputProps={{ maxLength: 128 }}
               autoComplete="current-password"
               InputProps={{
                 startAdornment: (

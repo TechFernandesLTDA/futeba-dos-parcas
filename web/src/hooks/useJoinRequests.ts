@@ -45,7 +45,7 @@ export interface JoinRequest {
  */
 export function useMyJoinRequest(groupId: string | undefined) {
   const { user, firebaseUser } = useAuth();
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const uid = firebaseUser?.uid || user?.id;
 
   const [request, setRequest] = useState<JoinRequest | null>(null);
@@ -104,6 +104,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
         status: 'PENDING',
         requested_at: serverTimestamp(),
       });
+      showSuccess('Solicitação enviada com sucesso!');
     } catch (e) {
       const err = e as Error;
       logger.error('requestJoin failed', err);
@@ -112,7 +113,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, user, showError]);
+  }, [groupId, uid, user, showSuccess, showError]);
 
   const cancelRequest = useCallback(async () => {
     if (!groupId || !uid) return;
@@ -120,6 +121,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
     setError(null);
     try {
       await deleteDoc(doc(db, `groups/${groupId}/join_requests/${uid}`));
+      showSuccess('Solicitação cancelada.');
     } catch (e) {
       const err = e as Error;
       logger.error('cancelRequest failed', err);
@@ -128,7 +130,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, showError]);
+  }, [groupId, uid, showSuccess, showError]);
 
   return {
     request,

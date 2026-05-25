@@ -450,7 +450,15 @@
       "filterByStatus": "Filter by game status",
       "clearFilters": "Clear filters"
     },
-    "loadError": "Failed to load games"
+    "loadError": "Failed to load games",
+    "public": {
+      "title": "Open Games",
+      "info": "Open games near you. Join, play, and meet new players!",
+      "empty": "No open games at the moment",
+      "emptyDesc": "Come back later or create your own game!",
+      "join": "I Want to Play",
+      "full": "Full"
+    }
   },
   "ranking": {
     "title": "Ranking",
@@ -474,7 +482,12 @@
     "standingsAria": "Ranking standings",
     "you": "You",
     "noPlayers": "No players in ranking",
-    "joinGamesAction": "See available games"
+    "joinGamesAction": "See available games",
+    "weekly": {
+      "title": "Weekly Ranking",
+      "empty": "No games this week yet",
+      "emptyDesc": "The ranking shows up when the week has finished games."
+    }
   },
   "league": {
     "title": "League",
@@ -605,7 +618,12 @@
     "publicGroupLabel": "Public group",
     "privateGroupLabel": "Private group",
     "createNewGroup": "Create new group",
-    "retry": "Try again"
+    "retry": "Try again",
+    "hallOfFame": "Hall of Fame",
+    "hallOfFameEmpty": "No completed seasons yet.",
+    "hallOfFameEmptyDesc": "The Hall of Fame will show the MVPs of each month.",
+    "hallOfFameMvpLabel": "MVP:",
+    "hallOfFamePlayers": "{{count}} players"
   },
   "schedule": {
     "title": "Schedules",
@@ -750,5 +768,15 @@
     "typeMajor": "Major update",
     "typeMinor": "New features",
     "typePatch": "Fixes"
+  },
+  "home": {
+    "quickActions": "Quick Actions",
+    "publicGames": "Open Games",
+    "inviteFriends": "Invite Friends",
+    "dreamTeam": "Dream Team",
+    "weeklyRanking": "Weekly Ranking",
+    "teamOfTheWeek": "Team of the Week",
+    "round": "Round {{week}}",
+    "viewFullRanking": "View full ranking"
   }
 }

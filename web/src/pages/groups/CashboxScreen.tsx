@@ -322,7 +322,7 @@ export const CashboxScreen: React.FC = () => {
         <DialogContent>
           <TextField
             autoFocus
-            margin="dense"
+            margin="none"
             label="Valor (R$)"
             type="number"
             fullWidth
@@ -331,11 +331,12 @@ export const CashboxScreen: React.FC = () => {
             sx={{ mb: 2 }}
           />
           <TextField
-            margin="dense"
+            margin="none"
             label="Descrição"
             fullWidth
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            inputProps={{ maxLength: 500 }}
           />
         </DialogContent>
         <DialogActions>

@@ -252,7 +252,7 @@ export const LevelJourneyScreen: React.FC = () => {
                           width: `${progress * 100}%`,
                           background: `linear-gradient(90deg, ${color}, ${alpha(color, 0.7)})`,
                           borderRadius: 5,
-                          transition: 'width 0.5s ease',
+                          transition: (t) => t.transitions.create('width', { duration: 500 }),
                           boxShadow: `0 0 8px ${alpha(color, 0.4)}`,
                         }}
                       />
@@ -283,7 +283,7 @@ export const LevelJourneyScreen: React.FC = () => {
             </Card>
 
             {/* Guia de XP - Colapsável como Android */}
-            <Card sx={{ mb: 2, borderRadius: 3 }}>
+            <Card sx={{ mb: 2 }}>
               <CardContent
                 sx={{
                   py: 1.5,
@@ -395,7 +395,7 @@ export const LevelJourneyScreen: React.FC = () => {
                 </Typography>
               </Divider>
             </Box>
-            <Card sx={{ borderRadius: 3 }}>
+            <Card>
               <CardContent>
                 {history.length === 0 ? (
                   <Box sx={{ textAlign: 'center', py: 3 }}>

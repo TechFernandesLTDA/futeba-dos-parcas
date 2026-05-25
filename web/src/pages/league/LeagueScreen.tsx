@@ -399,11 +399,12 @@ export const LeagueScreen: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               autoFocus
+              inputProps={{ maxLength: 200 }}
               InputProps={{
                 startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
                 endAdornment: search ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearch('')}><CloseIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => setSearch('')} aria-label="Limpar busca" sx={{ minWidth: 44, minHeight: 44 }}><CloseIcon fontSize="small" /></IconButton>
                   </InputAdornment>
                 ) : null,
               }}
@@ -561,7 +562,7 @@ export const LeagueScreen: React.FC = () => {
               : t('league.seasonNotStartedDesc')}
             actionLabel="Criar jogo"
             actionIcon={<SoccerIcon />}
-            onAction={() => navigate('/games/create')}
+            onAction={() => navigate('/game/create')}
           />
         ) : (
           <Fade in key={tabValue}>
@@ -678,7 +679,7 @@ export const LeagueScreen: React.FC = () => {
           color="primary"
           size="medium"
           onClick={scrollToMe}
-          sx={{ position: 'fixed', bottom: 80, right: 16, zIndex: 12 }}
+          sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 12 }}
           aria-label="Ir para minha posição"
         >
           <MyLocationIcon />
@@ -743,7 +744,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
       sx={{
         mb: 1,
         cursor: 'pointer',
-        transition: 'all 0.3s ease',
+        transition: (t) => t.transitions.create('all', { duration: t.transitions.duration.standard }),
         bgcolor: player.isCurrentUser
           ? (t) => alpha(t.palette.primary.main, 0.1)
           : zoneColor
@@ -840,7 +841,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
             />
           </Box>
 
-          <IconButton size="small" onClick={handleToggle}>
+          <IconButton onClick={handleToggle} aria-label={isExpanded ? 'Recolher' : 'Expandir'}>
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>

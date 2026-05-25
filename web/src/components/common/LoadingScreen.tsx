@@ -67,7 +67,7 @@ export const LoadingScreen = React.memo(function LoadingScreen({
             p: 2,
             borderRadius: 3,
             bgcolor: 'background.paper',
-            boxShadow: (theme) => `0 2px 8px ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+            boxShadow: (theme) => theme.shadows[4],
           }}
         >
           <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>

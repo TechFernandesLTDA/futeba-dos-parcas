@@ -1,6 +1,6 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
 import { useRatingHistory } from '../../hooks/useRatingHistory';
 import { PlayerRatingRole } from '../../types/user';
 
@@ -10,8 +10,16 @@ interface RatingEvolutionChartProps {
 
 type RatingChartRow = { date: string } & Partial<Record<PlayerRatingRole, number>>;
 
+const POSITION_NAMES: Record<string, string> = {
+  STRIKER: 'Atacante',
+  MID: 'Meio-campo',
+  DEFENDER: 'Defensor',
+  GOALKEEPER: 'Goleiro',
+};
+
 export const RatingEvolutionChart: React.FC<RatingEvolutionChartProps> = ({ userId }) => {
   const { history, loading, error } = useRatingHistory(userId);
+  const theme = useTheme();
 
   if (loading) {
     return (
@@ -69,10 +77,10 @@ export const RatingEvolutionChart: React.FC<RatingEvolutionChartProps> = ({ user
             <YAxis domain={[0, 5]} />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="STRIKER" stroke="#ff7300" name="Atacante" />
-            <Line type="monotone" dataKey="MID" stroke="#387908" name="Meio-campo" />
-            <Line type="monotone" dataKey="DEFENDER" stroke="#8884d8" name="Defensor" />
-            <Line type="monotone" dataKey="GOALKEEPER" stroke="#82ca9d" name="Goleiro" />
+            <Line type="monotone" dataKey="STRIKER" stroke={theme.palette.warning.main} name={POSITION_NAMES.STRIKER} />
+            <Line type="monotone" dataKey="MID" stroke={theme.palette.success.dark} name={POSITION_NAMES.MID} />
+            <Line type="monotone" dataKey="DEFENDER" stroke={theme.palette.secondary.main} name={POSITION_NAMES.DEFENDER} />
+            <Line type="monotone" dataKey="GOALKEEPER" stroke={theme.palette.success.light} name={POSITION_NAMES.GOALKEEPER} />
           </LineChart>
         </ResponsiveContainer>
       </Box>

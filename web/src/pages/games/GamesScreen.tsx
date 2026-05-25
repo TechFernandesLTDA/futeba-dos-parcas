@@ -11,7 +11,6 @@ import {
   Fab,
   Button,
   Grid,
-  Alert,
   CircularProgress,
   useTheme,
   useMediaQuery,
@@ -33,6 +32,7 @@ import { useGames } from '../../hooks/useGames';
 import { useGroups } from '../../hooks/useGroups';
 import { GameCard, LoadingState } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ErrorState } from '../../components/common/ErrorState';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { GameStatus } from '../../types/game';
 import { detectGameConflicts } from '../../utils/gameConflicts';
@@ -195,17 +195,10 @@ export const GamesScreen: React.FC = () => {
           {loading ? (
             <LoadingState shimmerCount={8} itemType="GAME" />
           ) : error ? (
-            <Alert
-              severity="error"
-              action={
-                <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={handleRefresh}>
-                  {t('common.retry')}
-                </Button>
-              }
-              sx={{ mb: 2 }}
-            >
-              {t('games.loadError')}: {error}
-            </Alert>
+            <ErrorState
+              message={`${t('games.loadError')}: ${error}`}
+              onRetry={handleRefresh}
+            />
           ) : filteredGames.length === 0 ? (
             <EmptyState
               icon={<SoccerIcon />}

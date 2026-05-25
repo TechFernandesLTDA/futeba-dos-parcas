@@ -29,6 +29,7 @@ import {
   Smartphone as DeviceIcon,
   Storage as DataIcon,
   DeleteForever as DeleteIcon,
+  SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -77,10 +78,9 @@ export const AboutScreen: React.FC = () => {
                 mx: 'auto',
                 mb: 2,
                 bgcolor: theme.palette.primary.main,
-                fontSize: 40,
               }}
             >
-              ⚽
+              <SoccerIcon sx={{ fontSize: 40, color: theme.palette.primary.contrastText }} />
             </Avatar>
             <Typography variant="h5" fontWeight={700}>
               Futeba dos Parças

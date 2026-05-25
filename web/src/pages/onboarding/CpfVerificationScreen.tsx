@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Box,
@@ -37,6 +38,7 @@ const logger = createLogger('CpfVerification');
  */
 export const CpfVerificationScreen: React.FC = () => {
   useDocumentTitle('Verificar CPF');
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { firebaseUser } = useAuth();
   const { showSuccess } = useToast();
@@ -181,14 +183,13 @@ export const CpfVerificationScreen: React.FC = () => {
         }
       }
 
-      setSuccess(true);
-      setClaimConfirmed(claimOk);
       showSuccess(t('onboarding.accountVerifiedToast'));
 
       if (claimOk) {
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1400);
+        navigate('/', { replace: true });
+      } else {
+        setSuccess(true);
+        setClaimConfirmed(false);
       }
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -263,7 +264,7 @@ export const CpfVerificationScreen: React.FC = () => {
             size="large"
             fullWidth
             sx={{ mt: 3, borderRadius: 2 }}
-            onClick={() => { window.location.href = '/'; }}
+            onClick={() => navigate('/')}
           >
             Continuar
           </Button>
@@ -283,7 +284,7 @@ export const CpfVerificationScreen: React.FC = () => {
       }}
     >
       <Container maxWidth="sm">
-        <Card elevation={3} sx={{ borderRadius: 3 }}>
+        <Card elevation={3}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
             <ProgressHeader />
 

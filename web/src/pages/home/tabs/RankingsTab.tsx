@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { gamificationColors } from '../../../theme';
+import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
 import {
   Box,
@@ -85,6 +85,7 @@ const PodiumSection: React.FC<{
   onAvatarClick: (userId: string) => void;
 }> = ({ players, showXP, positionChanges, onAvatarClick }) => {
   const theme = useTheme();
+  const gColors = useGamificationColors();
 
   if (players.length === 0) return null;
 
@@ -95,30 +96,30 @@ const PodiumSection: React.FC<{
       label: '1º',
       Icon: EmojiEvents,
       size: 64,
-      borderColor: gamificationColors.gold,
-      bgColor: alpha(gamificationColors.gold, 0.12),
-      gradient: `linear-gradient(180deg, ${alpha(gamificationColors.gold, 0.18)}, ${alpha(gamificationColors.gold, 0.04)})`,
-      iconColor: gamificationColors.gold,
+      borderColor: gColors.gold,
+      bgColor: alpha(gColors.gold, 0.12),
+      gradient: `linear-gradient(180deg, ${alpha(gColors.gold, 0.18)}, ${alpha(gColors.gold, 0.04)})`,
+      iconColor: gColors.gold,
     },
     {
       position: 2,
       label: '2º',
       Icon: MilitaryTechIcon,
       size: 56,
-      borderColor: gamificationColors.silver,
-      bgColor: alpha(gamificationColors.silver, 0.12),
-      gradient: `linear-gradient(180deg, ${alpha(gamificationColors.silver, 0.15)}, ${alpha(gamificationColors.silver, 0.03)})`,
-      iconColor: gamificationColors.silver,
+      borderColor: gColors.silver,
+      bgColor: alpha(gColors.silver, 0.12),
+      gradient: `linear-gradient(180deg, ${alpha(gColors.silver, 0.15)}, ${alpha(gColors.silver, 0.03)})`,
+      iconColor: gColors.silver,
     },
     {
       position: 3,
       label: '3º',
       Icon: Star,
       size: 48,
-      borderColor: gamificationColors.bronze,
-      bgColor: alpha(gamificationColors.bronze, 0.12),
-      gradient: `linear-gradient(180deg, ${alpha(gamificationColors.bronze, 0.15)}, ${alpha(gamificationColors.bronze, 0.03)})`,
-      iconColor: gamificationColors.bronze,
+      borderColor: gColors.bronze,
+      bgColor: alpha(gColors.bronze, 0.12),
+      gradient: `linear-gradient(180deg, ${alpha(gColors.bronze, 0.15)}, ${alpha(gColors.bronze, 0.03)})`,
+      iconColor: gColors.bronze,
     },
   ];
 
@@ -140,7 +141,7 @@ const PodiumSection: React.FC<{
               border: `2px solid ${config.borderColor}`,
               borderColor: config.borderColor,
               borderRadius: 2,
-              transition: 'transform 0.15s ease',
+              transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shortest }),
               '&:active': { transform: 'scale(0.97)' },
             }}
           >
@@ -197,7 +198,7 @@ const PodiumSection: React.FC<{
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
                 <TeamBadge teamId={player.favoriteTeam} size={16} />
                 {player.isCurrentUser && (
-                  <Chip label="Você" size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem' }} />
+                  <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
                 )}
               </Box>
               <Typography variant="subtitle2" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color} sx={{ mt: 0.5 }}>
@@ -226,6 +227,7 @@ const PodiumSection: React.FC<{
 
 export function RankingsTab() {
     const theme = useTheme();
+    const gColors = useGamificationColors();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
     const navigate = useNavigate();
   const { user } = useAuth();
@@ -554,7 +556,7 @@ export function RankingsTab() {
                 </Card>
                 <Card sx={{ flex: 1 }}>
                   <CardActionArea onClick={() => navigate('/level-journey')} sx={{ p: 2, textAlign: 'center' }}>
-                    <StarIcon sx={{ fontSize: 32, color: gamificationColors.gold, mb: 0.5 }} />
+                    <StarIcon sx={{ fontSize: 32, color: gColors.gold, mb: 0.5 }} />
                     <Typography variant="body2" fontWeight={600}>
                       {t('profile.levelJourney')}
                     </Typography>
@@ -655,7 +657,7 @@ const RankingCard = React.memo(function RankingCard({
         bgcolor: player.isCurrentUser ? (theme) => alpha(theme.palette.primary.main, 0.08) : 'background.paper',
         border: player.isCurrentUser ? (theme) => `2px solid ${theme.palette.primary.main}` : '1px solid',
         borderColor: player.isCurrentUser ? 'primary.main' : 'divider',
-        transition: 'transform 0.15s ease',
+        transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shortest }),
         '&:active': { transform: 'scale(0.98)' },
       }}
     >

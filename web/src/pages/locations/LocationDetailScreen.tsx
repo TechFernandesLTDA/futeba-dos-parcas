@@ -300,7 +300,7 @@ export const LocationDetailScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
               <Typography variant="subtitle1" fontWeight={600}>Avaliações ({reviews.length})</Typography>
-              {user && <Button size="small" startIcon={<ReviewIcon />} onClick={() => setReviewOpen(true)}>Avaliar</Button>}
+              {user && <Button size="small" startIcon={<ReviewIcon />} onClick={() => setReviewOpen(true)} sx={{ minHeight: 44 }}>Avaliar</Button>}
             </Box>
             {reviews.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 3 }}>

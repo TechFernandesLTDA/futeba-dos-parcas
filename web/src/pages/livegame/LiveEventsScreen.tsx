@@ -298,7 +298,7 @@ export const LiveEventsScreen: React.FC = () => {
       {canManage && (
         <Fab
           color="primary"
-          sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+          sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' } }}
           onClick={() => setDialogOpen(true)}
           aria-label="Adicionar evento"
         >
@@ -342,6 +342,7 @@ export const LiveEventsScreen: React.FC = () => {
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               sx={{ mb: 2 }}
+              inputProps={{ maxLength: 100 }}
             />
 
             <TextField

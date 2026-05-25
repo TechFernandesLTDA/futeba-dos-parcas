@@ -207,7 +207,7 @@ export function useGameDetail(gameId: string | null) {
 
 export function useConfirmPresence() {
   const { user, firebaseUser } = useAuth();
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -241,6 +241,7 @@ export function useConfirmPresence() {
         };
 
         await setDoc(confirmationRef, confirmationData);
+        showSuccess('Presença confirmada!');
         setLoading(false);
         return true;
       } catch (err) {
@@ -251,7 +252,7 @@ export function useConfirmPresence() {
         throw err;
       }
     },
-    [firebaseUser, user, showError]
+    [firebaseUser, user, showSuccess, showError]
   );
 
   const cancelPresence = useCallback(
@@ -275,6 +276,7 @@ export function useConfirmPresence() {
         // Apenas deletar a confirmação (igual ao Android)
         // O Cloud Function trigger (onConfirmationWrite) atualiza os contadores do jogo
         await deleteDoc(confirmationRef);
+        showSuccess('Presença cancelada.');
         setLoading(false);
         return true;
       } catch (err) {
@@ -285,7 +287,7 @@ export function useConfirmPresence() {
         throw err;
       }
     },
-    [firebaseUser, user, showError]
+    [firebaseUser, user, showSuccess, showError]
   );
 
   return { confirmPresence, cancelPresence, loading, error };
@@ -293,7 +295,7 @@ export function useConfirmPresence() {
 
 export function useCreateGame() {
   const { user, firebaseUser } = useAuth();
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -343,6 +345,7 @@ export function useCreateGame() {
         const docRef = await addDoc(gamesRef, newGame);
         // Invalidar cache de jogos após criar
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
+        showSuccess('Jogo criado com sucesso!');
         setLoading(false);
         return docRef.id;
       } catch (err) {
@@ -353,14 +356,14 @@ export function useCreateGame() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError]
   );
 
   return { createGame, loading, error };
 }
 
 export function useUpdateGameStatus() {
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -399,6 +402,7 @@ export function useUpdateGameStatus() {
 
         // Invalidar cache de jogos após mudar status
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
+        showSuccess('Status do jogo atualizado com sucesso!');
         setLoading(false);
         return true;
       } catch (err) {
@@ -409,7 +413,7 @@ export function useUpdateGameStatus() {
         throw err;
       }
     },
-    [queryClient, showError]
+    [queryClient, showSuccess, showError]
   );
 
   return { updateStatus, loading, error };

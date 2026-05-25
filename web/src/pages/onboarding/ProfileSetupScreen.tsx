@@ -158,6 +158,7 @@ export const ProfileSetupScreen: React.FC = () => {
           onChange={(e) => setName(e.target.value)}
           placeholder="Como seus amigos te chamam?"
           sx={{ mb: 3 }}
+          inputProps={{ maxLength: 100 }}
         />
 
         <TextField
@@ -183,6 +184,7 @@ export const ProfileSetupScreen: React.FC = () => {
           onChange={(e) => setNickname(e.target.value)}
           placeholder="Como você quer ser chamado?"
           sx={{ mb: 3 }}
+          inputProps={{ maxLength: 20 }}
         />
 
         <Box sx={{ mb: 3 }}>

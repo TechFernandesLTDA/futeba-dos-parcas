@@ -344,7 +344,7 @@ export const EvolutionScreen: React.FC = () => {
                           borderRadius: '4px 4px 0 0',
                           height: `${(data.gamesPlayed / maxValue) * 100}px`,
                           minHeight: 4,
-                          transition: 'height 0.3s ease',
+                          transition: (t) => t.transitions.create('height', { duration: t.transitions.duration.standard }),
                         }}
                       />
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>

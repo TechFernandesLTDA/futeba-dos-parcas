@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef, useCallback } from 'react';
+import { Box, Typography, useTheme } from '@mui/material';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('PerformanceMonitor');
@@ -260,6 +261,7 @@ export function useFirestorePerformanceMonitor(screenName: string) {
  * Mostra métricas em tempo real na tela
  */
 export function PerformanceOverlay({ metrics }: { metrics: Partial<PerformanceMetrics> }) {
+  const theme = useTheme();
   if (!import.meta.env.DEV) return null;
 
   const getScore = (value: number, good: number, poor: number) => {
@@ -269,61 +271,62 @@ export function PerformanceOverlay({ metrics }: { metrics: Partial<PerformanceMe
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: 80,
-      right: 20,
-      background: 'rgba(0, 0, 0, 0.9)',
-      color: '#fff',
-      padding: '12px',
-      borderRadius: '8px',
-      fontSize: '12px',
-      fontFamily: 'monospace',
-      zIndex: 9999,
-      minWidth: '200px',
-    }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#00d9ff' }}>
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 80,
+        right: 20,
+        background: 'rgba(0, 0, 0, 0.9)',
+        color: '#fff',
+        padding: '12px',
+        borderRadius: `${theme.shape.borderRadius / 1.5}px`,
+        fontFamily: 'monospace',
+        zIndex: 9999,
+        minWidth: '200px',
+      }}
+    >
+      <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 1, color: '#00d9ff', fontFamily: 'monospace', fontSize: '0.75rem' }}>
         📊 Performance Monitor
-      </div>
-      <div style={{ marginBottom: '4px' }}>
-        Screen: <span style={{ color: '#ffeb3b' }}>{metrics.screenName}</span>
-      </div>
+      </Typography>
+      <Typography variant="caption" sx={{ display: 'block', mb: 0.5, fontFamily: 'monospace', fontSize: '0.75rem' }}>
+        Screen: <Box component="span" sx={{ color: '#ffeb3b' }}>{metrics.screenName}</Box>
+      </Typography>
       {metrics.lcp && (
-        <div>
-          LCP: <span style={{ color: getScore(metrics.lcp, 2500, 4000).color }}>
+        <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          LCP: <Box component="span" sx={{ color: getScore(metrics.lcp, 2500, 4000).color }}>
             {metrics.lcp.toFixed(0)}ms
-          </span>
-        </div>
+          </Box>
+        </Typography>
       )}
       {metrics.fcp && (
-        <div>
-          FCP: <span style={{ color: getScore(metrics.fcp, 1800, 3000).color }}>
+        <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          FCP: <Box component="span" sx={{ color: getScore(metrics.fcp, 1800, 3000).color }}>
             {metrics.fcp.toFixed(0)}ms
-          </span>
-        </div>
+          </Box>
+        </Typography>
       )}
       {metrics.timeToInteractive && (
-        <div>
-          TTI: <span style={{ color: getScore(metrics.timeToInteractive, 3800, 7300).color }}>
+        <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          TTI: <Box component="span" sx={{ color: getScore(metrics.timeToInteractive, 3800, 7300).color }}>
             {metrics.timeToInteractive.toFixed(0)}ms
-          </span>
-        </div>
+          </Box>
+        </Typography>
       )}
       {metrics.cls !== undefined && (
-        <div>
-          CLS: <span style={{ color: getScore(metrics.cls, 0.1, 0.25).color }}>
+        <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          CLS: <Box component="span" sx={{ color: getScore(metrics.cls, 0.1, 0.25).color }}>
             {metrics.cls.toFixed(3)}
-          </span>
-        </div>
+          </Box>
+        </Typography>
       )}
-      <div style={{ marginTop: '8px', borderTop: '1px solid #333', paddingTop: '8px' }}>
-        Queries: <span style={{ color: '#4caf50' }}>{metrics.firestoreQueries}</span>
-      </div>
-      <div>
-        Data: <span style={{ color: '#4caf50' }}>
+      <Typography variant="caption" sx={{ display: 'block', mt: 1, pt: 1, borderTop: '1px solid #333', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+        Queries: <Box component="span" sx={{ color: '#4caf50' }}>{metrics.firestoreQueries}</Box>
+      </Typography>
+      <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+        Data: <Box component="span" sx={{ color: '#4caf50' }}>
           {((metrics.dataDownloaded || 0) / 1024).toFixed(2)}KB
-        </span>
-      </div>
-    </div>
+        </Box>
+      </Typography>
+    </Box>
   );
 }

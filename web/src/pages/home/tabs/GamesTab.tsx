@@ -141,7 +141,7 @@ export function GamesTab() {
             ),
             endAdornment: searchQuery ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label={t('games.search.clear')}>
+                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label={t('games.search.clear')} sx={{ minWidth: 44, minHeight: 44 }}>
                   <Close fontSize="small" />
                 </IconButton>
               </InputAdornment>
@@ -166,7 +166,7 @@ export function GamesTab() {
             <Tab value="FINISHED" label={t('games.tabs.finished')} sx={{ minHeight: 36, py: 0 }} />
           </Tabs>
           {hasActiveFilters && (
-            <IconButton size="small" onClick={clearFilters} sx={{ ml: 0.5 }} aria-label={t('games.search.clearFilters')}>
+            <IconButton onClick={clearFilters} sx={{ ml: 0.5 }} aria-label={t('games.search.clearFilters')}>
               <FilterListOff fontSize="small" />
             </IconButton>
           )}
@@ -190,7 +190,7 @@ export function GamesTab() {
 
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} sx={{ mb: 2, borderRadius: 3 }}>
+            <Card key={i} sx={{ mb: 2 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
                   <Skeleton variant="rounded" width={70} height={22} />
@@ -288,7 +288,7 @@ export function GamesTab() {
                               label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
                               size="small"
                               variant="outlined"
-                              sx={{ fontSize: '0.75rem', height: 22 }}
+                              sx={{ fontSize: '0.75rem', height: 18 }}
                             />
                           )}
                         </Box>

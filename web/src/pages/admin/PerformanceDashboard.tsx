@@ -120,7 +120,7 @@ export const PerformanceDashboard: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={goBack}>
+          <IconButton onClick={goBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <SpeedIcon sx={{ color: 'primary.main' }} />

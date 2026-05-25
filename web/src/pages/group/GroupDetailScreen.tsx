@@ -56,7 +56,9 @@ import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { pluralizeCount } from '../../utils/pluralize';
 import { GroupRole } from '../../types/group';
-import { PlayerAvatar, EmptyState, ShimmerLoading } from '../../components/common/GameCard';
+import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
+import { ErrorState } from '../../components/common/ErrorState';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -185,27 +187,31 @@ export const GroupDetailScreen: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (groupDeleted) {
     return (
       <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
-        <Alert severity="error">{error}</Alert>
-        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+        <EmptyState
+          icon={<GroupIcon sx={{ fontSize: 64 }} />}
+          title="Este grupo foi encerrado"
+          description="O grupo não está mais ativo."
+        />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
             Voltar
-          </Button>
-          <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
-            Tentar novamente
           </Button>
         </Box>
       </Container>
     );
   }
 
-  if (groupDeleted) {
+  if (error) {
     return (
       <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
-        <Alert severity="warning">Este grupo foi encerrado.</Alert>
-        <Box sx={{ mt: 2 }}>
+        <ErrorState
+          message={error}
+          onRetry={() => queryClient.invalidateQueries()}
+        />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
             Voltar
           </Button>
@@ -217,8 +223,12 @@ export const GroupDetailScreen: React.FC = () => {
   if (!group) {
     return (
       <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
-        <Alert severity="info">Grupo não encontrado.</Alert>
-        <Box sx={{ mt: 2 }}>
+        <EmptyState
+          icon={<GroupIcon sx={{ fontSize: 64 }} />}
+          title="Grupo não encontrado"
+          description="O grupo que você procura não está disponível."
+        />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
             Voltar
           </Button>
@@ -379,10 +389,8 @@ export const GroupDetailScreen: React.FC = () => {
                   icon={<PersonIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
                   title="Nenhum membro"
                   description="O grupo ainda não tem membros. Convide amigos pra começar!"
-                  action={isAdmin ? {
-                    label: 'Convidar',
-                    onClick: () => setInviteDialogOpen(true),
-                  } : undefined}
+                  actionLabel={isAdmin ? 'Convidar' : undefined}
+                  onAction={isAdmin ? () => setInviteDialogOpen(true) : undefined}
                 />
               ) : (
                 <List disablePadding aria-label={t('group.membersAria')}>
@@ -414,10 +422,8 @@ export const GroupDetailScreen: React.FC = () => {
                   icon={<SoccerIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
                   title="Nenhum jogo"
                   description="O grupo ainda não tem jogos agendados"
-                  action={{
-                    label: 'Criar Jogo',
-                    onClick: () => navigate(`/game/create?groupId=${groupId}`),
-                  }}
+                  actionLabel="Criar Jogo"
+                  onAction={() => navigate(`/game/create?groupId=${groupId}`)}
                 />
               ) : (
                 <Box sx={{ p: 2 }}>

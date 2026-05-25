@@ -351,12 +351,18 @@ export const onUserDeleted = auth
           );
         }
 
+        // 15. FIX #1841: user_streaks/{uid} — LGPD Art. 18 VI
+        // Dados de streak (current_streak, longest_streak, last_game_date)
+        // devem ser apagados junto com os demais dados pessoais.
+        await queueDelete(db.doc(`user_streaks/${uid}`));
+        logger.info(`[ACCOUNT_CLEANUP] Deletando user_streaks/${uid}`);
+
         await commitBatch();
         logger.info(
           `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
         );
 
-        // 15. Limpar arquivos órfãos do Storage (profile photos + thumbnails)
+        // 16. Limpar arquivos órfãos do Storage (profile photos + thumbnails)
         try {
           const storage = getStorage();
           const bucketName =

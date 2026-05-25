@@ -126,7 +126,7 @@ export const GroupsScreen: React.FC = () => {
       <Fab
         color="primary"
         aria-label="Criar novo grupo"
-        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' } }}
         onClick={() => navigate('/group/create')}
       >
         <AddIcon />

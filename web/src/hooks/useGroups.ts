@@ -27,6 +27,8 @@ import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 
 const logger = createLogger('useGroups');
 
+// ====== Group Document Parser ======
+
 // Converte documento Firestore para objeto Group
 function parseGroupDoc(docId: string, raw: Record<string, unknown>): Group {
   const converted = snakeToCamel(raw);
@@ -39,6 +41,8 @@ function parseGroupDoc(docId: string, raw: Record<string, unknown>): Group {
     deletedAt: ((raw.deleted_at || raw.deletedAt) as { toDate?: () => Date })?.toDate?.(),
   } as Group;
 }
+
+// ====== Data-Fetching Helpers ======
 
 // Busca grupos do usuário via subcoleção users/{uid}/groups como fonte primária,
 // com follow-up read dos docs completos para dados como type, description, nextGameDate.
@@ -107,6 +111,8 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
     .filter((g) => !g.deletedAt);
 }
 
+// ====== Public Group Discovery ======
+
 /**
  * Discovery de grupos publicos (issue #517 phase 1).
  *
@@ -153,6 +159,8 @@ async function fetchPublicGroups(maxResults = 100): Promise<Group[]> {
   return groups;
 }
 
+// ====== React Hooks ======
+
 export function useDiscoverPublicGroups() {
   const { user, firebaseUser } = useAuth();
   const uid = firebaseUser?.uid || user?.id;
@@ -170,6 +178,7 @@ export function useDiscoverPublicGroups() {
 }
 
 // Busca grupos do usuário via subcoleção users/{uid}/groups (igual ao Android)
+// ====== useGroups ======
 export function useGroups() {
   const { user, firebaseUser } = useAuth();
   const { showError } = useToast();
@@ -212,6 +221,7 @@ export function useGroups() {
   return { groups, loading, error, refetch };
 }
 
+// ====== useGroupDetail ======
 export function useGroupDetail(groupId: string | null) {
   const [group, setGroup] = useState<Group | null>(null);
   const [groupDeleted, setGroupDeleted] = useState(false);
@@ -287,9 +297,10 @@ export function useGroupDetail(groupId: string | null) {
   return { group, groupDeleted, members, loading, error };
 }
 
+// ====== useCreateGroup ======
 export function useCreateGroup() {
   const { user, firebaseUser } = useAuth();
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -360,6 +371,7 @@ export function useCreateGroup() {
         await batch.commit();
         // Invalidar cache de grupos após criar
         queryClient.invalidateQueries({ queryKey: ['groups', uid] });
+        showSuccess('Grupo criado com sucesso!');
         setLoading(false);
         return groupRef.id;
       } catch (err) {
@@ -370,12 +382,13 @@ export function useCreateGroup() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError]
   );
 
   return { createGroup, loading, error };
 }
 
+// ====== useCashbox ======
 export function useCashbox(groupId: string | null) {
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
   const [balance, setBalance] = useState(0);
@@ -428,9 +441,10 @@ export function useCashbox(groupId: string | null) {
   return { transactions, balance, loading, error };
 }
 
+// ====== useInvitePlayers ======
 export function useInvitePlayers() {
   const { user, firebaseUser } = useAuth();
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -460,6 +474,7 @@ export function useInvitePlayers() {
           used: false,
         });
 
+        showSuccess('Código de convite gerado!');
         setLoading(false);
         return code;
       } catch (err) {
@@ -470,7 +485,7 @@ export function useInvitePlayers() {
         throw err;
       }
     },
-    [firebaseUser, user, showError]
+    [firebaseUser, user, showSuccess, showError]
   );
 
   const joinByInviteCode = useCallback(
@@ -545,6 +560,7 @@ export function useInvitePlayers() {
         await batch.commit();
         // Invalidar cache de grupos após entrar em um
         queryClient.invalidateQueries({ queryKey: ['groups', uid] });
+        showSuccess('Você entrou no grupo!');
         setLoading(false);
         return groupId;
       } catch (err) {
@@ -555,11 +571,13 @@ export function useInvitePlayers() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError]
   );
 
   return { generateInviteCode, joinByInviteCode, loading, error };
 }
+
+// ====== useIsGroupMember ======
 
 /**
  * GAP-3: hook leve que confere se o user autenticado é membro do grupo.

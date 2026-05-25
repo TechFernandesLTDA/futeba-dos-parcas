@@ -107,7 +107,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               border: `1px solid ${theme.palette.divider}`,
               bgcolor: 'background.default',
               fontFamily: 'inherit',
-              fontSize: '0.65rem',
+              fontSize: '0.75rem',
               color: 'text.secondary',
             }}
           >

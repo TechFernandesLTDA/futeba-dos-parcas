@@ -93,7 +93,7 @@ export function GroupsTab() {
             ),
             endAdornment: searchQuery ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label={t('groups.search.clear')}>
+                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label={t('groups.search.clear')} sx={{ minWidth: 44, minHeight: 44 }}>
                   <Close fontSize="small" />
                 </IconButton>
               </InputAdornment>

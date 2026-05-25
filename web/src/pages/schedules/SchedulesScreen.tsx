@@ -25,7 +25,6 @@ import {
   Alert,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
   Schedule as ScheduleIcon,
@@ -34,6 +33,8 @@ import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, delet
 import { db } from '../../services/firebase';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
@@ -169,27 +170,16 @@ export const SchedulesScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label={t('common.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Agendamentos
-          </Typography>
+      <ScreenHeader
+        title="Agendamentos"
+        onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
+        backAriaLabel={t('common.back')}
+        actions={
           <IconButton onClick={() => setDialogOpen(true)} aria-label="Criar agendamento">
             <AddIcon />
           </IconButton>
-        </Box>
-      </Box>
+        }
+      />
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {error ? (
@@ -311,20 +301,17 @@ export const SchedulesScreen: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="delete-schedule-dialog-title">
-        <DialogTitle id="delete-schedule-dialog-title">Excluir Agendamento</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            Tem certeza que deseja excluir &quot;{deletingSchedule?.name}&quot;? Esta ação não pode ser desfeita.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={actionLoading}>{t('common.cancel')}</Button>
-          <Button onClick={handleDelete} color="error" variant="contained" disabled={actionLoading} startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}>
-            {actionLoading ? 'Excluindo...' : t('common.delete')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Excluir Agendamento"
+        message={`Tem certeza que deseja excluir "${deletingSchedule?.name}"? Esta ação não pode ser desfeita.`}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        loading={actionLoading}
+        loadingLabel="Excluindo..."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
     </Box>
   );
 };

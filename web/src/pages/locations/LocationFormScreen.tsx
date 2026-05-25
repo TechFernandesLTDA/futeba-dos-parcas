@@ -343,6 +343,7 @@ export const LocationFormScreen: React.FC = () => {
                     onChange={(e) => handleChange('address', e.target.value)}
                     error={!!errors.address}
                     helperText={errors.address}
+                    inputProps={{ maxLength: 500 }}
                   />
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                     <TextField
@@ -353,6 +354,7 @@ export const LocationFormScreen: React.FC = () => {
                       onChange={(e) => handleChange('city', e.target.value)}
                       error={!!errors.city}
                       helperText={errors.city}
+                      inputProps={{ maxLength: 100 }}
                     />
                     <TextField
                       label="Estado"
@@ -367,6 +369,7 @@ export const LocationFormScreen: React.FC = () => {
                     fullWidth
                     value={form.district}
                     onChange={(e) => handleChange('district', e.target.value)}
+                    inputProps={{ maxLength: 100 }}
                   />
                   <Box>
                     <Button
@@ -498,6 +501,7 @@ export const LocationFormScreen: React.FC = () => {
                     error={!!errors.phone}
                     helperText={errors.phone}
                     placeholder="(00) 00000-0000"
+                    inputProps={{ maxLength: 20 }}
                   />
                   <TextField
                     label="Site"
@@ -506,6 +510,7 @@ export const LocationFormScreen: React.FC = () => {
                     onChange={(e) => handleChange('website', e.target.value)}
                     placeholder="https://"
                     type="url"
+                    inputProps={{ maxLength: 2048 }}
                   />
                   <TextField
                     label="Descrição"

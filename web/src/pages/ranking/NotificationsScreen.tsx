@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { gamificationColors } from '../../theme';
+import { useGamificationColors } from '../../hooks/useGamificationColors';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -87,7 +87,7 @@ function getDateGroup(date: Date): string {
   return 'Mais antigos';
 }
 
-function getTypeIcon(type: string): React.ReactNode {
+function getTypeIcon(type: string, gColors: ReturnType<typeof useGamificationColors>): React.ReactNode {
   switch (type) {
     case 'GAME_INVITE':
       return <SoccerIcon color="primary" />;
@@ -114,17 +114,17 @@ function getTypeIcon(type: string): React.ReactNode {
     case 'MEMBER_LEFT':
       return <PersonRemoveIcon color="warning" />;
     case 'ACHIEVEMENT':
-      return <TrophyIcon sx={{ color: gamificationColors.gold }} />;
+      return <TrophyIcon sx={{ color: gColors.gold }} />;
     case 'BADGE_UNLOCKED':
-      return <BadgeIcon sx={{ color: gamificationColors.silver }} />;
+      return <BadgeIcon sx={{ color: gColors.silver }} />;
     case 'LEVEL_UP':
-      return <TrendingIcon sx={{ color: gamificationColors.level }} />;
+      return <TrendingIcon sx={{ color: gColors.level }} />;
     case 'MVP_RECEIVED':
-      return <TrophyIcon sx={{ color: gamificationColors.mvp }} />;
+      return <TrophyIcon sx={{ color: gColors.mvp }} />;
     case 'MVP_VOTE':
-      return <VoteIcon sx={{ color: gamificationColors.mvp }} />;
+      return <VoteIcon sx={{ color: gColors.mvp }} />;
     case 'STREAK_BROKEN':
-      return <StreakIcon sx={{ color: gamificationColors.streak }} />;
+      return <StreakIcon sx={{ color: gColors.streak }} />;
     case 'SYSTEM':
       return <NotificationIcon color="info" />;
     default:
@@ -151,6 +151,7 @@ export const NotificationsScreen: React.FC = () => {
   const navigate = useNavigate();
   const goBack = useNavigateBack('/');
   const theme = useTheme();
+  const gColors = useGamificationColors();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showSuccess, showError, showWithAction } = useToast();
@@ -202,7 +203,6 @@ export const NotificationsScreen: React.FC = () => {
       } else if ((notification.type === 'GAME_INVITE' || notification.type === 'GAME_SUMMON') && notification.referenceId) {
         await confirmPresence(notification.referenceId);
         await markAsRead(notification.id);
-        showSuccess('Presença confirmada!');
       }
     } catch {
       showError(t('notifications.acceptError'));
@@ -360,7 +360,7 @@ export const NotificationsScreen: React.FC = () => {
                           <CardContent sx={{ pb: 1, '&:last-child': { pb: 1 } }}>
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                               <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                {getTypeIcon(notification.type)}
+                                {getTypeIcon(notification.type, gColors)}
                               </Avatar>
                               <Box sx={{ flex: 1, minWidth: 0 }}>
                                 <Typography variant="subtitle2" fontWeight={600}>

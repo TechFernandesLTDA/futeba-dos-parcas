@@ -234,6 +234,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
                   <IconButton
                     className="delete-btn"
                     size="small"
+                    aria-label="Excluir foto"
                     sx={{
                       position: 'absolute',
                       top: 4,
@@ -241,7 +242,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
                       bgcolor: 'rgba(0,0,0,0.5)',
                       color: theme.palette.common.white,
                       opacity: 0,
-                      transition: 'opacity 0.2s',
+                      transition: (t) => t.transitions.create('opacity', { duration: t.transitions.duration.shorter }),
                       '&:hover': { bgcolor: 'error.main' },
                     }}
                     onClick={(e) => {
@@ -268,6 +269,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
           <IconButton
             sx={{ position: 'absolute', top: 8, right: 8, color: theme.palette.common.white, zIndex: 1, bgcolor: alpha(theme.palette.common.black, 0.5) }}
             onClick={() => setSelectedPhoto(null)}
+            aria-label="Fechar"
           >
             <CloseIcon />
           </IconButton>

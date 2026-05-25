@@ -12,7 +12,7 @@ const HOVER_SX: SxProps<Theme> = {
 };
 
 const BASE_TRANSITION_SX: SxProps<Theme> = {
-  transition: 'box-shadow 150ms ease, transform 150ms ease',
+  transition: (theme: Theme) => theme.transitions.create(['box-shadow', 'transform'], { duration: theme.transitions.duration.shortest }),
 };
 
 export interface InteractiveCardProps extends Omit<CardProps, 'onClick'> {

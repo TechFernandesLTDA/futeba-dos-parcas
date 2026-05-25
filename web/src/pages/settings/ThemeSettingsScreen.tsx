@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
@@ -38,6 +37,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { useLanguage, type SupportedLanguage } from '../../contexts';
 import { syncLanguageToFirestore } from '../../contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
+import { useNotificationSettings } from '../../hooks/useNotificationSettings';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 
 export const ThemeSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -51,15 +52,15 @@ export const ThemeSettingsScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
+  const { settings, setPreference } = useNotificationSettings(user?.id);
+  const [emailNotifications, setEmailNotifications] = useLocalStorage('emailNotifications', true);
+
   const handleLanguageChange = (lang: SupportedLanguage) => {
     setLanguage(lang);
     if (user?.id) {
       syncLanguageToFirestore(user.id, lang);
     }
   };
-
-  const [notifications, setNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
 
   const handleClearCache = () => {
     try {
@@ -166,8 +167,8 @@ export const ThemeSettingsScreen: React.FC = () => {
                 secondary={t('settings.theme.pushNotificationsDesc')}
               />
               <Switch
-                checked={notifications}
-                onChange={(e) => setNotifications(e.target.checked)}
+                checked={settings.pushEnabled}
+                onChange={(e) => setPreference('pushEnabled', e.target.checked)}
               />
             </ListItem>
             <Divider />

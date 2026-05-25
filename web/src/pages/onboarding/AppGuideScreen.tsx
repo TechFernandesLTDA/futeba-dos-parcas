@@ -160,7 +160,7 @@ export const AppGuideScreen: React.FC = () => {
                 height: 8,
                 borderRadius: 4,
                 bgcolor: index === activeStep ? 'primary.main' : alpha(theme.palette.primary.main, 0.25),
-                transition: 'width 0.3s ease',
+                transition: (t) => t.transitions.create('width', { duration: t.transitions.duration.standard }),
               }}
             />
           ))}

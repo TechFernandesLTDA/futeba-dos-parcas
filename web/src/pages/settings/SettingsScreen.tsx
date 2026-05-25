@@ -11,7 +11,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  IconButton,
   Switch,
   FormControlLabel,
   Divider,
@@ -28,7 +27,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Person as PersonIcon,
   Palette as PaletteIcon,
   Info as InfoIcon,
@@ -46,6 +44,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { deleteAccount } from '../../services/cloudFunctions';
 import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -157,24 +156,11 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label={t('common.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            {t('settings.title')}
-          </Typography>
-        </Box>
-      </Box>
+      <ScreenHeader
+        title={t('settings.title')}
+        onBack={goBack}
+        backAriaLabel={t('common.back')}
+      />
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
@@ -254,13 +240,17 @@ export const SettingsScreen: React.FC = () => {
                   <ListItemText primary={t('nav.notifications')} secondary={t('settings.notificationsPrefs')} />
                 </ListItemButton>
                 <Divider />
-                <ListItemButton onClick={() => navigate('/settings/gamification')}>
-                  <ListItemIcon>
-                    <TrophyIcon />
-                  </ListItemIcon>
-                  <ListItemText primary={t('settings.gamification')} secondary={t('settings.gamificationDesc')} />
-                </ListItemButton>
-                <Divider />
+                {user?.role === 'ADMIN' && (
+                  <>
+                    <ListItemButton onClick={() => navigate('/settings/gamification')}>
+                      <ListItemIcon>
+                        <TrophyIcon />
+                      </ListItemIcon>
+                      <ListItemText primary={t('settings.gamification')} secondary={t('settings.gamificationDesc')} />
+                    </ListItemButton>
+                    <Divider />
+                  </>
+                )}
                 <ListItemButton onClick={() => navigate('/whats-new')}>
                   <ListItemIcon>
                     <NewReleasesIcon />
@@ -395,7 +385,7 @@ export const SettingsScreen: React.FC = () => {
             onChange={(e) => setDeleteEmailInput(e.target.value)}
             disabled={deleting}
             aria-label={t('settings.deleteEmailAria')}
-            inputProps={{ 'aria-describedby': 'delete-step2-desc' }}
+            inputProps={{ 'aria-describedby': 'delete-step2-desc', maxLength: 254 }}
           />
         </DialogContent>
         <DialogActions>

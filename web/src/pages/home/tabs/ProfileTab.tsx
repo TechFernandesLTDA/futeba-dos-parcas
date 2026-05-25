@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
   Box,
+  Container,
   Typography,
   Card,
   CardContent,
@@ -47,7 +48,7 @@ import {
 import { getLevelColor } from '../../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../../utils/levelBadge';
 import { getLevelForXp, getXpProgress, getLevelEntry } from '../../../types/gamification';
-import { gamificationColors } from '../../../theme';
+import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../contexts/ToastContext';
@@ -61,6 +62,7 @@ export function ProfileTab() {
   const { user, firebaseUser, logout, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
+  const gColors = useGamificationColors();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { showError } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -338,10 +340,11 @@ export function ProfileTab() {
         </Card>
       </Box>
 
+      <Container maxWidth="md">
       {/* Stats Cards */}
-      <Box sx={{ px: 2, mt: -3 }}>
+      <Box sx={{ mt: -3 }}>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Card sx={{ flex: 1, borderRadius: 3 }}>
+          <Card sx={{ flex: 1 }}>
             <CardContent sx={{ textAlign: 'center', py: 2 }}>
               <SportsSoccer sx={{ color: 'primary.main', mb: 0.5 }} />
               <Typography variant="h5" fontWeight="bold">
@@ -353,9 +356,9 @@ export function ProfileTab() {
             </CardContent>
           </Card>
 
-          <Card sx={{ flex: 1, borderRadius: 3 }}>
+          <Card sx={{ flex: 1 }}>
             <CardContent sx={{ textAlign: 'center', py: 2 }}>
-              <EmojiEvents sx={{ color: gamificationColors.gold, mb: 0.5 }} />
+              <EmojiEvents sx={{ color: 'warning.main', mb: 0.5 }} />
               <Typography variant="h5" fontWeight="bold">
                 {user?.totalGoals || 0}
               </Typography>
@@ -365,9 +368,9 @@ export function ProfileTab() {
             </CardContent>
           </Card>
 
-          <Card sx={{ flex: 1, borderRadius: 3 }}>
+          <Card sx={{ flex: 1 }}>
             <CardContent sx={{ textAlign: 'center', py: 2 }}>
-              <Star sx={{ color: gamificationColors.mvp, mb: 0.5 }} />
+              <Star sx={{ color: 'secondary.main', mb: 0.5 }} />
               <Typography variant="h5" fontWeight="bold">
                 {user?.mvpCount || 0}
               </Typography>
@@ -381,16 +384,15 @@ export function ProfileTab() {
 
       {/* Streak Card */}
       {(user?.currentStreak || 0) > 0 && (
-        <Box sx={{ px: 2, mt: 2 }}>
+        <Box sx={{ mt: 2 }}>
           <Card
             sx={{
-              borderRadius: 3,
-              background: `linear-gradient(135deg, ${gamificationColors.streak}20, ${gamificationColors.streak}10)`,
-              border: `1px solid ${gamificationColors.streak}40`,
+              background: `linear-gradient(135deg, ${gColors.streak}20, ${gColors.streak}10)`,
+              border: `1px solid ${gColors.streak}40`,
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-              <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
+              <LocalFireDepartment sx={{ fontSize: 32, color: gColors.streak }} />
               <Box>
                 <Typography variant="subtitle1" fontWeight="bold">
                   {t('profile.streakActive', { count: user?.currentStreak || 0 })}
@@ -405,8 +407,8 @@ export function ProfileTab() {
       )}
 
       {/* Ratings por Posição - como Android */}
-      <Box sx={{ px: 2, mt: 2 }}>
-        <Card sx={{ borderRadius: 3 }}>
+      <Box sx={{ mt: 2 }}>
+        <Card>
           <CardContent>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
               {t('profile.skillsByPosition')}
@@ -452,8 +454,8 @@ export function ProfileTab() {
       </Box>
 
       {/* Menu Items */}
-      <Box sx={{ px: 2, mt: 2 }}>
-        <Card sx={{ borderRadius: 3 }}>
+      <Box sx={{ mt: 2 }}>
+        <Card>
           <List disablePadding aria-label="Menu do perfil">
             {menuItems.map((item, index) => (
               <React.Fragment key={item.label}>
@@ -483,14 +485,14 @@ export function ProfileTab() {
 
       {/* Seção Administração — só ADMIN/FIELD_OWNER */}
       {adminMenuItems.length > 0 && (
-        <Box sx={{ px: 2, mt: 2 }}>
+        <Box sx={{ mt: 2 }}>
           <Typography
             variant="overline"
             sx={{ color: 'text.secondary', pl: 1, fontWeight: 600 }}
           >
             Administração
           </Typography>
-          <Card sx={{ borderRadius: 3, mt: 0.5 }}>
+          <Card sx={{ mt: 0.5 }}>
             <List disablePadding aria-label="Menu de administração">
               {adminMenuItems.map((item, index) => (
                 <React.Fragment key={`admin-${index}`}>
@@ -522,7 +524,7 @@ export function ProfileTab() {
       )}
 
       {/* Action Buttons */}
-      <Box sx={{ px: 2, mt: 2, display: 'flex', gap: 2 }}>
+      <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
         <Button
           variant="outlined"
           startIcon={<Edit />}
@@ -566,6 +568,7 @@ export function ProfileTab() {
           </Button>
         </DialogActions>
       </Dialog>
+      </Container>
     </Box>
   );
 }

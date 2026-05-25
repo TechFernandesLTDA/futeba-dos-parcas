@@ -443,4 +443,17 @@ val viewModelKoinModule = module {
             analytics = get()
         )
     }
+
+    // Growth Features (spec feat-2026-05-24-engajamento-growth-v1)
+    viewModel {
+        com.futebadosparcas.ui.weekly.WeeklyRankingViewModel(
+            firestore = get()
+        )
+    }
+
+    viewModel {
+        com.futebadosparcas.ui.publicgames.PublicGamesViewModel(
+            firestore = get()
+        )
+    }
 }

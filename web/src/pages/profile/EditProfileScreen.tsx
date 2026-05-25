@@ -311,7 +311,7 @@ export const EditProfileScreen: React.FC = () => {
       setSuccess(true);
       setSelectedFile(null); // limpa file pendente após sucesso
       setInitialData(formData); // sync para evitar dirty guard após save
-      setTimeout(() => navigate('/?tab=4'), 1500);
+      navigate('/?tab=4');
     } catch (err) {
       // FIX 2026-05-20: usar somente Alert (setError) — antes duplicava
       // Alert + Toast com a mesma mensagem (mesmo pattern do #1420).
@@ -418,6 +418,7 @@ export const EditProfileScreen: React.FC = () => {
                 helperText={formErrors.name}
                 fullWidth
                 required
+                inputProps={{ maxLength: 100 }}
               />
 
               <TextField
@@ -438,6 +439,7 @@ export const EditProfileScreen: React.FC = () => {
                 helperText={formErrors.phone}
                 fullWidth
                 placeholder={t('profile.phonePlaceholder')}
+                inputProps={{ maxLength: 20 }}
               />
 
               <TextField
@@ -471,7 +473,7 @@ export const EditProfileScreen: React.FC = () => {
                 multiline
                 rows={3}
                 placeholder={t('profile.bioPlaceholder')}
-                inputProps={{ maxLength: 200 }}
+                inputProps={{ maxLength: 500 }}
               />
             </Box>
           </CardContent>

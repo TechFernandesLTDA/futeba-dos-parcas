@@ -62,7 +62,7 @@ export const StaleIndicator: React.FC<StaleIndicatorProps> = ({
             ? `${theme.palette.warning.main}14`
             : 'transparent',
           cursor: onRefresh ? 'pointer' : 'default',
-          transition: 'background 0.2s',
+          transition: (t) => t.transitions.create('background-color', { duration: t.transitions.duration.shorter }),
           '&:hover': onRefresh
             ? { bgcolor: `${theme.palette.warning.main}29` }
             : {},

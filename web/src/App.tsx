@@ -74,6 +74,12 @@ const InvitePlayersScreen = lazy(() => import('./pages/groups/InvitePlayersScree
 const JoinByInviteScreen = lazy(() => import('./pages/group/JoinByInviteScreen').then(m => ({ default: m.JoinByInviteScreen })));
 const DiscoverGroupsScreen = lazy(() => import('./pages/group/DiscoverGroupsScreen').then(m => ({ default: m.DiscoverGroupsScreen })));
 const PlayersScreen = lazy(() => import('./pages/players/PlayersScreen').then(m => ({ default: m.PlayersScreen })));
+const PublicGamesScreen = lazy(() => import('./pages/games/PublicGamesScreen').then(m => ({ default: m.PublicGamesScreen })));
+const InviteFriendScreen = lazy(() => import('./pages/InviteFriendScreen').then(m => ({ default: m.InviteFriendScreen })));
+const InviteRedirectScreen = lazy(() => import('./pages/InviteRedirectScreen').then(m => ({ default: m.InviteRedirectScreen })));
+const DreamTeamScreen = lazy(() => import('./pages/DreamTeamScreen').then(m => ({ default: m.DreamTeamScreen })));
+const GroupChallengesScreen = lazy(() => import('./pages/GroupChallengesScreen').then(m => ({ default: m.GroupChallengesScreen })));
+const WeeklyRankingScreen = lazy(() => import('./pages/ranking/WeeklyRankingScreen').then(m => ({ default: m.WeeklyRankingScreen })));
 
 // Profile
 const ProfileScreen = lazy(() => import('./pages/profile/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
@@ -449,6 +455,16 @@ function AppRoutes() {
         {/* Map */}
         <Route path="/map/games" element={<Suspense fallback={<RouteFallback />}><PublicGamesMapScreen /></Suspense>} />
         <Route path="/map/locations" element={<Suspense fallback={<RouteFallback />}><LocationsMapScreen /></Suspense>} />
+        {/* Public Games Feed */}
+        <Route path="/public-games" element={<Suspense fallback={<RouteFallback />}><PublicGamesScreen /></Suspense>} />
+        {/* Invite Friend */}
+        <Route path="/invite-friend" element={<Suspense fallback={<RouteFallback />}><InviteFriendScreen /></Suspense>} />
+        {/* Dream Team */}
+        <Route path="/dream-team" element={<Suspense fallback={<RouteFallback />}><DreamTeamScreen /></Suspense>} />
+        {/* Group Challenges */}
+        <Route path="/group/:groupId/challenges" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupChallengesScreen /></Suspense></GroupMemberRoute>} />
+        {/* Weekly Ranking */}
+        <Route path="/weekly-ranking" element={<Suspense fallback={<RouteFallback />}><WeeklyRankingScreen /></Suspense>} />
         {/* Settings */}
         <Route path="/settings" element={<Suspense fallback={<RouteFallback />}><SettingsScreen /></Suspense>} />
         <Route path="/settings/theme" element={<Suspense fallback={<RouteFallback />}><ThemeSettingsScreen /></Suspense>} />
@@ -479,6 +495,9 @@ function AppRoutes() {
 
       {/* Issue #514: aceitar convite via link compartilhado /join/:code */}
       <Route path="/join/:code" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><JoinByInviteScreen /></Suspense></ProtectedRoute>} />
+
+      {/* Invite friend deep link /invite/:code */}
+      <Route path="/invite/:code" element={<Suspense fallback={<RouteFallback />}><InviteRedirectScreen /></Suspense>} />
 
       {/* Tactical (full-screen, sem sidebar) */}
       <Route path="/tactical/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><TacticalBoardScreen /></Suspense></ProtectedRoute>} />

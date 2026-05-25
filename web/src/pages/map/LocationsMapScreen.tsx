@@ -194,6 +194,7 @@ export const LocationsMapScreen: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Buscar quadras"
+            inputProps={{ maxLength: 200 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -243,7 +244,7 @@ export const LocationsMapScreen: React.FC = () => {
                 <Card
                   sx={{
                     cursor: 'pointer',
-                    transition: 'transform 0.2s',
+                    transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shorter }),
                     '&:hover': { transform: 'scale(1.01)' },
                   }}
                   onClick={() => navigate(`/location/${location.id}`)}
@@ -295,7 +296,7 @@ export const LocationsMapScreen: React.FC = () => {
 
       <Fab
         color="primary"
-        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' } }}
         onClick={() => navigate('/location/create')}
         aria-label="Adicionar local"
       >

@@ -57,7 +57,7 @@ export const JoinByInviteScreen: React.FC = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const { firebaseUser } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const { joinByInviteCode, loading: joining } = useInvitePlayers();
 
   const [preview, setPreview] = useState<InvitePreview | null>(null);
@@ -138,7 +138,6 @@ export const JoinByInviteScreen: React.FC = () => {
 
     try {
       await joinByInviteCode(code);
-      showSuccess(`Você entrou no grupo ${preview.groupName}!`);
       navigate(`/group/${preview.groupId}`, { replace: true });
     } catch (err) {
       logger.error('Erro ao entrar no grupo:', err);
@@ -234,7 +233,7 @@ export const JoinByInviteScreen: React.FC = () => {
       <Card>
         <CardContent>
           <Stack alignItems="center" spacing={3}>
-            <Avatar sx={{ bgcolor: isGameInvite ? 'success.main' : 'primary.main', width: 72, height: 72 }}>
+            <Avatar sx={{ bgcolor: isGameInvite ? 'success.main' : 'primary.main', width: 64, height: 64 }}>
               {isGameInvite ? <GameIcon sx={{ fontSize: 40 }} aria-hidden="true" /> : <GroupIcon sx={{ fontSize: 40 }} aria-hidden="true" />}
             </Avatar>
 

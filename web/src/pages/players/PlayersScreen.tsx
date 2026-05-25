@@ -12,17 +12,10 @@ import {
   ListItemText,
   Divider,
   useTheme,
-  useMediaQuery,
   alpha,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Button,
-  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -37,6 +30,9 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { ErrorState } from '../../components/common/ErrorState';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { createLogger } from '../../utils/logger';
@@ -58,7 +54,6 @@ export const PlayersScreen: React.FC = () => {
   useDocumentTitle('Jogadores');
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
   const { showError } = useToast();
@@ -244,13 +239,10 @@ export const PlayersScreen: React.FC = () => {
           </Box>
         </Box>
         <Container maxWidth="sm" sx={{ py: 2 }}>
-          <Alert severity="error" action={
-            <Button color="inherit" size="small" onClick={handleRetry}>
-              Tentar novamente
-            </Button>
-          }>
-            {error}
-          </Alert>
+          <ErrorState
+            message={error}
+            onRetry={handleRetry}
+          />
         </Container>
       </Box>
     );
@@ -326,12 +318,11 @@ export const PlayersScreen: React.FC = () => {
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {members.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhum membro
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<PersonIcon sx={{ fontSize: 64 }} />}
+            title="Nenhum membro"
+            description="O grupo ainda não tem membros."
+          />
         ) : (
           <Card>
             <List disablePadding aria-label="Lista de jogadores do grupo">
@@ -360,26 +351,15 @@ export const PlayersScreen: React.FC = () => {
         onClose={() => setSelectedPlayerId(null)}
       />
 
-      <Dialog open={!!confirmRemoveId} onClose={() => setConfirmRemoveId(null)} fullScreen={isMobile} fullWidth maxWidth="sm">
-        <DialogTitle>Remover membro</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Tem certeza que deseja remover este jogador do grupo? Esta ação não pode ser desfeita.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmRemoveId(null)}>Cancelar</Button>
-          <Button
-            onClick={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
-            color="error"
-            variant="contained"
-            disabled={actionLoading === confirmRemoveId}
-            startIcon={actionLoading === confirmRemoveId ? <CircularProgress size={20} /> : undefined}
-          >
-            Remover
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={!!confirmRemoveId}
+        title="Remover membro"
+        message="Tem certeza que deseja remover este jogador do grupo? Esta ação não pode ser desfeita."
+        confirmLabel="Remover"
+        loading={actionLoading === confirmRemoveId}
+        onConfirm={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
+        onCancel={() => setConfirmRemoveId(null)}
+      />
     </Box>
   );
 };
