@@ -506,7 +506,7 @@ export const LiveGameScreen: React.FC = () => {
                       sx={{
                         color: 'primary.main',
                         opacity: leader === 2 ? 0.6 : 1,
-                        transition: 'opacity 0.2s, font-weight 0.2s',
+                        transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
                       }}
                     >
                       {s1}
@@ -525,7 +525,7 @@ export const LiveGameScreen: React.FC = () => {
                       sx={{
                         color: 'secondary.main',
                         opacity: leader === 1 ? 0.6 : 1,
-                        transition: 'opacity 0.2s, font-weight 0.2s',
+                        transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
                       }}
                     >
                       {s2}
@@ -645,7 +645,7 @@ export const LiveGameScreen: React.FC = () => {
                   <Typography variant="subtitle1" fontWeight={600}>
                     Live Stream
                   </Typography>
-                  <Button size="small" onClick={() => setShowStream(!showStream)}>
+                  <Button size="small" onClick={() => setShowStream(!showStream)} sx={{ minHeight: 44 }}>
                     {showStream ? 'Ocultar' : 'Mostrar'}
                   </Button>
                 </Box>
@@ -663,7 +663,7 @@ export const LiveGameScreen: React.FC = () => {
                         width: '100%',
                         height: '100%',
                         border: 'none',
-                        borderRadius: '8px',
+                        borderRadius: `${theme.shape.borderRadius / 1.5}px`,
                       }}
                     />
                   </Box>

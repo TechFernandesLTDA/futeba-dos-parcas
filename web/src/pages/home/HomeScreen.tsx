@@ -45,6 +45,8 @@ import { useNotificationPermission } from '../../hooks/useNotificationPermission
 import { NotificationBell } from '../../components/common/NotificationBell';
 import { AppLogo } from '../../components/common/AppLogo';
 import { WhatsNewPopupHost } from '../../components/whatsnew/WhatsNewPopupHost';
+import { TeamOfTheWeek } from '../../components/game/TeamOfTheWeek';
+import { QuickActions } from '../../components/home/QuickActions';
 
 // Larguras dos navs adaptativos (Material 3 spec)
 const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
@@ -176,7 +178,6 @@ export function HomeScreen() {
                 <Typography
                   variant="caption"
                   sx={{
-                    fontSize: '0.65rem',
                     fontWeight: tabValue === idx ? 600 : 400,
                     color: tabValue === idx ? 'primary.main' : 'text.secondary',
                   }}
@@ -314,6 +315,15 @@ export function HomeScreen() {
           aria-labelledby={`tab-${tabValue}`}
           sx={{ flex: 1 }}
         >
+        {/* TOW: Time of the Week - ranking semanal estilo Cartola */}
+        {tabValue === 0 && (
+          <Box sx={{ px: { xs: 2, sm: 2 }, pb: 0, pt: 1 }}>
+            <Suspense fallback={null}>
+              <TeamOfTheWeek />
+            </Suspense>
+            <QuickActions />
+          </Box>
+        )}
         {/* Suspense local: evita desmontar o nav ao carregar chunk da tab */}
         <Suspense fallback={<TabSkeleton />}>
           {mountedTabs.has(0) && <Box sx={{ display: tabValue === 0 ? 'block' : 'none' }}><HomeTab /></Box>}
@@ -356,7 +366,7 @@ export function HomeScreen() {
               minWidth: 0,
               px: 0.5,
               '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.65rem',
+                fontSize: '0.75rem',
                 '&.Mui-selected': {
                    fontSize: '0.75rem',
                 },

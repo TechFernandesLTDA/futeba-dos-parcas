@@ -38,7 +38,8 @@ export function ForgotPasswordScreen() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
       setError(t('auth.forgotPasswordFillEmail'));
       return;
     }
@@ -47,7 +48,7 @@ export function ForgotPasswordScreen() {
     setError('');
 
     try {
-      await resetPassword(email);
+      await resetPassword(normalizedEmail);
     } catch (err) {
       // FIX #930: Não distinguir auth/user-not-found — previne enumeração de email.
       // auth/invalid-email lança exceção antes do Firebase tentar enviar, então
@@ -121,7 +122,7 @@ export function ForgotPasswordScreen() {
           maxWidth: 420,
           width: '100%',
           borderRadius: 4,
-          boxShadow: isMd ? undefined : `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+          boxShadow: isMd ? undefined : (t) => t.shadows[16],
         }}
       >
         <CardContent sx={{ p: 4 }}>
@@ -181,7 +182,7 @@ export function ForgotPasswordScreen() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                inputProps={{ autoComplete: 'email' }}
+                inputProps={{ autoComplete: 'email', maxLength: 254 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

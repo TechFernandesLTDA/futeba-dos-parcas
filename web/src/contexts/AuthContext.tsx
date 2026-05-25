@@ -10,7 +10,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { doc, getDoc, updateDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
 import { User } from '../types';
@@ -65,7 +65,7 @@ interface AuthContextType {
   // Auth methods
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, inviteCode?: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (profile: { displayName?: string; photoURL?: string }) => Promise<void>;
@@ -285,27 +285,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Sign up with email/password
-  const signUp = useCallback(async (email: string, password: string, name: string) => {
+  const signUp = useCallback(async (email: string, password: string, name: string, inviteCode?: string) => {
     setError(null);
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
 
+      let invitedBy: string | undefined;
+      if (inviteCode) {
+        try {
+          const q = query(collection(db, 'users'), where('invite_code', '==', inviteCode.toUpperCase()));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            invitedBy = snap.docs[0].id;
+          }
+        } catch { /* non-fatal */ }
+      }
+
       // NOTA (#1023): forçar refresh do token ANTES de qualquer escrita no Firestore
-      // para garantir que custom claims setados pelo trigger `onNewUserCreated`
-      // (Cloud Functions) cheguem ao token local antes do primeiro request.
-      // AVISO: o trigger roda de forma assíncrona no servidor — este getIdToken(true)
-      // pode ainda não capturar o claim recém-setado. O withClaimRefreshRetry em
-      // web/src/utils/authRetry.ts é a rede de segurança para esse caso.
       try {
         await result.user.getIdToken(true);
         markClaimRefresh();
       } catch (tokenErr) {
-        // Não-fatal — falha no refresh de token não impede criação da conta.
         logger.warn('Falha ao forçar refresh de token após cadastro:', tokenErr);
       }
 
-      await createUserDocument(result.user, { name });
+      await createUserDocument(result.user, { name, ...(invitedBy ? { invited_by: invitedBy } : {}) });
     } catch (err) {
       setError((err as Error).message || 'Erro ao criar conta');
       throw err;

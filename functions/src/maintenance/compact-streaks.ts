@@ -112,17 +112,35 @@ export const maintainStreaksData = onSchedule(
       // FASE 1: Coleta de streaks ativas
       // FIX #788: era .limit(1000) sem paginação — usuários #1001+ nunca
       // tinham streaks resetadas. Agora: filtrar apenas current_streak > 0
-      // (streaks zeradas não precisam processing) com limite maior.
-      // Docs sem current_streak field são capturados pelo else branch abaixo.
-      const allStreaksSnap = await db()
-        .collection("user_streaks")
-        .where("current_streak", ">", 0)
-        .limit(5000)
-        .get();
+      // (streaks zeradas não precisam processing).
+      // FIX #1842: limit(5000) sem paginação — streaks beyond 5000 nunca
+      // processadas. Substituído por cursor-based pagination que garante
+      // cobertura completa independente do tamanho da coleção.
+      let allDocs: admin.firestore.QueryDocumentSnapshot[] = [];
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
+
+      while (true) {
+        let query: admin.firestore.Query = db()
+          .collection("user_streaks")
+          .where("current_streak", ">", 0)
+          .limit(5000);
+
+        if (lastDoc) {
+          query = query.startAfter(lastDoc);
+        }
+
+        const pageSnap = await query.get();
+        if (pageSnap.empty) break;
+
+        allDocs = allDocs.concat(pageSnap.docs);
+
+        if (pageSnap.size < 5000) break;
+        lastDoc = pageSnap.docs[pageSnap.size - 1];
+      }
       console.log(
         "[STREAK_MAINTENANCE] Total de " +
         "streaks ativas encontradas: " +
-        `${allStreaksSnap.size}`
+        `${allDocs.length}`
       );
 
       // Metricas
@@ -139,7 +157,7 @@ export const maintainStreaksData = onSchedule(
 
       // FASE 1.5: Pre-fetch de todos os
       // usuarios em batch (corrige N+1)
-      const allUserIds = allStreaksSnap.docs
+      const allUserIds = allDocs
         .map((doc) => doc.data().user_id)
         .filter(
           (id): id is string => !!id
@@ -184,7 +202,7 @@ export const maintainStreaksData = onSchedule(
       // FASE 2: Processar cada streak
       for (
         const streakDoc of
-        allStreaksSnap.docs
+        allDocs
       ) {
         const data = streakDoc.data();
         const userId = data.user_id;
@@ -344,7 +362,7 @@ export const maintainStreaksData = onSchedule(
             admin.firestore.FieldValue
               .serverTimestamp(),
           total_streaks:
-            allStreaksSnap.size,
+            allDocs.length,
           active_streaks: activeStreaks,
           expired_streaks: expiredStreaks,
           invalid_documents:

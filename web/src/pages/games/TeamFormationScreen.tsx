@@ -393,7 +393,7 @@ export const TeamFormationScreen: React.FC = () => {
               sx={{
                 bgcolor: alpha(theme.palette.primary.main, 0.05),
                 border: dropTarget === 'A' ? `2px dashed ${theme.palette.primary.main}` : '2px solid transparent',
-                transition: 'border-color 0.2s ease',
+                transition: theme.transitions.create('border-color', { duration: theme.transitions.duration.shorter }),
               }}
             >
               <CardContent>
@@ -430,7 +430,7 @@ export const TeamFormationScreen: React.FC = () => {
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {player.name}
                     </Typography>
-                    <IconButton size="small" color="primary" aria-label={`Mover ${player.name} para Time B`}>
+                    <IconButton color="primary" aria-label={`Mover ${player.name} para Time B`}>
                       <ArrowForward fontSize="small" />
                     </IconButton>
                   </Box>
@@ -452,7 +452,7 @@ export const TeamFormationScreen: React.FC = () => {
               sx={{
                 bgcolor: alpha(theme.palette.secondary.main, 0.05),
                 border: dropTarget === 'B' ? `2px dashed ${theme.palette.secondary.main}` : '2px solid transparent',
-                transition: 'border-color 0.2s ease',
+                transition: theme.transitions.create('border-color', { duration: theme.transitions.duration.shorter }),
               }}
             >
               <CardContent>
@@ -484,7 +484,7 @@ export const TeamFormationScreen: React.FC = () => {
                     }}
                     onClick={() => movePlayer(player, 'B')}
                   >
-                    <IconButton size="small" color="secondary" aria-label={`Mover ${player.name} para Time A`}>
+                    <IconButton color="secondary" aria-label={`Mover ${player.name} para Time A`}>
                       <ArrowBack fontSize="small" />
                     </IconButton>
                     <PlayerAvatar name={player.name} photoUrl={player.photoUrl} size={32} level={player.level} />

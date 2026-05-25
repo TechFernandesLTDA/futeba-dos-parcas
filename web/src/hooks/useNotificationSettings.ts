@@ -117,8 +117,7 @@ export function useNotificationSettings(userId?: string) {
     const muteDate = new Date(Date.now() + hours * 60 * 60 * 1000);
     setSettings((prev) => ({ ...prev, muteUntil: muteDate }));
     saveSettings({ muteUntil: muteDate });
-    showSuccess(`Notificações silenciadas por ${hours}h.`);
-  }, [saveSettings, showSuccess]);
+  }, [saveSettings]);
 
   const clearMute = useCallback(() => {
     setSettings((prev) => ({ ...prev, muteUntil: null }));

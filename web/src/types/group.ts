@@ -82,3 +82,28 @@ export interface CashboxTransaction {
   date: Date;
   createdAt: Date;
 }
+
+export type OfficialGroupCategory = 'REGIAO' | 'DIA_SEMANA' | 'TIPO_CAMPO' | 'FAIXA_ETARIA';
+
+export const OFFICIAL_GROUP_CATEGORY_LABELS: Record<OfficialGroupCategory, string> = {
+  REGIAO: 'Região',
+  DIA_SEMANA: 'Dia da Semana',
+  TIPO_CAMPO: 'Tipo de Campo',
+  FAIXA_ETARIA: 'Faixa Etária',
+};
+
+export interface OfficialGroup {
+  id: string;
+  name: string;
+  description: string;
+  category: OfficialGroupCategory;
+  icon: string;
+  memberCount: number;
+  createdAt: Date;
+}
+
+export interface AmbassadorBadge {
+  level: 'BRONZE' | 'PRATA' | 'OURO' | 'LENDA';
+  inviteCount: number;
+  earnedAt: Date;
+}

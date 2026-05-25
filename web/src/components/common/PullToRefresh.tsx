@@ -63,7 +63,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
-          transition: 'height 0.2s ease',
+          transition: (t) => t.transitions.create('height', { duration: t.transitions.duration.shorter }),
           height: refreshing ? 56 : pullDistance,
           bgcolor: alpha(theme.palette.primary.main, 0.04),
         }}

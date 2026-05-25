@@ -62,8 +62,8 @@ vi.mock('../../../types/gamification', () => ({
   }),
 }));
 
-vi.mock('../../../theme', () => ({
-  gamificationColors: {
+vi.mock('../../../hooks/useGamificationColors', () => ({
+  useGamificationColors: () => ({
     gold: '#FFD700',
     silver: '#C0C0C0',
     bronze: '#CD7F32',
@@ -71,7 +71,7 @@ vi.mock('../../../theme', () => ({
     level: '#00BCD4',
     mvp: '#FFD700',
     streak: '#FF5722',
-  },
+  }),
 }));
 
 vi.mock('../../../utils/logger', () => ({

@@ -2191,3 +2191,23 @@ export * from "./ratings/auto-ratings";
 // - onGameFinishedGroupLeague: atualiza standings da liga do grupo
 //   quando um jogo com group_id é finalizado.
 export {onGameFinishedGroupLeague} from "./group-league";
+
+// ==========================================
+// GROWTH FEATURES (#engajamento-2026-05-24)
+// ==========================================
+// - seedOfficialGroups: callable ADMIN para popular official-groups
+// - onUserCreatedGenerateInviteCode: gera invite_code único
+// - onUserCreatedProcessInvite: incrementa invite_count do inviter
+// - onUserInviteCountChanged: award ambassador badges
+// - processWeeklyRanking: scheduled todo domingo 23:59
+// - onGameFinishedCheckBadges: verifica badges ao finalizar jogo
+export {seedOfficialGroups} from "./growth/seed-official-groups";
+export {
+  onUserCreatedGenerateInviteCode,
+  onUserCreatedProcessInvite,
+  generateMyInviteCode,
+} from "./auth/invite-code";
+export {onUserInviteCountChanged} from "./badges/ambassador-badge";
+export {processWeeklyRanking} from "./growth/weekly-ranking";
+export {onGameFinishedCheckBadges} from "./badges/game-badges";
+export {startNewSeason, archiveSeason} from "./growth/season-cycle";

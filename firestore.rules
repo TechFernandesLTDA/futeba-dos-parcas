@@ -1641,6 +1641,14 @@ service cloud.firestore {
     }
 
     // ============================================
+    // SUB-COLECAO: users/{userId}/dream_team
+    // ============================================
+    match /users/{userId}/dream_team/{docId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create, update, delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ============================================
     // COLECAO: game_events (eventos de jogos ao vivo)
     // ============================================
     // SECURITY: Validacao de tipo de evento e campos obrigatorios
@@ -2022,6 +2030,45 @@ service cloud.firestore {
 
       // Apenas Admin pode criar/modificar badges
       allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: official-groups (grupos oficiais abertos)
+    // ============================================
+    // Grupos oficiais sao publicos para leitura (qualquer auth user).
+    // Write restrito a Cloud Functions (Admin SDK) e Admin users.
+    match /official-groups/{groupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || isFieldOwner();
+      allow update: if isAdmin() || isFieldOwner();
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: weekly-rankings (ranking semanal)
+    // ============================================
+    // Leitura publica para usuarios autenticados.
+    // Write restrito a Cloud Functions.
+    match /weekly-rankings/{weekKey} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ============================================
+    // COLECAO: season-archive (historico de ligas)
+    // ============================================
+    match /season-archive/{groupId}/seasons/{seasonId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ============================================
+    // COLECAO: group-challenges (desafios inter-grupos)
+    // ============================================
+    match /group-challenges/{challengeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
     }
 
     // ============================================

@@ -208,7 +208,7 @@ export const CreateGameScreen: React.FC = () => {
             fieldName: f.name,
             fieldType: (f.type as FieldType) || prev.fieldType,
             gameType: (f.type as string) || prev.gameType,
-            dailyPrice: f.hourlyPrice || prev.dailyPrice,
+            dailyPrice: f.hourlyPrice > 0 ? f.hourlyPrice : prev.dailyPrice,
           }));
         }
     } catch (_err) {
@@ -235,15 +235,23 @@ export const CreateGameScreen: React.FC = () => {
     }
   }, [group, groupId, formData.groupId]);
 
+  const cepAbortRef = useRef<AbortController | null>(null);
+
   const handleCepChange = async (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);
     setCep(digits);
     setCepError(null);
 
     if (digits.length === 8) {
+      cepAbortRef.current?.abort();
+      const controller = new AbortController();
+      cepAbortRef.current = controller;
+
       setCepLoading(true);
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+        const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error('CEP não encontrado');
         const data = await response.json();
         if (data.erro) {
@@ -256,9 +264,11 @@ export const CreateGameScreen: React.FC = () => {
         setFormData((prev) => ({
           ...prev,
           locationAddress: fullAddress,
-          locationName: prev.locationName || data.localidade || '',
+          // Apenas sugere o nome da localidade se o campo estiver vazio
+          locationName: prev.locationName || `Quadra ${data.logradouro?.split(' ')[0] || data.localidade || ''}`,
         }));
-      } catch {
+      } catch (err: unknown) {
+        if ((err as Error)?.name === 'AbortError') return;
         setCepError('Erro ao buscar CEP. Preencha manualmente.');
       } finally {
         setCepLoading(false);
@@ -286,8 +296,21 @@ export const CreateGameScreen: React.FC = () => {
         if (!useCustomLocation && formData.locationId && fields.length > 0 && !formData.fieldId) {
           errors.fieldId = t('games.create.errorSelectField');
         }
-        if (!formData.date) errors.date = t('games.create.errorDateRequired');
-        if (!formData.time) errors.time = t('games.create.errorTimeRequired');
+        if (!formData.date) { errors.date = t('games.create.errorDateRequired'); }
+        else {
+          const today = new Date().toISOString().split('T')[0];
+          if (formData.date < today) errors.date = t('games.create.errorDatePast');
+        }
+        if (!formData.time) { errors.time = t('games.create.errorTimeRequired'); }
+        else if (formData.endTime && formData.endTime <= formData.time) {
+          errors.endTime = t('games.create.errorEndTimeBeforeStart');
+        }
+        if (formData.visibility === 'GROUP_ONLY' && !formData.groupId) {
+          errors.visibility = t('games.create.errorGroupRequiredForVisibility');
+        }
+        if (formData.streamUrl.trim() && !/^https?:\/\/.+\..+/.test(formData.streamUrl.trim())) {
+          errors.streamUrl = t('games.create.errorStreamUrlInvalid');
+        }
         break;
       case 1:
         if (formData.maxPlayers < 2 || formData.maxPlayers > 50) {
@@ -295,6 +318,9 @@ export const CreateGameScreen: React.FC = () => {
         }
         if (formData.maxGoalkeepers < 0 || formData.maxGoalkeepers > 10) {
           errors.maxGoalkeepers = t('games.create.errorMaxGoalkeepers');
+        }
+        if (formData.numberOfTeams < 2 || formData.numberOfTeams > 4) {
+          errors.numberOfTeams = t('games.create.errorNumberOfTeamsRange');
         }
         break;
       case 2:
@@ -401,6 +427,7 @@ export const CreateGameScreen: React.FC = () => {
           const overlapQuery = query(
             gamesRef,
             where('field_id', '==', formData.fieldId),
+            where('date', '==', formData.date),
           );
           const existingGames = await getDocs(overlapQuery);
           const newStart = parseTime(formData.time);
@@ -437,7 +464,7 @@ export const CreateGameScreen: React.FC = () => {
         endTime: formData.endTime || null,
         dateTime,
         fieldType: formData.fieldType,
-        gameType: formData.fieldType,
+        gameType: formData.gameType || formData.fieldType,
         maxPlayers: formData.maxPlayers,
         maxGoalkeepers: formData.maxGoalkeepers,
         numberOfTeams: formData.numberOfTeams,
@@ -471,7 +498,6 @@ export const CreateGameScreen: React.FC = () => {
       }
 
       const gameId = await createGame(gamePayload as Partial<import('../../types/game').Game>);
-      showSuccess(t('games.create.createSuccess'));
       navigate(`/game/${gameId}`);
     } catch (err: unknown) {
       logger.error('Error creating game:', err);
@@ -591,6 +617,7 @@ export const CreateGameScreen: React.FC = () => {
                   fullWidth
                   required
                   placeholder={t('games.create.locationNamePlaceholder')}
+                  inputProps={{ maxLength: 100 }}
                 />
 
                 <TextField
@@ -602,6 +629,7 @@ export const CreateGameScreen: React.FC = () => {
                   fullWidth
                   required
                   placeholder={t('games.create.fullAddressPlaceholder')}
+                  inputProps={{ maxLength: 500 }}
                 />
               </>
             )}
@@ -858,6 +886,7 @@ export const CreateGameScreen: React.FC = () => {
                   helperText={formErrors.pixKey}
                   fullWidth
                   required
+                  inputProps={{ maxLength: 200 }}
                 />
 
                 <TextField
@@ -868,6 +897,7 @@ export const CreateGameScreen: React.FC = () => {
                   helperText={formErrors.pixBeneficiaryName}
                   fullWidth
                   required
+                  inputProps={{ maxLength: 100 }}
                 />
               </Box>
             )}
@@ -885,6 +915,7 @@ export const CreateGameScreen: React.FC = () => {
               multiline
               rows={6}
               placeholder={t('games.create.gameRulesPlaceholder')}
+              inputProps={{ maxLength: 500 }}
             />
 
             <TextField
@@ -894,6 +925,7 @@ export const CreateGameScreen: React.FC = () => {
               fullWidth
               placeholder="https://youtube.com/watch?v=... ou https://twitch.tv/..."
               helperText="Opcional. Cole uma URL do YouTube ou Twitch para transmitir ao vivo."
+              inputProps={{ maxLength: 2048 }}
             />
 
             <Alert severity="info">
@@ -978,12 +1010,13 @@ export const CreateGameScreen: React.FC = () => {
           <DialogContent>
             <TextField
               autoFocus
-              margin="dense"
+              margin="none"
               label="Nome do template"
               fullWidth
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="Ex: Jogo de domingo"
+              inputProps={{ maxLength: 100 }}
             />
           </DialogContent>
           <DialogActions>

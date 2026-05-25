@@ -273,6 +273,7 @@ export const UserManagementScreen: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Buscar usuário"
+            inputProps={{ maxLength: 200 }}
             InputProps={{
               startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
             }}

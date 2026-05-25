@@ -53,6 +53,11 @@ export interface User {
   isSearchable: boolean;
   isVerified: boolean;
 
+  // Invite
+  inviteCode?: string;
+  invitedBy?: string;
+  inviteCount: number;
+
   // Streak
   currentStreak: number;
   bestStreak: number;

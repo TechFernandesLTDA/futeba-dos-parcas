@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,7 @@ import {
   getXpRemaining,
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
-import { gamificationColors } from '../../theme';
+import { useGamificationColors } from '../../hooks/useGamificationColors';
 
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
@@ -83,7 +83,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
         variant="caption"
         sx={{
           color: alpha(theme.palette.common.white, 0.6),
-          fontSize: '0.65rem',
+          fontSize: '0.75rem',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           textAlign: 'center',
@@ -102,11 +102,12 @@ interface PlayerCardProps {
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const theme = useTheme();
+  const gColors = useGamificationColors();
 
   const CARD_GRADIENT = `linear-gradient(160deg, ${theme.palette.success.dark} 0%, ${alpha(theme.palette.success.main, 0.85)} 35%, ${theme.palette.success.main} 60%, ${theme.palette.success.light} 100%)`;
   const CARD_BADGE_BORDER = theme.palette.success.dark;
-  const XP_BAR_GRADIENT = `linear-gradient(90deg, ${theme.palette.primary.main}, ${gamificationColors.gold})`;
-  const OVERALL_BAR_GRADIENT = `linear-gradient(90deg, ${gamificationColors.gold}, ${theme.palette.warning.main})`;
+  const XP_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${theme.palette.primary.main}, ${gColors.gold})`, [theme.palette.primary.main, gColors.gold]);
+  const OVERALL_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${gColors.gold}, ${theme.palette.warning.main})`, [gColors.gold, theme.palette.warning.main]);
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const { showError } = useToast();
@@ -236,7 +237,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         <Box
           ref={cardRef}
           sx={{
-            borderRadius: '16px',
+            borderRadius: `${theme.shape.borderRadius}px`,
             overflow: 'hidden',
             background: CARD_GRADIENT,
             boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.5)}, 0 0 0 1px ${alpha(theme.palette.common.white, 0.1)}`,
@@ -285,16 +286,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             <Box
               sx={{
                 bgcolor: alpha(theme.palette.common.white, 0.1),
-                borderRadius: '6px',
+                borderRadius: `${theme.shape.borderRadius / 2}px`,
                 px: 0.75,
                 py: 0.25,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
               }}
             >
+              <SoccerIcon sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: 14 }} />
               <Typography
                 variant="overline"
                 sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '0.75rem', letterSpacing: '0.1em' }}
               >
-                ⚽ FIGURINHA
+                FIGURINHA
               </Typography>
             </Box>
           </Box>
@@ -345,8 +350,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     sx={{
                       borderRadius: '50%',
                       p: '3px',
-                       background: `linear-gradient(135deg, ${gamificationColors.gold}, ${gamificationColors.gold}, ${gamificationColors.gold})`,
-                      boxShadow: `0 0 20px ${alpha(gamificationColors.gold, 0.4)}`,
+                       background: `linear-gradient(135deg, ${gColors.gold}, ${gColors.gold}, ${gColors.gold})`,
+                      boxShadow: `0 0 20px ${alpha(gColors.gold, 0.4)}`,
                     }}
                   >
                     <Avatar
@@ -433,7 +438,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     <Box
                       sx={{
                         bgcolor: alpha(theme.palette.common.white, 0.15),
-                        borderRadius: '20px',
+                        borderRadius: `${theme.shape.borderRadius * 2}px`,
                         px: 1.25,
                         py: 0.25,
                       }}
@@ -450,7 +455,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     sx={{
                       bgcolor: alpha(levelColor, 0.3),
                       border: `1px solid ${alpha(levelColor, 0.6)}`,
-                      borderRadius: '20px',
+                      borderRadius: `${theme.shape.borderRadius * 2}px`,
                       px: 1.25,
                       py: 0.25,
                     }}
@@ -467,10 +472,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 {/* Barra de XP */}
                 <Box sx={{ width: '100%', mt: 2, px: 0.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.65rem' }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.75rem' }}>
                       {player.experiencePoints.toLocaleString('pt-BR')} XP
                     </Typography>
-                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.65rem' }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.75rem' }}>
                       {player.level < 20
                         ? `${xpRemaining.toLocaleString('pt-BR')} para nível ${player.level + 1}`
                         : 'Nível máximo!'}
@@ -490,7 +495,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         width: `${xpProgress * 100}%`,
                         background: XP_BAR_GRADIENT,
                         borderRadius: 3,
-                        transition: 'width 0.8s ease',
+                        transition: (t) => t.transitions.create('width', { duration: 800 }),
                         boxShadow: `0 0 6px ${alpha(theme.palette.primary.main, 0.6)}`,
                       }}
                     />
@@ -538,7 +543,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     icon={<TrophyIcon fontSize="small" />}
                     label="MVPs"
                     value={player.mvpCount}
-                    color={gamificationColors.gold}
+                    color={gColors.gold}
                   />
                   <StatItem
                     icon={<FireIcon fontSize="small" />}
@@ -561,7 +566,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     px: 2,
                     py: 1,
                     bgcolor: alpha(theme.palette.common.black, 0.25),
-                    borderRadius: '12px',
+                    borderRadius: `${theme.shape.borderRadius}px`,
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1.5,
@@ -570,11 +575,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 >
                   <Typography
                     sx={{
-                      color: gamificationColors.gold,
+                      color: gColors.gold,
                       fontWeight: 900,
                       fontSize: '2rem',
                       lineHeight: 1,
-                      textShadow: `0 0 12px ${alpha(gamificationColors.gold, 0.5)}`,
+                      textShadow: `0 0 12px ${alpha(gColors.gold, 0.5)}`,
                     }}
                   >
                     {player.overallRating}

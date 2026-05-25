@@ -199,6 +199,7 @@ export const HeadToHeadScreen: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoFocus
+                inputProps={{ maxLength: 200 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -211,7 +212,7 @@ export const HeadToHeadScreen: React.FC = () => {
                     </InputAdornment>
                   ) : searchTerm ? (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setSearchTerm('')}>
+                      <IconButton size="small" onClick={() => setSearchTerm('')} aria-label="Limpar busca" sx={{ minWidth: 44, minHeight: 44 }}>
                         <CloseIcon fontSize="small" />
                       </IconButton>
                     </InputAdornment>
@@ -461,10 +462,10 @@ const PlayerSlot: React.FC<{
           {player.name}
         </Typography>
         <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', mt: 0.5 }}>
-          <Button size="small" variant="outlined" onClick={onSelect} sx={{ fontSize: '0.7rem', textTransform: 'none' }}>
+          <Button size="small" variant="outlined" onClick={onSelect} sx={{ fontSize: '0.7rem', textTransform: 'none', minHeight: 44 }}>
             Trocar
           </Button>
-          <IconButton size="small" onClick={onClear}>
+          <IconButton onClick={onClear} aria-label="Remover">
             <CloseIcon sx={{ fontSize: 14 }} />
           </IconButton>
         </Box>
@@ -565,7 +566,7 @@ const MatchTimelineItem: React.FC<{
             size="small"
             sx={{
               height: 18,
-              fontSize: '0.65rem',
+              fontSize: '0.75rem',
               bgcolor: match.sameTeam
                 ? alpha(theme.palette.success.main, 0.1)
                 : alpha(theme.palette.error.main, 0.1),

@@ -65,6 +65,8 @@ import com.futebadosparcas.ui.theme.ThemeSettingsScreen
 import com.futebadosparcas.ui.admin.UserManagementScreen
 import com.futebadosparcas.ui.league.LeagueScreen
 import com.futebadosparcas.ui.profile.LevelJourneyScreen
+import com.futebadosparcas.ui.weekly.WeeklyRankingScreen
+import com.futebadosparcas.ui.publicgames.PublicGamesScreen
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.PreferencesManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -97,6 +99,15 @@ sealed class Screen(
     data object Ranking : Screen("ranking", titleResId = R.string.fragment_statistics_text_1)
     data object Evolution : Screen("evolution", titleResId = R.string.fragment_statistics_text_2)
     data object Badges : Screen("badges", titleResId = R.string.badges_title)
+    data object WeeklyRanking : Screen("weekly_ranking", titleResId = R.string.weekly_ranking)
+
+    // Growth features
+    data object PublicGames : Screen("public_games", titleResId = R.string.public_games)
+    data object InviteFriend : Screen("invite_friend", titleResId = R.string.invite_friend)
+    data object DreamTeam : Screen("dream_team", titleResId = R.string.dream_team)
+    data object GroupChallenges : Screen("group_challenges/{groupId}", titleResId = R.string.group_challenges_title) {
+        fun createRoute(groupId: String) = "group_challenges/$groupId"
+    }
 
     // Game management
     data object GameDetail : Screen("game_detail/{gameId}", titleResId = R.string.game_detail) {
@@ -853,6 +864,21 @@ fun AppNavHost(
             UserManagementScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // ==================== GROWTH FEATURES ====================
+
+        composable(Screen.WeeklyRanking.route) {
+            WeeklyRankingScreen(
+                onPlayerClick = { /* profile detail not yet available on Android */ },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.PublicGames.route) {
+            PublicGamesScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

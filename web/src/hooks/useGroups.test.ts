@@ -33,7 +33,15 @@ vi.mock('firebase/firestore', () => ({
   Timestamp: { now: () => ({ toDate: () => new Date() }), fromDate: (d: Date) => ({ toDate: () => d }) },
 }));
 
-vi.mock('../services/firebase', () => ({ db: {}, auth: { currentUser: null } }));
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+    showWarning: vi.fn(),
+    showInfo: vi.fn(),
+  }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
 
 let mockAuthReturn: any = {
   user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },

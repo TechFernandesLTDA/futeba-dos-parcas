@@ -160,6 +160,7 @@ export const ManageLocationsScreen: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Buscar locais"
+            inputProps={{ maxLength: 200 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -168,7 +169,7 @@ export const ManageLocationsScreen: React.FC = () => {
               ),
               endAdornment: searchQuery ? (
                 <InputAdornment position="end">
-                  <IconButton size="small" onClick={handleClearSearch} aria-label="Limpar busca" edge="end">
+                  <IconButton size="small" onClick={handleClearSearch} aria-label="Limpar busca" edge="end" sx={{ minWidth: 44, minHeight: 44 }}>
                     <CloseIcon fontSize="small" />
                   </IconButton>
                 </InputAdornment>

@@ -36,7 +36,21 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
       `[GROUP_LEAGUE] Processing game ${gameId} for group ${groupId}`
     );
 
+    const matchRef = db()
+      .collection("groups")
+      .doc(groupId)
+      .collection("league_matches")
+      .doc(gameId);
+
     try {
+      const matchSnap = await matchRef.get();
+      if (matchSnap.exists) {
+        console.log(
+          `[GROUP_LEAGUE] Game ${gameId} already processed for group ${groupId}, skipping (idempotency guard)`
+        );
+        return;
+      }
+
       const [activeSeasonSnap, confirmationsSnap, teamsSnap] =
         await Promise.all([
           db()
@@ -97,7 +111,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
       const draw = team1Score === team2Score;
       const team1Won = !draw && team1Score > team2Score;
 
-      const batch = db().batch();
+      let batch = db().batch();
       const standingsRef = db()
         .collection("groups")
         .doc(groupId)
@@ -173,6 +187,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
           console.log(
             `[GROUP_LEAGUE] Committed batch of ${batchOps} ops`
           );
+          batch = db().batch();
           batchOps = 0;
         }
       }
@@ -183,12 +198,6 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
           `[GROUP_LEAGUE] Committed final batch of ${batchOps} ops`
         );
       }
-
-      const matchRef = db()
-        .collection("groups")
-        .doc(groupId)
-        .collection("league_matches")
-        .doc(gameId);
 
       const playerResults = confirmations
         .filter((c) => {

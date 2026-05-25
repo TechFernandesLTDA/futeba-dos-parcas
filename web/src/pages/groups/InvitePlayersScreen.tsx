@@ -209,6 +209,7 @@ export const InvitePlayersScreen: React.FC = () => {
           }}
           aria-label="Buscar jogador por nome"
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          inputProps={{ maxLength: 200 }}
           InputProps={{
             endAdornment: (
               <IconButton onClick={handleSearch} disabled={searching} aria-label="Buscar">

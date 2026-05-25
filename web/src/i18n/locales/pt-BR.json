@@ -450,7 +450,15 @@
       "filterByStatus": "Filtrar por status do jogo",
       "clearFilters": "Limpar filtros"
     },
-    "loadError": "Erro ao carregar jogos"
+    "loadError": "Erro ao carregar jogos",
+    "public": {
+      "title": "Peladas Abertas",
+      "info": "Peladas abertas ao público perto de você. Entre, jogue e conheça novos craques!",
+      "empty": "Nenhuma pelada pública no momento",
+      "emptyDesc": "Volte mais tarde ou crie sua própria pelada!",
+      "join": "Quero Jogar",
+      "full": "Lotado"
+    }
   },
   "ranking": {
     "title": "Ranking",
@@ -474,7 +482,12 @@
     "standingsAria": "Classificação do ranking",
     "you": "Você",
     "noPlayers": "Nenhum jogador no ranking",
-    "joinGamesAction": "Ver jogos disponíveis"
+    "joinGamesAction": "Ver jogos disponíveis",
+    "weekly": {
+      "title": "Ranking Semanal",
+      "empty": "Nenhuma pelada essa semana ainda",
+      "emptyDesc": "O ranking aparece aqui quando a semana tiver jogos finalizados."
+    }
   },
   "league": {
     "title": "Liga",
@@ -605,7 +618,12 @@
     "publicGroupLabel": "Grupo público",
     "privateGroupLabel": "Grupo privado",
     "createNewGroup": "Criar novo grupo",
-    "retry": "Tentar novamente"
+    "retry": "Tentar novamente",
+    "hallOfFame": "Hall da Fama",
+    "hallOfFameEmpty": "Nenhuma temporada concluída ainda.",
+    "hallOfFameEmptyDesc": "O Hall da Fama mostrará os MVPs de cada mês.",
+    "hallOfFameMvpLabel": "MVP:",
+    "hallOfFamePlayers": "{{count}} jogadores"
   },
   "schedule": {
     "title": "Horários",
@@ -750,5 +768,15 @@
     "typeMajor": "Atualização principal",
     "typeMinor": "Novidades",
     "typePatch": "Correções"
+  },
+  "home": {
+    "quickActions": "Ações Rápidas",
+    "publicGames": "Peladas Abertas",
+    "inviteFriends": "Convidar Amigos",
+    "dreamTeam": "Time dos Sonhos",
+    "weeklyRanking": "Ranking Semanal",
+    "teamOfTheWeek": "Time da Semana",
+    "round": "Rodada {{week}}",
+    "viewFullRanking": "Ver ranking completo"
   }
 }

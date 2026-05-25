@@ -279,7 +279,7 @@ export const TacticalBoardScreen: React.FC = () => {
                 top: `${player.y}%`,
                 transform: 'translate(-50%, -50%)',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: (t) => t.transitions.create('all', { duration: t.transitions.duration.shorter }),
                 borderRadius: '50%',
                 display: 'flex',
                 flexDirection: 'column',

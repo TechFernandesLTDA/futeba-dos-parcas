@@ -105,7 +105,9 @@ export function RegisterScreen() {
     setError('');
 
     try {
-      await signUp(normalizedEmail, password, name.trim());
+      const inviteCode = searchParams.get('invite') || sessionStorage.getItem('inviteCode') || undefined;
+      if (inviteCode) sessionStorage.removeItem('inviteCode');
+      await signUp(normalizedEmail, password, name.trim(), inviteCode);
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, t('auth.registerFailed')));
@@ -183,7 +185,7 @@ export function RegisterScreen() {
           maxWidth: 420,
           width: '100%',
           borderRadius: 4,
-          boxShadow: isMd ? undefined : `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+          boxShadow: isMd ? undefined : (t) => t.shadows[16],
         }}
       >
         <CardContent sx={{ p: 4 }}>
@@ -230,7 +232,7 @@ export function RegisterScreen() {
               error={!!fieldErrors.name}
               helperText={fieldErrors.name}
               disabled={loading}
-              inputProps={{ autoComplete: 'name' }}
+              inputProps={{ autoComplete: 'name', maxLength: 100 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -253,7 +255,7 @@ export function RegisterScreen() {
               error={!!fieldErrors.email}
               helperText={fieldErrors.email}
               disabled={loading}
-              inputProps={{ autoComplete: 'email' }}
+              inputProps={{ autoComplete: 'email', maxLength: 254 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -276,7 +278,7 @@ export function RegisterScreen() {
               error={!!fieldErrors.password}
               helperText={fieldErrors.password}
               disabled={loading}
-              inputProps={{ autoComplete: 'new-password' }}
+              inputProps={{ autoComplete: 'new-password', maxLength: 128 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -312,7 +314,7 @@ export function RegisterScreen() {
               error={!!fieldErrors.confirmPassword}
               helperText={fieldErrors.confirmPassword}
               disabled={loading}
-              inputProps={{ autoComplete: 'new-password' }}
+              inputProps={{ autoComplete: 'new-password', maxLength: 128 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

@@ -211,7 +211,7 @@ const BadgeItem = React.memo(function BadgeItem({
           opacity: isUnlocked ? 1 : 0.5,
           ...rarityStyle,
           cursor: 'pointer',
-          transition: 'transform 0.2s',
+          transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shorter }),
           '&:hover': { transform: 'scale(1.04)' },
         }}
       >
@@ -243,8 +243,8 @@ const BadgeItem = React.memo(function BadgeItem({
               mt: 0.5,
               bgcolor: alpha(rarityColors[badge.rarity] ?? rarityColors.COMUM, 0.1),
               color: rarityColors[badge.rarity] ?? rarityColors.COMUM,
-              fontSize: '0.65rem',
-              height: 18,
+              fontSize: '0.75rem',
+              height: 20,
             }}
           />
           {isUnlocked && (

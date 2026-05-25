@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining, XP_VALUES } from '../../../types/gamification';
+import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../../../types/gamification';
 import { getLevelColor } from '../../../types/user';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
@@ -9,6 +9,7 @@ import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsCh
 import type { ChecklistStep } from '../../../components/onboarding/FirstStepsChecklist';
 import {
   Box,
+  Container,
   Typography,
   Card,
   CardContent,
@@ -37,12 +38,7 @@ import {
   CalendarMonth,
   LocationOn,
   People,
-  Notifications,
-  TrendingUp,
   EmojiEvents,
-  LocalFireDepartment,
-  Star,
-  GroupAdd,
   CheckCircle,
   LiveTv,
   Add as AddIcon,
@@ -50,7 +46,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
-import { gamificationColors } from '../../../theme';
+import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { useConfirmPresence } from '../../../hooks/useGames';
 import { useNextGame } from '../../../hooks/useNextGame';
 import { useWaitlist } from '../../../hooks/useWaitlist';
@@ -62,23 +58,11 @@ import { createLogger } from '../../../utils/logger';
 import { TeamBadge } from '../../../components/team/TeamBadge';
 import PlayerCard from '../../../components/player/PlayerCard';
 import { LeaguePlayer } from '../../../hooks/useLeague';
+import { StreakWidget } from './StreakWidget';
+import { RecentActivityFeed } from './RecentActivityFeed';
+import type { Activity } from './RecentActivityFeed';
 
 const logger = createLogger('HomeTab');
-
-interface Activity {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  time: string;
-  createdAt?: Date;
-  actorName?: string;
-  actorPhoto?: string;
-  referenceType?: string;
-  referenceId?: string;
-  groupId?: string;
-  senderId?: string;
-}
 
 // ─── NextGameWidget ──────────────────────────────────────────────────────────
 
@@ -87,7 +71,7 @@ function NextGameWidget() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const queryClient = useQueryClient();
 
   const { nextGame, isLoading: gamesLoading } = useNextGame();
@@ -132,14 +116,13 @@ function NextGameWidget() {
         await confirmPresence(nextGame.id);
         queryClient.invalidateQueries({ queryKey: ['confirmation', nextGame.id, user?.id] });
         queryClient.invalidateQueries({ queryKey: ['games'] });
-        showSuccess(t('games.presenceConfirmed'));
       } catch (err) {
         setOptimisticConfirmed(false);
         showError(t('games.presenceConfirmError'));
         logger.error('Confirm presence failed:', err);
       }
     },
-    [nextGame, confirmPresence, queryClient, user?.id, showSuccess, showError, t],
+    [nextGame, confirmPresence, queryClient, user?.id, showError, t],
   );
 
   const handleCancel = useCallback(
@@ -151,13 +134,12 @@ function NextGameWidget() {
         await cancelPresence(nextGame.id);
         queryClient.invalidateQueries({ queryKey: ['confirmation', nextGame.id, user?.id] });
         queryClient.invalidateQueries({ queryKey: ['games'] });
-        showSuccess(t('games.presenceCanceled'));
       } catch (err) {
         showError(t('games.presenceCancelError'));
         logger.error('Cancel presence failed:', err);
       }
     },
-    [nextGame, cancelPresence, queryClient, user?.id, showSuccess, showError, t],
+    [nextGame, cancelPresence, queryClient, user?.id, showError, t],
   );
 
   const handleJoinWaitlist = useCallback(
@@ -190,7 +172,7 @@ function NextGameWidget() {
   // ── Loading ──
   if (gamesLoading || confCheckLoading) {
     return (
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
+      <Card sx={{ mb: 3 }}>
         <CardContent>
           <Skeleton variant="text" width="45%" height={28} />
           <Skeleton variant="text" width="65%" />
@@ -207,7 +189,6 @@ function NextGameWidget() {
       <Card
         sx={{
           mb: 3,
-          borderRadius: 3,
           bgcolor: alpha(theme.palette.primary.main, 0.04),
           border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
         }}
@@ -247,7 +228,6 @@ function NextGameWidget() {
       <Card
         sx={{
           mb: 3,
-          borderRadius: 3,
           bgcolor: alpha(theme.palette.error.main, 0.06),
           border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
         }}
@@ -281,7 +261,6 @@ function NextGameWidget() {
     <Card
       sx={{
         mb: 3,
-        borderRadius: 3,
         border: isConfirmed
           ? `1px solid ${alpha(theme.palette.success.main, 0.3)}`
           : `1px solid ${alpha(statusColors[nextGame.status] || theme.palette.primary.main, 0.12)}`,
@@ -440,6 +419,7 @@ function MiniRankingWidget() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { groups } = useGroups();
+  const gColors = useGamificationColors();
 
   const primaryGroup = groups?.[0];
 
@@ -518,7 +498,7 @@ function MiniRankingWidget() {
 
   if (!primaryGroup) {
     return (
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
+      <Card sx={{ mb: 3 }}>
         <CardContent sx={{ py: 2 }}>
           <Box sx={{ textAlign: 'center' }}>
             <EmojiEvents sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
@@ -541,11 +521,11 @@ function MiniRankingWidget() {
 
   return (
     <>
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
+      <Card sx={{ mb: 3 }}>
         <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <EmojiEvents sx={{ fontSize: 18, color: gamificationColors.gold }} />
+              <EmojiEvents sx={{ fontSize: 18, color: gColors.gold }} />
               {t('ranking.title')}
             </Typography>
             <Link
@@ -592,7 +572,7 @@ function MiniRankingWidget() {
                           <EmojiEvents
                             sx={{
                               fontSize: 12,
-                              color: gamificationColors.gold,
+                              color: gColors.gold,
                               position: 'absolute',
                               top: -6,
                               right: -6,
@@ -634,6 +614,7 @@ export function HomeTab() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
+  const gColors = useGamificationColors();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
 
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -765,71 +746,21 @@ export function HomeTab() {
     };
   }, [user?.id]);
 
-  const getActivityIcon = (type: string) => {
-    const upper = type.toUpperCase();
-    if (upper.includes('GOAL') || upper === 'GOAL_SCORED') {
-      return <SportsSoccer color="success" />;
-    }
-    if (upper.includes('MVP') || upper === 'MVP_WON' || upper === 'MVP_RECEIVED' || upper === 'MVP_VOTE') {
-      return <EmojiEvents sx={{ color: gamificationColors.gold }} />;
-    }
-    if (upper === 'LEVEL_UP') {
-      return <TrendingUp sx={{ color: levelColor }} />;
-    }
-    if (upper === 'BADGE_UNLOCKED' || upper === 'ACHIEVEMENT') {
-      return <Star sx={{ color: gamificationColors.gold }} />;
-    }
-    if (upper === 'GROUP_INVITE' || upper === 'GROUP_INVITE_ACCEPTED' || upper === 'MEMBER_JOINED' || upper === 'GROUP_JOINED' || upper === 'JOIN_GROUP') {
-      return <GroupAdd color="primary" />;
-    }
-    if (upper === 'GAME_SCHEDULED' || upper === 'GAME_CREATED' || upper === 'GAME_CONFIRMED' || upper === 'GAME_UPDATED' || upper === 'GAME_REMINDER' || upper === 'GAME_WIN' || upper.includes('GAME')) {
-      return <CalendarMonth />;
-    }
-    return <Notifications />;
-  };
-
-  const getActivityColor = (type: string) => {
-    const upper = type.toUpperCase();
-    if (upper.includes('MVP') || upper === 'MVP_WON' || upper === 'MVP_RECEIVED') return gamificationColors.gold;
-    if (upper === 'LEVEL_UP') return levelColor;
-    if (upper === 'BADGE_UNLOCKED' || upper === 'ACHIEVEMENT') return gamificationColors.gold;
-    return undefined;
-  };
-
-  const getActivityNavTarget = (activity: Activity): string | null => {
-    if (activity.referenceType === 'game' && activity.referenceId) return `/game/${activity.referenceId}`;
-    if (activity.referenceType === 'group' || (activity.groupId && !activity.referenceId)) {
-      return `/group/${activity.referenceId || activity.groupId}`;
-    }
-    if (activity.referenceType === 'badge') return '/badges';
-    if (activity.referenceType === 'level') return '/level-journey';
-    if (activity.senderId && !activity.referenceId && !activity.groupId) return `/profile/${activity.senderId}`;
-    return null;
-  };
-
-  // Streak XP bonus alinhado com XP_VALUES (shared/xp-constants.json) — fonte única
-  const streak = user?.currentStreak || 0;
-  const streakBonus =
-    streak >= 10 ? XP_VALUES.STREAK_10
-    : streak >= 7 ? XP_VALUES.STREAK_7
-    : streak >= 5 ? XP_VALUES.STREAK_5
-    : streak >= 3 ? XP_VALUES.STREAK_3
-    : 0;
+  // ====== Main Render ======
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
         sx={{
           mb: 3,
           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
           color: 'primary.contrastText',
-          borderRadius: 3,
           overflow: 'visible',
           position: 'relative',
         }}
       >
-        <CardActionArea onClick={() => navigate('/level-journey')} aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })} sx={{ borderRadius: 3 }}>
+        <CardActionArea onClick={() => navigate('/level-journey')} aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })}>
           <CardContent sx={{ p: 2.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
               <Box sx={{ position: 'relative' }}>
@@ -877,7 +808,7 @@ export function HomeTab() {
                     boxShadow: `0 0 8px ${levelColor}80`,
                   }}
                 >
-                  <Typography variant="caption" fontWeight="bold" sx={{ color: 'primary.contrastText', fontSize: '0.65rem' }}>
+                  <Typography variant="caption" fontWeight="bold" sx={{ color: 'primary.contrastText' }}>
                     {currentLevel}
                   </Typography>
                 </Box>
@@ -929,7 +860,7 @@ export function HomeTab() {
               {[
                 { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/?tab=1' },
                 { value: user?.totalGoals || 0, label: t('profile.goals'), icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
-                { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gamificationColors.gold, 0.25), navigateTo: '/statistics' },
+                { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gColors.gold, 0.25), navigateTo: '/statistics' },
               ].map((stat) => (
                 <ButtonBase
                   key={stat.label}
@@ -978,178 +909,14 @@ export function HomeTab() {
             {/* Próximo Jogo — abaixo das informações do jogador */}
             <NextGameWidget />
 
-            {/* StreakWidget */}
-            {(user?.currentStreak || 0) > 0 ? (
-              <Card
-                sx={{
-                  mb: 2,
-                  bgcolor: alpha(gamificationColors.streak, 0.08),
-                  border: `1px solid ${alpha(gamificationColors.streak, 0.3)}`,
-                  borderRadius: 3,
-                }}
-              >
-                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      {t('profile.streakGamesInARow', { count: user?.currentStreak || 0 })}
-                    </Typography>
-                    {(user?.currentStreak || 0) >= (user?.bestStreak || 0) ? (
-                      <Typography variant="caption" sx={{ color: gamificationColors.gold, fontWeight: 600 }}>
-                        {t('profile.streakBestRecord', { record: user?.bestStreak || 0 })}
-                      </Typography>
-                    ) : (
-                      <Typography variant="caption" color="text.secondary">
-                        {t('profile.streakRecord', { record: user?.bestStreak || 0 })}
-                      </Typography>
-                    )}
-                  </Box>
-                  {streakBonus > 0 && (
-                    <Chip
-                      label={`+${streakBonus} XP`}
-                      size="small"
-                      sx={{ bgcolor: alpha(gamificationColors.streak, 0.15), color: gamificationColors.streak, fontWeight: 600 }}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card
-                sx={{
-                  mb: 2,
-                  bgcolor: alpha(theme.palette.action.hover, 0.3),
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: 3,
-                }}
-              >
-                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <LocalFireDepartment sx={{ fontSize: 32, color: 'text.disabled' }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      {t('profile.startStreak')}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('profile.startStreakDesc')}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
+            <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={2} />
 
             {/* MiniRankingWidget */}
             <MiniRankingWidget />
           </Grid>
 
           <Grid item xs={12} md={5}>
-            {/* Atividade Recente */}
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Notifications fontSize="small" color="primary" />
-              {t('profile.recentActivity')}
-            </Typography>
-            <Card sx={{ borderRadius: 3 }}>
-              {activitiesLoading ? (
-                <List disablePadding>
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <ListItem key={i} divider={i < 2}>
-                      <ListItemAvatar>
-                        <Skeleton variant="circular" width={40} height={40} />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={<Skeleton variant="text" width="60%" />}
-                        secondary={<Skeleton variant="text" width="30%" />}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              ) : activities.length === 0 ? (
-                <CardContent>
-                  <Box sx={{ textAlign: 'center', py: 2 }}>
-                    <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      {t('profile.noRecentActivity')}
-                    </Typography>
-                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
-                      {t('profile.noRecentActivityDesc')}
-                    </Typography>
-                    <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => navigate('/?tab=2')}
-                      >
-                        {t('common.viewGroups')}
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => navigate('/?tab=1')}
-                      >
-                        {t('games.createGame')}
-                      </Button>
-                    </Box>
-                  </Box>
-                </CardContent>
-              ) : (
-                <List disablePadding>
-                  {activities.map((activity, index) => {
-                    const navTarget = getActivityNavTarget(activity);
-                    const avatarColor = getActivityColor(activity.type);
-                    return (
-                      <ListItem
-                        key={activity.id}
-                        disablePadding
-                        divider={index < activities.length - 1}
-                      >
-                        <ListItemButton
-                          onClick={() => navTarget && navigate(navTarget)}
-                          disabled={!navTarget}
-                          sx={{ py: 1.5 }}
-                        >
-                          <ListItemAvatar>
-                            {activity.actorPhoto ? (
-                              <Avatar src={activity.actorPhoto} alt={activity.actorName || ''} />
-                            ) : (
-                              <Avatar
-                                sx={{
-                                  bgcolor: avatarColor
-                                    ? alpha(avatarColor, 0.15)
-                                    : 'action.hover',
-                                }}
-                                aria-hidden="true"
-                              >
-                                {getActivityIcon(activity.type)}
-                              </Avatar>
-                            )}
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={activity.title || activity.actorName || t('profile.defaultActivityTitle')}
-                            primaryTypographyProps={{
-                              fontWeight: 500,
-                              noWrap: true,
-                            }}
-                            secondary={
-                              activity.message || activity.actorName
-                                ? `${activity.actorName ? `${activity.actorName}  ·  ` : ''}${activity.message}`
-                                : ''
-                            }
-                            secondaryTypographyProps={{
-                              noWrap: true,
-                            }}
-                          />
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ ml: 1, alignSelf: 'flex-start', mt: 0.5, whiteSpace: 'nowrap' }}
-                          >
-                            {activity.time}
-                          </Typography>
-                        </ListItemButton>
-                      </ListItem>
-                    );
-                  })}
-                </List>
-              )}
-            </Card>
+            <RecentActivityFeed activities={activities} loading={activitiesLoading} />
           </Grid>
         </Grid>
       ) : (
@@ -1167,181 +934,16 @@ export function HomeTab() {
           {/* Próximo Jogo — abaixo das informações do jogador */}
           <NextGameWidget />
 
-          {/* StreakWidget */}
-          {(user?.currentStreak || 0) > 0 ? (
-            <Card
-              sx={{
-                mb: 3,
-                bgcolor: alpha(gamificationColors.streak, 0.08),
-                border: `1px solid ${alpha(gamificationColors.streak, 0.3)}`,
-                borderRadius: 3,
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <LocalFireDepartment sx={{ fontSize: 32, color: gamificationColors.streak }} />
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {t('profile.streakGamesInARow', { count: user?.currentStreak || 0 })}
-                  </Typography>
-                  {(user?.currentStreak || 0) >= (user?.bestStreak || 0) ? (
-                    <Typography variant="caption" sx={{ color: gamificationColors.gold, fontWeight: 600 }}>
-                      {t('profile.streakBestRecord', { record: user?.bestStreak || 0 })}
-                    </Typography>
-                  ) : (
-                    <Typography variant="caption" color="text.secondary">
-                      {t('profile.streakRecord', { record: user?.bestStreak || 0 })}
-                    </Typography>
-                  )}
-                </Box>
-                {streakBonus > 0 && (
-                  <Chip
-                    label={`+${streakBonus} XP`}
-                    size="small"
-                    sx={{ bgcolor: alpha(gamificationColors.streak, 0.15), color: gamificationColors.streak, fontWeight: 600 }}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card
-              sx={{
-                mb: 3,
-                bgcolor: alpha(theme.palette.action.hover, 0.3),
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 3,
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <LocalFireDepartment sx={{ fontSize: 32, color: 'text.disabled' }} />
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {t('profile.startStreak')}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('profile.startStreakDesc')}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          )}
+          <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} />
 
-          {/* MiniRankingWidget */}
           <MiniRankingWidget />
 
-          {/* Atividade Recente — full width já que NextGameWidget substitui o Próximo Jogo */}
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Notifications fontSize="small" color="primary" />
-            {t('profile.recentActivity')}
-          </Typography>
-          <Card sx={{ borderRadius: 3 }}>
-            {activitiesLoading ? (
-              <List disablePadding>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <ListItem key={i} divider={i < 2}>
-                    <ListItemAvatar>
-                      <Skeleton variant="circular" width={40} height={40} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={<Skeleton variant="text" width="60%" />}
-                      secondary={<Skeleton variant="text" width="30%" />}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            ) : activities.length === 0 ? (
-              <CardContent>
-                <Box sx={{ textAlign: 'center', py: 2 }}>
-                  <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    {t('profile.noRecentActivity')}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
-                    {t('profile.noRecentActivityDesc')}
-                  </Typography>
-                  <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => navigate('/?tab=2')}
-                    >
-                      {t('common.viewGroups')}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => navigate('/?tab=1')}
-                    >
-                      {t('games.createGame')}
-                    </Button>
-                  </Box>
-                </Box>
-              </CardContent>
-            ) : (
-              <List disablePadding>
-                {activities.map((activity, index) => {
-                  const navTarget = getActivityNavTarget(activity);
-                  const avatarColor = getActivityColor(activity.type);
-                  return (
-                    <ListItem
-                      key={activity.id}
-                      disablePadding
-                      divider={index < activities.length - 1}
-                    >
-                      <ListItemButton
-                        onClick={() => navTarget && navigate(navTarget)}
-                        disabled={!navTarget}
-                        sx={{ py: 1.5 }}
-                      >
-                        <ListItemAvatar>
-                          {activity.actorPhoto ? (
-                            <Avatar src={activity.actorPhoto} alt={activity.actorName || ''} />
-                          ) : (
-                            <Avatar
-                              sx={{
-                                bgcolor: avatarColor
-                                  ? alpha(avatarColor, 0.15)
-                                  : 'action.hover',
-                              }}
-                              aria-hidden="true"
-                            >
-                              {getActivityIcon(activity.type)}
-                            </Avatar>
-                          )}
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={activity.title || activity.actorName || t('profile.defaultActivityTitle')}
-                          primaryTypographyProps={{
-                            fontWeight: 500,
-                            noWrap: true,
-                          }}
-                          secondary={
-                            activity.message || activity.actorName
-                              ? `${activity.actorName ? `${activity.actorName}  ·  ` : ''}${activity.message}`
-                              : ''
-                          }
-                          secondaryTypographyProps={{
-                            noWrap: true,
-                          }}
-                        />
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ ml: 1, alignSelf: 'flex-start', mt: 0.5, whiteSpace: 'nowrap' }}
-                        >
-                          {activity.time}
-                        </Typography>
-                      </ListItemButton>
-                    </ListItem>
-                  );
-                })}
-              </List>
-            )}
-          </Card>
+          <RecentActivityFeed activities={activities} loading={activitiesLoading} />
         </>
       )}
       {isPlayerCardOpen && (
         <PlayerCard userId={user?.id || null} onClose={() => setIsPlayerCardOpen(false)} />
       )}
-    </Box>
+    </Container>
   );
 }

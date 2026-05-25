@@ -310,6 +310,7 @@ export const GroupEditScreen: React.FC = () => {
                 required
                 placeholder="Ex: Pelada dos Amigos, Futebol do Sábado"
                 aria-label="Nome do grupo"
+                inputProps={{ maxLength: 100 }}
               />
 
               <TextField
@@ -323,6 +324,7 @@ export const GroupEditScreen: React.FC = () => {
                 rows={4}
                 placeholder="Descreva seu grupo, horários habituais, nível dos jogadores..."
                 aria-label="Descrição do grupo"
+                inputProps={{ maxLength: 500 }}
               />
 
               <FormControlLabel

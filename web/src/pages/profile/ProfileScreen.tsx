@@ -15,8 +15,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Skeleton,
-  Alert,
   Button,
   useTheme,
   useMediaQuery,
@@ -36,7 +34,6 @@ import {
   Settings as SettingsIcon,
   BarChart as StatsIcon,
   WorkspacePremium as BadgeIcon,
-  Refresh as RefreshIcon,
   Security as ShieldIcon,
   DirectionsRun as RunnerIcon,
   SportsHandball as MidIcon,
@@ -46,6 +43,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerDetail } from '../../hooks/usePlayers';
 import { PlayerAvatar } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
+import { ErrorState } from '../../components/common/ErrorState';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { LoadingScreen } from '../../components/common/LoadingScreen';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
@@ -70,104 +71,38 @@ export const ProfileScreen: React.FC = () => {
   const { player: profile, loading, error } = usePlayerDetail(targetUserId);
 
   if (loading) {
-    return (
-      <Box sx={{ p: 2 }}>
-        {/* Header skeleton */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, p: 1 }}>
-          <Skeleton variant="circular" width={40} height={40} />
-          <Skeleton variant="text" width={100} height={32} />
-        </Box>
-
-        {/* Profile card skeleton */}
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Skeleton variant="circular" width={80} height={80} />
-              <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="60%" height={36} />
-                <Skeleton variant="text" width="30%" height={24} />
-              </Box>
-            </Box>
-            <Grid container spacing={2}>
-              {[0, 1, 2].map((i) => (
-                <Grid item key={i} xs={4}>
-                  <Paper variant="outlined" sx={{ p: 1.5 }}>
-                    <Skeleton variant="text" width="50%" height={32} sx={{ mx: 'auto' }} />
-                    <Skeleton variant="text" width="60%" height={16} sx={{ mx: 'auto' }} />
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* Stats card skeleton */}
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Skeleton variant="text" width="40%" height={28} sx={{ mb: 1.5 }} />
-            <Grid container spacing={2}>
-              {[0, 1, 2, 3].map((i) => (
-                <Grid item key={i} xs={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Skeleton variant="circular" width={24} height={24} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" width="50%" height={20} />
-                      <Skeleton variant="text" width="30%" height={28} />
-                    </Box>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* Options list skeleton */}
-        <Card>
-          <Box sx={{ p: 2 }}>
-            {[0, 1, 2, 3].map((i) => (
-              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5 }}>
-                <Skeleton variant="circular" width={24} height={24} />
-                <Skeleton variant="text" width={`${60 - i * 10}%`} height={24} />
-              </Box>
-            ))}
-          </Box>
-        </Card>
-      </Box>
-    );
+    return <LoadingScreen variant="cards" />;
   }
 
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => queryClient.invalidateQueries()}>
-              {t('common.retry')}
-            </Button>
-          }
-        >
-          {t('profile.loadError', { error })}
-        </Alert>
-        <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
-          {t('common.back')}
-        </Button>
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <ErrorState
+          message={t('profile.loadError', { error })}
+          onRetry={() => queryClient.invalidateQueries()}
+        />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Button startIcon={<BackIcon />} onClick={navigateBack}>
+            {t('common.back')}
+          </Button>
+        </Box>
       </Container>
     );
   }
 
   if (!profile) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            {t('profile.notFound')}
-          </Typography>
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <EmptyState
+          icon={<PersonIcon sx={{ fontSize: 64 }} />}
+          title={t('profile.notFound')}
+          description={t('profile.notFoundDesc', 'O perfil que você procura não está disponível.')}
+        />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Button startIcon={<BackIcon />} onClick={navigateBack}>
+            {t('common.back')}
+          </Button>
         </Box>
-        <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
-          {t('common.back')}
-        </Button>
       </Container>
     );
   }
@@ -176,29 +111,18 @@ export const ProfileScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
-            {t('profile.title')}
-          </Typography>
-          {isOwnProfile && (
+      <ScreenHeader
+        title={t('profile.title')}
+        onBack={navigateBack}
+        backAriaLabel={t('common.back')}
+        actions={
+          isOwnProfile ? (
             <IconButton onClick={() => navigate('/profile/edit')} aria-label={t('profile.editProfile')}>
               <EditIcon />
             </IconButton>
-            )}
-        </Box>
-      </Box>
+          ) : undefined
+        }
+      />
 
       <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         <Grid container spacing={2}>

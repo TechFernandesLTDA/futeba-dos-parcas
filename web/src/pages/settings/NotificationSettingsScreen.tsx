@@ -195,7 +195,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                     {t('settings.notifications.muteRemaining', { hours: muteRemaining })}
                   </Typography>
                 </Box>
-                <Button size="small" variant="outlined" color="warning" onClick={clearMute}>
+                <Button size="small" variant="outlined" color="warning" onClick={clearMute} sx={{ minHeight: 44 }}>
                   {t('settings.notifications.muteReactivate')}
                 </Button>
               </Box>

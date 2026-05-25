@@ -40,7 +40,7 @@ export const CreateGroupScreen: React.FC = () => {
   const { user } = useAuth();
 
   const { createGroup, loading, error } = useCreateGroup();
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -110,7 +110,6 @@ export const CreateGroupScreen: React.FC = () => {
 
     try {
       const groupId = await createGroup(formData, selectedFile);
-      showSuccess(t('groups.createdSuccess'));
       navigate(`/group/${groupId}`);
     } catch (err) {
       logger.error('Error creating group:', err);
@@ -186,6 +185,7 @@ export const CreateGroupScreen: React.FC = () => {
                 fullWidth
                 required
                 placeholder={t('groups.groupNamePlaceholder')}
+                inputProps={{ maxLength: 100 }}
               />
 
               <TextField
@@ -198,6 +198,7 @@ export const CreateGroupScreen: React.FC = () => {
                 multiline
                 rows={4}
                 placeholder={t('groups.descriptionPlaceholder')}
+                inputProps={{ maxLength: 500 }}
               />
 
               <FormControlLabel

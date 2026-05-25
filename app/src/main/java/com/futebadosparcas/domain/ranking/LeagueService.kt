@@ -244,7 +244,7 @@ class LeagueServiceImpl constructor(
     /**
      * Busca ranking da liga (ordenado por pontos).
      */
-    override suspend fun getLeagueRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipation>> {
+    override suspend fun getLeagueRanking(seasonId: String, limit: Int): Result<List<SeasonParticipation>> {
         return try {
             val snapshot = seasonParticipationCollection
                 .whereEqualTo("season_id", seasonId)
@@ -267,7 +267,7 @@ class LeagueServiceImpl constructor(
     override suspend fun getPlayersByDivision(
         seasonId: String,
         division: SharedLeagueDivision,
-        limit: Int = 50
+        limit: Int
     ): Result<List<SeasonParticipation>> {
         return try {
             val androidDivision = toAndroidDivision(division)

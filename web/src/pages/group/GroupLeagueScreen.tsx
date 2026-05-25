@@ -38,6 +38,7 @@ import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { HallOfFame } from '../../components/group/HallOfFame';
 
 export const GroupLeagueScreen: React.FC = () => {
   useDocumentTitle('Liga do Grupo');
@@ -231,6 +232,10 @@ export const GroupLeagueScreen: React.FC = () => {
             </List>
           </Box>
         )}
+
+        <Divider sx={{ my: 3 }} />
+
+        <HallOfFame groupId={groupId || ''} />
       </Container>
     </Box>
   );
@@ -346,7 +351,7 @@ const GroupLeagueItem = React.memo(function GroupLeagueItem({
             </Typography>
           </Box>
 
-          <IconButton size="small" onClick={handleToggle}>
+          <IconButton onClick={handleToggle} aria-label={isExpanded ? 'Recolher' : 'Expandir'}>
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>

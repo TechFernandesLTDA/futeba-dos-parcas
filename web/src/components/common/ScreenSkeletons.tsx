@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Skeleton, useTheme, alpha } from '@mui/material';
 
 function SkeletonCard({ children }: { children: React.ReactNode }) {
-  const theme = useTheme();
   return (
     <Box
       sx={{
@@ -10,7 +9,7 @@ function SkeletonCard({ children }: { children: React.ReactNode }) {
         p: 2,
         borderRadius: 3,
         bgcolor: 'background.paper',
-        boxShadow: `0 2px 8px ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+        boxShadow: (theme) => theme.shadows[4],
       }}
     >
       {children}

@@ -5,46 +5,29 @@ import {
   Box,
   Container,
   Typography,
-  Card,
-  CardContent,
   Button,
-  Chip,
   IconButton,
-  Tab,
-  Tabs,
   TextField,
   Stack,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert,
   Grid,
   useTheme,
   useMediaQuery,
-  alpha,
   CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  LocationOn as LocationIcon,
-  AccessTime as TimeIcon,
-  People as PeopleIcon,
   SportsSoccer as SoccerIcon,
-  Payments as PaymentIcon,
   Check as CheckIcon,
   PlayArrow as PlayIcon,
   HowToReg as CheckInIcon,
   HowToVote as VoteIcon,
   Share as ShareIcon,
-  Navigation as NavIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  PhotoLibrary as PhotoIcon,
   QrCode2 as QrCodeIcon,
 } from '@mui/icons-material';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -56,27 +39,13 @@ import { softDeleteGame, checkInToGame, generateCheckinToken } from '../../servi
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
-import {
-  PAYMENT_STATUS_CONFIG,
-  getStatusChipColors,
-} from '../../types/game';
-import { PlayerAvatar, StatusChip, ShimmerLoading, EmptyState } from '../../components/common/GameCard';
-import { TeamBadge } from '../../components/team/TeamBadge';
-import { formatGameDateLong } from '../../utils/dateFormatters';
+import { ShimmerLoading } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
+import { ErrorState } from '../../components/common/ErrorState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { GamePhotosTab } from './GamePhotosTab';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
-  <Box hidden={value !== index} sx={{ py: 2 }}>
-    {value === index && children}
-  </Box>
-);
+import { formatGameDateLong } from '../../utils/dateFormatters';
+import { GameInfoPanel } from './GameInfoPanel';
+import { GamePlayersSection } from './GamePlayersSection';
 
 export const GameDetailScreen: React.FC = () => {
   useDocumentTitle('Detalhes do Jogo');
@@ -131,7 +100,6 @@ export const GameDetailScreen: React.FC = () => {
     try {
       await confirmPresence(gameId, position);
       setPositionDialogOpen(false);
-      showSuccess('Presença confirmada!');
     } catch (err) {
       showError(getFirestoreErrorMessage(err));
     }
@@ -143,7 +111,6 @@ export const GameDetailScreen: React.FC = () => {
     try {
       await cancelPresence(gameId);
       setCancelDialogOpen(false);
-      showSuccess('Presença cancelada');
     } catch (err) {
       showError(getFirestoreErrorMessage(err));
     }
@@ -309,19 +276,34 @@ export const GameDetailScreen: React.FC = () => {
     );
   }
 
-  if (error || !game) {
+  if (error) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
-        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+        <ErrorState
+          message={error}
+          onRetry={() => queryClient.invalidateQueries()}
+        />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={navigateBack}>
             Voltar
           </Button>
-          {error && (
-            <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
-              Tentar novamente
-            </Button>
-          )}
+        </Box>
+      </Container>
+    );
+  }
+
+  if (!game) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <EmptyState
+          icon={<SoccerIcon sx={{ fontSize: 64 }} />}
+          title="Jogo não encontrado"
+          description="O jogo que você procura não está disponível."
+        />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Button startIcon={<BackIcon />} onClick={navigateBack}>
+            Voltar
+          </Button>
         </Box>
       </Container>
     );
@@ -369,354 +351,48 @@ export const GameDetailScreen: React.FC = () => {
         ]}
       />
 
-      {/* Painel de informações do jogo — reutilizado em xs/sm (inline) e lg (sidebar) */}
-      {(() => {
-        const infoPanel = (
-          <>
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  {(() => {
-                    const sc = getStatusChipColors(theme, game.status);
-                    return (
-                      <Chip
-                        label={sc.label}
-                        size="small"
-                        sx={{ backgroundColor: sc.bgColor, color: sc.color, fontWeight: 600, fontSize: '0.75rem' }}
-                      />
-                    );
-                  })()}
-                  {game.gameType && <Chip label={game.gameType} size="small" variant="outlined" />}
-                </Box>
+      {/* ====== Painel de informações + Listas de jogadores ====== */}
+      {isLg ? (
+        <Container maxWidth="xl" sx={{ py: 2 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} lg={4}>
+              <GameInfoPanel game={game} />
+            </Grid>
+            <Grid item xs={12} lg={8}>
+              <GamePlayersSection
+                game={game}
+                gameId={gameId!}
+                confirmedPlayers={confirmedPlayers}
+                goalkeepers={goalkeepers}
+                waitlist={waitlist}
+                confirmations={confirmations}
+                myConfirmation={myConfirmation}
+                isOwner={isOwner}
+                tabValue={tabValue}
+                onTabChange={setTabValue}
+              />
+            </Grid>
+          </Grid>
+        </Container>
+      ) : (
+        <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+          <GameInfoPanel game={game} />
+          <GamePlayersSection
+            game={game}
+            gameId={gameId!}
+            confirmedPlayers={confirmedPlayers}
+            goalkeepers={goalkeepers}
+            waitlist={waitlist}
+            confirmations={confirmations}
+            myConfirmation={myConfirmation}
+            isOwner={isOwner}
+            tabValue={tabValue}
+            onTabChange={setTabValue}
+          />
+        </Container>
+      )}
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <TimeIcon color="primary" />
-                    <Box>
-                      <Typography variant="body1" fontWeight={500}>
-                        {formatGameDateLong(game.date)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {game.time} {game.endTime && `- ${game.endTime}`}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                    <LocationIcon color="primary" sx={{ mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="body1" fontWeight={500}>
-                        {game.locationName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {game.locationAddress}
-                      </Typography>
-                      {game.locationLat && game.locationLng && (
-                        <Button
-                          size="small"
-                          startIcon={<NavIcon />}
-                          sx={{ mt: 1, p: 0 }}
-                          onClick={() =>
-                            window.open(
-                              `https://www.google.com/maps/dir/?api=1&destination=${game.locationLat},${game.locationLng}`,
-                              '_blank'
-                            )
-                          }
-                        >
-                          Navegar
-                        </Button>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {game.dailyPrice > 0 && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <PaymentIcon color="primary" />
-                      <Box>
-                        <Typography variant="body1" fontWeight={500}>
-                          R$ {game.dailyPrice.toFixed(2)} por jogador
-                        </Typography>
-                        {game.pixKey && (
-                          <Typography variant="body2" color="text.secondary">
-                            Pix: {game.pixKey}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PeopleIcon color="primary" />
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      Jogadores
-                    </Typography>
-                  </Box>
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    color={game.playersCount >= game.maxPlayers ? 'error' : 'primary'}
-                  >
-                    {game.playersCount}/{game.maxPlayers}
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: 8,
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    borderRadius: 4,
-                    mb: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: `${(game.playersCount / game.maxPlayers) * 100}%`,
-                      height: '100%',
-                      bgcolor: game.playersCount >= game.maxPlayers ? 'error.main' : 'primary.main',
-                      borderRadius: 4,
-                      transition: 'width 0.3s ease',
-                    }}
-                  />
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Goleiros: {game.goalkeepersCount}/{game.maxGoalkeepers}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Lista: {game.playersCount}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </>
-        );
-
-        const mainContent = (
-          <>
-            <Card sx={{ mb: 2 }}>
-              <Tabs
-                value={tabValue}
-                onChange={(_, v) => setTabValue(v)}
-                variant="scrollable"
-                scrollButtons="auto"
-                allowScrollButtonsMobile
-                aria-label="Listas de jogadores"
-                sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
-              >
-                <Tab label={`Confirmados (${confirmedPlayers.length})`} />
-                <Tab label={`Goleiros (${goalkeepers.length})`} />
-                <Tab label={`Espera (${waitlist.length})`} />
-                {game.status === 'FINISHED' && <Tab icon={<PhotoIcon />} iconPosition="start" label="Fotos" />}
-              </Tabs>
-
-              <TabPanel value={tabValue} index={0}>
-                {confirmedPlayers.length === 0 ? (
-                  <EmptyState
-                    icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-                    title="Nenhum jogador confirmado"
-                    description="Seja o primeiro a confirmar presença!"
-                  />
-                ) : (
-                  <List disablePadding aria-label="Jogadores confirmados">
-                    {confirmedPlayers.map((player, index) => (
-                      <ListItem
-                        key={player.id}
-                        divider={index < confirmedPlayers.length - 1}
-                        secondaryAction={
-                          <StatusChip status={player.paymentStatus} config={PAYMENT_STATUS_CONFIG} />
-                        }
-                      >
-                        <ListItemAvatar>
-                          <PlayerAvatar
-                            name={player.userName}
-                            photoUrl={player.userPhoto}
-                            size={44}
-                          />
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="subtitle2">{player.userName}</Typography>
-                              <TeamBadge teamId={player.favoriteTeam} size={18} />
-                              {player.position === 'GOALKEEPER' && (
-                                <Chip label="GK" size="small" color="primary" sx={{ height: 20 }} />
-                              )}
-                            </Box>
-                          }
-                          secondary={`#${player.confirmationOrder ?? (index + 1)}`}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                )}
-              </TabPanel>
-
-              <TabPanel value={tabValue} index={1}>
-                {goalkeepers.length === 0 ? (
-                  <EmptyState
-                    title="Nenhum goleiro"
-                    description="Nenhum goleiro confirmado ainda"
-                  />
-                ) : (
-                  <List disablePadding>
-                    {goalkeepers.map((player) => (
-                      <ListItem key={player.id}>
-                        <ListItemAvatar>
-                          <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} />
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {player.userName}
-                              <TeamBadge teamId={player.favoriteTeam} size={18} />
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                )}
-              </TabPanel>
-
-              <TabPanel value={tabValue} index={2}>
-                {waitlist.length === 0 ? (
-                  <EmptyState
-                    icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-                    title="Nenhum jogador na lista de espera"
-                    description="Quando a lista estiver cheia, novos jogadores entram aqui"
-                  />
-                ) : (
-                  <List disablePadding>
-                    {waitlist.map((player) => (
-                      <ListItem key={player.id}>
-                        <ListItemAvatar>
-                          <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} />
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {player.userName}
-                              <TeamBadge teamId={player.favoriteTeam} size={18} />
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                )}
-              </TabPanel>
-
-              {game.status === 'FINISHED' && (
-                <TabPanel value={tabValue} index={3}>
-                  <GamePhotosTab
-                    gameId={gameId!}
-                    isFinished={game.status === 'FINISHED'}
-                    isConfirmedPlayer={!!myConfirmation && myConfirmation.status === 'CONFIRMED'}
-                    isOwner={isOwner}
-                  />
-                </TabPanel>
-              )}
-            </Card>
-
-            {game.rules && (
-              <Card sx={{ mb: 2 }}>
-                <CardContent>
-                  <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                    Regras do Jogo
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {game.rules}
-                  </Typography>
-                </CardContent>
-              </Card>
-            )}
-
-            {game.status === 'FINISHED' && (game.team1Score !== undefined || game.team2Score !== undefined) && (
-              <Card sx={{ mb: 2 }}>
-                <CardContent>
-                  <Typography variant="subtitle1" fontWeight={600} gutterBottom textAlign="center">
-                    Resultado Final
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                    <Box sx={{ textAlign: 'center', flex: 1 }}>
-                      <Typography variant="h4" fontWeight={700}>
-                        {game.team1Score}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {game.team1Name || 'Time 1'}
-                      </Typography>
-                    </Box>
-                    <Typography variant="h5" color="text.secondary">
-                      X
-                    </Typography>
-                    <Box sx={{ textAlign: 'center', flex: 1 }}>
-                      <Typography variant="h4" fontWeight={700}>
-                        {game.team2Score}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {game.team2Name || 'Time 2'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  {game.mvpId && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                      <Chip
-                        icon={<SoccerIcon />}
-                        // #1535: exibe nome do MVP usando as confirmações já carregadas
-                        label={`MVP: ${confirmations.find((c) => c.userId === game.mvpId)?.userName ?? game.mvpId}`}
-                        color="primary"
-                        variant="outlined"
-                      />
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </>
-        );
-
-        // lg+: split-pane com sidebar de informações
-        if (isLg) {
-          return (
-            <Container maxWidth="xl" sx={{ py: 2 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} lg={4}>
-                  {infoPanel}
-                </Grid>
-                <Grid item xs={12} lg={8}>
-                  {mainContent}
-                </Grid>
-              </Grid>
-            </Container>
-          );
-        }
-
-        // md: container mais largo, layout linear
-        if (isMd) {
-          return (
-            <Container maxWidth="md" sx={{ py: 2 }}>
-              {infoPanel}
-              {mainContent}
-            </Container>
-          );
-        }
-
-        // xs/sm: comportamento original (sem mudança)
-        return (
-          <Container maxWidth="sm" sx={{ py: 2 }}>
-            {infoPanel}
-            {mainContent}
-          </Container>
-        );
-      })()}
+      {/* ====== Bottom Action Bar ====== */}
 
       <Box
         sx={{
@@ -819,6 +495,7 @@ export const GameDetailScreen: React.FC = () => {
         </Container>
       </Box>
 
+      {/* ====== Dialogs ====== */}
       <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="position-dialog-title">
         <DialogTitle id="position-dialog-title">Escolha sua posição</DialogTitle>
         <DialogContent>
@@ -907,6 +584,7 @@ export const GameDetailScreen: React.FC = () => {
               onChange={(e) => setEditForm({ ...editForm, rules: e.target.value })}
               fullWidth
               disabled={editLoading}
+              inputProps={{ maxLength: 500 }}
             />
           </Stack>
         </DialogContent>

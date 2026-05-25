@@ -1533,7 +1533,43 @@
           "order": "DESCENDING"
         }
       ]
-    }
-  ],
+        },
+        {
+          "collectionGroup": "official-groups",
+          "queryScope": "COLLECTION",
+          "fields": [
+            {
+              "fieldPath": "category",
+              "order": "ASCENDING"
+            },
+            {
+              "fieldPath": "name",
+              "order": "ASCENDING"
+            }
+          ]
+        },
+        {
+          "collectionGroup": "games",
+          "queryScope": "COLLECTION",
+          "fields": [
+            {
+              "fieldPath": "is_public",
+              "order": "ASCENDING"
+            },
+            {
+              "fieldPath": "visibility",
+              "order": "ASCENDING"
+            },
+            {
+              "fieldPath": "status",
+              "order": "ASCENDING"
+            },
+            {
+              "fieldPath": "date",
+              "order": "ASCENDING"
+            }
+          ]
+        }
+      ],
   "fieldOverrides": []
 }

@@ -51,7 +51,7 @@ const ConfirmedPlayersTab: React.FC<ConfirmedPlayersTabProps> = ({ players }) =>
                 <Typography variant="subtitle2">{player.userName}</Typography>
                 <TeamBadge teamId={player.favoriteTeam} size={18} />
                 {player.position === 'GOALKEEPER' && (
-                  <Chip label="GK" size="small" color="primary" sx={{ height: 20 }} />
+                  <Chip label="GK" size="small" color="primary" sx={{ height: 18 }} />
                 )}
               </Box>
             }

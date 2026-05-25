@@ -445,7 +445,15 @@
       "filterByStatus": "Filtrar por estado del juego",
       "clearFilters": "Limpiar filtros"
     },
-    "loadError": "Error al cargar partidos"
+    "loadError": "Error al cargar partidos",
+    "public": {
+      "title": "Partidos Abiertos",
+      "info": "Partidos abiertos al público cerca de ti. ¡Entra, juega y conoce nuevos cracks!",
+      "empty": "No hay partidos públicos en este momento",
+      "emptyDesc": "¡Vuelve más tarde o crea tu propio partido!",
+      "join": "Quiero Jugar",
+      "full": "Lleno"
+    }
   },
   "ranking": {
     "title": "Ranking",
@@ -469,7 +477,12 @@
     "standingsAria": "Clasificación del ranking",
     "you": "Tú",
     "noPlayers": "Sin jugadores en el ranking",
-    "joinGamesAction": "Ver partidos disponibles"
+    "joinGamesAction": "Ver partidos disponibles",
+    "weekly": {
+      "title": "Ranking Semanal",
+      "empty": "No hay partidos esta semana aún",
+      "emptyDesc": "El ranking aparece aquí cuando la semana tenga partidos finalizados."
+    }
   },
   "league": {
     "title": "Liga",
@@ -574,7 +587,12 @@
     "publicGroupLabel": "Grupo público",
     "privateGroupLabel": "Grupo privado",
     "createNewGroup": "Crear nuevo grupo",
-    "retry": "Intentar nuevamente"
+    "retry": "Intentar nuevamente",
+    "hallOfFame": "Salón de la Fama",
+    "hallOfFameEmpty": "No hay temporadas completadas aún.",
+    "hallOfFameEmptyDesc": "El Salón de la Fama mostrará los MVPs de cada mes.",
+    "hallOfFameMvpLabel": "MVP:",
+    "hallOfFamePlayers": "{{count}} jugadores"
   },
   "schedule": {
     "title": "Horarios",
@@ -719,5 +737,15 @@
     "typeMajor": "Actualización principal",
     "typeMinor": "Novedades",
     "typePatch": "Correcciones"
+  },
+  "home": {
+    "quickActions": "Acciones Rápidas",
+    "publicGames": "Partidos Abiertos",
+    "inviteFriends": "Invitar Amigos",
+    "dreamTeam": "Equipo Soñado",
+    "weeklyRanking": "Ranking Semanal",
+    "teamOfTheWeek": "Equipo de la Semana",
+    "round": "Jornada {{week}}",
+    "viewFullRanking": "Ver ranking completo"
   }
 }

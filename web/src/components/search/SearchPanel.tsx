@@ -460,7 +460,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Box
               component="kbd"
-              sx={{ px: 0.75, py: 0.25, borderRadius: 0.5, border: `1px solid ${theme.palette.divider}`, bgcolor: 'background.paper', fontFamily: 'inherit', fontSize: '0.65rem', lineHeight: 1.4, color: 'text.secondary' }}
+              sx={{ px: 0.75, py: 0.25, borderRadius: 0.5, border: `1px solid ${theme.palette.divider}`, bgcolor: 'background.paper', fontFamily: 'inherit', fontSize: '0.75rem', lineHeight: 1.4, color: 'text.secondary' }}
             >
               {k}
             </Box>

@@ -169,8 +169,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         showError('Telefone verificado, mas houve um erro ao salvar. Se o problema persistir, contate o suporte.');
       }
 
-      setStep('success');
-      setTimeout(() => navigate('/onboarding/cpf'), 1100);
+      navigate('/onboarding/cpf', { replace: true });
     } catch (err) {
       logger.error('Phone verification failed:', err);
       const code = (err as { code?: string }).code;
@@ -184,8 +183,7 @@ export const PhoneVerificationScreen: React.FC = () => {
             updated_at: serverTimestamp(),
           }).catch((e) => logger.error('Failed to persist phone (already-linked path):', e));
         }
-        setStep('success');
-        setTimeout(() => navigate('/onboarding/cpf'), 600);
+        navigate('/onboarding/cpf', { replace: true });
         return;
       }
       let msg = 'Código inválido. Tente novamente.';
@@ -241,7 +239,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       }}
     >
       <Container maxWidth="sm">
-        <Card elevation={3} sx={{ borderRadius: 3 }}>
+        <Card elevation={3}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
             <ProgressHeader />
 

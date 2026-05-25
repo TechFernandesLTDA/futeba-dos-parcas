@@ -1,6 +1,6 @@
 // Source of truth: shared/xp-constants.json — keep in sync
 import xpConstants from '../../../shared/xp-constants.json';
-import { gamificationColors } from '../theme';
+import { gamificationColors, rarityColors } from '../theme';
 
 export type LeagueDivision = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'CHAMPION';
 
@@ -222,18 +222,18 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
 ];
 
 export const BADGE_RARITY_CONFIG: Record<BadgeRarity, { label: string; color: string }> = {
-  COMUM: { label: 'Comum', color: '#9E9E9E' },
-  RARO: { label: 'Raro', color: '#2196F3' },
-  EPICO: { label: 'Épico', color: '#9C27B0' },
-  LENDARIO: { label: 'Lendário', color: '#FFD700' },
+  COMUM: { label: 'Comum', color: rarityColors.COMUM },
+  RARO: { label: 'Raro', color: rarityColors.RARO },
+  EPICO: { label: 'Épico', color: rarityColors.EPICO },
+  LENDARIO: { label: 'Lendário', color: rarityColors.LENDARIO },
 };
 
 export const CARD_RARITY_CONFIG: Record<CardRarity, { label: string; color: string }> = {
-  COMUM: { label: 'Comum', color: '#8E8E8E' },
+  COMUM: { label: 'Comum', color: rarityColors.COMUM },
   INCOMUM: { label: 'Incomum', color: '#4CAF50' },
-  RARO: { label: 'Raro', color: '#2196F3' },
-  EPICO: { label: 'Épico', color: '#9C27B0' },
-  LENDARIO: { label: 'Lendário', color: '#FFD700' },
+  RARO: { label: 'Raro', color: rarityColors.RARO },
+  EPICO: { label: 'Épico', color: rarityColors.EPICO },
+  LENDARIO: { label: 'Lendário', color: rarityColors.LENDARIO },
 };
 
 export const XP_VALUES = {
