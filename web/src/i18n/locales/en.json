@@ -623,7 +623,13 @@
     "hallOfFameEmpty": "No completed seasons yet.",
     "hallOfFameEmptyDesc": "The Hall of Fame will show the MVPs of each month.",
     "hallOfFameMvpLabel": "MVP:",
-    "hallOfFamePlayers": "{{count}} players"
+    "hallOfFamePlayers": "{{count}} players",
+    "myGroups": "My Groups",
+    "discoverGroupsBtn": "Discover Groups",
+    "discoverGroupsShort": "Discover",
+    "discoverMoreGroups": "Discover more groups",
+    "discoverMoreGroupsDesc": "Find official groups by region, day of the week, or field type. Join with 1 click!",
+    "openGroup": "Open"
   },
   "schedule": {
     "title": "Schedules",

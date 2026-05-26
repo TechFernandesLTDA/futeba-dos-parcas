@@ -17,6 +17,9 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  Stack,
+  Chip,
+  alpha,
 } from '@mui/material';
 import {
   Add,
@@ -27,6 +30,9 @@ import {
   Star,
   Event,
   Close,
+  Explore,
+  Groups as GroupsIcon,
+  ArrowForward,
 } from '@mui/icons-material';
 import { useGroups } from '../../../hooks/useGroups';
 import { PullToRefresh } from '../../../components/common/PullToRefresh';
@@ -56,6 +62,9 @@ export function GroupsTab() {
     );
   }, [groups, debouncedSearch]);
 
+  const myGroupsCount = groups?.length || 0;
+  const hasGroups = !loading && myGroupsCount > 0;
+
   return (
     <Box sx={{ pb: 8, maxWidth: { xs: '100%', lg: 1200 }, mx: 'auto' }}>
       {/* Barra de busca */}
@@ -69,16 +78,36 @@ export function GroupsTab() {
             mb: 1.5,
           }}
         >
-          <Typography variant="h6" fontWeight={600}>
-            {t('groups.title')}
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/group/create')}
-          >
-            {t('groups.createGroup')}
-          </Button>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="h6" fontWeight={600}>
+              {t('groups.title')}
+            </Typography>
+            {hasGroups && (
+              <Chip
+                label={`${myGroupsCount}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontWeight: 600 }}
+              />
+            )}
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<Explore />}
+              onClick={() => navigate('/groups/discover')}
+            >
+              Descobrir Grupos
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate('/group/create')}
+            >
+              {t('groups.createGroup')}
+            </Button>
+          </Stack>
         </Box>
 
         <TextField
@@ -105,9 +134,27 @@ export function GroupsTab() {
           sx={{ mb: 2 }}
         />
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {t('groups.count', { count: filteredGroups.length })}
-        </Typography>
+        {/* Seção: Meus Grupos */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <GroupsIcon fontSize="small" color="primary" />
+            <Typography variant="subtitle2" color="primary.main" fontWeight={600}>
+              Meus Grupos
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {loading ? '...' : `${filteredGroups.length} grupo${filteredGroups.length !== 1 ? 's' : ''}`}
+            </Typography>
+          </Stack>
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<Explore />}
+            onClick={() => navigate('/groups/discover')}
+            sx={{ display: { xs: 'inline-flex', md: 'none' }, fontWeight: 600 }}
+          >
+            Descobrir
+          </Button>
+        </Stack>
       </Box>
 
       {/* Lista de grupos */}
@@ -141,7 +188,7 @@ export function GroupsTab() {
             </Card>
           ))
         ) : filteredGroups.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Box sx={{ textAlign: 'center', pt: 4, pb: 2 }}>
             <People sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               {searchQuery ? t('groups.noResultsSearch') : t('groups.noResults')}
@@ -151,22 +198,30 @@ export function GroupsTab() {
                 ? t('groups.tryDifferentSearch')
                 : t('groups.createOrJoin')}
             </Typography>
-            {searchQuery ? (
-              <Button
-                variant="outlined"
-                onClick={() => setSearchQuery('')}
-              >
-                {t('groups.clearSearch')}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/group/create')}
-              >
-                {t('groups.createGroup')}
-              </Button>
-            )}
+            <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
+              {searchQuery ? (
+                <Button variant="outlined" onClick={() => setSearchQuery('')}>
+                  {t('groups.clearSearch')}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => navigate('/group/create')}
+                  >
+                    {t('groups.createGroup')}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Explore />}
+                    onClick={() => navigate('/groups/discover')}
+                  >
+                    Descobrir Grupos
+                  </Button>
+                </>
+              )}
+            </Stack>
           </Box>
         ) : (
           <Grid container spacing={2}>
@@ -205,14 +260,28 @@ export function GroupsTab() {
                           )}
                         </Box>
 
-                        {isOwner && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                            <Star sx={{ fontSize: 16, color: 'warning.main' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              {t('groups.owner')}
-                            </Typography>
-                          </Box>
-                        )}
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.5 }}>
+                          {isOwner && (
+                            <Chip
+                              icon={<Star sx={{ fontSize: 14 }} />}
+                              label={t('groups.owner')}
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.7rem', px: 0.75 }, '& .MuiChip-icon': { ml: 0.5 } }}
+                            />
+                          )}
+                          {group.type === 'PUBLIC' && (
+                            <Chip
+                              icon={<Public sx={{ fontSize: 14 }} />}
+                              label="Aberto"
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                              sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.7rem', px: 0.75 }, '& .MuiChip-icon': { ml: 0.5 } }}
+                            />
+                          )}
+                        </Stack>
                       </Box>
                     </Box>
 
@@ -250,7 +319,7 @@ export function GroupsTab() {
                         }}
                       >
                         <Event fontSize="small" color="primary" />
-                        <Typography variant="body2" color="primary.main" fontWeight="medium">
+                        <Typography variant="body2" color="primary.main" fontWeight="medium" noWrap>
                           {t('groups.nextGame')}: {group.nextGameTitle || 'Jogo'} • {formatDateShort(group.nextGameDate)}
                         </Typography>
                       </Box>
@@ -262,6 +331,47 @@ export function GroupsTab() {
             );
           })}
           </Grid>
+        )}
+
+        {/* Descobrir Grupos — CTA quando tem poucos grupos ou sempre visível */}
+        {hasGroups && !searchQuery && (
+          <Card
+            sx={{
+              mt: 2,
+              border: (theme) => `1px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.02),
+            }}
+          >
+            <CardActionArea onClick={() => navigate('/groups/discover')}>
+              <CardContent>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '50%',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Explore sx={{ color: 'primary.main' }} />
+                  </Box>
+                  <Box flex={1}>
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      Descobrir mais grupos
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Encontre grupos oficiais por região, dia da semana ou tipo de campo. Entre com 1 clique!
+                    </Typography>
+                  </Box>
+                  <ArrowForward color="action" sx={{ flexShrink: 0 }} />
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
         )}
       </Box>
       </PullToRefresh>

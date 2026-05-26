@@ -623,7 +623,13 @@
     "hallOfFameEmpty": "Nenhuma temporada concluída ainda.",
     "hallOfFameEmptyDesc": "O Hall da Fama mostrará os MVPs de cada mês.",
     "hallOfFameMvpLabel": "MVP:",
-    "hallOfFamePlayers": "{{count}} jogadores"
+    "hallOfFamePlayers": "{{count}} jogadores",
+    "myGroups": "Meus Grupos",
+    "discoverGroupsBtn": "Descobrir Grupos",
+    "discoverGroupsShort": "Descobrir",
+    "discoverMoreGroups": "Descobrir mais grupos",
+    "discoverMoreGroupsDesc": "Encontre grupos oficiais por região, dia da semana ou tipo de campo. Entre com 1 clique!",
+    "openGroup": "Aberto"
   },
   "schedule": {
     "title": "Horários",
