@@ -8,10 +8,9 @@ import {
   Card,
   CardContent,
   IconButton,
+  Button,
   Grid,
   Chip,
-  Alert,
-  Button,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -24,19 +23,19 @@ import {
   Tab,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Lock as LockIcon,
   WorkspacePremium as BadgeIcon,
-  Refresh as RefreshIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
 import { BADGE_DEFINITIONS, BadgeDefinition } from '../../types/gamification';
 import { rarityColors } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const ALL_CATEGORIES = ['all', ...new Set(BADGE_DEFINITIONS.map((b) => b.category))] as const;
 type CategoryFilter = (typeof ALL_CATEGORIES)[number];
@@ -87,38 +86,14 @@ export const BadgesScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label={t('common.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            {t('badges.title')}
-          </Typography>
-        </Box>
-      </Box>
+      <ScreenHeader title={t('badges.title')} onBack={goBack} />
 
       <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         {error ? (
-          <Alert
-            severity="error"
-            action={
-              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => queryClient.invalidateQueries()}>
-                Tentar novamente
-              </Button>
-            }
-            sx={{ mb: 2 }}
-          >
-            Erro ao carregar conquistas: {error}
-          </Alert>
+          <ErrorState
+            message={`Erro ao carregar conquistas: ${error}`}
+            onRetry={() => queryClient.invalidateQueries()}
+          />
         ) : (
           <>
             <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.1) }}>

@@ -3,10 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography, Button, useTheme, Chip } from '@mui/material';
 import { SentimentDissatisfied as NotFoundIcon } from '@mui/icons-material';
 import { logError } from '../../utils/errorLogger';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ErrorDetailsButton } from '../../components/common/ErrorDetailsButton';
 import type { ErrorLogEntry } from '../../utils/errorLogger';
 
 export const NotFoundScreen: React.FC = () => {
+  useDocumentTitle('404');
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();

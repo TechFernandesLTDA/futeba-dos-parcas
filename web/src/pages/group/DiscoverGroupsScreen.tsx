@@ -31,6 +31,8 @@ import {
   EmojiPeople as AgeIcon,
 } from '@mui/icons-material';
 import { useOfficialGroups, useJoinOfficialGroup, useIsInOfficialGroup } from '../../hooks/useOfficialGroups';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { OfficialGroup, OfficialGroupCategory, OFFICIAL_GROUP_CATEGORY_LABELS } from '../../types/group';
 
@@ -152,18 +154,17 @@ export const DiscoverGroupsScreen: React.FC = () => {
       )}
 
       {!officialLoading && officialError && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {officialError instanceof Error ? officialError.message : 'Erro ao carregar grupos.'}
-        </Alert>
+        <ErrorState
+          message={officialError instanceof Error ? officialError.message : 'Erro ao carregar grupos.'}
+          onRetry={() => refetchOfficial()}
+        />
       )}
 
       {!officialLoading && !officialError && filteredByTab.length === 0 && (
-        <Stack alignItems="center" spacing={2} mt={6}>
-          <GroupIcon sx={{ fontSize: 64, color: 'text.secondary' }} />
-          <Typography variant="h6" color="text.secondary">
-            {searchQuery ? 'Nenhum grupo encontrado' : 'Nenhum grupo oficial disponível'}
-          </Typography>
-        </Stack>
+        <EmptyState
+          icon={<GroupIcon />}
+          title={searchQuery ? 'Nenhum grupo encontrado' : 'Nenhum grupo oficial disponível'}
+        />
       )}
 
       {!officialLoading && !officialError && filteredByTab.length > 0 && (

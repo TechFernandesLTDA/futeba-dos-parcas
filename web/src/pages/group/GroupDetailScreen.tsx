@@ -62,6 +62,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -239,37 +240,27 @@ export const GroupDetailScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 10 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate('/?tab=2')} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography component="h1" variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
-            {group.name}
-          </Typography>
-          {isAdmin && (
-            <IconButton onClick={() => navigate(`/group/${groupId}/edit`)} aria-label="Editar grupo">
-              <EditIcon />
+      <ScreenHeader
+        title={group.name}
+        onBack={() => navigate('/?tab=2')}
+        actions={
+          <>
+            {isAdmin && (
+              <IconButton onClick={() => navigate(`/group/${groupId}/edit`)} aria-label="Editar grupo">
+                <EditIcon />
+              </IconButton>
+            )}
+            <IconButton onClick={() => navigate(`/group/${groupId}/settings`)} aria-label="Configurações do grupo">
+              <SettingsIcon />
             </IconButton>
-          )}
-          <IconButton onClick={() => navigate(`/group/${groupId}/settings`)} aria-label="Configurações do grupo">
-            <SettingsIcon />
-          </IconButton>
-          {isOwner && (
-            <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label="Excluir grupo">
-              <DeleteIcon />
-            </IconButton>
-          )}
-        </Box>
-      </Box>
+            {isOwner && (
+              <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label="Excluir grupo">
+                <DeleteIcon />
+              </IconButton>
+            )}
+          </>
+        }
+      />
 
       <AppBreadcrumbs
         items={[

@@ -6,31 +6,30 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
-  IconButton,
+  Button,
   List,
   ListItemButton,
   Divider,
   Chip,
   Alert,
-  Button,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   BugReport as BugIcon,
   ReportProblem as ProblemIcon,
   Lightbulb as ImprovementIcon,
   AddComment as SuggestionIcon,
   OpenInNew as OpenInNewIcon,
-  Refresh as RefreshIcon,
   RateReview as EmptyIcon,
 } from '@mui/icons-material';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeedback } from '../../hooks/useFeedback';
 import { LoadingState } from '../../components/common/GameCard';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 
 const STATUS_CONFIG: Record<string, { label: string; color: 'default' | 'info' | 'success' | 'error' | 'warning' }> = {
   open: { label: 'Aberto', color: 'default' },
@@ -67,47 +66,19 @@ export const MyFeedbacksScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Meus Feedbacks
-          </Typography>
-        </Box>
-      </Box>
+      <ScreenHeader title="Meus Feedbacks" onBack={goBack} />
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {fetching ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : error ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => queryClient.invalidateQueries()}>
-              Tentar novamente
-            </Button>
-          </Box>
+          <ErrorState message={error} onRetry={() => queryClient.invalidateQueries()} />
         ) : myFeedbacks.length === 0 ? (
-          <Card>
-            <CardContent sx={{ textAlign: 'center', py: 6 }}>
-              <EmptyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                Nenhum feedback enviado
-              </Typography>
-              <Typography variant="body2" color="text.disabled">
-                Seus feedbacks aparecerão aqui com status de acompanhamento
-              </Typography>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={<EmptyIcon />}
+            title="Nenhum feedback enviado"
+            description="Seus feedbacks aparecerão aqui com status de acompanhamento"
+          />
         ) : (
           <Card>
             <List disablePadding aria-label="Meus feedbacks">
@@ -139,7 +110,7 @@ export const MyFeedbacksScreen: React.FC = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                       <Typography variant="caption" color="text.secondary">
-                        {feedback.created_at?.toLocaleDateString?.('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' }) || '-'}
+                        {feedback.created_at?.toLocaleDateString?.(navigator.language || 'pt-BR', { day: 'numeric', month: 'short', year: 'numeric' }) || '-'}
                       </Typography>
                       {feedback.github_issue_url && (
                         <Button

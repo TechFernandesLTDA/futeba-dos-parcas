@@ -53,12 +53,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { TeamBadge } from '../../../components/team/TeamBadge';
 
 const logger = createLogger('ProfileTab');
 
 export function ProfileTab() {
   const { t } = useTranslation();
+  useDocumentTitle(t('nav.profile'));
   const { user, firebaseUser, logout, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();

@@ -29,6 +29,7 @@ import {
 } from "@mui/icons-material";
 import { useGroupChallenges, useChallengeGroup, useRespondChallenge, GroupChallenge } from "../hooks/useGroupChallenges";
 import { useOfficialGroups } from "../hooks/useOfficialGroups";
+import { EmptyState } from "../components/common/EmptyState";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export const GroupChallengesScreen: React.FC = () => {
@@ -106,15 +107,11 @@ export const GroupChallengesScreen: React.FC = () => {
       )}
 
       {!isLoading && (!challenges || challenges.length === 0) && (
-        <Stack alignItems="center" spacing={2} mt={6}>
-          <SportsSoccer sx={{ fontSize: 64, color: "text.secondary" }} />
-          <Typography variant="h6" color="text.secondary">
-            Nenhum desafio recebido ainda
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Desafie outro grupo oficial para uma pelada!
-          </Typography>
-        </Stack>
+        <EmptyState
+          icon={<SportsSoccer />}
+          title="Nenhum desafio recebido ainda"
+          description="Desafie outro grupo oficial para uma pelada!"
+        />
       )}
 
       {!isLoading && challenges && challenges.length > 0 && (

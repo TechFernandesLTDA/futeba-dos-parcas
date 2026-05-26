@@ -18,7 +18,6 @@ import {
   Fab,
   Button,
   Grid,
-  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -33,6 +32,8 @@ import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-ma
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { FIELD_TYPE_CONFIG, FieldType, Location } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -213,30 +214,16 @@ export const LocationsMapScreen: React.FC = () => {
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {errorState && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            action={
-              <Button color="inherit" size="small" onClick={() => { setErrorState(null); setLoading(true); setRetryCount((count) => count + 1); }}>
-                Tentar novamente
-              </Button>
-            }
-          >
-            {errorState}
-          </Alert>
+          <ErrorState message={errorState} onRetry={() => { setErrorState(null); setLoading(true); setRetryCount((count) => count + 1); }} />
         )}
         {loading ? (
           <LoadingState shimmerCount={6} itemType="CARD" />
         ) : filteredLocations.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <LocationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhuma quadra encontrada
-            </Typography>
-            <Typography variant="body2" color="text.disabled">
-              Adicione quadras para organizarem seus jogos!
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<LocationIcon />}
+            title="Nenhuma quadra encontrada"
+            description="Adicione quadras para organizarem seus jogos!"
+          />
         ) : (
           <Grid container spacing={2}>
             {filteredLocations.map((location) => (

@@ -39,6 +39,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -252,15 +253,11 @@ export const LiveEventsScreen: React.FC = () => {
         {loading ? (
           <LoadingState shimmerCount={6} itemType="LIST" />
         ) : events.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <SoccerIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhum evento
-            </Typography>
-            <Typography variant="body2" color="text.disabled">
-              Adicione gols, assistências e cartões
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<SoccerIcon />}
+            title="Nenhum evento"
+            description="Adicione gols, assistências e cartões"
+          />
         ) : (
           <List disablePadding aria-label="Eventos do jogo">
             {events.map((event, _index) => {

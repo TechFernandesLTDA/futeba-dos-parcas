@@ -15,8 +15,6 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
-  Alert,
-  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -29,6 +27,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -146,17 +145,7 @@ export const TacticalBoardScreen: React.FC = () => {
   };
 
   if (error) {
-    return (
-      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
-        <Alert severity="error" action={
-          <Button color="inherit" size="small" onClick={handleRetry}>
-            Tentar novamente
-          </Button>
-        }>
-          {error}
-        </Alert>
-      </Container>
-    );
+    return <ErrorState message={error} onRetry={handleRetry} />;
   }
 
   if (loading) {
@@ -311,7 +300,7 @@ export const TacticalBoardScreen: React.FC = () => {
                   color: 'common.white',
                   fontSize: theme.typography.caption.fontSize,
                   mt: 0.5,
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                  textShadow: `1px 1px 2px ${alpha(theme.palette.common.black, 0.8)}`,
                 }}
               >
                 {player.name.split(' ')[0]}

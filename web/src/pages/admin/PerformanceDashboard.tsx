@@ -17,9 +17,11 @@ import {
   Speed as SpeedIcon,
 } from '@mui/icons-material';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
+import { EmptyState } from '../../components/common/EmptyState';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 interface PerformanceRecord {
   id: string;
@@ -50,6 +52,7 @@ function getScoreColor(value: number, good: number, poor: number): string {
 }
 
 export const PerformanceDashboard: React.FC = () => {
+  useDocumentTitle('Performance');
   const goBack = useNavigateBack('/');
   const theme = useTheme();
   const { user } = useAuth();
@@ -134,17 +137,11 @@ export const PerformanceDashboard: React.FC = () => {
         {loading ? (
           <LinearProgress />
         ) : records.length === 0 ? (
-          <Card>
-            <CardContent sx={{ textAlign: 'center', py: 4 }}>
-              <SpeedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                Nenhuma métrica coletada ainda
-              </Typography>
-              <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
-                As métricas serão coletadas automaticamente conforme você navega pelo app
-              </Typography>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={<SpeedIcon />}
+            title="Nenhuma métrica coletada ainda"
+            description="As métricas serão coletadas automaticamente conforme você navega pelo app"
+          />
         ) : (
           <>
             {/* Resumo Geral */}

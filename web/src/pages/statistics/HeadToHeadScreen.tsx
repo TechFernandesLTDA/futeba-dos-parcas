@@ -37,6 +37,7 @@ import { db } from '../../services/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { useHeadToHead, HeadToHeadMatch } from '../../hooks/useHeadToHead';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -273,9 +274,7 @@ export const HeadToHeadScreen: React.FC = () => {
         )}
 
         {canCompare && error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
+          <ErrorState message={error} />
         )}
 
         {canCompare && stats && stats.totalGames === 0 && (

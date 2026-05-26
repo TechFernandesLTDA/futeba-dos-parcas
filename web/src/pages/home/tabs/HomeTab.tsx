@@ -56,6 +56,7 @@ import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { formatGameDateLong, formatTimeAgo as formatTimeAgoUtil } from '../../../utils/dateFormatters';
 import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { TeamBadge } from '../../../components/team/TeamBadge';
 import PlayerCard from '../../../components/player/PlayerCard';
 import { LeaguePlayer } from '../../../hooks/useLeague';
@@ -612,6 +613,7 @@ function MiniRankingWidget() {
 
 export function HomeTab() {
   const { t } = useTranslation();
+  useDocumentTitle(t('nav.home'));
   const { user } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -826,7 +828,7 @@ export function HomeTab() {
                   <TeamBadge teamId={user?.favoriteTeam} size={28} />
                 </Box>
                 <Typography variant="body2" noWrap sx={{ opacity: 0.85, mt: 0.25, textOverflow: 'ellipsis' }}>
-                  {levelEntry.name} • {currentXp.toLocaleString('pt-BR')} XP
+                   {levelEntry.name} • {currentXp.toLocaleString(navigator.language || 'pt-BR')} XP
                 </Typography>
               </Box>
             </Box>
@@ -856,7 +858,7 @@ export function HomeTab() {
               />
               {currentLevel < 20 && (
                 <Typography variant="caption" sx={{ opacity: 0.7, mt: 0.5, display: 'block' }}>
-                  {t('profile.xpToNextLevel', { xp: xpRemaining.toLocaleString('pt-BR'), levelName: getLevelEntry(currentLevel + 1).name })}
+                   {t('profile.xpToNextLevel', { xp: xpRemaining.toLocaleString(navigator.language || 'pt-BR'), levelName: getLevelEntry(currentLevel + 1).name })}
                 </Typography>
               )}
             </Box>

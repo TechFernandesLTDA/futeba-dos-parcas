@@ -56,6 +56,8 @@ import {
 import { useGroups } from '../../../hooks/useGroups';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../../components/common/ErrorState';
+import { ScreenHeader } from '../../../components/common/ScreenHeader';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 
 const spinnerKeyframes = {
   '@keyframes spin': {
@@ -233,6 +235,7 @@ export function RankingsTab() {
     const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  useDocumentTitle(t('nav.league'));
 
   const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=XP Global, 2=Sistema XP
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -312,21 +315,9 @@ export function RankingsTab() {
 
   return (
     <Box sx={{ minHeight: '100%' }}>
-      {/* Header com tabs */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', px: 2, pt: 1.5, pb: 0.5 }}>
-          <TrophyIcon sx={{ color: 'primary.main', mr: 1 }} />
-          <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>
-            {t('nav.league')}
-          </Typography>
+      <ScreenHeader
+        title={t('nav.league')}
+        actions={
           <Tooltip title="Atualizar">
             <IconButton
               onClick={handleRefresh}
@@ -336,39 +327,39 @@ export function RankingsTab() {
               <RefreshIcon sx={{ animation: loading ? 'spin 1s linear infinite' : 'none', ...spinnerKeyframes }} />
             </IconButton>
           </Tooltip>
-        </Box>
-        {userGroups.length > 0 && (
-          <Box sx={{ px: 2, pt: 0.5, pb: 1, overflowX: 'auto' }}>
-            <ToggleButtonGroup
-              value={selectedGroupId ?? '__global__'}
-              exclusive
-              onChange={(_, v) => setSelectedGroupId(v === '__global__' ? null : v)}
-              size="small"
-              sx={{ flexWrap: 'nowrap' }}
-            >
-              <ToggleButton value="__global__" aria-label="Global" sx={{ px: 1.5, textTransform: 'none', fontWeight: 600 }}>
-                Global
+        }
+      />
+      {userGroups.length > 0 && (
+        <Box sx={{ px: 2, pt: 0.5, pb: 1, overflowX: 'auto' }}>
+          <ToggleButtonGroup
+            value={selectedGroupId ?? '__global__'}
+            exclusive
+            onChange={(_, v) => setSelectedGroupId(v === '__global__' ? null : v)}
+            size="small"
+            sx={{ flexWrap: 'nowrap' }}
+          >
+            <ToggleButton value="__global__" aria-label="Global" sx={{ px: 1.5, textTransform: 'none', fontWeight: 600 }}>
+              Global
+            </ToggleButton>
+            {userGroups.map((g) => (
+              <ToggleButton key={g.id} value={g.id} aria-label={g.name} sx={{ px: 1.5, textTransform: 'none', fontWeight: 600 }}>
+                {g.name}
               </ToggleButton>
-              {userGroups.map((g) => (
-                <ToggleButton key={g.id} value={g.id} aria-label={g.name} sx={{ px: 1.5, textTransform: 'none', fontWeight: 600 }}>
-                  {g.name}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </Box>
-        )}
-        <Tabs
-          value={tabValue}
-          onChange={(_, v) => setTabValue(v)}
-          variant="fullWidth"
-          aria-label="Categorias de ranking"
-          sx={{ minHeight: 40 }}
-        >
-          <Tab label={t('nav.league')} sx={{ minHeight: 40, py: 0 }} />
-          <Tab label="XP Global" sx={{ minHeight: 40, py: 0 }} />
-          <Tab label="Sistema XP" sx={{ minHeight: 40, py: 0 }} />
-        </Tabs>
-      </Box>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
+      )}
+      <Tabs
+        value={tabValue}
+        onChange={(_, v) => setTabValue(v)}
+        variant="fullWidth"
+        aria-label="Categorias de ranking"
+        sx={{ minHeight: 40 }}
+      >
+        <Tab label={t('nav.league')} sx={{ minHeight: 40, py: 0 }} />
+        <Tab label="XP Global" sx={{ minHeight: 40, py: 0 }} />
+        <Tab label="Sistema XP" sx={{ minHeight: 40, py: 0 }} />
+      </Tabs>
 
       <PullToRefresh onRefresh={handleRefresh}>
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>

@@ -6,7 +6,6 @@ import {
   Typography,
   Card,
   CardContent,
-  IconButton,
   CircularProgress,
   TextField,
   Button,
@@ -23,11 +22,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert,
   Chip,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Payments as PaymentsIcon,
   TrendingUp as TrendingIcon,
   TrendingDown as TrendingDownIcon,
@@ -40,9 +37,12 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const logger = createLogger('CashboxScreen');
 
@@ -171,28 +171,16 @@ export const CashboxScreen: React.FC = () => {
   }, [amount, description, groupId, user, firebaseUser, transactionType, showError]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    return new Intl.NumberFormat(navigator.language || 'pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Caixa do Grupo
-          </Typography>
-          {isConfirmedMember && !isAdminOrOwner && (
+      <ScreenHeader
+        title="Caixa do Grupo"
+        onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
+        actions={
+          isConfirmedMember && !isAdminOrOwner ? (
             <Chip
               icon={<VisibilityIcon />}
               label="Somente leitura"
@@ -200,9 +188,9 @@ export const CashboxScreen: React.FC = () => {
               color="info"
               variant="outlined"
             />
-          )}
-        </Box>
-      </Box>
+          ) : undefined
+        }
+      />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Card sx={{ mb: 2, bgcolor: balance >= 0 ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.error.main, 0.1) }}>
@@ -259,27 +247,15 @@ export const CashboxScreen: React.FC = () => {
         )}
 
         {error ? (
-          <Container maxWidth="sm" sx={{ py: 2 }}>
-            <Alert severity="error" action={
-              <Button color="inherit" size="small" onClick={handleRetry}>
-                Tentar novamente
-              </Button>
-            }>
-              {error}
-            </Alert>
-          </Container>
+          <ErrorState message={error} onRetry={handleRetry} />
         ) : loading ? (
           <LoadingState shimmerCount={5} itemType="LIST" />
         ) : transactions.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhuma transação
-            </Typography>
-            <Typography variant="body2" color="text.disabled">
-              Adicione entradas e saídas para controlar o caixa
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<HistoryIcon />}
+            title="Nenhuma transação"
+            description="Adicione entradas e saídas para controlar o caixa"
+          />
         ) : (
           <List disablePadding aria-label="Histórico de transações">
             {transactions.map((transaction, index) => (
@@ -298,7 +274,7 @@ export const CashboxScreen: React.FC = () => {
                   </ListItemAvatar>
                   <ListItemText
                     primary={transaction.description}
-                    secondary={`${transaction.createdByName} • ${transaction.createdAt.toLocaleDateString('pt-BR')}`}
+                    secondary={`${transaction.createdByName} • ${transaction.createdAt.toLocaleDateString(navigator.language || 'pt-BR')}`}
                   />
                   <Typography
                     variant="subtitle1"

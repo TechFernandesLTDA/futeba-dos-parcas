@@ -17,7 +17,6 @@ import {
   Chip,
   List,
   LinearProgress,
-  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -32,6 +31,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -251,17 +251,7 @@ export const PostGameReportScreen: React.FC = () => {
   };
 
   if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error" action={
-          <Button color="inherit" size="small" onClick={handleRetry}>
-            Tentar novamente
-          </Button>
-        }>
-          {error}
-        </Alert>
-      </Container>
-    );
+    return <ErrorState message={error} onRetry={handleRetry} />;
   }
 
   if (loading) {

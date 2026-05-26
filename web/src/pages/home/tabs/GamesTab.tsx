@@ -37,6 +37,8 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../../components/common/ErrorState';
+import { EmptyState } from '../../../components/common/EmptyState';
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 
 const livePulseKeyframes = {
   '@keyframes livePulse': {
@@ -53,6 +55,7 @@ export function GamesTab() {
   const theme = useTheme();
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
   const { t } = useTranslation();
+  useDocumentTitle(t('nav.games'));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -198,13 +201,11 @@ export function GamesTab() {
             </Card>
           ))
         ) : filteredGames.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <SportsSoccer sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              {hasActiveFilters ? 'Nenhum jogo com esses filtros' : 'Nenhum jogo encontrado'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {hasActiveFilters
+          <EmptyState
+            icon={<SportsSoccer />}
+            title={hasActiveFilters ? 'Nenhum jogo com esses filtros' : 'Nenhum jogo encontrado'}
+            description={
+              hasActiveFilters
                 ? 'Tente alterar a busca ou os filtros'
                 : statusFilter === 'all'
                   ? 'Nenhum jogo disponível no momento'
@@ -212,26 +213,12 @@ export function GamesTab() {
                     ? 'Nenhum jogo aberto para inscrição'
                     : statusFilter === 'LIVE'
                       ? 'Nenhum jogo ao vivo agora'
-                      : 'Nenhum jogo finalizado ainda'}
-            </Typography>
-            {hasActiveFilters ? (
-              <Button
-                variant="outlined"
-                startIcon={<FilterListOff />}
-                onClick={clearFilters}
-              >
-                Limpar Filtros
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/game/create')}
-              >
-                Criar Jogo
-              </Button>
-            )}
-          </Box>
+                      : 'Nenhum jogo finalizado ainda'
+            }
+            actionLabel={hasActiveFilters ? 'Limpar Filtros' : 'Criar Jogo'}
+            actionIcon={hasActiveFilters ? <FilterListOff /> : <Add />}
+            onAction={hasActiveFilters ? clearFilters : () => navigate('/game/create')}
+          />
         ) : (
           <Box sx={{ px: isLg ? 2 : 0 }}>
             <Grid container spacing={2}>

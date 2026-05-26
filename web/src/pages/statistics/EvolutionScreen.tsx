@@ -15,8 +15,6 @@ import {
   alpha,
   Grid,
   Paper,
-  Alert,
-  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -31,6 +29,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
@@ -144,29 +144,15 @@ export const EvolutionScreen: React.FC = () => {
 
   // SECFIX #493: estado de erro com retry distinto do empty state
   if (error) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Alert severity="error" sx={{ mb: 2, textAlign: 'left' }}>
-          {error}
-        </Alert>
-        <Button
-          variant="contained"
-          onClick={() => setReloadKey((k) => k + 1)}
-        >
-          Tentar novamente
-        </Button>
-      </Box>
-    );
+    return <ErrorState message={error} onRetry={() => setReloadKey((k) => k + 1)} />;
   }
 
   if (!summary) {
     return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <TimelineIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-        <Typography variant="h6" color="text.secondary">
-          Nenhum dado disponível
-        </Typography>
-      </Box>
+      <EmptyState
+        icon={<TimelineIcon />}
+        title="Nenhum dado disponível"
+      />
     );
   }
 

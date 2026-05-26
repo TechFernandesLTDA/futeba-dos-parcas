@@ -14,7 +14,6 @@ import {
   useTheme,
   alpha,
   Chip,
-  Alert,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -26,9 +25,10 @@ import {
 } from '@mui/icons-material';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -73,7 +73,6 @@ export const VoteResultScreen: React.FC = () => {
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
@@ -183,17 +182,7 @@ export const VoteResultScreen: React.FC = () => {
   }, [gameId, retryCount]);
 
   if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error" action={
-          <Button color="inherit" size="small" onClick={handleRetry}>
-            Tentar novamente
-          </Button>
-        }>
-          {error}
-        </Alert>
-      </Container>
-    );
+    return <ErrorState message={error} onRetry={handleRetry} />;
   }
 
   if (loading) {
@@ -305,12 +294,10 @@ export const VoteResultScreen: React.FC = () => {
         )}
 
         {!voteResult?.mvp && !voteResult?.bolaMurcha && (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <StarIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Votação ainda não realizada
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<StarIcon />}
+            title="Votação ainda não realizada"
+          />
         )}
         </div>
 

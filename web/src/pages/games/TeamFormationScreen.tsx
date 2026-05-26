@@ -14,7 +14,6 @@ import {
   useTheme,
   alpha,
   CircularProgress,
-  Alert,
   Chip,
   LinearProgress,
   Tooltip,
@@ -32,6 +31,7 @@ import {
 import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { ErrorState } from '../../components/common/ErrorState';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { getLevelForXp } from '../../types/gamification';
@@ -333,17 +333,7 @@ export const TeamFormationScreen: React.FC = () => {
   const isBalanced = levelDiff <= 1;
 
   if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error" action={
-          <Button color="inherit" size="small" onClick={handleRetry}>
-            Tentar novamente
-          </Button>
-        }>
-          {error}
-        </Alert>
-      </Container>
-    );
+    return <ErrorState message={error} onRetry={handleRetry} />;
   }
 
   if (loading) {

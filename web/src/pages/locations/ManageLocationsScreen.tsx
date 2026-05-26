@@ -16,7 +16,6 @@ import {
   Fab,
   Button,
   Rating,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -39,6 +38,8 @@ import { db } from '../../services/firebase';
 import { deleteLocation } from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { Location, FIELD_TYPE_CONFIG, canManageLocation } from '../../types/location';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
@@ -181,17 +182,7 @@ export const ManageLocationsScreen: React.FC = () => {
 
       <Container maxWidth="md" sx={{ py: 2 }}>
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            action={
-              <Button color="inherit" size="small" onClick={() => setReloadKey((k) => k + 1)}>
-                Tentar novamente
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
+          <ErrorState message={error} onRetry={() => setReloadKey((k) => k + 1)} />
         )}
 
         {!loading && !error && (
@@ -203,27 +194,20 @@ export const ManageLocationsScreen: React.FC = () => {
 
         {loading ? (
           <LoadingState shimmerCount={6} itemType="CARD" />
-        ) : !error && filteredLocations.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <LocationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              {searchQuery ? 'Nenhum local encontrado' : 'Nenhum local cadastrado'}
-            </Typography>
-            <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
-              {searchQuery
+        ) : (loading || error) ? null : filteredLocations.length === 0 ? (
+          <EmptyState
+            icon={<LocationIcon />}
+            title={searchQuery ? 'Nenhum local encontrado' : 'Nenhum local cadastrado'}
+            description={
+              searchQuery
                 ? 'Tente alterar os termos da busca'
-                : 'Adicione locais para organizar seus jogos!'}
-            </Typography>
-            {searchQuery ? (
-              <Button variant="outlined" onClick={handleClearSearch}>
-                Limpar busca
-              </Button>
-            ) : (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/location/create')}>
-                Adicionar primeiro local
-              </Button>
-            )}
-          </Box>
+                : 'Adicione locais para organizar seus jogos!'
+            }
+            actionLabel={searchQuery ? 'Limpar busca' : 'Adicionar primeiro local'}
+            actionIcon={searchQuery ? undefined : <AddIcon />}
+            onAction={searchQuery ? handleClearSearch : () => navigate('/location/create')}
+            actionVariant={searchQuery ? 'outlined' : 'contained'}
+          />
         ) : (
           !error && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

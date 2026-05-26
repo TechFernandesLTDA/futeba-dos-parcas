@@ -42,6 +42,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
@@ -59,6 +60,7 @@ interface Settings {
 }
 
 export const SettingsScreen: React.FC = () => {
+  useDocumentTitle('Configurações');
   const navigate = useNavigate();
   const goBack = useNavigateBack('/');
   const theme = useTheme();
