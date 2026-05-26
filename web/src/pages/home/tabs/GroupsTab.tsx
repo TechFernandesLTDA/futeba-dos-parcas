@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,7 +13,6 @@ import {
   InputAdornment,
   Grid,
   Skeleton,
-  Alert,
   Button,
   IconButton,
   useTheme,
@@ -30,8 +29,10 @@ import {
   Close,
 } from '@mui/icons-material';
 import { useGroups } from '../../../hooks/useGroups';
+import { PullToRefresh } from '../../../components/common/PullToRefresh';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateShort } from '../../../utils/dateFormatters';
+import { ErrorState } from '../../../components/common/ErrorState';
 
 export function GroupsTab() {
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ export function GroupsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { groups, loading, error, refetch } = useGroups();
+
+  const handleRefresh = useCallback(async () => { await refetch(); }, [refetch]);
 
   const filteredGroups = useMemo(() => {
     if (!debouncedSearch) return groups;
@@ -108,19 +111,14 @@ export function GroupsTab() {
       </Box>
 
       {/* Lista de grupos */}
+      <PullToRefresh onRefresh={handleRefresh}>
       <Box sx={{ px: 2 }}>
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            action={
-              <Button color="inherit" size="small" onClick={() => refetch()}>
-                {t('groups.retry')}
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
+          <ErrorState
+            message={error}
+            onRetry={() => refetch()}
+            retryLabel={t('groups.retry')}
+          />
         )}
 
         {loading ? (
@@ -266,6 +264,7 @@ export function GroupsTab() {
           </Grid>
         )}
       </Box>
+      </PullToRefresh>
 
       {/* FAB (xs/sm only) */}
         <Fab
@@ -275,8 +274,9 @@ export function GroupsTab() {
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',
-          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-          right: { xs: 16, sm: 'calc(50% - 240px + 16px)' },
+          bottom: { xs: 80, sm: 80, md: 24 },
+          right: { xs: 16, sm: 'calc(50% - 240px + 16px)', md: 24 },
+          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}
       >
         <Add />

@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
+import { responsiveFontSizes } from '@mui/material/styles';
 import { futebaTheme, futebaDarkTheme } from '../theme';
 
-type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -62,9 +63,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     mode, toggleTheme, setMode,
   }), [mode, toggleTheme]);
 
+  const theme = useMemo(() => {
+    const base = isDark ? futebaDarkTheme : futebaTheme;
+    return responsiveFontSizes(base);
+  }, [isDark]);
+
   return (
     <ThemeContext.Provider value={value}>
-      <MuiThemeProvider theme={isDark ? futebaDarkTheme : futebaTheme}>
+      <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}
       </MuiThemeProvider>

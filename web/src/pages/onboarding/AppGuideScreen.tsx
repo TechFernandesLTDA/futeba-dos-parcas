@@ -137,7 +137,7 @@ export const AppGuideScreen: React.FC = () => {
           {slide.icon}
         </Box>
 
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+        <Typography variant="h4" component="h2" fontWeight={700} gutterBottom>
           {slide.title}
         </Typography>
 
@@ -149,16 +149,29 @@ export const AppGuideScreen: React.FC = () => {
       {/* Controles */}
       <Box sx={{ p: 2, pb: 4 }}>
         {/* Dots indicadores */}
-        <Stack direction="row" justifyContent="center" spacing={1} sx={{ mb: 3 }}>
+        <Stack direction="row" justifyContent="center" spacing={1} sx={{ mb: 3 }} role="tablist" aria-label="Navegação de slides">
           {SLIDES.map((_, index) => (
             <Box
-              key={index}
-              role="img"
-              aria-label={`Slide ${index + 1} de ${SLIDES.length}${index === activeStep ? ' (atual)' : ''}`}
+              key={SLIDES[index].id}
+              component="button"
+              role="tab"
+              aria-selected={index === activeStep}
+              aria-label={`Ir para slide ${index + 1} de ${SLIDES.length}`}
+              tabIndex={index === activeStep ? 0 : -1}
+              onClick={() => setActiveStep(index)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveStep(index);
+                }
+              }}
               sx={{
                 width: index === activeStep ? 20 : 8,
                 height: 8,
                 borderRadius: 4,
+                border: 'none',
+                cursor: 'pointer',
+                p: 0,
                 bgcolor: index === activeStep ? 'primary.main' : alpha(theme.palette.primary.main, 0.25),
                 transition: (t) => t.transitions.create('width', { duration: t.transitions.duration.standard }),
               }}

@@ -44,6 +44,7 @@ import {
   SwapHoriz as SubstitutionIcon,
   VolumeUp as SoundOnIcon,
   VolumeOff as SoundOffIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -55,6 +56,7 @@ import { Game, GameEvent, GameEventType } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { EmptyState } from '../../components/common/EmptyState';
 
 const logger = createLogger('LiveGameScreen');
 
@@ -590,9 +592,11 @@ export const LiveGameScreen: React.FC = () => {
             </Typography>
 
             {events.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 2 }}>
-                Nenhum evento registrado
-              </Typography>
+              <EmptyState
+                icon={<HistoryIcon />}
+                title="Nenhum evento registrado"
+                description="Os eventos do jogo aparecerão aqui conforme acontecerem."
+              />
             ) : (
               <List disablePadding aria-label="Eventos do jogo">
                 {events.map((event, index) => (

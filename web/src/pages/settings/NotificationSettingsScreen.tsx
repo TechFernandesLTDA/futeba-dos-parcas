@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -68,6 +68,46 @@ export const NotificationSettingsScreen: React.FC = () => {
     setMuteUntil,
     clearMute,
   } = useNotificationSettings(user?.id);
+
+  const handlePushEnabled = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('pushEnabled', e.target.checked);
+  }, [setPreference]);
+
+  const handleGameInvites = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('gameInvites', e.target.checked);
+  }, [setPreference]);
+
+  const handleGameReminders = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('gameReminders', e.target.checked);
+  }, [setPreference]);
+
+  const handleGroupInvites = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('groupInvites', e.target.checked);
+  }, [setPreference]);
+
+  const handleAchievements = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('achievements', e.target.checked);
+  }, [setPreference]);
+
+  const handleMvpVotes = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('mvpVotes', e.target.checked);
+  }, [setPreference]);
+
+  const handleLevelUp = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('levelUp', e.target.checked);
+  }, [setPreference]);
+
+  const handleSystemAnnouncements = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('systemAnnouncements', e.target.checked);
+  }, [setPreference]);
+
+  const handleReminderTime = useCallback((e: { target: { value: unknown } }) => {
+    setPreference('reminderTime', Number(e.target.value));
+  }, [setPreference]);
+
+  const handleMuteForHours = useCallback((hours: number) => () => {
+    setMuteUntil(hours);
+  }, [setMuteUntil]);
 
   const SectionHeader: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
@@ -212,7 +252,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.pushEnabled}
-                onChange={(e) => setPreference('pushEnabled', e.target.checked)}
+                onChange={handlePushEnabled}
                 aria-label={t('settings.notifications.pushToggle')}
               />
             </Box>
@@ -228,7 +268,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.gameInvites}
-                onChange={(e) => setPreference('gameInvites', e.target.checked)}
+                onChange={handleGameInvites}
                 aria-label={t('settings.notifications.gameInvites')}
               />
             </Box>
@@ -239,7 +279,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.gameReminders}
-                onChange={(e) => setPreference('gameReminders', e.target.checked)}
+                onChange={handleGameReminders}
                 aria-label={t('settings.notifications.gameReminders')}
               />
             </Box>
@@ -255,7 +295,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.groupInvites}
-                onChange={(e) => setPreference('groupInvites', e.target.checked)}
+                onChange={handleGroupInvites}
                 aria-label={t('settings.notifications.groupInvites')}
               />
             </Box>
@@ -271,7 +311,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.achievements}
-                onChange={(e) => setPreference('achievements', e.target.checked)}
+                onChange={handleAchievements}
                 aria-label={t('settings.notifications.achievements')}
               />
             </Box>
@@ -282,7 +322,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.mvpVotes}
-                onChange={(e) => setPreference('mvpVotes', e.target.checked)}
+                onChange={handleMvpVotes}
                 aria-label={t('settings.notifications.mvpVotes')}
               />
             </Box>
@@ -293,7 +333,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.levelUp}
-                onChange={(e) => setPreference('levelUp', e.target.checked)}
+                onChange={handleLevelUp}
                 aria-label={t('settings.notifications.levelUp')}
               />
             </Box>
@@ -309,7 +349,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               </Typography>
               <Switch
                 checked={settings.systemAnnouncements}
-                onChange={(e) => setPreference('systemAnnouncements', e.target.checked)}
+                onChange={handleSystemAnnouncements}
                 aria-label={t('settings.notifications.systemAnnouncements')}
               />
             </Box>
@@ -325,7 +365,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                 labelId="reminder-time-label"
                 value={settings.reminderTime}
                 label={t('settings.notifications.reminderLabel')}
-                onChange={(e) => setPreference('reminderTime', Number(e.target.value))}
+                onChange={handleReminderTime}
                 aria-label={t('settings.notifications.reminderTime')}
               >
                 {REMINDER_OPTIONS.map((opt) => (
@@ -348,7 +388,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               {MUTE_OPTIONS.map((opt) => (
                 <Button
                   key={opt.hours}
-                  onClick={() => setMuteUntil(opt.hours)}
+                  onClick={handleMuteForHours(opt.hours)}
                   aria-label={t('settings.notifications.muteFor', { period: opt.label })}
                 >
                   {opt.label}

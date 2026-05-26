@@ -26,3 +26,25 @@ export function useNavigateBack(fallback: string = '/') {
     }
   }, [navigate, location.key, fallback]);
 }
+
+/**
+ * #1933: Navegação com callback opcional pós-navigate.
+ * Centraliza padrão comum de "navigate + ação colateral".
+ *
+ * Uso:
+ *   const navigateWithCallback = useNavigateWithCallback();
+ *   navigateWithCallback('/group/123', () => showSuccess('Grupo criado!'));
+ */
+export function useNavigateWithCallback() {
+  const navigate = useNavigate();
+
+  const navigateWithCallback = useCallback((
+    to: string,
+    callback?: () => void
+  ) => {
+    navigate(to);
+    callback?.();
+  }, [navigate]);
+
+  return navigateWithCallback;
+}

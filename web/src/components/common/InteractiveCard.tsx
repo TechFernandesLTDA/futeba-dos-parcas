@@ -34,6 +34,10 @@ export const InteractiveCard = React.memo(
     { onClick, onContextMenu, onKeyDown, actionAreaSx, actionAreaLabel, children, sx, ...cardProps },
     ref,
   ) {
+    if (process.env.NODE_ENV === 'development' && onClick && !actionAreaLabel) {
+      console.warn('InteractiveCard: onClick provided without actionAreaLabel for accessibility');
+    }
+
     if (!onClick) {
       return (
         <Card ref={ref} sx={sx} onContextMenu={onContextMenu} onKeyDown={onKeyDown} {...cardProps}>
@@ -41,6 +45,14 @@ export const InteractiveCard = React.memo(
         </Card>
       );
     }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      onKeyDown?.(e);
+      if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        onClick();
+      }
+    };
 
     return (
       <Card
@@ -51,7 +63,7 @@ export const InteractiveCard = React.memo(
           ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
         ]}
         onContextMenu={onContextMenu}
-        onKeyDown={onKeyDown}
+        onKeyDown={handleKeyDown}
         {...cardProps}
       >
         <CardActionArea

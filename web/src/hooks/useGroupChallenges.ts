@@ -81,15 +81,29 @@ export function useChallengeGroup() {
       challengedGroupName: string;
       proposedDate: string;
     }) => {
-      await addDoc(collection(db, "group-challenges"), {
-        challenger_group_id: challengerGroupId,
-        challenger_group_name: challengerGroupName,
-        challenged_group_id: challengedGroupId,
-        challenged_group_name: challengedGroupName,
-        status: "PENDING",
-        proposed_date: proposedDate,
-        created_at: serverTimestamp(),
-      });
+      if (!challengerGroupId || !challengedGroupId) {
+        showError('Grupo não especificado.');
+        throw new Error('Grupo não especificado.');
+      }
+      if (!challengerGroupName?.trim() || !challengedGroupName?.trim()) {
+        showError('O nome do grupo é obrigatório.');
+        throw new Error('O nome do grupo é obrigatório.');
+      }
+
+      try {
+        await addDoc(collection(db, "group-challenges"), {
+          challenger_group_id: challengerGroupId,
+          challenger_group_name: challengerGroupName,
+          challenged_group_id: challengedGroupId,
+          challenged_group_name: challengedGroupName,
+          status: "PENDING",
+          proposed_date: proposedDate,
+          created_at: serverTimestamp(),
+        });
+      } catch (error) {
+        showError(getFirestoreErrorMessage(error));
+        throw error;
+      }
     },
     onSuccess: () => {
       showSuccess("Desafio enviado!");
@@ -113,10 +127,20 @@ export function useRespondChallenge() {
       challengeId: string;
       status: "ACCEPTED" | "DECLINED";
     }) => {
-      await updateDoc(doc(db, "group-challenges", challengeId), {
-        status,
-        responded_at: serverTimestamp(),
-      });
+      if (!challengeId) {
+        showError('Desafio não encontrado.');
+        throw new Error('Desafio não encontrado.');
+      }
+
+      try {
+        await updateDoc(doc(db, "group-challenges", challengeId), {
+          status,
+          responded_at: serverTimestamp(),
+        });
+      } catch (error) {
+        showError(getFirestoreErrorMessage(error));
+        throw error;
+      }
     },
     onSuccess: (_, { status }) => {
       showSuccess(status === "ACCEPTED" ? "Desafio aceito!" : "Desafio recusado.");

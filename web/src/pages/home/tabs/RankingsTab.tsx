@@ -20,7 +20,6 @@ import {
   IconButton,
   Tooltip,
   Fade,
-  Alert,
   Button,
   ToggleButtonGroup,
   ToggleButton,
@@ -42,6 +41,7 @@ import {
   Star,
 } from '@mui/icons-material';
 import { useAuth } from '../../../contexts/AuthContext';
+import { PullToRefresh } from '../../../components/common/PullToRefresh';
 import { PlayerAvatar } from '../../../components/common/GameCard';
 import { PlayerCard } from '../../../components/player/PlayerCard';
 import { TeamBadge } from '../../../components/team/TeamBadge';
@@ -55,6 +55,7 @@ import {
 } from '../../../utils/constants';
 import { useGroups } from '../../../hooks/useGroups';
 import { useTranslation } from 'react-i18next';
+import { ErrorState } from '../../../components/common/ErrorState';
 
 const spinnerKeyframes = {
   '@keyframes spin': {
@@ -287,7 +288,7 @@ export function RankingsTab() {
     setXpPositionChanges(xpChanges);
   }, [players, loading]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     refetch();
   }, [refetch]);
 
@@ -369,19 +370,14 @@ export function RankingsTab() {
         </Tabs>
       </Box>
 
+      <PullToRefresh onRefresh={handleRefresh}>
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {errorState && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            action={
-              <Button color="inherit" size="small" onClick={handleRefresh}>
-                Tentar novamente
-              </Button>
-            }
-          >
-            {errorState}
-          </Alert>
+          <ErrorState
+            message={errorState}
+            onRetry={handleRefresh}
+            retryLabel={t('common.retry')}
+          />
         )}
 
         {/* Card de posição do usuário atual */}
@@ -622,6 +618,7 @@ export function RankingsTab() {
           )
         )}
       </Container>
+      </PullToRefresh>
 
       {/* Figurinha do jogador */}
       <PlayerCard

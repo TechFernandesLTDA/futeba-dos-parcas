@@ -96,7 +96,7 @@ export const DreamTeamScreen: React.FC = () => {
       {selectedPlayers.map((slot, index) => {
         const selected = availablePlayers.find((p: { id: string; name: string; photoUrl?: string; autoStrikerRating: number }) => p.id === slot.userId);
         return (
-          <Card key={index} sx={{ mb: 2 }}>
+          <Card key={`${slot.position}-${index}`} sx={{ mb: 2 }}>
             <CardContent>
               <Stack direction="row" spacing={2} alignItems="center">
                 <Avatar sx={{ bgcolor: "primary.main", width: 40, height: 40 }}>

@@ -8,7 +8,7 @@ import {
   onSnapshot,
   addDoc,
   getDocs,
-  deleteDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -194,7 +194,9 @@ export function useWaitlist(gameId: string | null) {
       }
       // Reordenação da fila é SERVER-ONLY (CF). Cliente só remove a
       // própria entrada (regra firestore: delete só do próprio user_id).
-      await Promise.all(mine.docs.map((d) => deleteDoc(d.ref)));
+      const batch = writeBatch(db);
+      mine.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
       showSuccess('Você saiu da lista de espera');
       return true;
     } catch (err) {

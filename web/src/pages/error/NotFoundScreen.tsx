@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography, Button, useTheme, Chip } from '@mui/material';
 import { SentimentDissatisfied as NotFoundIcon } from '@mui/icons-material';
@@ -12,10 +12,15 @@ export const NotFoundScreen: React.FC = () => {
   const theme = useTheme();
   const [errorId, setErrorId] = useState<string | null>(null);
   const [logEntry, setLogEntry] = useState<(Partial<ErrorLogEntry> & { errorId: string }) | null>(null);
+  const attemptedPathRef = useRef(location.pathname + location.search);
+
+  useEffect(() => {
+    attemptedPathRef.current = location.pathname + location.search;
+  });
 
   useEffect(() => {
     // Registra o 404 para saber qual link está quebrado
-    const attemptedPath = location.pathname + location.search;
+    const attemptedPath = attemptedPathRef.current;
     logError(new Error(`Rota não encontrada: ${attemptedPath}`), {
       kind: 'route-not-found',
       attemptedPath,
@@ -31,8 +36,6 @@ export const NotFoundScreen: React.FC = () => {
         createdAt: new Date().toISOString(),
       });
     });
-    // Executa apenas na montagem do componente
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

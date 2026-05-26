@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -116,7 +116,6 @@ export const CashboxScreen: React.FC = () => {
       (err) => {
         logger.error('Error in cashbox transactions listener:', err);
         setError('Erro ao carregar transações do caixa.');
-        showError('Erro ao carregar transações do caixa.');
         setLoading(false);
       }
     );
@@ -142,9 +141,9 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId, showError, user, retryCount]);
+  }, [groupId, user, retryCount]);
 
-  const handleAddTransaction = async () => {
+  const handleAddTransaction = useCallback(async () => {
     const parsedAmount = parseFloat(amount);
     if (!groupId || !user || !description || isNaN(parsedAmount) || parsedAmount <= 0) return;
     setSubmitting(true);
@@ -169,7 +168,7 @@ export const CashboxScreen: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [amount, description, groupId, user, firebaseUser, transactionType, showError]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);

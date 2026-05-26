@@ -89,7 +89,7 @@ export interface UserStats {
   experiencePoints: number;
 }
 
-export interface Badge {
+export interface UserBadge {
   badgeId: string;
   unlockedAt: Date;
   count: number;

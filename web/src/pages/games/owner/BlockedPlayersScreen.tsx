@@ -25,6 +25,7 @@ import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../../components/common/GameCard';
+import { ErrorState } from '../../../components/common/ErrorState';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { createLogger } from '../../../utils/logger';
@@ -51,6 +52,7 @@ export const BlockedPlayersScreen: React.FC = () => {
 
   const [blockedPlayers, setBlockedPlayers] = useState<BlockedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [unblockingId, setUnblockingId] = useState<string | null>(null);
   const [gameOwnerId, setGameOwnerId] = useState<string | null>(null);
 
@@ -92,8 +94,9 @@ export const BlockedPlayersScreen: React.FC = () => {
           
           setBlockedPlayers(players.filter(Boolean) as BlockedPlayer[]);
         }
-      } catch (error) {
+        } catch (error) {
         logger.error('Error fetching blocked players:', error);
+        setLoadError('Erro ao carregar lista de bloqueados.');
         showError('Erro ao carregar lista de bloqueados.');
       } finally {
         setLoading(false);
@@ -148,7 +151,12 @@ export const BlockedPlayersScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        {loading ? (
+        {loadError ? (
+          <ErrorState
+            message={loadError}
+            onRetry={() => { setLoadError(null); setLoading(true); }}
+          />
+        ) : loading ? (
           <LoadingState shimmerCount={4} itemType="LIST" />
         ) : blockedPlayers.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>

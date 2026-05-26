@@ -367,8 +367,9 @@ export const ManageLocationsScreen: React.FC = () => {
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',
-          bottom: 16,
-          right: 16,
+          bottom: { xs: 80, md: 24 },
+          right: { xs: 16, md: 24 },
+          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}
         onClick={() => navigate('/location/create')}
         aria-label="Adicionar local"

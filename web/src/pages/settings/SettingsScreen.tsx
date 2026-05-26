@@ -45,6 +45,7 @@ import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ErrorState } from '../../components/common/ErrorState';
 import { deleteAccount } from '../../services/cloudFunctions';
 import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -80,6 +81,7 @@ export const SettingsScreen: React.FC = () => {
     gameReminders: true,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const loadSettings = useCallback(async () => {
@@ -96,11 +98,10 @@ export const SettingsScreen: React.FC = () => {
       }
     } catch (error) {
       logger.error('Error loading settings:', error);
-      showError(t('settings.loadError'));
-      showErrorRef.current(t('settings.loadError'));
+      setError(t('settings.loadError'));
     }
     setLoading(false);
-  }, [user, showError, t]);
+  }, [user, t]);
 
   useEffect(() => {
     if (user) {
@@ -163,7 +164,12 @@ export const SettingsScreen: React.FC = () => {
       />
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
-        {loading ? (
+        {error ? (
+          <ErrorState
+            message={error}
+            onRetry={() => { setError(null); loadSettings(); }}
+          />
+        ) : loading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2 }} />
             <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />

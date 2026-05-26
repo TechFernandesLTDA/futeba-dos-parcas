@@ -24,7 +24,7 @@ import {
   SportsSoccer as SoccerIcon,
   EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
-  Assessment as StatsIcon,
+  Assessment as ReportIcon,
   Share as ShareIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -32,6 +32,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -269,12 +270,11 @@ export const PostGameReportScreen: React.FC = () => {
 
   if (!stats) {
     return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <StatsIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-        <Typography variant="h6" color="text.secondary">
-          Relatório não disponível
-        </Typography>
-      </Box>
+      <EmptyState
+        icon={<ReportIcon />}
+        title="Relatório não disponível"
+        description="O relatório deste jogo ainda não foi gerado."
+      />
     );
   }
 

@@ -50,12 +50,6 @@ export function useRealtimeDocument<T = unknown>(
 export function useRealtimeCollection<T = unknown>(
   collectionName: string,
   queryFn?: (ref: CollectionReference) => Query,
-  // FIX #584/H3: era effect deps `[collectionName]` apenas — ignorava
-  // mudanças no queryFn (queryFnRef pegava nova ref a cada render mas
-  // listener não re-subscrevia). Callers com filtros novos recebiam
-  // stale data do primeiro render.
-  // Agora: caller passa `deps` (valores que afetam o queryFn) e
-  // listener re-subscreve quando deps mudam.
   deps: unknown[] = []
 ) {
   const [data, setData] = useState<T[]>([]);
@@ -90,6 +84,9 @@ export function useRealtimeCollection<T = unknown>(
     );
 
     return () => unsubscribe();
+    // The ...deps spread is intentional API design — callers control when to re-subscribe.
+    // Outer scope imports (db, collection, onSnapshot, snakeToCamel) are module-level
+    // constants that never change between renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectionName, ...deps]);
 

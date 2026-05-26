@@ -14,6 +14,7 @@ import {
   StepContent,
   FormControl,
   FormLabel,
+  FormHelperText,
   FormControlLabel,
   Radio,
   RadioGroup,
@@ -783,11 +784,13 @@ export const CreateGameScreen: React.FC = () => {
               type="number"
               value={formData.numberOfTeams}
               onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('numberOfTeams', isNaN(v) ? 2 : v); }}
+              error={!!formErrors.numberOfTeams}
+              helperText={formErrors.numberOfTeams}
               fullWidth
               inputProps={{ min: 2, max: 4 }}
             />
 
-            <FormControl>
+            <FormControl error={!!formErrors.visibility}>
               <FormLabel>{t('games.create.visibility')}</FormLabel>
               <RadioGroup
                 value={formData.visibility}
@@ -809,6 +812,7 @@ export const CreateGameScreen: React.FC = () => {
                   label={t('games.create.visibilityPublicOpen')}
                 />
               </RadioGroup>
+              {formErrors.visibility && <FormHelperText>{formErrors.visibility}</FormHelperText>}
             </FormControl>
 
             <Card sx={{ p: 1, bgcolor: 'action.hover' }}>
