@@ -22,7 +22,12 @@ export function AppLayout() {
         width: '100%',
       }}
     >
-      <Box component="nav" role="navigation" aria-label="Menu principal">
+      <Box
+        component="nav"
+        role="navigation"
+        aria-label="Menu principal"
+        sx={{ display: 'flex', flexShrink: 0 }}
+      >
         <AppSidebar />
       </Box>
       <Box
@@ -35,6 +40,7 @@ export function AppLayout() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'auto',
+          minHeight: '100dvh',
         }}
       >
         <ConnectionStatus isOnline={isOnline} />
