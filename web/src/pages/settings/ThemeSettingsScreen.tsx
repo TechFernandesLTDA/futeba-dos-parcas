@@ -7,7 +7,6 @@ import {
   Typography,
   Card,
   CardContent,
-  IconButton,
   List,
   ListItem,
   ListItemButton,
@@ -22,7 +21,6 @@ import {
   Chip,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
   BrightnessAuto as SystemIcon,
@@ -41,6 +39,7 @@ import type { ThemeMode } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 export const ThemeSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -92,24 +91,10 @@ export const ThemeSettingsScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label={t('common.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            {t('common.appearance')}
-          </Typography>
-        </Box>
-      </Box>
+      <ScreenHeader
+        title={t('common.appearance')}
+        onBack={goBack}
+      />
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {/* Seletor de tema com 3 opções: claro, escuro, sistema.

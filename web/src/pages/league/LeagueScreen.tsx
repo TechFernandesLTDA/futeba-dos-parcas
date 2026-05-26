@@ -61,6 +61,7 @@ import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { useSeasons } from '../../hooks/useSeasons';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 type SortField = 'points' | 'goals' | 'wins' | 'gamesPlayed' | 'assists' | 'mvpCount';
 
@@ -87,6 +88,7 @@ export const LeagueScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { t } = useTranslation();
+  useDocumentTitle(t('nav.league'));
   const { showError } = useToast();
 
   const [tabValue, setTabValue] = useState(0);

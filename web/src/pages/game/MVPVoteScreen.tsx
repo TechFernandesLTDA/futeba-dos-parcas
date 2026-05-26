@@ -28,6 +28,7 @@ import {
   HowToVote as VoteIcon,
   EmojiEvents as TrophyIcon,
   SentimentVeryDissatisfied as BolaMurchaIcon,
+  PersonOff as PersonOffIcon,
 } from '@mui/icons-material';
 import { doc, collection, query, where, onSnapshot, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -35,6 +36,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Game, GameConfirmation } from '../../types/game';
 import { PlayerAvatar } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -380,9 +382,7 @@ export const MVPVoteScreen: React.FC = () => {
                         </ListItem>
                       ))}
                     {confirmations.filter((p) => p.position === 'GOALKEEPER').length === 0 && (
-                      <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
-                        Nenhum goleiro neste jogo
-                      </Typography>
+                      <EmptyState icon={<PersonOffIcon />} title="Nenhum goleiro" description="Nenhum goleiro neste jogo" animate={false} />
                     )}
                   </List>
                 </RadioGroup>

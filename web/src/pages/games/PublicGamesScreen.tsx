@@ -24,6 +24,7 @@ import {
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
 import { usePublicGames, useJoinPublicGame } from '../../hooks/usePublicGames';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Game, FIELD_TYPE_LABELS } from '../../types/game';
 import { useTranslation } from 'react-i18next';
@@ -90,15 +91,11 @@ export const PublicGamesScreen: React.FC = () => {
       )}
 
       {!isLoading && !error && (!games || games.length === 0) && (
-        <Stack alignItems="center" spacing={2} mt={6}>
-          <SoccerIcon sx={{ fontSize: 64, color: 'text.secondary' }} />
-          <Typography variant="h6" color="text.secondary">
-            {t('games.public.empty')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t('games.public.emptyDesc')}
-          </Typography>
-        </Stack>
+        <EmptyState
+          icon={<SoccerIcon />}
+          title={t('games.public.empty')}
+          description={t('games.public.emptyDesc')}
+        />
       )}
 
       {!isLoading && !error && games && games.length > 0 && (

@@ -36,9 +36,11 @@ import { useGroupLeague } from '../../hooks/useGroupLeague';
 import { useIsGroupMember } from '../../hooks/useGroups';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { HallOfFame } from '../../components/group/HallOfFame';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 export const GroupLeagueScreen: React.FC = () => {
   useDocumentTitle('Liga do Grupo');
@@ -113,65 +115,43 @@ export const GroupLeagueScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1, gap: 0.5 }}>
-          <IconButton
-            onClick={goBack}
-            aria-label="Voltar"
-          >
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Liga do Grupo
-          </Typography>
+      <ScreenHeader
+        title="Liga do Grupo"
+        onBack={goBack}
+        actions={
           <IconButton onClick={() => refetch()} aria-label="Atualizar" size="small">
             <RefreshIcon />
           </IconButton>
+        }
+      />
+      {seasons.length > 1 && (
+        <Box sx={{ px: 2, pb: 1 }}>
+          <FormControl size="small" fullWidth>
+            <Select
+              value={selectedSeasonId || ''}
+              onChange={(e) => setSelectedSeasonId(e.target.value)}
+              variant="outlined"
+              sx={{ fontSize: '0.875rem' }}
+            >
+              {seasons.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.name}
+                  {s.isActive ? ' (Ativa)' : ''}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
-        {seasons.length > 1 && (
-          <Box sx={{ px: 2, pb: 1 }}>
-            <FormControl size="small" fullWidth>
-              <Select
-                value={selectedSeasonId || ''}
-                onChange={(e) => setSelectedSeasonId(e.target.value)}
-                variant="outlined"
-                sx={{ fontSize: '0.875rem' }}
-              >
-                {seasons.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>
-                    {s.name}
-                    {s.isActive ? ' (Ativa)' : ''}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        )}
-      </Box>
+      )}
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
         ) : error ? (
-          <Alert
-            severity="error"
-            action={
-              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => refetch()}>
-                Tentar novamente
-              </Button>
-            }
-            sx={{ mb: 2 }}
-          >
-            {error}
-          </Alert>
+          <ErrorState
+            message={error}
+            onRetry={() => refetch()}
+          />
         ) : standings.length === 0 ? (
           <EmptyState
             icon={<TrophyIcon />}

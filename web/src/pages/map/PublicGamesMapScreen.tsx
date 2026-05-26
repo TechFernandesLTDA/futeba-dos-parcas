@@ -12,7 +12,6 @@ import {
   alpha,
   Fab,
   Button,
-  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -25,6 +24,8 @@ import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-ma
 import { useAuth } from '../../contexts/AuthContext';
 import { usePublicGames } from '../../hooks/useGames';
 import { LoadingState, GameCard } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { Game } from '../../types/game';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -172,30 +173,16 @@ export const PublicGamesMapScreen: React.FC = () => {
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            action={
-              <Button color="inherit" size="small" onClick={() => refetch()}>
-                Tentar novamente
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
+          <ErrorState message={error} onRetry={() => refetch()} />
         )}
         {loading ? (
           <LoadingState shimmerCount={6} itemType="GAME" />
         ) : filteredGames.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <SoccerIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhum jogo público
-            </Typography>
-            <Typography variant="body2" color="text.disabled">
-              Crie um jogo e torne-o público para todos!
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<SoccerIcon />}
+            title="Nenhum jogo público"
+            description="Crie um jogo e torne-o público para todos!"
+          />
         ) : (
           filteredGames.map((game) => (
             <GameCard

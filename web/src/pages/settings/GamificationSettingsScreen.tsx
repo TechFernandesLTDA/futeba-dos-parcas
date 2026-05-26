@@ -6,7 +6,6 @@ import {
   Typography,
   Card,
   CardContent,
-  IconButton,
   List,
   ListItem,
   ListItemIcon,
@@ -21,7 +20,6 @@ import {
   CircularProgress,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Notifications as NotificationsIcon,
   Star as StarIcon,
   EmojiEvents as TrophyIcon,
@@ -45,6 +43,7 @@ import {
   XP_WIN,
   XP_STREAK_7,
 } from '../../utils/constants';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const logger = createLogger('GamificationSettingsScreen');
 
@@ -99,7 +98,6 @@ export const GamificationSettingsScreen: React.FC = () => {
     } catch (error) {
       logger.error('Erro ao carregar preferências de gamificação:', error);
       showError('Erro ao carregar configurações de gamificação.');
-      showErrorRef.current('Erro ao carregar configurações de gamificação.');
     } finally {
       setLoading(false);
     }
@@ -137,27 +135,7 @@ export const GamificationSettingsScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton
-            onClick={goBack}
-            aria-label={t('common.back')}
-          >
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Gamificação
-          </Typography>
-        </Box>
-      </Box>
+      <ScreenHeader title="Gamificação" onBack={goBack} />
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>

@@ -42,6 +42,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerDetail } from '../../hooks/usePlayers';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -59,6 +60,7 @@ export const ProfileScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
+  useDocumentTitle('Perfil');
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 

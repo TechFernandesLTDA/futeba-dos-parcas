@@ -11,6 +11,8 @@ import {
   Typography,
   TextField,
   InputAdornment,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -34,6 +36,7 @@ export const InviteFriendScreen: React.FC = () => {
   const goBack = useNavigateBack('/?tab=4');
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const theme = useTheme();
   const gColors = useGamificationColors();
   const [generating, setGenerating] = useState(false);
 
@@ -141,7 +144,7 @@ export const InviteFriendScreen: React.FC = () => {
               py: 1,
               px: 1,
               borderRadius: 1,
-              bgcolor: inviteCount >= l.count ? (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' : 'transparent',
+              bgcolor: inviteCount >= l.count ? theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.03) : 'transparent',
               opacity: inviteCount >= l.count ? 1 : 0.5,
             }}
           >
@@ -211,6 +214,7 @@ export const InviteFriendScreen: React.FC = () => {
 };
 
 function ConqueredChip({ label }: { label: string }) {
+  const theme = useTheme();
   return (
     <Box
       sx={{
@@ -218,7 +222,7 @@ function ConqueredChip({ label }: { label: string }) {
         px: 1,
         py: 0.3,
         borderRadius: 1,
-        bgcolor: (t) => t.palette.success.main + '20',
+        bgcolor: alpha(theme.palette.success.main, 0.12),
         color: 'success.main',
         fontSize: '0.75rem',
         fontWeight: 'bold',

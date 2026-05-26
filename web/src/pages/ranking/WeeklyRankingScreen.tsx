@@ -24,6 +24,7 @@ import {
 } from "@mui/icons-material";
 import { useWeeklyRanking } from "../../hooks/useWeeklyRanking";
 import { useGamificationColors } from "../../hooks/useGamificationColors";
+import { EmptyState } from "../../components/common/EmptyState";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { useTranslation } from "react-i18next";
 
@@ -66,15 +67,11 @@ export const WeeklyRankingScreen: React.FC = () => {
       )}
 
       {!isLoading && (!data || !data.rankings || data.rankings.length === 0) && (
-        <Stack alignItems="center" spacing={2} mt={6}>
-          <TrophyIcon sx={{ fontSize: 64, color: "text.secondary" }} />
-          <Typography variant="h6" color="text.secondary">
-            {t("ranking.weekly.empty")}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("ranking.weekly.emptyDesc")}
-          </Typography>
-        </Stack>
+        <EmptyState
+          icon={<TrophyIcon />}
+          title={t("ranking.weekly.empty")}
+          description={t("ranking.weekly.emptyDesc")}
+        />
       )}
 
       {!isLoading && data && data.rankings.length > 0 && (

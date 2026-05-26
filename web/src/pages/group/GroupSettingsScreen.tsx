@@ -50,6 +50,7 @@ import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { pluralizeCount } from '../../utils/pluralize';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const logger = createLogger('GroupSettingsScreen');
 
@@ -244,25 +245,10 @@ export const GroupSettingsScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      {/* Cabeçalho */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(`/group/${groupId}`)} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Configurações
-          </Typography>
-        </Box>
-      </Box>
+      <ScreenHeader
+        title="Configurações"
+        onBack={() => navigate(`/group/${groupId}`)}
+      />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {/* Informações do grupo (resumo) */}

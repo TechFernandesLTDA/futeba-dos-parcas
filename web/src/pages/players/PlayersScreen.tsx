@@ -18,7 +18,6 @@ import {
   Button,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Person as PersonIcon,
   PersonAdd as PersonAddIcon,
   PersonRemove as PersonRemoveIcon,
@@ -38,6 +37,7 @@ import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const logger = createLogger('PlayersScreen');
 
@@ -222,27 +222,22 @@ export const PlayersScreen: React.FC = () => {
     }
   };
 
-  if (error) {
-    return (
-      <Box sx={{ pb: 4 }}>
-        <Box
-          sx={{
-            position: 'sticky',
-            top: 0,
-            bgcolor: 'background.paper',
-            zIndex: 10,
-            borderBottom: `1px solid ${theme.palette.divider}`,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-            <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
-              <BackIcon />
+  return (
+    <Box sx={{ pb: 4 }}>
+      <ScreenHeader
+        title={!loading && !error && isMember ? `Jogadores (${members.length})` : 'Jogadores'}
+        onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
+        actions={
+          !loading && !error && isMember && currentUserRole !== 'MEMBER' ? (
+            <IconButton onClick={() => navigate(`/group/${groupId}/invite`)} aria-label="Convidar jogadores">
+              <PersonAddIcon />
             </IconButton>
-            <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-              Jogadores
-            </Typography>
-          </Box>
-        </Box>
+          ) : undefined
+        }
+      />
+      {loading ? (
+        <LoadingState shimmerCount={6} itemType="LIST" />
+      ) : error ? (
         <PullToRefresh onRefresh={handleRefresh}>
         <Container maxWidth="sm" sx={{ py: 2 }}>
           <ErrorState
@@ -251,36 +246,7 @@ export const PlayersScreen: React.FC = () => {
           />
         </Container>
         </PullToRefresh>
-      </Box>
-    );
-  }
-
-  if (loading) {
-    return <LoadingState shimmerCount={6} itemType="LIST" />;
-  }
-
-  // Usuário não é membro do grupo — não buscar perfis (#1028)
-  if (!isMember) {
-    return (
-      <Box sx={{ pb: 4 }}>
-        <Box
-          sx={{
-            position: 'sticky',
-            top: 0,
-            bgcolor: 'background.paper',
-            zIndex: 10,
-            borderBottom: `1px solid ${theme.palette.divider}`,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-            <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
-              <BackIcon />
-            </IconButton>
-            <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-              Jogadores
-            </Typography>
-          </Box>
-        </Box>
+      ) : !isMember ? (
         <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
           <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -293,82 +259,56 @@ export const PlayersScreen: React.FC = () => {
             Voltar
           </Button>
         </Container>
-      </Box>
-    );
-  }
+      ) : (
+        <>
+          <PullToRefresh onRefresh={handleRefresh}>
+          <Container maxWidth="sm" sx={{ py: 2 }}>
+            {members.length === 0 ? (
+              <EmptyState
+                icon={<PersonIcon sx={{ fontSize: 64 }} />}
+                title="Nenhum membro"
+                description="O grupo ainda não tem membros."
+              />
+            ) : (
+              <Card>
+                <List disablePadding aria-label="Lista de jogadores do grupo">
+                  {members.map((member, index) => (
+                    <PlayerMemberItem
+                      key={member.id}
+                      member={member}
+                      showDivider={index > 0}
+                      isOwner={currentUserRole === 'OWNER'}
+                      isActionLoading={actionLoading === member.id}
+                      onRemove={setConfirmRemoveId}
+                      onAvatarClick={setSelectedPlayerId}
+                      getRoleColor={getRoleColor}
+                      getRoleLabel={getRoleLabel}
+                      currentUserRole={currentUserRole}
+                    />
+                  ))}
+                </List>
+              </Card>
+            )}
+          </Container>
+          </PullToRefresh>
 
-  return (
-    <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Jogadores ({members.length})
-          </Typography>
-          {currentUserRole !== 'MEMBER' && (
-            <IconButton onClick={() => navigate(`/group/${groupId}/invite`)} aria-label="Convidar jogadores">
-              <PersonAddIcon />
-            </IconButton>
-          )}
-        </Box>
-      </Box>
-
-      <PullToRefresh onRefresh={handleRefresh}>
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        {members.length === 0 ? (
-          <EmptyState
-            icon={<PersonIcon sx={{ fontSize: 64 }} />}
-            title="Nenhum membro"
-            description="O grupo ainda não tem membros."
+          {/* Card de jogador estilo figurinha */}
+          <PlayerCard
+            userId={selectedPlayerId}
+            onClose={() => setSelectedPlayerId(null)}
           />
-        ) : (
-          <Card>
-            <List disablePadding aria-label="Lista de jogadores do grupo">
-              {members.map((member, index) => (
-                <PlayerMemberItem
-                  key={member.id}
-                  member={member}
-                  showDivider={index > 0}
-                  isOwner={currentUserRole === 'OWNER'}
-                  isActionLoading={actionLoading === member.id}
-                  onRemove={setConfirmRemoveId}
-                  onAvatarClick={setSelectedPlayerId}
-                  getRoleColor={getRoleColor}
-                  getRoleLabel={getRoleLabel}
-                  currentUserRole={currentUserRole}
-                />
-              ))}
-            </List>
-          </Card>
-        )}
-      </Container>
-      </PullToRefresh>
 
-      {/* Card de jogador estilo figurinha */}
-      <PlayerCard
-        userId={selectedPlayerId}
-        onClose={() => setSelectedPlayerId(null)}
-      />
-
-      <ConfirmDialog
-        open={!!confirmRemoveId}
-        title="Remover membro"
-        message="Tem certeza que deseja remover este jogador do grupo? Esta ação não pode ser desfeita."
-        confirmLabel="Remover"
-        loading={actionLoading === confirmRemoveId}
-        onConfirm={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
-        onCancel={() => setConfirmRemoveId(null)}
-      />
+          <ConfirmDialog
+            open={!!confirmRemoveId}
+            title="Remover membro"
+            message="Tem certeza que deseja remover este jogador do grupo? Esta ação não pode ser desfeita."
+            confirmLabel="Remover"
+            loading={actionLoading === confirmRemoveId}
+            onConfirm={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
+            onCancel={() => setConfirmRemoveId(null)}
+          />
+        </>
+      )}
     </Box>
   );
 };

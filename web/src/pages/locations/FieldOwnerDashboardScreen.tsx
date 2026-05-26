@@ -20,7 +20,6 @@ import {
   ListItemText,
   ListItemAvatar,
   Button,
-  Alert,
   useTheme,
 } from '@mui/material';
 import {
@@ -38,6 +37,8 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
@@ -237,20 +238,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   }
 
   if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={retryDashboard}>
-              Tentar novamente
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      </Container>
-    );
+    return <ErrorState message={error} onRetry={retryDashboard} />;
   }
 
   return (
@@ -347,19 +335,14 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             </Box>
             
             {locations.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 3 }}>
-                <LocationIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Nenhuma quadra cadastrada
-                </Typography>
-                <Button
-                  variant="contained"
-                  sx={{ mt: 2 }}
-                  onClick={() => navigate('/location/create')}
-                >
-                  Adicionar Quadra
-                </Button>
-              </Box>
+              <EmptyState
+                icon={<LocationIcon />}
+                title="Nenhuma quadra cadastrada"
+                actionLabel="Adicionar Quadra"
+                onAction={() => navigate('/location/create')}
+                animate={false}
+                sx={{ py: 3 }}
+              />
             ) : (
               <List disablePadding aria-label="Minhas quadras">
                 {locations.map((loc, index) => (

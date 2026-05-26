@@ -19,8 +19,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Alert,
-  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -40,6 +38,7 @@ import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 
@@ -154,17 +153,7 @@ export const WeeklyRecapScreen: React.FC = () => {
   }, [targetUserId, retryCount, t]);
 
   if (error) {
-    return (
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
-        <Alert severity="error" action={
-          <Button color="inherit" size="small" onClick={handleRetry}>
-            {t('weeklyRecap.retry')}
-          </Button>
-        }>
-          {error}
-        </Alert>
-      </Container>
-    );
+    return <ErrorState message={error} onRetry={handleRetry} />;
   }
 
   if (loading) {

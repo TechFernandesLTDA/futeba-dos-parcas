@@ -21,8 +21,6 @@ import {
   Chip,
   useTheme,
   alpha,
-  Alert,
-  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -33,9 +31,10 @@ import {
 } from '@mui/icons-material';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -64,7 +63,6 @@ export const LiveStatsScreen: React.FC = () => {
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
@@ -142,17 +140,7 @@ export const LiveStatsScreen: React.FC = () => {
   };
 
   if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error" action={
-          <Button color="inherit" size="small" onClick={handleRetry}>
-            Tentar novamente
-          </Button>
-        }>
-          {error}
-        </Alert>
-      </Container>
-    );
+    return <ErrorState message={error} onRetry={handleRetry} />;
   }
 
   if (loading) {
@@ -265,9 +253,7 @@ export const LiveStatsScreen: React.FC = () => {
           <Card>
             <List disablePadding aria-label="Eventos do jogo">
               {events.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography color="text.secondary">Nenhum evento ainda</Typography>
-                </Box>
+                <EmptyState icon={<SoccerIcon />} title="Nenhum evento ainda" animate={false} sx={{ py: 4 }} />
               ) : (
                 events.map((event, index) => (
                   <Box key={event.id}>

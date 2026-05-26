@@ -359,7 +359,7 @@ export function RegisterScreen() {
               color: theme.palette.info.main,
               '&:hover': {
                 borderColor: theme.palette.info.dark,
-                backgroundColor: `${theme.palette.info.main}0A`,
+                backgroundColor: alpha(theme.palette.info.main, 0.04),
               },
             }}
           >

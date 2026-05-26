@@ -33,6 +33,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePrefetchHome } from '../../hooks/usePrefetchHome';
 import { usePerformanceMonitoring } from '../../hooks/usePerformanceMonitoring';
 import { PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 // Carregamento lazy das tabs para reduzir bundle inicial da HomeScreen
 const HomeTab = lazy(() => import('./tabs/HomeTab').then(m => ({ default: m.HomeTab })));
@@ -70,6 +71,7 @@ export function HomeScreen() {
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const [mountedTabs, setMountedTabs] = useState<Set<number>>(() => new Set([tabValue]));
   const { t } = useTranslation();
+  useDocumentTitle(t('common.appName'));
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
   const contentRef = useRef<HTMLDivElement>(null);
