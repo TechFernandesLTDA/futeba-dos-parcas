@@ -22,8 +22,8 @@ import {
   PersonAdd as PersonAddIcon,
   PersonOff as PersonOffIcon,
 } from '@mui/icons-material';
-import { FormScaffold } from '../../components/layout';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -83,10 +83,9 @@ export const InvitePlayersScreen: React.FC = () => {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         if (cancelled) return;
         if (groupDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
+          const groupData = snakeToCamel(groupDoc.data()) as Record<string, unknown>;
 
-          setGroupName(groupData.name || 'Grupo');
+          setGroupName((groupData.name as string) || 'Grupo');
 
           // Query members from subcollection (schema: groups/{id}/members/{uid})
           const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
@@ -99,13 +98,12 @@ export const InvitePlayersScreen: React.FC = () => {
               const memberRole = (memberDoc.data().role as string) || 'MEMBER';
               const userDoc = await getDoc(doc(db, 'users', uid));
               if (userDoc.exists()) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const d = snakeToCamel(userDoc.data()) as Record<string, any>;
+                const d = snakeToCamel(userDoc.data()) as Record<string, unknown>;
                 return {
                   id: uid,
-                  name: d.name || 'Jogador',
-                  email: d.email || '',
-                  photoUrl: d.photoUrl,
+                  name: (d.name as string) || 'Jogador',
+                  email: (d.email as string) || '',
+                  photoUrl: d.photoUrl as string | undefined,
                   role: memberRole,
                 };
               }
@@ -132,7 +130,7 @@ export const InvitePlayersScreen: React.FC = () => {
   }, [groupId, showError, retryCount]);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (searchQuery.trim().length < 2) return;
 
     setSearching(true);
     setHasSearched(true);
@@ -179,7 +177,7 @@ export const InvitePlayersScreen: React.FC = () => {
         from_user_id: user.id,
         to_user_id: targetUser.id,
         status: 'PENDING',
-        expires_at: serverTimestamp(),
+        expires_at: Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),
         created_at: serverTimestamp(),
       });
       setSearchResults((prev) => prev.filter((r) => r.id !== targetUser.id));
@@ -192,12 +190,13 @@ export const InvitePlayersScreen: React.FC = () => {
   };
 
   return (
-    <FormScaffold
-      title="Convidar Jogadores"
-      closeDestination={closeDestination}
-      closeVariant="back"
-    >
-      <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
+    <AdaptiveFormSheet closeDestination={closeDestination}>
+      <FormScaffold
+        title="Convidar Jogadores"
+        closeDestination={closeDestination}
+        closeVariant="back"
+      >
+        <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         <TextField
           fullWidth
           placeholder="Buscar por nome..."
@@ -208,7 +207,11 @@ export const InvitePlayersScreen: React.FC = () => {
             if (hasSearched) setHasSearched(false);
           }}
           aria-label="Buscar jogador por nome"
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
+              handleSearch();
+            }
+          }}
           inputProps={{ maxLength: 200 }}
           InputProps={{
             endAdornment: (
@@ -309,6 +312,7 @@ export const InvitePlayersScreen: React.FC = () => {
           </Card>
         )}
       </Container>
-    </FormScaffold>
+      </FormScaffold>
+    </AdaptiveFormSheet>
   );
 };

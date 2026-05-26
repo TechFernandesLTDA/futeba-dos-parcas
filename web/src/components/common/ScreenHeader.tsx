@@ -7,6 +7,7 @@ import {
   type Theme,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
+import { pageSpacing } from '../../theme/pageTokens';
 
 export interface ScreenHeaderProps {
   title: string;
@@ -40,6 +41,7 @@ export const ScreenHeader = React.memo(function ScreenHeader({
       sx={{
         display: 'flex',
         alignItems: 'center',
+        height: '100%',
         p: 1,
         ...headerSx,
       }}
@@ -73,6 +75,7 @@ export const ScreenHeader = React.memo(function ScreenHeader({
         zIndex: 10,
         borderBottom: 1,
         borderColor: 'divider',
+        height: pageSpacing.headerHeight,
         ...sx,
       }}
     >

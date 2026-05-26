@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore';
+
 /**
  * Converte um objeto com campos em snake_case para camelCase.
  * Necessário porque o Firestore armazena campos em snake_case (padrão Android/Kotlin)
@@ -49,4 +51,11 @@ export function snakeToCamel<T = Record<string, unknown>>(obj: Record<string, un
     }
   }
   return result as T;
+}
+
+export function toDate(ts: Timestamp | Date | null | undefined): Date | undefined {
+  if (!ts) return undefined;
+  if (ts instanceof Date) return ts;
+  if (ts instanceof Timestamp) return ts.toDate();
+  return undefined;
 }

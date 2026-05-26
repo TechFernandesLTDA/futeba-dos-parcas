@@ -21,7 +21,7 @@ import { db, storage } from '../services/firebase';
 import { Group, GroupMember, GroupRole, CashboxTransaction } from '../types/group';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { snakeToCamel } from '../utils/firestoreHelpers';
+import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 
@@ -35,10 +35,10 @@ function parseGroupDoc(docId: string, raw: Record<string, unknown>): Group {
   return {
     id: docId,
     ...converted,
-    createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
-    updatedAt: ((raw.updated_at || raw.updatedAt) as { toDate?: () => Date })?.toDate?.(),
-    nextGameDate: ((raw.next_game_date || raw.nextGameDate) as { toDate?: () => Date })?.toDate?.(),
-    deletedAt: ((raw.deleted_at || raw.deletedAt) as { toDate?: () => Date })?.toDate?.(),
+    createdAt: toDate((raw.created_at ?? raw.createdAt) as Timestamp | Date),
+    updatedAt: toDate((raw.updated_at ?? raw.updatedAt) as Timestamp | Date),
+    nextGameDate: toDate((raw.next_game_date ?? raw.nextGameDate) as Timestamp | Date),
+    deletedAt: toDate((raw.deleted_at ?? raw.deletedAt) as Timestamp | Date),
   } as Group;
 }
 
@@ -195,6 +195,8 @@ export function useGroups() {
 
   // Listener para atualizações real-time na subcoleção do usuário
   // Invalida o cache quando a subcoleção muda
+  const [listenerError, setListenerError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!uid) return;
 
@@ -210,13 +212,14 @@ export function useGroups() {
       queryClient.invalidateQueries({ queryKey: ['groups', uid] });
     }, (err) => {
       logger.error('Error in groups listener:', err);
+      setListenerError(err.message);
       showError('Erro ao sincronizar grupos.');
     });
 
     return () => unsubscribe();
   }, [uid, queryClient, showError]);
 
-  const error = queryError ? (queryError as Error).message : null;
+  const error = listenerError || (queryError ? (queryError as Error).message : null);
 
   return { groups, loading, error, refetch };
 }

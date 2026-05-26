@@ -14,7 +14,6 @@ import {
   Tab,
   Skeleton,
   LinearProgress,
-  Alert,
   Button,
   alpha,
   useTheme,
@@ -37,6 +36,7 @@ import { useGames } from '../../../hooks/useGames';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';
 import { useTranslation } from 'react-i18next';
+import { ErrorState } from '../../../components/common/ErrorState';
 
 const livePulseKeyframes = {
   '@keyframes livePulse': {
@@ -175,17 +175,11 @@ export function GamesTab() {
 
       <Box sx={{ px: 2, pt: 2 }}>
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            action={
-              <Button color="inherit" size="small" onClick={() => refetch()}>
-                Tentar novamente
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
+          <ErrorState
+            message={error}
+            onRetry={() => refetch()}
+            retryLabel={t('common.retry')}
+          />
         )}
 
         {loading ? (
@@ -379,9 +373,9 @@ export function GamesTab() {
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',
-          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-          right: 16,
-          pb: 'env(safe-area-inset-bottom, 16px)',
+          bottom: { xs: 80, md: 24 },
+          right: { xs: 16, md: 24 },
+          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}
       >
         <Add />

@@ -193,6 +193,7 @@ export const HeadToHeadScreen: React.FC = () => {
                 Buscar Jogador {selectingPlayer}
               </Typography>
               <TextField
+                aria-label="Buscar jogador"
                 size="small"
                 fullWidth
                 placeholder="Digite o nome do jogador..."

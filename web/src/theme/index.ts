@@ -46,14 +46,14 @@ export const rarityColors: Record<string, string> = {
 // Gamification colors
 // #1574: adicionados platinum e champion para centralizar cores de divisão
 export const gamificationColors = {
-  gold: '#FFD700',
+  gold: '#B8860B',
   silver: '#C0C0C0',
   bronze: '#CD7F32',
   platinum: '#00E676',
   champion: '#E91E63',
   xp: '#9C27B0',
   level: '#00BCD4',
-  mvp: '#FFD700',
+  mvp: '#B8860B',
   streak: '#FF5722',
 };
 
@@ -61,12 +61,12 @@ export const gamificationColors = {
 // manter contraste adequado sobre fundos escuros (#0F172A / #1E293B)
 export const gamificationColorsDark = {
   ...gamificationColors,
-  gold: '#FFE033',
+  gold: '#FFD700',
   silver: '#D4D4D4',
   bronze: '#E8924A',
   xp: '#CE93D8',
   level: '#4DD0E1',
-  mvp: '#FFE033',
+  mvp: '#FFD700',
   streak: '#FF7043',
 };
 
@@ -269,16 +269,31 @@ export const futebaTheme = createTheme({
       },
     },
     MuiCssBaseline: {
-      styleOverrides: `
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-            scroll-behavior: auto !important;
-          }
-        }
-      `,
+      styleOverrides: {
+        '@media (prefers-reduced-motion: reduce)': {
+          '*, *::before, *::after': {
+            animationDuration: '0.01ms !important',
+            animationIterationCount: '1 !important',
+            transitionDuration: '0.01ms !important',
+            scrollBehavior: 'auto !important',
+          },
+        },
+        '.MuiCard-root': {
+          contentVisibility: 'auto',
+          containIntrinsicSize: 'auto 200px',
+        },
+        '.MuiTypography-noWrap': {
+          textOverflow: 'ellipsis',
+        },
+        '#mobile-shell': {
+          paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+        },
+        '@media (min-width: 900px)': {
+          '#mobile-shell': {
+            paddingBottom: 0,
+          },
+        },
+      },
     },
   },
 });
@@ -330,6 +345,9 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           boxShadow: theme.shadows[8],
+          ...(theme.palette.mode === 'dark' && {
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0))',
+          }),
         }),
       },
     },

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
@@ -36,6 +37,7 @@ import { useThemeContext } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useLanguage, type SupportedLanguage } from '../../contexts';
 import { syncLanguageToFirestore } from '../../contexts/LanguageContext';
+import type { ThemeMode } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -55,27 +57,38 @@ export const ThemeSettingsScreen: React.FC = () => {
   const { settings, setPreference } = useNotificationSettings(user?.id);
   const [emailNotifications, setEmailNotifications] = useLocalStorage('emailNotifications', true);
 
-  const handleLanguageChange = (lang: SupportedLanguage) => {
+  const handleLanguageChange = useCallback((lang: SupportedLanguage) => {
     setLanguage(lang);
     if (user?.id) {
       syncLanguageToFirestore(user.id, lang);
     }
-  };
+  }, [setLanguage, user?.id]);
 
-  const handleClearCache = () => {
+  const handleClearCache = useCallback(() => {
     try {
       localStorage.clear();
       showSuccess(t('settings.theme.clearCacheSuccess'));
     } catch {
       showError(t('settings.theme.clearCacheError'));
     }
-  };
+  }, [showSuccess, showError, t]);
 
-  const handleSyncData = () => {
-    // Invalida o cache do React Query para forçar refetch de todos os dados
+  const handleSyncData = useCallback(() => {
     queryClient.invalidateQueries();
     showSuccess(t('settings.theme.syncDataSuccess'));
-  };
+  }, [queryClient, showSuccess, t]);
+
+  const handleThemeModeChange = useCallback((_event: React.MouseEvent<HTMLElement>, newMode: ThemeMode | null) => {
+    if (newMode !== null) setMode(newMode);
+  }, [setMode]);
+
+  const handlePushEnabledChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('pushEnabled', e.target.checked);
+  }, [setPreference]);
+
+  const handleEmailNotificationsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmailNotifications(e.target.checked);
+  }, [setEmailNotifications]);
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -131,10 +144,7 @@ export const ThemeSettingsScreen: React.FC = () => {
               <ToggleButtonGroup
                 value={mode}
                 exclusive
-                onChange={(_event, newMode) => {
-                  // Ignora clique no botão já selecionado (newMode seria null)
-                  if (newMode !== null) setMode(newMode);
-                }}
+                onChange={handleThemeModeChange}
                 aria-label={t('settings.theme.selection')}
                 fullWidth
                 size="small"
@@ -168,7 +178,7 @@ export const ThemeSettingsScreen: React.FC = () => {
               />
               <Switch
                 checked={settings.pushEnabled}
-                onChange={(e) => setPreference('pushEnabled', e.target.checked)}
+                onChange={handlePushEnabledChange}
               />
             </ListItem>
             <Divider />
@@ -182,7 +192,7 @@ export const ThemeSettingsScreen: React.FC = () => {
               />
               <Switch
                 checked={emailNotifications}
-                onChange={(e) => setEmailNotifications(e.target.checked)}
+                onChange={handleEmailNotificationsChange}
               />
             </ListItem>
           </List>

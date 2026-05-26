@@ -28,6 +28,7 @@ import { doc, getDoc, getDocs, query, collection, where, documentId, writeBatch,
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -74,6 +75,12 @@ export const PlayersScreen: React.FC = () => {
     setRetryCount((n) => n + 1);
   };
 
+  const handleRefresh = async () => {
+    setError(null);
+    setLoading(true);
+    setRetryCount((n) => n + 1);
+  };
+
   useEffect(() => {
     if (!groupId || !user) return;
 
@@ -84,11 +91,10 @@ export const PlayersScreen: React.FC = () => {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         if (cancelled) return;
         if (groupDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
-          const memberIds = groupData.members || [];
-          const ownerId = groupData.ownerId;
-          const admins = groupData.admins || [];
+          const groupData = snakeToCamel(groupDoc.data()) as Record<string, unknown>;
+          const memberIds = (groupData.members as string[]) || [];
+          const ownerId = groupData.ownerId as string;
+          const admins = (groupData.admins as string[]) || [];
 
           // Privacidade: apenas membros do grupo podem ver a lista de jogadores (#1028)
           const isGroupMember =
@@ -125,8 +131,7 @@ export const PlayersScreen: React.FC = () => {
             if (result.status === 'rejected') continue;
             for (const userDoc of result.value.docs) {
               const raw = userDoc.data();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              userDataMap.set(userDoc.id, { raw, camel: snakeToCamel(raw) as Record<string, any> });
+              userDataMap.set(userDoc.id, { raw, camel: snakeToCamel(raw) as Record<string, unknown> });
             }
           }
 
@@ -238,12 +243,14 @@ export const PlayersScreen: React.FC = () => {
             </Typography>
           </Box>
         </Box>
+        <PullToRefresh onRefresh={handleRefresh}>
         <Container maxWidth="sm" sx={{ py: 2 }}>
           <ErrorState
             message={error}
             onRetry={handleRetry}
           />
         </Container>
+        </PullToRefresh>
       </Box>
     );
   }
@@ -316,6 +323,7 @@ export const PlayersScreen: React.FC = () => {
         </Box>
       </Box>
 
+      <PullToRefresh onRefresh={handleRefresh}>
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {members.length === 0 ? (
           <EmptyState
@@ -344,6 +352,7 @@ export const PlayersScreen: React.FC = () => {
           </Card>
         )}
       </Container>
+      </PullToRefresh>
 
       {/* Card de jogador estilo figurinha */}
       <PlayerCard

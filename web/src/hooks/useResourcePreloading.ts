@@ -5,16 +5,12 @@ import { useLocation } from 'react-router-dom';
 const routeModuleCache = new Map<string, boolean>();
 
 const routePrefetchers: Record<string, () => Promise<unknown>> = {
-  '/games': () => import('../pages/games/GamesScreen'),
-  '/groups': () => import('../pages/groups/GroupsScreen'),
-  '/profile': () => import('../pages/profile/ProfileScreen'),
   '/game/create': () => import('../pages/game/CreateGameScreen'),
   '/group/create': () => import('../pages/group/CreateGroupScreen'),
   '/profile/edit': () => import('../pages/profile/EditProfileScreen'),
   '/level-journey': () => import('../pages/profile/LevelJourneyScreen'),
   '/league': () => import('../pages/league/LeagueScreen'),
   '/statistics': () => import('../pages/statistics/StatisticsScreen'),
-  '/ranking': () => import('../pages/ranking/RankingScreen'),
 };
 
 function preloadRouteModule(route: string): Promise<void> {
@@ -68,11 +64,11 @@ export function useResourcePreloading() {
   useEffect(() => {
     // Prefetch likely next routes based on current route
     const prefetchMap: Record<string, string[]> = {
-      '/': ['/game/create', '/groups', '/profile'],
-      '/groups': ['/group/create', '/game/create'],
-      '/profile': ['/profile/edit', '/level-journey'],
-      '/ranking': ['/league', '/statistics'],
-      '/league': ['/ranking', '/statistics'],
+      '/': ['/game/create', '/profile/edit'],
+      '/group/create': ['/game/create'],
+      '/profile/edit': ['/level-journey'],
+      '/league': ['/statistics'],
+      '/statistics': ['/league'],
     };
 
     const currentPath = location.pathname;

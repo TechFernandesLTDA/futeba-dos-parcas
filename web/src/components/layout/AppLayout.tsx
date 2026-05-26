@@ -2,6 +2,13 @@ import { Box } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import { ConnectionStatus, useOnlineStatus } from '../common/ConnectionStatus';
+import { AppBreadcrumbs } from './AppBreadcrumbs';
+import { useAutoBreadcrumbs } from '../../hooks/useAutoBreadcrumbs';
+
+function AppBreadcrumbsWrapper() {
+  const items = useAutoBreadcrumbs();
+  return <AppBreadcrumbs items={items} />;
+}
 
 export function AppLayout() {
   const isOnline = useOnlineStatus();
@@ -31,6 +38,7 @@ export function AppLayout() {
         }}
       >
         <ConnectionStatus isOnline={isOnline} />
+        <AppBreadcrumbsWrapper />
         <Outlet />
       </Box>
     </Box>

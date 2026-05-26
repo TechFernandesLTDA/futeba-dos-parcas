@@ -4,17 +4,20 @@ import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
 import { AuthProvider, ThemeProvider, LanguageProvider, useAuth, TeamsProvider } from './contexts';
-import { Box } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { ErrorBoundary, withErrorBoundary } from './components/common/ErrorBoundary';
+import { ErrorOutline } from '@mui/icons-material';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConnectionStatus, useOnlineStatus } from './components/common/ConnectionStatus';
 import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { MobileTopBar } from './components/layout/MobileTopBar';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { useNotifications } from './hooks/useNotifications';
 import { AppLayout } from './components/layout';
 import { CommandPalette } from './components/search/CommandPalette';
+import { ShortcutsDialog } from './components/common/ShortcutsDialog';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
@@ -531,7 +534,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         id="mobile-shell"
         sx={{
           width: '100%',
-          maxWidth: { xs: '100%', sm: 480, md: 800, lg: 1200 },
+          maxWidth: { xs: '100%', sm: 600, md: 800, lg: 1200 },
           minHeight: '100dvh',
           bgcolor: 'background.default',
           boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.12)'}` }),
@@ -544,8 +547,23 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         {user && !isHomeScreen && (
           <MobileTopBar unreadCount={unreadCount} />
         )}
-        {children}
+        <MobileBottomNav>{children}</MobileBottomNav>
       </Box>
+    </Box>
+  );
+}
+
+function AppCrashFallback() {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', p: 4, textAlign: 'center' }}>
+      <ErrorOutline sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
+      <Typography variant="h5" gutterBottom>Algo deu errado</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Ocorreu um erro inesperado. Tente recarregar a página.
+      </Typography>
+      <Button variant="contained" onClick={() => window.location.reload()}>
+        Recarregar
+      </Button>
     </Box>
   );
 }
@@ -554,12 +572,30 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+        e.preventDefault();
+        setShortcutsOpen(true);
+      }
+      if (e.key === 'Escape' && shortcutsOpen) {
+        setShortcutsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [shortcutsOpen]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
           <AuthProvider>
+            <ErrorBoundary fallback={<AppCrashFallback />}>
             <ToastProvider>
             <TeamsProvider>
             <LanguageProvider>
@@ -576,6 +612,7 @@ function App() {
                   onClose={closePalette}
                 />
               </ErrorBoundary>
+              <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
               <MobileShell>
                 <VerificationBanner />
                 <Box component="main" id="main-content">
@@ -586,6 +623,7 @@ function App() {
             </LanguageProvider>
             </TeamsProvider>
             </ToastProvider>
+            </ErrorBoundary>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

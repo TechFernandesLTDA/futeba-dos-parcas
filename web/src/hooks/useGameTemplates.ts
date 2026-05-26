@@ -14,6 +14,7 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { GameTemplate, FieldType } from '../types/game';
 import { snakeToCamel } from '../utils/firestoreHelpers';
+import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useGameTemplates');
@@ -32,6 +33,7 @@ interface TemplateInput {
 
 export function useGameTemplates() {
   const { user } = useAuth();
+  const { showError } = useToast();
   const [templates, setTemplates] = useState<GameTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +85,15 @@ export function useGameTemplates() {
     const currentUser = userRef.current;
     if (!currentUser) return null;
 
+    if (!input.name?.trim()) {
+      showError('O nome do template é obrigatório.');
+      return null;
+    }
+    if (!input.max_players || input.max_players < 1) {
+      showError('O número máximo de jogadores deve ser pelo menos 1.');
+      return null;
+    }
+
     try {
       const templatesRef = collection(db, 'users', currentUser.id, 'game_templates');
       const docRef = await addDoc(templatesRef, {
@@ -102,13 +113,19 @@ export function useGameTemplates() {
       return docRef.id;
     } catch (err) {
       logger.error('Error saving template:', err);
+      showError('Erro ao salvar template.');
       throw err;
     }
-  }, [fetchTemplates]);
+  }, [fetchTemplates, showError]);
 
   const removeTemplate = useCallback(async (templateId: string): Promise<void> => {
     const currentUser = userRef.current;
     if (!currentUser) return;
+
+    if (!templateId) {
+      showError('Template não encontrado.');
+      return;
+    }
 
     try {
       const docRef = doc(db, 'users', currentUser.id, 'game_templates', templateId);
@@ -116,9 +133,10 @@ export function useGameTemplates() {
       setTemplates((prev) => prev.filter((t) => t.id !== templateId));
     } catch (err) {
       logger.error('Error deleting template:', err);
+      showError('Erro ao remover template.');
       throw err;
     }
-  }, []);
+  }, [showError]);
 
   return { templates, loading, error, saveTemplate, removeTemplate, refetch: fetchTemplates };
 }

@@ -239,7 +239,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
                       position: 'absolute',
                       top: 4,
                       right: 4,
-                      bgcolor: 'rgba(0,0,0,0.5)',
+                      bgcolor: alpha(theme.palette.common.black, 0.5),
                       color: theme.palette.common.white,
                       opacity: 0,
                       transition: (t) => t.transitions.create('opacity', { duration: t.transitions.duration.shorter }),

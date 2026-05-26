@@ -56,6 +56,7 @@ import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
+import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { useSeasons } from '../../hooks/useSeasons';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
@@ -232,6 +233,7 @@ export const LeagueScreen: React.FC = () => {
 
   // Callbacks memoizados para não quebrar React.memo
   const handleRetry = useCallback(() => refetch(), [refetch]);
+  const handleRefresh = useCallback(async () => { await refetch(); }, [refetch]);
 
   const scrollToMe = useCallback(() => {
     userCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -520,6 +522,7 @@ export const LeagueScreen: React.FC = () => {
         </Box>
       )}
 
+      <PullToRefresh onRefresh={handleRefresh}>
       <Container
         maxWidth={isMd ? 'md' : 'sm'}
         sx={{ py: 2 }}
@@ -673,13 +676,20 @@ export const LeagueScreen: React.FC = () => {
           </Fade>
         )}
       </Container>
+      </PullToRefresh>
 
       {currentUserPlayer && !showSticky && (
         <Fab
           color="primary"
           size="medium"
           onClick={scrollToMe}
-          sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 12 }}
+          sx={{
+            position: 'fixed',
+            bottom: { xs: 80, md: 24 },
+            right: { xs: 16, md: 24 },
+            zIndex: 12,
+            pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
+          }}
           aria-label="Ir para minha posição"
         >
           <MyLocationIcon />

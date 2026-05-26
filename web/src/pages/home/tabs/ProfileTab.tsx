@@ -495,7 +495,7 @@ export function ProfileTab() {
           <Card sx={{ mt: 0.5 }}>
             <List disablePadding aria-label="Menu de administração">
               {adminMenuItems.map((item, index) => (
-                <React.Fragment key={`admin-${index}`}>
+                <React.Fragment key={item.label}>
                   {index > 0 && <Divider />}
                   <ListItem
                     component="button"

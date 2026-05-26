@@ -27,7 +27,8 @@ import {
   AddCircleOutline as AddGameIcon,
   GroupAdd as AddGroupIcon,
   AccountCircle as ProfileIcon,
-  EmojiEvents as RankingIcon,
+  Notifications as NotificationsIcon,
+  Settings as SettingsIcon,
   Bolt as QuickIcon,
   History as HistoryIcon,
   Close as ClearIcon,
@@ -86,15 +87,25 @@ export interface SearchResult {
 const QUICK_COMMANDS: Omit<SearchResult, 'id'>[] = [
   { type: 'quick', name: 'Criar jogo', subtitle: 'Organizar nova pelada' },
   { type: 'quick', name: 'Criar grupo', subtitle: 'Novo grupo de pelada' },
-  { type: 'quick', name: 'Ir para perfil', subtitle: 'Ver meu perfil' },
-  { type: 'quick', name: 'Ver ranking', subtitle: 'Classificação dos jogadores' },
+  { type: 'quick', name: 'Configurações', subtitle: 'Ajustes da sua conta' },
+  { type: 'quick', name: 'Perfil', subtitle: 'Ver meu perfil' },
+  { type: 'quick', name: 'Notificações', subtitle: 'Central de notificações' },
 ];
 
 const QUICK_ROUTES: Record<string, string> = {
   'Criar jogo': '/game/create',
   'Criar grupo': '/group/create',
-  'Ir para perfil': '/profile',
-  'Ver ranking': '/ranking',
+  'Configurações': '/settings',
+  'Perfil': '/profile',
+  'Notificações': '/notifications',
+};
+
+const QUICK_SHORTCUTS: Record<string, string> = {
+  'Criar jogo': '⌘N',
+  'Criar grupo': '⌘⇧N',
+  'Configurações': '⌘,',
+  'Perfil': '',
+  'Notificações': '',
 };
 
 interface SearchPanelProps {
@@ -393,7 +404,27 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
                       secondaryTypographyProps={{ variant: 'caption' }}
                     />
-                    <Typography variant="caption" color="text.disabled" sx={{ ml: 1, flexShrink: 0 }}>↵</Typography>
+                    {QUICK_SHORTCUTS[cmd.name] ? (
+                      <Box
+                        component="kbd"
+                        aria-hidden="true"
+                        sx={{
+                          ml: 1,
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: 0.5,
+                          border: `1px solid ${theme.palette.divider}`,
+                          bgcolor: 'background.paper',
+                          fontFamily: 'inherit',
+                          fontSize: '0.75rem',
+                          lineHeight: 1.4,
+                          color: 'text.secondary',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {QUICK_SHORTCUTS[cmd.name]}
+                      </Box>
+                    ) : null}
                   </ListItemButton>
                 </Box>
               ))}
@@ -476,8 +507,9 @@ function quickIcon(name: string): React.ReactElement {
   const map: Record<string, React.ReactElement> = {
     'Criar jogo': <AddGameIcon fontSize="small" />,
     'Criar grupo': <AddGroupIcon fontSize="small" />,
-    'Ir para perfil': <ProfileIcon fontSize="small" />,
-    'Ver ranking': <RankingIcon fontSize="small" />,
+    'Configurações': <SettingsIcon fontSize="small" />,
+    'Perfil': <ProfileIcon fontSize="small" />,
+    'Notificações': <NotificationsIcon fontSize="small" />,
   };
   return map[name] ?? <QuickIcon fontSize="small" />;
 }

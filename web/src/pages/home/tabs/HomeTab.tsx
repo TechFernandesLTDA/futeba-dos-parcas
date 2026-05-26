@@ -5,6 +5,7 @@ import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../
 import { getLevelColor } from '../../../types/user';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
+import { PullToRefresh } from '../../../components/common/PullToRefresh';
 import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsChecklist';
 import type { ChecklistStep } from '../../../components/onboarding/FirstStepsChecklist';
 import {
@@ -628,6 +629,9 @@ export function HomeTab() {
   tRef.current = t;
 
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleRefresh = useCallback(async () => { await queryClient.invalidateQueries(); }, [queryClient]);
 
   // ─── Checklist de Primeiros Passos (Fase 1) ──────────────────────────────────
   const {
@@ -749,6 +753,7 @@ export function HomeTab() {
   // ====== Main Render ======
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <Container maxWidth="lg" sx={{ py: 2 }}>
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
@@ -945,5 +950,6 @@ export function HomeTab() {
         <PlayerCard userId={user?.id || null} onClose={() => setIsPlayerCardOpen(false)} />
       )}
     </Container>
+    </PullToRefresh>
   );
 }

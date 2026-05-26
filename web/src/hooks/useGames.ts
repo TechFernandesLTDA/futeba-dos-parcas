@@ -14,13 +14,14 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { Game, GameConfirmation, GameStatus, ConfirmationStatus } from '../types/game';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { snakeToCamel } from '../utils/firestoreHelpers';
+import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { camelToSnake } from '../utils/camelToSnake';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
@@ -33,12 +34,12 @@ function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
   return {
     id: docId,
     ...converted,
-    dateTime: (raw.dateTime as { toDate?: () => Date })?.toDate?.() || (raw.date_time as { toDate?: () => Date })?.toDate?.() || converted.dateTime,
-    createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
-    updatedAt: ((raw.updated_at || raw.updatedAt) as { toDate?: () => Date })?.toDate?.(),
-    votingDeadline: ((raw.voting_deadline || raw.votingDeadline) as { toDate?: () => Date })?.toDate?.(),
-    xpProcessedAt: ((raw.xp_processed_at || raw.xpProcessedAt) as { toDate?: () => Date })?.toDate?.(),
-    deletedAt: ((raw.deleted_at || raw.deletedAt) as { toDate?: () => Date })?.toDate?.(),
+    dateTime: toDate((raw.dateTime ?? raw.date_time) as Timestamp | Date) || converted.dateTime,
+    createdAt: toDate((raw.created_at ?? raw.createdAt) as Timestamp | Date),
+    updatedAt: toDate((raw.updated_at ?? raw.updatedAt) as Timestamp | Date),
+    votingDeadline: toDate((raw.voting_deadline ?? raw.votingDeadline) as Timestamp | Date),
+    xpProcessedAt: toDate((raw.xp_processed_at ?? raw.xpProcessedAt) as Timestamp | Date),
+    deletedAt: toDate((raw.deleted_at ?? raw.deletedAt) as Timestamp | Date),
   } as Game;
 }
 
@@ -315,8 +316,7 @@ export function useCreateGame() {
         const snakeGameData = camelToSnake(gameData);
 
         // Remover campos undefined (Firestore não aceita)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cleanData: Record<string, any> = {};
+        const cleanData: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(snakeGameData)) {
           if (value !== undefined) {
             cleanData[key] = value;

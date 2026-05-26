@@ -2,7 +2,8 @@ export type GameStatus = 'SCHEDULED' | 'CONFIRMED' | 'LIVE' | 'FINISHED' | 'CANC
 
 export type GameVisibility = 'GROUP_ONLY' | 'PUBLIC_CLOSED' | 'PUBLIC_OPEN';
 
-export type FieldType = 'SOCIETY' | 'FUTSAL' | 'CAMPO' | 'AREIA';
+import type { FieldType } from './location';
+export type { FieldType };
 
 export type ConfirmationStatus = 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'WAITLIST' | 'ON_THE_WAY' | 'CHECKED_IN';
 
@@ -187,7 +188,7 @@ export interface Game {
   coOrganizers: string[];
   
   // Confirmation
-  confirmationClosesAt?: string;
+  confirmationClosesAt?: Date;
   confirmationDeadlineHours: number;
   autoCloseHours?: number;
   autoClosed: boolean;
@@ -287,6 +288,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   FUTSAL: 'Futsal',
   CAMPO: 'Campo',
   AREIA: 'Areia',
+  OUTROS: 'Outros',
 };
 
 export const PIX_KEY_TYPE_LABELS: Record<PixKeyType, string> = {

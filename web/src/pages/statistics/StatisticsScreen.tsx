@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
@@ -13,8 +13,6 @@ import {
   Tab,
   Skeleton,
   Grid,
-  Alert,
-  Button,
   useTheme,
   useMediaQuery,
   alpha,
@@ -34,6 +32,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useStatistics } from '../../hooks/useStatistics';
 import { getLevelTitle, getLevelColor } from '../../types/user';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { AppBreadcrumbs } from '../../components/layout/AppBreadcrumbs';
@@ -73,9 +72,9 @@ export const StatisticsScreen: React.FC = () => {
     setSearchParams({ tab: v.toString() });
   };
 
-  if (error) {
-    showError(error);
-  }
+  useEffect(() => {
+    if (error) showError(error);
+  }, [error, showError]);
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -161,10 +160,7 @@ export const StatisticsScreen: React.FC = () => {
             </Card>
           </Box>
         ) : error && !stats ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-            <Button variant="outlined" onClick={retry}>{t('statistics.retry')}</Button>
-          </Box>
+          <ErrorState message={error} onRetry={retry} retryLabel={t('statistics.retry')} />
         ) : !stats ? (
           <EmptyState
             icon={<SportsSoccer sx={{ fontSize: 64, color: 'text.disabled' }} />}

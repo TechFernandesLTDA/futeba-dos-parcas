@@ -40,14 +40,15 @@ export function useFeedback() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!currentUser) {
+    const uid = currentUser?.uid;
+    if (!uid) {
       setFetching(false);
       return;
     }
 
     const q = query(
       collection(db, 'user_feedback'),
-      where('user_id', '==', currentUser.uid),
+      where('user_id', '==', uid),
       orderBy('created_at', 'desc'),
       // #1330: limita leitura realtime do feedback do usuário (evita ler todo o histórico)
       limit(50)
@@ -72,11 +73,7 @@ export function useFeedback() {
     });
 
     return () => unsubscribe();
-  // FIX #1540: usa currentUser?.uid como dep em vez do objeto inteiro
-  // evita re-subscrição desnecessária em token refreshes (que mudam o objeto
-  // FirebaseUser mas não o uid)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, showError]);
 
   const submitFeedback = async (input: SubmitFeedbackInput): Promise<string | null> => {
     if (!currentUser) {

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,10 @@ import {
   Typography,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { SearchPanel } from './SearchPanel';
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import { ShortcutsDialog } from '../common/ShortcutsDialog';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -35,6 +37,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Registra Cmd+K / Ctrl+K globalmente — toggle abre/fecha
   const handleShortcut = useCallback(() => {
@@ -47,7 +52,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   useKeyboardShortcut({ key: 'k', modifiers: ['cmd'] }, handleShortcut);
 
+  // Atalhos de ações rápidas
+  const handleCreateGame = useCallback(() => { onClose(); navigate('/game/create'); }, [onClose, navigate]);
+  useKeyboardShortcut({ key: 'n', modifiers: ['cmd'] }, handleCreateGame);
+
+  const handleCreateGroup = useCallback(() => { onClose(); navigate('/group/create'); }, [onClose, navigate]);
+  useKeyboardShortcut({ key: 'n', modifiers: ['cmd', 'shift'] }, handleCreateGroup);
+
+  const handleSettings = useCallback(() => { onClose(); navigate('/settings'); }, [onClose, navigate]);
+  useKeyboardShortcut({ key: ',', modifiers: ['cmd'] }, handleSettings);
+
+  // Atalho "?" para abrir diálogo de atalhos
+  const handleToggleShortcuts = useCallback(() => {
+    setShortcutsOpen(prev => !prev);
+  }, []);
+  useKeyboardShortcut({ key: '?', fireInInputs: false }, handleToggleShortcuts);
+
   return (
+    <>
     <Dialog
       open={open}
       onClose={onClose}
@@ -138,5 +160,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <SearchPanel onClose={onClose} autoFocus={open} />
       </DialogContent>
     </Dialog>
+    <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+    </>
   );
 };

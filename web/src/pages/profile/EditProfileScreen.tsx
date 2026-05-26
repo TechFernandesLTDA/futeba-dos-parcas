@@ -19,10 +19,9 @@ import {
 } from '@mui/material';
 import {
   PhotoCamera as CameraIcon,
-  Save as SaveIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { FormScaffold } from '../../components/layout';
+import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -277,9 +276,16 @@ export const EditProfileScreen: React.FC = () => {
     }
 
     // 2) Persiste demais campos do perfil no Firestore
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) {
+      showError('Nome não pode estar vazio.');
+      setSaving(false);
+      return;
+    }
+
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
-        name: formData.name,
+        name: trimmedName,
         nickname: formData.nickname,
         phone: formData.phone,
         preferred_position: formData.preferredPosition,
@@ -298,8 +304,8 @@ export const EditProfileScreen: React.FC = () => {
 
       // 3) Atualiza Firebase Auth profile (displayName e/ou photoURL)
       const profileUpdate: { displayName?: string; photoURL?: string } = {};
-      if (formData.name !== currentUser.displayName) {
-        profileUpdate.displayName = formData.name;
+      if (trimmedName !== currentUser.displayName) {
+        profileUpdate.displayName = trimmedName;
       }
       if (uploadedPhotoUrl) {
         profileUpdate.photoURL = uploadedPhotoUrl;
@@ -320,6 +326,10 @@ export const EditProfileScreen: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    navigate('/?tab=4');
   };
 
   if (loading) {
@@ -345,14 +355,23 @@ export const EditProfileScreen: React.FC = () => {
       selectedFile !== null);
 
   return (
-    <FormScaffold
-      title={t('profile.editProfile')}
-      closeDestination="/?tab=4"
-      closeVariant="X"
-      isDirty={isDirty}
-      loading={saving || uploadingAvatar}
-    >
-      <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
+    <AdaptiveFormSheet closeDestination="/?tab=4" isDirty={isDirty}>
+      <FormScaffold
+        title={t('profile.editProfile')}
+        closeDestination="/?tab=4"
+        closeVariant="X"
+        isDirty={isDirty}
+        loading={saving || uploadingAvatar}
+        footer={
+          <>
+            <Button onClick={handleCancel} disabled={saving || uploadingAvatar}>Cancelar</Button>
+            <Button variant="contained" onClick={handleSave} disabled={saving || uploadingAvatar}>
+              {saving || uploadingAvatar ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </>
+        }
+      >
+        <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -527,17 +546,8 @@ export const EditProfileScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Button
-          variant="contained"
-          fullWidth
-          size="large"
-          onClick={handleSave}
-          disabled={saving || uploadingAvatar}
-          startIcon={saving || uploadingAvatar ? <CircularProgress size={20} /> : <SaveIcon />}
-        >
-          {uploadingAvatar ? t('profile.uploadingPhoto') : t('profile.saveChanges')}
-        </Button>
       </Container>
-    </FormScaffold>
+      </FormScaffold>
+    </AdaptiveFormSheet>
   );
 };

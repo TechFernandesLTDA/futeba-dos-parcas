@@ -160,6 +160,9 @@ export const LocationFormScreen: React.FC = () => {
     else if (form.name.length < 3) e.name = 'Mínimo 3 caracteres';
     if (!form.address.trim()) e.address = 'Endereço é obrigatório';
     if (!form.city.trim()) e.city = 'Cidade é obrigatória';
+    if (!form.state || form.state.trim().length < 2) {
+      e.state = 'Estado é obrigatório.';
+    }
     if (form.fieldCount < 1) e.fieldCount = 'Mínimo 1 campo';
     if (form.playersPerTeam < 3 || form.playersPerTeam > 11) {
       e.playersPerTeam = 'Entre 3 e 11';
@@ -169,6 +172,15 @@ export const LocationFormScreen: React.FC = () => {
     const phoneDigits = form.phone.replace(/\D/g, '');
     if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
       e.phone = 'Telefone inválido (use DDD + número)';
+    }
+    if (form.website && !/^https?:\/\/.+/.test(form.website)) {
+      e.website = 'URL inválida. Deve começar com http:// ou https://';
+    }
+    if (form.latitude !== null && (form.latitude < -90 || form.latitude > 90)) {
+      e.latitude = 'Latitude deve estar entre -90 e 90.';
+    }
+    if (form.longitude !== null && (form.longitude < -180 || form.longitude > 180)) {
+      e.longitude = 'Longitude deve estar entre -180 e 180.';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -279,6 +291,10 @@ export const LocationFormScreen: React.FC = () => {
     }
   };
 
+  const handleCancel = () => {
+    navigate(closeDestination);
+  };
+
   const closeDestination = isEdit && locationId ? `/location/${locationId}` : '/locations';
 
   if (fetchLoading) {
@@ -316,6 +332,16 @@ export const LocationFormScreen: React.FC = () => {
         closeVariant="X"
         isDirty={isDirty}
         loading={loading}
+        footer={
+          <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+            <Button variant="outlined" onClick={handleCancel} disabled={loading} fullWidth>
+              Cancelar
+            </Button>
+            <Button variant="contained" onClick={handleSubmit} disabled={loading} fullWidth startIcon={loading ? <CircularProgress size={20} /> : null}>
+              {isEdit ? 'Salvar' : 'Criar Local'}
+            </Button>
+          </Box>
+        }
       >
         <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
           <Stack spacing={2}>
@@ -362,6 +388,8 @@ export const LocationFormScreen: React.FC = () => {
                       inputProps={{ maxLength: 2 }}
                       value={form.state}
                       onChange={(e) => handleChange('state', e.target.value.toUpperCase())}
+                      error={!!errors.state}
+                      helperText={errors.state}
                     />
                   </Stack>
                   <TextField
@@ -510,6 +538,8 @@ export const LocationFormScreen: React.FC = () => {
                     onChange={(e) => handleChange('website', e.target.value)}
                     placeholder="https://"
                     type="url"
+                    error={!!errors.website}
+                    helperText={errors.website}
                     inputProps={{ maxLength: 2048 }}
                   />
                   <TextField
@@ -526,25 +556,6 @@ export const LocationFormScreen: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Box sx={{ display: 'flex', gap: 2, pt: 1 }}>
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => navigate(closeDestination)}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleSubmit}
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={20} /> : null}
-              >
-                {isEdit ? 'Salvar' : 'Criar Local'}
-              </Button>
-            </Box>
           </Stack>
         </Container>
       </FormScaffold>

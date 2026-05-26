@@ -3,7 +3,7 @@ export * from './game';
 export * from './group';
 export * from './team';
 
-// Re-export gamification sem conflito com Badge de user.ts
+// Re-export gamification sem conflito com UserBadge de user.ts
 export {
   type LeagueDivision,
   type BadgeType,
@@ -13,7 +13,6 @@ export {
   type Season,
   type SeasonParticipation,
   type SeasonFinalStanding,
-  type UserBadge,
   type UserStreak,
   type WeeklyChallenge,
   type UserChallengeProgress,
@@ -35,6 +34,7 @@ export {
 export {
   type Location,
   type Field,
+  type FieldType,
   type LocationReview,
   type LocationWithFields,
   FIELD_TYPE_CONFIG,

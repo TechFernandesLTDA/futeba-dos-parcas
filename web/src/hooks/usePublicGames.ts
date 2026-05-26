@@ -73,11 +73,16 @@ export function useJoinPublicGame() {
       const gameId = game.id;
       const gameRef = doc(db, 'games', gameId);
 
-      await updateDoc(gameRef, {
-        players: arrayUnion(uid),
-        players_count: increment(1),
-        updated_at: serverTimestamp(),
-      });
+      try {
+        await updateDoc(gameRef, {
+          players: arrayUnion(uid),
+          players_count: increment(1),
+          updated_at: serverTimestamp(),
+        });
+      } catch (error) {
+        showError('Erro ao atualizar jogo público.');
+        throw error;
+      }
     },
     onSuccess: (_, game) => {
       showSuccess(`Você entrou na pelada "${game.locationName}"!`);
