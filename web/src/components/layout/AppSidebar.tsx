@@ -83,8 +83,10 @@ export function AppSidebar() {
           display: { xs: 'none', md: 'block', lg: 'none' },
           width: RAIL_WIDTH,
           flexShrink: 0,
+          height: '100%',
           '& .MuiDrawer-paper': {
             width: RAIL_WIDTH,
+            height: '100%',
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
@@ -153,8 +155,10 @@ export function AppSidebar() {
           display: { xs: 'none', lg: 'block' },
           width: DRAWER_WIDTH,
           flexShrink: 0,
+          height: '100%',
           '& .MuiDrawer-paper': {
             width: DRAWER_WIDTH,
+            height: '100%',
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
