@@ -44,7 +44,8 @@ export function useFormDraft<T extends Record<string, unknown>>(
         return null;
       }
       return entry.data;
-    } catch {
+    } catch (error) {
+      console.warn('Failed to read form draft from localStorage:', error);
       return null;
     }
   });
@@ -57,8 +58,8 @@ export function useFormDraft<T extends Record<string, unknown>>(
         const entry: DraftEntry<T> = { data: sanitized, savedAt: Date.now() };
         try {
           localStorage.setItem(storageKey, JSON.stringify(entry));
-        } catch {
-          // quota exceeded — ignore silently
+        } catch (error) {
+          console.warn('Failed to save form draft to localStorage:', error);
         }
         setDraft(sanitized);
       }, DEBOUNCE_MS);
@@ -68,7 +69,11 @@ export function useFormDraft<T extends Record<string, unknown>>(
 
   const clearDraft = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    localStorage.removeItem(storageKey);
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.warn('Failed to clear form draft from localStorage:', error);
+    }
     setDraft(null);
   }, [storageKey]);
 

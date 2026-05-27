@@ -51,7 +51,8 @@ function loadSearchHistory(): string[] {
   try {
     const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
     return raw ? JSON.parse(raw) : [];
-  } catch {
+  } catch (error) {
+    console.warn('Failed to read search history from localStorage:', error);
     return [];
   }
 }
@@ -59,8 +60,8 @@ function loadSearchHistory(): string[] {
 function saveSearchHistory(queries: string[]): void {
   try {
     localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(queries));
-  } catch {
-    // quota exceeded
+  } catch (error) {
+    console.warn('Failed to save search history to localStorage:', error);
   }
 }
 
@@ -73,7 +74,11 @@ function addToSearchHistory(queryText: string): void {
 }
 
 function clearSearchHistory(): void {
-  localStorage.removeItem(SEARCH_HISTORY_KEY);
+  try {
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
+  } catch (error) {
+    console.warn('Failed to clear search history from localStorage:', error);
+  }
 }
 
 export interface SearchResult {

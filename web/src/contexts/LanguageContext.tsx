@@ -18,7 +18,12 @@ const STORAGE_KEY = 'i18nextLng';
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const { i18n } = useTranslation();
   const [language, setLanguageState] = useState<SupportedLanguage>(() => {
-    return (localStorage.getItem(STORAGE_KEY) as SupportedLanguage) || 'pt-BR';
+    try {
+      return (localStorage.getItem(STORAGE_KEY) as SupportedLanguage) || 'pt-BR';
+    } catch (error) {
+      console.warn('Failed to read language from localStorage:', error);
+      return 'pt-BR';
+    }
   });
 
   const setLanguage = useCallback(async (lang: SupportedLanguage) => {
@@ -26,8 +31,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     await i18n.changeLanguage(lang);
     try {
       localStorage.setItem(STORAGE_KEY, lang);
-    } catch {
-      // QuotaExceededError em Safari/Firefox modo privado — ignorar, estado em memória persiste
+    } catch (error) {
+      console.warn('Failed to save language to localStorage:', error);
     }
   }, [i18n]);
 

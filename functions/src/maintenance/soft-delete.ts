@@ -39,6 +39,11 @@ const RETENTION_DAYS = 30;
 // CALLABLE: Soft Delete Game
 // ==========================================
 
+interface SoftDeleteGameData {
+  gameId: string;
+  reason?: string;
+}
+
 /**
  * Marca um jogo como soft-deleted.
  * Apenas o dono do jogo pode deletar.
@@ -51,7 +56,7 @@ const RETENTION_DAYS = 30;
  *   Resultado da operação
  */
 export const softDeleteGame =
-  functions.https.onCall({
+  functions.https.onCall<SoftDeleteGameData>({
     region: "southamerica-east1",
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
@@ -191,6 +196,11 @@ export const softDeleteGame =
 // CALLABLE: Soft Delete Group (NOVO - P2 #40)
 // ==========================================
 
+interface SoftDeleteGroupData {
+  groupId: string;
+  reason?: string;
+}
+
 /**
  * Marca um grupo e seus jogos como soft-deleted
  * (cascade). Apenas admin/owner do grupo pode
@@ -208,7 +218,7 @@ export const softDeleteGame =
  *   Resultado da operação
  */
 export const softDeleteGroup =
-  functions.https.onCall({
+  functions.https.onCall<SoftDeleteGroupData>({
     region: "southamerica-east1",
   }, async (request) => {
     const userId = request.auth?.uid;
@@ -360,6 +370,10 @@ export const softDeleteGroup =
 // CALLABLE: Restore Deleted Game (P2 #40)
 // ==========================================
 
+interface RestoreDeletedGameData {
+  gameId: string;
+}
+
 /**
  * Restaura um jogo soft-deleted.
  * Apenas o usuário que deletou ou admin pode
@@ -371,7 +385,7 @@ export const softDeleteGroup =
  *   Resultado da operação
  */
 export const restoreDeletedGame =
-  functions.https.onCall({
+  functions.https.onCall<RestoreDeletedGameData>({
     region: "southamerica-east1",
   }, async (request) => {
     const userId = request.auth?.uid;
@@ -494,6 +508,10 @@ export const restoreDeletedGame =
 // CALLABLE: Restore Deleted Group (P2 #40)
 // ==========================================
 
+interface RestoreDeletedGroupData {
+  groupId: string;
+}
+
 /**
  * Restaura um grupo soft-deleted.
  * Apenas quem deletou, o dono ou admin pode
@@ -507,7 +525,7 @@ export const restoreDeletedGame =
  *   Resultado da operação
  */
 export const restoreDeletedGroup =
-  functions.https.onCall({
+  functions.https.onCall<RestoreDeletedGroupData>({
     region: "southamerica-east1",
   }, async (request) => {
     const userId = request.auth?.uid;

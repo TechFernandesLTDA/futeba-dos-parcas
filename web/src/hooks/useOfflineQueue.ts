@@ -20,7 +20,8 @@ function loadQueue(): QueuedMutation[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
-  } catch {
+  } catch (error) {
+    console.warn('Failed to read offline queue from localStorage:', error);
     return [];
   }
 }
@@ -28,8 +29,8 @@ function loadQueue(): QueuedMutation[] {
 function saveQueue(queue: QueuedMutation[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-  } catch {
-    // quota exceeded
+  } catch (error) {
+    console.warn('Failed to save offline queue to localStorage:', error);
   }
 }
 

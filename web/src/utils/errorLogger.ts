@@ -99,8 +99,8 @@ function saveToLocalStorage(entry: ErrorLogEntry): void {
         half.push(entry);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(half));
       }
-    } catch {
-      // Se ainda falhar, ignora — não bloqueia UI
+    } catch (error) {
+      console.warn('Failed to save error log to localStorage (fallback):', error);
     }
   }
 }
@@ -202,7 +202,8 @@ export function getLocalErrorLogs(): ErrorLogEntry[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as ErrorLogEntry[]) : [];
-  } catch {
+  } catch (error) {
+    console.warn('Failed to read error logs from localStorage:', error);
     return [];
   }
 }
