@@ -95,6 +95,10 @@ fun HeatmapGrid(
         else -> 8.dp
     }
 
+    val startDate = remember(weeksToShow) {
+        today.minusWeeks(weeksToShow.toLong()).with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY))
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -105,8 +109,6 @@ fun HeatmapGrid(
                 // Iterate days (rows)
                 for (day in 0 until 7) {
                     // Calculate date for this cell
-                    // Determine start date of the grid (Sunday of weeksToShow weeks ago)
-                    val startDate = today.minusWeeks(weeksToShow.toLong()).with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY))
                     val cellDate = startDate.plusWeeks(week.toLong()).plusDays(day.toLong())
 
                     val count = activityCounts[cellDate] ?: 0

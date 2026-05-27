@@ -111,7 +111,10 @@ class WaitlistRepositoryImpl constructor(
             }
 
             // Reordenar posicoes restantes
-            reorderQueue(gameId)
+            val reorderResult = reorderQueue(gameId)
+            if (reorderResult.isFailure) {
+                AppLogger.w(TAG) { "Falha ao reordenar fila após remoção: ${reorderResult.exceptionOrNull()?.message}" }
+            }
 
             AppLogger.i(TAG) { "Usuario $userId removido da lista de espera do jogo $gameId" }
 
@@ -240,7 +243,10 @@ class WaitlistRepositoryImpl constructor(
             val updatedEntry = entry.copy(status = WaitlistStatus.PROMOTED.name)
 
             // Reordenar fila
-            reorderQueue(gameId)
+            val reorderResult = reorderQueue(gameId)
+            if (reorderResult.isFailure) {
+                AppLogger.w(TAG) { "Falha ao reordenar fila após promoção: ${reorderResult.exceptionOrNull()?.message}" }
+            }
 
             AppLogger.i(TAG) { "Usuario ${updatedEntry.userId} promovido da lista de espera do jogo $gameId" }
 
@@ -314,7 +320,10 @@ class WaitlistRepositoryImpl constructor(
             doc.reference.update("status", status.name).await()
 
             if (status == WaitlistStatus.PROMOTED || status == WaitlistStatus.CANCELLED || status == WaitlistStatus.EXPIRED) {
-                reorderQueue(gameId)
+                val reorderResult = reorderQueue(gameId)
+                if (reorderResult.isFailure) {
+                    AppLogger.w(TAG) { "Falha ao reordenar fila após mudança de status: ${reorderResult.exceptionOrNull()?.message}" }
+                }
             }
 
             Result.success(Unit)
@@ -412,9 +421,10 @@ class WaitlistRepositoryImpl constructor(
 
     /**
      * Reordena as posicoes na fila apos remocao ou promocao.
+     * @return Result<Unit> com sucesso ou falha logada.
      */
-    private suspend fun reorderQueue(gameId: String) {
-        try {
+    private suspend fun reorderQueue(gameId: String): Result<Unit> {
+        return try {
             // P1 #12: Limit 50 - maximo realista de jogadores na fila
             val snapshot = waitlistCollection(gameId)
                 .whereIn("status", listOf(
@@ -434,8 +444,10 @@ class WaitlistRepositoryImpl constructor(
                 position++
             }
             batch.commit().await()
+            Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao reordenar fila", e)
+            Result.failure(e)
         }
     }
 }

@@ -126,6 +126,7 @@ class LocationSelectorViewModel(
     // Cache interno
     private var allLocations: List<Location> = emptyList()
     private var searchJob: Job? = null
+    private var loadJob: Job? = null
 
     init {
         loadLocations()
@@ -136,7 +137,8 @@ class LocationSelectorViewModel(
     // ==================== CARREGAR LOCAIS ====================
 
     fun loadLocations() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = LocationSelectorUiState.Loading
             try {
                 val result = locationRepository.getAllLocations()
@@ -516,6 +518,7 @@ class LocationSelectorViewModel(
     override fun onCleared() {
         super.onCleared()
         searchJob?.cancel()
+        loadJob?.cancel()
     }
 }
 

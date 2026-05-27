@@ -89,7 +89,7 @@ fun rememberGlassConfig(): GlassConfig {
             contentColor = colorScheme.onSurface,
             backgroundAlpha = if (isDark) 0.6f else 0.8f,
             borderAlpha = if (isDark) 0.2f else 0.3f,
-            gradientColor = Color.White
+            gradientColor = colorScheme.primary.copy(alpha = 0.15f)
         )
     }
 }

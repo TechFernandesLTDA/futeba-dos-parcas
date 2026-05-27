@@ -52,7 +52,7 @@ describe('ErrorBoundary', () => {
     );
 
     // Deve exibir UI de erro em vez do componente quebrado
-    expect(screen.getByText('Oops! Algo deu errado')).toBeInTheDocument();
+    expect(screen.getByText('Ops! Algo deu errado')).toBeInTheDocument();
   });
 
   it('exibe UI de erro com mensagem e botões', () => {
@@ -62,13 +62,13 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Oops! Algo deu errado')).toBeInTheDocument();
+    expect(screen.getByText('Ops! Algo deu errado')).toBeInTheDocument();
     expect(screen.getByText(/Ocorreu um erro inesperado/)).toBeInTheDocument();
-    expect(screen.getByText('Tentar Novamente')).toBeInTheDocument();
+    expect(screen.getByText('Recarregar')).toBeInTheDocument();
     expect(screen.getByText('Ir para Início')).toBeInTheDocument();
   });
 
-  it('botão Tentar Novamente chama window.location.reload', async () => {
+  it('botão Recarregar chama window.location.reload', async () => {
     const user = userEvent.setup();
     const reloadMock = vi.fn();
     Object.defineProperty(window, 'location', {
@@ -82,7 +82,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    await user.click(screen.getByText('Tentar Novamente'));
+    await user.click(screen.getByText('Recarregar'));
     expect(reloadMock).toHaveBeenCalled();
   });
 
@@ -106,6 +106,6 @@ describe('ErrorBoundary', () => {
     );
 
     expect(screen.getByText('Fallback customizado')).toBeInTheDocument();
-    expect(screen.queryByText('Oops! Algo deu errado')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ops! Algo deu errado')).not.toBeInTheDocument();
   });
 });

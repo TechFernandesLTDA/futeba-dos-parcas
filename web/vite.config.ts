@@ -70,6 +70,14 @@ export default defineConfig({
           if (id.includes('recharts') || id.includes('d3-')) {
             return 'vendor-charts'
           }
+          // i18n locales (large JSON, code-split for lazy loading)
+          if (id.includes('src/i18n/locales/')) {
+            return 'i18n-locales'
+          }
+          // Google Maps (heavy, only used in map screens)
+          if (id.includes('@react-google-maps') || id.includes('@googlemaps')) {
+            return 'vendor-google-maps'
+          }
           return undefined
         },
       },

@@ -481,6 +481,7 @@ class FieldPhotoDataSource constructor(
             com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                 ?: "unknown"
         } catch (e: Exception) {
+            AppLogger.w(TAG) { "Erro ao obter currentUserId: ${e.message}" }
             "unknown"
         }
     }
@@ -538,9 +539,9 @@ class FieldPhotoDataSource constructor(
             val photoRef = storage.reference.child(photoPath)
             val thumbRef = storage.reference.child(thumbPath)
 
-            // Deletar ambos (ignorar erro se não existir)
-            try { photoRef.delete().await() } catch (e: Exception) { /* ignore */ }
-            try { thumbRef.delete().await() } catch (e: Exception) { /* ignore */ }
+            // Deletar ambos (ignorar erro se não existir, mas logar)
+            try { photoRef.delete().await() } catch (e: Exception) { AppLogger.w(TAG) { "Falha ao deletar foto principal: ${e.message}" } }
+            try { thumbRef.delete().await() } catch (e: Exception) { AppLogger.w(TAG) { "Falha ao deletar thumbnail: ${e.message}" } }
 
             AppLogger.d(TAG) { "Field photo deleted for field: $fieldId" }
             true

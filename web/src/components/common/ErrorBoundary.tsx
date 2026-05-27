@@ -97,7 +97,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <ErrorIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
 
               <Typography variant="h5" gutterBottom fontWeight={600}>
-                Oops! Algo deu errado
+                Ops! Algo deu errado
               </Typography>
 
               <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>

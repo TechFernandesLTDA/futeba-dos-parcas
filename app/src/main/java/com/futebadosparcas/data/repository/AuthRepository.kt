@@ -81,7 +81,7 @@ class AuthRepository constructor(
                 _profileComplete.value = result?.claims?.get("profileComplete") == true
             } catch (e: Exception) {
                 AppLogger.e(TAG, "checkProfileComplete failed: ${e.message}", e)
-                _profileComplete.value = false
+                _profileComplete.value = null
             }
         }
     }
@@ -97,7 +97,7 @@ class AuthRepository constructor(
             _profileComplete.value = result?.claims?.get("profileComplete") == true
         } catch (e: Exception) {
             AppLogger.e(TAG, "refreshProfileComplete failed: ${e.message}", e)
-            _profileComplete.value = false
+            _profileComplete.value = null
         }
     }
 

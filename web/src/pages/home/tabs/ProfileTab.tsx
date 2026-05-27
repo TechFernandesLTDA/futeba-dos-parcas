@@ -268,6 +268,7 @@ export function ProfileTab() {
               src={getLevelBadgeImage(currentLevel)}
               onError={handleBadgeImageError}
               loading="lazy"
+              decoding="async"
               alt={getLevelBadgeDescription(currentLevel, currentEntry.name)}
               sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />

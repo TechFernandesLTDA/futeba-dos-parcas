@@ -32,6 +32,7 @@ import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.data.model.DraftState
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -152,7 +153,7 @@ private fun CaptainPickHeader(
                     imageVector = Icons.Default.EmojiEvents,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = Color.White
+                    tint = ContrastHelper.getContrastingTextColor(colorValue)
                 )
             }
 
@@ -596,7 +597,7 @@ fun SnakeDraftIndicator(
                         text = pickNumber.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = ContrastHelper.getContrastingTextColor(Color(color.hexValue))
                     )
                 }
             }

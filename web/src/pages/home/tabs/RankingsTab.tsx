@@ -176,6 +176,7 @@ const PodiumSection: React.FC<{
                       src={getLevelBadgeImage(player.level)}
                       onError={handleBadgeImageError}
                       loading="lazy"
+                      decoding="async"
                       alt={`Nível ${player.level}`}
                       sx={{
                         position: 'absolute',
@@ -396,6 +397,7 @@ export function RankingsTab() {
                         src={getLevelBadgeImage(currentPlayer.level)}
                         onError={handleBadgeImageError}
                         loading="lazy"
+                        decoding="async"
                         alt={`Nível ${currentPlayer.level}`}
                         sx={{
                           position: 'absolute',

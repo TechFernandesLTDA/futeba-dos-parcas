@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.futebadosparcas.data.model.GameDraft
+import com.futebadosparcas.util.AppLogger
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -26,6 +27,7 @@ class CreateGameDraftRepository constructor(
     private val gson = Gson()
 
     companion object {
+        private const val TAG = "CreateGameDraftRepo"
         private val DRAFT_KEY = stringPreferencesKey("game_draft")
     }
 
@@ -49,6 +51,7 @@ class CreateGameDraftRepository constructor(
             val draft = gson.fromJson(draftJson, GameDraft::class.java)
             if (draft.isValid()) draft else null
         } catch (e: Exception) {
+            AppLogger.w(TAG) { "Erro ao parsear rascunho de jogo: ${e.message}" }
             null
         }
     }
@@ -63,6 +66,7 @@ class CreateGameDraftRepository constructor(
                 val draft = gson.fromJson(draftJson, GameDraft::class.java)
                 if (draft.isValid()) draft else null
             } catch (e: Exception) {
+                AppLogger.w(TAG) { "Erro ao parsear rascunho de jogo no flow: ${e.message}" }
                 null
             }
         }

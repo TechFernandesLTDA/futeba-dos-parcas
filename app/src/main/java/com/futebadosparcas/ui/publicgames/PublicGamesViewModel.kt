@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,12 +47,16 @@ class PublicGamesViewModel(
     private val _joinState = MutableStateFlow<JoinGameState>(JoinGameState.Idle)
     val joinState: StateFlow<JoinGameState> = _joinState.asStateFlow()
 
+    private var loadJob: Job? = null
+    private var joinJob: Job? = null
+
     init {
         load()
     }
 
     fun load() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = PublicGamesUiState.Loading
             try {
                 val today = java.time.LocalDate.now().toString()
@@ -91,7 +96,8 @@ class PublicGamesViewModel(
 
     fun joinGame(gameId: String, userId: String) {
         _joinState.value = JoinGameState.Loading
-        viewModelScope.launch {
+        joinJob?.cancel()
+        joinJob = viewModelScope.launch {
             try {
                 firestore.collection("games").document(gameId)
                     .update(
@@ -107,5 +113,11 @@ class PublicGamesViewModel(
                 )
             }
         }
+    }
+
+    override fun onCleared() {
+        loadJob?.cancel()
+        joinJob?.cancel()
+        super.onCleared()
     }
 }
