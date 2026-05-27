@@ -50,6 +50,15 @@ const REMINDER_OPTIONS = [
   { value: 60, label: '1 hora antes' },
 ];
 
+const SectionHeader: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+    <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
+    <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+      {title}
+    </Typography>
+  </Box>
+);
+
 export const NotificationSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Notificações');
@@ -107,15 +116,6 @@ export const NotificationSettingsScreen: React.FC = () => {
   const handleMuteForHours = useCallback((hours: number) => () => {
     setMuteUntil(hours);
   }, [setMuteUntil]);
-
-  const SectionHeader: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-      <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
-      <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-        {title}
-      </Typography>
-    </Box>
-  );
 
   const muted = settings.muteUntil && new Date(settings.muteUntil) > new Date();
   const muteRemaining = muted && settings.muteUntil

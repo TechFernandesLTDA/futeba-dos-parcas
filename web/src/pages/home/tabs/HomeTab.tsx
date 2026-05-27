@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../../../types/gamification';
-import { getLevelColor } from '../../../types/user';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
 import { PullToRefresh } from '../../../components/common/PullToRefresh';
@@ -17,6 +16,7 @@ import {
   CardActionArea,
   Chip,
   Avatar,
+  Divider,
   List,
   ListItem,
   ListItemAvatar,
@@ -501,20 +501,32 @@ function MiniRankingWidget() {
   if (!primaryGroup) {
     return (
       <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ py: 2 }}>
+        <CardContent sx={{ py: 2.5 }}>
           <Box sx={{ textAlign: 'center' }}>
-            <EmojiEvents sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
+            <EmojiEvents sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
               {t('groups.noRankingMembers')}
             </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => navigate('/?tab=2')}
-              sx={{ mt: 1 }}
-            >
-              {t('common.viewGroups')}
-            </Button>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+              {t('ranking.joinGroupToCompete', 'Entre em um grupo para competir no ranking')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => navigate('/?tab=2')}
+              >
+                {t('common.viewGroups')}
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<SportsSoccer />}
+                onClick={() => navigate('/?tab=1')}
+              >
+                {t('nav.games')}
+              </Button>
+            </Box>
           </Box>
         </CardContent>
       </Card>
@@ -550,9 +562,23 @@ function MiniRankingWidget() {
               </Box>
             ))
           ) : players.length === 0 ? (
-            <Typography variant="caption" color="text.secondary">
-              {t('ranking.noPlayersYet')}
-            </Typography>
+            <Box sx={{ textAlign: 'center', py: 1.5 }}>
+              <SportsSoccer sx={{ fontSize: 32, color: 'text.disabled', mb: 0.5 }} />
+              <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                {t('ranking.noPlayersYet')}
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5, mb: 1 }}>
+                {t('ranking.participateToAppear', 'Participe de jogos para aparecer no ranking')}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<SportsSoccer />}
+                onClick={() => navigate('/?tab=1')}
+              >
+                {t('games.viewGames', 'Ver jogos')}
+              </Button>
+            </Box>
           ) : (
             <List disablePadding dense>
               {players.map((player, index) => (
@@ -690,7 +716,14 @@ export function HomeTab() {
   const levelEntry = getLevelEntry(currentLevel);
   const progress = getXpProgress(currentXp);
   const xpRemaining = getXpRemaining(currentXp);
-  const levelColor = getLevelColor(currentLevel, theme);
+  const levelColor = currentLevel >= 19 ? gColors.gold
+    : currentLevel >= 16 ? theme.palette.error.main
+    : currentLevel >= 13 ? gColors.mvp
+    : currentLevel >= 11 ? theme.palette.info.main
+    : currentLevel >= 9 ? gColors.level
+    : currentLevel >= 6 ? theme.palette.success.main
+    : currentLevel >= 3 ? gColors.silver
+    : gColors.bronze;
 
   useEffect(() => {
     const uid = user?.id;
@@ -767,143 +800,164 @@ export function HomeTab() {
           position: 'relative',
         }}
       >
-        <CardActionArea onClick={() => navigate('/level-journey')} aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })}>
-          <CardContent sx={{ p: 2.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
-              <Box sx={{ position: 'relative' }}>
-                <Avatar
-                  src={user?.photoUrl}
-                  alt={user?.name || t('profile.defaultUserName')}
-                  onClick={(e) => { e.stopPropagation(); setIsPlayerCardOpen(true); }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.stopPropagation();
-                      setIsPlayerCardOpen(true);
-                    }
-                  }}
-                  aria-label={t('profile.openPlayerCardAria')}
-                  sx={{
-                    width: 60,
-                    height: 60,
-                    bgcolor: alpha(theme.palette.common.white, 0.2),
-                    color: 'primary.contrastText',
-                    fontWeight: 'bold',
-                    fontSize: '1.5rem',
-                    border: '3px solid',
-                    borderColor: 'primary.contrastText',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {user?.name?.charAt(0)?.toUpperCase() || '?'}
-                </Avatar>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: -4,
-                    right: -4,
-                    width: 26,
-                    height: 26,
-                    borderRadius: '50%',
-                    bgcolor: levelColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px solid',
-                    borderColor: 'background.paper',
-                    boxShadow: `0 0 8px ${levelColor}80`,
-                  }}
-                >
-                  <Typography variant="caption" fontWeight="bold" sx={{ color: 'primary.contrastText' }}>
-                    {currentLevel}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box sx={{ ml: 2, flex: 1, maxWidth: '100%', minWidth: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="h6" fontWeight="bold" noWrap sx={{ lineHeight: 1.2, textOverflow: 'ellipsis' }}>
-                    {t('profile.greeting', { name: user?.name?.split(' ')[0] || t('profile.defaultPlayerName') })}
-                  </Typography>
-                  <TeamBadge teamId={user?.favoriteTeam} size={28} />
-                </Box>
-                <Typography variant="body2" noWrap sx={{ opacity: 0.85, mt: 0.25, textOverflow: 'ellipsis' }}>
-                   {levelEntry.name} • {currentXp.toLocaleString(navigator.language || 'pt-BR')} XP
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="caption" sx={{ opacity: 0.85 }}>
-                  {t('profile.levelLabel', { level: currentLevel })}
-                </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.85 }}>
-                  {currentLevel < 20 ? t('profile.levelLabel', { level: currentLevel + 1 }) : t('profile.levelMax')}
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={progress * 100}
-                aria-label={t('profile.levelProgressAria')}
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  bgcolor: alpha(theme.palette.common.white, 0.15),
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
-                    bgcolor: alpha(theme.palette.common.white, 0.9),
-                  },
+        <CardContent sx={{ p: 2.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
+            <Box sx={{ position: 'relative' }}>
+              <Avatar
+                src={user?.photoUrl}
+                alt={user?.name || t('profile.defaultUserName')}
+                onClick={() => setIsPlayerCardOpen(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setIsPlayerCardOpen(true);
+                  }
                 }}
-              />
-              {currentLevel < 20 && (
-                <Typography variant="caption" sx={{ opacity: 0.7, mt: 0.5, display: 'block' }}>
-                   {t('profile.xpToNextLevel', { xp: xpRemaining.toLocaleString(navigator.language || 'pt-BR'), levelName: getLevelEntry(currentLevel + 1).name })}
+                aria-label={t('profile.openPlayerCardAria')}
+                sx={{
+                  width: 60,
+                  height: 60,
+                  bgcolor: alpha(theme.palette.common.white, 0.2),
+                  color: 'primary.contrastText',
+                  fontWeight: 'bold',
+                  fontSize: '1.5rem',
+                  border: '3px solid',
+                  borderColor: 'primary.contrastText',
+                  cursor: 'pointer',
+                }}
+              >
+                {user?.name?.charAt(0)?.toUpperCase() || '?'}
+              </Avatar>
+              <Box
+                component="button"
+                onClick={() => navigate('/level-journey')}
+                aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })}
+                sx={{
+                  position: 'absolute',
+                  bottom: -4,
+                  right: -4,
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  bgcolor: levelColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid',
+                  borderColor: 'background.paper',
+                  boxShadow: `0 0 8px ${levelColor}80`,
+                  cursor: 'pointer',
+                  p: 0,
+                }}
+              >
+                <Typography variant="caption" fontWeight="bold" sx={{ color: 'primary.contrastText' }}>
+                  {currentLevel}
                 </Typography>
-              )}
+              </Box>
             </Box>
+            <Box
+              sx={{ ml: 2, flex: 1, maxWidth: '100%', minWidth: 0, cursor: 'pointer' }}
+              onClick={() => setIsPlayerCardOpen(true)}
+              role="button"
+              tabIndex={0}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h6" fontWeight="bold" noWrap sx={{ lineHeight: 1.2, textOverflow: 'ellipsis' }}>
+                  {t('profile.greeting', { name: user?.name?.split(' ')[0] || t('profile.defaultPlayerName') })}
+                </Typography>
+                <TeamBadge teamId={user?.favoriteTeam} size={28} />
+              </Box>
+              <Typography variant="body2" noWrap sx={{ opacity: 0.85, mt: 0.25, textOverflow: 'ellipsis' }}>
+                 {levelEntry.name} • {currentXp.toLocaleString(navigator.language || 'pt-BR')} XP
+              </Typography>
+            </Box>
+          </Box>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              {[
-                { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/?tab=1' },
-                { value: user?.totalGoals || 0, label: t('profile.goals'), icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
-                { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gColors.gold, 0.25), navigateTo: '/statistics' },
-              ].map((stat) => (
-                <ButtonBase
-                  key={stat.label}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(stat.navigateTo);
-                  }}
-                  sx={{
-                    flex: 1,
-                    textAlign: 'center',
-                    bgcolor: stat.color,
-                    borderRadius: 2,
-                    py: 1,
-                    px: 0.5,
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                    {stat.icon}
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                    {stat.label}
-                  </Typography>
-                </ButtonBase>
-              ))}
+          <Box sx={{ mb: 2, cursor: 'pointer' }} onClick={() => navigate('/level-journey')}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography variant="caption" sx={{ opacity: 0.85 }}>
+                {t('profile.levelLabel', { level: currentLevel })}
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.85 }}>
+                {currentLevel < 20 ? t('profile.levelLabel', { level: currentLevel + 1 }) : t('profile.levelMax')}
+              </Typography>
             </Box>
-          </CardContent>
-        </CardActionArea>
+            <LinearProgress
+              variant="determinate"
+              value={progress * 100}
+              aria-label={t('profile.levelProgressAria')}
+              sx={{
+                height: 8,
+                borderRadius: 4,
+                bgcolor: alpha(theme.palette.common.white, 0.15),
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 4,
+                  bgcolor: alpha(theme.palette.common.white, 0.9),
+                },
+              }}
+            />
+            {currentLevel < 20 && (
+              <Typography variant="caption" sx={{ opacity: 0.7, mt: 0.5, display: 'block' }}>
+                 {t('profile.xpToNextLevel', { xp: xpRemaining.toLocaleString(navigator.language || 'pt-BR'), levelName: getLevelEntry(currentLevel + 1).name })}
+              </Typography>
+            )}
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {[
+              { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/?tab=1' },
+              { value: user?.totalGoals || 0, label: t('profile.goals'), icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
+              { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gColors.gold, 0.25), navigateTo: '/statistics' },
+            ].map((stat) => (
+              <ButtonBase
+                key={stat.label}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(stat.navigateTo);
+                }}
+                sx={{
+                  flex: 1,
+                  textAlign: 'center',
+                  bgcolor: stat.color,
+                  borderRadius: 2,
+                  py: 1,
+                  px: 0.5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                  {stat.icon}
+                  {stat.value}
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                  {stat.label}
+                </Typography>
+              </ButtonBase>
+            ))}
+          </Box>
+
+          <Button
+            variant="text"
+            fullWidth
+            onClick={() => navigate('/level-journey')}
+            sx={{
+              mt: 2,
+              color: 'primary.contrastText',
+              borderColor: alpha(theme.palette.common.white, 0.3),
+              border: '1px solid',
+              '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.1) },
+            }}
+          >
+            {t('profile.viewLevelJourney') || 'Ver jornada'}
+          </Button>
+        </CardContent>
       </Card>
 
       {isMd ? (
         <Grid container spacing={2}>
           <Grid item xs={12} md={7}>
-            {/* Checklist de Primeiros Passos (Fase 1 — antes do próximo jogo) */}
             <FirstStepsChecklist
               steps={checklistSteps}
               visible={checklistVisible}
@@ -911,24 +965,22 @@ export function HomeTab() {
                 const stepsDone = checklistSteps.filter(s => s.completed).length;
                 onChecklistDismissed(stepsDone, checklistSteps.length);
               }}
+              maxIncomplete={2}
             />
 
-            {/* Próximo Jogo — abaixo das informações do jogador */}
             <NextGameWidget />
 
-            <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={2} />
-
-            {/* MiniRankingWidget */}
             <MiniRankingWidget />
           </Grid>
 
           <Grid item xs={12} md={5}>
+            <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={2} />
+
             <RecentActivityFeed activities={activities} loading={activitiesLoading} />
           </Grid>
         </Grid>
       ) : (
         <>
-          {/* Checklist de Primeiros Passos (Fase 1 — antes do próximo jogo) */}
           <FirstStepsChecklist
             steps={checklistSteps}
             visible={checklistVisible}
@@ -936,14 +988,16 @@ export function HomeTab() {
               const stepsDone = checklistSteps.filter(s => s.completed).length;
               onChecklistDismissed(stepsDone, checklistSteps.length);
             }}
+            maxIncomplete={2}
           />
 
-          {/* Próximo Jogo — abaixo das informações do jogador */}
           <NextGameWidget />
 
-          <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} />
+          <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={3} />
 
           <MiniRankingWidget />
+
+          <Divider sx={{ mx: -2, my: 2.5, borderColor: 'divider' }} />
 
           <RecentActivityFeed activities={activities} loading={activitiesLoading} />
         </>

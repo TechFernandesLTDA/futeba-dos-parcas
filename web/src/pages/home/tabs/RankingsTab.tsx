@@ -21,8 +21,6 @@ import {
   Tooltip,
   Fade,
   Button,
-  ToggleButtonGroup,
-  ToggleButton,
 } from '@mui/material';
 import {
   EmojiEvents as TrophyIcon,
@@ -81,6 +79,109 @@ const XP_TABLE = [
 ];
 
 // #1217 - Podium section for top 3 players with distinct visual hierarchy
+// Helper to render a single podium card
+const PodiumCard: React.FC<{
+  player: LeaguePlayer;
+  config: { position: number; label: string; Icon: React.ElementType; size: number; borderColor: string; bgColor: string; gradient: string; iconColor: string };
+  showXP: boolean;
+  positionChange: number | null;
+  onAvatarClick: (userId: string) => void;
+}> = ({ player, config, showXP, positionChange, onAvatarClick }) => {
+  const theme = useTheme();
+  const divisionConfig = DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE;
+
+  return (
+    <Card
+      sx={{
+        flex: 1,
+        maxWidth: 170,
+        minWidth: 0,
+        background: config.gradient,
+        border: `2px solid ${config.borderColor}`,
+        borderColor: config.borderColor,
+        borderRadius: 2,
+        transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shortest }),
+        '&:active': { transform: 'scale(0.97)' },
+      }}
+    >
+      <CardContent sx={{ py: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
+        <Box sx={{ mb: 0.5 }}>
+          <config.Icon sx={{ color: config.iconColor, fontSize: 22 }} />
+        </Box>
+        <Typography variant="caption" fontWeight={700} sx={{ color: config.borderColor, mb: 1, display: 'block' }}>
+          {config.label}
+        </Typography>
+        <Box
+          onClick={() => onAvatarClick(player.userId)}
+          sx={{ cursor: 'pointer', display: 'inline-block' }}
+          role="button"
+          aria-label={`Ver figurinha de ${player.userName}`}
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(player.userId)}
+        >
+          <Box sx={{ position: 'relative', display: 'inline-block' }}>
+            <PlayerAvatar
+              name={player.userName}
+              photoUrl={player.userPhoto}
+              size={config.size}
+              level={player.level}
+            />
+            {player.level > 0 && (
+              <Box
+                component="img"
+                src={getLevelBadgeImage(player.level)}
+                onError={handleBadgeImageError}
+                loading="lazy"
+                decoding="async"
+                alt={`Nível ${player.level}`}
+                sx={{
+                  position: 'absolute',
+                  bottom: -4,
+                  right: -4,
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  border: `2px solid ${theme.palette.background.paper}`,
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+        <Typography
+          variant="body2"
+          fontWeight={700}
+          noWrap
+          sx={{ mt: 1, maxWidth: 130, mx: 'auto' }}
+        >
+          {player.userName}
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+          <TeamBadge teamId={player.favoriteTeam} size={16} />
+          {player.isCurrentUser && (
+            <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
+          )}
+        </Box>
+        <Typography variant="subtitle2" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color} sx={{ mt: 0.5 }}>
+          {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString('pt-BR')}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {showXP ? 'XP' : divisionConfig.label} · Nv. {player.level}
+        </Typography>
+        {positionChange !== null && positionChange !== 0 && (
+          <Typography variant="caption" fontWeight={700} color={positionChange > 0 ? 'success.main' : 'error.main'} sx={{ display: 'block', mt: 0.25 }}>
+            {positionChange > 0 ? '▲' : '▼'} {Math.abs(positionChange)}
+          </Typography>
+        )}
+        {positionChange === 0 && (
+          <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.25 }}>
+            —
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const PodiumSection: React.FC<{
   players: LeaguePlayer[];
   showXP: boolean;
@@ -89,6 +190,7 @@ const PodiumSection: React.FC<{
 }> = ({ players, showXP, positionChanges, onAvatarClick }) => {
   const theme = useTheme();
   const gColors = useGamificationColors();
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
 
   if (players.length === 0) return null;
 
@@ -98,7 +200,7 @@ const PodiumSection: React.FC<{
       position: 1,
       label: '1º',
       Icon: EmojiEvents,
-      size: 64,
+      size: isXs ? 52 : 64,
       borderColor: gColors.gold,
       bgColor: alpha(gColors.gold, 0.12),
       gradient: `linear-gradient(180deg, ${alpha(gColors.gold, 0.18)}, ${alpha(gColors.gold, 0.04)})`,
@@ -108,7 +210,7 @@ const PodiumSection: React.FC<{
       position: 2,
       label: '2º',
       Icon: MilitaryTechIcon,
-      size: 56,
+      size: isXs ? 44 : 56,
       borderColor: gColors.silver,
       bgColor: alpha(gColors.silver, 0.12),
       gradient: `linear-gradient(180deg, ${alpha(gColors.silver, 0.15)}, ${alpha(gColors.silver, 0.03)})`,
@@ -118,7 +220,7 @@ const PodiumSection: React.FC<{
       position: 3,
       label: '3º',
       Icon: Star,
-      size: 48,
+      size: isXs ? 40 : 48,
       borderColor: gColors.bronze,
       bgColor: alpha(gColors.bronze, 0.12),
       gradient: `linear-gradient(180deg, ${alpha(gColors.bronze, 0.15)}, ${alpha(gColors.bronze, 0.03)})`,
@@ -126,103 +228,73 @@ const PodiumSection: React.FC<{
     },
   ];
 
+  const first = top3[0];
+  const second = top3[1];
+  const third = top3[2];
+
+  if (isXs) {
+    return (
+      <Box sx={{ mb: 3, mt: 1 }}>
+        {/* 1st place - full width on top */}
+        {first && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+            <Box sx={{ width: '80%', maxWidth: 200 }}>
+              <PodiumCard
+                player={first}
+                config={podiumConfig[0]}
+                showXP={showXP}
+                positionChange={positionChanges[first.userId]}
+                onAvatarClick={onAvatarClick}
+              />
+            </Box>
+          </Box>
+        )}
+        {/* 2nd and 3rd side by side below */}
+        {(second || third) && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+            {second && (
+              <Box sx={{ flex: 1, maxWidth: 170 }}>
+                <PodiumCard
+                  player={second}
+                  config={podiumConfig[1]}
+                  showXP={showXP}
+                  positionChange={positionChanges[second.userId]}
+                  onAvatarClick={onAvatarClick}
+                />
+              </Box>
+            )}
+            {third && (
+              <Box sx={{ flex: 1, maxWidth: 170 }}>
+                <PodiumCard
+                  player={third}
+                  config={podiumConfig[2]}
+                  showXP={showXP}
+                  positionChange={positionChanges[third.userId]}
+                  onAvatarClick={onAvatarClick}
+                />
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: { xs: 1, sm: 2 }, mb: 3, mt: 1 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 2, mb: 3, mt: 1 }}>
       {podiumConfig.map((config, idx) => {
         const player = top3[idx];
         if (!player) return null;
-        const divisionConfig = DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE;
-        const change = positionChanges[player.userId];
 
         return (
-          <Card
+          <PodiumCard
             key={player.id}
-            sx={{
-              flex: 1,
-              maxWidth: 170,
-              background: config.gradient,
-              border: `2px solid ${config.borderColor}`,
-              borderColor: config.borderColor,
-              borderRadius: 2,
-              transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shortest }),
-              '&:active': { transform: 'scale(0.97)' },
-            }}
-          >
-            <CardContent sx={{ py: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
-              <Box sx={{ mb: 0.5 }}>
-                <config.Icon sx={{ color: config.iconColor, fontSize: 22 }} />
-              </Box>
-              <Typography variant="caption" fontWeight={700} sx={{ color: config.borderColor, mb: 1, display: 'block' }}>
-                {config.label}
-              </Typography>
-              <Box
-                onClick={() => onAvatarClick(player.userId)}
-                sx={{ cursor: 'pointer', display: 'inline-block' }}
-                role="button"
-                aria-label={`Ver figurinha de ${player.userName}`}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(player.userId)}
-              >
-                <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                  <PlayerAvatar
-                    name={player.userName}
-                    photoUrl={player.userPhoto}
-                    size={config.size}
-                    level={player.level}
-                  />
-                  {player.level > 0 && (
-                    <Box
-                      component="img"
-                      src={getLevelBadgeImage(player.level)}
-                      onError={handleBadgeImageError}
-                      loading="lazy"
-                      decoding="async"
-                      alt={`Nível ${player.level}`}
-                      sx={{
-                        position: 'absolute',
-                        bottom: -4,
-                        right: -4,
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        border: `2px solid ${theme.palette.background.paper}`,
-                      }}
-                    />
-                  )}
-                </Box>
-              </Box>
-              <Typography
-                variant="body2"
-                fontWeight={700}
-                noWrap
-                sx={{ mt: 1, maxWidth: 130, mx: 'auto' }}
-              >
-                {player.userName}
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                <TeamBadge teamId={player.favoriteTeam} size={16} />
-                {player.isCurrentUser && (
-                  <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
-                )}
-              </Box>
-              <Typography variant="subtitle2" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color} sx={{ mt: 0.5 }}>
-                {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString('pt-BR')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {showXP ? 'XP' : divisionConfig.label} · Nv. {player.level}
-              </Typography>
-              {change !== null && change !== 0 && (
-                <Typography variant="caption" fontWeight={700} color={change > 0 ? 'success.main' : 'error.main'} sx={{ display: 'block', mt: 0.25 }}>
-                  {change > 0 ? '▲' : '▼'} {Math.abs(change)}
-                </Typography>
-              )}
-              {change === 0 && (
-                <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.25 }}>
-                  —
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
+            player={player}
+            config={config}
+            showXP={showXP}
+            positionChange={positionChanges[player.userId]}
+            onAvatarClick={onAvatarClick}
+          />
         );
       })}
     </Box>
@@ -331,23 +403,31 @@ export function RankingsTab() {
         }
       />
       {userGroups.length > 0 && (
-        <Box sx={{ px: 2, pt: 0.5, pb: 1, overflowX: 'auto' }}>
-          <ToggleButtonGroup
-            value={selectedGroupId ?? '__global__'}
-            exclusive
-            onChange={(_, v) => setSelectedGroupId(v === '__global__' ? null : v)}
+        <Box sx={{ px: 2, pt: 0.5, pb: 1, display: 'flex', gap: 0.5, overflowX: 'auto', flexWrap: 'nowrap' }}>
+          <Chip
+            label="Global"
             size="small"
-            sx={{ flexWrap: 'nowrap' }}
-          >
-            <ToggleButton value="__global__" aria-label="Global" sx={{ px: 1.5, textTransform: 'none', fontWeight: 600 }}>
-              Global
-            </ToggleButton>
-            {userGroups.map((g) => (
-              <ToggleButton key={g.id} value={g.id} aria-label={g.name} sx={{ px: 1.5, textTransform: 'none', fontWeight: 600 }}>
-                {g.name}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
+            variant={selectedGroupId === null ? 'filled' : 'outlined'}
+            color={selectedGroupId === null ? 'primary' : 'default'}
+            clickable
+            onClick={() => setSelectedGroupId(null)}
+            sx={{ fontWeight: 600, textTransform: 'none' }}
+          />
+          {userGroups.map((g) => {
+            const isActive = selectedGroupId === g.id;
+            return (
+              <Chip
+                key={g.id}
+                label={g.name}
+                size="small"
+                variant={isActive ? 'filled' : 'outlined'}
+                color={isActive ? 'primary' : 'default'}
+                clickable
+                onClick={() => setSelectedGroupId(isActive ? null : g.id)}
+                sx={{ fontWeight: 600, textTransform: 'none' }}
+              />
+            );
+          })}
         </Box>
       )}
       <Tabs

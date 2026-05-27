@@ -19,6 +19,8 @@ import {
   useTheme,
   useMediaQuery,
   Chip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   DarkMode as DarkModeIcon,
@@ -53,13 +55,13 @@ export const ThemeSettingsScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
-  const { settings, setPreference } = useNotificationSettings(user?.id);
+  const { settings, setPreference, loading: notifLoading, error: notifError } = useNotificationSettings(user?.id);
   const [emailNotifications, setEmailNotifications] = useLocalStorage('emailNotifications', true);
 
   const handleLanguageChange = useCallback((lang: SupportedLanguage) => {
     setLanguage(lang);
     if (user?.id) {
-      syncLanguageToFirestore(user.id, lang);
+      syncLanguageToFirestore(user.id, lang).catch(() => {});
     }
   }, [setLanguage, user?.id]);
 
@@ -97,6 +99,11 @@ export const ThemeSettingsScreen: React.FC = () => {
       />
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+        {notifError ? (
+          <Alert severity="error" sx={{ mb: 2 }}>{notifError}</Alert>
+        ) : notifLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+        ) : null}
         {/* Seletor de tema com 3 opções: claro, escuro, sistema.
             Substituímos o Switch binário que estava acoplado ao toggleTheme
             (ciclo light→dark→system), causando dessincronização entre estado

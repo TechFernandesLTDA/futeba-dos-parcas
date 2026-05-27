@@ -22,7 +22,6 @@ import {
   Security as SecurityIcon,
   Gavel as TermsIcon,
   PrivacyTip as PrivacyIcon,
-  Help as HelpIcon,
   BugReport as BugIcon,
   Email as EmailIcon,
   Language as LanguageIcon,
@@ -45,6 +44,9 @@ export const AboutScreen: React.FC = () => {
   // Versão e build lidos em build time via Vite define (package.json + CI run number).
   const appVersion = import.meta.env.VITE_APP_VERSION ?? 'dev';
   const buildNumber = import.meta.env.VITE_APP_BUILD ?? 'dev';
+
+  const ua = navigator.userAgent;
+  const browser = ua.includes('Firefox') ? 'Firefox' : ua.includes('Edg') ? 'Edge' : ua.includes('Chrome') ? 'Chrome' : ua.includes('Safari') ? 'Safari' : 'Desconhecido';
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -128,13 +130,6 @@ export const AboutScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <List disablePadding aria-label="Suporte e contato">
-            <ListItemButton>
-              <ListItemIcon>
-                <HelpIcon />
-              </ListItemIcon>
-              <ListItemText primary="Central de Ajuda" />
-            </ListItemButton>
-            <Divider />
             <ListItemButton onClick={() => setFeedbackOpen(true)}>
               <ListItemIcon>
                 <BugIcon />
@@ -167,7 +162,7 @@ export const AboutScreen: React.FC = () => {
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <LanguageIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary="Navegador" secondary={navigator.userAgent.split(' ')[0]} />
+                <ListItemText primary="Navegador" secondary={browser} />
               </ListItem>
               <ListItem sx={{ px: 0 }}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
@@ -181,7 +176,7 @@ export const AboutScreen: React.FC = () => {
 
         <Box sx={{ textAlign: 'center', py: 2 }}>
           <Typography variant="caption" color="text.disabled">
-            © 2024-2026 Futeba dos Parças
+            {`© 2024-${new Date().getFullYear()} Futeba dos Parças`}
           </Typography>
           <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
             Feito com ❤️ para os amantes do futebol
