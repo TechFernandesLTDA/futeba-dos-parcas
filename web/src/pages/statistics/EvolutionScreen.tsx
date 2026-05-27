@@ -128,7 +128,7 @@ export const EvolutionScreen: React.FC = () => {
         setEvolutionData(data);
       } catch (err) {
         logger.error('Error fetching evolution data:', err);
-        showError(t('statistics.loadEvolutionError'));
+        showErrorRef.current(t('statistics.loadEvolutionError'));
         setError(t('statistics.loadEvolutionError'));
       } finally {
         setLoading(false);
@@ -152,6 +152,9 @@ export const EvolutionScreen: React.FC = () => {
       <EmptyState
         icon={<TimelineIcon />}
         title="Nenhum dado disponível"
+        description="Jogue partidas para acompanhar sua evolução"
+        actionLabel="Ver partidas"
+        onAction={() => navigate('/?tab=1')}
       />
     );
   }
@@ -312,7 +315,7 @@ export const EvolutionScreen: React.FC = () => {
                   </Typography>
                 </Box>
               ) : (
-                <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 150 }}>
+                <Box role="img" aria-label="Gráfico de jogos por mês dos últimos 12 meses" sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 150 }}>
                   {evolutionData.slice(0, 12).reverse().map((data, _index) => (
                     <Box
                       key={data.month}
@@ -321,6 +324,7 @@ export const EvolutionScreen: React.FC = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
+                        height: '100%',
                       }}
                     >
                       <Box
@@ -328,9 +332,9 @@ export const EvolutionScreen: React.FC = () => {
                           width: '100%',
                           bgcolor: theme.palette.primary.main,
                           borderRadius: '4px 4px 0 0',
-                          height: `${(data.gamesPlayed / maxValue) * 100}px`,
+                          height: `${(data.gamesPlayed / maxValue) * 100}%`,
                           minHeight: 4,
-                          transition: (t) => t.transitions.create('height', { duration: t.transitions.duration.standard }),
+                          transition: (tm) => tm.transitions.create('height', { duration: tm.transitions.duration.standard }),
                         }}
                       />
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
