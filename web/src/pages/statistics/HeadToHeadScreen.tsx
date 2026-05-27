@@ -598,4 +598,4 @@ const MatchTimelineItem: React.FC<{
       </Box>
     </Box>
   );
-};
+});
