@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -109,13 +109,18 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const XP_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${theme.palette.primary.main}, ${gColors.gold})`, [theme.palette.primary.main, gColors.gold]);
   const OVERALL_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${gColors.gold}, ${theme.palette.warning.main})`, [gColors.gold, theme.palette.warning.main]);
   const cardRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(true);
   const [sharing, setSharing] = useState(false);
   const { showError } = useToast();
   const { playerCard: player, loading, error, refetch } = usePlayerCard(userId);
 
-  const levelColor = player ? getLevelColor(player.level, theme) : theme.palette.grey[500];
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const levelColor = useMemo(() => player ? getLevelColor(player.level, theme) : theme.palette.grey[500], [player, theme]);
   const levelEntry = player ? getLevelEntry(player.level) : null;
-  const xpProgress = player ? getXpProgress(player.experiencePoints) : 0;
+  const xpProgress = useMemo(() => player ? getXpProgress(player.experiencePoints) : 0, [player]);
   const xpRemaining = player ? getXpRemaining(player.experiencePoints) : 0;
 
   // Captura o card como PNG e compartilha ou faz download
@@ -133,6 +138,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       });
 
       canvas.toBlob(async (blob) => {
+        if (!mountedRef.current) return;
         if (!blob) {
           // Libera spinner se geração de blob falhar (#1128)
           setSharing(false);
@@ -171,9 +177,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
     }
   }, [player, showError]);
 
-  const winRate = player && player.totalGames > 0
+  const winRate = useMemo(() => player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)
-    : 0;
+    : 0, [player]);
 
   return (
     <Dialog
@@ -215,7 +221,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           </Tooltip>
 
           <Tooltip title={typeof navigator.share === 'function' ? 'Compartilhar no WhatsApp' : 'Baixar imagem'}>
-            <span>
+            <span role="button" aria-disabled="true" tabIndex={-1}>
               <IconButton
                 onClick={handleShare}
                 disabled={sharing || loading || !player}

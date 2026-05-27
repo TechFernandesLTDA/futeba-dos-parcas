@@ -67,7 +67,20 @@ export const ThemeSettingsScreen: React.FC = () => {
 
   const handleClearCache = useCallback(() => {
     try {
+      const keysToKeep: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('firebase:authUser:')) {
+          keysToKeep.push(key);
+        }
+      }
+      const preserved: Record<string, string> = {};
+      keysToKeep.forEach((key) => {
+        const val = localStorage.getItem(key);
+        if (val !== null) preserved[key] = val;
+      });
       localStorage.clear();
+      Object.entries(preserved).forEach(([key, val]) => localStorage.setItem(key, val));
       showSuccess(t('settings.theme.clearCacheSuccess'));
     } catch {
       showError(t('settings.theme.clearCacheError'));

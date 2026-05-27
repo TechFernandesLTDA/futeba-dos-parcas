@@ -79,12 +79,21 @@ export function validateMinLength(value: string, min: number, fieldName: string)
   return undefined;
 }
 
-export function validateUrl(value: string | undefined | null): string | undefined {
-  if (!value) return undefined;
-  if (!/^https?:\/\/.+/.test(value)) return 'URL inválida.';
-  return undefined;
+export function isValidUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
 }
 
+export function validateUrl(value: string | undefined | null): string | undefined {
+  if (!value) return undefined;
+  if (!isValidUrl(value)) return 'URL inválida.';
+  return undefined;
+}
 export function validatePositiveNumber(value: number | undefined | null, fieldName: string): string | undefined {
   if (value === undefined || value === null || value <= 0) return `${fieldName} deve ser maior que zero.`;
   return undefined;

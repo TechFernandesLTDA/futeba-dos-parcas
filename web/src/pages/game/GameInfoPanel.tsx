@@ -75,7 +75,8 @@ export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
                     onClick={() =>
                       window.open(
                         `https://www.google.com/maps/dir/?api=1&destination=${game.locationLat},${game.locationLng}`,
-                        '_blank'
+                        '_blank',
+                        'noopener,noreferrer'
                       )
                     }
                   >

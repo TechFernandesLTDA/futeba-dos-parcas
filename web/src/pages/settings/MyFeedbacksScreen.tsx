@@ -26,6 +26,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeedback } from '../../hooks/useFeedback';
+import { isValidUrl } from '../../utils/validation';
 import { LoadingState } from '../../components/common/GameCard';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -86,8 +87,8 @@ export const MyFeedbacksScreen: React.FC = () => {
                 <React.Fragment key={feedback.id}>
                   <ListItemButton
                     onClick={() => {
-                      if (feedback.github_issue_url) {
-                        window.open(feedback.github_issue_url, '_blank');
+                      if (feedback.github_issue_url && isValidUrl(feedback.github_issue_url)) {
+                        window.open(feedback.github_issue_url, '_blank', 'noopener,noreferrer');
                       }
                     }}
                     sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 2 }}
@@ -119,7 +120,9 @@ export const MyFeedbacksScreen: React.FC = () => {
                           sx={{ ml: 'auto', fontSize: '0.75rem' }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            window.open(feedback.github_issue_url, '_blank');
+                            if (isValidUrl(feedback.github_issue_url)) {
+                              window.open(feedback.github_issue_url, '_blank', 'noopener,noreferrer');
+                            }
                           }}
                         >
                           Ver issue

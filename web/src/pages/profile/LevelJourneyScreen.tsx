@@ -286,6 +286,15 @@ export const LevelJourneyScreen: React.FC = () => {
             {/* Guia de XP - Colapsável como Android */}
             <Card sx={{ mb: 2 }}>
               <CardContent
+                role="button"
+                tabIndex={0}
+                aria-expanded={xpGuideOpen}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setXpGuideOpen(!xpGuideOpen);
+                  }
+                }}
                 sx={{
                   py: 1.5,
                   px: 2,
