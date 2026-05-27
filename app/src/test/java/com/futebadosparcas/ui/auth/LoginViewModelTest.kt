@@ -198,6 +198,7 @@ class LoginViewModelTest {
         @Test
         @DisplayName("sendPasswordResetEmail chama repositorio")
         fun `sendPasswordResetEmail calls repository`() = runTest(testDispatcher) {
+            coEvery { androidAuthRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
             viewModel.sendPasswordResetEmail("joao@email.com")
             advanceUntilIdle()
 
