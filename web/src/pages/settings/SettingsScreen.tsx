@@ -153,8 +153,8 @@ export const SettingsScreen: React.FC = () => {
     setDeleting(true);
     try {
       await deleteAccount();
-      showSuccess(t('settings.deleteAccountSuccess'));
       await logout();
+      showSuccess(t('settings.deleteAccountSuccess'));
       navigate('/login', { replace: true });
     } catch (err) {
       logger.error('Error deleting account:', err);

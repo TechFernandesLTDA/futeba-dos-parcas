@@ -229,6 +229,32 @@ export function sanitizeText(
 }
 
 /**
+ * Codifica entidades HTML em input de usuário.
+ * Lida com sequências multi-caractere corretamente
+ * (ampersand primeiro para evitar double-encoding).
+ *
+ * Usar quando o texto sanitizado precisa preservar
+ * tags visíveis (ex: "<script>" → "&lt;script&gt;").
+ * Caso contrário, prefira sanitizeText() que remove
+ * tags completamente.
+ *
+ * @param {string|undefined|null} input - Input
+ * @return {string} Texto com entidades codificadas
+ */
+export function htmlEncode(
+  input: string | undefined | null
+): string {
+  if (!input) return "";
+
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
+/**
  * Sanitiza E valida um campo de texto em uma
  * única operação. Combina sanitização XSS +
  * validação de tamanho.

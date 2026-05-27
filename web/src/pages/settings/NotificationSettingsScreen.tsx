@@ -50,14 +50,16 @@ const REMINDER_OPTIONS = [
   { value: 60, label: '1 hora antes' },
 ];
 
-const SectionHeader: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-    <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
-    <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-      {title}
-    </Typography>
-  </Box>
-);
+const SectionHeader = React.memo(function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+      <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
+      <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+        {title}
+      </Typography>
+    </Box>
+  );
+});
 
 export const NotificationSettingsScreen: React.FC = () => {
   const { t } = useTranslation();

@@ -86,42 +86,51 @@ export function useNotificationSettings(userId?: string) {
     try {
       const settingsRef = doc(db, 'notification_settings', userId);
       await setDoc(settingsRef, {
-        push_enabled: newSettings.pushEnabled ?? settings.pushEnabled,
-        game_reminders: newSettings.gameReminders ?? settings.gameReminders,
-        game_invites: newSettings.gameInvites ?? settings.gameInvites,
-        group_invites: newSettings.groupInvites ?? settings.groupInvites,
-        achievements: newSettings.achievements ?? settings.achievements,
-        mvp_votes: newSettings.mvpVotes ?? settings.mvpVotes,
-        level_up: newSettings.levelUp ?? settings.levelUp,
-        system_announcements: newSettings.systemAnnouncements ?? settings.systemAnnouncements,
-        reminder_time: newSettings.reminderTime ?? settings.reminderTime,
-        mute_until: newSettings.muteUntil ?? settings.muteUntil,
+        push_enabled: newSettings.pushEnabled,
+        game_reminders: newSettings.gameReminders,
+        game_invites: newSettings.gameInvites,
+        group_invites: newSettings.groupInvites,
+        achievements: newSettings.achievements,
+        mvp_votes: newSettings.mvpVotes,
+        level_up: newSettings.levelUp,
+        system_announcements: newSettings.systemAnnouncements,
+        reminder_time: newSettings.reminderTime,
+        mute_until: newSettings.muteUntil,
         updated_at: serverTimestamp(),
       }, { merge: true });
 
-      setSettings((prev) => ({ ...prev, ...newSettings }));
       showSuccess('Configurações salvas.');
     } catch (err) {
       logger.error('Error saving notification settings:', err);
       showError('Erro ao salvar configurações.');
+      throw err;
     }
-  }, [userId, settings, showSuccess, showError]);
+  }, [userId, showSuccess, showError]);
 
   const setPreference = useCallback((key: keyof NotificationSettings, value: boolean | number) => {
     const update = { [key]: value } as Partial<NotificationSettings>;
-    setSettings((prev) => ({ ...prev, ...update }));
-    saveSettings(update);
+    let previous: NotificationSettings | null = null;
+    setSettings((prev) => { previous = prev; return { ...prev, ...update }; });
+    saveSettings(update).catch(() => {
+      if (previous) setSettings(previous);
+    });
   }, [saveSettings]);
 
   const setMuteUntil = useCallback((hours: number) => {
     const muteDate = new Date(Date.now() + hours * 60 * 60 * 1000);
-    setSettings((prev) => ({ ...prev, muteUntil: muteDate }));
-    saveSettings({ muteUntil: muteDate });
+    let previous: NotificationSettings | null = null;
+    setSettings((prev) => { previous = prev; return { ...prev, muteUntil: muteDate }; });
+    saveSettings({ muteUntil: muteDate }).catch(() => {
+      if (previous) setSettings(previous);
+    });
   }, [saveSettings]);
 
   const clearMute = useCallback(() => {
-    setSettings((prev) => ({ ...prev, muteUntil: null }));
-    saveSettings({ muteUntil: null });
+    let previous: NotificationSettings | null = null;
+    setSettings((prev) => { previous = prev; return { ...prev, muteUntil: null }; });
+    saveSettings({ muteUntil: null }).catch(() => {
+      if (previous) setSettings(previous);
+    });
   }, [saveSettings]);
 
   return {
