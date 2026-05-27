@@ -62,10 +62,6 @@ export default defineConfig({
           if (id.includes('date-fns')) {
             return 'vendor-utils'
           }
-          // HTML2Canvas (heavy, only used in specific screens)
-          if (id.includes('html2canvas')) {
-            return 'vendor-html2canvas'
-          }
           // Charts (Recharts)
           if (id.includes('recharts') || id.includes('d3-')) {
             return 'vendor-charts'
