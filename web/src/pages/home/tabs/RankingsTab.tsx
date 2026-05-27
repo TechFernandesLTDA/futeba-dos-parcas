@@ -263,8 +263,8 @@ export function RankingsTab() {
     try {
       prevLiga = JSON.parse(localStorage.getItem('rankings_prev_positions_liga') || '{}') as Record<string, number>;
       prevXp = JSON.parse(localStorage.getItem('rankings_prev_positions_xp') || '{}') as Record<string, number>;
-    } catch {
-      // corrupt data, reset
+    } catch (error) {
+      console.warn('Failed to read rankings positions from localStorage:', error);
     }
     const currentLiga: Record<string, number> = {};
     players.forEach((p, i) => { currentLiga[p.userId] = i + 1; });
@@ -284,8 +284,8 @@ export function RankingsTab() {
     try {
       localStorage.setItem('rankings_prev_positions_liga', JSON.stringify(currentLiga));
       localStorage.setItem('rankings_prev_positions_xp', JSON.stringify(currentXp));
-    } catch {
-      // quota exceeded or storage unavailable
+    } catch (error) {
+      console.warn('Failed to save rankings positions to localStorage:', error);
     }
     setLigaPositionChanges(ligaChanges);
     setXpPositionChanges(xpChanges);

@@ -11,7 +11,11 @@ export const InviteRedirectScreen: React.FC = () => {
   useEffect(() => {
     if (loading) return;
 
-    sessionStorage.setItem('inviteCode', code || '');
+    try {
+      sessionStorage.setItem('inviteCode', code || '');
+    } catch (error) {
+      console.warn('Failed to save invite code to sessionStorage:', error);
+    }
 
     if (!firebaseUser) {
       navigate(`/register?invite=${code}`, { replace: true });

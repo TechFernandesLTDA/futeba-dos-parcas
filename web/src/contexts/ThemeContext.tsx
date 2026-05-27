@@ -15,17 +15,26 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('themeMode');
-    return (saved as ThemeMode) || 'system';
+    try {
+      const saved = localStorage.getItem('themeMode');
+      return (saved as ThemeMode) || 'system';
+    } catch (error) {
+      console.warn('Failed to read themeMode from localStorage:', error);
+      return 'system';
+    }
   });
 
   // Inicializa isDark de forma síncrona para evitar flash na primeira renderização.
   // Sem esse lazy initializer, o tema light sempre pisca antes de aplicar o dark
   // salvo, pois o useEffect só roda após a montagem do componente.
   const [isDark, setIsDark] = useState<boolean>(() => {
-    const saved = localStorage.getItem('themeMode') as ThemeMode | null;
-    if (saved === 'dark') return true;
-    if (saved === 'light') return false;
+    try {
+      const saved = localStorage.getItem('themeMode') as ThemeMode | null;
+      if (saved === 'dark') return true;
+      if (saved === 'light') return false;
+    } catch (error) {
+      console.warn('Failed to read themeMode from localStorage:', error);
+    }
     // Modo 'system' (ou nenhuma preferência salva): respeita prefers-color-scheme
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
@@ -48,7 +57,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   useEffect(() => {
-    localStorage.setItem('themeMode', mode);
+    try {
+      localStorage.setItem('themeMode', mode);
+    } catch (error) {
+      console.warn('Failed to save themeMode to localStorage:', error);
+    }
   }, [mode]);
 
   const toggleTheme = useCallback(() => {
