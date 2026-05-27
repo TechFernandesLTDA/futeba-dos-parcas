@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -44,6 +45,7 @@ import {
   XP_STREAK_7,
 } from '../../utils/constants';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ErrorState } from '../../components/common/ErrorState';
 
 const logger = createLogger('GamificationSettingsScreen');
 
@@ -79,12 +81,15 @@ export const GamificationSettingsScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
-  const showErrorRef = useRef(showError);
-  showErrorRef.current = showError;
 
   const [prefs, setPrefs] = useState<GamificationPrefs>(DEFAULT_PREFS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
 
   const loadPrefs = useCallback(async () => {
     if (!user) return;
@@ -97,6 +102,7 @@ export const GamificationSettingsScreen: React.FC = () => {
       }
     } catch (error) {
       logger.error('Erro ao carregar preferências de gamificação:', error);
+      setError('Erro ao carregar configurações de gamificação.');
       showError('Erro ao carregar configurações de gamificação.');
     } finally {
       setLoading(false);
@@ -137,7 +143,12 @@ export const GamificationSettingsScreen: React.FC = () => {
     <Box sx={{ pb: 4 }}>
       <ScreenHeader title="Gamificação" onBack={goBack} />
 
-      {loading ? (
+      {error ? (
+        <ErrorState
+          message={error}
+          onRetry={() => { setError(null); loadPrefs(); }}
+        />
+      ) : loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
           <CircularProgress />
         </Box>

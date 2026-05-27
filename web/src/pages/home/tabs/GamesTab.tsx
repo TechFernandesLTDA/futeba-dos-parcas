@@ -20,6 +20,8 @@ import {
   useMediaQuery,
   Grid,
   IconButton,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   Add,
@@ -30,6 +32,9 @@ import {
   SportsSoccer,
   Close,
   FilterListOff,
+  SortByAlpha,
+  EventAvailable,
+  AccessTime,
 } from '@mui/icons-material';
 import { FIELD_TYPE_LABELS, GameStatus, getStatusChipColors } from '../../../types/game';
 import { useGames } from '../../../hooks/useGames';
@@ -49,6 +54,13 @@ const livePulseKeyframes = {
 };
 
 type FilterStatus = 'all' | GameStatus;
+type SortBy = 'date' | 'spots' | 'nearest';
+
+const SORT_OPTIONS: { value: SortBy; label: string; icon: React.ReactNode }[] = [
+  { value: 'date', label: 'Data', icon: <CalendarMonth fontSize="small" /> },
+  { value: 'spots', label: 'Vagas', icon: <EventAvailable fontSize="small" /> },
+  { value: 'nearest', label: 'Próximos', icon: <AccessTime fontSize="small" /> },
+];
 
 export function GamesTab() {
   const navigate = useNavigate();
@@ -58,6 +70,7 @@ export function GamesTab() {
   useDocumentTitle(t('nav.games'));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('date');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const { games, loading, error, refetch } = useGames();
@@ -86,8 +99,16 @@ export function GamesTab() {
       );
     }
 
+    if (sortBy === 'spots') {
+      result.sort((a, b) => (b.maxPlayers - b.playersCount) - (a.maxPlayers - a.playersCount));
+    } else if (sortBy === 'nearest') {
+      result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    } else {
+      result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
     return result;
-  }, [games, debouncedSearch, statusFilter]);
+  }, [games, debouncedSearch, statusFilter, sortBy]);
 
   // Estabilizado: navigate é estável, dep array vazio seguro
   const handleCardClick = useCallback((gameId: string) => {
@@ -174,6 +195,30 @@ export function GamesTab() {
             </IconButton>
           )}
         </Box>
+
+        {/* #2024 - Sort options */}
+        <Box sx={{ display: 'flex', alignItems: 'center', pt: 1, pb: 0.5 }}>
+          <SortByAlpha fontSize="small" color="action" sx={{ mr: 1, flexShrink: 0 }} />
+          <ToggleButtonGroup
+            value={sortBy}
+            exclusive
+            onChange={(_, v) => v && setSortBy(v)}
+            size="small"
+            sx={{ flexWrap: 'nowrap' }}
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <ToggleButton
+                key={opt.value}
+                value={opt.value}
+                aria-label={opt.label}
+                sx={{ px: 1, py: 0.25, textTransform: 'none', fontSize: '0.75rem', gap: 0.5 }}
+              >
+                {opt.icon}
+                {opt.label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <Box sx={{ px: 2, pt: 2 }}>
@@ -225,10 +270,11 @@ export function GamesTab() {
           {filteredGames.map((game) => {
             const progress = game.maxPlayers > 0 ? Math.min((game.playersCount / game.maxPlayers) * 100, 100) : 0;
             const isFull = game.maxPlayers > 0 && game.playersCount >= game.maxPlayers;
+            const isLive = game.status === 'LIVE';
 
             return (
               <Grid item xs={12} lg={6} key={game.id}>
-              <Card sx={{ mb: 2 }}>
+              <Card sx={{ mb: 2, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>

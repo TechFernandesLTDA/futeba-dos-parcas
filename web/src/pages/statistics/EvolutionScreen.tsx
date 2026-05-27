@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -60,11 +61,14 @@ export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Evolução');
   const goBack = useNavigateBack('/');
-    const theme = useTheme();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [tabValue, setTabValue] = useState(0);
   const [evolutionData, setEvolutionData] = useState<EvolutionData[]>([]);
@@ -136,7 +140,7 @@ export const EvolutionScreen: React.FC = () => {
     };
 
     fetchData();
-  }, [targetUserId, reloadKey, showError, t]);
+  }, [targetUserId, reloadKey, t]);
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;

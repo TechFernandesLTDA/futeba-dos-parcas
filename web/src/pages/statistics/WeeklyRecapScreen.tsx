@@ -29,7 +29,7 @@ import {
   LocalFireDepartment as FireIcon,
   Timeline as TimelineIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -119,24 +119,23 @@ export const WeeklyRecapScreen: React.FC = () => {
         }
 
         const gamesRef = collection(db, 'games');
-        const q = query(gamesRef, orderBy('date', 'desc'), limit(10));
+        const q = query(gamesRef, where('participants', 'array-contains', targetUserId), orderBy('date', 'desc'), limit(10));
         const snapshot = await getDocs(q);
 
         const gamesData: GameRecord[] = [];
         snapshot.docs.forEach((d) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(d.data()) as Record<string, any>;
-          const participants = data.participants || [];
-          if (participants.includes(targetUserId)) {
-            gamesData.push({
-              id: d.id,
-              date: data.date?.toDate?.() || new Date(data.date),
-              result: data.winnerTeam ? 'WIN' : 'LOSS',
-              goals: data.goals?.[targetUserId] || 0,
-              assists: data.assists?.[targetUserId] || 0,
-              isMvp: data.mvpId === targetUserId,
-            });
-          }
+          const userTeam = data.team1Players?.includes(targetUserId) ? 'A' : data.team2Players?.includes(targetUserId) ? 'B' : null;
+          const gameDate = data.date?.toDate?.() ?? (data.date ? new Date(data.date) : new Date(0));
+          gamesData.push({
+            id: d.id,
+            date: gameDate,
+            result: !data.winnerTeam ? 'DRAW' : (data.winnerTeam === userTeam ? 'WIN' : 'LOSS'),
+            goals: data.goals?.[targetUserId] || 0,
+            assists: data.assists?.[targetUserId] || 0,
+            isMvp: data.mvpId === targetUserId,
+          });
         });
 
         setRecentGames(gamesData);

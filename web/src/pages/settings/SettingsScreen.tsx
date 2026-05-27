@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -67,8 +67,6 @@ export const SettingsScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
-  const showErrorRef = useRef(showError);
-  showErrorRef.current = showError;
   const { t } = useTranslation();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // Fluxo de exclusão de conta — LGPD art. 18
@@ -89,10 +87,6 @@ export const SettingsScreen: React.FC = () => {
   const loadSettings = useCallback(async () => {
     if (!user) return;
     try {
-      // FIX C1: era `doc(db, 'users', uid, 'settings')` com 3 segments —
-      // path inválido pra doc reference (Firebase v9 throwa). Silent fail
-      // em prod desde release inicial: try/catch swallow → defaults useState.
-      // Agora usa subcollection `users/{uid}/preferences/notifications` (4 segments).
       const settingsRef = doc(db, 'users', user.id, 'preferences', 'notifications');
       const docSnap = await getDoc(settingsRef);
       if (docSnap.exists()) {
@@ -106,16 +100,31 @@ export const SettingsScreen: React.FC = () => {
   }, [user, t]);
 
   useEffect(() => {
-    if (user) {
-      loadSettings();
-    }
-  }, [user, loadSettings]);
+    let cancelled = false;
+    if (!user) return;
+    (async () => {
+      try {
+        const settingsRef = doc(db, 'users', user.id, 'preferences', 'notifications');
+        const docSnap = await getDoc(settingsRef);
+        if (cancelled) return;
+        if (docSnap.exists()) {
+          setSettings(snakeToCamel(docSnap.data()) as Settings);
+        }
+      } catch (error) {
+        if (cancelled) return;
+        logger.error('Error loading settings:', error);
+        setError(t('settings.loadError'));
+      }
+      if (cancelled) return;
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user, t]);
 
   const handleSaveSettings = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      // FIX C1: mesma correção do loadSettings — subcollection 4 segments.
       const settingsRef = doc(db, 'users', user.id, 'preferences', 'notifications');
       await setDoc(settingsRef, {
         notifications: settings.notifications,
@@ -144,10 +153,9 @@ export const SettingsScreen: React.FC = () => {
     setDeleting(true);
     try {
       await deleteAccount();
-      // Limpar cache e encerrar sessão — a CF já apagou os dados no backend
+      showSuccess(t('settings.deleteAccountSuccess'));
       await logout();
       navigate('/login', { replace: true });
-      showSuccess(t('settings.deleteAccountSuccess'));
     } catch (err) {
       logger.error('Error deleting account:', err);
       showError(getFunctionErrorMessage(err, 'deleteAccount', t('settings.deleteAccountError')));

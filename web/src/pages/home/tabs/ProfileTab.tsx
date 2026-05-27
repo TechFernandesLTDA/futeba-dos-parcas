@@ -159,7 +159,7 @@ export function ProfileTab() {
       <Box sx={{ pb: 8 }}>
         <Box
           sx={{
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             pt: 2,
             pb: 6,
             px: 2,
@@ -226,7 +226,7 @@ export function ProfileTab() {
       {/* Profile Header */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
           pt: 2,
           pb: 6,
           px: 2,
@@ -346,11 +346,11 @@ export function ProfileTab() {
       <Container maxWidth="md">
       {/* Stats Cards */}
       <Box sx={{ mt: -3 }}>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Card sx={{ flex: 1 }}>
+        <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
+          <Card sx={{ flex: 1, minWidth: 80, overflow: 'hidden' }}>
             <CardContent sx={{ textAlign: 'center', py: 2 }}>
               <SportsSoccer sx={{ color: 'primary.main', mb: 0.5 }} />
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant="h5" fontWeight="bold" noWrap sx={{ textOverflow: 'ellipsis', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 {user?.totalGames || 0}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -359,10 +359,10 @@ export function ProfileTab() {
             </CardContent>
           </Card>
 
-          <Card sx={{ flex: 1 }}>
+          <Card sx={{ flex: 1, minWidth: 80, overflow: 'hidden' }}>
             <CardContent sx={{ textAlign: 'center', py: 2 }}>
               <EmojiEvents sx={{ color: 'warning.main', mb: 0.5 }} />
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant="h5" fontWeight="bold" noWrap sx={{ textOverflow: 'ellipsis', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 {user?.totalGoals || 0}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -371,10 +371,10 @@ export function ProfileTab() {
             </CardContent>
           </Card>
 
-          <Card sx={{ flex: 1 }}>
+          <Card sx={{ flex: 1, minWidth: 80, overflow: 'hidden' }}>
             <CardContent sx={{ textAlign: 'center', py: 2 }}>
               <Star sx={{ color: 'secondary.main', mb: 0.5 }} />
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant="h5" fontWeight="bold" noWrap sx={{ textOverflow: 'ellipsis', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 {user?.mvpCount || 0}
               </Typography>
               <Typography variant="caption" color="text.secondary">

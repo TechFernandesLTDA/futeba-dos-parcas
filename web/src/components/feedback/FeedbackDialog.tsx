@@ -14,10 +14,8 @@ import {
   Send as SendIcon,
   CheckCircleOutline as SuccessIcon,
 } from '@mui/icons-material';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../../contexts/ToastContext';
+import { useFeedback, UserFeedback } from '../../hooks/useFeedback';
 import { captureContext } from '../../utils/captureContext';
 
 const FEEDBACK_TYPES = [
@@ -43,13 +41,12 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentUser } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { submitFeedback, loading } = useFeedback();
 
   const [feedbackType, setFeedbackType] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState('medium');
-  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -82,26 +79,15 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
 
   const handleSubmit = async () => {
     if (!validate() || !currentUser) return;
-    setLoading(true);
-    try {
-      await addDoc(collection(db, 'user_feedback'), {
-        user_id: currentUser.uid,
-        user_email: currentUser.email || '',
-        type: feedbackType,
-        title: title.trim(),
-        description: description.trim(),
-        severity,
-        status: 'open',
-        context: captureContext(),
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-      });
-      showSuccess('Feedback enviado com sucesso! Obrigado por contribuir.');
+    const result = await submitFeedback({
+      type: feedbackType as UserFeedback['type'],
+      title: title.trim(),
+      description: description.trim(),
+      severity: severity as UserFeedback['severity'],
+      context: captureContext() as unknown as Record<string, unknown>,
+    });
+    if (result) {
       setSubmitted(true);
-    } catch (err) {
-      showError('Erro ao enviar feedback: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
-    } finally {
-      setLoading(false);
     }
   };
 

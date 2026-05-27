@@ -25,12 +25,12 @@ import {
   ArrowBack as BackIcon,
   ExpandMore as ExpandMoreIcon,
   NewReleases as NewReleasesIcon,
-  ErrorOutline as ErrorIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useReleaseNotes } from '../../hooks/useReleaseNotes';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ErrorState } from '../../components/common/ErrorState';
 import { ReleaseNoteContent, ReleaseTypeBadge } from '../../components/whatsnew/ReleaseNoteContent';
 import { formatReleaseDate } from '../../utils/releaseNotesFormat';
 import { trackEvent } from '../../utils/analytics';
@@ -117,11 +117,10 @@ export const WhatsNewPage: React.FC = () => {
         )}
 
         {!loading && error && (
-          <EmptyState
-            icon={<ErrorIcon />}
-            title={t('whatsNew.error')}
-            actionLabel={t('common.retry')}
-            onAction={() => refetch()}
+          <ErrorState
+            message={t('whatsNew.error')}
+            error={error}
+            onRetry={() => refetch()}
           />
         )}
 

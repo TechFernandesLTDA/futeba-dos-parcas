@@ -17,6 +17,8 @@ import {
   Skeleton,
   AppBar,
   Toolbar,
+  Collapse,
+  IconButton,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -25,6 +27,8 @@ import {
   EmojiEvents,
   Person,
   Notifications as NotificationsIcon,
+  ExpandLess,
+  ExpandMore,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@mui/material';
@@ -70,6 +74,7 @@ export function HomeScreen() {
   const { permission, requestPermission } = useNotificationPermission();
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const [mountedTabs, setMountedTabs] = useState<Set<number>>(() => new Set([tabValue]));
+  const [towExpanded, setTowExpanded] = useState(true);
   const { t } = useTranslation();
   useDocumentTitle(t('common.appName'));
   const { user } = useAuth();
@@ -285,7 +290,7 @@ export function HomeScreen() {
           pb: { xs: 'calc(72px + env(safe-area-inset-bottom, 0px))', md: 0 },
         }}
       >
-        {/* AppBar mobile com NotificationBell (#1214) */}
+        {/* AppBar mobile com logo clicável e NotificationBell com label (#2036, #2031) */}
         <AppBar
           position="sticky"
           elevation={0}
@@ -298,14 +303,39 @@ export function HomeScreen() {
           }}
         >
           <Toolbar variant="dense">
-            {/* Logo padronizada (AppLogo /logo.png circular) — alinhado a
-                MobileTopBar das demais telas. */}
-            <AppLogo size="small" shape="circle" alt={t('common.appName')} sx={{ width: 28, height: 28, mr: 1 }} />
-            <Typography variant="h6" fontWeight={700} color="primary.main" sx={{ flex: 1 }}>
-              {t('common.appName')}
-            </Typography>
-            {/* NotificationBell já é um IconButton — não aninhar dentro de outro (#1321) */}
-            <NotificationBell unreadCount={unreadCount} />
+            <Box
+              onClick={() => handleTabChange(0)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleTabChange(0);
+                }
+              }}
+              aria-label={`${t('common.appName')} — ir para o início`}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                flex: 1,
+                cursor: 'pointer',
+                borderRadius: 1,
+                py: 0.25,
+                '&:hover': { bgcolor: 'action.hover' },
+                '&:focus-visible': { outline: (t2) => `2px solid ${t2.palette.primary.main}`, outlineOffset: 2 },
+              }}
+            >
+              <AppLogo size="small" shape="circle" alt={t('common.appName')} sx={{ width: 28, height: 28, mr: 1 }} />
+              <Typography variant="h6" fontWeight={700} color="primary.main">
+                {t('common.appName')}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <NotificationBell unreadCount={unreadCount} />
+              <Typography variant="caption" sx={{ fontSize: '0.55rem', lineHeight: 1, mt: -0.75, color: 'text.secondary' }}>
+                {t('nav.notifications', 'Notificações')}
+              </Typography>
+            </Box>
           </Toolbar>
         </AppBar>
 
@@ -317,13 +347,25 @@ export function HomeScreen() {
           aria-labelledby={`tab-${tabValue}`}
           sx={{ flex: 1 }}
         >
-        {/* TOW: Time of the Week - ranking semanal estilo Cartola */}
+        {/* TOW + QuickActions colapsáveis (#2029) */}
         {tabValue === 0 && (
           <Box sx={{ px: { xs: 2, sm: 2 }, pb: 0, pt: 1 }}>
-            <Suspense fallback={null}>
-              <TeamOfTheWeek />
-            </Suspense>
-            <QuickActions />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <IconButton
+                size="small"
+                onClick={() => setTowExpanded(!towExpanded)}
+                aria-label={towExpanded ? 'Recolher destaques' : 'Expandir destaques'}
+                sx={{ mb: 0.5 }}
+              >
+                {towExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+              </IconButton>
+            </Box>
+            <Collapse in={towExpanded}>
+              <Suspense fallback={null}>
+                <TeamOfTheWeek />
+              </Suspense>
+              <QuickActions />
+            </Collapse>
           </Box>
         )}
         {/* Suspense local: evita desmontar o nav ao carregar chunk da tab */}

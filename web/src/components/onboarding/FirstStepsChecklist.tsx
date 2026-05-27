@@ -6,6 +6,7 @@
  *
  * Acessibilidade: aria-labels, contraste adequado, links semânticos.
  */
+import { useState } from 'react';
 import {
   Box,
   Card,
@@ -23,6 +24,8 @@ import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UncheckedIcon,
   Close as CloseIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -45,14 +48,34 @@ interface FirstStepsChecklistProps {
   steps: ChecklistStep[];
   visible: boolean;
   onDismiss: () => void;
+  /** Max incomplete items shown before truncation (default: all). */
+  maxIncomplete?: number;
 }
 
-export function FirstStepsChecklist({ steps, visible, onDismiss }: FirstStepsChecklistProps) {
+export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }: FirstStepsChecklistProps) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [expanded, setExpanded] = useState(false);
 
   const completedCount = steps.filter(s => s.completed).length;
   const progress = steps.length > 0 ? completedCount / steps.length : 0;
+
+  const visibleSteps: ChecklistStep[] = [];
+  const hiddenSteps: ChecklistStep[] = [];
+  let incompleteShown = 0;
+  const limit = maxIncomplete ?? steps.length;
+
+  for (const step of steps) {
+    if (step.completed) {
+      visibleSteps.push(step);
+    } else if (incompleteShown < limit) {
+      visibleSteps.push(step);
+      incompleteShown++;
+    } else {
+      hiddenSteps.push(step);
+    }
+  }
+  const truncated = hiddenSteps.length > 0;
 
   return (
     <Collapse in={visible} unmountOnExit>
@@ -103,7 +126,7 @@ export function FirstStepsChecklist({ steps, visible, onDismiss }: FirstStepsChe
 
           {/* Lista de passos */}
           <Stack spacing={1.5}>
-            {steps.map(step => (
+            {visibleSteps.map(step => (
               <Stack
                 key={step.id}
                 direction="row"
@@ -155,6 +178,55 @@ export function FirstStepsChecklist({ steps, visible, onDismiss }: FirstStepsChe
                 )}
               </Stack>
             ))}
+
+            {truncated && (
+              <>
+                <Collapse in={expanded}>
+                  <Stack spacing={1.5}>
+                    {hiddenSteps.map(step => (
+                      <Stack
+                        key={step.id}
+                        direction="row"
+                        alignItems="center"
+                        spacing={1.5}
+                      >
+                        <UncheckedIcon
+                          fontSize="small"
+                          sx={{ color: 'text.disabled', flexShrink: 0 }}
+                          aria-label="Pendente"
+                        />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {step.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" noWrap>
+                            {step.subtitle}
+                          </Typography>
+                        </Box>
+                        <Button
+                          size="small"
+                          variant="text"
+                          onClick={() => navigate(step.navigateTo)}
+                          aria-label={step.actionLabel}
+                          sx={{ flexShrink: 0, minHeight: 36 }}
+                        >
+                          {step.actionLabel}
+                        </Button>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Collapse>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => setExpanded(!expanded)}
+                  endIcon={expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                  sx={{ alignSelf: 'center', fontSize: '0.75rem' }}
+                >
+                  {expanded ? 'Ver menos' : `Ver todos (${hiddenSteps.length})`}
+                </Button>
+              </>
+            )}
           </Stack>
         </CardContent>
       </Card>
