@@ -812,6 +812,7 @@ private fun ShirtCustomizer(
         Color(0xFF000000) to "Preto",
         Color(0xFFFFFFFF) to "Branco"
     )
+    val avatarNumbers = remember { (1..99).toList() }
 
     Column {
         Text(
@@ -854,7 +855,7 @@ private fun ShirtCustomizer(
                     label = { Text(stringResource(R.string.avatar_no_number)) }
                 )
             }
-            items((1..99).toList(), key = { it }) { number ->
+            items(avatarNumbers, key = { it }) { number ->
                 FilterChip(
                     selected = config.shirtNumber == number,
                     onClick = { onConfigChange(config.copy(shirtNumber = number)) },

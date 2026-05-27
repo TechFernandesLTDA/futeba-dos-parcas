@@ -416,14 +416,14 @@ fun PhotoCarousel(
             )
         }
 
-        // Indicadores de página
+            // Indicadores de página
         if (photos.size > 1) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 8.dp)
                     .background(
-                        Color.Black.copy(alpha = 0.3f),
+                        MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f),
                         RoundedCornerShape(12.dp)
                     )
                     .padding(horizontal = 8.dp, vertical = 4.dp),
@@ -436,8 +436,11 @@ fun PhotoCarousel(
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(
-                                if (pagerState.currentPage == index) Color.White
-                                else Color.White.copy(alpha = 0.5f)
+                                if (pagerState.currentPage == index) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
+                                }
                             )
                     )
                 }

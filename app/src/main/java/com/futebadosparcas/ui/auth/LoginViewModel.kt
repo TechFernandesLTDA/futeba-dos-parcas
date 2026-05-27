@@ -81,7 +81,18 @@ class LoginViewModel(
 
     fun sendPasswordResetEmail(email: String) {
         viewModelScope.launch {
-            androidAuthRepository.sendPasswordResetEmail(email)
+            _loginState.value = LoginState.Loading
+            val result = androidAuthRepository.sendPasswordResetEmail(email)
+            result.fold(
+                onSuccess = {
+                    _loginState.value = LoginState.Idle
+                },
+                onFailure = { error ->
+                    _loginState.value = LoginState.Error(
+                        error.message ?: "Erro ao enviar email de recuperação"
+                    )
+                }
+            )
         }
     }
 

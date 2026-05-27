@@ -40,6 +40,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.ComponentActivity
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -112,7 +114,7 @@ fun PhoneVerificationScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Confirmamos seu numero via SMS para evitar contas falsas. Etapa 1 de 2.",
+                        text = "Confirmamos seu número via SMS para evitar contas falsas. Etapa 1 de 2.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -144,7 +146,7 @@ fun PhoneVerificationScreen(
                                 keyboardType = KeyboardType.Phone,
                             ),
                             supportingText = {
-                                Text("Formato internacional: +55 + DDD + numero")
+                                Text("Formato internacional: +55 + DDD + número")
                             },
                         )
                         Spacer(Modifier.height(16.dp))
@@ -165,12 +167,12 @@ fun PhoneVerificationScreen(
                                 Spacer(Modifier.size(8.dp))
                                 Text("Enviando...")
                             } else {
-                                Text("Enviar codigo por SMS")
+                                Text("Enviar código por SMS")
                             }
                         }
                     } else {
                         Text(
-                            text = "Digite o codigo de 6 digitos enviado para $phone",
+                            text = "Digite o código de 6 dígitos enviado para $phone",
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Spacer(Modifier.height(16.dp))
@@ -181,7 +183,7 @@ fun PhoneVerificationScreen(
                                     otp = it
                                 }
                             },
-                            label = { Text("Codigo") },
+                            label = { Text("Código") },
                             placeholder = { Text("123456") },
                             singleLine = true,
                             enabled = !loading,
@@ -206,7 +208,7 @@ fun PhoneVerificationScreen(
                                         Spacer(Modifier.size(8.dp))
                                         Text("Verificando...")
                                     } else {
-                                        Text("Verificar")
+                                        Text(stringResource(R.string.verify))
                                     }
                                 }
                                 Spacer(Modifier.height(8.dp))

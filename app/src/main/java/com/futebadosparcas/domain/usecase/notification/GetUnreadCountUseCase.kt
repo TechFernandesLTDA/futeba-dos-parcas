@@ -44,20 +44,28 @@ class GetUnreadCountUseCase constructor(
     override suspend fun execute(): Int {
         AppLogger.d(TAG) { "Buscando contagem de notificações não lidas" }
 
-        val currentUserId = auth.currentUser?.uid
-        requireNotNull(currentUserId) { "Usuário não autenticado" }
+        return try {
+            val currentUserId = auth.currentUser?.uid
+            if (currentUserId == null) {
+                AppLogger.w(TAG) { "Usuário não autenticado — contagem 0" }
+                return 0
+            }
 
-        // Executar query para contar notificações não lidas
-        val snapshot = firestore.collection(COLLECTION_NOTIFICATIONS)
-            .whereEqualTo("user_id", currentUserId)
-            .whereEqualTo("read", false)
-            .get()
-            .await()
+            // Executar query para contar notificações não lidas
+            val snapshot = firestore.collection(COLLECTION_NOTIFICATIONS)
+                .whereEqualTo("user_id", currentUserId)
+                .whereEqualTo("read", false)
+                .get()
+                .await()
 
-        val unreadCount = snapshot.size()
+            val unreadCount = snapshot.size()
 
-        AppLogger.d(TAG) { "Contagem de não lidas: $unreadCount" }
+            AppLogger.d(TAG) { "Contagem de não lidas: $unreadCount" }
 
-        return unreadCount
+            unreadCount
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao contar notificações não lidas", e)
+            0
+        }
     }
 }
