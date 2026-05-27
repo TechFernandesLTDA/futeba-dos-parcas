@@ -41,10 +41,15 @@ import {
 import {
   MVP_VOTE_WINDOW_HOURS,
   XP_ACTIONS,
-  LEVEL_TABLE,
   MAX_XP_PER_GAME,
   MIN_XP_PER_GAME,
 } from "../constants";
+import {getLevelForXp} from "../xp/pipeline";
+import {
+  getGameDate,
+  getWeekKey,
+} from "../game/helpers";
+import {Game} from "../models";
 
 const getDb = () => admin.firestore();
 
@@ -1008,6 +1013,38 @@ async function applyVotingXpDelta(
     .collection("users")
     .doc(userId);
 
+  // FIX #1990: obter game doc para derivar week/month keys e active season
+  // necessários para atualizar season_participation + ranking_deltas.
+  let weekKey: string | null = null;
+  let monthKey: string | null = null;
+  let activeSeasonId: string | null = null;
+
+  try {
+    const gameSnap = await db
+      .collection("games")
+      .doc(gameId)
+      .get();
+    const gameDoc = gameSnap.data() as Game | undefined;
+    const gameDate = getGameDate(gameDoc);
+    monthKey = gameDate.toISOString().substring(0, 7);
+    weekKey = getWeekKey(gameDate);
+
+    const seasonSnap = await db
+      .collection("seasons")
+      .where("is_active", "==", true)
+      .limit(1)
+      .get();
+    activeSeasonId = !seasonSnap.empty ?
+      seasonSnap.docs[0].id :
+      null;
+  } catch (fetchError) {
+    console.warn(
+      `[VOTING_XP] Could not fetch game/season for ${gameId}: ` +
+      `${fetchError}. season_participation & ranking_deltas will ` +
+      "not be updated for this XP application."
+    );
+  }
+
   try {
     await db.runTransaction(async (txn) => {
       const logDoc = await txn.get(logRef);
@@ -1071,21 +1108,16 @@ async function applyVotingXpDelta(
       const currentXp =
         (userDoc.data()
           ?.experience_points as number) || 0;
+      const currentLevel =
+        (userDoc.data()?.level as number) || 0;
       // FIX #1575: piso em MIN_XP_PER_GAME (-100) em vez de 0 pra Bola Murcha
       // não ser absorvida silenciosamente quando o user tem menos XP que a
       // penalidade. Math.max(0,...) zerava a penalidade — comportamento errado.
       const newXp = Math.max(MIN_XP_PER_GAME, currentXp + xpDelta);
 
-      // FIX #648/B3: recalcula level apos aplicar XP
-      // (antes era feito sem atualizar level no user doc).
-      const levelTable = LEVEL_TABLE.levels;
-      const sortedLevels = [...levelTable].sort(
-        (a, b) => b.xpRequired - a.xpRequired
-      );
-      const newLevel =
-        sortedLevels.find(
-          (l) => newXp >= l.xpRequired
-        )?.level ?? 0;
+      // FIX #1993: usa getLevelForXp() canônico de xp/pipeline.ts
+      // em vez de recalcular level inline (evita drift por inconsistência).
+      const newLevel = getLevelForXp(newXp);
 
       txn.set(logRef, {
         user_id: userId,
@@ -1093,6 +1125,8 @@ async function applyVotingXpDelta(
         xp_earned: xpDelta,
         xp_before: currentXp,
         xp_after: newXp,
+        level_before: currentLevel,
+        level_after: newLevel,
         reason,
         transaction_id: logId,
         source: "mvp_voting_concluded",
@@ -1102,6 +1136,7 @@ async function applyVotingXpDelta(
       // FIX #1532: usar FieldValue.increment em vez de valor absoluto
       // pra evitar race condition com onGameStatusUpdate que também
       // escreve experience_points. Increment é atômico no Firestore.
+      // FIX #1993: level recalculado via getLevelForXp() para consistência.
       txn.update(userRef, {
         experience_points:
           admin.firestore.FieldValue.increment(xpDelta),
@@ -1110,12 +1145,57 @@ async function applyVotingXpDelta(
           .serverTimestamp(),
       });
 
+      // FIX #1990: atualizar season_participation e ranking_deltas
+      // para que o XP de voto conte nos rankings de temporada.
+      const isMvp = reason === "MVP";
+      const now = admin.firestore.FieldValue.serverTimestamp();
+
+      if (activeSeasonId) {
+        const seasonPartId = `${activeSeasonId}_${userId}`;
+        const seasonPartUpdate: Record<string, unknown> = {
+          total_xp: admin.firestore.FieldValue.increment(xpDelta),
+          updated_at: now,
+        };
+        if (isMvp) {
+          seasonPartUpdate.mvp_count =
+            admin.firestore.FieldValue.increment(1);
+        }
+        txn.set(
+          db.collection("season_participation").doc(seasonPartId),
+          seasonPartUpdate,
+          {merge: true}
+        );
+      }
+
+      if (weekKey && monthKey) {
+        const weekDeltaId = `week_${weekKey}_${userId}`;
+        const monthDeltaId = `month_${monthKey}_${userId}`;
+        const rankingFields: Record<string, unknown> = {
+          xp_added: admin.firestore.FieldValue.increment(xpDelta),
+          updated_at: now,
+        };
+        if (isMvp) {
+          rankingFields.mvp_added =
+            admin.firestore.FieldValue.increment(1);
+        }
+        txn.set(
+          db.collection("ranking_deltas").doc(weekDeltaId),
+          rankingFields,
+          {merge: true}
+        );
+        txn.set(
+          db.collection("ranking_deltas").doc(monthDeltaId),
+          rankingFields,
+          {merge: true}
+        );
+      }
+
       console.log(
         `[VOTING_XP] Applied ${xpDelta} XP ` +
         `to ${userId} for ${reason} ` +
         `in ${gameId} ` +
         `(${currentXp} → ${newXp}, ` +
-        `level ${newLevel})`
+        `level ${currentLevel} → ${newLevel})`
       );
     });
   } catch (error) {
