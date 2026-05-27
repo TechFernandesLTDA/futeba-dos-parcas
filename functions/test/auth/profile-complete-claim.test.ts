@@ -1,4 +1,5 @@
 const mockSetCustomUserClaims = jest.fn().mockResolvedValue(undefined);
+const mockRevokeRefreshTokens = jest.fn().mockResolvedValue(undefined);
 const mockGetUser = jest.fn();
 const mockDocGet = jest.fn();
 const mockDoc = jest.fn().mockReturnValue({
@@ -14,6 +15,7 @@ jest.mock("firebase-admin", () => ({
   auth: jest.fn(() => ({
     getUser: mockGetUser,
     setCustomUserClaims: mockSetCustomUserClaims,
+    revokeRefreshTokens: mockRevokeRefreshTokens,
   })),
   firestore: jest.fn(() => ({
     collection: mockCollection,
