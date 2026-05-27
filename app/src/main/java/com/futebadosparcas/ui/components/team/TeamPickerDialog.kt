@@ -116,7 +116,7 @@ fun TeamPickerDialog(
 
                 item { HorizontalDivider() }
 
-                items(filteredTeams) { team ->
+                items(filteredTeams, key = { it.id }) { team ->
                     val isSelected = team.id == currentTeamId
                     Row(
                         modifier = Modifier

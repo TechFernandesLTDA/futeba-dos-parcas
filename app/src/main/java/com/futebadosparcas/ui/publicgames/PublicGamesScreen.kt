@@ -64,7 +64,7 @@ fun PublicGamesScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.games) { game ->
+                    items(state.games, key = { it.id }) { game ->
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Row(
                                 modifier = Modifier

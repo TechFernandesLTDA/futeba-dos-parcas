@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.HeadToHeadHistory
 import com.futebadosparcas.domain.model.HeadToHeadMatch
 import com.futebadosparcas.domain.model.TeamColor
+import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -243,7 +244,7 @@ private fun StatBox(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = if (isHighlighted) {
-                        Color.White
+                        ContrastHelper.getContrastingTextColor(color)
                     } else {
                         MaterialTheme.colorScheme.onSurface
                     }

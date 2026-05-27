@@ -561,8 +561,11 @@ export const onUserDeleted = auth
                   );
                 }
               }
-            } catch {
-              // Non-fatal: some prefixes may not exist
+            } catch (deleteError: unknown) {
+              logger.warn(
+                `[ACCOUNT_CLEANUP] Erro ao deletar arquivos do prefixo ${prefix}:`,
+                deleteError
+              );
             }
           }
         } catch (storageError) {

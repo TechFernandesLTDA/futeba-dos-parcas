@@ -45,7 +45,7 @@ fun ErrorView(
     message: String,
     modifier: Modifier = Modifier,
     onRetry: (() -> Unit)? = null,
-    retryText: String = "Tentar novamente"
+    retryText: String = "" // defaults to stringResource(R.string.retry) below
 ) {
     Column(
         modifier = modifier
@@ -80,7 +80,7 @@ fun ErrorView(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = retryText)
+                Text(text = retryText.ifEmpty { stringResource(R.string.retry) })
             }
         }
     }

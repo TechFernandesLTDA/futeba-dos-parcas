@@ -658,7 +658,7 @@ private fun MiniReactionButton(
     Box(
         modifier = Modifier
             .scale(scale.value)
-            .size(40.dp)
+            .size(48.dp)
             .clip(CircleShape)
             .background(reaction.color.copy(alpha = 0.15f))
             .clickable {

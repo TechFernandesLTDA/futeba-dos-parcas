@@ -302,7 +302,7 @@ private fun AntiBotGate(
                             }
                         },
                     ) {
-                        Text("Tentar novamente")
+                        Text(stringResource(R.string.retry))
                     }
                 }
             }

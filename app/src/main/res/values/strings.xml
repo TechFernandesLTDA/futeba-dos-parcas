@@ -33,7 +33,7 @@
     <!-- Games -->
     <string name="upcoming_games">Próximos Jogos</string>
     <string name="game_details">Detalhes do Jogo</string>
-    <string name="confirm_presence">Confirmar Presença</string>
+    <string name="confirm_presence">Confirmar</string>
     <string name="cancel_confirmation">Cancelar Confirmação</string>
     <string name="confirmed">Confirmado</string>
     <string name="players">Jogadores</string>
@@ -57,7 +57,7 @@
     <string name="assists">Assistências</string>
     <string name="wins">Vitórias</string>
     <string name="week">Semana</string>
-    <string name="month">Mes</string>
+    <string name="month">Mês</string>
     <string name="year">Ano</string>
     <string name="all_time">Geral</string>
     <string name="your_position">Sua posição:</string>
@@ -83,7 +83,7 @@
     <string name="xp_evolution">Evolução de XP</string>
     <string name="recent_xp_gains">Ganhos Recentes de XP</string>
     <string name="milestone_first_goal">Primeiro Gol</string>
-    <string name="milestone_first_assist">Primeira Assistencia</string>
+    <string name="milestone_first_assist">Primeira Assistência</string>
     <string name="milestone_first_mvp">Primeiro MVP</string>
     <string name="milestone_first_win">Primeira Vitória</string>
 
@@ -508,7 +508,7 @@ desbloquear badges!</string>
     <string name="fragment_games_text_11">Erro ao carregar jogos</string>
     <string name="fragment_games_text_12">Tentar novamente</string>
     <string name="fragment_games_contentdescription_13">Criar novo jogo</string>
-    <string name="fragment_game_detail_text_1">Confirmar Presença</string>
+    <string name="fragment_game_detail_text_1">Confirmar</string>
     <string name="fragment_groups_hint_1">Buscar grupos\u2026</string>
     <string name="fragment_groups_text_2">Nenhum grupo ainda</string>
     <string name="fragment_groups_text_3">Crie um grupo para organizar seus jogos com os amigos</string>
@@ -739,7 +739,7 @@ subir no ranking!</string>
     <string name="item_game_card_text_5">Quadra 1 - Society</string>
     <string name="item_game_card_text_6">8/12</string>
     <string name="item_game_card_text_7">R$ 30,00</string>
-    <string name="item_game_card_text_8">Confirmar Presença</string>
+    <string name="item_game_card_text_8">Confirmar</string>
     <string name="item_game_detail_header_text_1">Arena XP</string>
     <string name="item_game_detail_header_text_2">Quadra 2</string>
     <string name="item_game_detail_header_text_3"> • Coberta</string>
@@ -900,7 +900,7 @@ subir no ranking!</string>
     <string name="biometric_negative_button">Usar Google</string>
 
     <!-- Register -->
-    <string name="register_use_google_button">Use o botao \'Entrar com Google\' para criar sua conta</string>
+    <string name="register_use_google_button">Use o botão \'Entrar com Google\' para criar sua conta</string>
 
     <!-- DevTools -->
     <string name="dev_tools_title">Ferramentas de Desenvolvedor</string>
@@ -943,9 +943,9 @@ subir no ranking!</string>
     <!-- Undo Snackbar -->
     <string name="undo">Desfazer</string>
     <string name="undo_action">Desfazer ação</string>
-    <string name="item_deleted">Item excluido</string>
+    <string name="item_deleted">Item excluído</string>
     <string name="item_removed">Item removido</string>
-    <string name="action_undone">Acao desfeita</string>
+    <string name="action_undone">Ação desfeita</string>
 
     <!-- Games Screen -->
     <string name="create_game">Criar Jogo</string>
@@ -958,7 +958,7 @@ subir no ranking!</string>
     <!-- Group Detail Screen -->
     <string name="group_detail">Detalhes do Grupo</string>
     <string name="back">Voltar</string>
-    <string name="more_options">Mais opcoes</string>
+    <string name="more_options">Mais opções</string>
     <string name="invite_players">Convidar Jogadores</string>
     <string name="cashbox">Caixinha</string>
     <string name="edit_group">Editar Grupo</string>
@@ -975,7 +975,7 @@ subir no ranking!</string>
     <string name="add">Adicionar</string>
     <string name="search_locations">Buscar locais</string>
     <string name="no_locations">Nenhum local cadastrado</string>
-    <string name="no_locations_description">Adicione um novo local usando o botao +</string>
+    <string name="no_locations_description">Adicione um novo local usando o botão +</string>
     <string name="add_location">Adicionar Local</string>
 
     <!-- Live Events Screen -->
@@ -983,8 +983,8 @@ subir no ranking!</string>
     <string name="no_events_description">Os eventos da partida aparecerão aqui</string>
 
     <!-- Live Stats Screen -->
-    <string name="no_stats">Sem estatisticas</string>
-    <string name="no_stats_description">As estatisticas aparecerão quando o jogo iniciar</string>
+    <string name="no_stats">Sem estatísticas</string>
+    <string name="no_stats_description">As estatísticas aparecerão quando o jogo iniciar</string>
 
     <!-- Field Owner Dashboard -->
     <string name="fields">Quadras</string>
@@ -1050,8 +1050,8 @@ subir no ranking!</string>
     <string name="team_score_display">Gols: %1$d</string>
 
     <!-- Game Confirmation Messages -->
-    <string name="game_confirm_presence">Confirmar Presença</string>
-    <string name="game_cancel_presence">Cancelar Presença</string>
+    <string name="game_confirm_presence">Confirmar</string>
+    <string name="game_cancel_presence">Cancelar Confirmação</string>
     <string name="game_cancel_confirmation">Cancelar Confirmação</string>
     <string name="game_accept_invite">Aceitar Convite</string>
     <string name="game_decline_invite">Recusar</string>
@@ -1259,6 +1259,7 @@ subir no ranking!</string>
     <string name="action_close">Fechar</string>
     <string name="action_back">Voltar</string>
     <string name="action_confirm">Confirmar</string>
+    <string name="verify">Verificar</string>
     <string name="confirm_player">Confirmar jogador</string>
     <string name="awaiting_confirmation">Aguardando</string>
     <string name="action_invite">Convidar</string>
@@ -1427,7 +1428,7 @@ subir no ranking!</string>
     <string name="next_game_scheduled">Próximo jogo agendado para %s</string>
     <string name="scheduling_conflict">Conflito de agendamento em %s</string>
     <string name="scheduling_error">Erro de agendamento: %s</string>
-    <string name="cancel_presence">Cancelar Presença</string>
+    <string name="cancel_presence">Cancelar Confirmação</string>
     <string name="accept_invite">Aceitar Convite</string>
     <string name="teams">Times</string>
     <string name="attendance_list">Lista de Presença</string>
@@ -1462,7 +1463,7 @@ subir no ranking!</string>
     <string name="tactical_draw_color">Cor do Desenho</string>
     <string name="tactical_clear">Limpar</string>
     <string name="tactical_share">Compartilhar</string>
-    <string name="tactical_share_tactic">Compartihar Tática</string>
+    <string name="tactical_share_tactic">Compartilhar Tática</string>
     <string name="tactical_error_share">Erro ao compartilhar: %s</string>
     <string name="tactical_error_save">Erro ao salvar imagem</string>
     <string name="invite_whatsapp">Convidar WhatsApp</string>
@@ -1618,7 +1619,7 @@ subir no ranking!</string>
     <string name="login_signin_with_credential">Entrando com credencial Firebase</string>
     <string name="login_signin_credential_completed">signInWithCredential completado</string>
     <string name="login_signin_success">signInWithCredential: sucesso - UID: %s</string>
-    <string name="login_user_email">Email do usuario: %s</string>
+    <string name="login_user_email">Email do usuário: %s</string>
     <string name="login_user_display_name">Nome de exibição: %s</string>
     <string name="login_calling_viewmodel">Chamando viewModel.onGoogleSignInSuccess()</string>
     <string name="login_signin_failure">signInWithCredential: falha - %s</string>
@@ -2027,7 +2028,7 @@ subir no ranking!</string>
 
     <!-- Create Game - Additional (migrated from moko-resources) -->
     <string name="create_game_label_visibility">Visibilidade</string>
-    <string name="create_game_hint_price">Preco por jogador</string>
+    <string name="create_game_hint_price">Preço por jogador</string>
     <string name="create_game_hint_max_players">Max Jogadores</string>
     <string name="create_game_button_cancel">Cancelar</string>
     <string name="create_game_button_schedule">Agendar</string>
@@ -2049,7 +2050,7 @@ subir no ranking!</string>
 
     <!-- Additional strings from moko-resources that were missing -->
     <string name="action_ok">OK</string>
-    <string name="action_no">Nao</string>
+    <string name="action_no">Não</string>
     <string name="action_yes">Sim</string>
 
     <!-- Cashbox additional -->
@@ -2097,7 +2098,7 @@ subir no ranking!</string>
     <string name="error_unauthorized">Você não tem permissão para esta ação</string>
 
     <!-- Field types -->
-    <string name="field_address">Endereco</string>
+    <string name="field_address">Endereço</string>
     <string name="field_city">Cidade</string>
     <string name="field_email">Email</string>
     <string name="field_nickname">Apelido</string>
@@ -2169,11 +2170,11 @@ subir no ranking!</string>
     <string name="schedules_delete">Excluir</string>
     <string name="schedules_day_sunday">Domingo</string>
     <string name="schedules_day_monday">Segunda</string>
-    <string name="schedules_day_tuesday">Terca</string>
+    <string name="schedules_day_tuesday">Terça</string>
     <string name="schedules_day_wednesday">Quarta</string>
     <string name="schedules_day_thursday">Quinta</string>
     <string name="schedules_day_friday">Sexta</string>
-    <string name="schedules_day_saturday">Sabado</string>
+    <string name="schedules_day_saturday">Sábado</string>
     <string name="schedules_recurrence_weekly">Semanal</string>
     <string name="schedules_recurrence_biweekly">Quinzenal</string>
     <string name="schedules_recurrence_monthly">Mensal</string>
@@ -2203,7 +2204,7 @@ subir no ranking!</string>
     <string name="schedules_error_loading">Erro ao carregar agendamentos</string>
     <string name="schedules_try_again">Tentar Novamente</string>
     <string name="schedules_fab_description">Criar novo agendamento</string>
-    <string name="schedules_delete_title">Excluir Recorrencia</string>
+    <string name="schedules_delete_title">Excluir Recorrência</string>
     <string name="schedules_delete_message">Deseja parar esta recorrência? Novos jogos não serão mais agendados automaticamente para esta série.</string>
     <string name="schedules_stop">Parar</string>
     <string name="schedules_cancel">Cancelar</string>
@@ -2229,7 +2230,7 @@ subir no ranking!</string>
     <string name="schedules_create_content">Criando agendamento: %s</string>
 
     <!-- Profile Level Journey missing strings -->
-    <string name="profile_all_levels">Todos os Niveis</string>
+    <string name="profile_all_levels">Todos os Níveis</string>
     <string name="profile_xp">XP</string>
     <string name="profile_next_level">Próximo Nível</string>
     <string name="profile_current_level">Nível Atual</string>
@@ -2248,8 +2249,8 @@ subir no ranking!</string>
     <string name="players_share">Compartilhar</string>
 
     <!-- Preferences missing strings -->
-    <string name="preferences_profile_visible">Perfil Visivel</string>
-    <string name="preferences_profile_visible_desc">Permitir que outros usuarios vejam seu perfil</string>
+    <string name="preferences_profile_visible">Perfil Visível</string>
+    <string name="preferences_profile_visible_desc">Permitir que outros usuários vejam seu perfil</string>
     <string name="preferences_developer_tools">Ferramentas de Desenvolvedor</string>
     <string name="preferences_dev_mode_active">Modo Desenvolvedor Ativo</string>
 
@@ -2315,14 +2316,14 @@ subir no ranking!</string>
     <string name="location_marker_description_no_rating">%1$s, %2$s</string>
     <string name="location_marker_description_no_neighborhood">%1$s, %2$.1f estrelas</string>
     <string name="location_marker_description_name_only">%1$s</string>
-    <string name="location_search_description">Buscar locais por nome ou endereco</string>
+    <string name="location_search_description">Buscar locais por nome ou endereço</string>
     <string name="location_search_clear_description">Limpar busca</string>
     <string name="location_filter_description">Filtrar por %1$s</string>
     <string name="location_card_description">%1$s, %2$s, %3$.1f estrelas, %4$d campos</string>
     <string name="location_card_description_no_fields">%1$s, %2$s, %3$.1f estrelas</string>
     <string name="location_fab_add_description">Adicionar novo local</string>
     <string name="location_fab_map_description">Ver mapa de locais</string>
-    <string name="location_menu_more_options_description">Mais opcoes</string>
+    <string name="location_menu_more_options_description">Mais opções</string>
     <string name="location_loading_description">Carregando locais</string>
     <string name="location_map_region_description">Mapa mostrando %1$d locais</string>
 
@@ -2342,11 +2343,11 @@ subir no ranking!</string>
     <string name="location_dialog_field_name">Nome do Campo</string>
     <string name="location_dialog_field_required">Campo obrigatório</string>
     <string name="location_dialog_field_type">Tipo</string>
-    <string name="location_dialog_price">Preco</string>
+    <string name="location_dialog_price">Preço</string>
     <string name="location_dialog_price_invalid">Preço inválido</string>
-    <string name="location_dialog_surface">Superficie</string>
-    <string name="location_dialog_surface_placeholder">Ex: Gramado, Sintetico</string>
-    <string name="location_dialog_dimensions">Dimensoes</string>
+    <string name="location_dialog_surface">Superfície</string>
+    <string name="location_dialog_surface_placeholder">Ex: Gramado, Sintético</string>
+    <string name="location_dialog_dimensions">Dimensões</string>
     <string name="location_dialog_dimensions_placeholder">Ex: 40x20m</string>
     <string name="location_dialog_covered">Coberto</string>
 
@@ -2360,11 +2361,11 @@ subir no ranking!</string>
     <string name="live_game_player_label">Jogador</string>
     <string name="live_game_expand">Expandir</string>
     <string name="live_game_no_player">Sem jogador</string>
-    <string name="live_game_assist">Assistencia</string>
-    <string name="live_game_no_assist_label">Sem assistencia</string>
-    <string name="live_game_substituted_out">Substituido</string>
-    <string name="live_game_no_stats">Sem estatisticas</string>
-    <string name="live_game_no_stats_description">Nenhuma estatistica registrada ainda</string>
+    <string name="live_game_assist">Assistência</string>
+    <string name="live_game_no_assist_label">Sem assistência</string>
+    <string name="live_game_substituted_out">Substituído</string>
+    <string name="live_game_no_stats">Sem estatísticas</string>
+    <string name="live_game_no_stats_description">Nenhuma estatística registrada ainda</string>
 
     <!-- Live Game more missing strings -->
     <string name="live_game_add_event">Adicionar Evento</string>
@@ -2372,8 +2373,8 @@ subir no ranking!</string>
     <string name="live_game_event_type">Tipo de Evento</string>
     <string name="live_game_goal">Gol</string>
     <string name="live_game_save">Defesa</string>
-    <string name="live_game_yellow_card">Cartao Amarelo</string>
-    <string name="live_game_red_card">Cartao Vermelho</string>
+    <string name="live_game_yellow_card">Cartão Amarelo</string>
+    <string name="live_game_red_card">Cartão Vermelho</string>
     <string name="live_game_select_team">Selecionar Time</string>
     <string name="live_game_minute">Minuto</string>
     <string name="live_game_goal_label">Gol</string>
@@ -2385,9 +2386,9 @@ subir no ranking!</string>
     <string name="live_game_no_events">Sem eventos</string>
     <string name="live_game_no_events_description">Nenhum evento registrado ainda</string>
     <string name="live_game_event_goal">Gol</string>
-    <string name="live_game_event_substitution">Substituicao</string>
-    <string name="live_game_event_yellow_card">Cartao Amarelo</string>
-    <string name="live_game_event_red_card">Cartao Vermelho</string>
+    <string name="live_game_event_substitution">Substituição</string>
+    <string name="live_game_event_yellow_card">Cartão Amarelo</string>
+    <string name="live_game_event_red_card">Cartão Vermelho</string>
     <string name="live_game_event_foul">Falta</string>
     <string name="live_game_event_default">Evento</string>
     <string name="live_game_end_label">Encerrar</string>
@@ -2399,8 +2400,8 @@ subir no ranking!</string>
     <string name="live_game_assist_by">Assistido por %s</string>
 
     <!-- Live Game - New Features (Voice, Timer, Referee Mode, etc.) -->
-    <string name="live_game_referee_mode">Modo Arbitro</string>
-    <string name="live_game_toggle_referee_mode">Alternar modo arbitro</string>
+    <string name="live_game_referee_mode">Modo Árbitro</string>
+    <string name="live_game_toggle_referee_mode">Alternar modo árbitro</string>
     <string name="live_game_first_half">1o Tempo</string>
     <string name="live_game_second_half">2o Tempo</string>
     <string name="live_game_first_half_abbr">1T</string>
@@ -2411,7 +2412,7 @@ subir no ranking!</string>
     <string name="live_game_timer_config">Configurar Tempo</string>
     <string name="live_game_half_duration">Duração de cada tempo</string>
     <string name="live_game_minutes">minutos</string>
-    <string name="live_game_substitution">Substituicao</string>
+    <string name="live_game_substitution">Substituição</string>
     <string name="live_game_player_out">Jogador que sai</string>
     <string name="live_game_player_in">Jogador que entra</string>
     <string name="live_game_voice_command">Comando de voz</string>
@@ -2454,7 +2455,7 @@ subir no ranking!</string>
     <string name="league_rating_components">Componentes do Rating</string>
 
     <!-- FCM Service Strings -->
-    <string name="fcm_channel_name">Futeba dos Parcas</string>
+    <string name="fcm_channel_name">Futeba dos Parças</string>
     <string name="fcm_channel_description">Notificações de jogos e confirmações</string>
     <string name="fcm_new_token_received">Novo FCM token recebido</string>
     <string name="fcm_error_updating_token">Erro ao atualizar FCM token</string>
@@ -2486,14 +2487,14 @@ subir no ranking!</string>
     <string name="notification_message_invite_accepted">%1$s aceitou o convite para o grupo %2$s</string>
     <string name="notification_message_invite_declined">%1$s recusou o convite para o grupo %2$s</string>
     <string name="notification_message_game_call">Você foi convocado para %1$s (%2$s) - Grupo %3$s</string>
-    <string name="notification_message_game_reminder">%1$s comeca em %2$s (%3$s)</string>
+    <string name="notification_message_game_reminder">%1$s começa em %2$s (%3$s)</string>
     <string name="notification_message_new_member">%1$s entrou no grupo %2$s</string>
     <string name="notification_message_season_closed">A temporada %1$s chegou ao fim. Confira sua classificação final!</string>
 
     <!-- Content Description Strings -->
     <string name="cd_back">Voltar</string>
     <string name="cd_execute">Executar</string>
-    <string name="cd_more_options">Mais opcoes</string>
+    <string name="cd_more_options">Mais opções</string>
     <string name="cd_close">Fechar</string>
     <string name="cd_offline">Offline</string>
     <string name="cd_add_location">Adicionar Local</string>
@@ -2502,7 +2503,7 @@ subir no ranking!</string>
     <string name="cd_current_level_badge">Nível atual</string>
     <string name="cd_level_journey_badge">Badge de nível %s</string>
     <string name="cd_photo_player">Foto de %s</string>
-    <string name="cd_user_photo">Foto do usuario</string>
+    <string name="cd_user_photo">Foto do usuário</string>
     <string name="cd_profile_photo">Foto de perfil</string>
     <string name="cd_edit_profile">Editar Perfil</string>
     <string name="cd_sign_out">Sair</string>
@@ -2582,7 +2583,7 @@ subir no ranking!</string>
     <string name="about_rate_app_desc">Deixe sua avaliação na Play Store</string>
     <string name="about_contact_us">Fale Conosco</string>
     <string name="about_contact_us_desc">Envie feedback ou relato de problemas</string>
-    <string name="about_privacy_policy">Politica de Privacidade</string>
+    <string name="about_privacy_policy">Política de Privacidade</string>
     <string name="about_privacy_policy_desc">Como tratamos seus dados</string>
     <string name="about_terms_of_service">Termos de Uso</string>
     <string name="about_terms_of_service_desc">Condições de uso do aplicativo</string>
@@ -2630,8 +2631,8 @@ subir no ranking!</string>
     <string name="stat_label_draws">Empates</string>
     <string name="stat_label_mvps">MVPs</string>
     <string name="stat_label_saves">Defesas</string>
-    <string name="stat_label_cards">Cartoes</string>
-    <string name="stat_label_avg_goals">Media Gols</string>
+    <string name="stat_label_cards">Cartões</string>
+    <string name="stat_label_avg_goals">Média Gols</string>
 
     <!-- Game Confirmation Errors -->
     <string name="error_invalid_position">Posição inválida: %1$s. Valores aceitos: %2$s</string>
@@ -2641,7 +2642,7 @@ subir no ranking!</string>
     <string name="error_game_full">Jogo lotado (%1$d/%2$d jogadores)</string>
     <string name="error_game_already_started">Não é possível confirmar após o início do jogo</string>
     <string name="error_user_not_authenticated">Usuário não autenticado</string>
-    <string name="error_failed_to_get_user">Falha ao obter usuario atual</string>
+    <string name="error_failed_to_get_user">Falha ao obter usuário atual</string>
     <string name="error_failed_to_get_game">Falha ao obter detalhes do jogo</string>
 
     <!-- Default Values -->
@@ -2897,7 +2898,7 @@ subir no ranking!</string>
 
     <!-- Profile Setup Screen -->
     <string name="profile_setup_title">Configure seu perfil</string>
-    <string name="profile_setup_subtitle">Conte um pouco sobre você para melhorar sua experiencia</string>
+    <string name="profile_setup_subtitle">Conte um pouco sobre você para melhorar sua experiência</string>
     <string name="profile_setup_name">Nome completo</string>
     <string name="profile_setup_name_hint">Como você se chama?</string>
     <string name="profile_setup_nickname">Apelido (opcional)</string>
@@ -2924,7 +2925,7 @@ subir no ranking!</string>
     <string name="app_guide_groups_title">Grupos</string>
     <string name="app_guide_groups_desc">Participe de grupos de pelada e organize jogos com a galera</string>
     <string name="app_guide_tip">Dica: Jogue regularmente para subir de nível e desbloquear badges exclusivas!</string>
-    <string name="app_guide_start">Comecar a usar</string>
+    <string name="app_guide_start">Começar a usar</string>
 
     <!-- ==================== LOCATION ONBOARDING (progressive empty state) ==================== -->
 
@@ -2938,12 +2939,12 @@ subir no ranking!</string>
 
     <!-- Step 2 -->
     <string name="location_onboarding_step2_title">Adicione quadras ao local</string>
-    <string name="location_onboarding_step2_desc">Cadastre as quadras disponiveis com tipo e dimensoes</string>
+    <string name="location_onboarding_step2_desc">Cadastre as quadras disponíveis com tipo e dimensões</string>
     <string name="location_onboarding_step2_action">Adicionar Quadra</string>
 
     <!-- Step 3 -->
-    <string name="location_onboarding_step3_title">Defina precos e horarios</string>
-    <string name="location_onboarding_step3_desc">Configure valores por hora e horarios de funcionamento</string>
+    <string name="location_onboarding_step3_title">Defina preços e horários</string>
+    <string name="location_onboarding_step3_desc">Configure valores por hora e horários de funcionamento</string>
     <string name="location_onboarding_step3_action">Configurar</string>
 
     <!-- Misc -->
@@ -2976,7 +2977,7 @@ subir no ranking!</string>
     <string name="location_export_json">JSON</string>
     <string name="location_export_json_description">Formato completo com todos os dados estruturados</string>
     <string name="location_export_csv">CSV</string>
-    <string name="location_export_csv_description">Planilha compativel com Excel e Google Sheets</string>
+    <string name="location_export_csv_description">Planilha compatível com Excel e Google Sheets</string>
     <string name="location_export_button">Exportar</string>
 
     <!-- Export Results -->
@@ -3319,7 +3320,7 @@ subir no ranking!</string>
 
     <!-- Create Game Wizard (Improvement #8) -->
     <string name="create_game_wizard_previous">Anterior</string>
-    <string name="create_game_wizard_next">Proximo</string>
+    <string name="create_game_wizard_next">Próximo</string>
     <string name="create_game_wizard_finish">Agendar</string>
     <string name="create_game_step_location">Local</string>
     <string name="create_game_step_details">Detalhes</string>
@@ -3352,8 +3353,8 @@ subir no ranking!</string>
 
     <!-- CEP Lookup (Improvement #5) -->
     <string name="create_game_cep_label">CEP</string>
-    <string name="create_game_cep_found">Endereco encontrado:</string>
-    <string name="create_game_cep_use_address">Usar este endereco</string>
+    <string name="create_game_cep_found">Endereço encontrado:</string>
+    <string name="create_game_cep_use_address">Usar este endereço</string>
     <string name="create_game_cep_not_found">CEP não encontrado</string>
 
     <!-- Price Per Player (Improvement #6) -->
@@ -3381,8 +3382,8 @@ subir no ranking!</string>
     <string name="create_game_draft_saved">Salvo automaticamente as %s</string>
 
     <!-- Google Calendar (Improvement #10) -->
-    <string name="create_game_add_to_calendar">Adicionar ao Calendario</string>
-    <string name="create_game_calendar_added">Evento adicionado ao calendario</string>
+    <string name="create_game_add_to_calendar">Adicionar ao Calendário</string>
+    <string name="create_game_calendar_added">Evento adicionado ao calendário</string>
 
     <!-- Create Game Success -->
     <string name="create_game_success_title">Jogo Agendado!</string>
@@ -3589,7 +3590,7 @@ subir no ranking!</string>
     <string name="cd_previous">Anterior</string>
     <string name="cd_next">Próximo</string>
     <string name="cd_refresh">Atualizar</string>
-    <string name="cd_clear_metrics">Limpar metricas</string>
+    <string name="cd_clear_metrics">Limpar métricas</string>
     <string name="cd_send_analytics">Enviar ao Analytics</string>
     <string name="cd_locked">Bloqueado</string>
     <string name="cd_member_count">%1$d %2$s</string>

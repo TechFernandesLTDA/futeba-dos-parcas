@@ -163,6 +163,7 @@ class InviteRepositoryImpl constructor(
 
             Result.success(invites)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar convites pendentes", e)
             Result.failure(e)
         }
     }
@@ -267,6 +268,7 @@ class InviteRepositoryImpl constructor(
 
             Result.success(invites)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar convites pendentes do grupo", e)
             Result.failure(e)
         }
     }
@@ -365,6 +367,7 @@ class InviteRepositoryImpl constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao aceitar convite", e)
             Result.failure(e)
         }
     }
@@ -424,6 +427,7 @@ class InviteRepositoryImpl constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao recusar convite", e)
             Result.failure(e)
         }
     }
@@ -465,6 +469,7 @@ class InviteRepositoryImpl constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao cancelar convite", e)
             Result.failure(e)
         }
     }
@@ -481,6 +486,7 @@ class InviteRepositoryImpl constructor(
                 Result.failure(Exception("Convite não encontrado"))
             }
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar convite por ID", e)
             Result.failure(e)
         }
     }
@@ -506,6 +512,7 @@ class InviteRepositoryImpl constructor(
 
             Result.success(count)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao contar convites pendentes", e)
             Result.failure(e)
         }
     }
