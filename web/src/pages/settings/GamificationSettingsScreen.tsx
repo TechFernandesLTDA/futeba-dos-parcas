@@ -87,10 +87,6 @@ export const GamificationSettingsScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (user?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />;
-  }
-
   const loadPrefs = useCallback(async () => {
     if (!user) return;
     try {
@@ -138,6 +134,10 @@ export const GamificationSettingsScreen: React.FC = () => {
       setSaving(false);
     }
   };
+
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <Box sx={{ pb: 4 }}>
