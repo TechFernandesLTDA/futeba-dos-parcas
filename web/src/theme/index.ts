@@ -43,6 +43,18 @@ export const rarityColors: Record<string, string> = {
   LEGENDARY: '#FF9800',
 };
 
+// Dark-mode badge rarity variants — higher brightness for contrast on dark backgrounds
+export const rarityColorsDark: Record<string, string> = {
+  COMUM: '#BDBDBD',
+  RARO: '#42A5F5',
+  EPICO: '#CE93D8',
+  LENDARIO: '#FFB74D',
+  COMMON: '#BDBDBD',
+  RARE: '#42A5F5',
+  EPIC: '#CE93D8',
+  LEGENDARY: '#FFB74D',
+};
+
 // Gamification colors
 // #1574: adicionados platinum e champion para centralizar cores de divisão
 export const gamificationColors = {

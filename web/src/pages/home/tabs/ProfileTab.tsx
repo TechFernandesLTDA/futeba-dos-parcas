@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
   Box,
@@ -78,6 +78,14 @@ export function ProfileTab() {
   const xpInLevel = currentXp - currentEntry.xpRequired;
   const xpNeededForNext = nextEntry ? nextEntry.xpRequired - currentEntry.xpRequired : 0;
   const levelColor = getLevelColor(currentLevel, theme);
+
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setAnimatedProgress(levelProgress);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, [levelProgress]);
 
   const handleLogout = async () => {
     try {
@@ -321,7 +329,7 @@ export function ProfileTab() {
 
             <LinearProgress
               variant="determinate"
-              value={levelProgress}
+              value={animatedProgress}
               sx={{
                 height: 8,
                 borderRadius: 4,
@@ -329,6 +337,7 @@ export function ProfileTab() {
                 '& .MuiLinearProgress-bar': {
                   borderRadius: 4,
                   background: `linear-gradient(90deg, ${levelColor}, ${alpha(levelColor, 0.7)})`,
+                  transition: 'transform 1s ease-in-out',
                 },
               }}
             />

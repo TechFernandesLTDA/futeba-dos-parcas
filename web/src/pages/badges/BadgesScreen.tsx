@@ -33,7 +33,7 @@ import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { BADGE_DEFINITIONS, BadgeDefinition } from '../../types/gamification';
-import { rarityColors } from '../../theme';
+import { rarityColors, rarityColorsDark } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 
@@ -64,6 +64,7 @@ export const BadgesScreen: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { unlockedIds, loading, error } = useBadges(user?.id);
+  const rarityMap = theme.palette.mode === 'dark' ? rarityColorsDark : rarityColors;
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [detailBadge, setDetailBadge] = useState<BadgeDefinition | null>(null);
 
@@ -79,12 +80,12 @@ export const BadgesScreen: React.FC = () => {
   ), [unlockedIds.size]);
 
   const getRarityStyle = useMemo(() => (rarity: string) => {
-    const color = rarityColors[rarity] ?? rarityColors.COMUM;
+    const color = rarityMap[rarity] ?? rarityMap.COMUM;
     return {
       border: `2px solid ${color}`,
       boxShadow: `0 0 10px ${alpha(color, 0.3)}`,
     };
-  }, []);
+  }, [rarityMap]);
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -149,6 +150,7 @@ export const BadgesScreen: React.FC = () => {
                       badge={badge}
                       isUnlocked={unlockedIds.has(badge.id)}
                       rarityStyle={getRarityStyle(badge.rarity)}
+                      rarityMap={rarityMap}
                       onClick={() => setDetailBadge(badge)}
                     />
                   </Grid>
@@ -163,6 +165,7 @@ export const BadgesScreen: React.FC = () => {
         badge={detailBadge}
         isUnlocked={detailBadge ? unlockedIds.has(detailBadge.id) : false}
         onClose={() => setDetailBadge(null)}
+        rarityMap={rarityMap}
       />
     </Box>
   );
@@ -172,11 +175,13 @@ const BadgeItem = React.memo(function BadgeItem({
   badge,
   isUnlocked,
   rarityStyle,
+  rarityMap,
   onClick,
 }: {
   badge: BadgeDefinition;
   isUnlocked: boolean;
   rarityStyle: { border: string; boxShadow: string };
+  rarityMap: Record<string, string>;
   onClick: () => void;
 }) {
   return (
@@ -198,7 +203,7 @@ const BadgeItem = React.memo(function BadgeItem({
               width: 60,
               height: 60,
               borderRadius: '50%',
-              bgcolor: alpha(rarityColors[badge.rarity] ?? rarityColors.COMUM, 0.1),
+              bgcolor: alpha(rarityMap[badge.rarity] ?? rarityMap.COMUM, 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -218,8 +223,8 @@ const BadgeItem = React.memo(function BadgeItem({
             size="small"
             sx={{
               mt: 0.5,
-              bgcolor: alpha(rarityColors[badge.rarity] ?? rarityColors.COMUM, 0.1),
-              color: rarityColors[badge.rarity] ?? rarityColors.COMUM,
+              bgcolor: alpha(rarityMap[badge.rarity] ?? rarityMap.COMUM, 0.1),
+              color: rarityMap[badge.rarity] ?? rarityMap.COMUM,
               fontSize: '0.75rem',
               height: 20,
             }}
@@ -239,16 +244,18 @@ function BadgeDetailDialog({
   badge,
   isUnlocked,
   onClose,
+  rarityMap,
 }: {
   badge: BadgeDefinition | null;
   isUnlocked: boolean;
   onClose: () => void;
+  rarityMap: Record<string, string>;
 }) {
   const theme = useTheme();
 
   if (!badge) return null;
 
-  const rarityColor = rarityColors[badge.rarity] ?? rarityColors.COMUM;
+  const rarityColor = rarityMap[badge.rarity] ?? rarityMap.COMUM;
 
   return (
     <Dialog open={true} onClose={onClose} maxWidth="xs" fullWidth>

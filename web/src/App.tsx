@@ -28,6 +28,14 @@ import {
   GroupDetailSkeleton,
   ProfileScreenSkeleton,
   RankingScreenSkeleton,
+  BadgesSkeleton,
+  EditProfileSkeleton,
+  GlobalSearchSkeleton,
+  LevelJourneySkeleton,
+  StatisticSkeleton,
+  LiveGameSkeleton,
+  WeeklyRecapSkeleton,
+  AboutSkeleton,
 } from './components/common/ScreenSkeletons';
 
 
@@ -146,10 +154,18 @@ function RouteFallback() {
   const path = location.pathname;
 
   if (path === '/' || path === '') return <HomeScreenSkeleton />;
+  if (path.startsWith('/game/') && path.endsWith('/live')) return <LiveGameSkeleton />;
   if (path.startsWith('/game/')) return <GameDetailSkeleton />;
   if (path.startsWith('/group/') && !path.includes('/edit') && !path.includes('/settings') && !path.includes('/cashbox')) return <GroupDetailSkeleton />;
+  if (path.startsWith('/profile/edit')) return <EditProfileSkeleton />;
   if (path.startsWith('/profile')) return <ProfileScreenSkeleton />;
   if (path === '/league') return <RankingScreenSkeleton />;
+  if (path === '/badges') return <BadgesSkeleton />;
+  if (path === '/search') return <GlobalSearchSkeleton />;
+  if (path.startsWith('/level-journey')) return <LevelJourneySkeleton />;
+  if (path === '/statistics') return <StatisticSkeleton />;
+  if (path.startsWith('/weekly-recap')) return <WeeklyRecapSkeleton />;
+  if (path === '/about') return <AboutSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>

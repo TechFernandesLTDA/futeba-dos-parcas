@@ -43,6 +43,7 @@ import com.futebadosparcas.ui.groups.dialogs.EditGroupDialog
 import com.futebadosparcas.ui.groups.dialogs.TransferOwnershipDialog
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
@@ -479,12 +480,7 @@ private fun GroupDetailTopBar(
             }
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-            actionIconContentColor = MaterialTheme.colorScheme.onSurface
-        )
+        colors = AppTopBar.surfaceColors()
     )
 }
 

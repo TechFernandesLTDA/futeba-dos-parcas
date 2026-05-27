@@ -82,7 +82,7 @@ export const StatisticsScreen: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          bgcolor: 'background.paper',
+          bgcolor: 'background.default',
           zIndex: 10,
           borderBottom: 1,
           borderColor: 'divider',

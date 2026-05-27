@@ -24,6 +24,7 @@ import {FUNCTION_REGION} from "../constants";
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
 const MAX_GPS_ACCURACY_METERS = 100;
+const QR_RADIUS_METERS = 500;
 
 interface CheckInRequest {
   gameId: string;
@@ -189,6 +190,19 @@ export const checkInToGame = onCall(
     if (hasQrToken) {
       const storedToken = game.checkin_qr_token as string | undefined;
       if (typeof storedToken === "string" && storedToken === qrToken) {
+        // FIX #2051: QR token expiration check (24h)
+        const expiresAt = game.checkin_qr_token_expires_at as
+          admin.firestore.Timestamp | undefined;
+        if (
+          expiresAt &&
+          typeof expiresAt.toDate === "function" &&
+          expiresAt.toDate().getTime() < Date.now()
+        ) {
+          throw new HttpsError(
+            "permission-denied",
+            "QR token expirado",
+          );
+        }
         qrValid = true;
       } else {
         throw new HttpsError(
@@ -201,7 +215,9 @@ export const checkInToGame = onCall(
     let dist = 0;
     let radius = DEFAULT_RADIUS_METERS;
 
-    if (!qrValid) {
+    // FIX #2051: Always validate GPS when coordinates provided.
+    // QR uses lenient 500m radius instead of skipping GPS entirely.
+    if (hasGps) {
       const gameLat = game.location_lat as number | undefined;
       const gameLng = game.location_lng as number | undefined;
       if (
@@ -215,27 +231,32 @@ export const checkInToGame = onCall(
       }
 
       dist = haversineMeters(lat!, lng!, gameLat, gameLng);
-      const radiusRaw = (game.checkin_radius_meters as number) ??
-        DEFAULT_RADIUS_METERS;
-      radius = Math.min(
-        Math.max(radiusRaw, DEFAULT_RADIUS_METERS),
-        MAX_RADIUS_METERS,
-      );
-      if (radiusRaw !== radius) {
-        logger.warn(
-          "[CHECKIN_RADIUS_CLAMP]",
-          {
-            gameId,
-            configured: radiusRaw,
-            used: radius,
-          },
+
+      if (qrValid) {
+        radius = QR_RADIUS_METERS;
+      } else {
+        const radiusRaw = (game.checkin_radius_meters as number) ??
+          DEFAULT_RADIUS_METERS;
+        radius = Math.min(
+          Math.max(radiusRaw, DEFAULT_RADIUS_METERS),
+          MAX_RADIUS_METERS,
         );
+        if (radiusRaw !== radius) {
+          logger.warn(
+            "[CHECKIN_RADIUS_CLAMP]",
+            {
+              gameId,
+              configured: radiusRaw,
+              used: radius,
+            },
+          );
+        }
       }
 
       if (dist > radius) {
         logger.warn(
           "[CHECKIN_OUT_OF_RANGE]",
-          {uid, gameId, dist: Math.round(dist), radius},
+          {uid, gameId, dist: Math.round(dist), radius, qrValid},
         );
         throw new HttpsError(
           "permission-denied",
@@ -250,6 +271,7 @@ export const checkInToGame = onCall(
     // race entre checar checked_in e escrever.
     const confId = `${gameId}_${uid}`;
     const confRef = db().doc(`confirmations/${confId}`);
+    const gameRef = db().doc(`games/${gameId}`);
 
     await db().runTransaction(async (tx) => {
       const confSnap = await tx.get(confRef);
@@ -276,6 +298,14 @@ export const checkInToGame = onCall(
         };
       }
 
+      // FIX #2051: Invalidate QR token after successful check-in
+      if (qrValid) {
+        tx.update(gameRef, {
+          checkin_qr_token: admin.firestore.FieldValue.delete(),
+          checkin_qr_token_expires_at: admin.firestore.FieldValue.delete(),
+        });
+      }
+
       tx.set(
         confRef,
         {
@@ -294,7 +324,7 @@ export const checkInToGame = onCall(
             typeof accuracy === "number" ?
               Math.round(accuracy) :
               null,
-          check_in_distance_m: qrValid ? null : Math.round(dist),
+          check_in_distance_m: hasGps ? Math.round(dist) : null,
           check_in_method: qrValid ? "qr" : "gps",
           was_present: true,
         },
@@ -303,13 +333,13 @@ export const checkInToGame = onCall(
 
       return {
         success: true,
-        distance_m: qrValid ? null : Math.round(dist),
+        distance_m: hasGps ? Math.round(dist) : null,
       };
     });
 
     return {
       success: true,
-      distance_m: qrValid ? null : Math.round(dist),
+      distance_m: hasGps ? Math.round(dist) : null,
       method: qrValid ? "qr" : "gps",
     };
   },
@@ -343,11 +373,7 @@ export const generateCheckinToken = onCall(
 
     const ownerId = game.owner_id as string;
     const coOrganizers = (game.co_organizers as string[]) ?? [];
-    const userSnap = await db().doc(`users/${uid}`).get();
-    const userRole = userSnap.exists ?
-      (userSnap.data() as Record<string, unknown>).role as string :
-      undefined;
-    const isAdmin = userRole === "ADMIN";
+    const isAdmin = request.auth?.token?.role === "ADMIN";
 
     if (ownerId !== uid && !coOrganizers.includes(uid) && !isAdmin) {
       throw new HttpsError(
@@ -364,10 +390,27 @@ export const generateCheckinToken = onCall(
       );
     }
 
+    // FIX #2051: Reuse existing valid token to prevent spamming
+    const existingToken = game.checkin_qr_token as string | undefined;
+    const existingExpiresAt = game.checkin_qr_token_expires_at as
+      admin.firestore.Timestamp | undefined;
+    if (
+      typeof existingToken === "string" &&
+      existingExpiresAt &&
+      typeof existingExpiresAt.toDate === "function" &&
+      existingExpiresAt.toDate().getTime() > Date.now()
+    ) {
+      logger.info("[CHECKIN_QR_TOKEN_REUSE]", {gameId, uid});
+      return {success: true, token: existingToken};
+    }
+
     const token = crypto.randomUUID().replace(/-/g, "").slice(0, 24);
 
     await db().doc(`games/${gameId}`).update({
       checkin_qr_token: token,
+      checkin_qr_token_expires_at: admin.firestore.Timestamp.fromMillis(
+        Date.now() + 24 * 60 * 60 * 1000
+      ),
       checkin_qr_token_created_at: admin.firestore.FieldValue.serverTimestamp(),
     });
 

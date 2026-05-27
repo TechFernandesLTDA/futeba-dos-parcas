@@ -58,9 +58,13 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 /**
@@ -212,6 +216,8 @@ fun CustomAvatar(
     showBadge: Boolean = true,
     showFrame: Boolean = true
 ) {
+    val textMeasurer = rememberTextMeasurer()
+
     Box(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center
@@ -233,7 +239,7 @@ fun CustomAvatar(
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                drawAvatar(config, size.toPx() * 0.85f)
+                drawAvatar(config, size.toPx() * 0.85f, textMeasurer)
             }
         }
 
@@ -297,7 +303,7 @@ private fun AvatarFrameRing(
 /**
  * Desenha o avatar no canvas.
  */
-private fun DrawScope.drawAvatar(config: AvatarConfig, sizePx: Float) {
+private fun DrawScope.drawAvatar(config: AvatarConfig, sizePx: Float, textMeasurer: androidx.compose.ui.text.TextMeasurer) {
     val centerX = size.width / 2
     val centerY = size.height / 2
     val faceRadius = sizePx * 0.35f
@@ -383,7 +389,7 @@ private fun DrawScope.drawAvatar(config: AvatarConfig, sizePx: Float) {
 
     // Corpo/camisa
     val bodyTop = centerY + faceRadius * 0.6f
-    drawShirt(config, centerX, bodyTop, sizePx)
+    drawShirt(config, centerX, bodyTop, sizePx, textMeasurer)
 }
 
 /**
@@ -514,7 +520,8 @@ private fun DrawScope.drawShirt(
     config: AvatarConfig,
     centerX: Float,
     bodyTop: Float,
-    sizePx: Float
+    sizePx: Float,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer
 ) {
     val shirtPath = Path().apply {
         moveTo(centerX - sizePx * 0.35f, bodyTop)
@@ -531,8 +538,28 @@ private fun DrawScope.drawShirt(
 
     // Número na camisa
     config.shirtNumber?.let { number ->
-        // TODO: Desenhar número (requer TextMeasurer)
+        val textLayoutResult = textMeasurer.measure(
+            text = number.toString(),
+            style = TextStyle(
+                color = Color.White,
+                fontSize = (sizePx * 0.16f).toSp(),
+                fontWeight = FontWeight.Bold
+            )
+        )
+        val textWidth = textLayoutResult.size.width.toFloat()
+        val textHeight = textLayoutResult.size.height.toFloat()
+        drawText(
+            textLayoutResult = textLayoutResult,
+            topLeft = Offset(
+                centerX - textWidth / 2,
+                bodyTop + (sizePx - bodyTop) / 2 - textHeight / 2
+            )
+        )
     }
+}
+
+private fun Float.toSp(): androidx.compose.ui.unit.TextUnit {
+    return androidx.compose.ui.unit.TextUnit(this, androidx.compose.ui.unit.TextUnitType.Sp)
 }
 
 // ==================== Customizer Screen ====================

@@ -131,7 +131,7 @@ export const HeadToHeadScreen: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          bgcolor: 'background.paper',
+          bgcolor: 'background.default',
           zIndex: 10,
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
@@ -462,11 +462,11 @@ const PlayerSlot: React.FC<{
           {player.name}
         </Typography>
         <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', mt: 0.5 }}>
-          <Button size="small" variant="outlined" onClick={onSelect} sx={{ fontSize: '0.7rem', textTransform: 'none', minHeight: 44 }}>
+          <Button size="small" variant="outlined" onClick={onSelect} sx={{ fontSize: theme.typography.caption.fontSize, textTransform: 'none', minHeight: 44 }}>
             Trocar
           </Button>
           <IconButton onClick={onClear} aria-label="Remover">
-            <CloseIcon sx={{ fontSize: 14 }} />
+            <CloseIcon sx={{ fontSize: theme.typography.caption.fontSize }} />
           </IconButton>
         </Box>
       </Box>

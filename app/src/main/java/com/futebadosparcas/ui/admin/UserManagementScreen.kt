@@ -142,14 +142,9 @@ fun UserManagementScreen(
 private fun UserManagementTopBar(
     onNavigateBack: () -> Unit
 ) {
-    // FIX #1405: migrado para AppTopBar unificado
-    AppTopBar(
-        title = { Text(stringResource(R.string.admin_manage_users)) },
-        navigationIcon = {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-            }
-        }
+    AppTopBar.Secondary(
+        titleResId = R.string.admin_manage_users,
+        onNavigateBack = onNavigateBack
     )
 }
 

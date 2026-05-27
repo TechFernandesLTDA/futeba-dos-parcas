@@ -49,6 +49,30 @@ interface GameCardProps {
   onCopyLink?: () => void;
 }
 
+const pulseKeyframes = {
+  '@keyframes pulse': {
+    '0%': { opacity: 1, boxShadow: '0 0 0 0 rgba(76, 175, 80, 0.4)' },
+    '70%': { opacity: 0.6, boxShadow: '0 0 0 6px rgba(76, 175, 80, 0)' },
+    '100%': { opacity: 1, boxShadow: '0 0 0 0 rgba(76, 175, 80, 0)' },
+  },
+};
+
+function getCountdown(dateStr: string, timeStr: string): string | null {
+  if (!dateStr || !timeStr) return null;
+  const [day, month, year] = dateStr.split('/').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  if (!day || !month || !year || isNaN(hours) || isNaN(minutes)) return null;
+  const gameDate = new Date(year, month - 1, day, hours, minutes);
+  const diffMs = gameDate.getTime() - Date.now();
+  if (diffMs <= 0) return null;
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0 && m > 0) return `Em ${h}h ${m}min`;
+  if (h > 0) return `Em ${h}h`;
+  return `Em ${m}min`;
+}
+
 export const GameCard: React.FC<GameCardProps> = React.memo(({
   game,
   onClick,
@@ -65,8 +89,9 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   const theme = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
   const statusConfig = getStatusChipColors(theme, game.status);
-  const progress = (game.playersCount / game.maxPlayers) * 100;
+  const progress = game.maxPlayers > 0 ? (game.playersCount / game.maxPlayers) * 100 : 0;
   const isFull = game.playersCount >= game.maxPlayers;
+  const countdown = game.status === 'SCHEDULED' ? getCountdown(game.date, game.time) : null;
 
   // Dono do jogo pode cancelar; nao-donos nao veem a opcao
   const isGameOwner = Boolean(currentUserId && game.ownerId === currentUserId);
@@ -123,17 +148,45 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Chip
-                  label={statusConfig.label}
-                  size="small"
-                  sx={{
-                    backgroundColor: statusConfig.bgColor,
-                    color: statusConfig.color,
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                  }}
-                />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
+                {game.status === 'LIVE' ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <Box
+                      component="span"
+                      aria-hidden="true"
+                      sx={{
+                        display: 'inline-block',
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        bgcolor: theme.palette.success.main,
+                        animation: 'pulse 1.5s infinite ease-in-out',
+                        ...pulseKeyframes,
+                      }}
+                    />
+                    <Chip
+                      label={statusConfig.label}
+                      size="small"
+                      sx={{
+                        backgroundColor: statusConfig.bgColor,
+                        color: statusConfig.color,
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  <Chip
+                    label={statusConfig.label}
+                    size="small"
+                    sx={{
+                      backgroundColor: statusConfig.bgColor,
+                      color: statusConfig.color,
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                    }}
+                  />
+                )}
                 <Chip
                   label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
                   size="small"
@@ -163,6 +216,19 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   </Tooltip>
                 )}
               </Box>
+              {game.status === 'FINISHED' && (game.team1Score > 0 || game.team2Score > 0) && (
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mb: 0.25 }}>
+                  <Typography variant="h6" fontWeight={800} color="primary.main">
+                    {game.team1Score}
+                  </Typography>
+                  <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
+                    vs
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800} color="primary.main">
+                    {game.team2Score}
+                  </Typography>
+                </Box>
+              )}
               <Typography variant="subtitle1" fontWeight={600}>
                 {game.locationName}
               </Typography>
@@ -176,6 +242,22 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
               <Typography variant="body2">
                 {formatGameDate(game.date)} as {game.time}
               </Typography>
+              {countdown && (
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{
+                    ml: 0.5,
+                    color: theme.palette.warning.main,
+                    bgcolor: alpha(theme.palette.warning.main, 0.1),
+                    px: 0.75,
+                    py: 0.25,
+                    borderRadius: 1,
+                  }}
+                >
+                  {countdown}
+                </Typography>
+              )}
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
@@ -211,10 +293,17 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
               sx={{
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                backgroundColor: alpha(
+                  game.status === 'CONFIRMED' ? theme.palette.success.main : theme.palette.primary.main,
+                  0.1
+                ),
                 '& .MuiLinearProgress-bar': {
                   borderRadius: 3,
-                  backgroundColor: isFull ? theme.palette.error.main : theme.palette.primary.main,
+                  backgroundColor: isFull
+                    ? theme.palette.error.main
+                    : game.status === 'CONFIRMED'
+                      ? theme.palette.success.main
+                      : theme.palette.primary.main,
                 },
               }}
             />
@@ -369,7 +458,8 @@ export const PlayerAvatar: React.FC<{
   size?: number;
   level?: number;
   teamId?: string | null;
-}> = React.memo(({ name, photoUrl, size = 40, level, teamId }) => {
+  borderColor?: string;
+}> = React.memo(({ name, photoUrl, size = 40, level, teamId, borderColor }) => {
   const theme = useTheme();
   const [imgLoaded, setImgLoaded] = React.useState(false);
   const [imgError, setImgError] = React.useState(false);
@@ -410,6 +500,7 @@ export const PlayerAvatar: React.FC<{
             bgcolor: showInitials ? 'primary.main' : undefined,
             fontSize: size * 0.4,
             opacity: imgLoaded || showInitials ? 1 : 0,
+            border: borderColor ? `3px solid ${borderColor}` : undefined,
           }}
           imgProps={photoUrl ? {
             onLoad: () => setImgLoaded(true),

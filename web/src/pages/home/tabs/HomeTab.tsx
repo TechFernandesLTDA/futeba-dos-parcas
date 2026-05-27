@@ -693,7 +693,7 @@ export function HomeTab() {
       subtitle: t('onboarding.checklistConfirmPresenceDesc'),
       actionLabel: t('common.viewGames'),
       navigateTo: '/?tab=1',
-      completed: false, // TODO: derivar de confirmations quando HomeTab expuser este dado
+      completed: (user?.totalGames ?? 0) > 0
     },
     {
       id: 'play_first_game',
@@ -701,7 +701,7 @@ export function HomeTab() {
       subtitle: t('onboarding.checklistPlayFirstGameDesc'),
       actionLabel: t('common.viewGames'),
       navigateTo: '/?tab=1',
-      completed: false, // TODO: derivar de gamesPlayed quando exposto no User type
+      completed: (user?.totalGames ?? 0) > 0
     },
   ], [user, groups, t]);
 

@@ -125,26 +125,16 @@ fun BadgesScreen(
 private fun BadgesTopBar(
     onBackClick: (() -> Unit)?
 ) {
-    // FIX #1405: migrado para AppTopBar unificado
-    AppTopBar(
-        title = {
-            Text(
-                text = stringResource(R.string.badges_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        navigationIcon = if (onBackClick != null) {
-            {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back)
-                    )
-                }
-            }
-        } else null
-    )
+    if (onBackClick != null) {
+        AppTopBar.Secondary(
+            titleResId = R.string.badges_title,
+            onNavigateBack = onBackClick
+        )
+    } else {
+        AppTopBar.Simple(
+            titleResId = R.string.badges_title
+        )
+    }
 }
 
 /**

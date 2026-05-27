@@ -52,6 +52,7 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ShareCardHelper
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.games.components.WaitlistSection
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
@@ -157,9 +158,7 @@ fun GameDetailScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                    colors = AppTopBar.surfaceColors()
                 )
             }
         }
@@ -258,9 +257,7 @@ fun GameDetailTopBar(
                 }
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors = AppTopBar.surfaceColors()
     )
 }
 

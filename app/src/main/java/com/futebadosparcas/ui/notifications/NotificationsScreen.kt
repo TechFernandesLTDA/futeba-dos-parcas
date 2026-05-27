@@ -445,8 +445,8 @@ private fun NotificationsTopBar(
         label = "badgePulse"
     )
 
-    // FIX #1405: migrado para AppTopBar function unificado (centralizado)
-    AppTopBar(
+    // FIX #2063: migrado para TopAppBar com cores padronizadas do AppTopBar
+    TopAppBar(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

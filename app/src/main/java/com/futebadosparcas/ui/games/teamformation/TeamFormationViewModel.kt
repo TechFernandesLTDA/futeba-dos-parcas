@@ -8,6 +8,7 @@ import com.futebadosparcas.data.model.DraftState
 import com.futebadosparcas.data.model.DraftRevealAnimation
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import com.futebadosparcas.domain.ai.EnhancedTeamBalancer
 import com.futebadosparcas.domain.ai.PlayerForBalancing
 import com.futebadosparcas.domain.ai.SwapSuggestion
@@ -22,11 +23,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class TeamFormationViewModel(
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
-    private val savedFormationRepository: SavedFormationRepository
+    private val savedFormationRepository: SavedFormationRepository,
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
     companion object {
@@ -80,21 +83,30 @@ class TeamFormationViewModel(
                     return@launch
                 }
 
-                // Converter para DraftPlayer
+                // Converter para DraftPlayer com ratings reais
                 currentPlayers = confirmedPlayers.map { conf ->
                     val position = PlayerPosition.fromString(conf.position)
+                    val user = try {
+                        firestore.collection("users").document(conf.userId).get().await()
+                            .toObject(User::class.java)
+                    } catch (e: Exception) {
+                        null
+                    }
+
                     DraftPlayer(
                         id = conf.userId,
                         name = conf.userName,
                         photoUrl = conf.userPhoto,
                         position = position,
-                        // TODO #1621: substituir ratings padrão pelos ratings reais do perfil
-                        //  do jogador quando GameRepository.getPlayerRatings(userId) for implementado
-                        overallRating = 3.0f, // Valor padrao, idealmente buscar do perfil
-                        strikerRating = 3.0f,
-                        midRating = 3.0f,
-                        defenderRating = 3.0f,
-                        gkRating = if (position == PlayerPosition.GOALKEEPER) 4.0f else 2.0f
+                        overallRating = (user?.getOverallRating() ?: 0.0).toFloat().coerceAtLeast(1.0f),
+                        strikerRating = (user?.getEffectiveRating(PlayerRatingRole.STRIKER) ?: 3.0).toFloat(),
+                        midRating = (user?.getEffectiveRating(PlayerRatingRole.MID) ?: 3.0).toFloat(),
+                        defenderRating = (user?.getEffectiveRating(PlayerRatingRole.DEFENDER) ?: 3.0).toFloat(),
+                        gkRating = if (position == PlayerPosition.GOALKEEPER) {
+                            (user?.getEffectiveRating(PlayerRatingRole.GOALKEEPER) ?: 4.0).toFloat()
+                        } else {
+                            (user?.getEffectiveRating(PlayerRatingRole.GOALKEEPER) ?: 2.0).toFloat()
+                        }
                     )
                 }
 

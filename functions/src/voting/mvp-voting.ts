@@ -589,22 +589,23 @@ export const concludeMvpVoting =
               }
 
               // 2.3: Validar permissão
-              // (apenas dono ou admin)
+              // (dono, co-organizadores ou admin)
+              const coOrganizers =
+                (gameData.co_organizers as string[]) ?? [];
+              const isAdmin =
+                request.auth?.token?.role ===
+                "ADMIN";
               if (
-                gameData.owner_id !== userId
+                gameData.owner_id !== userId &&
+                !coOrganizers.includes(userId) &&
+                !isAdmin
               ) {
-                // Verificar admin via claims
-                const isAdmin =
-                  request.auth?.token?.role ===
-                  "ADMIN";
-                if (!isAdmin) {
-                  throw new HttpsError(
-                    "permission-denied",
-                    "Apenas o dono do jogo " +
-                    "ou admin pode encerrar " +
-                    "a votação"
-                  );
-                }
+                throw new HttpsError(
+                  "permission-denied",
+                  "Apenas o dono do jogo, " +
+                  "co-organizadores ou admin " +
+                  "podem encerrar a votação"
+                );
               }
 
               // 2.4: Validar FINISHED

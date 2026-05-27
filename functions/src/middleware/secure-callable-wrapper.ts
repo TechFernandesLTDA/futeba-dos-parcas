@@ -217,52 +217,10 @@ export function secureCallable<
         const userId = request.auth?.uid;
 
         // ======================================
-        // 3. AUTHORIZATION CHECK (Role-based)
-        // ======================================
-        if (config.requiredRole && userId) {
-          const userRole =
-            await getUserRole(
-              userId,
-              request.auth?.token?.role as string | undefined
-            );
-
-          const allowedRoles =
-            Array.isArray(
-              config.requiredRole
-            ) ?
-              config.requiredRole :
-              [config.requiredRole];
-
-          if (
-            !userRole ||
-            !allowedRoles.includes(userRole)
-          ) {
-            console.warn(
-              "[SECURE_CALLABLE] User " +
-              `${userId} (role: ${userRole}) ` +
-              "denied. Required: " +
-              allowedRoles.join(", ")
-            );
-
-            await logAudit({
-              requestId,
-              type: "AUTHORIZATION_DENIED",
-              userId,
-              userRole,
-              requiredRoles: allowedRoles,
-              status: "DENIED",
-            });
-
-            throw new HttpsError(
-              "permission-denied",
-              "This operation requires: " +
-              allowedRoles.join(", ")
-            );
-          }
-        }
-
-        // ======================================
-        // 4. RATE LIMITING CHECK (P0 #34)
+        // 3. RATE LIMITING CHECK (P0 #34)
+        // FIX #2053: Rate-limit BEFORE role check so
+        // attackers spamming role-protected endpoints
+        // get rate-limited, not just permission-denied.
         // ======================================
         if (config.rateLimit && userId) {
           const rl = await checkRateLimit(
@@ -314,6 +272,51 @@ export function secureCallable<
             `${config.rateLimit.maxRequests} ` +
             "requests remaining"
           );
+        }
+
+        // ======================================
+        // 4. AUTHORIZATION CHECK (Role-based)
+        // ======================================
+        if (config.requiredRole && userId) {
+          const userRole =
+            await getUserRole(
+              userId,
+              request.auth?.token?.role as string | undefined
+            );
+
+          const allowedRoles =
+            Array.isArray(
+              config.requiredRole
+            ) ?
+              config.requiredRole :
+              [config.requiredRole];
+
+          if (
+            !userRole ||
+            !allowedRoles.includes(userRole)
+          ) {
+            console.warn(
+              "[SECURE_CALLABLE] User " +
+              `${userId} (role: ${userRole}) ` +
+              "denied. Required: " +
+              allowedRoles.join(", ")
+            );
+
+            await logAudit({
+              requestId,
+              type: "AUTHORIZATION_DENIED",
+              userId,
+              userRole,
+              requiredRoles: allowedRoles,
+              status: "DENIED",
+            });
+
+            throw new HttpsError(
+              "permission-denied",
+              "This operation requires: " +
+              allowedRoles.join(", ")
+            );
+          }
         }
 
         // ======================================

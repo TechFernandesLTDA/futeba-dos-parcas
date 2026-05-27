@@ -370,7 +370,8 @@ val viewModelKoinModule = module {
 
     viewModel {
         VoteResultViewModel(
-            gameRepository = get()
+            gameRepository = get(),
+            firestore = get()
         )
     }
 
@@ -378,7 +379,8 @@ val viewModelKoinModule = module {
         TeamFormationViewModel(
             gameRepository = get(),
             authRepository = get<AndroidAuthRepository>(),
-            savedFormationRepository = get()
+            savedFormationRepository = get(),
+            firestore = get()
         )
     }
 

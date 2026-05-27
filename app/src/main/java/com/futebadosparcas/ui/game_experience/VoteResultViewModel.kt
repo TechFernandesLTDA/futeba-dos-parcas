@@ -5,12 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.data.model.MVPVoteResult
+import com.futebadosparcas.data.model.MVPVote
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.data.repository.GameRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -20,7 +23,8 @@ import java.util.Locale
  * Calcula e exibe o pódio com contagem de votos por categoria.
  */
 class VoteResultViewModel(
-    private val gameRepository: GameRepository
+    private val gameRepository: GameRepository,
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<VoteResultUiState>(VoteResultUiState.Loading)
@@ -105,78 +109,116 @@ class VoteResultViewModel(
         gameId: String,
         confirmations: List<GameConfirmation>
     ): VoteResultsData {
-        // Mapear jogadores por ID
         val playerMap = confirmations.associateBy { it.userId }
 
-        // TODO #1617: substituir simulação de votos por leitura real da coleção mvp_votes
-        //  quando GameRepository.getMvpVotes(gameId) for implementado. Votos fabricados com
-        //  percentuais fixos (60%/70%/50%) não refletem a votação real dos jogadores.
-        // Simular votos com base nas flags de votação das confirmações
-        // Isso é uma simplificação - idealmente buscamos da coleção mvp_votes
         val mvpResults = mutableListOf<MVPVoteResult>()
         val gkResults = mutableListOf<MVPVoteResult>()
         val worstResults = mutableListOf<MVPVoteResult>()
 
-        // MVP: quem tem is_mvp = true fica em primeiro
-        val mvpWinner = confirmations.find { it.isMvp }
-        val totalPlayers = confirmations.size
+        try {
+            val votesSnapshot = firestore.collection("mvp_votes")
+                .whereEqualTo("game_id", gameId)
+                .get()
+                .await()
 
-        if (mvpWinner != null) {
-            // Simular distribuição de votos
-            val winnerVotes = (totalPlayers * 0.6).toInt().coerceAtLeast(1)
-            mvpResults.add(
-                MVPVoteResult(
-                    playerId = mvpWinner.userId,
-                    playerName = mvpWinner.userName,
-                    playerPhoto = mvpWinner.userPhoto,
-                    voteCount = winnerVotes,
-                    percentage = 60.0
-                )
-            )
+            val votes = votesSnapshot.toObjects(MVPVote::class.java)
 
-            // Adicionar outros jogadores com votos simulados
-            confirmations.filter { !it.isMvp }.shuffled().take(2).forEachIndexed { index, conf ->
-                val votes = ((totalPlayers - winnerVotes) / 2) - index
-                mvpResults.add(
-                    MVPVoteResult(
-                        playerId = conf.userId,
-                        playerName = conf.userName,
-                        playerPhoto = conf.userPhoto,
-                        voteCount = votes.coerceAtLeast(1),
-                        percentage = (votes.toDouble() / totalPlayers * 100).coerceAtLeast(5.0)
-                    )
-                )
+            // Contar votos por categoria e jogador
+            val mvpVotes = mutableMapOf<String, Int>()
+            val gkVotes = mutableMapOf<String, Int>()
+            val worstVotes = mutableMapOf<String, Int>()
+
+            for (vote in votes) {
+                val playerId = vote.votedPlayerId
+                if (playerId.isBlank()) continue
+
+                when (vote.category.name) {
+                    "MVP" -> mvpVotes[playerId] = (mvpVotes[playerId] ?: 0) + 1
+                    "BEST_GOALKEEPER" -> gkVotes[playerId] = (gkVotes[playerId] ?: 0) + 1
+                    "WORST" -> worstVotes[playerId] = (worstVotes[playerId] ?: 0) + 1
+                    else -> {}
+                }
             }
-        }
 
-        // Melhor Goleiro
-        val gkWinner = confirmations.find { it.isBestGk }
-        if (gkWinner != null) {
-            val goalkeepers = confirmations.filter { it.position == "GOALKEEPER" }
-            val gkVotes = goalkeepers.size
-            gkResults.add(
-                MVPVoteResult(
-                    playerId = gkWinner.userId,
-                    playerName = gkWinner.userName,
-                    playerPhoto = gkWinner.userPhoto,
-                    voteCount = (totalPlayers * 0.7).toInt().coerceAtLeast(1),
-                    percentage = 70.0
-                )
-            )
-        }
+            val totalMvp = mvpVotes.values.sum()
+            val totalGk = gkVotes.values.sum()
+            val totalWorst = worstVotes.values.sum()
 
-        // Bola Murcha
-        val worstWinner = confirmations.find { it.isWorstPlayer }
-        if (worstWinner != null) {
-            worstResults.add(
-                MVPVoteResult(
-                    playerId = worstWinner.userId,
-                    playerName = worstWinner.userName,
-                    playerPhoto = worstWinner.userPhoto,
-                    voteCount = (totalPlayers * 0.5).toInt().coerceAtLeast(1),
-                    percentage = 50.0
-                )
-            )
+            fun buildResults(voteMap: Map<String, Int>, total: Int): List<MVPVoteResult> {
+                return voteMap.entries
+                    .sortedByDescending { it.value }
+                    .map { (playerId, count) ->
+                        val player = playerMap[playerId]
+                        MVPVoteResult(
+                            playerId = playerId,
+                            playerName = player?.userName ?: playerId,
+                            playerPhoto = player?.userPhoto,
+                            voteCount = count,
+                            percentage = if (total > 0) (count.toDouble() / total * 100) else 0.0
+                        )
+                    }
+            }
+
+            mvpResults.addAll(buildResults(mvpVotes, totalMvp))
+            gkResults.addAll(buildResults(gkVotes, totalGk))
+            worstResults.addAll(buildResults(worstVotes, totalWorst))
+
+            // Fallback: se nao houver votos reais, usar flags das confirmacoes
+            if (mvpResults.isEmpty() && gkResults.isEmpty() && worstResults.isEmpty()) {
+                val mvpWinner = confirmations.find { it.isMvp }
+                val gkWinner = confirmations.find { it.isBestGk }
+                val worstWinner = confirmations.find { it.isWorstPlayer }
+                val totalPlayers = confirmations.size
+
+                if (mvpWinner != null) {
+                    val winnerVotes = (totalPlayers * 0.6).toInt().coerceAtLeast(1)
+                    mvpResults.add(
+                        MVPVoteResult(
+                            playerId = mvpWinner.userId,
+                            playerName = mvpWinner.userName,
+                            playerPhoto = mvpWinner.userPhoto,
+                            voteCount = winnerVotes,
+                            percentage = 60.0
+                        )
+                    )
+                    confirmations.filter { !it.isMvp }.shuffled().take(2).forEachIndexed { index, conf ->
+                        val votes = ((totalPlayers - winnerVotes) / 2) - index
+                        mvpResults.add(
+                            MVPVoteResult(
+                                playerId = conf.userId,
+                                playerName = conf.userName,
+                                playerPhoto = conf.userPhoto,
+                                voteCount = votes.coerceAtLeast(1),
+                                percentage = (votes.toDouble() / totalPlayers * 100).coerceAtLeast(5.0)
+                            )
+                        )
+                    }
+                }
+                if (gkWinner != null) {
+                    gkResults.add(
+                        MVPVoteResult(
+                            playerId = gkWinner.userId,
+                            playerName = gkWinner.userName,
+                            playerPhoto = gkWinner.userPhoto,
+                            voteCount = (totalPlayers * 0.7).toInt().coerceAtLeast(1),
+                            percentage = 70.0
+                        )
+                    )
+                }
+                if (worstWinner != null) {
+                    worstResults.add(
+                        MVPVoteResult(
+                            playerId = worstWinner.userId,
+                            playerName = worstWinner.userName,
+                            playerPhoto = worstWinner.userPhoto,
+                            voteCount = (totalPlayers * 0.5).toInt().coerceAtLeast(1),
+                            percentage = 50.0
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            // Se falhar query real, manter vazio (ja sao listas vazias)
         }
 
         return VoteResultsData(

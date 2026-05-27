@@ -171,12 +171,251 @@ export const RankingScreenSkeleton: React.FC = React.memo(function RankingScreen
   );
 });
 
+export const BadgesSkeleton: React.FC = React.memo(function BadgesSkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando conquistas">
+      <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+      <SkeletonCard>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Skeleton variant="circular" width={40} height={40} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="30%" height={22} />
+            <Skeleton variant="text" width="50%" height={14} sx={{ mt: 0.5 }} />
+          </Box>
+        </Box>
+      </SkeletonCard>
+      <Box sx={{ display: 'flex', gap: 1, mb: 2, overflow: 'hidden' }}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} variant="rounded" width={80} height={32} sx={{ borderRadius: 1, flexShrink: 0 }} />
+        ))}
+      </Box>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <SkeletonCard key={i}>
+            <Box sx={{ width: { xs: '100%', sm: 140 }, textAlign: 'center' }}>
+              <Skeleton variant="circular" width={60} height={60} sx={{ mx: 'auto', mb: 1 }} />
+              <Skeleton variant="text" width="80%" height={16} sx={{ mx: 'auto' }} />
+              <Skeleton variant="rounded" width={60} height={20} sx={{ mx: 'auto', mt: 0.5, borderRadius: 1 }} />
+            </Box>
+          </SkeletonCard>
+        ))}
+      </Box>
+    </Box>
+  );
+});
+
+export const EditProfileSkeleton: React.FC = React.memo(function EditProfileSkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando edição de perfil">
+      <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+      <SkeletonCard>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Skeleton variant="circular" width={96} height={96} sx={{ mb: 2 }} />
+          <Skeleton variant="text" width="60%" height={20} />
+        </Box>
+      </SkeletonCard>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <SkeletonCard key={i}>
+          <Skeleton variant="text" width={80} height={14} sx={{ mb: 0.5 }} />
+          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+        </SkeletonCard>
+      ))}
+      <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 2, mt: 2 }} />
+    </Box>
+  );
+});
+
+export const GlobalSearchSkeleton: React.FC = React.memo(function GlobalSearchSkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando busca">
+      <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 2, mb: 2 }} />
+      <Skeleton variant="text" width="30%" height={22} sx={{ mb: 1.5 }} />
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+          <Skeleton variant="circular" width={44} height={44} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="50%" height={18} />
+            <Skeleton variant="text" width="30%" height={14} />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+});
+
+export const LevelJourneySkeleton: React.FC = React.memo(function LevelJourneySkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando jornada de níveis">
+      <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+      <SkeletonCard>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Skeleton variant="circular" width={64} height={64} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="60%" height={22} />
+            <Skeleton variant="text" width="30%" height={16} sx={{ mt: 0.5 }} />
+          </Box>
+        </Box>
+        <Skeleton variant="rectangular" height={8} sx={{ borderRadius: 3, mt: 1.5 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+          <Skeleton variant="text" width={60} height={14} />
+          <Skeleton variant="text" width={60} height={14} />
+        </Box>
+      </SkeletonCard>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <SkeletonCard key={i}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Skeleton variant="circular" width={40} height={40} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="text" width="50%" height={18} />
+              <Skeleton variant="text" width="70%" height={14} />
+            </Box>
+            <Skeleton variant="rounded" width={80} height={28} sx={{ borderRadius: 1 }} />
+          </Box>
+        </SkeletonCard>
+      ))}
+    </Box>
+  );
+});
+
+export const StatisticSkeleton: React.FC = React.memo(function StatisticSkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando estatísticas">
+      <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+      <SkeletonCard>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Skeleton variant="circular" width={64} height={64} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="60%" height={22} />
+            <Skeleton variant="text" width="30%" height={16} sx={{ mt: 0.5 }} />
+          </Box>
+        </Box>
+      </SkeletonCard>
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} variant="rounded" sx={{ flex: 1, height: 80, borderRadius: 2 }} />
+        ))}
+      </Box>
+      <SkeletonCard>
+        <Skeleton variant="text" width={100} height={20} sx={{ mb: 1 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Skeleton variant="circular" width={140} height={140} />
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1.5 }}>
+          {[1, 2, 3].map(i => (
+            <Box key={i} sx={{ textAlign: 'center' }}>
+              <Skeleton variant="text" width={40} height={22} sx={{ mx: 'auto' }} />
+              <Skeleton variant="text" width={60} height={14} sx={{ mx: 'auto' }} />
+            </Box>
+          ))}
+        </Box>
+      </SkeletonCard>
+    </Box>
+  );
+});
+
+export const LiveGameSkeleton: React.FC = React.memo(function LiveGameSkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando jogo ao vivo">
+      <Skeleton variant="text" width="50%" height={28} sx={{ mb: 2 }} />
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+        <Skeleton variant="rounded" sx={{ flex: 1, height: 100, borderRadius: 2 }} />
+        <Skeleton variant="rounded" sx={{ flex: 1, height: 100, borderRadius: 2 }} />
+      </Box>
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} variant="rounded" sx={{ flex: 1, height: 60, borderRadius: 2 }} />
+        ))}
+      </Box>
+      <Skeleton variant="text" width="30%" height={22} sx={{ mb: 1.5 }} />
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <SkeletonCard key={i}>
+            <Box sx={{ width: { xs: '100%', sm: 150 }, textAlign: 'center' }}>
+              <Skeleton variant="circular" width={48} height={48} sx={{ mx: 'auto', mb: 1 }} />
+              <Skeleton variant="text" width="70%" height={16} sx={{ mx: 'auto' }} />
+              <Skeleton variant="text" width="50%" height={14} sx={{ mx: 'auto', mt: 0.5 }} />
+            </Box>
+          </SkeletonCard>
+        ))}
+      </Box>
+    </Box>
+  );
+});
+
+export const WeeklyRecapSkeleton: React.FC = React.memo(function WeeklyRecapSkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando resumo semanal">
+      <Skeleton variant="text" width="50%" height={28} sx={{ mb: 2 }} />
+      <SkeletonCard>
+        <Skeleton variant="text" width={80} height={16} sx={{ mb: 1 }} />
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          {[1, 2, 3].map(i => (
+            <Box key={i} sx={{ flex: 1, textAlign: 'center' }}>
+              <Skeleton variant="text" width={50} height={36} sx={{ mx: 'auto' }} />
+              <Skeleton variant="text" width={60} height={14} sx={{ mx: 'auto', mt: 0.5 }} />
+            </Box>
+          ))}
+        </Box>
+      </SkeletonCard>
+      <SkeletonCard>
+        <Skeleton variant="text" width={100} height={16} sx={{ mb: 1 }} />
+        <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
+      </SkeletonCard>
+      <Skeleton variant="text" width="40%" height={22} sx={{ mb: 1.5 }} />
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+          <Skeleton variant="circular" width={36} height={36} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="60%" height={16} />
+            <Skeleton variant="text" width="40%" height={14} />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+});
+
+export const AboutSkeleton: React.FC = React.memo(function AboutSkeleton() {
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label="Carregando sobre">
+      <Skeleton variant="text" width="30%" height={28} sx={{ mb: 2 }} />
+      <SkeletonCard>
+        <Skeleton variant="text" width="50%" height={22} sx={{ mb: 1 }} />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Box key={i} sx={{ mb: 1 }}>
+            <Skeleton variant="text" width="100%" height={16} />
+            <Skeleton variant="text" width="90%" height={16} />
+            <Skeleton variant="text" width="70%" height={16} />
+          </Box>
+        ))}
+      </SkeletonCard>
+      <SkeletonCard>
+        <Skeleton variant="text" width="40%" height={22} sx={{ mb: 1 }} />
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} variant="circular" width={48} height={48} />
+          ))}
+        </Box>
+        <Skeleton variant="text" width="60%" height={16} sx={{ mt: 1.5 }} />
+      </SkeletonCard>
+    </Box>
+  );
+});
+
 const SCREEN_SKELETONS: Record<string, React.FC> = {
   home: HomeScreenSkeleton,
   'game-detail': GameDetailSkeleton,
   'group-detail': GroupDetailSkeleton,
   profile: ProfileScreenSkeleton,
   ranking: RankingScreenSkeleton,
+  badges: BadgesSkeleton,
+  'edit-profile': EditProfileSkeleton,
+  search: GlobalSearchSkeleton,
+  'level-journey': LevelJourneySkeleton,
+  statistics: StatisticSkeleton,
+  'live-game': LiveGameSkeleton,
+  'weekly-recap': WeeklyRecapSkeleton,
+  about: AboutSkeleton,
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

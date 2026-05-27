@@ -213,24 +213,42 @@ export const generateProfileThumbnail =
           },
         });
 
+        // FIX #2056: Defense-in-depth for thumbnail trust path.
+        // Storage triggers do NOT pass auth context (no request.auth),
+        // so we cannot verify that the uploader matches the userId.
+        // This relies 100% on Storage security rules to prevent
+        // unauthorized writes to users/{uid}/profile.jpg.
+        // As a secondary check, verify the user doc exists before updating.
         if (userId) {
-          // Armazenar o path no Storage (não URL pública) para evitar
-          // privacy leak. Clientes devem usar Firebase Storage SDK para
-          // obter URL autenticada ou signed URL com TTL.
-          await db()
+          const userDocSnap = await db()
             .collection("users")
             .doc(userId)
-            .update({
-              photo_thumbnail_path: thumbFilePath,
-              photo_thumbnail_updated_at:
-                admin.firestore.FieldValue
-                  .serverTimestamp(),
-            });
+            .get();
+          if (!userDocSnap.exists) {
+            logger.warn(
+              "[THUMBNAIL] User doc " +
+              `${userId} not found, ` +
+              "skipping Firestore update"
+            );
+          } else {
+            // Armazenar o path no Storage (não URL pública) para evitar
+            // privacy leak. Clientes devem usar Firebase Storage SDK para
+            // obter URL autenticada ou signed URL com TTL.
+            await db()
+              .collection("users")
+              .doc(userId)
+              .update({
+                photo_thumbnail_path: thumbFilePath,
+                photo_thumbnail_updated_at:
+                  admin.firestore.FieldValue
+                    .serverTimestamp(),
+              });
 
-          logger.info(
-            "[THUMBNAIL] Updated user " +
-            `${userId} with thumbnail path`
-          );
+            logger.info(
+              "[THUMBNAIL] Updated user " +
+              `${userId} with thumbnail path`
+            );
+          }
         }
 
         // Cleanup temp files
@@ -409,24 +427,42 @@ export const generateGroupThumbnail =
           },
         });
 
+        // FIX #2056: Defense-in-depth for thumbnail trust path.
+        // Storage triggers do NOT pass auth context (no request.auth),
+        // so we cannot verify that the uploader matches the groupId.
+        // This relies 100% on Storage security rules to prevent
+        // unauthorized writes to groups/{groupId}/logo.jpg.
+        // As a secondary check, verify the group doc exists before updating.
         if (groupId) {
-          // Armazenar o path no Storage (não URL pública) para evitar
-          // privacy leak. Clientes devem usar Firebase Storage SDK para
-          // obter URL autenticada ou signed URL com TTL.
-          await db()
+          const groupDocSnap = await db()
             .collection("groups")
             .doc(groupId)
-            .update({
-              photo_thumbnail_path: thumbFilePath,
-              photo_thumbnail_updated_at:
-                admin.firestore.FieldValue
-                  .serverTimestamp(),
-            });
+            .get();
+          if (!groupDocSnap.exists) {
+            logger.warn(
+              "[THUMBNAIL] Group doc " +
+              `${groupId} not found, ` +
+              "skipping Firestore update"
+            );
+          } else {
+            // Armazenar o path no Storage (não URL pública) para evitar
+            // privacy leak. Clientes devem usar Firebase Storage SDK para
+            // obter URL autenticada ou signed URL com TTL.
+            await db()
+              .collection("groups")
+              .doc(groupId)
+              .update({
+                photo_thumbnail_path: thumbFilePath,
+                photo_thumbnail_updated_at:
+                  admin.firestore.FieldValue
+                    .serverTimestamp(),
+              });
 
-          logger.info(
-            "[THUMBNAIL] Updated group " +
-            `${groupId} with thumbnail path`
-          );
+            logger.info(
+              "[THUMBNAIL] Updated group " +
+              `${groupId} with thumbnail path`
+            );
+          }
         }
 
         await fs.unlink(tempFilePath);

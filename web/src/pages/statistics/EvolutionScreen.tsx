@@ -130,7 +130,7 @@ export const EvolutionScreen: React.FC = () => {
         setEvolutionData(data);
       } catch (err) {
         logger.error('Error fetching evolution data:', err);
-        showError(t('statistics.loadEvolutionError'));
+        showErrorRef.current(t('statistics.loadEvolutionError'));
         setError(t('statistics.loadEvolutionError'));
       } finally {
         setLoading(false);
@@ -166,7 +166,7 @@ export const EvolutionScreen: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          bgcolor: 'background.paper',
+          bgcolor: 'background.default',
           zIndex: 10,
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}

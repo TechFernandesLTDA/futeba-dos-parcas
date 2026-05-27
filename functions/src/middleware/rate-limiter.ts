@@ -132,24 +132,29 @@ export async function checkRateLimit(
           );
         }
 
-        // Adicionar request atual
-        requests.push(now);
-
+        // FIX #2054: Only push timestamp if request would be allowed.
+        // Previously pushed unconditionally — rejected calls kept
+        // growing the array indefinitely (memory leak).
         const currentCount = requests.length;
         const allowed =
-          currentCount <= config.maxRequests;
+          currentCount < config.maxRequests;
         const remaining = Math.max(
           0,
-          config.maxRequests - currentCount
+          config.maxRequests - currentCount - 1
         );
         const resetAt =
           new Date(now + config.windowMs);
+
+        // Only record the timestamp if the request is allowed
+        const updatedRequests = allowed ?
+          [...requests, now] :
+          requests;
 
         // Atualizar bucket
         transaction.set(
           bucketRef,
           {
-            requests,
+            requests: updatedRequests,
             last_updated:
               admin.firestore.FieldValue
                 .serverTimestamp(),
@@ -382,22 +387,25 @@ export async function checkRateLimitByIp(
           );
         }
 
-        requests.push(now);
-
+        // FIX #2054: Only push timestamp if request would be allowed.
         const currentCount = requests.length;
         const allowed =
-          currentCount <= config.maxRequests;
+          currentCount < config.maxRequests;
         const remaining = Math.max(
           0,
-          config.maxRequests - currentCount
+          config.maxRequests - currentCount - 1
         );
         const resetAt =
           new Date(now + config.windowMs);
 
+        const updatedRequests = allowed ?
+          [...requests, now] :
+          requests;
+
         transaction.set(
           bucketRef,
           {
-            requests,
+            requests: updatedRequests,
             ip_address: ipAddress,
             last_updated:
               admin.firestore.FieldValue

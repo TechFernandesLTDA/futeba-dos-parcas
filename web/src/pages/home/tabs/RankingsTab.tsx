@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
+import { getLevelColor } from '../../../types/user';
 import {
   Box,
   Container,
@@ -89,6 +90,7 @@ const PodiumCard: React.FC<{
 }> = ({ player, config, showXP, positionChange, onAvatarClick }) => {
   const theme = useTheme();
   const divisionConfig = DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE;
+  const levelColor = getLevelColor(player.level, theme);
 
   return (
     <Card
@@ -125,6 +127,7 @@ const PodiumCard: React.FC<{
               photoUrl={player.userPhoto}
               size={config.size}
               level={player.level}
+              borderColor={levelColor}
             />
             {player.level > 0 && (
               <Box
@@ -371,6 +374,7 @@ export function RankingsTab() {
   // Posição do usuário atual
   const currentUserRank = players.findIndex(p => p.isCurrentUser) + 1;
   const currentPlayer = players.find(p => p.isCurrentUser);
+  const currentPlayerLevelColor = currentPlayer ? getLevelColor(currentPlayer.level, theme) : theme.palette.primary.main;
 
   const positionChanges = tabValue === 1 ? xpPositionChanges : ligaPositionChanges;
 
@@ -470,6 +474,7 @@ export function RankingsTab() {
                       photoUrl={currentPlayer.userPhoto}
                       size={56}
                       level={currentPlayer.level}
+                      borderColor={currentPlayerLevelColor}
                     />
                     {currentPlayer.level > 0 && (
                       <Box
@@ -718,7 +723,9 @@ const RankingCard = React.memo(function RankingCard({
   onAvatarClick: (userId: string) => void;
   positionChange: number | null;
 }) {
+  const theme = useTheme();
   const divisionConfig = DIVISION_CONFIG[player.division as LeagueDivision] || DIVISION_CONFIG.BRONZE;
+  const levelColor = getLevelColor(player.level, theme);
 
   return (
     <Card
@@ -766,6 +773,7 @@ const RankingCard = React.memo(function RankingCard({
               photoUrl={player.userPhoto}
               size={44}
               level={player.level}
+              borderColor={levelColor}
             />
           </Box>
 
