@@ -53,6 +53,8 @@ const RETENTION_DAYS = 30;
 export const softDeleteGame =
   functions.https.onCall({
     region: "southamerica-east1",
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   }, async (request) => {
     const userId = request.auth?.uid;
     const {gameId, reason} = request.data;

@@ -1495,6 +1495,51 @@ export const recalculateLeagueRating =
 
 // SECFIX #495: memory + timeout pra cascade delete (game_events,
 // confirmations, ranking_deltas, etc)
+/**
+ * Coleta todos os documentos de uma query com paginação,
+ * evitando truncamento silencioso do limit(2000).
+ *
+ * @param {admin.firestore.Query} baseQuery - Base query sem limit
+ * @param {admin.firestore.DocumentReference[]} allRefs - Array que
+ *   recebe as referências coletadas (mutado in-place)
+ * @param {string} label - Nome da coleção para log
+ * @return {Promise<void>}
+ */
+async function collectAllMatching(
+  baseQuery: admin.firestore.Query,
+  allRefs: admin.firestore.DocumentReference[],
+  label: string
+): Promise<void> {
+  let lastDoc:
+    admin.firestore.QueryDocumentSnapshot | undefined;
+  let totalFound = 0;
+
+  while (true) {
+    let query = baseQuery.limit(450);
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const snapshot = await query.get();
+    if (snapshot.size === 0) break;
+
+    snapshot.docs.forEach((doc) => {
+      allRefs.push(doc.ref);
+      totalFound++;
+    });
+    lastDoc =
+      snapshot.docs[snapshot.docs.length - 1];
+
+    if (snapshot.size < 450) break;
+  }
+
+  console.log(
+    "[CASCADE DELETE] Found " +
+    `${totalFound} ` +
+    `${label} to delete`
+  );
+}
+
 export const onGameDeleted = onDocumentDeleted(
   {
     document: "games/{gameId}",
@@ -1529,64 +1574,40 @@ export const onGameDeleted = onDocumentDeleted(
       const allRefs: admin.firestore
         .DocumentReference[] = [];
 
-      // 1. Delete confirmations
-      const confirmationsSnap = await db()
-        .collection("confirmations")
-        .where("game_id", "==", gameId)
-        .limit(2000)
-        .get();
-      confirmationsSnap.docs.forEach(
-        (doc) => allRefs.push(doc.ref)
-      );
-      console.log(
-        "[CASCADE DELETE] Found " +
-        `${confirmationsSnap.size} ` +
-        "confirmations to delete"
+      // 1. Delete confirmations (paginated)
+      await collectAllMatching(
+        db()
+          .collection("confirmations")
+          .where("game_id", "==", gameId),
+        allRefs,
+        "confirmations"
       );
 
-      // 2. Delete teams
-      const teamsSnap = await db()
-        .collection("teams")
-        .where("game_id", "==", gameId)
-        .limit(2000)
-        .get();
-      teamsSnap.docs.forEach(
-        (doc) => allRefs.push(doc.ref)
-      );
-      console.log(
-        "[CASCADE DELETE] Found " +
-        `${teamsSnap.size} ` +
-        "teams to delete"
+      // 2. Delete teams (paginated)
+      await collectAllMatching(
+        db()
+          .collection("teams")
+          .where("game_id", "==", gameId),
+        allRefs,
+        "teams"
       );
 
-      // 3. Delete game_events
-      const eventsSnap = await db()
-        .collection("game_events")
-        .where("game_id", "==", gameId)
-        .limit(2000)
-        .get();
-      eventsSnap.docs.forEach(
-        (doc) => allRefs.push(doc.ref)
-      );
-      console.log(
-        "[CASCADE DELETE] Found " +
-        `${eventsSnap.size} ` +
-        "game_events to delete"
+      // 3. Delete game_events (paginated)
+      await collectAllMatching(
+        db()
+          .collection("game_events")
+          .where("game_id", "==", gameId),
+        allRefs,
+        "game_events"
       );
 
-      // 4. Delete mvp_votes
-      const votesSnap = await db()
-        .collection("mvp_votes")
-        .where("game_id", "==", gameId)
-        .limit(2000)
-        .get();
-      votesSnap.docs.forEach(
-        (doc) => allRefs.push(doc.ref)
-      );
-      console.log(
-        "[CASCADE DELETE] Found " +
-        `${votesSnap.size} ` +
-        "mvp_votes to delete"
+      // 4. Delete mvp_votes (paginated)
+      await collectAllMatching(
+        db()
+          .collection("mvp_votes")
+          .where("game_id", "==", gameId),
+        allRefs,
+        "mvp_votes"
       );
 
       // 5. Delete live_scores
@@ -1604,19 +1625,13 @@ export const onGameDeleted = onDocumentDeleted(
         );
       }
 
-      // 6. Delete xp_logs related to this game
-      const xpLogsSnap = await db()
-        .collection("xp_logs")
-        .where("game_id", "==", gameId)
-        .limit(2000)
-        .get();
-      xpLogsSnap.docs.forEach(
-        (doc) => allRefs.push(doc.ref)
-      );
-      console.log(
-        "[CASCADE DELETE] Found " +
-        `${xpLogsSnap.size} ` +
-        "xp_logs to delete"
+      // 6. Delete xp_logs related to this game (paginated)
+      await collectAllMatching(
+        db()
+          .collection("xp_logs")
+          .where("game_id", "==", gameId),
+        allRefs,
+        "xp_logs"
       );
 
       // Commit em chunks de BATCH_LIMIT para

@@ -404,8 +404,17 @@ service cloud.firestore {
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
       // Validações de dados obrigatorias na criacao
+      // #1979: whitelist de campos — bloqueia self-injection de campos sensíveis
+      // (experience_points, level, milestones_achieved, verified, verifiedAt, cpfVerifiedAt)
       allow create: if isOwner(userId) &&
                        request.resource.data.role == 'PLAYER' &&
+                       // #1979: previne self-injection de campos gamificados/sensiveis no create
+                       !('experience_points' in request.resource.data) &&
+                       !('level' in request.resource.data) &&
+                       !('milestones_achieved' in request.resource.data) &&
+                       !('verified' in request.resource.data) &&
+                       !('verifiedAt' in request.resource.data) &&
+                       !('cpfVerifiedAt' in request.resource.data) &&
                        // Validacao de nome (2-100 chars)
                        isValidName(request.resource.data.name) &&
                        // Validacao de email (formato valido)
@@ -482,6 +491,18 @@ service cloud.firestore {
            isValidRating(request.resource.data.gk_rating));
 
       allow delete: if false;
+
+      // ============================================
+      // SUBCOLECAO: rating_history (histórico de ratings automáticos)
+      // ============================================
+      // #1994: movido de cashbox/{entryId}/rating_history (path errado) para
+      // users/{userId}/rating_history — caminho correto para ratings de usuário.
+      // (#1709) Cloud Functions escrevem ao recalcular ratings.
+      // Owner (userId do path) e admin podem ler para exibir no gráfico de evolução.
+      match /rating_history/{entryId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow create, update, delete: if false;
+      }
     }
 
     // ============================================
@@ -682,7 +703,11 @@ service cloud.firestore {
       // ID deve seguir padrao: {gameId}_{userId}
       // OU o dono do jogo pode criar convites (summon) para outros
       // #1018: isAdmin() nunca pode ficar bloqueado por isVerifiedOrGrace() — admin é sempre permitido
+      // #1983: whitelist de campos — previne self-injection de is_mvp, goals, assists, saves, etc.
+      // Na criação, apenas game_id, user_id, status, position, created_at são permitidos.
       allow create: if (isAdmin() || isVerifiedOrGrace()) &&
+                       // #1983: apenas campos permitidos na criação (bloqueia self-injection de stats/MVP)
+                       request.resource.data.keys().hasOnly(['game_id', 'user_id', 'status', 'position', 'created_at']) &&
                        ((request.resource.data.user_id == userId() &&
                          isValidConfirmationId(confirmationId, request.resource.data.game_id, userId())) ||
                         (isGameOwner(request.resource.data.game_id) &&
@@ -1417,16 +1442,6 @@ service cloud.firestore {
                       request.resource.data.voided_at == request.time;
 
       allow delete: if false;
-
-      // ============================================
-      // SUBCOLECAO: rating_history (histórico de ratings automáticos)
-      // ============================================
-      // (#1709) Cloud Functions escrevem ao recalcular ratings.
-      // Owner e admin podem ler para exibir no gráfico de evolução.
-      match /rating_history/{entryId} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow create, update, delete: if false;
-      }
     }
 
       match /cashbox_summary/{docId} {
@@ -1661,14 +1676,16 @@ service cloud.firestore {
       // 1. game_id obrigatorio
       // 2. type deve ser um dos tipos validos
       // 3. Campos de score (se presentes) devem ter bounds
-      // SECFIX #856: confirmed player deve ser o autor do evento (created_by == userId())
-      // Game owner e admin podem criar eventos sem restrição de autoria
+      // #1991: created_by deve SEMPRE refletir o auth.uid real — admin/owner não podem
+      // criar eventos atribuindo created_by a outro usuário (XP fraud/prevention).
       allow create: if isVerifiedOrGrace() && (
         isAdmin() ||
         isGameOwner(request.resource.data.game_id) ||
-        (isConfirmedPlayer(request.resource.data.game_id) &&
-         request.resource.data.created_by == userId())
+        isConfirmedPlayer(request.resource.data.game_id)
       ) &&
+      // #1991: created_by SEMPRE deve ser o caller — previne admin/owner de injetar
+      // eventos com created_by de terceiros para inflar/deflar XP fraudulento
+      request.resource.data.created_by == userId() &&
       // game_id obrigatorio
       request.resource.data.game_id is string &&
       request.resource.data.game_id.size() > 0 &&
@@ -2067,8 +2084,17 @@ service cloud.firestore {
     // ============================================
     match /group-challenges/{challengeId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      // #1976: create restrito ao creator, group owner ou admin
+      allow create: if isAuthenticated() &&
+        (isAdmin() || request.resource.data.created_by == userId());
+      // #1976: update exige ownership — challenge creator, group owner ou admin.
+      // Antes qualquer auth user podia alterar qualquer challenge.
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.created_by == userId() ||
+        (resource.data.group_id != null && isGroupAdmin(resource.data.group_id))
+      );
+      allow delete: if isAdmin();
     }
 
     // ============================================
@@ -2233,10 +2259,12 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
         request.resource.data.game_id is string &&
         request.resource.data.uploaded_by == userId() &&
-        firestore.exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
-        firestore.get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
-        (firestore.exists(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) ||
-         firestore.get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.owner_id == userId());
+        // #1972: fix — firestore.exists()/firestore.get() não existem no Firebase Rules.
+        // Funções corretas: exists() e get().
+        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
+        get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
+        (exists(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) ||
+         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.owner_id == userId());
 
       allow update: if false;
 

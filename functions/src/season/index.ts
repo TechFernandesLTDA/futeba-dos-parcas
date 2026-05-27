@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import {
-  FIRESTORE_BATCH_LIMIT,
+  FIRESTORE_BATCH_SAFE_LIMIT,
   FUNCTION_REGION,
 } from "../constants";
 import {db} from "../_db";
@@ -86,7 +86,7 @@ export const checkSeasonEnd = onSchedule(
 
     let batch = db().batch();
     let operationCount = 0;
-    const BATCH_LIMIT = FIRESTORE_BATCH_LIMIT;
+    const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     const commitBatch = async () => {
       if (operationCount > 0) {

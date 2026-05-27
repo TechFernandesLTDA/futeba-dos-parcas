@@ -711,13 +711,7 @@ export const concludeMvpVoting =
                   confData.userId;
                 if (!confUserId) continue;
 
-                const confId =
-                  `${gameId}_${confUserId}`;
-                const confRef = db
-                  .collection(
-                    "confirmations"
-                  )
-                  .doc(confId);
+                const confRef = confDoc.ref;
 
                 transaction.update(
                   confRef,

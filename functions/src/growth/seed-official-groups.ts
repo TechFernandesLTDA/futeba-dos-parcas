@@ -11,7 +11,8 @@ const db = () => admin.firestore();
 export const seedOfficialGroups = onCall(
   {
     region: FUNCTION_REGION,
-    enforceAppCheck: false,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request) => {
     if (request.auth?.token?.role !== "ADMIN") {
