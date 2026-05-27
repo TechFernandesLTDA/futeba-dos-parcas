@@ -119,7 +119,8 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
 export const generateMyInviteCode = onCall(
   {
     region: FUNCTION_REGION,
-    enforceAppCheck: false,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request) => {
     const uid = request.auth?.uid;

@@ -41,10 +41,18 @@ import {db} from "../_db";
 // TYPES & INTERFACES
 // ==========================================
 
+/**
+ * Canonical role list — must match Android role whitelist
+ * (app/.../ui/admin/ManageRolesScreen.kt) and web role constants.
+ * If you add a role here, update Android + web too.
+ * @see #1970
+ */
+const VALID_ROLES = ["ADMIN", "FIELD_OWNER", "PLAYER"] as const;
+
 /** Request para definir role de um usuário */
 interface SetUserRoleRequest {
   uid: string;
-  role: "ADMIN" | "FIELD_OWNER" | "PLAYER";
+  role: (typeof VALID_ROLES)[number];
 }
 
 // ==========================================
@@ -105,16 +113,11 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
       );
     }
 
-    const validRoles = [
-      "ADMIN",
-      "FIELD_OWNER",
-      "PLAYER",
-    ];
-    if (!role || !validRoles.includes(role)) {
+    if (!role || !(VALID_ROLES as readonly string[]).includes(role)) {
       throw new HttpsError(
         "invalid-argument",
         "role must be one of: " +
-        `${validRoles.join(", ")}`
+        `${VALID_ROLES.join(", ")}`
       );
     }
 

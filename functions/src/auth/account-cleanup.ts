@@ -9,6 +9,10 @@
  * - audit_logs (target_user_id=uid) → LGPD cleanup
  * - sessions/{uid} → LGPD session cleanup
  * - verification_failures (uid=uid) → LGPD cleanup
+ * - cashbox transactions (created_by) → anonymize created_by_name (#1961)
+ * - location reviews (user_id) → anonymize user_name (#1963)
+ * - groups (ownerId + members[].userName) → anonymize denormalized PII (#1965)
+ * - activities (targetUserId) → anonymize targetUserName + targetUserPhoto (#1968)
  *
  * Usuários sem CPF verificado (sem users_private) são no-op silencioso.
  *
@@ -358,11 +362,183 @@ export const onUserDeleted = auth
         logger.info(`[ACCOUNT_CLEANUP] Deletando user_streaks/${uid}`);
 
         await commitBatch();
+
+        // FIX #1961: cashbox transactions — anonymize created_by_name (LGPD Art. 18 VI)
+        // Transactions are subcollections inside cashbox documents.
+        // Requires composite index on collectionGroup(transactions): created_by ASC, __name__ ASC
+        try {
+          let cashboxTotal = 0;
+          while (true) {
+            const cashboxSnap = await db
+              .collectionGroup("transactions")
+              .where("created_by", "==", uid)
+              .limit(500)
+              .get();
+            if (cashboxSnap.empty) break;
+            const cashboxBatch = db.batch();
+            cashboxSnap.forEach((doc) => {
+              cashboxBatch.update(doc.ref, {
+                created_by_name: "Usuário removido",
+              });
+            });
+            await cashboxBatch.commit();
+            cashboxTotal += cashboxSnap.size;
+            if (cashboxSnap.size < 500) break;
+          }
+          if (cashboxTotal > 0) {
+            logger.info(
+              `[ACCOUNT_CLEANUP] Anonimizando ${cashboxTotal} ` +
+                `cashbox transactions do usuário ${uid}`
+            );
+          }
+        } catch (cashboxError) {
+          logger.warn(
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar cashbox transactions para ${uid} (non-fatal):`,
+            cashboxError
+          );
+        }
+
+        // FIX #1963: location reviews — anonymize user_name (LGPD Art. 18 VI)
+        // Reviews are subcollections inside location documents.
+        // Requires composite index on collectionGroup(reviews): user_id ASC, __name__ ASC
+        try {
+          let reviewsTotal = 0;
+          while (true) {
+            const reviewsSnap = await db
+              .collectionGroup("reviews")
+              .where("user_id", "==", uid)
+              .limit(500)
+              .get();
+            if (reviewsSnap.empty) break;
+            const reviewsBatch = db.batch();
+            reviewsSnap.forEach((doc) => {
+              reviewsBatch.update(doc.ref, {
+                user_name: "Usuário removido",
+              });
+            });
+            await reviewsBatch.commit();
+            reviewsTotal += reviewsSnap.size;
+            if (reviewsSnap.size < 500) break;
+          }
+          if (reviewsTotal > 0) {
+            logger.info(
+              `[ACCOUNT_CLEANUP] Anonimizando ${reviewsTotal} ` +
+                `location reviews do usuário ${uid}`
+            );
+          }
+        } catch (reviewsError) {
+          logger.warn(
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar location reviews para ${uid} (non-fatal):`,
+            reviewsError
+          );
+        }
+
+        // FIX #1965: groups — anonymize ownerName + members[].userName (LGPD Art. 18 VI)
+        // Owner name and member names are denormalized and retain PII after deletion.
+        try {
+          let groupsTotal = 0;
+          let lastDoc: admin.firestore.DocumentSnapshot | null = null;
+          while (true) {
+            let query = db.collection("groups").limit(500);
+            if (lastDoc) query = query.startAfter(lastDoc);
+            const groupsSnap = await query.get();
+            if (groupsSnap.empty) break;
+            const groupsBatch = db.batch();
+            let batchOps = 0;
+            for (const doc of groupsSnap.docs) {
+              const data = doc.data();
+              let modified = false;
+              const updates: Record<string, unknown> = {};
+
+              if (data.ownerId === uid && data.ownerName) {
+                updates.ownerName = "Usuário removido";
+                modified = true;
+              }
+
+              if (data.members && Array.isArray(data.members)) {
+                const updatedMembers = data.members.map(
+                  (m: Record<string, unknown>) =>
+                    m.userId === uid ?
+                      {...m, userName: "Usuário removido"} :
+                      m
+                );
+                // Only update if something actually changed
+                const hasChange = data.members.some(
+                  (m: Record<string, unknown>, i: number) =>
+                    m.userId === uid &&
+                    m.userName !== updatedMembers[i].userName
+                );
+                if (hasChange) {
+                  updates.members = updatedMembers;
+                  modified = true;
+                }
+              }
+
+              if (modified) {
+                groupsBatch.update(doc.ref, updates);
+                batchOps++;
+                groupsTotal++;
+              }
+            }
+            if (batchOps > 0) {
+              await groupsBatch.commit();
+            }
+            lastDoc = groupsSnap.docs[groupsSnap.docs.length - 1];
+            if (groupsSnap.size < 500) break;
+          }
+          if (groupsTotal > 0) {
+            logger.info(
+              `[ACCOUNT_CLEANUP] Anonimizando ${groupsTotal} ` +
+                `grupos com PII do usuário ${uid}`
+            );
+          }
+        } catch (groupsError) {
+          logger.warn(
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar grupos para ${uid} (non-fatal):`,
+            groupsError
+          );
+        }
+
+        // FIX #1968: activities — anonymize targetUserName + targetUserPhoto (LGPD Art. 18 VI)
+        // Activities where the deleted user is referenced as a target (by other users).
+        // Requires composite index on collectionGroup(activities): targetUserId ASC, __name__ ASC
+        try {
+          let targetActivitiesTotal = 0;
+          while (true) {
+            const activitiesSnap = await db
+              .collectionGroup("activities")
+              .where("targetUserId", "==", uid)
+              .limit(500)
+              .get();
+            if (activitiesSnap.empty) break;
+            const activitiesBatch = db.batch();
+            activitiesSnap.forEach((doc) => {
+              activitiesBatch.update(doc.ref, {
+                targetUserName: "Usuário removido",
+                targetUserPhoto: null,
+              });
+            });
+            await activitiesBatch.commit();
+            targetActivitiesTotal += activitiesSnap.size;
+            if (activitiesSnap.size < 500) break;
+          }
+          if (targetActivitiesTotal > 0) {
+            logger.info(
+              `[ACCOUNT_CLEANUP] Anonimizando ${targetActivitiesTotal} ` +
+                `activities com target PII do usuário ${uid}`
+            );
+          }
+        } catch (activitiesError) {
+          logger.warn(
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar activities target para ${uid} (non-fatal):`,
+            activitiesError
+          );
+        }
         logger.info(
           `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
         );
 
-        // 16. Limpar arquivos órfãos do Storage (profile photos + thumbnails)
+        // 20. Limpar arquivos órfãos do Storage (profile photos + thumbnails)
         try {
           const storage = getStorage();
           const bucketName =
