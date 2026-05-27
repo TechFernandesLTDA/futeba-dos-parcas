@@ -230,7 +230,7 @@ export function GroupsTab() {
 
             return (
               <Grid item xs={12} md={6} lg={4} key={group.id}>
-              <Card sx={isMd ? { height: '100%' } : { mb: 2 }}>
+              <Card sx={{ ...(isMd ? { height: '100%' } : { mb: 2 }), ...(isOwner ? { borderLeft: `4px solid ${theme.palette.warning.main}` } : {}) }}>
                 <CardActionArea onClick={() => navigate(`/group/${group.id}`)}>
                   <CardContent>
                     {/* Header */}

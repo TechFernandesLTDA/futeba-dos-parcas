@@ -72,17 +72,19 @@ export const BadgesScreen: React.FC = () => {
     return BADGE_DEFINITIONS.filter((b) => b.category === selectedCategory);
   }, [selectedCategory]);
 
-  const progress = BADGE_DEFINITIONS.length > 0
-    ? Math.round((unlockedIds.size / BADGE_DEFINITIONS.length) * 100)
-    : 0;
+  const progress = useMemo(() => (
+    BADGE_DEFINITIONS.length > 0
+      ? Math.round((unlockedIds.size / BADGE_DEFINITIONS.length) * 100)
+      : 0
+  ), [unlockedIds.size]);
 
-  const getRarityStyle = (rarity: string) => {
+  const getRarityStyle = useMemo(() => (rarity: string) => {
     const color = rarityColors[rarity] ?? rarityColors.COMUM;
     return {
       border: `2px solid ${color}`,
       boxShadow: `0 0 10px ${alpha(color, 0.3)}`,
     };
-  };
+  }, []);
 
   return (
     <Box sx={{ pb: 4 }}>

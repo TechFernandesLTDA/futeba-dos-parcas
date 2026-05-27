@@ -266,9 +266,9 @@ export const StatisticsScreen: React.FC = () => {
                     </Box>
                     <Box sx={{ mt: 1.5 }}>
                       <Box sx={{ display: 'flex', borderRadius: 1, overflow: 'hidden', height: 8 }}>
-                        <Box sx={{ width: `${memoizedStats.winRate}%`, bgcolor: 'success.main', transition: (t) => t.transitions.create('width', { duration: 500 }) }} />
-                        <Box sx={{ width: `${memoizedStats.drawRate}%`, bgcolor: 'warning.main', transition: (t) => t.transitions.create('width', { duration: 500 }) }} />
-                        <Box sx={{ width: `${memoizedStats.lossRate}%`, bgcolor: 'error.main', transition: (t) => t.transitions.create('width', { duration: 500 }) }} />
+                        <Box sx={{ width: `${memoizedStats.winRate}%`, bgcolor: 'success.main', transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
+                        <Box sx={{ width: `${memoizedStats.drawRate}%`, bgcolor: 'warning.main', transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
+                        <Box sx={{ width: `${memoizedStats.lossRate}%`, bgcolor: 'error.main', transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
                         <Typography variant="caption">V: {memoizedStats.winRate}%</Typography>
@@ -318,14 +318,14 @@ export const StatisticsScreen: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                         <Typography variant="caption" sx={{ width: 70 }}>{t('statistics.currentStreak')}</Typography>
                         <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${(stats.currentStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'warning.main', borderRadius: 1, transition: (t) => t.transitions.create('width', { duration: 500 }) }} />
+                          <Box sx={{ height: '100%', width: `${(stats.currentStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'warning.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
                         </Box>
                         <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.currentStreak}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="caption" sx={{ width: 70 }}>{t('statistics.bestStreak')}</Typography>
                         <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.success.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${(stats.bestStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'success.main', borderRadius: 1, transition: (t) => t.transitions.create('width', { duration: 500 }) }} />
+                          <Box sx={{ height: '100%', width: `${(stats.bestStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'success.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
                         </Box>
                         <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.bestStreak}</Typography>
                       </Box>
@@ -390,14 +390,14 @@ export const StatisticsScreen: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                         <Typography variant="caption" sx={{ width: 100 }}>{t('statistics.goals')}</Typography>
                         <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${(stats.totalGoals / memoizedStats.maxGa) * 100}%`, bgcolor: 'primary.main', borderRadius: 1, transition: (t) => t.transitions.create('width', { duration: 500 }) }} />
+                          <Box sx={{ height: '100%', width: `${(stats.totalGoals / memoizedStats.maxGa) * 100}%`, bgcolor: 'primary.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
                         </Box>
                         <Typography variant="caption" fontWeight={600}>{stats.totalGoals}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="caption" sx={{ width: 100 }}>{t('statistics.assists')}</Typography>
                         <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${(stats.totalAssists / memoizedStats.maxGa) * 100}%`, bgcolor: 'secondary.main', borderRadius: 1, transition: (t) => t.transitions.create('width', { duration: 500 }) }} />
+                          <Box sx={{ height: '100%', width: `${(stats.totalAssists / memoizedStats.maxGa) * 100}%`, bgcolor: 'secondary.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
                         </Box>
                         <Typography variant="caption" fontWeight={600}>{stats.totalAssists}</Typography>
                       </Box>
