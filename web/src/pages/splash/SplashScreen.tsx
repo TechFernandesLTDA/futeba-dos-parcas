@@ -23,8 +23,14 @@ export const SplashScreen: React.FC = () => {
 
     const timer = setTimeout(() => {
       if (firebaseUser) {
-        const hasCompletedSetup = localStorage.getItem('profileSetupComplete');
-        const hasSeenGuide = localStorage.getItem('appGuideShown');
+        let hasCompletedSetup: string | null = null;
+        let hasSeenGuide: string | null = null;
+        try {
+          hasCompletedSetup = localStorage.getItem('profileSetupComplete');
+          hasSeenGuide = localStorage.getItem('appGuideShown');
+        } catch (error) {
+          console.warn('Failed to read onboarding flags from localStorage:', error);
+        }
         
         if (!hasCompletedSetup) {
           navigate('/profile/setup');

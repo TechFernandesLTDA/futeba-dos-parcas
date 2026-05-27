@@ -62,7 +62,12 @@ export function useOnboarding() {
     const uid = firebaseUser?.uid;
     if (!uid) {
       // Usuário não autenticado — usa localStorage como fallback
-      const shown = localStorage.getItem(LOCALSTORAGE_KEY) === 'true';
+      let shown = false;
+      try {
+        shown = localStorage.getItem(LOCALSTORAGE_KEY) === 'true';
+      } catch (error) {
+        console.warn('Failed to read onboarding state from localStorage:', error);
+      }
       setState(prev => ({ ...prev, carouselSkipped: shown, carouselCompletedAt: shown ? Date.now() : null }));
       setLoading(false);
       return;
@@ -108,7 +113,12 @@ export function useOnboarding() {
 
   /** Verifica se o carrossel já foi visto nesta versão. */
   const hasSeenCarousel = useCallback((): boolean => {
-    const legacyShown = localStorage.getItem(LOCALSTORAGE_KEY) === 'true';
+    let legacyShown = false;
+    try {
+      legacyShown = localStorage.getItem(LOCALSTORAGE_KEY) === 'true';
+    } catch (error) {
+      console.warn('Failed to read onboarding state from localStorage:', error);
+    }
     return legacyShown ||
       ((state.carouselCompletedAt !== null || state.carouselSkipped) &&
        state.version >= CURRENT_ONBOARDING_VERSION);
@@ -127,7 +137,11 @@ export function useOnboarding() {
 
   const onCarouselSkipped = useCallback(async (atSlideIndex: number) => {
     trackEvent('onboarding_skipped', { at_slide_index: atSlideIndex });
-    localStorage.setItem(LOCALSTORAGE_KEY, 'true');
+    try {
+      localStorage.setItem(LOCALSTORAGE_KEY, 'true');
+    } catch (error) {
+      console.warn('Failed to save onboarding state to localStorage:', error);
+    }
     setState(prev => ({ ...prev, carouselSkipped: true, version: CURRENT_ONBOARDING_VERSION }));
     await persistUpdates({
       carousel_skipped: true,
@@ -138,7 +152,11 @@ export function useOnboarding() {
   const onCarouselCompleted = useCallback(async () => {
     const durationMs = Date.now() - carouselStartRef.current;
     trackEvent('onboarding_carousel_completed', { duration_ms: durationMs });
-    localStorage.setItem(LOCALSTORAGE_KEY, 'true');
+    try {
+      localStorage.setItem(LOCALSTORAGE_KEY, 'true');
+    } catch (error) {
+      console.warn('Failed to save onboarding state to localStorage:', error);
+    }
     const now = Date.now();
     setState(prev => ({ ...prev, carouselCompletedAt: now, version: CURRENT_ONBOARDING_VERSION }));
     await persistUpdates({

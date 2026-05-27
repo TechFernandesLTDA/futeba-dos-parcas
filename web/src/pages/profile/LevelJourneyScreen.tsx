@@ -195,6 +195,7 @@ export const LevelJourneyScreen: React.FC = () => {
                       src={getLevelBadgeImage(currentLevel)}
                       onError={handleBadgeImageError}
                       loading="lazy"
+                      decoding="async"
                       alt={getLevelBadgeDescription(currentLevel, currentEntry.name)}
                       sx={{
                         width: '100%',
@@ -484,6 +485,7 @@ function LevelRow({
             src={getLevelBadgeImage(entry.level)}
             onError={handleBadgeImageError}
             loading="lazy"
+            decoding="async"
             alt={getLevelBadgeDescription(entry.level, entry.name)}
             sx={{
               width: '100%',

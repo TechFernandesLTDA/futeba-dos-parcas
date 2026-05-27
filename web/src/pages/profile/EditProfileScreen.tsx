@@ -249,13 +249,22 @@ export const EditProfileScreen: React.FC = () => {
         formData.gkRating !== initialData.gkRating);
 
     if (ratingsChanged) {
-      const lastChanged = Number(localStorage.getItem(RATING_RATE_LIMIT_KEY) || 0);
+      let lastChanged = 0;
+      try {
+        lastChanged = Number(localStorage.getItem(RATING_RATE_LIMIT_KEY) || 0);
+      } catch (error) {
+        console.warn('Failed to read rating rate limit from localStorage:', error);
+      }
       if (Date.now() - lastChanged < RATING_RATE_LIMIT_MS) {
         setSaving(false);
         showError('Aguarde 1 minuto entre alterações de rating.');
         return;
       }
-      localStorage.setItem(RATING_RATE_LIMIT_KEY, String(Date.now()));
+      try {
+        localStorage.setItem(RATING_RATE_LIMIT_KEY, String(Date.now()));
+      } catch (error) {
+        console.warn('Failed to save rating rate limit to localStorage:', error);
+      }
     }
 
     // 1) Upload do avatar (se houver arquivo selecionado)

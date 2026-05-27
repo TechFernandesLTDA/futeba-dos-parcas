@@ -137,8 +137,13 @@ export const LiveGameScreen: React.FC = () => {
   const [finishing, setFinishing] = useState(false);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
-    const stored = localStorage.getItem('live_sound_enabled');
-    return stored !== 'false';
+    try {
+      const stored = localStorage.getItem('live_sound_enabled');
+      return stored !== 'false';
+    } catch (error) {
+      console.warn('Failed to read sound setting from localStorage:', error);
+      return true;
+    }
   });
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevEventCountRef = useRef(0);
@@ -295,7 +300,11 @@ export const LiveGameScreen: React.FC = () => {
   const toggleSound = useCallback(() => {
     setSoundEnabled((prev) => {
       const next = !prev;
-      localStorage.setItem('live_sound_enabled', String(next));
+      try {
+        localStorage.setItem('live_sound_enabled', String(next));
+      } catch (error) {
+        console.warn('Failed to save sound setting to localStorage:', error);
+      }
       return next;
     });
   }, []);

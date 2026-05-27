@@ -7,7 +7,8 @@ function getScrollPositions(): Record<string, number> {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch {
+  } catch (error) {
+    console.warn('Failed to read scroll positions from sessionStorage:', error);
     return {};
   }
 }
@@ -17,8 +18,8 @@ function saveScrollPosition(pathname: string, top: number) {
     const positions = getScrollPositions();
     positions[pathname] = top;
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
-  } catch {
-    /* sessionStorage unavailable */
+  } catch (error) {
+    console.warn('Failed to save scroll position to sessionStorage:', error);
   }
 }
 

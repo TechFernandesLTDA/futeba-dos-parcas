@@ -45,14 +45,30 @@ export const DevToolsScreen: React.FC = () => {
   const buildNumber = import.meta.env.VITE_APP_BUILD ?? 'dev';
 
   const handleClearCache = () => {
-    localStorage.clear();
-    sessionStorage.clear();
+    try {
+      localStorage.clear();
+    } catch (error) {
+      console.warn('Failed to clear localStorage:', error);
+    }
+    try {
+      sessionStorage.clear();
+    } catch (error) {
+      console.warn('Failed to clear sessionStorage:', error);
+    }
     setLastAction('Cache limpo com sucesso!');
   };
 
   const handleResetOnboarding = () => {
-    localStorage.removeItem('appGuideShown');
-    localStorage.removeItem('profileSetupComplete');
+    try {
+      localStorage.removeItem('appGuideShown');
+    } catch (error) {
+      console.warn('Failed to remove appGuideShown from localStorage:', error);
+    }
+    try {
+      localStorage.removeItem('profileSetupComplete');
+    } catch (error) {
+      console.warn('Failed to remove profileSetupComplete from localStorage:', error);
+    }
     setLastAction('Onboarding resetado!');
   };
 

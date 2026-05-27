@@ -105,8 +105,20 @@ export function RegisterScreen() {
     setError('');
 
     try {
-      const inviteCode = searchParams.get('invite') || sessionStorage.getItem('inviteCode') || undefined;
-      if (inviteCode) sessionStorage.removeItem('inviteCode');
+      let storedInviteCode: string | null = null;
+      try {
+        storedInviteCode = sessionStorage.getItem('inviteCode');
+      } catch (error) {
+        console.warn('Failed to read invite code from sessionStorage:', error);
+      }
+      const inviteCode = searchParams.get('invite') || storedInviteCode || undefined;
+      if (inviteCode) {
+        try {
+          sessionStorage.removeItem('inviteCode');
+        } catch (error) {
+          console.warn('Failed to remove invite code from sessionStorage:', error);
+        }
+      }
       await signUp(normalizedEmail, password, name.trim(), inviteCode);
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {

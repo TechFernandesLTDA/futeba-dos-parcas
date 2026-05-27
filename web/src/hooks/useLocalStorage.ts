@@ -12,7 +12,8 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     try {
       const item = localStorage.getItem(key);
       return item !== null ? (JSON.parse(item) as T) : initialValue;
-    } catch {
+    } catch (error) {
+      console.warn(`Failed to read "${key}" from localStorage:`, error);
       return initialValue;
     }
   });
