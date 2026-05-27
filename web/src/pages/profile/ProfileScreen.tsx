@@ -81,7 +81,7 @@ export const ProfileScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <ErrorState
           message={t('profile.loadError', { error })}
-          onRetry={() => queryClient.invalidateQueries()}
+          onRetry={() => queryClient.invalidateQueries({ queryKey: ['player', targetUserId] })}
         />
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={navigateBack}>

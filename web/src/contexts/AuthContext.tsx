@@ -143,7 +143,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!userSnap.exists()) {
           const { email, displayName, photoURL } = firebaseUser;
           const userData = {
-            email: email || '',
             name: displayName || 'Usuário',
             nickname: '',
             photo_url: photoURL || '',
@@ -177,6 +176,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
 
           transaction.set(userRef, userData);
+
+          const privateRef = doc(db, 'users_private', firebaseUser.uid);
+          const privateData = {
+            email: email || '',
+            created_at: serverTimestamp(),
+          };
+          transaction.set(privateRef, privateData);
+
           const convertedNew = snakeToCamel<Omit<User, 'id'>>(userData) as Record<string, unknown>;
           return normalizeUserData(convertedNew, firebaseUser.uid, userData as Record<string, unknown>);
         }
@@ -435,14 +442,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await refreshUser();
     } catch (err) {
       logger.error('Error updating profile:', err);
-      if (!error) {
-        setError((err as Error).message || 'Erro ao atualizar perfil');
-      }
+      setError((err as Error).message || 'Erro ao atualizar perfil');
       throw err;
     } finally {
       setUpdatingProfile(false);
     }
-  }, [user, refreshUser, error]);
+  }, [user, refreshUser]);
 
   const value = useMemo<AuthContextType>(() => ({
     firebaseUser,

@@ -79,6 +79,10 @@ class BiometricHelper constructor(
             .setTitle(title)
             .setSubtitle(subtitle)
             .setNegativeButtonText(negativeButtonText)
+            .setConfirmationRequired(true)
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG
+            )
             .build()
 
         biometricPrompt.authenticate(promptInfo)
@@ -127,6 +131,10 @@ class BiometricHelper constructor(
             .setTitle(title)
             .setSubtitle(subtitle)
             .setNegativeButtonText(negativeButtonText)
+            .setConfirmationRequired(true)
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG
+            )
             .build()
 
         biometricPrompt.authenticate(promptInfo)

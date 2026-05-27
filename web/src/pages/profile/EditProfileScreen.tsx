@@ -115,8 +115,12 @@ export const EditProfileScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Sync ref for cleanup (avoids stale closure in unmount effect)
+  previewUrlRef.current = previewUrl;
 
   const handlePhotoClick = () => fileInputRef.current?.click();
 
@@ -149,11 +153,12 @@ export const EditProfileScreen: React.FC = () => {
   // Cleanup de blob URL ao desmontar
   useEffect(() => {
     return () => {
-      if (previewUrl && previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(previewUrl);
+      const url = previewUrlRef.current;
+      if (url && url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
       }
     };
-  }, [previewUrl]);
+  }, []);
 
   const loadProfile = useCallback(async () => {
     if (!currentUser) return;

@@ -98,28 +98,28 @@ export const AboutScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <List disablePadding aria-label="Links legais">
-            <ListItemButton onClick={() => window.open('/terms_of_service.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/terms_of_service.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <TermsIcon />
               </ListItemIcon>
               <ListItemText primary="Termos de Uso" />
             </ListItemButton>
             <Divider />
-            <ListItemButton onClick={() => window.open('/privacy_policy.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/privacy_policy.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <PrivacyIcon />
               </ListItemIcon>
               <ListItemText primary="Política de Privacidade" />
             </ListItemButton>
             <Divider />
-            <ListItemButton onClick={() => window.open('/child_safety.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/child_safety.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <SecurityIcon />
               </ListItemIcon>
               <ListItemText primary="Segurança Infantil" />
             </ListItemButton>
             <Divider />
-            <ListItemButton onClick={() => window.open('/delete_account.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/delete_account.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <DeleteIcon />
               </ListItemIcon>
@@ -137,7 +137,7 @@ export const AboutScreen: React.FC = () => {
               <ListItemText primary="Reportar Problema" />
             </ListItemButton>
             <Divider />
-            <ListItemButton onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank')}>
+            <ListItemButton onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <EmailIcon />
               </ListItemIcon>
