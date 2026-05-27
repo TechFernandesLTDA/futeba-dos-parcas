@@ -73,6 +73,33 @@ jest.mock("../src/constants", () => ({
     MVP: 30,
     WORST_PLAYER: -10,
   },
+  LEVEL_TABLE: {
+    levels: [
+      {level: 0, name: "Novato", xpRequired: 0},
+      {level: 1, name: "Iniciante", xpRequired: 100},
+      {level: 2, name: "Amador", xpRequired: 300},
+      {level: 3, name: "Intermediario", xpRequired: 750},
+      {level: 4, name: "Avancado", xpRequired: 1500},
+      {level: 5, name: "Profissional", xpRequired: 2800},
+      {level: 6, name: "Elite", xpRequired: 5000},
+      {level: 7, name: "Mestre", xpRequired: 8500},
+      {level: 8, name: "Lenda Viva", xpRequired: 14000},
+      {level: 9, name: "Craque", xpRequired: 22000},
+      {level: 10, name: "GOAT", xpRequired: 35000},
+      {level: 11, name: "Extra 11", xpRequired: 52850},
+      {level: 12, name: "Extra 12", xpRequired: 80000},
+      {level: 13, name: "Extra 13", xpRequired: 120000},
+      {level: 14, name: "Extra 14", xpRequired: 180000},
+      {level: 15, name: "Extra 15", xpRequired: 250000},
+      {level: 16, name: "Extra 16", xpRequired: 350000},
+      {level: 17, name: "Extra 17", xpRequired: 500000},
+      {level: 18, name: "Extra 18", xpRequired: 700000},
+      {level: 19, name: "Extra 19", xpRequired: 1000000},
+      {level: 20, name: "Lendario", xpRequired: 1500000},
+    ],
+  },
+  MAX_XP_PER_GAME: 100,
+  MIN_XP_PER_GAME: -100,
 }));
 
 // Capturar handlers registrados pelo onCall
