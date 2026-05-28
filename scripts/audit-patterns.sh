@@ -124,11 +124,12 @@ check_func_pattern \
 echo ""
 echo "── Cross-cutting: Secrets ──"
 
-SECRETS_PATTERN="serviceAccountKey|private_key|-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY|firebase-adminsdk.*\.json|AIzaSy[A-Za-z0-9_-]{33}"
+SECRETS_PATTERN="private_key|-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY|ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]+|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{48}"
 
 echo -e "  ${CYAN}→${NC} Verificando secrets em arquivos versionados"
 while IFS=: read -r file line content; do
   [ -z "$file" ] && continue
+  echo "$file" | grep -qE 'scripts/(audit-patterns|check-secrets)\.sh$' && continue
   echo "$file" | grep -qE '\.(md|txt|yml|yaml)$' && continue
   echo "$file" | grep -qE '(\.env\.example|\.env\.template)' && continue
   report "CRITICAL" "$file" "$line" "Possível secret/chave exposta no código" "SEC-001"

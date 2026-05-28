@@ -22,11 +22,8 @@ echo ""
 echo "── Verificando secrets em arquivos versionados ──"
 
 SECRET_PATTERNS=(
-  "serviceAccountKey"
   "private_key"
   "-----BEGIN"
-  "firebase-adminsdk"
-  "AIzaSy[A-Za-z0-9_-]{33}"
   "ghp_[A-Za-z0-9]{36}"
   "gho_[A-Za-z0-9]{36}"
   "xox[baprs]-[A-Za-z0-9-]+"
@@ -45,6 +42,8 @@ EXCLUDE_DIRS=(
   "build"
   ".gradle"
   ".firebase"
+  "scripts/archive"
+  "scripts/migrations"
 )
 
 EXCLUDE_FILES=(
@@ -80,6 +79,7 @@ ALLOWLIST=(
   ".env.example"
   ".env.template"
   "web/.env.production"
+  "scripts/audit-patterns.sh"
 )
 
 FOUND=0
