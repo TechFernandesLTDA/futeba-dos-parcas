@@ -31,6 +31,7 @@ import { TeamSelector } from '../../components/team/TeamSelector';
 import { updateProfile } from 'firebase/auth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { avatarSizes } from '../../theme/iconSizes';
 
 const logger = createLogger('ProfileSetupScreen');
 
@@ -125,8 +126,8 @@ export const ProfileSetupScreen: React.FC = () => {
           <Box sx={{ position: 'relative', display: 'inline-block' }}>
             <Avatar
               sx={{
-                width: 120,
-                height: 120,
+                width: avatarSizes.xxl,
+                height: avatarSizes.xxl,
                 bgcolor: theme.palette.primary.main,
                 fontSize: 48,
               }}

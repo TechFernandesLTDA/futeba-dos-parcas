@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.AppDimensions
 
 @Composable
 fun RegisterScreen(
@@ -94,7 +95,7 @@ fun RegisterScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
-                    .padding(24.dp),
+                    .padding(AppDimensions.spacing_extraLarge),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -106,7 +107,7 @@ fun RegisterScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
                 Text(
                     text = stringResource(R.string.auth_register_subtitle),
@@ -115,14 +116,14 @@ fun RegisterScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
                 RegisterForm(
                     uiState = uiState,
                     onRegisterWithEmail = onRegisterWithEmail
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
                 TextButton(onClick = onNavigateToLogin) {
                     Text(stringResource(R.string.auth_already_have_account))
@@ -145,7 +146,7 @@ private fun RegisterForm(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_medium),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -153,9 +154,9 @@ private fun RegisterForm(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(AppDimensions.spacing_huge),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
         ) {
             OutlinedTextField(
                 value = name,
@@ -210,8 +211,8 @@ private fun RegisterForm(
 
             Button(
                 onClick = { onRegisterWithEmail(email, password, name) },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(AppDimensions.height_button_large),
+                shape = RoundedCornerShape(AppDimensions.radius_medium),
                 enabled = email.isNotBlank() && password.isNotBlank() && name.isNotBlank() && uiState !is RegisterState.Loading
             ) {
                 Text(stringResource(R.string.auth_register_button))
@@ -224,10 +225,10 @@ private fun RegisterForm(
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(AppDimensions.icon_extraLarge),
                         color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 4.dp
                     )
@@ -241,7 +242,7 @@ private fun RegisterForm(
             ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(AppDimensions.radius_medium),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
@@ -251,7 +252,7 @@ private fun RegisterForm(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(AppDimensions.spacing_large)
                     )
                 }
             }

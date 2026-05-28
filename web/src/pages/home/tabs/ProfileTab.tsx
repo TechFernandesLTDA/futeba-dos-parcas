@@ -49,6 +49,8 @@ import { getLevelColor } from '../../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../../utils/levelBadge';
 import { getLevelForXp, getXpProgress, getLevelEntry } from '../../../types/gamification';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
+import { iconSizes } from '../../../theme/iconSizes';
+import { pageSpacing } from '../../../theme/pageTokens';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../contexts/ToastContext';
@@ -164,7 +166,7 @@ export function ProfileTab() {
 
   if (loading) {
     return (
-      <Box sx={{ pb: 8 }}>
+      <Box sx={{ pb: pageSpacing.pagePaddingBottom }}>
         <Box
           sx={{
             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -198,7 +200,7 @@ export function ProfileTab() {
 
   if (!firebaseUser && !loading) {
     return (
-      <Box sx={{ pb: 8, px: 2, pt: 4, textAlign: 'center' }}>
+      <Box sx={{ pb: pageSpacing.pagePaddingBottom, px: pageSpacing.pagePadding, pt: 4, textAlign: 'center' }}>
         <Alert
           severity="warning"
           sx={{ mb: 2 }}
@@ -214,7 +216,7 @@ export function ProfileTab() {
 
   if (firebaseUser && !user && !loading) {
     return (
-      <Box sx={{ pb: 8, px: 2, pt: 4 }}>
+      <Box sx={{ pb: pageSpacing.pagePaddingBottom, px: pageSpacing.pagePadding, pt: 4 }}>
         <Alert
           severity="error"
           action={
@@ -230,7 +232,7 @@ export function ProfileTab() {
   }
 
   return (
-    <Box sx={{ pb: 8 }}>
+    <Box sx={{ pb: pageSpacing.pagePaddingBottom }}>
       {/* Profile Header */}
       <Box
         sx={{
@@ -404,7 +406,7 @@ export function ProfileTab() {
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-              <LocalFireDepartment sx={{ fontSize: 32, color: gColors.streak }} />
+              <LocalFireDepartment sx={{ fontSize: iconSizes.xl, color: gColors.streak }} />
               <Box>
                 <Typography variant="subtitle1" fontWeight="bold">
                   {t('profile.streakActive', { count: user?.currentStreak || 0 })}

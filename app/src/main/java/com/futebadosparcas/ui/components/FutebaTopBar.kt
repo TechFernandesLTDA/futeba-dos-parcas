@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+@Deprecated(
+    message = "Use design/AppTopBars or modern/AdaptiveNavigation instead"
+)
 /**
  * TopBar padronizada do app Futeba dos Parcas.
  *

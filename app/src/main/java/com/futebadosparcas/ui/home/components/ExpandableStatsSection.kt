@@ -28,6 +28,7 @@ import com.patrykandpatrick.vico.core.axis.AxisPosition
 import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -149,7 +150,7 @@ fun ExpandableStatsSection(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(chartHeight)
-                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(AppDimensions.radius_small))
                     ) {
                         Chart(
                             chart = columnChart(),
@@ -173,7 +174,7 @@ fun ExpandableStatsSection(
 private fun StatItemLarge(label: String, value: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(AppDimensions.spacing_large)
     ) {
         Text(
             text = value,

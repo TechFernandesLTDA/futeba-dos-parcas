@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.activity.ComponentActivity
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.AppDimensions
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -82,7 +83,7 @@ fun PhoneVerificationScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             verticalArrangement = Arrangement.Center,
         ) {
             Card(
@@ -91,10 +92,10 @@ fun PhoneVerificationScreen(
                 ),
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(AppDimensions.spacing_extraLarge),
                 ) {
                     Box(
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(AppDimensions.icon_extraLarge),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -104,7 +105,7 @@ fun PhoneVerificationScreen(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_small))
                     Text(
                         text = "Verificar telefone",
                         style = MaterialTheme.typography.headlineSmall,
@@ -112,13 +113,13 @@ fun PhoneVerificationScreen(
                             contentDescription = "Etapa 1 de 2: Verificar telefone"
                         },
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_small))
                     Text(
                         text = "Confirmamos seu número via SMS para evitar contas falsas. Etapa 1 de 2.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_large))
 
                     val errorMsg = (state as? PhoneVerificationUiState.Error)?.message
                     if (errorMsg != null) {
@@ -127,7 +128,7 @@ fun PhoneVerificationScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(AppDimensions.spacing_small))
                     }
 
                     val loading = state is PhoneVerificationUiState.SendingCode ||
@@ -149,7 +150,7 @@ fun PhoneVerificationScreen(
                                 Text("Formato internacional: +55 + DDD + número")
                             },
                         )
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(AppDimensions.spacing_large))
                         Button(
                             onClick = {
                                 val activity = context as? ComponentActivity
@@ -164,7 +165,7 @@ fun PhoneVerificationScreen(
                                     modifier = Modifier.size(20.dp),
                                     strokeWidth = 2.dp,
                                 )
-                                Spacer(Modifier.size(8.dp))
+                                Spacer(Modifier.size(AppDimensions.spacing_small))
                                 Text("Enviando...")
                             } else {
                                 Text("Enviar código por SMS")
@@ -175,7 +176,7 @@ fun PhoneVerificationScreen(
                             text = "Digite o código de 6 dígitos enviado para $phone",
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(AppDimensions.spacing_large))
                         OutlinedTextField(
                             value = otp,
                             onValueChange = {
@@ -192,7 +193,7 @@ fun PhoneVerificationScreen(
                                 keyboardType = KeyboardType.NumberPassword,
                             ),
                         )
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(AppDimensions.spacing_large))
                         Box(modifier = Modifier.fillMaxWidth()) {
                             Column {
                                 Button(
@@ -205,13 +206,13 @@ fun PhoneVerificationScreen(
                                             modifier = Modifier.size(20.dp),
                                             strokeWidth = 2.dp,
                                         )
-                                        Spacer(Modifier.size(8.dp))
+                                        Spacer(Modifier.size(AppDimensions.spacing_small))
                                         Text("Verificando...")
                                     } else {
                                         Text(stringResource(R.string.verify))
                                     }
                                 }
-                                Spacer(Modifier.height(8.dp))
+                                Spacer(Modifier.height(AppDimensions.spacing_small))
                                 OutlinedButton(
                                     onClick = {
                                         step = "phone"

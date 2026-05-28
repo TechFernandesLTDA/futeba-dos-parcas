@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.AppDimensions
 /**
  * Tela de onboarding para solicitar permissões do sistema.
  * Exibida na primeira abertura do app para solicitar:
@@ -132,10 +133,10 @@ fun PermissionOnboardingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_massive))
 
             // Título
             Text(
@@ -146,7 +147,7 @@ fun PermissionOnboardingScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Text(
                 text = stringResource(R.string.permission_onboarding_subtitle),
@@ -155,7 +156,7 @@ fun PermissionOnboardingScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Card de Notificações (Android 13+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -168,7 +169,7 @@ fun PermissionOnboardingScreen(
                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
             }
 
             // Card de Localização
@@ -187,7 +188,7 @@ fun PermissionOnboardingScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             // Card de Câmera
             PermissionCard(
@@ -200,7 +201,7 @@ fun PermissionOnboardingScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             // Card de Microfone (Mensagens de Voz)
             PermissionCard(
@@ -220,8 +221,8 @@ fun PermissionOnboardingScreen(
                 onClick = onComplete,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                    .height(AppDimensions.height_input),
+                shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Text(
                     text = stringResource(R.string.permission_onboarding_continue),
@@ -229,7 +230,7 @@ fun PermissionOnboardingScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             // Texto informativo
             Text(
@@ -239,7 +240,7 @@ fun PermissionOnboardingScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
         }
     }
 }
@@ -261,18 +262,18 @@ private fun PermissionCard(
                 MaterialTheme.colorScheme.surfaceContainerHigh
             }
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(AppDimensions.radius_large)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(AppDimensions.spacing_large),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Ícone
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(AppDimensions.icon_extraLarge)
                     .background(
                         color = if (isGranted) {
                             MaterialTheme.colorScheme.primary
@@ -291,11 +292,11 @@ private fun PermissionCard(
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(AppDimensions.icon_medium)
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
 
             // Textos
             Column(modifier = Modifier.weight(1f)) {
@@ -312,7 +313,7 @@ private fun PermissionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
 
             // Botão
             AnimatedVisibility(
@@ -322,7 +323,7 @@ private fun PermissionCard(
             ) {
                 OutlinedButton(
                     onClick = onRequest,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(AppDimensions.radius_small)
                 ) {
                     Text(stringResource(R.string.permission_allow))
                 }

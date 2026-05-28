@@ -37,6 +37,7 @@ import com.futebadosparcas.domain.util.CpfValidator
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.delay
+import com.futebadosparcas.ui.theme.AppDimensions
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -72,7 +73,7 @@ fun CpfVerificationScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             verticalArrangement = Arrangement.Center,
         ) {
             Card(
@@ -85,7 +86,7 @@ fun CpfVerificationScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
+                            .padding(AppDimensions.spacing_extraLarge),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
@@ -96,7 +97,7 @@ fun CpfVerificationScreen(
                             modifier = Modifier.size(72.dp),
                             tint = MaterialTheme.colorScheme.primary,
                         )
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(AppDimensions.spacing_large))
                         Text(
                             text = stringResource(R.string.cpf_success_message),
                             style = MaterialTheme.typography.headlineSmall,
@@ -104,9 +105,9 @@ fun CpfVerificationScreen(
                         )
                     }
                 } else {
-                Column(modifier = Modifier.padding(24.dp)) {
+                Column(modifier = Modifier.padding(AppDimensions.spacing_extraLarge)) {
                     Box(
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(AppDimensions.icon_extraLarge),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -116,18 +117,18 @@ fun CpfVerificationScreen(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_small))
                     Text(
                         text = stringResource(R.string.cpf_verification_title),
                         style = MaterialTheme.typography.headlineSmall,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_small))
                     Text(
                         text = stringResource(R.string.cpf_verification_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_large))
 
                     val errorMsg = (state as? CpfVerificationUiState.Error)?.message
                     if (errorMsg != null) {
@@ -136,7 +137,7 @@ fun CpfVerificationScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(AppDimensions.spacing_small))
                     }
 
                     val loading = state is CpfVerificationUiState.Verifying
@@ -158,7 +159,7 @@ fun CpfVerificationScreen(
                         ),
                         supportingText = { Text(stringResource(R.string.cpf_supporting_text)) },
                     )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_large))
                     Button(
                         onClick = { viewModel.verifyCpf(cpf) },
                         enabled = !loading && CpfValidator.isValid(cpf),
@@ -169,13 +170,13 @@ fun CpfVerificationScreen(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
                             )
-                            Spacer(Modifier.size(8.dp))
+                            Spacer(Modifier.size(AppDimensions.spacing_small))
                             Text(stringResource(R.string.cpf_verifying))
                         } else {
                             Text(stringResource(R.string.cpf_finish))
                         }
                     }
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(AppDimensions.spacing_large))
                     Text(
                         text = stringResource(R.string.cpf_privacy_terms),
                         style = MaterialTheme.typography.bodySmall,

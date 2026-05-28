@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
+import { iconSizes } from '../../../theme/iconSizes';
 import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
 import { getLevelColor } from '../../../types/user';
 import {
@@ -108,7 +109,7 @@ const PodiumCard: React.FC<{
     >
       <CardContent sx={{ py: 1.5, textAlign: 'center', '&:last-child': { pb: 1.5 } }}>
         <Box sx={{ mb: 0.5 }}>
-          <config.Icon sx={{ color: config.iconColor, fontSize: 22 }} />
+          <config.Icon sx={{ color: config.iconColor, fontSize: iconSizes.lg }} />
         </Box>
         <Typography variant="caption" fontWeight={700} sx={{ color: config.borderColor, mb: 1, display: 'block' }}>
           {config.label}
@@ -602,7 +603,7 @@ export function RankingsTab() {
                   <Card key={key} sx={{ border: `1px solid ${alpha(config.color, 0.3)}` }}>
                     <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <MilitaryTechIcon sx={{ color: config.color, fontSize: 28 }} />
+                        <MilitaryTechIcon sx={{ color: config.color, fontSize: iconSizes.lg }} />
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="subtitle2" fontWeight={700} sx={{ color: config.color }}>
                             {config.label}
@@ -621,20 +622,20 @@ export function RankingsTab() {
               <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
                 <Card sx={{ flex: 1 }}>
                   <CardActionArea onClick={() => navigate('/league')} sx={{ p: 2, textAlign: 'center' }}>
-                    <MilitaryTechIcon sx={{ fontSize: 32, color: 'primary.main', mb: 0.5 }} />
+                    <MilitaryTechIcon sx={{ fontSize: iconSizes.xl, color: 'primary.main', mb: 0.5 }} />
                     <Typography variant="body2" fontWeight={600}>
                       Liga Completa
                     </Typography>
-                    <OpenIcon sx={{ fontSize: 14, color: 'text.disabled', mt: 0.5 }} />
+                    <OpenIcon sx={{ fontSize: iconSizes.xs, color: 'text.disabled', mt: 0.5 }} />
                   </CardActionArea>
                 </Card>
                 <Card sx={{ flex: 1 }}>
                   <CardActionArea onClick={() => navigate('/level-journey')} sx={{ p: 2, textAlign: 'center' }}>
-                    <StarIcon sx={{ fontSize: 32, color: gColors.gold, mb: 0.5 }} />
+                    <StarIcon sx={{ fontSize: iconSizes.xl, color: gColors.gold, mb: 0.5 }} />
                     <Typography variant="body2" fontWeight={600}>
                       {t('profile.levelJourney')}
                     </Typography>
-                    <OpenIcon sx={{ fontSize: 14, color: 'text.disabled', mt: 0.5 }} />
+                    <OpenIcon sx={{ fontSize: iconSizes.xs, color: 'text.disabled', mt: 0.5 }} />
                   </CardActionArea>
                 </Card>
               </Box>
@@ -662,7 +663,7 @@ export function RankingsTab() {
             ))
           ) : sortedPlayers.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
-              <TrophyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+              <TrophyIcon sx={{ fontSize: iconSizes.hero, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
                 {t('ranking.noPlayers')}
               </Typography>
@@ -756,7 +757,7 @@ const RankingCard = React.memo(function RankingCard({
             }}
           >
             {/* Troféu apenas no 1º; 2/3 mostram numeral sobre bg prata/bronze (#1360) */}
-            {position === 1 ? <TrophyIcon sx={{ fontSize: 16 }} /> : position}
+            {position === 1 ? <TrophyIcon sx={{ fontSize: iconSizes.sm }} /> : position}
           </Box>
 
           {/* Avatar — clique abre a figurinha do jogador */}

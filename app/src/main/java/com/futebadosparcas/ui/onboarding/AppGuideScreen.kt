@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.AppDimensions
 /**
  * Tela de guia do aplicativo.
  * Apresenta as principais funcionalidades e como usar.
@@ -56,10 +57,10 @@ fun AppGuideScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Título
             Text(
@@ -70,7 +71,7 @@ fun AppGuideScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Text(
                 text = stringResource(R.string.app_guide_subtitle),
@@ -79,7 +80,7 @@ fun AppGuideScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Cards de funcionalidades
             GuideFeatureCard(
@@ -88,7 +89,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_home_desc)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             GuideFeatureCard(
                 icon = Icons.Default.Sports,
@@ -96,7 +97,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_games_desc)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             GuideFeatureCard(
                 icon = Icons.Default.People,
@@ -104,7 +105,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_players_desc)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             GuideFeatureCard(
                 icon = Icons.Default.EmojiEvents,
@@ -112,7 +113,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_league_desc)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             GuideFeatureCard(
                 icon = Icons.Default.Groups,
@@ -120,7 +121,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_groups_desc)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Dica final
             Card(
@@ -128,17 +129,17 @@ fun AppGuideScreen(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(AppDimensions.spacing_large),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "\uD83D\uDCA1",
                         style = MaterialTheme.typography.headlineMedium
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
                     Text(
                         text = stringResource(R.string.app_guide_tip),
                         style = MaterialTheme.typography.bodyMedium,
@@ -149,15 +150,15 @@ fun AppGuideScreen(
             }
 
             Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Botão Começar a usar
             Button(
                 onClick = onComplete,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                    .height(AppDimensions.height_input),
+                shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Text(
                     text = stringResource(R.string.app_guide_start),
@@ -165,7 +166,7 @@ fun AppGuideScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
         }
     }
 }
@@ -181,17 +182,17 @@ private fun GuideFeatureCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(AppDimensions.radius_large)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(AppDimensions.spacing_large),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(AppDimensions.icon_extraLarge)
                     .background(
                         color = MaterialTheme.colorScheme.primary,
                         shape = CircleShape
@@ -202,11 +203,11 @@ private fun GuideFeatureCard(
                     imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(AppDimensions.icon_medium)
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(

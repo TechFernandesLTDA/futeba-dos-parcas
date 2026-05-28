@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.onboarding.OnboardingStep
+import com.futebadosparcas.ui.theme.AppDimensions
 
 /**
  * Card de Primeiros Passos exibido na HomeScreen.
@@ -65,13 +66,13 @@ fun FirstStepsChecklist(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_extraSmall),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(AppDimensions.spacing_large)) {
                 // Cabeçalho com título e botão dispensar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -99,7 +100,7 @@ fun FirstStepsChecklist(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
                 // Barra de progresso
                 val completedCount = steps.values.count { it }
@@ -109,7 +110,7 @@ fun FirstStepsChecklist(
                     progress = { progress },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(4.dp)
+                        .height(AppDimensions.spacing_extraSmall)
                         .semantics {
                             contentDescription = "$completedCount de ${steps.size} passos concluídos"
                         },
@@ -117,7 +118,7 @@ fun FirstStepsChecklist(
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
                 // Lista de passos
                 steps.entries.forEachIndexed { _, (step, isCompleted) ->
@@ -158,10 +159,10 @@ private fun ChecklistStepItem(
                 MaterialTheme.colorScheme.primary
             else
                 MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(AppDimensions.icon_medium)
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
         // Título e subtítulo
         Column(modifier = Modifier.weight(1f)) {
@@ -182,10 +183,10 @@ private fun ChecklistStepItem(
 
         // Ação de navegação (apenas se não concluído)
         if (!isCompleted) {
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             TextButton(
                 onClick = onClick,
-                modifier = Modifier.height(48.dp) // touch target mínimo
+                modifier = Modifier.height(AppDimensions.height_button_large) // touch target mínimo
             ) {
                 Text(
                     text = stringResource(actionRes),

@@ -47,6 +47,8 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
+import { iconSizes } from '../../../theme/iconSizes';
+import { pageSpacing } from '../../../theme/pageTokens';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { useConfirmPresence } from '../../../hooks/useGames';
 import { useNextGame } from '../../../hooks/useNextGame';
@@ -174,7 +176,7 @@ function NextGameWidget() {
   // ── Loading ──
   if (gamesLoading || confCheckLoading) {
     return (
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: pageSpacing.sectionSpacing }}>
         <CardContent>
           <Skeleton variant="text" width="45%" height={28} />
           <Skeleton variant="text" width="65%" />
@@ -190,14 +192,14 @@ function NextGameWidget() {
     return (
       <Card
         sx={{
-          mb: 3,
+          mb: pageSpacing.sectionSpacing,
           bgcolor: alpha(theme.palette.primary.main, 0.04),
           border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
         }}
       >
         <CardContent sx={{ py: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <CalendarMonth sx={{ fontSize: 36, color: 'text.disabled' }} />
+                <CalendarMonth sx={{ fontSize: iconSizes.xl, color: 'text.disabled' }} />
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" fontWeight={600}>
                 {t('games.noGameScheduled')}
@@ -229,7 +231,7 @@ function NextGameWidget() {
     return (
       <Card
         sx={{
-          mb: 3,
+          mb: pageSpacing.sectionSpacing,
           bgcolor: alpha(theme.palette.error.main, 0.06),
           border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
         }}
@@ -237,7 +239,7 @@ function NextGameWidget() {
         <CardActionArea onClick={() => navigate(`/game/${nextGame.id}`)}>
           <CardContent sx={{ py: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <LiveTv sx={{ fontSize: 36, color: theme.palette.error.main }} />
+              <LiveTv sx={{ fontSize: iconSizes.xl, color: theme.palette.error.main }} />
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle2" fontWeight={600}>
                   {t('games.liveNow')}
@@ -262,7 +264,7 @@ function NextGameWidget() {
   return (
     <Card
       sx={{
-        mb: 3,
+        mb: pageSpacing.sectionSpacing,
         border: isConfirmed
           ? `1px solid ${alpha(theme.palette.success.main, 0.3)}`
           : `1px solid ${alpha(statusColors[nextGame.status] || theme.palette.primary.main, 0.12)}`,
@@ -287,7 +289,7 @@ function NextGameWidget() {
               />
               {isConfirmed && (
                 <Chip
-                  icon={<CheckCircle sx={{ fontSize: 14 }} />}
+                    icon={<CheckCircle sx={{ fontSize: iconSizes.xs }} />}
                   label={t('games.confirmed_chip')}
                   size="small"
                   sx={{
@@ -300,7 +302,7 @@ function NextGameWidget() {
               )}
             </Box>
             <Chip
-              icon={<People sx={{ fontSize: 16 }} />}
+              icon={<People sx={{ fontSize: iconSizes.sm }} />}
               label={`${nextGame.playersCount}/${nextGame.maxPlayers}`}
               size="small"
               sx={{ flexShrink: 0, ml: 1, fontWeight: 600 }}
@@ -312,7 +314,7 @@ function NextGameWidget() {
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-            <CalendarMonth sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <CalendarMonth sx={{ fontSize: iconSizes.sm, color: 'text.secondary' }} />
             <Typography variant="body2" color="text.secondary">
               {formatGameDateLong(nextGame.date)} às {nextGame.time}
             </Typography>
@@ -320,7 +322,7 @@ function NextGameWidget() {
 
           {nextGame.locationAddress && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-              <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <LocationOn sx={{ fontSize: iconSizes.sm, color: 'text.secondary' }} />
               <Typography variant="body2" color="text.secondary" noWrap>
                 {nextGame.locationAddress}
               </Typography>
@@ -500,10 +502,10 @@ function MiniRankingWidget() {
 
   if (!primaryGroup) {
     return (
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: pageSpacing.sectionSpacing }}>
         <CardContent sx={{ py: 2.5 }}>
           <Box sx={{ textAlign: 'center' }}>
-            <EmojiEvents sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+            <EmojiEvents sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 1 }} />
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
               {t('groups.noRankingMembers')}
             </Typography>
@@ -535,11 +537,11 @@ function MiniRankingWidget() {
 
   return (
     <>
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: pageSpacing.sectionSpacing }}>
         <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <EmojiEvents sx={{ fontSize: 18, color: gColors.gold }} />
+              <EmojiEvents sx={{ fontSize: iconSizes.md, color: gColors.gold }} />
               {t('ranking.title')}
             </Typography>
             <Link
@@ -563,7 +565,7 @@ function MiniRankingWidget() {
             ))
           ) : players.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 1.5 }}>
-              <SportsSoccer sx={{ fontSize: 32, color: 'text.disabled', mb: 0.5 }} />
+              <SportsSoccer sx={{ fontSize: iconSizes.xl, color: 'text.disabled', mb: 0.5 }} />
               <Typography variant="body2" color="text.secondary" fontWeight={500}>
                 {t('ranking.noPlayersYet')}
               </Typography>
@@ -599,7 +601,7 @@ function MiniRankingWidget() {
                         {index === 0 && (
                           <EmojiEvents
                             sx={{
-                              fontSize: 12,
+                              fontSize: iconSizes.xs,
                               color: gColors.gold,
                               position: 'absolute',
                               top: -6,
@@ -793,14 +795,14 @@ export function HomeTab() {
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
         sx={{
-          mb: 3,
+          mb: pageSpacing.sectionSpacing,
           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
           color: 'primary.contrastText',
           overflow: 'visible',
           position: 'relative',
         }}
       >
-        <CardContent sx={{ p: 2.5 }}>
+        <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
             <Box sx={{ position: 'relative' }}>
               <Avatar
@@ -906,9 +908,9 @@ export function HomeTab() {
 
           <Box sx={{ display: 'flex', gap: 2 }}>
             {[
-              { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/?tab=1' },
-              { value: user?.totalGoals || 0, label: t('profile.goals'), icon: <SportsScore aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
-              { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: 16, opacity: 0.9 }} />, color: alpha(gColors.gold, 0.25), navigateTo: '/statistics' },
+              { value: user?.totalGames || 0, label: t('profile.games'), icon: <SportsSoccer aria-hidden="true" sx={{ fontSize: iconSizes.sm, opacity: 0.9 }} />, color: alpha(theme.palette.common.white, 0.15), navigateTo: '/?tab=1' },
+              { value: user?.totalGoals || 0, label: t('profile.goals'), icon: <SportsScore aria-hidden="true" sx={{ fontSize: iconSizes.sm, opacity: 0.9 }} />, color: alpha(theme.palette.success.light, 0.25), navigateTo: '/statistics' },
+              { value: user?.mvpCount || 0, label: t('profile.mvp'), icon: <EmojiEvents aria-hidden="true" sx={{ fontSize: iconSizes.sm, opacity: 0.9 }} />, color: alpha(gColors.gold, 0.25), navigateTo: '/statistics' },
             ].map((stat) => (
               <ButtonBase
                 key={stat.label}

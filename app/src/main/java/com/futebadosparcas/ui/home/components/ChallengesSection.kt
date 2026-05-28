@@ -31,6 +31,7 @@ import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -106,7 +107,7 @@ fun ChallengeCard(challenge: WeeklyChallenge, progress: UserChallengeProgress?, 
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(AppDimensions.spacing_medium)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -126,17 +127,17 @@ fun ChallengeCard(challenge: WeeklyChallenge, progress: UserChallengeProgress?, 
                 minLines = 2
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
             
             LinearProgressIndicator(
                 progress = { percent },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .height(AppDimensions.spacing_small)
+                    .clip(RoundedCornerShape(AppDimensions.spacing_extraSmall)),
             )
             
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
             
             Row(
                 modifier = Modifier.fillMaxWidth(), 

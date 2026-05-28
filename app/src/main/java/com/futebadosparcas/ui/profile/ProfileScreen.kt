@@ -50,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -273,9 +274,9 @@ private fun ProfileContent(
             ),
         contentPadding = PaddingValues(
             horizontal = windowSizeClass.horizontalPadding,
-            vertical = 8.dp
+            vertical = AppDimensions.spacing_small
         ),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
     ) {
         // Header: Avatar, Nome, Role
         item(key = "header") {
@@ -369,7 +370,7 @@ private fun ProfileContent(
 
         // Espaçamento antes da versão
         item(key = "bottom_spacer") {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
         }
 
         // Versão do App
@@ -381,7 +382,7 @@ private fun ProfileContent(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = AppDimensions.spacing_small),
                 textAlign = TextAlign.Center
             )
         }
@@ -399,7 +400,7 @@ private fun ProfileHeader(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -407,7 +408,7 @@ private fun ProfileHeader(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Avatar com badge de nível
@@ -451,12 +452,12 @@ private fun ProfileHeader(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(user.level)),
                     contentDescription = stringResource(R.string.cd_level_badge_main),
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(AppDimensions.rank_badge_size)
                         .align(Alignment.BottomEnd)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             // Nome
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -466,14 +467,14 @@ private fun ProfileHeader(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                 TeamBadgeById(
                     teamId = user.favoriteTeam,
                     iconSize = 24
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
 
             // Email — dark mode: usar onSurface + peso médio (era onSurfaceVariant, ficava "reto")
             Text(
@@ -485,7 +486,7 @@ private fun ProfileHeader(
 
             // Role Badge
             if (user.isAdmin() || user.isFieldOwner()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (user.isAdmin()) {
@@ -493,7 +494,7 @@ private fun ProfileHeader(
                     } else {
                         MaterialTheme.colorScheme.secondary
                     },
-                    tonalElevation = 0.dp
+                    tonalElevation = AppDimensions.elevation_none
                 ) {
                     Text(
                         text = when {
@@ -501,7 +502,7 @@ private fun ProfileHeader(
                             user.isFieldOwner() -> stringResource(R.string.profile_role_organizer)
                             else -> ""
                         },
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = AppDimensions.spacing_medium, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = if (user.isAdmin()) {
                             MaterialTheme.colorScheme.onError
@@ -534,7 +535,7 @@ private fun StaticLevelCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
@@ -542,7 +543,7 @@ private fun StaticLevelCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(AppDimensions.spacing_large)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -567,24 +568,24 @@ private fun StaticLevelCard(
                 Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
                     contentDescription = stringResource(R.string.level_badge),
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(AppDimensions.icon_extraLarge)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             // Barra de progresso ESTÁTICA
             LinearProgressIndicator(
                 progress = { xpPercentage / 100f },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .height(AppDimensions.spacing_small)
+                    .clip(RoundedCornerShape(AppDimensions.spacing_extraSmall)),
                 color = GamificationColors.XpGreen,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -603,7 +604,7 @@ private fun StaticLevelCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             // Mensagem motivacional — dark mode: alpha 0.9f (italic já reduz legibilidade; antes 0.8f sumia)
             Text(
@@ -623,13 +624,13 @@ private fun StaticLevelCard(
 private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
+        shape = RoundedCornerShape(AppDimensions.radius_large),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(AppDimensions.spacing_large)
         ) {
             Text(
                 text = stringResource(R.string.field_preferences),
@@ -637,7 +638,7 @@ private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -685,10 +686,10 @@ private fun FieldTypeIcon(
                 FieldType.OUTROS -> Icons.Default.SportsSoccer
             },
             contentDescription = label,
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(AppDimensions.rank_badge_size),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
@@ -706,13 +707,13 @@ private fun FieldTypeIcon(
 private fun StaticRatingsCard(ratings: List<RatingData>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
+        shape = RoundedCornerShape(AppDimensions.radius_large),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(AppDimensions.spacing_large)
         ) {
             Text(
                 text = stringResource(R.string.position_ratings),
@@ -720,10 +721,10 @@ private fun StaticRatingsCard(ratings: List<RatingData>) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             ratings.forEachIndexed { index, ratingData ->
-                if (index > 0) Spacer(modifier = Modifier.height(12.dp))
+                if (index > 0) Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
                 StaticRatingItem(
                     label = ratingData.label,
                     rating = ratingData.rating,
@@ -770,7 +771,7 @@ private fun StaticRatingItem(
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodyMedium
@@ -785,13 +786,13 @@ private fun StaticRatingItem(
             )
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.xp_bar_height))
 
         LinearProgressIndicator(
             progress = { (rating.toFloat() / 5f).coerceIn(0f, 1f) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
+                .height(AppDimensions.xp_bar_height)
                 .clip(RoundedCornerShape(3.dp)),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -806,13 +807,13 @@ private fun StaticRatingItem(
 private fun StatisticsCard(statistics: Statistics?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
+        shape = RoundedCornerShape(AppDimensions.radius_large),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(AppDimensions.spacing_large)
         ) {
             Text(
                 text = stringResource(R.string.statistics_title),
@@ -820,11 +821,11 @@ private fun StatisticsCard(statistics: Statistics?) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             if (statistics != null) {
                 // Grid de estatísticas 3x3
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -898,13 +899,13 @@ private fun RowScope.StatItem(label: String, value: String) {
 private fun BadgesSection(badges: List<UserBadge>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
+        shape = RoundedCornerShape(AppDimensions.radius_large),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(AppDimensions.spacing_large)
         ) {
             Text(
                 text = stringResource(R.string.recent_badges),
@@ -912,10 +913,10 @@ private fun BadgesSection(badges: List<UserBadge>) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
             ) {
                 items(
                     items = badges.take(5),
@@ -963,7 +964,7 @@ private fun BadgeItem(badge: UserBadge) {
             Icon(
                 imageVector = Icons.Default.EmojiEvents,
                 contentDescription = badge.badgeId,
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(AppDimensions.icon_large),
                 tint = when (badgeType) {
                     BadgeType.HAT_TRICK, BadgeType.PAREDAO -> GamificationColors.Gold
                     BadgeType.ARTILHEIRO_MES, BadgeType.MITO -> MaterialTheme.colorScheme.primary
@@ -991,7 +992,7 @@ private fun BadgeItem(badge: UserBadge) {
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
 
         // Nome do badge — dark mode: onSurface + Medium (era onSurfaceVariant sem weight, invisível)
         Text(
@@ -1016,33 +1017,33 @@ private fun ActionButtonsSection(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
     ) {
         Button(
             onClick = onEditProfileClick,
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(AppDimensions.radius_medium)
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = stringResource(R.string.edit_profile),
                 modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             Text(stringResource(R.string.edit_profile))
         }
 
         OutlinedButton(
             onClick = onLogoutClick,
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(AppDimensions.radius_medium)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = stringResource(R.string.logout),
                 modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             Text(stringResource(R.string.logout))
         }
     }
@@ -1060,8 +1061,8 @@ private fun SettingsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
+        shape = RoundedCornerShape(AppDimensions.radius_large),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)  // Sem sombra para scroll suave
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             SettingsMenuItem(
@@ -1100,17 +1101,17 @@ private fun FeedbackSection() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
+        shape = RoundedCornerShape(AppDimensions.radius_large),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)  // Sem sombra para scroll suave
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
             Text(
                 text = stringResource(R.string.feedback_section),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small)
             )
 
             SettingsMenuItem(
@@ -1166,19 +1167,19 @@ private fun AdminSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer
         )
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
             Text(
                 text = stringResource(R.string.administration_section),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small)
             )
 
             if (isAdmin) {
@@ -1238,16 +1239,16 @@ private fun SettingsMenuItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(AppDimensions.spacing_large),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = title,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(AppDimensions.icon_medium),
             tint = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
@@ -1276,16 +1277,16 @@ private fun AdminMenuItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(AppDimensions.spacing_large),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = title,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(AppDimensions.icon_medium),
             tint = MaterialTheme.colorScheme.onErrorContainer
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -1315,7 +1316,7 @@ private fun AdminMenuItem(
 private fun DeveloperMenuCard(onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer
         )
@@ -1324,16 +1325,16 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(16.dp),
+                .padding(AppDimensions.spacing_large),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Code,
                 contentDescription = stringResource(R.string.cd_developer_menu),
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(AppDimensions.icon_medium),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
             Text(
                 text = stringResource(R.string.developer_menu),
                 style = MaterialTheme.typography.bodyLarge,
@@ -1360,7 +1361,7 @@ private fun ErrorState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = AppDimensions.spacing_extraLarge, vertical = AppDimensions.spacing_large),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -1370,21 +1371,21 @@ private fun ErrorState(
             modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
         Button(onClick = onRetry) {
             Icon(
                 imageVector = Icons.Default.Refresh,
                 contentDescription = stringResource(R.string.retry),
                 modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             Text(stringResource(R.string.retry))
         }
     }
@@ -1397,38 +1398,38 @@ private fun ErrorState(
 private fun ProfileLoadingShimmer() {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
     ) {
         // Header shimmer
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(AppDimensions.spacing_extraLarge),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     ShimmerBox(
                         modifier = Modifier.size(120.dp),
                         cornerRadius = 60.dp
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
                     ShimmerBox(
                         modifier = Modifier
                             .width(200.dp)
-                            .height(24.dp),
-                        cornerRadius = 4.dp
+                            .height(AppDimensions.spacing_extraLarge),
+                        cornerRadius = AppDimensions.spacing_extraSmall
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
                     ShimmerBox(
                         modifier = Modifier
                             .width(150.dp)
-                            .height(16.dp),
-                        cornerRadius = 4.dp
+                            .height(AppDimensions.spacing_large),
+                        cornerRadius = AppDimensions.spacing_extraSmall
                     )
                 }
             }
@@ -1438,25 +1439,25 @@ private fun ProfileLoadingShimmer() {
         items(4) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(AppDimensions.spacing_large),
+                    verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
                 ) {
                     ShimmerBox(
                         modifier = Modifier
                             .width(150.dp)
                             .height(20.dp),
-                        cornerRadius = 4.dp
+                        cornerRadius = AppDimensions.spacing_extraSmall
                     )
                     ShimmerBox(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp),
-                        cornerRadius = 8.dp
+                        cornerRadius = AppDimensions.spacing_small
                     )
                 }
             }

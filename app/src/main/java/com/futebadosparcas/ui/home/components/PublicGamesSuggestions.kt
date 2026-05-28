@@ -44,6 +44,7 @@ import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.util.toDate
+import com.futebadosparcas.ui.theme.AppDimensions
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -133,7 +134,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
             containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(AppDimensions.radius_medium)
     ) {
         Column {
             // Header Image Placeholder or Map Snapshot
@@ -151,7 +152,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                  )
             }
 
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.padding(AppDimensions.spacing_medium)) {
                 Text(
                     text = game.locationName ?: locationUnknown,
                     style = MaterialTheme.typography.titleSmall,
@@ -160,7 +161,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                     overflow = TextOverflow.Ellipsis
                 )
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -169,7 +170,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                     Text(
                         text = formatDate(game.dateTime.toDate()),
                         style = MaterialTheme.typography.bodySmall,
@@ -177,7 +178,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -186,7 +187,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                     Text(
                         text = stringResource(R.string.public_games_slots_available),
                         style = MaterialTheme.typography.bodySmall,

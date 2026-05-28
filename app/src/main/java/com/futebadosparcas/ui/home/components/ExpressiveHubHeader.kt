@@ -27,6 +27,7 @@ import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.AdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 @Composable
 fun ExpressiveHubHeader(
@@ -55,7 +56,7 @@ fun ExpressiveHubHeader(
         modifier = modifier
             .fillMaxWidth()
             .padding(spacing.contentPaddingHorizontal),
-        shadowElevation = 0.dp
+        shadowElevation = AppDimensions.elevation_none
     ) {
         Column(
             modifier = Modifier
@@ -130,11 +131,11 @@ private fun CompactHeaderLayout(
                 modifier = Modifier
                     .size(badgeSize)
                     .align(Alignment.BottomEnd)
-                    .offset(x = 4.dp, y = 4.dp)
+                    .offset(x = AppDimensions.spacing_extraSmall, y = AppDimensions.spacing_extraSmall)
             )
         }
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -149,7 +150,7 @@ private fun CompactHeaderLayout(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                 TeamBadgeById(
                     teamId = user.favoriteTeam,
                     iconSize = 28
@@ -163,7 +164,7 @@ private fun CompactHeaderLayout(
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier
                 .minimumInteractiveComponentSize()
-                .height(32.dp)
+                .height(AppDimensions.spacing_huge)
                 .clickable {
                     hapticManager?.tick()
                     onLevelClick()
@@ -171,7 +172,7 @@ private fun CompactHeaderLayout(
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.padding(horizontal = 12.dp)
+                modifier = Modifier.padding(horizontal = AppDimensions.spacing_medium)
             ) {
                 Text(
                     text = stringResource(R.string.hub_level_short, summary.level),
@@ -189,9 +190,9 @@ private fun CompactHeaderLayout(
     XpProgressSection(summary = summary, animatedProgress = animatedProgress)
 
     if (statistics != null) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -245,7 +246,7 @@ private fun ExpandedHeaderLayout(
                     modifier = Modifier
                         .size(badgeSize)
                         .align(Alignment.BottomEnd)
-                        .offset(x = 4.dp, y = 4.dp)
+                        .offset(x = AppDimensions.spacing_extraSmall, y = AppDimensions.spacing_extraSmall)
                 )
             }
 
@@ -264,7 +265,7 @@ private fun ExpandedHeaderLayout(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                     TeamBadgeById(
                         teamId = user.favoriteTeam,
                         iconSize = 28
@@ -286,7 +287,7 @@ private fun ExpandedHeaderLayout(
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = AppDimensions.spacing_large)
                     ) {
                         Text(
                             text = stringResource(R.string.hub_level_full, summary.level, summary.levelName),
@@ -345,13 +346,13 @@ private fun XpProgressSection(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
         // Barra de Progresso Customizada (Gradiente)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(12.dp)
+                .height(AppDimensions.spacing_medium)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surface)
         ) {
@@ -371,7 +372,7 @@ private fun XpProgressSection(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
         Text(
             text = if (summary.isMaxLevel) stringResource(R.string.hub_max_level_reached)

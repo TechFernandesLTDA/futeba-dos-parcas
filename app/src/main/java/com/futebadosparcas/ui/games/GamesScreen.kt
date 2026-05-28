@@ -40,6 +40,7 @@ import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -171,7 +172,7 @@ private fun GamesSuccessContent(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = windowSizeClass.horizontalPadding, vertical = 12.dp)
+                .padding(horizontal = windowSizeClass.horizontalPadding, vertical = AppDimensions.spacing_medium)
         )
 
         if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
@@ -183,9 +184,9 @@ private fun GamesSuccessContent(
                     .adaptiveContentWidth(),
                 contentPadding = PaddingValues(
                     horizontal = windowSizeClass.horizontalPadding,
-                    vertical = 8.dp
+                    vertical = AppDimensions.spacing_small
                 ),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 items(games, key = { it.game.id }) { game ->
                     GameCard(
@@ -205,7 +206,7 @@ private fun GamesSuccessContent(
                     .adaptiveContentWidth(),
                 contentPadding = PaddingValues(
                     horizontal = windowSizeClass.horizontalPadding,
-                    vertical = 8.dp
+                    vertical = AppDimensions.spacing_small
                 ),
                 horizontalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing),
                 verticalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing)
@@ -234,7 +235,7 @@ private fun GamesFilters(
     Row(
         modifier = modifier
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
     ) {
         FilterChip(
             selected = selectedFilter == GameFilterType.ALL,
@@ -297,17 +298,17 @@ private fun GameCard(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 120.dp)
+            .heightIn(min = AppDimensions.card_min_height)
             .semantics(mergeDescendants = true) { contentDescription = cardCd },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_medium),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(AppDimensions.spacing_medium),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             // Header com local e tipo de campo
             Row(
@@ -339,13 +340,13 @@ private fun GameCard(
                 Surface(
                     shape = RoundedCornerShape(Spacing.sm),
                     color = getFieldTypeColor(game.game.gameType),
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.padding(start = AppDimensions.spacing_small)
                 ) {
                     Text(
                         text = game.game.gameType,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = AppDimensions.spacing_extraSmall)
                     )
                 }
             }
@@ -354,12 +355,12 @@ private fun GameCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
             ) {
                 Icon(
                     imageVector = Icons.Default.Schedule,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(AppDimensions.icon_small),
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
@@ -384,12 +385,12 @@ private fun GameCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(AppDimensions.icon_small),
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
@@ -403,9 +404,9 @@ private fun GameCard(
                 // Status badge
                 if (game.game.status.isNotEmpty()) {
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(AppDimensions.spacing_extraSmall),
                         color = getStatusColor(game.game.status),
-                        modifier = Modifier.padding(end = 4.dp)
+                        modifier = Modifier.padding(end = AppDimensions.spacing_extraSmall)
                     ) {
                         Text(
                             text = getStatusText(game.game.status),
@@ -428,8 +429,8 @@ private fun GamesLoadingState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(AppDimensions.spacing_medium),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
     ) {
         repeat(6) {
             ShimmerGameCard()
@@ -447,18 +448,18 @@ private fun GamesEmptyState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(AppDimensions.spacing_extraLarge),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.EventNote,
             contentDescription = null,
-            modifier = Modifier.size(96.dp),
+            modifier = Modifier.size(AppDimensions.avatar_extraLarge),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
         Text(
             text = stringResource(R.string.empty_state_no_games_title_generic),
@@ -467,7 +468,7 @@ private fun GamesEmptyState(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
         Text(
             text = stringResource(R.string.empty_state_no_games_desc_generic),
@@ -476,17 +477,17 @@ private fun GamesEmptyState(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth(0.8f)
-                .padding(bottom = 24.dp)
+                .padding(bottom = AppDimensions.spacing_extraLarge)
         )
 
         FilledTonalButton(
             onClick = onCreateGameClick,
             modifier = Modifier
                 .fillMaxWidth(0.6f)
-                .height(48.dp)
+                .height(AppDimensions.height_button_large)
         ) {
             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(Spacing.md))
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             Text(stringResource(R.string.empty_state_no_games_action))
         }
     }
@@ -503,18 +504,18 @@ private fun GamesErrorState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(AppDimensions.spacing_large),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.Default.ErrorOutline,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(AppDimensions.avatar_large),
             tint = MaterialTheme.colorScheme.error
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
         Text(
             text = stringResource(R.string.error),
@@ -526,13 +527,13 @@ private fun GamesErrorState(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 16.dp),
+            modifier = Modifier.padding(vertical = AppDimensions.spacing_large),
             textAlign = TextAlign.Center
         )
 
         Button(onClick = onRetry) {
             Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(Spacing.md))
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             Text(stringResource(R.string.retry))
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.AppNotification
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,20 +36,20 @@ fun NotificationPreviewSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp)
+                .padding(bottom = AppDimensions.spacing_extraLarge)
         ) {
             Text(
                 text = stringResource(R.string.notifications_recent_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small)
             )
 
             if (notifications.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(32.dp),
+                        .padding(AppDimensions.spacing_huge),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -59,8 +60,8 @@ fun NotificationPreviewSheet(
                 }
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small),
+                    verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
                 ) {
                     items(notifications, key = { it.id }) { notification ->
                         NotificationItem(
@@ -84,22 +85,22 @@ fun NotificationItem(
         colors = CardDefaults.cardColors(
             containerColor = if (notification.read) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_small)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(AppDimensions.spacing_medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Notifications, 
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(AppDimensions.icon_medium)
             )
             
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
             
             Column {
                 Text(

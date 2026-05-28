@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.AppDimensions
 /**
  * Tela de configuração inicial do perfil.
  * Coleta informações básicas do jogador.
@@ -67,10 +68,10 @@ fun ProfileSetupScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Título
             Text(
@@ -81,7 +82,7 @@ fun ProfileSetupScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Text(
                 text = stringResource(R.string.profile_setup_subtitle),
@@ -90,7 +91,7 @@ fun ProfileSetupScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Campo Nome
             OutlinedTextField(
@@ -100,10 +101,10 @@ fun ProfileSetupScreen(
                 placeholder = { Text(stringResource(R.string.profile_setup_name_hint)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(AppDimensions.radius_medium)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             // Campo Apelido
             OutlinedTextField(
@@ -113,10 +114,10 @@ fun ProfileSetupScreen(
                 placeholder = { Text(stringResource(R.string.profile_setup_nickname_hint)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(AppDimensions.radius_medium)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
             // Posição Preferida
             Text(
@@ -126,11 +127,11 @@ fun ProfileSetupScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 positions.take(2).forEach { (label, value) ->
                     FilterChip(
@@ -142,11 +143,11 @@ fun ProfileSetupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 positions.drop(2).forEach { (label, value) ->
                     FilterChip(
@@ -158,7 +159,7 @@ fun ProfileSetupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
             // Tipo de Campo Preferido
             Text(
@@ -168,11 +169,11 @@ fun ProfileSetupScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 FilterChip(
                     selected = societySelected,
@@ -195,7 +196,7 @@ fun ProfileSetupScreen(
             }
 
             Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Botão Continuar
             Button(
@@ -216,8 +217,8 @@ fun ProfileSetupScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                    .height(AppDimensions.height_input),
+                shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Text(
                     text = stringResource(R.string.continue_button),
@@ -225,7 +226,7 @@ fun ProfileSetupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             // Botão Pular
             TextButton(onClick = onSkip) {
@@ -235,7 +236,7 @@ fun ProfileSetupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
         }
     }
 }

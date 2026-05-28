@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.AppDimensions
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
@@ -65,7 +66,7 @@ fun VerificationBanner(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.tertiaryContainer)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

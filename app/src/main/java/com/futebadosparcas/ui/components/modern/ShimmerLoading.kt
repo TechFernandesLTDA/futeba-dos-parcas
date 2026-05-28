@@ -1,5 +1,9 @@
 package com.futebadosparcas.ui.components.modern
 
+/**
+ * CANONICAL component. Use this instead of legacy versions in ui/components/.
+ */
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

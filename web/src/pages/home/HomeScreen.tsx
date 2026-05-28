@@ -52,6 +52,7 @@ import { AppLogo } from '../../components/common/AppLogo';
 import { WhatsNewPopupHost } from '../../components/whatsnew/WhatsNewPopupHost';
 import { TeamOfTheWeek } from '../../components/game/TeamOfTheWeek';
 import { QuickActions } from '../../components/home/QuickActions';
+import { pageSpacing } from '../../theme/pageTokens';
 
 // Larguras dos navs adaptativos (Material 3 spec)
 const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
@@ -60,7 +61,7 @@ const DRAWER_WIDTH = 240;  // lg+: Drawer permanent (icon + label)
 // Skeleton de carregamento para transição entre tabs
 function TabSkeleton() {
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: pageSpacing.pagePadding }}>
       {[...Array(4)].map((_, i) => (
         <Skeleton key={i} variant="rounded" height={80} sx={{ mb: 1.5 }} />
       ))}
@@ -349,7 +350,7 @@ export function HomeScreen() {
         >
         {/* TOW + QuickActions colapsáveis (#2029) */}
         {tabValue === 0 && (
-          <Box sx={{ px: { xs: 2, sm: 2 }, pb: 0, pt: 1 }}>
+          <Box sx={{           px: pageSpacing.pagePadding, pb: 0, pt: 1 }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <IconButton
                 size="small"
@@ -405,7 +406,7 @@ export function HomeScreen() {
           aria-label="Navegação principal"
           sx={{
             bgcolor: 'background.paper',
-            height: 64,
+            height: pageSpacing.bottomBarHeight,
             '& .MuiBottomNavigationAction-root': {
               minWidth: 0,
               px: 0.5,
@@ -451,7 +452,7 @@ export function HomeScreen() {
           </>
         }
         onClose={() => setShowNotifBanner(false)}
-        sx={{ bottom: { xs: 80, md: 16 } }}
+        sx={{ bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 16 } }}
       />
 
       {/* Pop-up automático "Novidades" — aparece 1x após atualização do app */}

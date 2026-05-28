@@ -11,6 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@Deprecated(
+    message = "Use modern/LoadingButton instead",
+    replaceWith = ReplaceWith("LoadingButton", "com.futebadosparcas.ui.components.modern.LoadingButton")
+)
 /**
  * Loading Button Component
  *

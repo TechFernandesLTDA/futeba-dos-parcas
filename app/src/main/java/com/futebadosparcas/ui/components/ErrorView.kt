@@ -23,6 +23,10 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
+@Deprecated(
+    message = "Use modern/ErrorState instead",
+    replaceWith = ReplaceWith("ErrorState", "com.futebadosparcas.ui.components.modern.ErrorState")
+)
 /**
  * Error View Component
  *

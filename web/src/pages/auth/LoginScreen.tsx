@@ -33,6 +33,8 @@ import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { AppLogo } from '../../components/common/AppLogo';
+import { sxPresets } from '../../theme/sxPresets';
+import { pageSpacing } from '../../theme/pageTokens';
 
 export function LoginScreen() {
   useDocumentTitle('Login');
@@ -258,16 +260,18 @@ export function LoginScreen() {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{
-                py: 1.5,
-                fontSize: '1rem',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.dark})`,
+              sx={[
+                sxPresets.gradientPrimary,
+                {
+                  py: 1.5,
+                  fontSize: '1rem',
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.dark})`,
+                  },
                 },
-              }}
+              ]}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.login')}
+              {loading ? <CircularProgress size={24} sx={{ color: theme.palette.common.white }} /> : t('auth.login')}
             </Button>
           </form>
 
@@ -282,7 +286,7 @@ export function LoginScreen() {
             </Link>
           </Box>
 
-          <Divider sx={{ my: 3 }}>{t('common.or')}</Divider>
+          <Divider sx={{ my: pageSpacing.sectionSpacing }}>{t('common.or')}</Divider>
 
           <Button
             fullWidth
