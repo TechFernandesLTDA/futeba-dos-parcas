@@ -99,6 +99,8 @@ export const onConfirmationCreated = onDocumentCreated(
     const userConfsSnap = await db()
       .collection("confirmations")
       .where("user_id", "==", userId)
+      .where("status", "in", ["CONFIRMED", "PENDING"])
+      .orderBy("created_at", "desc")
       .limit(50)
       .get();
 

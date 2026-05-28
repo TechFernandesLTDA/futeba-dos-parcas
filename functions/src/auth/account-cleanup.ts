@@ -363,6 +363,8 @@ export const onUserDeleted = auth
 
         await commitBatch();
 
+        let anonFailed = false;
+
         // FIX #1961: cashbox transactions — anonymize created_by_name (LGPD Art. 18 VI)
         // Transactions are subcollections inside cashbox documents.
         // Requires composite index on collectionGroup(transactions): created_by ASC, __name__ ASC
@@ -392,8 +394,9 @@ export const onUserDeleted = auth
             );
           }
         } catch (cashboxError) {
+          anonFailed = true;
           logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar cashbox transactions para ${uid} (non-fatal):`,
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar cashbox transactions para ${uid}:`,
             cashboxError
           );
         }
@@ -427,8 +430,9 @@ export const onUserDeleted = auth
             );
           }
         } catch (reviewsError) {
+          anonFailed = true;
           logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar location reviews para ${uid} (non-fatal):`,
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar location reviews para ${uid}:`,
             reviewsError
           );
         }
@@ -493,8 +497,9 @@ export const onUserDeleted = auth
             );
           }
         } catch (groupsError) {
+          anonFailed = true;
           logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar grupos para ${uid} (non-fatal):`,
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar grupos para ${uid}:`,
             groupsError
           );
         }
@@ -529,8 +534,9 @@ export const onUserDeleted = auth
             );
           }
         } catch (activitiesError) {
+          anonFailed = true;
           logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar activities target para ${uid} (non-fatal):`,
+            `[ACCOUNT_CLEANUP] Erro ao anonimizar activities target para ${uid}:`,
             activitiesError
           );
         }
@@ -573,6 +579,12 @@ export const onUserDeleted = auth
             "[ACCOUNT_CLEANUP] Erro ao limpar Storage " +
             `para ${uid} (non-fatal):`,
             storageError
+          );
+        }
+
+        if (anonFailed) {
+          throw new Error(
+            "[ACCOUNT_CLEANUP] PII anonymization incomplete — forcing retry"
           );
         }
       } catch (error) {

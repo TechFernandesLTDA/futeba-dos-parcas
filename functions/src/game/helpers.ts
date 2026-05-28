@@ -361,6 +361,7 @@ export async function fetchAllStats(
     bestPlayerCount: 0,
     worstPlayerCount: 0,
     currentMvpStreak: 0,
+    bestMvpStreak: 0,
   };
   const result =
     new Map<string, UserStatistics>();

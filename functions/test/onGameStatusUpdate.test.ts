@@ -897,13 +897,13 @@ describe("onGameStatusUpdate", () => {
 
       // We need to override the confirmations collection mock
       // to include the cheater
-      const originalImpl = mockCollection.getMockImplementation() as any;
       mockCollection.mockImplementation((collectionName: string) => {
         if (collectionName === "confirmations") {
           return {
             doc: jest.fn(() => ({ id: "mock", update: jest.fn() })),
             where: jest.fn().mockReturnThis(),
             limit: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
             get: jest.fn().mockResolvedValue({
               docs: [
                 ...Array.from({ length: 7 }, (_, i) => ({
@@ -930,10 +930,7 @@ describe("onGameStatusUpdate", () => {
             }),
           };
         }
-        // Fall back to standard mock for other collections
-        if (originalImpl) {
-          return originalImpl(collectionName);
-        }
+        // Standard mock with full chain for all other collections
         return {
           doc: jest.fn(() => ({
             id: "mock",
@@ -942,6 +939,7 @@ describe("onGameStatusUpdate", () => {
           })),
           where: jest.fn().mockReturnThis(),
           limit: jest.fn().mockReturnThis(),
+          select: jest.fn().mockReturnThis(),
           get: jest.fn().mockResolvedValue({ docs: [], empty: true }),
         };
       });
@@ -951,15 +949,10 @@ describe("onGameStatusUpdate", () => {
         { status: "FINISHED", owner_id: "owner1" },
       );
 
-      // Should throw due to anti-cheat validation
-      await expect((onGameStatusUpdate as any)(event)).rejects.toThrow("[ANTI-CHEAT]");
-
-      // Should release the processing lock
-      expect(mockDocUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          xp_processing: false,
-        })
-      );
+      // Should NOT throw — anti-cheat now clamps and warns instead of aborting
+      // The function proceeds past anti-cheat to XP processing. The cheater's
+      // stats are capped to MAX_GOALS_PER_GAME via Math.min downstream.
+      await expect((onGameStatusUpdate as any)(event)).resolves.not.toThrow();
     });
 
     test("should handle transaction lock failure gracefully", async () => {
