@@ -52,7 +52,7 @@ class GamesViewModelTest {
         gameRepository = mockk(relaxed = true)
         observeUnreadCountUseCase = mockk(relaxed = true)
         confirmationUseCase = mockk(relaxed = true)
-        savedStateHandle = mockk(relaxed = true)
+        savedStateHandle = SavedStateHandle()
 
         every { observeUnreadCountUseCase() } returns flowOf(0)
     }
@@ -70,7 +70,7 @@ class GamesViewModelTest {
         @DisplayName("Estado inicial deve ser Loading")
         fun `initial state is Loading`() = runTest(testDispatcher) {
             coEvery { gameRepository.getGamesByFilter(any()) } returns Result.success(testGames)
-            every { savedStateHandle.get<String>(any()) } returns GameFilterType.ALL.name
+            savedStateHandle["current_filter"] = GameFilterType.ALL.name
 
             viewModel = GamesViewModel(gameRepository, observeUnreadCountUseCase, confirmationUseCase, savedStateHandle)
             advanceUntilIdle()

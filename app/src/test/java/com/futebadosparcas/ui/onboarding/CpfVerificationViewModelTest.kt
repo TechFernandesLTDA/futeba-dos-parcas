@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.onboarding
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.HttpsCallableReference
 import com.google.firebase.functions.HttpsCallableResult
@@ -107,8 +108,12 @@ class CpfVerificationViewModelTest {
             Tasks.forResult(resultSetVerifiedSuccess)
 
         if (posVerifyRefreshError == null) {
-            // Pre-call e pos-verify refresh com sucesso; getIdToken retorna null (nao usado alem do await)
-            every { user.getIdToken(true) } returns Tasks.forResult(null)
+            val verifiedToken = mockk<GetTokenResult>()
+            every { verifiedToken.claims } returns mapOf("verified" to true)
+            every { user.getIdToken(true) } returnsMany listOf(
+                Tasks.forResult(null),
+                Tasks.forResult(verifiedToken),
+            )
         } else {
             // Pre-call refresh OK (Task com null); pos-verify refresh com falha (todas as 3 tentativas)
             every { user.getIdToken(true) } returnsMany listOf(
@@ -120,23 +125,22 @@ class CpfVerificationViewModelTest {
         }
     }
 
-    // ─── H2: Sucesso server-side + falha pos-verify => UiState.Success ────────────
+    // ─── H2: Sucesso server-side + falha pos-verify => UiState.Error ──────────────
 
     @Test
-    @DisplayName("H2: sucesso server-side + falha refresh pos-verify => UiState.Success (nao Error)")
-    fun verifyCpf_serverSideSuccess_posVerifyRefreshFails_stateIsSuccess() = runTest {
-        // ESTE E O TESTE PRINCIPAL — pina a classe de bug da saga web #1284/#1285
-        // setUserVerified revoga refresh tokens; o refresh seguinte pode lancar
-        // user-token-expired. Isso NAO deve virar Error.
+    @DisplayName("H2: sucesso server-side + falha refresh pos-verify => UiState.Error")
+    fun verifyCpf_serverSideSuccess_posVerifyRefreshFails_stateIsError() = runTest {
+        // Sem claim verified no token pos-verify, a UI nao deve liberar o usuario
+        // para evitar redirect loop com claim stale.
         setupSuccessFlow(posVerifyRefreshError = RuntimeException("user-token-expired"))
 
         viewModel.verifyCpf(cpfValido)
         advanceUntilIdle()
 
         assertInstanceOf(
-            CpfVerificationUiState.Success::class.java,
+            CpfVerificationUiState.Error::class.java,
             viewModel.uiState.value,
-            "Sucesso server-side deve resultar em Success, nao Error, mesmo se refresh pos-verify falhar",
+            "Sem claim verified apos refresh, a UI deve pedir para tentar novamente.",
         )
     }
 
@@ -212,7 +216,12 @@ class CpfVerificationViewModelTest {
             Tasks.forResult(resultVerifyCpfSuccess)
         every { refSetUserVerified.call(any<Map<String, Any?>>()) } returns
             Tasks.forResult(resultSetVerifiedSuccess)
-        every { user.getIdToken(true) } returns Tasks.forResult(null)
+        val verifiedToken = mockk<GetTokenResult>()
+        every { verifiedToken.claims } returns mapOf("verified" to true)
+        every { user.getIdToken(true) } returnsMany listOf(
+            Tasks.forResult(null),
+            Tasks.forResult(verifiedToken),
+        )
 
         viewModel.verifyCpf(cpfValido)
         advanceUntilIdle()

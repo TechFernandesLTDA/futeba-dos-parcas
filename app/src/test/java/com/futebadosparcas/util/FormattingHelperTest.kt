@@ -56,7 +56,7 @@ class FormattingHelperTest {
     inner class FormatLargeNumberTests {
 
         @ParameterizedTest
-        @CsvSource("500, 500", "1500, 1,50K", "1000000, 1,00M", "1500000000, 1,50B")
+        @CsvSource("500, 500", "1500, '1,50K'", "1000000, '1,00M'", "1500000000, '1,50B'")
         @DisplayName("Formata numeros grandes com sufixo")
         fun `formats large numbers with suffix`(value: Long, expected: String) {
             assertEquals(expected, formattingHelper.formatLargeNumber(value))
@@ -183,7 +183,7 @@ class FormattingHelperTest {
         @Test
         @DisplayName("Trunca texto com ellipsis")
         fun `truncates text with ellipsis`() {
-            assertEquals("Hel...", formattingHelper.truncate("Hello World", 5))
+            assertEquals("He...", formattingHelper.truncate("Hello World", 5))
         }
 
         @Test

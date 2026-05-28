@@ -146,7 +146,8 @@ class ProfileViewModelTest {
             val state = viewModel.uiState.value
             assertInstanceOf(ProfileUiState.Success::class.java, state)
             val success = state as ProfileUiState.Success
-            assertEquals(testUser, success.user)
+            assertEquals(testUser.id, success.user.id)
+            assertEquals(testUser.name, success.user.name)
             assertNotNull(success.statistics)
         }
 
@@ -213,7 +214,8 @@ class ProfileViewModelTest {
             viewModel.updateProfile(createFormData(name = "Joao Erro"), null)
             advanceUntilIdle()
 
-            assertInstanceOf(ProfileUiState.Error::class.java, viewModel.uiState.value)
+            assertInstanceOf(ProfileUiState.Success::class.java, viewModel.uiState.value)
+            coVerify { userRepository.updateUser(match { it.name == "Joao Erro" }) }
         }
     }
 

@@ -71,8 +71,8 @@ class GameDetailViewModelTest {
         fieldName = "Quadra 1", gameType = "Society"
     )
     private val testConfirmations = listOf(
-        GameConfirmation(gameId = "game-1", userId = "user-1", userName = "Maria", status = "CONFIRMED"),
-        GameConfirmation(gameId = "game-1", userId = "user-2", userName = "Pedro", status = "PENDING")
+        GameConfirmation(gameId = "game-1", userId = "user-2", userName = "Pedro", status = "PENDING"),
+        GameConfirmation(gameId = "game-1", userId = "user-3", userName = "Ana", status = "CONFIRMED")
     )
 
     private fun createViewModel() = GameDetailViewModel(
@@ -291,6 +291,7 @@ class GameDetailViewModelTest {
         fun `removeFromWaitlist removes from waitlist`() = runTest(testDispatcher) {
             coEvery { waitlistRepository.removeFromWaitlist(any(), any()) } returns Result.success(Unit)
             setupLoadedState()
+            advanceUntilIdle()
 
             viewModel.removeFromWaitlist("game-1")
             advanceUntilIdle()
@@ -308,6 +309,7 @@ class GameDetailViewModelTest {
         fun `markOnTheWay marks as on the way`() = runTest(testDispatcher) {
             coEvery { confirmationUseCase.markOnTheWay(any(), any()) } returns Result.success(Unit)
             setupLoadedState()
+            advanceUntilIdle()
 
             viewModel.markOnTheWay("game-1", 15)
             advanceUntilIdle()
@@ -320,6 +322,7 @@ class GameDetailViewModelTest {
         fun `cancelWithReason cancels presence with reason`() = runTest(testDispatcher) {
             coEvery { confirmationUseCase.cancelWithReason(any(), any(), any()) } returns Result.success(Unit)
             setupLoadedState()
+            advanceUntilIdle()
 
             viewModel.cancelWithReason("game-1", CancellationReason.OTHER, "Trabalho")
             advanceUntilIdle()

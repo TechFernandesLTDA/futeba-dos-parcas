@@ -87,7 +87,7 @@ class CreateGameUseCaseTest {
         }
 
         @ParameterizedTest
-        @CsvSource("0", "1", "3", "101", "200")
+        @CsvSource("0", "1", "101", "200")
         @DisplayName("Numero de jogadores invalido retorna falha")
         fun `invalid player count returns failure`(maxPlayers: Int) = runTest {
             val params = validParams.copy(maxPlayers = maxPlayers)

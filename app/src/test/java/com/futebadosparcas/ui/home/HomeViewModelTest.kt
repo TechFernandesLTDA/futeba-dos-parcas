@@ -95,7 +95,7 @@ class HomeViewModelTest {
         activityRepository = mockk(relaxed = true)
         gameConfirmationRepository = mockk(relaxed = true)
         connectivityMonitor = mockk(relaxed = true)
-        savedStateHandle = mockk(relaxed = true)
+        savedStateHandle = SavedStateHandle()
         sharedCache = mockk(relaxed = true)
         prefetchService = mockk(relaxed = true)
     }
@@ -144,7 +144,7 @@ class HomeViewModelTest {
         @Test
         @DisplayName("isGridView inicialmente false")
         fun `initial isGridView is false`() {
-            every { savedStateHandle.get<Boolean>(any()) } returns false
+            savedStateHandle["is_grid_view"] = false
             every { connectivityMonitor.isConnected } returns MutableStateFlow(true)
             every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
 
@@ -216,7 +216,7 @@ class HomeViewModelTest {
         @Test
         @DisplayName("toggleViewMode alterna isGridView")
         fun `toggleViewMode toggles isGridView`() = runTest(testDispatcher) {
-            every { savedStateHandle.get<Boolean>(any()) } returns false
+            savedStateHandle["is_grid_view"] = false
             setupMocksForSuccess()
 
             viewModel = createViewModel()
@@ -258,8 +258,8 @@ class HomeViewModelTest {
         @DisplayName("observeUnreadCount atualiza contador")
         fun `observeUnreadCount updates counter`() = runTest(testDispatcher) {
             val unreadFlow = MutableStateFlow(5)
-            every { notificationRepository.getUnreadCountFlow() } returns unreadFlow
             setupMocksForSuccess()
+            every { notificationRepository.getUnreadCountFlow() } returns unreadFlow
 
             viewModel = createViewModel()
             advanceUntilIdle()
