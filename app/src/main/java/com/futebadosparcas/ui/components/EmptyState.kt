@@ -18,6 +18,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+@Deprecated(
+    message = "Use modern/EmptyState instead",
+    replaceWith = ReplaceWith("EmptyState", "com.futebadosparcas.ui.components.modern.EmptyState")
+)
 /**
  * Estados vazios diferenciados para melhor UX
  */
@@ -67,6 +71,10 @@ sealed class EmptyStateType {
     ) : EmptyStateType()
 }
 
+@Deprecated(
+    message = "Use modern/EmptyState instead",
+    replaceWith = ReplaceWith("EmptyState", "com.futebadosparcas.ui.components.modern.EmptyState")
+)
 /**
  * Componente principal de Empty State
  * Exibe diferentes estados vazios com animações suaves
@@ -189,6 +197,10 @@ private fun EmptyStateContent(
     }
 }
 
+@Deprecated(
+    message = "Use modern/CompactEmptyState instead",
+    replaceWith = ReplaceWith("CompactEmptyState", "com.futebadosparcas.ui.components.modern.CompactEmptyState")
+)
 /**
  * Variante compacta para uso em seções menores
  */
@@ -233,6 +245,11 @@ fun EmptyStateCompact(
     }
 }
 
+@Deprecated(
+    message = "Use modern/EmptyGamesState instead",
+    replaceWith = ReplaceWith("EmptyGamesState", "com.futebadosparcas.ui.components.modern.EmptyGamesState")
+)
+@Suppress("DEPRECATION")
 /**
  * Empty State para listas de jogos
  */
@@ -253,6 +270,11 @@ fun EmptyGamesState(
     )
 }
 
+@Deprecated(
+    message = "Use modern/EmptyPlayersState instead",
+    replaceWith = ReplaceWith("EmptyPlayersState", "com.futebadosparcas.ui.components.modern.EmptyPlayersState")
+)
+@Suppress("DEPRECATION")
 /**
  * Empty State para lista de jogadores
  */
@@ -273,6 +295,11 @@ fun EmptyPlayersState(
     )
 }
 
+@Deprecated(
+    message = "Use modern/EmptySearchState instead",
+    replaceWith = ReplaceWith("EmptySearchState", "com.futebadosparcas.ui.components.modern.EmptySearchState")
+)
+@Suppress("DEPRECATION")
 /**
  * Empty State para busca sem resultados
  */

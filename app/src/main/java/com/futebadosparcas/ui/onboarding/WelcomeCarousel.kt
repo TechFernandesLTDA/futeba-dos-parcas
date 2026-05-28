@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import kotlinx.coroutines.launch
+import com.futebadosparcas.ui.theme.AppDimensions
 
 /**
  * Dados de um slide do carrossel de onboarding.
@@ -130,7 +131,7 @@ fun WelcomeCarousel(
             exit = fadeOut(tween(200)),
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp)
+                .padding(AppDimensions.spacing_large)
         ) {
             TextButton(
                 onClick = {
@@ -163,7 +164,7 @@ fun WelcomeCarousel(
                 CarouselSlideContent(slide = slides[page])
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
             // Dots indicadores
             val dotsDescription = stringResource(
@@ -174,8 +175,8 @@ fun WelcomeCarousel(
             Row(
                 modifier = Modifier
                     .semantics { contentDescription = dotsDescription }
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = AppDimensions.spacing_large),
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 slides.forEachIndexed { index, _ ->
@@ -192,7 +193,7 @@ fun WelcomeCarousel(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // CTA: "Próximo" ou "Bora jogar!" no último slide
             if (isLastSlide) {
@@ -200,8 +201,8 @@ fun WelcomeCarousel(
                     onClick = onComplete,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp)
-                        .height(56.dp)
+                        .padding(horizontal = AppDimensions.spacing_huge)
+                        .height(AppDimensions.height_input)
                 ) {
                     Text(
                         text = stringResource(R.string.onboarding_start),
@@ -217,8 +218,8 @@ fun WelcomeCarousel(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp)
-                        .height(56.dp)
+                        .padding(horizontal = AppDimensions.spacing_huge)
+                        .height(AppDimensions.height_input)
                 ) {
                     Text(
                         text = stringResource(R.string.onboarding_next),
@@ -227,7 +228,7 @@ fun WelcomeCarousel(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
         }
     }
 }
@@ -240,7 +241,7 @@ private fun CarouselSlideContent(slide: CarouselSlide) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp),
+            .padding(horizontal = AppDimensions.spacing_huge),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -248,7 +249,7 @@ private fun CarouselSlideContent(slide: CarouselSlide) {
         Text(
             text = slide.emoji,
             style = MaterialTheme.typography.displayLarge,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = AppDimensions.spacing_huge)
         )
 
         Text(
@@ -259,7 +260,7 @@ private fun CarouselSlideContent(slide: CarouselSlide) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
         Text(
             text = stringResource(slide.subtitleRes),

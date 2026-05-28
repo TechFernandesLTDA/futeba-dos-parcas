@@ -35,6 +35,8 @@ import {
   ArrowForward,
 } from '@mui/icons-material';
 import { useGroups } from '../../../hooks/useGroups';
+import { iconSizes } from '../../../theme/iconSizes';
+import { pageSpacing } from '../../../theme/pageTokens';
 import { PullToRefresh } from '../../../components/common/PullToRefresh';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateShort } from '../../../utils/dateFormatters';
@@ -159,7 +161,7 @@ export function GroupsTab() {
 
       {/* Lista de grupos */}
       <PullToRefresh onRefresh={handleRefresh}>
-      <Box sx={{ px: 2 }}>
+      <Box sx={{ px: pageSpacing.pagePadding }}>
         {error && (
           <ErrorState
             message={error}
@@ -189,7 +191,7 @@ export function GroupsTab() {
           ))
         ) : filteredGroups.length === 0 ? (
           <Box sx={{ textAlign: 'center', pt: 4, pb: 2 }}>
-            <People sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+            <People sx={{ fontSize: iconSizes.hero, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               {searchQuery ? t('groups.noResultsSearch') : t('groups.noResults')}
             </Typography>
@@ -263,7 +265,7 @@ export function GroupsTab() {
                         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.5 }}>
                           {isOwner && (
                             <Chip
-                              icon={<Star sx={{ fontSize: 14 }} />}
+                              icon={<Star sx={{ fontSize: iconSizes.xs }} />}
                               label={t('groups.owner')}
                               size="small"
                               color="warning"
@@ -273,7 +275,7 @@ export function GroupsTab() {
                           )}
                           {group.type === 'PUBLIC' && (
                             <Chip
-                              icon={<Public sx={{ fontSize: 14 }} />}
+                              icon={<Public sx={{ fontSize: iconSizes.xs }} />}
                               label="Aberto"
                               size="small"
                               color="success"
@@ -384,7 +386,7 @@ export function GroupsTab() {
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',
-          bottom: { xs: 80, sm: 80, md: 24 },
+          bottom: { xs: pageSpacing.bottomBarHeight + 16, sm: pageSpacing.bottomBarHeight + 16, md: 24 },
           right: { xs: 16, sm: 'calc(50% - 240px + 16px)', md: 24 },
           pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}

@@ -58,6 +58,7 @@ import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.util.toDate
+import com.futebadosparcas.ui.theme.AppDimensions
 
 /**
  * Seção de próximos jogos na Home com status de confirmação (CMD-29)
@@ -115,7 +116,7 @@ fun UpcomingGamesSection(
         // Seção "Confirmados"
         if (confirmedGames.isNotEmpty()) {
             if (pendingGames.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
             }
             GamesByStatusSection(
                 title = stringResource(R.string.upcoming_games_confirmed),
@@ -150,8 +151,8 @@ private fun GamesByStatusSection(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
+            .padding(horizontal = AppDimensions.spacing_large),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = if (isPending) {
                 MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
@@ -178,12 +179,12 @@ private fun GamesByStatusSection(
 
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = AppDimensions.spacing_large)
             )
 
             // Lista de jogos
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
             ) {
                 games.forEach { gameWithConfirmations ->
                     GameConfirmationCard(
@@ -191,7 +192,7 @@ private fun GamesByStatusSection(
                         onGameClick = { onGameClick(gameWithConfirmations.game.id) },
                         onConfirmClick = { onConfirmClick(gameWithConfirmations.game.id) },
                         isPending = isPending,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = AppDimensions.spacing_medium, vertical = AppDimensions.spacing_extraSmall)
                     )
                 }
             }
@@ -203,7 +204,7 @@ private fun GamesByStatusSection(
                     .semantics { role = Role.Button }
                     .clickable(onClick = onSeeAllClick)
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f))
-                    .padding(12.dp),
+                    .padding(AppDimensions.spacing_medium),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -230,13 +231,13 @@ private fun SectionHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp, 12.dp, 16.dp, 8.dp),
+            .padding(AppDimensions.spacing_large, AppDimensions.spacing_medium, AppDimensions.spacing_large, AppDimensions.spacing_small),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             Icon(
                 imageVector = icon,
@@ -254,14 +255,14 @@ private fun SectionHeader(
 
         Surface(
             color = iconTint.copy(alpha = 0.15f),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(AppDimensions.radius_medium)
         ) {
             Text(
                 text = "$count",
                 style = MaterialTheme.typography.labelMedium,
                 color = iconTint,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = AppDimensions.spacing_extraSmall)
             )
         }
     }
@@ -315,7 +316,7 @@ private fun GameConfirmationCard(
             .fillMaxWidth()
             .semantics(mergeDescendants = true) { contentDescription = cardCd }
             .clickable(onClick = onGameClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_medium),
         colors = CardDefaults.cardColors(
             containerColor = if (isPending) {
                 MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
@@ -325,21 +326,21 @@ private fun GameConfirmationCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isPending) 3.dp else 1.dp),
         border = if (isPending) {
-            BorderStroke(1.dp, statusColor.copy(alpha = 0.3f))
+            BorderStroke(AppDimensions.elevation_small, statusColor.copy(alpha = 0.3f))
         } else null
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(AppDimensions.spacing_medium),
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Indicador visual de status (mais destacado para pendentes)
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(AppDimensions.icon_extraLarge)
+                    .clip(RoundedCornerShape(AppDimensions.radius_medium))
                     .background(statusBackgroundColor),
                 contentAlignment = Alignment.Center
             ) {
@@ -353,19 +354,19 @@ private fun GameConfirmationCard(
                     },
                     contentDescription = null,
                     tint = statusColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(AppDimensions.icon_medium)
                 )
             }
 
             // Informações do jogo
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
             ) {
                 // Local
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
@@ -386,7 +387,7 @@ private fun GameConfirmationCard(
                 // Data e hora
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
                 ) {
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
@@ -404,7 +405,7 @@ private fun GameConfirmationCard(
                 // Confirmados
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
                 ) {
                     Icon(
                         imageVector = Icons.Default.People,
@@ -429,12 +430,12 @@ private fun GameConfirmationCard(
             // Status e botão de ação
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
             ) {
                 // Badge de status
                 Surface(
                     color = statusBackgroundColor,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(AppDimensions.radius_small)
                 ) {
                     Text(
                         text = when {
@@ -444,7 +445,7 @@ private fun GameConfirmationCard(
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = statusColor,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = AppDimensions.spacing_extraSmall),
                         fontWeight = if (isPending) FontWeight.Bold else FontWeight.Medium
                     )
                 }
@@ -453,8 +454,8 @@ private fun GameConfirmationCard(
                 if (!isUserConfirmed && gameStatus == GameStatus.SCHEDULED) {
                     Button(
                         onClick = onConfirmClick,
-                        modifier = Modifier.height(32.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        modifier = Modifier.height(AppDimensions.spacing_huge),
+                        contentPadding = PaddingValues(horizontal = AppDimensions.spacing_medium, vertical = AppDimensions.spacing_none),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isPending) {
                                 MaterialTheme.colorScheme.error
@@ -462,7 +463,7 @@ private fun GameConfirmationCard(
                                 MaterialTheme.colorScheme.primary
                             }
                         ),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(AppDimensions.radius_small)
                     ) {
                         Text(stringResource(R.string.confirm), style = MaterialTheme.typography.labelSmall)
                     }

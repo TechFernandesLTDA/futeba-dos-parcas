@@ -9,6 +9,7 @@ import {
   alpha,
 } from '@mui/material';
 import { LocalFireDepartment } from '@mui/icons-material';
+import { iconSizes } from '../../../theme/iconSizes';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { XP_VALUES } from '../../../types/gamification';
 
@@ -43,7 +44,7 @@ export function StreakWidget({ streak, bestStreak = 0, mb = 3 }: StreakWidgetPro
         }}
       >
         <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-          <LocalFireDepartment sx={{ fontSize: 32, color: gColors.streak }} />
+          <LocalFireDepartment sx={{ fontSize: iconSizes.xl, color: gColors.streak }} />
           <Box sx={{ flex: 1 }}>
             <Typography variant="subtitle2" fontWeight="bold">
               {t('profile.streakGamesInARow', { count: streak })}
@@ -80,7 +81,7 @@ export function StreakWidget({ streak, bestStreak = 0, mb = 3 }: StreakWidgetPro
       }}
     >
       <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <LocalFireDepartment sx={{ fontSize: 32, color: 'text.disabled' }} />
+        <LocalFireDepartment sx={{ fontSize: iconSizes.xl, color: 'text.disabled' }} />
         <Box sx={{ flex: 1 }}>
           <Typography variant="subtitle2" fontWeight="bold">
             {t('profile.startStreak')}

@@ -49,6 +49,7 @@ import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -177,7 +178,7 @@ fun LeagueContent(
                 }
             ),
         // Adiciona contentPadding para melhor performance de scroll
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(bottom = AppDimensions.spacing_large)
     ) {
         // 1. Cabeçalho Dinâmico (Sobe com o scroll)
         item {
@@ -209,7 +210,7 @@ fun LeagueContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                            .padding(horizontal = 20.dp, vertical = AppDimensions.spacing_medium),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -236,7 +237,7 @@ fun LeagueContent(
                     message = stringResource(R.string.league_no_players),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 48.dp)
+                        .padding(vertical = AppDimensions.spacing_massive)
                 )
             }
         } else {
@@ -272,14 +273,14 @@ fun LeagueHeader(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(24.dp),
+            .padding(AppDimensions.spacing_large),
+        shape = RoundedCornerShape(AppDimensions.spacing_extraLarge),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = BorderStroke(AppDimensions.elevation_small, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Box(
             modifier = Modifier
-                .padding(24.dp)
+                .padding(AppDimensions.spacing_extraLarge)
         ) {
             Column {
                 // Seletor de Season
@@ -360,12 +361,12 @@ fun LeagueHeader(
                     Surface(
                         color = divisionColor.copy(alpha = 0.18f),
                         contentColor = divisionColor,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.padding(8.dp),
-                        border = BorderStroke(1.dp, divisionColor.copy(alpha = 0.5f))
+                        shape = RoundedCornerShape(AppDimensions.radius_large),
+                        modifier = Modifier.padding(AppDimensions.spacing_small),
+                        border = BorderStroke(AppDimensions.elevation_small, divisionColor.copy(alpha = 0.5f))
                     ) {
                         Column(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -393,7 +394,7 @@ fun LeagueHeader(
                     val range = nextThreshold - prevThreshold
                     val progress = ((currentRating - prevThreshold) / range).coerceIn(0.0, 1.0).toFloat()
                     
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
                     
                     Column {
                         Row(
@@ -412,12 +413,12 @@ fun LeagueHeader(
                                 fontSize = MaterialTheme.typography.bodySmall.fontSize
                             )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
                         LinearProgressIndicator(
                             progress = { progress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
+                                .height(AppDimensions.xp_bar_height)
                                 .clip(RoundedCornerShape(3.dp)),
                             color = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.outlineVariant,
@@ -437,7 +438,7 @@ fun LeagueHeader(
                     MiniStatItem(stringResource(R.string.league_victories), "✅ ${myParticipation?.wins ?: 0}")
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
                 // Mini Stats - Row 2
                 Row(
@@ -480,7 +481,7 @@ fun DivisionSelector(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -502,19 +503,19 @@ fun DivisionSelector(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                 )
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(AppDimensions.spacing_large)) {
                     Text(
                         stringResource(R.string.league_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
                     DivisionInfoItem(
                         emoji = "💎",
@@ -545,7 +546,7 @@ fun DivisionSelector(
                         description = stringResource(R.string.league_beginners)
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
                     Text(
                         stringResource(R.string.league_rating_description),
@@ -553,7 +554,7 @@ fun DivisionSelector(
                         fontWeight = FontWeight.Bold,
                         fontSize = MaterialTheme.typography.labelSmall.fontSize
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
                     Text(
                         stringResource(R.string.league_rating_components),
                         style = MaterialTheme.typography.bodySmall,
@@ -569,7 +570,7 @@ fun DivisionSelector(
             selectedTabIndex = divisions.indexOf(selectedDivision),
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.primary,
-            edgePadding = 16.dp,
+            edgePadding = AppDimensions.spacing_large,
             divider = {},
             indicator = { tabPositions ->
                 TabRowDefaults.SecondaryIndicator(
@@ -613,13 +614,13 @@ fun DivisionInfoItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = AppDimensions.spacing_extraSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = emoji,
             fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-            modifier = Modifier.width(32.dp)
+            modifier = Modifier.width(AppDimensions.spacing_huge)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -671,10 +672,10 @@ fun RankingListItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = AppDimensions.spacing_large, vertical = 6.dp)
             .scale(scale)
             .clickable { onPlayerClick(item.participation.userId) },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = if (isMe) {
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -683,21 +684,21 @@ fun RankingListItem(
             }
         ),
         // Remove tonalElevation variável - causa jank no scroll
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none),
         border = if (isMe || isPromotion) {
-            BorderStroke(1.dp, borderColor)
+            BorderStroke(AppDimensions.elevation_small, borderColor)
         } else null
     ) {
         Row(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(AppDimensions.spacing_medium)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Posição
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(AppDimensions.icon_large)
                     .clip(CircleShape)
                     .background(
                         if (position <= 3) getRankColor(position)
@@ -720,7 +721,7 @@ fun RankingListItem(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
             // Avatar
             CachedProfileImage(
@@ -729,7 +730,7 @@ fun RankingListItem(
                 size = 44.dp
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
             // Nome e Nickname
             Column(modifier = Modifier.weight(1f)) {
@@ -741,7 +742,7 @@ fun RankingListItem(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                     TeamBadgeById(
                         teamId = item.user.favoriteTeam,
                         iconSize = 18
@@ -786,8 +787,8 @@ fun RankingListItem(
 @Composable
 private fun LeagueLoadingState(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = modifier.padding(AppDimensions.spacing_large),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
     ) {
         repeat(5) {
             RankingItemShimmer(

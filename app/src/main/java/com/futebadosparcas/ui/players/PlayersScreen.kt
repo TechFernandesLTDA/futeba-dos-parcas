@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 
@@ -313,7 +314,7 @@ fun PlayersScreen(
                                 generatedBy = context.getString(R.string.app_name)
                             )
                         },
-                        modifier = Modifier.padding(bottom = 32.dp)
+                        modifier = Modifier.padding(bottom = AppDimensions.spacing_huge)
                     )
                 }
             }
@@ -344,8 +345,8 @@ private fun PlayersSearchAndFilters(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(AppDimensions.spacing_large),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
     ) {
         // Barra de busca
         OutlinedTextField(
@@ -394,21 +395,21 @@ private fun PlayersSearchAndFilters(
             keyboardActions = KeyboardActions(
                 onSearch = { focusManager.clearFocus() }
             ),
-            shape = RoundedCornerShape(28.dp)
+            shape = RoundedCornerShape(AppDimensions.radius_full)
         )
 
         // Mensagem de modo comparação
         AnimatedVisibility(visible = isComparisonMode) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(AppDimensions.radius_small),
                 color = MaterialTheme.colorScheme.errorContainer
             ) {
                 Text(
                     text = stringResource(R.string.players_select_two),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(AppDimensions.spacing_medium)
                 )
             }
         }
@@ -416,7 +417,7 @@ private fun PlayersSearchAndFilters(
         // Filtros por tipo de campo
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             FilterChip(
                 selected = selectedFieldType == null,
@@ -470,7 +471,7 @@ private fun PlayersSearchAndFilters(
         // Ordenação
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.NAME,
@@ -524,9 +525,9 @@ private fun PlayersLoadingContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 16.dp)
+            .padding(horizontal = AppDimensions.spacing_large),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small),
+        contentPadding = PaddingValues(vertical = AppDimensions.spacing_large)
     ) {
         items(8) {
             ShimmerPlayerCard()
@@ -552,9 +553,9 @@ private fun PlayersListContent(
         modifier = modifier
             .fillMaxSize()
             .adaptiveContentWidth()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 16.dp)
+            .padding(horizontal = AppDimensions.spacing_large),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small),
+        contentPadding = PaddingValues(vertical = AppDimensions.spacing_large)
     ) {
         items(
             items = players,
@@ -587,10 +588,10 @@ private fun PlayerCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 72.dp, max = 120.dp)
+            .heightIn(min = AppDimensions.height_list_item, max = 120.dp)
             .semantics(mergeDescendants = true) { }
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
@@ -603,7 +604,7 @@ private fun PlayerCard(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(AppDimensions.spacing_medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
@@ -613,12 +614,12 @@ private fun PlayerCard(
                 size = 64.dp
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
             // Informações
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
             ) {
                 // Nome
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -629,7 +630,7 @@ private fun PlayerCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                     TeamBadgeById(
                         teamId = player.favoriteTeam,
                         iconSize = 20
@@ -638,7 +639,7 @@ private fun PlayerCard(
 
                 // Ratings
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
                 ) {
                     PlayerRatingBadge(
                         label = stringResource(R.string.players_rating_atk),
@@ -657,11 +658,11 @@ private fun PlayerCard(
             // Nível/Badge e botão de convite
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
             ) {
                 // Nível
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(AppDimensions.radius_small),
                     color = GamificationColors.Gold.copy(alpha = 0.15f)
                 ) {
                     Text(
@@ -669,7 +670,7 @@ private fun PlayerCard(
                         style = MaterialTheme.typography.labelMedium,
                         color = GamificationColors.Gold,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = AppDimensions.spacing_extraSmall)
                     )
                 }
 
@@ -677,7 +678,7 @@ private fun PlayerCard(
                 if (!isComparisonMode) {
                     IconButton(
                         onClick = onInviteClick,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(AppDimensions.icon_extraLarge)
                     ) {
                         Icon(
                             imageVector = Icons.Default.PersonAdd,
@@ -690,7 +691,7 @@ private fun PlayerCard(
 
             // Checkbox de seleção (modo comparação)
             if (isComparisonMode) {
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
 
                 Checkbox(
                     checked = isSelected,
@@ -714,7 +715,7 @@ private fun PlayerRatingBadge(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall)
     ) {
         Text(
             text = label,
@@ -724,7 +725,7 @@ private fun PlayerRatingBadge(
         )
 
         Surface(
-            shape = RoundedCornerShape(4.dp),
+            shape = RoundedCornerShape(AppDimensions.spacing_extraSmall),
             color = color.copy(alpha = 0.15f)
         ) {
             Text(
@@ -764,18 +765,18 @@ private fun GroupSelectionDialog(
         },
         text = {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 items(groups, key = { it.groupId }) { group ->
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onGroupSelected(group.groupId) },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(AppDimensions.radius_medium),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(AppDimensions.spacing_large),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -783,7 +784,7 @@ private fun GroupSelectionDialog(
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )
-                            Spacer(Modifier.width(12.dp))
+                            Spacer(Modifier.width(AppDimensions.spacing_medium))
                             Text(
                                 text = group.groupName,
                                 style = MaterialTheme.typography.bodyLarge,

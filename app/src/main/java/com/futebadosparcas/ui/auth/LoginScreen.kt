@@ -62,6 +62,7 @@ import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.AppDimensions
 @Composable
 fun LoginScreen(
     uiState: LoginState,
@@ -104,7 +105,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
-                    .padding(24.dp),
+                    .padding(AppDimensions.spacing_extraLarge),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -116,12 +117,12 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Spacer(modifier = Modifier.height(48.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_massive))
 
                     // Logo do App (maior e mais proeminente)
                     AppLogo()
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
                     // Nome do Aplicativo
                     Text(
@@ -133,7 +134,7 @@ fun LoginScreen(
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
                     // Slogan
                     Text(
@@ -141,10 +142,10 @@ fun LoginScreen(
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
+                        modifier = Modifier.padding(horizontal = AppDimensions.spacing_huge)
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
                 }
 
                 // Middle Section: Login Card
@@ -156,12 +157,12 @@ fun LoginScreen(
                     onNavigateToRegister = onNavigateToRegister
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
                 // Bottom Section: Footer
                 LoginFooter(versionName = versionName)
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
             }
         }
     }
@@ -171,8 +172,8 @@ fun LoginScreen(
 private fun AppLogo() {
     Card(
         modifier = Modifier.size(140.dp),
-        shape = RoundedCornerShape(28.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_full),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
@@ -186,7 +187,7 @@ private fun AppLogo() {
                 contentDescription = stringResource(R.string.auth_logo_description),
                 modifier = Modifier
                     .size(100.dp)
-                    .clip(RoundedCornerShape(20.dp)),
+                    .clip(RoundedCornerShape(AppDimensions.radius_extraLarge)),
                 contentScale = ContentScale.Fit
             )
         }
@@ -209,7 +210,7 @@ private fun LoginCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_medium),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -217,9 +218,9 @@ private fun LoginCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(AppDimensions.spacing_huge),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
         ) {
             Text(
                 text = stringResource(R.string.auth_sign_in_title),
@@ -237,7 +238,7 @@ private fun LoginCard(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
 
             if (!showEmailForm) {
                 AnimatedVisibility(
@@ -291,8 +292,8 @@ private fun LoginCard(
 
                 Button(
                     onClick = { onEmailPasswordSignIn(email, password) },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().height(AppDimensions.height_button_large),
+                    shape = RoundedCornerShape(AppDimensions.radius_medium),
                     enabled = email.isNotBlank() && password.isNotBlank() && uiState !is LoginState.Loading
                 ) {
                     Text(stringResource(R.string.auth_sign_in_title))
@@ -323,10 +324,10 @@ private fun LoginCard(
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(AppDimensions.icon_extraLarge),
                         color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 4.dp
                     )
@@ -345,7 +346,7 @@ private fun LoginCard(
             ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(AppDimensions.radius_medium),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
@@ -355,7 +356,7 @@ private fun LoginCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(AppDimensions.spacing_large)
                     )
                 }
             }
@@ -371,8 +372,8 @@ private fun GoogleSignInButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(16.dp),
+            .height(AppDimensions.height_input),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -385,10 +386,10 @@ private fun GoogleSignInButton(
         Icon(
             painter = painterResource(R.drawable.ic_google),
             contentDescription = null,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(AppDimensions.icon_medium),
             tint = Color.Unspecified // Mantém as cores originais do ícone do Google
         )
-        Spacer(modifier = Modifier.size(12.dp))
+        Spacer(modifier = Modifier.size(AppDimensions.spacing_medium))
         Text(
             text = stringResource(R.string.auth_sign_in_google),
             style = MaterialTheme.typography.titleMedium.copy(
@@ -421,7 +422,7 @@ private fun LoginFooter(versionName: String) {
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
 
         Text(
             text = stringResource(R.string.auth_version, versionName),

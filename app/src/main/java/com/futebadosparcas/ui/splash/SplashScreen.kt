@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.ui.theme.AppDimensions
 import com.futebadosparcas.util.LevelBadgeHelper
 import kotlinx.coroutines.delay
 import com.futebadosparcas.R
@@ -77,7 +78,7 @@ fun SplashScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(32.dp),
+                    .padding(AppDimensions.spacing_huge),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -100,7 +101,7 @@ fun SplashScreen(
                     contentDescription = stringResource(R.string.app_name),
                     modifier = Modifier
                         .size(100.dp)
-                        .padding(top = 24.dp)
+                        .padding(top = AppDimensions.spacing_extraLarge)
                 )
 
                 // Frase de Efeito
@@ -112,7 +113,7 @@ fun SplashScreen(
                     ),
                     color = colorScheme.primary.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 24.dp)
+                    modifier = Modifier.padding(horizontal = AppDimensions.spacing_huge).padding(top = AppDimensions.spacing_extraLarge)
                 )
             }
 
@@ -120,7 +121,7 @@ fun SplashScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 48.dp),
+                    .padding(bottom = AppDimensions.spacing_massive),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom
             ) {
@@ -135,14 +136,14 @@ fun SplashScreen(
                     text = stringResource(R.string.version, versionName),
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_extraSmall)
                 )
 
                 Text(
                     text = stringResource(R.string.layout_splash_branding_text_2),
                     style = typography.bodySmall,
                     color = colorScheme.onSurface,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_extraSmall)
                 )
             }
         }

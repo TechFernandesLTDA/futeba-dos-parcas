@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -42,7 +43,7 @@ fun WelcomeEmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(24.dp),
+            .padding(AppDimensions.spacing_extraLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -58,7 +59,7 @@ fun WelcomeEmptyState(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
         // Mensagem de Boas-vindas
         Text(
@@ -69,7 +70,7 @@ fun WelcomeEmptyState(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
         Text(
             text = stringResource(R.string.welcome_no_games),
@@ -78,7 +79,7 @@ fun WelcomeEmptyState(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
         // Card de Dicas
         Card(
@@ -86,7 +87,7 @@ fun WelcomeEmptyState(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(AppDimensions.radius_large)
         ) {
             Column(
                 modifier = Modifier
@@ -100,21 +101,21 @@ fun WelcomeEmptyState(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
                 TipItem(
                     icon = Icons.Default.SportsSoccer,
                     text = stringResource(R.string.welcome_step_create_game)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
                 TipItem(
                     icon = Icons.Default.Group,
                     text = stringResource(R.string.welcome_step_invite_friends)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
                 TipItem(
                     icon = Icons.Default.EmojiEvents,
@@ -123,7 +124,7 @@ fun WelcomeEmptyState(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
         // Informação sobre XP
         Row(
@@ -136,19 +137,19 @@ fun WelcomeEmptyState(
                             GamificationColors.XpLightGreen.copy(alpha = 0.1f)
                         )
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(AppDimensions.radius_medium)
                 )
-                .padding(16.dp),
+                .padding(AppDimensions.spacing_large),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(AppDimensions.icon_medium)
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
             Text(
                 text = stringResource(R.string.welcome_xp_tip),
@@ -160,11 +161,11 @@ fun WelcomeEmptyState(
 
         // Botoes de acao principais
         if (onCreateGame != null || onJoinGroup != null) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
             ) {
                 // Botao Criar Jogo (primario)
                 if (onCreateGame != null) {
@@ -181,7 +182,7 @@ fun WelcomeEmptyState(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
                         Text(
                             text = stringResource(R.string.welcome_action_create_game),
                             style = MaterialTheme.typography.labelLarge
@@ -203,7 +204,7 @@ fun WelcomeEmptyState(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
                         Text(
                             text = stringResource(R.string.welcome_action_join_group),
                             style = MaterialTheme.typography.labelLarge
@@ -231,7 +232,7 @@ private fun TipItem(
             modifier = Modifier.size(20.dp)
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
         Text(
             text = text,

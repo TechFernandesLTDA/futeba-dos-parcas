@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { AppLogo } from '../../components/common/AppLogo';
+import { sxPresets } from '../../theme/sxPresets';
 
 export function ForgotPasswordScreen() {
   const { t } = useTranslation();
@@ -199,13 +200,15 @@ export function ForgotPasswordScreen() {
                 variant="contained"
                 size="large"
                 disabled={loading}
-                sx={{
-                  py: 1.5,
-                  fontSize: '1rem',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                }}
+                sx={[
+                  sxPresets.gradientPrimary,
+                  {
+                    py: 1.5,
+                    fontSize: '1rem',
+                  },
+                ]}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.forgotPasswordSendLink')}
+                {loading ? <CircularProgress size={24} sx={{ color: theme.palette.common.white }} /> : t('auth.forgotPasswordSendLink')}
               </Button>
             </form>
           )}

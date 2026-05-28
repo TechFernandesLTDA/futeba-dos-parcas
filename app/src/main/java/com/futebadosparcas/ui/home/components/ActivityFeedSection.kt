@@ -44,6 +44,7 @@ import androidx.compose.ui.res.painterResource
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 @Composable
@@ -57,15 +58,15 @@ fun ActivityFeedSection(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small)
         )
 
         if (activities.isEmpty()) {
             EmptyActivityState()
         } else {
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(horizontal = AppDimensions.spacing_large),
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
             ) {
                 items(activities, key = { it.id }) { activity ->
                     ActivityCard(activity)
@@ -84,10 +85,10 @@ fun ActivityCard(activity: Activity) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(AppDimensions.radius_medium)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(AppDimensions.spacing_medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon based on type - Show level badge for LEVEL_UP activities
@@ -99,13 +100,13 @@ fun ActivityCard(activity: Activity) {
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
                     contentDescription = stringResource(R.string.activity_feed_level_badge_cd, level),
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(AppDimensions.rank_badge_size)
                 )
             } else {
                 // Show default icon
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(AppDimensions.rank_badge_size)
                         .clip(CircleShape)
                         .background(getActivityColor(activity.type.name).copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
@@ -114,12 +115,12 @@ fun ActivityCard(activity: Activity) {
                         imageVector = getActivityIcon(activity.type.name),
                         contentDescription = null,
                         tint = getActivityColor(activity.type.name),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(AppDimensions.icon_medium)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -135,7 +136,7 @@ fun ActivityCard(activity: Activity) {
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                     Text(
                         text = "- ${getRelativeTime(activity.createdAt)}",
                         style = MaterialTheme.typography.labelSmall,
@@ -171,7 +172,7 @@ fun EmptyActivityState() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(AppDimensions.spacing_large),
         contentAlignment = Alignment.Center
     ) {
         Text(

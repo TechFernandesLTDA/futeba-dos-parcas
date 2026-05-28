@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { getLevelColor } from '../../../types/user';
 import { useAuth } from '../../../contexts/AuthContext';
+import { iconSizes } from '../../../theme/iconSizes';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { useTheme } from '@mui/material/styles';
 
@@ -123,7 +124,7 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
         ) : activities.length === 0 ? (
           <CardContent>
             <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+              <Notifications sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 1 }} />
               <Typography variant="body2" color="text.secondary">
                 {t('profile.noRecentActivity')}
               </Typography>

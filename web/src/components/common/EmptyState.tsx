@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button, SxProps, Theme } from '@mui/material';
+import { iconSizes } from '../../theme/iconSizes';
 import {
   SportsSoccer as GamesIcon,
   People as GroupsIcon,
@@ -64,7 +65,7 @@ const EmptyStateBase = React.memo(function EmptyState({
         alignItems: 'center',
         justifyContent: 'center',
         mx: 'auto',
-        '& > *': { fontSize: 40, color: 'text.disabled' },
+        '& > *': { fontSize: iconSizes.xl, color: 'text.disabled' },
       }}>
         {icon}
       </Box>

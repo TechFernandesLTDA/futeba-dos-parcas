@@ -28,29 +28,30 @@ import {
 } from '@mui/icons-material';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { iconSizes } from '../../theme/iconSizes';
 
 const SLIDES = [
   {
     id: 'organized',
-    icon: <SoccerIcon sx={{ fontSize: 72 }} />,
+    icon: <SoccerIcon sx={{ fontSize: iconSizes.hero }} />,
     title: 'Sua pelada, organizada',
     subtitle: 'Crie jogos, convoque os parças e acompanhe tudo em um só lugar — sem grupo de WhatsApp bagunçado.',
   },
   {
     id: 'xp',
-    icon: <TrophyIcon sx={{ fontSize: 72 }} />,
+    icon: <TrophyIcon sx={{ fontSize: iconSizes.hero }} />,
     title: 'Jogou, pontuou',
     subtitle: 'Cada jogo te dá XP. Suba de nível, desbloqueie badges e dispute o ranking mensal da liga.',
   },
   {
     id: 'invite',
-    icon: <GroupsIcon sx={{ fontSize: 72 }} />,
+    icon: <GroupsIcon sx={{ fontSize: iconSizes.hero }} />,
     title: 'Chame os parças',
     subtitle: 'Envie convites, gerencie confirmações e monte os times automaticamente com equilíbrio.',
   },
   {
     id: 'start',
-    icon: <RocketIcon sx={{ fontSize: 72 }} />,
+    icon: <RocketIcon sx={{ fontSize: iconSizes.hero }} />,
     title: 'Bora começar!',
     subtitle: 'Tudo pronto para sua primeira pelada. Crie seu grupo, convide a galera e bora jogar!',
   },

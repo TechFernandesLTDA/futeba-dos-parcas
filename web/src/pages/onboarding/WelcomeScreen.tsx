@@ -3,6 +3,7 @@ import { ArrowForward as ArrowForwardIcon, SportsSoccer as SoccerIcon } from '@m
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { iconSizes } from '../../theme/iconSizes';
 
 export const WelcomeScreen: React.FC = () => {
   useDocumentTitle('Bem-vindo');
@@ -35,7 +36,7 @@ export const WelcomeScreen: React.FC = () => {
           mb: 4,
         }}
       >
-        <SoccerIcon sx={{ fontSize: 64 }} />
+        <SoccerIcon sx={{ fontSize: iconSizes.hero }} />
       </Box>
 
       <Typography variant="h3" fontWeight={700} gutterBottom sx={{ textAlign: 'center' }}>

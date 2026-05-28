@@ -37,5 +37,5 @@ export const sxPresets = {
 
   gradientPrimary: (theme: Theme) => ({
     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-  }) as SxProps<Theme>,
+  }),
 };

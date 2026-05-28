@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.components.design.AppLogo
 import com.futebadosparcas.ui.components.design.AppLogoShape
 import com.futebadosparcas.ui.components.design.AppLogoSize
+import com.futebadosparcas.ui.theme.AppDimensions
 /**
  * Tela de boas-vindas do onboarding.
  * Apresenta o app e seus principais recursos.
@@ -41,7 +42,7 @@ fun WelcomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -54,7 +55,7 @@ fun WelcomeScreen(
                 contentDescription = null
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
 
             // Título
             Text(
@@ -65,7 +66,7 @@ fun WelcomeScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             // Subtítulo
             Text(
@@ -75,7 +76,7 @@ fun WelcomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_massive))
 
             // Features
             WelcomeFeatureItem(
@@ -102,8 +103,8 @@ fun WelcomeScreen(
                 onClick = onContinue,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                    .height(AppDimensions.height_input),
+                shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Text(
                     text = stringResource(R.string.welcome_get_started),
@@ -111,7 +112,7 @@ fun WelcomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
         }
     }
 }
@@ -127,6 +128,6 @@ private fun WelcomeFeatureItem(
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 16.dp)
+            .padding(vertical = AppDimensions.spacing_small, horizontal = AppDimensions.spacing_large)
     )
 }

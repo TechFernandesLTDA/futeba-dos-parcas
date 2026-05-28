@@ -27,6 +27,7 @@ import java.time.temporal.ChronoUnit
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.util.toInstant
+import com.futebadosparcas.ui.theme.AppDimensions
 
 @Composable
 fun ActivityHeatmapSection(
@@ -90,9 +91,9 @@ fun HeatmapGrid(
 
     // Tamanho adaptativo das células
     val cellSize = when {
-        weeksToShow <= 12 -> 12.dp
+        weeksToShow <= 12 -> AppDimensions.spacing_medium
         weeksToShow <= 16 -> 10.dp
-        else -> 8.dp
+        else -> AppDimensions.spacing_small
     }
 
     val startDate = remember(weeksToShow) {
@@ -120,7 +121,7 @@ fun HeatmapGrid(
 }
 
 @Composable
-fun HeatmapCell(count: Int, size: androidx.compose.ui.unit.Dp = 12.dp) {
+fun HeatmapCell(count: Int, size: androidx.compose.ui.unit.Dp = AppDimensions.spacing_medium) {
     val color = when {
         count == 0 -> MaterialTheme.colorScheme.surfaceVariant
         count < 2 -> MaterialTheme.colorScheme.primaryContainer

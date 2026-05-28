@@ -35,6 +35,8 @@ import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { AppLogo } from '../../components/common/AppLogo';
+import { sxPresets } from '../../theme/sxPresets';
+import { pageSpacing } from '../../theme/pageTokens';
 
 export function RegisterScreen() {
   useDocumentTitle('Cadastro');
@@ -343,20 +345,22 @@ export function RegisterScreen() {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{
-                py: 1.5,
-                fontSize: '1rem',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.dark})`,
+              sx={[
+                sxPresets.gradientPrimary,
+                {
+                  py: 1.5,
+                  fontSize: '1rem',
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.dark})`,
+                  },
                 },
-              }}
+              ]}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.createAccount')}
+              {loading ? <CircularProgress size={24} sx={{ color: theme.palette.common.white }} /> : t('auth.createAccount')}
             </Button>
           </form>
 
-          <Divider sx={{ my: 3 }}>{t('common.or')}</Divider>
+          <Divider sx={{ my: pageSpacing.sectionSpacing }}>{t('common.or')}</Divider>
 
           <Button
             fullWidth

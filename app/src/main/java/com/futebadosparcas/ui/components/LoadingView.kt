@@ -14,6 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@Deprecated(
+    message = "Use modern/ShimmerLoading or design/UnifiedStates.AppStateContainer instead"
+)
 /**
  * Loading View Component
  *

@@ -7,6 +7,7 @@ import {
   useTheme,
   alpha,
 } from '@mui/material';
+import { iconSizes } from '../../theme/iconSizes';
 import {
   ErrorOutline as ErrorIcon,
   Refresh as RefreshIcon,
@@ -54,7 +55,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           mb: 2,
         }}
       >
-        <ErrorIcon sx={{ fontSize: 32, color: 'error.main' }} />
+        <ErrorIcon sx={{ fontSize: iconSizes.lg, color: 'error.main' }} />
       </Box>
 
       <Typography variant="h6" color="text.secondary" gutterBottom>

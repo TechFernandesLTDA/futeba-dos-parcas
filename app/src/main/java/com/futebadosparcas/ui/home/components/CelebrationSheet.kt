@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 
 /**
  * BottomSheet de celebração exibido ao completar o checklist de primeiros passos.
@@ -49,7 +50,7 @@ fun CelebrationSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 24.dp),
+                .padding(horizontal = AppDimensions.spacing_huge, vertical = AppDimensions.spacing_extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Emoji de troféu (Fase 2: substituir por Lottie confetti)
@@ -58,7 +59,7 @@ fun CelebrationSheet(
                 style = MaterialTheme.typography.displayMedium
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
 
             Text(
                 text = stringResource(R.string.onboarding_celebration_title),
@@ -67,7 +68,7 @@ fun CelebrationSheet(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
 
             Text(
                 text = stringResource(R.string.onboarding_celebration_subtitle),
@@ -76,13 +77,13 @@ fun CelebrationSheet(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 
             Button(
                 onClick = onDismiss,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(AppDimensions.height_input)
             ) {
                 Text(
                     text = stringResource(R.string.onboarding_celebration_cta),
@@ -90,7 +91,7 @@ fun CelebrationSheet(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
         }
     }
 }

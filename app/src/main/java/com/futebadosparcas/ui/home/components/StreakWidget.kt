@@ -29,6 +29,7 @@ import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 @Composable
@@ -48,20 +49,20 @@ fun StreakWidget(
 
     // Tamanhos adaptativos
     val iconBoxSize = adaptiveValue(
-        compact = 48.dp,
+        compact = AppDimensions.spacing_massive,
         medium = 56.dp,
         expanded = 64.dp
     )
 
     val iconSize = adaptiveValue(
         compact = 28.dp,
-        medium = 32.dp,
+        medium = AppDimensions.spacing_huge,
         expanded = 36.dp
     )
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -74,7 +75,7 @@ fun StreakWidget(
                     .size(iconBoxSize)
                     .background(
                         brush = Brush.verticalGradient(fireColors),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(AppDimensions.radius_medium)
                     ),
                 contentAlignment = Alignment.Center
             ) {

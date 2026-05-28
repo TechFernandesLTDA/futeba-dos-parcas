@@ -37,6 +37,7 @@ import {
   AccessTime,
 } from '@mui/icons-material';
 import { FIELD_TYPE_LABELS, GameStatus, getStatusChipColors } from '../../../types/game';
+import { pageSpacing } from '../../../theme/pageTokens';
 import { useGames } from '../../../hooks/useGames';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';
@@ -221,7 +222,7 @@ export function GamesTab() {
         </Box>
       </Box>
 
-      <Box sx={{ px: 2, pt: 2 }}>
+      <Box sx={{ px: pageSpacing.pagePadding, pt: 2 }}>
         {error && (
           <ErrorState
             message={error}
@@ -406,7 +407,7 @@ export function GamesTab() {
         sx={{
           display: { xs: 'flex', md: 'none' },
           position: 'fixed',
-          bottom: { xs: 80, md: 24 },
+          bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 24 },
           right: { xs: 16, md: 24 },
           pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}

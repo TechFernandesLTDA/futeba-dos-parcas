@@ -27,6 +27,7 @@ import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -103,7 +104,7 @@ fun BadgeCard(badge: UserBadge, size: androidx.compose.ui.unit.Dp = 80.dp) {
          modifier = Modifier.size(size),
          shape = CircleShape
      ) {
-         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(8.dp)) {
+         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(AppDimensions.spacing_small)) {
               Text(
                   text = badge.badgeId.replace("_", " ").uppercase(),
                   fontWeight = FontWeight.Bold,

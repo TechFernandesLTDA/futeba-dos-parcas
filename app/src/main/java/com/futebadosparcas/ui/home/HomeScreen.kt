@@ -47,6 +47,7 @@ import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -184,7 +185,7 @@ fun HomeScreen(
                                 generatedBy = successState.user.getDisplayName()
                             )
                         },
-                        modifier = Modifier.padding(bottom = 32.dp)
+                        modifier = Modifier.padding(bottom = AppDimensions.spacing_huge)
                     )
                 }
             }
@@ -308,7 +309,7 @@ private fun HomeSuccessContent(
                 }
             ),
         verticalArrangement = Arrangement.Top,
-        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
+        contentPadding = PaddingValues(top = AppDimensions.spacing_small, bottom = AppDimensions.spacing_large)
     ) {
         // Status de Sincronização
         item(key = "sync_status") {
@@ -352,7 +353,7 @@ private fun HomeSuccessContent(
                                 onSeeAllGamesClick()
                         }
                     },
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_small)
                 )
             }
         }
@@ -372,7 +373,7 @@ private fun HomeSuccessContent(
                     userLevel = gamificationSummary?.level ?: 0,
                     onCreateGame = onCreateGameClick,
                     onJoinGroup = onJoinGroupClick,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_small)
                 )
             }
         }
@@ -394,7 +395,7 @@ private fun HomeSuccessContent(
             item(key = "activity_feed") {
                 ActivityFeedSection(
                     activities = state.activities,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_large)
                 )
             }
         }
@@ -405,7 +406,7 @@ private fun HomeSuccessContent(
                 PublicGamesSuggestions(
                     games = state.publicGames,
                     onGameClick = { game -> onGameClick(game.id) },
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_large)
                 )
             }
         }
@@ -415,7 +416,7 @@ private fun HomeSuccessContent(
             item(key = "challenges") {
                 ChallengesSection(
                     challenges = state.challenges,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_large)
                 )
             }
         }
@@ -425,7 +426,7 @@ private fun HomeSuccessContent(
             item(key = "statistics") {
                 ExpandableStatsSection(
                     statistics = statistics,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_large)
                 )
             }
         }
@@ -435,7 +436,7 @@ private fun HomeSuccessContent(
             item(key = "badges") {
                 RecentBadgesCarousel(
                     badges = state.recentBadges,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = AppDimensions.spacing_large)
                 )
             }
         }
@@ -451,7 +452,7 @@ private fun HomeLoadingState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(AppDimensions.spacing_large),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -460,7 +461,7 @@ private fun HomeLoadingState() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-                .padding(bottom = 16.dp)
+                .padding(bottom = AppDimensions.spacing_large)
         )
 
         // Shimmer para cards
@@ -469,7 +470,7 @@ private fun HomeLoadingState() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = AppDimensions.spacing_medium)
             )
         }
     }
@@ -486,7 +487,7 @@ private fun HomeErrorState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(AppDimensions.spacing_large),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -494,14 +495,14 @@ private fun HomeErrorState(
             text = stringResource(R.string.error_default),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = AppDimensions.spacing_small)
         )
 
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = AppDimensions.spacing_large)
         )
 
         Button(onClick = onRetry) {
