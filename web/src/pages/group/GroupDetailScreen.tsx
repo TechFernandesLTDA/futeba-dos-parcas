@@ -272,29 +272,39 @@ export const GroupDetailScreen: React.FC = () => {
       {/* Painel de informações do grupo — reutilizado em xs/sm (inline) e lg (sidebar) */}
       {(() => {
         const infoPanel = (
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Avatar
-                  src={group.photoUrl}
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    bgcolor: 'primary.main',
-                    fontSize: '2rem',
-                  }}
-                >
-                  {group.name.charAt(0).toUpperCase()}
-                </Avatar>
+          <Card sx={{ mb: 2, overflow: 'hidden' }}>
+            <Box
+              sx={{
+                height: 120,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                position: 'relative',
+              }}
+            >
+              <Avatar
+                src={group.photoUrl}
+                sx={{
+                  position: 'absolute',
+                  bottom: -36,
+                  left: 20,
+                  width: 72,
+                  height: 72,
+                  bgcolor: 'primary.main',
+                  border: `4px solid ${theme.palette.background.paper}`,
+                  fontSize: '2rem',
+                }}
+              >
+                {group.name.charAt(0).toUpperCase()}
+              </Avatar>
+            </Box>
+            <CardContent sx={{ pt: 5.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h5" fontWeight={700}>
                     {group.name}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                    <GroupIcon fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      {group.memberCount ?? 0} membros
-                    </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                    <Chip icon={<GroupIcon />} label={pluralizeCount(group.memberCount ?? 0, 'membro', 'membros')} size="small" />
+                    <Chip icon={<SoccerIcon />} label={pluralizeCount(games.length, 'jogo', 'jogos')} size="small" variant="outlined" />
                     {group.isPublic && (
                       <Chip label={t('group.public')} size="small" variant="outlined" />
                     )}
@@ -303,7 +313,7 @@ export const GroupDetailScreen: React.FC = () => {
               </Box>
 
               {group.description && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   {group.description}
                 </Typography>
               )}

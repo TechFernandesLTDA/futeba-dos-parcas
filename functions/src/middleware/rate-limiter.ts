@@ -155,6 +155,8 @@ export async function checkRateLimit(
           bucketRef,
           {
             requests: updatedRequests,
+            user_id: userId,
+            key_prefix: keyPrefix,
             last_updated:
               admin.firestore.FieldValue
                 .serverTimestamp(),

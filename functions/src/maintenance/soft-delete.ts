@@ -220,6 +220,8 @@ interface SoftDeleteGroupData {
 export const softDeleteGroup =
   functions.https.onCall<SoftDeleteGroupData>({
     region: "southamerica-east1",
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   }, async (request) => {
     const userId = request.auth?.uid;
     const {groupId, reason} = request.data;
@@ -387,6 +389,8 @@ interface RestoreDeletedGameData {
 export const restoreDeletedGame =
   functions.https.onCall<RestoreDeletedGameData>({
     region: "southamerica-east1",
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   }, async (request) => {
     const userId = request.auth?.uid;
     const {gameId} = request.data;
@@ -527,6 +531,8 @@ interface RestoreDeletedGroupData {
 export const restoreDeletedGroup =
   functions.https.onCall<RestoreDeletedGroupData>({
     region: "southamerica-east1",
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   }, async (request) => {
     const userId = request.auth?.uid;
     const {groupId} = request.data;

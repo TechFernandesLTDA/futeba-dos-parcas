@@ -429,3 +429,17 @@ export const futebaDarkTheme = createTheme({
     },
   },
 });
+
+export const futebaDarkOledTheme = createTheme({
+  ...futebaDarkTheme,
+  palette: {
+    ...futebaDarkTheme.palette,
+    background: {
+      default: '#000000',
+      paper: '#0A0A0A',
+    },
+    divider: '#1F2937',
+    surfaceContainer: '#101010',
+    surfaceContainerHigh: '#171717',
+  },
+});

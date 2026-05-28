@@ -87,6 +87,7 @@
     "title": "Tema",
     "light": "Claro",
     "dark": "Oscuro",
+    "oled": "OLED",
     "system": "Sistema",
     "auto": "Automático (sistema)",
     "lightMode": "Modo claro",
@@ -144,6 +145,7 @@
       "title": "Tema",
       "lightDesc": "Modo claro",
       "darkDesc": "Modo oscuro",
+      "oledDesc": "Modo OLED con negro puro",
       "systemDesc": "Automático (sistema)",
       "selection": "Selección de tema",
       "pushNotifications": "Notificaciones Push",
@@ -353,6 +355,10 @@
       "stepSettings": "Configuración",
       "stepPayment": "Pago",
       "stepRules": "Reglas",
+      "stepLocationDateDesc": "Dónde y cuándo será el partido",
+      "stepSettingsDesc": "Cupos, posiciones y tipo de cancha",
+      "stepPaymentDesc": "Valor y forma de cobro",
+      "stepRulesDesc": "Reglas y enlace de transmisión",
       "stepperLabel": "Pasos de creación del partido",
       "group": "Grupo",
       "loadingGroups": "Cargando grupos...",
@@ -437,6 +443,14 @@
     "presenceCanceled": "Asistencia cancelada.",
     "presenceCancelError": "Error al cancelar la asistencia.",
     "liveTitle": "Partido en Vivo",
+    "events": {
+      "goal": "Gol",
+      "assist": "Asistencia",
+      "save": "Defensa",
+      "yellow_card": "Tarjeta Amarilla",
+      "red_card": "Tarjeta Roja",
+      "substitution": "Sustitución"
+    },
     "filterByGroup": "Filtrar por grupo",
     "allGroups": "Todos los grupos",
     "search": {
@@ -536,6 +550,10 @@
     "loadEvolutionError": "No se pudieron cargar los datos de evolución. Intenta de nuevo.",
     "loadError": "Error al cargar estadísticas. Intenta de nuevo.",
     "joinGamesPrompt": "¡Participa en partidos para ver tus estadísticas!"
+  },
+  "level": {
+    "currentBadge": "ACTUAL",
+    "maxReached": "¡Nivel máximo alcanzado! ¡Eres el Rey del Fútbol!"
   },
   "groups": {
     "title": "Grupos",

@@ -39,6 +39,7 @@ import {
 import { FIELD_TYPE_LABELS, GameStatus, getStatusChipColors } from '../../../types/game';
 import { pageSpacing } from '../../../theme/pageTokens';
 import { useGames } from '../../../hooks/useGames';
+import { useGroups } from '../../../hooks/useGroups';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';
 import { useTranslation } from 'react-i18next';
@@ -75,6 +76,8 @@ export function GamesTab() {
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const { games, loading, error, refetch } = useGames();
+  const { groups, loading: groupsLoading } = useGroups();
+  const hasGroups = groups.length > 0;
 
   const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all';
 
@@ -124,7 +127,7 @@ export function GamesTab() {
           position: 'sticky',
           top: 0,
           zIndex: 5,
-          bgcolor: 'background.paper',
+          bgcolor: 'surfaceContainerHigh',
           p: 2,
           pb: 0,
           borderBottom: `1px solid ${theme.palette.divider}`,
@@ -231,7 +234,7 @@ export function GamesTab() {
           />
         )}
 
-        {loading ? (
+        {loading || groupsLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} sx={{ mb: 2 }}>
               <CardContent>
@@ -248,12 +251,20 @@ export function GamesTab() {
           ))
         ) : filteredGames.length === 0 ? (
           <EmptyState
-            icon={<SportsSoccer />}
-            title={hasActiveFilters ? 'Nenhum jogo com esses filtros' : 'Nenhum jogo encontrado'}
+            icon={hasActiveFilters || hasGroups ? <SportsSoccer /> : <People />}
+            title={
+              hasActiveFilters
+                ? 'Nenhum jogo com esses filtros'
+                : hasGroups
+                  ? 'Nenhum jogo agendado'
+                  : 'Entre em um grupo primeiro'
+            }
             description={
               hasActiveFilters
                 ? 'Tente alterar a busca ou os filtros'
-                : statusFilter === 'all'
+                : !hasGroups
+                  ? 'Você precisa fazer parte de um grupo para ver e criar jogos.'
+                  : statusFilter === 'all'
                   ? 'Nenhum jogo disponível no momento'
                   : statusFilter === 'SCHEDULED'
                     ? 'Nenhum jogo aberto para inscrição'
@@ -261,9 +272,9 @@ export function GamesTab() {
                       ? 'Nenhum jogo ao vivo agora'
                       : 'Nenhum jogo finalizado ainda'
             }
-            actionLabel={hasActiveFilters ? 'Limpar Filtros' : 'Criar Jogo'}
-            actionIcon={hasActiveFilters ? <FilterListOff /> : <Add />}
-            onAction={hasActiveFilters ? clearFilters : () => navigate('/game/create')}
+            actionLabel={hasActiveFilters ? 'Limpar Filtros' : hasGroups ? 'Criar Jogo' : 'Descobrir Grupos'}
+            actionIcon={hasActiveFilters ? <FilterListOff /> : hasGroups ? <Add /> : <People />}
+            onAction={hasActiveFilters ? clearFilters : () => navigate(hasGroups ? '/game/create' : '/groups/discover')}
           />
         ) : (
           <Box sx={{ px: isLg ? 2 : 0 }}>

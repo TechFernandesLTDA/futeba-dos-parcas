@@ -26,6 +26,15 @@ import {
   Lock as LockIcon,
   WorkspacePremium as BadgeIcon,
   Close as CloseIcon,
+  GridView as GridViewIcon,
+  SportsSoccer as SportsSoccerIcon,
+  LocalFireDepartment as FireIcon,
+  EmojiEvents as TrophyIcon,
+  Handshake as HandshakeIcon,
+  Star as StarIcon,
+  EventAvailable as EventAvailableIcon,
+  Groups as GroupsIcon,
+  MilitaryTech as MilitaryTechIcon,
 } from '@mui/icons-material';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
@@ -52,6 +61,20 @@ const CATEGORY_LABELS: Record<CategoryFilter, string> = {
   presence: 'Presença',
   community: 'Comunidade',
   level: 'Nível',
+};
+
+const CATEGORY_ICONS: Record<CategoryFilter, React.ReactElement> = {
+  all: <GridViewIcon fontSize="small" />,
+  participation: <SportsSoccerIcon fontSize="small" />,
+  streak: <FireIcon fontSize="small" />,
+  mvp: <TrophyIcon fontSize="small" />,
+  goals: <SportsSoccerIcon fontSize="small" />,
+  assists: <HandshakeIcon fontSize="small" />,
+  wins: <TrophyIcon fontSize="small" />,
+  performance: <StarIcon fontSize="small" />,
+  presence: <EventAvailableIcon fontSize="small" />,
+  community: <GroupsIcon fontSize="small" />,
+  level: <MilitaryTechIcon fontSize="small" />,
 };
 
 export const BadgesScreen: React.FC = () => {
@@ -134,6 +157,8 @@ export const BadgesScreen: React.FC = () => {
                 <Tab
                   key={cat}
                   value={cat}
+                  icon={CATEGORY_ICONS[cat]}
+                  iconPosition="start"
                   label={CATEGORY_LABELS[cat]}
                   sx={{ textTransform: 'none', minWidth: 'auto' }}
                 />

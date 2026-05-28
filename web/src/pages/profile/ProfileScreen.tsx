@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
@@ -53,6 +54,24 @@ import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 import { getEffectiveRating, type User } from '../../types/user';
 
+function useCountUp(target: number, duration = 800) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      setValue(Math.floor(progress * target));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return value;
+}
+
 export const ProfileScreen: React.FC = () => {
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/?tab=4');
@@ -71,6 +90,9 @@ export const ProfileScreen: React.FC = () => {
   const targetUserId = userId || currentUser?.id;
 
   const { player: profile, loading, error } = usePlayerDetail(targetUserId);
+  const animatedLevel = useCountUp(profile?.level ?? 0);
+  const animatedXp = useCountUp(profile?.xp ?? 0);
+  const animatedMvps = useCountUp(profile?.mvpCount ?? 0);
 
   if (loading) {
     return <LoadingScreen variant="cards" />;
@@ -167,7 +189,7 @@ export const ProfileScreen: React.FC = () => {
                   <Grid item xs={4}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="primary">
-                        {profile.level}
+                        {animatedLevel}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {t('profile.level')}
@@ -177,7 +199,7 @@ export const ProfileScreen: React.FC = () => {
                   <Grid item xs={4}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="secondary">
-                        {profile.xp}
+                        {animatedXp}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {t('profile.totalXp')}
@@ -187,7 +209,7 @@ export const ProfileScreen: React.FC = () => {
                   <Grid item xs={4}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="warning.main">
-                        {profile.mvpCount}
+                        {animatedMvps}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {t('profile.mvps')}

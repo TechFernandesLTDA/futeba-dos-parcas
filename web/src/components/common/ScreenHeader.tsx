@@ -71,7 +71,7 @@ export const ScreenHeader = React.memo(function ScreenHeader({
       sx={{
         position: 'sticky',
         top: 0,
-        bgcolor: 'background.paper',
+        bgcolor: 'surfaceContainerHigh',
         zIndex: 10,
         borderBottom: 1,
         borderColor: 'divider',

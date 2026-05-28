@@ -56,6 +56,7 @@ import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.games.components.WaitlistSection
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import com.futebadosparcas.ui.theme.MatchEventColors
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.time.LocalDate
@@ -64,23 +65,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
-
-/**
- * Cores semânticas para eventos de jogo (Material Design 3 compliant)
- */
-object MatchEventColors {
-    @Composable
-    fun goalColor() = MaterialTheme.colorScheme.onSurface
-
-    @Composable
-    fun yellowCardColor() = Color(0xFFFDD835)  // Material Yellow A700 - cor fixa de cartão amarelo (gamificação)
-
-    @Composable
-    fun redCardColor() = MaterialTheme.colorScheme.error
-
-    @Composable
-    fun defaultColor() = MaterialTheme.colorScheme.onSurfaceVariant
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -938,7 +922,7 @@ fun LiveMatchSection(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${event.minute}' ${event.playerName} - ${event.eventType}",
+                            text = "${event.minute}' ${event.playerName} - ${getGameDetailEventLabel(event.eventType)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.weight(1f))
@@ -955,13 +939,13 @@ fun LiveMatchSection(
             if (state.canLogEvents && state.game.status == "LIVE") {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                     IconButton(onClick = { onAddEvent(GameEventType.GOAL) }) {
-                        Icon(painterResource(R.drawable.ic_football), contentDescription = stringResource(R.string.live_goal), tint = MatchEventColors.goalColor())
+                        Icon(painterResource(R.drawable.ic_football), contentDescription = stringResource(R.string.live_goal), tint = MaterialTheme.colorScheme.onSurface)
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.YELLOW_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_yellow_card), tint = MatchEventColors.yellowCardColor())
+                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_yellow_card), tint = MatchEventColors.YellowCard)
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.RED_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_red_card), tint = MatchEventColors.redCardColor())
+                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_red_card), tint = MatchEventColors.RedCard)
                     }
                 }
             }
@@ -972,18 +956,34 @@ fun LiveMatchSection(
 fun getEventIcon(type: String): Int {
     return when(type) {
         "GOAL" -> R.drawable.ic_football
+        "ASSIST" -> R.drawable.ic_sports_soccer
+        "SAVE" -> R.drawable.ic_sports_soccer
         "YELLOW_CARD", "RED_CARD" -> R.drawable.ic_card_filled
         else -> R.drawable.ic_sports_soccer
     }
 }
 
 @Composable
+fun getGameDetailEventLabel(type: String): String {
+    return when(type) {
+        "GOAL" -> stringResource(R.string.live_game_event_goal)
+        "ASSIST" -> stringResource(R.string.live_game_assist)
+        "SAVE" -> stringResource(R.string.live_game_save)
+        "YELLOW_CARD" -> stringResource(R.string.live_game_event_yellow_card)
+        "RED_CARD" -> stringResource(R.string.live_game_event_red_card)
+        "SUBSTITUTION" -> stringResource(R.string.live_game_event_substitution)
+        else -> stringResource(R.string.live_game_event_default)
+    }
+}
+
+@Composable
 fun getEventColor(type: String): Color {
     return when(type) {
-        "GOAL" -> MatchEventColors.goalColor()
-        "YELLOW_CARD" -> MatchEventColors.yellowCardColor()
-        "RED_CARD" -> MatchEventColors.redCardColor()
-        else -> MatchEventColors.defaultColor()
+        "GOAL" -> MaterialTheme.colorScheme.onSurface
+        "ASSIST", "SAVE", "SUBSTITUTION" -> MaterialTheme.colorScheme.secondary
+        "YELLOW_CARD" -> MatchEventColors.YellowCard
+        "RED_CARD" -> MatchEventColors.RedCard
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 }
 

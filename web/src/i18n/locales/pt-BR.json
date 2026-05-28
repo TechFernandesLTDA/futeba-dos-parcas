@@ -87,6 +87,7 @@
     "title": "Tema",
     "light": "Claro",
     "dark": "Escuro",
+    "oled": "OLED",
     "system": "Sistema",
     "auto": "Automático (sistema)",
     "lightMode": "Modo claro",
@@ -144,6 +145,7 @@
       "title": "Tema",
       "lightDesc": "Modo claro",
       "darkDesc": "Modo escuro",
+      "oledDesc": "Modo OLED com preto puro",
       "systemDesc": "Automático (sistema)",
       "selection": "Seleção de tema",
       "pushNotifications": "Notificações Push",
@@ -358,6 +360,10 @@
       "stepSettings": "Configurações",
       "stepPayment": "Pagamento",
       "stepRules": "Regras",
+      "stepLocationDateDesc": "Onde e quando será o jogo",
+      "stepSettingsDesc": "Vagas, posições e tipo de campo",
+      "stepPaymentDesc": "Valor e forma de cobrança",
+      "stepRulesDesc": "Regras e link de transmissão",
       "stepperLabel": "Etapas de criação do jogo",
       "group": "Grupo",
       "loadingGroups": "Carregando grupos...",
@@ -442,6 +448,14 @@
     "presenceCanceled": "Presença cancelada.",
     "presenceCancelError": "Erro ao cancelar presença.",
     "liveTitle": "Jogo ao Vivo",
+    "events": {
+      "goal": "Gol",
+      "assist": "Assistência",
+      "save": "Defesa",
+      "yellow_card": "Cartão Amarelo",
+      "red_card": "Cartão Vermelho",
+      "substitution": "Substituição"
+    },
     "filterByGroup": "Filtrar por grupo",
     "allGroups": "Todos os grupos",
     "search": {
@@ -567,6 +581,10 @@
     "level": "Nível",
     "browseGames": "Ver jogos disponíveis",
     "retry": "Tentar novamente"
+  },
+  "level": {
+    "currentBadge": "ATUAL",
+    "maxReached": "Nível máximo atingido! Você é o Rei do Futebol!"
   },
   "groups": {
     "title": "Grupos",

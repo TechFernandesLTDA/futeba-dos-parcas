@@ -34,6 +34,7 @@ import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
+import { gamificationColors } from '../../theme';
 import { useTranslation } from 'react-i18next';
 
 export const RankingScreen: React.FC = () => {
@@ -76,6 +77,9 @@ export const RankingScreen: React.FC = () => {
   }, [players, tabValue]);
 
   const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
+  const columnLabel = tabValue === 1 ? 'MVPs' : tabValue === 2 ? 'Gols' : 'Pts';
+  const hasPodium = ranked.length >= 3;
+  const listRanked = hasPodium ? ranked.slice(3) : ranked;
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -83,7 +87,7 @@ export const RankingScreen: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          bgcolor: 'background.paper',
+          bgcolor: 'surfaceContainerHigh',
           zIndex: 10,
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
@@ -137,36 +141,56 @@ export const RankingScreen: React.FC = () => {
             </Button>
           </Box>
         ) : (
+          <>
+          <PodiumSection players={ranked.slice(0, 3)} onAvatarClick={setSelectedPlayerId} />
+          <Box
+            sx={{
+              display: 'flex',
+              px: 2,
+              py: 0.75,
+              mb: 1,
+              borderRadius: 2,
+              bgcolor: 'surfaceContainer',
+            }}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ flex: 1, fontWeight: 700 }}>
+              Jogador
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+              {columnLabel}
+            </Typography>
+          </Box>
           <List disablePadding aria-label={t('ranking.standingsAria')}>
-            {ranked.length > 20 ? (
+            {listRanked.length > 20 ? (
               <VirtualList
-                items={ranked}
+                items={listRanked}
                 estimateSize={100}
                 overscan={3}
-                getItemKey={(index) => ranked[index].id}
+                getItemKey={(index) => listRanked[index].id}
                 renderItem={(player, index) => (
                   <RankingItem
                     player={player}
-                    position={index + 1}
-                    positionStyle={getPositionStyle(index + 1)}
+                    position={index + 4}
+                    positionStyle={getPositionStyle(index + 4)}
                     tabValue={tabValue}
                     onAvatarClick={setSelectedPlayerId}
                   />
                 )}
               />
             ) : (
-              ranked.map((player, index) => (
+              listRanked.map((player, index) => (
                 <RankingItem
                   key={player.id}
                   player={player}
-                  position={index + 1}
-                  positionStyle={getPositionStyle(index + 1)}
+                    position={index + (hasPodium ? 4 : 1)}
+                    positionStyle={getPositionStyle(index + (hasPodium ? 4 : 1))}
                   tabValue={tabValue}
                   onAvatarClick={setSelectedPlayerId}
                 />
               ))
             )}
           </List>
+          </>
         )}
 
         {selectedPlayerId && (
@@ -182,6 +206,57 @@ export const RankingScreen: React.FC = () => {
     </Box>
   );
 };
+
+const PODIUM_ORDER = [1, 0, 2];
+
+const PodiumSection = React.memo(function PodiumSection({
+  players,
+  onAvatarClick,
+}: {
+  players: LeaguePlayer[];
+  onAvatarClick: (userId: string) => void;
+}) {
+  const medals = ['1º', '2º', '3º'];
+
+  if (players.length < 3) return null;
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 1.5, mb: 2 }}>
+      {PODIUM_ORDER.map((playerIndex) => {
+        const player = players[playerIndex];
+        const colors = [gamificationColors.gold, gamificationColors.silver, gamificationColors.bronze];
+        const isFirst = playerIndex === 0;
+        return (
+          <Card
+            key={player.id}
+            sx={{
+              flex: 1,
+              textAlign: 'center',
+              border: `2px solid ${colors[playerIndex]}`,
+              boxShadow: (theme) => `0 6px 20px ${alpha(colors[playerIndex], theme.palette.mode === 'dark' ? 0.28 : 0.18)}`,
+              transform: isFirst ? 'translateY(-10px)' : undefined,
+            }}
+          >
+            <CardContent sx={{ px: 1, py: isFirst ? 2 : 1.5, '&:last-child': { pb: isFirst ? 2 : 1.5 } }}>
+              <Typography variant="h4" component="div" sx={{ lineHeight: 1 }}>
+                {medals[playerIndex]}
+              </Typography>
+              <Box onClick={() => onAvatarClick(player.userId)} sx={{ cursor: 'pointer', my: 1 }}>
+                <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={isFirst ? 72 : 56} level={player.level} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={700} noWrap>
+                {player.userName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {player.points} pts
+              </Typography>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </Box>
+  );
+});
 
 const RankingItem = React.memo(function RankingItem({
   player,
