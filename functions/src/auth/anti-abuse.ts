@@ -88,6 +88,21 @@ export const canSendSmsOtp = onCall(
 
     const ip = clientIp(request);
 
+    const callerCheck = await checkRateLimit(request.auth!.uid, {
+      maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR * 3,
+      windowMs: 60 * 60 * 1000,
+      keyPrefix: "sms_caller",
+    });
+    if (!callerCheck.allowed) {
+      return {
+        allowed: false,
+        reason: "caller_rate_limit",
+        retryAfterSec: Math.ceil(
+          (callerCheck.resetAt.getTime() - Date.now()) / 1000,
+        ),
+      };
+    }
+
     const phoneCheck = await checkRateLimit(phone, {
       maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR,
       windowMs: 60 * 60 * 1000,

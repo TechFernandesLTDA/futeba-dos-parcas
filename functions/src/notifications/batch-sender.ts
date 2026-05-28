@@ -44,7 +44,7 @@ import {
 import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
-import {shouldNotifyUser} from "./helpers";
+import {shouldNotifyUser, isTransientError} from "./helpers";
 
 const getDb = () => admin.firestore();
 const getFcm = () => admin.messaging();
@@ -406,18 +406,22 @@ async function processNotificationQueue():
       invalidTokensCleaned +=
         sendResult.invalidTokensCleaned;
 
-      // 7. Marcar como enviada
+      const hasTransientFailures =
+        sendResult.transientFailed > 0;
+      const allFailed =
+        sendResult.failed === tokens.length &&
+        sendResult.transientFailed === tokens.length;
+
       await doc.ref.update({
-        status:
-          sendResult.failed === tokens.length ?
-            "FAILED" :
-            "SENT",
+        status: allFailed ? "FAILED" :
+          hasTransientFailures ? "PENDING" : "SENT",
         sent_at:
           admin.firestore.FieldValue
             .serverTimestamp(),
         result: {
           sent: sendResult.sent,
           failed: sendResult.failed,
+          transientFailed: sendResult.transientFailed,
           invalidTokensCleaned:
             sendResult.invalidTokensCleaned,
           totalTokens: tokens.length,
@@ -477,10 +481,12 @@ async function sendMulticastInChunks(
 ): Promise<{
   sent: number;
   failed: number;
+  transientFailed: number;
   invalidTokensCleaned: number;
 }> {
   let sent = 0;
   let failed = 0;
+  let transientFailed = 0;
   let invalidTokensCleaned = 0;
 
   // Dividir tokens em chunks de 500
@@ -548,7 +554,7 @@ async function sendMulticastInChunks(
       sent += response.successCount;
       failed += response.failureCount;
 
-      // Processar falhas para tokens inválidos
+      // Processar falhas para tokens invalidos e transientes
       if (response.failureCount > 0) {
         const tokensToRemove: {
           token: string;
@@ -578,6 +584,13 @@ async function sendMulticastInChunks(
                     userId,
                   });
                 }
+              } else if (
+                isTransientError(sendResponse.error as {code?: string; message?: string})
+              ) {
+                console.warn(
+                  `[BATCH_FCM] Transient FCM error for token ${failedToken.slice(0, 8)}...: ${errorCode}`
+                );
+                transientFailed++;
               }
             }
           }
@@ -591,6 +604,10 @@ async function sendMulticastInChunks(
           invalidTokensCleaned +=
             tokensToRemove.length;
         }
+
+        // Transient errors are tracked separately — they should be retried,
+        // not counted as permanent failures.
+        failed -= transientFailed;
       }
     } catch (error) {
       console.error(
@@ -601,7 +618,7 @@ async function sendMulticastInChunks(
     }
   }
 
-  return {sent, failed, invalidTokensCleaned};
+  return {sent, failed, transientFailed, invalidTokensCleaned};
 }
 
 // ==========================================

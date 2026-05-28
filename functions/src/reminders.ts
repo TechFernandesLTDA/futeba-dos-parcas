@@ -269,6 +269,8 @@ async function fetchGamesInReminderWindow(
     const noDateTimeSnap = await getDb()
       .collection("games")
       .where("dateTime", "==", null)
+      .orderBy("created_at", "desc")
+      .limit(50)
       .get();
 
     for (const doc of noDateTimeSnap.docs) {

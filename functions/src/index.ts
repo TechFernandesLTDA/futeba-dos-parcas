@@ -459,47 +459,32 @@ export const onGameStatusUpdate = onDocumentUpdated(
               c.userId.trim() !== ""
           );
 
-        // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE)
+        // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE) — clamp and warn, don't throw
         for (const conf of validConfirmations) {
-          if (
-            conf.goals < 0 ||
-            conf.goals > MAX_GOALS_PER_GAME
-          ) {
-            throw new Error(
-              "[ANTI-CHEAT] Invalid goals " +
-              `count for user ${conf.userId}: ` +
-              `${conf.goals} ` +
-              `(max: ${MAX_GOALS_PER_GAME})`
+          if (conf.goals < 0 || conf.goals > MAX_GOALS_PER_GAME) {
+            console.warn(
+              "[ANTI-CHEAT] User " +
+              `${conf.userId}: goals=${conf.goals} ` +
+              `above cap ${MAX_GOALS_PER_GAME} ` +
+              "— clamping to cap"
             );
           }
-          if (
-            conf.assists < 0 ||
-            conf.assists > MAX_ASSISTS_PER_GAME
-          ) {
-            throw new Error(
-              "[ANTI-CHEAT] Invalid assists " +
-              `count for user ${conf.userId}: ` +
-              `${conf.assists} ` +
-              `(max: ${MAX_ASSISTS_PER_GAME})`
+          if (conf.assists < 0 || conf.assists > MAX_ASSISTS_PER_GAME) {
+            console.warn(
+              "[ANTI-CHEAT] User " +
+              `${conf.userId}: assists=${conf.assists} ` +
+              `above cap ${MAX_ASSISTS_PER_GAME} ` +
+              "— clamping to cap"
             );
           }
-          if (
-            conf.saves < 0 ||
-            conf.saves > MAX_SAVES_PER_GAME
-          ) {
-            throw new Error(
-              "[ANTI-CHEAT] Invalid saves " +
-              `count for user ${conf.userId}: ` +
-              `${conf.saves} ` +
-              `(max: ${MAX_SAVES_PER_GAME})`
+          if (conf.saves < 0 || conf.saves > MAX_SAVES_PER_GAME) {
+            console.warn(
+              "[ANTI-CHEAT] User " +
+              `${conf.userId}: saves=${conf.saves} ` +
+              `above cap ${MAX_SAVES_PER_GAME} ` +
+              "— clamping to cap"
             );
           }
-          console.log(
-            `[ANTI-CHEAT] User ${conf.userId}: ` +
-            `${conf.goals} goals, ` +
-            `${conf.assists} assists, ` +
-            `${conf.saves} saves - VALID`
-          );
         }
 
         const teams = teamsSnap.docs.map(
@@ -681,6 +666,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
             gamesLost: 0,
             gamesDraw: 0,
             bestPlayerCount: 0,
+            worstPlayerCount: 0,
+            currentMvpStreak: 0,
+            bestMvpStreak: 0,
           } as UserStatistics;
 
           const streak =
@@ -921,10 +909,26 @@ export const onGameStatusUpdate = onDocumentUpdated(
           currentBatchOps++;
 
           // 2. Update Stats
+          // Usar FieldValue.increment() para counters cumulativos
           currentBatch.set(
             db().collection("statistics")
               .doc(uid),
-            newStats,
+            {
+              totalGames: admin.firestore.FieldValue.increment(1),
+              totalGoals: admin.firestore.FieldValue.increment(conf.goals),
+              totalAssists: admin.firestore.FieldValue.increment(conf.assists),
+              totalSaves: admin.firestore.FieldValue.increment(conf.saves),
+              totalYellowCards: admin.firestore.FieldValue.increment(conf.yellowCards),
+              totalRedCards: admin.firestore.FieldValue.increment(conf.redCards),
+              gamesWon: admin.firestore.FieldValue.increment(result === "WIN" ? 1 : 0),
+              gamesLost: admin.firestore.FieldValue.increment(result === "LOSS" ? 1 : 0),
+              gamesDraw: admin.firestore.FieldValue.increment(result === "DRAW" ? 1 : 0),
+              bestPlayerCount: admin.firestore.FieldValue.increment(isMvp ? 1 : 0),
+              worstPlayerCount: admin.firestore.FieldValue.increment(isWorstPlayer ? 1 : 0),
+              currentMvpStreak: newMvpStreak,
+              bestMvpStreak: Math.max(stats.bestMvpStreak || 0, newMvpStreak),
+              updated_at: now,
+            },
             {merge: true}
           );
           currentBatchOps++;

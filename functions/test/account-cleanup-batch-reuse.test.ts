@@ -79,6 +79,11 @@ jest.mock("firebase-admin", () => {
       collection: mockCollection,
       doc: mockDocRef,
       batch: mockBatch,
+      collectionGroup: jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        get: jest.fn().mockResolvedValue({ docs: [], empty: true, size: 0 }),
+      }),
     })),
     auth: jest.fn(() => ({})),
     initializeApp: jest.fn(),
