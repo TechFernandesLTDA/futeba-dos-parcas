@@ -146,9 +146,9 @@ describe("waitlist — read", () => {
     );
   });
 
-  it("Player NAO envolvido NAO pode ler entrada alheia", async () => {
+  it("Qualquer usuario autenticado pode ler entradas da waitlist", async () => {
     const db = asPlayerC(testEnv);
-    await assertFails(
+    await assertSucceeds(
       db.doc(`games/${GAME_ID}/waitlist/${UID_PLAYER_B}`).get()
     );
   });
