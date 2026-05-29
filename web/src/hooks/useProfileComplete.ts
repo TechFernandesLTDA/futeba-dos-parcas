@@ -6,19 +6,24 @@ export function useProfileComplete() {
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const mountedRef = useRef(true);
+  const lastCheckedUidRef = useRef<string | null>(null);
 
   const check = useCallback(async (user: typeof firebaseUser, forceRefresh = false) => {
     if (!user) {
       setProfileComplete(null);
       return;
     }
+    const uid = user.uid;
+    lastCheckedUidRef.current = uid;
     try {
       const tokenResult = await user.getIdTokenResult(forceRefresh);
+      if (lastCheckedUidRef.current !== uid) return;
       if (mountedRef.current) {
         setProfileComplete(!!tokenResult.claims.profileComplete);
         setError(null);
       }
     } catch (err) {
+      if (lastCheckedUidRef.current !== uid) return;
       if (mountedRef.current) {
         setProfileComplete(null);
         setError(err instanceof Error ? err : new Error(String(err)));

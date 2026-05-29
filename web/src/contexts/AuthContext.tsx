@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userSnap = await transaction.get(userRef);
 
         if (!userSnap.exists()) {
-          const { email, displayName, photoURL } = firebaseUser;
+          const { displayName, photoURL } = firebaseUser;
           const userData = {
             name: displayName || 'Usuário',
             nickname: '',
@@ -176,13 +176,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
 
           transaction.set(userRef, userData);
-
-          const privateRef = doc(db, 'users_private', firebaseUser.uid);
-          const privateData = {
-            email: email || '',
-            created_at: serverTimestamp(),
-          };
-          transaction.set(privateRef, privateData);
 
           const convertedNew = snakeToCamel<Omit<User, 'id'>>(userData) as Record<string, unknown>;
           return normalizeUserData(convertedNew, firebaseUser.uid, userData as Record<string, unknown>);

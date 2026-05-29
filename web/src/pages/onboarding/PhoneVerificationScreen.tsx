@@ -35,6 +35,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { canSendSmsOtp } from '../../services/cloudFunctions';
 
 const logger = createLogger('PhoneVerification');
 
@@ -108,6 +109,15 @@ export const PhoneVerificationScreen: React.FC = () => {
           { size: 'invisible' },
         );
       }
+
+      const rateCheck = await canSendSmsOtp({ phone: `+${normalized}` });
+      if (!rateCheck.data.allowed) {
+        const retryAfter = rateCheck.data.retryAfterSec || 60;
+        setError(`Muitas tentativas. Aguarde ${Math.ceil(retryAfter / 60)} minuto(s).`);
+        setResendCooldown(retryAfter);
+        return;
+      }
+
       const confirmation = await signInWithPhoneNumber(
         auth,
         `+${normalized}`,

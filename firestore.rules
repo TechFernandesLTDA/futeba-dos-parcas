@@ -169,7 +169,7 @@ service cloud.firestore {
     function isVerifiedOrGrace() {
       return isAuthenticated() && (
         ("verified" in request.auth.token && request.auth.token.verified == true) ||
-        request.time < timestamp.date(2026, 6, 4)
+        request.time < timestamp.date(2026, 8, 3)
       );
     }
 
@@ -180,10 +180,7 @@ service cloud.firestore {
       return isAuthenticated() &&
         exists(/databases/$(database)/documents/users/$(userId())) &&
         getUser().data.phone != null &&
-        (
-          getUser().data.cpf != null ||
-          getUser().data.cpfVerifiedAt != null
-        );
+        getUser().data.cpfVerifiedAt != null;
     }
 
     function isProfileComplete() {
