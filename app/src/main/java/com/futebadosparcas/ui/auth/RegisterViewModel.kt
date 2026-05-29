@@ -22,7 +22,8 @@ class RegisterViewModel(
         registerJob?.cancel()
         registerJob = viewModelScope.launch {
             _registerState.value = RegisterState.Loading
-            val result = androidAuthRepository.createUserWithEmailAndPassword(email, password, name)
+            val normalizedEmail = email.trim().lowercase()
+            val result = androidAuthRepository.createUserWithEmailAndPassword(normalizedEmail, password, name)
             result.fold(
                 onSuccess = { user ->
                     _registerState.value = RegisterState.Success(user)

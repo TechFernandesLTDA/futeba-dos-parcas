@@ -57,6 +57,7 @@ class SplashActivityCompose : AppCompatActivity() {
     }
 
     private var userState: User? by mutableStateOf(null)
+    private var userChecked by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Instala a splash screen do sistema (Android 12+)
@@ -69,6 +70,7 @@ class SplashActivityCompose : AppCompatActivity() {
             FutebaTheme {
                 SplashScreen(
                     user = userState,
+                    userChecked = userChecked,
                     versionName = BuildConfig.VERSION_NAME,
                     randomQuote = randomQuote,
                     onNavigate = { destination ->
@@ -98,6 +100,7 @@ class SplashActivityCompose : AppCompatActivity() {
             } else {
                 userState = null
             }
+            userChecked = true
         }
     }
 
