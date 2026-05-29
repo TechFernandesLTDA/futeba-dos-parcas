@@ -5,7 +5,7 @@ import { Card, CardActionArea, CardProps, SxProps, Theme } from '@mui/material';
 const HOVER_SX: SxProps<Theme> = {
   '@media (hover: hover) and (pointer: fine)': {
     '&:hover': {
-      boxShadow: (theme: Theme) => theme.shadows[4],
+      boxShadow: (theme: Theme) => theme.shadows[8],
       transform: 'translateY(-2px)',
     },
   },

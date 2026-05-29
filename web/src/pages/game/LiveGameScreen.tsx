@@ -23,7 +23,6 @@ import {
   DialogActions,
   TextField,
   Alert,
-  Skeleton,
   CircularProgress,
   useTheme,
   useMediaQuery,
@@ -57,6 +56,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { EmptyState } from '../../components/common/EmptyState';
+import { LoadingState } from '../../components/common/GameCard';
 
 const logger = createLogger('LiveGameScreen');
 
@@ -97,6 +97,10 @@ function getStreamEmbedUrl(streamUrl: string): string | null {
     return null;
   }
   return null;
+}
+
+function getEventTypeLabel(t: ReturnType<typeof useTranslation>['t'], eventType: string): string {
+  return t(`games.events.${eventType.toLowerCase()}`, { defaultValue: eventType });
 }
 
 export const LiveGameScreen: React.FC = () => {
@@ -442,9 +446,8 @@ export const LiveGameScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 4, textAlign: 'center' }}>
-        <Skeleton variant="rectangular" height={200} sx={{ mb: 2 }} />
-        <Skeleton variant="text" />
+      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 4 }}>
+        <LoadingState shimmerCount={3} itemType="CARD" />
       </Container>
     );
   }
@@ -473,7 +476,7 @@ export const LiveGameScreen: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          bgcolor: 'background.paper',
+          bgcolor: 'surfaceContainerHigh',
           zIndex: 10,
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
@@ -498,49 +501,73 @@ export const LiveGameScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 2 }}>
-        <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+        <Card
+          sx={{
+            mb: 2,
+            overflow: 'hidden',
+            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)} 0%, ${alpha(theme.palette.secondary.main, 0.14)} 100%)`,
+          }}
+        >
           <CardContent>
-            {/* Placar com cores distintas por time + destaque no líder (#1363) */}
+            {/* Scorecard ao vivo com linguagem de placar esportivo. */}
             {(() => {
               const s1 = score?.team1Score || 0;
               const s2 = score?.team2Score || 0;
               const leader: 1 | 2 | 0 = s1 > s2 ? 1 : s2 > s1 ? 2 : 0;
               return (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                  <Box sx={{ textAlign: 'center', flex: 1 }}>
-                    <Typography variant="h5" fontWeight={600} color="text.secondary">
-                      {game.team1Name || t('games.teamA')}
+                <Box sx={{ textAlign: 'center' }}>
+                  <Chip
+                    size="small"
+                    color="error"
+                    label="AO VIVO"
+                    sx={{ fontWeight: 800, letterSpacing: 0.8, mb: 1.5 }}
+                  />
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: { xs: 1.5, sm: 3 } }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="subtitle1" fontWeight={700} color="text.secondary" noWrap>
+                        {game.team1Name || t('games.teamA')}
+                      </Typography>
+                      <Typography
+                        key={`team-1-${s1}`}
+                        variant="h1"
+                        fontWeight={leader === 1 ? 800 : 600}
+                        sx={{
+                          color: 'primary.main',
+                          opacity: leader === 2 ? 0.6 : 1,
+                          lineHeight: 1,
+                          animation: 'scoreFlash 280ms ease-out',
+                          '@keyframes scoreFlash': {
+                            '0%': { transform: 'scale(1.12)' },
+                            '100%': { transform: 'scale(1)' },
+                          },
+                          transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
+                        }}
+                      >
+                        {s1}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h2" color="text.secondary" fontWeight={300} sx={{ px: 1 }}>
+                      –
                     </Typography>
-                    <Typography
-                      variant="h2"
-                      fontWeight={leader === 1 ? 800 : 600}
-                      sx={{
-                        color: 'primary.main',
-                        opacity: leader === 2 ? 0.6 : 1,
-                        transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
-                      }}
-                    >
-                      {s1}
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4" color="text.secondary">
-                    vs
-                  </Typography>
-                  <Box sx={{ textAlign: 'center', flex: 1 }}>
-                    <Typography variant="h5" fontWeight={600} color="text.secondary">
-                      {game.team2Name || t('games.teamB')}
-                    </Typography>
-                    <Typography
-                      variant="h2"
-                      fontWeight={leader === 2 ? 800 : 600}
-                      sx={{
-                        color: 'secondary.main',
-                        opacity: leader === 1 ? 0.6 : 1,
-                        transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
-                      }}
-                    >
-                      {s2}
-                    </Typography>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="subtitle1" fontWeight={700} color="text.secondary" noWrap>
+                        {game.team2Name || t('games.teamB')}
+                      </Typography>
+                      <Typography
+                        key={`team-2-${s2}`}
+                        variant="h1"
+                        fontWeight={leader === 2 ? 800 : 600}
+                        sx={{
+                          color: 'secondary.main',
+                          opacity: leader === 1 ? 0.6 : 1,
+                          lineHeight: 1,
+                          animation: 'scoreFlash 280ms ease-out',
+                          transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
+                        }}
+                      >
+                        {s2}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
               );
@@ -636,9 +663,7 @@ export const LiveGameScreen: React.FC = () => {
                       </ListItemAvatar>
                       <ListItemText
                         primary={event.playerName}
-                        secondary={`${
-                          { GOAL: 'Gol', ASSIST: 'Assistência', SAVE: 'Defesa', YELLOW_CARD: 'Cartão Amarelo', RED_CARD: 'Cartão Vermelho', SUBSTITUTION: 'Substituição' }[event.eventType] || event.eventType
-                        } - ${event.minute}'`}
+                        secondary={`${getEventTypeLabel(t, event.eventType)} - ${event.minute}'`}
                       />
                     </ListItem>
                     {index < events.length - 1 && <Divider />}

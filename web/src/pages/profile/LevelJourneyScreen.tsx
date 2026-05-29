@@ -48,6 +48,7 @@ import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } f
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('LevelJourneyScreen');
 
@@ -66,6 +67,7 @@ export const LevelJourneyScreen: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
+  const { t } = useTranslation();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
@@ -276,7 +278,7 @@ export const LevelJourneyScreen: React.FC = () => {
                   >
                     <TrophyIcon sx={{ color, fontSize: 28, mb: 0.5 }} />
                     <Typography variant="body2" color={color} fontWeight={600}>
-                      Nível máximo atingido! Você é o Rei do Futebol!
+                      {t('level.maxReached')}
                     </Typography>
                   </Box>
                 )}
@@ -455,6 +457,7 @@ function LevelRow({
   isCurrent: boolean;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const color = getLevelColor(entry.level, theme);
 
   return (
@@ -528,7 +531,7 @@ function LevelRow({
                   letterSpacing: 0.5,
                 }}
               >
-                ATUAL
+                {t('level.currentBadge')}
               </Box>
             )}
           </Box>

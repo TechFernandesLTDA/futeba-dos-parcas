@@ -64,6 +64,7 @@ export const onUserDeleted = auth
         // Padrão espelhado de functions/src/notifications/batch-sender.ts.
         let batch = db.batch();
         let batchOps = 0;
+        const queuedDeletePaths = new Set<string>();
 
         // FIX #652-B3 + #1280: helper to commit batch and recreate instance
         const commitBatch = async () => {
@@ -86,6 +87,8 @@ export const onUserDeleted = auth
         const queueDelete = async (
           ref: admin.firestore.DocumentReference
         ) => {
+          if (queuedDeletePaths.has(ref.path)) return;
+          queuedDeletePaths.add(ref.path);
           batch.delete(ref);
           batchOps++;
           if (batchOps >= 450) await commitBatch();
@@ -144,6 +147,82 @@ export const onUserDeleted = auth
           logger.info(
             `[ACCOUNT_CLEANUP] Deletando ${auditLogsTotal} audit_logs ` +
             `do usuário ${uid}`
+          );
+        }
+
+        // 4b. FIX #2081: Cleanup audit_logs (actor_user_id == uid)
+        // LGPD Art. 18 VI — cobre logs em que o usuário deletado foi o ator.
+        let auditActorLogsTotal = 0;
+        while (true) {
+          const auditActorLogsSnap = await db
+            .collection("audit_logs")
+            .where("actor_user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (auditActorLogsSnap.empty) break;
+          for (const doc of auditActorLogsSnap.docs) {
+            await queueDelete(doc.ref);
+          }
+          auditActorLogsTotal += auditActorLogsSnap.size;
+          if (auditActorLogsSnap.size < 500) break;
+        }
+        if (auditActorLogsTotal > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${auditActorLogsTotal} ` +
+            `audit_logs por actor_user_id do usuário ${uid}`
+          );
+        }
+
+        // 4c. FIX #2081: Cleanup rate_limits tied to the deleted UID.
+        // New buckets include user_id; legacy buckets are addressed by known
+        // key prefixes because older docs used only `${prefix}_${uid}` IDs.
+        let rateLimitsTotal = 0;
+        while (true) {
+          const rateLimitsSnap = await db
+            .collection("rate_limits")
+            .where("user_id", "==", uid)
+            .limit(500)
+            .get();
+          if (rateLimitsSnap.empty) break;
+          for (const doc of rateLimitsSnap.docs) {
+            await queueDelete(doc.ref);
+          }
+          rateLimitsTotal += rateLimitsSnap.size;
+          if (rateLimitsSnap.size < 500) break;
+        }
+
+        const legacyRateLimitPrefixes = [
+          "default",
+          "mvp_vote",
+          "mvp_conclude",
+          "checkin",
+          "soft_delete_game",
+          "soft_delete_group",
+          "restore_game",
+          "restore_group",
+          "setRole",
+          "migrate",
+          "deleteLoc",
+          "autoRate",
+          "recalcAllRatings",
+          "leaderboard",
+          "migrate_invites",
+          "enqueue_notif",
+          "verify_cpf",
+          "log_verif_fail",
+          "send_test_notif",
+          "fake_game_notif",
+          "seed_db",
+        ];
+        for (const prefix of legacyRateLimitPrefixes) {
+          await queueDelete(db.doc(`rate_limits/${prefix}_${uid}`));
+          rateLimitsTotal++;
+        }
+
+        if (rateLimitsTotal > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${rateLimitsTotal} ` +
+            `rate_limits do usuário ${uid}`
           );
         }
 

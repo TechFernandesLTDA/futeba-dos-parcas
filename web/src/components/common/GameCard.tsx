@@ -200,7 +200,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                       label="Conflito"
                       size="small"
                       sx={{
-                        backgroundColor: `${theme.palette.warning.main}1F`,
+                        backgroundColor: alpha(theme.palette.warning.main, 0.12),
                         color: theme.palette.mode === 'dark'
                           ? theme.palette.warning.light
                           : theme.palette.warning.dark,

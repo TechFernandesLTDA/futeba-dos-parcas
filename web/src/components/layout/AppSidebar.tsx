@@ -10,6 +10,9 @@ import {
   Tooltip,
   Badge,
   keyframes,
+  Button,
+  Divider,
+  Avatar,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -18,6 +21,7 @@ import {
   EmojiEvents,
   Person,
   Notifications as NotificationsIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -55,6 +59,7 @@ export function AppSidebar() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
+  const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
 
   const NAV_ITEMS: NavItem[] = [
     { icon: <HomeIcon />, label: t('nav.home'), path: '/?tab=0', matchPaths: [] },
@@ -90,7 +95,9 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            bgcolor: 'background.paper',
+            bgcolor: 'surfaceContainerHigh',
+            display: 'flex',
+            flexDirection: 'column',
           },
         }}
         aria-label="Navegação principal"
@@ -162,7 +169,9 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            bgcolor: 'background.paper',
+            bgcolor: 'surfaceContainerHigh',
+            display: 'flex',
+            flexDirection: 'column',
           },
         }}
         aria-label="Navegação principal"
@@ -185,42 +194,70 @@ export function AppSidebar() {
             {t('common.appName')}
           </Typography>
         </Box>
+        <Box sx={{ px: 2, pb: 1 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/game/create')}
+            sx={{ borderRadius: 6 }}
+          >
+            {t('games.createGame')}
+          </Button>
+        </Box>
+        <Divider sx={{ mx: 2, mb: 1 }} />
         <List>
           {NAV_ITEMS.map((item) => {
             const active = isItemActive(item, location.pathname, location.search);
             const isNotifItem = item.path === '/notifications';
             return (
-              <ListItemButton
-                key={item.label}
-                selected={active}
-                onClick={() => navigate(item.path)}
-                sx={{
-                  borderRadius: 2,
-                  mx: 1,
-                  my: 0.5,
-                  '&.Mui-selected': {
-                    bgcolor: 'action.selected',
-                    '& .MuiListItemIcon-root': { color: 'primary.main' },
-                    '& .MuiListItemText-primary': {
-                      color: 'primary.main',
-                      fontWeight: 600,
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon
+              <Tooltip key={item.label} title={item.label} placement="right">
+                <ListItemButton
+                  selected={active}
+                  onClick={() => navigate(item.path)}
                   sx={{
-                    color: 'text.secondary',
-                    animation: isNotifItem && unreadCount > 0 ? `${pulse} 2s ease-in-out infinite` : undefined,
+                    borderRadius: 2,
+                    mx: 1,
+                    my: 0.5,
+                    '&.Mui-selected': {
+                      bgcolor: 'action.selected',
+                      '& .MuiListItemIcon-root': { color: 'primary.main' },
+                      '& .MuiListItemText-primary': {
+                        color: 'primary.main',
+                        fontWeight: 600,
+                      },
+                    },
                   }}
                 >
-                  {React.cloneElement(item.icon as React.ReactElement, { 'aria-hidden': true })}
-                </ListItemIcon>
-                <ListItemText primary={item.label} />
-              </ListItemButton>
+                  <ListItemIcon
+                    sx={{
+                      color: 'text.secondary',
+                      animation: isNotifItem && unreadCount > 0 ? `${pulse} 2s ease-in-out infinite` : undefined,
+                    }}
+                  >
+                    {React.cloneElement(item.icon as React.ReactElement, { 'aria-hidden': true })}
+                  </ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </Tooltip>
             );
           })}
         </List>
+        <Box sx={{ mt: 'auto', p: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar src={user?.photoUrl} sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
+              {userInitial}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" fontWeight={600} noWrap>
+                {user?.name || 'Usuário'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                {user?.email || t('nav.profile')}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </Drawer>
     </>
   );

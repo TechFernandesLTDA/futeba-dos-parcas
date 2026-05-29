@@ -30,6 +30,7 @@ import {
   DialogActions,
   IconButton,
   Divider,
+  LinearProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -128,6 +129,12 @@ export const CreateGameScreen: React.FC = () => {
     t('games.create.stepSettings'),
     t('games.create.stepPayment'),
     t('games.create.stepRules'),
+  ];
+  const stepDescriptions = [
+    t('games.create.stepLocationDateDesc'),
+    t('games.create.stepSettingsDesc'),
+    t('games.create.stepPaymentDesc'),
+    t('games.create.stepRulesDesc'),
   ];
 
   const { group } = useGroupDetail(groupId || null);
@@ -1041,10 +1048,23 @@ export const CreateGameScreen: React.FC = () => {
 
         <Divider sx={{ mb: 2 }} />
 
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={(activeStep / (steps.length - 1)) * 100}
+            sx={{ height: 8, borderRadius: 4 }}
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
+            Passo {activeStep + 1} de {steps.length}: {steps[activeStep]}
+          </Typography>
+        </Box>
+
         <Stepper activeStep={activeStep} orientation="vertical" aria-label={t('games.create.stepperLabel')}>
           {steps.map((label, index) => (
             <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+              <StepLabel optional={<Typography variant="caption">{stepDescriptions[index]}</Typography>}>
+                {label}
+              </StepLabel>
               <StepContent>
                 <Card sx={{ mt: 2, mb: 2 }}>
                   <CardContent>{renderStepContent(index)}</CardContent>

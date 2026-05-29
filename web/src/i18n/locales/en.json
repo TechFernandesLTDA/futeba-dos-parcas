@@ -87,6 +87,7 @@
     "title": "Theme",
     "light": "Light",
     "dark": "Dark",
+    "oled": "OLED",
     "system": "System",
     "auto": "Auto (system)",
     "lightMode": "Light mode",
@@ -144,6 +145,7 @@
       "title": "Theme",
       "lightDesc": "Light mode",
       "darkDesc": "Dark mode",
+      "oledDesc": "OLED mode with pure black",
       "systemDesc": "Auto (system)",
       "selection": "Theme selection",
       "pushNotifications": "Push Notifications",
@@ -358,6 +360,10 @@
       "stepSettings": "Settings",
       "stepPayment": "Payment",
       "stepRules": "Rules",
+      "stepLocationDateDesc": "Where and when the game happens",
+      "stepSettingsDesc": "Spots, positions and field type",
+      "stepPaymentDesc": "Price and payment method",
+      "stepRulesDesc": "Rules and streaming link",
       "stepperLabel": "Game creation steps",
       "group": "Group",
       "loadingGroups": "Loading groups...",
@@ -442,6 +448,14 @@
     "presenceCanceled": "Presence canceled.",
     "presenceCancelError": "Failed to cancel presence.",
     "liveTitle": "Live Game",
+    "events": {
+      "goal": "Goal",
+      "assist": "Assist",
+      "save": "Save",
+      "yellow_card": "Yellow Card",
+      "red_card": "Red Card",
+      "substitution": "Substitution"
+    },
     "filterByGroup": "Filter by group",
     "allGroups": "All groups",
     "search": {
@@ -567,6 +581,10 @@
     "level": "Level",
     "browseGames": "Browse games",
     "retry": "Retry"
+  },
+  "level": {
+    "currentBadge": "CURRENT",
+    "maxReached": "Max level reached! You are the Football King!"
   },
   "groups": {
     "title": "Groups",

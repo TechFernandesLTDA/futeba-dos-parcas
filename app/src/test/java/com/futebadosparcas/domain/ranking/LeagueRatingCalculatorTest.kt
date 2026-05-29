@@ -43,12 +43,12 @@ class LeagueRatingCalculatorTest {
             )
             val rating = LeagueRatingCalculator.calculate(games)
 
-            // PPJ: 200/200 * 100 * 0.4 = 40
+            // PPJ: 200/500 * 100 * 0.4 = 16
             // WR: 100% * 0.3 = 30
             // GD: (3+3)/6 * 100 * 0.2 = 20
-            // MVP: 100/50 = 2 -> cap 1.0 * 100 * 0.1 = 10
-            // Total: 100
-            assertEquals(100.0, rating, 0.001)
+            // MVP: 100% -> cap 1.0 * 100 * 0.1 = 10
+            // Total: 76
+            assertEquals(76.0, rating, 0.001)
         }
 
         @Test
@@ -66,7 +66,7 @@ class LeagueRatingCalculatorTest {
             )
             val rating = LeagueRatingCalculator.calculate(games)
 
-            // PPJ: 10/200 * 100 * 0.4 = 2
+            // PPJ: 10/500 * 100 * 0.4 = 0.8
             // WR: 0% * 0.3 = 0
             // GD: 0/6 * 100 * 0.2 = 0
             // MVP: 0 * 0.1 = 0

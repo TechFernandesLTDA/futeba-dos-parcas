@@ -57,6 +57,8 @@ export const processWeeklyRanking = onSchedule(
     schedule: "every sunday 23:59",
     timeZone: "America/Sao_Paulo",
     region: FUNCTION_REGION,
+    timeoutSeconds: 540,
+    memory: "512MiB",
   },
   async () => {
     const now = new Date();
@@ -88,6 +90,18 @@ export const processWeeklyRanking = onSchedule(
         .collection("confirmations")
         .where("was_present", "==", true)
         .get();
+
+      const teamsSnap = await db()
+        .collection("games")
+        .doc(gameId)
+        .collection("teams")
+        .get();
+
+      const teams = teamsSnap.docs.map((t) => ({
+        playerIds: (t.data().player_ids as string[]) || [],
+        score: (t.data().score as number) || 0,
+      }));
+      const teamScores = teams.map((t) => t.score);
 
       for (const confDoc of confSnap.docs) {
         const c = confDoc.data();
@@ -133,22 +147,13 @@ export const processWeeklyRanking = onSchedule(
           s.points -= 3;
         }
 
-        const teamsSnap = await db()
-          .collection("games")
-          .doc(gameId)
-          .collection("teams")
-          .get();
-
-        const userTeam = teamsSnap.docs.find((t) =>
-          (t.data().player_ids as string[])?.includes(uid)
+        const userTeam = teams.find((t) =>
+          t.playerIds.includes(uid)
         );
 
         if (userTeam) {
-          const allTeams = teamsSnap.docs.map((t) => t.data().score as number);
-          const userScore = userTeam.data().score as number;
-
-          if (allTeams.length >= 2) {
-            const isWin = userScore > Math.min(...allTeams);
+          if (teamScores.length >= 2) {
+            const isWin = userTeam.score > Math.min(...teamScores);
             if (isWin) {
               s.wins += 1;
               s.points += 2;
@@ -175,37 +180,60 @@ export const processWeeklyRanking = onSchedule(
 
     // Scout ranking: dream team scoring
     const scoutRankings: Array<{ userId: string; userName: string; points: number }> = [];
-    const usersSnap = await db().collection("users").get();
+    let lastUserDoc: admin.firestore.QueryDocumentSnapshot | undefined;
 
-    for (const userDoc of usersSnap.docs) {
-      const teamDoc = await db()
+    while (true) {
+      let usersQuery = db()
         .collection("users")
-        .doc(userDoc.id)
-        .collection("dream_team")
-        .doc("current")
-        .get();
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(500);
 
-      if (!teamDoc.exists) continue;
+      if (lastUserDoc) {
+        usersQuery = usersQuery.startAfter(lastUserDoc);
+      }
 
-      const teamData = teamDoc.data();
-      const players = (teamData?.players as Array<{ userId: string }>) || [];
-      if (players.length === 0) continue;
+      const usersSnap = await usersQuery.get();
+      if (usersSnap.empty) break;
 
-      let teamPoints = 0;
-      for (const player of players) {
-        const playerScore = rankings.find((r) => r.userId === player.userId);
-        if (playerScore) {
-          teamPoints += playerScore.points;
+      const teamDocs = await Promise.all(
+        usersSnap.docs.map((userDoc) =>
+          db()
+            .collection("users")
+            .doc(userDoc.id)
+            .collection("dream_team")
+            .doc("current")
+            .get()
+        )
+      );
+
+      for (const [index, teamDoc] of teamDocs.entries()) {
+        const userDoc = usersSnap.docs[index];
+
+        if (!teamDoc.exists) continue;
+
+        const teamData = teamDoc.data();
+        const players = (teamData?.players as Array<{ userId: string }>) || [];
+        if (players.length === 0) continue;
+
+        let teamPoints = 0;
+        for (const player of players) {
+          const playerScore = rankings.find((r) => r.userId === player.userId);
+          if (playerScore) {
+            teamPoints += playerScore.points;
+          }
+        }
+
+        if (teamPoints > 0) {
+          scoutRankings.push({
+            userId: userDoc.id,
+            userName: (userDoc.data()?.name as string) || "Jogador",
+            points: teamPoints,
+          });
         }
       }
 
-      if (teamPoints > 0) {
-        scoutRankings.push({
-          userId: userDoc.id,
-          userName: (userDoc.data()?.name as string) || "Jogador",
-          points: teamPoints,
-        });
-      }
+      lastUserDoc = usersSnap.docs[usersSnap.docs.length - 1];
+      if (usersSnap.size < 500) break;
     }
 
     scoutRankings.sort((a, b) => b.points - a.points);

@@ -26,6 +26,7 @@ import {
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
   BrightnessAuto as SystemIcon,
+  Contrast as OledIcon,
   Notifications as NotificationsIcon,
   Language as LanguageIcon,
   Storage as StorageIcon,
@@ -126,7 +127,9 @@ export const ThemeSettingsScreen: React.FC = () => {
           <List disablePadding>
             <ListItem>
               <ListItemIcon>
-                {mode === 'dark' ? (
+                {mode === 'oled' ? (
+                  <OledIcon />
+                ) : mode === 'dark' ? (
                   <DarkModeIcon />
                 ) : mode === 'light' ? (
                   <LightModeIcon />
@@ -137,7 +140,9 @@ export const ThemeSettingsScreen: React.FC = () => {
               <ListItemText
                 primary={t('settings.theme.title')}
                 secondary={
-                  mode === 'dark'
+                  mode === 'oled'
+                    ? t('settings.theme.oledDesc')
+                    : mode === 'dark'
                     ? t('settings.theme.darkDesc')
                     : mode === 'light'
                     ? t('settings.theme.lightDesc')
@@ -165,6 +170,10 @@ export const ThemeSettingsScreen: React.FC = () => {
                 <ToggleButton value="dark" aria-label={t('theme.dark')}>
                   <DarkModeIcon sx={{ mr: 0.5 }} fontSize="small" />
                   {t('theme.dark')}
+                </ToggleButton>
+                <ToggleButton value="oled" aria-label={t('theme.oled')}>
+                  <OledIcon sx={{ mr: 0.5 }} fontSize="small" />
+                  {t('theme.oled')}
                 </ToggleButton>
               </ToggleButtonGroup>
             </ListItem>

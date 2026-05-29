@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { responsiveFontSizes } from '@mui/material/styles';
-import { futebaTheme, futebaDarkTheme } from '../theme';
+import { futebaTheme, futebaDarkTheme, futebaDarkOledTheme } from '../theme';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'oled' | 'system';
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -30,7 +30,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [isDark, setIsDark] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('themeMode') as ThemeMode | null;
-      if (saved === 'dark') return true;
+      if (saved === 'dark' || saved === 'oled') return true;
       if (saved === 'light') return false;
     } catch (error) {
       console.warn('Failed to read themeMode from localStorage:', error);
@@ -46,7 +46,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (mode === 'system') {
         setIsDark(mediaQuery.matches);
       } else {
-        setIsDark(mode === 'dark');
+        setIsDark(mode === 'dark' || mode === 'oled');
       }
     };
 
@@ -67,7 +67,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleTheme = useCallback(() => {
     setMode(current => {
       if (current === 'light') return 'dark';
-      if (current === 'dark') return 'system';
+      if (current === 'dark') return 'oled';
+      if (current === 'oled') return 'system';
       return 'light';
     });
   }, []);
@@ -77,9 +78,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }), [mode, toggleTheme]);
 
   const theme = useMemo(() => {
-    const base = isDark ? futebaDarkTheme : futebaTheme;
+    const base = mode === 'oled' ? futebaDarkOledTheme : isDark ? futebaDarkTheme : futebaTheme;
     return responsiveFontSizes(base);
-  }, [isDark]);
+  }, [isDark, mode]);
 
   return (
     <ThemeContext.Provider value={value}>
