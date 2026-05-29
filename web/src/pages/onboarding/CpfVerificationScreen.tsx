@@ -23,7 +23,7 @@ import {
   ShieldOutlined as ShieldIcon,
 } from '@mui/icons-material';
 import { isValidCpf, formatCpf, stripCpf } from '../../utils/cpfValidator';
-import { verifyCpf, setUserVerified, recomputeMyProfileClaim } from '../../services/cloudFunctions';
+import { verifyCpf, setUserVerified, recomputeMyProfileClaim, logVerificationFailure } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -225,6 +225,9 @@ export const CpfVerificationScreen: React.FC = () => {
       // FIX 2026-05-20: somente Alert no card (setError) — antes duplicava
       // com Toast (showError) exibindo a mesma mensagem na base da tela.
       setError(userMsg);
+
+      // Anti-abuse: log failure for audit
+      logVerificationFailure({ reason: code || 'unknown', stage: 'cpf' }).catch(() => {});
     } finally {
       setLoading(false);
     }

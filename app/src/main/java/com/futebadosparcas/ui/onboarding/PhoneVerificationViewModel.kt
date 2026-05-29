@@ -132,17 +132,9 @@ class PhoneVerificationViewModel(
                 PhoneAuthProvider.verifyPhoneNumber(options)
             } catch (e: Exception) {
                 AppLogger.e("PhoneVerification", "Erro ao verificar rate limit OTP", e)
-                // Em caso de falha na CF (ex: offline), prosseguir com envio
-                // para não degradar a experiência quando há problemas de rede.
-                // O Firebase Phone Auth tem seus próprios limites de quota.
-                val options = PhoneAuthOptions.newBuilder(auth)
-                    .setPhoneNumber(normalized)
-                    .setTimeout(60L, TimeUnit.SECONDS)
-                    .setActivity(activity)
-                    .setCallbacks(callbacks)
-                    .apply { resendToken?.let { setForceResendingToken(it) } }
-                    .build()
-                PhoneAuthProvider.verifyPhoneNumber(options)
+                _uiState.value = PhoneVerificationUiState.Error(
+                    "Erro de conexao. Verifique sua internet e tente novamente."
+                )
             }
         }
     }

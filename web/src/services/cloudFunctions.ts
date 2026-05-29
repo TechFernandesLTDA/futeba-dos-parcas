@@ -45,6 +45,12 @@ export const setUserVerified = httpsCallable<
 // Recomputa custom claim profileComplete (defense-in-depth: gates #1483/1484/1485)
 export const recomputeMyProfileClaim = httpsCallable<void, { success: boolean; profileComplete: boolean }>(functions, 'recomputeMyProfileClaim');
 
+// Anti-abuse: audit verification failures
+export const logVerificationFailure = httpsCallable<
+  { reason: string; stage: string },
+  { logged: boolean }
+>(functions, 'logVerificationFailure');
+
 // Exclusão de conta — LGPD art. 18 (direito ao esquecimento)
 export const deleteAccount = httpsCallable<void, { success: boolean }>(functions, 'deleteAccount');
 
