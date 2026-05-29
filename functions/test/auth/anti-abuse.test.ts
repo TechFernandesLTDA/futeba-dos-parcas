@@ -115,6 +115,7 @@ describe("Auth — Anti Abuse", () => {
     it("permite envio quando dentro do rate limit", async () => {
       (checkRateLimit as jest.Mock)
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date(Date.now() + 3600000) });
 
       const result = await canSendSmsOtp(makeRequest());
@@ -124,6 +125,7 @@ describe("Auth — Anti Abuse", () => {
 
     it("bloqueia quando rate limit por phone excedido", async () => {
       (checkRateLimit as jest.Mock)
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: false, remaining: 0, resetAt: new Date(Date.now() + 3600000) });
 
       const result = await canSendSmsOtp(makeRequest());
@@ -134,6 +136,7 @@ describe("Auth — Anti Abuse", () => {
 
     it("bloqueia quando rate limit por IP excedido", async () => {
       (checkRateLimit as jest.Mock)
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: false, remaining: 0, resetAt: new Date(Date.now() + 3600000) });
 
@@ -157,6 +160,7 @@ describe("Auth — Anti Abuse", () => {
 
     it("extrai IP corretamente de x-forwarded-for", async () => {
       (checkRateLimit as jest.Mock)
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date(Date.now() + 3600000) });
 

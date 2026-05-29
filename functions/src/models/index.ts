@@ -67,6 +67,8 @@ export interface UserStatistics {
     worstPlayerCount: number;
     // Sequencia atual de jogos como MVP
     currentMvpStreak: number;
+    // Melhor sequencia historica de MVPs consecutivos
+    bestMvpStreak: number;
 }
 
 export interface XpLog {

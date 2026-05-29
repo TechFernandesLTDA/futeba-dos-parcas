@@ -1111,9 +1111,15 @@ async function applyVotingXpDelta(
           ?.experience_points as number) || 0;
       const currentLevel =
         (userDoc.data()?.level as number) || 0;
-      // FIX #1575: piso em MIN_XP_PER_GAME (-100) em vez de 0 pra Bola Murcha
+      // FIX #1575 + #2111: piso em MIN_XP_PER_GAME (-100) em vez de 0 pra Bola Murcha
       // não ser absorvida silenciosamente quando o user tem menos XP que a
       // penalidade. Math.max(0,...) zerava a penalidade — comportamento errado.
+      // FIX #2111: clamp the increment delta itself so the atomic
+      // FieldValue.increment doesn't bypass the floor. Read + write are within
+      // the same transaction → safe from race conditions.
+      const clampedXpDelta = (currentXp + xpDelta < MIN_XP_PER_GAME) ?
+        MIN_XP_PER_GAME - currentXp :
+        xpDelta;
       const newXp = Math.max(MIN_XP_PER_GAME, currentXp + xpDelta);
 
       // FIX #1993: usa getLevelForXp() canônico de xp/pipeline.ts
@@ -1123,7 +1129,7 @@ async function applyVotingXpDelta(
       txn.set(logRef, {
         user_id: userId,
         game_id: gameId,
-        xp_earned: xpDelta,
+        xp_earned: clampedXpDelta,
         xp_before: currentXp,
         xp_after: newXp,
         level_before: currentLevel,
@@ -1134,13 +1140,9 @@ async function applyVotingXpDelta(
         created_at: admin.firestore.FieldValue
           .serverTimestamp(),
       });
-      // FIX #1532: usar FieldValue.increment em vez de valor absoluto
-      // pra evitar race condition com onGameStatusUpdate que também
-      // escreve experience_points. Increment é atômico no Firestore.
-      // FIX #1993: level recalculado via getLevelForXp() para consistência.
       txn.update(userRef, {
         experience_points:
-          admin.firestore.FieldValue.increment(xpDelta),
+          admin.firestore.FieldValue.increment(clampedXpDelta),
         level: newLevel,
         updated_at: admin.firestore.FieldValue
           .serverTimestamp(),
@@ -1154,7 +1156,7 @@ async function applyVotingXpDelta(
       if (activeSeasonId) {
         const seasonPartId = `${activeSeasonId}_${userId}`;
         const seasonPartUpdate: Record<string, unknown> = {
-          total_xp: admin.firestore.FieldValue.increment(xpDelta),
+          total_xp: admin.firestore.FieldValue.increment(clampedXpDelta),
           updated_at: now,
         };
         if (isMvp) {
@@ -1172,7 +1174,7 @@ async function applyVotingXpDelta(
         const weekDeltaId = `week_${weekKey}_${userId}`;
         const monthDeltaId = `month_${monthKey}_${userId}`;
         const rankingFields: Record<string, unknown> = {
-          xp_added: admin.firestore.FieldValue.increment(xpDelta),
+          xp_added: admin.firestore.FieldValue.increment(clampedXpDelta),
           updated_at: now,
         };
         if (isMvp) {
@@ -1192,7 +1194,7 @@ async function applyVotingXpDelta(
       }
 
       console.log(
-        `[VOTING_XP] Applied ${xpDelta} XP ` +
+        `[VOTING_XP] Applied ${clampedXpDelta} XP ` +
         `to ${userId} for ${reason} ` +
         `in ${gameId} ` +
         `(${currentXp} → ${newXp}, ` +
