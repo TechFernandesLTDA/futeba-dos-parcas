@@ -46,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun SplashScreen(
     user: User?,
+    userChecked: Boolean = false,
     versionName: String,
     randomQuote: String,
     onNavigate: (destination: SplashDestination) -> Unit
@@ -54,8 +55,10 @@ fun SplashScreen(
     var badgeScale by remember { mutableFloatStateOf(0.8f) }
     var hasNavigated by remember { mutableStateOf(false) }
 
-    // Animação do brasão quando usuário está logado
-    LaunchedEffect(user) {
+    val launcherKey = user != null to userChecked
+
+    LaunchedEffect(launcherKey) {
+        if (!userChecked) return@LaunchedEffect
         if (user != null && !hasNavigated) {
             // Animação de aparecimento do brasão
             badgeAlpha = 1f

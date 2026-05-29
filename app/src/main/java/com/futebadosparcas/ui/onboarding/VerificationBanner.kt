@@ -26,7 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
 
-private const val GRACE_END_MILLIS = 1780_531_200_000L // 2026-06-04T00:00:00Z
+private const val GRACE_END_MILLIS = 1_785_715_200_000L // 2026-08-03T00:00:00Z
 
 /**
  * Banner avisando users nao-verified sobre prazo do grace period.
