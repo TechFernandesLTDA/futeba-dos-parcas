@@ -122,13 +122,14 @@ export function asPlayerC(testEnv: RulesTestEnvironment) {
 export function asUser(
   testEnv: RulesTestEnvironment,
   uid: string,
-  claims: Record<string, unknown> = {
+  claims: Record<string, unknown> = {}
+) {
+  return testEnv.authenticatedContext(uid, {
     role: "PLAYER",
     verified: true,
     profileComplete: true,
-  }
-) {
-  return testEnv.authenticatedContext(uid, claims).firestore();
+    ...claims,
+  }).firestore();
 }
 
 /**

@@ -149,27 +149,26 @@ service cloud.firestore {
 
     // isAdmin() - Usa APENAS Custom Claims (0 Firestore reads)
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.role == 'ADMIN';
+      return isAuthenticated() &&
+        "role" in request.auth.token &&
+        request.auth.token.role == "ADMIN";
     }
 
-    // isFieldOwner() - Verifica Custom Claims para FIELD_OWNER
     function isFieldOwner() {
-      return isAuthenticated() && request.auth.token.role == 'FIELD_OWNER';
+      return isAuthenticated() &&
+        "role" in request.auth.token &&
+        request.auth.token.role == "FIELD_OWNER";
     }
 
-    // FASE 5 #448: Phone+CPF verification enforcement
-    // isVerified() - Verifica custom claim verified=true (Phone+CPF Anti-Bot)
-    // Spec: SPEC_PHONE_CPF_FASE5_ENFORCEMENT.md
     function isVerified() {
-      return isAuthenticated() && request.auth.token.verified == true;
+      return isAuthenticated() &&
+        "verified" in request.auth.token &&
+        request.auth.token.verified == true;
     }
 
-    // isVerifiedOrGrace() - Permite users existentes durante 30-day grace
-    // Apos 2026-06-04 (30d apos deploy Fase 5), passa a exigir verified=true.
-    // Server-side fixed (cliente nao pode bypassar mudando timestamp local).
     function isVerifiedOrGrace() {
       return isAuthenticated() && (
-        request.auth.token.verified == true ||
+        ("verified" in request.auth.token && request.auth.token.verified == true) ||
         request.time < timestamp.date(2026, 6, 4)
       );
     }
@@ -189,7 +188,8 @@ service cloud.firestore {
 
     function isProfileComplete() {
       return isAuthenticated() && (
-        request.auth.token.profileComplete == true ||
+        ("profileComplete" in request.auth.token &&
+         request.auth.token.profileComplete == true) ||
         hasProfileCompleteFallback()
       );
     }
@@ -928,7 +928,8 @@ service cloud.firestore {
         // Owner deve ser o usuario autenticado
         request.resource.data.owner_id == userId() &&
         // #1026: Apenas FIELD_OWNER ou ADMIN podem criar locais
-        (request.auth.token.role == 'FIELD_OWNER' || request.auth.token.role == 'ADMIN') &&
+        ("role" in request.auth.token &&
+         (request.auth.token.role == 'FIELD_OWNER' || request.auth.token.role == 'ADMIN')) &&
         // Validacao de dados
         hasValidLocationData() &&
         // Campos de sistema devem ter valores corretos na criacao
