@@ -80,6 +80,10 @@ export const canSendSmsOtp = onCall(
 
     const phone: unknown = request.data?.phone;
     if (typeof phone !== "string" || !/^\+\d{10,15}$/.test(phone)) {
+      // NOTE: regex is intentionally loose here (E.164 any country).
+      // Actual BR mobile validation happens at Firebase Phone Auth layer
+      // (signInWithPhoneNumber rejects landlines/non-mobile). Tightening
+      // this regex would block future international expansion.
       throw new HttpsError(
         "invalid-argument",
         "Phone E.164 invalido",
