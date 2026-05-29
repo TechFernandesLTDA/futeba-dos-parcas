@@ -98,6 +98,11 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 - `onAuthStateChanged` fires on every token refresh — compare UIDs to avoid loading flash.
 - `auth/popup-closed-by-user` is NOT an error — silently return.
 
+### CPF validation (critical constraint)
+- The CPF check-digit algorithm is implemented in **3 places**: `functions/src/validation/cpf.ts`, `web/src/utils/cpfValidator.ts`, and `shared/.../CpfValidator.kt`.
+- **All three MUST stay in sync.** If the algorithm changes, update all three simultaneously.
+- The formula `(sum * 10) % 11` (with `10 → 0`) is mathematically equivalent to the standard `11 - (sum % 11)` algorithm.<
+
 ### States every screen must handle
 ```typescript
 // Loading → ShimmerLoading or LoadingState
