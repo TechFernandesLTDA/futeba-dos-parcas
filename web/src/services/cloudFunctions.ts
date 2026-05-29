@@ -27,6 +27,11 @@ export const recalculateAllAutoRatings = httpsCallable<
 
 // Phone + CPF Verification (Anti-Bot)
 // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
+export const canSendSmsOtp = httpsCallable<
+  { phone: string },
+  { allowed: boolean; reason?: string; retryAfterSec?: number }
+>(functions, 'canSendSmsOtp');
+
 export const verifyCpf = httpsCallable<
   { cpf: string },
   { success: boolean; cpfMasked: string }

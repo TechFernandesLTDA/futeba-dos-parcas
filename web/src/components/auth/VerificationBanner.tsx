@@ -4,7 +4,7 @@ import { Alert, Button, Box, Slide } from '@mui/material';
 import { ShieldOutlined as ShieldIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
-const GRACE_END = new Date('2026-06-04T00:00:00Z');
+const GRACE_END = new Date('2026-08-03T00:00:00Z');
 
 /**
  * Banner pra users existentes ainda nao-verificados.
