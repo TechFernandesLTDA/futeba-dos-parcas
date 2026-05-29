@@ -186,9 +186,10 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
     const adminUnverified = asUser(testEnv, "uid-admin-unverified", {
       role: "ADMIN",
       verified: false,
+      profileComplete: true,
     });
     await assertSucceeds(
-      adminUnverified.db.doc("games/game-admin-unverified").set({
+      adminUnverified.doc("games/game-admin-unverified").set({
         title: "Admin Jogo",
         owner_id: "uid-admin-unverified",
         status: "SCHEDULED",

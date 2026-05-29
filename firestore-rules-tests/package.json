@@ -10,12 +10,12 @@
     "test:ci": "JAVA_HOME=/opt/homebrew/Cellar/openjdk/25.0.2/libexec/openjdk.jdk/Contents/Home firebase emulators:exec --only firestore --project futebadosparcas 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --reporter=verbose'"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^5.0.0",
-    "firebase": "^12.12.1",
-    "firebase-tools": "^15.17.0",
-    "typescript": "^5.7.3",
-    "vite": "^8.0.10",
-    "vitest": "^4.1.5"
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "firebase": "^12.14.0",
+    "firebase-tools": "^15.19.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
   },
   "engines": {
     "node": ">=20"
