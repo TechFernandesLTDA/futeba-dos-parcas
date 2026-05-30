@@ -15,8 +15,10 @@ class CalculateLevelUseCaseTest {
     private val useCase = CalculateLevelUseCase()
 
     @Test
-    fun nivel1_comZeroXp() {
-        assertEquals(1, useCase.calculateLevel(0))
+    fun nivel0_comZeroXp() {
+        // LevelTable e a fonte de verdade (refator #1531): nivel 0 "Novato" em 0 XP.
+        // O LevelCalculator antigo (10 niveis, 1-based) foi descontinuado.
+        assertEquals(0, useCase.calculateLevel(0))
     }
 
     @Test
