@@ -31,6 +31,15 @@ const getDb = () => admin.firestore();
 const getStorage = () => new Storage();
 
 /**
+ * FIX #2323: guarda de segurança contra loop infinito na anonimização LGPD.
+ * Com limit(500) por página, 1000 iterações = até 500k docs anonimizados —
+ * folga mais que suficiente para qualquer usuário real. Se exceder, é sinal de
+ * loop sem avanço de cursor → aborta com logger.error em vez de travar até o
+ * timeout da função (e disparar retry infinito).
+ */
+const MAX_ANON_ITERATIONS = 1000;
+
+/**
  * Cloud Function: onUserDeleted
  *
  * Trigger: Firebase Auth onDelete
@@ -446,15 +455,36 @@ export const onUserDeleted = auth
 
         // FIX #1961: cashbox transactions — anonymize created_by_name (LGPD Art. 18 VI)
         // Transactions are subcollections inside cashbox documents.
-        // Requires composite index on collectionGroup(transactions): created_by ASC, __name__ ASC
+        // FIX #2323: paginação por cursor (startAfter) + guarda de iterações.
+        // Antes: query sem cursor repetia sempre os mesmos 500 docs (created_by
+        // não muda na anonimização, só created_by_NAME) → size sempre 500 →
+        // loop infinito. Agora avança via startAfter(lastDoc). SEM orderBy
+        // explícito (espelha o loop de `groups` abaixo): reusa a ordenação
+        // implícita por __name__ do single-field index já existente — não exige
+        // índice composto novo (que não existe em firestore.indexes.json).
         try {
           let cashboxTotal = 0;
+          let cashboxLastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          let cashboxIterations = 0;
           while (true) {
-            const cashboxSnap = await db
+            if (++cashboxIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar cashbox transactions " +
+                  `para ${uid} — abortando para evitar loop infinito`
+              );
+              anonFailed = true;
+              break;
+            }
+            let cashboxQuery = db
               .collectionGroup("transactions")
               .where("created_by", "==", uid)
-              .limit(500)
-              .get();
+              .limit(500);
+            if (cashboxLastDoc) {
+              cashboxQuery = cashboxQuery.startAfter(cashboxLastDoc);
+            }
+            const cashboxSnap = await cashboxQuery.get();
             if (cashboxSnap.empty) break;
             const cashboxBatch = db.batch();
             cashboxSnap.forEach((doc) => {
@@ -464,6 +494,8 @@ export const onUserDeleted = auth
             });
             await cashboxBatch.commit();
             cashboxTotal += cashboxSnap.size;
+            cashboxLastDoc =
+              cashboxSnap.docs[cashboxSnap.docs.length - 1];
             if (cashboxSnap.size < 500) break;
           }
           if (cashboxTotal > 0) {
@@ -482,15 +514,33 @@ export const onUserDeleted = auth
 
         // FIX #1963: location reviews — anonymize user_name (LGPD Art. 18 VI)
         // Reviews are subcollections inside location documents.
-        // Requires composite index on collectionGroup(reviews): user_id ASC, __name__ ASC
+        // FIX #2323: paginação por cursor (startAfter) + guarda de iterações.
+        // Mesma causa-raiz do loop de cashbox: o filtro (user_id) não muda na
+        // anonimização → query sem cursor reprocessava os mesmos 500 docs em
+        // loop. SEM orderBy explícito (reusa ordenação por __name__).
         try {
           let reviewsTotal = 0;
+          let reviewsLastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          let reviewsIterations = 0;
           while (true) {
-            const reviewsSnap = await db
+            if (++reviewsIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar location reviews " +
+                  `para ${uid} — abortando para evitar loop infinito`
+              );
+              anonFailed = true;
+              break;
+            }
+            let reviewsQuery = db
               .collectionGroup("reviews")
               .where("user_id", "==", uid)
-              .limit(500)
-              .get();
+              .limit(500);
+            if (reviewsLastDoc) {
+              reviewsQuery = reviewsQuery.startAfter(reviewsLastDoc);
+            }
+            const reviewsSnap = await reviewsQuery.get();
             if (reviewsSnap.empty) break;
             const reviewsBatch = db.batch();
             reviewsSnap.forEach((doc) => {
@@ -500,6 +550,8 @@ export const onUserDeleted = auth
             });
             await reviewsBatch.commit();
             reviewsTotal += reviewsSnap.size;
+            reviewsLastDoc =
+              reviewsSnap.docs[reviewsSnap.docs.length - 1];
             if (reviewsSnap.size < 500) break;
           }
           if (reviewsTotal > 0) {
@@ -585,15 +637,33 @@ export const onUserDeleted = auth
 
         // FIX #1968: activities — anonymize targetUserName + targetUserPhoto (LGPD Art. 18 VI)
         // Activities where the deleted user is referenced as a target (by other users).
-        // Requires composite index on collectionGroup(activities): targetUserId ASC, __name__ ASC
+        // FIX #2323: paginação por cursor (startAfter) + guarda de iterações.
+        // Mesma causa-raiz dos loops acima: o filtro (targetUserId) não muda na
+        // anonimização → query sem cursor reprocessava os mesmos 500 docs em
+        // loop. SEM orderBy explícito (reusa ordenação por __name__).
         try {
           let targetActivitiesTotal = 0;
+          let activitiesLastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          let activitiesIterations = 0;
           while (true) {
-            const activitiesSnap = await db
+            if (++activitiesIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar activities target " +
+                  `para ${uid} — abortando para evitar loop infinito`
+              );
+              anonFailed = true;
+              break;
+            }
+            let activitiesQuery = db
               .collectionGroup("activities")
               .where("targetUserId", "==", uid)
-              .limit(500)
-              .get();
+              .limit(500);
+            if (activitiesLastDoc) {
+              activitiesQuery = activitiesQuery.startAfter(activitiesLastDoc);
+            }
+            const activitiesSnap = await activitiesQuery.get();
             if (activitiesSnap.empty) break;
             const activitiesBatch = db.batch();
             activitiesSnap.forEach((doc) => {
@@ -604,6 +674,8 @@ export const onUserDeleted = auth
             });
             await activitiesBatch.commit();
             targetActivitiesTotal += activitiesSnap.size;
+            activitiesLastDoc =
+              activitiesSnap.docs[activitiesSnap.docs.length - 1];
             if (activitiesSnap.size < 500) break;
           }
           if (targetActivitiesTotal > 0) {

@@ -290,21 +290,73 @@ async function processNotificationQueue():
       " notificacoes da fila"
     );
 
-    // 2. Marcar como PROCESSING
-    const processingBatch = db.batch();
+    // 2. Reivindicar (claim) cada doc de forma ATÔMICA via transaction.
+    // FIX #2324: o claim PENDING→PROCESSING precisa ser compare-and-swap.
+    // Antes era um batch.update() não-transacional: entre o .get() (passo 1)
+    // e o commit, outra instância concorrente podia ler os MESMOS docs PENDING
+    // e enviar push DUPLICADO. Agora cada doc é reivindicado dentro de uma
+    // transaction que relê o status: se já != PENDING (outra instância pegou,
+    // ou já foi SENT/PROCESSING), pula. Só os docs efetivamente reivindicados
+    // por ESTA execução seguem para envio (idempotência garantida mesmo com
+    // overlap). O conteúdo do doc (userIds/title/body) é imutável, então
+    // reusamos o snapshot do passo 1 — apenas `status` importa para o claim.
+    const claimedDocs:
+      admin.firestore.QueryDocumentSnapshot[] = [];
     for (const doc of pendingSnap.docs) {
-      processingBatch.update(doc.ref, {
-        status: "PROCESSING",
-        processing_at:
-          admin.firestore.FieldValue
-            .serverTimestamp(),
-      });
+      try {
+        const claimed = await db.runTransaction(async (tx) => {
+          const fresh = await tx.get(doc.ref);
+          if (!fresh.exists) return false;
+          if (fresh.data()?.status !== "PENDING") {
+            // Já reivindicado por outra execução (ou já processado): pular.
+            return false;
+          }
+          tx.update(doc.ref, {
+            status: "PROCESSING",
+            processing_at:
+              admin.firestore.FieldValue
+                .serverTimestamp(),
+          });
+          return true;
+        });
+        if (claimed) {
+          claimedDocs.push(doc);
+        }
+      } catch (claimError) {
+        // Falha transitória no claim: não reivindica este doc nesta execução.
+        // Permanece PENDING e será reprocessado na próxima passada.
+        logger.warn(
+          `[BATCH_FCM] Falha ao reivindicar doc ${doc.id}:`,
+          claimError
+        );
+      }
     }
-    await processingBatch.commit();
 
-    // 3. Coletar todos os userIds únicos
+    if (claimedDocs.length === 0) {
+      logger.info(
+        "[BATCH_FCM] Nenhum doc reivindicado nesta execucao" +
+        " (provavel concorrencia) — encerrando"
+      );
+      return {
+        totalTargeted: 0,
+        totalSent: 0,
+        totalFailed: 0,
+        invalidTokensCleaned: 0,
+        durationMs: Date.now() - startTime,
+      };
+    }
+
+    if (claimedDocs.length < pendingSnap.size) {
+      logger.info(
+        `[BATCH_FCM] Reivindicados ${claimedDocs.length}` +
+        ` de ${pendingSnap.size} docs` +
+        " (demais ja reivindicados por outra execucao)"
+      );
+    }
+
+    // 3. Coletar todos os userIds únicos (apenas dos docs reivindicados)
     const allUserIds = new Set<string>();
-    for (const doc of pendingSnap.docs) {
+    for (const doc of claimedDocs) {
       const data = doc.data();
       const userIds = data.userIds as string[];
       if (userIds) {
@@ -324,8 +376,10 @@ async function processNotificationQueue():
       Array.from(allUserIds)
     );
 
-    // 5. Processar cada notificação na fila
-    for (const doc of pendingSnap.docs) {
+    // 5. Processar cada notificação reivindicada por esta execução.
+    // FIX #2324: itera sobre claimedDocs (não pendingSnap.docs) — assim docs
+    // que outra instância concorrente reivindicou NÃO são reenviados aqui.
+    for (const doc of claimedDocs) {
       const data = doc.data();
       const userIds =
         (data.userIds as string[]) || [];
@@ -840,6 +894,12 @@ export const processNotificationBatch =
       memory: "512MiB",
       timeoutSeconds: 120,
       retryCount: 1,
+      // FIX #2324: serializa execução — impede instâncias concorrentes.
+      // Schedule de 1min com timeout de 2min podia sobrepor execuções; com
+      // maxInstances:1 o GCFv2 nunca roda duas instâncias deste scheduled
+      // function ao mesmo tempo (prevenção barata do push duplicado). O claim
+      // atômico via transaction acima é o hardening (defesa em profundidade).
+      maxInstances: 1,
     },
     async () => {
       const result =

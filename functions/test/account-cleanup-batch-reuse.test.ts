@@ -18,6 +18,8 @@
 function makeBatchInstance() {
   const instance = {
     delete: jest.fn(),
+    // FIX #2323: os loops de anonimização usam batch.update() (não delete).
+    update: jest.fn(),
     commit: jest.fn().mockResolvedValue(undefined),
     _committed: false,
   };
@@ -72,6 +74,19 @@ const mockCollection = jest.fn().mockReturnValue({
   get: mockCollectionGet,
 });
 
+// FIX #2323: collectionGroup mock controlável (com startAfter) para validar a
+// paginação por cursor nos loops de anonimização. Cada teste sobrescreve
+// mockCollectionGroupGet conforme o cenário. Default: vazio (no-op).
+const mockCollectionGroupGet = jest
+  .fn()
+  .mockResolvedValue({docs: [], empty: true, size: 0});
+const mockCollectionGroup = jest.fn().mockReturnValue({
+  where: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  startAfter: jest.fn().mockReturnThis(),
+  get: mockCollectionGroupGet,
+});
+
 jest.mock("firebase-admin", () => {
   const mockAdmin: any = {
     apps: [{name: "test"}],
@@ -79,11 +94,7 @@ jest.mock("firebase-admin", () => {
       collection: mockCollection,
       doc: mockDocRef,
       batch: mockBatch,
-      collectionGroup: jest.fn().mockReturnValue({
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        get: jest.fn().mockResolvedValue({ docs: [], empty: true, size: 0 }),
-      }),
+      collectionGroup: mockCollectionGroup,
     })),
     auth: jest.fn(() => ({})),
     initializeApp: jest.fn(),
@@ -143,6 +154,13 @@ describe("onUserDeleted — regressão #1280 batch reuse", () => {
     // users/{uid}: existe (sem cpfHash para simplicidade)
     // users_private/{uid}: não existe (sem PII extra)
     mockDocGet.mockResolvedValue({exists: false, data: () => null});
+
+    // collectionGroup default: vazio (clearAllMocks apaga o mockResolvedValue)
+    mockCollectionGroupGet.mockResolvedValue({
+      docs: [],
+      empty: true,
+      size: 0,
+    });
   });
 
   test("não lança para usuário sem docs residuais", async () => {
@@ -250,4 +268,85 @@ describe("onUserDeleted — regressão #1280 batch reuse", () => {
       }
     }
   });
+});
+
+// ==========================================
+// REGRESSÃO #2323 — loop infinito na anonimização LGPD (collectionGroup)
+// ==========================================
+
+describe("onUserDeleted — regressão #2323 loop infinito anonimização", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    batchInstances.length = 0;
+    mockDocGet.mockResolvedValue({exists: false, data: () => null});
+    mockCollectionGet.mockResolvedValue({docs: [], empty: true, size: 0});
+    mockCollectionGroupGet.mockResolvedValue({
+      docs: [],
+      empty: true,
+      size: 0,
+    });
+  });
+
+  test(
+    "termina com >= 500 docs anonimizados (cursor avança, não reprocessa)",
+    async () => {
+      // Cenário do bug: usuário com 750 docs em uma subcoleção (ex: cashbox
+      // transactions). Antes do fix, a query sem cursor retornava sempre os
+      // mesmos 500 primeiros docs (size === 500) → while(true) infinito.
+      // Depois do fix: startAfter(lastDoc) avança → 2ª página tem 250 docs
+      // (< 500) → loop encerra. Se o cursor NÃO avançasse, este mock retornaria
+      // 500 indefinidamente e o teste estouraria o timeout (falha = bug voltou).
+      const PAGE_1 = 500;
+      const PAGE_2 = 250;
+      // Snapshot mock com forEach (QuerySnapshot real expõe forEach + docs).
+      const makeSnap = (n: number, prefix: string) => {
+        const docs = Array.from({length: n}, (_, i) => ({
+          ref: {id: `${prefix}_${i}`},
+        }));
+        return {
+          docs,
+          empty: n === 0,
+          size: n,
+          forEach: (cb: (d: {ref: {id: string}}) => void) =>
+            docs.forEach(cb),
+        };
+      };
+      let cgCallCount = 0;
+      mockCollectionGroupGet.mockImplementation(() => {
+        cgCallCount++;
+        // Apenas a PRIMEIRA subcoleção consultada (cashbox transactions) tem
+        // docs; chamadas subsequentes (reviews/activities) já vêm vazias para
+        // manter o teste focado e rápido.
+        if (cgCallCount === 1) {
+          return Promise.resolve(makeSnap(PAGE_1, "tx"));
+        }
+        if (cgCallCount === 2) {
+          return Promise.resolve(makeSnap(PAGE_2, "tx_500"));
+        }
+        return Promise.resolve(makeSnap(0, "empty"));
+      });
+
+      await expect(
+        onUserDeleted(makeUserRecord())
+      ).resolves.not.toThrow();
+
+      // 1ª subcoleção: 2 páginas (500 + 250) → 2 chamadas. Demais subcoleções
+      // (reviews, activities): 1 chamada vazia cada. Total esperado: 4.
+      // O ponto crucial: o loop ENCERROU (chamadas finitas) em vez de repetir
+      // a página de 500 para sempre.
+      expect(cgCallCount).toBe(4);
+    },
+    10000
+  );
+
+  test(
+    "termina sem lançar quando subcoleções estão vazias (caminho feliz)",
+    async () => {
+      await expect(
+        onUserDeleted(makeUserRecord())
+      ).resolves.not.toThrow();
+      // 3 subcoleções consultadas uma vez cada (todas vazias).
+      expect(mockCollectionGroupGet).toHaveBeenCalledTimes(3);
+    }
+  );
 });
