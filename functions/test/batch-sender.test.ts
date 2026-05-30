@@ -66,6 +66,14 @@ jest.mock("firebase-admin", () => {
         delete: mockBatchDelete,
         commit: mockBatchCommit,
       })),
+      // FIX #2324: stub de runTransaction para o claim atômico
+      // (PENDING→PROCESSING) em processNotificationQueue. Os testes atuais
+      // não exercitam essa função, mas o stub evita crash caso passem a fazê-lo.
+      runTransaction: jest.fn(
+        async (
+          fn: (tx: { get: jest.Mock; update: jest.Mock }) => Promise<unknown>
+        ) => fn({ get: mockDocGet, update: mockDocUpdate })
+      ),
     })),
     messaging: jest.fn(() => ({
       sendEachForMulticast: mockMessagingSendEach,
