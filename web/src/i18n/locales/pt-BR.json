@@ -1,4 +1,11 @@
 {
+  "validation": {
+    "required": "Campo obrigatório",
+    "positiveNumber": "Informe um número válido (≥ 0)",
+    "minLength": "Mínimo {{min}} caracteres",
+    "selectRequired": "Selecione uma opção",
+    "dateRequired": "Data obrigatória"
+  },
   "cashbox": {
     "title": "Caixinha",
     "income": "Entrada",

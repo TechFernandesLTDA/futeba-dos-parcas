@@ -819,6 +819,8 @@ export const LiveGameScreen: React.FC = () => {
               onChange={(e) => setSelectedPlayer(e.target.value)}
               fullWidth
               required
+              error={!selectedPlayer && actionLoading}
+              helperText={!selectedPlayer && actionLoading ? t('validation.selectRequired') : ' '}
             >
               {confirmedPlayers.map((p) => (
                 <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
@@ -828,7 +830,7 @@ export const LiveGameScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddEventDialog(false)}>{t('common.cancel')}</Button>
-          <Button variant="contained" onClick={handleAddEvent} disabled={actionLoading}>{t('games.live.add')}</Button>
+          <Button variant="contained" onClick={handleAddEvent} disabled={actionLoading || !selectedPlayer} startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}>{t('games.live.add')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

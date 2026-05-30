@@ -20,6 +20,7 @@ import {
   Alert,
   Skeleton,
   useTheme,
+  useMediaQuery,
   alpha,
   CircularProgress,
 } from '@mui/material';
@@ -51,6 +52,7 @@ export const MVPVoteScreen: React.FC = () => {
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // #2238: layout responsivo
   const { currentUser } = useAuth();
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -184,7 +186,7 @@ export const MVPVoteScreen: React.FC = () => {
           <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
           <Skeleton variant="text" width={120} height={28} />
         </Box>
-        <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
           <Skeleton variant="rounded" height={80} sx={{ mb: 3 }} />
           <Skeleton variant="text" width="50%" height={24} sx={{ mb: 1 }} />
           {[0, 1, 2, 3].map((i) => (
@@ -249,7 +251,7 @@ export const MVPVoteScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

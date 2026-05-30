@@ -77,6 +77,8 @@ export const SchedulesScreen: React.FC = () => {
   const [newScheduleDay, setNewScheduleDay] = useState(0);
   const [newScheduleTime, setNewScheduleTime] = useState('');
   const [newScheduleMaxPlayers, setNewScheduleMaxPlayers] = useState(14);
+  const [scheduleNameTouched, setScheduleNameTouched] = useState(false); // #2231
+  const [scheduleTimeTouched, setScheduleTimeTouched] = useState(false); // #2231
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -257,7 +259,7 @@ export const SchedulesScreen: React.FC = () => {
         )}
       </Container>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="new-schedule-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setScheduleNameTouched(false); setScheduleTimeTouched(false); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="new-schedule-dialog-title">
         <DialogTitle id="new-schedule-dialog-title">Novo Agendamento</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
@@ -266,9 +268,13 @@ export const SchedulesScreen: React.FC = () => {
               label="Nome"
               value={newScheduleName}
               onChange={(e) => setNewScheduleName(e.target.value)}
+              onBlur={() => setScheduleNameTouched(true)}
+              error={scheduleNameTouched && !newScheduleName.trim()}
+              helperText={scheduleNameTouched && !newScheduleName.trim() ? t('validation.required') : ' '}
               fullWidth
               required
               placeholder="Ex: Futebol de Sábado"
+              inputProps={{ maxLength: 100 }}
             />
             <TextField
               select
@@ -286,6 +292,9 @@ export const SchedulesScreen: React.FC = () => {
               type="time"
               value={newScheduleTime}
               onChange={(e) => setNewScheduleTime(e.target.value)}
+              onBlur={() => setScheduleTimeTouched(true)}
+              error={scheduleTimeTouched && !newScheduleTime}
+              helperText={scheduleTimeTouched && !newScheduleTime ? t('validation.required') : ' '}
               fullWidth
               required
               InputLabelProps={{ shrink: true }}
@@ -301,7 +310,7 @@ export const SchedulesScreen: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={actionLoading}>{t('common.cancel')}</Button>
+          <Button onClick={() => { setDialogOpen(false); setScheduleNameTouched(false); setScheduleTimeTouched(false); }} disabled={actionLoading}>{t('common.cancel')}</Button>
           <Button variant="contained" onClick={handleCreateSchedule} disabled={actionLoading || !newScheduleName.trim() || !newScheduleTime} startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}>
             {actionLoading ? 'Criando...' : t('common.save')}
           </Button>

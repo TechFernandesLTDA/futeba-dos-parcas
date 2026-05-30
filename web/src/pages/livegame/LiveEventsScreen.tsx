@@ -84,6 +84,8 @@ export const LiveEventsScreen: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<'A' | 'B'>('A');
   const [minute, setMinute] = useState('0');
   const [playerName, setPlayerName] = useState('');
+  const [playerNameTouched, setPlayerNameTouched] = useState(false); // #2231
+  const [minuteTouched, setMinuteTouched] = useState(false); // #2231
   const [submitting, setSubmitting] = useState(false);
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -325,7 +327,7 @@ export const LiveEventsScreen: React.FC = () => {
         </Fab>
       )}
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setPlayerNameTouched(false); setMinuteTouched(false); }} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
@@ -360,6 +362,9 @@ export const LiveEventsScreen: React.FC = () => {
               label="Nome do Jogador"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
+              onBlur={() => setPlayerNameTouched(true)}
+              error={playerNameTouched && !playerName.trim()}
+              helperText={playerNameTouched && !playerName.trim() ? t('validation.required') : ' '}
               sx={{ mb: 2 }}
               inputProps={{ maxLength: 100 }}
             />
@@ -370,6 +375,10 @@ export const LiveEventsScreen: React.FC = () => {
               type="number"
               value={minute}
               onChange={(e) => setMinute(e.target.value)}
+              onBlur={() => setMinuteTouched(true)}
+              error={minuteTouched && (minute === '' || Number(minute) < 0)}
+              helperText={minuteTouched && (minute === '' || Number(minute) < 0) ? t('validation.positiveNumber') : ' '}
+              inputProps={{ min: 0, max: 200 }}
             />
           </Box>
         </DialogContent>
