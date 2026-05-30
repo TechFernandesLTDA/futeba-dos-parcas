@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -35,6 +35,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorState } from '../../components/common/ErrorState';
 import {
   LEVEL_TABLE,
   LevelEntry,
@@ -80,65 +81,66 @@ export const LevelJourneyScreen: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState(0);
   const [history, setHistory] = useState<LevelHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [xpGuideOpen, setXpGuideOpen] = useState(false);
 
   const targetUserId = userId || currentUser?.id;
 
-  useEffect(() => {
+  // #2215: estado de erro dedicado (antes só havia toast) + retry.
+  const cancelledRef = useRef(false);
+  const fetchLevelData = useCallback(async () => {
     if (!targetUserId) {
       setLoading(false);
       return;
     }
-
-    let cancelled = false;
-
-    const fetchLevelData = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', targetUserId));
-        if (cancelled) return;
-        if (userDoc.exists()) {
-          const raw = userDoc.data();
-          const data = snakeToCamel(raw) as Record<string, unknown>;
-          const xp = (data.experiencePoints as number) || (data.xp as number) || 0;
-          if (!cancelled) {
-            setCurrentXp(xp);
-            setCurrentLevel(getLevelForXp(xp));
-          }
-        }
-
-        const xpLogsRef = collection(db, 'xp_logs');
-        const q = query(xpLogsRef, where('user_id', '==', targetUserId), orderBy('created_at', 'desc'), limit(10));
-        const snapshot = await getDocs(q);
-
-        if (cancelled) return;
-
-        const historyData = snapshot.docs.map((d) => {
-          const rawLog = d.data();
-          const logData = snakeToCamel(rawLog) as Record<string, unknown>;
-          return {
-            level: (logData.newLevel as number) || 0,
-            achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
-            xpGained: (logData.xpGained as number) || 0,
-            source: (logData.source as string) || 'Jogo',
-          };
-        });
-
-        if (!cancelled) {
-          setHistory(historyData);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          logger.error('Error fetching level data:', error);
-          showErrorRef.current('Erro ao carregar histórico de nível.');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+    setLoading(true);
+    setError(null);
+    try {
+      const userDoc = await getDoc(doc(db, 'users', targetUserId));
+      if (cancelledRef.current) return;
+      if (userDoc.exists()) {
+        const raw = userDoc.data();
+        const data = snakeToCamel(raw) as Record<string, unknown>;
+        const xp = (data.experiencePoints as number) || (data.xp as number) || 0;
+        setCurrentXp(xp);
+        setCurrentLevel(getLevelForXp(xp));
       }
-    };
 
+      const xpLogsRef = collection(db, 'xp_logs');
+      const q = query(xpLogsRef, where('user_id', '==', targetUserId), orderBy('created_at', 'desc'), limit(10));
+      const snapshot = await getDocs(q);
+
+      if (cancelledRef.current) return;
+
+      const historyData = snapshot.docs.map((d) => {
+        const rawLog = d.data();
+        const logData = snakeToCamel(rawLog) as Record<string, unknown>;
+        return {
+          level: (logData.newLevel as number) || 0,
+          achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
+          xpGained: (logData.xpGained as number) || 0,
+          source: (logData.source as string) || 'Jogo',
+        };
+      });
+
+      setHistory(historyData);
+    } catch (err) {
+      if (!cancelledRef.current) {
+        logger.error('Error fetching level data:', err);
+        const message = t('profile.levelHistoryLoadError');
+        setError(message);
+        showErrorRef.current(message);
+      }
+    } finally {
+      if (!cancelledRef.current) setLoading(false);
+    }
+  }, [targetUserId, t]);
+
+  useEffect(() => {
+    cancelledRef.current = false;
     fetchLevelData();
-    return () => { cancelled = true; };
-  }, [targetUserId]);
+    return () => { cancelledRef.current = true; };
+  }, [fetchLevelData]);
 
   const progress = getXpProgress(currentXp);
   const xpRemaining = getXpRemaining(currentXp);
@@ -159,11 +161,11 @@ export const LevelJourneyScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Rumo ao Estrelato
+            {t('profile.starRoad')}
           </Typography>
         </Box>
       </Box>
@@ -171,6 +173,8 @@ export const LevelJourneyScreen: React.FC = () => {
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
+        ) : error ? (
+          <ErrorState message={error} onRetry={fetchLevelData} />
         ) : (
           <>
             {/* Card do nível atual - com efeito glow como Android */}

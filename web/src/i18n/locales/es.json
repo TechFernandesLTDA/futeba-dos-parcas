@@ -297,6 +297,7 @@
     "signInPrompt": "Inicia sesión para acceder a tu perfil",
     "goToLogin": "Ir al inicio de sesión",
     "loadErrorSimple": "Error al cargar perfil",
+    "levelHistoryLoadError": "Error al cargar el historial de nivel.",
     "streakActive_one": "¡{{count}} partido seguido!",
     "streakActive_other": "¡{{count}} partidos seguidos!",
     "streakRecord_one": "Récord: {{count}} partido",
@@ -801,6 +802,35 @@
   },
   "badges": {
     "title": "Logros"
+  },
+  "dreamTeam": {
+    "title": "Mi Equipo de los Sueños",
+    "description": "¡Arma tu equipo ficticio con los mejores jugadores que has enfrentado! Tu equipo puntúa junto con el ranking semanal.",
+    "loadError": "Error al cargar el Equipo de los Sueños. Inténtalo de nuevo.",
+    "selectPlayer": "Seleccionar jugador...",
+    "selectPlayerAria": "Seleccionar jugador para la posición {{position}}",
+    "none": "Ninguno",
+    "saveTeam": "Guardar Equipo"
+  },
+  "challenges": {
+    "title": "Desafíos",
+    "challenge": "Desafiar",
+    "loadError": "Error al cargar los desafíos. Inténtalo de nuevo.",
+    "emptyTitle": "Aún no has recibido desafíos",
+    "emptyDesc": "¡Desafía a otro grupo oficial a un partido!",
+    "proposedDate": "Fecha propuesta: {{date}}",
+    "dateToArrange": "Fecha a acordar",
+    "statusPending": "Pendiente",
+    "statusAccepted": "Aceptado",
+    "statusDeclined": "Rechazado",
+    "statusFinished": "Finalizado",
+    "accept": "Aceptar",
+    "declineChallenge": "Rechazar desafío",
+    "challengeGroup": "Desafiar Grupo",
+    "opponentGroup": "Grupo rival",
+    "selectGroup": "Seleccionar grupo...",
+    "proposedDateLabel": "Fecha propuesta",
+    "sendChallenge": "Enviar Desafío"
   },
   "weeklyRecap": {
     "title": "Resumen Semanal",

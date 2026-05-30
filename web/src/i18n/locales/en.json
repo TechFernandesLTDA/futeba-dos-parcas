@@ -297,6 +297,7 @@
     "signInPrompt": "Sign in to access your profile",
     "goToLogin": "Go to login",
     "loadErrorSimple": "Error loading profile",
+    "levelHistoryLoadError": "Error loading level history.",
     "streakActive_one": "{{count}} game in a row!",
     "streakActive_other": "{{count}} games in a row!",
     "streakRecord_one": "Record: {{count}} game",
@@ -832,6 +833,35 @@
   },
   "badges": {
     "title": "Achievements"
+  },
+  "dreamTeam": {
+    "title": "My Dream Team",
+    "description": "Build your fictional team with the best players you have faced! Your team scores along with the weekly ranking.",
+    "loadError": "Error loading the Dream Team. Please try again.",
+    "selectPlayer": "Select player...",
+    "selectPlayerAria": "Select player for the {{position}} position",
+    "none": "None",
+    "saveTeam": "Save Team"
+  },
+  "challenges": {
+    "title": "Challenges",
+    "challenge": "Challenge",
+    "loadError": "Error loading challenges. Please try again.",
+    "emptyTitle": "No challenges received yet",
+    "emptyDesc": "Challenge another official group to a match!",
+    "proposedDate": "Proposed date: {{date}}",
+    "dateToArrange": "Date to be arranged",
+    "statusPending": "Pending",
+    "statusAccepted": "Accepted",
+    "statusDeclined": "Declined",
+    "statusFinished": "Finished",
+    "accept": "Accept",
+    "declineChallenge": "Decline challenge",
+    "challengeGroup": "Challenge Group",
+    "opponentGroup": "Opponent group",
+    "selectGroup": "Select group...",
+    "proposedDateLabel": "Proposed date",
+    "sendChallenge": "Send Challenge"
   },
   "weeklyRecap": {
     "title": "Weekly Recap",

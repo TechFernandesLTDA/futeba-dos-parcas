@@ -98,19 +98,27 @@ export const GroupLeagueScreen: React.FC = () => {
     [theme]
   );
 
-  if (memberLoading || (!isMember && !memberLoading)) {
-    if (!isMember && !memberLoading) {
-      return (
-        <Container maxWidth="sm" sx={{ py: 4 }}>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Você precisa ser membro do grupo para ver a liga.
-          </Alert>
-          <Button startIcon={<BackIcon />} onClick={goBack}>
-            Voltar
-          </Button>
-        </Container>
-      );
-    }
+  // #2215: enquanto verifica associação, mostra loading explícito em vez de
+  // cair no return undefined (tela em branco durante memberLoading).
+  if (memberLoading) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <LoadingState shimmerCount={8} itemType="RANKING" />
+      </Container>
+    );
+  }
+
+  if (!isMember) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Você precisa ser membro do grupo para ver a liga.
+        </Alert>
+        <Button startIcon={<BackIcon />} onClick={goBack}>
+          Voltar
+        </Button>
+      </Container>
+    );
   }
 
   return (
