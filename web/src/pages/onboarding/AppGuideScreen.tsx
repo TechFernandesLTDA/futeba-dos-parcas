@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { useToast } from '../../contexts/ToastContext';
 import { iconSizes } from '../../theme/iconSizes';
 import { createLogger } from '../../utils/logger';
 
@@ -64,6 +65,7 @@ export const AppGuideScreen: React.FC = () => {
   useDocumentTitle('Bem-vindo ao Futeba');
   const navigate = useNavigate();
   const theme = useTheme();
+  const { showError } = useToast();
   const {
     onCarouselStarted,
     onSlideViewed,
@@ -94,6 +96,7 @@ export const AppGuideScreen: React.FC = () => {
       await onCarouselCompleted();
     } catch (err) {
       logger.error('Falha ao registrar conclusão do onboarding:', err);
+      showError('Não foi possível salvar seu progresso, mas você já pode continuar.');
     }
     navigate('/');
   };
@@ -103,6 +106,7 @@ export const AppGuideScreen: React.FC = () => {
       await onCarouselSkipped(activeStep);
     } catch (err) {
       logger.error('Falha ao registrar skip do onboarding:', err);
+      showError('Não foi possível salvar seu progresso, mas você já pode continuar.');
     }
     navigate('/');
   };

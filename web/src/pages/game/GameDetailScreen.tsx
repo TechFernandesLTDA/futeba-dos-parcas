@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -90,9 +90,19 @@ export const GameDetailScreen: React.FC = () => {
   const isCurrentUserAdmin = user?.role === 'ADMIN';
   const canManage = game && (isOwner || isCurrentUserAdmin || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
 
-  const confirmedPlayers = confirmations.filter((c) => c.status === 'CONFIRMED');
-  const goalkeepers = confirmedPlayers.filter((c) => c.position === 'GOALKEEPER');
-  const waitlist = confirmations.filter((c) => c.status === 'WAITLIST');
+  // #2272: arrays derivados memoizados — antes os 3 .filter() rodavam a cada render.
+  const confirmedPlayers = useMemo(
+    () => confirmations.filter((c) => c.status === 'CONFIRMED'),
+    [confirmations],
+  );
+  const goalkeepers = useMemo(
+    () => confirmedPlayers.filter((c) => c.position === 'GOALKEEPER'),
+    [confirmedPlayers],
+  );
+  const waitlist = useMemo(
+    () => confirmations.filter((c) => c.status === 'WAITLIST'),
+    [confirmations],
+  );
 
   const handleConfirmPresence = async (position: 'GOALKEEPER' | 'FIELD') => {
     if (!gameId) return;

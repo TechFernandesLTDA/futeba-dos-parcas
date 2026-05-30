@@ -59,6 +59,11 @@ interface LevelHistory {
   source: string;
 }
 
+// #2272: LEVEL_TABLE é constante — divide-se uma única vez no nível do módulo,
+// em vez de rodar .filter() a cada render do componente.
+const BASE_LEVELS = LEVEL_TABLE.filter((e) => e.level <= 10);
+const LEGEND_LEVELS = LEVEL_TABLE.filter((e) => e.level >= 11);
+
 export const LevelJourneyScreen: React.FC = () => {
   useDocumentTitle('Jornada de Nível');
   const navigateBack = useNavigateBack('/');
@@ -372,7 +377,7 @@ export const LevelJourneyScreen: React.FC = () => {
               </Divider>
             </Box>
 
-            {LEVEL_TABLE.filter((e) => e.level <= 10).map((entry) => (
+            {BASE_LEVELS.map((entry) => (
               <LevelRow
                 key={entry.level}
                 entry={entry}
@@ -390,7 +395,7 @@ export const LevelJourneyScreen: React.FC = () => {
               </Divider>
             </Box>
 
-            {LEVEL_TABLE.filter((e) => e.level >= 11).map((entry) => (
+            {LEGEND_LEVELS.map((entry) => (
               <LevelRow
                 key={entry.level}
                 entry={entry}
