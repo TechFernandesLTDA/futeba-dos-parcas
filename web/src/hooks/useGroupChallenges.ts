@@ -41,6 +41,11 @@ function challengeErrorMessage(err: unknown): string {
   return getFirestoreErrorMessage(err);
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
+ * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function useGroupChallenges(groupId?: string) {
   const { user } = useAuth();
   const uid = user?.id ?? "";

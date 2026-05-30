@@ -34,6 +34,11 @@ function getWeekKey(): string {
   return `${now.getFullYear()}-${String(weekNum).padStart(2, '0')}`;
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
+ * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function useWeeklyRanking() {
   const { user } = useAuth();
   const uid = user?.id ?? '';
