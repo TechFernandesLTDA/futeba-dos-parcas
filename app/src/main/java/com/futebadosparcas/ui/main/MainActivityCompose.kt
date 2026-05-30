@@ -13,9 +13,7 @@ import com.futebadosparcas.util.globalKeyboardShortcuts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -45,9 +43,8 @@ import com.futebadosparcas.domain.gamification.BadgeAwarder
 import com.futebadosparcas.domain.ranking.PostGameEventEmitter
 import com.futebadosparcas.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.collectLatest
-import com.futebadosparcas.ui.adaptive.WindowSizeClass
-import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
-import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
+import com.futebadosparcas.ui.components.modern.AdaptiveNavigationScaffold
+import com.futebadosparcas.ui.components.modern.NavDestination
 import com.futebadosparcas.ui.navigation.AppNavHost
 import com.futebadosparcas.ui.navigation.Screen
 import com.futebadosparcas.ui.theme.CoilConfig
@@ -404,7 +401,6 @@ fun MainScreen(
     val context = LocalContext.current
     val navController = androidx.navigation.compose.rememberNavController()
     val navItems = rememberBottomNavItems()
-    val windowSizeClass = rememberWindowSizeClass()
 
     // Entrada atual da pilha de navegação
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -489,60 +485,39 @@ fun MainScreen(
             onNavigateProfile = { onNavigate(Screen.Profile.route) }
         )
 
-    // Layout adaptativo: Rail lateral em Medium/Expanded, BottomBar em Compact
-    if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
-        // Compact: Scaffold com NavigationBar no fundo
-        // contentWindowInsets = WindowInsets(0) garante que o Scaffold raiz não
-        // consuma insets, evitando double-padding com os Scaffolds internos (#2189).
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(keyboardShortcutsModifier),
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            contentWindowInsets = WindowInsets(0),
-            bottomBar = {
-                if (showNavigation) {
-                    FutebaBottomBar(
-                        items = navItems,
-                        currentRoute = currentDestination?.route,
-                        notificationCount = notificationCount,
-                        onNavigate = onNavigate
-                    )
-                }
-            }
-        ) { innerPadding ->
-            Box(modifier = Modifier.padding(innerPadding)) {
-                AppNavHost(navController = navController)
-            }
-        }
-    } else {
-        // Medium/Expanded: NavigationRail lateral + Scaffold sem bottomBar
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(keyboardShortcutsModifier)
-        ) {
-            if (showNavigation) {
-                FutebaNavigationRail(
-                    items = navItems,
-                    currentRoute = currentDestination?.route,
-                    notificationCount = notificationCount,
-                    showLabels = windowSizeClass.widthSizeClass == WindowWidthSizeClass.EXPANDED,
-                    onNavigate = onNavigate
-                )
-            }
+    // Converte navItems para NavDestination do componente canônico (#2190).
+    val navDestinations = navItems.map { item ->
+        NavDestination(
+            route = item.route,
+            label = item.label,
+            icon = item.icon,
+            contentDescription = item.label
+        )
+    }
 
-            // contentWindowInsets = WindowInsets(0) evita double-padding com
-            // Scaffolds internos das telas (#2189).
-            Scaffold(
-                modifier = Modifier.weight(1f),
-                snackbarHost = { SnackbarHost(snackbarHostState) },
-                contentWindowInsets = WindowInsets(0)
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding)) {
-                    AppNavHost(navController = navController)
-                }
+    // Layout adaptativo via AdaptiveNavigationScaffold canônico (#2190).
+    // NavigationSuiteScaffold seleciona automaticamente BottomBar/Rail/Drawer
+    // conforme o window size class — sem lógica manual de if/else.
+    AdaptiveNavigationScaffold(
+        selectedDestination = currentDestination?.route ?: Screen.Home.route,
+        onNavigate = { route ->
+            if (showNavigation || route != currentDestination?.route) {
+                onNavigate(route)
             }
+        },
+        destinations = if (showNavigation) navDestinations else emptyList(),
+        modifier = Modifier
+            .fillMaxSize()
+            .then(keyboardShortcutsModifier)
+    ) {
+        // Snackbar overlay dentro do content — NavigationSuiteScaffold não expõe
+        // slot de snackbar diretamente (#2189/#2190).
+        Box(modifier = Modifier.fillMaxSize()) {
+            AppNavHost(navController = navController)
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 
