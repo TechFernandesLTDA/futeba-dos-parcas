@@ -4205,8 +4205,6 @@ subir no ranking!</string>
 
     <!-- ==================== VOTE RESULT ==================== -->
     <string name="vote_result_error_load">Erro ao carregar resultados</string>
-    <string name="vote_result_default_team_a">Time A</string>
-    <string name="vote_result_default_team_b">Time B</string>
 
     <!-- ==================== WEEKLY RANKING ==================== -->
     <string name="weekly_ranking_player_fallback">Jogador</string>

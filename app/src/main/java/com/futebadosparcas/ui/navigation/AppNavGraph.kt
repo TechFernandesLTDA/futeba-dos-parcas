@@ -5,7 +5,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -18,9 +21,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -179,6 +186,7 @@ object Routes {
 /**
  * NavHost principal do app com todas as Screens conectadas.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -308,11 +316,17 @@ fun AppNavHost(
 
         composable(Screen.League.route) {
             val viewModel: com.futebadosparcas.ui.league.LeagueViewModel = koinViewModel()
+            val playerCardViewModel: com.futebadosparcas.ui.player.PlayerCardViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
             val availableSeasons by viewModel.availableSeasons.collectAsStateWithLifecycle()
             val selectedSeason by viewModel.selectedSeason.collectAsStateWithLifecycle()
-            val context = LocalContext.current
+            val playerCardUiState by playerCardViewModel.uiState.collectAsStateWithLifecycle()
+
+            // Estado para ModalBottomSheet do jogador (fix #2260: migrado de Fragment)
+            var selectedPlayerId by remember { mutableStateOf<String?>(null) }
+            val playerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            val sheetScope = rememberCoroutineScope()
 
             LeagueScreen(
                 uiState = uiState,
@@ -326,19 +340,47 @@ fun AppNavHost(
                 onNavigateNotifications = { navController.navigate(Screen.Notifications.route) },
                 onNavigateGroups = { navController.navigate(Screen.Groups.route) },
                 onNavigateMap = { navController.navigate(Screen.LocationsMap.route) },
-                // TODO(#2260): migrar para Compose ModalBottomSheet. Requer um
-                // componente que carregue User+Statistics a partir do userId
-                // (PlayerCardContent atual exige os dados já carregados). Mantido
-                // o bridge via Fragment self-loading até esse componente existir.
                 onPlayerClick = { userId ->
-                    val activity = context as? androidx.fragment.app.FragmentActivity
-                    activity?.let {
-                        com.futebadosparcas.ui.player.PlayerCardBottomSheet
-                            .newInstance(userId)
-                            .show(it.supportFragmentManager, "player_card")
-                    }
+                    selectedPlayerId = userId
+                    playerCardViewModel.loadPlayerData(userId)
+                    sheetScope.launch { playerSheetState.show() }
                 }
             )
+
+            // ModalBottomSheet Compose — substitui PlayerCardBottomSheet Fragment (#2260)
+            if (selectedPlayerId != null) {
+                ModalBottomSheet(
+                    onDismissRequest = { selectedPlayerId = null },
+                    sheetState = playerSheetState,
+                ) {
+                    when (val state = playerCardUiState) {
+                        is com.futebadosparcas.ui.player.PlayerCardUiState.Success -> {
+                            com.futebadosparcas.ui.players.PlayerCardContent(
+                                user = state.user,
+                                stats = state.statistics,
+                                onClose = {
+                                    sheetScope.launch { playerSheetState.hide() }
+                                        .invokeOnCompletion { selectedPlayerId = null }
+                                },
+                                onShare = {}
+                            )
+                        }
+                        is com.futebadosparcas.ui.player.PlayerCardUiState.Loading -> {
+                            androidx.compose.foundation.layout.Box(
+                                modifier = androidx.compose.ui.Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentAlignment = androidx.compose.ui.Alignment.Center
+                            ) {
+                                androidx.compose.material3.CircularProgressIndicator()
+                            }
+                        }
+                        is com.futebadosparcas.ui.player.PlayerCardUiState.Error -> {
+                            selectedPlayerId = null
+                        }
+                    }
+                }
+            }
         }
 
         composable(Screen.Statistics.route) {
