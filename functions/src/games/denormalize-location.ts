@@ -160,110 +160,116 @@ export const denormalizeGameLocations = onCall(
     memory: "512MiB",
   },
   async (request) => {
-    const {auth} = request;
-    if (!auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Login obrigatório"
-      );
-    }
-
-    if (auth.token?.role !== "ADMIN") {
-      throw new HttpsError(
-        "permission-denied",
-        "Apenas ADMIN pode rodar denormalização"
-      );
-    }
-
-    const db = admin.firestore();
-
-    let updated = 0;
-    let skipped = 0;
-    const errors: Array<{gameId: string; error: string}> = [];
-
-    // FIX #758: cursor-based pagination para evitar OOM em coleções grandes.
-    // Antes: db.collection("games").get() materializava TODOS os docs em memória.
-    const PAGE_SIZE = 500;
-    let lastDoc:
-      admin.firestore.QueryDocumentSnapshot | undefined;
-    let pageIndex = 0;
-
-    while (true) {
-      let q = db
-        .collection("games")
-        .orderBy(admin.firestore.FieldPath.documentId())
-        .limit(PAGE_SIZE);
-      if (lastDoc) q = q.startAfter(lastDoc);
-
-      const page = await q.get();
-      if (page.empty) break;
-
-      const batch = db.batch();
-      let chunkUpdates = 0;
-
-      for (const doc of page.docs) {
-        const data = doc.data();
-
-        if (
-          typeof data.location_lat !== "number" ||
-          typeof data.location_lng !== "number"
-        ) {
-          skipped++;
-          continue;
-        }
-
-        const latApprox = roundCoord(data.location_lat);
-        const lngApprox = roundCoord(data.location_lng);
-
-        if (
-          data.location_lat_approx === latApprox &&
-          data.location_lng_approx === lngApprox
-        ) {
-          skipped++;
-          continue;
-        }
-
-        batch.update(doc.ref, {
-          location_lat_approx: latApprox,
-          location_lng_approx: lngApprox,
-        });
-        chunkUpdates++;
+    try {
+      const {auth} = request;
+      if (!auth) {
+        throw new HttpsError(
+          "unauthenticated",
+          "Login obrigatório"
+        );
       }
 
-      if (chunkUpdates > 0) {
-        try {
-          await batch.commit();
-          updated += chunkUpdates;
-        } catch (err) {
-          logger.error(
-            `[GAME_LOC_BACKFILL] Página ${pageIndex} failed:`,
-            err
-          );
-          for (const doc of page.docs) {
-            errors.push({
-              gameId: doc.id,
-              error: (err as Error).message,
-            });
+      if (auth.token?.role !== "ADMIN") {
+        throw new HttpsError(
+          "permission-denied",
+          "Apenas ADMIN pode rodar denormalização"
+        );
+      }
+
+      const db = admin.firestore();
+
+      let updated = 0;
+      let skipped = 0;
+      const errors: Array<{gameId: string; error: string}> = [];
+
+      // FIX #758: cursor-based pagination para evitar OOM em coleções grandes.
+      // Antes: db.collection("games").get() materializava TODOS os docs em memória.
+      const PAGE_SIZE = 500;
+      let lastDoc:
+      admin.firestore.QueryDocumentSnapshot | undefined;
+      let pageIndex = 0;
+
+      while (true) {
+        let q = db
+          .collection("games")
+          .orderBy(admin.firestore.FieldPath.documentId())
+          .limit(PAGE_SIZE);
+        if (lastDoc) q = q.startAfter(lastDoc);
+
+        const page = await q.get();
+        if (page.empty) break;
+
+        const batch = db.batch();
+        let chunkUpdates = 0;
+
+        for (const doc of page.docs) {
+          const data = doc.data();
+
+          if (
+            typeof data.location_lat !== "number" ||
+          typeof data.location_lng !== "number"
+          ) {
+            skipped++;
+            continue;
+          }
+
+          const latApprox = roundCoord(data.location_lat);
+          const lngApprox = roundCoord(data.location_lng);
+
+          if (
+            data.location_lat_approx === latApprox &&
+          data.location_lng_approx === lngApprox
+          ) {
+            skipped++;
+            continue;
+          }
+
+          batch.update(doc.ref, {
+            location_lat_approx: latApprox,
+            location_lng_approx: lngApprox,
+          });
+          chunkUpdates++;
+        }
+
+        if (chunkUpdates > 0) {
+          try {
+            await batch.commit();
+            updated += chunkUpdates;
+          } catch (err) {
+            logger.error(
+              `[GAME_LOC_BACKFILL] Página ${pageIndex} failed:`,
+              err
+            );
+            for (const doc of page.docs) {
+              errors.push({
+                gameId: doc.id,
+                error: (err as Error).message,
+              });
+            }
           }
         }
+
+        lastDoc = page.docs[page.docs.length - 1];
+        pageIndex++;
+        if (page.size < PAGE_SIZE) break;
       }
 
-      lastDoc = page.docs[page.docs.length - 1];
-      pageIndex++;
-      if (page.size < PAGE_SIZE) break;
-    }
-
-    logger.info(
-      `[GAME_LOC_BACKFILL] Done: ${updated} updated, ` +
+      logger.info(
+        `[GAME_LOC_BACKFILL] Done: ${updated} updated, ` +
         `${skipped} skipped, ${errors.length} errors`
-    );
+      );
 
-    return {
-      success: true,
-      updated,
-      skipped,
-      errors,
-      total: updated + skipped + errors.length,
-    };
+      return {
+        success: true,
+        updated,
+        skipped,
+        errors,
+        total: updated + skipped + errors.length,
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("denormalizeGameLocations failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
+    }
   }
 );

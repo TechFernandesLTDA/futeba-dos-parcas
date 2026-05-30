@@ -120,26 +120,32 @@ export const recomputeMyProfileClaim = onCall(
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "auth required"
+    try {
+      if (!request.auth) {
+        throw new HttpsError(
+          "unauthenticated",
+          "auth required"
+        );
+      }
+
+      const uid = request.auth.uid;
+      const userSnap = await admin
+        .firestore()
+        .collection("users")
+        .doc(uid)
+        .get();
+      const profileComplete = computeProfileComplete(
+        userSnap.exists ? userSnap.data() as UserProfileData : undefined
       );
+
+      return {
+        success: true,
+        ...(await setProfileCompleteClaim(uid, profileComplete)),
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("recomputeMyProfileClaim failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
     }
-
-    const uid = request.auth.uid;
-    const userSnap = await admin
-      .firestore()
-      .collection("users")
-      .doc(uid)
-      .get();
-    const profileComplete = computeProfileComplete(
-      userSnap.exists ? userSnap.data() as UserProfileData : undefined
-    );
-
-    return {
-      success: true,
-      ...(await setProfileCompleteClaim(uid, profileComplete)),
-    };
   }
 );

@@ -5,11 +5,11 @@ config();
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_PROD = NODE_ENV === 'production';
 
-if (IS_PROD && !process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET é obrigatório em produção. Refuse to start with default secret.');
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET é obrigatório. A aplicação não inicia sem ele.');
 }
 
-if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+if (process.env.JWT_SECRET.length < 32) {
   throw new Error('JWT_SECRET deve ter pelo menos 32 caracteres.');
 }
 
@@ -18,7 +18,7 @@ export const appConfig = {
   port: parseInt(process.env.PORT || '3000'),
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'dev-only-insecure-secret-do-not-use-in-prod',
+    secret: process.env.JWT_SECRET,
     expiration: process.env.JWT_EXPIRATION || '7d',
   },
 

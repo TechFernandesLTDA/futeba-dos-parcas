@@ -1,7 +1,8 @@
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
-import {onCall} from "firebase-functions/v2/https";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 
 const db = () => admin.firestore();
@@ -123,26 +124,46 @@ export const generateMyInviteCode = onCall(
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request) => {
-    const uid = request.auth?.uid;
-    if (!uid) throw new Error("Voce precisa estar logado.");
+    try {
+      const uid = request.auth?.uid;
+      if (!uid) {
+        throw new HttpsError("unauthenticated", "Voce precisa estar logado.");
+      }
 
-    const userRef = db().collection("users").doc(uid);
-    const userDoc = await userRef.get();
+      // #2283: rate limiting — 3 geracoes por hora
+      const rl = await checkRateLimit(uid, {
+        maxRequests: 3,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "generate_invite_code",
+      });
+      if (!rl.allowed) {
+        throw new HttpsError("resource-exhausted", "Muitas tentativas. Tente novamente mais tarde.");
+      }
 
-    if (!userDoc.exists) throw new Error("Usuario nao encontrado.");
+      const userRef = db().collection("users").doc(uid);
+      const userDoc = await userRef.get();
 
-    const existingCode = userDoc.data()?.invite_code as string | undefined;
-    if (existingCode) return {inviteCode: existingCode};
+      if (!userDoc.exists) {
+        throw new HttpsError("not-found", "Usuario nao encontrado.");
+      }
 
-    const inviteCode = await generateUniqueCode();
+      const existingCode = userDoc.data()?.invite_code as string | undefined;
+      if (existingCode) return {inviteCode: existingCode};
 
-    await userRef.update({
-      invite_code: inviteCode,
-      invite_count: userDoc.data()?.invite_count || 0,
-    });
+      const inviteCode = await generateUniqueCode();
 
-    logger.info("Generated invite code on demand", {uid, inviteCode});
+      await userRef.update({
+        invite_code: inviteCode,
+        invite_count: userDoc.data()?.invite_count || 0,
+      });
 
-    return {inviteCode};
+      logger.info("Generated invite code on demand", {uid, inviteCode});
+
+      return {inviteCode};
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("generateMyInviteCode failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
+    }
   }
 );

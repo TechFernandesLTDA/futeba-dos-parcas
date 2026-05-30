@@ -74,9 +74,9 @@ export function validateNumberRange(
   return { valid: true };
 }
 
-export function validateMinLength(value: string, min: number, fieldName: string): string | undefined {
-  if (value.trim().length < min) return `${fieldName} deve ter pelo menos ${min} caracteres.`;
-  return undefined;
+export function validateMinLength(value: string, min: number, fieldName: string): ValidationResult {
+  if (value.trim().length < min) return { valid: false, error: `${fieldName} deve ter pelo menos ${min} caracteres.` };
+  return { valid: true };
 }
 
 export function isValidUrl(url: string | undefined | null): boolean {
@@ -89,19 +89,20 @@ export function isValidUrl(url: string | undefined | null): boolean {
   }
 }
 
-export function validateUrl(value: string | undefined | null): string | undefined {
-  if (!value) return undefined;
-  if (!isValidUrl(value)) return 'URL inválida.';
-  return undefined;
-}
-export function validatePositiveNumber(value: number | undefined | null, fieldName: string): string | undefined {
-  if (value === undefined || value === null || value <= 0) return `${fieldName} deve ser maior que zero.`;
-  return undefined;
+export function validateUrl(value: string | undefined | null): ValidationResult {
+  if (!value) return { valid: true };
+  if (!isValidUrl(value)) return { valid: false, error: 'URL inválida.' };
+  return { valid: true };
 }
 
-export function validateGeoCoord(value: number | undefined | null, min: number, max: number, fieldName: string): string | undefined {
+export function validatePositiveNumber(value: number | undefined | null, fieldName: string): ValidationResult {
+  if (value === undefined || value === null || value <= 0) return { valid: false, error: `${fieldName} deve ser maior que zero.` };
+  return { valid: true };
+}
+
+export function validateGeoCoord(value: number | undefined | null, min: number, max: number, fieldName: string): ValidationResult {
   if (value !== undefined && value !== null && (value < min || value > max)) {
-    return `${fieldName} deve estar entre ${min} e ${max}.`;
+    return { valid: false, error: `${fieldName} deve estar entre ${min} e ${max}.` };
   }
-  return undefined;
+  return { valid: true };
 }

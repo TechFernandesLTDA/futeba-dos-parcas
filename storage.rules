@@ -31,9 +31,11 @@ service firebase.storage {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Verifica se o usuário é membro do grupo
+    // Verifica se o usuário é membro ATIVO do grupo
+    // #2160: exige status == ACTIVE — membro banido/removido não mantém acesso
     function isGroupMember(groupId) {
-      return firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
+      let memberDoc = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
+      return memberDoc != null && memberDoc.data.status == 'ACTIVE';
     }
 
     // Verifica se o usuário é admin do grupo.
@@ -84,6 +86,17 @@ service firebase.storage {
     }
 
     // ============================================
+    // THUMBNAILS DE PERFIL DE USUÁRIOS
+    // Path: users/{userId}/thumbnails/{fileName}
+    // Gerados por Cloud Functions (generate-thumbnails).
+    // #2158: Leitura publica, escrita apenas Admin SDK.
+    // ============================================
+    match /users/{userId}/thumbnails/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ============================================
     // LOGOS DE GRUPOS
     // Path: groups/{groupId}/logo.jpg
     //
@@ -111,6 +124,27 @@ service firebase.storage {
     }
 
     // ============================================
+    // THUMB DE GRUPO (Android)
+    // Path: groups/{groupId}/thumb.jpg
+    // #2158: Android usa este path. Mesma permissao do logo.
+    // ============================================
+    match /groups/{groupId}/thumb.jpg {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
+      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+    }
+
+    // ============================================
+    // THUMBNAILS DE GRUPO (gerados por Cloud Functions)
+    // Path: groups/{groupId}/thumbnails/{fileName}
+    // #2158: Leitura publica, escrita apenas Admin SDK.
+    // ============================================
+    match /groups/{groupId}/thumbnails/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ============================================
     // COMPROVANTES DO CAIXINHA
     // Path: groups/{groupId}/receipts/{timestamp}.jpg
     // ============================================
@@ -124,6 +158,23 @@ service firebase.storage {
 
       // Apenas admins podem deletar
       allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+    }
+
+    // ============================================
+    // FOTOS DE LOCAIS — PATH FLAT (Web)
+    // Path: locations/{locationId}/{fileName}
+    // #2158: Web usa locations/{id}/photo.jpg (sem subpasta photos/).
+    // Owner/manager do local pode escrever.
+    // ============================================
+    match /locations/{locationId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+                     (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
+                      request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', [])) &&
+                     isImage() && isUnderSize(5);
+      allow delete: if isAuthenticated() &&
+                      (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
+                       request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', []));
     }
 
     // ============================================
@@ -163,6 +214,22 @@ service firebase.storage {
                      isImage() && isUnderSize(5);
 
       // #1573: owner OU manager do local pode deletar (paridade com Firestore rules)
+      allow delete: if isAuthenticated() &&
+                      (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
+                       request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', []));
+    }
+
+    // ============================================
+    // FOTOS DE CAMPOS COM FIELDID (Android)
+    // Path: locations/{locationId}/fields/{fieldId}/{fileName}
+    // #2158: Android usa locations/{locationId}/fields/{fieldId}/photo.jpg e thumb.jpg
+    // ============================================
+    match /locations/{locationId}/fields/{fieldId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+                     (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
+                      request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', [])) &&
+                     isImage() && isUnderSize(5);
       allow delete: if isAuthenticated() &&
                       (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
                        request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', []));
@@ -214,14 +281,15 @@ service firebase.storage {
       allow read: if isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId));
 
-      // Jogadores confirmados ou dono do jogo podem fazer upload
-      // em jogos CONFIRMED, LIVE ou FINISHED
-      // Máximo 10MB por foto, apenas imagem
+      // #2160: confirmacao exige status == CONFIRMED (nao apenas existencia do doc)
       allow write: if isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.status in ['CONFIRMED', 'LIVE', 'FINISHED'] &&
-                     (firestore.exists(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) ||
-                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid) &&
+                     ((
+                       firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) != null &&
+                       firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)).data.status == 'CONFIRMED'
+                     ) ||
+                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid) &&
                      isImage() && isUnderSize(10);
 
       // Uploader ou dono do jogo ou admin pode deletar fotos

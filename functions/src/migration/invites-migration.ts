@@ -17,6 +17,7 @@
 
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
+import {HttpsError} from "firebase-functions/v2/https";
 import {FieldValue} from "firebase-admin/firestore";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
 import {db} from "../_db";
@@ -50,8 +51,11 @@ export const migrateGroupsInviteCodeToInvites =
       }),
     },
     async (request) => {
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "User must be authenticated");
+      }
       const startedAt = Date.now();
-      const callerUid = request.auth!.uid;
+      const callerUid = request.auth.uid;
 
       // Rate limit via system lock (1h)
       const lockRef = db()

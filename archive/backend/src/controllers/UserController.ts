@@ -49,7 +49,7 @@ export class UserController {
 
       await this.userRepository.save(user);
 
-      logger.info(`User profile updated: ${user.email}`);
+      logger.info(`User profile updated: ${user.id}`);
 
       ApiResponse.success(res, user.toPublic());
     } catch (error) {

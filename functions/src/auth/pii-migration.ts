@@ -182,122 +182,128 @@ export const migratePiiToUsersPrivate = onCall(
     memory: "512MiB",
   },
   async (request) => {
-    const {auth} = request;
-    if (!auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Login obrigatório"
-      );
-    }
-
-    if (auth.token?.role !== "ADMIN") {
-      throw new HttpsError(
-        "permission-denied",
-        "Apenas ADMIN pode rodar migração"
-      );
-    }
-
-    const db = admin.firestore();
-
-    let migrated = 0;
-    let skipped = 0;
-    let total = 0;
-    const errors: Array<{uid: string; error: string}> = [];
-
-    // FIX #1579: paginação com cursor (limit/startAfter) em vez de .get()
-    // irrestrito — .get() carrega todos os usuários em memória de uma vez,
-    // causando OOM em bases grandes (>10k usuários). Padrão de referência:
-    // functions/src/utils/soft-delete-helper.ts (lastDoc + startAfter loop).
-    const PAGE_SIZE = 500;
-    let lastDoc:
-      admin.firestore.QueryDocumentSnapshot | undefined = undefined;
-    let hasMore = true;
-
-    while (hasMore) {
-      let query = db
-        .collection("users")
-        .orderBy(admin.firestore.FieldPath.documentId())
-        .limit(PAGE_SIZE);
-      if (lastDoc) query = query.startAfter(lastDoc);
-
-      const usersSnap = await query.get();
-
-      if (usersSnap.empty) break;
-
-      total += usersSnap.size;
-      const batch = db.batch();
-      let batchHasOps = false;
-
-      for (const doc of usersSnap.docs) {
-        const userData = doc.data();
-        const pii = extractPii(userData);
-
-        // Pula se nenhum campo PII presente
-        if (Object.keys(pii).length === 0) {
-          skipped++;
-          continue;
-        }
-
-        try {
-          const privateRef = db.doc(`users_private/${doc.id}`);
-          batch.set(
-            privateRef,
-            {
-              ...pii,
-              piiSyncedAt:
-                admin.firestore.FieldValue.serverTimestamp(),
-              migratedAt:
-                admin.firestore.FieldValue.serverTimestamp(),
-            },
-            {merge: true}
-          );
-          migrated++;
-          batchHasOps = true;
-        } catch (err) {
-          errors.push({
-            uid: doc.id,
-            error: (err as Error).message,
-          });
-        }
+    try {
+      const {auth} = request;
+      if (!auth) {
+        throw new HttpsError(
+          "unauthenticated",
+          "Login obrigatório"
+        );
       }
 
-      if (batchHasOps) {
-        try {
-          await batch.commit();
-        } catch (err) {
-          logger.error(
-            "[PII_MIGRATION] Batch commit failed:",
-            err
-          );
-          // Marca todos do chunk como erro
-          for (const doc of usersSnap.docs) {
+      if (auth.token?.role !== "ADMIN") {
+        throw new HttpsError(
+          "permission-denied",
+          "Apenas ADMIN pode rodar migração"
+        );
+      }
+
+      const db = admin.firestore();
+
+      let migrated = 0;
+      let skipped = 0;
+      let total = 0;
+      const errors: Array<{uid: string; error: string}> = [];
+
+      // FIX #1579: paginação com cursor (limit/startAfter) em vez de .get()
+      // irrestrito — .get() carrega todos os usuários em memória de uma vez,
+      // causando OOM em bases grandes (>10k usuários). Padrão de referência:
+      // functions/src/utils/soft-delete-helper.ts (lastDoc + startAfter loop).
+      const PAGE_SIZE = 500;
+      let lastDoc:
+      admin.firestore.QueryDocumentSnapshot | undefined = undefined;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = db
+          .collection("users")
+          .orderBy(admin.firestore.FieldPath.documentId())
+          .limit(PAGE_SIZE);
+        if (lastDoc) query = query.startAfter(lastDoc);
+
+        const usersSnap = await query.get();
+
+        if (usersSnap.empty) break;
+
+        total += usersSnap.size;
+        const batch = db.batch();
+        let batchHasOps = false;
+
+        for (const doc of usersSnap.docs) {
+          const userData = doc.data();
+          const pii = extractPii(userData);
+
+          // Pula se nenhum campo PII presente
+          if (Object.keys(pii).length === 0) {
+            skipped++;
+            continue;
+          }
+
+          try {
+            const privateRef = db.doc(`users_private/${doc.id}`);
+            batch.set(
+              privateRef,
+              {
+                ...pii,
+                piiSyncedAt:
+                admin.firestore.FieldValue.serverTimestamp(),
+                migratedAt:
+                admin.firestore.FieldValue.serverTimestamp(),
+              },
+              {merge: true}
+            );
+            migrated++;
+            batchHasOps = true;
+          } catch (err) {
             errors.push({
               uid: doc.id,
               error: (err as Error).message,
             });
           }
         }
+
+        if (batchHasOps) {
+          try {
+            await batch.commit();
+          } catch (err) {
+            logger.error(
+              "[PII_MIGRATION] Batch commit failed:",
+              err
+            );
+            // Marca todos do chunk como erro
+            for (const doc of usersSnap.docs) {
+              errors.push({
+                uid: doc.id,
+                error: (err as Error).message,
+              });
+            }
+          }
+        }
+
+        if (usersSnap.size < PAGE_SIZE) {
+          hasMore = false;
+        } else {
+          lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
+        }
       }
 
-      if (usersSnap.size < PAGE_SIZE) {
-        hasMore = false;
-      } else {
-        lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
-      }
-    }
-
-    logger.info(
-      `[PII_MIGRATION] Done: ${migrated} migrated, ` +
+      logger.info(
+        `[PII_MIGRATION] Done: ${migrated} migrated, ` +
         `${skipped} skipped, ${errors.length} errors`
-    );
+      );
 
-    return {
-      success: true,
-      migrated,
-      skipped,
-      errors,
-      total,
-    };
+      return {
+        success: true,
+        migrated,
+        skipped,
+        errors,
+        total,
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("migratePiiToUsersPrivate failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
+    }
   }
 );
 
@@ -363,53 +369,59 @@ export const updateUserPii = onCall(
     consumeAppCheckToken: true,
   },
   async (request) => {
-    const {auth, data} = request;
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "Login obrigatório");
-    }
+    try {
+      const {auth, data} = request;
+      if (!auth) {
+        throw new HttpsError("unauthenticated", "Login obrigatório");
+      }
 
-    if (!data || typeof data !== "object") {
-      throw new HttpsError("invalid-argument", "Body inválido");
-    }
+      if (!data || typeof data !== "object") {
+        throw new HttpsError("invalid-argument", "Body inválido");
+      }
 
-    const updates: Record<string, unknown> = {};
-    for (const field of PII_FIELDS) {
-      if (!(field in data)) continue;
-      const val = (data as Record<string, unknown>)[field];
-      if (!validatePiiField(field, val)) {
+      const updates: Record<string, unknown> = {};
+      for (const field of PII_FIELDS) {
+        if (!(field in data)) continue;
+        const val = (data as Record<string, unknown>)[field];
+        if (!validatePiiField(field, val)) {
+          throw new HttpsError(
+            "invalid-argument",
+            `Campo ${field} inválido`
+          );
+        }
+        updates[field] = val;
+      }
+
+      if (Object.keys(updates).length === 0) {
         throw new HttpsError(
           "invalid-argument",
-          `Campo ${field} inválido`
+          "Nenhum campo PII válido fornecido"
         );
       }
-      updates[field] = val;
-    }
 
-    if (Object.keys(updates).length === 0) {
-      throw new HttpsError(
-        "invalid-argument",
-        "Nenhum campo PII válido fornecido"
+      const db = admin.firestore();
+      const ref = db.doc(`users_private/${auth.uid}`);
+
+      await ref.set(
+        {
+          ...updates,
+          piiSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        {merge: true}
       );
-    }
 
-    const db = admin.firestore();
-    const ref = db.doc(`users_private/${auth.uid}`);
-
-    await ref.set(
-      {
-        ...updates,
-        piiSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      {merge: true}
-    );
-
-    logger.info(
-      `[PII] User ${auth.uid} updated PII: ` +
+      logger.info(
+        `[PII] User ${auth.uid} updated PII: ` +
         Object.keys(updates).join(",")
-    );
+      );
 
-    return {success: true, updated: Object.keys(updates)};
+      return {success: true, updated: Object.keys(updates)};
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("updateUserPii failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
+    }
   }
 );
 
@@ -436,112 +448,118 @@ export const removePiiFromUsers = onCall(
     memory: "512MiB",
   },
   async (request) => {
-    const {auth} = request;
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "Login obrigatório");
-    }
-    if (auth.token?.role !== "ADMIN") {
-      throw new HttpsError(
-        "permission-denied",
-        "Apenas ADMIN pode rodar cleanup"
-      );
-    }
+    try {
+      const {auth} = request;
+      if (!auth) {
+        throw new HttpsError("unauthenticated", "Login obrigatório");
+      }
+      if (auth.token?.role !== "ADMIN") {
+        throw new HttpsError(
+          "permission-denied",
+          "Apenas ADMIN pode rodar cleanup"
+        );
+      }
 
-    const db = admin.firestore();
+      const db = admin.firestore();
 
-    let cleaned = 0;
-    let skipped = 0;
-    let total = 0;
-    const errors: Array<{uid: string; error: string}> = [];
+      let cleaned = 0;
+      let skipped = 0;
+      let total = 0;
+      const errors: Array<{uid: string; error: string}> = [];
 
-    // FIX #1579: paginação com cursor (limit/startAfter) em vez de .get()
-    // irrestrito — igual ao fix em migratePiiToPrivate acima.
-    const PAGE_SIZE = 500;
-    let lastDoc:
+      // FIX #1579: paginação com cursor (limit/startAfter) em vez de .get()
+      // irrestrito — igual ao fix em migratePiiToPrivate acima.
+      const PAGE_SIZE = 500;
+      let lastDoc:
       admin.firestore.QueryDocumentSnapshot | undefined = undefined;
-    let hasMore = true;
+      let hasMore = true;
 
-    while (hasMore) {
-      let query = db
-        .collection("users")
-        .orderBy(admin.firestore.FieldPath.documentId())
-        .limit(PAGE_SIZE);
-      if (lastDoc) query = query.startAfter(lastDoc);
+      while (hasMore) {
+        let query = db
+          .collection("users")
+          .orderBy(admin.firestore.FieldPath.documentId())
+          .limit(PAGE_SIZE);
+        if (lastDoc) query = query.startAfter(lastDoc);
 
-      const usersSnap = await query.get();
+        const usersSnap = await query.get();
 
-      if (usersSnap.empty) break;
+        if (usersSnap.empty) break;
 
-      total += usersSnap.size;
-      const batch = db.batch();
-      let chunkCleans = 0;
+        total += usersSnap.size;
+        const batch = db.batch();
+        let chunkCleans = 0;
 
-      for (const doc of usersSnap.docs) {
-        const data = doc.data();
+        for (const doc of usersSnap.docs) {
+          const data = doc.data();
 
-        // Verifica quais PII fields ainda estão em users
-        const fieldsToDelete: Record<string, FirebaseFirestore.FieldValue> = {};
-        let hasAny = false;
-        for (const field of PII_FIELDS) {
-          if (data[field] !== undefined && data[field] !== null) {
-            fieldsToDelete[field] = admin.firestore.FieldValue.delete();
-            hasAny = true;
+          // Verifica quais PII fields ainda estão em users
+          const fieldsToDelete: Record<string, FirebaseFirestore.FieldValue> = {};
+          let hasAny = false;
+          for (const field of PII_FIELDS) {
+            if (data[field] !== undefined && data[field] !== null) {
+              fieldsToDelete[field] = admin.firestore.FieldValue.delete();
+              hasAny = true;
+            }
+          }
+
+          if (!hasAny) {
+            skipped++;
+            continue;
+          }
+
+          try {
+            batch.update(doc.ref, fieldsToDelete);
+            chunkCleans++;
+          } catch (err) {
+            errors.push({uid: doc.id, error: (err as Error).message});
           }
         }
 
-        if (!hasAny) {
-          skipped++;
+        if (chunkCleans === 0) {
+          if (usersSnap.size < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
+          }
           continue;
         }
 
         try {
-          batch.update(doc.ref, fieldsToDelete);
-          chunkCleans++;
+          await batch.commit();
+          cleaned += chunkCleans;
         } catch (err) {
-          errors.push({uid: doc.id, error: (err as Error).message});
+          logger.error(
+            "[PII_CLEANUP] Batch commit failed:",
+            err
+          );
+          for (const doc of usersSnap.docs) {
+            errors.push({uid: doc.id, error: (err as Error).message});
+          }
         }
-      }
 
-      if (chunkCleans === 0) {
         if (usersSnap.size < PAGE_SIZE) {
           hasMore = false;
         } else {
           lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
         }
-        continue;
       }
 
-      try {
-        await batch.commit();
-        cleaned += chunkCleans;
-      } catch (err) {
-        logger.error(
-          "[PII_CLEANUP] Batch commit failed:",
-          err
-        );
-        for (const doc of usersSnap.docs) {
-          errors.push({uid: doc.id, error: (err as Error).message});
-        }
-      }
-
-      if (usersSnap.size < PAGE_SIZE) {
-        hasMore = false;
-      } else {
-        lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
-      }
-    }
-
-    logger.info(
-      `[PII_CLEANUP] Done: ${cleaned} cleaned, ` +
+      logger.info(
+        `[PII_CLEANUP] Done: ${cleaned} cleaned, ` +
         `${skipped} skipped, ${errors.length} errors`
-    );
+      );
 
-    return {
-      success: true,
-      cleaned,
-      skipped,
-      errors,
-      total,
-    };
+      return {
+        success: true,
+        cleaned,
+        skipped,
+        errors,
+        total,
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("removePiiFromUsers failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
+    }
   }
 );

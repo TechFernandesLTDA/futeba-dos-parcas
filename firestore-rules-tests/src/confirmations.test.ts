@@ -112,8 +112,6 @@ describe("confirmations — create (auto-confirmacao)", () => {
         game_id: GAME_ACTIVE,
         user_id: UID_PLAYER_B,
         status: "CONFIRMED",
-        is_on_the_way: false,
-        eta_minutes: null,
         created_at: new Date(),
       })
     );
@@ -184,8 +182,6 @@ describe("confirmations — create (summon pelo game owner)", () => {
         game_id: GAME_ACTIVE,
         user_id: UID_PLAYER_C,
         status: "PENDING",
-        is_on_the_way: false,
-        eta_minutes: null,
         created_at: new Date(),
       })
     );
@@ -226,8 +222,6 @@ describe("confirmations — create (summon pelo game owner)", () => {
         game_id: GAME_ACTIVE,
         user_id: UID_PLAYER_B,
         status: "CONFIRMED",
-        is_on_the_way: false,
-        eta_minutes: null,
         created_at: new Date(),
       })
     );

@@ -101,6 +101,9 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     }),
   },
   async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
     // ==========================================
     // 3. INPUT VALIDATION
     // ==========================================
@@ -160,7 +163,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     logger.info(
       "[CUSTOM_CLAIMS] " +
       `Set role=${role} for user ${uid} ` +
-      `by admin ${request.auth!.uid} ` +
+      `by admin ${request.auth.uid} ` +
       "(refresh tokens revoked)"
     );
 
@@ -175,7 +178,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
         role,
         claims_updated_at:
           FieldValue.serverTimestamp(),
-        claims_updated_by: request.auth!.uid,
+        claims_updated_by: request.auth.uid,
       });
     logger.info(
       "[CUSTOM_CLAIMS] Synced role to " +
@@ -189,7 +192,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
       await db().collection("audit_logs").add({
         type: "ROLE_CHANGE",
         target_user_id: uid,
-        actor_user_id: request.auth!.uid,
+        actor_user_id: request.auth.uid,
         old_role: currentRole,
         new_role: role,
         timestamp: FieldValue.serverTimestamp(),
@@ -326,6 +329,9 @@ export const migrateAllUsersToCustomClaims = secureCallable(
     }),
   },
   async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
     // Rate limiting: Apenas uma migração por hora
     // para evitar abuso
     const RATE_LIMIT_MS = 60 * 60 * 1000; // 1 hora
@@ -367,13 +373,13 @@ export const migrateAllUsersToCustomClaims = secureCallable(
     // Registrar lock antes de iniciar
     await lockRef.set({
       last_run_at: FieldValue.serverTimestamp(),
-      started_by: request.auth!.uid,
+      started_by: request.auth.uid,
       status: "running",
     });
 
     logger.info(
       "[MIGRATION] Starting Custom Claims " +
-      `migration by ${request.auth!.uid}`
+      `migration by ${request.auth.uid}`
     );
 
     try {
