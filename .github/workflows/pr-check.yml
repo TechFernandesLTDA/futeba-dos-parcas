@@ -18,9 +18,9 @@ jobs:
   validate:
     name: Validate PR
     # Self-hosted Mac (Apple Silicon) por padrao para custo zero.
-    # Para forcar github-hosted defina vars.RUNNER_LABELS = ["ubuntu-latest"]
+    # Para forcar github-hosted defina vars.RUNNER_LABELS_GENERAL = ["ubuntu-latest"]
     # em Settings -> Secrets and variables -> Actions -> Variables.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
     timeout-minutes: 25
 
     steps:

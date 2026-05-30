@@ -34,7 +34,7 @@ env:
 jobs:
   macrobenchmark:
     name: Macrobenchmark (API 34)
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
     timeout-minutes: 60
 
     env:

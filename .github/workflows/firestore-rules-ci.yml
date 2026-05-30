@@ -21,7 +21,7 @@ jobs:
     name: Testar Firestore Security Rules
     # Self-hosted macOS ARM64 (mesmo padrao de android-ci.yml e ios-build.yml).
     # Evita custos de GitHub-hosted; user pool de 8 runners locais.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
     timeout-minutes: 15
 
     steps:

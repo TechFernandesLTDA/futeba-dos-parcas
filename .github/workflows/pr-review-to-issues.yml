@@ -27,7 +27,7 @@ jobs:
     if: >
       github.event_name == 'issue_comment' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
     timeout-minutes: 15
 
     steps:

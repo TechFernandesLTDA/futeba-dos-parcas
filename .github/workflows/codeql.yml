@@ -19,7 +19,7 @@ jobs:
     # Self-hosted Mac ARM64: requer Rosetta 2 (CodeQL CLI e x86_64 binario).
     # JDK 17 (Temurin) ja disponivel via JAVA_HOME no runner.env.
     # setup-java@v4 removido (causava erro -86 spawn em arm64).
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
     timeout-minutes: 30
     permissions:
       security-events: write

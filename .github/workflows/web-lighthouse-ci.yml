@@ -25,7 +25,7 @@ defaults:
 jobs:
   lighthouse:
     name: Lighthouse CI
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
     timeout-minutes: 20
 
     steps:
