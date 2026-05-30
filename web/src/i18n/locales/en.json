@@ -1021,7 +1021,20 @@
     "clearSearch": "Clear search",
     "viewStats": "View stats",
     "createSchedule": "Create schedule",
-    "addLocation": "Register location"
+    "addLocation": "Register location",
+    "addTransaction": "Add transaction",
+    "cashbox": "Cashbox is empty",
+    "cashboxDesc": "No transactions recorded in the group cashbox.",
+    "members": "No members",
+    "membersDesc": "Invite players to join the group.",
+    "activities": "No activity",
+    "activitiesDesc": "Group activities will appear here.",
+    "xpLogs": "No XP history",
+    "xpLogsDesc": "Join games to start earning XP!",
+    "statistics": "No statistics",
+    "statisticsDesc": "Play matches to generate your statistics.",
+    "confirmations": "No confirmations",
+    "confirmationsDesc": "No one has confirmed attendance yet."
   },
   "home": {
     "quickActions": "Quick Actions",

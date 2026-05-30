@@ -990,7 +990,20 @@
     "clearSearch": "Limpiar búsqueda",
     "viewStats": "Ver estadísticas",
     "createSchedule": "Crear horario",
-    "addLocation": "Registrar lugar"
+    "addLocation": "Registrar lugar",
+    "addTransaction": "Agregar transacción",
+    "cashbox": "Caja vacía",
+    "cashboxDesc": "No hay transacciones registradas en la caja del grupo.",
+    "members": "Sin miembros",
+    "membersDesc": "Invita jugadores para unirse al grupo.",
+    "activities": "Sin actividad",
+    "activitiesDesc": "Las actividades del grupo aparecerán aquí.",
+    "xpLogs": "Sin historial de XP",
+    "xpLogsDesc": "¡Participa en partidos para empezar a ganar XP!",
+    "statistics": "Sin estadísticas",
+    "statisticsDesc": "Juega partidos para generar tus estadísticas.",
+    "confirmations": "Sin confirmaciones",
+    "confirmationsDesc": "Nadie ha confirmado asistencia todavía."
   },
   "home": {
     "quickActions": "Acciones Rápidas",

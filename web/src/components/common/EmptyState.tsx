@@ -12,6 +12,13 @@ import {
   EditCalendar as NoScheduleIcon,
   MapOutlined as MapIcon,
   StarBorder as StarIcon,
+  // #2197: variantes adicionadas para paridade com Android (modern/EmptyState.kt)
+  AccountBalanceWallet as CashboxIcon,
+  PersonAddAlt as MembersIcon,
+  Timeline as ActivitiesIcon,
+  TrendingUp as XpLogsIcon,
+  BarChart as StatisticsIcon,
+  PeopleAlt as ConfirmationsIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
@@ -124,6 +131,13 @@ interface EmptyStateType extends React.NamedExoticComponent<EmptyStateProps> {
   Schedules: ContextualVariant;
   Locations: ContextualVariant;
   Challenges: ContextualVariant;
+  // #2197: paridade com Android
+  Cashbox: ContextualVariant;
+  Members: ContextualVariant;
+  Activities: ContextualVariant;
+  XpLogs: ContextualVariant;
+  Statistics: ContextualVariant;
+  Confirmations: ContextualVariant;
 }
 
 const defaultProps = {
@@ -138,6 +152,13 @@ const defaultProps = {
   Schedules: { icon: NoScheduleIcon, titleKey: 'empty.schedules' },
   Locations: { icon: MapIcon, titleKey: 'empty.locations' },
   Challenges: { icon: StarIcon, titleKey: 'empty.challenges' },
+  // #2197: paridade com Android (mesmos ícones Material por categoria)
+  Cashbox: { icon: CashboxIcon, titleKey: 'empty.cashbox' },
+  Members: { icon: MembersIcon, titleKey: 'empty.members' },
+  Activities: { icon: ActivitiesIcon, titleKey: 'empty.activities' },
+  XpLogs: { icon: XpLogsIcon, titleKey: 'empty.xpLogs' },
+  Statistics: { icon: StatisticsIcon, titleKey: 'empty.statistics' },
+  Confirmations: { icon: ConfirmationsIcon, titleKey: 'empty.confirmations' },
 } as const;
 
 function createEmptyVariant(
@@ -181,5 +202,12 @@ EmptyState.League = createEmptyVariant('League', 'empty.leagueDesc', 'empty.view
 EmptyState.Schedules = createEmptyVariant('Schedules', 'empty.schedulesDesc', 'empty.createSchedule');
 EmptyState.Locations = createEmptyVariant('Locations', 'empty.locationsDesc', 'empty.addLocation');
 EmptyState.Challenges = createEmptyVariant('Challenges', 'empty.challengesDesc', 'empty.viewGames');
+// #2197: variantes de paridade com Android
+EmptyState.Cashbox = createEmptyVariant('Cashbox', 'empty.cashboxDesc', 'empty.addTransaction');
+EmptyState.Members = createEmptyVariant('Members', 'empty.membersDesc', 'empty.invitePlayers');
+EmptyState.Activities = createEmptyVariant('Activities', 'empty.activitiesDesc', 'empty.viewGames');
+EmptyState.XpLogs = createEmptyVariant('XpLogs', 'empty.xpLogsDesc', 'empty.viewGames');
+EmptyState.Statistics = createEmptyVariant('Statistics', 'empty.statisticsDesc', 'empty.viewGames');
+EmptyState.Confirmations = createEmptyVariant('Confirmations', 'empty.confirmationsDesc', 'empty.viewGames');
 
 export default EmptyState;
