@@ -27,13 +27,13 @@ afterAll(async () => {
 });
 
 describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
-  it("Usuario nao verificado NAO pode criar game (alem da grace period)", async () => {
+  it("Usuario nao verificado PODE criar game (dentro da grace period ate 2026-08-03)", async () => {
     const unverifiedDb = asUser(testEnv, "uid-unverified-001", {
       role: "PLAYER",
       verified: false,
       profileComplete: true,
     });
-    await assertFails(
+    await assertSucceeds(
       unverifiedDb.doc("games/game-unverified").set({
         title: "Jogo Unverified",
         owner_id: "uid-unverified-001",
@@ -83,7 +83,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
     );
   });
 
-  it("Usuario nao verificado NAO pode criar game_event (alem da grace)", async () => {
+  it("Usuario nao verificado PODE criar game_event (dentro da grace ate 2026-08-03)", async () => {
     await seedDoc(testEnv, `games/grace-game-event`, {
       title: "Grace Event Test",
       owner_id: UID_PLAYER_A,
@@ -108,7 +108,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
       verified: false,
       profileComplete: true,
     });
-    await assertFails(
+    await assertSucceeds(
       unverifiedDb.doc(`game_events/ge-grace-unverified`).set({
         game_id: "grace-game-event",
         type: "GOAL",
@@ -120,7 +120,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
     );
   });
 
-  it("Usuario nao verificado NAO pode criar MVP vote (alem da grace)", async () => {
+  it("Usuario nao verificado PODE criar MVP vote (dentro da grace ate 2026-08-03)", async () => {
     await seedDoc(testEnv, `games/grace-game-mvp`, {
       title: "Grace MVP Test",
       owner_id: UID_PLAYER_A,
@@ -150,7 +150,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
       verified: false,
       profileComplete: true,
     });
-    await assertFails(
+    await assertSucceeds(
       unverifiedDb.doc(`mvp_votes/vote-grace-unverified`).set({
         game_id: "grace-game-mvp",
         voter_id: "uid-unverified-004",

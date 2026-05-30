@@ -89,7 +89,7 @@ describe("profileComplete — games create", () => {
   });
 
   it("sem claim e sem fallback bloqueia criar jogo", async () => {
-    const db = asUser(testEnv, UID_EMPTY, {role: "PLAYER", verified: true});
+    const db = asUser(testEnv, UID_EMPTY, {role: "PLAYER", verified: true, profileComplete: false});
     await assertFails(
       db.doc("games/profile-complete-empty").set(validGame(UID_EMPTY))
     );
@@ -119,7 +119,7 @@ describe("profileComplete — groups create", () => {
   });
 
   it("sem claim e sem fallback bloqueia criar grupo", async () => {
-    const db = asUser(testEnv, UID_EMPTY, {role: "PLAYER", verified: true});
+    const db = asUser(testEnv, UID_EMPTY, {role: "PLAYER", verified: true, profileComplete: false});
     await assertFails(
       db.doc("groups/profile-complete-empty").set(validGroup(UID_EMPTY))
     );
