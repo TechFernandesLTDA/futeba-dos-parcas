@@ -114,12 +114,13 @@ export function renderWithProviders(
  */
 export function createTestWrapper() {
   const client = createTestQueryClient();
+  // Não inclui ToastProvider aqui: hooks que usam useToast já mockam
+  // ToastContext individualmente. Incluir ToastProvider causaria erro quando
+  // o teste mocka '../contexts/ToastContext' sem exportar ToastProvider. #2330
   return function TestWrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={client}>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        {children}
       </QueryClientProvider>
     );
   };

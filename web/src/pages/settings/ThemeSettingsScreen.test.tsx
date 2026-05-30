@@ -6,6 +6,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockSetMode = vi.fn();
 
+vi.mock('../../services/firebase', () => ({
+  db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
+  messagingPromise: Promise.resolve(null),
+}));
+
 vi.mock('../../contexts/ThemeContext', () => ({
   useTheme: () => ({ mode: 'light', setMode: mockSetMode, toggleTheme: vi.fn() }),
 }));

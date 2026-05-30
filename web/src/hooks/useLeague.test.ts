@@ -26,6 +26,10 @@ vi.mock('../services/firebase', () => ({
   db: {},
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }) => children,
+}));
 import { useLeague } from './useLeague';
 
 describe('useLeague', () => {

@@ -2,7 +2,6 @@ import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '../contexts/ToastContext';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import ptBR from '../i18n/locales/pt-BR.json';
@@ -36,6 +35,11 @@ void i18n.use(initReactI18next).init({
 // Por isso fazemos monkey-patch de renderHook para injetar o wrapper
 // quando o teste não passa um próprio. #2330
 
+// GlobalWrapper inclui apenas QueryClientProvider.
+// NÃO inclui ToastProvider pois testes que mockam ../contexts/ToastContext
+// sem exportar ToastProvider quebravam o wrapper para todos os renders
+// daquele arquivo. Testes que precisam de ToastProvider real usam
+// renderWithProviders() de test/renderWithProviders.tsx. #2330
 function GlobalWrapper({ children }: { children: React.ReactNode }) {
   const testQueryClient = new QueryClient({
     defaultOptions: {
@@ -46,7 +50,7 @@ function GlobalWrapper({ children }: { children: React.ReactNode }) {
   return React.createElement(
     QueryClientProvider,
     { client: testQueryClient },
-    React.createElement(ToastProvider, null, children),
+    children,
   );
 }
 

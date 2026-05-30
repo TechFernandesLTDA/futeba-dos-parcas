@@ -4,6 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { ErrorBoundary } from './ErrorBoundary';
 
+vi.mock('../../services/firebase', () => ({
+  db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
+  messagingPromise: Promise.resolve(null),
+}));
+
 vi.mock('../../utils/logger', () => ({
   createLogger: () => ({
     debug: vi.fn(),

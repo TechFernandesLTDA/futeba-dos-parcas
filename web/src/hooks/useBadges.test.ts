@@ -17,12 +17,18 @@ vi.mock('firebase/firestore', () => ({
   where: (...args: any[]) => mockWhere(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+  limit: vi.fn((...args) => args[0]),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
 
 vi.mock('../services/firebase', () => ({
   db: {},
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }) => children,
+}));
 import { useBadges } from './useBadges';
 import { BADGE_DEFINITIONS } from '../types/gamification';
 

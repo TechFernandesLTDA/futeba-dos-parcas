@@ -34,6 +34,7 @@ vi.mock('firebase/firestore', () => ({
   getDoc: (...args: any[]) => mockGetDoc(...args),
   updateDoc: vi.fn().mockResolvedValue(undefined),
   serverTimestamp: vi.fn(),
+  limit: vi.fn((...args) => args[0]),
 }));
 
 const mockSignOut = vi.fn().mockResolvedValue(undefined);

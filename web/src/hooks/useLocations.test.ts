@@ -18,12 +18,18 @@ vi.mock('firebase/firestore', () => ({
   query: (...args: any[]) => mockQuery(...args),
   orderBy: (...args: any[]) => mockOrderBy(...args),
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+  limit: vi.fn((...args) => args[0]),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
 
 vi.mock('../services/firebase', () => ({
   db: {},
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }) => children,
+}));
 import { useLocations, useLocationDetail } from './useLocations';
 
 describe('useLocations', () => {

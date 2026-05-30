@@ -5,6 +5,11 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
+vi.mock('../../services/firebase', () => ({
+  db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
+  messagingPromise: Promise.resolve(null),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {

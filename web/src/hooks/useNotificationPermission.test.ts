@@ -22,6 +22,8 @@ vi.mock('firebase/firestore', () => ({
   arrayRemove: (...args: unknown[]) => mockArrayRemove(...args),
   // runTransaction é usado no fluxo de token FCM
   runTransaction: vi.fn().mockResolvedValue(undefined),
+  limit: vi.fn((...args) => args[0]),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
 
 vi.mock('../services/firebase', () => ({

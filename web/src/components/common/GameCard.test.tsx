@@ -5,6 +5,11 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { GameCard } from './GameCard';
 import { Game } from '../../types/game';
 
+vi.mock('../../services/firebase', () => ({
+  db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
+  messagingPromise: Promise.resolve(null),
+}));
+
 vi.mock('../../utils/dateFormatters', () => ({
   formatGameDate: (date: string) => date === '15/03/2026' ? 'Hoje' : date,
 }));

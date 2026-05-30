@@ -46,6 +46,16 @@ vi.mock('firebase/firestore', () => ({
   Timestamp: { now: () => ({ toDate: () => new Date() }), fromDate: (d: Date) => ({ toDate: () => d }) },
 }));
 
+vi.mock('../services/firebase', () => ({
+  db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
+}));
+
+vi.mock('firebase/storage', () => ({
+  ref: vi.fn(),
+  uploadBytes: vi.fn(),
+  getDownloadURL: vi.fn(),
+}));
+
 vi.mock('../contexts/ToastContext', () => ({
   useToast: () => ({
     showSuccess: vi.fn(),

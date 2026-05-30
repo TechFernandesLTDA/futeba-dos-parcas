@@ -42,6 +42,11 @@ vi.mock('../utils/logger', () => ({
   }),
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 import { usePaginatedQuery } from './usePaginatedQuery';
 
 describe('usePaginatedQuery', () => {

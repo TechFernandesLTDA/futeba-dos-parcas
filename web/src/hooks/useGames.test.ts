@@ -72,6 +72,10 @@ vi.mock('../utils/logger', () => ({
   }),
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }) => children,
+}));
 import { useGames, useGameDetail, useConfirmPresence, useCreateGame, useUpdateGameStatus } from './useGames';
 
 describe('useGames', () => {

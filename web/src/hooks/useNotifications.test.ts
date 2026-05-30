@@ -47,6 +47,10 @@ vi.mock('../utils/logger', () => ({
   }),
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }) => children,
+}));
 import { useNotifications } from './useNotifications';
 
 describe('useNotifications', () => {

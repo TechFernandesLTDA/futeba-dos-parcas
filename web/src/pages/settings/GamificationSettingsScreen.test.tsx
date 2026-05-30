@@ -13,6 +13,7 @@ vi.mock('firebase/firestore', () => ({
   getDoc: (...args: unknown[]) => mockGetDoc(...args),
   setDoc: (...args: unknown[]) => mockSetDoc(...args),
   serverTimestamp: vi.fn(() => 'mock-timestamp'),
+  limit: vi.fn((...args) => args[0]),
 }));
 
 vi.mock('../../services/firebase', () => ({ db: {} }));

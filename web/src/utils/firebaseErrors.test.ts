@@ -22,6 +22,7 @@ vi.mock('firebase/firestore', () => ({
   persistentLocalCache: vi.fn(() => ({})),
   persistentMultipleTabManager: vi.fn(() => ({})),
   connectFirestoreEmulator: vi.fn(),
+  limit: vi.fn((...args) => args[0]),
 }));
 
 import { getAuthErrorMessage, getFirestoreErrorMessage } from './firebaseErrors';
