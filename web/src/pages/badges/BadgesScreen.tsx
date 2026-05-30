@@ -213,6 +213,15 @@ const BadgeItem = React.memo(function BadgeItem({
     <Tooltip title={isUnlocked ? `Clique para detalhes` : badge.requirement}>
       <Card
         onClick={onClick}
+        role="button"
+        tabIndex={0}
+        aria-label={badge.name}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
         sx={{
           height: '100%',
           opacity: isUnlocked ? 1 : 0.5,
@@ -277,15 +286,16 @@ function BadgeDetailDialog({
   rarityMap: Record<string, string>;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   if (!badge) return null;
 
   const rarityColor = rarityMap[badge.rarity] ?? rarityMap.COMUM;
 
   return (
-    <Dialog open={true} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={true} onClose={onClose} maxWidth="xs" fullWidth aria-label={badge.name}>
       <DialogTitle sx={{ textAlign: 'right', p: 1 }}>
-        <IconButton onClick={onClose} aria-label="Fechar">
+        <IconButton onClick={onClose} aria-label={t('common.close')}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>

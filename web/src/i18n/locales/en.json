@@ -908,6 +908,7 @@
     "weeklyRanking": "Weekly Ranking",
     "teamOfTheWeek": "Team of the Week",
     "round": "Round {{week}}",
-    "viewFullRanking": "View full ranking"
+    "viewFullRanking": "View full ranking",
+    "viewStat": "View {{stat}}"
   }
 }

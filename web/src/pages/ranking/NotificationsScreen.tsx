@@ -342,7 +342,7 @@ export const NotificationsScreen: React.FC = () => {
                   <Typography
                     variant="overline"
                     color="text.secondary"
-                    sx={{ px: 1, fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.08em' }}
+                    sx={{ px: 1, fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.08em' }}
                   >
                     {groupLabel}
                   </Typography>

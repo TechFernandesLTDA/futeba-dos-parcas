@@ -298,7 +298,7 @@ function NextGameWidget() {
                   bgcolor: alpha(statusColors[nextGame.status] || theme.palette.primary.main, 0.12),
                   color: statusColors[nextGame.status] || theme.palette.primary.main,
                   fontWeight: 600,
-                  fontSize: '0.7rem',
+                  fontSize: '0.75rem',
                 }}
               />
               {isConfirmed && (
@@ -310,7 +310,7 @@ function NextGameWidget() {
                     bgcolor: alpha(theme.palette.success.main, 0.12),
                     color: theme.palette.success.main,
                     fontWeight: 600,
-                    fontSize: '0.7rem',
+                    fontSize: '0.75rem',
                   }}
                 />
               )}
@@ -876,6 +876,13 @@ export function HomeTab() {
               onClick={() => setIsPlayerCardOpen(true)}
               role="button"
               tabIndex={0}
+              aria-label={t('profile.openPlayerCardAria')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsPlayerCardOpen(true);
+                }
+              }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="h6" fontWeight="bold" noWrap sx={{ lineHeight: 1.2, textOverflow: 'ellipsis' }}>
@@ -889,7 +896,19 @@ export function HomeTab() {
             </Box>
           </Box>
 
-          <Box sx={{ mb: 2, cursor: 'pointer' }} onClick={() => navigate('/level-journey')}>
+          <Box
+            sx={{ mb: 2, cursor: 'pointer' }}
+            onClick={() => navigate('/level-journey')}
+            role="button"
+            tabIndex={0}
+            aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate('/level-journey');
+              }
+            }}
+          >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
               <Typography variant="caption" sx={{ opacity: 0.85 }}>
                 {t('profile.levelLabel', { level: currentLevel })}
@@ -927,6 +946,7 @@ export function HomeTab() {
             ].map((stat) => (
               <ButtonBase
                 key={stat.label}
+                aria-label={t('home.viewStat', { stat: stat.label })}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(stat.navigateTo);

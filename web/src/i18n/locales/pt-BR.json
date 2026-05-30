@@ -908,6 +908,7 @@
     "weeklyRanking": "Ranking Semanal",
     "teamOfTheWeek": "Time da Semana",
     "round": "Rodada {{week}}",
-    "viewFullRanking": "Ver ranking completo"
+    "viewFullRanking": "Ver ranking completo",
+    "viewStat": "Ver {{stat}}"
   }
 }

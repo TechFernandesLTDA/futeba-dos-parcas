@@ -445,7 +445,7 @@ export const LeagueScreen: React.FC = () => {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {t('league.tabAll')}
-                <Chip label={divisionCounts.ALL || 0} size="small" sx={{ height: 18, fontSize: '0.7rem', minWidth: 24 }} />
+                <Chip label={divisionCounts.ALL || 0} size="small" sx={{ height: 18, fontSize: '0.75rem', minWidth: 24 }} />
               </Box>
             }
           />
@@ -466,7 +466,7 @@ export const LeagueScreen: React.FC = () => {
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   {DIVISION_CONFIG[div]?.label ?? div}
-                  <Chip label={divisionCounts[div] || 0} size="small" sx={{ height: 18, fontSize: '0.7rem', minWidth: 24 }} />
+                  <Chip label={divisionCounts[div] || 0} size="small" sx={{ height: 18, fontSize: '0.75rem', minWidth: 24 }} />
                 </Box>
               }
               sx={{
@@ -516,7 +516,7 @@ export const LeagueScreen: React.FC = () => {
             sx={{
               bgcolor: alpha(getDivisionColor(currentUserPlayer.division, theme), 0.15),
               color: 'text.primary',
-              fontSize: '0.7rem',
+              fontSize: '0.75rem',
               height: 20,
             }}
           />
