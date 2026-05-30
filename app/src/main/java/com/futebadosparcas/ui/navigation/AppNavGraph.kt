@@ -290,9 +290,10 @@ fun AppNavHost(
 
         composable(Screen.Players.route) {
             val viewModel: com.futebadosparcas.ui.players.PlayersViewModel = koinViewModel()
+            // O clique em jogador é tratado internamente pela PlayersScreen
+            // via ModalBottomSheet (PlayerCardContent), sem callback externo.
             PlayersScreen(
                 viewModel = viewModel,
-                onPlayerClick = { /* Navegação para detalhe do jogador */ },
                 onNavigateNotifications = {
                     navController.navigate(Screen.Notifications.route)
                 },
@@ -325,6 +326,10 @@ fun AppNavHost(
                 onNavigateNotifications = { navController.navigate(Screen.Notifications.route) },
                 onNavigateGroups = { navController.navigate(Screen.Groups.route) },
                 onNavigateMap = { navController.navigate(Screen.LocationsMap.route) },
+                // TODO(#2260): migrar para Compose ModalBottomSheet. Requer um
+                // componente que carregue User+Statistics a partir do userId
+                // (PlayerCardContent atual exige os dados já carregados). Mantido
+                // o bridge via Fragment self-loading até esse componente existir.
                 onPlayerClick = { userId ->
                     val activity = context as? androidx.fragment.app.FragmentActivity
                     activity?.let {
@@ -911,10 +916,13 @@ private fun SecondaryScreenWrapper(
                         )
                     }
                 },
+                // Usa surface/onSurface (não primary/onPrimary) para garantir
+                // contraste WCAG AA do ícone de voltar com qualquer cor seed
+                // customizada pelo usuário (#2187).
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }

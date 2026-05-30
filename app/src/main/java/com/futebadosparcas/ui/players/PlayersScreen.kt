@@ -77,7 +77,6 @@ import androidx.compose.ui.semantics.semantics
 @Composable
 fun PlayersScreen(
     viewModel: PlayersViewModel,
-    onPlayerClick: (User) -> Unit,
     onNavigateNotifications: () -> Unit,
     onNavigateGroups: () -> Unit,
     onNavigateMap: () -> Unit,
