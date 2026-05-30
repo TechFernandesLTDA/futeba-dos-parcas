@@ -66,7 +66,9 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             showLabels
             sx={{
               width: '100%',
-              maxWidth: 480,
+              // #2203: em tablets (sm, até 900px) 480px centraliza os ícones e
+              // desperdiça as laterais. Distribui melhor com 600px no sm.
+              maxWidth: { xs: 480, sm: 600 },
               height: pageSpacing.bottomBarHeight,
               '& .MuiBottomNavigationAction-root': {
                 minWidth: 44,
