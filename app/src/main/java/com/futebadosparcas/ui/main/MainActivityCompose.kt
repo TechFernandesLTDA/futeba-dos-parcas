@@ -388,7 +388,6 @@ private fun AntiBotGate(
  * - Medium (600–839dp): NavigationRail (lateral)
  * - Expanded (>= 840dp): NavigationRail com labels visíveis (lateral)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     themeConfig: com.futebadosparcas.domain.model.AppThemeConfig,

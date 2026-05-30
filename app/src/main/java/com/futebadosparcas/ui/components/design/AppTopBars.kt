@@ -124,8 +124,7 @@ object AppTopBar {
         onNavigateNotifications: () -> Unit,
         onNavigateGroups: () -> Unit,
         onNavigateMap: () -> Unit,
-        modifier: Modifier = Modifier,
-        scrollBehavior: TopAppBarScrollBehavior? = null
+        modifier: Modifier = Modifier
     ) {
         TopAppBar(
             title = {
@@ -161,7 +160,6 @@ object AppTopBar {
                 }
             },
             colors = surfaceColors(),
-            scrollBehavior = scrollBehavior,
             modifier = modifier
         )
     }

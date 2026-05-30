@@ -54,7 +54,6 @@ import androidx.compose.ui.res.stringResource
  * - Pull-to-refresh (via Fragment)
  * - Navegação via callbacks
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GamesScreen(
     viewModel: GamesViewModel,

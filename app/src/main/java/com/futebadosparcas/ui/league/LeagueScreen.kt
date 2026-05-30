@@ -52,7 +52,6 @@ import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeagueScreen(
     uiState: LeagueUiState,
