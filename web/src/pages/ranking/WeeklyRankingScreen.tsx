@@ -32,7 +32,7 @@ export const WeeklyRankingScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t("ranking.weekly.title"));
   const navigate = useNavigate();
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const gColors = useGamificationColors();
   const { data, isLoading } = useWeeklyRanking();

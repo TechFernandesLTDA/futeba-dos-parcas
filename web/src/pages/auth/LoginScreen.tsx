@@ -68,8 +68,15 @@ export function LoginScreen() {
    * convites por link.
    */
   const resolveRedirect = (): string => {
-    const fromState = (location.state as { from?: { pathname?: string } } | null)
-      ?.from?.pathname;
+    // #2225: ProtectedRoute guarda o location COMPLETO em state.from. Antes lia
+    // só pathname, descartando search/hash (deep links com query — ex.: ?tab=2
+    // ou filtros — voltavam quebrados). Reconstrói pathname + search + hash.
+    const from = (location.state as {
+      from?: { pathname?: string; search?: string; hash?: string };
+    } | null)?.from;
+    const fromState = from?.pathname
+      ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
+      : undefined;
     const fromQuery = searchParams.get('redirect');
     const candidate = fromState || fromQuery || '/';
     // Apenas paths internos. Rejeita protocol-relative (`//`) e URLs absolutas.

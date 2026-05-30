@@ -206,7 +206,10 @@ export function GamesTab() {
           <ToggleButtonGroup
             value={sortBy}
             exclusive
-            onChange={(_, v) => v && setSortBy(v)}
+            // #2267: ToggleButtonGroup exclusive emite null ao re-clicar a opção
+            // ativa. Mantemos o sort atual (sem deseleção) — um sort sempre ativo
+            // é o comportamento esperado; deselecionar deixaria a lista sem ordem.
+            onChange={(_, v: SortBy | null) => { if (v !== null) setSortBy(v); }}
             size="small"
             sx={{ flexWrap: 'nowrap' }}
           >

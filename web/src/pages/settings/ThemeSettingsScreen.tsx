@@ -50,7 +50,7 @@ const logger = createLogger('ThemeSettingsScreen');
 export const ThemeSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('settings.theme.title'));
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { mode, setMode } = useThemeContext();

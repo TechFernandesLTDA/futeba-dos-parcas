@@ -39,6 +39,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
+import { pageSpacing } from '../../theme/pageTokens';
 
 const logger = createLogger('LocationsMapScreen');
 
@@ -115,7 +116,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
 export const LocationsMapScreen: React.FC = () => {
   useDocumentTitle('Mapa de Locais');
   const navigate = useNavigate();
-  const navigateBack = useNavigateBack('/');
+  const navigateBack = useNavigateBack();
   const theme = useTheme();
   useAuth();
 
@@ -283,7 +284,14 @@ export const LocationsMapScreen: React.FC = () => {
 
       <Fab
         color="primary"
-        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' } }}
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          position: 'fixed',
+          // #2161: acima da bottom nav (64px). #2270: safe-area iPhone notch.
+          bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 24 },
+          right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' },
+          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
+        }}
         onClick={() => navigate('/location/create')}
         aria-label="Adicionar local"
       >

@@ -729,6 +729,8 @@ export const LiveGameScreen: React.FC = () => {
             bgcolor: 'background.paper',
             borderTop: `1px solid ${theme.palette.divider}`,
             p: 2,
+            // #2270: safe-area para não ficar sob o home indicator (iPhone notch).
+            pb: 'calc(16px + env(safe-area-inset-bottom, 0px))',
             zIndex: 10,
           }}
         >

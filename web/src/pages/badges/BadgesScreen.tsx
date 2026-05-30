@@ -80,7 +80,7 @@ const CATEGORY_ICONS: Record<CategoryFilter, React.ReactElement> = {
 export const BadgesScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('badges.title'));
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();

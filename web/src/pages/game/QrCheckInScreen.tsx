@@ -30,7 +30,7 @@ export const QrCheckInScreen: React.FC = () => {
   useDocumentTitle('Check-in por QR Code');
   const { gameId, token } = useParams<{ gameId: string; token: string }>();
   const navigate = useNavigate();
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const { currentUser } = useAuth();
   const { showError } = useToast();
 

@@ -53,7 +53,7 @@ function getScoreColor(value: number, good: number, poor: number): string {
 
 export const PerformanceDashboard: React.FC = () => {
   useDocumentTitle('Performance');
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const { user } = useAuth();
   const [records, setRecords] = useState<PerformanceRecord[]>([]);

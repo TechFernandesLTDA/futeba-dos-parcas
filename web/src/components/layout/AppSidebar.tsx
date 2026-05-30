@@ -13,28 +13,26 @@ import {
   Button,
   Divider,
   Avatar,
+  Chip,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, KeyboardCommandKey as KeyboardIcon } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { AppLogo } from '../common/AppLogo';
-import { NAV_ITEMS, RAIL_WIDTH, DRAWER_WIDTH, NavItem } from '../../config/navItems';
+import {
+  NAV_ITEMS,
+  RAIL_WIDTH_RESPONSIVE,
+  DRAWER_WIDTH_RESPONSIVE,
+  getActiveNavIndex,
+} from '../../config/navItems';
 
 const pulse = keyframes`
   0% { transform: scale(1); }
   50% { transform: scale(1.15); }
   100% { transform: scale(1); }
 `;
-
-function isItemActive(item: NavItem, currentPath: string, currentSearch: string): boolean {
-  if (currentPath === '/') {
-    const tab = new URLSearchParams(currentSearch).get('tab') || '0';
-    return item.path === `/?tab=${tab}`;
-  }
-  return item.matchPaths.some((mp) => currentPath.startsWith(mp));
-}
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -44,17 +42,25 @@ export function AppSidebar() {
   const { unreadCount } = useNotifications(user?.id);
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
 
+  // #2226: índice ativo via fonte única (compartilhada com MobileBottomNav).
+  // Substitui o antigo isItemActive (lógica duplicada que destacava a seção
+  // errada em rotas secundárias).
+  const activeIndex = React.useMemo(
+    () => getActiveNavIndex(location.pathname, location.search),
+    [location.pathname, location.search],
+  );
+
   return (
     <>
       <Drawer
         variant="permanent"
         sx={{
           display: { xs: 'none', md: 'block', lg: 'none' },
-          width: RAIL_WIDTH,
+          width: RAIL_WIDTH_RESPONSIVE,
           flexShrink: 0,
           height: '100%',
           '& .MuiDrawer-paper': {
-            width: RAIL_WIDTH,
+            width: RAIL_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
             borderRight: 1,
@@ -75,8 +81,8 @@ export function AppSidebar() {
           <AppLogo size="small" shape="circle" alt="Futeba dos Parças" />
         </Box>
         <List sx={{ pt: 1 }}>
-          {NAV_ITEMS.map((item) => {
-            const active = isItemActive(item, location.pathname, location.search);
+          {NAV_ITEMS.map((item, idx) => {
+            const active = activeIndex === idx;
             const isNotifItem = item.path === '/notifications';
             const icon = isNotifItem ? (
               <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
@@ -127,11 +133,11 @@ export function AppSidebar() {
         variant="permanent"
         sx={{
           display: { xs: 'none', lg: 'block' },
-          width: DRAWER_WIDTH,
+          width: DRAWER_WIDTH_RESPONSIVE,
           flexShrink: 0,
           height: '100%',
           '& .MuiDrawer-paper': {
-            width: DRAWER_WIDTH,
+            width: DRAWER_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
             borderRight: 1,
@@ -173,8 +179,8 @@ export function AppSidebar() {
         </Box>
         <Divider sx={{ mx: 2, mb: 1 }} />
         <List>
-          {NAV_ITEMS.map((item) => {
-            const active = isItemActive(item, location.pathname, location.search);
+          {NAV_ITEMS.map((item, idx) => {
+            const active = activeIndex === idx;
             const isNotifItem = item.path === '/notifications';
             const icon = isNotifItem ? (
               <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
@@ -214,7 +220,25 @@ export function AppSidebar() {
             );
           })}
         </List>
-        <Box sx={{ mt: 'auto', p: 2, borderTop: 1, borderColor: 'divider' }}>
+        {/* #2192: entrada descobrível para os atalhos de teclado. Antes só
+            acessíveis pressionando "?", sem nenhuma pista visual. */}
+        <Box sx={{ mt: 'auto', px: 1, pb: 0.5 }}>
+          <ListItemButton
+            onClick={() => window.dispatchEvent(new Event('open-shortcuts'))}
+            sx={{ borderRadius: 2, mx: 1 }}
+            aria-label={t('shortcuts.openLabel')}
+          >
+            <ListItemIcon sx={{ color: 'text.secondary' }}>
+              <KeyboardIcon aria-hidden />
+            </ListItemIcon>
+            <ListItemText
+              primary={t('shortcuts.title')}
+              primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+            />
+            <Chip label="?" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
+          </ListItemButton>
+        </Box>
+        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Avatar src={user?.photoUrl} sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
               {userInitial}

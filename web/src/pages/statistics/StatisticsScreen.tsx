@@ -48,7 +48,7 @@ export const StatisticsScreen: React.FC = () => {
   const { user } = useAuth();
   const { showError } = useToast();
   const { t } = useTranslation();
-  const navigateBack = useNavigateBack('/');
+  const navigateBack = useNavigateBack();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabValue = parseInt(searchParams.get('tab') || '0');

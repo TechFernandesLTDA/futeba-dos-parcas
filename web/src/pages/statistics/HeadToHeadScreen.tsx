@@ -84,7 +84,7 @@ async function searchPlayers(term: string): Promise<PlayerSearchResult[]> {
 
 export const HeadToHeadScreen: React.FC = () => {
   useDocumentTitle('Confronto Direto');
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
 

@@ -14,6 +14,9 @@ import { LoadingScreen } from './components/common/LoadingScreen';
 import { MobileTopBar } from './components/layout/MobileTopBar';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
+import { useAutoBreadcrumbs } from './hooks/useAutoBreadcrumbs';
+import { useNavigateBack } from './hooks/useNavigateBack';
+import { useSwipeBack } from './hooks/useSwipeBack';
 import { useNotifications } from './hooks/useNotifications';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
 import { AppLayout } from './components/layout';
@@ -398,11 +401,6 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
 
-      {/* Auth */}
-      <Route path="/login" element={<PublicRoute><Suspense fallback={<RouteFallback />}><LoginScreen /></Suspense></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
-      <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
-
       {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
@@ -515,6 +513,14 @@ const SafeScreen = withErrorBoundary(AppRoutes);
 function MobileShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
+  const location = useLocation();
+  const breadcrumbs = useAutoBreadcrumbs();
+  // #2193: rotas secundárias = qualquer path que não seja a raiz (tabs vivem
+  // todas em "/"). Detail/form/settings ganham botão de voltar no mobile.
+  const isSecondary = location.pathname !== '/' && location.pathname !== '';
+  const goBack = useNavigateBack();
+  // #2194: swipe-back só em rotas secundárias (na raiz não há para onde voltar).
+  useSwipeBack({ disabled: !isSecondary });
 
   return (
     <Box
@@ -529,7 +535,10 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         id="mobile-shell"
         sx={{
           width: '100%',
-          maxWidth: { xs: '100%', sm: 600, md: 800, lg: 1200 },
+          // #2173: maxWidth compensa a sidebar (88px md / 240px lg) para não
+          // comprimir a área de conteúdo em monitores grandes. xl adicionado
+          // para telas 2K/4K.
+          maxWidth: { xs: '100%', sm: 600, md: 900, lg: 1440, xl: 1600 },
           minHeight: '100dvh',
           bgcolor: 'background.default',
           boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.12)'}` }),
@@ -538,7 +547,12 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         }}
       >
         {user && (
-          <MobileTopBar unreadCount={unreadCount} />
+          <MobileTopBar
+            unreadCount={unreadCount}
+            showBack={isSecondary}
+            onBack={goBack}
+            breadcrumbs={breadcrumbs}
+          />
         )}
         <MobileBottomNav>{children}</MobileBottomNav>
       </Box>
@@ -593,8 +607,15 @@ function App() {
         setShortcutsOpen(false);
       }
     };
+    // #2192: entrada descobrível — sidebar/menu dispara este evento para abrir
+    // o diálogo de atalhos sem precisar conhecer a tecla "?".
+    const handleOpenShortcuts = () => setShortcutsOpen(true);
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-shortcuts', handleOpenShortcuts);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-shortcuts', handleOpenShortcuts);
+    };
   }, [shortcutsOpen]);
 
   return (

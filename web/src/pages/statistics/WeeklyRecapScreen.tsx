@@ -80,7 +80,7 @@ export const WeeklyRecapScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('weeklyRecap.title'));
   const navigate = useNavigate();
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
     const theme = useTheme();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();

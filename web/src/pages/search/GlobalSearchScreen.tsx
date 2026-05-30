@@ -17,7 +17,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 export const GlobalSearchScreen: React.FC = () => {
   useDocumentTitle('Busca');
   const navigate = useNavigate();
-  const navigateBack = useNavigateBack('/');
+  const navigateBack = useNavigateBack();
   const theme = useTheme();
 
   const handleClose = () => {

@@ -31,9 +31,14 @@
     "deleting": "Deleting...",
     "fillAllFields": "Fill in all fields",
     "genericError": "Something went wrong. Please try again.",
+    "navigationError": "Could not navigate. Please try again.",
     "charCount": "{{current}}/{{max}} characters",
     "viewGroups": "View Groups",
     "viewGames": "View Games"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "openLabel": "Open keyboard shortcuts"
   },
   "nav": {
     "home": "Home",

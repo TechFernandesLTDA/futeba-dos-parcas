@@ -470,8 +470,9 @@ export const MVPVoteScreen: React.FC = () => {
           </Card>
         </Container>
 
-      {/* #2178: FixedBottomBar */}
-      <FixedBottomBar>
+      {/* #2178: FixedBottomBar. #2164: tela full-screen (rota fora do AppLayout),
+          centraliza no viewport — sem offset de sidebar. */}
+      <FixedBottomBar inLayout={false}>
         <Container maxWidth="sm">
           <Button
             variant="contained"

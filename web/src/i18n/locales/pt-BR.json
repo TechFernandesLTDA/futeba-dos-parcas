@@ -31,9 +31,14 @@
     "deleting": "Excluindo...",
     "fillAllFields": "Preencha todos os campos",
     "genericError": "Algo deu errado. Tente novamente.",
+    "navigationError": "Não foi possível navegar. Tente novamente.",
     "charCount": "{{current}}/{{max}} caracteres",
     "viewGroups": "Ver Grupos",
     "viewGames": "Ver Jogos"
+  },
+  "shortcuts": {
+    "title": "Atalhos de teclado",
+    "openLabel": "Abrir atalhos de teclado"
   },
   "nav": {
     "home": "Início",

@@ -45,7 +45,7 @@ import {
   Delete as DeleteIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
-import { AppBreadcrumbs } from '../../components/layout';
+import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
 import { useMyJoinRequest } from '../../hooks/useJoinRequests';
@@ -530,21 +530,9 @@ export const GroupDetailScreen: React.FC = () => {
           conteúdo (mobile bottom-bar e barra flutuante desktop). */}
       <Box aria-hidden sx={{ height: { xs: 80, sm: 88 } }} />
 
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: { xs: 0, sm: '50%' },
-          right: { xs: 0, sm: 'auto' },
-          transform: { sm: 'translateX(-50%)' },
-          width: { xs: '100%', sm: 480 },
-          maxWidth: 480,
-          bgcolor: 'background.paper',
-          borderTop: `1px solid ${theme.palette.divider}`,
-          p: 2,
-          zIndex: 10,
-        }}
-      >
+      {/* #2164/#2270: barra fixa via FixedBottomBar (centralizada no conteúdo
+          + safe-area), substituindo a versão hand-rolled centrada no viewport. */}
+      <FixedBottomBar>
         <Container maxWidth="sm">
           <Button
             variant="contained"
@@ -555,7 +543,7 @@ export const GroupDetailScreen: React.FC = () => {
             Criar Jogo
           </Button>
         </Container>
-      </Box>
+      </FixedBottomBar>
 
       <Dialog open={inviteDialogOpen} onClose={() => { setInviteDialogOpen(false); setInviteCode(''); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">
         <DialogTitle id="invite-dialog-title">Convidar Jogadores</DialogTitle>
