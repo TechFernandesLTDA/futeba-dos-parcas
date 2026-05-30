@@ -60,9 +60,9 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Sports
 import com.futebadosparcas.R
@@ -480,7 +480,7 @@ fun MainScreen(
             onNavigateHome = { onNavigate(Screen.Home.route) },
             onNavigateGames = { onNavigate(Screen.Games.route) },
             onNavigateGroups = { onNavigate(Screen.Groups.route) },
-            onNavigateRankings = { onNavigate(Screen.League.route) },
+            onNavigateRankings = { onNavigate(Screen.Ranking.route) },
             onNavigateProfile = { onNavigate(Screen.Profile.route) }
         )
 
@@ -642,10 +642,11 @@ data class BottomNavItem(
 
 @Composable
 private fun rememberBottomNavItems(): List<BottomNavItem> {
+    // Alinhado ao canônico Web: [Home, Games, Groups, Ranking, Profile] — #2182
     val homeLabel = stringResource(R.string.nav_home)
     val gamesLabel = stringResource(R.string.nav_games)
-    val playersLabel = stringResource(R.string.nav_players)
-    val leagueLabel = stringResource(R.string.league)
+    val groupsLabel = stringResource(R.string.nav_groups)
+    val rankingLabel = stringResource(R.string.nav_ranking)
     val profileLabel = stringResource(R.string.nav_profile)
 
     return remember {
@@ -663,16 +664,16 @@ private fun rememberBottomNavItems(): List<BottomNavItem> {
                 screen = Screen.Games
             ),
             BottomNavItem(
-                route = Screen.Players.route,
-                icon = Icons.Filled.People,
-                label = playersLabel,
-                screen = Screen.Players
+                route = Screen.Groups.route,
+                icon = Icons.Filled.Groups,
+                label = groupsLabel,
+                screen = Screen.Groups
             ),
             BottomNavItem(
-                route = Screen.League.route,
+                route = Screen.Ranking.route,
                 icon = Icons.Filled.EmojiEvents,
-                label = leagueLabel,
-                screen = Screen.League
+                label = rankingLabel,
+                screen = Screen.Ranking
             ),
             BottomNavItem(
                 route = Screen.Profile.route,

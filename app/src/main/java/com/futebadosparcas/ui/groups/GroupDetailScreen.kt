@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -604,7 +603,7 @@ private fun EnhancedGroupHeader(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(AppDimensions.radius_large),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -748,7 +747,7 @@ private fun RoleBadgeChip(myRole: GroupMemberRole?) {
 
     Surface(
         color = color.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(AppDimensions.radius_large)
+        shape = MaterialTheme.shapes.large
     ) {
         Row(
             modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = AppDimensions.spacing_extraSmall),
@@ -811,7 +810,7 @@ private fun MembersSectionHeader(
         if (myRole == GroupMemberRole.OWNER || myRole == GroupMemberRole.ADMIN) {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(AppDimensions.radius_medium)
+                shape = MaterialTheme.shapes.medium
             ) {
                 Text(
                     text = stringResource(R.string.groups_manage),
@@ -835,7 +834,7 @@ private fun EmptyMembersState(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(AppDimensions.radius_large),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -1063,7 +1062,7 @@ private fun JoinRequestSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(AppDimensions.radius_large),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
@@ -1164,7 +1163,7 @@ private fun PendingJoinRequestsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(AppDimensions.radius_large),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )

@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -219,7 +218,7 @@ private fun BadgeProgressHeader(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
@@ -370,7 +369,7 @@ private fun BadgeCard(
             .fillMaxWidth()
             .aspectRatio(0.85f)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -459,7 +458,7 @@ private fun BadgeRarityLabel(rarity: BadgeRarity) {
     val rarityColor = getRarityColor(rarity)
 
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         color = rarityColor.copy(alpha = 0.15f),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -480,7 +479,7 @@ private fun BadgeRarityLabel(rarity: BadgeRarity) {
 @Composable
 private fun BadgeCountChip(count: Int) {
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.tertiaryContainer,
         modifier = Modifier.height(24.dp)
     ) {
@@ -521,7 +520,7 @@ private fun BadgeDetailDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+            shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
@@ -602,7 +601,7 @@ private fun BadgeDetailDialog(
 
                 // XP Reward
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     color = GamificationColors.XpGreen.copy(alpha = 0.15f)
                 ) {
                     Text(
@@ -643,7 +642,7 @@ private fun BadgeDetailDialog(
                 FilledTonalButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     Text(stringResource(R.string.badges_continue))
                 }
@@ -715,7 +714,7 @@ private fun BadgeProgressHeaderShimmer() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        shape = RoundedCornerShape(16.dp)
+        shape = MaterialTheme.shapes.large
     ) {
         Box(
             modifier = Modifier
@@ -758,7 +757,7 @@ private fun BadgeCardShimmer() {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.85f),
-        shape = RoundedCornerShape(16.dp)
+        shape = MaterialTheme.shapes.large
     ) {
         Box(
             modifier = Modifier
