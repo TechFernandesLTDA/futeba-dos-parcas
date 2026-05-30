@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Card, CardActionArea, CardProps, SxProps, Theme } from '@mui/material';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 // Hover apenas para dispositivos com ponteiro real (mouse), nao touch
 const HOVER_SX: SxProps<Theme> = {
@@ -34,6 +35,16 @@ export const InteractiveCard = React.memo(
     { onClick, onContextMenu, onKeyDown, actionAreaSx, actionAreaLabel, children, sx, ...cardProps },
     ref,
   ) {
+    // #2218: hook declarado antes de qualquer early return (regra dos Hooks).
+    const { trigger } = useHapticFeedback();
+    // #2218: feedback tátil leve no toque, com fallback silencioso (sem suporte
+    // ou prefers-reduced-motion). Espelha o ripple/micro-interação do Android.
+    const handleClick = useCallback(() => {
+      if (!onClick) return;
+      trigger('light');
+      onClick();
+    }, [onClick, trigger]);
+
     if (process.env.NODE_ENV === 'development' && onClick && !actionAreaLabel) {
       console.warn('InteractiveCard: onClick provided without actionAreaLabel for accessibility');
     }
@@ -50,7 +61,7 @@ export const InteractiveCard = React.memo(
       onKeyDown?.(e);
       if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault();
-        onClick();
+        handleClick();
       }
     };
 
@@ -67,7 +78,7 @@ export const InteractiveCard = React.memo(
         {...cardProps}
       >
         <CardActionArea
-          onClick={onClick}
+          onClick={handleClick}
           aria-label={actionAreaLabel}
           sx={[
             { borderRadius: 'inherit', height: '100%' },
