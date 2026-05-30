@@ -6,6 +6,7 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useOfflineQueue');
 const STORAGE_KEY = 'offline_write_queue';
+const KEY_STORAGE_KEY = 'offline_queue_enc_key';
 
 interface QueuedMutation {
   id: string;
@@ -16,34 +17,98 @@ interface QueuedMutation {
   enqueuedAt: number;
 }
 
-function loadQueue(): QueuedMutation[] {
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
+  const existingKey = localStorage.getItem(KEY_STORAGE_KEY);
+  if (existingKey) {
+    const rawKey = Uint8Array.from(atob(existingKey), (c) => c.charCodeAt(0));
+    return crypto.subtle.importKey(
+      'raw',
+      rawKey,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt'],
+    );
+  }
+  const key = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt'],
+  );
+  const exported = await crypto.subtle.exportKey('raw', key);
+  localStorage.setItem(KEY_STORAGE_KEY, btoa(String.fromCharCode(...new Uint8Array(exported))));
+  return key;
+}
+
+async function encryptQueue(queue: QueuedMutation[]): Promise<string> {
+  if (queue.length === 0) return '';
+  const key = await getOrCreateEncryptionKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plaintext = encoder.encode(JSON.stringify(queue));
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
+  const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(ciphertext), iv.length);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function decryptQueue(encrypted: string): Promise<QueuedMutation[]> {
+  if (!encrypted) return [];
+  const key = await getOrCreateEncryptionKey();
+  const combined = Uint8Array.from(atob(encrypted), (c) => c.charCodeAt(0));
+  const iv = combined.slice(0, 12);
+  const ciphertext = combined.slice(12);
+  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return JSON.parse(decoder.decode(plaintext));
+}
+
+async function loadQueue(): Promise<QueuedMutation[]> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (error) {
-    console.warn('Failed to read offline queue from localStorage:', error);
+    if (!raw) return [];
+    return await decryptQueue(raw);
+  } catch {
+    logger.warn('Failed to decrypt offline queue, starting fresh');
+    localStorage.removeItem(STORAGE_KEY);
     return [];
   }
 }
 
-function saveQueue(queue: QueuedMutation[]): void {
+async function saveQueue(queue: QueuedMutation[]): Promise<void> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+    const encrypted = await encryptQueue(queue);
+    if (encrypted) {
+      localStorage.setItem(STORAGE_KEY, encrypted);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   } catch (error) {
-    console.warn('Failed to save offline queue to localStorage:', error);
+    logger.warn('Failed to save offline queue', error);
   }
 }
 
 export function useOfflineQueue() {
   const { isOnline } = useNetworkStatus();
-  const [queue, setQueue] = useState<QueuedMutation[]>(loadQueue);
+  const [queue, setQueue] = useState<QueuedMutation[]>([]);
+  const [queueLoaded, setQueueLoaded] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const processingRef = useRef(false);
 
   useEffect(() => {
-    saveQueue(queue);
-  }, [queue]);
+    loadQueue().then((loaded) => {
+      setQueue(loaded);
+      setQueueLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (queueLoaded) {
+      saveQueue(queue);
+    }
+  }, [queue, queueLoaded]);
 
   const enqueue = useCallback((mutation: Omit<QueuedMutation, 'id' | 'enqueuedAt'>) => {
     const entry: QueuedMutation = {

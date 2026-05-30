@@ -205,6 +205,13 @@ service cloud.firestore {
       return gameDoc != null && gameDoc.data.owner_id == userId();
     }
 
+    // #2151: Helper global para verificar se usuario e owner de um grupo
+    // Elimina duplicacao isGroupOwnerById/isGroupOwnerById2 em members e join_requests
+    function isGroupOwnerById(groupId) {
+      let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
+      return groupDoc != null && groupDoc.data.owner_id == userId();
+    }
+
     // Verifica se usuario pode gerenciar jogo (owner ou co-organizer)
     function canManageGame(gameData) {
       return gameData.owner_id == userId() ||
@@ -218,9 +225,10 @@ service cloud.firestore {
     }
 
     // Helper para verificar se usuario e membro ativo de um grupo
+    // #2151: usa apenas get() + null check (antes usava exists()+get() = double read)
     function isGroupMember(groupId) {
-      let memberPath = /databases/$(database)/documents/groups/$(groupId)/members/$(userId());
-      return exists(memberPath) && get(memberPath).data.status == 'ACTIVE';
+      let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
+      return memberDoc != null && memberDoc.data.status == 'ACTIVE';
     }
 
     // Helper para verificar se usuario e admin/owner de um grupo
@@ -626,9 +634,9 @@ service cloud.firestore {
           request.resource.data.queue_position is number &&
           request.resource.data.added_at is number;
 
-        // Sair: somente a propria entrada (ou admin para moderacao).
+        // Sair: somente a propria entrada, game owner, ou admin para moderacao.
         allow delete: if isAuthenticated() &&
-          (resource.data.user_id == userId() || isAdmin());
+          (resource.data.user_id == userId() || isGameOwner(gameId) || isAdmin());
 
         // Promocao/expiracao NUNCA no cliente (server-only, anti-race).
         allow update: if false;
@@ -1407,11 +1415,6 @@ service cloud.firestore {
           memberId == userId() ||
           isGroupAdmin(groupId)
         );
-
-        function isGroupOwnerById(gId) {
-          let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
-          return groupDoc != null && groupDoc.data.owner_id == userId();
-        }
       }
 
       // ============================================
@@ -1420,15 +1423,10 @@ service cloud.firestore {
       // DocId == userId garante 1 request por user por grupo.
       // ============================================
       match /join_requests/{requesterId} {
-        function isGroupOwnerById2(gId) {
-          let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
-          return groupDoc != null && groupDoc.data.owner_id == userId();
-        }
-
         // Read: requester ve proprio, owner/admin ve todos do grupo
         allow read: if isAuthenticated() && (
           requesterId == userId() ||
-          isGroupOwnerById2(groupId) ||
+          isGroupOwnerById(groupId) ||
           isGroupAdmin(groupId) ||
           isAdmin()
         );
@@ -1448,7 +1446,7 @@ service cloud.firestore {
 
         // Update: owner/admin transiciona PENDING -> APPROVED|REJECTED
         allow update: if isAuthenticated() &&
-          (isGroupOwnerById2(groupId) || isGroupAdmin(groupId)) &&
+          (isGroupOwnerById(groupId) || isGroupAdmin(groupId)) &&
           resource.data.status == 'PENDING' &&
           (request.resource.data.status == 'APPROVED' || request.resource.data.status == 'REJECTED') &&
           request.resource.data.responded_by == userId();
@@ -1456,7 +1454,7 @@ service cloud.firestore {
         // Delete: requester deleta proprio (cancelar) ou owner/admin limpa
         allow delete: if isAuthenticated() && (
           requesterId == userId() ||
-          isGroupOwnerById2(groupId) ||
+          isGroupOwnerById(groupId) ||
           isGroupAdmin(groupId)
         );
       }
