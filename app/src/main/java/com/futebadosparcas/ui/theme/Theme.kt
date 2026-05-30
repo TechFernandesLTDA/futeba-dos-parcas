@@ -73,10 +73,14 @@ fun FutebaTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = FutebaTypography,
-        shapes = FutebaShapes,
-        content = content
-    )
+    // Envolve MaterialTheme com ResponsiveTypographyProvider para disponibilizar
+    // LocalResponsiveTextDimens em toda a árvore de composição (#2209).
+    ResponsiveTypographyProvider {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = FutebaTypography,
+            shapes = FutebaShapes,
+            content = content
+        )
+    }
 }
