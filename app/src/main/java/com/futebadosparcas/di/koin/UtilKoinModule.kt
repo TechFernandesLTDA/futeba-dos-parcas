@@ -5,6 +5,7 @@ import com.futebadosparcas.util.LocationAnalytics
 import com.futebadosparcas.util.LocationSeeder
 import com.futebadosparcas.util.PerformanceTracker
 import com.futebadosparcas.util.PreferencesManager
+import com.futebadosparcas.util.ResourceManager
 import com.futebadosparcas.data.cache.MemoryCache
 import com.futebadosparcas.ui.games.teamformation.SavedFormationRepository
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
@@ -16,6 +17,11 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val utilKoinModule = module {
+
+    // ResourceManager para acesso a recursos Android em ViewModels
+    single<ResourceManager> {
+        ResourceManager(androidContext())
+    }
 
     single<PerformanceTracker> {
         PerformanceTracker()
