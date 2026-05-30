@@ -21,6 +21,7 @@
 | Formas/raio | MUI `shape.borderRadius` | `app/.../ui/theme/Shape.kt` (`FutebaShapes`) |
 | Gamificação | `gamificationColors[Dark]` em `theme/index.ts` | `GamificationColors` em `Color.kt` |
 | Gradientes | (não usado — flat) | `app/.../ui/theme/Gradients.kt` |
+| **Animação** | **`web/src/theme/motion.ts`** | **`app/.../ui/theme/AppMotion.kt`** |
 
 ---
 
@@ -54,21 +55,21 @@ neutro/OLED. **Unificar é decisão de produto** — registrada em
 **Canônico = Android** (`GamificationColors` em `Color.kt`), documentado também
 em `.claude/rules/material3-compose-reference.md`.
 
-| Token | Canônico (dark/Android) | Web light | Web dark |
-|-------|-------------------------|-----------|----------|
-| Gold | `#FFD700` | `#B8860B` (DarkGoldenrod) | `#FFD700` ✅ |
-| Silver | `#E0E0E0` | `#C0C0C0` | `#E0E0E0` ✅ |
-| Bronze | `#CD7F32` | `#CD7F32` ✅ | `#E8924A` (clareado p/ dark) |
+| Token   | HEX base canônico | Web light                   | Web dark                        | Android (`GamificationColors`)    |
+|---------|-------------------|-----------------------------|---------------------------------|-----------------------------------|
+| Gold    | `#FFD700`         | `#FFD700` ✅ (#2236)         | `#FFD700` ✅                    | `Gold = Color(0xFFFFD700)` ✅     |
+| Silver  | `#E0E0E0`         | `#E0E0E0` ✅ (#2236)         | `#E0E0E0` ✅                    | `Silver = Color(0xFFE0E0E0)` ✅   |
+| Bronze  | `#CD7F32`         | `#CD7F32` ✅                 | `#E8924A` (clareado p/ dark)    | `Bronze = Color(0xFFCD7F32)` ✅   |
+| Diamond | `#B9F2FF`         | `#B9F2FF` ✅ (#2236)         | `#B9F2FF` ✅                    | `Diamond = Color(0xFFB9F2FF)` ✅  |
 
-> **Por que web tem variante light mais escura:** ouro/prata puros são
-> ilegíveis sobre fundo branco. A web mantém:
-> - **light**: tons escurecidos para contraste (`gamificationColors`)
-> - **dark/OLED**: tons brilhantes alinhados ao Android (`gamificationColorsDark`)
+> **Nota:** Gold (`#FFD700`) e Silver (`#E0E0E0`) são cores de fundo — usar
+> texto escuro sobre eles (ex.: `#1A1C1E`) ou calcular via `getContrastText()`.
+> Bronze no dark mode é clareado (`#E8924A`) pois `#CD7F32` perde contraste em
+> fundos escuros (#0F172A / #1E293B).
 >
 > Seleção automática por modo: `getGamificationColors(theme)` /
 > `useGamificationColors()`. Android usa `GamificationColors` + `ContrastHelper`
-> para o texto. **Paridade visual real é no dark mode** (mesmos hexes); o light
-> mode diverge de propósito por acessibilidade.
+> para o texto. **Paridade total** (todos os tiers alinhados) após #2236.
 
 ### Formato de badge/medalha (#2236)
 
@@ -154,29 +155,53 @@ Web: MUI `shape.borderRadius` (12 default, Card override 16). Android:
 
 ## 7. Animação (#2195)
 
-Tokens de duração/easing canônicos, alinhados ao Material 3 motion.
+Tokens de duração/easing centralizados, alinhados ao Material Design 3 Motion.
 
-| Token | Duração | Web (MUI `transitions.duration`) | Android (`tween`) |
-|-------|---------|----------------------------------|-------------------|
-| short | 150ms | `shorter`/`shortest` | `tween(150)` |
-| medium | 300ms | `standard` (300) | `tween(300)` — usado no `AppNavGraph` |
-| long | 500ms | `complex` | `tween(500)` |
+**Localização dos tokens:**
 
-| Easing | Web | Android |
-|--------|-----|---------|
-| standard | `transitions.easing.easeInOut` | `FastOutSlowInEasing` |
-| decelerate | `easing.easeOut` | `LinearOutSlowInEasing` |
-| emphasized | cubic-bezier(0.2, 0, 0, 1) | `FastOutSlowInEasing` |
+| Plataforma | Arquivo | Objeto/Classe |
+|------------|---------|---------------|
+| Web        | `web/src/theme/motion.ts` | `motionDuration`, `motionEasing`, `motion()` |
+| Web (re-export) | `web/src/theme/index.ts` | (mesmos, para importadores do tema) |
+| Android    | `app/src/main/java/com/futebadosparcas/ui/theme/AppMotion.kt` | `MotionDuration`, `MotionEasing` |
 
-**Referências de uso atual:**
-- Navegação push/pop: 300ms fade + slide (Android `AppNavGraph`; web usa default
-  do react-router — alvo de unificação futura).
-- `EmptyState` fade-in: 0.3s ease-out (web) — equivale a `medium` + `decelerate`.
-- `InteractiveCard` hover: `shortest` (web).
+### Durações
 
-**Acessibilidade:** respeitar `prefers-reduced-motion` (web) e
-`Settings.Global.ANIMATOR_DURATION_SCALE` (Android). O hook web
-`useHapticFeedback` já respeita `prefers-reduced-motion`.
+| Token    | Valor  | Web (`motionDuration`)   | Android (`MotionDuration`) | Uso típico                              |
+|----------|--------|--------------------------|----------------------------|-----------------------------------------|
+| `short`  | 150 ms | `motionDuration.short`   | `MotionDuration.Short`     | Tooltips, micro-feedback, ripple        |
+| `medium` | 300 ms | `motionDuration.medium`  | `MotionDuration.Medium`    | Navegação, modais, transições padrão    |
+| `long`   | 500 ms | `motionDuration.long`    | `MotionDuration.Long`      | Onboarding, celebração de XP, hero anim |
+
+### Easings (Material 3)
+
+| Token        | Curva CSS                    | Android (`MotionEasing`)         | Uso típico                              |
+|--------------|------------------------------|----------------------------------|-----------------------------------------|
+| `standard`   | `cubic-bezier(0.2, 0, 0, 1)` | `MotionEasing.Standard`          | Uso geral                               |
+| `emphasized` | `cubic-bezier(0.2, 0, 0, 1)` | `MotionEasing.Emphasized`        | FAB, hero, destaque high-emphasis       |
+| `decelerate` | `cubic-bezier(0, 0, 0, 1)`   | `MotionEasing.Decelerate`        | Elementos que entram em tela            |
+| `accelerate` | `cubic-bezier(0.3, 0, 1, 1)` | `MotionEasing.Accelerate`        | Elementos que saem de tela              |
+
+**Uso web:**
+```ts
+import { motion, motionDuration, motionEasing } from '@/theme';
+// em sx prop:
+sx={{ transition: motion('opacity', 'medium', 'standard') }}
+// valor direto:
+`${motionDuration.medium}ms ${motionEasing.decelerate}`
+```
+
+**Uso Android:**
+```kotlin
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+// em animationSpec:
+tween(durationMillis = MotionDuration.Medium, easing = MotionEasing.Standard)
+```
+
+**Acessibilidade:** respeitar `prefers-reduced-motion` (web — já coberto pelo
+`MuiCssBaseline` override no tema) e `Settings.Global.ANIMATOR_DURATION_SCALE`
+(Android — gerenciado automaticamente pelo sistema).
 
 ---
 
