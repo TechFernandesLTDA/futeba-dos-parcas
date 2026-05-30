@@ -173,10 +173,15 @@ class ConfirmationUseCase constructor(
             val game = gameResult.getOrNull()
                 ?: return Result.failure(Exception("Jogo nao encontrado"))
 
-            // Calcular horas antes do jogo
-            // TODO: KMP Game model não tem dateTime property - precisa reconstruir a partir de date+time strings
-            // ou armazenar timestamp no modelo Game
-            val hoursBeforeGame = 0.0
+            // Calcular horas antes do jogo reconstruindo o timestamp a partir
+            // de date+time (o modelo KMP Game expõe essas strings). #2294
+            val gameStartMillis = parseGameStartMillis(game.date, game.time)
+            val hoursBeforeGame = if (gameStartMillis != null) {
+                ((gameStartMillis - System.currentTimeMillis()) / 3_600_000.0)
+                    .coerceAtLeast(0.0)
+            } else {
+                0.0
+            }
 
             // Registrar cancelamento (Issue #39)
             val cancellation = GameCancellation(
@@ -499,6 +504,21 @@ class ConfirmationUseCase constructor(
                 .await()
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao salvar cancelamento", e)
+        }
+    }
+
+    /**
+     * Reconstrói o timestamp (millis) de início do jogo a partir das strings
+     * date ("yyyy-MM-dd") e time ("HH:mm") do modelo KMP Game. #2294
+     * Retorna null se o parse falhar (formato inesperado/vazio).
+     */
+    private fun parseGameStartMillis(date: String, time: String): Long? {
+        if (date.isBlank() || time.isBlank()) return null
+        return try {
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US)
+            sdf.parse("$date $time")?.time
+        } catch (e: Exception) {
+            null
         }
     }
 }
