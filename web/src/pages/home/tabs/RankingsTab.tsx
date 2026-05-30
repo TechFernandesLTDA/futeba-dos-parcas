@@ -47,7 +47,7 @@ import { PlayerCard } from '../../../components/player/PlayerCard';
 import { TeamBadge } from '../../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague';
 import { useActiveSeason } from '../../../hooks/useActiveSeason';
-import { DIVISION_CONFIG, LeagueDivision, getXpProgress } from '../../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getXpProgress, getDivisionColor } from '../../../types/gamification';
 import { getLevelBadgeImage, handleBadgeImageError } from '../../../utils/levelBadge';
 import {
   XP_PARTICIPATION, XP_GOAL, XP_ASSIST, XP_SAVE,
@@ -90,7 +90,11 @@ const PodiumCard: React.FC<{
   onAvatarClick: (userId: string) => void;
 }> = ({ player, config, showXP, positionChange, onAvatarClick }) => {
   const theme = useTheme();
-  const divisionConfig = DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE;
+  // #2163: color theme-aware (dark/OLED); label/minPoints vêm do config estático
+  const divisionConfig = {
+    ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
+    color: getDivisionColor(player.division, theme),
+  };
   const levelColor = getLevelColor(player.level, theme);
 
   return (
@@ -411,7 +415,7 @@ export function RankingsTab() {
         }
       />
       {userGroups.length > 0 && (
-        <Box sx={{ px: 2, pt: 0.5, pb: 1, display: 'flex', gap: 0.5, overflowX: 'auto', flexWrap: 'nowrap' }}>
+        <Box sx={{ px: 2, pt: 0.5, pb: 1, display: 'flex', gap: 0.5, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
           <Chip
             label="Global"
             size="small"
@@ -521,8 +525,8 @@ export function RankingsTab() {
                         size="small"
                         sx={{
                           mt: 0.5,
-                          bgcolor: alpha(DIVISION_CONFIG[currentPlayer.division]?.color || theme.palette.text.primary, 0.15),
-                          color: DIVISION_CONFIG[currentPlayer.division]?.color || theme.palette.text.primary,
+                          bgcolor: alpha(getDivisionColor(currentPlayer.division, theme), 0.15),
+                          color: getDivisionColor(currentPlayer.division, theme),
                           fontWeight: 600,
                         }}
                       />
@@ -602,13 +606,16 @@ export function RankingsTab() {
                 {t('league.divisions')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {(Object.entries(DIVISION_CONFIG) as [LeagueDivision, typeof DIVISION_CONFIG[LeagueDivision]][]).map(([key, config]) => (
-                  <Card key={key} sx={{ border: `1px solid ${alpha(config.color, 0.3)}` }}>
+                {(Object.entries(DIVISION_CONFIG) as [LeagueDivision, typeof DIVISION_CONFIG[LeagueDivision]][]).map(([key, config]) => {
+                  // #2163: color theme-aware (dark/OLED)
+                  const divColor = getDivisionColor(key, theme);
+                  return (
+                  <Card key={key} sx={{ border: `1px solid ${alpha(divColor, 0.3)}` }}>
                     <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <MilitaryTechIcon sx={{ color: config.color, fontSize: iconSizes.lg }} />
+                        <MilitaryTechIcon sx={{ color: divColor, fontSize: iconSizes.lg }} />
                         <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle2" fontWeight={700} sx={{ color: config.color }}>
+                          <Typography variant="subtitle2" fontWeight={700} sx={{ color: divColor }}>
                             {config.label}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -618,7 +625,8 @@ export function RankingsTab() {
                       </Box>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </Box>
 
               {/* Links para telas detalhadas */}
@@ -728,7 +736,11 @@ const RankingCard = React.memo(function RankingCard({
   positionChange: number | null;
 }) {
   const theme = useTheme();
-  const divisionConfig = DIVISION_CONFIG[player.division as LeagueDivision] || DIVISION_CONFIG.BRONZE;
+  // #2163: color theme-aware (dark/OLED)
+  const divisionConfig = {
+    ...(DIVISION_CONFIG[player.division as LeagueDivision] || DIVISION_CONFIG.BRONZE),
+    color: getDivisionColor(player.division as LeagueDivision, theme),
+  };
   const levelColor = getLevelColor(player.level, theme);
 
   return (

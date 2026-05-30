@@ -127,7 +127,7 @@ export function GamesTab() {
           position: 'sticky',
           top: 0,
           zIndex: 5,
-          bgcolor: 'surfaceContainerHigh',
+          bgcolor: 'background.paper', // #2273: token canônico de sticky header
           p: 2,
           pb: 0,
           borderBottom: `1px solid ${theme.palette.divider}`,

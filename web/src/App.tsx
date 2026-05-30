@@ -192,13 +192,19 @@ function AppLoadingFallback() {
   return <LoadingScreen variant="cards" message="Carregando..." />;
 }
 
+// #2188: carregamento inicial (auth resolvendo) usa a splash com identidade
+// visual do app, em vez dos skeleton cards cinzas.
+function SplashLoadingFallback() {
+  return <LoadingScreen variant="splash" />;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
   const location = useLocation();
   const verified = useVerifiedClaim(firebaseUser);
 
   if (loading) {
-    return <AppLoadingFallback />;
+    return <SplashLoadingFallback />;
   }
 
   // FIX #574 (C3): preserva location pra que LoginScreen redirecione user
@@ -233,7 +239,7 @@ function VerifiedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const verified = useVerifiedClaim(firebaseUser);
 
-  if (loading) return <AppLoadingFallback />;
+  if (loading) return <SplashLoadingFallback />;
 
   if (!firebaseUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -256,7 +262,7 @@ function VerifiedRoute({ children }: { children: React.ReactNode }) {
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <AppLoadingFallback />;
+  if (loading) return <SplashLoadingFallback />;
   // FIX #584/H5: distinguir unauth (→/login) de auth-mas-nao-admin (→/).
   // Antes: user==null caía em `user?.role !== 'ADMIN'` (true) e ia pra /,
   // criando silent gap (unauth user via home em vez de login).
@@ -274,7 +280,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <AppLoadingFallback />;
+  if (loading) return <SplashLoadingFallback />;
   // FIX #584/H5: unauth user → /login (vide AdminRoute).
   // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
   if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
@@ -300,7 +306,7 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   const { showError } = useToast();
   const [notified, setNotified] = useState(false);
 
-  if (loading) return <AppLoadingFallback />;
+  if (loading) return <SplashLoadingFallback />;
   if (!firebaseUser) return <Navigate to="/login" replace />;
 
   // Admin tem acesso global (consistente com rules)
@@ -329,7 +335,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const verified = useVerifiedClaim(firebaseUser);
 
   if (loading) {
-    return <AppLoadingFallback />;
+    return <SplashLoadingFallback />;
   }
 
   if (firebaseUser) {

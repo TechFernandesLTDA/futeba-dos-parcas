@@ -53,8 +53,12 @@ export const WelcomeScreen: React.FC = () => {
           variant="contained"
           size="large"
           sx={{
-            bgcolor: 'background.paper',
-            color: theme.palette.primary.main,
+            // #2271: WelcomeScreen tem fundo gradiente verde FIXO (não muda com tema),
+            // então o botão usa branco fixo + texto verde; antes usava background.paper
+            // (escuro no dark) e hover p/ branco causava flash. Agora base e hover são
+            // consistentes.
+            bgcolor: 'common.white',
+            color: theme.palette.primary.dark,
             py: 1.5,
             mb: 2,
             '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.9) },

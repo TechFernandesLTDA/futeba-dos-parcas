@@ -364,8 +364,8 @@ export const CreateGameScreen: React.FC = () => {
   };
 
   const handleSaveTemplate = async () => {
-    if (!templateName.trim()) {
-      showError('Digite um nome para o template.');
+    if (templateName.trim().length < 3) {
+      showError('O nome do template deve ter pelo menos 3 caracteres.');
       return;
     }
     setSavingTemplate(true);
@@ -1040,15 +1040,23 @@ export const CreateGameScreen: React.FC = () => {
               margin="none"
               label="Nome do template"
               fullWidth
+              required
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="Ex: Jogo de domingo"
               inputProps={{ maxLength: 100 }}
+              // #2231: feedback visual de validação (mínimo 3 caracteres) + contador
+              error={templateName.trim().length > 0 && templateName.trim().length < 3}
+              helperText={
+                templateName.trim().length > 0 && templateName.trim().length < 3
+                  ? 'O nome deve ter pelo menos 3 caracteres'
+                  : `${templateName.length}/100`
+              }
             />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setTemplateDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveTemplate} variant="contained" disabled={savingTemplate || !templateName.trim()}>
+            <Button onClick={handleSaveTemplate} variant="contained" disabled={savingTemplate || templateName.trim().length < 3}>
               {savingTemplate ? <CircularProgress size={20} /> : 'Salvar'}
             </Button>
           </DialogActions>

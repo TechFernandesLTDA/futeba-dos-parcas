@@ -5,3 +5,4 @@ export { AdaptiveFormSheet } from './AdaptiveFormSheet';
 export { AppBreadcrumbs } from './AppBreadcrumbs';
 export type { BreadcrumbItem } from './AppBreadcrumbs';
 export { MobileTopBar } from './MobileTopBar';
+export { FixedBottomBar } from './FixedBottomBar';

@@ -41,6 +41,7 @@ import { PullToRefresh } from '../../../components/common/PullToRefresh';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateShort } from '../../../utils/dateFormatters';
 import { ErrorState } from '../../../components/common/ErrorState';
+import { EmptyState } from '../../../components/common/EmptyState';
 
 export function GroupsTab() {
   const navigate = useNavigate();
@@ -190,41 +191,29 @@ export function GroupsTab() {
             </Card>
           ))
         ) : filteredGroups.length === 0 ? (
-          <Box sx={{ textAlign: 'center', pt: 4, pb: 2 }}>
-            <People sx={{ fontSize: iconSizes.hero, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              {searchQuery ? t('groups.noResultsSearch') : t('groups.noResults')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {searchQuery
-                ? t('groups.tryDifferentSearch')
-                : t('groups.createOrJoin')}
-            </Typography>
-            <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
-              {searchQuery ? (
-                <Button variant="outlined" onClick={() => setSearchQuery('')}>
-                  {t('groups.clearSearch')}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={() => navigate('/group/create')}
-                  >
-                    {t('groups.createGroup')}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Explore />}
-                    onClick={() => navigate('/groups/discover')}
-                  >
-                    Descobrir Grupos
-                  </Button>
-                </>
-              )}
-            </Stack>
-          </Box>
+          // #2268: usa o componente EmptyState padrão (ícone circular + fade-in)
+          searchQuery ? (
+            <EmptyState
+              icon={<People />}
+              title={t('groups.noResultsSearch')}
+              description={t('groups.tryDifferentSearch')}
+              actionLabel={t('groups.clearSearch')}
+              actionVariant="outlined"
+              onAction={() => setSearchQuery('')}
+            />
+          ) : (
+            <EmptyState
+              icon={<People />}
+              title={t('groups.noResults')}
+              description={t('groups.createOrJoin')}
+              actionLabel={t('groups.createGroup')}
+              actionIcon={<Add />}
+              onAction={() => navigate('/group/create')}
+              secondaryActionLabel="Descobrir Grupos"
+              secondaryActionIcon={<Explore />}
+              onSecondaryAction={() => navigate('/groups/discover')}
+            />
+          )
         ) : (
           <Grid container spacing={2}>
           {filteredGroups.map((group) => {

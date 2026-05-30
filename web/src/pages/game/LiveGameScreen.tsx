@@ -480,7 +480,7 @@ export const LiveGameScreen: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          bgcolor: 'surfaceContainerHigh',
+          bgcolor: 'background.paper', // #2273: token canônico de sticky header
           zIndex: 10,
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}

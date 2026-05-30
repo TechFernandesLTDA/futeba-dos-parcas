@@ -169,7 +169,7 @@ export function getOverallRating(user: User): number {
 }
 
 import { type Theme } from '@mui/material/styles';
-import { gamificationColors } from '../theme';
+import { getGamificationColors } from '../utils/gamificationColors';
 import { getLevelName as getLevelNameFromTable } from './gamification';
 
 /** Retorna o título do nível usando LevelTable (fonte única de verdade) */
@@ -177,14 +177,20 @@ export function getLevelTitle(level: number): string {
   return getLevelNameFromTable(level);
 }
 
-/** Retorna a cor do nível baseada na fase — usa tokens do tema (suporta dark mode) */
+/**
+ * Retorna a cor do nível baseada na fase — theme-aware (#2163/#2271).
+ * Usa a paleta de gamificação correta para o modo (light vs dark/OLED) para
+ * garantir contraste WCAG; tons brand fixos como gold/silver/bronze passam a
+ * usar a variante dark mais brilhante quando o tema é escuro.
+ */
 export function getLevelColor(level: number, theme: Theme): string {
-  if (level >= 19) return gamificationColors.gold;
+  const colors = getGamificationColors(theme);
+  if (level >= 19) return colors.gold;
   if (level >= 16) return theme.palette.error.main;
-  if (level >= 13) return gamificationColors.mvp;
+  if (level >= 13) return colors.mvp;
   if (level >= 11) return theme.palette.info.main;
-  if (level >= 9) return gamificationColors.level;
+  if (level >= 9) return colors.level;
   if (level >= 6) return theme.palette.success.main;
-  if (level >= 3) return gamificationColors.silver;
-  return gamificationColors.bronze;
+  if (level >= 3) return colors.silver;
+  return colors.bronze;
 }

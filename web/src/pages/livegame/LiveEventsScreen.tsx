@@ -24,6 +24,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -68,6 +69,7 @@ export const LiveEventsScreen: React.FC = () => {
   useDocumentTitle('Eventos ao Vivo');
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // #2238: dialog responsivo
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
 
@@ -312,7 +314,7 @@ export const LiveEventsScreen: React.FC = () => {
         </Fab>
       )}
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth aria-labelledby="add-event-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">Adicionar Evento</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>

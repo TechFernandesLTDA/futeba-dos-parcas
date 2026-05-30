@@ -49,13 +49,15 @@ interface GameCardProps {
   onCopyLink?: () => void;
 }
 
-const pulseKeyframes = {
+// #2137: theme-aware — usa theme.palette.success.main em vez de verde hardcoded,
+// preservando contraste do pulse "LIVE" em dark/OLED.
+const makePulseKeyframes = (color: string) => ({
   '@keyframes pulse': {
-    '0%': { opacity: 1, boxShadow: '0 0 0 0 rgba(76, 175, 80, 0.4)' },
-    '70%': { opacity: 0.6, boxShadow: '0 0 0 6px rgba(76, 175, 80, 0)' },
-    '100%': { opacity: 1, boxShadow: '0 0 0 0 rgba(76, 175, 80, 0)' },
+    '0%': { opacity: 1, boxShadow: `0 0 0 0 ${alpha(color, 0.4)}` },
+    '70%': { opacity: 0.6, boxShadow: `0 0 0 6px ${alpha(color, 0)}` },
+    '100%': { opacity: 1, boxShadow: `0 0 0 0 ${alpha(color, 0)}` },
   },
-};
+});
 
 function getCountdown(dateStr: string, timeStr: string): string | null {
   if (!dateStr || !timeStr) return null;
@@ -161,7 +163,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                         borderRadius: '50%',
                         bgcolor: theme.palette.success.main,
                         animation: 'pulse 1.5s infinite ease-in-out',
-                        ...pulseKeyframes,
+                        ...makePulseKeyframes(theme.palette.success.main),
                       }}
                     />
                     <Chip
@@ -554,6 +556,12 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
   );
 });
 
+/**
+ * @deprecated #2176 — use `EmptyState` de `components/common/EmptyState.tsx`
+ * (com ícone circular, fade-in e variantes contextuais). Este export legado
+ * (assinatura `action: { label, onClick }`) será removido após migração dos
+ * consumidores. Mantido por compat até lá.
+ */
 export const EmptyState: React.FC<{
   icon?: React.ReactNode;
   title: string;

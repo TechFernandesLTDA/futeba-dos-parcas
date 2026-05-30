@@ -32,9 +32,9 @@ import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
-import { DIVISION_CONFIG } from '../../types/gamification';
+import { DIVISION_CONFIG, getDivisionColor } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
-import { gamificationColors } from '../../theme';
+import { getGamificationColors } from '../../utils/gamificationColors';
 import { useTranslation } from 'react-i18next';
 
 export const RankingScreen: React.FC = () => {
@@ -87,7 +87,7 @@ export const RankingScreen: React.FC = () => {
         sx={{
           position: 'sticky',
           top: 0,
-          bgcolor: 'surfaceContainerHigh',
+          bgcolor: 'background.paper', // #2273: token canônico de sticky header
           zIndex: 10,
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
@@ -216,15 +216,19 @@ const PodiumSection = React.memo(function PodiumSection({
   players: LeaguePlayer[];
   onAvatarClick: (userId: string) => void;
 }) {
+  const theme = useTheme();
   const medals = ['1º', '2º', '3º'];
 
   if (players.length < 3) return null;
+
+  // #2163: cores theme-aware (dark/OLED) para o pódio
+  const gColors = getGamificationColors(theme);
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 1.5, mb: 2 }}>
       {PODIUM_ORDER.map((playerIndex) => {
         const player = players[playerIndex];
-        const colors = [gamificationColors.gold, gamificationColors.silver, gamificationColors.bronze];
+        const colors = [gColors.gold, gColors.silver, gColors.bronze];
         const isFirst = playerIndex === 0;
         return (
           <Card
@@ -343,7 +347,7 @@ const RankingItem = React.memo(function RankingItem({
             <Typography
               variant="h6"
               fontWeight={700}
-              color={DIVISION_CONFIG[player.division]?.color || 'text.primary'}
+              color={getDivisionColor(player.division, theme)}
             >
               {tabValue === 1 ? player.mvpCount : tabValue === 2 ? player.goals : player.points}
             </Typography>
@@ -351,8 +355,8 @@ const RankingItem = React.memo(function RankingItem({
               label={DIVISION_CONFIG[player.division]?.label || 'Bronze'}
               size="small"
               sx={{
-                bgcolor: alpha(DIVISION_CONFIG[player.division]?.color || theme.palette.text.primary, 0.1),
-                color: DIVISION_CONFIG[player.division]?.color || theme.palette.text.primary,
+                bgcolor: alpha(getDivisionColor(player.division, theme), 0.1),
+                color: getDivisionColor(player.division, theme),
                 fontSize: '0.75rem',
                 height: 20,
               }}

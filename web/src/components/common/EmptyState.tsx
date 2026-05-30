@@ -23,6 +23,10 @@ interface EmptyStateProps {
   actionIcon?: React.ReactNode;
   onAction?: () => void;
   actionVariant?: 'contained' | 'outlined' | 'text';
+  // #2268: ação secundária opcional (ex.: "Descobrir Grupos" ao lado de "Criar")
+  secondaryActionLabel?: string;
+  secondaryActionIcon?: React.ReactNode;
+  onSecondaryAction?: () => void;
   animate?: boolean;
   sx?: SxProps<Theme>;
 }
@@ -35,6 +39,9 @@ const EmptyStateBase = React.memo(function EmptyState({
   actionIcon,
   onAction,
   actionVariant = 'contained',
+  secondaryActionLabel,
+  secondaryActionIcon,
+  onSecondaryAction,
   animate = true,
   sx,
 }: EmptyStateProps) {
@@ -77,16 +84,20 @@ const EmptyStateBase = React.memo(function EmptyState({
           {description}
         </Typography>
       )}
-      {actionLabel && onAction && (
-        <Button
-          variant={actionVariant}
-          startIcon={actionIcon}
-          onClick={onAction}
-          sx={{ mt: 1 }}
-        >
-          {actionLabel}
-        </Button>
-      )}
+      {(actionLabel && onAction) || (secondaryActionLabel && onSecondaryAction) ? (
+        <Box sx={{ mt: 1, display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {actionLabel && onAction && (
+            <Button variant={actionVariant} startIcon={actionIcon} onClick={onAction}>
+              {actionLabel}
+            </Button>
+          )}
+          {secondaryActionLabel && onSecondaryAction && (
+            <Button variant="outlined" startIcon={secondaryActionIcon} onClick={onSecondaryAction}>
+              {secondaryActionLabel}
+            </Button>
+          )}
+        </Box>
+      ) : null}
     </Box>
   );
 });
