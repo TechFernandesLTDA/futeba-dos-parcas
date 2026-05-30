@@ -334,6 +334,20 @@ export const futebaTheme = createTheme({
         '.MuiTypography-noWrap': {
           textOverflow: 'ellipsis',
         },
+        // #2240: foco visível consistente para usuários de teclado (WCAG 2.4.7).
+        // Outline de 3px com offset; a cor vem de --futeba-focus-ring, definida
+        // por tema (light abaixo; dark/OLED sobrescreve em seu MuiCssBaseline)
+        // para garantir contraste >= 3:1 contra o fundo. Aplica a qualquer
+        // elemento focável via :focus-visible (botões, links, Boxes com
+        // role/tabIndex, inputs).
+        body: {
+          '--futeba-focus-ring': '#1B5E20',
+        },
+        ':focus-visible': {
+          outline: '3px solid var(--futeba-focus-ring, #1B5E20)',
+          outlineOffset: '2px',
+          borderRadius: '4px',
+        },
         // #2177: padding inferior do #mobile-shell removido. O spacer dentro
         // de MobileBottomNav (height = bottomBarHeight + safe-area) já reserva
         // o espaço; a regra aqui duplicava o padding (~128px + 2x safe-area).
@@ -377,6 +391,17 @@ export const futebaDarkTheme = createTheme({
   },
   components: {
     ...futebaTheme.components,
+    // #2240: no dark/OLED o anel de foco verde-escuro não contrasta com o fundo
+    // navy. Sobrescreve --futeba-focus-ring com verde claro (>= 3:1 em #0F172A)
+    // preservando as demais regras do baseline.
+    MuiCssBaseline: {
+      styleOverrides: {
+        ...(futebaTheme.components?.MuiCssBaseline?.styleOverrides as Record<string, unknown>),
+        body: {
+          '--futeba-focus-ring': '#86EFAC',
+        },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
