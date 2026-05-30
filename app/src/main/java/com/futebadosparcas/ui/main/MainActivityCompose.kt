@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -491,11 +492,14 @@ fun MainScreen(
     // Layout adaptativo: Rail lateral em Medium/Expanded, BottomBar em Compact
     if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
         // Compact: Scaffold com NavigationBar no fundo
+        // contentWindowInsets = WindowInsets(0) garante que o Scaffold raiz não
+        // consuma insets, evitando double-padding com os Scaffolds internos (#2189).
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
                 .then(keyboardShortcutsModifier),
             snackbarHost = { SnackbarHost(snackbarHostState) },
+            contentWindowInsets = WindowInsets(0),
             bottomBar = {
                 if (showNavigation) {
                     FutebaBottomBar(
@@ -528,9 +532,12 @@ fun MainScreen(
                 )
             }
 
+            // contentWindowInsets = WindowInsets(0) evita double-padding com
+            // Scaffolds internos das telas (#2189).
             Scaffold(
                 modifier = Modifier.weight(1f),
-                snackbarHost = { SnackbarHost(snackbarHostState) }
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                contentWindowInsets = WindowInsets(0)
             ) { innerPadding ->
                 Box(modifier = Modifier.padding(innerPadding)) {
                     AppNavHost(navController = navController)
