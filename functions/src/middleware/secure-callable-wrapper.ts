@@ -23,6 +23,7 @@
  * ```
  */
 
+import {logger} from "firebase-functions";
 import {
   onCall,
   HttpsError,
@@ -153,7 +154,7 @@ export function secureCallable<
               string) || "unknown";
 
           if (!appCheckToken) {
-            console.warn(
+            logger.warn(
               "[SECURE_CALLABLE] " +
               `${requestId}: Request SEM ` +
               "App Check token. " +
@@ -178,7 +179,7 @@ export function secureCallable<
 
           // Token consumido (replay attack)
           if (appCheckToken.alreadyConsumed) {
-            console.warn(
+            logger.warn(
               "[SECURE_CALLABLE] " +
               `${requestId}: App Check ` +
               "token REPLAY detectado. UID: " +
@@ -233,7 +234,7 @@ export function secureCallable<
                 Date.now()) / 1000
             );
 
-            console.warn(
+            logger.warn(
               "[SECURE_CALLABLE] User " +
               `${userId} exceeded rate limit ` +
               `(${config.rateLimit.maxRequests}` +
@@ -266,7 +267,7 @@ export function secureCallable<
             );
           }
 
-          console.log(
+          logger.info(
             "[SECURE_CALLABLE] User " +
             `${userId}: ${rl.remaining}/` +
             `${config.rateLimit.maxRequests} ` +
@@ -295,7 +296,7 @@ export function secureCallable<
             !userRole ||
             !allowedRoles.includes(userRole)
           ) {
-            console.warn(
+            logger.warn(
               "[SECURE_CALLABLE] User " +
               `${userId} (role: ${userRole}) ` +
               "denied. Required: " +
@@ -322,7 +323,7 @@ export function secureCallable<
         // ======================================
         // 5. EXECUTE HANDLER
         // ======================================
-        console.log(
+        logger.info(
           `[SECURE_CALLABLE] ${requestId}: ` +
           "Starting handler for user " +
           `${userId}`
@@ -381,7 +382,7 @@ export function secureCallable<
           });
         }
 
-        console.error(
+        logger.error(
           `[SECURE_CALLABLE] ${requestId}: ` +
           `Error after ${duration}ms:`, error
         );
@@ -438,7 +439,7 @@ async function getUserRole(
       return customRole;
     }
   } catch (error) {
-    console.error(
+    logger.error(
       "[SECURE_CALLABLE] Error getting " +
       `custom claims for ${userId}:`, error
     );
@@ -454,7 +455,7 @@ async function getUserRole(
       userDoc.data()?.role;
     return firestoreRole || null;
   } catch (error) {
-    console.error(
+    logger.error(
       "[SECURE_CALLABLE] Error getting " +
       `role from Firestore for ${userId}:`,
       error
@@ -491,7 +492,7 @@ async function logAudit(
           .serverTimestamp(),
     });
   } catch (error) {
-    console.error(
+    logger.error(
       "[SECURE_CALLABLE] Error logging audit:",
       error
     );

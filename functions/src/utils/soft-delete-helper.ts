@@ -24,6 +24,7 @@
  * @see specs/P2_40_SOFT_DELETE_PATTERN.md
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 
 const getDb = () => admin.firestore();
@@ -132,7 +133,7 @@ export async function softDelete(
 
     // Verificar se já está deletado (idempotência)
     if (docData?.deleted_at) {
-      console.log(
+      logger.info(
         "[SOFT_DELETE] Documento " +
         `${collection}/${docId} ` +
         "já está soft-deleted"
@@ -171,7 +172,7 @@ export async function softDelete(
 
     await docRef.update(updateFields);
 
-    console.log(
+    logger.info(
       "[SOFT_DELETE] Documento " +
       `${collection}/${docId} ` +
       `soft-deleted por ${deletedBy}` +
@@ -190,7 +191,7 @@ export async function softDelete(
   } catch (error: unknown) {
     const typedError =
       error as Record<string, unknown>;
-    console.error(
+    logger.error(
       "[SOFT_DELETE] Erro ao soft-delete " +
       `${collection}/${docId}:`,
       error
@@ -290,7 +291,7 @@ export async function restoreSoftDeleted(
 
     await docRef.update(updateFields);
 
-    console.log(
+    logger.info(
       "[SOFT_DELETE] Documento " +
       `${collection}/${docId} ` +
       `restaurado por ${restoredBy}`
@@ -306,7 +307,7 @@ export async function restoreSoftDeleted(
   } catch (error: unknown) {
     const typedError =
       error as Record<string, unknown>;
-    console.error(
+    logger.error(
       "[SOFT_DELETE] Erro ao restaurar " +
       `${collection}/${docId}:`,
       error
@@ -347,7 +348,7 @@ export async function isSoftDeleted(
     const data = docSnap.data();
     return data?.deleted_at != null;
   } catch (error) {
-    console.error(
+    logger.error(
       "[SOFT_DELETE] Erro ao verificar " +
       `${collection}/${docId}:`,
       error
@@ -415,7 +416,7 @@ export async function cleanupSoftDeleted(
       totalDeleted += snapshot.size;
       batchCount++;
 
-      console.log(
+      logger.info(
         "[SOFT_DELETE_CLEANUP] Batch " +
         `${batchCount}: ${snapshot.size} ` +
         "documentos removidos de " +
@@ -431,7 +432,7 @@ export async function cleanupSoftDeleted(
 
     const durationMs = Date.now() - startTime;
 
-    console.log(
+    logger.info(
       "[SOFT_DELETE_CLEANUP] " +
       `${collection}: ${totalDeleted} ` +
       "documentos permanentemente removidos " +
@@ -447,7 +448,7 @@ export async function cleanupSoftDeleted(
       durationMs,
     };
   } catch (error: unknown) {
-    console.error(
+    logger.error(
       "[SOFT_DELETE_CLEANUP] Erro em " +
       `${collection}:`,
       error
@@ -595,7 +596,7 @@ export async function softDeleteGroupCascade(
       await overflowBatch.commit();
     }
 
-    console.log(
+    logger.info(
       "[SOFT_DELETE_CASCADE] Grupo " +
       `${groupId}: 1 grupo + ` +
       `${gamesDeleted} jogos soft-deleted`
@@ -605,7 +606,7 @@ export async function softDeleteGroupCascade(
   } catch (error: unknown) {
     const typedError =
       error as Record<string, unknown>;
-    console.error(
+    logger.error(
       "[SOFT_DELETE_CASCADE] Erro para grupo " +
       `${groupId}:`,
       error

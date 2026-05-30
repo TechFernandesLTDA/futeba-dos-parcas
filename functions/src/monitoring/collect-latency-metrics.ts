@@ -23,6 +23,7 @@
  * @see specs/2026-05-12_TESTING_AUDIT_ISSUES.md (Issue 7)
  */
 
+import {logger} from "firebase-functions/v2";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
@@ -284,7 +285,7 @@ export async function fetchCallableLogs(
 export async function runCollectCallableLatencyMetrics(
   fetchLogsFn: FetchLogsFn = fetchCallableLogs
 ): Promise<void> {
-  console.log(
+  logger.info(
     "[LATENCY_METRICS] Iniciando coleta de métricas de latência"
   );
 
@@ -302,7 +303,7 @@ export async function runCollectCallableLatencyMetrics(
 
   const startIsoLog = yesterday.toISOString();
   const endIsoLog = endOfYesterday.toISOString();
-  console.log(
+  logger.info(
     "[LATENCY_METRICS] Coletando logs de " +
     `${startIsoLog} até ${endIsoLog}`
   );
@@ -311,12 +312,12 @@ export async function runCollectCallableLatencyMetrics(
 
   try {
     entries = await fetchLogsFn(yesterday, endOfYesterday);
-    console.log(
+    logger.info(
       `[LATENCY_METRICS] ${entries.length} entradas de log encontradas`
     );
   } catch (err) {
     // Não aborta — escreve doc com callables vazio para indicar tentativa
-    console.error(
+    logger.error(
       "[LATENCY_METRICS] Falha ao buscar logs do Cloud Logging:", err
     );
   }
@@ -324,7 +325,7 @@ export async function runCollectCallableLatencyMetrics(
   const callables = computeLatencyStats(entries);
   const callableCount = Object.keys(callables).length;
 
-  console.log(
+  logger.info(
     `[LATENCY_METRICS] Métricas computadas para ${callableCount} callables`
   );
 
@@ -366,7 +367,7 @@ export async function runCollectCallableLatencyMetrics(
         created_at: timestamp,
       });
 
-      console.warn(
+      logger.warn(
         `[LATENCY_METRICS] ALERTA: callable "${name}" ` +
         `p95=${stats.p95_ms}ms ultrapassa SLO de ${P95_SLO_MS}ms`
       );
@@ -379,7 +380,7 @@ export async function runCollectCallableLatencyMetrics(
     alertingCallables.join(", ") :
     "nenhum";
 
-  console.log(
+  logger.info(
     `[LATENCY_METRICS] Doc ${dateStr}_callable_latency salvo. ` +
     `Alertas: ${alertingCallables.length} (${alertSummary})`
   );

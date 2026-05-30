@@ -26,6 +26,7 @@
  * @see specs/INFRASTRUCTURE_RECOMMENDATIONS.md
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   onCall,
@@ -52,12 +53,8 @@ const getDb = () => admin.firestore();
 /** TTL do cache em milissegundos (5 minutos) */
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-/**
- * TTL curto para cache durante horário de pico
- * (2 minutos) - reservado para uso futuro
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const CACHE_TTL_PEAK_MS = 2 * 60 * 1000;
+// FIX #2199: removidos exports não utilizados CACHE_TTL_PEAK_MS,
+// PEAK_HOURS_START e PEAK_HOURS_END (eram dead code com eslint-disable).
 
 /** Coleção para armazenar cache de rankings */
 const CACHE_COLLECTION = "cache_leaderboard";
@@ -67,20 +64,6 @@ const DEFAULT_LEADERBOARD_LIMIT = 100;
 
 /** Limite absoluto para evitar queries caras */
 const ABSOLUTE_MAX_LIMIT = 500;
-
-/**
- * Horário de início de pico (20h BRT) -
- * reservado para uso futuro
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const PEAK_HOURS_START = 20;
-
-/**
- * Horário de fim de pico (23h BRT) -
- * reservado para uso futuro
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const PEAK_HOURS_END = 23;
 
 // ==========================================
 // INTERFACES
@@ -231,7 +214,7 @@ export const getLeaderboardCached =
           const cacheAge =
             Date.now() -
             cached.cached_at.toMillis();
-          console.log(
+          logger.info(
             "[LEADERBOARD_CACHE] " +
             "Cache HIT para season " +
             `${safeSeasonId} ` +
@@ -254,7 +237,7 @@ export const getLeaderboardCached =
       // ==========================================
       // 3. CACHE MISS: Buscar do Firestore
       // ==========================================
-      console.log(
+      logger.info(
         "[LEADERBOARD_CACHE] " +
         "Cache MISS para season " +
         `${safeSeasonId}. ` +
@@ -351,7 +334,7 @@ export const getLeaderboardCached =
             limit: resultLimit,
           });
       } catch (error) {
-        console.error(
+        logger.error(
           "[LEADERBOARD_CACHE] " +
           "Erro ao salvar cache:",
           error
@@ -360,7 +343,7 @@ export const getLeaderboardCached =
 
       const queryDuration =
         Date.now() - startTime;
-      console.log(
+      logger.info(
         "[LEADERBOARD_CACHE] " +
         "Leaderboard carregado em " +
         `${queryDuration}ms ` +
@@ -405,8 +388,10 @@ async function getCachedLeaderboard(
 
     if (!cacheDoc.exists) return null;
 
-    const data =
-      cacheDoc.data() as CachedLeaderboard;
+    // FIX #2284: valida shape antes do cast; cache malformado vira miss.
+    const raw = cacheDoc.data();
+    if (typeof raw !== "object" || raw === null) return null;
+    const data = raw as CachedLeaderboard;
 
     // Verificar se o cache expirou
     const now = Date.now();
@@ -419,7 +404,7 @@ async function getCachedLeaderboard(
 
     return data;
   } catch (error) {
-    console.error(
+    logger.error(
       "[LEADERBOARD_CACHE] " +
       "Erro ao ler cache:",
       error
@@ -484,7 +469,7 @@ async function fetchUsersInBatch(
         });
         return map;
       } catch (error) {
-        console.error(
+        logger.error(
           "[LEADERBOARD_CACHE] " +
           "Erro ao buscar usuários:",
           error
@@ -561,7 +546,7 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
       });
       await batch.commit();
 
-      console.log(
+      logger.info(
         "[LEADERBOARD_CACHE] Invalidated " +
         `${cacheSnap.size} cache doc(s) ` +
         `for season ${seasonId}`
@@ -572,7 +557,7 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
       // Não re-throw para evitar retry em cascata que custaria Firestore reads extras.
       // O TTL de 5 min na coleção leaderboard_cache garante eventual consistência
       // sem dados stale por mais de 5 minutos no pior caso.
-      console.error(
+      logger.error(
         "[LEADERBOARD_CACHE] " +
         `Erro ao invalidar cache da season ${seasonId}:`,
         error

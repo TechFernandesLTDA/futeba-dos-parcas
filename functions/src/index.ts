@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import {setGlobalOptions} from "firebase-functions/v2";
+import {logger, setGlobalOptions} from "firebase-functions/v2";
 import {
   onDocumentUpdated,
   onDocumentDeleted,
@@ -17,12 +17,16 @@ import {
 import {
   getAllBadgesToAward,
 } from "./badges/badge-helper";
+import {isGameShape} from "./validation/guards";
 
 // Padroniza região default de TODAS as functions v2 que não especificam
 // region explicitamente. Antes, 15 functions ficavam em us-central1
 // (default do Firebase) enquanto Firestore está em southamerica-east1,
 // gerando latência extra e split confuso entre módulos.
-setGlobalOptions({region: FUNCTION_REGION});
+// FIX #2152: maxInstances global de 10 evita "bill shock" — sem teto, um
+// pico/loop de gatilhos pode escalar para centenas de instâncias e estourar
+// a fatura. 10 cobre o tráfego atual com folga.
+setGlobalOptions({region: FUNCTION_REGION, maxInstances: 10});
 
 // ==========================================
 // IMPORTS DOS MÓDULOS EXTRAÍDOS
@@ -200,16 +204,28 @@ admin.initializeApp();
 export const onGameStatusUpdate = onDocumentUpdated(
   {
     document: "games/{gameId}",
-    region: FUNCTION_REGION,
+    // FIX #2199: region já vem de setGlobalOptions (redundante aqui).
     memory: "512MiB",
     timeoutSeconds: 180,
   },
   async (event) => {
     if (!event.data) return;
 
-    const before = event.data.before.data() as Game;
-    const after = event.data.after.data() as Game;
     const gameId = event.params.gameId;
+
+    // FIX #2284: valida o shape cru do Firestore antes do cast. Trigger:
+    // loga e faz early-return em vez de seguir com dados malformados.
+    const beforeRaw = event.data.before.data();
+    const afterRaw = event.data.after.data();
+    if (!isGameShape(beforeRaw) || !isGameShape(afterRaw)) {
+      logger.error(
+        `[GUARD] onGameStatusUpdate: Game ${gameId} malformado`,
+        {hasBefore: !!beforeRaw, hasAfter: !!afterRaw}
+      );
+      return;
+    }
+    const before: Game = beforeRaw;
+    const after: Game = afterRaw;
 
     // ==========================================
     // SECURITY VALIDATION (PERF_001 Enhanced)
@@ -217,7 +233,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
     // 1. Validate owner_id exists
     if (!after.owner_id) {
-      console.error(
+      logger.error(
         `[SECURITY] Game ${gameId}: ` +
         "Missing owner_id. Blocking processing."
       );
@@ -230,7 +246,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
       before.owner_id &&
       before.owner_id !== after.owner_id
     ) {
-      console.warn(
+      logger.warn(
         `[SECURITY] Game ${gameId}: owner changed ` +
         `from ${before.owner_id} ` +
         `to ${after.owner_id} ` +
@@ -245,7 +261,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
       .doc(after.owner_id)
       .get();
     if (!ownerDoc.exists) {
-      console.error(
+      logger.error(
         `[SECURITY] Game ${gameId}: ` +
         `owner_id ${after.owner_id} ` +
         "not found in users. Blocking processing."
@@ -255,7 +271,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
     // 4. Log status change for audit trail
     if (before.status !== after.status) {
-      console.log(
+      logger.info(
         `[AUDIT] Game ${gameId}: ` +
         `Status changed ${before.status} ` +
         `-> ${after.status} ` +
@@ -308,7 +324,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 reason: "processing" as const,
               };
             }
-            console.warn(
+            logger.warn(
               "[LOCK_TTL] Stale xp_processing lock " +
               `detected for game ${event.params.gameId} ` +
               `(age: ${Math.round(lockAge / 1000)}s). ` +
@@ -328,14 +344,14 @@ export const onGameStatusUpdate = onDocumentUpdated(
       );
 
       if (!lockResult.shouldProcess) {
-        console.log(
+        logger.info(
           `Game ${gameId} skipped ` +
           `(${lockResult.reason}).`
         );
         return;
       }
 
-      console.log(
+      logger.info(
         `Processing Game ${gameId} for XP...`
       );
 
@@ -384,7 +400,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         const gameData = gameSnap.data() as
           Game | undefined;
         if (!gameData) {
-          console.error(
+          logger.error(
             `[VALIDATION] Game ${gameId}: ` +
             "Documento do jogo não encontrado. " +
             "Abortando XP."
@@ -404,7 +420,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           !gameData.owner_id ||
           typeof gameData.owner_id !== "string"
         ) {
-          console.error(
+          logger.error(
             `[VALIDATION] Game ${gameId}: ` +
             "owner_id ausente ou inválido."
           );
@@ -418,7 +434,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         }
 
         if (gameData.status !== "FINISHED") {
-          console.error(
+          logger.error(
             `[VALIDATION] Game ${gameId}: ` +
             "Status inesperado " +
             `'${gameData.status}' ` +
@@ -443,7 +459,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
               c.userId.trim() === ""
           );
         if (invalidConfirmations.length > 0) {
-          console.error(
+          logger.error(
             `[VALIDATION] Game ${gameId}: ` +
             `${invalidConfirmations.length} ` +
             "confirmações com userId inválido. " +
@@ -462,7 +478,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE) — clamp and warn, don't throw
         for (const conf of validConfirmations) {
           if (conf.goals < 0 || conf.goals > MAX_GOALS_PER_GAME) {
-            console.warn(
+            logger.warn(
               "[ANTI-CHEAT] User " +
               `${conf.userId}: goals=${conf.goals} ` +
               `above cap ${MAX_GOALS_PER_GAME} ` +
@@ -470,7 +486,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             );
           }
           if (conf.assists < 0 || conf.assists > MAX_ASSISTS_PER_GAME) {
-            console.warn(
+            logger.warn(
               "[ANTI-CHEAT] User " +
               `${conf.userId}: assists=${conf.assists} ` +
               `above cap ${MAX_ASSISTS_PER_GAME} ` +
@@ -478,7 +494,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             );
           }
           if (conf.saves < 0 || conf.saves > MAX_SAVES_PER_GAME) {
-            console.warn(
+            logger.warn(
               "[ANTI-CHEAT] User " +
               `${conf.userId}: saves=${conf.saves} ` +
               `above cap ${MAX_SAVES_PER_GAME} ` +
@@ -515,7 +531,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         // jogos com menos de 6 jogadores reais válidos.
         const MIN_PLAYERS = 6;
         if (validConfirmations.length < MIN_PLAYERS) {
-          console.log(
+          logger.info(
             "Not enough players " +
             `(${validConfirmations.length}` +
             `/${MIN_PLAYERS}). ` +
@@ -558,7 +574,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           if (uid) alreadyProcessedUserIds.add(uid);
         });
         if (alreadyProcessedUserIds.size > 0) {
-          console.log(
+          logger.info(
             "[XP_IDEMPOTENCY] Skipping " +
             `${alreadyProcessedUserIds.size} ` +
             "already-processed user(s) for " +
@@ -607,7 +623,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             batchCommits.push(
               currentBatch.commit()
             );
-            console.log(
+            logger.info(
               "[XP_BATCH] Comitting batch " +
               `with ${currentBatchOps} ops, ` +
               "starting new batch"
@@ -691,7 +707,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             after.mvp_id === uid &&
             !isMvpAndConfirmed
           ) {
-            console.error(
+            logger.error(
               `[FRAUD] User ${uid} set as ` +
               "MVP without confirmation " +
               `in game ${gameId}`
@@ -738,7 +754,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             if (opponentScoreForXp === 0) {
               cleanSheetXp =
                 settings.xp_clean_sheet;
-              console.log(
+              logger.info(
                 "[CLEAN_SHEET] " +
                 `Goalkeeper ${uid} ` +
                 `gets +${cleanSheetXp} ` +
@@ -779,7 +795,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
                     uid, streak
                   );
               } catch (err) {
-                console.error(
+                logger.error(
                   "[STREAK] Error sending " +
                   "notification for " +
                   `user ${uid}:`,
@@ -794,7 +810,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           let penaltyXp = 0;
           if (isWorstPlayer) {
             penaltyXp = XP_WORST_PLAYER_PENALTY;
-            console.log(
+            logger.info(
               `[PENALTY] User ${uid} is ` +
               "\"Bola Murcha\" in game " +
               `${gameId}. Applying ` +
@@ -1119,7 +1135,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           (r) => r.status === "rejected"
         );
         if (failedCommits.length > 0) {
-          console.error(
+          logger.error(
             `[XP] ${failedCommits.length}/${batchCommits.length} ` +
             "batch commits falharam para game " + gameId
           );
@@ -1129,7 +1145,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             (failedCommits[0] as PromiseRejectedResult).reason
           );
         }
-        console.log(
+        logger.info(
           `Game ${gameId} processing ` +
           "complete " +
           `(${batchCommits.length} ` +
@@ -1145,7 +1161,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           await Promise.all(
             streakNotificationPromises
           );
-          console.log(
+          logger.info(
             "[STREAK] " +
             `${streakNotificationPromises
               .length} ` +
@@ -1163,7 +1179,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             gameId, after, db()
           );
         } catch (e) {
-          console.error(
+          logger.error(
             "[CONSOLIDATED] Erro ao gerar " +
             `atividade para game ${gameId}:`,
             e
@@ -1174,7 +1190,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         // trigger separado (requer detecção
         // de mudança de mvp_id)
       } catch (error) {
-        console.error(
+        logger.error(
           `Game ${gameId} processing failed.`,
           error
         );
@@ -1193,12 +1209,12 @@ export const onGameStatusUpdate = onDocumentUpdated(
 // RECALCULAR LEAGUE RATING E DIVISÃO
 // ==========================================
 
-// FIX #752: options object com region explícita (era 2-arg sem region → us-central1 default)
+// FIX #752: options object (era 2-arg sem region → us-central1 default)
+// FIX #2199: region agora vem de setGlobalOptions (linha 30), removida daqui.
 export const recalculateLeagueRating =
   onDocumentUpdated(
     {
       document: "season_participation/{partId}",
-      region: FUNCTION_REGION,
       memory: "512MiB",
       timeoutSeconds: 180,
     },
@@ -1218,7 +1234,7 @@ export const recalculateLeagueRating =
 
       // 1. Validate user_id exists
       if (!userId) {
-        console.error(
+        logger.error(
           "[SECURITY] Participation " +
           `${partId}: Missing user_id. ` +
           "Blocking processing."
@@ -1232,7 +1248,7 @@ export const recalculateLeagueRating =
         .doc(userId)
         .get();
       if (!userDoc.exists) {
-        console.error(
+        logger.error(
           "[SECURITY] Participation " +
           `${partId}: user_id ${userId} ` +
           "not found. Blocking processing."
@@ -1241,7 +1257,7 @@ export const recalculateLeagueRating =
       }
 
       // 3. Log for audit trail
-      console.log(
+      logger.info(
         `[AUDIT] Participation ${partId}: ` +
         `Processing for user ${userId}`
       );
@@ -1261,7 +1277,7 @@ export const recalculateLeagueRating =
         // Nenhum novo jogo foi adicionado,
         // provavelmente foi nossa própria
         // atualização
-        console.log(
+        logger.info(
           "Skipping recalculation for " +
           `${partId} - no new games ` +
           `(${gamesPlayedAfter} games)`
@@ -1269,7 +1285,7 @@ export const recalculateLeagueRating =
         return;
       }
 
-      console.log(
+      logger.info(
         "Recalculating rating for " +
         `${partId}: ${gamesPlayedBefore} ` +
         `-> ${gamesPlayedAfter} games`
@@ -1310,7 +1326,7 @@ export const recalculateLeagueRating =
                   reason: "processing" as const,
                 };
               }
-              console.warn(
+              logger.warn(
                 "[LOCK_TTL] Stale league_processing " +
                 `lock detected for ${partId} ` +
                 `(age: ${Math.round(lockAge / 1000)}s). ` +
@@ -1331,7 +1347,7 @@ export const recalculateLeagueRating =
         );
 
       if (!lockResult.shouldProcess) {
-        console.log(
+        logger.info(
           `[LEAGUE] ${partId} skipped ` +
           `(${lockResult.reason})`
         );
@@ -1441,7 +1457,7 @@ export const recalculateLeagueRating =
           .PROMOTION_GAMES_REQUIRED;
         const relegReq = leagueModule
           .RELEGATION_GAMES_REQUIRED;
-        console.log(
+        logger.info(
           "[LEAGUE] Rating: " +
           `${leagueRating.toFixed(1)} | ` +
           "Div: " +
@@ -1461,8 +1477,8 @@ export const recalculateLeagueRating =
         // FIX #584/M7: era catch sem rethrow → liga permanentemente skip
         // pra esse game, divisão stale sem alert.
         // Agora rethrow → Eventarc retry com backoff. Se erro persiste,
-        // alerta via console.error mas não bloqueia o trigger Firestore.
-        console.error(
+        // alerta via logger.error mas não bloqueia o trigger Firestore.
+        logger.error(
           "Erro ao recalcular rating " +
           `para ${partId}:`,
           e
@@ -1477,7 +1493,7 @@ export const recalculateLeagueRating =
             admin.firestore.FieldValue
               .delete(),
         }).catch((cleanupErr) => {
-          console.error(
+          logger.error(
             "[LEAGUE] Falha ao liberar lock " +
             `para ${partId}:`,
             cleanupErr
@@ -1537,7 +1553,7 @@ async function collectAllMatching(
     if (snapshot.size < 450) break;
   }
 
-  console.log(
+  logger.info(
     "[CASCADE DELETE] Found " +
     `${totalFound} ` +
     `${label} to delete`
@@ -1547,13 +1563,13 @@ async function collectAllMatching(
 export const onGameDeleted = onDocumentDeleted(
   {
     document: "games/{gameId}",
-    region: FUNCTION_REGION,
+    // FIX #2199: region já vem de setGlobalOptions (redundante aqui).
     memory: "512MiB",
     timeoutSeconds: 300,
   },
   async (event) => {
     const gameId = event.params.gameId;
-    console.log(
+    logger.info(
       "[CASCADE DELETE] Starting cascade " +
       `deletion for game ${gameId}`
     );
@@ -1566,7 +1582,7 @@ export const onGameDeleted = onDocumentDeleted(
       // trigger dispara, então re-read sempre retorna exists=false,
       // tornando o cascade delete dead code.
       if (!event.data?.exists) {
-        console.log(
+        logger.info(
           "[CASCADE DELETE] Game " +
           `${gameId} sem dados pré-deleção, ` +
           "skipping (idempotent)."
@@ -1623,7 +1639,7 @@ export const onGameDeleted = onDocumentDeleted(
         await liveScoreRef.get();
       if (liveScoreDoc.exists) {
         allRefs.push(liveScoreRef);
-        console.log(
+        logger.info(
           "[CASCADE DELETE] " +
           "Found live_score to delete"
         );
@@ -1658,26 +1674,26 @@ export const onGameDeleted = onDocumentDeleted(
           const batchNum = Math.floor(
             i / BATCH_LIMIT
           ) + 1;
-          console.log(
+          logger.info(
             "[CASCADE DELETE] " +
             `Committed batch ${batchNum} ` +
             `(${chunk.length} ops)`
           );
         }
-        console.log(
+        logger.info(
           "[CASCADE DELETE] Successfully " +
           `deleted ${totalDeleted} related ` +
           `documents for game ${gameId}`
         );
       } else {
-        console.log(
+        logger.info(
           "[CASCADE DELETE] No related " +
           "documents found for game " +
           `${gameId}`
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         "[CASCADE DELETE] Error during " +
         "cascade deletion for game " +
         `${gameId}:`,
@@ -1706,7 +1722,7 @@ export const onGroupDeleted = onDocumentDeleted(
   },
   async (event) => {
     const groupId = event.params.groupId;
-    console.log(
+    logger.info(
       "[CASCADE DELETE] Starting cascade " +
       `deletion for group ${groupId}`
     );
@@ -1735,7 +1751,7 @@ export const onGroupDeleted = onDocumentDeleted(
           type: "delete", ref: doc.ref,
         })
       );
-      console.log(
+      logger.info(
         "[CASCADE DELETE] Found " +
         `${membersSnap.size} ` +
         "members to delete"
@@ -1752,7 +1768,7 @@ export const onGroupDeleted = onDocumentDeleted(
           type: "delete", ref: doc.ref,
         })
       );
-      console.log(
+      logger.info(
         "[CASCADE DELETE] Found " +
         `${cashboxSnap.size} ` +
         "cashbox entries to delete"
@@ -1781,7 +1797,7 @@ export const onGroupDeleted = onDocumentDeleted(
           type: "delete", ref: doc.ref,
         })
       );
-      console.log(
+      logger.info(
         "[CASCADE DELETE] Found " +
         `${joinRequestsSnap.size} ` +
         "join_requests to delete"
@@ -1797,7 +1813,7 @@ export const onGroupDeleted = onDocumentDeleted(
           type: "delete", ref: doc.ref,
         })
       );
-      console.log(
+      logger.info(
         "[CASCADE DELETE] Found " +
         `${invitesSnap.size} ` +
         "invites to delete"
@@ -1813,7 +1829,7 @@ export const onGroupDeleted = onDocumentDeleted(
           type: "delete", ref: doc.ref,
         })
       );
-      console.log(
+      logger.info(
         "[CASCADE DELETE] Found " +
         `${schedulesSnap.size} ` +
         "schedules to delete"
@@ -1847,7 +1863,7 @@ export const onGroupDeleted = onDocumentDeleted(
           type: "delete", ref: doc.ref,
         })
       );
-      console.log(
+      logger.info(
         "[CASCADE DELETE] Found " +
         `${usersWithGroupDocs.length} ` +
         "user group references to delete"
@@ -1874,7 +1890,7 @@ export const onGroupDeleted = onDocumentDeleted(
           },
         })
       );
-      console.log(
+      logger.info(
         "[CASCADE DELETE] Marked " +
         `${gamesSnap.size} ` +
         "games as orphaned"
@@ -1909,27 +1925,27 @@ export const onGroupDeleted = onDocumentDeleted(
           const batchNum = Math.floor(
             i / BATCH_LIMIT
           ) + 1;
-          console.log(
+          logger.info(
             "[CASCADE DELETE] " +
             `Committed batch ${batchNum} ` +
             `(${chunk.length} ops)`
           );
         }
-        console.log(
+        logger.info(
           "[CASCADE DELETE] Successfully " +
           `processed ${totalOps} ` +
           "operations for group " +
           `${groupId}`
         );
       } else {
-        console.log(
+        logger.info(
           "[CASCADE DELETE] No related " +
           "documents found for group " +
           `${groupId}`
         );
       }
     } catch (error) {
-      console.error(
+      logger.error(
         "[CASCADE DELETE] Error during " +
         "cascade deletion for group " +
         `${groupId}:`,
@@ -2000,7 +2016,7 @@ export const onConfirmationWrite =
       if (delta === 0) return;
 
       try {
-        console.log(
+        logger.info(
           "[SYNC] Confirmation status " +
           `changed: ${statusBefore} -> ` +
           `${statusAfter} for game ${gameId} ` +
@@ -2019,13 +2035,13 @@ export const onConfirmationWrite =
               .FieldValue.serverTimestamp(),
           });
 
-        console.log(
+        logger.info(
           `[SYNC] Game ${gameId}: ` +
           `players_count ${delta > 0 ? "+" : ""}` +
           `${delta}`
         );
       } catch (error) {
-        console.error(
+        logger.error(
           "[SYNC] Error syncing counts " +
           `for game ${gameId}:`,
           error

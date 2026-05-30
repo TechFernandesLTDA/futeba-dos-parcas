@@ -11,6 +11,7 @@
  * trigger calcula delta + atualiza `groups/{gid}.member_count` via admin SDK
  * (bypassa rules).
  */
+import {logger} from "firebase-functions";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
@@ -93,7 +94,7 @@ export const onMemberWritten = onDocumentWritten(
     // logic to decrement — flag was never cleared on those paths.
     const beforeExists = !!event.data?.before?.exists;
     if (!beforeExists && isCountedByJoinRequest(after)) {
-      console.log(
+      logger.info(
         `[MEMBER_COUNTER] Skipping CREATE for ${groupId}/${memberId} — ` +
         "member_count already incremented by join-request approval"
       );
@@ -117,7 +118,7 @@ export const onMemberWritten = onDocumentWritten(
       reason = !after ? "DELETE_WAS_ACTIVE" : "DEACTIVATED";
     } else {
       // Sem mudança em count semantics — skip
-      console.log(
+      logger.info(
         `[MEMBER_COUNTER] No-op for ${groupId}/${memberId} ` +
         `(wasActive=${wasActive}, isActive=${isActive})`
       );
@@ -153,20 +154,20 @@ export const onMemberWritten = onDocumentWritten(
         }
       );
       if (newCount === null) {
-        console.log(
+        logger.info(
           `[MEMBER_COUNTER] Group ${groupId} not found, ` +
           "skipping counter update"
         );
         return;
       }
-      console.log(
+      logger.info(
         `[MEMBER_COUNTER] ${reason}: groups/${groupId}.member_count ` +
         `${delta > 0 ? "+" : ""}${delta} → ${newCount} (member ${memberId})`
       );
     } catch (err) {
       // Group doc pode ter sido deleted enquanto trigger rodava (cascade).
       // Logar mas não throw — não há recovery útil.
-      console.error(
+      logger.error(
         `[MEMBER_COUNTER] Failed to update groups/${groupId}.member_count ` +
         `(${reason}): ${(err as Error).message}`
       );

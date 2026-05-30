@@ -13,6 +13,7 @@ import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
+import {FUNCTION_REGION} from "../constants";
 
 const MAX_EVENTS_PER_USER_GAME = 50;
 const MAX_EVENTS_PER_OWNER_GAME = 200;
@@ -23,7 +24,8 @@ export const onGameEventCreated = onDocumentCreated(
     // FIX #584/H10: era "us-central1", mas Firestore é southamerica-east1.
     // Triggers Firestore precisam estar na MESMA region do Firestore →
     // antes nunca disparava, abuse-detection era dead code em prod.
-    region: "southamerica-east1",
+    // FIX #2199: usa a constante FUNCTION_REGION em vez de string hardcoded.
+    region: FUNCTION_REGION,
   },
   async (event) => {
     const data = event.data?.data();

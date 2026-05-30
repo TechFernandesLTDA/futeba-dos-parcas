@@ -7,9 +7,11 @@
  * do projeto.
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   MAX_XP_PER_GAME,
+  MIN_XP_PER_GAME,
   MAX_GOALS_PER_GAME,
   MAX_ASSISTS_PER_GAME,
   MAX_SAVES_PER_GAME,
@@ -77,6 +79,8 @@ export const VALIDATION_CONSTANTS = {
   MAX_ASSISTS_PER_GAME,
   MAX_SAVES_PER_GAME,
   MAX_XP_PER_GAME,
+  // FIX #2198: XP pode ser negativo (penalidade Bola Murcha = -10).
+  MIN_XP_PER_GAME,
 
   // Limites de placar (P0 #30)
   MAX_SCORE: 100,
@@ -383,7 +387,7 @@ export function normalizeLeagueRating(
 }
 
 /**
- * Valida level (0 - 10).
+ * Valida level (0 - 20).
  *
  * @param {number|undefined|null} level - Nível
  * @param {string} field - Nome do campo
@@ -633,12 +637,18 @@ export function validateGameStats(
 export function validateXPGain(
   xp: number
 ): ValidationResult {
-  if (xp < 0) {
+  // FIX #2198: XP negativo é VÁLIDO (penalidade Bola Murcha = -10). Só
+  // rejeita se ultrapassar a magnitude permitida (MIN_XP_PER_GAME = -100).
+  if (xp < VALIDATION_CONSTANTS.MIN_XP_PER_GAME) {
     return {
       field: "xp",
-      message: "XP não pode ser negativo",
+      message:
+        "Mínimo de " +
+        VALIDATION_CONSTANTS.MIN_XP_PER_GAME +
+        " XP por jogo",
       code:
-        ValidationErrorCode.NEGATIVE_VALUE,
+        ValidationErrorCode
+          .ANTI_CHEAT_VIOLATION,
     };
   }
 
@@ -659,14 +669,17 @@ export function validateXPGain(
 }
 
 /**
- * Limita XP ao máximo permitido.
+ * Limita XP à faixa permitida [MIN_XP_PER_GAME, MAX_XP_PER_GAME].
+ *
+ * FIX #2198: antes usava Math.max(0, xp) e zerava penalidades negativas
+ * (Bola Murcha). Agora preserva valores negativos até o piso anti-cheat.
  *
  * @param {number} xp - XP para limitar
- * @return {number} XP limitado
+ * @return {number} XP limitado à faixa válida
  */
 export function capXP(xp: number): number {
   return Math.min(
-    Math.max(0, xp),
+    Math.max(VALIDATION_CONSTANTS.MIN_XP_PER_GAME, xp),
     VALIDATION_CONSTANTS.MAX_XP_PER_GAME
   );
 }
@@ -994,7 +1007,7 @@ export function logValidationErrors(
   errors: ValidationError[]
 ): void {
   if (errors.length > 0) {
-    console.warn(
+    logger.warn(
       `[VALIDATION] ${context}: ` +
       formatValidationErrors(errors)
     );

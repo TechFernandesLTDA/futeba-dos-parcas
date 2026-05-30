@@ -1,3 +1,4 @@
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   onDocumentUpdated,
@@ -32,7 +33,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
       return;
     }
 
-    console.log(
+    logger.info(
       `[GROUP_LEAGUE] Processing game ${gameId} for group ${groupId}`
     );
 
@@ -45,7 +46,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
     try {
       const matchSnap = await matchRef.get();
       if (matchSnap.exists) {
-        console.log(
+        logger.info(
           `[GROUP_LEAGUE] Game ${gameId} already processed for group ${groupId}, skipping (idempotency guard)`
         );
         return;
@@ -72,7 +73,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
         ]);
 
       if (activeSeasonSnap.empty) {
-        console.log(
+        logger.info(
           `[GROUP_LEAGUE] No active season for group ${groupId}, skipping`
         );
         return;
@@ -97,7 +98,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
       }));
 
       if (teams.length < 2 || confirmations.length === 0) {
-        console.log(
+        logger.info(
           `[GROUP_LEAGUE] Insufficient data: ${teams.length} teams, ${confirmations.length} confirmations`
         );
         return;
@@ -158,7 +159,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
       await db().runTransaction(async (tx) => {
         const matchSnap = await tx.get(matchRef);
         if (matchSnap.exists) {
-          console.log(
+          logger.info(
             `[GROUP_LEAGUE] Game ${gameId} already processed, skipping (atomic idempotency guard)`
           );
           return;
@@ -232,11 +233,11 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
         });
       });
 
-      console.log(
+      logger.info(
         `[GROUP_LEAGUE] Game ${gameId} processed for group ${groupId} season ${seasonId}`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         `[GROUP_LEAGUE] Error processing game ${gameId}:`,
         error
       );

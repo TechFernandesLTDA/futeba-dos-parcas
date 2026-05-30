@@ -61,6 +61,7 @@
  * @see Gamification.kt#UserStreak
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {
@@ -103,7 +104,7 @@ export const maintainStreaksData = onSchedule(
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (_event) => {
-    console.log(
+    logger.info(
       "[STREAK_MAINTENANCE] Iniciando " +
       "manutencao de streaks..."
     );
@@ -137,7 +138,7 @@ export const maintainStreaksData = onSchedule(
         if (pageSnap.size < 5000) break;
         lastDoc = pageSnap.docs[pageSnap.size - 1];
       }
-      console.log(
+      logger.info(
         "[STREAK_MAINTENANCE] Total de " +
         "streaks ativas encontradas: " +
         `${allDocs.length}`
@@ -189,7 +190,7 @@ export const maintainStreaksData = onSchedule(
           (d) => existingUserIds.add(d.id)
         );
       }
-      console.log(
+      logger.info(
         "[STREAK_MAINTENANCE] Usuarios " +
         "existentes: " +
         `${existingUserIds.size}/` +
@@ -213,7 +214,7 @@ export const maintainStreaksData = onSchedule(
           typeof data.current_streak !==
           "number"
         ) {
-          console.warn(
+          logger.warn(
             "[STREAK_MAINTENANCE] " +
             "Documento invalido: " +
             `${streakDoc.id}, ` +
@@ -228,7 +229,7 @@ export const maintainStreaksData = onSchedule(
         // 2.2: Verificar se usuario existe
         // (usa Set pre-carregado)
         if (!existingUserIds.has(userId)) {
-          console.log(
+          logger.info(
             "[STREAK_MAINTENANCE] " +
             `Usuario ${userId} deletado, ` +
             "removendo streak"
@@ -247,7 +248,7 @@ export const maintainStreaksData = onSchedule(
           lastGameDate =
             new Date(data.last_game_date);
           if (isNaN(lastGameDate.getTime())) {
-            console.warn(
+            logger.warn(
               "[STREAK_MAINTENANCE] " +
               "Data invalida para " +
               `${userId}: ` +
@@ -262,7 +263,7 @@ export const maintainStreaksData = onSchedule(
           lastGameDate < thirtyDaysAgo &&
           data.current_streak > 0
         ) {
-          console.log(
+          logger.info(
             "[STREAK_MAINTENANCE] " +
             "Streak expirado para " +
             `${userId}. Resetando: ` +
@@ -297,7 +298,7 @@ export const maintainStreaksData = onSchedule(
         // Commit batch se atingir limite
         if (batchOps >= FIRESTORE_BATCH_SAFE_LIMIT) {
           await batch.commit();
-          console.log(
+          logger.info(
             "[STREAK_MAINTENANCE] " +
             `Batch de ${batchOps} ` +
             "operacoes commitado"
@@ -311,7 +312,7 @@ export const maintainStreaksData = onSchedule(
       // FASE 3: Commit final
       if (batchOps > 0) {
         await batch.commit();
-        console.log(
+        logger.info(
           "[STREAK_MAINTENANCE] Batch " +
           `final de ${batchOps} ` +
           "operacoes commitado"
@@ -324,27 +325,27 @@ export const maintainStreaksData = onSchedule(
           (totalStreak / activeStreaks)
             .toFixed(2) :
           0;
-      console.log(
+      logger.info(
         "[STREAK_MAINTENANCE] " +
         "Manutencao concluida:"
       );
-      console.log(
+      logger.info(
         "  - Streaks ativos: " +
         `${activeStreaks}`
       );
-      console.log(
+      logger.info(
         "  - Streaks expirados (reset): " +
         `${expiredStreaks}`
       );
-      console.log(
+      logger.info(
         "  - Documentos invalidos " +
         "(removidos): " +
         `${invalidDocuments}`
       );
-      console.log(
+      logger.info(
         `  - Maior streak: ${maxStreak}`
       );
-      console.log(
+      logger.info(
         "  - Media de streak ativo: " +
         `${avgStreak}`
       );
@@ -373,7 +374,7 @@ export const maintainStreaksData = onSchedule(
           status: "SUCCESS",
         });
     } catch (error) {
-      console.error(
+      logger.error(
         "[STREAK_MAINTENANCE] Erro " +
         "durante manutencao:",
         error

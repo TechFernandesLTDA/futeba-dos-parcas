@@ -125,6 +125,13 @@ jest.mock("firebase-functions/v2/https", () => ({
 
 jest.mock("firebase-functions/v2", () => ({
   setGlobalOptions: jest.fn(),
+  // FIX #2286: index.ts agora usa logger de firebase-functions/v2 (era console.*).
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
   scheduler: {
     onSchedule: jest.fn(() => jest.fn()),
   },

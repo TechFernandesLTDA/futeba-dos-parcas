@@ -16,6 +16,8 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+// FIX #2199: crypto.randomUUID() era usado sem import (undefined em runtime).
+import crypto from "crypto";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {requireProfileComplete} from "../middleware/require-profile-complete";

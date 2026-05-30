@@ -18,7 +18,11 @@ export const seedOfficialGroups = onCall(
   async (request) => {
     try {
       if (request.auth?.token?.role !== "ADMIN") {
-        throw new Error("Apenas administradores podem executar o seed.");
+        // FIX #2196: callable deve lançar HttpsError, não Error genérico.
+        throw new HttpsError(
+          "permission-denied",
+          "Apenas administradores podem executar o seed."
+        );
       }
 
       const officialGroups = [

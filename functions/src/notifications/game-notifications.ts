@@ -4,6 +4,7 @@
  * e vagas em jogos.
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   onDocumentCreated,
@@ -43,7 +44,7 @@ export const onGameCreated = onDocumentCreated(
 
     // Idempotência: verificar se já foi enviada
     if (game.invite_notification_sent === true) {
-      console.log(
+      logger.info(
         "[GAME_CREATED] Notification for" +
         ` game ${gameId} already sent,` +
         " skipping (idempotent)."
@@ -107,7 +108,7 @@ export const onGameCreated = onDocumentCreated(
             });
         }
       } catch (e) {
-        console.error(
+        logger.error(
           "Erro ao notificar membros do grupo:",
           e
         );
@@ -172,7 +173,7 @@ export const onGameUpdatedNotification =
             );
           }
         } catch (e) {
-          console.error(
+          logger.error(
             "Erro ao notificar cancelamento:",
             e
           );
@@ -216,7 +217,7 @@ export const onGameUpdatedNotification =
             );
           }
         } catch (e) {
-          console.error(
+          logger.error(
             "Erro ao notificar atualizacao:",
             e
           );
@@ -257,7 +258,7 @@ export const onGameVacancy = onDocumentUpdated(
       after.game_id || after.gameId;
     if (!gameId) return;
 
-    console.log(
+    logger.info(
       "[GAME_VACANCY] Vaga aberta no" +
       ` jogo ${gameId}` +
       ` (confirmacao ${confirmationId})`
@@ -293,7 +294,7 @@ export const onGameVacancy = onDocumentUpdated(
             (now.getTime() - notifiedAt.getTime()) /
             60000;
         if (minutesSince < 5) {
-          console.log(
+          logger.info(
             "[GAME_VACANCY] Vaga ja notificada" +
               ` ha ${minutesSince.toFixed(1)}min` +
               ` para jogo ${gameId}, ignorando.`
@@ -382,7 +383,7 @@ export const onGameVacancy = onDocumentUpdated(
             }
           );
 
-          console.log(
+          logger.info(
             "[GAME_VACANCY] Notificacao" +
             " enviada para" +
             ` ${waitlistUserIds.length}` +
@@ -441,7 +442,7 @@ export const onGameVacancy = onDocumentUpdated(
               }
             );
 
-            console.log(
+            logger.info(
               "[GAME_VACANCY] Notificacao" +
               " enviada para" +
               ` ${memberIds.length}` +
@@ -451,7 +452,7 @@ export const onGameVacancy = onDocumentUpdated(
         }
       }
     } catch (e) {
-      console.error(
+      logger.error(
         "[GAME_VACANCY] Erro ao" +
         " processar vaga:",
         e

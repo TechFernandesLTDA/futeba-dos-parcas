@@ -1,3 +1,4 @@
+import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
@@ -59,7 +60,7 @@ export const keepWarmFunctions =
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async (_context) => {
-      console.log(
+      logger.info(
         "[KEEP-WARM] Starting warm-up cycle at",
         new Date().toISOString()
       );
@@ -97,7 +98,7 @@ export const keepWarmFunctions =
       await logKeepWarmMetrics(results);
 
       // Log resumo (onSchedule não suporta retorno)
-      console.log(
+      logger.info(
         "[KEEP-WARM] Warm-up cycle complete:",
         JSON.stringify(results)
       );
@@ -144,7 +145,7 @@ async function warmCallableFunction(
   const startTime = Date.now();
 
   try {
-    console.log(
+    logger.info(
       `[KEEP-WARM] Warming up ${functionName}...`
     );
 
@@ -171,7 +172,7 @@ async function warmCallableFunction(
     }
 
     const latency = Date.now() - startTime;
-    console.log(
+    logger.info(
       `[KEEP-WARM] ${functionName} ` +
       `pinged in ${latency}ms`
     );
@@ -184,7 +185,7 @@ async function warmCallableFunction(
     };
   } catch (error) {
     const latency = Date.now() - startTime;
-    console.error(
+    logger.error(
       "[KEEP-WARM] Error warming " +
       `${functionName}:`, error
     );
@@ -227,13 +228,13 @@ async function logKeepWarmMetrics(
       results,
     });
 
-    console.log(
+    logger.info(
       "[KEEP-WARM] Logged metrics: " +
       `${successCount}/${results.length} ` +
       "functions warm"
     );
   } catch (error) {
-    console.error(
+    logger.error(
       "[KEEP-WARM] Error logging metrics:", error
     );
   }
