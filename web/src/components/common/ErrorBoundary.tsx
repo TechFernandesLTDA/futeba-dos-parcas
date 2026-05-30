@@ -11,6 +11,12 @@ const logger = createLogger('ErrorBoundary');
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  /**
+   * #2221: callback opcional disparado quando um erro é capturado.
+   * Útil para boundaries com fallback silencioso (ex.: overlays) que ainda
+   * precisam dar feedback ao usuário via toast.
+   */
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
@@ -40,6 +46,10 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.error('Error caught by boundary:', { error, errorInfo });
     this.setState({ errorInfo });
+
+    // #2221: permite que o consumidor reaja (ex.: exibir toast) sem
+    // depender de um fallback visível.
+    this.props.onError?.(error, errorInfo);
 
     // Persiste o erro com contexto completo (best-effort, não bloqueia render)
     logError(error, { kind: 'render', errorInfo }).then((errorId) => {

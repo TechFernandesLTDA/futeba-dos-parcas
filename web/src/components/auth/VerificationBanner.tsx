@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Box, Slide } from '@mui/material';
 import { ShieldOutlined as ShieldIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useVerifiedClaim } from '../../hooks/useVerifiedClaim';
 
 const GRACE_END = new Date('2026-08-03T00:00:00Z');
 
@@ -17,22 +18,7 @@ const GRACE_END = new Date('2026-08-03T00:00:00Z');
 export const VerificationBanner: React.FC = () => {
   const { firebaseUser } = useAuth();
   const navigate = useNavigate();
-  const [verified, setVerified] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (!firebaseUser) {
-      setVerified(null);
-      return;
-    }
-    let cancelled = false;
-    firebaseUser
-      .getIdTokenResult()
-      .then((r) => !cancelled && setVerified(r.claims.verified === true))
-      .catch(() => !cancelled && setVerified(false));
-    return () => {
-      cancelled = true;
-    };
-  }, [firebaseUser]);
+  const verified = useVerifiedClaim(firebaseUser);
 
   if (!firebaseUser || verified !== false) return null;
 

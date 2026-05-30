@@ -154,11 +154,17 @@ export const GroupDetailScreen: React.FC = () => {
     }
     const link = `${window.location.origin}/join/${inviteCode}`;
     if (navigator.share) {
-      await navigator.share({
-        title: `Convite: ${group?.name}`,
-        text: `Venha jogar com a gente no grupo ${group?.name}!`,
-        url: link,
-      });
+      try {
+        await navigator.share({
+          title: `Convite: ${group?.name}`,
+          text: `Venha jogar com a gente no grupo ${group?.name}!`,
+          url: link,
+        });
+      } catch (err) {
+        // #2281: ignora cancelamento da share sheet; reporta demais erros.
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        showError(t('group.shareError', 'Erro ao compartilhar'));
+      }
     } else {
       handleCopyInvite();
     }

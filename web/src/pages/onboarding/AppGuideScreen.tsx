@@ -29,6 +29,9 @@ import {
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { iconSizes } from '../../theme/iconSizes';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('AppGuideScreen');
 
 const SLIDES = [
   {
@@ -86,12 +89,21 @@ export const AppGuideScreen: React.FC = () => {
   }, [activeStep, onSlideViewed]);
 
   const handleComplete = async () => {
-    await onCarouselCompleted();
+    // #2281: persistência do onboarding não deve bloquear a navegação se falhar.
+    try {
+      await onCarouselCompleted();
+    } catch (err) {
+      logger.error('Falha ao registrar conclusão do onboarding:', err);
+    }
     navigate('/');
   };
 
   const handleSkip = async () => {
-    await onCarouselSkipped(activeStep);
+    try {
+      await onCarouselSkipped(activeStep);
+    } catch (err) {
+      logger.error('Falha ao registrar skip do onboarding:', err);
+    }
     navigate('/');
   };
 

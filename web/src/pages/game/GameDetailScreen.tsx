@@ -140,11 +140,17 @@ export const GameDetailScreen: React.FC = () => {
       url: window.location.href,
     };
 
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-      showSuccess('Link copiado!');
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+        showSuccess('Link copiado!');
+      }
+    } catch (err) {
+      // #2281: ignora cancelamento da share sheet; reporta demais erros.
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      showError('Erro ao compartilhar');
     }
   };
 
@@ -641,8 +647,13 @@ export const GameDetailScreen: React.FC = () => {
                   variant="outlined"
                   fullWidth
                   onClick={async () => {
-                    await navigator.clipboard.writeText(qrCheckInUrl);
-                    showSuccess('Link copiado!');
+                    // #2281: clipboard.writeText pode lançar sem permissão (HTTP/sandbox)
+                    try {
+                      await navigator.clipboard.writeText(qrCheckInUrl);
+                      showSuccess('Link copiado!');
+                    } catch {
+                      showError('Não foi possível copiar o link');
+                    }
                   }}
                 >
                   Copiar Link

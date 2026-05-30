@@ -69,11 +69,15 @@ export const InviteFriendScreen: React.FC = () => {
         title: 'Futeba dos Parças',
         text: `Bora jogar uma pelada? Entra no Futeba dos Parças com meu convite: ${inviteLink}`,
         url: inviteLink,
-      }).catch(() => {});
+      }).catch((err) => {
+        // #2281/#2290: ignora cancelamento da share sheet; reporta demais erros.
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        showError('Erro ao compartilhar');
+      });
     } else {
       handleCopy();
     }
-  }, [inviteLink, handleCopy]);
+  }, [inviteLink, handleCopy, showError]);
 
   const handleGenerate = async () => {
     setGenerating(true);

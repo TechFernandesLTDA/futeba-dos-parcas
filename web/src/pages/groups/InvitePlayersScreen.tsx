@@ -131,6 +131,9 @@ export const InvitePlayersScreen: React.FC = () => {
 
   const handleSearch = async () => {
     if (searchQuery.trim().length < 2) return;
+    // #2216: bloqueia reentrada enquanto uma busca está em andamento
+    // (evita chamadas concorrentes ao apertar Enter repetidamente).
+    if (searching) return;
 
     setSearching(true);
     setHasSearched(true);
@@ -208,7 +211,8 @@ export const InvitePlayersScreen: React.FC = () => {
           }}
           aria-label="Buscar jogador por nome"
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
+            // #2216: ignora Enter enquanto a busca está em andamento
+            if (e.key === 'Enter' && !searching && searchQuery.trim().length >= 2) {
               handleSearch();
             }
           }}

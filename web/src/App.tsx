@@ -15,6 +15,7 @@ import { MobileTopBar } from './components/layout/MobileTopBar';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { useNotifications } from './hooks/useNotifications';
+import { useVerifiedClaim } from './hooks/useVerifiedClaim';
 import { AppLayout } from './components/layout';
 import { CommandPalette } from './components/search/CommandPalette';
 import { ShortcutsDialog } from './components/common/ShortcutsDialog';
@@ -189,35 +190,6 @@ function RouteFallback() {
 
 function AppLoadingFallback() {
   return <LoadingScreen variant="cards" message="Carregando..." />;
-}
-
-/**
- * Hook compartilhado para checar o custom claim `verified` do ID token.
- * Retorna `null` enquanto aguarda a resolução, `true`/`false` quando resolvido.
- */
-function useVerifiedClaim(firebaseUser: ReturnType<typeof useAuth>['firebaseUser']): boolean | null {
-  const [verified, setVerified] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (!firebaseUser) {
-      setVerified(null);
-      return;
-    }
-    let cancelled = false;
-    firebaseUser
-      .getIdTokenResult()
-      .then((result) => {
-        if (!cancelled) setVerified(result.claims.verified === true);
-      })
-      .catch(() => {
-        if (!cancelled) setVerified(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [firebaseUser]);
-
-  return verified;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -583,6 +555,20 @@ function AppCrashFallback() {
   );
 }
 
+/**
+ * #2221: boundary com fallback silencioso (sem UI) que ainda dá feedback
+ * ao usuário via toast quando o conteúdo (ex.: CommandPalette) der throw.
+ * Antes o usuário pressionava Cmd+K e nada acontecia, sem qualquer aviso.
+ */
+function SilentToastBoundary({ children, message }: { children: React.ReactNode; message: string }) {
+  const { showError } = useToast();
+  return (
+    <ErrorBoundary fallback={<></>} onError={() => showError(message)}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
 function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
@@ -620,13 +606,13 @@ function App() {
                   der throw síncrono (ex: Firestore query inválida), não derruba
                   a árvore inteira (já que está fora de SafeScreen).
                   FIX #601 LOW backlog. */}
-              <ErrorBoundary fallback={<></>}>
+              <SilentToastBoundary message="Não foi possível abrir a busca. Tente novamente.">
                 <CommandPalette
                   open={paletteOpen}
                   onOpen={openPalette}
                   onClose={closePalette}
                 />
-              </ErrorBoundary>
+              </SilentToastBoundary>
               <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
               <MobileShell>
                 <VerificationBanner />

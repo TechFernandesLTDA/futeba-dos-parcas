@@ -226,8 +226,11 @@ export const CpfVerificationScreen: React.FC = () => {
       // com Toast (showError) exibindo a mesma mensagem na base da tela.
       setError(userMsg);
 
-      // Anti-abuse: log failure for audit
-      logVerificationFailure({ reason: code || 'unknown', stage: 'cpf' }).catch(() => {});
+      // Anti-abuse: log failure for audit (fire-and-forget)
+      // #2290: registra falha do log de auditoria em vez de engolir silenciosamente.
+      logVerificationFailure({ reason: code || 'unknown', stage: 'cpf' }).catch((e) => {
+        logger.error('Falha ao registrar tentativa de verificação:', e);
+      });
     } finally {
       setLoading(false);
     }

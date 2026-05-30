@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { createLogger } from '../../utils/logger';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
@@ -44,6 +45,8 @@ import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 
+const logger = createLogger('ThemeSettingsScreen');
+
 export const ThemeSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('settings.theme.title'));
@@ -62,7 +65,11 @@ export const ThemeSettingsScreen: React.FC = () => {
   const handleLanguageChange = useCallback((lang: SupportedLanguage) => {
     setLanguage(lang);
     if (user?.id) {
-      syncLanguageToFirestore(user.id, lang).catch(() => {});
+      // #2290: não engolir erro silenciosamente — sync é fire-and-forget,
+      // a preferência local já foi aplicada, então apenas registramos a falha.
+      syncLanguageToFirestore(user.id, lang).catch((err) => {
+        logger.error('Falha ao sincronizar idioma no Firestore:', err);
+      });
     }
   }, [setLanguage, user?.id]);
 
