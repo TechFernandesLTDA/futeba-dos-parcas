@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks
 const mockGetDocs = vi.fn();
@@ -41,6 +42,11 @@ vi.mock('../utils/logger', () => ({
   }),
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 import { usePaginatedQuery } from './usePaginatedQuery';
 
 describe('usePaginatedQuery', () => {
@@ -57,7 +63,7 @@ describe('usePaginatedQuery', () => {
   it('inicia com loading=false e data vazio', () => {
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games' })
-    );
+    , { wrapper: createTestWrapper() });
 
     expect(result.current.loading).toBe(false);
     expect(result.current.data).toEqual([]);
@@ -74,7 +80,7 @@ describe('usePaginatedQuery', () => {
 
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games', pageSize: 20 })
-    );
+    , { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.fetchData();
@@ -99,7 +105,7 @@ describe('usePaginatedQuery', () => {
 
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games', pageSize: 5 })
-    );
+    , { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.fetchData();
@@ -123,7 +129,7 @@ describe('usePaginatedQuery', () => {
 
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games', pageSize: 20 })
-    );
+    , { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.fetchData();
@@ -153,7 +159,7 @@ describe('usePaginatedQuery', () => {
 
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games' })
-    );
+    , { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.fetchData();
@@ -172,7 +178,7 @@ describe('usePaginatedQuery', () => {
 
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games' })
-    );
+    , { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.fetchData();
@@ -189,7 +195,7 @@ describe('usePaginatedQuery', () => {
   it('usa pageSize padrão de 20', () => {
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games' })
-    );
+    , { wrapper: createTestWrapper() });
 
     // O pageSize padrão é 20, mas usamos pageSize + 1 no limit
     // Isso é verificado indiretamente via o comportamento de hasMore
@@ -203,7 +209,7 @@ describe('usePaginatedQuery', () => {
 
     const { result } = renderHook(() =>
       usePaginatedQuery({ collectionName: 'games' })
-    );
+    , { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.fetchData();

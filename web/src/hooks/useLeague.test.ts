@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks
 const mockOnSnapshot = vi.fn();
@@ -25,6 +26,10 @@ vi.mock('../services/firebase', () => ({
   db: {},
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }) => children,
+}));
 import { useLeague } from './useLeague';
 
 describe('useLeague', () => {
@@ -39,12 +44,12 @@ describe('useLeague', () => {
   });
 
   it('retorna loading=true inicialmente', () => {
-    const { result } = renderHook(() => useLeague('user-1'));
+    const { result } = renderHook(() => useLeague('user-1'), { wrapper: createTestWrapper() });
     expect(result.current.loading).toBe(true);
   });
 
   it('configura listener na coleção season_participation', () => {
-    renderHook(() => useLeague('user-1'));
+    renderHook(() => useLeague('user-1'), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'season_participation');
     expect(mockOnSnapshot).toHaveBeenCalled();
   });
@@ -91,7 +96,7 @@ describe('useLeague', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useLeague('current-user'));
+    const { result } = renderHook(() => useLeague('current-user'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -129,7 +134,7 @@ describe('useLeague', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useLeague('u1', 'GOLD'));
+    const { result } = renderHook(() => useLeague('u1', 'GOLD'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -157,7 +162,7 @@ describe('useLeague', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useLeague('u1'));
+    const { result } = renderHook(() => useLeague('u1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -173,7 +178,7 @@ describe('useLeague', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useLeague('u1'));
+    const { result } = renderHook(() => useLeague('u1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.error).toBe('League error');

@@ -1,4 +1,7 @@
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import ptBR from '../i18n/locales/pt-BR.json';
@@ -20,3 +23,37 @@ void i18n.use(initReactI18next).init({
   fallbackLng: 'pt-BR',
   interpolation: { escapeValue: false },
 });
+
+// Wrapper global para todos os testes (render + renderHook).
+// Fornece QueryClientProvider e ToastProvider por padrão, eliminando os erros
+// "No QueryClient set" e "useToast must be used within a ToastProvider"
+// que eram a raiz de ~100 falhas. #2330
+// Testes que precisam de comportamento customizado podem passar wrapper próprio.
+//
+// NOTA: configure({ wrapper }) do RTL v16 NÃO funciona para renderHook —
+// o wrapper só é lido pelo argumento da chamada, não do config global.
+// Por isso fazemos monkey-patch de renderHook para injetar o wrapper
+// quando o teste não passa um próprio. #2330
+
+// GlobalWrapper inclui apenas QueryClientProvider.
+// NÃO inclui ToastProvider pois testes que mockam ../contexts/ToastContext
+// sem exportar ToastProvider quebravam o wrapper para todos os renders
+// daquele arquivo. Testes que precisam de ToastProvider real usam
+// renderWithProviders() de test/renderWithProviders.tsx. #2330
+function GlobalWrapper({ children }: { children: React.ReactNode }) {
+  const testQueryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, staleTime: 0, gcTime: 0 },
+      mutations: { retry: false },
+    },
+  });
+  return React.createElement(
+    QueryClientProvider,
+    { client: testQueryClient },
+    children,
+  );
+}
+
+// configure({ wrapper }) funciona para `render` mas NÃO para `renderHook` no RTL v16.
+// Deixamos para consistência com render (afeta testes de componente).
+configure({ wrapper: GlobalWrapper });

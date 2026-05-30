@@ -34,6 +34,7 @@ vi.mock('firebase/firestore', () => ({
   getDoc: (...args: any[]) => mockGetDoc(...args),
   updateDoc: vi.fn().mockResolvedValue(undefined),
   serverTimestamp: vi.fn(),
+  limit: vi.fn((...args) => args[0]),
 }));
 
 const mockSignOut = vi.fn().mockResolvedValue(undefined);
@@ -44,6 +45,8 @@ vi.mock('firebase/auth', () => ({
 vi.mock('../../services/firebase', () => ({
   db: {},
   auth: {},
+  functions: {},
+  messagingPromise: Promise.resolve(null),
 }));
 
 vi.mock('../../utils/firestoreHelpers', () => ({

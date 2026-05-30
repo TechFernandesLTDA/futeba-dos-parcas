@@ -1,4 +1,30 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Mock firebase/firestore e services/firebase para evitar erro "Missing Firebase config"
+// que ocorre porque firebaseErrors.ts → errorLogger.ts → services/firebase.ts (#2330)
+vi.mock('../services/firebase', () => ({
+  db: {},
+  auth: { currentUser: null },
+  storage: {},
+  functions: {},
+}));
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(),
+  doc: vi.fn(),
+  getDoc: vi.fn(),
+  getDocs: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  orderBy: vi.fn(),
+  onSnapshot: vi.fn(),
+  serverTimestamp: vi.fn(),
+  initializeFirestore: vi.fn(() => ({})),
+  persistentLocalCache: vi.fn(() => ({})),
+  persistentMultipleTabManager: vi.fn(() => ({})),
+  connectFirestoreEmulator: vi.fn(),
+  limit: vi.fn((...args) => args[0]),
+}));
+
 import { getAuthErrorMessage, getFirestoreErrorMessage } from './firebaseErrors';
 
 describe('getAuthErrorMessage', () => {

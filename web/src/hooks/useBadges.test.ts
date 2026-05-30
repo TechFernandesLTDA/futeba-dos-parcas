@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks
 const mockOnSnapshot = vi.fn();
@@ -16,12 +17,18 @@ vi.mock('firebase/firestore', () => ({
   where: (...args: any[]) => mockWhere(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+  limit: vi.fn((...args) => args[0]),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
 
 vi.mock('../services/firebase', () => ({
   db: {},
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
+  ToastProvider: ({ children }) => children,
+}));
 import { useBadges } from './useBadges';
 import { BADGE_DEFINITIONS } from '../types/gamification';
 
@@ -35,12 +42,12 @@ describe('useBadges', () => {
   });
 
   it('retorna loading=true inicialmente', () => {
-    const { result } = renderHook(() => useBadges('user-1'));
+    const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });
     expect(result.current.loading).toBe(true);
   });
 
   it('retorna loading=false sem userId', async () => {
-    const { result } = renderHook(() => useBadges(undefined));
+    const { result } = renderHook(() => useBadges(undefined), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -48,7 +55,7 @@ describe('useBadges', () => {
   });
 
   it('inclui definições de badges (BADGE_DEFINITIONS)', () => {
-    const { result } = renderHook(() => useBadges('user-1'));
+    const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });
     expect(result.current.badges).toEqual(BADGE_DEFINITIONS);
     expect(result.current.badges.length).toBeGreaterThan(0);
   });
@@ -81,7 +88,7 @@ describe('useBadges', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useBadges('user-1'));
+    const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -100,7 +107,7 @@ describe('useBadges', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useBadges('user-1'));
+    const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -117,7 +124,7 @@ describe('useBadges', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useBadges('user-1'));
+    const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.error).toBe('Badge error');

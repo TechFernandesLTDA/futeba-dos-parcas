@@ -13,6 +13,7 @@ vi.mock('firebase/firestore', () => ({
   getDoc: vi.fn(() => Promise.resolve({ exists: () => false })),
   serverTimestamp: vi.fn(() => new Date()),
   writeBatch: vi.fn(() => ({ commit: vi.fn() })),
+  limit: vi.fn((...args) => args[0]),
 }));
 
 vi.mock('firebase/storage', () => ({
@@ -67,6 +68,8 @@ vi.mock('../../components/layout', () => ({
       {children}
     </div>
   ),
+  // AdaptiveFormSheet é exportado pelo barrel — deve estar presente no mock. #2330
+  AdaptiveFormSheet: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('../../components/team/TeamSelector', () => ({

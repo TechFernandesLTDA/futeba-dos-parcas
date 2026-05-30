@@ -42,6 +42,7 @@ vi.mock('firebase/firestore', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setDoc: (...args: any[]) => mockSetDoc(...args),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
+  limit: vi.fn((...args) => args[0]),
 }));
 
 vi.mock('../services/firebase', () => ({

@@ -56,8 +56,10 @@ describe('maskCpf', () => {
     expect(maskCpf('123.456.789-09')).toBe('***.456.789-**');
   });
 
-  it('retorna input se inválido', () => {
-    expect(maskCpf('123')).toBe('123');
+  it('retorna "***" para CPF inválido (curto demais)', () => {
+    // maskCpf sempre mascara — retorna '***' para entradas inválidas (não 11 dígitos)
+    // para não vazar dados parciais (LGPD). #2330 fix de expectativa errada.
+    expect(maskCpf('123')).toBe('***');
   });
 });
 

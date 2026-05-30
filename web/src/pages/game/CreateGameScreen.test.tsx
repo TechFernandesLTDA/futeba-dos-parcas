@@ -86,6 +86,8 @@ vi.mock('firebase/firestore', () => ({
   getDocs: vi.fn().mockResolvedValue({ docs: [] }),
   doc: vi.fn(),
   Timestamp: { fromDate: vi.fn() },
+  limit: vi.fn((...args) => args[0]),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
 
 import { CreateGameScreen } from './CreateGameScreen';
