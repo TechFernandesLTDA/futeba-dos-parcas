@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import '../i18n';
 
@@ -67,7 +67,6 @@ export async function syncLanguageToFirestore(uid: string, language: SupportedLa
   try {
     const prefRef = doc(db, 'users', uid, 'preferences', 'language');
     await updateDoc(prefRef, { language }).catch(async () => {
-      const { setDoc } = await import('firebase/firestore');
       await setDoc(prefRef, { language });
     });
   } catch {

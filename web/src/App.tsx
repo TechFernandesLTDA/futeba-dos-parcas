@@ -420,13 +420,17 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
 
-      {/* Home */}
-      <Route path="/" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense></ProtectedRoute>} />
+      {/* Auth */}
+      <Route path="/login" element={<PublicRoute><Suspense fallback={<RouteFallback />}><LoginScreen /></Suspense></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
 
       {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        {/* Home */}
+        <Route path="/" element={<Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense>} />
         {/* Games */}
         <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
         {/* GAP #7 (#1080): VerifiedRoute redireciona unverified pra onboarding em vez de deixar submit falhar silencioso no rules */}
@@ -533,8 +537,6 @@ const SafeScreen = withErrorBoundary(AppRoutes);
 function MobileShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
-  const location = useLocation();
-  const isHomeScreen = location.pathname === '/' || location.pathname === '';
 
   return (
     <Box
@@ -542,7 +544,6 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         display: 'flex',
         justifyContent: 'center',
         minHeight: '100dvh',
-        // Fundo externo apenas quando o shell é centralizado (sm+)
         bgcolor: { xs: 'background.default', sm: 'divider' },
       }}
     >
@@ -558,9 +559,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}
       >
-        {/* Topbar mobile canônica: sino ancorado ao fluxo (sticky),
-            não flutuante — evita sobreposição de conteúdo (#1321) */}
-        {user && !isHomeScreen && (
+        {user && (
           <MobileTopBar unreadCount={unreadCount} />
         )}
         <MobileBottomNav>{children}</MobileBottomNav>
