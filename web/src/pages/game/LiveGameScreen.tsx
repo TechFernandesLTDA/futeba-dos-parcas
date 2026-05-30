@@ -30,7 +30,6 @@ import {
   MenuItem,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   PlayArrow as PlayIcon,
   Stop as StopIcon,
   SportsSoccer as SoccerIcon,
@@ -44,7 +43,9 @@ import {
   VolumeUp as SoundOnIcon,
   VolumeOff as SoundOffIcon,
   History as HistoryIcon,
+  ArrowBack as BackIcon,
 } from '@mui/icons-material';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
@@ -483,33 +484,28 @@ export const LiveGameScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 10 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper', // #2273: token canônico de sticky header
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>
-            {t('games.liveTitle')}
-          </Typography>
-          <IconButton onClick={toggleSound} aria-label={soundEnabled ? t('games.live.disableSounds') : t('games.live.enableSounds')}>
-            {soundEnabled ? <SoundOnIcon /> : <SoundOffIcon />}
-          </IconButton>
-          <Chip
-            icon={<TimerIcon />}
-            label={formatTime(elapsedTime)}
-            color="error"
-            sx={{ fontWeight: 700 }}
-          />
-        </Box>
-      </Box>
+      {/* Cabeçalho padronizado — som e timer passados via prop `actions` */}
+      <ScreenHeader
+        title={t('games.liveTitle')}
+        onBack={navigateBack}
+        backAriaLabel={t('common.back')}
+        actions={
+          <>
+            <IconButton
+              onClick={toggleSound}
+              aria-label={soundEnabled ? t('games.live.disableSounds') : t('games.live.enableSounds')}
+            >
+              {soundEnabled ? <SoundOnIcon /> : <SoundOffIcon />}
+            </IconButton>
+            <Chip
+              icon={<TimerIcon />}
+              label={formatTime(elapsedTime)}
+              color="error"
+              sx={{ fontWeight: 700 }}
+            />
+          </>
+        }
+      />
 
       <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 2 }}>
         <Card

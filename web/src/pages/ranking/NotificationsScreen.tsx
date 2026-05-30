@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -27,7 +26,6 @@ import {
   Alert,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Notifications as NotificationIcon,
   Check as CheckIcon,
   Close as CloseIcon,
@@ -47,6 +45,8 @@ import {
   DoneAll as DoneAllIcon,
   FilterList as FilterIcon,
 } from '@mui/icons-material';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { PageContainer } from '../../components/common/PageContainer';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useConfirmPresence } from '../../hooks/useGames';
@@ -251,64 +251,72 @@ export const NotificationsScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
+      {/* Cabeçalho padronizado — badge de não-lidas + ações de gestão via `actions` */}
+      <ScreenHeader
+        title="Notificações"
+        onBack={goBack}
+        backAriaLabel="Voltar"
+        actions={
+          <>
+            {unreadCount > 0 && (
+              <Badge badgeContent={unreadCount} color="error" sx={{ mr: 1 }} />
+            )}
+            {unreadCount > 0 && (
+              <IconButton
+                onClick={markAllAsRead}
+                aria-label="Marcar todas como lidas"
+                sx={{ padding: theme.spacing(1.25) }}
+              >
+                <DoneAllIcon fontSize="small" />
+              </IconButton>
+            )}
+            {notifications.length > 0 && (
+              <IconButton
+                onClick={() => setDeleteDialogOpen(true)}
+                aria-label="Limpar todas"
+                sx={{ padding: theme.spacing(1.25) }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            )}
+          </>
+        }
+        headerSx={{ height: 'auto' }}
+      />
+
+      {/* Filtros de tipo — mantidos dentro do sticky wrapper próprio */}
       <Box
         sx={{
           position: 'sticky',
-          top: 0,
+          top: (theme) => theme.spacing(7),
           bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          zIndex: 9,
+          borderBottom: 1,
+          borderColor: 'divider',
+          display: 'flex',
+          gap: 1,
+          px: 1,
+          pb: 1,
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>
-            Notificações
-          </Typography>
-          {unreadCount > 0 && (
-            <Badge badgeContent={unreadCount} color="error" sx={{ mr: 1 }} />
-          )}
-          {unreadCount > 0 && (
-            <IconButton onClick={markAllAsRead} aria-label="Marcar todas como lidas" sx={{ padding: theme.spacing(1.25) }}>
-              <DoneAllIcon fontSize="small" />
-            </IconButton>
-          )}
-          {notifications.length > 0 && (
-            <IconButton onClick={() => setDeleteDialogOpen(true)} aria-label="Limpar todas" sx={{ padding: theme.spacing(1.25) }}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          )}
-        </Box>
-
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1,
-            px: 1,
-            pb: 1,
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': { display: 'none' },
-          }}
-        >
-          {ALL_FILTERS.map((filter) => (
-            <Chip
-              key={filter.type}
-              label={filter.label}
-              size="small"
-              color={activeFilter === filter.type ? 'primary' : 'default'}
-              variant={activeFilter === filter.type ? 'filled' : 'outlined'}
-              onClick={() => setActiveFilter(filter.type)}
-              icon={activeFilter === filter.type ? <FilterIcon fontSize="small" /> : undefined}
-              aria-label={`Filtrar por ${filter.label}`}
-            />
-          ))}
-        </Box>
+        {ALL_FILTERS.map((filter) => (
+          <Chip
+            key={filter.type}
+            label={filter.label}
+            size="small"
+            color={activeFilter === filter.type ? 'primary' : 'default'}
+            variant={activeFilter === filter.type ? 'filled' : 'outlined'}
+            onClick={() => setActiveFilter(filter.type)}
+            icon={activeFilter === filter.type ? <FilterIcon fontSize="small" /> : undefined}
+            aria-label={`Filtrar por ${filter.label}`}
+          />
+        ))}
       </Box>
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth={isMd ? 'detail' : 'list'}>
         {error ? (
           <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
         ) : loading ? (
@@ -448,7 +456,7 @@ export const NotificationsScreen: React.FC = () => {
             })}
           </Box>
         )}
-      </Container>
+      </PageContainer>
 
       <Dialog
         open={deleteDialogOpen}

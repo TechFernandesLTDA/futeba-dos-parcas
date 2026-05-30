@@ -21,7 +21,6 @@ import {
   CircularProgress,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
   Check as CheckIcon,
   PlayArrow as PlayIcon,
@@ -31,7 +30,9 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   QrCode2 as QrCodeIcon,
+  ArrowBack as BackIcon,
 } from '@mui/icons-material';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
@@ -328,45 +329,36 @@ export const GameDetailScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 10 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <Tooltip title={t('common.back')}>
-            <IconButton onClick={navigateBack} aria-label={t('common.back')}>
-              <BackIcon />
-            </IconButton>
-          </Tooltip>
-          <Typography component="h1" variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
-            {game.locationName}
-          </Typography>
-          <Tooltip title={t('games.detail.shareGame')}>
-            <IconButton onClick={handleShare} aria-label={t('games.detail.shareGame')}>
-              <ShareIcon />
-            </IconButton>
-          </Tooltip>
-          {canManage && (
-            <>
-              <Tooltip title={t('games.detail.editGame')}>
-                <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')}>
-                  <EditIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t('games.detail.deleteGame')}>
-                <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('games.detail.deleteGame')}>
-                  <DeleteIcon />
-                </IconButton>
-              </Tooltip>
-            </>
-          )}
-        </Box>
-      </Box>
+      {/* Cabeçalho padronizado — ações extras passadas via prop `actions` */}
+      <ScreenHeader
+        title={game.locationName}
+        onBack={navigateBack}
+        backAriaLabel={t('common.back')}
+        actions={
+          <>
+            <Tooltip title={t('games.detail.shareGame')}>
+              <IconButton onClick={handleShare} aria-label={t('games.detail.shareGame')}>
+                <ShareIcon />
+              </IconButton>
+            </Tooltip>
+            {canManage && (
+              <>
+                <Tooltip title={t('games.detail.editGame')}>
+                  <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')}>
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('games.detail.deleteGame')}>
+                  <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('games.detail.deleteGame')}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+          </>
+        }
+        component="h1"
+      />
 
       <AppBreadcrumbs
         items={[
