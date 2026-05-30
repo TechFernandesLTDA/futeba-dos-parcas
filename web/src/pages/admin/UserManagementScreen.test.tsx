@@ -119,9 +119,4 @@ describe('UserManagementScreen', () => {
     renderWithTheme(<UserManagementScreen />);
     expect(await screen.findByText('Todos os roles')).toBeInTheDocument();
   });
-
-  it('mostra role filter dropdown', async () => {
-    renderWithTheme(<UserManagementScreen />);
-    expect(await screen.findByText('Todos os roles')).toBeInTheDocument();
-  });
 });
