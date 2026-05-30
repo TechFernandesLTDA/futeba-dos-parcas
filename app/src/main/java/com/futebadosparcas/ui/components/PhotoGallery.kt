@@ -199,10 +199,14 @@ fun FullScreenPhotoGallery(
             dismissOnClickOutside = false
         )
     ) {
+        // Fundo usa scrim do tema para respeitar dark/light mode (#2138)
+        val scrimColor = MaterialTheme.colorScheme.scrim
+        val onScrimColor = MaterialTheme.colorScheme.inverseOnSurface
+        val overlayColor = scrimColor.copy(alpha = 0.5f)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(scrimColor)
         ) {
             // Pager de fotos
             HorizontalPager(
@@ -224,7 +228,7 @@ fun FullScreenPhotoGallery(
                             pagerState.currentPage + 1,
                             photos.size
                         ),
-                        color = Color.White
+                        color = onScrimColor
                     )
                 },
                 navigationIcon = {
@@ -232,12 +236,12 @@ fun FullScreenPhotoGallery(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.photo_gallery_close),
-                            tint = Color.White
+                            tint = onScrimColor
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Black.copy(alpha = 0.5f)
+                    containerColor = overlayColor
                 ),
                 modifier = Modifier.align(Alignment.TopCenter)
             )
@@ -258,8 +262,8 @@ fun FullScreenPhotoGallery(
                                 .size(if (isSelected) 10.dp else 8.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (isSelected) Color.White
-                                    else Color.White.copy(alpha = 0.5f)
+                                    if (isSelected) onScrimColor
+                                    else onScrimColor.copy(alpha = 0.5f)
                                 )
                                 .clickable {
                                     scope.launch {
@@ -285,12 +289,12 @@ fun FullScreenPhotoGallery(
                             .align(Alignment.CenterStart)
                             .padding(start = 8.dp)
                             .size(48.dp)
-                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .background(overlayColor, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.photo_gallery_previous),
-                            tint = Color.White
+                            tint = onScrimColor
                         )
                     }
                 }
@@ -307,12 +311,12 @@ fun FullScreenPhotoGallery(
                             .align(Alignment.CenterEnd)
                             .padding(end = 8.dp)
                             .size(48.dp)
-                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .background(overlayColor, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = stringResource(R.string.photo_gallery_next),
-                            tint = Color.White
+                            tint = onScrimColor
                         )
                     }
                 }

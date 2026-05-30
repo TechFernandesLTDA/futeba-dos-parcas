@@ -34,8 +34,10 @@ class AuthRepository constructor(
 
     private val usersCollection = firestore.collection("users")
 
-    // Escopo singleton para manter o stateIn ativo durante ciclo da app
-    private val authScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // Escopo singleton para manter o stateIn ativo durante ciclo da app.
+    // Cancelar via cancel() quando a app é destruída para evitar leak (#2282).
+    private val authScopeJob = SupervisorJob()
+    private val authScope = CoroutineScope(authScopeJob + Dispatchers.Main)
 
     // Flow raw para listeners de autenticação
     private val rawAuthStateFlow: Flow<FirebaseUser?> = callbackFlow {
@@ -236,5 +238,13 @@ class AuthRepository constructor(
             AppLogger.e(TAG, "deleteAccount failed: ${e.message}", e)
             Result.failure(e)
         }
+    }
+
+    /**
+     * Cancela o escopo de coroutines do repositório.
+     * Deve ser chamado quando a aplicação é destruída para liberar recursos (#2282).
+     */
+    fun cancel() {
+        authScopeJob.cancel()
     }
 }
