@@ -60,8 +60,9 @@ export const verifyCpf = onCall(
     secrets: ["CPF_SALT"],
   },
   async (request) => {
+    try {
     const {auth, data, app} = request;
-
+ 
     // FIX 2026-05-11 (Gustavo): logar contexto detalhado de auth + App Check
     // pra diagnosticar "Sessão deslogado" no client (= functions/unauthenticated).
     // Antes: callable rejeitava silenciosamente sem dica do motivo.
@@ -199,6 +200,11 @@ export const verifyCpf = onCall(
       success: true,
       cpfMasked,
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('verifyCpf failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   },
 );
 
@@ -222,6 +228,7 @@ export const setUserVerified = onCall(
     consumeAppCheckToken: true,
   },
   async (request) => {
+    try {
     const {auth, data} = request;
     if (!auth) {
       throw new HttpsError("unauthenticated", "Login obrigatório");
@@ -306,6 +313,11 @@ export const setUserVerified = onCall(
       success: true,
       uid: targetUid,
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('setUserVerified failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   },
 );
 
@@ -334,6 +346,7 @@ export const bulkSetVerifiedForExistingUsers = onCall(
     timeoutSeconds: 540,
   },
   async (request) => {
+    try {
     // Apenas ADMIN pode disparar o backfill
     if (
       !request.auth ||
@@ -459,5 +472,10 @@ export const bulkSetVerifiedForExistingUsers = onCall(
       totalSetVerified,
       errors,
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('bulkSetVerifiedForExistingUsers failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   }
 );
