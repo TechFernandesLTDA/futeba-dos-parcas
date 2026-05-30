@@ -1067,7 +1067,8 @@
   },
   "connection": {
     "restored": "Connection restored",
-    "offlineLimited": "You are offline — limited functions"
+    "offlineLimited": "You are offline — limited functions",
+    "requiresConnection": "Requires internet connection"
   },
   "home": {
     "quickActions": "Quick Actions",

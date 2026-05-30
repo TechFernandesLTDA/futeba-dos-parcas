@@ -2532,7 +2532,9 @@ subir no ranking!</string>
 
     <!-- UI Component Strings -->
     <string name="ui_loading_state">%1$s (%2$d/%3$d)</string>
-    <string name="ui_offline_message">Você está offline. Algumas funcionalidades podem estar limitadas.</string>
+    <string name="ui_offline_message">Modo offline — funções limitadas</string>
+    <string name="ui_offline_banner_desc">Você está sem conexão. Ações que requerem internet estão desabilitadas.</string>
+    <string name="ui_requires_connection">Requer conexão com internet</string>
     <string name="ui_error_title">Erro</string>
     <string name="ui_error_network">Verifique sua conexão com a internet e tente novamente</string>
     <string name="ui_error_timeout">A operação demorou muito tempo. Por favor, tente novamente.</string>
