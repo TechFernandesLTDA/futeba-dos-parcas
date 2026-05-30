@@ -32,7 +32,7 @@ import com.futebadosparcas.ui.components.AnimatedStateContainer
 import com.futebadosparcas.ui.components.StateType
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.repository.GameFilterType
-import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.theme.Spacing
@@ -70,7 +70,7 @@ fun GamesScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            FutebaTopBar(
+            AppTopBar.Root(
                 unreadCount = unreadCount,
                 onNavigateNotifications = onNotificationsClick,
                 onNavigateGroups = onGroupsClick,
