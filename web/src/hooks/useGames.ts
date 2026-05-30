@@ -318,6 +318,9 @@ export function useCreateGame() {
         const docRef = await addDoc(gamesRef, newGame);
         // Invalidar cache de jogos após criar
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
+        // #2254: public-games agora usa key própria (não está mais sob ['games']),
+        // então invalida explicitamente para o mapa/lista refletirem o novo jogo.
+        queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });
         showSuccess('Jogo criado com sucesso!');
         setLoading(false);
         return docRef.id;
@@ -375,6 +378,8 @@ export function useUpdateGameStatus() {
 
         // Invalidar cache de jogos após mudar status
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
+        // #2254: public-games tem key própria — invalida para refletir mudança de status.
+        queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });
         showSuccess('Status do jogo atualizado com sucesso!');
         setLoading(false);
         return true;
