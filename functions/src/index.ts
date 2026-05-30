@@ -718,8 +718,34 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
           // Check if player was voted as
           // "Bola Murcha" (worst player)
-          const isWorstPlayer =
-            conf.is_worst_player === true;
+          // SECURITY FIX (auditoria 2026-05-30 #1): revalida contra
+          // after.worst_player_id (campo do game doc, owner-gated nas
+          // rules) — espelha a revalidacao de MVP (CVE-2). Antes lia
+          // conf.is_worst_player DIRETO, permitindo que QUALQUER jogador
+          // confirmado marcasse a confirmation de um TERCEIRO como Bola
+          // Murcha (griefing: -10 XP + worstPlayerCount++) sem voto real.
+          const isWorstAndConfirmed =
+            after.worst_player_id === uid &&
+            confirmations.some(
+              (c) =>
+                c.userId === uid &&
+                c.status === "CONFIRMED"
+            );
+
+          // Log fraud attempts (worst flag set sem voto agregado)
+          if (
+            conf.is_worst_player === true &&
+            !isWorstAndConfirmed
+          ) {
+            logger.error(
+              `[FRAUD] User ${uid} flagged ` +
+              "is_worst_player without being " +
+              "voted worst_player_id in game " +
+              `${gameId}`
+            );
+          }
+
+          const isWorstPlayer = isWorstAndConfirmed;
 
           // Calc XP (COM TETOS ANTI-CHEAT)
           let xp = settings.xp_presence;
