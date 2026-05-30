@@ -433,17 +433,12 @@ private fun NotificationsTopBar(
         previousCount = unreadCount
     }
 
-    // Melhoria 6: Pulsação contínua quando há não lidas
-    val pulseAnimation = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by pulseAnimation.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "badgePulse"
-    )
+    // #2183: a pulsação contínua (infiniteRepeatable) foi MOVIDA para dentro do
+    // AnimatedVisibility do badge (ver abaixo). Antes ela era criada aqui no
+    // nível do TopBar e rodava SEMPRE que unreadCount > 0, drenando bateria
+    // mesmo com o badge fora de tela / não composto. Dentro do AnimatedVisibility
+    // a transição só existe enquanto o badge está visível e é descartada (parando
+    // o loop) quando unreadCount zera.
 
     // FIX #2063: migrado para TopAppBar com cores padronizadas do AppTopBar
     TopAppBar(
@@ -464,6 +459,19 @@ private fun NotificationsTopBar(
                     enter = scaleIn() + fadeIn(),
                     exit = scaleOut() + fadeOut()
                 ) {
+                    // #2183: pulso contínuo criado AQUI dentro — só existe enquanto
+                    // o badge está visível. Ao zerar unreadCount o AnimatedVisibility
+                    // remove este conteúdo e a infiniteTransition para (sem drain).
+                    val pulseAnimation = rememberInfiniteTransition(label = "pulse")
+                    val pulseScale by pulseAnimation.animateFloat(
+                        initialValue = 1f,
+                        targetValue = 1.1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1000, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "badgePulse"
+                    )
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.error,
