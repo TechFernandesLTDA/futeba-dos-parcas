@@ -33,7 +33,7 @@ import {
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
-import { AppBreadcrumbs } from '../../components/layout';
+import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { softDeleteGame, checkInToGame, generateCheckinToken } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
@@ -392,23 +392,9 @@ export const GameDetailScreen: React.FC = () => {
         </Container>
       )}
 
-      {/* ====== Bottom Action Bar ====== */}
+      {/* ====== Bottom Action Bar (#2178: FixedBottomBar) ====== */}
 
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: { xs: 0, sm: '50%' },
-          right: { xs: 0, sm: 'auto' },
-          transform: { sm: 'translateX(-50%)' },
-          width: { xs: '100%', sm: 480 },
-          maxWidth: 480,
-          bgcolor: 'background.paper',
-          borderTop: `1px solid ${theme.palette.divider}`,
-          p: 2,
-          zIndex: 10,
-        }}
-      >
+      <FixedBottomBar>
         <Container maxWidth="sm">
           {game.status === 'SCHEDULED' || game.status === 'CONFIRMED' ? (
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -493,7 +479,7 @@ export const GameDetailScreen: React.FC = () => {
             </Button>
           ) : null}
         </Container>
-      </Box>
+      </FixedBottomBar>
 
       {/* ====== Dialogs ====== */}
       <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="position-dialog-title">

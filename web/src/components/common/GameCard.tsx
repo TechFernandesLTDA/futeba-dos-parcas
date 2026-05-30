@@ -554,6 +554,12 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
   );
 };
 
+/**
+ * @deprecated #2176 — use `EmptyState` de `components/common/EmptyState.tsx`
+ * (com ícone circular, fade-in e variantes contextuais). Este export legado
+ * (assinatura `action: { label, onClick }`) será removido após migração dos
+ * consumidores. Mantido por compat até lá.
+ */
 export const EmptyState: React.FC<{
   icon?: React.ReactNode;
   title: string;

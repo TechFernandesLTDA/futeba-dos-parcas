@@ -37,6 +37,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Game, GameConfirmation } from '../../types/game';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
+import { FixedBottomBar } from '../../components/layout';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -469,21 +470,8 @@ export const MVPVoteScreen: React.FC = () => {
           </Card>
         </Container>
 
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: { xs: 0, sm: '50%' },
-          right: { xs: 0, sm: 'auto' },
-          transform: { sm: 'translateX(-50%)' },
-          width: { xs: '100%', sm: 480 },
-          maxWidth: 480,
-          bgcolor: 'background.paper',
-          borderTop: `1px solid ${theme.palette.divider}`,
-          p: 2,
-          zIndex: 10,
-        }}
-      >
+      {/* #2178: FixedBottomBar */}
+      <FixedBottomBar>
         <Container maxWidth="sm">
           <Button
             variant="contained"
@@ -496,7 +484,7 @@ export const MVPVoteScreen: React.FC = () => {
             {submitting ? 'Enviando...' : 'Enviar Voto'}
           </Button>
         </Container>
-      </Box>
+      </FixedBottomBar>
     </Box>
   );
 };
