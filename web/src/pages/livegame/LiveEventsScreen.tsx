@@ -14,7 +14,6 @@ import {
   ListItemAvatar,
   ListItemText,
   Chip,
-  Fab,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -42,6 +41,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ScreenFab } from '../../components/layout';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -309,22 +309,18 @@ export const LiveEventsScreen: React.FC = () => {
         )}
       </Container>
 
+      {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
       {canManage && (
-        <Fab
-          color="primary"
+        <ScreenFab
+          icon={<AddIcon />}
+          aria-label="Adicionar evento"
+          onClick={() => setDialogOpen(true)}
           sx={{
             display: { xs: 'flex', md: 'none' },
-            position: 'fixed',
-            // #2161: acima da bottom nav (64px). #2270: safe-area iPhone notch.
             bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 24 },
             right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' },
-            pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
           }}
-          onClick={() => setDialogOpen(true)}
-          aria-label="Adicionar evento"
-        >
-          <AddIcon />
-        </Fab>
+        />
       )}
 
       <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setPlayerNameTouched(false); setMinuteTouched(false); }} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">

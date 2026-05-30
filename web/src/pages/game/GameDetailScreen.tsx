@@ -43,7 +43,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { ShimmerLoading } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
-import { ErrorState } from '../../components/common/ErrorState';
+import { ErrorScreen } from '../../components/common/ErrorScreen';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import { GameInfoPanel } from './GameInfoPanel';
@@ -299,17 +299,13 @@ export const GameDetailScreen: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <ErrorState
-          message={error}
-          onRetry={() => queryClient.invalidateQueries()}
-        />
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Button startIcon={<BackIcon />} onClick={navigateBack}>
-            {t('common.back')}
-          </Button>
-        </Box>
-      </Container>
+      // #2178: ErrorScreen padronizado
+      <ErrorScreen
+        message={error}
+        onRetry={() => queryClient.invalidateQueries()}
+        onBack={navigateBack}
+        backLabel={t('common.back')}
+      />
     );
   }
 

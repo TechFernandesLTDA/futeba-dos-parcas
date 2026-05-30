@@ -8,7 +8,6 @@ import {
   CardContent,
   CardActionArea,
   Avatar,
-  Fab,
   TextField,
   InputAdornment,
   Grid,
@@ -42,6 +41,7 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateShort } from '../../../utils/dateFormatters';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { ScreenFab } from '../../../components/layout';
 
 export function GroupsTab() {
   const navigate = useNavigate();
@@ -370,21 +370,17 @@ export function GroupsTab() {
       </Box>
       </PullToRefresh>
 
-      {/* FAB (xs/sm only) */}
-        <Fab
-          color="primary"
-          aria-label={t('groups.createNewGroup')}
-          onClick={() => navigate('/group/create')}
+      {/* #2178: ScreenFab padronizado (xs/sm only) */}
+      <ScreenFab
+        icon={<Add />}
+        aria-label={t('groups.createNewGroup')}
+        onClick={() => navigate('/group/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },
-          position: 'fixed',
           bottom: { xs: pageSpacing.bottomBarHeight + 16, sm: pageSpacing.bottomBarHeight + 16, md: 24 },
           right: { xs: 16, sm: 'calc(50% - 240px + 16px)', md: 24 },
-          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}
-      >
-        <Add />
-      </Fab>
+      />
     </Box>
   );
 }

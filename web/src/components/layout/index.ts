@@ -6,3 +6,4 @@ export { AppBreadcrumbs } from './AppBreadcrumbs';
 export type { BreadcrumbItem } from './AppBreadcrumbs';
 export { MobileTopBar } from './MobileTopBar';
 export { FixedBottomBar } from './FixedBottomBar';
+export { ScreenFab } from './ScreenFab';
