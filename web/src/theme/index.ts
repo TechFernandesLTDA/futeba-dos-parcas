@@ -227,6 +227,21 @@ export const futebaTheme = createTheme({
         },
       },
     },
+    // #2230: hover/transition consistente em cards interativos (envoltos em
+    // CardActionArea). Cards estáticos não são afetados. Respeita reduced-motion
+    // via override global em MuiCssBaseline.
+    MuiCardActionArea: {
+      styleOverrides: {
+        root: {
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          '@media (hover: hover)': {
+            '&:hover': {
+              transform: 'translateY(-2px)',
+            },
+          },
+        },
+      },
+    },
     MuiPaper: {
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
