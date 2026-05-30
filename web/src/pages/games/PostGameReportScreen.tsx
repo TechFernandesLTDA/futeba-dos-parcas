@@ -76,6 +76,39 @@ interface FinancialData {
   unpaidCount: number;
 }
 
+// #2276: interfaces tipadas para os docs lidos (substituem Record<string, any>).
+interface RawGameReportDoc {
+  status?: string;
+  mvpId?: string;
+  bolaMurchaId?: string;
+  teamAScore?: number;
+  team1Score?: number;
+  teamBScore?: number;
+  team2Score?: number;
+  team1Name?: string;
+  teamAName?: string;
+  team2Name?: string;
+  teamBName?: string;
+  winnerTeam?: PostGameStats['winner'];
+  scorers?: PostGameStats['scorers'];
+  assistants?: PostGameStats['assistants'];
+  participants?: PostGameStats['participants'];
+  dailyPrice?: number;
+}
+interface RawConfirmationDoc {
+  userId?: string;
+  xpEarned?: number;
+  isMvp?: boolean;
+  isWorstPlayer?: boolean;
+  status?: string;
+  paymentStatus?: string;
+}
+interface RawNamedUserDoc {
+  name?: string;
+  xp?: number;
+  totalXp?: number;
+}
+
 export const PostGameReportScreen: React.FC = () => {
   useDocumentTitle('Relatório Pós-Jogo');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -118,8 +151,7 @@ export const PostGameReportScreen: React.FC = () => {
           return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
+        const data = snakeToCamel<RawGameReportDoc>(gameDoc.data());
 
         if (data.status !== 'FINISHED') {
           showErrorRef.current('Relatório só disponível após o jogo ser finalizado.');
@@ -131,8 +163,7 @@ export const PostGameReportScreen: React.FC = () => {
         if (data.mvpId) {
           const mvpDoc = await getDoc(doc(db, 'users', data.mvpId));
           if (cancelled) return;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (mvpDoc.exists()) mvpName = (snakeToCamel(mvpDoc.data()) as Record<string, any>).name || '';
+          if (mvpDoc.exists()) mvpName = snakeToCamel<RawNamedUserDoc>(mvpDoc.data()).name || '';
         }
 
         // Busca o nome do jogador "Bola Murcha" do Firestore, igual ao padrão do MVP
@@ -140,8 +171,7 @@ export const PostGameReportScreen: React.FC = () => {
         if (data.bolaMurchaId) {
           const bolaMurchaDoc = await getDoc(doc(db, 'users', data.bolaMurchaId));
           if (cancelled) return;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (bolaMurchaDoc.exists()) bolaMurchaName = (snakeToCamel(bolaMurchaDoc.data()) as Record<string, any>).name || '';
+          if (bolaMurchaDoc.exists()) bolaMurchaName = snakeToCamel<RawNamedUserDoc>(bolaMurchaDoc.data()).name || '';
         }
 
         if (cancelled) return;
@@ -167,8 +197,7 @@ export const PostGameReportScreen: React.FC = () => {
           const confirmationQ = query(confirmationsRef, where('game_id', '==', gameId));
           const confirmationsSnap = await getDocs(confirmationQ);
           if (cancelled) return;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const confirmationsData = confirmationsSnap.docs.map((d) => snakeToCamel(d.data()) as Record<string, any>);
+          const confirmationsData = confirmationsSnap.docs.map((d) => snakeToCamel<RawConfirmationDoc>(d.data()));
 
           const myConfirmation = confirmationsData.find((c) => c.userId === uid);
           if (myConfirmation) {
@@ -197,8 +226,7 @@ export const PostGameReportScreen: React.FC = () => {
           const userDoc = await getDoc(doc(db, 'users', uid));
           if (cancelled) return;
           if (userDoc.exists()) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const userData = snakeToCamel(userDoc.data()) as Record<string, any>;
+            const userData = snakeToCamel<RawNamedUserDoc>(userDoc.data());
             const currentXp = userData.xp || userData.totalXp || 0;
             const xpEarned = myConfirmation?.xpEarned || 0;
             const xpBefore = currentXp - xpEarned;

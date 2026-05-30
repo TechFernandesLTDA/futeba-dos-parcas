@@ -30,6 +30,9 @@ export const useNotifications = (userId?: string) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // #2263: estado de "acting" exposto por mutação, espelhando o padrão de useWaitlist.
+  // Permite que a UI desabilite botões e mostre progresso durante escritas.
+  const [acting, setActing] = useState(false);
 
   useEffect(() => {
     if (!userId) {
@@ -68,20 +71,24 @@ export const useNotifications = (userId?: string) => {
     return () => unsubscribe();
   }, [userId]);
 
-  const markAsRead = async (notificationId: string) => {
+  // #2289: envolvidas em useCallback para identidade estável entre renders.
+  const markAsRead = useCallback(async (notificationId: string) => {
+    setActing(true);
     try {
       await updateDoc(doc(db, 'notifications', notificationId), { read: true });
     } catch (err) {
       logger.error('Error marking notification as read:', err);
       showError('Erro ao marcar notificação como lida.');
+    } finally {
+      setActing(false);
     }
-  };
+  }, [showError]);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
+    const unread = notifications.filter((n) => !n.read);
+    if (unread.length === 0) return;
+    setActing(true);
     try {
-      const unread = notifications.filter((n) => !n.read);
-      if (unread.length === 0) return;
-
       const batch = writeBatch(db);
       unread.forEach((n) => {
         batch.update(doc(db, 'notifications', n.id), { read: true });
@@ -92,17 +99,22 @@ export const useNotifications = (userId?: string) => {
     } catch (err) {
       logger.error('Error marking all notifications as read:', err);
       showError('Erro ao marcar todas as notificações como lidas.');
+    } finally {
+      setActing(false);
     }
-  };
+  }, [notifications, showSuccess, showError]);
 
-  const deleteNotification = async (notificationId: string) => {
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    setActing(true);
     try {
       await deleteDoc(doc(db, 'notifications', notificationId));
     } catch (err) {
       logger.error('Error deleting notification:', err);
       showError('Erro ao excluir notificação.');
+    } finally {
+      setActing(false);
     }
-  };
+  }, [showError]);
 
   const toggleRead = useCallback(async (notificationId: string, currentRead: boolean) => {
     try {
@@ -178,6 +190,7 @@ export const useNotifications = (userId?: string) => {
     unreadCount,
     loading,
     error,
+    acting,
     markAsRead,
     markAllAsRead,
     deleteNotification,

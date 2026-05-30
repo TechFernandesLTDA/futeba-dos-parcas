@@ -19,6 +19,19 @@ import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useLeague');
 
+// #2276: interface tipada para o doc de season_participation (substitui Record<string, any>).
+interface RawSeasonParticipation {
+  userId?: string;
+  level?: number;
+  points?: number;
+  gamesPlayed?: number;
+  wins?: number;
+  goals?: number;
+  assists?: number;
+  mvpCount?: number;
+  division?: string;
+}
+
 export interface LeaguePlayer {
   id: string;
   userId: string;
@@ -106,8 +119,7 @@ async function fetchLeagueData(
   // Extrair dados de participação e IDs de usuários
   const participationData = snapshot.docs.map((docSnapshot) => {
     const raw = docSnapshot.data();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = snakeToCamel(raw) as Record<string, any>;
+    const data = snakeToCamel<RawSeasonParticipation>(raw);
     const userId = data.userId || raw.user_id || docSnapshot.id;
 
     return {
@@ -120,7 +132,7 @@ async function fetchLeagueData(
       goals: data.goals || 0,
       assists: data.assists || 0,
       mvpCount: data.mvpCount || raw.mvp_count || 0,
-      division: data.division || 'BRONZE',
+      division: (data.division || 'BRONZE') as LeagueDivision,
     };
   });
 

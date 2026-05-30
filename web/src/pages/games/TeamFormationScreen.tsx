@@ -60,6 +60,12 @@ interface ConfirmationData {
   status: string;
 }
 
+// #2276: interface tipada para o doc games (substitui Record<string, any>).
+interface RawGameOwner {
+  ownerId?: string;
+  owner_id?: string;
+}
+
 export const TeamFormationScreen: React.FC = () => {
   useDocumentTitle('Formação de Times');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -96,14 +102,14 @@ export const TeamFormationScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const fetchGame = async () => {
       try {
         // Verificar se o usuário é dono do jogo antes de mostrar o formulário
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          const gameData = snakeToCamel<RawGameOwner>(gameDoc.data());
           const ownerId = gameData.ownerId || gameData.owner_id;
           const currentUser = userRef.current;
           if (currentUser && currentUser.id !== ownerId) {
@@ -140,7 +146,7 @@ export const TeamFormationScreen: React.FC = () => {
           })
         );
 
-        if (players.length > 0) {
+        if (players.length > 0 && !cancelled) {
           const drawPlayers: PlayerForDraw[] = players.map((p) => ({
             id: p.id,
             name: p.name,
@@ -156,14 +162,19 @@ export const TeamFormationScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching game:', error);
-        setError('Erro ao carregar dados. Tente novamente.');
-        showErrorRef.current('Erro ao carregar dados. Tente novamente.');
+        if (!cancelled) {
+          setError('Erro ao carregar dados. Tente novamente.');
+          showErrorRef.current('Erro ao carregar dados. Tente novamente.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchGame();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, retryCount]);
 
   const shuffleTeams = () => {

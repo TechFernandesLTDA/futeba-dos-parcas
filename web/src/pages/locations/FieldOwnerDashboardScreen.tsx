@@ -63,6 +63,16 @@ interface LocationData {
   ratingCount: number;
 }
 
+// #2276: interface tipada para o doc locations (substitui Record<string, any>).
+interface RawLocationDoc {
+  name?: string;
+  city?: string;
+  photoUrl?: string;
+  fieldCount?: number;
+  rating?: number;
+  ratingCount?: number;
+}
+
 interface LocationGameData {
   id: string;
   status?: string;
@@ -167,8 +177,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       locQ,
       (locSnap) => {
         const locs = locSnap.docs.map((d) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(d.data()) as Record<string, any>;
+          const data = snakeToCamel<RawLocationDoc>(d.data());
           return {
             id: d.id,
             name: data.name || 'Quadra',

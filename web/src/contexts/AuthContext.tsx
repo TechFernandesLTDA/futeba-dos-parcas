@@ -192,6 +192,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // #2289: refs mantêm a referência mais recente de fetchUserData/createUserDocument.
+  // Os useCallback abaixo têm deps vazias por design (identidade estável), mas antes
+  // capturavam versões obsoletas dessas funções (que por sua vez capturam setError).
+  const fetchUserDataRef = useRef(fetchUserData);
+  fetchUserDataRef.current = fetchUserData;
+  const createUserDocumentRef = useRef(createUserDocument);
+  createUserDocumentRef.current = createUserDocument;
+
   // Listen for auth state changes
   useEffect(() => {
     // FIX #584/H4: era onAuthStateChanged async sem cancellation guard.
@@ -213,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setFirebaseUser(firebaseUser);
 
         if (firebaseUser) {
-          let userData = await fetchUserData(firebaseUser.uid, true);
+          let userData = await fetchUserDataRef.current(firebaseUser.uid, true);
 
           // FIX #584/H4: descarta resultado se uid mudou durante fetch
           if (lastFetchUid !== firebaseUser.uid) {
@@ -225,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           if (!userData) {
-            userData = await createUserDocument(firebaseUser);
+            userData = await createUserDocumentRef.current(firebaseUser);
             // Re-check após segunda await
             if (lastFetchUid !== firebaseUser.uid) return;
           }
@@ -270,7 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      await createUserDocument(result.user);
+      await createUserDocumentRef.current(result.user);
     } catch (err: unknown) {
       if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
       // FIX #942: tratar account-exists-with-different-credential explicitamente
@@ -310,7 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.warn('Falha ao forçar refresh de token após cadastro:', tokenErr);
       }
 
-      await createUserDocument(result.user, { name, ...(invitedBy ? { invited_by: invitedBy } : {}) });
+      await createUserDocumentRef.current(result.user, { name, ...(invitedBy ? { invited_by: invitedBy } : {}) });
     } catch (err) {
       setError((err as Error).message || 'Erro ao criar conta');
       throw err;
@@ -360,7 +368,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentUser = firebaseUserRef.current;
     if (!currentUser) return;
     try {
-      const userData = await fetchUserData(currentUser.uid, true);
+      const userData = await fetchUserDataRef.current(currentUser.uid, true);
       if (userData) {
         setUser(userData);
         setError(null);

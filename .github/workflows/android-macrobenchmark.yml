@@ -91,7 +91,7 @@ jobs:
           script: |
             ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
               -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None \
-              -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
+              -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING
 
       - name: Upload resultados dos benchmarks
         if: always()

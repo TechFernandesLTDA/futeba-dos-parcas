@@ -60,6 +60,16 @@ import { TeamBadge } from '../../../components/team/TeamBadge';
 
 const logger = createLogger('ProfileTab');
 
+// #2272: função pura movida para fora do componente — não precisa ser recriada
+// a cada render.
+function getInitials(name: string): string {
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}
+
 export function ProfileTab() {
   const { t } = useTranslation();
   useDocumentTitle(t('nav.profile'));
@@ -97,14 +107,6 @@ export function ProfileTab() {
       logger.error('Erro ao sair:', error);
       showError(t('profile.signOutError'));
     }
-  };
-
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
   };
 
   // Memoizado: recriado apenas quando navigate muda (estável por sessão)

@@ -36,6 +36,36 @@ export interface PlayerCardData {
   favoriteTeam?: string;
 }
 
+// #2276: interface tipada do doc users (camelCase pós-snakeToCamel).
+interface RawUserDoc {
+  experiencePoints?: number;
+  level?: number;
+  strikerRating?: number;
+  midRating?: number;
+  defenderRating?: number;
+  gkRating?: number;
+  autoStrikerRating?: number;
+  autoMidRating?: number;
+  autoDefenderRating?: number;
+  autoGkRating?: number;
+  autoRatingSamples?: number;
+  name?: string;
+  nickname?: string;
+  photoUrl?: string;
+  preferredPosition?: PreferredPosition;
+  totalGames?: number;
+  totalGoals?: number;
+  totalAssists?: number;
+  totalSaves?: number;
+  mvpCount?: number;
+  totalWins?: number;
+  totalDraws?: number;
+  totalLosses?: number;
+  currentStreak?: number;
+  bestStreak?: number;
+  favoriteTeam?: string;
+}
+
 async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
   const userDoc = await getDoc(doc(db, 'users', userId));
 
@@ -44,8 +74,7 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
   }
 
   const raw = userDoc.data();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data = snakeToCamel(raw) as Record<string, any>;
+  const data = snakeToCamel<RawUserDoc>(raw);
 
   const totalXp = data.experiencePoints ?? raw.experience_points ?? 0;
   const level = data.level ?? getLevelForXp(totalXp);

@@ -521,10 +521,10 @@ export const CreateGameScreen: React.FC = () => {
     }
   };
 
-  const renderStepContent = (step: number) => {
-    switch (step) {
-      case 0:
-        return (
+  // #2250: cada passo do formulário extraído em sua própria função de render,
+  // substituindo o switch monolítico de ~436 linhas. As funções compartilham os
+  // closures do componente (state/handlers), evitando prop-threading frágil.
+  const renderStepLocationDate = () => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {formData.groupName && (
               <Alert severity="info">
@@ -743,10 +743,9 @@ export const CreateGameScreen: React.FC = () => {
               />
             </Box>
           </Box>
-        );
+  );
 
-      case 1:
-        return (
+  const renderStepGameSettings = () => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
               select
@@ -854,10 +853,9 @@ export const CreateGameScreen: React.FC = () => {
               )}
             </Card>
           </Box>
-        );
+  );
 
-      case 2:
-        return (
+  const renderStepPayment = () => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
               label={t('games.create.pricePerPlayer')}
@@ -921,10 +919,9 @@ export const CreateGameScreen: React.FC = () => {
               </Box>
             )}
           </Box>
-        );
+  );
 
-      case 3:
-        return (
+  const renderStepRules = () => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
               label={t('games.create.gameRules')}
@@ -951,8 +948,19 @@ export const CreateGameScreen: React.FC = () => {
               {t('games.create.rulesShownInfo')}
             </Alert>
           </Box>
-        );
+  );
 
+  // #2250: dispatcher — mapeia activeStep para a função de render do passo.
+  const renderStepContent = (step: number) => {
+    switch (step) {
+      case 0:
+        return renderStepLocationDate();
+      case 1:
+        return renderStepGameSettings();
+      case 2:
+        return renderStepPayment();
+      case 3:
+        return renderStepRules();
       default:
         return null;
     }

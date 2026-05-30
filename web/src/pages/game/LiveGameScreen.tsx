@@ -45,7 +45,7 @@ import {
   VolumeOff as SoundOffIcon,
   History as HistoryIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
@@ -376,18 +376,22 @@ export const LiveGameScreen: React.FC = () => {
         aggregated.set(playerId, current);
       }
 
-      // Escreve nas confirmações com Promise.allSettled para resiliência
+      // #2291: escreve todas as confirmações em um único writeBatch atômico,
+      // evitando o estado inconsistente que Promise.allSettled permitia (parte
+      // dos jogadores atualizados, parte não). Contagem de jogadores << 500.
       if (aggregated.size > 0) {
-        const confirmationUpdates = Array.from(aggregated.entries()).map(([playerId, stats]) => {
-          const confirmRef = doc(db, 'confirmations', `${gameId}_${playerId}`);
-          return setDoc(confirmRef, stats, { merge: true });
-        });
-
-        const results = await Promise.allSettled(confirmationUpdates);
-        const failed = results.filter((r) => r.status === 'rejected');
-        if (failed.length > 0) {
-          failed.forEach((r) => logger.error('Falha ao sincronizar stats de jogador:', (r as PromiseRejectedResult).reason));
-          // Não bloquear o finish — o CF pode re-agregar via game_events se necessário
+        try {
+          const statsBatch = writeBatch(db);
+          for (const [playerId, stats] of aggregated.entries()) {
+            const confirmRef = doc(db, 'confirmations', `${gameId}_${playerId}`);
+            statsBatch.set(confirmRef, stats, { merge: true });
+          }
+          await statsBatch.commit();
+        } catch (statsErr) {
+          // Não bloquear o finish — o CF pode re-agregar via game_events se necessário,
+          // mas avisamos o usuário de forma não-bloqueante (#2291).
+          logger.error('Falha ao sincronizar stats de jogadores:', statsErr);
+          showError('Algumas estatísticas podem demorar a aparecer.');
         }
       }
 

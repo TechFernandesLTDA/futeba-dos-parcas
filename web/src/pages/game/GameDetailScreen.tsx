@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -90,9 +90,19 @@ export const GameDetailScreen: React.FC = () => {
   const isCurrentUserAdmin = user?.role === 'ADMIN';
   const canManage = game && (isOwner || isCurrentUserAdmin || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
 
-  const confirmedPlayers = confirmations.filter((c) => c.status === 'CONFIRMED');
-  const goalkeepers = confirmedPlayers.filter((c) => c.position === 'GOALKEEPER');
-  const waitlist = confirmations.filter((c) => c.status === 'WAITLIST');
+  // #2272: arrays derivados memoizados — antes os 3 .filter() rodavam a cada render.
+  const confirmedPlayers = useMemo(
+    () => confirmations.filter((c) => c.status === 'CONFIRMED'),
+    [confirmations],
+  );
+  const goalkeepers = useMemo(
+    () => confirmedPlayers.filter((c) => c.position === 'GOALKEEPER'),
+    [confirmedPlayers],
+  );
+  const waitlist = useMemo(
+    () => confirmations.filter((c) => c.status === 'WAITLIST'),
+    [confirmations],
+  );
 
   const handleConfirmPresence = async (position: 'GOALKEEPER' | 'FIELD') => {
     if (!gameId) return;
@@ -140,11 +150,17 @@ export const GameDetailScreen: React.FC = () => {
       url: window.location.href,
     };
 
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-      showSuccess('Link copiado!');
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+        showSuccess('Link copiado!');
+      }
+    } catch (err) {
+      // #2281: ignora cancelamento da share sheet; reporta demais erros.
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      showError('Erro ao compartilhar');
     }
   };
 
@@ -634,8 +650,13 @@ export const GameDetailScreen: React.FC = () => {
                   variant="outlined"
                   fullWidth
                   onClick={async () => {
-                    await navigator.clipboard.writeText(qrCheckInUrl);
-                    showSuccess('Link copiado!');
+                    // #2281: clipboard.writeText pode lançar sem permissão (HTTP/sandbox)
+                    try {
+                      await navigator.clipboard.writeText(qrCheckInUrl);
+                      showSuccess('Link copiado!');
+                    } catch {
+                      showError('Não foi possível copiar o link');
+                    }
                   }}
                 >
                   Copiar Link

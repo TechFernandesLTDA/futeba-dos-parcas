@@ -59,6 +59,12 @@ interface GameEvent {
   createdAt: Date;
 }
 
+// #2276: interface tipada para o doc games (substitui Record<string, any>).
+interface RawGameOwner {
+  ownerId?: string;
+  owner_id?: string;
+}
+
 export const LiveEventsScreen: React.FC = () => {
   useDocumentTitle('Eventos ao Vivo');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -82,24 +88,27 @@ export const LiveEventsScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId || !user) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     // Verificar se o usuário pode gerenciar eventos (owner do jogo)
     const checkManagePermission = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
+        if (gameDoc.exists() && !cancelled) {
+          const gameData = snakeToCamel<RawGameOwner>(gameDoc.data());
           const ownerId = gameData.ownerId || gameData.owner_id;
           setCanManage(user.id === ownerId);
         }
       } catch (err) {
         logger.error('Erro ao verificar permissão de gerenciamento:', err);
-        showErrorRef.current('Erro ao verificar permissões. Tente novamente.');
+        if (!cancelled) showErrorRef.current('Erro ao verificar permissões. Tente novamente.');
       }
     };
 
     checkManagePermission();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, user]);
 
   useEffect(() => {

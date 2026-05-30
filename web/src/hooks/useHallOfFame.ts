@@ -19,6 +19,11 @@ interface SeasonArchive {
   playersCount: number;
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
+ * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function useHallOfFame(groupId?: string) {
   return useQuery({
     queryKey: ["hall-of-fame", groupId],

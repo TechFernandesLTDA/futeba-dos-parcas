@@ -376,9 +376,12 @@ export function RankingsTab() {
     refetch();
   }, [refetch]);
 
-  // Posição do usuário atual
-  const currentUserRank = players.findIndex(p => p.isCurrentUser) + 1;
-  const currentPlayer = players.find(p => p.isCurrentUser);
+  // #2272: posição/jogador atual memoizados — findIndex/find rodavam a cada render.
+  const currentPlayer = useMemo(() => players.find(p => p.isCurrentUser), [players]);
+  const currentUserRank = useMemo(
+    () => players.findIndex(p => p.isCurrentUser) + 1,
+    [players],
+  );
   const currentPlayerLevelColor = currentPlayer ? getLevelColor(currentPlayer.level, theme) : theme.palette.primary.main;
 
   const positionChanges = tabValue === 1 ? xpPositionChanges : ligaPositionChanges;

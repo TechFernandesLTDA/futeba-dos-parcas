@@ -19,6 +19,11 @@ export interface DreamTeamPlayer {
   position: "GOALKEEPER" | "DEFENDER" | "MIDFIELDER" | "STRIKER";
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
+ * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function useDreamTeam() {
   const { user } = useAuth();
   const uid = user?.id ?? "";
@@ -37,6 +42,10 @@ export function useDreamTeam() {
   });
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function usePlayedAgainst() {
   const { user } = useAuth();
   const uid = user?.id ?? "";
@@ -112,18 +121,14 @@ export function useSaveDreamTeam() {
       if (!uid) throw new Error("Você precisa estar logado.");
       if (players.length !== 5) throw new Error("Selecione exatamente 5 jogadores.");
 
-      try {
-        const ref = doc(db, "users", uid, "dream_team", "current");
-        const batch = writeBatch(db);
-        batch.set(ref, {
-          players,
-          created_at: serverTimestamp(),
-        });
-        await batch.commit();
-      } catch (error) {
-        showError(getFirestoreErrorMessage(error));
-        throw error;
-      }
+      // #2166: sem showError aqui — o onError abaixo já exibe o toast.
+      const ref = doc(db, "users", uid, "dream_team", "current");
+      const batch = writeBatch(db);
+      batch.set(ref, {
+        players,
+        created_at: serverTimestamp(),
+      });
+      await batch.commit();
     },
     onSuccess: () => {
       showSuccess("Time dos Sonhos salvo!");

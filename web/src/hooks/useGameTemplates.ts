@@ -35,17 +35,25 @@ export function useGameTemplates() {
   const { user } = useAuth();
   const { showError } = useToast();
   const [templates, setTemplates] = useState<GameTemplate[]>([]);
-  const [loading, setLoading] = useState(false);
+  // #2252: inicializa loading=true para distinguir "ainda não buscou" de "vazio".
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const userRef = useRef(user);
   userRef.current = user;
+  // #2278/#2252: flag de cancelamento para evitar setState após unmount.
+  const cancelledRef = useRef(false);
 
   const fetchTemplates = useCallback(async () => {
     const currentUser = userRef.current;
-    if (!currentUser) return;
+    if (!currentUser) {
+      if (!cancelledRef.current) setLoading(false);
+      return;
+    }
 
-    setLoading(true);
-    setError(null);
+    if (!cancelledRef.current) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const templatesRef = collection(db, 'users', currentUser.id, 'game_templates');
       const q = query(templatesRef, orderBy('created_at', 'desc'));
@@ -68,17 +76,21 @@ export function useGameTemplates() {
           created_at: createdAt instanceof Timestamp ? createdAt.toDate() : (createdAt as Date) ?? new Date(),
         };
       });
-      setTemplates(data);
+      if (!cancelledRef.current) setTemplates(data);
     } catch (err) {
       logger.error('Error fetching templates:', err);
-      setError('Erro ao carregar templates.');
+      if (!cancelledRef.current) setError('Erro ao carregar templates.');
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    cancelledRef.current = false;
     fetchTemplates();
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchTemplates]);
 
   const saveTemplate = useCallback(async (input: TemplateInput): Promise<string | null> => {

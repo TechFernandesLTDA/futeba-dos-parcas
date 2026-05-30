@@ -46,9 +46,12 @@ export const QrCheckInScreen: React.FC = () => {
       return;
     }
 
+    let cancelled = false; // #2278: evita setState após unmount
+
     const validateToken = async () => {
       try {
         const gameSnap = await getDoc(doc(db, 'games', gameId));
+        if (cancelled) return;
         if (!gameSnap.exists()) {
           setState('error');
           setErrorMessage('Jogo não encontrado');
@@ -74,12 +77,17 @@ export const QrCheckInScreen: React.FC = () => {
 
         setState('confirming');
       } catch {
-        setState('error');
-        setErrorMessage('Erro ao validar QR Code');
+        if (!cancelled) {
+          setState('error');
+          setErrorMessage('Erro ao validar QR Code');
+        }
       }
     };
 
     validateToken();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, token]);
 
   const handleCheckIn = async () => {

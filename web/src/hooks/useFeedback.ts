@@ -73,7 +73,9 @@ export function useFeedback() {
     });
 
     return () => unsubscribe();
-  }, [currentUser?.uid, showError]);
+    // #2262: showError removido das deps — não é usado no listener (usa setError),
+    // mantê-lo causava re-subscribe desnecessário quando a identidade mudava.
+  }, [currentUser?.uid]);
 
   const submitFeedback = async (input: SubmitFeedbackInput): Promise<string | null> => {
     if (!currentUser) {

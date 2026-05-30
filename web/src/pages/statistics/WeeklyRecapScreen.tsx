@@ -65,6 +65,17 @@ interface GameRecord {
   isMvp: boolean;
 }
 
+// #2276: interface tipada para o doc games lido (substitui Record<string, any>).
+interface RawWeeklyGameDoc {
+  team1Players?: string[];
+  team2Players?: string[];
+  date?: { toDate?: () => Date } | string;
+  winnerTeam?: 'A' | 'B';
+  goals?: Record<string, number>;
+  assists?: Record<string, number>;
+  mvpId?: string;
+}
+
 export const WeeklyRecapScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('weeklyRecap.title'));
@@ -98,12 +109,14 @@ export const WeeklyRecapScreen: React.FC = () => {
       return;
     }
 
+    let cancelled = false; // #2278: evita setState após unmount
     const fetchData = async () => {
       try {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
         const statsDoc = await getDoc(doc(db, 'weekly_stats', targetUserId));
+        if (cancelled) return;
         if (statsDoc.exists()) {
           setWeeklyStats(snakeToCamel(statsDoc.data()) as WeeklyStats);
         } else {
@@ -124,10 +137,12 @@ export const WeeklyRecapScreen: React.FC = () => {
 
         const gamesData: GameRecord[] = [];
         snapshot.docs.forEach((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(d.data()) as Record<string, any>;
+          const data = snakeToCamel<RawWeeklyGameDoc>(d.data());
           const userTeam = data.team1Players?.includes(targetUserId) ? 'A' : data.team2Players?.includes(targetUserId) ? 'B' : null;
-          const gameDate = data.date?.toDate?.() ?? (data.date ? new Date(data.date) : new Date(0));
+          const dateField = data.date;
+          const gameDate = (typeof dateField === 'object' && dateField?.toDate)
+            ? dateField.toDate()
+            : (typeof dateField === 'string' ? new Date(dateField) : new Date(0));
           gamesData.push({
             id: d.id,
             date: gameDate,
@@ -138,17 +153,22 @@ export const WeeklyRecapScreen: React.FC = () => {
           });
         });
 
-        setRecentGames(gamesData);
+        if (!cancelled) setRecentGames(gamesData);
       } catch (error) {
         logger.error('Error fetching weekly recap:', error);
-        setError(t('weeklyRecap.loadError'));
-        showErrorRef.current(t('weeklyRecap.loadError'));
+        if (!cancelled) {
+          setError(t('weeklyRecap.loadError'));
+          showErrorRef.current(t('weeklyRecap.loadError'));
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [targetUserId, retryCount, t]);
 
   if (error) {

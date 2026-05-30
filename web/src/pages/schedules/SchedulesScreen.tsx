@@ -72,6 +72,7 @@ export const SchedulesScreen: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingSchedule, setDeletingSchedule] = useState<Schedule | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [newScheduleName, setNewScheduleName] = useState('');
   const [newScheduleDay, setNewScheduleDay] = useState(0);
   const [newScheduleTime, setNewScheduleTime] = useState('');
@@ -113,12 +114,17 @@ export const SchedulesScreen: React.FC = () => {
   }, [groupId, retryCount]);
 
   const handleToggleActive = async (schedule: Schedule) => {
+    // Evita spam-toggle enquanto o write está em andamento (#2300)
+    if (togglingId === schedule.id) return;
+    setTogglingId(schedule.id);
     try {
       await updateDoc(doc(db, 'schedules', schedule.id), {
         is_active: !schedule.isActive,
       });
     } catch (err: unknown) {
       showError(getFirestoreErrorMessage(err, 'Erro ao alterar status'));
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -222,6 +228,7 @@ export const SchedulesScreen: React.FC = () => {
                         <Switch
                           checked={schedule.isActive}
                           onChange={() => handleToggleActive(schedule)}
+                          disabled={togglingId === schedule.id}
                           size="small"
                           inputProps={{ 'aria-label': `${schedule.isActive ? 'Desativar' : 'Ativar'} ${schedule.name}` }}
                         />

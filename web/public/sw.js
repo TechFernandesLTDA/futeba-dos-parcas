@@ -3,9 +3,12 @@
 // Bump version a cada deploy que precisa invalidar cache.
 // v1 → v2: corrige bug em que cache-first travava assets antigos
 // mesmo após hash de bundle mudar (BadgesScreen-BexbiUlU.js sticky).
-const CACHE_NAME = 'futeba-v2';
+// v2 → v3: precache de /offline.html como fallback offline dedicado (#2204).
+const CACHE_NAME = 'futeba-v3';
+const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
+  '/offline.html',
   '/manifest.json',
   '/favicon.svg',
   '/icons/icon-192.png',
@@ -57,8 +60,10 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() =>
+          // #2204: fallback offline dedicado em vez de texto cru "Offline".
           caches.match(request).then((cached) =>
-            cached || caches.match('/') || new Response('Offline', { status: 503 })
+            cached || caches.match(OFFLINE_URL) || caches.match('/') ||
+            new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } })
           )
         )
     );

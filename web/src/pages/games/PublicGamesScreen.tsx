@@ -33,7 +33,7 @@ export const PublicGamesScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('games.public.title'));
   const goBack = useNavigateBack('/?tab=1');
-  const { data: games, isLoading, error, refetch } = usePublicGames();
+  const { data: games, loading: isLoading, error, refetch } = usePublicGames('open');
   const joinGame = useJoinPublicGame();
   const [joiningId, setJoiningId] = useState<string | null>(null);
 
@@ -87,7 +87,7 @@ export const PublicGamesScreen: React.FC = () => {
       )}
 
       {!isLoading && error && (
-        <Alert severity="error">{error instanceof Error ? error.message : 'Erro ao carregar peladas.'}</Alert>
+        <Alert severity="error">{error || 'Erro ao carregar peladas.'}</Alert>
       )}
 
       {!isLoading && !error && (!games || games.length === 0) && (

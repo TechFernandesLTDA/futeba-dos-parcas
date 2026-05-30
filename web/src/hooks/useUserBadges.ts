@@ -13,6 +13,11 @@ interface UserBadge {
   earned: boolean;
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
+ * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function useUserBadges(userId?: string) {
   const { user } = useAuth();
   const uid = userId || user?.id || '';

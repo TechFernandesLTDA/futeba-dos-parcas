@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -39,16 +39,18 @@ export function useNotificationSettings(userId?: string) {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // #2278: flag de cancelamento para evitar setState após unmount.
+  const cancelledRef = useRef(false);
 
   const loadSettings = useCallback(async () => {
     if (!userId) {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
       return;
     }
     try {
       const settingsRef = doc(db, 'notification_settings', userId);
       const docSnap = await getDoc(settingsRef);
-      if (docSnap.exists()) {
+      if (docSnap.exists() && !cancelledRef.current) {
         const raw = docSnap.data();
         const converted = snakeToCamel<Record<string, unknown>>(raw);
         setSettings({
@@ -66,19 +68,23 @@ export function useNotificationSettings(userId?: string) {
       }
     } catch (err) {
       logger.error('Error loading notification settings:', err);
-      setError(getFirestoreErrorMessage(err));
+      if (!cancelledRef.current) setError(getFirestoreErrorMessage(err));
       // FIX #1557: não re-lança o erro para evitar unhandled promise rejection no useEffect
       // O erro já está logado e disponível via state
     }
-    setLoading(false);
+    if (!cancelledRef.current) setLoading(false);
   }, [userId]);
 
   useEffect(() => {
+    cancelledRef.current = false;
     if (userId) {
       loadSettings();
     } else {
       setLoading(false);
     }
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [userId, loadSettings]);
 
   const saveSettings = useCallback(async (newSettings: Partial<NotificationSettings>) => {

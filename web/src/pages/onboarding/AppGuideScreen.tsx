@@ -28,7 +28,11 @@ import {
 } from '@mui/icons-material';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { useToast } from '../../contexts/ToastContext';
 import { iconSizes } from '../../theme/iconSizes';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('AppGuideScreen');
 
 const SLIDES = [
   {
@@ -61,6 +65,7 @@ export const AppGuideScreen: React.FC = () => {
   useDocumentTitle('Bem-vindo ao Futeba');
   const navigate = useNavigate();
   const theme = useTheme();
+  const { showError } = useToast();
   const {
     onCarouselStarted,
     onSlideViewed,
@@ -86,12 +91,23 @@ export const AppGuideScreen: React.FC = () => {
   }, [activeStep, onSlideViewed]);
 
   const handleComplete = async () => {
-    await onCarouselCompleted();
+    // #2281: persistência do onboarding não deve bloquear a navegação se falhar.
+    try {
+      await onCarouselCompleted();
+    } catch (err) {
+      logger.error('Falha ao registrar conclusão do onboarding:', err);
+      showError('Não foi possível salvar seu progresso, mas você já pode continuar.');
+    }
     navigate('/');
   };
 
   const handleSkip = async () => {
-    await onCarouselSkipped(activeStep);
+    try {
+      await onCarouselSkipped(activeStep);
+    } catch (err) {
+      logger.error('Falha ao registrar skip do onboarding:', err);
+      showError('Não foi possível salvar seu progresso, mas você já pode continuar.');
+    }
     navigate('/');
   };
 

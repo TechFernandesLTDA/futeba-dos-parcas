@@ -32,6 +32,11 @@ async function fetchOfficialGroups(): Promise<OfficialGroup[]> {
   return snapshot.docs.map((d) => parseOfficialGroup(d.id, d.data()));
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
+ * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function useOfficialGroups() {
   const { user } = useAuth();
   const uid = user?.id ?? '';
@@ -45,6 +50,10 @@ export function useOfficialGroups() {
   });
 }
 
+/**
+ * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery.
+ * Não envolver no contrato { data, loading, error }.
+ */
 export function useIsInOfficialGroup(groupId?: string) {
   const { user } = useAuth();
   const uid = user?.id ?? '';

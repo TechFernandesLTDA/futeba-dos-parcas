@@ -380,7 +380,8 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   );
 });
 
-export const GameCardSkeleton: React.FC = () => {
+// #2297: memoizado — renderizado em listas, props vazias (sempre igual).
+export const GameCardSkeleton: React.FC = React.memo(() => {
   return (
     <Card sx={{ mb: 2 }}>
       <CardContent sx={{ p: 2 }}>
@@ -401,7 +402,7 @@ export const GameCardSkeleton: React.FC = () => {
       </CardContent>
     </Card>
   );
-};
+});
 
 /**
  * StatusChip aceita configurações com paletteKey (theme-aware, fix #761)
@@ -539,7 +540,8 @@ export const PlayerAvatar: React.FC<{
   );
 });
 
-export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }> = ({
+// #2297: memoizado — renderizado com frequência em telas com listas.
+export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }> = React.memo(({
   count = 3,
   type = 'card',
 }) => {
@@ -552,7 +554,7 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
       ))}
     </Box>
   );
-};
+});
 
 /**
  * @deprecated #2176 — use `EmptyState` de `components/common/EmptyState.tsx`

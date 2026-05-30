@@ -56,6 +56,23 @@ interface StatsSummary {
   winRate: number;
 }
 
+// #2276: interfaces tipadas para os docs lidos (substituem Record<string, any>).
+interface RawUserStats {
+  gamesPlayed?: number;
+  wins?: number;
+  goals?: number;
+  assists?: number;
+  mvpCount?: number;
+}
+interface RawMonthlyStats {
+  month?: string;
+  gamesPlayed?: number;
+  goals?: number;
+  assists?: number;
+  wins?: number;
+  xpEarned?: number;
+}
+
 export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Evolução');
@@ -86,13 +103,14 @@ export const EvolutionScreen: React.FC = () => {
 
     setError(null);
     setLoading(true);
+    // #2278: evita setState após unmount
+    let cancelled = false;
 
     const fetchData = async () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', targetUserId));
-        if (userDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(userDoc.data()) as Record<string, any>;
+        if (userDoc.exists() && !cancelled) {
+          const data = snakeToCamel<RawUserStats>(userDoc.data());
           const totalGames = data.gamesPlayed || 0;
           const totalWins = data.wins || 0;
           const totalGoals = data.goals || 0;
@@ -115,10 +133,9 @@ export const EvolutionScreen: React.FC = () => {
         const snapshot = await getDocs(q);
 
         const data: EvolutionData[] = snapshot.docs.map((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const docData = snakeToCamel(d.data()) as Record<string, any>;
+          const docData = snakeToCamel<RawMonthlyStats>(d.data());
           return {
-            month: docData.month,
+            month: docData.month ?? '',
             gamesPlayed: docData.gamesPlayed || 0,
             goals: docData.goals || 0,
             assists: docData.assists || 0,
@@ -127,17 +144,22 @@ export const EvolutionScreen: React.FC = () => {
           };
         });
 
-        setEvolutionData(data);
+        if (!cancelled) setEvolutionData(data);
       } catch (err) {
         logger.error('Error fetching evolution data:', err);
-        showErrorRef.current(t('statistics.loadEvolutionError'));
-        setError(t('statistics.loadEvolutionError'));
+        if (!cancelled) {
+          showErrorRef.current(t('statistics.loadEvolutionError'));
+          setError(t('statistics.loadEvolutionError'));
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [targetUserId, reloadKey, t]);
 
   if (loading) {

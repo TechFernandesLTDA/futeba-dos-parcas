@@ -58,6 +58,16 @@ interface LiveStats {
   topScorerB: { name: string; goals: number } | null;
 }
 
+// #2276: interface tipada para o doc games (substitui Record<string, any>).
+interface RawGameStats {
+  teamAScore?: number;
+  team1Score?: number;
+  teamBScore?: number;
+  team2Score?: number;
+  topScorerA?: { name: string; goals: number } | null;
+  topScorerB?: { name: string; goals: number } | null;
+}
+
 export const LiveStatsScreen: React.FC = () => {
   useDocumentTitle('Estatísticas ao Vivo');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -82,13 +92,13 @@ export const LiveStatsScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const fetchData = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
+        if (gameDoc.exists() && !cancelled) {
+          const data = snakeToCamel<RawGameStats>(gameDoc.data());
           setStats({
             teamAScore: data.teamAScore || data.team1Score || 0,
             teamBScore: data.teamBScore || data.team2Score || 0,
@@ -109,17 +119,22 @@ export const LiveStatsScreen: React.FC = () => {
             createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
           };
         }) as GameEvent[];
-        setEvents(eventsData);
+        if (!cancelled) setEvents(eventsData);
       } catch (error) {
         logger.error('Error fetching stats:', error);
-        setError('Erro ao carregar estatísticas. Tente novamente.');
-        showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
+        if (!cancelled) {
+          setError('Erro ao carregar estatísticas. Tente novamente.');
+          showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, retryCount]);
 
   const getEventIcon = (type: string) => {

@@ -8,6 +8,8 @@ const logger = createLogger('useOfflineQueue');
 const STORAGE_KEY = 'offline_write_queue';
 const KEY_STORAGE_KEY = 'offline_queue_enc_key';
 
+const MAX_RETRIES = 5;
+
 interface QueuedMutation {
   id: string;
   collection: string;
@@ -15,6 +17,8 @@ interface QueuedMutation {
   data: Record<string, unknown>;
   docId?: string;
   enqueuedAt: number;
+  // #2171: contagem de tentativas para re-enfileirar falhas com limite.
+  retries?: number;
 }
 
 const encoder = new TextEncoder();
@@ -96,6 +100,11 @@ export function useOfflineQueue() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const processingRef = useRef(false);
+  // #2171: ref espelha a fila para que processQueue leia sempre o estado atual,
+  // evitando closures obsoletas e o race em que enqueue durante o processamento
+  // era sobrescrito por setQueue([]).
+  const queueRef = useRef<QueuedMutation[]>([]);
+  queueRef.current = queue;
 
   useEffect(() => {
     loadQueue().then((loaded) => {
@@ -120,38 +129,68 @@ export function useOfflineQueue() {
     return entry.id;
   }, []);
 
+  const runMutation = useCallback(async (mutation: QueuedMutation) => {
+    switch (mutation.operation) {
+      case 'set':
+        await setDoc(doc(db, mutation.collection, mutation.docId!), mutation.data, { merge: true });
+        break;
+      case 'update':
+        await updateDoc(doc(db, mutation.collection, mutation.docId!), mutation.data);
+        break;
+      case 'delete':
+        await deleteDoc(doc(db, mutation.collection, mutation.docId!));
+        break;
+      case 'add':
+        await addDoc(collection(db, mutation.collection), mutation.data);
+        break;
+    }
+  }, []);
+
   const processQueue = useCallback(async () => {
-    if (processingRef.current || queue.length === 0) return;
+    if (processingRef.current || queueRef.current.length === 0) return;
     processingRef.current = true;
     setProcessing(true);
     setError(null);
 
-    for (const mutation of queue) {
+    // #2171: snapshot do lote a processar. Mutações enfileiradas durante o
+    // processamento NÃO entram neste lote e são preservadas no setQueue final.
+    const batch = [...queueRef.current];
+    const processedIds = new Set<string>();
+    const retried: QueuedMutation[] = [];
+
+    for (const mutation of batch) {
       try {
-        switch (mutation.operation) {
-          case 'set':
-            await setDoc(doc(db, mutation.collection, mutation.docId!), mutation.data, { merge: true });
-            break;
-          case 'update':
-            await updateDoc(doc(db, mutation.collection, mutation.docId!), mutation.data);
-            break;
-          case 'delete':
-            await deleteDoc(doc(db, mutation.collection, mutation.docId!));
-            break;
-          case 'add':
-            await addDoc(collection(db, mutation.collection), mutation.data);
-            break;
-        }
+        await runMutation(mutation);
+        processedIds.add(mutation.id);
       } catch (err) {
         logger.error('Offline mutation failed:', err);
-        setError('Falha ao sincronizar alterações offline.');
+        setError('Falha ao sincronizar algumas alterações offline. Tentaremos novamente.');
+        const retries = (mutation.retries ?? 0) + 1;
+        if (retries <= MAX_RETRIES) {
+          // Re-enfileira para nova tentativa
+          retried.push({ ...mutation, retries });
+        } else {
+          // Excedeu o limite — descarta e marca como processada para não travar a fila
+          logger.error(`Descartando mutação após ${MAX_RETRIES} tentativas:`, mutation.id);
+          processedIds.add(mutation.id);
+        }
       }
     }
 
-    setQueue([]);
+    // #2171: remove apenas as processadas com sucesso (ou descartadas) e mantém
+    // tanto as re-enfileiradas quanto as novas mutações chegadas durante o loop.
+    setQueue(prev => {
+      const remaining = prev.filter(m => !processedIds.has(m.id));
+      // Atualiza retries das que falharam mas continuam na fila
+      return remaining.map(m => {
+        const r = retried.find(x => x.id === m.id);
+        return r ? { ...m, retries: r.retries } : m;
+      });
+    });
+
     setProcessing(false);
     processingRef.current = false;
-  }, [queue]);
+  }, [runMutation]);
 
   useEffect(() => {
     if (isOnline && queue.length > 0 && !processingRef.current) {

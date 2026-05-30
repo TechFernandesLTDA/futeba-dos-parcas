@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   collection,
   doc,
@@ -197,6 +197,11 @@ export function useGroups() {
   // Invalida o cache quando a subcoleção muda
   const [listenerError, setListenerError] = useState<string | null>(null);
 
+  // #2262: usa ref para showError para evitar re-subscribe do listener quando
+  // a identidade da função de contexto muda entre renders.
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
+
   useEffect(() => {
     if (!uid) return;
 
@@ -213,11 +218,11 @@ export function useGroups() {
     }, (err) => {
       logger.error('Error in groups listener:', err);
       setListenerError(err.message);
-      showError('Erro ao sincronizar grupos.');
+      showErrorRef.current('Erro ao sincronizar grupos.');
     });
 
     return () => unsubscribe();
-  }, [uid, queryClient, showError]);
+  }, [uid, queryClient]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 
@@ -408,8 +413,10 @@ export function useCashbox(groupId: string | null) {
 
     const cashboxRef = collection(db, 'groups', groupId, 'cashbox');
 
+    // #2214: ordena por created_at (campo realmente gravado pela escrita),
+    // não por 'date' que nunca é gravado — antes transações novas não apareciam.
     const unsubscribe = onSnapshot(
-      query(cashboxRef, orderBy('date', 'desc')),
+      query(cashboxRef, orderBy('created_at', 'desc')),
       (snapshot) => {
         let totalBalance = 0;
         const transactionsData = snapshot.docs.map((d) => {
@@ -420,11 +427,13 @@ export function useCashbox(groupId: string | null) {
           } else {
             totalBalance -= raw.amount as number;
           }
+          const createdAt = ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.();
           return {
             id: d.id,
             ...converted,
-            date: (raw.date as { toDate?: () => Date })?.toDate?.(),
-            createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
+            // #2214: usa created_at como fallback quando 'date' não existe (docs legados)
+            date: (raw.date as { toDate?: () => Date })?.toDate?.() ?? createdAt,
+            createdAt,
           } as CashboxTransaction;
         });
         setTransactions(transactionsData);
