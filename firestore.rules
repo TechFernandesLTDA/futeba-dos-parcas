@@ -1790,8 +1790,9 @@ service cloud.firestore {
         isGameOwner(resource.data.game_id) ||
         (isConfirmedPlayer(resource.data.game_id) && resource.data.created_by == userId())
       ) &&
-      // Nao pode alterar game_id (previne mover evento entre jogos)
-      fieldUnchanged('game_id');
+      // #2155: created_by e game_id sao imutaveis
+      fieldUnchanged('game_id') &&
+      fieldUnchanged('created_by');
 
       // SECFIX #610: confirmedPlayer só pode deletar eventos que ELE mesmo criou.
       // Sem o check de ownership, qualquer jogador confirmado poderia deletar gols/
@@ -2009,9 +2010,9 @@ service cloud.firestore {
     // ============================================
     match /game_requests/{requestId} {
       // Qualquer usuario autenticado pode ler suas proprias solicitacoes
-      // Dono do jogo pode ler todas as solicitacoes do seu jogo
+      // Dono do jogo ou admin pode ler todas as solicitacoes do jogo
       allow read: if isAuthenticated() &&
-        (resource.data.user_id == userId() || isGameOwner(resource.data.game_id));
+        (resource.data.user_id == userId() || isGameOwner(resource.data.game_id) || isAdmin());
 
       // C-006 fix: Usuario pode criar solicitacao apenas para si mesmo
       // Validacoes adicionais para prevenir abuso:
@@ -2033,7 +2034,8 @@ service cloud.firestore {
 
       allow delete: if isAuthenticated() && (
         resource.data.user_id == userId() ||
-        isGameOwner(resource.data.game_id)
+        isGameOwner(resource.data.game_id) ||
+        isAdmin()
       );
     }
 
