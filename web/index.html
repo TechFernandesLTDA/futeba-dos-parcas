@@ -32,6 +32,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     
     <title>Futeba dos Parças</title>
+
+    <!--
+      Recuperação automática de Service Worker / cache travado (follow-up #2204).
+      Se o React não montar em 15s (ex.: SW antigo cache-first servindo um
+      index.html stale que aponta pra bundles JS já removidos → 404 → app nunca
+      monta → "carregando infinito"), desregistra todos os SWs, limpa os caches
+      e recarrega UMA única vez por sessão (guard em sessionStorage, sem loop).
+    -->
+    <script>
+      (function () {
+        try {
+          if (sessionStorage.getItem('fdp-sw-recovered')) return;
+        } catch (e) { return; }
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            var root = document.getElementById('root');
+            if (root && root.childElementCount > 0) return; // app montou: tudo certo
+            try { sessionStorage.setItem('fdp-sw-recovered', '1'); } catch (e) {}
+            var reload = function () { window.location.reload(); };
+            var clearCaches = (window.caches)
+              ? caches.keys().then(function (ks) {
+                  return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+                })
+              : Promise.resolve();
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations()
+                .then(function (regs) {
+                  return Promise.all(regs.map(function (r) { return r.unregister(); }));
+                })
+                .then(function () { return clearCaches; })
+                .then(reload, reload);
+            } else {
+              clearCaches.then(reload, reload);
+            }
+          }, 15000);
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
