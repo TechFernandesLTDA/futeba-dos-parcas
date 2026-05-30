@@ -1,9 +1,10 @@
 import React from 'react';
-import { Box, Skeleton, Typography } from '@mui/material';
+import { Box, CircularProgress, Skeleton, Typography, useTheme, alpha } from '@mui/material';
+import { AppLogo } from './AppLogo';
 
 interface LoadingScreenProps {
   message?: string;
-  variant?: 'spinner' | 'skeleton' | 'cards';
+  variant?: 'spinner' | 'skeleton' | 'cards' | 'splash';
 }
 
 /**
@@ -14,6 +15,49 @@ export const LoadingScreen = React.memo(function LoadingScreen({
   message,
   variant = 'cards',
 }: LoadingScreenProps) {
+  const theme = useTheme();
+
+  // #2188: variante splash com identidade visual do app (logo + gradiente),
+  // usada no carregamento inicial em vez dos 3 skeleton cards cinzas.
+  if (variant === 'splash') {
+    return (
+      <Box
+        sx={{
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          gap: 3,
+        }}
+        role="status"
+        aria-label={message || 'Carregando'}
+      >
+        <AppLogo
+          size="xlarge"
+          shape="circle"
+          alt="Futeba dos Parças"
+          sx={{
+            bgcolor: alpha(theme.palette.common.white, 0.2),
+            animation: 'splashPulse 2s infinite',
+            '@keyframes splashPulse': {
+              '0%': { transform: 'scale(1)', opacity: 1 },
+              '50%': { transform: 'scale(1.05)', opacity: 0.8 },
+              '100%': { transform: 'scale(1)', opacity: 1 },
+            },
+          }}
+        />
+        <CircularProgress sx={{ color: 'primary.contrastText' }} />
+        {message && (
+          <Typography variant="body2" sx={{ color: alpha(theme.palette.primary.contrastText, 0.85) }}>
+            {message}
+          </Typography>
+        )}
+      </Box>
+    );
+  }
+
   if (variant === 'spinner') {
     return (
       <Box

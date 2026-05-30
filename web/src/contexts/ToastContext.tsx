@@ -189,9 +189,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               : { vertical: 'top', horizontal: 'center' }
           }
           sx={
+            // #2144: stacking de toasts. Antes usava `!important` para vencer o
+            // posicionamento do Snackbar; agora usamos seletor de maior
+            // especificidade (`&.MuiSnackbar-root`), sem `!important`.
             toast.undo || toast.severity === 'error'
-              ? { bottom: `${16 + index * 64}px !important`, zIndex: 99999 }
-              : { top: `${80 + index * 60}px !important`, zIndex: 99999 }
+              ? { '&.MuiSnackbar-root': { bottom: 16 + index * 64 }, zIndex: 99999 }
+              : { '&.MuiSnackbar-root': { top: 80 + index * 60 }, zIndex: 99999 }
           }
         >
           <Alert

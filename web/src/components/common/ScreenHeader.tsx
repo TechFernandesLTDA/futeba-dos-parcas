@@ -71,7 +71,9 @@ export const ScreenHeader = React.memo(function ScreenHeader({
       sx={{
         position: 'sticky',
         top: 0,
-        bgcolor: 'surfaceContainerHigh',
+        // #2273: token canônico de sticky header = background.paper (igual BottomNavigation),
+        // padronizando o fundo dos headers entre todas as telas.
+        bgcolor: 'background.paper',
         zIndex: 10,
         borderBottom: 1,
         borderColor: 'divider',

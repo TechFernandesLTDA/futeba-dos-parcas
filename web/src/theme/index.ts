@@ -33,11 +33,13 @@ const secondary = {
 export const rarityColors: Record<string, string> = {
   // PT-BR (canônico, alinhado a BadgeRarity em types/gamification.ts)
   COMUM: '#9E9E9E',
+  INCOMUM: '#388E3C', // #2163: era #4CAF50 hardcoded; tom mais escuro p/ contraste light
   RARO: '#2196F3',
   EPICO: '#9C27B0',
   LENDARIO: '#FF9800',
   // EN aliases (legacy / fallback)
   COMMON: '#9E9E9E',
+  UNCOMMON: '#388E3C',
   RARE: '#2196F3',
   EPIC: '#9C27B0',
   LEGENDARY: '#FF9800',
@@ -46,10 +48,12 @@ export const rarityColors: Record<string, string> = {
 // Dark-mode badge rarity variants — higher brightness for contrast on dark backgrounds
 export const rarityColorsDark: Record<string, string> = {
   COMUM: '#BDBDBD',
+  INCOMUM: '#66BB6A', // #2163: variante brilhante p/ dark/OLED
   RARO: '#42A5F5',
   EPICO: '#CE93D8',
   LENDARIO: '#FFB74D',
   COMMON: '#BDBDBD',
+  UNCOMMON: '#66BB6A',
   RARE: '#42A5F5',
   EPIC: '#CE93D8',
   LEGENDARY: '#FFB74D',
@@ -223,6 +227,21 @@ export const futebaTheme = createTheme({
         },
       },
     },
+    // #2230: hover/transition consistente em cards interativos (envoltos em
+    // CardActionArea). Cards estáticos não são afetados. Respeita reduced-motion
+    // via override global em MuiCssBaseline.
+    MuiCardActionArea: {
+      styleOverrides: {
+        root: {
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          '@media (hover: hover)': {
+            '&:hover': {
+              transform: 'translateY(-2px)',
+            },
+          },
+        },
+      },
+    },
     MuiPaper: {
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
@@ -282,6 +301,14 @@ export const futebaTheme = createTheme({
     },
     MuiCssBaseline: {
       styleOverrides: {
+        // #2208: transição suave ao alternar tema (light/dark/OLED). Limitada a
+        // propriedades de cor para evitar footgun de perf de `transition: all`.
+        // Composição com prefers-reduced-motion abaixo desativa a animação.
+        'body, body *': {
+          transitionProperty: 'background-color, color, border-color',
+          transitionDuration: '0.25s',
+          transitionTimingFunction: 'ease',
+        },
         '@media (prefers-reduced-motion: reduce)': {
           '*, *::before, *::after': {
             animationDuration: '0.01ms !important',

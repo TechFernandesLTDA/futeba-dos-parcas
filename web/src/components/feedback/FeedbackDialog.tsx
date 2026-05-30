@@ -155,9 +155,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
                 gridTemplateColumns: '1fr 1fr',
                 gap: 1,
                 mb: errors.type ? 0.5 : 2,
-                '& .MuiToggleButtonGroup-grouped': {
-                  border: `1px solid ${theme.palette.divider} !important`,
-                  borderRadius: '12px !important',
+                // #2144: especificidade dobrada (classe repetida) vence as regras
+                // de border-collapse do MUI ToggleButtonGroup sem `!important`.
+                '& .MuiToggleButtonGroup-grouped.MuiToggleButtonGroup-grouped': {
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: '12px',
                 },
               }}
             >
@@ -171,9 +173,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
                     gap: 0.5,
                     py: 1.5,
                     textTransform: 'none',
-                    '&.Mui-selected': {
+                    // #2144: especificidade via &&.Mui-selected vence MUI sem !important
+                    '&&.Mui-selected': {
                       bgcolor: alpha(theme.palette.primary.main, 0.08),
-                      borderColor: `${theme.palette.primary.main} !important`,
+                      borderColor: theme.palette.primary.main,
                     },
                   }}
                 >
@@ -236,9 +239,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
               size="small"
               fullWidth
               sx={{
-                '& .MuiToggleButtonGroup-grouped': {
-                  border: `1px solid ${theme.palette.divider} !important`,
-                  borderRadius: '8px !important',
+                // #2144: especificidade dobrada vence o border-collapse do MUI sem !important
+                '& .MuiToggleButtonGroup-grouped.MuiToggleButtonGroup-grouped': {
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: '8px',
                   textTransform: 'none',
                   fontWeight: 500,
                   fontSize: '0.8125rem',

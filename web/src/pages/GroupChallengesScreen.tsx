@@ -85,7 +85,7 @@ export const GroupChallengesScreen: React.FC = () => {
         <IconButton onClick={goBack} aria-label="Voltar">
           <BackIcon />
         </IconButton>
-        <Typography variant="h5" fontWeight="bold" flex={1} noWrap>
+        <Typography variant="h6" fontWeight="bold" flex={1} noWrap>
           Desafios
         </Typography>
         <Button

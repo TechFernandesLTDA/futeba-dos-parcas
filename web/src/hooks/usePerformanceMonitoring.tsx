@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef, useCallback } from 'react';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography, useTheme, alpha } from '@mui/material';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('PerformanceMonitor');
@@ -264,10 +264,11 @@ export function PerformanceOverlay({ metrics }: { metrics: Partial<PerformanceMe
   const theme = useTheme();
   if (!import.meta.env.DEV) return null;
 
+  // #2301/#2212: tokens do tema em vez de hex hardcoded (suporta dark mode)
   const getScore = (value: number, good: number, poor: number) => {
-    if (value <= good) return { color: '#0cce6b', label: 'Good' };
-    if (value <= poor) return { color: '#ffa400', label: 'Needs Improvement' };
-    return { color: '#ff4e42', label: 'Poor' };
+    if (value <= good) return { color: theme.palette.success.main, label: 'Good' };
+    if (value <= poor) return { color: theme.palette.warning.main, label: 'Needs Improvement' };
+    return { color: theme.palette.error.main, label: 'Poor' };
   };
 
   return (
@@ -276,8 +277,8 @@ export function PerformanceOverlay({ metrics }: { metrics: Partial<PerformanceMe
         position: 'fixed',
         bottom: 80,
         right: 20,
-        background: 'rgba(0, 0, 0, 0.9)',
-        color: '#fff',
+        background: alpha(theme.palette.common.black, 0.9),
+        color: theme.palette.common.white,
         padding: '12px',
         borderRadius: `${theme.shape.borderRadius / 1.5}px`,
         fontFamily: 'monospace',
@@ -285,11 +286,11 @@ export function PerformanceOverlay({ metrics }: { metrics: Partial<PerformanceMe
         minWidth: '200px',
       }}
     >
-      <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 1, color: '#00d9ff', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+      <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 1, color: theme.palette.info.main, fontFamily: 'monospace', fontSize: '0.75rem' }}>
         📊 Performance Monitor
       </Typography>
       <Typography variant="caption" sx={{ display: 'block', mb: 0.5, fontFamily: 'monospace', fontSize: '0.75rem' }}>
-        Screen: <Box component="span" sx={{ color: '#ffeb3b' }}>{metrics.screenName}</Box>
+        Screen: <Box component="span" sx={{ color: theme.palette.warning.light }}>{metrics.screenName}</Box>
       </Typography>
       {metrics.lcp && (
         <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.75rem' }}>
@@ -319,11 +320,11 @@ export function PerformanceOverlay({ metrics }: { metrics: Partial<PerformanceMe
           </Box>
         </Typography>
       )}
-      <Typography variant="caption" sx={{ display: 'block', mt: 1, pt: 1, borderTop: '1px solid #333', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-        Queries: <Box component="span" sx={{ color: '#4caf50' }}>{metrics.firestoreQueries}</Box>
+      <Typography variant="caption" sx={{ display: 'block', mt: 1, pt: 1, borderTop: `1px solid ${theme.palette.divider}`, fontFamily: 'monospace', fontSize: '0.75rem' }}>
+        Queries: <Box component="span" sx={{ color: theme.palette.success.main }}>{metrics.firestoreQueries}</Box>
       </Typography>
       <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-        Data: <Box component="span" sx={{ color: '#4caf50' }}>
+        Data: <Box component="span" sx={{ color: theme.palette.success.main }}>
           {((metrics.dataDownloaded || 0) / 1024).toFixed(2)}KB
         </Box>
       </Typography>

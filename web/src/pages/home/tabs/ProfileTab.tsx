@@ -9,7 +9,7 @@ import {
   Avatar,
   LinearProgress,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -474,23 +474,14 @@ export function ProfileTab() {
             {menuItems.map((item, index) => (
               <React.Fragment key={item.label}>
                 {index > 0 && <Divider />}
-                <ListItem
-                  component="button"
-                  onClick={item.onClick}
-                  aria-label={item.label}
-                  sx={{
-                    border: 0,
-                    bgcolor: 'transparent',
-                    width: '100%',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }}
-                >
+                {/* #2136: ListItemButton em vez de ListItem component="button" —
+                    o <button> nativo aplicava `color: ButtonText` e impedia o
+                    ListItemText de herdar text.primary em dark/OLED. */}
+                <ListItemButton onClick={item.onClick} aria-label={item.label}>
                   <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
                   <ChevronRight color="action" />
-                </ListItem>
+                </ListItemButton>
               </React.Fragment>
             ))}
           </List>
@@ -511,25 +502,14 @@ export function ProfileTab() {
               {adminMenuItems.map((item, index) => (
                 <React.Fragment key={item.label}>
                   {index > 0 && <Divider />}
-                  <ListItem
-                    component="button"
-                    onClick={item.onClick}
-                    aria-label={item.label}
-                    sx={{
-                      border: 0,
-                      bgcolor: 'transparent',
-                      width: '100%',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      '&:hover': { bgcolor: 'action.hover' },
-                    }}
-                  >
+                  {/* #2136: ListItemButton para herdar text.primary em dark/OLED */}
+                  <ListItemButton onClick={item.onClick} aria-label={item.label}>
                     <ListItemIcon sx={{ minWidth: 40, color: 'primary.main' }}>
                       {item.icon}
                     </ListItemIcon>
                     <ListItemText primary={item.label} />
                     <ChevronRight color="action" />
-                  </ListItem>
+                  </ListItemButton>
                 </React.Fragment>
               ))}
             </List>
