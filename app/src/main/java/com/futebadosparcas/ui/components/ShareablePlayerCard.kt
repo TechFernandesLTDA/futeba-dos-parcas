@@ -77,10 +77,12 @@ object PlayerCardShareHelper {
         context: Context,
         user: User,
         stats: Statistics?,
+        scope: CoroutineScope,
         generatedBy: String = "Futeba dos Parças"
     ) {
-        // Executar em coroutine para carregar foto
-        CoroutineScope(Dispatchers.Main).launch {
+        // Usa o scope lifecycle-aware do caller (rememberCoroutineScope) em vez
+        // de um CoroutineScope solto, evitando vazamento de coroutine.
+        scope.launch {
             try {
                 // Carregar foto do jogador
                 val photoBitmap = loadUserPhoto(context, user.photoUrl)

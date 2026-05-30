@@ -99,6 +99,7 @@ fun HomeScreen(
     var showPlayerCard by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
+    val shareScope = androidx.compose.runtime.rememberCoroutineScope()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -182,6 +183,7 @@ fun HomeScreen(
                                 context = context,
                                 user = successState.user,
                                 stats = successState.statistics,
+                                scope = shareScope,
                                 generatedBy = successState.user.getDisplayName()
                             )
                         },
