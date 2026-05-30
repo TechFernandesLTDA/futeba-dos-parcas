@@ -76,7 +76,14 @@ export function AppSidebar() {
           sx={{ p: 1.5, cursor: 'pointer', display: 'flex', justifyContent: 'center' }}
           onClick={() => navigate('/')}
           role="link"
-          aria-label="Ir para Início"
+          tabIndex={0}
+          aria-label={t('nav.home')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigate('/');
+            }
+          }}
         >
           <AppLogo size="small" shape="circle" alt="Futeba dos Parças" />
         </Box>
@@ -159,7 +166,14 @@ export function AppSidebar() {
           }}
           onClick={() => navigate('/')}
           role="link"
-          aria-label="Ir para Início"
+          tabIndex={0}
+          aria-label={t('nav.home')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigate('/');
+            }
+          }}
         >
           <AppLogo size="small" shape="circle" alt="Futeba dos Parças" sx={{ width: 28, height: 28 }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">

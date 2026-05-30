@@ -67,17 +67,17 @@ const spinnerKeyframes = {
 
 // Tabela de XP por ação para referência rápida
 const XP_TABLE = [
-  { label: 'Participação', xp: XP_PARTICIPATION, Icon: SportsSoccer, color: 'primary' as const },
-  { label: 'Gol', xp: XP_GOAL, Icon: SportsScore, color: 'success' as const },
-  { label: 'Assistência', xp: XP_ASSIST, Icon: AssistWalker, color: 'info' as const },
-  { label: 'Defesa (GK)', xp: XP_SAVE, Icon: Shield, color: 'secondary' as const },
-  { label: 'MVP', xp: XP_MVP, Icon: StarIcon, color: 'warning' as const },
-  { label: 'Vitória', xp: XP_WIN, Icon: TrophyIcon, color: 'warning' as const },
-  { label: 'Empate', xp: XP_DRAW, Icon: Handshake, color: 'default' as const },
-  { label: 'Streak 3+', xp: XP_STREAK_3, Icon: Whatshot, color: 'error' as const },
-  { label: 'Streak 5+', xp: XP_STREAK_5, Icon: Whatshot, color: 'error' as const },
-  { label: 'Streak 7+', xp: XP_STREAK_7, Icon: Whatshot, color: 'error' as const },
-  { label: 'Streak 10+', xp: XP_STREAK_10, Icon: SportsMartialArts, color: 'error' as const },
+  { labelKey: 'ranking.xpTable.participation', xp: XP_PARTICIPATION, Icon: SportsSoccer, color: 'primary' as const },
+  { labelKey: 'ranking.xpTable.goal', xp: XP_GOAL, Icon: SportsScore, color: 'success' as const },
+  { labelKey: 'ranking.xpTable.assist', xp: XP_ASSIST, Icon: AssistWalker, color: 'info' as const },
+  { labelKey: 'ranking.xpTable.save', xp: XP_SAVE, Icon: Shield, color: 'secondary' as const },
+  { labelKey: 'ranking.xpTable.mvp', xp: XP_MVP, Icon: StarIcon, color: 'warning' as const },
+  { labelKey: 'ranking.xpTable.win', xp: XP_WIN, Icon: TrophyIcon, color: 'warning' as const },
+  { labelKey: 'ranking.xpTable.draw', xp: XP_DRAW, Icon: Handshake, color: 'default' as const },
+  { labelKey: 'ranking.xpTable.streak3', xp: XP_STREAK_3, Icon: Whatshot, color: 'error' as const },
+  { labelKey: 'ranking.xpTable.streak5', xp: XP_STREAK_5, Icon: Whatshot, color: 'error' as const },
+  { labelKey: 'ranking.xpTable.streak7', xp: XP_STREAK_7, Icon: Whatshot, color: 'error' as const },
+  { labelKey: 'ranking.xpTable.streak10', xp: XP_STREAK_10, Icon: SportsMartialArts, color: 'error' as const },
 ];
 
 // #1217 - Podium section for top 3 players with distinct visual hierarchy
@@ -403,11 +403,11 @@ export function RankingsTab() {
       <ScreenHeader
         title={t('nav.league')}
         actions={
-          <Tooltip title="Atualizar">
+          <Tooltip title={t('common.refresh')}>
             <IconButton
               onClick={handleRefresh}
               size="small"
-              aria-label="Atualizar rankings"
+              aria-label={t('ranking.refreshRankings')}
             >
               <RefreshIcon sx={{ animation: loading ? 'spin 1s linear infinite' : 'none', ...spinnerKeyframes }} />
             </IconButton>
@@ -417,7 +417,7 @@ export function RankingsTab() {
       {userGroups.length > 0 && (
         <Box sx={{ px: 2, pt: 0.5, pb: 1, display: 'flex', gap: 0.5, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
           <Chip
-            label="Global"
+            label={t('ranking.global')}
             size="small"
             variant={selectedGroupId === null ? 'filled' : 'outlined'}
             color={selectedGroupId === null ? 'primary' : 'default'}
@@ -446,12 +446,12 @@ export function RankingsTab() {
         value={tabValue}
         onChange={(_, v) => setTabValue(v)}
         variant="fullWidth"
-        aria-label="Categorias de ranking"
+        aria-label={t('ranking.categoriesAria')}
         sx={{ minHeight: 40 }}
       >
         <Tab label={t('nav.league')} sx={{ minHeight: 40, py: 0 }} />
-        <Tab label="XP Global" sx={{ minHeight: 40, py: 0 }} />
-        <Tab label="Sistema XP" sx={{ minHeight: 40, py: 0 }} />
+        <Tab label={t('ranking.xpGlobal')} sx={{ minHeight: 40, py: 0 }} />
+        <Tab label={t('ranking.xpSystem')} sx={{ minHeight: 40, py: 0 }} />
       </Tabs>
 
       <PullToRefresh onRefresh={handleRefresh}>
@@ -569,13 +569,13 @@ export function RankingsTab() {
           <Fade in>
             <Box>
               <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
-                Como funciona o XP
+                {t('ranking.howXpWorks')}
               </Typography>
               <Card sx={{ mb: 2 }}>
                 <CardContent sx={{ p: 0 }}>
                   {XP_TABLE.map((item, index) => (
                     <Box
-                      key={item.label}
+                      key={item.labelKey}
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -588,7 +588,7 @@ export function RankingsTab() {
                         <item.Icon color={item.color === 'default' ? 'action' : item.color} fontSize="small" />
                       </Box>
                       <Typography variant="body2" sx={{ flex: 1 }} fontWeight={500}>
-                        {item.label}
+                        {t(item.labelKey)}
                       </Typography>
                       <Chip
                         label={`+${item.xp} XP`}
@@ -619,7 +619,7 @@ export function RankingsTab() {
                             {config.label}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {config.minPoints ? `${config.minPoints}+ pontos` : 'Divisão inicial'}
+                            {config.minPoints ? t('ranking.minPoints', { points: config.minPoints }) : t('ranking.startingDivision')}
                           </Typography>
                         </Box>
                       </Box>
@@ -635,7 +635,7 @@ export function RankingsTab() {
                   <CardActionArea onClick={() => navigate('/league')} sx={{ p: 2, textAlign: 'center' }}>
                     <MilitaryTechIcon sx={{ fontSize: iconSizes.xl, color: 'primary.main', mb: 0.5 }} />
                     <Typography variant="body2" fontWeight={600}>
-                      Liga Completa
+                      {t('ranking.fullLeague')}
                     </Typography>
                     <OpenIcon sx={{ fontSize: iconSizes.xs, color: 'text.disabled', mt: 0.5 }} />
                   </CardActionArea>
@@ -679,10 +679,10 @@ export function RankingsTab() {
                 {t('ranking.noPlayers')}
               </Typography>
               <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
-                Os 100 melhores jogadores aparecem aqui. Participe de jogos para entrar no ranking!
+                {t('ranking.top100Desc')}
               </Typography>
               <Button variant="outlined" onClick={() => navigate('/?tab=1')}>
-                Ver jogos disponíveis
+                {t('ranking.joinGamesAction')}
               </Button>
             </Box>
           ) : (

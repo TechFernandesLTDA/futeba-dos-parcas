@@ -34,6 +34,7 @@ import { auth, db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 import { canSendSmsOtp } from '../../services/cloudFunctions';
 
@@ -44,7 +45,8 @@ const logger = createLogger('PhoneVerification');
  * Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md (R2, polish 2026-05-05)
  */
 export const PhoneVerificationScreen: React.FC = () => {
-  useDocumentTitle('Verificar telefone');
+  const { t } = useTranslation();
+  useDocumentTitle(t('onboarding.verifyPhone'));
   const navigate = useNavigate();
   const { firebaseUser } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -308,7 +310,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                         sx={{ mb: 2 }}
                         helperText="Use seu celular verdadeiro — você só usa 1 vez"
                         inputProps={{
-                          'aria-label': 'Número de telefone',
+                          'aria-label': t('onboarding.phoneNumberAria'),
                           autoComplete: 'tel',
                           inputMode: 'tel',
                         }}
@@ -366,7 +368,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                         inputProps={{
                           inputMode: 'numeric',
                           maxLength: 6,
-                          'aria-label': 'Código SMS',
+                          'aria-label': t('onboarding.smsCodeAria'),
                           autoComplete: 'one-time-code',
                         }}
                       />

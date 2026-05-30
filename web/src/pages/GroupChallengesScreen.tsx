@@ -30,13 +30,16 @@ import {
 import { useGroupChallenges, useChallengeGroup, useRespondChallenge, GroupChallenge } from "../hooks/useGroupChallenges";
 import { useOfficialGroups } from "../hooks/useOfficialGroups";
 import { EmptyState } from "../components/common/EmptyState";
+import { ErrorState } from "../components/common/ErrorState";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { useTranslation } from "react-i18next";
 
 export const GroupChallengesScreen: React.FC = () => {
-  useDocumentTitle("Desafios");
+  const { t } = useTranslation();
+  useDocumentTitle(t("challenges.title"));
   const { groupId } = useParams<{ groupId: string }>();
   const goBack = useNavigateBack(`/group/${groupId}`);
-  const { data: challenges, isLoading, refetch } = useGroupChallenges(groupId);
+  const { data: challenges, isLoading, error, refetch } = useGroupChallenges(groupId);
   const { data: officialGroups = [] } = useOfficialGroups();
   const challengeGroup = useChallengeGroup();
   const respond = useRespondChallenge();
@@ -82,11 +85,11 @@ export const GroupChallengesScreen: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label="Voltar">
+        <IconButton onClick={goBack} aria-label={t("common.back")}>
           <BackIcon />
         </IconButton>
         <Typography variant="h6" fontWeight="bold" flex={1} noWrap>
-          Desafios
+          {t("challenges.title")}
         </Typography>
         <Button
           variant="contained"
@@ -94,7 +97,7 @@ export const GroupChallengesScreen: React.FC = () => {
           onClick={() => setChallengeDialogOpen(true)}
           disabled={!currentGroup}
         >
-          Desafiar
+          {t("challenges.challenge")}
         </Button>
       </Stack>
 
@@ -106,15 +109,20 @@ export const GroupChallengesScreen: React.FC = () => {
         </Stack>
       )}
 
-      {!isLoading && (!challenges || challenges.length === 0) && (
+      {/* #2215: estado de erro dedicado quando o hook falha. */}
+      {!isLoading && error && (
+        <ErrorState message={t("challenges.loadError")} onRetry={() => refetch()} />
+      )}
+
+      {!isLoading && !error && (!challenges || challenges.length === 0) && (
         <EmptyState
           icon={<SportsSoccer />}
-          title="Nenhum desafio recebido ainda"
-          description="Desafie outro grupo oficial para uma pelada!"
+          title={t("challenges.emptyTitle")}
+          description={t("challenges.emptyDesc")}
         />
       )}
 
-      {!isLoading && challenges && challenges.length > 0 && (
+      {!isLoading && !error && challenges && challenges.length > 0 && (
         <Stack spacing={2}>
           {challenges.map((challenge: GroupChallenge) => (
             <Card key={challenge.id} variant="outlined">
@@ -129,18 +137,18 @@ export const GroupChallengesScreen: React.FC = () => {
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {challenge.proposedDate
-                        ? `Data proposta: ${challenge.proposedDate}`
-                        : "Data a combinar"}
+                        ? t("challenges.proposedDate", { date: challenge.proposedDate })
+                        : t("challenges.dateToArrange")}
                     </Typography>
                     <Chip
                       label={
                         challenge.status === "PENDING"
-                          ? "Pendente"
+                          ? t("challenges.statusPending")
                           : challenge.status === "ACCEPTED"
-                          ? "Aceito"
+                          ? t("challenges.statusAccepted")
                           : challenge.status === "DECLINED"
-                          ? "Recusado"
-                          : "Finalizado"
+                          ? t("challenges.statusDeclined")
+                          : t("challenges.statusFinished")
                       }
                       size="small"
                       color={
@@ -171,13 +179,13 @@ export const GroupChallengesScreen: React.FC = () => {
                         disabled={respondingId === challenge.id}
                         onClick={() => handleRespond(challenge.id, "ACCEPTED")}
                       >
-                        Aceitar
+                        {t("challenges.accept")}
                       </Button>
                       <IconButton
                         color="error"
                         onClick={() => handleRespond(challenge.id, "DECLINED")}
                         disabled={respondingId === challenge.id}
-                        aria-label="Recusar desafio"
+                        aria-label={t("challenges.declineChallenge")}
                       >
                         <DeclineIcon />
                       </IconButton>
@@ -190,19 +198,19 @@ export const GroupChallengesScreen: React.FC = () => {
         </Stack>
       )}
 
-      <Dialog open={challengeDialogOpen} onClose={() => setChallengeDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Desafiar Grupo</DialogTitle>
+      <Dialog open={challengeDialogOpen} onClose={() => setChallengeDialogOpen(false)} maxWidth="sm" fullWidth aria-labelledby="challenge-dialog-title">
+        <DialogTitle id="challenge-dialog-title">{t("challenges.challengeGroup")}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
               select
               fullWidth
-              label="Grupo adversário"
+              label={t("challenges.opponentGroup")}
               value={selectedGroupId}
               onChange={(e) => setSelectedGroupId(e.target.value)}
               SelectProps={{ native: true }}
             >
-              <option value="">Selecionar grupo...</option>
+              <option value="">{t("challenges.selectGroup")}</option>
               {officialGroups
                 .filter((g) => g.id !== groupId)
                 .map((g) => (
@@ -213,7 +221,7 @@ export const GroupChallengesScreen: React.FC = () => {
             </TextField>
             <TextField
               fullWidth
-              label="Data proposta"
+              label={t("challenges.proposedDateLabel")}
               type="date"
               value={proposedDate}
               onChange={(e) => setProposedDate(e.target.value)}
@@ -222,13 +230,13 @@ export const GroupChallengesScreen: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setChallengeDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setChallengeDialogOpen(false)}>{t("common.cancel")}</Button>
           <Button
             variant="contained"
             onClick={handleSendChallenge}
             disabled={challengeGroup.isPending || !selectedGroupId || !proposedDate}
           >
-            {challengeGroup.isPending ? <CircularProgress size={20} color="inherit" /> : "Enviar Desafio"}
+            {challengeGroup.isPending ? <CircularProgress size={20} color="inherit" /> : t("challenges.sendChallenge")}
           </Button>
         </DialogActions>
       </Dialog>

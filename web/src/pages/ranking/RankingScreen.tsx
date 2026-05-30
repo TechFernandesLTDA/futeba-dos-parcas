@@ -245,7 +245,14 @@ const PodiumSection = React.memo(function PodiumSection({
               <Typography variant="h4" component="div" sx={{ lineHeight: 1 }}>
                 {medals[playerIndex]}
               </Typography>
-              <Box onClick={() => onAvatarClick(player.userId)} sx={{ cursor: 'pointer', my: 1 }}>
+              <Box
+                onClick={() => onAvatarClick(player.userId)}
+                sx={{ cursor: 'pointer', my: 1 }}
+                role="button"
+                aria-label={`Ver figurinha de ${player.userName}`}
+                tabIndex={0}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onAvatarClick(player.userId)}
+              >
                 <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={isFirst ? 72 : 56} level={player.level} />
               </Box>
               <Typography variant="subtitle2" fontWeight={700} noWrap>

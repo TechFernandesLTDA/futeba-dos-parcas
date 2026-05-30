@@ -28,6 +28,7 @@ import {
   Cancel as CancelIcon,
   Warning as ConflictIcon,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { Game, FIELD_TYPE_LABELS, getStatusChipColors, ConfirmationPaletteKey } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { InteractiveCard } from './InteractiveCard';
@@ -89,6 +90,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   onCopyLink,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
   const statusConfig = getStatusChipColors(theme, game.status);
   const progress = game.maxPlayers > 0 ? (game.playersCount / game.maxPlayers) * 100 : 0;
@@ -357,7 +359,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
           onClose={menu.handleClose}
           anchorReference="anchorPosition"
           anchorPosition={menu.anchorPosition ?? undefined}
-          aria-label="Menu de acoes do jogo"
+          aria-label={t('games.detail.gameActionsMenu')}
         >
           {menu.visibleItems.map((item: ContextMenuItem) => (
             <MenuItem
@@ -546,7 +548,7 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
   type = 'card',
 }) => {
   return (
-    <Box role="status" aria-label="Carregando conteudo">
+    <Box role="status" aria-label="Carregando conteúdo">
       {Array.from({ length: count }).map((_, index) => (
         <Box key={index}> {/* list never reorders — static shimmer array */}
           {type === 'card' ? <GameCardSkeleton /> : <Skeleton variant="text" height={60} />}
@@ -606,7 +608,7 @@ export const LoadingState: React.FC<{ shimmerCount?: number; itemType?: string }
   itemType: _itemType = 'CARD',
 }) => {
   return (
-    <Box role="status" aria-label="Carregando conteudo">
+    <Box role="status" aria-label="Carregando conteúdo">
       {Array.from({ length: shimmerCount }).map((_, index) => (
         <Card key={index} sx={{ mb: 1 }}> {/* list never reorders — static shimmer array */}
           <CardContent>

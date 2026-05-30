@@ -38,6 +38,7 @@ import { FIELD_TYPE_CONFIG, FieldType, Location } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 import { pageSpacing } from '../../theme/pageTokens';
 
@@ -114,7 +115,8 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
 }
 
 export const LocationsMapScreen: React.FC = () => {
-  useDocumentTitle('Mapa de Locais');
+  const { t } = useTranslation();
+  useDocumentTitle(t('locations.mapTitle'));
   const navigate = useNavigate();
   const navigateBack = useNavigateBack();
   const theme = useTheme();
@@ -230,9 +232,18 @@ export const LocationsMapScreen: React.FC = () => {
             {filteredLocations.map((location) => (
               <Grid xs={12} key={location.id}>
                 <Card
+                  role="button"
+                  tabIndex={0}
+                  aria-label={location.name}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate(`/location/${location.id}`);
+                    }
+                  }}
                   sx={{
                     cursor: 'pointer',
-                    transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shorter }),
+                    transition: (tr) => tr.transitions.create('transform', { duration: tr.transitions.duration.shorter }),
                     '&:hover': { transform: 'scale(1.01)' },
                   }}
                   onClick={() => navigate(`/location/${location.id}`)}

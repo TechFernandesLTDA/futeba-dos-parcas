@@ -259,7 +259,7 @@ export function GroupsTab() {
                               size="small"
                               color="warning"
                               variant="outlined"
-                              sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.7rem', px: 0.75 }, '& .MuiChip-icon': { ml: 0.5 } }}
+                              sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.75rem', px: 0.75 }, '& .MuiChip-icon': { ml: 0.5 } }}
                             />
                           )}
                           {group.type === 'PUBLIC' && (
@@ -269,7 +269,7 @@ export function GroupsTab() {
                               size="small"
                               color="success"
                               variant="outlined"
-                              sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.7rem', px: 0.75 }, '& .MuiChip-icon': { ml: 0.5 } }}
+                              sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.75rem', px: 0.75 }, '& .MuiChip-icon': { ml: 0.5 } }}
                             />
                           )}
                         </Stack>

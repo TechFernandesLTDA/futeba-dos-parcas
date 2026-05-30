@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../theme/iconSizes';
 
 export const WelcomeScreen: React.FC = () => {
-  useDocumentTitle('Bem-vindo');
   const { t } = useTranslation();
+  useDocumentTitle(t('welcome.documentTitle'));
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -44,7 +44,7 @@ export const WelcomeScreen: React.FC = () => {
       </Typography>
 
       <Typography variant="h6" sx={{ textAlign: 'center', opacity: 0.9, mb: 4, maxWidth: 300 }}>
-        Organize suas peladas com os amigos de forma fácil e divertida
+        {t('welcome.subtitle')}
       </Typography>
 
       <Box sx={{ width: '100%', maxWidth: 300 }}>
@@ -66,7 +66,7 @@ export const WelcomeScreen: React.FC = () => {
           endIcon={<ArrowForwardIcon />}
           onClick={() => navigate('/register')}
         >
-          Criar Conta
+          {t('auth.createAccountTitle')}
         </Button>
 
         <Button
@@ -81,18 +81,18 @@ export const WelcomeScreen: React.FC = () => {
           }}
           onClick={() => navigate('/login')}
         >
-          Já tenho conta
+          {t('welcome.haveAccount')}
         </Button>
       </Box>
 
       <Typography variant="caption" sx={{ mt: 4, opacity: 0.7 }}>
-        Ao continuar, você concorda com nossos{' '}
+        {t('welcome.termsPrefix')}{' '}
         <Link href="/terms_of_service.html" color="primary" underline="hover">
-          Termos de Uso
+          {t('onboarding.termsOfUse')}
         </Link>
-        {' '}e{' '}
+        {' '}{t('onboarding.termsConnector')}{' '}
         <Link href="/privacy_policy.html" color="primary" underline="hover">
-          Política de Privacidade
+          {t('onboarding.privacyPolicy')}
         </Link>
       </Typography>
     </Box>

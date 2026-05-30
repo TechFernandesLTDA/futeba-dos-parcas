@@ -54,7 +54,6 @@ import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
-import { pluralizeCount } from '../../utils/pluralize';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -176,11 +175,11 @@ export const GroupDetailScreen: React.FC = () => {
     try {
       await softDeleteGroup({ groupId });
       setDeleteDialogOpen(false);
-      showSuccess('Grupo excluído com sucesso');
+      showSuccess(t('groupDetail.deleteSuccess'));
       // #1591: navega diretamente após await sem setTimeout frágil
       navigate('/?tab=2');
     } catch (err) {
-      showError(getFirestoreErrorMessage(err, 'Erro ao excluir grupo'));
+      showError(getFirestoreErrorMessage(err, t('groupDetail.deleteError')));
     } finally {
       setDeleteLoading(false);
     }
@@ -199,12 +198,12 @@ export const GroupDetailScreen: React.FC = () => {
       <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <EmptyState
           icon={<GroupIcon sx={{ fontSize: 64 }} />}
-          title="Este grupo foi encerrado"
-          description="O grupo não está mais ativo."
+          title={t('groupDetail.closedTitle')}
+          description={t('groupDetail.closedDesc')}
         />
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
-            Voltar
+            {t('common.back')}
           </Button>
         </Box>
       </Container>
@@ -220,7 +219,7 @@ export const GroupDetailScreen: React.FC = () => {
         />
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
-            Voltar
+            {t('common.back')}
           </Button>
         </Box>
       </Container>
@@ -232,12 +231,12 @@ export const GroupDetailScreen: React.FC = () => {
       <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <EmptyState
           icon={<GroupIcon sx={{ fontSize: 64 }} />}
-          title="Grupo não encontrado"
-          description="O grupo que você procura não está disponível."
+          title={t('groupDetail.notFound')}
+          description={t('groupDetail.notFoundDesc')}
         />
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
-            Voltar
+            {t('common.back')}
           </Button>
         </Box>
       </Container>
@@ -252,15 +251,15 @@ export const GroupDetailScreen: React.FC = () => {
         actions={
           <>
             {isAdmin && (
-              <IconButton onClick={() => navigate(`/group/${groupId}/edit`)} aria-label="Editar grupo">
+              <IconButton onClick={() => navigate(`/group/${groupId}/edit`)} aria-label={t('groups.editGroup')}>
                 <EditIcon />
               </IconButton>
             )}
-            <IconButton onClick={() => navigate(`/group/${groupId}/settings`)} aria-label="Configurações do grupo">
+            <IconButton onClick={() => navigate(`/group/${groupId}/settings`)} aria-label={t('groupDetail.groupSettings')}>
               <SettingsIcon />
             </IconButton>
             {isOwner && (
-              <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label="Excluir grupo">
+              <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('groups.deleteGroup')}>
                 <DeleteIcon />
               </IconButton>
             )}
@@ -309,8 +308,8 @@ export const GroupDetailScreen: React.FC = () => {
                     {group.name}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                    <Chip icon={<GroupIcon />} label={pluralizeCount(group.memberCount ?? 0, 'membro', 'membros')} size="small" />
-                    <Chip icon={<SoccerIcon />} label={pluralizeCount(games.length, 'jogo', 'jogos')} size="small" variant="outlined" />
+                    <Chip icon={<GroupIcon />} label={t('groups.membersCount', { count: group.memberCount ?? 0 })} size="small" />
+                    <Chip icon={<SoccerIcon />} label={t('groups.gamesCount', { count: games.length })} size="small" variant="outlined" />
                     {group.isPublic && (
                       <Chip label={t('group.public')} size="small" variant="outlined" />
                     )}
@@ -368,13 +367,13 @@ export const GroupDetailScreen: React.FC = () => {
               value={tabValue}
               onChange={(_, v) => setTabValue(v)}
               variant="fullWidth"
-              aria-label="Seções do grupo"
+              aria-label={t('groupDetail.sectionsAria')}
               sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
             >
               <Tab label={t('group.tabMembers')} />
               <Tab label={t('group.tabGames')} />
               <Tab label={t('group.tabCashbox')} />
-              <Tab label="Liga" icon={<TrophyIcon />} iconPosition="start" />
+              <Tab label={t('nav.league')} icon={<TrophyIcon />} iconPosition="start" />
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
@@ -386,7 +385,7 @@ export const GroupDetailScreen: React.FC = () => {
                       setInviteDialogOpen(true);
                     }}
                   >
-                    Convidar
+                    {t('groupDetail.invite')}
                   </Button>
                 </Box>
               )}
@@ -394,9 +393,9 @@ export const GroupDetailScreen: React.FC = () => {
               {members.length === 0 ? (
                 <EmptyState
                   icon={<PersonIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-                  title="Nenhum membro"
-                  description="O grupo ainda não tem membros. Convide amigos pra começar!"
-                  actionLabel={isAdmin ? 'Convidar' : undefined}
+                  title={t('groupDetail.noMembers')}
+                  description={t('groupDetail.noMembersDesc')}
+                  actionLabel={isAdmin ? t('groupDetail.invite') : undefined}
                   onAction={isAdmin ? () => setInviteDialogOpen(true) : undefined}
                 />
               ) : (
@@ -418,7 +417,7 @@ export const GroupDetailScreen: React.FC = () => {
                   startIcon={<AddIcon />}
                   onClick={() => navigate(`/game/create?groupId=${groupId}`)}
                 >
-                  Novo Jogo
+                  {t('groupDetail.newGame')}
                 </Button>
               </Box>
 
@@ -427,9 +426,9 @@ export const GroupDetailScreen: React.FC = () => {
               ) : games.length === 0 ? (
                 <EmptyState
                   icon={<SoccerIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-                  title="Nenhum jogo"
-                  description="O grupo ainda não tem jogos agendados"
-                  actionLabel="Criar Jogo"
+                  title={t('groupDetail.noGames')}
+                  description={t('groupDetail.noGamesDesc')}
+                  actionLabel={t('games.createGame')}
                   onAction={() => navigate(`/game/create?groupId=${groupId}`)}
                 />
               ) : (
@@ -449,7 +448,7 @@ export const GroupDetailScreen: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="subtitle1" fontWeight={600}>
-                    Saldo Atual
+                    {t('groupDetail.currentBalance')}
                   </Typography>
                   <Typography
                     variant="h4"
@@ -465,7 +464,7 @@ export const GroupDetailScreen: React.FC = () => {
                   startIcon={<MoneyIcon />}
                   onClick={() => navigate(`/group/${groupId}/cashbox`)}
                 >
-                  Ver Detalhes
+                  {t('groupDetail.viewDetails')}
                 </Button>
               </CardContent>
             </TabPanel>
@@ -474,17 +473,17 @@ export const GroupDetailScreen: React.FC = () => {
               <CardContent sx={{ textAlign: 'center', py: 4 }}>
                 <TrophyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
                 <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                  Liga do Grupo
+                  {t('groupDetail.groupLeague')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Acompanhe a classificação e o desempenho dos membros na liga interna do grupo.
+                  {t('groupDetail.groupLeagueDesc')}
                 </Typography>
                 <Button
                   variant="contained"
                   startIcon={<TrophyIcon />}
                   onClick={() => navigate(`/group/${groupId}/league`)}
                 >
-                  Ver Classificação
+                  {t('groupDetail.viewStandings')}
                 </Button>
               </CardContent>
             </TabPanel>
@@ -540,13 +539,13 @@ export const GroupDetailScreen: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => navigate(`/game/create?groupId=${groupId}`)}
           >
-            Criar Jogo
+            {t('games.createGame')}
           </Button>
         </Container>
       </FixedBottomBar>
 
       <Dialog open={inviteDialogOpen} onClose={() => { setInviteDialogOpen(false); setInviteCode(''); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">
-        <DialogTitle id="invite-dialog-title">Convidar Jogadores</DialogTitle>
+        <DialogTitle id="invite-dialog-title">{t('groups.invitePlayers')}</DialogTitle>
         <DialogContent>
           {inviteLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -555,17 +554,17 @@ export const GroupDetailScreen: React.FC = () => {
           ) : inviteCode ? (
             <Box sx={{ pt: 1 }}>
               <Alert severity="info" sx={{ mb: 2 }}>
-                Compartilhe o link abaixo para convidar jogadores
+                {t('groupDetail.shareInviteLink')}
               </Alert>
 
               <TextField
-                label="Código do Convite"
+                label={t('groupDetail.inviteCode')}
                 value={inviteCode}
                 fullWidth
                 InputProps={{
                   readOnly: true,
                   endAdornment: (
-                    <IconButton onClick={handleCopyInvite} edge="end" aria-label="Copiar código do convite">
+                    <IconButton onClick={handleCopyInvite} edge="end" aria-label={t('groupDetail.copyInviteCode')}>
                       <CopyIcon />
                     </IconButton>
                   ),
@@ -573,7 +572,7 @@ export const GroupDetailScreen: React.FC = () => {
               />
 
               <TextField
-                label="Link de Convite"
+                label={t('groupDetail.inviteLink')}
                 value={`${window.location.origin}/join/${inviteCode}`}
                 fullWidth
                 sx={{ mt: 2 }}
@@ -585,45 +584,51 @@ export const GroupDetailScreen: React.FC = () => {
           ) : (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Gere um código de convite para compartilhar com seus amigos
+                {t('groupDetail.generateInvitePrompt')}
               </Typography>
               <Button
                 variant="contained"
                 onClick={handleGenerateInvite}
                 startIcon={<AddIcon />}
               >
-                Gerar Convite
+                {t('groupDetail.generateInvite')}
               </Button>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setInviteDialogOpen(false); setInviteCode(''); }}>Fechar</Button>
+          <Button onClick={() => { setInviteDialogOpen(false); setInviteCode(''); }}>{t('common.close')}</Button>
           {inviteCode && (
             <Button
               variant="contained"
               startIcon={<ShareIcon />}
               onClick={handleShare}
             >
-              Compartilhar
+              {t('common.share')}
             </Button>
           )}
         </DialogActions>
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="delete-group-dialog-title">
-        <DialogTitle id="delete-group-dialog-title">Excluir Grupo</DialogTitle>
+        <DialogTitle id="delete-group-dialog-title">{t('groups.deleteGroup')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Tem certeza que deseja excluir o grupo "{group?.name}"? Esta ação pode ser revertida por um administrador.
+            {t('groupDetail.deleteConfirm', { name: group?.name })}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
-          <Button onClick={handleDeleteGroup} color="error" variant="contained" disabled={deleteLoading}>
-            {deleteLoading ? 'Excluindo...' : 'Excluir'}
+          <Button
+            onClick={handleDeleteGroup}
+            color="error"
+            variant="contained"
+            startIcon={deleteLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? t('common.deleting') : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -639,6 +644,7 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
   showDivider: boolean;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   return (
     <React.Fragment>
       <ListItem sx={{ py: 1.5 }}>
@@ -669,7 +675,7 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
               />
             </Box>
           }
-          secondary={pluralizeCount(member.totalGames, 'jogo', 'jogos')}
+          secondary={t('groups.gamesCount', { count: member.totalGames })}
         />
       </ListItem>
       {showDivider && <Divider />}
