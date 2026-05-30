@@ -1153,6 +1153,22 @@ subir no ranking!</string>
     <string name="league_division_bronze">BRONZE</string>
     <string name="league_division_diamond">DIAMANTE</string>
     <string name="league_rating_format">Rating: %1$s</string>
+    <!-- Emojis de liga centralizados (#2257) — localizáveis/substituíveis -->
+    <string name="league_emoji_diamond">💎</string>
+    <string name="league_emoji_gold">🥇</string>
+    <string name="league_emoji_silver">🥈</string>
+    <string name="league_emoji_bronze">🥉</string>
+    <string name="league_emoji_selected">✓</string>
+    <string name="league_no_position">—</string>
+    <string name="league_emoji_win">✅</string>
+    <string name="league_emoji_goal">⚽</string>
+    <string name="league_emoji_assist">👟</string>
+    <string name="league_emoji_mvp">⭐</string>
+    <!-- Formatos de estatística com emoji (#2257) -->
+    <string name="league_stat_win_format">✅ %1$s</string>
+    <string name="league_stat_goal_format">⚽ %1$s</string>
+    <string name="league_stat_assist_format">👟 %1$s</string>
+    <string name="league_stat_mvp_format">⭐ %1$s</string>
     <string name="league_rating_description">Rating calculado baseado em:</string>
     <string name="league_rules_show">Como funciona?</string>
     <string name="league_rules_hide">Ocultar regras</string>
@@ -2577,6 +2593,7 @@ subir no ranking!</string>
     <!-- Theme Settings Strings -->
     <string name="theme_settings_primary_color">Cor Principal</string>
     <string name="theme_settings_accent_color">Cor de Destaque</string>
+    <string name="theme_settings_preview_label">Preview: Primary Container</string>
 
     <!-- About Screen Strings -->
     <string name="about_rate_app">Avaliar o App</string>

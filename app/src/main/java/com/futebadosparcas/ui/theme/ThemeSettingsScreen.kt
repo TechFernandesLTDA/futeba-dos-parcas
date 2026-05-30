@@ -55,14 +55,14 @@ fun ThemeSettingsScreen(
 
         // Primary Color
         ColorPickerSection(
-            title = "Cor Principal",
+            title = stringResource(R.string.theme_settings_primary_color),
             selectedColor = config.seedColors.primary,
             onColorSelected = { viewModel.setPrimaryColor(it) }
         )
 
         // Secondary Color
         ColorPickerSection(
-            title = "Cor de Destaque",
+            title = stringResource(R.string.theme_settings_accent_color),
             selectedColor = config.seedColors.secondary,
             onColorSelected = { viewModel.setSecondaryColor(it) }
         )
@@ -75,7 +75,7 @@ fun ThemeSettingsScreen(
             modifier = Modifier.fillMaxWidth().height(100.dp)
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Text("Preview: Primary Container", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(stringResource(R.string.theme_settings_preview_label), color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))

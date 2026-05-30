@@ -112,7 +112,11 @@ fun LeagueScreen(
                                 title = stringResource(R.string.error),
                                 description = uiState.message,
                                 actionLabel = stringResource(R.string.retry),
-                                onRetry = onRefresh
+                                // Marca refreshing para evitar double-tap e exibir loading no retry
+                                onRetry = {
+                                    isRefreshing = true
+                                    onRefresh()
+                                }
                             ),
                             modifier = Modifier.align(Alignment.Center)
                         )
@@ -330,7 +334,7 @@ fun LeagueHeader(
                                     expanded = false
                                 },
                                 leadingIcon = if (s.id == selectedSeason?.id) {
-                                    { Text("✓", color = MaterialTheme.colorScheme.primary) }
+                                    { Text(stringResource(R.string.league_emoji_selected), color = MaterialTheme.colorScheme.primary) }
                                 } else null
                             )
                         }
@@ -351,7 +355,7 @@ fun LeagueHeader(
                             fontSize = MaterialTheme.typography.bodyMedium.fontSize
                         )
                         Text(
-                            text = if (myPosition != null) "#$myPosition" else "—",
+                            text = if (myPosition != null) "#$myPosition" else stringResource(R.string.league_no_position),
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = MaterialTheme.typography.displayMedium.fontSize,
                             fontWeight = FontWeight.Black
@@ -435,7 +439,7 @@ fun LeagueHeader(
                 ) {
                     MiniStatItem(stringResource(R.string.league_points), "${myParticipation?.points ?: 0}")
                     MiniStatItem(stringResource(R.string.league_games_played), "${myParticipation?.gamesPlayed ?: 0}")
-                    MiniStatItem(stringResource(R.string.league_victories), "✅ ${myParticipation?.wins ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_victories), stringResource(R.string.league_stat_win_format, "${myParticipation?.wins ?: 0}"))
                 }
 
                 Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
@@ -445,9 +449,9 @@ fun LeagueHeader(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MiniStatItem(stringResource(R.string.league_goals), "⚽ ${myParticipation?.goals ?: 0}")
-                    MiniStatItem(stringResource(R.string.league_assists), "👟 ${myParticipation?.assists ?: 0}")
-                    MiniStatItem(stringResource(R.string.league_mvp_count), "⭐ ${myParticipation?.mvpCount ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_goals), stringResource(R.string.league_stat_goal_format, "${myParticipation?.goals ?: 0}"))
+                    MiniStatItem(stringResource(R.string.league_assists), stringResource(R.string.league_stat_assist_format, "${myParticipation?.assists ?: 0}"))
+                    MiniStatItem(stringResource(R.string.league_mvp_count), stringResource(R.string.league_stat_mvp_format, "${myParticipation?.mvpCount ?: 0}"))
                 }
             }
         }
@@ -518,28 +522,28 @@ fun DivisionSelector(
                     Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
                     DivisionInfoItem(
-                        emoji = "💎",
+                        emoji = stringResource(R.string.league_emoji_diamond),
                         name = stringResource(R.string.league_division_diamond),
                         rating = "70-100",
                         color = GamificationColors.Diamond,
                         description = stringResource(R.string.league_elite)
                     )
                     DivisionInfoItem(
-                        emoji = "🥇",
+                        emoji = stringResource(R.string.league_emoji_gold),
                         name = stringResource(R.string.league_division_gold),
                         rating = "50-69",
                         color = GamificationColors.Gold,
                         description = stringResource(R.string.league_experienced)
                     )
                     DivisionInfoItem(
-                        emoji = "🥈",
+                        emoji = stringResource(R.string.league_emoji_silver),
                         name = stringResource(R.string.league_division_silver),
                         rating = "30-49",
                         color = GamificationColors.Silver,
                         description = stringResource(R.string.league_evolving)
                     )
                     DivisionInfoItem(
-                        emoji = "🥉",
+                        emoji = stringResource(R.string.league_emoji_bronze),
                         name = stringResource(R.string.league_division_bronze),
                         rating = "0-29",
                         color = GamificationColors.Bronze,
@@ -808,12 +812,14 @@ fun getDivisionColor(division: LeagueDivision): Color {
     }
 }
 
+@Composable
 fun getDivisionEmoji(division: LeagueDivision): String {
+    // Emojis centralizados em strings.xml (#2257) — localizáveis/substituíveis
     return when (division) {
-        LeagueDivision.BRONZE -> "🥉"
-        LeagueDivision.PRATA -> "🥈"
-        LeagueDivision.OURO -> "🥇"
-        LeagueDivision.DIAMANTE -> "💎"
+        LeagueDivision.BRONZE -> stringResource(R.string.league_emoji_bronze)
+        LeagueDivision.PRATA -> stringResource(R.string.league_emoji_silver)
+        LeagueDivision.OURO -> stringResource(R.string.league_emoji_gold)
+        LeagueDivision.DIAMANTE -> stringResource(R.string.league_emoji_diamond)
     }
 }
 

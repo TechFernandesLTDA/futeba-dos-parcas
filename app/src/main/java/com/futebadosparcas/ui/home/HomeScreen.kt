@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -507,8 +508,24 @@ private fun HomeErrorState(
             modifier = Modifier.padding(bottom = AppDimensions.spacing_large)
         )
 
-        Button(onClick = onRetry) {
-            Text(stringResource(R.string.action_retry))
+        // Protege contra double-tap: desabilita o botão e mostra loading durante o retry
+        var isRetrying by remember { mutableStateOf(false) }
+        Button(
+            onClick = {
+                isRetrying = true
+                onRetry()
+            },
+            enabled = !isRetrying
+        ) {
+            if (isRetrying) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(AppDimensions.icon_small),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text(stringResource(R.string.action_retry))
+            }
         }
     }
 }
