@@ -36,6 +36,7 @@ import { DIVISION_CONFIG, getDivisionColor } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
 import { getGamificationColors } from '../../utils/gamificationColors';
 import { useTranslation } from 'react-i18next';
+import { iconSizes } from '../../theme/iconSizes';
 
 export const RankingScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -129,7 +130,7 @@ export const RankingScreen: React.FC = () => {
           </Alert>
         ) : ranked.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
-            <TrophyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+            <TrophyIcon sx={{ fontSize: iconSizes.hero, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               {t('ranking.emptyTitle')}
             </Typography>

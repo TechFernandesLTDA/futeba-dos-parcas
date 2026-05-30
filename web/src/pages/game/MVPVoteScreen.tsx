@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   Button,
-  IconButton,
   List,
   ListItem,
   ListItemAvatar,
@@ -39,6 +38,7 @@ import { Game, GameConfirmation } from '../../types/game';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { FixedBottomBar } from '../../components/layout';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -232,24 +232,8 @@ export const MVPVoteScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 10 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Votação MVP
-          </Typography>
-        </Box>
-      </Box>
+      {/* #2174: header padronizado via ScreenHeader */}
+      <ScreenHeader title="Votação MVP" onBack={navigateBack} />
 
       <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>

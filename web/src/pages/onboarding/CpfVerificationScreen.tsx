@@ -28,6 +28,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { iconSizes } from '../../theme/iconSizes';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('CpfVerification');
@@ -252,7 +253,7 @@ export const CpfVerificationScreen: React.FC = () => {
   const SuccessState = () => (
     <Fade in timeout={400}>
       <Box sx={{ textAlign: 'center', py: 6 }}>
-        <CheckCircleIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
+        <CheckCircleIcon sx={{ fontSize: iconSizes.hero, color: 'success.main', mb: 2 }} />
         <Typography variant="h5" fontWeight={700} gutterBottom>
           {t('onboarding.allSet')}
         </Typography>

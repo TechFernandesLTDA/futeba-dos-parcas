@@ -6,7 +6,6 @@ import {
   Container,
   Typography,
   Card,
-  IconButton,
   List,
   ListItem,
   ListItemAvatar,
@@ -17,7 +16,6 @@ import {
   alpha,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Block as BlockIcon,
   RemoveCircle as UnblockIcon,
 } from '@mui/icons-material';
@@ -26,6 +24,7 @@ import { db } from '../../../services/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../../components/common/GameCard';
 import { ErrorState } from '../../../components/common/ErrorState';
+import { ScreenHeader } from '../../../components/common/ScreenHeader';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { createLogger } from '../../../utils/logger';
@@ -145,24 +144,8 @@ export const BlockedPlayersScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Jogadores Bloqueados
-          </Typography>
-        </Box>
-      </Box>
+      {/* #2174: header padronizado via ScreenHeader */}
+      <ScreenHeader title="Jogadores Bloqueados" onBack={navigateBack} />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {loadError ? (

@@ -62,6 +62,7 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { iconSizes } from '../../theme/iconSizes';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -197,7 +198,7 @@ export const GroupDetailScreen: React.FC = () => {
     return (
       <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <EmptyState
-          icon={<GroupIcon sx={{ fontSize: 64 }} />}
+          icon={<GroupIcon sx={{ fontSize: iconSizes.hero }} />}
           title={t('groupDetail.closedTitle')}
           description={t('groupDetail.closedDesc')}
         />
@@ -227,7 +228,7 @@ export const GroupDetailScreen: React.FC = () => {
     return (
       <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
         <EmptyState
-          icon={<GroupIcon sx={{ fontSize: 64 }} />}
+          icon={<GroupIcon sx={{ fontSize: iconSizes.hero }} />}
           title={t('groupDetail.notFound')}
           description={t('groupDetail.notFoundDesc')}
         />
@@ -389,7 +390,7 @@ export const GroupDetailScreen: React.FC = () => {
 
               {members.length === 0 ? (
                 <EmptyState
-                  icon={<PersonIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
+                  icon={<PersonIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
                   title={t('groupDetail.noMembers')}
                   description={t('groupDetail.noMembersDesc')}
                   actionLabel={isAdmin ? t('groupDetail.invite') : undefined}
@@ -422,7 +423,7 @@ export const GroupDetailScreen: React.FC = () => {
                 <ShimmerLoading count={2} type="card" />
               ) : games.length === 0 ? (
                 <EmptyState
-                  icon={<SoccerIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
+                  icon={<SoccerIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
                   title={t('groupDetail.noGames')}
                   description={t('groupDetail.noGamesDesc')}
                   actionLabel={t('games.createGame')}
@@ -468,7 +469,7 @@ export const GroupDetailScreen: React.FC = () => {
 
             <TabPanel value={tabValue} index={3}>
               <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                <TrophyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+                <TrophyIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 2 }} />
                 <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                   {t('groupDetail.groupLeague')}
                 </Typography>
