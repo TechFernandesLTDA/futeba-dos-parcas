@@ -153,7 +153,13 @@ export const LiveGameScreen: React.FC = () => {
   const prevEventCountRef = useRef(0);
 
   useEffect(() => {
-    if (!gameId) return;
+    // #2229: sem gameId não há o que carregar — encerra o loading e sinaliza
+    // erro em vez de deixar o spinner girando indefinidamente.
+    if (!gameId) {
+      setError(t('games.notFound'));
+      setLoading(false);
+      return;
+    }
 
     const gameRef = doc(db, 'games', gameId);
 
@@ -189,7 +195,7 @@ export const LiveGameScreen: React.FC = () => {
       }
     }, (err) => {
       logger.error('Error in score listener:', err);
-      showErrorRef.current('Erro ao carregar placar do jogo');
+      showErrorRef.current(t('games.live.errorLoadScore'));
     });
 
     const eventsQuery = query(collection(db, 'game_events'), where('game_id', '==', gameId));
@@ -206,7 +212,7 @@ export const LiveGameScreen: React.FC = () => {
       setEvents([...eventsData].sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0)));
     }, (err) => {
       logger.error('Error in events listener:', err);
-      showErrorRef.current('Erro ao carregar eventos do jogo');
+      showErrorRef.current(t('games.live.errorLoadEvents'));
     });
 
     const confirmationsQuery = query(
@@ -227,7 +233,7 @@ export const LiveGameScreen: React.FC = () => {
       setConfirmedPlayers(players);
     }, (err) => {
       logger.error('Error in confirmations listener:', err);
-      showErrorRef.current('Erro ao carregar lista de presença');
+      showErrorRef.current(t('games.live.errorLoadPresence'));
     });
 
     return () => {
@@ -236,7 +242,7 @@ export const LiveGameScreen: React.FC = () => {
       unsubscribeEvents();
       unsubscribeConfirmations();
     };
-  }, [gameId]);
+  }, [gameId, t]);
 
   // Extrai o timestamp (number) para estabilizar a dep array do effect:
   // `score?.startedAt` é uma instância de Date nova a cada snapshot, recriando
@@ -316,7 +322,7 @@ export const LiveGameScreen: React.FC = () => {
   const handleAddEvent = async () => {
     if (!selectedPlayer || !gameId) return;
     if (!canManage) {
-      showError('Apenas o organizador pode adicionar eventos');
+      showError(t('games.live.onlyOrganizerAddEvents'));
       return;
     }
 
@@ -326,7 +332,7 @@ export const LiveGameScreen: React.FC = () => {
         game_id: gameId,
         event_type: selectedEventType,
         player_id: selectedPlayer,
-        player_name: player?.name || 'Jogador',
+        player_name: player?.name || t('profile.defaultPlayerName'),
         minute: Math.floor(elapsedTime / 60),
         created_by: uid,
         created_at: serverTimestamp(),
@@ -335,14 +341,14 @@ export const LiveGameScreen: React.FC = () => {
       setSelectedPlayer('');
     } catch (err) {
       logger.error('Error adding event:', err);
-      showError(getFirestoreErrorMessage(err, 'Erro ao adicionar evento'));
+      showError(getFirestoreErrorMessage(err, t('games.live.errorAddEvent')));
     }
   };
 
   // #1539: abre diálogo de confirmação antes de finalizar
   const handleFinishGameClick = () => {
     if (!canManage) {
-      showError('Apenas o organizador pode finalizar o jogo');
+      showError(t('games.live.onlyOrganizerFinish'));
       return;
     }
     setConfirmFinishOpen(true);
@@ -391,7 +397,7 @@ export const LiveGameScreen: React.FC = () => {
           // Não bloquear o finish — o CF pode re-agregar via game_events se necessário,
           // mas avisamos o usuário de forma não-bloqueante (#2291).
           logger.error('Falha ao sincronizar stats de jogadores:', statsErr);
-          showError('Algumas estatísticas podem demorar a aparecer.');
+          showError(t('games.live.statsDelayWarning'));
         }
       }
 
@@ -405,7 +411,7 @@ export const LiveGameScreen: React.FC = () => {
       navigate(`/game/${gameId}/vote`);
     } catch (err) {
       logger.error('Error finishing game:', err);
-      showError(getFirestoreErrorMessage(err, 'Erro ao finalizar jogo'));
+      showError(getFirestoreErrorMessage(err, t('games.live.errorFinish')));
     } finally {
       setFinishing(false);
     }
@@ -415,7 +421,7 @@ export const LiveGameScreen: React.FC = () => {
   const handleStartGame = async () => {
     if (!gameId) return;
     if (game?.status !== 'CONFIRMED') {
-      showError('O jogo precisa estar confirmado para ser iniciado');
+      showError(t('games.live.mustBeConfirmedToStart'));
       return;
     }
     setActionLoading(true);
@@ -442,7 +448,7 @@ export const LiveGameScreen: React.FC = () => {
       await setDoc(scoreRef, { [field]: increment(delta), updated_at: serverTimestamp() }, { merge: true });
     } catch (err) {
       logger.error('Erro ao atualizar placar:', err);
-      showError(getFirestoreErrorMessage(err, 'Erro ao atualizar placar'));
+      showError(getFirestoreErrorMessage(err, t('games.live.errorUpdateScore')));
     } finally {
       setScoreUpdating(false);
     }
@@ -466,7 +472,7 @@ export const LiveGameScreen: React.FC = () => {
           </Button>
           {error && (
             <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
-              Tentar novamente
+              {t('common.retry')}
             </Button>
           )}
         </Box>
@@ -492,7 +498,7 @@ export const LiveGameScreen: React.FC = () => {
           <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>
             {t('games.liveTitle')}
           </Typography>
-          <IconButton onClick={toggleSound} aria-label={soundEnabled ? 'Desativar sons' : 'Ativar sons'}>
+          <IconButton onClick={toggleSound} aria-label={soundEnabled ? t('games.live.disableSounds') : t('games.live.enableSounds')}>
             {soundEnabled ? <SoundOnIcon /> : <SoundOffIcon />}
           </IconButton>
           <Chip
@@ -523,7 +529,7 @@ export const LiveGameScreen: React.FC = () => {
                   <Chip
                     size="small"
                     color="error"
-                    label="AO VIVO"
+                    label={t('games.statusLive')}
                     sx={{ fontWeight: 800, letterSpacing: 0.8, mb: 1.5 }}
                   />
                   <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: { xs: 1.5, sm: 3 } }}>
@@ -586,7 +592,7 @@ export const LiveGameScreen: React.FC = () => {
                     variant="outlined"
                     onClick={() => handleScoreUpdate(1, -1)}
                     disabled={scoreUpdating || (score?.team1Score ?? 0) <= 0}
-                    aria-label={`Diminuir placar ${game.team1Name || 'Time A'}`}
+                    aria-label={t('games.live.decreaseScore', { team: game.team1Name || t('games.teamA') })}
                   >
                     −
                   </Button>
@@ -595,7 +601,7 @@ export const LiveGameScreen: React.FC = () => {
                     variant="contained"
                     onClick={() => handleScoreUpdate(1, 1)}
                     disabled={scoreUpdating}
-                    aria-label={`Aumentar placar ${game.team1Name || 'Time A'}`}
+                    aria-label={t('games.live.increaseScore', { team: game.team1Name || t('games.teamA') })}
                   >
                     +
                   </Button>
@@ -606,7 +612,7 @@ export const LiveGameScreen: React.FC = () => {
                     variant="outlined"
                     onClick={() => handleScoreUpdate(2, -1)}
                     disabled={scoreUpdating || (score?.team2Score ?? 0) <= 0}
-                    aria-label={`Diminuir placar ${game.team2Name || 'Time B'}`}
+                    aria-label={t('games.live.decreaseScore', { team: game.team2Name || t('games.teamB') })}
                   >
                     −
                   </Button>
@@ -615,7 +621,7 @@ export const LiveGameScreen: React.FC = () => {
                     variant="contained"
                     onClick={() => handleScoreUpdate(2, 1)}
                     disabled={scoreUpdating}
-                    aria-label={`Aumentar placar ${game.team2Name || 'Time B'}`}
+                    aria-label={t('games.live.increaseScore', { team: game.team2Name || t('games.teamB') })}
                   >
                     +
                   </Button>
@@ -628,17 +634,17 @@ export const LiveGameScreen: React.FC = () => {
         <Card sx={{ mb: 2 }}>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-              Eventos do Jogo
+              {t('games.live.gameEvents')}
             </Typography>
 
             {events.length === 0 ? (
               <EmptyState
                 icon={<HistoryIcon />}
-                title="Nenhum evento registrado"
-                description="Os eventos do jogo aparecerão aqui conforme acontecerem."
+                title={t('games.live.noEvents')}
+                description={t('games.live.noEventsDesc')}
               />
             ) : (
-              <List disablePadding aria-label="Eventos do jogo">
+              <List disablePadding aria-label={t('games.live.gameEvents')}>
                 {events.map((event, index) => (
                   <React.Fragment key={event.id}>
                     <ListItem>
@@ -656,13 +662,13 @@ export const LiveGameScreen: React.FC = () => {
                           }}
                         >
                           {/* Ícones vetoriais por tipo de evento — fix #762 */}
-                          {event.eventType === 'GOAL' && <SoccerIcon aria-label="Gol" />}
+                          {event.eventType === 'GOAL' && <SoccerIcon aria-label={t('games.events.goal')} />}
                           {/* warning.light sobre warning.main = ~1.7:1 no dark; warning.main isolado mantém amarelo legível */}
-                          {event.eventType === 'YELLOW_CARD' && <YellowCardIcon aria-label="Cartão Amarelo" sx={{ color: 'warning.main' }} />}
-                          {event.eventType === 'RED_CARD' && <RedCardIcon aria-label="Cartão Vermelho" />}
-                          {event.eventType === 'ASSIST' && <AssistIcon aria-label="Assistência" />}
-                          {event.eventType === 'SAVE' && <SaveIcon aria-label="Defesa" />}
-                          {event.eventType === 'SUBSTITUTION' && <SubstitutionIcon aria-label="Substituição" />}
+                          {event.eventType === 'YELLOW_CARD' && <YellowCardIcon aria-label={t('games.events.yellow_card')} sx={{ color: 'warning.main' }} />}
+                          {event.eventType === 'RED_CARD' && <RedCardIcon aria-label={t('games.events.red_card')} />}
+                          {event.eventType === 'ASSIST' && <AssistIcon aria-label={t('games.events.assist')} />}
+                          {event.eventType === 'SAVE' && <SaveIcon aria-label={t('games.events.save')} />}
+                          {event.eventType === 'SUBSTITUTION' && <SubstitutionIcon aria-label={t('games.events.substitution')} />}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
@@ -685,17 +691,17 @@ export const LiveGameScreen: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="subtitle1" fontWeight={600}>
-                    Live Stream
+                    {t('games.live.liveStream')}
                   </Typography>
                   <Button size="small" onClick={() => setShowStream(!showStream)} sx={{ minHeight: 44 }}>
-                    {showStream ? 'Ocultar' : 'Mostrar'}
+                    {showStream ? t('games.live.hide') : t('games.live.show')}
                   </Button>
                 </Box>
                 {showStream && (
                   <Box sx={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
                     <iframe
                       src={embedUrl}
-                      title="Live Stream"
+                      title={t('games.live.liveStream')}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       style={{
@@ -739,7 +745,7 @@ export const LiveGameScreen: React.FC = () => {
               {isRunning ? (
                 <>
                   <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setAddEventDialog(true)} fullWidth>
-                    Adicionar Evento
+                    {t('games.live.addEvent')}
                   </Button>
                   <Button
                     variant="contained"
@@ -749,7 +755,7 @@ export const LiveGameScreen: React.FC = () => {
                     disabled={finishing}
                     fullWidth
                   >
-                    {finishing ? 'Finalizando...' : 'Finalizar Jogo'}
+                    {finishing ? t('games.live.finishing') : t('games.live.finishGame')}
                   </Button>
                 </>
               ) : (
@@ -761,7 +767,7 @@ export const LiveGameScreen: React.FC = () => {
                   disabled={actionLoading}
                   fullWidth
                 >
-                  {actionLoading ? 'Iniciando...' : 'Iniciar Jogo'}
+                  {actionLoading ? t('games.live.starting') : t('games.live.startGame')}
                 </Button>
               )}
             </Box>
@@ -771,44 +777,44 @@ export const LiveGameScreen: React.FC = () => {
 
       {/* #1539: Diálogo de confirmação para finalizar jogo */}
       <Dialog open={confirmFinishOpen} onClose={() => setConfirmFinishOpen(false)} maxWidth="xs" fullWidth aria-labelledby="confirm-finish-dialog-title">
-        <DialogTitle id="confirm-finish-dialog-title">Finalizar Jogo</DialogTitle>
+        <DialogTitle id="confirm-finish-dialog-title">{t('games.live.finishGame')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Tem certeza que deseja finalizar o jogo? O placar atual será salvo e os jogadores poderão votar no MVP.
+            {t('games.live.finishConfirm')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmFinishOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setConfirmFinishOpen(false)}>{t('common.cancel')}</Button>
           <Button variant="contained" color="error" onClick={handleFinishGame}>
-            Finalizar
+            {t('games.live.finish')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={addEventDialog} onClose={() => setAddEventDialog(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="add-event-dialog-title">
-        <DialogTitle id="add-event-dialog-title">Adicionar Evento</DialogTitle>
+        <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               select
-              label="Tipo de Evento"
+              label={t('games.live.eventType')}
               value={selectedEventType}
               onChange={(e) => setSelectedEventType(e.target.value as GameEventType)}
               fullWidth
             >
               {[
-                { value: 'GOAL', label: 'Gol' },
-                { value: 'ASSIST', label: 'Assistência' },
-                { value: 'SAVE', label: 'Defesa' },
-                { value: 'YELLOW_CARD', label: 'Cartão Amarelo' },
-                { value: 'RED_CARD', label: 'Cartão Vermelho' },
+                { value: 'GOAL', label: t('games.events.goal') },
+                { value: 'ASSIST', label: t('games.events.assist') },
+                { value: 'SAVE', label: t('games.events.save') },
+                { value: 'YELLOW_CARD', label: t('games.events.yellow_card') },
+                { value: 'RED_CARD', label: t('games.events.red_card') },
               ].map((type) => (
                 <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
               ))}
             </TextField>
             <TextField
               select
-              label="Jogador"
+              label={t('games.players')}
               value={selectedPlayer}
               onChange={(e) => setSelectedPlayer(e.target.value)}
               fullWidth
@@ -821,8 +827,8 @@ export const LiveGameScreen: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddEventDialog(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleAddEvent} disabled={actionLoading}>Adicionar</Button>
+          <Button onClick={() => setAddEventDialog(false)}>{t('common.cancel')}</Button>
+          <Button variant="contained" onClick={handleAddEvent} disabled={actionLoading}>{t('games.live.add')}</Button>
         </DialogActions>
       </Dialog>
     </Box>
