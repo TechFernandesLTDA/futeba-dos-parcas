@@ -534,10 +534,26 @@ private fun GamesErrorState(
             textAlign = TextAlign.Center
         )
 
-        Button(onClick = onRetry) {
-            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(Spacing.md))
-            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
-            Text(stringResource(R.string.retry))
+        // Protege contra double-tap: desabilita o botão e mostra loading durante o retry
+        var isRetrying by remember { mutableStateOf(false) }
+        Button(
+            onClick = {
+                isRetrying = true
+                onRetry()
+            },
+            enabled = !isRetrying
+        ) {
+            if (isRetrying) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(Spacing.md),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(Spacing.md))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
+                Text(stringResource(R.string.retry))
+            }
         }
     }
 }
