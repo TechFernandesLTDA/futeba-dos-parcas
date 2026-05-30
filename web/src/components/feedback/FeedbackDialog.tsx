@@ -98,6 +98,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
       fullScreen={fullScreen}
       maxWidth="sm"
       fullWidth
+      aria-labelledby="feedback-dialog-title"
       PaperProps={{
         sx: {
           borderRadius: { xs: 0, sm: 4 },
@@ -105,7 +106,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
         },
       }}
     >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+      <DialogTitle id="feedback-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
         <Typography variant="h5" fontWeight={700}>
           {submitted ? 'Feedback Enviado' : 'Enviar Feedback'}
         </Typography>

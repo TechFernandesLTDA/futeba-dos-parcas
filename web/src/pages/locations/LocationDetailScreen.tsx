@@ -327,7 +327,7 @@ export const LocationDetailScreen: React.FC = () => {
                     <Box key={review.id}>
                       {index > 0 && <Divider sx={{ my: 1 }} />}
                       <Box sx={{ display: 'flex', gap: 1.5 }}>
-                        <Avatar src={review.userPhoto} sx={{ width: 36, height: 36 }}>{review.userName?.charAt(0)?.toUpperCase()}</Avatar>
+                        <Avatar src={review.userPhoto} alt={review.userName ?? ''} sx={{ width: 36, height: 36 }}>{review.userName?.charAt(0)?.toUpperCase()}</Avatar>
                         <Box sx={{ flex: 1 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Typography variant="subtitle2">{review.userName}</Typography>

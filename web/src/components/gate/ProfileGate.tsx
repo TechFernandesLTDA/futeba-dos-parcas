@@ -54,10 +54,11 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
         open={true}
         aria-modal="true"
         role="dialog"
+        aria-labelledby="profile-gate-title"
         disableEscapeKeyDown
         onClose={() => {}}
       >
-        <DialogTitle>{t('profile.gate.title')}</DialogTitle>
+        <DialogTitle id="profile-gate-title">{t('profile.gate.title')}</DialogTitle>
         <DialogContent>
           <Typography>{t('profile.gate.message')}</Typography>
         </DialogContent>

@@ -359,7 +359,8 @@ export const NotificationsScreen: React.FC = () => {
                         >
                           <CardContent sx={{ pb: 1, '&:last-child': { pb: 1 } }}>
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                              {/* #2213: avatar decorativo (ícone do tipo) — título/corpo adjacentes já descrevem. */}
+                              <Avatar aria-hidden="true" sx={{ bgcolor: 'primary.main' }}>
                                 {getTypeIcon(notification.type, gColors)}
                               </Avatar>
                               <Box sx={{ flex: 1, minWidth: 0 }}>

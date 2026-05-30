@@ -275,7 +275,8 @@ export const LiveStatsScreen: React.FC = () => {
                     {index > 0 && <Divider />}
                     <ListItem>
                       <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                        {/* #2213: avatar decorativo (ícone do evento) — texto adjacente já descreve. */}
+                        <Avatar aria-hidden="true" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
                           {getEventIcon(event.type)}
                         </Avatar>
                       </ListItemAvatar>
