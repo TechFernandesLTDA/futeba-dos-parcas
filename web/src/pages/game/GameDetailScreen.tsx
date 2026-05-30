@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -14,6 +15,7 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  Tooltip,
   useTheme,
   useMediaQuery,
   CircularProgress,
@@ -48,7 +50,8 @@ import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
 
 export const GameDetailScreen: React.FC = () => {
-  useDocumentTitle('Detalhes do Jogo');
+  const { t } = useTranslation();
+  useDocumentTitle(t('games.gameDetails'));
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -145,8 +148,8 @@ export const GameDetailScreen: React.FC = () => {
     if (!game) return;
 
     const shareData = {
-      title: `Pelada: ${game.locationName}`,
-      text: `Vem jogar com a gente! ${formatGameDateLong(game.date)} às ${game.time}\n${game.locationAddress}`,
+      title: t('games.detail.shareTitle', { location: game.locationName }),
+      text: t('games.detail.shareText', { date: formatGameDateLong(game.date), time: game.time, address: game.locationAddress }),
       url: window.location.href,
     };
 
@@ -155,12 +158,12 @@ export const GameDetailScreen: React.FC = () => {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-        showSuccess('Link copiado!');
+        showSuccess(t('group.linkCopied'));
       }
     } catch (err) {
       // #2281: ignora cancelamento da share sheet; reporta demais erros.
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      showError('Erro ao compartilhar');
+      showError(t('games.detail.shareError'));
     }
   };
 
@@ -170,10 +173,10 @@ export const GameDetailScreen: React.FC = () => {
     try {
       await softDeleteGame({ gameId });
       setDeleteDialogOpen(false);
-      showSuccess('Jogo excluído com sucesso');
+      showSuccess(t('games.detail.deleteSuccess'));
       navigate('/?tab=1', { replace: true });
     } catch (err) {
-      showError((err as Error)?.message || 'Erro ao excluir jogo');
+      showError((err as Error)?.message || t('games.detail.deleteError'));
     } finally {
       setDeleteLoading(false);
     }
@@ -197,11 +200,11 @@ export const GameDetailScreen: React.FC = () => {
 
     // Validação mínima
     if (!editForm.date || !editForm.time) {
-      showError('Informe data e horário');
+      showError(t('games.detail.errorDateTimeRequired'));
       return;
     }
     if (editForm.maxPlayers < 2 || editForm.maxPlayers > 50) {
-      showError('Número máximo de jogadores deve ser entre 2 e 50');
+      showError(t('games.detail.errorMaxPlayersRange'));
       return;
     }
 
@@ -225,7 +228,7 @@ export const GameDetailScreen: React.FC = () => {
 
       queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
       setEditDialogOpen(false);
-      showSuccess('Jogo atualizado');
+      showSuccess(t('games.detail.updateSuccess'));
     } catch (err) {
       showError(getFirestoreErrorMessage(err));
     } finally {
@@ -237,7 +240,7 @@ export const GameDetailScreen: React.FC = () => {
     if (!gameId || !game) return;
 
     if (!navigator.geolocation) {
-      showError('Geolocalização não suportada pelo navegador.');
+      showError(t('games.detail.geolocationUnsupported'));
       return;
     }
 
@@ -250,16 +253,18 @@ export const GameDetailScreen: React.FC = () => {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
-          showSuccess(`Check-in realizado com sucesso!${result.data.distanceMeters ? ` (${Math.round(result.data.distanceMeters)}m do local)` : ''}`);
+          showSuccess(result.data.distanceMeters
+            ? t('games.detail.checkInSuccessDistance', { meters: Math.round(result.data.distanceMeters) })
+            : t('games.detail.checkInSuccess'));
           queryClient.invalidateQueries({ queryKey: ['game', gameId] });
         } catch (err) {
-          showError((err as Error)?.message || 'Erro ao realizar check-in');
+          showError((err as Error)?.message || t('games.detail.checkInError'));
         } finally {
           setCheckInLoading(false);
         }
       },
       (_err) => {
-        showError('Erro ao capturar localização. Verifique as permissões.');
+        showError(t('games.detail.locationCaptureError'));
         setCheckInLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -274,7 +279,7 @@ export const GameDetailScreen: React.FC = () => {
       setQrToken(result.data.token);
       setQrDialogOpen(true);
     } catch (err) {
-      showError((err as Error)?.message || 'Erro ao gerar QR Code');
+      showError((err as Error)?.message || t('games.detail.qrGenerateError'));
     } finally {
       setQrLoading(false);
     }
@@ -301,7 +306,7 @@ export const GameDetailScreen: React.FC = () => {
         />
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={navigateBack}>
-            Voltar
+            {t('common.back')}
           </Button>
         </Box>
       </Container>
@@ -313,12 +318,12 @@ export const GameDetailScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <EmptyState
           icon={<SoccerIcon sx={{ fontSize: 64 }} />}
-          title="Jogo não encontrado"
-          description="O jogo que você procura não está disponível."
+          title={t('games.notFound')}
+          description={t('games.detail.notFoundDesc')}
         />
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button startIcon={<BackIcon />} onClick={navigateBack}>
-            Voltar
+            {t('common.back')}
           </Button>
         </Box>
       </Container>
@@ -337,23 +342,31 @@ export const GameDetailScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
+          <Tooltip title={t('common.back')}>
+            <IconButton onClick={navigateBack} aria-label={t('common.back')}>
+              <BackIcon />
+            </IconButton>
+          </Tooltip>
           <Typography component="h1" variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
             {game.locationName}
           </Typography>
-          <IconButton onClick={handleShare} aria-label="Compartilhar jogo">
-            <ShareIcon />
-          </IconButton>
+          <Tooltip title={t('games.detail.shareGame')}>
+            <IconButton onClick={handleShare} aria-label={t('games.detail.shareGame')}>
+              <ShareIcon />
+            </IconButton>
+          </Tooltip>
           {canManage && (
             <>
-              <IconButton onClick={openEditDialog} aria-label="Editar jogo">
-                <EditIcon />
-              </IconButton>
-              <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label="Excluir jogo">
-                <DeleteIcon />
-              </IconButton>
+              <Tooltip title={t('games.detail.editGame')}>
+                <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')}>
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={t('games.detail.deleteGame')}>
+                <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('games.detail.deleteGame')}>
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
             </>
           )}
         </Box>
@@ -361,9 +374,9 @@ export const GameDetailScreen: React.FC = () => {
 
       <AppBreadcrumbs
         items={[
-          { label: 'Jogos', to: '/?tab=1' },
-          ...(game.groupId ? [{ label: game.groupName ?? 'Grupo', to: `/group/${game.groupId}` }] : []),
-          { label: game.locationName || `Jogo ${game.date}` },
+          { label: t('games.title'), to: '/?tab=1' },
+          ...(game.groupId ? [{ label: game.groupName ?? t('groups.title'), to: `/group/${game.groupId}` }] : []),
+          { label: game.locationName || t('games.detail.gameOn', { date: game.date }) },
         ]}
       />
 
@@ -420,21 +433,22 @@ export const GameDetailScreen: React.FC = () => {
                     variant="outlined"
                     color="error"
                     fullWidth
+                    startIcon={confirmLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
                     onClick={() => setCancelDialogOpen(true)}
                     disabled={confirmLoading}
                   >
-                    Cancelar Presença
+                    {t('games.cancelPresence')}
                   </Button>
                   {canManage && game.status === 'CONFIRMED' && (
                     <Button
                       variant="contained"
                       color="success"
                       fullWidth
-                      startIcon={<PlayIcon />}
+                      startIcon={statusLoading ? <CircularProgress size={16} color="inherit" /> : <PlayIcon />}
                       onClick={handleStartGame}
                       disabled={statusLoading}
                     >
-                      Iniciar Jogo
+                      {t('games.live.startGame')}
                     </Button>
                   )}
                 </>
@@ -442,11 +456,11 @@ export const GameDetailScreen: React.FC = () => {
                 <Button
                   variant="contained"
                   fullWidth
-                  startIcon={<CheckIcon />}
+                  startIcon={confirmLoading ? <CircularProgress size={16} color="inherit" /> : <CheckIcon />}
                   onClick={() => setPositionDialogOpen(true)}
                   disabled={confirmLoading || game.playersCount >= game.maxPlayers}
                 >
-                  {game.playersCount >= game.maxPlayers ? 'Lista Cheia' : 'Confirmar Presença'}
+                  {game.playersCount >= game.maxPlayers ? t('games.detail.listFull') : t('games.confirmPresence')}
                 </Button>
               )}
             </Box>
@@ -460,7 +474,7 @@ export const GameDetailScreen: React.FC = () => {
                   onClick={handleCheckIn}
                   disabled={checkInLoading}
                 >
-                  Check-in
+                  {t('games.detail.checkIn')}
                 </Button>
               )}
               {canManage && (
@@ -470,7 +484,7 @@ export const GameDetailScreen: React.FC = () => {
                   onClick={handleGenerateQr}
                   disabled={qrLoading}
                 >
-                  QR Code
+                  {t('games.detail.qrCode')}
                 </Button>
               )}
               <Button
@@ -480,7 +494,7 @@ export const GameDetailScreen: React.FC = () => {
                 startIcon={<SoccerIcon />}
                 onClick={() => navigate(`/game/${gameId}/live`)}
               >
-                Ver Jogo ao Vivo
+                {t('games.detail.watchLive')}
               </Button>
             </Box>
           ) : game.status === 'FINISHED' && !game.votingConcluded ? (
@@ -491,7 +505,7 @@ export const GameDetailScreen: React.FC = () => {
               startIcon={<VoteIcon />}
               onClick={() => navigate(`/game/${gameId}/vote`)}
             >
-              Votar MVP
+              {t('games.detail.voteMvp')}
             </Button>
           ) : null}
         </Container>
@@ -499,7 +513,7 @@ export const GameDetailScreen: React.FC = () => {
 
       {/* ====== Dialogs ====== */}
       <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="position-dialog-title">
-        <DialogTitle id="position-dialog-title">Escolha sua posição</DialogTitle>
+        <DialogTitle id="position-dialog-title">{t('games.detail.choosePosition')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', gap: 2, pt: 1 }}>
             <Button
@@ -508,7 +522,7 @@ export const GameDetailScreen: React.FC = () => {
               onClick={() => handleConfirmPresence('FIELD')}
               disabled={game.goalkeepersCount >= game.maxGoalkeepers && game.goalkeepersCount > 0}
             >
-              Jogador de Linha
+              {t('games.detail.fieldPlayer')}
             </Button>
             <Button
               variant="outlined"
@@ -516,23 +530,29 @@ export const GameDetailScreen: React.FC = () => {
               onClick={() => handleConfirmPresence('GOALKEEPER')}
               disabled={game.goalkeepersCount >= game.maxGoalkeepers}
             >
-              Goleiro
+              {t('profile.goalkeeper')}
             </Button>
           </Box>
         </DialogContent>
       </Dialog>
 
       <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cancel-dialog-title">
-        <DialogTitle id="cancel-dialog-title">Cancelar Presença</DialogTitle>
+        <DialogTitle id="cancel-dialog-title">{t('games.cancelPresence')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Tem certeza que deseja cancelar sua presença?
+            {t('games.detail.cancelPresenceConfirm')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCancelDialogOpen(false)}>Não</Button>
-          <Button onClick={handleCancelPresence} color="error" variant="contained">
-            Sim, cancelar
+          <Button onClick={() => setCancelDialogOpen(false)}>{t('games.detail.no')}</Button>
+          <Button
+            onClick={handleCancelPresence}
+            color="error"
+            variant="contained"
+            startIcon={confirmLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            disabled={confirmLoading}
+          >
+            {t('games.detail.yesCancel')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -545,11 +565,11 @@ export const GameDetailScreen: React.FC = () => {
         maxWidth="sm"
         aria-labelledby="edit-game-dialog-title"
       >
-        <DialogTitle id="edit-game-dialog-title">Editar Jogo</DialogTitle>
+        <DialogTitle id="edit-game-dialog-title">{t('games.detail.editGame')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField
-              label="Data"
+              label={t('games.date')}
               type="date"
               value={editForm.date}
               onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
@@ -558,7 +578,7 @@ export const GameDetailScreen: React.FC = () => {
               disabled={editLoading}
             />
             <TextField
-              label="Horário"
+              label={t('games.time')}
               type="time"
               value={editForm.time}
               onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
@@ -567,7 +587,7 @@ export const GameDetailScreen: React.FC = () => {
               disabled={editLoading}
             />
             <TextField
-              label="Máximo de jogadores"
+              label={t('games.detail.maxPlayersLabel')}
               type="number"
               value={editForm.maxPlayers}
               onChange={(e) =>
@@ -576,10 +596,10 @@ export const GameDetailScreen: React.FC = () => {
               inputProps={{ min: 2, max: 50 }}
               fullWidth
               disabled={editLoading}
-              helperText="Entre 2 e 50"
+              helperText={t('games.detail.maxPlayersHelper')}
             />
             <TextField
-              label="Regras"
+              label={t('games.detail.rulesLabel')}
               multiline
               rows={3}
               value={editForm.rules}
@@ -592,33 +612,44 @@ export const GameDetailScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)} disabled={editLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
-          <Button onClick={handleSaveEdit} variant="contained" disabled={editLoading}>
-            {editLoading ? 'Salvando...' : 'Salvar'}
+          <Button
+            onClick={handleSaveEdit}
+            variant="contained"
+            startIcon={editLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            disabled={editLoading}
+          >
+            {editLoading ? t('common.saving') : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="delete-game-dialog-title">
-        <DialogTitle id="delete-game-dialog-title">Excluir Jogo</DialogTitle>
+        <DialogTitle id="delete-game-dialog-title">{t('games.detail.deleteGame')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Tem certeza que deseja excluir este jogo? Esta ação pode ser revertida por um administrador.
+            {t('games.detail.deleteConfirm')}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
-          <Button onClick={handleDeleteGame} color="error" variant="contained" disabled={deleteLoading}>
-            {deleteLoading ? 'Excluindo...' : 'Excluir'}
+          <Button
+            onClick={handleDeleteGame}
+            color="error"
+            variant="contained"
+            startIcon={deleteLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? t('common.deleting') : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)} fullWidth maxWidth="xs" aria-labelledby="qr-dialog-title">
-        <DialogTitle id="qr-dialog-title">QR Code de Check-in</DialogTitle>
+        <DialogTitle id="qr-dialog-title">{t('games.detail.qrCheckInTitle')}</DialogTitle>
         <DialogContent>
           <Box sx={{ textAlign: 'center', py: 2 }}>
             {qrCheckInUrl && (
@@ -626,7 +657,7 @@ export const GameDetailScreen: React.FC = () => {
                 <Box
                   component="img"
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCheckInUrl)}`}
-                  alt="QR Code para check-in"
+                  alt={t('games.detail.qrAlt')}
                   sx={{
                     width: 250,
                     height: 250,
@@ -644,7 +675,7 @@ export const GameDetailScreen: React.FC = () => {
                   }}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Os jogadores podem escanear este QR code para fazer check-in
+                  {t('games.detail.qrInstructions')}
                 </Typography>
                 <Button
                   variant="outlined"
@@ -653,20 +684,20 @@ export const GameDetailScreen: React.FC = () => {
                     // #2281: clipboard.writeText pode lançar sem permissão (HTTP/sandbox)
                     try {
                       await navigator.clipboard.writeText(qrCheckInUrl);
-                      showSuccess('Link copiado!');
+                      showSuccess(t('group.linkCopied'));
                     } catch {
-                      showError('Não foi possível copiar o link');
+                      showError(t('group.copyLinkError'));
                     }
                   }}
                 >
-                  Copiar Link
+                  {t('games.detail.copyLink')}
                 </Button>
               </>
             )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setQrDialogOpen(false)}>Fechar</Button>
+          <Button onClick={() => setQrDialogOpen(false)}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
     </Box>
