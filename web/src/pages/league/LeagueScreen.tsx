@@ -59,7 +59,7 @@ import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { useSeasons } from '../../hooks/useSeasons';
-import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getDivisionColor } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -417,7 +417,7 @@ export const LeagueScreen: React.FC = () => {
         </Collapse>
 
         <Collapse in={showSort}>
-          <Box sx={{ px: 2, pb: 1, overflowX: 'auto' }}>
+          <Box sx={{ px: 2, pb: 1, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
             <ToggleButtonGroup
               value={sortField}
               exclusive
@@ -459,7 +459,7 @@ export const LeagueScreen: React.FC = () => {
                     width: 10,
                     height: 10,
                     borderRadius: '50%',
-                    bgcolor: DIVISION_CONFIG[div]?.color ?? 'transparent',
+                    bgcolor: getDivisionColor(div, theme) ?? 'transparent',
                   }}
                 />
               }
@@ -471,7 +471,7 @@ export const LeagueScreen: React.FC = () => {
               }
               sx={{
                 minHeight: 48,
-                '&.Mui-selected': { color: DIVISION_CONFIG[div]?.color },
+                '&.Mui-selected': { color: getDivisionColor(div, theme) },
               }}
             />
           ))}
@@ -514,7 +514,7 @@ export const LeagueScreen: React.FC = () => {
             label={DIVISION_CONFIG[currentUserPlayer.division]?.label}
             size="small"
             sx={{
-              bgcolor: alpha(DIVISION_CONFIG[currentUserPlayer.division]?.color, 0.15),
+              bgcolor: alpha(getDivisionColor(currentUserPlayer.division, theme), 0.15),
               color: 'text.primary',
               fontSize: '0.7rem',
               height: 20,
@@ -735,7 +735,11 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   totalPlayers: number;
 }) {
   const theme = useTheme();
-  const divisionConfig = DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE;
+  // #2163: color theme-aware (dark/OLED)
+  const divisionConfig = {
+    ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
+    color: getDivisionColor(player.division, theme),
+  };
   const winRate = player.gamesPlayed > 0 ? Math.round((player.wins / player.gamesPlayed) * 100) : 0;
 
   const zoneColor = isPromoZone

@@ -49,7 +49,7 @@ export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <TimeIcon color="primary" />
               <Box>
-                <Typography variant="body1" fontWeight={500}>
+                <Typography variant="subtitle1">
                   {formatGameDateLong(game.date)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -61,7 +61,7 @@ export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <LocationIcon color="primary" sx={{ mt: 0.5 }} />
               <Box>
-                <Typography variant="body1" fontWeight={500}>
+                <Typography variant="subtitle1">
                   {game.locationName}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -90,7 +90,7 @@ export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <PaymentIcon color="primary" />
                 <Box>
-                  <Typography variant="body1" fontWeight={500}>
+                  <Typography variant="subtitle1">
                     R$ {game.dailyPrice.toFixed(2)} por jogador
                   </Typography>
                   {game.pixKey && (

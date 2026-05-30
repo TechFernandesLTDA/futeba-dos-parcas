@@ -629,9 +629,16 @@ export const GameDetailScreen: React.FC = () => {
                     width: 250,
                     height: 250,
                     mb: 2,
+                    // #2137: QR é preto-sobre-branco — o fundo branco é OBRIGATÓRIO
+                    // para escaneabilidade. Em dark/OLED adicionamos borda visível para
+                    // o "cartão" do QR não se fundir com o fundo escuro do dialog.
                     bgcolor: 'common.white',
                     p: 1,
                     borderRadius: 1,
+                    border: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? `2px solid ${theme.palette.divider}`
+                        : 'none',
                   }}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

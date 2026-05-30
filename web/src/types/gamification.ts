@@ -1,6 +1,8 @@
 // Source of truth: shared/xp-constants.json — keep in sync
+import type { Theme } from '@mui/material/styles';
 import xpConstants from '../../../shared/xp-constants.json';
 import { gamificationColors, rarityColors } from '../theme';
+import { getGamificationColors } from '../utils/gamificationColors';
 
 export type LeagueDivision = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'CHAMPION';
 
@@ -173,6 +175,8 @@ export interface RankingPlayer {
 }
 
 // Cores alinhadas com gamificationColors em theme/index.ts (single source of truth)
+// NOTA (#2163): as cores aqui são light-mode. Para uso visual em telas, prefira
+// `getDivisionColor(division, theme)` que é theme-aware (dark/OLED).
 export const DIVISION_CONFIG: Record<LeagueDivision, { label: string; color: string; minPoints: number }> = {
   BRONZE: { label: 'Bronze', color: gamificationColors.bronze, minPoints: 0 },
   SILVER: { label: 'Prata', color: gamificationColors.silver, minPoints: 100 },
@@ -181,6 +185,23 @@ export const DIVISION_CONFIG: Record<LeagueDivision, { label: string; color: str
   DIAMOND: { label: 'Diamante', color: gamificationColors.level, minPoints: 1000 },
   CHAMPION: { label: 'Campeão', color: gamificationColors.champion, minPoints: 2000 },
 };
+
+/**
+ * Cor da divisão, theme-aware (#2163). Em dark/OLED retorna a variante mais
+ * brilhante de `gamificationColorsDark` para manter contraste WCAG.
+ */
+export function getDivisionColor(division: LeagueDivision, theme: Theme): string {
+  const colors = getGamificationColors(theme);
+  const map: Record<LeagueDivision, string> = {
+    BRONZE: colors.bronze,
+    SILVER: colors.silver,
+    GOLD: colors.gold,
+    PLATINUM: colors.platinum,
+    DIAMOND: colors.level,
+    CHAMPION: colors.champion,
+  };
+  return map[division] ?? colors.bronze;
+}
 
 export interface BadgeDefinition {
   id: string;
@@ -230,7 +251,7 @@ export const BADGE_RARITY_CONFIG: Record<BadgeRarity, { label: string; color: st
 
 export const CARD_RARITY_CONFIG: Record<CardRarity, { label: string; color: string }> = {
   COMUM: { label: 'Comum', color: rarityColors.COMUM },
-  INCOMUM: { label: 'Incomum', color: '#4CAF50' },
+  INCOMUM: { label: 'Incomum', color: rarityColors.INCOMUM }, // #2163: era #4CAF50 hardcoded
   RARO: { label: 'Raro', color: rarityColors.RARO },
   EPICO: { label: 'Épico', color: rarityColors.EPICO },
   LENDARIO: { label: 'Lendário', color: rarityColors.LENDARIO },
