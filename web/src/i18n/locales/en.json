@@ -1036,6 +1036,10 @@
     "confirmations": "No confirmations",
     "confirmationsDesc": "No one has confirmed attendance yet."
   },
+  "connection": {
+    "restored": "Connection restored",
+    "offlineLimited": "You are offline — limited functions"
+  },
   "home": {
     "quickActions": "Quick Actions",
     "publicGames": "Open Games",

@@ -1005,6 +1005,10 @@
     "confirmations": "Sin confirmaciones",
     "confirmationsDesc": "Nadie ha confirmado asistencia todavía."
   },
+  "connection": {
+    "restored": "Conexión restaurada",
+    "offlineLimited": "Estás sin conexión — funciones limitadas"
+  },
   "home": {
     "quickActions": "Acciones Rápidas",
     "publicGames": "Partidos Abiertos",

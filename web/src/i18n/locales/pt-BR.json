@@ -1036,6 +1036,10 @@
     "confirmations": "Nenhuma confirmação",
     "confirmationsDesc": "Ninguém confirmou presença ainda."
   },
+  "connection": {
+    "restored": "Conexão restaurada",
+    "offlineLimited": "Você está offline — funções limitadas"
+  },
   "home": {
     "quickActions": "Ações Rápidas",
     "publicGames": "Peladas Abertas",
