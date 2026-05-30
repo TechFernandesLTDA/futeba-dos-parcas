@@ -34,7 +34,7 @@ import {
 } from '@mui/icons-material';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
-import { useThemeContext } from '../../contexts/ThemeContext';
+import { useTheme as useThemeContext } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useLanguage, type SupportedLanguage } from '../../contexts';
 import { syncLanguageToFirestore } from '../../contexts/LanguageContext';

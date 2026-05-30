@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const mockSetMode = vi.fn();
 
 vi.mock('../../contexts/ThemeContext', () => ({
-  useThemeContext: () => ({ mode: 'light', setMode: mockSetMode, toggleTheme: vi.fn() }),
+  useTheme: () => ({ mode: 'light', setMode: mockSetMode, toggleTheme: vi.fn() }),
 }));
 
 vi.mock('../../contexts/AuthContext', () => ({

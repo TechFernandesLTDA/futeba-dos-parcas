@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -43,32 +43,38 @@ export const useLocations = () => {
   const { showError } = useToast();
   const [listenerError, setListenerError] = useState<string | null>(null);
 
+  // #2262: usa ref para showError para evitar re-subscribe do listener quando
+  // a identidade da função de contexto muda entre renders.
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
+
   // Listener real-time para invalidar cache quando localizações mudam
   // FIX #1129: limit(200) server-side, alinhado com fetchLocations.
   useEffect(() => {
     const locRef = collection(db, 'locations');
     const q = query(locRef, orderBy('name', 'asc'), limit(200));
-    let initialSnapshots = 0;
+    // #2253: pula apenas o primeiro snapshot (padrão isFirstSnapshot usado nos
+    // demais hooks). Não depende do SDK entregar exatamente 2 snapshots iniciais.
+    let isFirstSnapshot = true;
 
     const unsubscribe = onSnapshot(
       q,
       (_snap) => {
-        // Pula os 2 primeiros snapshots: cache local + primeiro do servidor
-        // Evita invalidateQueries duplicado que causa flicker de dados
-        initialSnapshots++;
-        if (initialSnapshots <= 2) return;
-
+        if (isFirstSnapshot) {
+          isFirstSnapshot = false;
+          return;
+        }
         queryClient.invalidateQueries({ queryKey: ['locations'] });
       },
       (err) => {
         logger.error('Error in locations listener:', err);
         setListenerError(err.message);
-        showError('Erro ao carregar localizações em tempo real');
+        showErrorRef.current('Erro ao carregar localizações em tempo real');
       }
     );
 
     return () => unsubscribe();
-  }, [queryClient, showError]);
+  }, [queryClient]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 
