@@ -83,11 +83,12 @@ export const TacticalBoardScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const fetchPlayers = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
+        if (gameDoc.exists() && !cancelled) {
           const data = snakeToCamel(gameDoc.data()) as Record<string, RawPlayerData[]>;
           const teamA = (data.teamA || []).map((p: RawPlayerData, i: number) => ({
             id: p.id || `a-${i}`,
@@ -105,18 +106,23 @@ export const TacticalBoardScreen: React.FC = () => {
             y: FORMATIONS[0].positions[i]?.[1] || 30,
             team: 'B' as const,
           }));
-          setPlayers([...teamA, ...teamB]);
+          if (!cancelled) setPlayers([...teamA, ...teamB]);
         }
       } catch (error) {
         logger.error('Error fetching players:', error);
-        setError('Erro ao carregar quadro tático.');
-        showErrorRef.current('Erro ao carregar quadro tático.');
+        if (!cancelled) {
+          setError('Erro ao carregar quadro tático.');
+          showErrorRef.current('Erro ao carregar quadro tático.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchPlayers();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, retryCount]);
 
   const applyFormation = (formationIndex: number) => {

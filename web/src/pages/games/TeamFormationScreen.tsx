@@ -96,6 +96,7 @@ export const TeamFormationScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const fetchGame = async () => {
       try {
@@ -140,7 +141,7 @@ export const TeamFormationScreen: React.FC = () => {
           })
         );
 
-        if (players.length > 0) {
+        if (players.length > 0 && !cancelled) {
           const drawPlayers: PlayerForDraw[] = players.map((p) => ({
             id: p.id,
             name: p.name,
@@ -156,14 +157,19 @@ export const TeamFormationScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching game:', error);
-        setError('Erro ao carregar dados. Tente novamente.');
-        showErrorRef.current('Erro ao carregar dados. Tente novamente.');
+        if (!cancelled) {
+          setError('Erro ao carregar dados. Tente novamente.');
+          showErrorRef.current('Erro ao carregar dados. Tente novamente.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchGame();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, retryCount]);
 
   const shuffleTeams = () => {

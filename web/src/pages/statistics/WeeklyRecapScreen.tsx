@@ -98,12 +98,14 @@ export const WeeklyRecapScreen: React.FC = () => {
       return;
     }
 
+    let cancelled = false; // #2278: evita setState após unmount
     const fetchData = async () => {
       try {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
         const statsDoc = await getDoc(doc(db, 'weekly_stats', targetUserId));
+        if (cancelled) return;
         if (statsDoc.exists()) {
           setWeeklyStats(snakeToCamel(statsDoc.data()) as WeeklyStats);
         } else {
@@ -138,17 +140,22 @@ export const WeeklyRecapScreen: React.FC = () => {
           });
         });
 
-        setRecentGames(gamesData);
+        if (!cancelled) setRecentGames(gamesData);
       } catch (error) {
         logger.error('Error fetching weekly recap:', error);
-        setError(t('weeklyRecap.loadError'));
-        showErrorRef.current(t('weeklyRecap.loadError'));
+        if (!cancelled) {
+          setError(t('weeklyRecap.loadError'));
+          showErrorRef.current(t('weeklyRecap.loadError'));
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [targetUserId, retryCount, t]);
 
   if (error) {

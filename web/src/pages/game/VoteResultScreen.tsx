@@ -117,11 +117,12 @@ export const VoteResultScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const fetchData = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
+        if (gameDoc.exists() && !cancelled) {
           const raw = gameDoc.data();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(raw) as Record<string, any>;
@@ -171,14 +172,19 @@ export const VoteResultScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching vote results:', error);
-        setError('Erro ao carregar resultado da votação.');
-        showErrorRef.current('Erro ao carregar resultado da votação.');
+        if (!cancelled) {
+          setError('Erro ao carregar resultado da votação.');
+          showErrorRef.current('Erro ao carregar resultado da votação.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, retryCount]);
 
   if (error) {

@@ -61,27 +61,31 @@ export const PerformanceDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const loadRecords = async () => {
       try {
         const perfRef = collection(db, 'performance_metrics');
         const q = query(perfRef, orderBy('timestamp', 'desc'), limit(100));
         const snapshot = await getDocs(q);
-        
+
         const data: PerformanceRecord[] = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         } as PerformanceRecord));
 
-        setRecords(data);
+        if (!cancelled) setRecords(data);
       } catch (err) {
         console.error('Error loading performance records:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadRecords();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Agrupar por tela

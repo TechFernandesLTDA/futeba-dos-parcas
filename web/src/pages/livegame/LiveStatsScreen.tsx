@@ -82,11 +82,12 @@ export const LiveStatsScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const fetchData = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
+        if (gameDoc.exists() && !cancelled) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
           setStats({
@@ -109,17 +110,22 @@ export const LiveStatsScreen: React.FC = () => {
             createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
           };
         }) as GameEvent[];
-        setEvents(eventsData);
+        if (!cancelled) setEvents(eventsData);
       } catch (error) {
         logger.error('Error fetching stats:', error);
-        setError('Erro ao carregar estatísticas. Tente novamente.');
-        showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
+        if (!cancelled) {
+          setError('Erro ao carregar estatísticas. Tente novamente.');
+          showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, retryCount]);
 
   const getEventIcon = (type: string) => {

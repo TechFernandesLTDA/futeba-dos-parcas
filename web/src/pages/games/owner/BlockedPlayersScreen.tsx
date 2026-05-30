@@ -58,11 +58,12 @@ export const BlockedPlayersScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     const fetchBlocked = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
+        if (gameDoc.exists() && !cancelled) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
           const blockedIds = gameData.blockedPlayers || [];
@@ -92,18 +93,23 @@ export const BlockedPlayersScreen: React.FC = () => {
             })
           );
           
-          setBlockedPlayers(players.filter(Boolean) as BlockedPlayer[]);
+          if (!cancelled) setBlockedPlayers(players.filter(Boolean) as BlockedPlayer[]);
         }
         } catch (error) {
         logger.error('Error fetching blocked players:', error);
-        setLoadError('Erro ao carregar lista de bloqueados.');
-        showError('Erro ao carregar lista de bloqueados.');
+        if (!cancelled) {
+          setLoadError('Erro ao carregar lista de bloqueados.');
+          showError('Erro ao carregar lista de bloqueados.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchBlocked();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, navigate, showError, user]);
 
   const handleUnblock = async (playerId: string) => {

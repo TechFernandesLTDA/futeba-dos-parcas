@@ -80,12 +80,13 @@ export const LiveEventsScreen: React.FC = () => {
 
   useEffect(() => {
     if (!gameId || !user) return;
+    let cancelled = false; // #2278: evita setState após unmount
 
     // Verificar se o usuário pode gerenciar eventos (owner do jogo)
     const checkManagePermission = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
+        if (gameDoc.exists() && !cancelled) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
           const ownerId = gameData.ownerId || gameData.owner_id;
@@ -93,11 +94,14 @@ export const LiveEventsScreen: React.FC = () => {
         }
       } catch (err) {
         logger.error('Erro ao verificar permissão de gerenciamento:', err);
-        showErrorRef.current('Erro ao verificar permissões. Tente novamente.');
+        if (!cancelled) showErrorRef.current('Erro ao verificar permissões. Tente novamente.');
       }
     };
 
     checkManagePermission();
+    return () => {
+      cancelled = true;
+    };
   }, [gameId, user]);
 
   useEffect(() => {
