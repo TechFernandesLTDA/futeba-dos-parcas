@@ -87,6 +87,7 @@ export const LocationDetailScreen: React.FC = () => {
   const [newReviewRating, setNewReviewRating] = useState<number>(5);
   const [newReviewComment, setNewReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewCommentError, setReviewCommentError] = useState(false); // #2231
 
   useEffect(() => {
     if (!locationId) return;
@@ -165,7 +166,12 @@ export const LocationDetailScreen: React.FC = () => {
 
   const handleSubmitReview = async () => {
     if (!user || !locationId) return;
-    if (!newReviewComment.trim()) { showError('Comentário é obrigatório.'); return; }
+    if (!newReviewComment.trim()) {
+      setReviewCommentError(true); // #2231: feedback visual no campo
+      showError('Comentário é obrigatório.');
+      return;
+    }
+    setReviewCommentError(false);
     setSubmittingReview(true);
     try {
       await addDoc(collection(db, 'locations', locationId, 'reviews'), {
@@ -363,7 +369,7 @@ export const LocationDetailScreen: React.FC = () => {
               <Typography>Nota:</Typography>
               <Rating value={newReviewRating} onChange={(_, v) => setNewReviewRating(v || 1)} />
             </Box>
-            <TextField label="Comentário" multiline rows={3} value={newReviewComment} onChange={(e) => setNewReviewComment(e.target.value)} inputProps={{ maxLength: 500 }} helperText={`${newReviewComment.length}/500`} />
+            <TextField label="Comentário" required multiline rows={3} value={newReviewComment} onChange={(e) => { setNewReviewComment(e.target.value); if (reviewCommentError) setReviewCommentError(false); }} inputProps={{ maxLength: 500 }} error={reviewCommentError} helperText={reviewCommentError ? 'Comentário é obrigatório' : `${newReviewComment.length}/500`} />
           </Box>
         </DialogContent>
         <DialogActions>
