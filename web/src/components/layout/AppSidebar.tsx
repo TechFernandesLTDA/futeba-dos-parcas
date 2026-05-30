@@ -13,8 +13,9 @@ import {
   Button,
   Divider,
   Avatar,
+  Chip,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, KeyboardCommandKey as KeyboardIcon } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -219,7 +220,25 @@ export function AppSidebar() {
             );
           })}
         </List>
-        <Box sx={{ mt: 'auto', p: 2, borderTop: 1, borderColor: 'divider' }}>
+        {/* #2192: entrada descobrível para os atalhos de teclado. Antes só
+            acessíveis pressionando "?", sem nenhuma pista visual. */}
+        <Box sx={{ mt: 'auto', px: 1, pb: 0.5 }}>
+          <ListItemButton
+            onClick={() => window.dispatchEvent(new Event('open-shortcuts'))}
+            sx={{ borderRadius: 2, mx: 1 }}
+            aria-label={t('shortcuts.openLabel')}
+          >
+            <ListItemIcon sx={{ color: 'text.secondary' }}>
+              <KeyboardIcon aria-hidden />
+            </ListItemIcon>
+            <ListItemText
+              primary={t('shortcuts.title')}
+              primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+            />
+            <Chip label="?" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
+          </ListItemButton>
+        </Box>
+        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Avatar src={user?.photoUrl} sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
               {userInitial}

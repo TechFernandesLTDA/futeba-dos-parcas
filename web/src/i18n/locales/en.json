@@ -36,6 +36,10 @@
     "viewGroups": "View Groups",
     "viewGames": "View Games"
   },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "openLabel": "Open keyboard shortcuts"
+  },
   "nav": {
     "home": "Home",
     "games": "Games",

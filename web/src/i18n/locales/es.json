@@ -36,6 +36,10 @@
     "viewGroups": "Ver Grupos",
     "viewGames": "Ver Partidos"
   },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "openLabel": "Abrir atajos de teclado"
+  },
   "nav": {
     "home": "Inicio",
     "games": "Juegos",

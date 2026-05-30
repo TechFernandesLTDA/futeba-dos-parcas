@@ -607,8 +607,15 @@ function App() {
         setShortcutsOpen(false);
       }
     };
+    // #2192: entrada descobrível — sidebar/menu dispara este evento para abrir
+    // o diálogo de atalhos sem precisar conhecer a tecla "?".
+    const handleOpenShortcuts = () => setShortcutsOpen(true);
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-shortcuts', handleOpenShortcuts);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-shortcuts', handleOpenShortcuts);
+    };
   }, [shortcutsOpen]);
 
   return (
