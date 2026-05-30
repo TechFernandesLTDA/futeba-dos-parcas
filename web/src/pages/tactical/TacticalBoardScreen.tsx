@@ -330,7 +330,10 @@ export const TacticalBoardScreen: React.FC = () => {
               justifyContent: 'center',
             }}
           >
-            <SoccerIcon sx={{ fontSize: 16, color: 'text.primary' }} />
+            {/* #2293: o círculo de fundo é sempre branco (bola no centro do
+                campo). Em dark mode, `text.primary` fica branco → ícone
+                invisível. Cor fixa escura garante contraste nos dois temas. */}
+            <SoccerIcon sx={{ fontSize: 16, color: 'common.black' }} />
           </Box>
         </Paper>
 

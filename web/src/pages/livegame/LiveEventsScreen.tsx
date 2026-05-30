@@ -278,7 +278,8 @@ export const LiveEventsScreen: React.FC = () => {
               <Card key={event.id} sx={{ mb: 1, ...eventStyle, borderWidth: 1, borderStyle: 'solid' }}>
                 <ListItem sx={{ py: 1.5 }}>
                   <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                    {/* #2213: avatar decorativo (ícone do evento) — texto adjacente já descreve. */}
+                    <Avatar aria-hidden="true" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
                       {getEventIcon(event.type)}
                     </Avatar>
                   </ListItemAvatar>

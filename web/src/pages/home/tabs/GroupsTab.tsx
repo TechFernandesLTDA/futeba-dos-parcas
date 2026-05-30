@@ -244,10 +244,13 @@ export function GroupsTab() {
                           <Typography variant="subtitle1" fontWeight="bold" noWrap>
                             {group.name}
                           </Typography>
+                          {/* #2213: ícone transmite estado (público/privado) — usar role="img"
+                              para expor o aria-label a leitores de tela (SvgIcon sem role não
+                              é anunciado de forma confiável). */}
                           {group.type === 'PUBLIC' ? (
-                            <Public fontSize="small" color="action" aria-label={t('groups.publicGroupLabel')} />
+                            <Public fontSize="small" color="action" role="img" aria-label={t('groups.publicGroupLabel')} />
                           ) : (
-                            <Lock fontSize="small" color="action" aria-label={t('groups.privateGroupLabel')} />
+                            <Lock fontSize="small" color="action" role="img" aria-label={t('groups.privateGroupLabel')} />
                           )}
                         </Box>
 

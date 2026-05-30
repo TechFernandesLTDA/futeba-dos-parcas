@@ -38,6 +38,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('LiveStatsScreen');
 
@@ -69,7 +70,8 @@ interface RawGameStats {
 }
 
 export const LiveStatsScreen: React.FC = () => {
-  useDocumentTitle('Estatísticas ao Vivo');
+  const { t } = useTranslation();
+  useDocumentTitle(t('games.liveStats.title'));
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
@@ -275,7 +277,8 @@ export const LiveStatsScreen: React.FC = () => {
                     {index > 0 && <Divider />}
                     <ListItem>
                       <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                        {/* #2213: avatar decorativo (ícone do evento) — texto adjacente já descreve. */}
+                        <Avatar aria-hidden="true" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
                           {getEventIcon(event.type)}
                         </Avatar>
                       </ListItemAvatar>
@@ -294,7 +297,7 @@ export const LiveStatsScreen: React.FC = () => {
 
         {tabValue === 2 && (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography color="text.secondary">Estatísticas por jogador em breve</Typography>
+            <Typography color="text.secondary">{t('games.liveStats.perPlayerSoon')}</Typography>
           </Box>
         )}
       </Container>

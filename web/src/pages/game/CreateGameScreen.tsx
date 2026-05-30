@@ -1032,8 +1032,8 @@ export const CreateGameScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Dialog open={templateDialogOpen} onClose={() => setTemplateDialogOpen(false)} fullWidth maxWidth="xs">
-          <DialogTitle>Salvar como Template</DialogTitle>
+        <Dialog open={templateDialogOpen} onClose={() => setTemplateDialogOpen(false)} fullWidth maxWidth="xs" aria-labelledby="save-template-dialog-title">
+          <DialogTitle id="save-template-dialog-title">Salvar como Template</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus

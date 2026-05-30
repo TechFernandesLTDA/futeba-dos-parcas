@@ -187,6 +187,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       onClose={onClose}
       maxWidth="xs"
       fullWidth
+      // #2213: card-style dialog sem DialogTitle textual — nome acessível via
+      // aria-label com o nome do jogador.
+      aria-label={player?.name ? `Card do jogador ${player.name}` : 'Card do jogador'}
       PaperProps={{
         sx: {
           background: 'transparent',

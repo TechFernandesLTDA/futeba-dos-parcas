@@ -39,7 +39,9 @@ import { setUserRole as setUserRoleCallable } from '../../services/cloudFunction
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
-import { PlayerAvatar, LoadingState, EmptyState } from '../../components/common/GameCard';
+import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+// #2176: EmptyState canônico (rico, com i18n) vive em common/EmptyState — não no GameCard.
+import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -320,10 +322,8 @@ export const UserManagementScreen: React.FC = () => {
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
               title="Nenhum usuário encontrado"
               description={`Não encontramos usuários para "${searchQuery}". Tente outro termo.`}
-              action={{
-                label: 'Limpar busca',
-                onClick: () => setSearchQuery(''),
-              }}
+              actionLabel="Limpar busca"
+              onAction={() => setSearchQuery('')}
             />
           ) : (
             <EmptyState

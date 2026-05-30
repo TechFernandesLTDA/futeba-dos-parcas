@@ -1,4 +1,16 @@
 {
+  "cashbox": {
+    "title": "Cashbox",
+    "income": "Income",
+    "expense": "Expense",
+    "addIncome": "Add Income",
+    "addExpense": "Add Expense",
+    "amountLabel": "Amount (R$)",
+    "amountError": "Enter a value greater than zero",
+    "descriptionLabel": "Description",
+    "descriptionError": "Enter a description",
+    "confirming": "Confirming..."
+  },
   "common": {
     "appName": "Futeba dos Parças",
     "loading": "Loading...",
@@ -320,6 +332,10 @@
     }
   },
   "games": {
+    "liveStats": {
+      "title": "Live Stats",
+      "perPlayerSoon": "Per-player stats coming soon"
+    },
     "title": "Games",
     "upcoming": "Upcoming Games",
     "myGames": "My Games",

@@ -296,7 +296,7 @@ function BadgeDetailDialog({
     <Dialog open={true} onClose={onClose} maxWidth="xs" fullWidth aria-label={badge.name}>
       <DialogTitle sx={{ textAlign: 'right', p: 1 }}>
         <IconButton onClick={onClose} aria-label={t('common.close')}>
-          <CloseIcon />
+          <CloseIcon aria-hidden="true" />
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ textAlign: 'center', pb: 4, pt: 0 }}>
