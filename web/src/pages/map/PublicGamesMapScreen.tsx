@@ -28,6 +28,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Game } from '../../types/game';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { pageSpacing } from '../../theme/pageTokens';
 
 function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick: (game: Game) => void }) {
   const theme = useTheme();
@@ -196,7 +197,15 @@ export const PublicGamesMapScreen: React.FC = () => {
 
       <Fab
         color="primary"
-        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: 16 }}
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          position: 'fixed',
+          // #2161: acima da bottom nav (64px) p/ não ficar oculto.
+          bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 24 },
+          right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' },
+          // #2270: safe-area (home indicator iPhone notch).
+          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
+        }}
         onClick={() => navigate('/game/create')}
         aria-label="Criar novo jogo"
       >

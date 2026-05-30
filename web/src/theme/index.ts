@@ -299,6 +299,16 @@ export const futebaTheme = createTheme({
         }),
       },
     },
+    // #2169: dialogs fullScreen respeitam safe-area (notch/dynamic island +
+    // home indicator) centralizadamente, em vez de patch por tela (12+ dialogs).
+    MuiDialog: {
+      styleOverrides: {
+        paperFullScreen: {
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         // #2208: transição suave ao alternar tema (light/dark/OLED). Limitada a
@@ -435,6 +445,12 @@ export const futebaDarkTheme = createTheme({
           backgroundColor: theme.palette.background.paper,
           boxShadow: theme.shadows[16],
         }),
+        // #2169: safe-area em fullScreen (este bloco sobrescreve o spread do
+        // light theme, então o paperFullScreen precisa ser redeclarado aqui).
+        paperFullScreen: {
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        },
       },
     },
     MuiTextField: {
