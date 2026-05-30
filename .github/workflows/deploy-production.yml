@@ -6,7 +6,10 @@ name: Deploy to Google Play Store
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags (e.g., v1.5.0)
+      # Apenas tags semver estritas (ex: v1.5.0) disparam deploy de producao.
+      # Padrao 'v*' era perigoso: tags como 'vdebug-test' disparariam deploy
+      # acidental pro Play Store. Alinhado com release.yml (#2200).
+      - 'v*.*.*'
   workflow_dispatch:  # Allow manual trigger
 
 permissions:

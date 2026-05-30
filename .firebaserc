@@ -1,7 +1,8 @@
 {
   "projects": {
+    "default": "futebadosparcas",
     "futeba-prod": "futebadosparcas",
-    "default": "futebadosparcas"
+    "production": "futebadosparcas"
   },
   "targets": {},
   "etags": {}
