@@ -94,7 +94,9 @@ class LocationSyncManager constructor(
         private const val QUEUE_ITEM_TTL_MS = 7 * 24 * 60 * 60 * 1000L
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // Job explícito para permitir cancelamento via shutdown() (#2282)
+    private val scopeJob = SupervisorJob()
+    private val scope = CoroutineScope(scopeJob + Dispatchers.IO)
     private val gson = Gson()
 
     // Estado interno
@@ -428,5 +430,15 @@ class LocationSyncManager constructor(
         val expirationTime = System.currentTimeMillis() - QUEUE_ITEM_TTL_MS
         locationSyncDao.deleteExpiredItems(expirationTime)
         AppLogger.d(TAG) { "Limpeza de itens expirados concluída" }
+    }
+
+    /**
+     * Encerra o manager e cancela todas as coroutines em andamento (#2282).
+     * Deve ser chamado quando o componente é destruído.
+     */
+    fun shutdown() {
+        syncJob?.cancel()
+        scopeJob.cancel()
+        AppLogger.d(TAG) { "LocationSyncManager encerrado" }
     }
 }

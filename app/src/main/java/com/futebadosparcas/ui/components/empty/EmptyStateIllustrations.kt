@@ -584,7 +584,7 @@ private fun RocketIllustration(
         }
         drawPath(rocketPath, rocketColor)
 
-        // Janela
+        // Janela do foguete — branco semi-transparente intencional na ilustração Canvas
         drawCircle(
             color = Color.White.copy(alpha = 0.5f),
             radius = 10f,

@@ -62,8 +62,10 @@ class ConfirmationUseCase constructor(
      */
     suspend fun canConfirmPresence(game: Game): Result<ConfirmationCheck> {
         return try {
-            // TODO: getConfirmationDeadline() foi removido do modelo Game
-            // Implementar via configurações do Group ou outro mecanismo
+            // STUB(#2294): getConfirmationDeadline() foi removido do modelo Game.
+            // Deadline de confirmação deve ser lido das configurações do Group
+            // (ex: group.confirmationDeadlineHours). Até implementação completa,
+            // permite confirmação sempre.
             Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = 0L))
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao verificar deadline", e)
@@ -90,8 +92,8 @@ class ConfirmationUseCase constructor(
             val game = gameResult.getOrNull()
                 ?: return Result.failure(Exception("Jogo nao encontrado"))
 
-            // TODO: isConfirmationDeadlinePassed() e isFull() foram removidos
-            // Implementar via lógica manual ou configurações do Group
+            // STUB(#2294): isConfirmationDeadlinePassed() e isFull() foram removidos do modelo Game.
+            // Lógica de deadline implementada manualmente abaixo via playersCount/maxPlayers.
             val totalPlayers = game.playersCount + game.goalkeepersCount
             val maxTotal = game.maxPlayers + game.maxGoalkeepers
 
@@ -430,7 +432,8 @@ class ConfirmationUseCase constructor(
                 .documents
                 .mapNotNull { it.toObject(GameCancellation::class.java) }
 
-            // TODO: PlayerAttendance.calculate() não existe no modelo KMP - calcular manualmente
+            // STUB(#2294): PlayerAttendance.calculate() não existe no modelo KMP.
+            // Cálculo feito manualmente a partir das confirmações e cancelamentos do Firestore.
             val totalConfirmed = confirmations.size
             val totalAttended = confirmations.count { it.wasPresent == true }
             val totalCancelled = cancellations.size

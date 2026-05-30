@@ -960,8 +960,8 @@ class GameDetailViewModel(
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
             val updatedGame = currentState.game.copy(
                 pixKey = pixKey
-                // TODO: pixKeyType, pixBeneficiaryName, pixPaymentEnabled foram removidos do modelo Game
-                // Implementar via Group settings ou outro mecanismo
+                // STUB(#2294): pixKeyType, pixBeneficiaryName, pixPaymentEnabled foram removidos do modelo Game.
+                // Esses campos devem ser migrados para Group settings (configuração por grupo).
             )
             val result = gameRepository.updateGame(updatedGame)
             if (result.isFailure) {

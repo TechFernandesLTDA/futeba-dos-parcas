@@ -227,6 +227,9 @@ object FutebaColors {
     // Modern, energetic, yet professional.
     // ==========================================
     val Primary = Color(0xFF00852A) // Vibrant Green (WCAG AA)
+    // NOTA: PrimaryDark tem luminância maior que Primary (0x96 > 0x85).
+    // O nome é enganoso — representa a variante XML legacy usada em temas de status bar,
+    // NÃO a versão escura do Primary. (#2143)
     val PrimaryDark = Color(0xFF009624)
     val PrimaryLight = Color(0xFF5EFC82) // Neon pop
     val PrimaryContainer = Color(0xFFE0F2F1) // Very subtle mint tint
@@ -329,12 +332,15 @@ object FutebaColors {
 
     // ==========================================
     // GAMIFICATION - Premium Metals & Effects
+    // DUPLICATA: fonte canônica é GamificationColors (#2143).
+    // Mantido por compatibilidade com código XML legado.
     // ==========================================
     val Gold = Color(0xFFFFD700)
     val Silver = Color(0xFFE0E0E0)
     val Bronze = Color(0xFFCD7F32)
 
     // Royal Purple for Premium/MVP
+    // DUPLICATA: fonte canônica é GamificationColors.Purple (#2143)
     val Purple = Color(0xFF6200EA) // Deep Purple A700
     val PurpleLight = Color(0xFFB388FF)
 
