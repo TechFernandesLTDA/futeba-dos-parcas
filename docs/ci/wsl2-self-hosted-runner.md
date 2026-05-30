@@ -166,25 +166,56 @@ cd ~/futeba-dos-parcas && (cd web && npm ci) ; (cd functions && npm ci) ; ./grad
 
 ---
 
-## Passo 6 — label-routing nos workflows (feito por mim, sessão integradora no Mac)
+## Passo 6 — ligar o balanceamento inteligente Mac↔WSL2
 
-Há uma PR separada (não este runbook) que muda os jobs **não-Apple** de:
+### Como o routing já está montado (lever centralizado)
+
+**Todos** os ~39 jobs deste repo usam a mesma expressão:
 ```yaml
 runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
 ```
-para:
-```yaml
-runs-on: [self-hosted]   # casa qualquer self-hosted: Mac(ARM64) OU WSL(Linux X64)
-```
-Como **ambos** os Macs e o WSL casam `self-hosted`, o GitHub balanceia entre os 3
-slots automaticamente. KMP/iOS (`ios-build.yml`, jobs de framework Apple)
-**continuam** em `["self-hosted","macOS","ARM64"]` — esses só podem rodar no Mac.
+Ou seja: leem a **variável de repo `RUNNER_LABELS`**; se ela não existir, caem no
+fallback `["self-hosted","macOS","ARM64"]` (só Mac). Hoje a var **não existe** →
+tudo vai pros 2 Macs.
 
-> Enquanto a PR de routing não mergeia, este runner já recebe qualquer job
-> `runs-on: ["self-hosted","macOS","ARM64"]`? **Não** — falta a label `macOS`.
-> Ele só pega jobs que pedem exatamente as labels que ele tem. Por isso a PR de
-> routing é o que "liga" o balanceamento. Até lá, o runner fica idle (ou pega
-> `workflow_dispatch` manual com `runs-on: [self-hosted]`).
+### Ligar o balanceamento (1 comando, sem editar workflow)
+
+Setar a var afrouxa **todos** os jobs de uma vez pra exigir só `self-hosted`,
+fazendo Mac + Mac2 + WSL2 casarem o mesmo pool. O GitHub então **balanceia
+sozinho**: o primeiro runner idle pega o job (sem pesos; é fila/first-available).
+```bash
+gh variable set RUNNER_LABELS --body '["self-hosted"]' --repo TechFernandesLTDA/futeba-dos-parcas
+```
+
+### ⚠️ FOOTGUN — fixar os jobs Apple-only ANTES de setar a var
+
+A var afrouxa **inclusive** os jobs que **só rodam em macOS** — eles tentariam
+rodar no WSL2 (Linux) e **falhariam**:
+
+| Workflow | Por quê é Mac-only |
+|----------|--------------------|
+| `ios-build.yml` (4 jobs) | KMP iOS framework exige Xcode/macOS |
+| `android-macrobenchmark.yml` | exige emulador/device Android |
+
+**Antes** de `gh variable set RUNNER_LABELS`, edite esses dois arquivos trocando a
+expressão da var por um literal fixo (assim ignoram a var e ficam presos ao Mac):
+```yaml
+runs-on: ["self-hosted", "macOS", "ARM64"]   # FIXO: iOS/macrobenchmark só no Mac
+```
+Faça via **branch + PR** (master é protegido). Depois que essa PR mergear, aí sim
+rode o `gh variable set RUNNER_LABELS`.
+
+> Ordem segura: (1) PR fixando ios-build.yml + android-macrobenchmark.yml → merge
+> → (2) `gh variable set RUNNER_LABELS '["self-hosted"]'` → (3) abrir um PR que
+> toque `web/` e confirmar em **Set up job → Runner name** que caiu no
+> `futeba-wsl-5700x3d`. Se algo der errado, **reverter é instantâneo**:
+> `gh variable delete RUNNER_LABELS` volta tudo pro fallback (só Mac).
+
+### Alternativa (sem a var): editar runs-on por job
+
+Em vez da var, dá pra trocar `runs-on` job-a-job pros não-Apple. Mais edições,
+mais blast radius. A var-lever acima é preferível: 1 PR pequena (pin Apple) + 1
+comando + revert trivial.
 
 ---
 
