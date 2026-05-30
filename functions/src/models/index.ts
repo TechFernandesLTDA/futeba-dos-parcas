@@ -19,6 +19,11 @@ export interface Game {
     xp_processing_error?: string;
     status: string; // "FINISHED"
     mvp_id?: string;
+    // Auditoria 2026-05-30 #1: vencedores de votacao gravados no game doc
+    // (owner-gated nas rules) — usados para revalidar flags na confirmation
+    // e impedir griefing de XP (-10 Bola Murcha) cross-user.
+    worst_player_id?: string;
+    best_gk_id?: string;
     owner_id: string;
     group_id?: string;
     date?: string;

@@ -420,6 +420,16 @@ service cloud.firestore {
                        !('verified' in request.resource.data) &&
                        !('verifiedAt' in request.resource.data) &&
                        !('cpfVerifiedAt' in request.resource.data) &&
+                       // Auditoria 2026-05-30 #5: ratings automaticos sao
+                       // server-only (Cloud Functions). O update ja bloqueia
+                       // via fieldUnchanged; o create esquecia, permitindo
+                       // self-injecao de auto_*_rating/samples para enviesar
+                       // o balanceamento de times.
+                       !('auto_striker_rating' in request.resource.data) &&
+                       !('auto_mid_rating' in request.resource.data) &&
+                       !('auto_defender_rating' in request.resource.data) &&
+                       !('auto_gk_rating' in request.resource.data) &&
+                       !('auto_rating_samples' in request.resource.data) &&
                        // Validacao de nome (2-100 chars)
                        isValidName(request.resource.data.name) &&
                        // Validacao de email (formato valido)
@@ -483,6 +493,11 @@ service cloud.firestore {
            // CPF-audit #1306: campos mirror gravados SOMENTE por Cloud Function via Admin SDK
            // (verifyCpf grava cpfVerifiedAt; setUserVerified grava verifiedAt em users/{uid})
            // Cliente nao pode espoofar esses campos para enganar listeners/badges
+           // Auditoria 2026-05-30 #12: o create ja bloqueia 'verified'
+           // (#1979); o update esquecia. Embora a fonte autoritativa seja
+           // o custom claim, o campo doc.verified spoofado pode enganar
+           // listeners/UI legados. Espelha o bloqueio do create.
+           fieldUnchanged('verified') &&
            fieldUnchanged('verifiedAt') &&
            fieldUnchanged('cpfVerifiedAt') &&
            // Apenas updated_at e protegido (gerenciado por Cloud Functions)
@@ -648,7 +663,15 @@ service cloud.firestore {
       // confirmation_order via subcolecao. Alinhado com root confirmations rules.
       // ============================================
       match /confirmations/{confirmationId} {
-        allow read: if isAuthenticated() && isGameOwner(gameId);
+        // Auditoria 2026-05-30 #11: o proprio jogador (e admin) deve ler
+        // sua entrada de ETA — ConfirmationUseCase.markOnTheWay/updateEta
+        // consulta a subcolecao antes do update. Antes so isGameOwner lia,
+        // causando lockout do proprio jogador (e do admin).
+        allow read: if isAuthenticated() && (
+          isAdmin() ||
+          isGameOwner(gameId) ||
+          confirmationId == (gameId + '_' + userId())
+        );
         allow create: if isAuthenticated() && (
           isAdmin() ||
           (isGameOwner(gameId) && request.resource.data.user_id != userId())
@@ -668,9 +691,14 @@ service cloud.firestore {
       // Leitura/escrita: apenas o proprio jogador. Admin/owner podem ler todos.
       // ============================================
       match /cancellations/{cancellationId} {
+        // Auditoria 2026-05-30 #4: o proprio jogador deve ler a sua entrada
+        // (ConfirmationUseCase consulta collectionGroup cancellations por
+        // user_id apos cancelar presenca). Antes so admin/owner liam ->
+        // updateAttendanceRate quebrava silenciosamente para nao-owners.
         allow read: if isAuthenticated() && (
           isAdmin() ||
-          isGameOwner(gameId)
+          isGameOwner(gameId) ||
+          resource.data.user_id == userId()
         );
         allow create: if isAuthenticated() &&
           request.resource.data.user_id == userId() &&
