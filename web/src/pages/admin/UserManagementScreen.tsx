@@ -70,7 +70,7 @@ interface RawAdminUserDoc {
 
 export const UserManagementScreen: React.FC = () => {
   useDocumentTitle('Gerenciar Usuários');
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user: currentUser } = useAuth();

@@ -115,7 +115,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
 export const LocationsMapScreen: React.FC = () => {
   useDocumentTitle('Mapa de Locais');
   const navigate = useNavigate();
-  const navigateBack = useNavigateBack('/');
+  const navigateBack = useNavigateBack();
   const theme = useTheme();
   useAuth();
 

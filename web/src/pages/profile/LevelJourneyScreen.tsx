@@ -66,7 +66,7 @@ const LEGEND_LEVELS = LEVEL_TABLE.filter((e) => e.level >= 11);
 
 export const LevelJourneyScreen: React.FC = () => {
   useDocumentTitle('Jornada de Nível');
-  const navigateBack = useNavigateBack('/');
+  const navigateBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();

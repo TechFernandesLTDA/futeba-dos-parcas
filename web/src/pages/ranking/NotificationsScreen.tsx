@@ -149,7 +149,7 @@ export const NotificationsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Notificações');
   const navigate = useNavigate();
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const gColors = useGamificationColors();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));

@@ -46,7 +46,7 @@ export const GroupLeagueScreen: React.FC = () => {
   useDocumentTitle('Liga do Grupo');
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();

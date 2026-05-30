@@ -34,7 +34,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const DevToolsScreen: React.FC = () => {
   useDocumentTitle('Ferramentas de Dev');
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const { user } = useAuth();
 

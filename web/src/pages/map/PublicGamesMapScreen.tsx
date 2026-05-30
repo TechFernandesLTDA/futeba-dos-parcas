@@ -104,7 +104,7 @@ function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick
 export const PublicGamesMapScreen: React.FC = () => {
   useDocumentTitle('Jogos Públicos');
   const navigate = useNavigate();
-  const navigateBack = useNavigateBack('/');
+  const navigateBack = useNavigateBack();
   const theme = useTheme();
   useAuth();
 

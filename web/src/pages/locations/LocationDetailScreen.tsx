@@ -147,6 +147,13 @@ export const LocationDetailScreen: React.FC = () => {
   const userCanEdit = !!user && !!location && (user.role === 'ADMIN' || canManageLocation(location, user.id));
   const userCanDelete = !!user && user.role === 'ADMIN';
 
+  // #2224: tela pública. ADMIN/FIELD_OWNER podem voltar à gestão (/locations,
+  // rota protegida); demais usuários (deep link, mapa, busca) voltam para o
+  // mapa público de locais — nunca para a rota protegida que os jogaria em
+  // Home/login.
+  const canManageLocations = user?.role === 'ADMIN' || user?.role === 'FIELD_OWNER';
+  const locationsListPath = canManageLocations ? '/locations' : '/map/locations';
+
   const handleDelete = async () => {
     if (!locationId || !location) return;
     setDeleting(true);
@@ -154,7 +161,7 @@ export const LocationDetailScreen: React.FC = () => {
       const deleteLocation = getCallable('deleteLocation');
       await deleteLocation({ locationId });
       showSuccess(`Local "${location.name}" excluído com sucesso.`);
-      navigate('/locations');
+      navigate(locationsListPath);
     } catch (err) {
       logger.error('Erro ao excluir local:', err);
       showError('Erro ao excluir local. Tente novamente.');
@@ -197,7 +204,7 @@ export const LocationDetailScreen: React.FC = () => {
   const renderHeader = (title: string) => (
     <Box sx={{ position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 10, borderBottom: `1px solid ${theme.palette.divider}` }}>
       <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-        <IconButton onClick={() => navigate('/locations')} aria-label="Voltar"><BackIcon /></IconButton>
+        <IconButton onClick={() => navigate(locationsListPath)} aria-label="Voltar"><BackIcon /></IconButton>
         <Typography variant="h6" sx={{ ml: 1, flex: 1 }} noWrap>{title}</Typography>
         {userCanEdit && location && (
           <IconButton onClick={() => navigate(`/location/${location.id}/edit`)} aria-label="Editar local"><EditIcon /></IconButton>
@@ -226,7 +233,7 @@ export const LocationDetailScreen: React.FC = () => {
           <LocationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>{error || 'Local não encontrado'}</Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mt: 2 }}>
-            <Button variant="outlined" onClick={() => navigate('/locations')}>Ver todos os locais</Button>
+            <Button variant="outlined" onClick={() => navigate(locationsListPath)}>Ver todos os locais</Button>
             {error && <Button variant="contained" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</Button>}
           </Box>
         </Container>

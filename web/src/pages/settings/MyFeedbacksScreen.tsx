@@ -50,7 +50,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactElement }> =
 
 export const MyFeedbacksScreen: React.FC = () => {
   useDocumentTitle('Meus Feedbacks');
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { currentUser } = useAuth();

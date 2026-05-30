@@ -37,7 +37,7 @@ import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 export const AboutScreen: React.FC = () => {
   useDocumentTitle('Sobre');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const { user } = useAuth();
 

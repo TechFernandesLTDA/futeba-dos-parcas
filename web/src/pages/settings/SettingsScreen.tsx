@@ -62,7 +62,7 @@ interface Settings {
 export const SettingsScreen: React.FC = () => {
   useDocumentTitle('Configurações');
   const navigate = useNavigate();
-  const goBack = useNavigateBack('/');
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user, logout } = useAuth();

@@ -69,8 +69,13 @@ export function RegisterScreen() {
    * FIX #574: antes hardcoded `/`.
    */
   const resolveRedirect = (): string => {
-    const fromState = (location.state as { from?: { pathname?: string } } | null)
-      ?.from?.pathname;
+    // #2225: preserva search/hash do deep link (vide LoginScreen).
+    const from = (location.state as {
+      from?: { pathname?: string; search?: string; hash?: string };
+    } | null)?.from;
+    const fromState = from?.pathname
+      ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
+      : undefined;
     const fromQuery = searchParams.get('redirect');
     const candidate = fromState || fromQuery || '/';
     return candidate.startsWith('/') && !candidate.startsWith('//')
