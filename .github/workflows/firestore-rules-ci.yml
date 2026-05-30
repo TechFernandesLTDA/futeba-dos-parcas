@@ -2,11 +2,15 @@ name: Firestore Rules Tests
 
 on:
   push:
+    # Restringe a master/develop (alinhado com android-ci/web-ci) para nao
+    # desperdiçar runner em branches de feature (#2201).
+    branches: [master, develop]
     paths:
       - "firestore.rules"
       - "firestore-rules-tests/**"
       - ".github/workflows/firestore-rules-ci.yml"
   pull_request:
+    branches: [master, develop]
     paths:
       - "firestore.rules"
       - "firestore-rules-tests/**"
