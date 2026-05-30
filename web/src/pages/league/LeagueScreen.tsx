@@ -33,6 +33,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  InputLabel,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -378,7 +379,11 @@ export const LeagueScreen: React.FC = () => {
         {seasons.length > 1 && (
           <Box sx={{ px: 2, pb: 1 }}>
             <FormControl size="small" fullWidth>
+              {/* #2213: InputLabel fornece label acessível ao Select de temporada */}
+              <InputLabel id="league-season-label">{t('league.season')}</InputLabel>
               <Select
+                labelId="league-season-label"
+                label={t('league.season')}
                 value={effectiveSeasonId || ''}
                 onChange={(e) => handleSeasonChange(e.target.value)}
                 variant="outlined"

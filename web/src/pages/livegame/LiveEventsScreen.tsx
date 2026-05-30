@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -68,6 +69,7 @@ interface RawGameOwner {
 
 export const LiveEventsScreen: React.FC = () => {
   useDocumentTitle('Eventos ao Vivo');
+  const { t } = useTranslation();
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // #2238: dialog responsivo
@@ -324,7 +326,7 @@ export const LiveEventsScreen: React.FC = () => {
       )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
-        <DialogTitle id="add-event-dialog-title">Adicionar Evento</DialogTitle>
+        <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
             <ToggleButtonGroup
@@ -372,9 +374,9 @@ export const LiveEventsScreen: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>Cancelar</Button>
+          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>{t('common.cancel')}</Button>
           <Button variant="contained" onClick={handleAddEvent} disabled={submitting || !playerName.trim() || !eventType} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
-            {submitting ? 'Adicionando...' : 'Adicionar'}
+            {submitting ? t('common.loading') : t('games.live.add')}
           </Button>
         </DialogActions>
       </Dialog>

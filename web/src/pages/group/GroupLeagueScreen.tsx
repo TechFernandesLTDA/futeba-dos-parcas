@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
@@ -22,6 +23,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  InputLabel,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -44,6 +46,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 export const GroupLeagueScreen: React.FC = () => {
   useDocumentTitle('Liga do Grupo');
+  const { t } = useTranslation();
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const goBack = useNavigateBack();
@@ -135,7 +138,11 @@ export const GroupLeagueScreen: React.FC = () => {
       {seasons.length > 1 && (
         <Box sx={{ px: 2, pb: 1 }}>
           <FormControl size="small" fullWidth>
+            {/* #2213: InputLabel fornece label acessível ao Select de temporada */}
+            <InputLabel id="group-league-season-label">{t('league.season')}</InputLabel>
             <Select
+              labelId="group-league-season-label"
+              label={t('league.season')}
               value={selectedSeasonId || ''}
               onChange={(e) => setSelectedSeasonId(e.target.value)}
               variant="outlined"
