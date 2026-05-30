@@ -56,7 +56,7 @@ enum class FlameLevel(
     val particleCount: Int,
     val intensity: Float
 ) {
-    NONE(0, "Iniciar sequência", listOf(Color.Gray), 0, 0f),
+    NONE(0, "Iniciar sequência", listOf(GamificationColors.FlameNone), 0, 0f),
     WARMING(1, "Esquentando", GamificationColors.Level1, 3, 0.5f),
     HOT(4, "Em chamas", GamificationColors.Level2, 5, 0.7f),
     BURNING(7, "Pegando fogo", GamificationColors.Level3, 8, 0.85f),

@@ -225,6 +225,7 @@ private fun RankingList(
     onPlayerClick: (String) -> Unit
 ) {
     val windowSizeClass = rememberWindowSizeClass()
+    val currentUserId = rememberCurrentUserId()
 
     // Em tablets, centraliza o conteúdo com largura máxima para legibilidade
     Box(
@@ -272,7 +273,7 @@ private fun RankingList(
                     rank = index + 4,
                     player = player,
                     category = category,
-                    isCurrentUser = player.userId == getCurrentUserId(),
+                    isCurrentUser = player.userId == currentUserId,
                     onClick = { onPlayerClick(player.userId) }
                 )
             }
@@ -663,7 +664,8 @@ private fun MyPositionCard(
     rankings: List<PlayerRankingItem>
 ) {
     // Find the current user's data
-    val userData = rankings.firstOrNull { it.userId == getCurrentUserId() }
+    val currentUserId = rememberCurrentUserId()
+    val userData = rankings.firstOrNull { it.userId == currentUserId }
 
     Card(
         modifier = Modifier
@@ -808,13 +810,13 @@ private fun getRankColor(position: Int): Color {
 }
 
 /**
- * Retorna o ID do usuario atual.
- * Funcao auxiliar para evitar dependencia circular no ViewModel.
+ * Retorna o ID do usuario atual via Koin (DI), em vez de
+ * FirebaseAuth.getInstance() direto no Composable (#2285).
  */
-private fun getCurrentUserId(): String? {
-    return try {
-        com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-    } catch (e: Exception) {
-        null
+@Composable
+private fun rememberCurrentUserId(): String? {
+    val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
+    return remember(auth.currentUser?.uid) {
+        runCatching { auth.currentUser?.uid }.getOrNull()
     }
 }

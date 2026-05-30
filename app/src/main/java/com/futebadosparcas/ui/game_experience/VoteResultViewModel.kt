@@ -252,7 +252,8 @@ class VoteResultViewModel(
             context = context,
             category = category,
             results = results,
-            gameInfo = state.gameInfo
+            gameInfo = state.gameInfo,
+            scope = viewModelScope
         )
     }
 }

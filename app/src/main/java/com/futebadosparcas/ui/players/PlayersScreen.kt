@@ -77,7 +77,6 @@ import androidx.compose.ui.semantics.semantics
 @Composable
 fun PlayersScreen(
     viewModel: PlayersViewModel,
-    onPlayerClick: (User) -> Unit,
     onNavigateNotifications: () -> Unit,
     onNavigateGroups: () -> Unit,
     onNavigateMap: () -> Unit,
@@ -100,6 +99,7 @@ fun PlayersScreen(
 
     // Context para compartilhamento
     val context = androidx.compose.ui.platform.LocalContext.current
+    val shareScope = androidx.compose.runtime.rememberCoroutineScope()
 
     // Estado para Snackbar
     val snackbarHostState = remember { SnackbarHostState() }
@@ -311,6 +311,7 @@ fun PlayersScreen(
                                 context = context,
                                 user = player,
                                 stats = selectedPlayerStats,
+                                scope = shareScope,
                                 generatedBy = context.getString(R.string.app_name)
                             )
                         },

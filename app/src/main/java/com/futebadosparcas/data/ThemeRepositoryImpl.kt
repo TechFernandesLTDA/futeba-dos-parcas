@@ -1,6 +1,7 @@
 package com.futebadosparcas.data
 
-import android.graphics.Color
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -43,8 +44,9 @@ class ThemeRepositoryImpl constructor(
                 ContrastLevel.NORMAL
             }
 
-            val primary = preferences[Keys.PRIMARY_COLOR] ?: Color.parseColor("#58CC02")
-            val secondary = preferences[Keys.SECONDARY_COLOR] ?: Color.parseColor("#FF9600")
+            // Usa Compose Color (não android.graphics.Color) para cores semente padrão.
+            val primary = preferences[Keys.PRIMARY_COLOR] ?: Color(0xFF58CC02).toArgb()
+            val secondary = preferences[Keys.SECONDARY_COLOR] ?: Color(0xFFFF9600).toArgb()
 
             AppThemeConfig(
                 seedColors = SeedColors(primary, secondary),

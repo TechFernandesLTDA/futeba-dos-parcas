@@ -76,11 +76,14 @@ object ShareMVPCardHelper {
         context: Context,
         category: VoteCategory,
         results: List<MVPVoteResult>,
-        gameInfo: GameResultInfo?
+        gameInfo: GameResultInfo?,
+        scope: CoroutineScope
     ) {
         if (results.isEmpty()) return
 
-        CoroutineScope(Dispatchers.Main).launch {
+        // Usa o scope lifecycle-aware do caller (viewModelScope) em vez de
+        // um CoroutineScope solto, evitando vazamento de coroutine.
+        scope.launch {
             try {
                 // Carregar fotos dos jogadores
                 val photoBitmaps = mutableMapOf<String, Bitmap?>()

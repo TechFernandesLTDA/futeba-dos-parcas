@@ -34,6 +34,8 @@ fun ProfileGate(
     content: @Composable () -> Unit
 ) {
     var step by remember { mutableStateOf<OnboardingStep>(OnboardingStep.None) }
+    // FirebaseAuth via Koin (DI) em vez de FirebaseAuth.getInstance() direto.
+    val auth: FirebaseAuth = org.koin.compose.koinInject()
 
     when {
         isProfileComplete == null -> {
@@ -76,7 +78,7 @@ fun ProfileGate(
                         },
                         confirmButton = {
                             TextButton(onClick = {
-                                val phone = FirebaseAuth.getInstance().currentUser?.phoneNumber
+                                val phone = auth.currentUser?.phoneNumber
                                 step = if (phone.isNullOrEmpty()) {
                                     OnboardingStep.Phone
                                 } else {

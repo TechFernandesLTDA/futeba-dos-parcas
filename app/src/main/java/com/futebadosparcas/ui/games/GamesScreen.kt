@@ -155,8 +155,11 @@ private fun GamesSuccessContent(
     var selectedFilter by remember { mutableStateOf(GameFilterType.ALL) }
     val windowSizeClass = rememberWindowSizeClass()
 
-    // Prefetch detalhes dos primeiros 5 jogos quando a lista é carregada
-    LaunchedEffect(games) {
+    // Prefetch detalhes dos primeiros 5 jogos quando a lista é carregada.
+    // List não é estável no Compose; usamos chave derivada estável (ids dos jogos)
+    // para evitar re-execução do efeito a cada recomposição.
+    val gamesKey = remember(games) { games.joinToString(",") { it.game.id } }
+    LaunchedEffect(gamesKey) {
         if (games.isNotEmpty()) {
             viewModel.prefetchGameDetails(games)
         }

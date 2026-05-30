@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.groups
 
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -514,8 +515,8 @@ private fun GroupDetailContent(
     val isOwnerOrAdmin = myRole == GroupMemberRole.OWNER || myRole == GroupMemberRole.ADMIN
     LazyColumn(
         modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(AppDimensions.spacing_large),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
     ) {
         // Header do grupo com informações enriquecidas
         item {
@@ -603,7 +604,7 @@ private fun EnhancedGroupHeader(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -612,7 +613,7 @@ private fun EnhancedGroupHeader(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(AppDimensions.spacing_large),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Foto do grupo com badge de role
@@ -658,7 +659,7 @@ private fun EnhancedGroupHeader(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             // Nome do grupo
             Text(
@@ -668,7 +669,7 @@ private fun EnhancedGroupHeader(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_extraSmall))
 
             // Descrição
             Text(
@@ -678,11 +679,11 @@ private fun EnhancedGroupHeader(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             // Chips informativos em linha
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Member count chip (informacional, sem click)
@@ -693,7 +694,7 @@ private fun EnhancedGroupHeader(
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -747,11 +748,11 @@ private fun RoleBadgeChip(myRole: GroupMemberRole?) {
 
     Surface(
         color = color.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(AppDimensions.radius_large)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = AppDimensions.spacing_extraSmall),
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_extraSmall),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -785,7 +786,7 @@ private fun MembersSectionHeader(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             Icon(
                 imageVector = Icons.Default.People,
@@ -810,13 +811,13 @@ private fun MembersSectionHeader(
         if (myRole == GroupMemberRole.OWNER || myRole == GroupMemberRole.ADMIN) {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(AppDimensions.radius_medium)
             ) {
                 Text(
                     text = stringResource(R.string.groups_manage),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = AppDimensions.spacing_extraSmall),
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -834,7 +835,7 @@ private fun EmptyMembersState(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -842,9 +843,9 @@ private fun EmptyMembersState(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(AppDimensions.spacing_extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
         ) {
             Icon(
                 imageVector = Icons.Default.GroupOff,
@@ -868,14 +869,14 @@ private fun EmptyMembersState(
 
             // Botão de convidar (apenas para admins)
             if (myRole == GroupMemberRole.OWNER || myRole == GroupMemberRole.ADMIN) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_small))
                 Button(onClick = onInviteClick) {
                     Icon(
                         imageVector = Icons.Default.PersonAdd,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
                     Text(stringResource(R.string.groups_invite_players))
                 }
             }
@@ -897,7 +898,7 @@ private fun GroupActionButtons(
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
     ) {
         // Invite Players (admin+)
         if (isOwnerOrAdmin) {
@@ -910,7 +911,7 @@ private fun GroupActionButtons(
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                 Text(
                     text = stringResource(R.string.invite),
                     maxLines = 1,
@@ -930,7 +931,7 @@ private fun GroupActionButtons(
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
             Text(
                 text = stringResource(R.string.cashbox),
                 maxLines = 1,
@@ -950,7 +951,7 @@ private fun GroupActionButtons(
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                 Text(
                     text = stringResource(R.string.create_game),
                     maxLines = 1,
@@ -1062,14 +1063,14 @@ private fun JoinRequestSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth().padding(AppDimensions.spacing_large),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
         ) {
             when (state) {
                 is MyJoinRequestState.Loading -> {
@@ -1163,14 +1164,14 @@ private fun PendingJoinRequestsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth().padding(AppDimensions.spacing_large),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
         ) {
             Text(
                 text = stringResource(R.string.join_request_pending_section_title, requests.size),
@@ -1182,7 +1183,7 @@ private fun PendingJoinRequestsSection(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
                 ) {
                     CachedProfileImage(
                         photoUrl = req.userPhoto,
@@ -1200,7 +1201,7 @@ private fun PendingJoinRequestsSection(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(AppDimensions.spacing_extraSmall))
                             TeamBadgeById(
                                 teamId = null,
                                 iconSize = 18

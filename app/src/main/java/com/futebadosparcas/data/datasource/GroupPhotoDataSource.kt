@@ -9,7 +9,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.storageMetadata
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -133,8 +132,9 @@ class GroupPhotoDataSource constructor(
             val successListener = com.google.android.gms.tasks.OnSuccessListener<com.google.firebase.storage.UploadTask.TaskSnapshot> {
                 // Upload completo - obter URL
                 storageRef.downloadUrl.addOnSuccessListener { uri ->
-                    // Upload do thumbnail em background
-                    CoroutineScope(Dispatchers.IO).launch {
+                    // Upload do thumbnail no escopo do callbackFlow (cancela junto
+                    // com o Flow via awaitClose) em vez de um CoroutineScope solto.
+                    launch(Dispatchers.IO) {
                         val thumbUrl = uploadThumbnail(groupId, thumbnailData)
                         trySend(UploadResult.Success(uri.toString(), thumbUrl))
                         close()

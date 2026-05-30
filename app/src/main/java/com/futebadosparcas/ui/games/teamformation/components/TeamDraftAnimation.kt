@@ -78,7 +78,8 @@ fun TeamDraftRevealCard(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.8f)),
+            // Usa scrim do tema (não Color.Black) para o overlay modal.
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.8f)),
         contentAlignment = Alignment.Center
     ) {
         // Card com flip
@@ -332,7 +333,8 @@ fun DraftCountdown(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.9f)),
+            // Usa scrim do tema (não Color.Black) para o overlay modal.
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.9f)),
         contentAlignment = Alignment.Center
     ) {
         Column(

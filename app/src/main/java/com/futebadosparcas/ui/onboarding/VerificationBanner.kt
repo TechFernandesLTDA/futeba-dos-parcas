@@ -38,7 +38,7 @@ private const val GRACE_END_MILLIS = 1_785_715_200_000L // 2026-08-03T00:00:00Z
 @Composable
 fun VerificationBanner(
     onClickVerify: () -> Unit = {},
-    auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    auth: FirebaseAuth = org.koin.compose.koinInject(),
 ) {
     var verified by remember { mutableStateOf<Boolean?>(null) }
 

@@ -6,6 +6,10 @@ import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import com.futebadosparcas.util.globalKeyboardShortcuts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -467,11 +471,30 @@ fun MainScreen(
         }
     }
 
+    // #2191: integra atalhos de teclado globais (Chromebook/tablet com teclado/TV).
+    // H=Home, G=Games, P=Peladas/Grupos, R=Ranking/League, U=Profile.
+    val keyboardFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    LaunchedEffect(Unit) {
+        runCatching { keyboardFocus.requestFocus() }
+    }
+    val keyboardShortcutsModifier = Modifier
+        .focusRequester(keyboardFocus)
+        .focusable()
+        .globalKeyboardShortcuts(
+            onNavigateHome = { onNavigate(Screen.Home.route) },
+            onNavigateGames = { onNavigate(Screen.Games.route) },
+            onNavigateGroups = { onNavigate(Screen.Groups.route) },
+            onNavigateRankings = { onNavigate(Screen.League.route) },
+            onNavigateProfile = { onNavigate(Screen.Profile.route) }
+        )
+
     // Layout adaptativo: Rail lateral em Medium/Expanded, BottomBar em Compact
     if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
         // Compact: Scaffold com NavigationBar no fundo
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .then(keyboardShortcutsModifier),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (showNavigation) {
@@ -490,7 +513,11 @@ fun MainScreen(
         }
     } else {
         // Medium/Expanded: NavigationRail lateral + Scaffold sem bottomBar
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(keyboardShortcutsModifier)
+        ) {
             if (showNavigation) {
                 FutebaNavigationRail(
                     items = navItems,

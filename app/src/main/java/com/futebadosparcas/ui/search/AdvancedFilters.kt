@@ -161,14 +161,16 @@ fun AdvancedFiltersContent(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Estado local dos filtros
-    val selectedDateFilters = remember { mutableStateListOf(*currentFilters.dateFilters.toTypedArray()) }
-    val selectedTimeFilters = remember { mutableStateListOf(*currentFilters.timeFilters.toTypedArray()) }
-    val selectedGameTypes = remember { mutableStateListOf(*currentFilters.gameTypeFilters.toTypedArray()) }
-    var maxDistance by remember { mutableFloatStateOf(currentFilters.maxDistanceKm) }
-    var playerRange by remember { mutableStateOf(currentFilters.minPlayers.toFloat()..currentFilters.maxPlayers.toFloat()) }
-    var onlyWithVacancies by remember { mutableStateOf(currentFilters.onlyWithVacancies) }
-    var onlyFreeGames by remember { mutableStateOf(currentFilters.onlyFreeGames) }
+    // Estado local dos filtros — usa currentFilters como key para re-sincronizar
+    // quando o parent altera os filtros (ex: reset externo). Sem a key, o estado
+    // local ficaria stale após a primeira composição.
+    val selectedDateFilters = remember(currentFilters) { mutableStateListOf(*currentFilters.dateFilters.toTypedArray()) }
+    val selectedTimeFilters = remember(currentFilters) { mutableStateListOf(*currentFilters.timeFilters.toTypedArray()) }
+    val selectedGameTypes = remember(currentFilters) { mutableStateListOf(*currentFilters.gameTypeFilters.toTypedArray()) }
+    var maxDistance by remember(currentFilters) { mutableFloatStateOf(currentFilters.maxDistanceKm) }
+    var playerRange by remember(currentFilters) { mutableStateOf(currentFilters.minPlayers.toFloat()..currentFilters.maxPlayers.toFloat()) }
+    var onlyWithVacancies by remember(currentFilters) { mutableStateOf(currentFilters.onlyWithVacancies) }
+    var onlyFreeGames by remember(currentFilters) { mutableStateOf(currentFilters.onlyFreeGames) }
 
     Column(
         modifier = modifier
