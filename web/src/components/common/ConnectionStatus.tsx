@@ -62,8 +62,12 @@ export const ConnectionStatus: React.FC<{ isOnline: boolean }> = ({ isOnline }) 
         role="alert"
         aria-live="assertive"
         sx={{
-          position: 'sticky',
-          top: 0,
+          // #2175 (bug 3): `fixed` (não `sticky`) — o banner é renderizado como
+          // último filho do MobileBottomNav; sticky no fim do DOM nunca fixa no
+          // topo do viewport. fixed + top:0 centralizado garante visibilidade
+          // tanto no mobile quanto no desktop (AppLayout).
+          position: 'fixed',
+          top: 'env(safe-area-inset-top, 0px)',
           left: '50%',
           transform: 'translateX(-50%)',
           maxWidth: 'fit-content',
