@@ -22,7 +22,7 @@ import {
 } from '@mui/icons-material';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { usePublicGames } from '../../hooks/useGames';
+import { usePublicGames } from '../../hooks/usePublicGames';
 import { LoadingState, GameCard } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -110,7 +110,7 @@ export const PublicGamesMapScreen: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { games, loading, error, refetch } = usePublicGames();
+  const { games, loading, error, refetch } = usePublicGames('map');
 
   const filteredGames = games.filter((game) =>
     (game.locationName || '').toLowerCase().includes(searchQuery.toLowerCase())

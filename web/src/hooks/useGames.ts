@@ -78,21 +78,8 @@ async function fetchGames(filters?: {
 }
 
 // Busca jogos públicos (scheduled/confirmed, is_public=true)
-async function fetchPublicGames(): Promise<Game[]> {
-  const gamesRef = collection(db, 'games');
-  const q = query(
-    gamesRef,
-    where('is_public', '==', true),
-    where('status', 'in', ['SCHEDULED', 'CONFIRMED']),
-    orderBy('date', 'asc'),
-    limit(DEFAULT_GAMES_LIMIT)
-  );
-
-  const snapshot = await getDocs(q);
-  return snapshot.docs
-    .map((d) => parseGameDoc(d.id, d.data()))
-    .filter((g) => !g.deletedAt);
-}
+// #2254: usePublicGames consolidado em hooks/usePublicGames.ts (variantes
+// 'open' e 'map'). A versão duplicada que existia aqui foi removida.
 
 export function useGames(filters?: {
   status?: GameStatus;
@@ -114,20 +101,6 @@ export function useGames(filters?: {
     // PERF: mutations (useCreateGame, useUpdateGameStatus) já chamam invalidateQueries.
     // Remover onSnapshot redundante que causava double-fetch a cada mudança:
     // snapshot disparava invalidação → getDocs era chamado novamente além do fetch da mutation.
-    refetchOnWindowFocus: false,
-  });
-
-  const error = queryError ? (queryError as Error).message : null;
-
-  return { games, loading, error, refetch };
-}
-
-export function usePublicGames() {
-  const { data: games = [], isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: ['games', 'public'],
-    queryFn: () => fetchPublicGames(),
-    staleTime: 60_000,
-    gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
