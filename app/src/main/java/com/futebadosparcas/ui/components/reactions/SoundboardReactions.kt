@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.ReactionColors
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -75,24 +76,24 @@ enum class ReactionType(
     val vibrationPattern: LongArray
 ) {
     // Reações positivas
-    CHEER("🎉", "Torcida", Color(0xFF4CAF50), longArrayOf(0, 100, 50, 100)),
-    CLAP("👏", "Palmas", Color(0xFF2196F3), longArrayOf(0, 50, 30, 50, 30, 50)),
-    GOAL("⚽", "Gol!", Color(0xFFFF9800), longArrayOf(0, 200, 100, 200)),
-    FIRE("🔥", "Jogada!", Color(0xFFFF5722), longArrayOf(0, 150)),
-    STAR("⭐", "Craque!", Color(0xFFFFD700), longArrayOf(0, 100, 50, 150)),
+    CHEER("🎉", "Torcida", ReactionColors.Cheer, longArrayOf(0, 100, 50, 100)),
+    CLAP("👏", "Palmas", ReactionColors.Clap, longArrayOf(0, 50, 30, 50, 30, 50)),
+    GOAL("⚽", "Gol!", ReactionColors.Goal, longArrayOf(0, 200, 100, 200)),
+    FIRE("🔥", "Jogada!", ReactionColors.Fire, longArrayOf(0, 150)),
+    STAR("⭐", "Craque!", ReactionColors.Star, longArrayOf(0, 100, 50, 150)),
 
     // Reações neutras/divertidas
-    LAUGH("😂", "Kkkkk", Color(0xFFFFC107), longArrayOf(0, 50, 50, 50, 50, 50)),
-    SHOCK("😱", "Eita!", Color(0xFF9C27B0), longArrayOf(0, 300)),
-    THINKING("🤔", "Hmm", Color(0xFF607D8B), longArrayOf(0, 100)),
+    LAUGH("😂", "Kkkkk", ReactionColors.Laugh, longArrayOf(0, 50, 50, 50, 50, 50)),
+    SHOCK("😱", "Eita!", ReactionColors.Shock, longArrayOf(0, 300)),
+    THINKING("🤔", "Hmm", ReactionColors.Thinking, longArrayOf(0, 100)),
 
     // Reações negativas
-    BOO("👎", "Vaia", Color(0xFFE91E63), longArrayOf(0, 200)),
-    FACEPALM("🤦", "Puts", Color(0xFF795548), longArrayOf(0, 150)),
+    BOO("👎", "Vaia", ReactionColors.Boo, longArrayOf(0, 200)),
+    FACEPALM("🤦", "Puts", ReactionColors.Facepalm, longArrayOf(0, 150)),
 
     // Reações especiais
-    WHISTLE("📣", "Apito", Color(0xFF03A9F4), longArrayOf(0, 250)),
-    HORN("📯", "Buzina", Color(0xFFCDDC39), longArrayOf(0, 500)),
+    WHISTLE("📣", "Apito", ReactionColors.Whistle, longArrayOf(0, 250)),
+    HORN("📯", "Buzina", ReactionColors.Horn, longArrayOf(0, 500)),
 }
 
 /**

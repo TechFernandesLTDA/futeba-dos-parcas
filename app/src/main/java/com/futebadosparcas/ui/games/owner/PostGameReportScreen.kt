@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color as AndroidColor
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.net.Uri
@@ -429,7 +428,7 @@ private fun ReportStatsCard(
                 StatBox(
                     value = yellowCards.toString(),
                     label = stringResource(R.string.owner_yellow),
-                    color = Color(0xFFFDD835)
+                    color = GamificationColors.CardYellow
                 )
                 StatBox(
                     value = redCards.toString(),
@@ -495,9 +494,9 @@ private fun ReportTopPlayersCard(
                 ) {
                     // Medal/position
                     val medalColor = when (index) {
-                        0 -> Color(0xFFFFD700)
-                        1 -> Color(0xFFE0E0E0)
-                        2 -> Color(0xFFCD7F32)
+                        0 -> GamificationColors.Gold
+                        1 -> GamificationColors.Silver
+                        2 -> GamificationColors.Bronze
                         else -> MaterialTheme.colorScheme.onSurfaceVariant
                     }
                     Box(

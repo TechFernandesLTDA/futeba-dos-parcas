@@ -375,6 +375,9 @@ object GamificationColors {
     val Bronze = Color(0xFFCD7F32)
     val Diamond = Color(0xFFB9F2FF)
 
+    // Cor semântica do cartão amarelo de futebol (fixa, independente do tema).
+    val CardYellow = Color(0xFFFDD835)
+
     val Purple = Color(0xFF6200EA)
     val PurpleLight = Color(0xFFB388FF)
 
@@ -415,6 +418,25 @@ object GamificationColors {
 
     val AccentBlue = Color(0xFF2196F3)
     val AccentPurple = Color(0xFFAB47BC)
+}
+
+/**
+ * Cores de identidade das reações do soundboard (design tokens fixos).
+ * Centralizadas aqui para evitar valores hardcoded espalhados na UI.
+ */
+object ReactionColors {
+    val Cheer = Color(0xFF4CAF50)
+    val Clap = Color(0xFF2196F3)
+    val Goal = Color(0xFFFF9800)
+    val Fire = Color(0xFFFF5722)
+    val Star = Color(0xFFFFD700)
+    val Laugh = Color(0xFFFFC107)
+    val Shock = Color(0xFF9C27B0)
+    val Thinking = Color(0xFF607D8B)
+    val Boo = Color(0xFFE91E63)
+    val Facepalm = Color(0xFF795548)
+    val Whistle = Color(0xFF03A9F4)
+    val Horn = Color(0xFFCDDC39)
 }
 
 /**

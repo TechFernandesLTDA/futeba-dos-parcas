@@ -175,16 +175,6 @@ data class CashboxEntry(
         return sdf.format(createdAt ?: referenceDate)
     }
 
-    /**
-     * Retorna a cor apropriada (verde para entrada, vermelho para saída)
-     */
-    fun getAmountColor(): Int {
-        return if (isIncome()) {
-            android.graphics.Color.parseColor("#4CAF50") // Verde
-        } else {
-            android.graphics.Color.parseColor("#F44336") // Vermelho
-        }
-    }
 }
 
 /**
@@ -283,16 +273,6 @@ data class CashboxSummary(
         return "- R$ ${String.format(Locale.getDefault(), "%.2f", totalExpense)}"
     }
 
-    /**
-     * Retorna a cor do saldo (verde positivo, vermelho negativo)
-     */
-    fun getBalanceColor(): Int {
-        return if (balance >= 0) {
-            android.graphics.Color.parseColor("#4CAF50") // Verde
-        } else {
-            android.graphics.Color.parseColor("#F44336") // Vermelho
-        }
-    }
 
     /**
      * Verifica se há movimentações registradas
