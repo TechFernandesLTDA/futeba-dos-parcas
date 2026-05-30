@@ -31,6 +31,7 @@
     "deleting": "Eliminando...",
     "fillAllFields": "Completa todos los campos",
     "genericError": "Algo salió mal. Inténtalo de nuevo.",
+    "navigationError": "No se pudo navegar. Inténtalo de nuevo.",
     "charCount": "{{current}}/{{max}} caracteres",
     "viewGroups": "Ver Grupos",
     "viewGames": "Ver Partidos"

@@ -10,7 +10,8 @@ import {
   Box,
 } from '@mui/material';
 import { pageSpacing } from '../../theme/pageTokens';
-import { NAV_ITEMS } from '../../config/navItems';
+import { NAV_ITEMS, getActiveNavIndex } from '../../config/navItems';
+import { useToast } from '../../contexts/ToastContext';
 
 const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.showInBottomNav);
 
@@ -18,30 +19,20 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { showError } = useToast();
 
+  // #2175 (bug 1): threshold 50 + histerese padrão evita flicker (esconder a
+  // cada 1px de scroll). Antes: disableHysteresis + threshold 0.
   const trigger = useScrollTrigger({
-    disableHysteresis: true,
-    threshold: 0,
+    threshold: 50,
   });
 
   const activeValue = React.useMemo(() => {
-    const path = location.pathname;
-    const search = location.search;
-
-    if ((path === '/' || path === '') && !search.includes('tab=')) return 0;
-    if (path === '/' && search.includes('tab=')) {
-      const tab = new URLSearchParams(search).get('tab');
-      const idx = BOTTOM_NAV_ITEMS.findIndex((item) => item.path === `/?tab=${tab}`);
-      if (idx >= 0) return idx;
-    }
-
-    for (let i = 0; i < BOTTOM_NAV_ITEMS.length; i++) {
-      for (const matchPath of BOTTOM_NAV_ITEMS[i].matchPaths) {
-        if (path.startsWith(matchPath)) return i;
-      }
-    }
-
-    return 0;
+    // #2226: fonte única de active-state (getActiveNavIndex). Índices 0-4
+    // coincidem com BOTTOM_NAV_ITEMS; -1 ou notificações (5) → false (nenhum
+    // item destacado), evitando highlight incorreto em rotas órfãs (#2184).
+    const idx = getActiveNavIndex(location.pathname, location.search);
+    return idx >= 0 && idx < BOTTOM_NAV_ITEMS.length ? idx : false;
   }, [location.pathname, location.search]);
 
   return (
@@ -63,8 +54,14 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
         >
           <BottomNavigation
             value={activeValue}
-            onChange={(_e, newValue) => {
-              navigate(BOTTOM_NAV_ITEMS[newValue].path);
+            onChange={(_e, newValue: number) => {
+              // #2175 (bug 2): navegação com error handling — feedback ao
+              // usuário se navigate lançar (ex.: rota inválida).
+              try {
+                navigate(BOTTOM_NAV_ITEMS[newValue].path);
+              } catch {
+                showError(t('common.navigationError'));
+              }
             }}
             showLabels
             sx={{
