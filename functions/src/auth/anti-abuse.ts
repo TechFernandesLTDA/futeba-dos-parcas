@@ -72,77 +72,77 @@ export const canSendSmsOtp = onCall(
     try {
     // #1034: Defense in depth — auth guard antes de qualquer
     // processamento de dados para evitar consumo de rate limit por anônimos
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Login obrigatorio",
-      );
-    }
+      if (!request.auth) {
+        throw new HttpsError(
+          "unauthenticated",
+          "Login obrigatorio",
+        );
+      }
 
-    const phone: unknown = request.data?.phone;
-    if (typeof phone !== "string" || !/^\+\d{10,15}$/.test(phone)) {
+      const phone: unknown = request.data?.phone;
+      if (typeof phone !== "string" || !/^\+\d{10,15}$/.test(phone)) {
       // NOTE: regex is intentionally loose here (E.164 any country).
       // Actual BR mobile validation happens at Firebase Phone Auth layer
       // (signInWithPhoneNumber rejects landlines/non-mobile). Tightening
       // this regex would block future international expansion.
-      throw new HttpsError(
-        "invalid-argument",
-        "Phone E.164 invalido",
-      );
-    }
+        throw new HttpsError(
+          "invalid-argument",
+          "Phone E.164 invalido",
+        );
+      }
 
-    const ip = clientIp(request);
+      const ip = clientIp(request);
 
-    const callerCheck = await checkRateLimit(request.auth!.uid, {
-      maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR * 3,
-      windowMs: 60 * 60 * 1000,
-      keyPrefix: "sms_caller",
-    });
-    if (!callerCheck.allowed) {
-      return {
-        allowed: false,
-        reason: "caller_rate_limit",
-        retryAfterSec: Math.ceil(
-          (callerCheck.resetAt.getTime() - Date.now()) / 1000,
-        ),
-      };
-    }
+      const callerCheck = await checkRateLimit(request.auth!.uid, {
+        maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR * 3,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "sms_caller",
+      });
+      if (!callerCheck.allowed) {
+        return {
+          allowed: false,
+          reason: "caller_rate_limit",
+          retryAfterSec: Math.ceil(
+            (callerCheck.resetAt.getTime() - Date.now()) / 1000,
+          ),
+        };
+      }
 
-    const phoneCheck = await checkRateLimit(phone, {
-      maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR,
-      windowMs: 60 * 60 * 1000,
-      keyPrefix: "sms_phone",
-    });
-    if (!phoneCheck.allowed) {
-      return {
-        allowed: false,
-        reason: "phone_rate_limit",
-        retryAfterSec: Math.ceil(
-          (phoneCheck.resetAt.getTime() - Date.now()) / 1000,
-        ),
-      };
-    }
+      const phoneCheck = await checkRateLimit(phone, {
+        maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "sms_phone",
+      });
+      if (!phoneCheck.allowed) {
+        return {
+          allowed: false,
+          reason: "phone_rate_limit",
+          retryAfterSec: Math.ceil(
+            (phoneCheck.resetAt.getTime() - Date.now()) / 1000,
+          ),
+        };
+      }
 
-    const ipCheck = await checkRateLimit(ip, {
-      maxRequests: SMS_RATE_LIMIT_PER_IP_HOUR,
-      windowMs: 60 * 60 * 1000,
-      keyPrefix: "sms_ip",
-    });
-    if (!ipCheck.allowed) {
-      return {
-        allowed: false,
-        reason: "ip_rate_limit",
-        retryAfterSec: Math.ceil(
-          (ipCheck.resetAt.getTime() - Date.now()) / 1000,
-        ),
-      };
-    }
+      const ipCheck = await checkRateLimit(ip, {
+        maxRequests: SMS_RATE_LIMIT_PER_IP_HOUR,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "sms_ip",
+      });
+      if (!ipCheck.allowed) {
+        return {
+          allowed: false,
+          reason: "ip_rate_limit",
+          retryAfterSec: Math.ceil(
+            (ipCheck.resetAt.getTime() - Date.now()) / 1000,
+          ),
+        };
+      }
 
-    return {allowed: true};
+      return {allowed: true};
     } catch (error) {
       if (error instanceof HttpsError) throw error;
-      logger.error('canSendSmsOtp failed', {error, uid: request.auth?.uid});
-      throw new HttpsError('internal', 'An unexpected error occurred');
+      logger.error("canSendSmsOtp failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
@@ -163,98 +163,98 @@ export const logVerificationFailure = onCall(
   },
   async (request) => {
     try {
-    const {auth} = request;
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "Login obrigatorio");
-    }
+      const {auth} = request;
+      if (!auth) {
+        throw new HttpsError("unauthenticated", "Login obrigatorio");
+      }
 
-    // FIX #1310-L8: rate limit por uid. Sem isto, um cliente pode chamar
-    // logVerificationFailure em loop e inflar verification_failures/
-    // audit_logs (custo de storage + ruído nos alerts).
-    const logRl = await checkRateLimit(auth.uid, {
-      maxRequests: LOG_FAIL_RATE_LIMIT_PER_HOUR,
-      windowMs: 60 * 60 * 1000,
-      keyPrefix: "log_verif_fail",
-    });
-    if (!logRl.allowed) {
-      const retryAfterSec = Math.ceil(
-        (logRl.resetAt.getTime() - Date.now()) / 1000,
-      );
-      throw new HttpsError(
-        "resource-exhausted",
-        "Muitas tentativas. Tente novamente mais tarde.",
-        {retryAfter: retryAfterSec},
-      );
-    }
+      // FIX #1310-L8: rate limit por uid. Sem isto, um cliente pode chamar
+      // logVerificationFailure em loop e inflar verification_failures/
+      // audit_logs (custo de storage + ruído nos alerts).
+      const logRl = await checkRateLimit(auth.uid, {
+        maxRequests: LOG_FAIL_RATE_LIMIT_PER_HOUR,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "log_verif_fail",
+      });
+      if (!logRl.allowed) {
+        const retryAfterSec = Math.ceil(
+          (logRl.resetAt.getTime() - Date.now()) / 1000,
+        );
+        throw new HttpsError(
+          "resource-exhausted",
+          "Muitas tentativas. Tente novamente mais tarde.",
+          {retryAfter: retryAfterSec},
+        );
+      }
 
-    const reason: unknown = request.data?.reason;
-    const stage: unknown = request.data?.stage;
-    if (typeof reason !== "string" || typeof stage !== "string") {
-      throw new HttpsError(
-        "invalid-argument",
-        "reason e stage devem ser string",
-      );
-    }
+      const reason: unknown = request.data?.reason;
+      const stage: unknown = request.data?.stage;
+      if (typeof reason !== "string" || typeof stage !== "string") {
+        throw new HttpsError(
+          "invalid-argument",
+          "reason e stage devem ser string",
+        );
+      }
 
-    const validStages = ["phone", "cpf"];
-    const validReasons = [
-      "invalid_format",
-      "invalid_cpf",
-      "duplicate_cpf",
-      "duplicate_phone",
-      "rate_limited",
-      "code_expired",
-      "code_incorrect",
-    ];
-    if (!validStages.includes(stage) || !validReasons.includes(reason)) {
-      throw new HttpsError("invalid-argument", "Valores invalidos");
-    }
+      const validStages = ["phone", "cpf"];
+      const validReasons = [
+        "invalid_format",
+        "invalid_cpf",
+        "duplicate_cpf",
+        "duplicate_phone",
+        "rate_limited",
+        "code_expired",
+        "code_incorrect",
+      ];
+      if (!validStages.includes(stage) || !validReasons.includes(reason)) {
+        throw new HttpsError("invalid-argument", "Valores invalidos");
+      }
 
-    const ip = clientIp(request);
-    const uid = auth.uid;
-    const now = admin.firestore.FieldValue.serverTimestamp();
+      const ip = clientIp(request);
+      const uid = auth.uid;
+      const now = admin.firestore.FieldValue.serverTimestamp();
 
-    await db().collection("verification_failures").add({
-      uid,
-      ip,
-      stage,
-      reason,
-      timestamp: now,
-    });
-
-    // Verifica se user tem muitas falhas recentes (>= threshold)
-    // e loga alert pra investigacao
-    const oneHourAgo = admin.firestore.Timestamp.fromMillis(
-      Date.now() - 60 * 60 * 1000,
-    );
-    const recentFails = await db()
-      .collection("verification_failures")
-      .where("uid", "==", uid)
-      .where("timestamp", ">=", oneHourAgo)
-      .count()
-      .get();
-
-    const count = recentFails.data().count;
-    if (count >= VERIFY_FAIL_AUDIT_THRESHOLD) {
-      logger.warn(
-        "[ANTI_ABUSE] User com multiplas falhas verificacao",
-        {uid, ip, count, stage, reason},
-      );
-      // Audit log critico
-      await db().collection("audit_logs").add({
-        type: "VERIFICATION_ABUSE_DETECTED",
-        target_user_id: uid,
+      await db().collection("verification_failures").add({
+        uid,
         ip,
-        failure_count_1h: count,
+        stage,
+        reason,
         timestamp: now,
       });
-    }
 
-    return {logged: true};
+      // Verifica se user tem muitas falhas recentes (>= threshold)
+      // e loga alert pra investigacao
+      const oneHourAgo = admin.firestore.Timestamp.fromMillis(
+        Date.now() - 60 * 60 * 1000,
+      );
+      const recentFails = await db()
+        .collection("verification_failures")
+        .where("uid", "==", uid)
+        .where("timestamp", ">=", oneHourAgo)
+        .count()
+        .get();
+
+      const count = recentFails.data().count;
+      if (count >= VERIFY_FAIL_AUDIT_THRESHOLD) {
+        logger.warn(
+          "[ANTI_ABUSE] User com multiplas falhas verificacao",
+          {uid, ip, count, stage, reason},
+        );
+        // Audit log critico
+        await db().collection("audit_logs").add({
+          type: "VERIFICATION_ABUSE_DETECTED",
+          target_user_id: uid,
+          ip,
+          failure_count_1h: count,
+          timestamp: now,
+        });
+      }
+
+      return {logged: true};
     } catch (error) {
       if (error instanceof HttpsError) throw error;
-      logger.error('logVerificationFailure failed', {error, uid: request.auth?.uid});
-      throw new HttpsError('internal', 'An unexpected error occurred');
+      logger.error("logVerificationFailure failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
     }
   },
 );
