@@ -60,6 +60,12 @@ interface ConfirmationData {
   status: string;
 }
 
+// #2276: interface tipada para o doc games (substitui Record<string, any>).
+interface RawGameOwner {
+  ownerId?: string;
+  owner_id?: string;
+}
+
 export const TeamFormationScreen: React.FC = () => {
   useDocumentTitle('Formação de Times');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -103,8 +109,7 @@ export const TeamFormationScreen: React.FC = () => {
         // Verificar se o usuário é dono do jogo antes de mostrar o formulário
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          const gameData = snakeToCamel<RawGameOwner>(gameDoc.data());
           const ownerId = gameData.ownerId || gameData.owner_id;
           const currentUser = userRef.current;
           if (currentUser && currentUser.id !== ownerId) {

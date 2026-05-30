@@ -68,6 +68,20 @@ import type { Activity } from './RecentActivityFeed';
 
 const logger = createLogger('HomeTab');
 
+// #2276: interface tipada para o doc de atividade/notificação (substitui Record<string, any>).
+interface RawActivityDoc {
+  type?: string;
+  title?: string;
+  message?: string;
+  body?: string;
+  senderName?: string;
+  senderPhoto?: string;
+  referenceType?: string;
+  referenceId?: string;
+  groupId?: string;
+  senderId?: string;
+}
+
 // ─── NextGameWidget ──────────────────────────────────────────────────────────
 
 function NextGameWidget() {
@@ -750,8 +764,7 @@ export function HomeTab() {
         if (cancelled) return;
         const data = snapshot.docs.map((docSnap) => {
           const raw = docSnap.data();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const d = snakeToCamel(raw) as Record<string, any>;
+          const d = snakeToCamel<RawActivityDoc>(raw);
           const createdAt = (raw.created_at || raw.createdAt)?.toDate?.();
           return {
             id: docSnap.id,

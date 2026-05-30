@@ -10,8 +10,8 @@ interface UseFirestoreQueryOptions<T> {
   /** Query do Firestore */
   query: Query<DocumentData> | null;
   /** Transforma o documento raw em tipo T (após snakeToCamel) */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transform?: (data: Record<string, any>, id: string) => T;
+  // #2276: Record<string, unknown> em vez de any — força casts explícitos no transform.
+  transform?: (data: Record<string, unknown>, id: string) => T;
   /** Ativa/desativa a query */
   enabled?: boolean;
 }

@@ -71,6 +71,26 @@ interface UserProfile {
   autoRatingSamples: number;
 }
 
+// #2276: interface tipada para o doc users lido (substitui Record<string, any>).
+// Inclui spellings snake_case acessados como fallback defensivo.
+interface RawEditProfileDoc {
+  name?: string;
+  nickname?: string;
+  phone?: string;
+  preferredPosition?: PreferredPosition;
+  bio?: string;
+  favoriteTeam?: string | null;
+  strikerRating?: number; striker_rating?: number;
+  midRating?: number; mid_rating?: number;
+  defenderRating?: number; defender_rating?: number;
+  gkRating?: number; gk_rating?: number;
+  autoStrikerRating?: number; auto_striker_rating?: number;
+  autoMidRating?: number; auto_mid_rating?: number;
+  autoDefenderRating?: number; auto_defender_rating?: number;
+  autoGkRating?: number; auto_gk_rating?: number;
+  autoRatingSamples?: number; auto_rating_samples?: number;
+}
+
 export const EditProfileScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('profile.editTitle'));
@@ -167,8 +187,7 @@ export const EditProfileScreen: React.FC = () => {
     try {
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
       if (userDoc.exists()) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = snakeToCamel(userDoc.data()) as Record<string, any>;
+        const data = snakeToCamel<RawEditProfileDoc>(userDoc.data());
         const loaded: UserProfile = {
           name: data.name || currentUser.displayName || '',
           nickname: data.nickname || '',

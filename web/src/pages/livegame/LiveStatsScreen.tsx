@@ -58,6 +58,16 @@ interface LiveStats {
   topScorerB: { name: string; goals: number } | null;
 }
 
+// #2276: interface tipada para o doc games (substitui Record<string, any>).
+interface RawGameStats {
+  teamAScore?: number;
+  team1Score?: number;
+  teamBScore?: number;
+  team2Score?: number;
+  topScorerA?: { name: string; goals: number } | null;
+  topScorerB?: { name: string; goals: number } | null;
+}
+
 export const LiveStatsScreen: React.FC = () => {
   useDocumentTitle('Estatísticas ao Vivo');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -88,8 +98,7 @@ export const LiveStatsScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists() && !cancelled) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          const data = snakeToCamel<RawGameStats>(gameDoc.data());
           setStats({
             teamAScore: data.teamAScore || data.team1Score || 0,
             teamBScore: data.teamBScore || data.team2Score || 0,

@@ -56,6 +56,23 @@ interface StatsSummary {
   winRate: number;
 }
 
+// #2276: interfaces tipadas para os docs lidos (substituem Record<string, any>).
+interface RawUserStats {
+  gamesPlayed?: number;
+  wins?: number;
+  goals?: number;
+  assists?: number;
+  mvpCount?: number;
+}
+interface RawMonthlyStats {
+  month?: string;
+  gamesPlayed?: number;
+  goals?: number;
+  assists?: number;
+  wins?: number;
+  xpEarned?: number;
+}
+
 export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle('Evolução');
@@ -93,8 +110,7 @@ export const EvolutionScreen: React.FC = () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', targetUserId));
         if (userDoc.exists() && !cancelled) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(userDoc.data()) as Record<string, any>;
+          const data = snakeToCamel<RawUserStats>(userDoc.data());
           const totalGames = data.gamesPlayed || 0;
           const totalWins = data.wins || 0;
           const totalGoals = data.goals || 0;
@@ -117,10 +133,9 @@ export const EvolutionScreen: React.FC = () => {
         const snapshot = await getDocs(q);
 
         const data: EvolutionData[] = snapshot.docs.map((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const docData = snakeToCamel(d.data()) as Record<string, any>;
+          const docData = snakeToCamel<RawMonthlyStats>(d.data());
           return {
-            month: docData.month,
+            month: docData.month ?? '',
             gamesPlayed: docData.gamesPlayed || 0,
             goals: docData.goals || 0,
             assists: docData.assists || 0,

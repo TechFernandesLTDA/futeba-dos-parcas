@@ -41,6 +41,16 @@ interface BlockedPlayer {
   blockedAt?: Date;
 }
 
+// #2276: interfaces tipadas para os docs lidos (substituem Record<string, any>).
+interface RawBlockedGameDoc {
+  blockedPlayers?: string[];
+  ownerId?: string;
+}
+interface RawBlockedUserDoc {
+  name?: string;
+  photoUrl?: string;
+}
+
 export const BlockedPlayersScreen: React.FC = () => {
   useDocumentTitle('Jogadores Bloqueados');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -64,8 +74,7 @@ export const BlockedPlayersScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists() && !cancelled) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          const gameData = snakeToCamel<RawBlockedGameDoc>(gameDoc.data());
           const blockedIds = gameData.blockedPlayers || [];
           const ownerId = gameData.ownerId || null;
           setGameOwnerId(ownerId);
@@ -81,8 +90,7 @@ export const BlockedPlayersScreen: React.FC = () => {
             blockedIds.map(async (uid: string) => {
               const userDoc = await getDoc(doc(db, 'users', uid));
               if (userDoc.exists()) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const data = snakeToCamel(userDoc.data()) as Record<string, any>;
+                const data = snakeToCamel<RawBlockedUserDoc>(userDoc.data());
                 return {
                   id: uid,
                   name: data.name || 'Jogador',

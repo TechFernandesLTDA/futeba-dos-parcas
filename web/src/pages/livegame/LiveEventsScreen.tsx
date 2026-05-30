@@ -58,6 +58,12 @@ interface GameEvent {
   createdAt: Date;
 }
 
+// #2276: interface tipada para o doc games (substitui Record<string, any>).
+interface RawGameOwner {
+  ownerId?: string;
+  owner_id?: string;
+}
+
 export const LiveEventsScreen: React.FC = () => {
   useDocumentTitle('Eventos ao Vivo');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -87,8 +93,7 @@ export const LiveEventsScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists() && !cancelled) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          const gameData = snakeToCamel<RawGameOwner>(gameDoc.data());
           const ownerId = gameData.ownerId || gameData.owner_id;
           setCanManage(user.id === ownerId);
         }

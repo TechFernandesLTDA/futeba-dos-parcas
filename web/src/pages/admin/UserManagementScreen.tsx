@@ -57,6 +57,17 @@ interface UserWithRole {
   level: number;
 }
 
+// #2276: interface tipada para o doc users (substitui Record<string, any>).
+interface RawAdminUserDoc {
+  name?: string;
+  email?: string;
+  photoUrl?: string;
+  role?: string;
+  createdAt?: { toDate?: () => Date };
+  gamesPlayed?: number;
+  level?: number;
+}
+
 export const UserManagementScreen: React.FC = () => {
   useDocumentTitle('Gerenciar Usuários');
   const goBack = useNavigateBack('/');
@@ -95,8 +106,7 @@ export const UserManagementScreen: React.FC = () => {
   };
 
   const parseUserDoc = (d: DocumentSnapshot) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = snakeToCamel(d.data() as Record<string, any>) as Record<string, any>;
+    const data = snakeToCamel<RawAdminUserDoc>(d.data() ?? {});
     return {
       id: d.id,
       name: data.name || 'Sem nome',

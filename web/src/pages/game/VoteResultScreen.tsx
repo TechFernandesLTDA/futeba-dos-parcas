@@ -68,6 +68,23 @@ interface GameResult {
   winner: 'A' | 'B' | 'DRAW';
 }
 
+// #2276: interfaces tipadas para os docs lidos (substituem Record<string, any>).
+interface RawVoteGameDoc {
+  teamAScore?: number;
+  team1Score?: number;
+  teamBScore?: number;
+  team2Score?: number;
+  winnerTeam?: GameResult['winner'];
+  mvpId?: string;
+  bolaMurchaId?: string;
+  mvpVotes?: number;
+  bolaMurchaVotes?: number;
+}
+interface RawVoteUserDoc {
+  name?: string;
+  photoUrl?: string;
+}
+
 export const VoteResultScreen: React.FC = () => {
   useDocumentTitle('Resultado da Votação');
   const navigateBack = useNavigateBack('/?tab=1');
@@ -124,8 +141,7 @@ export const VoteResultScreen: React.FC = () => {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists() && !cancelled) {
           const raw = gameDoc.data();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(raw) as Record<string, any>;
+          const data = snakeToCamel<RawVoteGameDoc>(raw);
           setGameResult({
             teamAScore: data.teamAScore || data.team1Score || 0,
             teamBScore: data.teamBScore || data.team2Score || 0,
@@ -137,8 +153,7 @@ export const VoteResultScreen: React.FC = () => {
             const userDoc = await getDoc(doc(db, 'users', mvpId));
             if (userDoc.exists()) {
               const userRaw = userDoc.data();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const userData = snakeToCamel(userRaw) as Record<string, any>;
+              const userData = snakeToCamel<RawVoteUserDoc>(userRaw);
               setVoteResult((prev) => ({
                 ...prev,
                 mvp: {
@@ -156,8 +171,7 @@ export const VoteResultScreen: React.FC = () => {
             const userDoc = await getDoc(doc(db, 'users', bolaMurchaId));
             if (userDoc.exists()) {
               const userRaw = userDoc.data();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const userData = snakeToCamel(userRaw) as Record<string, any>;
+              const userData = snakeToCamel<RawVoteUserDoc>(userRaw);
               setVoteResult((prev) => ({
                 ...prev,
                 bolaMurcha: {
