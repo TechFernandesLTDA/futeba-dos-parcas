@@ -1,4 +1,16 @@
 {
+  "cashbox": {
+    "title": "Caixinha",
+    "income": "Entrada",
+    "expense": "Saída",
+    "addIncome": "Adicionar Entrada",
+    "addExpense": "Adicionar Saída",
+    "amountLabel": "Valor (R$)",
+    "amountError": "Informe um valor maior que zero",
+    "descriptionLabel": "Descrição",
+    "descriptionError": "Informe uma descrição",
+    "confirming": "Confirmando..."
+  },
   "common": {
     "appName": "Futeba dos Parças",
     "loading": "Carregando...",
@@ -320,6 +332,10 @@
     }
   },
   "games": {
+    "liveStats": {
+      "title": "Estatísticas ao Vivo",
+      "perPlayerSoon": "Estatísticas por jogador em breve"
+    },
     "title": "Jogos",
     "upcoming": "Próximos Jogos",
     "myGames": "Meus Jogos",

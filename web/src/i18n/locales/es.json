@@ -1,4 +1,16 @@
 {
+  "cashbox": {
+    "title": "Caja",
+    "income": "Ingreso",
+    "expense": "Gasto",
+    "addIncome": "Agregar Ingreso",
+    "addExpense": "Agregar Gasto",
+    "amountLabel": "Monto (R$)",
+    "amountError": "Ingrese un valor mayor que cero",
+    "descriptionLabel": "Descripción",
+    "descriptionError": "Ingrese una descripción",
+    "confirming": "Confirmando..."
+  },
   "common": {
     "appName": "Futeba dos Parças",
     "loading": "Cargando...",
@@ -315,6 +327,10 @@
     "signOutError": "Error al cerrar sesión. Intenta de nuevo."
   },
   "games": {
+    "liveStats": {
+      "title": "Estadísticas en Vivo",
+      "perPlayerSoon": "Estadísticas por jugador próximamente"
+    },
     "title": "Juegos",
     "upcoming": "Próximos Juegos",
     "myGames": "Mis Juegos",

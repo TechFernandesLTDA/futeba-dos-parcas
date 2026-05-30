@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -58,7 +59,8 @@ interface CashboxTransaction {
 }
 
 export const CashboxScreen: React.FC = () => {
-  useDocumentTitle('Caixinha');
+  const { t } = useTranslation();
+  useDocumentTitle(t('cashbox.title'));
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -74,10 +76,19 @@ export const CashboxScreen: React.FC = () => {
   const [transactionType, setTransactionType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  // #2231: rastreia se o campo já foi tocado para só exibir erro após interação.
+  const [amountTouched, setAmountTouched] = useState(false);
+  const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const { showError } = useToast();
+
+  // #2231: validação em tempo real do formulário de transação.
+  const parsedAmount = parseFloat(amount);
+  const amountValid = !!amount && !isNaN(parsedAmount) && parsedAmount > 0;
+  const descriptionValid = description.trim().length > 0;
+  const formValid = amountValid && descriptionValid;
 
   const handleRetry = () => {
     setError(null);
@@ -226,10 +237,12 @@ export const CashboxScreen: React.FC = () => {
               startIcon={<TrendingIcon />}
               onClick={() => {
                 setTransactionType('INCOME');
+                setAmountTouched(false);
+                setDescriptionTouched(false);
                 setDialogOpen(true);
               }}
             >
-              Entrada
+              {t('cashbox.income')}
             </Button>
             <Button
               variant="contained"
@@ -238,10 +251,12 @@ export const CashboxScreen: React.FC = () => {
               startIcon={<TrendingDownIcon />}
               onClick={() => {
                 setTransactionType('EXPENSE');
+                setAmountTouched(false);
+                setDescriptionTouched(false);
                 setDialogOpen(true);
               }}
             >
-              Saída
+              {t('cashbox.expense')}
             </Button>
           </Box>
         )}
@@ -292,32 +307,39 @@ export const CashboxScreen: React.FC = () => {
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cashbox-dialog-title">
         <DialogTitle id="cashbox-dialog-title">
-          {transactionType === 'INCOME' ? 'Adicionar Entrada' : 'Adicionar Saída'}
+          {transactionType === 'INCOME' ? t('cashbox.addIncome') : t('cashbox.addExpense')}
         </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="none"
-            label="Valor (R$)"
+            label={t('cashbox.amountLabel')}
             type="number"
             fullWidth
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            sx={{ mb: 2 }}
+            onBlur={() => setAmountTouched(true)}
+            error={amountTouched && !amountValid}
+            helperText={amountTouched && !amountValid ? t('cashbox.amountError') : ' '}
+            inputProps={{ min: 0, step: '0.01' }}
+            sx={{ mb: 1 }}
           />
           <TextField
             margin="none"
-            label="Descrição"
+            label={t('cashbox.descriptionLabel')}
             fullWidth
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            onBlur={() => setDescriptionTouched(true)}
+            error={descriptionTouched && !descriptionValid}
+            helperText={descriptionTouched && !descriptionValid ? t('cashbox.descriptionError') : ' '}
             inputProps={{ maxLength: 500 }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>Cancelar</Button>
-          <Button onClick={handleAddTransaction} variant="contained" color={transactionType === 'INCOME' ? 'success' : 'error'} disabled={submitting || !amount || !description || parseFloat(amount) <= 0 || isNaN(parseFloat(amount))} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
-            {submitting ? 'Confirmando...' : 'Confirmar'}
+          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>{t('common.cancel')}</Button>
+          <Button onClick={handleAddTransaction} variant="contained" color={transactionType === 'INCOME' ? 'success' : 'error'} disabled={submitting || !formValid} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
+            {submitting ? t('cashbox.confirming') : t('common.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
