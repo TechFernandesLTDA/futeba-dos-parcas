@@ -358,6 +358,7 @@ val viewModelKoinModule = module {
     viewModel {
         PhoneVerificationViewModel(
             auth = get(),
+            resourceManager = get(),
         )
     }
 

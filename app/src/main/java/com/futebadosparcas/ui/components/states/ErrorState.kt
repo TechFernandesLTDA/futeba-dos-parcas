@@ -12,6 +12,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+
+@Deprecated(
+    message = "Use modern/ErrorState instead for consistent UI",
+    replaceWith = ReplaceWith("ErrorState", "com.futebadosparcas.ui.components.modern.ErrorState")
+)
 /**
  * Estado de erro padrão com retry button
  *

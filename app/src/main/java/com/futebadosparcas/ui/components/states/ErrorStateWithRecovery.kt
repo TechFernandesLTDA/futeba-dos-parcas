@@ -19,6 +19,11 @@ import com.futebadosparcas.util.RecoveryAction
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
+@Deprecated(
+    message = "Use modern/ErrorState with errorType parameter instead",
+    replaceWith = ReplaceWith("ErrorState", "com.futebadosparcas.ui.components.modern.ErrorState")
+)
+
 /**
  * Estado de erro com recuperacao contextual.
  *

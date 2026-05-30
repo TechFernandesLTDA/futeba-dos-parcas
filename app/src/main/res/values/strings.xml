@@ -4157,4 +4157,57 @@ subir no ranking!</string>
     <string name="membro">Membro</string>
     <string name="ver_ranking_completo">Ver ranking completo</string>
 
+    <!-- ==================== PHONE VERIFICATION ==================== -->
+    <string name="phone_error_invalid_number">Número de telefone inválido</string>
+    <string name="phone_error_sms_send">Erro ao enviar SMS. Tente novamente.</string>
+    <string name="phone_error_invalid_format">Formato inválido. Use +5511999999999</string>
+    <string name="phone_error_too_many_attempts_with_time">Muitas tentativas. Tente novamente em %1$ds</string>
+    <string name="phone_error_too_many_attempts">Muitas tentativas. Tente novamente mais tarde.</string>
+    <string name="phone_error_connection">Erro de conexão. Verifique sua internet e tente novamente.</string>
+    <string name="phone_error_code_length">O código deve ter 6 dígitos</string>
+    <string name="phone_error_session_expired">Sessão expirou. Reinicie o processo.</string>
+    <string name="phone_error_login_expired">Login expirou. Faça login novamente.</string>
+    <string name="phone_error_invalid_code">Código incorreto</string>
+    <string name="phone_error_code_expired">Código expirou. Solicite novo SMS.</string>
+    <string name="phone_error_credential_in_use">Este telefone já está vinculado a outra conta</string>
+    <string name="phone_error_invalid_code_retry">Código inválido. Tente novamente.</string>
+
+    <!-- ==================== TEAM FORMATION ==================== -->
+    <string name="team_formation_error_invalid_game_id">ID do jogo inválido</string>
+    <string name="team_formation_error_load_confirmations">Erro ao carregar confirmações</string>
+    <string name="team_formation_error_min_players">Mínimo de 2 jogadores confirmados necessários</string>
+    <string name="team_formation_error_unknown">Erro desconhecido</string>
+    <string name="team_formation_error_player_already_paired">Jogador já está em outro par</string>
+    <string name="team_formation_error_invalid_captains">Capitães inválidos</string>
+    <string name="team_formation_error_define_teams_save">Defina os times antes de salvar</string>
+    <string name="team_formation_success_saved">Formação salva com sucesso</string>
+    <string name="team_formation_error_save">Erro ao salvar formação</string>
+    <string name="team_formation_error_no_players_available">Nenhum jogador desta formação está disponível</string>
+    <string name="team_formation_error_define_teams_confirm">Defina os times antes de confirmar</string>
+    <string name="team_formation_success_confirmed">Times confirmados com sucesso</string>
+    <string name="team_formation_error_confirm">Erro ao confirmar times</string>
+    <string name="team_formation_default_team_a">Time A</string>
+    <string name="team_formation_default_team_b">Time B</string>
+    <string name="team_formation_default_team_1">Time 1</string>
+    <string name="team_formation_default_team_2">Time 2</string>
+
+    <!-- ==================== GAME DETAIL ==================== -->
+    <string name="game_detail_error_invalid_id">ID do jogo inválido</string>
+    <string name="game_detail_error_load">Erro ao carregar jogo</string>
+    <string name="game_detail_error_list_closed">A lista está fechada! Apenas o organizador pode alterar.</string>
+    <string name="game_detail_error_define_teams">Defina os times antes de iniciar o jogo</string>
+    <string name="game_detail_error_too_early">O jogo só pode ser iniciado 10 minutos antes do horário marcado.</string>
+    <string name="game_detail_error_gps_required">Ative o GPS para confirmar que está no local do jogo.</string>
+    <string name="game_detail_error_too_far">Você está muito longe da quadra (%1$dm). Aproxime-se para iniciar.</string>
+    <string name="game_detail_error_update_presence">Erro ao atualizar presença: %1$s</string>
+    <string name="game_detail_error_save_score">Erro ao salvar placar: %1$s</string>
+    <string name="game_detail_error_internal">Falha interna</string>
+
+    <!-- ==================== VOTE RESULT ==================== -->
+    <string name="vote_result_error_load">Erro ao carregar resultados</string>
+
+    <!-- ==================== WEEKLY RANKING ==================== -->
+    <string name="weekly_ranking_player_fallback">Jogador</string>
+    <string name="weekly_ranking_error_load">Erro ao carregar ranking</string>
+
 </resources>

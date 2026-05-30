@@ -12,7 +12,9 @@ import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import com.futebadosparcas.R
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.ResourceManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +38,7 @@ class PhoneVerificationViewModel(
     private val auth: FirebaseAuth,
     private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val resourceManager: ResourceManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PhoneVerificationUiState>(
@@ -60,8 +63,8 @@ class PhoneVerificationViewModel(
             AppLogger.e("PhoneVerification", "verification failed", e)
             val msg = when (e) {
                 is FirebaseAuthInvalidCredentialsException ->
-                    "Numero de telefone invalido"
-                else -> e.message ?: "Erro ao enviar SMS. Tente novamente."
+                    resourceManager.getString(R.string.phone_error_invalid_number)
+                else -> e.message ?: resourceManager.getString(R.string.phone_error_sms_send)
             }
             _uiState.value = PhoneVerificationUiState.Error(msg)
         }
@@ -91,7 +94,7 @@ class PhoneVerificationViewModel(
         val normalized = phone.replace("\\s".toRegex(), "")
         if (!normalized.matches(Regex("^\\+\\d{10,15}$"))) {
             _uiState.value =
-                PhoneVerificationUiState.Error("Formato invalido. Use +5511999998888")
+                PhoneVerificationUiState.Error(resourceManager.getString(R.string.phone_error_invalid_format))
             return
         }
         _uiState.value = PhoneVerificationUiState.SendingCode
@@ -112,9 +115,9 @@ class PhoneVerificationViewModel(
                 if (!allowed) {
                     val retryAfterSec = resultData?.get("retryAfterSec") as? Number
                     val msg = if (retryAfterSec != null && retryAfterSec.toInt() > 0) {
-                        "Muitas tentativas. Tente novamente em ${retryAfterSec.toInt()}s"
+                        resourceManager.getString(R.string.phone_error_too_many_attempts_with_time, retryAfterSec.toInt())
                     } else {
-                        "Muitas tentativas. Tente novamente mais tarde."
+                        resourceManager.getString(R.string.phone_error_too_many_attempts)
                     }
                     _uiState.value = PhoneVerificationUiState.Error(msg)
                     return@launch
@@ -133,7 +136,7 @@ class PhoneVerificationViewModel(
             } catch (e: Exception) {
                 AppLogger.e("PhoneVerification", "Erro ao verificar rate limit OTP", e)
                 _uiState.value = PhoneVerificationUiState.Error(
-                    "Erro de conexao. Verifique sua internet e tente novamente."
+                    resourceManager.getString(R.string.phone_error_connection)
                 )
             }
         }
@@ -145,13 +148,13 @@ class PhoneVerificationViewModel(
     fun verifyCode(code: String) {
         if (!code.matches(Regex("^\\d{6}$"))) {
             _uiState.value =
-                PhoneVerificationUiState.Error("O codigo deve ter 6 digitos")
+                PhoneVerificationUiState.Error(resourceManager.getString(R.string.phone_error_code_length))
             return
         }
         val id = verificationId
         if (id == null) {
             _uiState.value =
-                PhoneVerificationUiState.Error("Sessao expirou. Reinicie o processo.")
+                PhoneVerificationUiState.Error(resourceManager.getString(R.string.phone_error_session_expired))
             return
         }
         val credential = PhoneAuthProvider.getCredential(id, code)
@@ -166,7 +169,7 @@ class PhoneVerificationViewModel(
                 val currentUser = auth.currentUser
                 if (currentUser == null) {
                     _uiState.value = PhoneVerificationUiState.Error(
-                        "Login expirou. Faca login novamente.",
+                        resourceManager.getString(R.string.phone_error_login_expired),
                     )
                     return@launch
                 }
@@ -203,12 +206,12 @@ class PhoneVerificationViewModel(
                 AppLogger.e("PhoneVerification", "linkWithCredential failed", e)
                 val msg = when {
                     e.message?.contains("invalid-verification-code") == true ->
-                        "Codigo incorreto"
+                        resourceManager.getString(R.string.phone_error_invalid_code)
                     e.message?.contains("code-expired") == true ->
-                        "Codigo expirou. Solicite novo SMS."
+                        resourceManager.getString(R.string.phone_error_code_expired)
                     e.message?.contains("credential-already-in-use") == true ->
-                        "Este telefone ja esta vinculado a outra conta"
-                    else -> "Codigo invalido. Tente novamente."
+                        resourceManager.getString(R.string.phone_error_credential_in_use)
+                    else -> resourceManager.getString(R.string.phone_error_invalid_code_retry)
                 }
                 _uiState.value = PhoneVerificationUiState.Error(msg)
             }
