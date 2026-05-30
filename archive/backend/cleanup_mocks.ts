@@ -1,9 +1,12 @@
 
 import * as admin from 'firebase-admin';
-import * as path from 'path';
 
-// Configuração da chave de serviço
-const serviceAccountPath = path.join(__dirname, 'futebadosparcas-firebase-adminsdk-fbsvc-b5fb25775d.json');
+const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+if (!serviceAccountPath) {
+    console.error('GOOGLE_APPLICATION_CREDENTIALS não definido. Defina o caminho para o arquivo de chave de serviço.');
+    process.exit(1);
+}
 
 try {
     admin.initializeApp({

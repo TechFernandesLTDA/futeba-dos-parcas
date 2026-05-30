@@ -13,13 +13,21 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-ch
 import { getAnalytics, type Analytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBMzIKlfST4gJm3RM3QQXY-N0doVE6vMQE",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "futebadosparcas.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "futebadosparcas",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "futebadosparcas.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "490094091078",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:490094091078:web:2a2bb9d9048da03cb5a347",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
+const missingKeys = Object.entries(firebaseConfig)
+  .filter(([, v]) => !v)
+  .map(([k]) => k);
+
+if (missingKeys.length > 0) {
+  throw new Error(`Missing Firebase config env vars: ${missingKeys.join(', ')}`);
+}
 
 let app: FirebaseApp;
 try {
