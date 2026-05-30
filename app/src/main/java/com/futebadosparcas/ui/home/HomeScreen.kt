@@ -44,6 +44,7 @@ import com.futebadosparcas.domain.model.WeeklyChallenge
 import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.util.HapticManager
@@ -105,7 +106,7 @@ fun HomeScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            FutebaTopBar(
+            AppTopBar.Root(
                 unreadCount = unreadCount,
                 onNavigateNotifications = onNotificationsClick,
                 onNavigateGroups = onGroupsClick,

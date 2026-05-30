@@ -43,7 +43,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateCompact
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
-import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
@@ -52,7 +52,6 @@ import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeagueScreen(
     uiState: LeagueUiState,
@@ -81,7 +80,7 @@ fun LeagueScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            FutebaTopBar(
+            AppTopBar.Root(
                 unreadCount = unreadCount,
                 onNavigateNotifications = onNavigateNotifications,
                 onNavigateGroups = onNavigateGroups,

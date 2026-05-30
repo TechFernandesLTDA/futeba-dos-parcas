@@ -14,11 +14,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.EventNote
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -32,7 +38,7 @@ import com.futebadosparcas.ui.components.AnimatedStateContainer
 import com.futebadosparcas.ui.components.StateType
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.repository.GameFilterType
-import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.theme.Spacing
@@ -54,7 +60,6 @@ import androidx.compose.ui.res.stringResource
  * - Pull-to-refresh (via Fragment)
  * - Navegação via callbacks
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GamesScreen(
     viewModel: GamesViewModel,
@@ -70,7 +75,7 @@ fun GamesScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            FutebaTopBar(
+            AppTopBar.Root(
                 unreadCount = unreadCount,
                 onNavigateNotifications = onNotificationsClick,
                 onNavigateGroups = onGroupsClick,

@@ -48,6 +48,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.PlayerCardShareHelper
 import com.futebadosparcas.ui.components.ShimmerPlayerCard
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.theme.bottomBarPadding
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.FlowPreview
@@ -143,7 +144,7 @@ fun PlayersScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            com.futebadosparcas.ui.components.FutebaTopBar(
+            AppTopBar.Root(
                 unreadCount = unreadCount,
                 onNavigateNotifications = onNavigateNotifications,
                 onNavigateGroups = onNavigateGroups,
