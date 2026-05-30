@@ -378,6 +378,9 @@ object GamificationColors {
     // Cor semântica do cartão amarelo de futebol (fixa, independente do tema).
     val CardYellow = Color(0xFFFDD835)
 
+    // Cor da chama "sem streak" (estado inativo do StreakFlame).
+    val FlameNone = Color(0xFF9E9E9E) // Grey 500
+
     val Purple = Color(0xFF6200EA)
     val PurpleLight = Color(0xFFB388FF)
 
