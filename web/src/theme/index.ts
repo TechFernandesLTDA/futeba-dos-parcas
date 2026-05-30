@@ -324,14 +324,9 @@ export const futebaTheme = createTheme({
         '.MuiTypography-noWrap': {
           textOverflow: 'ellipsis',
         },
-        '#mobile-shell': {
-          paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
-        },
-        '@media (min-width: 900px)': {
-          '#mobile-shell': {
-            paddingBottom: 0,
-          },
-        },
+        // #2177: padding inferior do #mobile-shell removido. O spacer dentro
+        // de MobileBottomNav (height = bottomBarHeight + safe-area) já reserva
+        // o espaço; a regra aqui duplicava o padding (~128px + 2x safe-area).
       },
     },
   },

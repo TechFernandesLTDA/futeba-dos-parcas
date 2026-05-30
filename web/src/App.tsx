@@ -398,11 +398,6 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
 
-      {/* Auth */}
-      <Route path="/login" element={<PublicRoute><Suspense fallback={<RouteFallback />}><LoginScreen /></Suspense></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
-      <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
-
       {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
