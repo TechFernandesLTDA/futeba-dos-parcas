@@ -57,6 +57,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingState } from '../../components/common/GameCard';
+import { FixedBottomBar } from '../../components/layout';
 
 const logger = createLogger('LiveGameScreen');
 
@@ -722,24 +723,10 @@ export const LiveGameScreen: React.FC = () => {
         })()}
       </Container>
 
+      {/* #2178: FixedBottomBar. #2164: tela full-screen (fora do AppLayout),
+          centraliza no viewport — sem offset de sidebar. */}
       {canManage && (
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: { xs: 0, sm: '50%' },
-            right: { xs: 0, sm: 'auto' },
-            transform: { sm: 'translateX(-50%)' },
-            width: { xs: '100%', sm: 480 },
-            maxWidth: 480,
-            bgcolor: 'background.paper',
-            borderTop: `1px solid ${theme.palette.divider}`,
-            p: 2,
-            // #2270: safe-area para não ficar sob o home indicator (iPhone notch).
-            pb: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-            zIndex: 10,
-          }}
-        >
+        <FixedBottomBar inLayout={false}>
           <Container maxWidth={isDesktop ? 'md' : 'sm'}>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {isRunning ? (
@@ -772,7 +759,7 @@ export const LiveGameScreen: React.FC = () => {
               )}
             </Box>
           </Container>
-        </Box>
+        </FixedBottomBar>
       )}
 
       {/* #1539: Diálogo de confirmação para finalizar jogo */}

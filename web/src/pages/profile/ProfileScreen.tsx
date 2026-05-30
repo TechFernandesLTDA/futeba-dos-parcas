@@ -46,7 +46,7 @@ import { usePlayerDetail } from '../../hooks/usePlayers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
-import { ErrorState } from '../../components/common/ErrorState';
+import { ErrorScreen } from '../../components/common/ErrorScreen';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -100,17 +100,13 @@ export const ProfileScreen: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <ErrorState
-          message={t('profile.loadError', { error })}
-          onRetry={() => queryClient.invalidateQueries({ queryKey: ['player', targetUserId] })}
-        />
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Button startIcon={<BackIcon />} onClick={navigateBack}>
-            {t('common.back')}
-          </Button>
-        </Box>
-      </Container>
+      // #2178: ErrorScreen padronizado
+      <ErrorScreen
+        message={t('profile.loadError', { error })}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: ['player', targetUserId] })}
+        onBack={navigateBack}
+        backLabel={t('common.back')}
+      />
     );
   }
 

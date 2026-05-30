@@ -13,7 +13,6 @@ import {
   Avatar,
   Chip,
   useTheme,
-  Fab,
   Button,
   Rating,
   Dialog,
@@ -40,6 +39,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ScreenFab } from '../../components/layout';
 import { Location, FIELD_TYPE_CONFIG, canManageLocation } from '../../types/location';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
@@ -345,21 +345,17 @@ export const ManageLocationsScreen: React.FC = () => {
         )}
       </Container>
 
-      {/* FAB mobile */}
-      <Fab
-        color="primary"
+      {/* #2178: ScreenFab padronizado — FAB mobile */}
+      <ScreenFab
+        icon={<AddIcon />}
+        aria-label="Adicionar local"
+        onClick={() => navigate('/location/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },
-          position: 'fixed',
           bottom: { xs: 80, md: 24 },
           right: { xs: 16, md: 24 },
-          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}
-        onClick={() => navigate('/location/create')}
-        aria-label="Adicionar local"
-      >
-        <AddIcon />
-      </Fab>
+      />
 
       {/* Confirmação de exclusão */}
       <Dialog

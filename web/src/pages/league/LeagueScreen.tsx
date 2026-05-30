@@ -25,7 +25,6 @@ import {
   ToggleButton,
   Tooltip,
   Collapse,
-  Fab,
   Snackbar,
   LinearProgress,
   Divider,
@@ -56,6 +55,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ScreenFab } from '../../components/layout';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
@@ -685,22 +685,18 @@ export const LeagueScreen: React.FC = () => {
       </Container>
       </PullToRefresh>
 
+      {/* #2178: ScreenFab padronizado — navega para posição do usuário */}
       {currentUserPlayer && !showSticky && (
-        <Fab
-          color="primary"
-          size="medium"
+        <ScreenFab
+          icon={<MyLocationIcon />}
+          aria-label="Ir para minha posição"
           onClick={scrollToMe}
           sx={{
-            position: 'fixed',
             bottom: { xs: 80, md: 24 },
             right: { xs: 16, md: 24 },
             zIndex: 12,
-            pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
           }}
-          aria-label="Ir para minha posição"
-        >
-          <MyLocationIcon />
-        </Fab>
+        />
       )}
 
       <Snackbar

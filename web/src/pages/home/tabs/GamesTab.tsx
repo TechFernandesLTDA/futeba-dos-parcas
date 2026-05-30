@@ -7,7 +7,6 @@ import {
   CardContent,
   CardActionArea,
   Chip,
-  Fab,
   TextField,
   InputAdornment,
   Tabs,
@@ -46,6 +45,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
+import { ScreenFab } from '../../../components/layout';
 
 const livePulseKeyframes = {
   '@keyframes livePulse': {
@@ -414,20 +414,17 @@ export function GamesTab() {
         )}
       </Box>
 
-      <Fab
-        color="primary"
+      {/* #2178: ScreenFab padronizado */}
+      <ScreenFab
+        icon={<Add />}
         aria-label={t('games.createGame')}
         onClick={() => navigate('/game/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },
-          position: 'fixed',
           bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 24 },
           right: { xs: 16, md: 24 },
-          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}
-      >
-        <Add />
-      </Fab>
+      />
     </Box>
   );
 }

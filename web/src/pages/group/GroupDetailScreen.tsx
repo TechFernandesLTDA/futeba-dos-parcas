@@ -57,7 +57,7 @@ import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
-import { ErrorState } from '../../components/common/ErrorState';
+import { ErrorScreen } from '../../components/common/ErrorScreen';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -212,17 +212,14 @@ export const GroupDetailScreen: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
-        <ErrorState
-          message={error}
-          onRetry={() => queryClient.invalidateQueries()}
-        />
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
-            {t('common.back')}
-          </Button>
-        </Box>
-      </Container>
+      // #2178: ErrorScreen padronizado
+      <ErrorScreen
+        message={error}
+        onRetry={() => queryClient.invalidateQueries()}
+        onBack={() => navigate('/?tab=2')}
+        backLabel={t('common.back')}
+        maxWidth={containerMaxWidth}
+      />
     );
   }
 

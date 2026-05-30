@@ -15,7 +15,6 @@ import {
   Rating,
   useTheme,
   alpha,
-  Fab,
   Button,
   Grid,
 } from '@mui/material';
@@ -34,6 +33,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ScreenFab } from '../../components/layout';
 import { FIELD_TYPE_CONFIG, FieldType, Location } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -293,21 +293,17 @@ export const LocationsMapScreen: React.FC = () => {
         )}
       </Container>
 
-      <Fab
-        color="primary"
+      {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
+      <ScreenFab
+        icon={<AddIcon />}
+        aria-label="Adicionar local"
+        onClick={() => navigate('/location/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },
-          position: 'fixed',
-          // #2161: acima da bottom nav (64px). #2270: safe-area iPhone notch.
           bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 24 },
           right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' },
-          pb: { xs: 'env(safe-area-inset-bottom, 0px)', md: 0 },
         }}
-        onClick={() => navigate('/location/create')}
-        aria-label="Adicionar local"
-      >
-        <AddIcon />
-      </Fab>
+      />
     </Box>
   );
 };
