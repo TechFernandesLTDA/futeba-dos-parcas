@@ -90,6 +90,41 @@ export function renderWithProviders(
   return render(ui, { wrapper: Wrapper, ...renderOptions });
 }
 
+/**
+ * createTestWrapper — retorna um componente wrapper com providers para uso
+ * em `renderHook({ wrapper: createTestWrapper() })`.
+ *
+ * Exemplo:
+ *   const { result } = renderHook(() => useMyHook(), {
+ *     wrapper: createTestWrapper(),
+ *   });
+ */
+/**
+ * createTestWrapper — retorna um componente wrapper com providers para uso
+ * em `renderHook({ wrapper: createTestWrapper() })`.
+ *
+ * Usa apenas QueryClientProvider (sem ToastProvider) porque hook tests que
+ * usam useToast já mockam ../contexts/ToastContext individualmente — o
+ * ToastProvider real não é necessário para renderHook. #2330
+ *
+ * Exemplo:
+ *   const { result } = renderHook(() => useMyHook(), {
+ *     wrapper: createTestWrapper(),
+ *   });
+ */
+export function createTestWrapper() {
+  const client = createTestQueryClient();
+  return function TestWrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={client}>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+  };
+}
+
 // Re-exporta tudo do @testing-library/react para que os testes possam
 // importar screen, waitFor, fireEvent, etc. de um único lugar
 export * from '@testing-library/react';

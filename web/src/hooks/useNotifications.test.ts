@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks
 const mockOnSnapshot = vi.fn();
@@ -60,12 +61,12 @@ describe('useNotifications', () => {
   });
 
   it('retorna loading=true inicialmente', () => {
-    const { result } = renderHook(() => useNotifications('user-1'));
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
     expect(result.current.loading).toBe(true);
   });
 
   it('retorna loading=false sem userId', async () => {
-    const { result } = renderHook(() => useNotifications(undefined));
+    const { result } = renderHook(() => useNotifications(undefined), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -75,7 +76,7 @@ describe('useNotifications', () => {
   });
 
   it('configura listener com query correta (user_id, ordered, limited)', () => {
-    renderHook(() => useNotifications('user-1'));
+    renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
 
     expect(mockCollection).toHaveBeenCalledWith({}, 'notifications');
     expect(mockWhere).toHaveBeenCalledWith('user_id', '==', 'user-1');
@@ -126,7 +127,7 @@ describe('useNotifications', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useNotifications('user-1'));
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -143,7 +144,7 @@ describe('useNotifications', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useNotifications('user-1'));
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.markAsRead('notif-1');
@@ -195,7 +196,7 @@ describe('useNotifications', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useNotifications('user-1'));
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -216,7 +217,7 @@ describe('useNotifications', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useNotifications('user-1'));
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.deleteNotification('notif-1');
@@ -232,7 +233,7 @@ describe('useNotifications', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useNotifications('user-1'));
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.error).toBe('Notification error');

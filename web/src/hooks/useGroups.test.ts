@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks simples
 const mockOnSnapshot = vi.fn();
@@ -105,12 +106,12 @@ describe('useGroups', () => {
   });
 
   it('retorna loading=true inicialmente', () => {
-    const { result } = renderHook(() => useGroups());
+    const { result } = renderHook(() => useGroups(), { wrapper: createTestWrapper() });
     expect(result.current.loading).toBe(true);
   });
 
   it('consulta subcoleção users/{uid}/groups', () => {
-    renderHook(() => useGroups());
+    renderHook(() => useGroups(), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'users', 'test-user-id', 'groups');
   });
 
@@ -119,7 +120,7 @@ describe('useGroups', () => {
       onNext({ empty: true, docs: [] });
       return vi.fn();
     });
-    const { result } = renderHook(() => useGroups());
+    const { result } = renderHook(() => useGroups(), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.groups).toEqual([]);
   });
@@ -136,7 +137,7 @@ describe('useGroups', () => {
       });
       return vi.fn();
     });
-    const { result } = renderHook(() => useGroups());
+    const { result } = renderHook(() => useGroups(), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.groups).toHaveLength(1);
     expect(mockGetDoc).toHaveBeenCalled();
@@ -147,7 +148,7 @@ describe('useGroups', () => {
       onError(new Error('Permission denied'));
       return vi.fn();
     });
-    const { result } = renderHook(() => useGroups());
+    const { result } = renderHook(() => useGroups(), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe('Permission denied');
   });
@@ -155,7 +156,7 @@ describe('useGroups', () => {
   it('remove listener no unmount', () => {
     const unsubscribe = vi.fn();
     mockOnSnapshot.mockReturnValue(unsubscribe);
-    const { unmount } = renderHook(() => useGroups());
+    const { unmount } = renderHook(() => useGroups(), { wrapper: createTestWrapper() });
     unmount();
     expect(unsubscribe).toHaveBeenCalled();
   });
@@ -167,7 +168,7 @@ describe('useGroups', () => {
       signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
       refreshUser: vi.fn(), currentUser: null,
     };
-    const { result } = renderHook(() => useGroups());
+    const { result } = renderHook(() => useGroups(), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockOnSnapshot).not.toHaveBeenCalled();
   });
@@ -184,13 +185,13 @@ describe('useGroupDetail', () => {
   });
 
   it('retorna null e loading=false para groupId null', async () => {
-    const { result } = renderHook(() => useGroupDetail(null));
+    const { result } = renderHook(() => useGroupDetail(null), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.group).toBeNull();
   });
 
   it('configura listeners para grupo e membros', () => {
-    renderHook(() => useGroupDetail('group-1'));
+    renderHook(() => useGroupDetail('group-1'), { wrapper: createTestWrapper() });
     expect(mockOnSnapshot).toHaveBeenCalledTimes(2);
   });
 
@@ -205,7 +206,7 @@ describe('useGroupDetail', () => {
       }
       return vi.fn();
     });
-    const { result } = renderHook(() => useGroupDetail('group-1'));
+    const { result } = renderHook(() => useGroupDetail('group-1'), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.group).not.toBeNull();
     expect(result.current.members).toHaveLength(1);
@@ -229,7 +230,7 @@ describe('useCreateGroup', () => {
   });
 
   it('cria grupo com batch write', async () => {
-    const { result } = renderHook(() => useCreateGroup());
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
     await act(async () => {
       const id = await result.current.createGroup({ name: 'Novo Grupo', description: 'Desc' });
       expect(id).toBe('new-group-id');
@@ -240,7 +241,7 @@ describe('useCreateGroup', () => {
   });
 
   it('escreve na subcoleção users/{uid}/groups', async () => {
-    const { result } = renderHook(() => useCreateGroup());
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
     await act(async () => { await result.current.createGroup({ name: 'Novo Grupo' }); });
     expect(mockDoc).toHaveBeenCalledWith({}, 'users', 'test-user-id', 'groups', 'new-group-id');
   });
@@ -251,7 +252,7 @@ describe('useCreateGroup', () => {
       signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
       refreshUser: vi.fn(), currentUser: null,
     };
-    const { result } = renderHook(() => useCreateGroup());
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
     await expect(act(async () => { await result.current.createGroup({ name: 'Teste' }); }))
       .rejects.toThrow('User not authenticated');
   });
@@ -267,7 +268,7 @@ describe('useCashbox', () => {
   });
 
   it('retorna loading=false para groupId null', async () => {
-    const { result } = renderHook(() => useCashbox(null));
+    const { result } = renderHook(() => useCashbox(null), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
@@ -282,7 +283,7 @@ describe('useCashbox', () => {
       });
       return vi.fn();
     });
-    const { result } = renderHook(() => useCashbox('group-1'));
+    const { result } = renderHook(() => useCashbox('group-1'), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.balance).toBe(120);
     expect(result.current.transactions).toHaveLength(3);
@@ -293,7 +294,7 @@ describe('useCashbox', () => {
       onError(new Error('Cashbox error'));
       return vi.fn();
     });
-    const { result } = renderHook(() => useCashbox('group-1'));
+    const { result } = renderHook(() => useCashbox('group-1'), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.error).toBe('Cashbox error'));
   });
 });
@@ -318,7 +319,7 @@ describe('useInvitePlayers', () => {
   });
 
   it('generateInviteCode retorna código de 6 caracteres em maiúsculas', async () => {
-    const { result } = renderHook(() => useInvitePlayers());
+    const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
     let code: string | undefined;
     await act(async () => { code = await result.current.generateInviteCode('group-1', 'Meu Grupo'); });
     expect(code).toBeDefined();
@@ -335,7 +336,7 @@ describe('useInvitePlayers', () => {
       }],
     });
     mockGetDoc.mockResolvedValue({ exists: () => true, data: () => ({ name: 'Grupo Teste', photo_url: null }) });
-    const { result } = renderHook(() => useInvitePlayers());
+    const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
     await act(async () => {
       const groupId = await result.current.joinByInviteCode('ABC123');
       expect(groupId).toBe('group-1');
@@ -347,7 +348,7 @@ describe('useInvitePlayers', () => {
 
   it('joinByInviteCode falha com código inválido', async () => {
     mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
-    const { result } = renderHook(() => useInvitePlayers());
+    const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
     await expect(act(async () => { await result.current.joinByInviteCode('INVALID'); }))
       .rejects.toThrow('Invalid or expired invite code');
   });

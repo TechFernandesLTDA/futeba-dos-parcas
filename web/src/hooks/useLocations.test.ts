@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks
 const mockOnSnapshot = vi.fn();
@@ -35,17 +36,17 @@ describe('useLocations', () => {
   });
 
   it('retorna loading=true inicialmente', () => {
-    const { result } = renderHook(() => useLocations());
+    const { result } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });
     expect(result.current.loading).toBe(true);
   });
 
   it('configura listener na coleção locations', () => {
-    renderHook(() => useLocations());
+    renderHook(() => useLocations(), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'locations');
   });
 
   it('ordena locais por nome (asc)', () => {
-    renderHook(() => useLocations());
+    renderHook(() => useLocations(), { wrapper: createTestWrapper() });
     expect(mockOrderBy).toHaveBeenCalledWith('name', 'asc');
   });
 
@@ -66,7 +67,7 @@ describe('useLocations', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useLocations());
+    const { result } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -82,7 +83,7 @@ describe('useLocations', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useLocations());
+    const { result } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.error).toBe('Location error');
@@ -94,7 +95,7 @@ describe('useLocations', () => {
     const unsubscribe = vi.fn();
     mockOnSnapshot.mockReturnValue(unsubscribe);
 
-    const { unmount } = renderHook(() => useLocations());
+    const { unmount } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });
     unmount();
 
     expect(unsubscribe).toHaveBeenCalled();
@@ -108,7 +109,7 @@ describe('useLocationDetail', () => {
   });
 
   it('retorna loading=false para locationId undefined', async () => {
-    const { result } = renderHook(() => useLocationDetail(undefined));
+    const { result } = renderHook(() => useLocationDetail(undefined), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -124,7 +125,7 @@ describe('useLocationDetail', () => {
       data: () => ({ name: 'Campo do Zé', address: 'Rua A, 123', latitude: -23.5, longitude: -46.6 }),
     });
 
-    const { result } = renderHook(() => useLocationDetail('loc-1'));
+    const { result } = renderHook(() => useLocationDetail('loc-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -137,7 +138,7 @@ describe('useLocationDetail', () => {
   it('trata erros ao buscar local', async () => {
     mockGetDoc.mockRejectedValue(new Error('Not found'));
 
-    const { result } = renderHook(() => useLocationDetail('loc-invalid'));
+    const { result } = renderHook(() => useLocationDetail('loc-invalid'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.error).toBe('Not found');

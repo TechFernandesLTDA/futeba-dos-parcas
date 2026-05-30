@@ -67,6 +67,8 @@ vi.mock('../../components/layout', () => ({
       {children}
     </div>
   ),
+  // AdaptiveFormSheet é exportado pelo barrel — deve estar presente no mock. #2330
+  AdaptiveFormSheet: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('../../components/team/TeamSelector', () => ({

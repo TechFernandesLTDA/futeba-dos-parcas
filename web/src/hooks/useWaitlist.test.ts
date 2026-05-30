@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks antes dos imports do módulo testado
 const mockOnSnapshot = vi.fn();
@@ -67,13 +68,13 @@ describe('useWaitlist', () => {
   });
 
   it('gameId nulo: não cria listener, não fica loading', () => {
-    const { result } = renderHook(() => useWaitlist(null));
+    const { result } = renderHook(() => useWaitlist(null), { wrapper: createTestWrapper() });
     expect(mockOnSnapshot).not.toHaveBeenCalled();
     expect(result.current.loading).toBe(false);
   });
 
   it('escuta games/{id}/waitlist e filtra status não-ativos', async () => {
-    const { result } = renderHook(() => useWaitlist('g1'));
+    const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'games', 'g1', 'waitlist');
     act(() => {
       emitSnapshot([
@@ -95,7 +96,7 @@ describe('useWaitlist', () => {
       empty: false,
       docs: [{ data: () => ({ status: 'WAITING' }) }],
     });
-    const { result } = renderHook(() => useWaitlist('g1'));
+    const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     let ok: boolean | undefined;
     await act(async () => {
       ok = await result.current.joinWaitlist();
@@ -108,7 +109,7 @@ describe('useWaitlist', () => {
   it('joinWaitlist grava schema snake_case com status WAITING e added_at numérico', async () => {
     mockGetDocs.mockResolvedValueOnce({ empty: true, docs: [] });
     mockAddDoc.mockResolvedValueOnce({ id: 'new' });
-    const { result } = renderHook(() => useWaitlist('g1'));
+    const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     await act(async () => {
       await result.current.joinWaitlist('GOALKEEPER');
     });
@@ -128,7 +129,7 @@ describe('useWaitlist', () => {
       docs: [{ ref: { id: 'a' } }, { ref: { id: 'b' } }],
     });
     mockDeleteDoc.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useWaitlist('g1'));
+    const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     await act(async () => {
       await result.current.leaveWaitlist();
     });

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks devem ser configurados antes dos imports dos módulos testados
 const mockOnSnapshot = vi.fn();
@@ -83,12 +84,12 @@ describe('useGames', () => {
   });
 
   it('retorna loading=true inicialmente', () => {
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
     expect(result.current.loading).toBe(true);
   });
 
   it('configura listener onSnapshot na coleção games', () => {
-    renderHook(() => useGames());
+    renderHook(() => useGames(), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'games');
     expect(mockOnSnapshot).toHaveBeenCalled();
   });
@@ -110,7 +111,7 @@ describe('useGames', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -121,17 +122,17 @@ describe('useGames', () => {
   });
 
   it('filtra jogos por status', () => {
-    renderHook(() => useGames({ status: 'LIVE' }));
+    renderHook(() => useGames({ status: 'LIVE' }), { wrapper: createTestWrapper() });
     expect(mockWhere).toHaveBeenCalledWith('status', '==', 'LIVE');
   });
 
   it('filtra jogos por groupId', () => {
-    renderHook(() => useGames({ groupId: 'group-1' }));
+    renderHook(() => useGames({ groupId: 'group-1' }), { wrapper: createTestWrapper() });
     expect(mockWhere).toHaveBeenCalledWith('group_id', '==', 'group-1');
   });
 
   it('aplica limit quando fornecido', () => {
-    renderHook(() => useGames({ limitCount: 5 }));
+    renderHook(() => useGames({ limitCount: 5 }), { wrapper: createTestWrapper() });
     expect(mockLimit).toHaveBeenCalledWith(5);
   });
 
@@ -141,7 +142,7 @@ describe('useGames', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -154,7 +155,7 @@ describe('useGames', () => {
     const unsubscribe = vi.fn();
     mockOnSnapshot.mockReturnValue(unsubscribe);
 
-    const { unmount } = renderHook(() => useGames());
+    const { unmount } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
     unmount();
 
     expect(unsubscribe).toHaveBeenCalled();
@@ -184,7 +185,7 @@ describe('useGames', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useGames());
+    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -206,7 +207,7 @@ describe('useGameDetail', () => {
   });
 
   it('retorna null e loading=false para gameId null', async () => {
-    const { result } = renderHook(() => useGameDetail(null));
+    const { result } = renderHook(() => useGameDetail(null), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -216,7 +217,7 @@ describe('useGameDetail', () => {
   });
 
   it('configura listeners para jogo e confirmações', () => {
-    renderHook(() => useGameDetail('game-1'));
+    renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
 
     // Deve chamar onSnapshot duas vezes (jogo + confirmações)
     expect(mockOnSnapshot).toHaveBeenCalledTimes(2);
@@ -246,7 +247,7 @@ describe('useGameDetail', () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useGameDetail('game-1'));
+    const { result } = renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -266,7 +267,7 @@ describe('useGameDetail', () => {
       return callCount === 1 ? unsubGame : unsubConfirmations;
     });
 
-    const { unmount } = renderHook(() => useGameDetail('game-1'));
+    const { unmount } = renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
     unmount();
 
     expect(unsubGame).toHaveBeenCalled();
@@ -284,7 +285,7 @@ describe('useConfirmPresence', () => {
   });
 
   it('cria confirmação com o padrão correto de doc ID (gameId_userId)', async () => {
-    const { result } = renderHook(() => useConfirmPresence());
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.confirmPresence('game-1');
@@ -311,7 +312,7 @@ describe('useConfirmPresence', () => {
       currentUser: null,
     });
 
-    const { result } = renderHook(() => useConfirmPresence());
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
 
     await expect(
       act(async () => {
@@ -321,7 +322,7 @@ describe('useConfirmPresence', () => {
   });
 
   it('cancelPresence deleta o documento de confirmação', async () => {
-    const { result } = renderHook(() => useConfirmPresence());
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
 
     await act(async () => {
       await result.current.cancelPresence('game-1');
@@ -333,7 +334,7 @@ describe('useConfirmPresence', () => {
   it('cancelPresence falha se confirmação não existir', async () => {
     mockGetDoc.mockResolvedValue({ exists: () => false });
 
-    const { result } = renderHook(() => useConfirmPresence());
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
 
     await expect(
       act(async () => {
@@ -351,7 +352,7 @@ describe('useCreateGame', () => {
   });
 
   it('cria jogo com campos corretos', async () => {
-    const { result } = renderHook(() => useCreateGame());
+    const { result } = renderHook(() => useCreateGame(), { wrapper: createTestWrapper() });
 
     await act(async () => {
       const id = await result.current.createGame({
@@ -391,7 +392,7 @@ describe('useCreateGame', () => {
       currentUser: null,
     });
 
-    const { result } = renderHook(() => useCreateGame());
+    const { result } = renderHook(() => useCreateGame(), { wrapper: createTestWrapper() });
 
     await expect(
       act(async () => {
@@ -414,7 +415,7 @@ describe('useUpdateGameStatus', () => {
       data: () => ({ status: 'SCHEDULED' }),
     });
 
-    const { result } = renderHook(() => useUpdateGameStatus());
+    const { result } = renderHook(() => useUpdateGameStatus(), { wrapper: createTestWrapper() });
 
     await act(async () => {
       const success = await result.current.updateStatus('game-1', 'CONFIRMED');
@@ -433,7 +434,7 @@ describe('useUpdateGameStatus', () => {
       data: () => ({ status: 'SCHEDULED' }),
     });
 
-    const { result } = renderHook(() => useUpdateGameStatus());
+    const { result } = renderHook(() => useUpdateGameStatus(), { wrapper: createTestWrapper() });
 
     await expect(
       act(async () => {
@@ -448,7 +449,7 @@ describe('useUpdateGameStatus', () => {
       data: () => ({ status: 'FINISHED' }),
     });
 
-    const { result } = renderHook(() => useUpdateGameStatus());
+    const { result } = renderHook(() => useUpdateGameStatus(), { wrapper: createTestWrapper() });
 
     await expect(
       act(async () => {
@@ -460,7 +461,7 @@ describe('useUpdateGameStatus', () => {
   it('falha se o jogo não for encontrado', async () => {
     mockGetDoc.mockResolvedValue({ exists: () => false });
 
-    const { result } = renderHook(() => useUpdateGameStatus());
+    const { result } = renderHook(() => useUpdateGameStatus(), { wrapper: createTestWrapper() });
 
     await expect(
       act(async () => {
