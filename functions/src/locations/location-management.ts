@@ -69,6 +69,9 @@ export const deleteLocation = secureCallable<DeleteLocationRequest>(
     }),
   },
   async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
     const {locationId} = request.data;
     if (!locationId || typeof locationId !== "string") {
       throw new HttpsError("invalid-argument", "locationId must be a non-empty string");
@@ -93,7 +96,7 @@ export const deleteLocation = secureCallable<DeleteLocationRequest>(
     await db().collection("audit_logs").add({
       type: "LOCATION_DELETE",
       target_location_id: locationId,
-      actor_user_id: request.auth!.uid,
+      actor_user_id: request.auth.uid,
       location_name: locData.name || null,
       deleted_docs_count: deletedCount,
       subcollections: LOCATION_SUBCOLLECTIONS,

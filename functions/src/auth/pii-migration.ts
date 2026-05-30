@@ -182,6 +182,7 @@ export const migratePiiToUsersPrivate = onCall(
     memory: "512MiB",
   },
   async (request) => {
+    try {
     const {auth} = request;
     if (!auth) {
       throw new HttpsError(
@@ -298,6 +299,11 @@ export const migratePiiToUsersPrivate = onCall(
       errors,
       total,
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('migratePiiToUsersPrivate failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   }
 );
 
@@ -363,6 +369,7 @@ export const updateUserPii = onCall(
     consumeAppCheckToken: true,
   },
   async (request) => {
+    try {
     const {auth, data} = request;
     if (!auth) {
       throw new HttpsError("unauthenticated", "Login obrigatório");
@@ -410,6 +417,11 @@ export const updateUserPii = onCall(
     );
 
     return {success: true, updated: Object.keys(updates)};
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('updateUserPii failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   }
 );
 
@@ -436,6 +448,7 @@ export const removePiiFromUsers = onCall(
     memory: "512MiB",
   },
   async (request) => {
+    try {
     const {auth} = request;
     if (!auth) {
       throw new HttpsError("unauthenticated", "Login obrigatório");
@@ -543,5 +556,10 @@ export const removePiiFromUsers = onCall(
       errors,
       total,
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('removePiiFromUsers failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   }
 );

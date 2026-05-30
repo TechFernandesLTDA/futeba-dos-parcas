@@ -1001,7 +1001,7 @@ export const enqueueNotificationCallable = secureCallable(
     const safeBody = sanitizeText(body);
 
     console.log(
-      `[BATCH_FCM] Admin ${request.auth!.uid}` +
+      `[BATCH_FCM] Admin ${request.auth?.uid || "unknown"}` +
       " enfileirando notificacao para" +
       ` ${userIds.length} usuarios`
     );

@@ -69,6 +69,7 @@ export const canSendSmsOtp = onCall(
     consumeAppCheckToken: true,
   },
   async (request) => {
+    try {
     // #1034: Defense in depth — auth guard antes de qualquer
     // processamento de dados para evitar consumo de rate limit por anônimos
     if (!request.auth) {
@@ -138,6 +139,11 @@ export const canSendSmsOtp = onCall(
     }
 
     return {allowed: true};
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('canSendSmsOtp failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   },
 );
 
@@ -156,6 +162,7 @@ export const logVerificationFailure = onCall(
     consumeAppCheckToken: true,
   },
   async (request) => {
+    try {
     const {auth} = request;
     if (!auth) {
       throw new HttpsError("unauthenticated", "Login obrigatorio");
@@ -244,5 +251,10 @@ export const logVerificationFailure = onCall(
     }
 
     return {logged: true};
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('logVerificationFailure failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   },
 );

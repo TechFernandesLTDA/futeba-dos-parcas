@@ -160,6 +160,7 @@ export const denormalizeGameLocations = onCall(
     memory: "512MiB",
   },
   async (request) => {
+    try {
     const {auth} = request;
     if (!auth) {
       throw new HttpsError(
@@ -265,5 +266,10 @@ export const denormalizeGameLocations = onCall(
       errors,
       total: updated + skipped + errors.length,
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('denormalizeGameLocations failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   }
 );

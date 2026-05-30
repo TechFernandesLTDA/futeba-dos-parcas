@@ -128,7 +128,10 @@ export const submitMvpVote =
     async (request) => {
       requireProfileComplete(request);
 
-      const voterId = request.auth!.uid;
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "User must be authenticated");
+      }
+      const voterId = request.auth.uid;
 
       // ======================================
       // 1.5. RATE LIMITING (20 votos/min)
@@ -492,7 +495,10 @@ export const concludeMvpVoting =
     async (request) => {
       requireProfileComplete(request);
 
-      const userId = request.auth!.uid;
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "User must be authenticated");
+      }
+      const userId = request.auth.uid;
 
       // ======================================
       // 1.5. RATE LIMITING (5 conclusões/min)

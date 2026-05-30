@@ -120,6 +120,7 @@ export const recomputeMyProfileClaim = onCall(
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request) => {
+    try {
     if (!request.auth) {
       throw new HttpsError(
         "unauthenticated",
@@ -141,5 +142,10 @@ export const recomputeMyProfileClaim = onCall(
       success: true,
       ...(await setProfileCompleteClaim(uid, profileComplete)),
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('recomputeMyProfileClaim failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   }
 );

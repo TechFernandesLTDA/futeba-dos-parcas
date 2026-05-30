@@ -1,4 +1,5 @@
-import {onCall} from "firebase-functions/v2/https";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FUNCTION_REGION} from "../constants";
 
@@ -15,6 +16,7 @@ export const seedOfficialGroups = onCall(
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request) => {
+    try {
     if (request.auth?.token?.role !== "ADMIN") {
       throw new Error("Apenas administradores podem executar o seed.");
     }
@@ -126,5 +128,10 @@ export const seedOfficialGroups = onCall(
       count: added.length,
       groups: added,
     };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error('seedOfficialGroups failed', {error, uid: request.auth?.uid});
+      throw new HttpsError('internal', 'An unexpected error occurred');
+    }
   }
 );

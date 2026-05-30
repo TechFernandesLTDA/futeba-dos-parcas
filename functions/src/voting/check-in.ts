@@ -69,8 +69,11 @@ export const checkInToGame = onCall(
   async (request) => {
     requireProfileComplete(request);
 
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
     const {auth, data} = request;
-    const uid = auth!.uid;
+    const uid = auth.uid;
 
     // FIX #584/H12: rate limit pra prevenir GPS coordinate enumeration.
     // Antes: sem rate limit, atacante binary-searchearia coordenadas
@@ -354,8 +357,11 @@ export const generateCheckinToken = onCall(
   async (request) => {
     requireProfileComplete(request);
 
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
     const {auth, data} = request;
-    const uid = auth!.uid;
+    const uid = auth.uid;
 
     const {gameId} = (data ?? {}) as {gameId?: string};
     if (typeof gameId !== "string" || gameId.length === 0 || gameId.length > 128) {
