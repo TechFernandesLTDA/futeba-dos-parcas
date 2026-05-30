@@ -633,6 +633,44 @@ service cloud.firestore {
         // Promocao/expiracao NUNCA no cliente (server-only, anti-race).
         allow update: if false;
       }
+
+      // ============================================
+      // SUB-COLECAO: confirmations (Android ETA writes)
+      // #2157: Android escreve is_on_the_way, eta_minutes, on_the_way_at,
+      // confirmation_order via subcolecao. Alinhado com root confirmations rules.
+      // ============================================
+      match /confirmations/{confirmationId} {
+        allow read: if isAuthenticated() && isGameOwner(gameId);
+        allow create: if isAuthenticated() && (
+          isAdmin() ||
+          (isGameOwner(gameId) && request.resource.data.user_id != userId())
+        );
+        allow update: if isAuthenticated() && (
+          isAdmin() ||
+          isGameOwner(gameId) ||
+          (confirmationId == (gameId + '_' + userId()) &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_on_the_way', 'eta_minutes', 'on_the_way_at', 'confirmation_order', 'updated_at']))
+        );
+        allow delete: if isAuthenticated() && isGameOwner(gameId);
+      }
+
+      // ============================================
+      // SUB-COLECAO: cancellations
+      // #2157: Android escreve cancelamentos de presenca em subcolecao.
+      // Leitura/escrita: apenas o proprio jogador. Admin/owner podem ler todos.
+      // ============================================
+      match /cancellations/{cancellationId} {
+        allow read: if isAuthenticated() && (
+          isAdmin() ||
+          isGameOwner(gameId)
+        );
+        allow create: if isAuthenticated() &&
+          request.resource.data.user_id == userId() &&
+          request.resource.data.game_id == gameId &&
+          request.resource.data.reason is string;
+        allow update: if false;
+        allow delete: if isAuthenticated() && isGameOwner(gameId);
+      }
     }
 
     // ============================================
@@ -700,17 +738,24 @@ service cloud.firestore {
       // ID deve seguir padrao: {gameId}_{userId}
       // OU o dono do jogo pode criar convites (summon) para outros
       // #1018: isAdmin() nunca pode ficar bloqueado por isVerifiedOrGrace() — admin é sempre permitido
-      // #1983: whitelist de campos — previne self-injection de is_mvp, goals, assists, saves, etc.
-      // Na criação, apenas game_id, user_id, status, position, created_at são permitidos.
+      // #2154: whitelist de campos expandida para schema real do Web (id, user_name,
+      // user_photo, is_casual_player) alem dos campos base. Bloqueia self-injection
+      // de is_mvp, goals, assists, saves, etc.
       allow create: if (isAdmin() || isVerifiedOrGrace()) &&
-                       // #1983: apenas campos permitidos na criação (bloqueia self-injection de stats/MVP)
-                       request.resource.data.keys().hasOnly(['game_id', 'user_id', 'status', 'position', 'created_at']) &&
-                       ((request.resource.data.user_id == userId() &&
-                         isValidConfirmationId(confirmationId, request.resource.data.game_id, userId())) ||
-                        (isGameOwner(request.resource.data.game_id) &&
+                       request.resource.data.keys().hasOnly(['game_id', 'user_id', 'status', 'position', 'created_at', 'id', 'user_name', 'user_photo', 'is_casual_player']) &&
+                       ((
+                         // Self-confirm: exige jogo existente, status != CANCELLED/FINISHED
+                         request.resource.data.user_id == userId() &&
+                         isValidConfirmationId(confirmationId, request.resource.data.game_id, userId()) &&
+                         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
+                         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status in ['SCHEDULED', 'CONFIRMED']
+                       ) || (
+                         // Summon by game owner
+                         isGameOwner(request.resource.data.game_id) &&
                          request.resource.data.user_id != userId() &&
                          isValidConfirmationId(confirmationId, request.resource.data.game_id, request.resource.data.user_id) &&
-                         request.resource.data.get('status', 'PENDING') == 'PENDING') ||
+                         request.resource.data.get('status', 'PENDING') == 'PENDING'
+                       ) ||
                         isAdmin());
 
       // SECFIX #438: dono da confirmacao agora restrito a campos de
@@ -1340,7 +1385,13 @@ service cloud.firestore {
             // Fix: null-check getAfter() result before accessing .data (#540)
             getAfter(/databases/$(database)/documents/groups/$(groupId)) != null &&
             getAfter(/databases/$(database)/documents/groups/$(groupId)).data.owner_id == userId()) ||
-           (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId() && memberId == userId())
+           // #2153: self-create MEMBER exige grupo ativo e publico OU convite aprovado via trigger
+           (request.resource.data.role == 'MEMBER' &&
+            request.resource.data.user_id == userId() &&
+            memberId == userId() &&
+            request.resource.data.status == 'ACTIVE' &&
+            isGroupActive(groupId) &&
+            get(/databases/$(database)/documents/groups/$(groupId)).data.is_public == true)
         );
 
         // #1491: OWNER nao pode alterar o proprio status (sair do grupo).
@@ -1454,6 +1505,21 @@ service cloud.firestore {
           request.resource.data.balance is number &&
           request.resource.data.period_start is string &&
           request.resource.data.period_end is string;
+      }
+
+      // ============================================
+      // SUB-COLECAO: blocked_players
+      // #2157: Admin/owner do grupo pode bloquear/desbloquear jogadores.
+      // DocId == userId do jogador bloqueado.
+      // ============================================
+      match /blocked_players/{blockedUserId} {
+        allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow create: if isAuthenticated() && isGroupAdmin(groupId) &&
+          request.resource.data.user_id == blockedUserId &&
+          request.resource.data.blocked_by == userId() &&
+          request.resource.data.user_name is string &&
+          request.resource.data.reason is string;
+        allow delete: if isAuthenticated() && isGroupAdmin(groupId);
       }
     }
 
@@ -1622,9 +1688,39 @@ service cloud.firestore {
     // Schema: users/{uid}/preferences/{prefDocId}
     //   - "notifications" doc: { notifications, email_notifications, game_reminders, updated_at }
     match /users/{userId}/preferences/{prefId} {
-      // #1037.3: prefId restrito a valores conhecidos — evita que cliente escreva docs arbitrários
+      // #2157: prefId inclui 'language' usado por LanguageContext (web)
       allow read, write: if isAuthenticated() && request.auth.uid == userId
-        && prefId in ['notifications', 'theme', 'gamification'];
+        && prefId in ['notifications', 'theme', 'gamification', 'language'];
+    }
+
+    // ============================================
+    // COLECAO: notification_settings
+    // #2157: Colecao usada por Web, Android e Cloud Functions
+    // para configuracao de notificacoes push/email/in-app.
+    // DocId == userId — cada usuario tem seu proprio doc.
+    // ============================================
+    match /notification_settings/{uid} {
+      allow read, write: if isAuthenticated() && uid == userId();
+    }
+
+    // ============================================
+    // COLECAO: monthly_stats (estatisticas mensais agregadas)
+    // #2157: Leitura publica — dados agregados por Cloud Functions.
+    // Apenas Admin SDK pode escrever.
+    // ============================================
+    match /monthly_stats/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ============================================
+    // COLECAO: weekly_stats (estatisticas dos ultimos 7 dias)
+    // #2157: Leitura publica — dados agregados por Cloud Functions.
+    // DocId == userId. Apenas Admin SDK pode escrever.
+    // ============================================
+    match /weekly_stats/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
 
     // ============================================
@@ -1694,7 +1790,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(resource.data.game_id) ||
-        isConfirmedPlayer(resource.data.game_id)
+        (isConfirmedPlayer(resource.data.game_id) && resource.data.created_by == userId())
       ) &&
       // Nao pode alterar game_id (previne mover evento entre jogos)
       fieldUnchanged('game_id');
@@ -2257,11 +2353,10 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
         request.resource.data.game_id is string &&
         request.resource.data.uploaded_by == userId() &&
-        // #1972: fix — firestore.exists()/firestore.get() não existem no Firebase Rules.
-        // Funções corretas: exists() e get().
         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
-        (exists(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) ||
+        ((get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) != null &&
+          get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())).data.status == 'CONFIRMED') ||
          get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.owner_id == userId());
 
       allow update: if false;
