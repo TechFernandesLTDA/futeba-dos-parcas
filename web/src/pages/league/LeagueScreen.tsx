@@ -735,6 +735,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   totalPlayers: number;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   // #2163: color theme-aware (dark/OLED)
   const divisionConfig = {
     ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
@@ -757,6 +758,16 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
     <Card
       ref={cardRef}
       onClick={() => onToggleExpand(player.id)}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      aria-label={t('league.togglePlayerAria', { name: player.userName })}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggleExpand(player.id);
+        }
+      }}
       sx={{
         mb: 1,
         cursor: 'pointer',

@@ -651,7 +651,8 @@
     "emptyDivisionDesc": "Play more games to climb divisions!",
     "seasonNotStartedDesc": "Join games to enter the league and earn points.",
     "viewPreviousSeason": "View previous season",
-    "standingsAria": "League standings"
+    "standingsAria": "League standings",
+    "togglePlayerAria": "Expand details for {{name}}"
   },
   "statistics": {
     "title": "Statistics",
@@ -781,6 +782,7 @@
   },
   "locations": {
     "title": "Locations",
+    "mapTitle": "Locations Map",
     "manage": "Manage Locations",
     "details": "Location Details",
     "addLocation": "Add Location",

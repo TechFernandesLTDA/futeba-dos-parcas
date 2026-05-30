@@ -651,7 +651,8 @@
     "emptyDivisionDesc": "Jogue mais para subir de divisão!",
     "seasonNotStartedDesc": "Participe de jogos para entrar na liga e acumular pontos.",
     "viewPreviousSeason": "Ver temporada anterior",
-    "standingsAria": "Classificação da liga"
+    "standingsAria": "Classificação da liga",
+    "togglePlayerAria": "Expandir detalhes de {{name}}"
   },
   "statistics": {
     "title": "Estatísticas",
@@ -781,6 +782,7 @@
   },
   "locations": {
     "title": "Locais",
+    "mapTitle": "Mapa de Locais",
     "manage": "Gerenciar Locais",
     "details": "Detalhes do Local",
     "addLocation": "Adicionar Local",
