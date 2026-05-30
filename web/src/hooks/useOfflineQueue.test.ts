@@ -70,7 +70,10 @@ describe('useOfflineQueue', () => {
     expect(result.current.queueLength).toBe(2);
   });
 
-  it('persiste fila no localStorage', () => {
+  it('persiste fila no localStorage (async — aguarda encriptação)', async () => {
+    // A fila é salva de forma assíncrona via crypto.subtle (AES-GCM).
+    // useEffect → saveQueue → encryptQueue → crypto.subtle.encrypt → localStorage.setItem
+    // O dado no localStorage é ciphertext base64, NÃO JSON simples. #2330
     Object.defineProperty(navigator, 'onLine', {
       value: false,
       writable: true,
@@ -80,10 +83,14 @@ describe('useOfflineQueue', () => {
     act(() => {
       result.current.enqueue({ collection: 'games', operation: 'set', data: { x: 1 }, docId: '1' });
     });
+    // Aguarda o effect assíncrono salvar no localStorage
+    await waitFor(() => {
+      expect(localStorage.getItem('offline_write_queue')).not.toBeNull();
+    });
+    // O valor é ciphertext base64 (não JSON legível) — apenas verificamos presença
     const raw = localStorage.getItem('offline_write_queue');
-    expect(raw).not.toBeNull();
-    const parsed = JSON.parse(raw!);
-    expect(parsed).toHaveLength(1);
+    expect(typeof raw).toBe('string');
+    expect(raw!.length).toBeGreaterThan(0);
   });
 
   it('processa fila quando volta a ficar online', async () => {

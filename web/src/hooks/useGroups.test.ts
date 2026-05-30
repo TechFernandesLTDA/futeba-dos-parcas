@@ -25,11 +25,23 @@ vi.mock('firebase/firestore', () => ({
   addDoc: (...args: any[]) => mockAddDoc(...args),
   updateDoc: vi.fn(),
   setDoc: vi.fn(),
+  deleteDoc: vi.fn(),
   writeBatch: (...args: any[]) => mockWriteBatch(...args),
   query: (...args: any[]) => mockQuery(...args),
   where: (...args: any[]) => mockWhere(...args),
   orderBy: (...args: any[]) => mockOrderBy(...args),
+  limit: vi.fn((...args: any[]) => args),
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
+  documentId: vi.fn(() => '__name__'),
+  arrayUnion: vi.fn((...args: any[]) => args),
+  arrayRemove: vi.fn((...args: any[]) => args),
+  // initializeFirestore é chamado pelo services/firebase.ts ao ser importado.
+  // Necessário para evitar "No X export is defined on the mock". #2330
+  initializeFirestore: vi.fn(() => ({})),
+  persistentLocalCache: vi.fn(() => ({})),
+  persistentMultipleTabManager: vi.fn(() => ({})),
+  connectFirestoreEmulator: vi.fn(),
   Timestamp: { now: () => ({ toDate: () => new Date() }), fromDate: (d: Date) => ({ toDate: () => d }) },
 }));
 

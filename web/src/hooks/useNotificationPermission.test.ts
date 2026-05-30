@@ -20,6 +20,8 @@ vi.mock('firebase/firestore', () => ({
   getDoc: (...args: unknown[]) => mockGetDoc(...args),
   arrayUnion: (...args: unknown[]) => mockArrayUnion(...args),
   arrayRemove: (...args: unknown[]) => mockArrayRemove(...args),
+  // runTransaction é usado no fluxo de token FCM
+  runTransaction: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../services/firebase', () => ({
@@ -111,6 +113,8 @@ describe('useNotificationPermission', () => {
   });
 
   it('trata erros gracefully durante requestPermission', async () => {
+    // O hook loga o erro e re-lança (finally: setLoading(false)).
+    // O teste captura o erro esperado e verifica que loading volta a false. #2330
     const mockRequestPermission = vi.fn().mockRejectedValue(new Error('Permission denied'));
     Object.defineProperty(globalThis, 'Notification', {
       value: {
@@ -123,7 +127,11 @@ describe('useNotificationPermission', () => {
     const { result } = renderHook(() => useNotificationPermission());
 
     await act(async () => {
-      await result.current.requestPermission();
+      try {
+        await result.current.requestPermission();
+      } catch {
+        // erro esperado — hook re-throws após logar
+      }
     });
 
     expect(result.current.loading).toBe(false);

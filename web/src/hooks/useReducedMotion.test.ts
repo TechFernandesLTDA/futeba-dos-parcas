@@ -17,7 +17,7 @@ describe('useReducedMotion', () => {
 
   function setupMatchMedia(matches: boolean) {
     window.matchMedia = ((_query: string) => ({
-      matches: query === '(prefers-reduced-motion: reduce)' ? matches : false,
+      matches: _query === '(prefers-reduced-motion: reduce)' ? matches : false,
       addEventListener: (_: string, handler: (e: { matches: boolean }) => void) => {
         listeners.push(handler);
       },

@@ -71,7 +71,8 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('mode').textContent).toBe('light');
   });
 
-  it('toggleTheme cicla entre light -> dark -> system', async () => {
+  it('toggleTheme cicla entre light -> dark -> oled -> system', async () => {
+    // Ciclo real: system → light → dark → oled → system (ThemeContext.tsx linha 67-72)
     const user = userEvent.setup();
     render(
       <ThemeProvider>
@@ -87,7 +88,11 @@ describe('ThemeContext', () => {
     await user.click(screen.getByText('toggle'));
     expect(screen.getByTestId('mode').textContent).toBe('dark');
 
-    // dark -> system
+    // dark -> oled (não "system" — oled é um modo válido). #2330 fix de expectativa.
+    await user.click(screen.getByText('toggle'));
+    expect(screen.getByTestId('mode').textContent).toBe('oled');
+
+    // oled -> system (fecha o ciclo)
     await user.click(screen.getByText('toggle'));
     expect(screen.getByTestId('mode').textContent).toBe('system');
   });
