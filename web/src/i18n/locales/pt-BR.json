@@ -1021,7 +1021,24 @@
     "clearSearch": "Limpar busca",
     "viewStats": "Ver estatísticas",
     "createSchedule": "Criar horário",
-    "addLocation": "Cadastrar local"
+    "addLocation": "Cadastrar local",
+    "addTransaction": "Adicionar transação",
+    "cashbox": "Caixa vazio",
+    "cashboxDesc": "Nenhuma transação registrada no caixa do grupo.",
+    "members": "Nenhum membro",
+    "membersDesc": "Convide jogadores para fazer parte do grupo.",
+    "activities": "Nenhuma atividade",
+    "activitiesDesc": "As atividades do grupo aparecerão aqui.",
+    "xpLogs": "Sem histórico de XP",
+    "xpLogsDesc": "Participe de jogos para começar a ganhar XP!",
+    "statistics": "Sem estatísticas",
+    "statisticsDesc": "Jogue partidas para gerar suas estatísticas.",
+    "confirmations": "Nenhuma confirmação",
+    "confirmationsDesc": "Ninguém confirmou presença ainda."
+  },
+  "connection": {
+    "restored": "Conexão restaurada",
+    "offlineLimited": "Você está offline — funções limitadas"
   },
   "home": {
     "quickActions": "Ações Rápidas",

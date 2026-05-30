@@ -17,7 +17,10 @@ describe('ConnectionStatus', () => {
 
   it('renderiza banner offline quando offline', () => {
     renderWithTheme(<ConnectionStatus isOnline={false} />);
-    expect(screen.getByText('Você está offline')).toBeInTheDocument();
+    // #2222: texto agora vem do i18n (chave connection.offlineLimited). Sem
+    // provider de i18n no setup de teste, useTranslation retorna a própria
+    // chave — então asseguramos a presença do banner pela chave renderizada.
+    expect(screen.getByText('connection.offlineLimited')).toBeInTheDocument();
   });
 
   it('tem role alert', () => {

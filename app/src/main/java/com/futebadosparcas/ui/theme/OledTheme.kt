@@ -117,9 +117,12 @@ fun OledTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
+        // #2183: usar tokens do app (FutebaTypography/FutebaShapes). Antes lia
+        // MaterialTheme.typography/shapes DENTRO do builder, retornando defaults
+        // do M3 e revertendo tipografia/formas ao ativar o tema OLED.
         colorScheme = OledDarkColorScheme,
-        typography = MaterialTheme.typography,
-        shapes = MaterialTheme.shapes,
+        typography = FutebaTypography,
+        shapes = FutebaShapes,
         content = content
     )
 }

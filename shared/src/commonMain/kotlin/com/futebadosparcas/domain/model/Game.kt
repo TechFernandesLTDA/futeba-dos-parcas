@@ -54,7 +54,17 @@ enum class ConfirmationStatus {
     PENDING,
 
     @SerialName("WAITLIST")
-    WAITLIST
+    WAITLIST,
+
+    // #2182: alinhado ao enum do :app (data/model/Game.kt) e ao type da web
+    // (game.ts). Estados de check-in (Issues #35/#36) estavam ausentes no shared,
+    // causando drift cross-platform. `status` é persistido como String, então
+    // não há `when` exaustivo que quebre ao adicionar valores.
+    @SerialName("ON_THE_WAY")
+    ON_THE_WAY,
+
+    @SerialName("CHECKED_IN")
+    CHECKED_IN
 }
 
 /**

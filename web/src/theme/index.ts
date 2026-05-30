@@ -75,10 +75,13 @@ export const gamificationColors = {
 
 // #1554: variantes para dark mode — mesmas cores com maior saturação/brilho para
 // manter contraste adequado sobre fundos escuros (#0F172A / #1E293B)
+// #2180: gold/silver alinhados ao canônico do Android (GamificationColors em
+// Color.kt: Gold #FFD700, Silver #E0E0E0). Bronze permanece clareado (#E8924A) de
+// propósito — o #CD7F32 do Android é a variante LIGHT e perde contraste no dark.
 export const gamificationColorsDark = {
   ...gamificationColors,
   gold: '#FFD700',
-  silver: '#D4D4D4',
+  silver: '#E0E0E0',
   bronze: '#E8924A',
   xp: '#CE93D8',
   level: '#4DD0E1',

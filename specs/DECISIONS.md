@@ -484,4 +484,51 @@ PRs #1517–#1522.
 
 ---
 
+### [2026-05-30] Paridade cross-platform: divergências DEFERIDAS (épico #2312)
+
+**Contexto:** Auditoria de paridade Web↔Android (épico #2312) encontrou duas
+divergências que NÃO são gaps de funcionalidade, mas decisões de produto sobre
+prominência/identidade. Ambas tocam app já em produção (v1.22.0), então caem na
+Regra #1 (SDD) — exigem spec aprovada antes de alterar.
+
+**Divergência A — Bottom navigation, tab 3 (#2182):**
+- Web (`config/navItems.ts`): Home · Games · **Groups** · League · Profile
+- Android (`MainActivityCompose.kt`): Home · Games · **Players** · League · Profile
+- (A tab 4 já é "League" em ambos — a tabela do issue #2182 estava desatualizada
+  citando "Ranking".)
+
+Ambas plataformas TÊM as telas Groups e Players; a divergência é só qual ocupa o
+slot privilegiado da bottom nav. Deferir não perde funcionalidade.
+
+**Divergência B — Dark mode background (#2180):**
+- Web: `#0F172A` (slate/azulado), surface `#1E293B`
+- Android: `#0F1114` (neutro/true-black), surface `#15191C`
+
+A web é afinada em torno do slate (sombras densificadas para esse fundo).
+Unificar tem risco de regressão visual ampla.
+
+**Decisão:** DEFERIR ambas para spec/decisão do PO.
+- **Recomendação A:** Groups como tab 3 em ambos (grupo é a unidade
+  organizadora — você entra num grupo antes de ver games/players/league). Mas é
+  call de produto; marcar como pendente.
+- **Recomendação B:** escolher uma paleta única (slate OU neutro) e aplicar nas
+  duas plataformas numa spec dedicada de tema.
+
+**Justificativa:** trocar tab primária / fundo de tema de app shipado afeta
+memória muscular e identidade — não é fato de paridade, é preferência. Alterar
+unilateralmente sem spec viola Regra #1.
+
+**O que FOI feito no épico #2312 (sem precisar de spec):**
+- `ConfirmationStatus` (shared) ganhou `ON_THE_WAY`/`CHECKED_IN` (já existiam no
+  `:app` e na web — drift puro).
+- Gamification dark colors da web alinhadas ao canônico do Android.
+- Variantes de `EmptyState` da web sincronizadas com Android (#2197).
+- `useHapticFeedback` na web (#2218).
+- Fix de bateria no pulso de badge + tokens em High-Contrast/OLED (#2183).
+- `DESIGN_TOKENS.md` criado como fonte única (#2239, absorve #2236/#2195).
+
+**Relacionado:** épico #2312; `DESIGN_TOKENS.md`.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

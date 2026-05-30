@@ -12,6 +12,7 @@ import {
   type SxProps,
   type Theme,
 } from '@mui/material';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -61,6 +62,13 @@ export const ConfirmDialog = React.memo(function ConfirmDialog({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const fullScreen = fullScreenProp ?? isMobile;
+  // #2218: feedback tátil ao confirmar — mais forte em ações destrutivas (error).
+  const { trigger } = useHapticFeedback();
+
+  const handleConfirm = React.useCallback(() => {
+    trigger(confirmColor === 'error' ? 'error' : 'medium');
+    onConfirm();
+  }, [trigger, confirmColor, onConfirm]);
 
   const titleId = id ? `${id}-title` : undefined;
 
@@ -85,7 +93,7 @@ export const ConfirmDialog = React.memo(function ConfirmDialog({
           {cancelLabel}
         </Button>
         <Button
-          onClick={onConfirm}
+          onClick={handleConfirm}
           color={confirmColor}
           variant={confirmVariant}
           disabled={loading}

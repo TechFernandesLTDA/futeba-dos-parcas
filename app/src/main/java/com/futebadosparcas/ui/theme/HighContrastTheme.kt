@@ -190,9 +190,12 @@ fun HighContrastTheme(
     }
 
     MaterialTheme(
+        // #2183: usar tokens do app (FutebaTypography/FutebaShapes). Antes lia
+        // MaterialTheme.typography/shapes DENTRO do builder, o que retorna os
+        // defaults do M3 e revertia tipografia/formas ao ativar high-contrast.
         colorScheme = colorScheme,
-        typography = MaterialTheme.typography,
-        shapes = MaterialTheme.shapes,
+        typography = FutebaTypography,
+        shapes = FutebaShapes,
         content = content
     )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Slide } from '@mui/material';
 import { WifiOff as OfflineIcon, Wifi as OnlineIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useOnlineStatus = () => {
@@ -35,6 +36,8 @@ export const useOnlineStatus = () => {
 };
 
 export const ConnectionStatus: React.FC<{ isOnline: boolean }> = ({ isOnline }) => {
+  // #2222: hook declarado antes de qualquer early return (regra dos Hooks).
+  const { t } = useTranslation();
   const [showBackOnline, setShowBackOnline] = useState(false);
   const prevOnlineRef = useRef(isOnline);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -86,7 +89,9 @@ export const ConnectionStatus: React.FC<{ isOnline: boolean }> = ({ isOnline }) 
       >
         {isOnline ? <OnlineIcon fontSize="small" /> : <OfflineIcon fontSize="small" />}
         <Typography variant="body2">
-          {isOnline ? 'Conexão restaurada' : 'Você está offline'}
+          {/* #2222: mensagem offline comunica que as funções ficam limitadas
+              (ações que exigem conexão não funcionam). i18n nos 3 locales. */}
+          {isOnline ? t('connection.restored') : t('connection.offlineLimited')}
         </Typography>
       </Box>
     </Slide>
