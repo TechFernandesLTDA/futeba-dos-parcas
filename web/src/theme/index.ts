@@ -61,31 +61,37 @@ export const rarityColorsDark: Record<string, string> = {
 
 // Gamification colors
 // #1574: adicionados platinum e champion para centralizar cores de divisão
+// #2236: gold/silver/bronze/diamond alinhados ao canônico do Android (GamificationColors em Color.kt)
+//   Gold   #FFD700 = 0xFFFFD700
+//   Silver #E0E0E0 = 0xFFE0E0E0
+//   Bronze #CD7F32 = 0xFFCD7F32
+//   Diamond #B9F2FF = 0xFFB9F2FF
+// Nota: no light mode, gold (#FFD700) e silver (#E0E0E0) são cores de fundo — use
+// contraste de texto via getContrastText() ou texto escuro fixo (#1A1C1E).
 export const gamificationColors = {
-  gold: '#B8860B',
-  silver: '#C0C0C0',
+  gold: '#FFD700',
+  silver: '#E0E0E0',
   bronze: '#CD7F32',
+  diamond: '#B9F2FF',
   platinum: '#00E676',
   champion: '#E91E63',
   xp: '#9C27B0',
   level: '#00BCD4',
-  mvp: '#B8860B',
+  mvp: '#FFD700',
   streak: '#FF5722',
 };
 
 // #1554: variantes para dark mode — mesmas cores com maior saturação/brilho para
 // manter contraste adequado sobre fundos escuros (#0F172A / #1E293B)
-// #2180: gold/silver alinhados ao canônico do Android (GamificationColors em
-// Color.kt: Gold #FFD700, Silver #E0E0E0). Bronze permanece clareado (#E8924A) de
-// propósito — o #CD7F32 do Android é a variante LIGHT e perde contraste no dark.
+// #2236: gold/silver/diamond usam os mesmos hex canônicos do Android (já aplicados
+// na base acima). Bronze permanece clareado (#E8924A) no dark — o #CD7F32 perde
+// contraste sobre fundos escuros.
 export const gamificationColorsDark = {
   ...gamificationColors,
-  gold: '#FFD700',
-  silver: '#E0E0E0',
   bronze: '#E8924A',
+  diamond: '#B9F2FF',
   xp: '#CE93D8',
   level: '#4DD0E1',
-  mvp: '#FFD700',
   streak: '#FF7043',
 };
 
@@ -509,3 +515,7 @@ export const futebaDarkOledTheme = createTheme({
     surfaceContainerHigh: '#171717',
   },
 });
+
+// Re-exporta tokens de animação para que importadores de theme/index.ts
+// não precisem importar de theme/motion.ts separadamente.
+export { motionTokens, motionDuration, motionEasing, motion } from './motion';
