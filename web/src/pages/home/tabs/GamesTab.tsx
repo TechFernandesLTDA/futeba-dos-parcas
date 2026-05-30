@@ -58,10 +58,10 @@ const livePulseKeyframes = {
 type FilterStatus = 'all' | GameStatus;
 type SortBy = 'date' | 'spots' | 'nearest';
 
-const SORT_OPTIONS: { value: SortBy; label: string; icon: React.ReactNode }[] = [
-  { value: 'date', label: 'Data', icon: <CalendarMonth fontSize="small" /> },
-  { value: 'spots', label: 'Vagas', icon: <EventAvailable fontSize="small" /> },
-  { value: 'nearest', label: 'Próximos', icon: <AccessTime fontSize="small" /> },
+const SORT_OPTIONS: { value: SortBy; labelKey: string; icon: React.ReactNode }[] = [
+  { value: 'date', labelKey: 'games.sort.date', icon: <CalendarMonth fontSize="small" /> },
+  { value: 'spots', labelKey: 'games.sort.spots', icon: <EventAvailable fontSize="small" /> },
+  { value: 'nearest', labelKey: 'games.sort.nearest', icon: <AccessTime fontSize="small" /> },
 ];
 
 export function GamesTab() {
@@ -217,11 +217,11 @@ export function GamesTab() {
               <ToggleButton
                 key={opt.value}
                 value={opt.value}
-                aria-label={opt.label}
+                aria-label={t(opt.labelKey)}
                 sx={{ px: 1, py: 0.25, textTransform: 'none', fontSize: '0.75rem', gap: 0.5 }}
               >
                 {opt.icon}
-                {opt.label}
+                {t(opt.labelKey)}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
@@ -257,25 +257,25 @@ export function GamesTab() {
             icon={hasActiveFilters || hasGroups ? <SportsSoccer /> : <People />}
             title={
               hasActiveFilters
-                ? 'Nenhum jogo com esses filtros'
+                ? t('games.empty.filteredTitle')
                 : hasGroups
-                  ? 'Nenhum jogo agendado'
-                  : 'Entre em um grupo primeiro'
+                  ? t('games.empty.noScheduledTitle')
+                  : t('games.empty.joinGroupTitle')
             }
             description={
               hasActiveFilters
-                ? 'Tente alterar a busca ou os filtros'
+                ? t('games.empty.filteredDesc')
                 : !hasGroups
-                  ? 'Você precisa fazer parte de um grupo para ver e criar jogos.'
+                  ? t('games.empty.joinGroupDesc')
                   : statusFilter === 'all'
-                  ? 'Nenhum jogo disponível no momento'
+                  ? t('games.empty.noneAvailable')
                   : statusFilter === 'SCHEDULED'
-                    ? 'Nenhum jogo aberto para inscrição'
+                    ? t('games.empty.noneOpen')
                     : statusFilter === 'LIVE'
-                      ? 'Nenhum jogo ao vivo agora'
-                      : 'Nenhum jogo finalizado ainda'
+                      ? t('games.empty.noneLive')
+                      : t('games.empty.noneFinished')
             }
-            actionLabel={hasActiveFilters ? 'Limpar Filtros' : hasGroups ? 'Criar Jogo' : 'Descobrir Grupos'}
+            actionLabel={hasActiveFilters ? t('games.empty.clearFilters') : hasGroups ? t('games.createGame') : t('groups.discoverGroupsBtn')}
             actionIcon={hasActiveFilters ? <FilterListOff /> : hasGroups ? <Add /> : <People />}
             onAction={hasActiveFilters ? clearFilters : () => navigate(hasGroups ? '/game/create' : '/groups/discover')}
           />

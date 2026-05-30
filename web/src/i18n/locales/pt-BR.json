@@ -298,6 +298,13 @@
     "goToLogin": "Ir para o login",
     "loadErrorSimple": "Erro ao carregar perfil",
     "levelHistoryLoadError": "Erro ao carregar histórico de nível.",
+    "logoutTitle": "Sair da conta?",
+    "logoutMessage": "Você será desconectado e precisará fazer login novamente para acessar o app.",
+    "adminMenu": {
+      "manageFields": "Gerenciar Quadras",
+      "ownerDashboard": "Painel do Dono",
+      "devTools": "Ferramentas de Dev"
+    },
     "streakActive_one": "{{count}} jogo seguido!",
     "streakActive_other": "{{count}} jogos seguidos!",
     "streakRecord_one": "Recorde: {{count}} jogo",
@@ -541,6 +548,23 @@
       "clearFilters": "Limpar filtros"
     },
     "loadError": "Erro ao carregar jogos",
+    "sort": {
+      "date": "Data",
+      "spots": "Vagas",
+      "nearest": "Próximos"
+    },
+    "empty": {
+      "filteredTitle": "Nenhum jogo com esses filtros",
+      "filteredDesc": "Tente alterar a busca ou os filtros",
+      "noScheduledTitle": "Nenhum jogo agendado",
+      "joinGroupTitle": "Entre em um grupo primeiro",
+      "joinGroupDesc": "Você precisa fazer parte de um grupo para ver e criar jogos.",
+      "noneAvailable": "Nenhum jogo disponível no momento",
+      "noneOpen": "Nenhum jogo aberto para inscrição",
+      "noneLive": "Nenhum jogo ao vivo agora",
+      "noneFinished": "Nenhum jogo finalizado ainda",
+      "clearFilters": "Limpar Filtros"
+    },
     "public": {
       "title": "Peladas Abertas",
       "info": "Peladas abertas ao público perto de você. Entre, jogue e conheça novos craques!",

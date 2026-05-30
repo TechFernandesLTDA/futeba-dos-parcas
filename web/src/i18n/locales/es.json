@@ -298,6 +298,13 @@
     "goToLogin": "Ir al inicio de sesión",
     "loadErrorSimple": "Error al cargar perfil",
     "levelHistoryLoadError": "Error al cargar el historial de nivel.",
+    "logoutTitle": "¿Cerrar sesión?",
+    "logoutMessage": "Se cerrará tu sesión y deberás iniciar sesión nuevamente para acceder a la app.",
+    "adminMenu": {
+      "manageFields": "Gestionar Canchas",
+      "ownerDashboard": "Panel del Dueño",
+      "devTools": "Herramientas de Dev"
+    },
     "streakActive_one": "¡{{count}} partido seguido!",
     "streakActive_other": "¡{{count}} partidos seguidos!",
     "streakRecord_one": "Récord: {{count}} partido",
@@ -536,6 +543,23 @@
       "clearFilters": "Limpiar filtros"
     },
     "loadError": "Error al cargar partidos",
+    "sort": {
+      "date": "Fecha",
+      "spots": "Cupos",
+      "nearest": "Próximos"
+    },
+    "empty": {
+      "filteredTitle": "Ningún partido con esos filtros",
+      "filteredDesc": "Intenta cambiar la búsqueda o los filtros",
+      "noScheduledTitle": "Ningún partido agendado",
+      "joinGroupTitle": "Únete a un grupo primero",
+      "joinGroupDesc": "Necesitas formar parte de un grupo para ver y crear partidos.",
+      "noneAvailable": "Ningún partido disponible por ahora",
+      "noneOpen": "Ningún partido abierto para inscripción",
+      "noneLive": "Ningún partido en vivo ahora",
+      "noneFinished": "Ningún partido finalizado todavía",
+      "clearFilters": "Limpiar Filtros"
+    },
     "public": {
       "title": "Partidos Abiertos",
       "info": "Partidos abiertos al público cerca de ti. ¡Entra, juega y conoce nuevos cracks!",

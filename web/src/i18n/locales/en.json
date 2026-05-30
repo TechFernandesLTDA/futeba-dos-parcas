@@ -298,6 +298,13 @@
     "goToLogin": "Go to login",
     "loadErrorSimple": "Error loading profile",
     "levelHistoryLoadError": "Error loading level history.",
+    "logoutTitle": "Log out?",
+    "logoutMessage": "You will be logged out and will need to sign in again to access the app.",
+    "adminMenu": {
+      "manageFields": "Manage Fields",
+      "ownerDashboard": "Owner Dashboard",
+      "devTools": "Dev Tools"
+    },
     "streakActive_one": "{{count}} game in a row!",
     "streakActive_other": "{{count}} games in a row!",
     "streakRecord_one": "Record: {{count}} game",
@@ -541,6 +548,23 @@
       "clearFilters": "Clear filters"
     },
     "loadError": "Failed to load games",
+    "sort": {
+      "date": "Date",
+      "spots": "Spots",
+      "nearest": "Upcoming"
+    },
+    "empty": {
+      "filteredTitle": "No games match these filters",
+      "filteredDesc": "Try changing the search or filters",
+      "noScheduledTitle": "No games scheduled",
+      "joinGroupTitle": "Join a group first",
+      "joinGroupDesc": "You need to be part of a group to view and create games.",
+      "noneAvailable": "No games available right now",
+      "noneOpen": "No games open for registration",
+      "noneLive": "No live games right now",
+      "noneFinished": "No finished games yet",
+      "clearFilters": "Clear Filters"
+    },
     "public": {
       "title": "Open Games",
       "info": "Open games near you. Join, play, and meet new players!",

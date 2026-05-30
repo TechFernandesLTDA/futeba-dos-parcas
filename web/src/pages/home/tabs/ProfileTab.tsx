@@ -127,36 +127,36 @@ export function ProfileTab() {
     if (isAdmin || isFieldOwner) {
       items.push({
         icon: <Stadium />,
-        label: 'Gerenciar Quadras',
+        label: t('profile.adminMenu.manageFields'),
         onClick: () => navigate('/locations'),
       });
     }
     if (isFieldOwner) {
       items.push({
         icon: <Dashboard />,
-        label: 'Painel do Dono',
+        label: t('profile.adminMenu.ownerDashboard'),
         onClick: () => navigate('/owner/dashboard'),
       });
     }
     if (isAdmin) {
       items.push({
         icon: <AdminPanelSettings />,
-        label: 'Gerenciar Usuários',
+        label: t('profile.manageUsers'),
         onClick: () => navigate('/admin/users'),
       });
       items.push({
         icon: <EmojiEvents />,
-        label: 'Configurações da Liga',
+        label: t('profile.leagueSettings'),
         onClick: () => navigate('/settings/gamification'),
       });
       items.push({
         icon: <BugReport />,
-        label: 'Ferramentas de Dev',
+        label: t('profile.adminMenu.devTools'),
         onClick: () => navigate('/dev'),
       });
     }
     return items;
-  }, [isAdmin, isFieldOwner, navigate]);
+  }, [isAdmin, isFieldOwner, navigate, t]);
 
   // Memoizado: recriado apenas quando ratings do usuário ou tema mudam
   const positionRatings = useMemo(() => [
@@ -528,7 +528,7 @@ export function ProfileTab() {
           onClick={() => navigate('/profile/edit')}
           sx={{ borderRadius: 3 }}
         >
-          Editar Perfil
+          {t('profile.editProfile')}
         </Button>
         <Button
           variant="outlined"
@@ -538,7 +538,7 @@ export function ProfileTab() {
           onClick={() => setLogoutDialogOpen(true)}
           sx={{ borderRadius: 3 }}
         >
-          Sair
+          {t('nav.logout')}
         </Button>
       </Box>
 
@@ -551,16 +551,16 @@ export function ProfileTab() {
         maxWidth="sm"
         aria-labelledby="logout-dialog-title"
       >
-        <DialogTitle id="logout-dialog-title">Sair da conta?</DialogTitle>
+        <DialogTitle id="logout-dialog-title">{t('profile.logoutTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Você será desconectado e precisará fazer login novamente para acessar o app.
+            {t('profile.logoutMessage')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLogoutDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setLogoutDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleLogout} color="error" variant="contained">
-            Sair
+            {t('nav.logout')}
           </Button>
         </DialogActions>
       </Dialog>
