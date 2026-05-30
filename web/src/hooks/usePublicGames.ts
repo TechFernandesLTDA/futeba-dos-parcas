@@ -73,16 +73,13 @@ export function useJoinPublicGame() {
       const gameId = game.id;
       const gameRef = doc(db, 'games', gameId);
 
-      try {
-        await updateDoc(gameRef, {
-          players: arrayUnion(uid),
-          players_count: increment(1),
-          updated_at: serverTimestamp(),
-        });
-      } catch (error) {
-        showError('Erro ao atualizar jogo público.');
-        throw error;
-      }
+      // #2166: sem showError aqui — o onError abaixo já exibe o toast.
+      // Antes o usuário via dois toasts idênticos para o mesmo erro.
+      await updateDoc(gameRef, {
+        players: arrayUnion(uid),
+        players_count: increment(1),
+        updated_at: serverTimestamp(),
+      });
     },
     onSuccess: (_, game) => {
       showSuccess(`Você entrou na pelada "${game.locationName}"!`);

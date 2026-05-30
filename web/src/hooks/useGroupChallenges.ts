@@ -28,6 +28,19 @@ export interface GroupChallenge {
   createdAt: Date;
 }
 
+/**
+ * #2166: mensagem de erro para as mutações de desafio.
+ * Erros de validação (Error plano, sem `code` Firestore) preservam a mensagem
+ * específica; erros de infra/Firestore são mapeados para PT-BR amigável.
+ */
+function challengeErrorMessage(err: unknown): string {
+  const code = (err as { code?: string })?.code;
+  if (!code && err instanceof Error && err.message) {
+    return err.message;
+  }
+  return getFirestoreErrorMessage(err);
+}
+
 export function useGroupChallenges(groupId?: string) {
   const { user } = useAuth();
   const uid = user?.id ?? "";
@@ -82,35 +95,29 @@ export function useChallengeGroup() {
       proposedDate: string;
     }) => {
       if (!challengerGroupId || !challengedGroupId) {
-        showError('Grupo não especificado.');
         throw new Error('Grupo não especificado.');
       }
       if (!challengerGroupName?.trim() || !challengedGroupName?.trim()) {
-        showError('O nome do grupo é obrigatório.');
         throw new Error('O nome do grupo é obrigatório.');
       }
 
-      try {
-        await addDoc(collection(db, "group-challenges"), {
-          challenger_group_id: challengerGroupId,
-          challenger_group_name: challengerGroupName,
-          challenged_group_id: challengedGroupId,
-          challenged_group_name: challengedGroupName,
-          status: "PENDING",
-          proposed_date: proposedDate,
-          created_at: serverTimestamp(),
-        });
-      } catch (error) {
-        showError(getFirestoreErrorMessage(error));
-        throw error;
-      }
+      // #2166: sem showError aqui — o onError abaixo exibe o toast uma única vez.
+      await addDoc(collection(db, "group-challenges"), {
+        challenger_group_id: challengerGroupId,
+        challenger_group_name: challengerGroupName,
+        challenged_group_id: challengedGroupId,
+        challenged_group_name: challengedGroupName,
+        status: "PENDING",
+        proposed_date: proposedDate,
+        created_at: serverTimestamp(),
+      });
     },
     onSuccess: () => {
       showSuccess("Desafio enviado!");
       queryClient.invalidateQueries({ queryKey: ["group-challenges"] });
     },
     onError: (err) => {
-      showError(getFirestoreErrorMessage(err));
+      showError(challengeErrorMessage(err));
     },
   });
 }
@@ -128,26 +135,21 @@ export function useRespondChallenge() {
       status: "ACCEPTED" | "DECLINED";
     }) => {
       if (!challengeId) {
-        showError('Desafio não encontrado.');
         throw new Error('Desafio não encontrado.');
       }
 
-      try {
-        await updateDoc(doc(db, "group-challenges", challengeId), {
-          status,
-          responded_at: serverTimestamp(),
-        });
-      } catch (error) {
-        showError(getFirestoreErrorMessage(error));
-        throw error;
-      }
+      // #2166: sem showError aqui — o onError abaixo exibe o toast uma única vez.
+      await updateDoc(doc(db, "group-challenges", challengeId), {
+        status,
+        responded_at: serverTimestamp(),
+      });
     },
     onSuccess: (_, { status }) => {
       showSuccess(status === "ACCEPTED" ? "Desafio aceito!" : "Desafio recusado.");
       queryClient.invalidateQueries({ queryKey: ["group-challenges"] });
     },
     onError: (err) => {
-      showError(getFirestoreErrorMessage(err));
+      showError(challengeErrorMessage(err));
     },
   });
 }

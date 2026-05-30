@@ -112,18 +112,14 @@ export function useSaveDreamTeam() {
       if (!uid) throw new Error("Você precisa estar logado.");
       if (players.length !== 5) throw new Error("Selecione exatamente 5 jogadores.");
 
-      try {
-        const ref = doc(db, "users", uid, "dream_team", "current");
-        const batch = writeBatch(db);
-        batch.set(ref, {
-          players,
-          created_at: serverTimestamp(),
-        });
-        await batch.commit();
-      } catch (error) {
-        showError(getFirestoreErrorMessage(error));
-        throw error;
-      }
+      // #2166: sem showError aqui — o onError abaixo já exibe o toast.
+      const ref = doc(db, "users", uid, "dream_team", "current");
+      const batch = writeBatch(db);
+      batch.set(ref, {
+        players,
+        created_at: serverTimestamp(),
+      });
+      await batch.commit();
     },
     onSuccess: () => {
       showSuccess("Time dos Sonhos salvo!");
