@@ -10,6 +10,9 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/BRANCH_STRATEGY.md'
       - 'functions/**'
+      - 'web/**'
+      - 'iosApp/**'
+      - 'archive/**'
   pull_request:
     branches: [ master, develop ]
     paths-ignore:
@@ -18,6 +21,9 @@ on:
       - 'specs/**'
       - '.github/ISSUE_TEMPLATE/**'
       - 'functions/**'
+      - 'web/**'
+      - 'iosApp/**'
+      - 'archive/**'
   workflow_dispatch:
 
 # Cancela execucoes anteriores do mesmo branch/PR
