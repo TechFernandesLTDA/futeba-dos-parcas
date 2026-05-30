@@ -20,6 +20,7 @@ import {
   Divider,
   Chip,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -74,6 +75,7 @@ export const LiveStatsScreen: React.FC = () => {
   useDocumentTitle(t('games.liveStats.title'));
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // #2238: layout responsivo
   const { gameId } = useParams<{ gameId: string }>();
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -190,7 +192,7 @@ export const LiveStatsScreen: React.FC = () => {
         </Tabs>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
         {tabValue === 0 && stats && (
           <>
             <Card sx={{ mb: 2, textAlign: 'center' }}>

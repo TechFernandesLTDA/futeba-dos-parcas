@@ -1,4 +1,11 @@
 {
+  "validation": {
+    "required": "Required field",
+    "positiveNumber": "Enter a valid number (≥ 0)",
+    "minLength": "Minimum {{min}} characters",
+    "selectRequired": "Please select an option",
+    "dateRequired": "Date is required"
+  },
   "cashbox": {
     "title": "Cashbox",
     "income": "Income",

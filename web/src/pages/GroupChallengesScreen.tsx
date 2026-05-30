@@ -19,6 +19,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
   ArrowBack as BackIcon,
@@ -39,6 +41,8 @@ export const GroupChallengesScreen: React.FC = () => {
   useDocumentTitle(t("challenges.title"));
   const { groupId } = useParams<{ groupId: string }>();
   const goBack = useNavigateBack(`/group/${groupId}`);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // #2238
   const { data: challenges, isLoading, error, refetch } = useGroupChallenges(groupId);
   const { data: officialGroups = [] } = useOfficialGroups();
   const challengeGroup = useChallengeGroup();
@@ -47,6 +51,8 @@ export const GroupChallengesScreen: React.FC = () => {
   const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [proposedDate, setProposedDate] = useState("");
+  const [groupTouched, setGroupTouched] = useState(false); // #2231
+  const [dateTouched, setDateTouched] = useState(false); // #2231
   const [respondingId, setRespondingId] = useState<string | null>(null);
 
   const currentGroup = officialGroups.find((g) => g.id === groupId);
@@ -198,7 +204,7 @@ export const GroupChallengesScreen: React.FC = () => {
         </Stack>
       )}
 
-      <Dialog open={challengeDialogOpen} onClose={() => setChallengeDialogOpen(false)} maxWidth="sm" fullWidth aria-labelledby="challenge-dialog-title">
+      <Dialog open={challengeDialogOpen} onClose={() => { setChallengeDialogOpen(false); setGroupTouched(false); setDateTouched(false); }} maxWidth="sm" fullWidth fullScreen={isMobile} aria-labelledby="challenge-dialog-title">
         <DialogTitle id="challenge-dialog-title">{t("challenges.challengeGroup")}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
@@ -208,6 +214,9 @@ export const GroupChallengesScreen: React.FC = () => {
               label={t("challenges.opponentGroup")}
               value={selectedGroupId}
               onChange={(e) => setSelectedGroupId(e.target.value)}
+              onBlur={() => setGroupTouched(true)}
+              error={groupTouched && !selectedGroupId}
+              helperText={groupTouched && !selectedGroupId ? t("validation.selectRequired") : " "}
               SelectProps={{ native: true }}
             >
               <option value="">{t("challenges.selectGroup")}</option>
@@ -225,12 +234,15 @@ export const GroupChallengesScreen: React.FC = () => {
               type="date"
               value={proposedDate}
               onChange={(e) => setProposedDate(e.target.value)}
+              onBlur={() => setDateTouched(true)}
+              error={dateTouched && !proposedDate}
+              helperText={dateTouched && !proposedDate ? t("validation.dateRequired") : " "}
               InputLabelProps={{ shrink: true }}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setChallengeDialogOpen(false)}>{t("common.cancel")}</Button>
+          <Button onClick={() => { setChallengeDialogOpen(false); setGroupTouched(false); setDateTouched(false); }}>{t("common.cancel")}</Button>
           <Button
             variant="contained"
             onClick={handleSendChallenge}
