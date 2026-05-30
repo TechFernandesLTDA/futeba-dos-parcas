@@ -1036,7 +1036,8 @@
   },
   "connection": {
     "restored": "Conexión restaurada",
-    "offlineLimited": "Estás sin conexión — funciones limitadas"
+    "offlineLimited": "Estás sin conexión — funciones limitadas",
+    "requiresConnection": "Requiere conexión a internet"
   },
   "home": {
     "quickActions": "Acciones Rápidas",
