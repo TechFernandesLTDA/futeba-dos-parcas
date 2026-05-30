@@ -6,6 +6,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { FavoriteTeam } from '../types/team';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const logger = createLogger('useTeams');
 
@@ -24,6 +25,11 @@ async function fetchTeams(): Promise<FavoriteTeam[]> {
 
 export function useTeams() {
   const queryClient = useQueryClient();
+  // favorite_teams exige auth (rule allow read: if isAuthenticated()).
+  // O TeamsProvider envolve toda a arvore (inclusive login/register), entao
+  // sem este gate a query/listener disparava nao-autenticado -> permission-denied
+  // no console + toast de erro na tela de login.
+  const { currentUser } = useAuth();
 
   const {
     data: teams = [],
@@ -32,6 +38,7 @@ export function useTeams() {
   } = useQuery({
     queryKey: [COLLECTION],
     queryFn: fetchTeams,
+    enabled: !!currentUser,
     staleTime: 24 * 60 * 60 * 1000,
     gcTime: 7 * 24 * 60 * 60 * 1000,
   });
@@ -40,6 +47,8 @@ export function useTeams() {
   const [listenerError, setListenerError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!currentUser) return;
+
     const coll = collection(db, COLLECTION);
     const q = query(coll, orderBy('name', 'asc'));
     let isFirstSnapshot = true;
@@ -61,7 +70,7 @@ export function useTeams() {
     );
 
     return () => unsubscribe();
-  }, [queryClient, showError]);
+  }, [queryClient, showError, currentUser]);
 
   const teamsById = useMemo(() => {
     const map = new Map<string, FavoriteTeam>();

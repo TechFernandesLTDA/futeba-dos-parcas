@@ -9,6 +9,13 @@
       "cwd": "web"
     },
     {
+      "name": "web-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--", "--port", "4173", "--strictPort"],
+      "port": 4173,
+      "cwd": "web"
+    },
+    {
       "name": "backend-api",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
