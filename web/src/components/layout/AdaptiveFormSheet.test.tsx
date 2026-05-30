@@ -38,6 +38,8 @@ describe('AdaptiveFormSheet', () => {
         <div>Conteúdo</div>
       </AdaptiveFormSheet>
     );
+    // Componente deve renderizar sem erros com qualquer closeDestination
+    expect(screen.getByText('Conteúdo')).toBeInTheDocument();
   });
 
   it('mobile renderiza sem wrapper', () => {

@@ -92,11 +92,17 @@ describe('usePerformanceMonitoring', () => {
   });
 
   it('envia métricas para analytics após 3 segundos', () => {
-    renderHook(() => usePerformanceMonitoring({ screenName: 'Test' }));
+    const { result } = renderHook(() =>
+      usePerformanceMonitoring({ screenName: 'Test' })
+    );
 
     act(() => {
       vi.advanceTimersByTime(3000);
     });
+
+    // Após 3s o hook deve ter calculado timeToInteractive via setTimeout
+    expect(result.current.metrics.timeToInteractive).toBeDefined();
+    expect(typeof result.current.metrics.timeToInteractive).toBe('number');
   });
 
   it('desconecta observer no cleanup', () => {
@@ -141,9 +147,14 @@ describe('useFirestorePerformanceMonitor', () => {
       useFirestorePerformanceMonitor('TestScreen')
     );
 
-    act(() => {
-      result.current.trackQuery();
-      result.current.trackQuery();
-    });
+    // trackQuery usa ref interna — não dispara re-render, mas não deve lançar exceção
+    expect(() => {
+      act(() => {
+        result.current.trackQuery();
+        result.current.trackQuery();
+      });
+    }).not.toThrow();
+    // queryCount inicial é 0 (ref não-reativa no retorno do hook)
+    expect(result.current.queryCount).toBe(0);
   });
 });

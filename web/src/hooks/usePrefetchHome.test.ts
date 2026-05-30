@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 
 const mockGetDocs = vi.fn();
 const mockCollection = vi.fn();
@@ -61,7 +61,7 @@ describe('usePrefetchHome', () => {
   it('chama getDocs na coleção games, grupos e notificações', async () => {
     renderHook(() => usePrefetchHome());
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(mockGetDocs).toHaveBeenCalled();
     });
   });
@@ -72,7 +72,7 @@ describe('usePrefetchHome', () => {
 
     renderHook(() => usePrefetchHome());
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(mockGetDocs).toHaveBeenCalledTimes(3);
     });
   });
@@ -83,7 +83,7 @@ describe('usePrefetchHome', () => {
 
     renderHook(() => usePrefetchHome());
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(mockPrefetchQuery).toHaveBeenCalled();
     });
   });

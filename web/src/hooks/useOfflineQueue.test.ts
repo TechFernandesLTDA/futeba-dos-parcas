@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 
 const mockSetDoc = vi.fn();
 const mockUpdateDoc = vi.fn();
@@ -103,9 +103,11 @@ describe('useOfflineQueue', () => {
       writable: true,
       configurable: true,
     });
-    await act(async () => {
+    act(() => {
       window.dispatchEvent(new Event('online'));
-      await vi.waitFor(() => {});
+    });
+    await waitFor(() => {
+      expect(mockSetDoc).toHaveBeenCalled();
     });
   });
 

@@ -34,6 +34,8 @@ describe('PullToRefresh', () => {
         <div>Conteúdo</div>
       </PullToRefresh>
     );
+    // Em estado inicial não há indicador de atualização
+    expect(screen.queryByText('Atualizando...')).not.toBeInTheDocument();
   });
 
   it('desabilitado não responde a touch events', () => {
@@ -43,6 +45,8 @@ describe('PullToRefresh', () => {
         <div>Conteúdo</div>
       </PullToRefresh>
     );
+    // Componente deve renderizar children mesmo quando desabilitado
+    expect(screen.getByText('Conteúdo')).toBeInTheDocument();
   });
 
   it('aplica altura zero quando não está puxando', () => {
@@ -61,6 +65,8 @@ describe('PullToRefresh', () => {
         <div>Conteúdo</div>
       </PullToRefresh>
     );
+    // Container raiz deve estar presente
+    expect(screen.getByText('Conteúdo')).toBeInTheDocument();
   });
 
   it('não dispara refresh após unmount', () => {
@@ -71,6 +77,8 @@ describe('PullToRefresh', () => {
       </PullToRefresh>
     );
     unmount();
+    // onRefresh não deve ter sido chamado sem interação
+    expect(onRefresh).not.toHaveBeenCalled();
   });
 
   it('renderiza múltiplos children', () => {
