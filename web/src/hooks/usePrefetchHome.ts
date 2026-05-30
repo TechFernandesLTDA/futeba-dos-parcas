@@ -24,6 +24,8 @@ export function usePrefetchHome() {
     if (!user?.id) return;
 
     const uid = user.id;
+    // #2265/#2278: flag de cancelamento para não logar/prefetch após unmount.
+    let cancelled = false;
 
     // Prefetch próximo jogo (apenas 1, otimizado para HomeTab)
     const prefetchNextGame = async () => {
@@ -37,7 +39,7 @@ export function usePrefetchHome() {
         );
         const snapshot = await getDocs(q);
         
-        if (!snapshot.empty) {
+        if (!snapshot.empty && !cancelled) {
           const gameDoc = snapshot.docs[0];
           // Prefetch confirmação do usuário para este jogo
           const confDocId = `${gameDoc.id}_${uid}`;
@@ -88,7 +90,11 @@ export function usePrefetchHome() {
       prefetchGroups(),
       prefetchActivities(),
     ]).then(() => {
-      logger.info('Home prefetch complete');
+      if (!cancelled) logger.info('Home prefetch complete');
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 }

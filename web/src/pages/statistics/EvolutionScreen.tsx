@@ -86,11 +86,13 @@ export const EvolutionScreen: React.FC = () => {
 
     setError(null);
     setLoading(true);
+    // #2278: evita setState após unmount
+    let cancelled = false;
 
     const fetchData = async () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', targetUserId));
-        if (userDoc.exists()) {
+        if (userDoc.exists() && !cancelled) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(userDoc.data()) as Record<string, any>;
           const totalGames = data.gamesPlayed || 0;
@@ -127,17 +129,22 @@ export const EvolutionScreen: React.FC = () => {
           };
         });
 
-        setEvolutionData(data);
+        if (!cancelled) setEvolutionData(data);
       } catch (err) {
         logger.error('Error fetching evolution data:', err);
-        showErrorRef.current(t('statistics.loadEvolutionError'));
-        setError(t('statistics.loadEvolutionError'));
+        if (!cancelled) {
+          showErrorRef.current(t('statistics.loadEvolutionError'));
+          setError(t('statistics.loadEvolutionError'));
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [targetUserId, reloadKey, t]);
 
   if (loading) {
