@@ -164,17 +164,22 @@ async function checkBadgeCarrasco(userId: string): Promise<boolean> {
   const gameIds = confSnap.docs.map((d) => d.data().game_id as string).filter(Boolean);
   const lossesByOpponent: Record<string, number> = {};
 
-  for (const gameId of gameIds) {
-    const gameDoc = await db().collection("games").doc(gameId).get();
+  // FIX #2196: lê jogo + teams (coleção RAIZ filtrada por game_id) de todos os
+  // jogos em paralelo, eliminando o N+1 sequencial doc-a-doc.
+  const gamesData = await Promise.all(
+    gameIds.map(async (gameId) => {
+      const [gameDoc, teamsSnap] = await Promise.all([
+        db().collection("games").doc(gameId).get(),
+        db().collection("teams").where("game_id", "==", gameId).get(),
+      ]);
+      return {gameDoc, teamsSnap};
+    })
+  );
+
+  for (const {gameDoc, teamsSnap} of gamesData) {
     if (!gameDoc.exists) continue;
     const game = gameDoc.data();
     if (!game || game.status !== "FINISHED") continue;
-
-    const teamsSnap = await db()
-      .collection("games")
-      .doc(gameId)
-      .collection("teams")
-      .get();
 
     const userTeam = teamsSnap.docs.find((t) =>
       (t.data().player_ids as string[])?.includes(userId)
@@ -233,54 +238,66 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
     logger.info("Checking badges after game finished", {gameId});
 
     try {
+      // FIX #2196: confirmations vivem na coleção RAIZ filtrada por game_id,
+      // não em games/{gameId}/confirmations. Path canônico igual a index.ts.
       const confSnap = await db()
-        .collection("games")
-        .doc(gameId)
         .collection("confirmations")
+        .where("game_id", "==", gameId)
         .where("was_present", "==", true)
         .get();
 
       const userIds = confSnap.docs.map((d) => d.data().user_id as string);
       const uniqueUserIds = [...new Set(userIds)];
 
-      for (const userId of uniqueUserIds) {
-        const badgesRef = db().collection("users").doc(userId).collection("badges");
+      // FIX #2196: pré-carrega os badges já conquistados de cada usuário em
+      // paralelo (1 leitura da subcollection por usuário em vez de N leituras
+      // individuais doc-a-doc no laço de triggers), eliminando o N+1.
+      await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+          const badgesRef = db()
+            .collection("users")
+            .doc(userId)
+            .collection("badges");
 
-        for (const trigger of BADGE_TRIGGERS) {
-          try {
-            const alreadyEarned = await badgesRef.doc(trigger.badgeId).get();
-            if (alreadyEarned.exists) continue;
+          // Conjunto de badges já conquistados (1 query por usuário).
+          const earnedSnap = await badgesRef.get();
+          const earnedIds = new Set(earnedSnap.docs.map((d) => d.id));
 
-            const earned = await trigger.check(userId);
-            if (earned) {
-              await badgesRef.doc(trigger.badgeId).set({
-                badge_id: trigger.badgeId,
-                name: trigger.name,
-                icon: trigger.icon,
-                description: trigger.description,
-                type: trigger.badgeId,
-                earned_at: admin.firestore.FieldValue.serverTimestamp(),
-                earned: true,
-              });
+          for (const trigger of BADGE_TRIGGERS) {
+            try {
+              if (earnedIds.has(trigger.badgeId)) continue;
 
-              logger.info("Badge earned", {userId, badgeId: trigger.badgeId});
-
-              try {
-                await sendNotificationToUser(userId, {
-                  title: `🏆 ${trigger.name}`,
-                  body: trigger.description,
-                  type: NotificationType.ACHIEVEMENT,
-                  data: {badgeId: trigger.badgeId},
+              const earned = await trigger.check(userId);
+              if (earned) {
+                await badgesRef.doc(trigger.badgeId).set({
+                  badge_id: trigger.badgeId,
+                  name: trigger.name,
+                  icon: trigger.icon,
+                  description: trigger.description,
+                  type: trigger.badgeId,
+                  earned_at: admin.firestore.FieldValue.serverTimestamp(),
+                  earned: true,
                 });
-              } catch (notifErr) {
-                logger.error("Failed to send badge notification", {userId, badgeId: trigger.badgeId, notifErr});
+
+                logger.info("Badge earned", {userId, badgeId: trigger.badgeId});
+
+                try {
+                  await sendNotificationToUser(userId, {
+                    title: `🏆 ${trigger.name}`,
+                    body: trigger.description,
+                    type: NotificationType.ACHIEVEMENT,
+                    data: {badgeId: trigger.badgeId},
+                  });
+                } catch (notifErr) {
+                  logger.error("Failed to send badge notification", {userId, badgeId: trigger.badgeId, notifErr});
+                }
               }
+            } catch (err) {
+              logger.error("Error checking badge", {userId, badgeId: trigger.badgeId, err});
             }
-          } catch (err) {
-            logger.error("Error checking badge", {userId, badgeId: trigger.badgeId, err});
           }
-        }
-      }
+        })
+      );
     } catch (err) {
       logger.error("Error in badge check", {gameId, err});
     }

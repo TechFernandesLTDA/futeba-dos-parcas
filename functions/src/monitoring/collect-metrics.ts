@@ -1,3 +1,4 @@
+import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 
@@ -26,7 +27,7 @@ export const collectHourlyMetrics =
     timeoutSeconds: 300,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
-    console.log(
+    logger.info(
       "[METRICS] Starting hourly metrics"
     );
 
@@ -65,7 +66,7 @@ export const collectHourlyMetrics =
           const snap = await db().collection(colName).count().get();
           return [colName, snap.data().count];
         } catch (error) {
-          console.error(
+          logger.error(
             "[METRICS] Error counting " +
               `${colName}:`,
             error
@@ -88,7 +89,7 @@ export const collectHourlyMetrics =
           const snap = await query.count().get();
           return [label, snap.data().count];
         } catch (error) {
-          console.error(
+          logger.error(
             "[METRICS] Error counting " +
               `${label}:`,
             error
@@ -177,7 +178,7 @@ export const collectHourlyMetrics =
         }
         dauLast24h = dauUserIds.size;
       } catch (dauErr) {
-        console.warn("[METRICS] DAU query failed:", dauErr);
+        logger.warn("[METRICS] DAU query failed:", dauErr);
       }
 
       // Buscar métrica anterior para deltas
@@ -227,31 +228,31 @@ export const collectHourlyMetrics =
       await db().collection("metrics")
         .add(metricsDoc);
 
-      console.log(
+      logger.info(
         "[METRICS] Hourly metrics collected"
       );
-      console.log(
+      logger.info(
         "[METRICS] Total users: " +
         counts.users
       );
-      console.log(
+      logger.info(
         "[METRICS] Total games: " +
         counts.games
       );
-      console.log(
+      logger.info(
         "[METRICS] Games last 24h: " +
         gamesLast24h
       );
-      console.log(
+      logger.info(
         "[METRICS] Active users last 7d: " +
         activeUsersLast7d
       );
-      console.log(
+      logger.info(
         "[METRICS] DAU (unique owners): " +
         dauLast24h
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[METRICS] Error collecting metrics:",
         error
       );
@@ -280,7 +281,7 @@ export const collectDailyMetrics =
     timeoutSeconds: 300,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
-    console.log(
+    logger.info(
       "[METRICS] Starting daily metrics"
     );
 
@@ -372,23 +373,23 @@ export const collectDailyMetrics =
       await db().collection("metrics")
         .add(dailyMetrics);
 
-      console.log(
+      logger.info(
         "[METRICS] Daily metrics collected"
       );
-      console.log(
+      logger.info(
         "[METRICS] Games created today: " +
         gamesCreatedToday.data().count
       );
-      console.log(
+      logger.info(
         "[METRICS] Games finished today: " +
         gamesFinishedToday.data().count
       );
-      console.log(
+      logger.info(
         "[METRICS] Users created today: " +
         usersCreatedToday.data().count
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[METRICS] Error collecting daily " +
         "metrics:", error
       );
@@ -417,7 +418,7 @@ export const cleanupOldMetrics =
     timeoutSeconds: 540,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
-    console.log(
+    logger.info(
       "[METRICS] Starting metrics cleanup " +
       "(TTL: 90 days)"
     );
@@ -463,7 +464,7 @@ export const cleanupOldMetrics =
         }
 
         if (batchCount >= 50) {
-          console.warn(
+          logger.warn(
             "[METRICS] Reached batch limit, " +
             "stopping."
           );
@@ -471,13 +472,13 @@ export const cleanupOldMetrics =
         }
       }
 
-      console.log(
+      logger.info(
         "[METRICS] Cleanup completed. " +
         `Deleted ${totalDeleted} old metrics ` +
         `in ${batchCount} batches`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[METRICS] Error during metrics " +
         "cleanup:", error
       );

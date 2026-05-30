@@ -4,6 +4,7 @@
  * envio de notificações push.
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   FCM_TTL_SECONDS,
@@ -193,7 +194,7 @@ async function sendWithRetry(
         const backoffMs =
           Math.pow(2, attempt - 1) *
           INITIAL_BACKOFF_MS;
-        console.log(
+        logger.info(
           `FCM retry ${attempt}/${maxRetries}` +
           ` apos erro transiente (${errorCode}).` +
           ` Aguardando ${backoffMs}ms...`
@@ -207,7 +208,7 @@ async function sendWithRetry(
         attempt === maxRetries &&
         isTransientError(fcmErr)
       ) {
-        console.error(
+        logger.error(
           `FCM falhou apos ${maxRetries}` +
           ` tentativas (${errorCode}):` +
           ` ${fcmErr.message}`
@@ -275,14 +276,14 @@ async function removeInvalidToken(
     const allTokens = extractTokensFromUserData(data);
 
     if (!allTokens.includes(invalidToken)) {
-      console.log(
+      logger.info(
         "Token invalido nao encontrado para " +
         userId + " — ignorando remocao."
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `Removendo token invalido do usuario ${userId}`
     );
 
@@ -316,7 +317,7 @@ async function removeInvalidToken(
         .update(update);
     }
   } catch (e) {
-    console.error(
+    logger.error(
       "Erro ao remover token invalido" +
       ` do usuario ${userId}:`,
       e
@@ -345,7 +346,7 @@ async function getUserFcmTokens(
       userDoc.data() as Record<string, unknown>;
     return extractTokensFromUserData(data);
   } catch (e) {
-    console.error(
+    logger.error(
       "Erro ao buscar tokens FCM do usuario " +
       userId + ":",
       e
@@ -397,7 +398,7 @@ export async function shouldNotifyUser(
     return true;
   } catch (e) {
     // fail-open: não bloquear notificação em caso de erro de leitura
-    console.error(
+    logger.error(
       "[NOTIF] shouldNotifyUser erro para " + userId + ":",
       e
     );
@@ -445,7 +446,7 @@ async function getUserFcmTokensWithMapping(
         }
       );
     } catch (e) {
-      console.error(
+      logger.error(
         "Erro ao buscar tokens em lote:",
         e
       );
@@ -504,7 +505,7 @@ export async function sendNotificationToUser(
     groupId,
   );
   if (!shouldSend) {
-    console.log(
+    logger.info(
       "[NOTIF] Notificação suprimida por preferências do usuário " + userId
     );
     return false;
@@ -512,7 +513,7 @@ export async function sendNotificationToUser(
 
   const tokens = await getUserFcmTokens(userId);
   if (tokens.length === 0) {
-    console.log(
+    logger.info(
       "Usuario " + userId + " nao tem token FCM"
     );
     return false;
@@ -571,7 +572,7 @@ export async function sendNotificationToUser(
     const result = await sendWithRetry(message);
 
     if (result.success) {
-      console.log(
+      logger.info(
         `Notificacao enviada para ${userId}` +
         ` (token ...${token.slice(-8)})`
       );
@@ -580,12 +581,12 @@ export async function sendNotificationToUser(
       result.error &&
       isInvalidTokenError(result.error)
     ) {
-      console.log(
+      logger.info(
         `Token invalido para ${userId}, limpando...`
       );
       await removeInvalidToken(userId, token);
     } else if (result.error) {
-      console.error(
+      logger.error(
         `Erro ao enviar notificacao para ${userId}:`,
         result.error
       );
@@ -617,7 +618,7 @@ export async function sendNotificationToUsers(
   );
   const filteredUserIds = userIds.filter((_, i) => filterResults[i]);
   if (filteredUserIds.length === 0) {
-    console.log("[NOTIF] Todos os usuários suprimiram este tipo de notificação");
+    logger.info("[NOTIF] Todos os usuários suprimiram este tipo de notificação");
     return 0;
   }
 
@@ -625,7 +626,7 @@ export async function sendNotificationToUsers(
   const tokenMappings =
     await getUserFcmTokensWithMapping(filteredUserIds);
   if (tokenMappings.length === 0) {
-    console.log("Nenhum token FCM encontrado");
+    logger.info("Nenhum token FCM encontrado");
     return 0;
   }
 
@@ -705,7 +706,7 @@ export async function sendNotificationToUsers(
 
       // Processar falhas individuais
       if (response.failureCount > 0) {
-        console.log(
+        logger.info(
           `Multicast: ${response.successCount}` +
           ` sucesso, ${response.failureCount}` +
           " falhas"
@@ -730,7 +731,7 @@ export async function sendNotificationToUsers(
                     sendResponse.error
                   )
                 ) {
-                  console.log(
+                  logger.info(
                     "Token invalido detectado" +
                     ` (${errorCode})` +
                     ` para usuario ${uid}`
@@ -744,7 +745,7 @@ export async function sendNotificationToUsers(
                     sendResponse.error
                   )
                 ) {
-                  console.log(
+                  logger.info(
                     "Erro transiente" +
                     ` (${errorCode})` +
                     ` para usuario ${uid},` +
@@ -755,7 +756,7 @@ export async function sendNotificationToUsers(
                     userId: uid,
                   });
                 } else {
-                  console.error(
+                  logger.error(
                     "Falha ao enviar para" +
                     ` usuario ${uid}:` +
                     ` ${errorCode} -` +
@@ -768,7 +769,7 @@ export async function sendNotificationToUsers(
         );
       }
     } catch (e) {
-      console.error(
+      logger.error(
         "Erro ao enviar multicast:",
         e
       );
@@ -777,7 +778,7 @@ export async function sendNotificationToUsers(
 
   // Limpar tokens inválidos em paralelo
   if (invalidTokensToRemove.length > 0) {
-    console.log(
+    logger.info(
       `Removendo ${invalidTokensToRemove.length}` +
       " tokens invalidos..."
     );
@@ -790,7 +791,7 @@ export async function sendNotificationToUsers(
 
   // Retry para falhas transientes
   if (transientFailures.length > 0) {
-    console.log(
+    logger.info(
       "Tentando retry para" +
       ` ${transientFailures.length}` +
       " falhas transientes..."
@@ -821,7 +822,7 @@ export async function sendNotificationToUsers(
         await sendWithRetry(retryMessage);
 
       if (result.success) {
-        console.log(
+        logger.info(
           "Retry bem-sucedido para" +
           ` usuario ${userId}`
         );
@@ -830,13 +831,13 @@ export async function sendNotificationToUsers(
         result.error &&
         isInvalidTokenError(result.error)
       ) {
-        console.log(
+        logger.info(
           "Token invalido detectado no" +
           ` retry para usuario ${userId}`
         );
         await removeInvalidToken(userId, token);
       } else {
-        console.error(
+        logger.error(
           `Retry falhou para usuario ${userId}:` +
           ` ${result.error?.message ||
             "erro desconhecido"}`
@@ -845,7 +846,7 @@ export async function sendNotificationToUsers(
     }
   }
 
-  console.log(
+  logger.info(
     "Total de notificacoes enviadas com" +
     ` sucesso: ${totalSuccess}`
   );
@@ -929,7 +930,7 @@ export async function sendAndSaveNotification(
 ): Promise<boolean> {
   // B3: Evitar auto-notificacao
   if (payload.senderId && payload.senderId === userId) {
-    console.log(
+    logger.info(
       "[SELF-NOTIFY] Pulando auto-notificacao" +
       ` para ${userId} (senderId === userId)`
     );

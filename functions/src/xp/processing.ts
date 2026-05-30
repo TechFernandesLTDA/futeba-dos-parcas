@@ -896,7 +896,7 @@ export async function processXpBatch(
       const skippedInChunk = chunkResults.filter(
         (r) => r.alreadyProcessed
       ).length;
-      console.log(
+      logger.info(
         "[XP_BATCH] Chunk de " +
         `${chunk.length} transações commitado ` +
         `(${skippedInChunk} já processadas)`
@@ -904,7 +904,7 @@ export async function processXpBatch(
     } catch (error: unknown) {
       const typedError =
         error as Record<string, unknown>;
-      console.error(
+      logger.error(
         "[XP_BATCH] Erro ao commitar chunk " +
         `${i / TXN_CHUNK_SIZE}:`,
         error
@@ -997,7 +997,7 @@ export async function retryXpOperation<T>(
       const backoffMs =
         Math.pow(2, attempt - 1) *
         initialBackoffMs;
-      console.log(
+      logger.info(
         "[XP_RETRY] Tentativa " +
         `${attempt}/${maxRetries} falhou. ` +
         `Retry em ${backoffMs}ms...`

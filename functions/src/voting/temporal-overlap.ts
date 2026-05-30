@@ -104,24 +104,32 @@ export const onConfirmationCreated = onDocumentCreated(
       .limit(50)
       .get();
 
-    const overlaps: string[] = [];
-    for (const doc of userConfsSnap.docs) {
-      if (doc.id === event.params.confId) continue;
+    // FIX #2198: filtra as confirmações candidatas e carrega os games em
+    // paralelo (Promise.all) em vez de uma leitura sequencial por confirmação.
+    const candidates = userConfsSnap.docs.filter((doc) => {
+      if (doc.id === event.params.confId) return false;
       const other = doc.data();
       const otherGameId = other.game_id as string;
-      if (!otherGameId || otherGameId === gameId) continue;
+      if (!otherGameId || otherGameId === gameId) return false;
       const otherStatus = other.status as string;
-      if (otherStatus === "CANCELLED") continue;
+      if (otherStatus === "CANCELLED") return false;
+      return true;
+    });
 
-      // Carrega outro game e checa overlap
-      const otherGameSnap = await db()
-        .doc(`games/${otherGameId}`)
-        .get();
-      if (!otherGameSnap.exists) continue;
+    const candidateGameSnaps = await Promise.all(
+      candidates.map((doc) =>
+        db().doc(`games/${doc.data().game_id as string}`).get()
+      )
+    );
+
+    const overlaps: string[] = [];
+    candidateGameSnaps.forEach((otherGameSnap, index) => {
+      const doc = candidates[index];
+      if (!otherGameSnap.exists) return;
       const otherWindow = getGameWindow(
         otherGameSnap.data() as Record<string, unknown>,
       );
-      if (!otherWindow) continue;
+      if (!otherWindow) return;
 
       if (
         window.start <= otherWindow.end &&
@@ -129,7 +137,7 @@ export const onConfirmationCreated = onDocumentCreated(
       ) {
         overlaps.push(doc.id);
       }
-    }
+    });
 
     if (overlaps.length === 0) return;
 

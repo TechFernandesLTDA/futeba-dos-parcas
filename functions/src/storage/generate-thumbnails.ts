@@ -178,7 +178,7 @@ export const generateProfileThumbnail =
         );
 
         // Generate thumbnail (200x200, cover, 80%)
-        console.log(
+        logger.info(
           "[THUMBNAIL] Generating thumbnail 200x200"
         );
         const sharp = (await import("sharp")).default;

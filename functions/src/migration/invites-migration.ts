@@ -74,7 +74,9 @@ export const migrateGroupsInviteCodeToInvites =
               (Date.now() - lastRun.getTime())) /
               60000
           );
-          throw new Error(
+          // FIX #2196: callable deve lançar HttpsError, não Error genérico.
+          throw new HttpsError(
+            "resource-exhausted",
             "Migration already ran recently. Try again " +
               `in ${minutesRemaining} minutes.`
           );

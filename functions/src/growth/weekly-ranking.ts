@@ -81,22 +81,28 @@ export const processWeeklyRanking = onSchedule(
 
     const scores: WeeklyScores = {};
 
-    for (const gameDoc of gamesSnap.docs) {
-      const gameId = gameDoc.id;
+    // FIX #2198: confirmations/teams vivem na coleção RAIZ filtrada por
+    // game_id (path canônico igual a index.ts), e são lidas em paralelo
+    // (Promise.all) em vez de sequencialmente por jogo.
+    const perGameSnaps = await Promise.all(
+      gamesSnap.docs.map(async (gameDoc) => {
+        const gameId = gameDoc.id;
+        const [confSnap, teamsSnap] = await Promise.all([
+          db()
+            .collection("confirmations")
+            .where("game_id", "==", gameId)
+            .where("was_present", "==", true)
+            .get(),
+          db()
+            .collection("teams")
+            .where("game_id", "==", gameId)
+            .get(),
+        ]);
+        return {confSnap, teamsSnap};
+      })
+    );
 
-      const confSnap = await db()
-        .collection("games")
-        .doc(gameId)
-        .collection("confirmations")
-        .where("was_present", "==", true)
-        .get();
-
-      const teamsSnap = await db()
-        .collection("games")
-        .doc(gameId)
-        .collection("teams")
-        .get();
-
+    for (const {confSnap, teamsSnap} of perGameSnaps) {
       const teams = teamsSnap.docs.map((t) => ({
         playerIds: (t.data().player_ids as string[]) || [],
         score: (t.data().score as number) || 0,
@@ -179,61 +185,61 @@ export const processWeeklyRanking = onSchedule(
     });
 
     // Scout ranking: dream team scoring
+    // FIX #2198: em vez de escanear TODOS os usuários (~10k) buscando o
+    // dream_team de cada um, usa collectionGroup("dream_team") que retorna
+    // SOMENTE os usuários que de fato montaram um time dos sonhos. O doc
+    // canônico é users/{uid}/dream_team/current (vide web/useDreamTeam.ts).
     const scoutRankings: Array<{ userId: string; userName: string; points: number }> = [];
-    let lastUserDoc: admin.firestore.QueryDocumentSnapshot | undefined;
 
-    while (true) {
-      let usersQuery = db()
-        .collection("users")
-        .orderBy(admin.firestore.FieldPath.documentId())
-        .limit(500);
+    const dreamTeamsSnap = await db()
+      .collectionGroup("dream_team")
+      .get();
 
-      if (lastUserDoc) {
-        usersQuery = usersQuery.startAfter(lastUserDoc);
-      }
+    // Mapa de pontos por dono de time (apenas pontos positivos entram).
+    const pointsByOwner: Array<{ userId: string; points: number }> = [];
 
-      const usersSnap = await usersQuery.get();
-      if (usersSnap.empty) break;
+    for (const teamDoc of dreamTeamsSnap.docs) {
+      // Considera apenas o doc "current" (ignora histórico/outros docs).
+      if (teamDoc.id !== "current") continue;
 
-      const teamDocs = await Promise.all(
-        usersSnap.docs.map((userDoc) =>
-          db()
-            .collection("users")
-            .doc(userDoc.id)
-            .collection("dream_team")
-            .doc("current")
-            .get()
-        )
-      );
+      // O dono do time é o pai do pai: users/{uid}/dream_team/current.
+      const ownerId = teamDoc.ref.parent.parent?.id;
+      if (!ownerId) continue;
 
-      for (const [index, teamDoc] of teamDocs.entries()) {
-        const userDoc = usersSnap.docs[index];
+      const teamData = teamDoc.data();
+      // FIX #2284: valida o shape antes do cast.
+      const rawPlayers = teamData?.players;
+      if (!Array.isArray(rawPlayers) || rawPlayers.length === 0) continue;
+      const players = rawPlayers as Array<{ userId: string }>;
 
-        if (!teamDoc.exists) continue;
-
-        const teamData = teamDoc.data();
-        const players = (teamData?.players as Array<{ userId: string }>) || [];
-        if (players.length === 0) continue;
-
-        let teamPoints = 0;
-        for (const player of players) {
-          const playerScore = rankings.find((r) => r.userId === player.userId);
-          if (playerScore) {
-            teamPoints += playerScore.points;
-          }
-        }
-
-        if (teamPoints > 0) {
-          scoutRankings.push({
-            userId: userDoc.id,
-            userName: (userDoc.data()?.name as string) || "Jogador",
-            points: teamPoints,
-          });
+      let teamPoints = 0;
+      for (const player of players) {
+        const playerScore = rankings.find((r) => r.userId === player.userId);
+        if (playerScore) {
+          teamPoints += playerScore.points;
         }
       }
 
-      lastUserDoc = usersSnap.docs[usersSnap.docs.length - 1];
-      if (usersSnap.size < 500) break;
+      if (teamPoints > 0) {
+        pointsByOwner.push({userId: ownerId, points: teamPoints});
+      }
+    }
+
+    // Busca os nomes dos donos em paralelo (apenas os que pontuaram —
+    // conjunto muito menor que a base inteira de usuários).
+    const ownerDocs = await Promise.all(
+      pointsByOwner.map((o) =>
+        db().collection("users").doc(o.userId).get()
+      )
+    );
+
+    for (const [index, ownerDoc] of ownerDocs.entries()) {
+      const owner = pointsByOwner[index];
+      scoutRankings.push({
+        userId: owner.userId,
+        userName: (ownerDoc.data()?.name as string) || "Jogador",
+        points: owner.points,
+      });
     }
 
     scoutRankings.sort((a, b) => b.points - a.points);

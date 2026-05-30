@@ -4,6 +4,7 @@
  * e streaks.
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   onDocumentCreated,
@@ -83,7 +84,7 @@ export const onBadgeAwarded = onDocumentCreated(
   async (event) => {
     const userBadge = event.data?.data();
     if (!userBadge) {
-      console.log(
+      logger.info(
         "[onBadgeAwarded] No data, skipping"
       );
       return;
@@ -94,14 +95,14 @@ export const onBadgeAwarded = onDocumentCreated(
     const badgeId = userBadge.badge_id;
 
     if (!userId || !badgeId) {
-      console.error(
+      logger.error(
         "[onBadgeAwarded] Missing user_id" +
         ` or badge_id in document ${badgeDocId}`
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[onBadgeAwarded] Badge ${badgeId}` +
       ` awarded to user ${userId}`
     );
@@ -137,7 +138,7 @@ export const onBadgeAwarded = onDocumentCreated(
           },
         });
 
-      console.log(
+      logger.info(
         "[onBadgeAwarded] Push notification" +
         ` sent: ${notificationSent}`
       );
@@ -151,12 +152,12 @@ export const onBadgeAwarded = onDocumentCreated(
         action: "badges",
       });
 
-      console.log(
+      logger.info(
         "[onBadgeAwarded] Notification saved" +
         ` to Firestore for user ${userId}`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[onBadgeAwarded] Error processing" +
         " badge notification:",
         error
@@ -227,7 +228,7 @@ export async function sendStreakNotificationIfMilestone(
 
   const milestone = reachedMilestones[0];
 
-  console.log(
+  logger.info(
     `[STREAK] User ${userId} reached streak` +
     ` milestone: ${currentStreak} games`
   );
@@ -256,13 +257,13 @@ export async function sendStreakNotificationIfMilestone(
       action: "achievements",
     });
 
-    console.log(
+    logger.info(
       `[STREAK] Notification sent to ${userId}:` +
       ` ${milestone.title}`
     );
     return sent;
   } catch (error) {
-    console.error(
+    logger.error(
       "[STREAK] Error sending streak" +
       ` notification to ${userId}:`,
       error
@@ -296,7 +297,7 @@ export async function notifyMvpAwardedDirect(
   // Só notifica se o jogo está FINISHED
   if (gameData.status !== "FINISHED") return;
 
-  console.log(
+  logger.info(
     "[MVP_AWARDED_DIRECT] MVP definido" +
     ` no jogo ${gameId}: ${mvpId}`
   );
@@ -316,7 +317,7 @@ export async function notifyMvpAwardedDirect(
     action: "game_detail/" + gameId,
   });
 
-  console.log(
+  logger.info(
     "[MVP_AWARDED_DIRECT] Notificacao" +
     ` enviada para ${mvpId}`
   );
@@ -358,7 +359,7 @@ export const onMvpAwarded = onDocumentUpdated(
         after as Record<string, unknown>
       );
     } catch (e) {
-      console.error(
+      logger.error(
         "[MVP_AWARDED] Erro ao notificar" +
         ` MVP ${afterMvpId}:`,
         e
@@ -398,7 +399,7 @@ export const onDivisionChanged =
         return;
       }
 
-      console.log(
+      logger.info(
         `[RANKING_CHANGED] User ${userId}:` +
         ` ${beforeDivision} -> ${afterDivision}`
       );
@@ -460,12 +461,12 @@ export const onDivisionChanged =
           action: "profile",
         });
 
-        console.log(
+        logger.info(
           "[RANKING_CHANGED] Notificacao" +
           ` enviada para ${userId}`
         );
       } catch (e) {
-        console.error(
+        logger.error(
           "[RANKING_CHANGED] Erro ao" +
           ` notificar ${userId}:`,
           e

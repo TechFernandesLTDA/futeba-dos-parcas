@@ -18,6 +18,7 @@
  * @see functions/src/utils/soft-delete-helper.ts
  */
 
+import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {
@@ -155,7 +156,7 @@ export const softDeleteGame =
         );
       }
 
-      console.log(
+      logger.info(
         `[SOFT_DELETE] Game ${gameId} ` +
         `soft-deleted por ${userId}`
       );
@@ -181,7 +182,7 @@ export const softDeleteGame =
       ) {
         throw error;
       }
-      console.error(
+      logger.error(
         "[SOFT_DELETE] Erro ao soft-delete " +
         `game ${gameId}:`, error
       );
@@ -327,7 +328,7 @@ export const softDeleteGroup =
         );
       }
 
-      console.log(
+      logger.info(
         `[SOFT_DELETE] Grupo ${groupId} ` +
         `soft-deleted por ${userId}: ` +
         `${result.gamesDeleted} jogos afetados`
@@ -357,7 +358,7 @@ export const softDeleteGroup =
       ) {
         throw error;
       }
-      console.error(
+      logger.error(
         "[SOFT_DELETE] Erro ao soft-delete " +
         `grupo ${groupId}:`, error
       );
@@ -480,7 +481,7 @@ export const restoreDeletedGame =
         );
       }
 
-      console.log(
+      logger.info(
         `[SOFT_DELETE] Jogo ${gameId} ` +
         `restaurado por ${userId}`
       );
@@ -497,7 +498,7 @@ export const restoreDeletedGame =
       ) {
         throw error;
       }
-      console.error(
+      logger.error(
         "[SOFT_DELETE] Erro ao restaurar " +
         `jogo ${gameId}:`, error
       );
@@ -619,7 +620,7 @@ export const restoreDeletedGroup =
         );
       }
 
-      console.log(
+      logger.info(
         `[SOFT_DELETE] Grupo ${groupId} ` +
         `restaurado por ${userId}`
       );
@@ -639,7 +640,7 @@ export const restoreDeletedGroup =
       ) {
         throw error;
       }
-      console.error(
+      logger.error(
         "[SOFT_DELETE] Erro ao restaurar " +
         `grupo ${groupId}:`, error
       );
@@ -680,7 +681,7 @@ export const cleanupAllSoftDeleted =
     // FIX #1040: try/catch externo para re-throw — aciona retry do Cloud Scheduler.
     // Sem isso, erros eram swallowed e documentos expirados ficavam acumulados.
     try {
-      console.log(
+      logger.info(
         "[SOFT_DELETE_CLEANUP] Iniciando " +
       "cleanup unificado (TTL: " +
       `${RETENTION_DAYS} dias)`
@@ -704,7 +705,7 @@ export const cleanupAllSoftDeleted =
     ];
 
     for (const col of collections) {
-      console.log(
+      logger.info(
         "[SOFT_DELETE_CLEANUP] Processando: " +
         col.name
       );
@@ -740,7 +741,7 @@ export const cleanupAllSoftDeleted =
       })),
     });
 
-    console.log(
+    logger.info(
       "[SOFT_DELETE_CLEANUP] Concluído em " +
       `${totalDuration}ms. Total removido: ` +
       `${totalDeleted} documentos`
@@ -749,7 +750,7 @@ export const cleanupAllSoftDeleted =
       // Re-throw para acionar retry automático do Cloud Scheduler.
       // Sem o throw, falhas silenciosas passavam despercebidas e documentos
       // expirados nunca seriam removidos até a próxima execução semanal.
-      console.error(
+      logger.error(
         "[SOFT_DELETE_CLEANUP] Erro fatal no cleanup:", error
       );
       throw error;

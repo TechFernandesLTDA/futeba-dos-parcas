@@ -55,6 +55,13 @@ jest.mock("firebase-admin", () => {
 // ==========================================
 
 jest.mock("firebase-functions/v2", () => ({
+  // FIX #2286: collect-latency-metrics.ts agora usa logger (era console.*).
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
   scheduler: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSchedule: jest.fn((_opts: unknown, handler: any) => handler),

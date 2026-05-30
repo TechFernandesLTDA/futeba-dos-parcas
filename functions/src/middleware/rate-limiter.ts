@@ -241,7 +241,7 @@ export function withRateLimit<T = unknown>(
         (resetAt.getTime() - Date.now()) / 1000
       );
 
-      console.warn(
+      logger.warn(
         "[RATE_LIMIT] Usuário " +
         `${userId} excedeu limite ` +
         `(${config.maxRequests}/` +
@@ -263,7 +263,7 @@ export function withRateLimit<T = unknown>(
     }
 
     // Log de debug
-    console.log(
+    logger.info(
       "[RATE_LIMIT] Usuário " +
       `${userId}: ${remaining}/` +
       `${config.maxRequests} ` +
@@ -296,7 +296,7 @@ export function withRateLimit<T = unknown>(
  */
 export async function cleanupExpiredRateLimits(
 ): Promise<number> {
-  console.log(
+  logger.info(
     "[RATE_LIMIT_CLEANUP] Iniciando limpeza " +
     "de rate limits expirados..."
   );
@@ -312,7 +312,7 @@ export async function cleanupExpiredRateLimits(
       .get();
 
     if (expiredSnap.empty) {
-      console.log(
+      logger.info(
         "[RATE_LIMIT_CLEANUP] Nenhum bucket " +
         "expirado encontrado"
       );
@@ -327,13 +327,13 @@ export async function cleanupExpiredRateLimits(
 
     await batch.commit();
 
-    console.log(
+    logger.info(
       "[RATE_LIMIT_CLEANUP] " +
       `${expiredSnap.size} buckets removidos`
     );
     return expiredSnap.size;
   } catch (error) {
-    console.error(
+    logger.error(
       "[RATE_LIMIT_CLEANUP] Erro ao limpar " +
       "rate limits:", error
     );
@@ -462,12 +462,12 @@ export async function resetUserRateLimit(
 
   try {
     await bucketRef.delete();
-    console.log(
+    logger.info(
       "[RATE_LIMIT] Rate limit resetado " +
       `para usuário ${userId}`
     );
   } catch (error) {
-    console.error(
+    logger.error(
       "[RATE_LIMIT] Erro ao resetar rate " +
       `limit para ${userId}:`, error
     );
@@ -519,7 +519,7 @@ export async function getUserRateLimitStats(
           null,
     };
   } catch (error) {
-    console.error(
+    logger.error(
       "[RATE_LIMIT] Erro ao obter stats " +
       `para ${userId}:`, error
     );

@@ -6,6 +6,7 @@
  * de jogadores/estatísticas/streaks.
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   FIRESTORE_WHERE_IN_LIMIT,
@@ -121,7 +122,7 @@ export function toLiveScore(
     rawTeam1Score > MAX_SCORE ||
     rawTeam2Score > MAX_SCORE
   ) {
-    console.warn(
+    logger.warn(
       "[SCORE_BOUNDS] Placar fora dos " +
       "limites detectado: " +
       `T1=${rawTeam1Score}, ` +
@@ -389,11 +390,15 @@ export async function fetchAllStats(
   );
   for (const snap of snaps) {
     for (const doc of snap.docs) {
+      // FIX #2284: mescla os defaults SOB os dados crus, garantindo que
+      // campos ausentes/malformados no doc não virem undefined no cast.
+      const raw = doc.data();
       result.set(
         doc.id,
-        (doc.data() || {
+        {
           ...defaultStats,
-        }) as UserStatistics
+          ...(typeof raw === "object" && raw !== null ? raw : {}),
+        } as UserStatistics
       );
     }
   }

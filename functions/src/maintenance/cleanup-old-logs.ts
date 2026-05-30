@@ -82,12 +82,16 @@ export const cleanupOldXpLogs =
 
     try {
       // Query logs older than 1 year
-      const query = db().collection("xp_logs")
+      const baseQuery = db().collection("xp_logs")
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
         .limit(FIRESTORE_PAGINATION_LIMIT);
 
       let hasMore = true;
+      // FIX #2198: cursor de paginação — evita reprocessar docs já lidos
+      // quando o delete em batch ainda não propagou no índice.
+      let lastDoc:
+        admin.firestore.QueryDocumentSnapshot | undefined;
 
       while (hasMore) {
         // Verificar timeout antes de cada batch
@@ -102,12 +106,17 @@ export const cleanupOldXpLogs =
           break;
         }
 
-        const snapshot = await query.get();
+        const pageQuery = lastDoc ?
+          baseQuery.startAfter(lastDoc) :
+          baseQuery;
+        const snapshot = await pageQuery.get();
 
         if (snapshot.empty) {
           hasMore = false;
           break;
         }
+
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
         // Delete in batch
         const batch = db().batch();
@@ -214,12 +223,15 @@ export const cleanupOldActivities =
     let batchCount = 0;
 
     try {
-      const query = db().collection("activities")
+      const baseQuery = db().collection("activities")
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
         .limit(FIRESTORE_PAGINATION_LIMIT);
 
       let hasMore = true;
+      // FIX #2198: cursor de paginação — evita reprocessar docs já lidos.
+      let lastDoc:
+        admin.firestore.QueryDocumentSnapshot | undefined;
 
       while (hasMore) {
         // Verificar timeout antes de cada batch
@@ -233,12 +245,17 @@ export const cleanupOldActivities =
           break;
         }
 
-        const snapshot = await query.get();
+        const pageQuery = lastDoc ?
+          baseQuery.startAfter(lastDoc) :
+          baseQuery;
+        const snapshot = await pageQuery.get();
 
         if (snapshot.empty) {
           hasMore = false;
           break;
         }
+
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
         const batch = db().batch();
         snapshot.docs.forEach((doc) => {
@@ -334,13 +351,16 @@ export const cleanupOldNotifications =
 
     try {
       // Only delete READ notifications older than 30d
-      const query = db().collection("notifications")
+      const baseQuery = db().collection("notifications")
         .where("read", "==", true)
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
         .limit(FIRESTORE_PAGINATION_LIMIT);
 
       let hasMore = true;
+      // FIX #2198: cursor de paginação — evita reprocessar docs já lidos.
+      let lastDoc:
+        admin.firestore.QueryDocumentSnapshot | undefined;
 
       while (hasMore) {
         // Verificar timeout antes de cada batch
@@ -354,12 +374,17 @@ export const cleanupOldNotifications =
           break;
         }
 
-        const snapshot = await query.get();
+        const pageQuery = lastDoc ?
+          baseQuery.startAfter(lastDoc) :
+          baseQuery;
+        const snapshot = await pageQuery.get();
 
         if (snapshot.empty) {
           hasMore = false;
           break;
         }
+
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
         const batch = db().batch();
         snapshot.docs.forEach((doc) => {

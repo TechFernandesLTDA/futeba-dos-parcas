@@ -16,6 +16,7 @@
  * - Custo: 40% redução de Firestore reads
  */
 
+import {logger} from "firebase-functions";
 import {
   onCall,
   HttpsError,
@@ -172,7 +173,7 @@ export const resetXpRateLimit =
           .doc(bucketKey)
           .delete();
 
-        console.log(
+        logger.info(
           "[XP_RATE_LIMIT] Rate limit " +
           "reset for user " +
           `${targetUserId} by admin ` +

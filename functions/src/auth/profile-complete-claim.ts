@@ -9,6 +9,7 @@ import {
 } from "firebase-functions/v2/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {isValidPhoneBR} from "../validation/phone-br";
+import {isRecord} from "../validation/guards";
 
 interface UserProfileData {
   cpfVerifiedAt?: unknown;
@@ -89,12 +90,16 @@ async function setProfileCompleteClaim(
 export const onUserProfileWritten = onDocumentWritten(
   {document: "users/{uid}", region: FUNCTION_REGION},
   async (event) => {
-    const before = event.data?.before.exists ?
-      event.data.before.data() as UserProfileData :
-      undefined;
-    const after = event.data?.after.exists ?
-      event.data.after.data() as UserProfileData :
-      undefined;
+    // FIX #2284: valida que é um objeto antes do cast (early-return implícito
+    // via undefined caso o doc esteja malformado).
+    const beforeRaw = event.data?.before.exists ?
+      event.data.before.data() : undefined;
+    const afterRaw = event.data?.after.exists ?
+      event.data.after.data() : undefined;
+    const before: UserProfileData | undefined =
+      isRecord(beforeRaw) ? beforeRaw : undefined;
+    const after: UserProfileData | undefined =
+      isRecord(afterRaw) ? afterRaw : undefined;
 
     if (
       before?.phone === after?.phone &&
@@ -134,8 +139,10 @@ export const recomputeMyProfileClaim = onCall(
         .collection("users")
         .doc(uid)
         .get();
+      // FIX #2284: valida shape antes do cast.
+      const userRaw = userSnap.exists ? userSnap.data() : undefined;
       const profileComplete = computeProfileComplete(
-        userSnap.exists ? userSnap.data() as UserProfileData : undefined
+        isRecord(userRaw) ? (userRaw as UserProfileData) : undefined
       );
 
       return {

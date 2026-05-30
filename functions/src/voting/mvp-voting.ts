@@ -26,6 +26,7 @@
  * @see specs/P2_39_MVP_VOTING_RACE_CONDITION_FIX.md
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   onCall,
@@ -50,6 +51,7 @@ import {
   getWeekKey,
 } from "../game/helpers";
 import {Game} from "../models";
+import {isGameShape} from "../validation/guards";
 
 const getDb = () => admin.firestore();
 
@@ -423,7 +425,7 @@ export const submitMvpVote =
           }
         );
 
-        console.log(
+        logger.info(
           "[MVP_VOTE] Voto registrado: " +
           `${voterId} -> ` +
           `${result.votedPlayerId} ` +
@@ -447,7 +449,7 @@ export const submitMvpVote =
           error instanceof Error ?
             error.message :
             String(error);
-        console.error(
+        logger.error(
           "[MVP_VOTE] Erro ao registrar " +
           `voto: ${errMsg}`
         );
@@ -632,7 +634,7 @@ export const concludeMvpVoting =
                 gameData.voting_status ===
                 "CONCLUDED"
               ) {
-                console.log(
+                logger.info(
                   "[MVP_CONCLUDE] Votação " +
                   `do jogo ${gameId} já ` +
                   "foi concluída"
@@ -791,7 +793,7 @@ export const concludeMvpVoting =
             }
           );
 
-        console.log(
+        logger.info(
           "[MVP_CONCLUDE] Votação " +
           "concluída para jogo " +
           `${gameId}: ` +
@@ -827,7 +829,7 @@ export const concludeMvpVoting =
               XP_ACTIONS.MVP
             );
           } catch (xpError) {
-            console.error(
+            logger.error(
               "[VOTING_XP] MVP application failed " +
               "(will be safe on retry — idempotente):",
               xpError
@@ -844,7 +846,7 @@ export const concludeMvpVoting =
               XP_ACTIONS.WORST_PLAYER
             );
           } catch (xpError) {
-            console.error(
+            logger.error(
               "[VOTING_XP] Bola Murcha application failed " +
               "(will be safe on retry — idempotente):",
               xpError
@@ -878,7 +880,7 @@ export const concludeMvpVoting =
           error instanceof Error ?
             error.message :
             String(error);
-        console.error(
+        logger.error(
           "[MVP_CONCLUDE] Erro ao " +
           "concluir votação: " +
           errMsg
@@ -974,7 +976,7 @@ function resolveWinner(
       a.playerId.localeCompare(b.playerId)
   );
 
-  console.log(
+  logger.info(
     "[MVP_TIEBREAK] Empate com " +
     `${maxCount} votos entre ` +
     `${tied.length} jogadores. ` +
@@ -1031,7 +1033,11 @@ async function applyVotingXpDelta(
       .collection("games")
       .doc(gameId)
       .get();
-    const gameDoc = gameSnap.data() as Game | undefined;
+    // FIX #2284: valida o shape antes do cast. Se malformado, trata como
+    // undefined (getGameDate aplica fallback) em vez de cast cego.
+    const rawGame = gameSnap.data();
+    const gameDoc: Game | undefined =
+      isGameShape(rawGame) ? rawGame : undefined;
     const gameDate = getGameDate(gameDoc);
     monthKey = gameDate.toISOString().substring(0, 7);
     weekKey = getWeekKey(gameDate);
@@ -1045,7 +1051,7 @@ async function applyVotingXpDelta(
       seasonSnap.docs[0].id :
       null;
   } catch (fetchError) {
-    console.warn(
+    logger.warn(
       `[VOTING_XP] Could not fetch game/season for ${gameId}: ` +
       `${fetchError}. season_participation & ranking_deltas will ` +
       "not be updated for this XP application."
@@ -1056,7 +1062,7 @@ async function applyVotingXpDelta(
     await db.runTransaction(async (txn) => {
       const logDoc = await txn.get(logRef);
       if (logDoc.exists) {
-        console.log(
+        logger.info(
           `[VOTING_XP] Skipping ${reason} XP ` +
           `for ${userId} in ${gameId} ` +
           "— log already exists (idempotent)"
@@ -1088,7 +1094,7 @@ async function applyVotingXpDelta(
             0,
             MAX_XP_PER_GAME - totalExistingXp
           );
-          console.warn(
+          logger.warn(
             `[VOTING_XP] Capping ${reason} XP ` +
             `for ${userId} in ${gameId}: ` +
             `${totalExistingXp} + ${xpDelta} ` +
@@ -1105,7 +1111,7 @@ async function applyVotingXpDelta(
 
       const userDoc = await txn.get(userRef);
       if (!userDoc.exists) {
-        console.warn(
+        logger.warn(
           `[VOTING_XP] User ${userId} not found, ` +
           `skipping ${reason} XP for ${gameId}`
         );
@@ -1199,7 +1205,7 @@ async function applyVotingXpDelta(
         );
       }
 
-      console.log(
+      logger.info(
         `[VOTING_XP] Applied ${clampedXpDelta} XP ` +
         `to ${userId} for ${reason} ` +
         `in ${gameId} ` +
@@ -1208,7 +1214,7 @@ async function applyVotingXpDelta(
       );
     });
   } catch (error) {
-    console.error(
+    logger.error(
       `[VOTING_XP] Error applying ${reason} ` +
       `XP for ${userId} in ${gameId}:`,
       error

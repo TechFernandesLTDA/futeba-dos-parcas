@@ -38,8 +38,7 @@ export const startNewSeason = onSchedule(
   async () => {
     const now = new Date();
     const monthKey = getMonthKey(now);
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    void prevMonth;
+    // FIX #2199: removida a variável prevMonth não utilizada (+ void prevMonth).
 
     logger.info("Starting new season", {monthKey});
 

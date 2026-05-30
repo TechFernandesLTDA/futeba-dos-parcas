@@ -358,20 +358,18 @@ actual class FirebaseDataSource actual constructor() {
             confirmations.forEach { confirmation ->
                 val docRef = firestore.collection(COLLECTION_CONFIRMATIONS)
                     .document("${gameId}_${confirmation.userId}")
+                // FIX #2296: removidas as chaves camelCase duplicadas. O
+                // parsing usa @SerialName(snake_case), então as duplicatas
+                // eram redundantes e infladas o payload de escrita.
                 val confirmationData = mapOf(
                     "id" to docRef.id,
                     "game_id" to gameId,
-                    "gameId" to gameId,
                     "user_id" to confirmation.userId,
-                    "userId" to confirmation.userId,
                     "user_name" to confirmation.userName,
-                    "userName" to confirmation.userName,
                     "user_photo" to confirmation.userPhoto,
-                    "userPhoto" to confirmation.userPhoto,
                     "position" to confirmation.position,
                     "status" to "PENDING",
-                    "is_casual_player" to confirmation.isCasualPlayer,
-                    "isCasualPlayer" to confirmation.isCasualPlayer
+                    "is_casual_player" to confirmation.isCasualPlayer
                 )
                 batch.set(docRef, confirmationData)
             }

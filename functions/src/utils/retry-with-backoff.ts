@@ -27,6 +27,7 @@
  * @see specs/BACKEND_OPTIMIZATION_SPEC.md - PHASE 3
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 
 const getDb = () => admin.firestore();
@@ -212,7 +213,7 @@ export async function retryWithBackoff<T>(
 
       // Log de sucesso (se houve retries)
       if (attempt > 1) {
-        console.log(
+        logger.info(
           `[RETRY] ${cfg.operationName}: ` +
           "Sucesso na tentativa " +
           `${attempt}/${cfg.maxRetries} ` +
@@ -241,7 +242,7 @@ export async function retryWithBackoff<T>(
         const errMsg =
           (typedError.message as string) ||
           String(error);
-        console.error(
+        logger.error(
           `[RETRY] ${cfg.operationName}: ` +
           "Erro permanente na tentativa " +
           `${attempt}. Não retentando. ` +
@@ -274,7 +275,7 @@ export async function retryWithBackoff<T>(
         const errMsg =
           (typedError.message as string) ||
           String(error);
-        console.error(
+        logger.error(
           `[RETRY] ${cfg.operationName}: ` +
           "Max retries " +
           `(${cfg.maxRetries}) atingido. ` +
@@ -304,7 +305,7 @@ export async function retryWithBackoff<T>(
       const errCode =
         (typedError.code as string) ||
         (typedError.message as string);
-      console.log(
+      logger.info(
         `[RETRY] ${cfg.operationName}: ` +
         `Tentativa ${attempt}/` +
         `${cfg.maxRetries} falhou ` +
@@ -386,7 +387,7 @@ async function sendToDeadLetterQueue(
       .collection(DEAD_LETTER_COLLECTION)
       .add(entry);
 
-    console.log(
+    logger.info(
       "[DLQ] Operação " +
       `"${config.operationName}" enviada ` +
       "para dead letter queue " +
@@ -396,7 +397,7 @@ async function sendToDeadLetterQueue(
 
     return true;
   } catch (dlqError) {
-    console.error(
+    logger.error(
       "[DLQ] Erro ao enviar para " +
       "dead letter queue:",
       dlqError
@@ -430,7 +431,7 @@ export async function getDeadLetterQueueItems(
       ...doc.data() as DeadLetterEntry,
     }));
   } catch (error) {
-    console.error(
+    logger.error(
       "[DLQ] Erro ao buscar itens:",
       error
     );
@@ -462,7 +463,7 @@ export async function resolveDeadLetterItem(
       resolved_by: resolvedBy,
     });
 
-  console.log(
+  logger.info(
     `[DLQ] Item ${docId} marcado como ` +
     `resolvido por ${resolvedBy}`
   );

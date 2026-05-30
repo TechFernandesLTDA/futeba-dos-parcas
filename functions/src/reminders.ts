@@ -13,6 +13,7 @@
  * - Timezone: America/Sao_Paulo
  */
 
+import {logger} from "firebase-functions";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import {
@@ -200,14 +201,14 @@ async function fetchGamesInReminderWindow(
   );
 
   const hoursLabel = hoursBeforeGame;
-  console.log(
+  logger.info(
     "[REMINDERS] Buscando jogos na " +
     `janela de ${hoursLabel}h:`
   );
-  console.log(
+  logger.info(
     `  - Agora: ${now.toISOString()}`
   );
-  console.log(
+  logger.info(
     "  - Janela: " +
     `${windowStart.toISOString()} ate ` +
     `${windowEnd.toISOString()}`
@@ -241,7 +242,7 @@ async function fetchGamesInReminderWindow(
     if (
       EXCLUDED_GAME_STATUSES.includes(status)
     ) {
-      console.log(
+      logger.info(
         `  - Jogo ${doc.id} ignorado` +
         ` (status: ${status})`
       );
@@ -315,7 +316,7 @@ async function fetchGamesInReminderWindow(
     }
 
     if (noDateTimeSnap.size > 0) {
-      console.log(
+      logger.info(
         "[REMINDERS] " +
         `${noDateTimeSnap.size} jogos sem` +
         " dateTime processados (fallback" +
@@ -323,14 +324,14 @@ async function fetchGamesInReminderWindow(
       );
     }
   } catch (e) {
-    console.error(
+    logger.error(
       "[REMINDERS] Erro ao buscar jogos" +
       " sem dateTime:",
       e
     );
   }
 
-  console.log(
+  logger.info(
     `[REMINDERS] Encontrados ${games.length}` +
     " jogos elegiveis para lembrete" +
     ` de ${hoursLabel}h`
@@ -379,7 +380,7 @@ async function fetchPendingConfirmations(
 
     // Pular se lembrete ja foi enviado
     if (data[reminderField] === true) {
-      console.log(
+      logger.info(
         `  - User ${userId} ja recebeu` +
         ` lembrete ${reminderType}`
       );
@@ -537,7 +538,7 @@ async function canSendReminderToUser(
           settings.muteUntilTime.toDate() :
           new Date(settings.muteUntilTime as string);
       if (muteUntil > new Date()) {
-        console.log(
+        logger.info(
           `[REMINDERS] Usuario ${userId}` +
           " silenciado ate " + muteUntil.toISOString()
         );
@@ -552,7 +553,7 @@ async function canSendReminderToUser(
         Array.isArray(muteGroups) &&
         (muteGroups as string[]).includes(groupId)
       ) {
-        console.log(
+        logger.info(
           `[REMINDERS] Usuario ${userId} silenciou` +
           ` grupo ${groupId}`
         );
@@ -562,7 +563,7 @@ async function canSendReminderToUser(
 
     return true;
   } catch (e) {
-    console.error(
+    logger.error(
       "[REMINDERS] Erro ao verificar prefs" +
       ` de ${userId}, fail-open:`,
       e
@@ -592,7 +593,7 @@ async function sendReminder(
     game.group_id
   );
   if (!canSend) {
-    console.log(
+    logger.info(
       "[REMINDERS] Pulando lembrete para" +
       ` ${userId} — preferencias bloqueiam envio`
     );
@@ -622,7 +623,7 @@ async function sendReminder(
       `O jogo${locationInfo} comeca em ` +
       `1 hora (${formattedDate}). Prepare-se!`;
 
-  console.log(
+  logger.info(
     "[REMINDERS] Enviando lembrete " +
     `${reminderType} para user ${userId}, ` +
     `jogo ${game.id}`
@@ -657,7 +658,7 @@ async function sendReminder(
 
     return sent;
   } catch (e) {
-    console.error(
+    logger.error(
       "[REMINDERS] Erro ao enviar " +
       `lembrete para ${userId}:`,
       e
@@ -723,7 +724,7 @@ async function markReminderSent(
         });
     }
   } catch (e) {
-    console.error(
+    logger.error(
       "[REMINDERS] Erro ao marcar " +
       `lembrete ${reminderType} ` +
       `para ${userId}:`,
@@ -747,7 +748,7 @@ async function processReminders(
     reminderType === "24h" ? 24 : 2;
   let totalSent = 0;
 
-  console.log(
+  logger.info(
     "\n[REMINDERS] ==========" +
     " Processando lembretes de " +
     `${reminderType} ==========`
@@ -760,7 +761,7 @@ async function processReminders(
     );
 
   for (const game of games) {
-    console.log(
+    logger.info(
       "\n[REMINDERS] Processando jogo " +
       `${game.id} (status: ${game.status})`
     );
@@ -774,7 +775,7 @@ async function processReminders(
       );
     const pendingCount =
       pendingConfirmations.length;
-    console.log(
+    logger.info(
       `  - ${pendingCount}` +
       " confirmacoes pendentes"
     );
@@ -806,7 +807,7 @@ async function processReminders(
           reminderType
         );
       const membersCount = membersNoConf.length;
-      console.log(
+      logger.info(
         `  - ${membersCount} membros do` +
         " grupo sem confirmacao"
       );
@@ -829,7 +830,7 @@ async function processReminders(
     }
   }
 
-  console.log(
+  logger.info(
     "[REMINDERS] Total de lembretes " +
     `${reminderType} enviados: ${totalSent}`
   );
@@ -864,18 +865,18 @@ export const checkGameReminders = onSchedule(
     memory: "256MiB",
   },
   async () => {
-    console.log(
+    logger.info(
       "\n========================================"
     );
-    console.log(
+    logger.info(
       "[REMINDERS] Iniciando verificacao" +
       " de lembretes de jogos"
     );
     const ts = new Date().toISOString();
-    console.log(
+    logger.info(
       `[REMINDERS] Timestamp: ${ts}`
     );
-    console.log(
+    logger.info(
       "========================================\n"
     );
 
@@ -889,24 +890,24 @@ export const checkGameReminders = onSchedule(
         await processReminders("2h");
 
       const total = sent24h + sent2h;
-      console.log(
+      logger.info(
         "\n========================================"
       );
-      console.log(
+      logger.info(
         "[REMINDERS] Concluido! " +
         `Total enviados: ${total}`
       );
-      console.log(
+      logger.info(
         `  - Lembretes 24h: ${sent24h}`
       );
-      console.log(
+      logger.info(
         `  - Lembretes 2h: ${sent2h}`
       );
-      console.log(
+      logger.info(
         "========================================\n"
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[REMINDERS] Erro fatal ao " +
         "processar lembretes:",
         error
@@ -931,14 +932,14 @@ export const testGameReminders = onSchedule(
     region: FUNCTION_REGION,
   },
   async () => {
-    console.log(
+    logger.info(
       "[REMINDERS TEST] Executando teste" +
       " manual de lembretes..."
     );
 
     // Simular verificacao com logs detalhados
     const now = new Date();
-    console.log(
+    logger.info(
       "[REMINDERS TEST] Hora atual: " +
       `${now.toISOString()}`
     );
@@ -956,7 +957,7 @@ export const testGameReminders = onSchedule(
       .get();
 
     const count = upcomingGamesSnap.size;
-    console.log(
+    logger.info(
       "[REMINDERS TEST] Proximos " +
       `${count} jogos:`
     );
@@ -964,7 +965,7 @@ export const testGameReminders = onSchedule(
       const data = doc.data();
       const dateTime =
         data.dateTime?.toDate?.() || "N/A";
-      console.log(
+      logger.info(
         `  - ${doc.id}: ${data.status}` +
         ` @ ${dateTime}`
       );
@@ -974,7 +975,7 @@ export const testGameReminders = onSchedule(
     await processReminders("24h");
     await processReminders("2h");
 
-    console.log(
+    logger.info(
       "[REMINDERS TEST] Teste concluido!"
     );
   }
@@ -1004,19 +1005,19 @@ export const autoCancelLowQuorum = onSchedule(
     memory: "256MiB",
   },
   async () => {
-    console.log(
+    logger.info(
       "\n====================================" +
       "===="
     );
-    console.log(
+    logger.info(
       "[AUTO_CANCEL] Verificando jogos " +
       "com baixo quórum"
     );
     const ts = new Date().toISOString();
-    console.log(
+    logger.info(
       `[AUTO_CANCEL] Timestamp: ${ts}`
     );
-    console.log(
+    logger.info(
       "====================================" +
       "====\n"
     );
@@ -1041,7 +1042,7 @@ export const autoCancelLowQuorum = onSchedule(
         .where("dateTime", "<=", endTs)
         .get();
 
-      console.log(
+      logger.info(
         `[AUTO_CANCEL] ${gamesSnap.size} ` +
         "jogos CONFIRMED dentro da janela de 2h"
       );
@@ -1069,7 +1070,7 @@ export const autoCancelLowQuorum = onSchedule(
         const confirmedCount =
           confirmationsSnap.size;
 
-        console.log(
+        logger.info(
           `[AUTO_CANCEL] Jogo ${gameId}: ` +
           `${confirmedCount}/${minPlayers} ` +
           "jogadores confirmados"
@@ -1142,27 +1143,27 @@ export const autoCancelLowQuorum = onSchedule(
           }
 
           cancelledCount++;
-          console.log(
+          logger.info(
             `[AUTO_CANCEL] Jogo ${gameId} ` +
             "cancelado por baixo quórum"
           );
         }
       }
 
-      console.log(
+      logger.info(
         "\n====================================" +
         "===="
       );
-      console.log(
+      logger.info(
         "[AUTO_CANCEL] Concluído! " +
         `${cancelledCount} jogo(s) cancelado(s)`
       );
-      console.log(
+      logger.info(
         "====================================" +
         "====\n"
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[AUTO_CANCEL] Erro fatal:",
         error
       );
@@ -1197,19 +1198,19 @@ export const processExpiredWaitlistEntries =
       memory: "256MiB",
     },
     async () => {
-      console.log(
+      logger.info(
         "\n====================================" +
         "===="
       );
-      console.log(
+      logger.info(
         "[WAITLIST] Processando entradas" +
         " expiradas da lista de espera"
       );
       const ts = new Date().toISOString();
-      console.log(
+      logger.info(
         `[WAITLIST] Timestamp: ${ts}`
       );
-      console.log(
+      logger.info(
         "====================================" +
         "====\n"
       );
@@ -1238,7 +1239,7 @@ export const processExpiredWaitlistEntries =
           .get();
 
         const wlSize = waitlistQuery.size;
-        console.log(
+        logger.info(
           "[WAITLIST] Encontradas " +
           `${wlSize} entradas expiradas`
         );
@@ -1250,7 +1251,7 @@ export const processExpiredWaitlistEntries =
           const gameId = data.game_id;
           const userId = data.user_id;
 
-          console.log(
+          logger.info(
             "[WAITLIST] Processando " +
             `entrada expirada: ${doc.id}` +
             ` (game: ${gameId},` +
@@ -1331,44 +1332,44 @@ export const processExpiredWaitlistEntries =
                 action,
               });
               promotedCount++;
-              console.log(
+              logger.info(
                 "[WAITLIST] Proximo jogador notificado: " +
                 `${nextUserId} (${nextUserName})`
               );
             } else if (!hasNext) {
-              console.log(
+              logger.info(
                 "[WAITLIST] Nenhum jogador na fila para o jogo " + gameId
               );
             }
           } catch (entryError) {
-            console.error(
+            logger.error(
               "[WAITLIST] Erro ao processar entrada " + `${doc.id}:`,
               entryError
             );
           }
         }
 
-        console.log(
+        logger.info(
           "\n====================================" +
           "===="
         );
-        console.log(
+        logger.info(
           "[WAITLIST] Processamento concluido!"
         );
-        console.log(
+        logger.info(
           "  - Entradas expiradas: " +
           `${expiredCount}`
         );
-        console.log(
+        logger.info(
           "  - Proximos notificados: " +
           `${promotedCount}`
         );
-        console.log(
+        logger.info(
           "====================================" +
           "====\n"
         );
       } catch (error) {
-        console.error(
+        logger.error(
           "[WAITLIST] Erro fatal ao " +
           "processar lista de espera:",
           error

@@ -23,6 +23,7 @@
  * @see functions/src/monitoring/collect-metrics.ts
  */
 
+import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import "../types/firestore-count";
@@ -127,7 +128,7 @@ export const systemHealthCheck =
     const startTime = Date.now();
     const db = getDb();
 
-    console.log(
+    logger.info(
       "[HEALTH_CHECK] Iniciando health check"
     );
 
@@ -200,7 +201,7 @@ export const systemHealthCheck =
         }
         await resetBatch.commit();
 
-        console.log(
+        logger.info(
           "[HEALTH_CHECK] Auto-reset de " +
           `${staleCount} jogos com XP ` +
           "processing travado"
@@ -528,14 +529,14 @@ export const systemHealthCheck =
             return;
           } catch (err) {
             if (attempt < maxRetries) {
-              console.warn(
+              logger.warn(
                 "[HEALTH_CHECK] Alert batch commit failed " +
                 `(attempt ${attempt}/${maxRetries}), retrying...`,
                 err
               );
               await new Promise((r) => setTimeout(r, 1000 * attempt));
             } else {
-              console.error(
+              logger.error(
                 "[HEALTH_CHECK] Alert batch commit failed " +
                 `after ${maxRetries} attempts, alerts dropped:`,
                 err
@@ -550,7 +551,7 @@ export const systemHealthCheck =
       const alertTypes = alerts.map(
         (a) => a.type
       );
-      console.log(
+      logger.info(
         "[HEALTH_CHECK] " +
         `${alerts.length} alertas gerados: ` +
         alertTypes.join(", ")
@@ -559,7 +560,7 @@ export const systemHealthCheck =
 
     const checkCount =
       Object.keys(checks).length;
-    console.log(
+    logger.info(
       "[HEALTH_CHECK] Concluído em " +
       `${durationMs}ms. Status: ` +
       `${overallStatus}. ` +
@@ -588,7 +589,7 @@ export const cleanupDeadLetterQueue =
   }, async (_event) => {
     const db = getDb();
 
-    console.log(
+    logger.info(
       "[DLQ_CLEANUP] Iniciando limpeza " +
       "da dead letter queue"
     );
@@ -646,19 +647,19 @@ export const cleanupDeadLetterQueue =
         });
         await batch.commit();
 
-        console.log(
+        logger.info(
           "[DLQ_CLEANUP] " +
           `${stalePendingSnap.size} itens ` +
           "pendentes antigos marcados IGNORED"
         );
       }
 
-      console.log(
+      logger.info(
         "[DLQ_CLEANUP] Limpeza concluída. " +
         `${totalDeleted} itens removidos.`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[DLQ_CLEANUP] Erro:", error
       );
     }
@@ -684,7 +685,7 @@ export const cleanupExpiredRateLimits =
   }, async (_event) => {
     const db = getDb();
 
-    console.log(
+    logger.info(
       "[RATE_LIMIT_CLEANUP] Iniciando " +
       "limpeza de rate limits expirados"
     );
@@ -702,7 +703,7 @@ export const cleanupExpiredRateLimits =
         .get();
 
       if (expiredSnap.empty) {
-        console.log(
+        logger.info(
           "[RATE_LIMIT_CLEANUP] Nenhum " +
           "bucket expirado encontrado"
         );
@@ -718,12 +719,12 @@ export const cleanupExpiredRateLimits =
       await batch.commit();
       totalDeleted = expiredSnap.size;
 
-      console.log(
+      logger.info(
         "[RATE_LIMIT_CLEANUP] " +
         `${totalDeleted} buckets removidos`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[RATE_LIMIT_CLEANUP] Erro:", error
       );
     }
@@ -766,7 +767,7 @@ export const cleanupOldAlerts =
         .get();
 
       if (oldAlertsSnap.empty) {
-        console.log(
+        logger.info(
           "[ALERTS_CLEANUP] Nenhum alerta " +
           "antigo para limpar"
         );
@@ -779,13 +780,13 @@ export const cleanupOldAlerts =
       );
       await batch.commit();
 
-      console.log(
+      logger.info(
         "[ALERTS_CLEANUP] " +
         `${oldAlertsSnap.size} alertas ` +
         "antigos removidos"
       );
     } catch (error) {
-      console.error(
+      logger.error(
         "[ALERTS_CLEANUP] Erro:", error
       );
     }

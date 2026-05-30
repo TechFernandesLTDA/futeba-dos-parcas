@@ -24,6 +24,7 @@
  * @see specs/MASTER_OPTIMIZATION_CHECKLIST.md
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   onSchedule,
@@ -44,7 +45,12 @@ import {
 import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
-import {shouldNotifyUser, isTransientError} from "./helpers";
+import {
+  shouldNotifyUser,
+  isTransientError,
+  // FIX #2199: reusa a versão canônica em helpers.ts (removida a duplicata local).
+  isInvalidTokenError,
+} from "./helpers";
 
 const getDb = () => admin.firestore();
 const getFcm = () => admin.messaging();
@@ -143,7 +149,7 @@ export async function enqueueNotification(
     !notification.userIds ||
     notification.userIds.length === 0
   ) {
-    console.log(
+    logger.info(
       "[BATCH_FCM] Nenhum destinatario," +
       " ignorando enqueue"
     );
@@ -162,7 +168,7 @@ export async function enqueueNotification(
     userIds: notification.userIds,
   });
 
-  console.log(
+  logger.info(
     "[BATCH_FCM] Notificacao enfileirada:" +
     ` ${queueDoc.id} para` +
     ` ${notification.userIds.length} usuarios`
@@ -226,7 +232,7 @@ export async function enqueueNotifications(
     await currentBatch.commit();
   }
 
-  console.log(
+  logger.info(
     `[BATCH_FCM] ${count}` +
     " notificacoes enfileiradas em batch"
   );
@@ -278,7 +284,7 @@ async function processNotificationQueue():
       };
     }
 
-    console.log(
+    logger.info(
       "[BATCH_FCM] Processando" +
       ` ${pendingSnap.size}` +
       " notificacoes da fila"
@@ -347,7 +353,7 @@ async function processNotificationQueue():
       }
       const skippedCount = userIds.length - filteredDocUserIds.length;
       if (skippedCount > 0) {
-        console.log(
+        logger.info(
           `[BATCH_FCM] Filtrados ${skippedCount} usuarios ` +
           `por preferencias (tipo: ${type}, doc: ${doc.id})`
         );
@@ -429,7 +435,7 @@ async function processNotificationQueue():
       });
     }
   } catch (error) {
-    console.error(
+    logger.error(
       "[BATCH_FCM] Erro ao processar fila:",
       error
     );
@@ -437,7 +443,7 @@ async function processNotificationQueue():
 
   const durationMs = Date.now() - startTime;
 
-  console.log(
+  logger.info(
     "[BATCH_FCM] Processamento concluido" +
     ` em ${durationMs}ms:` +
     ` ${totalSent} enviadas,` +
@@ -576,7 +582,8 @@ async function sendMulticastInChunks(
                 "unknown";
 
               if (
-                isInvalidTokenError(errorCode)
+                // FIX #2199: passa o objeto de erro (helpers extrai .code).
+                isInvalidTokenError({code: errorCode})
               ) {
                 if (userId) {
                   tokensToRemove.push({
@@ -587,7 +594,7 @@ async function sendMulticastInChunks(
               } else if (
                 isTransientError(sendResponse.error as {code?: string; message?: string})
               ) {
-                console.warn(
+                logger.warn(
                   `[BATCH_FCM] Transient FCM error for token ${failedToken.slice(0, 8)}...: ${errorCode}`
                 );
                 transientFailed++;
@@ -610,7 +617,7 @@ async function sendMulticastInChunks(
         failed -= transientFailed;
       }
     } catch (error) {
-      console.error(
+      logger.error(
         "[BATCH_FCM] Erro no envio multicast:",
         error
       );
@@ -687,7 +694,7 @@ async function fetchTokensInBatch(
 
         return map;
       } catch (error) {
-        console.error(
+        logger.error(
           "[BATCH_FCM] Erro ao buscar tokens:",
           error
         );
@@ -704,28 +711,6 @@ async function fetchTokensInBatch(
   }
 
   return tokenMap;
-}
-
-/**
- * Verifica se o código de erro indica token
- * FCM inválido.
- *
- * @param {string} errorCode - Código do erro
- * @return {boolean} true se token é inválido
- */
-function isInvalidTokenError(
-  errorCode: string
-): boolean {
-  return (
-    errorCode ===
-      "messaging/" +
-      "registration-token-not-registered" ||
-    errorCode ===
-      "messaging/" +
-      "invalid-registration-token" ||
-    errorCode ===
-      "messaging/invalid-argument"
-  );
 }
 
 /**
@@ -776,7 +761,7 @@ async function cleanupInvalidTokens(
       );
     }
   } catch (err) {
-    console.error(
+    logger.error(
       "[BATCH_FCM] Erro ao buscar docs para" +
       " cleanup:",
       err
@@ -820,12 +805,12 @@ async function cleanupInvalidTokens(
 
     await batch.commit();
 
-    console.log(
+    logger.info(
       `[BATCH_FCM] ${tokensToRemove.length}` +
       " tokens invalidos removidos"
     );
   } catch (error) {
-    console.error(
+    logger.error(
       "[BATCH_FCM] Erro ao limpar" +
       " tokens invalidos:",
       error
@@ -1000,7 +985,7 @@ export const enqueueNotificationCallable = secureCallable(
     const safeTitle = sanitizeText(title);
     const safeBody = sanitizeText(body);
 
-    console.log(
+    logger.info(
       `[BATCH_FCM] Admin ${request.auth?.uid || "unknown"}` +
       " enfileirando notificacao para" +
       ` ${userIds.length} usuarios`
@@ -1083,7 +1068,7 @@ export const cleanupNotificationQueue =
           await batch.commit();
           totalDeleted = snapshot.size;
         } else {
-          console.log(
+          logger.info(
             "[BATCH_FCM_CLEANUP] Nenhuma" +
             " notificacao antiga para limpar"
           );
@@ -1138,20 +1123,20 @@ export const cleanupNotificationQueue =
           });
 
           await staleBatch.commit();
-          console.log(
+          logger.info(
             "[BATCH_FCM_CLEANUP]" +
             ` ${staleSnap.size} notificacoes` +
             " travadas resetadas para PENDING"
           );
         }
 
-        console.log(
+        logger.info(
           "[BATCH_FCM_CLEANUP]" +
           ` ${totalDeleted} notificacoes` +
           " antigas removidas"
         );
       } catch (error) {
-        console.error(
+        logger.error(
           "[BATCH_FCM_CLEANUP] Erro:",
           error
         );

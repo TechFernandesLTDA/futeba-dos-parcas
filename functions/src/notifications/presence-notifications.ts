@@ -4,6 +4,7 @@
  * grupo, membros entrando/saindo, e caixa.
  */
 
+import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   onDocumentCreated,
@@ -87,7 +88,7 @@ export const onGameConfirmed = onDocumentCreated(
         );
       }
     } catch (e) {
-      console.error(
+      logger.error(
         "Erro ao notificar confirmacao:",
         e
       );
@@ -127,7 +128,7 @@ export const onGroupInviteCreated =
 
       // Validar campos obrigatórios
       if (!invitedUserId) {
-        console.error(
+        logger.error(
           "[GROUP_INVITE] Convite" +
           ` ${inviteId} sem invited_user_id`
         );
@@ -135,14 +136,14 @@ export const onGroupInviteCreated =
       }
 
       if (!groupId) {
-        console.error(
+        logger.error(
           "[GROUP_INVITE] Convite" +
           ` ${inviteId} sem group_id`
         );
         return;
       }
 
-      console.log(
+      logger.info(
         "[GROUP_INVITE] Enviando notificacao" +
         ` para ${invitedUserId} - Convite` +
         ` para ${groupName}` +
@@ -171,12 +172,12 @@ export const onGroupInviteCreated =
           }
         );
 
-        console.log(
+        logger.info(
           "[GROUP_INVITE] Notificacao enviada" +
           ` com sucesso para ${invitedUserId}`
         );
       } catch (e) {
-        console.error(
+        logger.error(
           "[GROUP_INVITE] Erro ao enviar" +
           ` notificacao para ${invitedUserId}:`,
           e
@@ -197,7 +198,7 @@ export const onGroupInviteCreated =
 export const cleanupExpiredInvites = onSchedule(
   {schedule: "every 24 hours", region: FUNCTION_REGION},
   async () => {
-    console.log(
+    logger.info(
       "[CLEANUP] Iniciando limpeza de" +
       " convites expirados..."
     );
@@ -220,14 +221,14 @@ export const cleanupExpiredInvites = onSchedule(
         .get();
 
       if (expiredInvitesSnap.empty) {
-        console.log(
+        logger.info(
           "[CLEANUP] Nenhum convite" +
           " expirado encontrado"
         );
         return;
       }
 
-      console.log(
+      logger.info(
         "[CLEANUP] Encontrados " +
         `${expiredInvitesSnap.size}` +
         " convites expirados"
@@ -265,12 +266,12 @@ export const cleanupExpiredInvites = onSchedule(
         totalUpdated += chunk.length;
       }
 
-      console.log(
+      logger.info(
         `[CLEANUP] ${totalUpdated}` +
         " convites marcados como EXPIRED"
       );
     } catch (e) {
-      console.error(
+      logger.error(
         "[CLEANUP] Erro ao limpar" +
         " convites expirados:",
         e
@@ -321,14 +322,14 @@ export const onGroupInviteResponse =
         "seu grupo";
 
       if (!invitedById) {
-        console.log(
+        logger.info(
           "[GROUP_INVITE_RESPONSE] Convite" +
           ` ${inviteId} sem invited_by_id`
         );
         return;
       }
 
-      console.log(
+      logger.info(
         "[GROUP_INVITE_RESPONSE] Convite" +
         ` ${inviteId}: ${beforeStatus}` +
         ` -> ${afterStatus}`
@@ -371,13 +372,13 @@ export const onGroupInviteResponse =
           );
         }
 
-        console.log(
+        logger.info(
           "[GROUP_INVITE_RESPONSE]" +
           " Notificacao enviada" +
           ` para ${invitedById}`
         );
       } catch (e) {
-        console.error(
+        logger.error(
           "[GROUP_INVITE_RESPONSE] Erro ao" +
           ` notificar ${invitedById}:`,
           e
@@ -407,7 +408,7 @@ export const onMemberJoined = onDocumentCreated(
     const role = member.role || member.memberRole;
     if (role === "OWNER") return;
 
-    console.log(
+    logger.info(
       `[MEMBER_JOINED] Member ${memberId}` +
       ` joined group ${groupId}`
     );
@@ -477,14 +478,14 @@ export const onMemberJoined = onDocumentCreated(
           }
         );
 
-        console.log(
+        logger.info(
           "[MEMBER_JOINED] Notificacao" +
           " enviada para " +
           `${adminIds.length} admins`
         );
       }
     } catch (e) {
-      console.error(
+      logger.error(
         "[MEMBER_JOINED] Erro ao processar:",
         e
       );
@@ -502,7 +503,7 @@ export const onMemberLeft = onDocumentDeleted(
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
 
-    console.log(
+    logger.info(
       `[MEMBER_LEFT] Member ${memberId}` +
       ` left group ${groupId}`
     );
@@ -570,14 +571,14 @@ export const onMemberLeft = onDocumentDeleted(
           }
         );
 
-        console.log(
+        logger.info(
           "[MEMBER_LEFT] Notificacao" +
           " enviada para " +
           `${adminIds.length} admins`
         );
       }
     } catch (e) {
-      console.error(
+      logger.error(
         "[MEMBER_LEFT] Erro ao processar:",
         e
       );
@@ -614,7 +615,7 @@ export const onCashboxTransaction =
         transaction.created_by_id ||
         transaction.createdById;
 
-      console.log(
+      logger.info(
         `[CASHBOX] Transaction ${transactionId}` +
         ` in group ${groupId}:` +
         ` ${txType} R$${amount}`
@@ -686,12 +687,12 @@ export const onCashboxTransaction =
           }
         );
 
-        console.log(
+        logger.info(
           "[CASHBOX] Notificacao enviada" +
           ` para ${adminIds.length} admins`
         );
       } catch (e) {
-        console.error(
+        logger.error(
           "[CASHBOX] Erro ao processar" +
           " transacao:",
           e

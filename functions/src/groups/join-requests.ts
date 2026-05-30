@@ -21,6 +21,7 @@ import {
   NotificationType,
   sendNotificationToUser,
 } from "../notifications/helpers";
+import {isRecord} from "../validation/guards";
 
 const db = () => admin.firestore();
 
@@ -32,6 +33,20 @@ interface JoinRequestData {
   responded_by?: string;
 }
 
+/**
+ * FIX #2284: valida o shape mínimo de um join_request (user_id + status
+ * strings) antes do cast cego sobre dados crus do Firestore.
+ * @param {unknown} data dados crus do snapshot
+ * @return {boolean} true se válido
+ */
+function isJoinRequestShape(data: unknown): data is JoinRequestData {
+  return (
+    isRecord(data) &&
+    typeof data.user_id === "string" &&
+    typeof data.status === "string"
+  );
+}
+
 export const onJoinRequestApproved = onDocumentUpdated(
   {
     document: "groups/{groupId}/join_requests/{userId}",
@@ -40,9 +55,19 @@ export const onJoinRequestApproved = onDocumentUpdated(
   async (event) => {
     if (!event.data) return;
 
-    const before = event.data.before.data() as JoinRequestData | undefined;
-    const after = event.data.after.data() as JoinRequestData | undefined;
-    if (!before || !after) return;
+    const beforeRaw = event.data.before.data();
+    const afterRaw = event.data.after.data();
+    // FIX #2284: valida shape antes do cast; early-return se malformado.
+    if (!isJoinRequestShape(beforeRaw) || !isJoinRequestShape(afterRaw)) {
+      if (beforeRaw || afterRaw) {
+        logger.error("[GUARD] join_request malformado", {
+          ...event.params,
+        });
+      }
+      return;
+    }
+    const before: JoinRequestData = beforeRaw;
+    const after: JoinRequestData = afterRaw;
 
     // So processa transicao PENDING -> APPROVED
     if (before.status !== "PENDING" || after.status !== "APPROVED") {

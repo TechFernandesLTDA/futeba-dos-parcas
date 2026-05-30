@@ -359,10 +359,15 @@ describe("Validation Module", () => {
       expect(validateXPGain(100)).toBeNull();
     });
 
-    test("negative XP returns error", () => {
-      const result = validateXPGain(-10);
+    // FIX #2198: XP negativo (penalidade Bola Murcha = -10) é VÁLIDO.
+    test("Bola Murcha penalty (-10) is valid", () => {
+      expect(validateXPGain(-10)).toBeNull();
+    });
+
+    test("excessive negative XP returns anti-cheat error", () => {
+      const result = validateXPGain(-101);
       expect(result).not.toBeNull();
-      expect(result!.code).toBe(ValidationErrorCode.NEGATIVE_VALUE);
+      expect(result!.code).toBe(ValidationErrorCode.ANTI_CHEAT_VIOLATION);
     });
 
     test("excessive XP returns anti-cheat error", () => {
@@ -375,6 +380,10 @@ describe("Validation Module", () => {
       expect(validateXPGain(500)).toBeNull();
     });
 
+    test("boundary: -100 XP is valid", () => {
+      expect(validateXPGain(-100)).toBeNull();
+    });
+
     test("boundary: 0 XP is valid", () => {
       expect(validateXPGain(0)).toBeNull();
     });
@@ -385,8 +394,13 @@ describe("Validation Module", () => {
       expect(capXP(600)).toBe(500);
     });
 
-    test("floors at 0", () => {
-      expect(capXP(-10)).toBe(0);
+    // FIX #2198: capXP preserva penalidades negativas até o piso anti-cheat.
+    test("preserves Bola Murcha penalty (-10)", () => {
+      expect(capXP(-10)).toBe(-10);
+    });
+
+    test("floors at -100", () => {
+      expect(capXP(-150)).toBe(-100);
     });
 
     test("keeps valid value", () => {
