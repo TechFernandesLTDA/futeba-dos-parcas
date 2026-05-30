@@ -2593,6 +2593,7 @@ subir no ranking!</string>
     <!-- Theme Settings Strings -->
     <string name="theme_settings_primary_color">Cor Principal</string>
     <string name="theme_settings_accent_color">Cor de Destaque</string>
+    <string name="theme_settings_preview_label">Preview: Primary Container</string>
 
     <!-- About Screen Strings -->
     <string name="about_rate_app">Avaliar o App</string>
