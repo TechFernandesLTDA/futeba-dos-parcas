@@ -19,7 +19,7 @@ permissions:
 jobs:
   deploy-production:
     name: Build & Deploy to Play Store
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_DEPLOY || '["self-hosted","deploy"]') }}
     timeout-minutes: 60
 
     steps:

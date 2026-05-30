@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build-release:
     name: Build Release
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_DEPLOY || '["self-hosted","deploy"]') }}
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
@@ -102,7 +102,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_DEPLOY || '["self-hosted","deploy"]') }}
     needs: build-release
     permissions:
       contents: write
@@ -162,7 +162,7 @@ jobs:
 
   publish-release-notes:
     name: Publish Release Notes
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_DEPLOY || '["self-hosted","deploy"]') }}
     needs: create-release
     timeout-minutes: 10
     steps:

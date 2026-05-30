@@ -12,7 +12,7 @@ on:
 jobs:
   deploy-beta:
     name: Build & Deploy Beta
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_GENERAL || '["self-hosted","general"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_DEPLOY || '["self-hosted","deploy"]') }}
     timeout-minutes: 45
 
     steps:
