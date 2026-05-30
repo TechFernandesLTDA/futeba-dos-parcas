@@ -447,7 +447,11 @@
       "conflictCheckFailed": "No se pudo verificar conflictos de horario en esta cancha. Verifica manualmente si ya existe otro partido en el mismo horario.",
       "createSuccess": "¡Partido creado con éxito!",
       "createError": "Error al crear el partido",
-      "covered": "Cubierta"
+      "covered": "Cubierta",
+      "saveAsTemplate": "Guardar como Plantilla",
+      "templateNameLabel": "Nombre de la plantilla",
+      "templateNamePlaceholder": "Ej: Partido del domingo",
+      "templateNameMinLength": "El nombre debe tener al menos 3 caracteres"
     },
     "noGameScheduled": "Ningún partido programado",
     "noGameScheduledDesc": "Crea o únete a un partido para comenzar",
@@ -779,7 +783,9 @@
     "addLocation": "Agregar Ubicación",
     "addField": "Agregar Cancha",
     "noLocations": "Sin ubicaciones registradas",
-    "noLocationsDesc": "Agrega una nueva ubicación usando el botón +"
+    "noLocationsDesc": "Agrega una nueva ubicación usando el botón +",
+    "deleteTitle": "¿Eliminar ubicación?",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar {{name}}? Esta acción no se puede deshacer."
   },
   "feedback": {
     "title": "Retroalimentación",

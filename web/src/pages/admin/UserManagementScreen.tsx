@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -72,6 +73,7 @@ interface RawAdminUserDoc {
 
 export const UserManagementScreen: React.FC = () => {
   useDocumentTitle('Gerenciar Usuários');
+  const { t } = useTranslation();
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -418,7 +420,7 @@ export const UserManagementScreen: React.FC = () => {
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button
             onClick={() => selectedUser && confirmRoleChange(selectedUser, 'PLAYER')}
             disabled={actionLoading || selectedUser?.role === 'PLAYER'}
@@ -463,7 +465,7 @@ export const UserManagementScreen: React.FC = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setConfirmDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button
             color={isPendingAdminDemotion ? 'error' : 'primary'}
             variant="contained"
@@ -477,7 +479,7 @@ export const UserManagementScreen: React.FC = () => {
               setPendingRoleChange(null);
             }}
           >
-            Confirmar
+            {t('common.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -494,7 +496,7 @@ export const UserManagementScreen: React.FC = () => {
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBulkDialogOpen(false)} disabled={bulkLoading}>Cancelar</Button>
+          <Button onClick={() => setBulkDialogOpen(false)} disabled={bulkLoading}>{t('common.cancel')}</Button>
           <Button onClick={() => handleBulkRoleChange('PLAYER')} disabled={bulkLoading}>Player</Button>
           <Button onClick={() => handleBulkRoleChange('FIELD_OWNER')} disabled={bulkLoading} color="warning">Field Owner</Button>
           <Button onClick={() => handleBulkRoleChange('ADMIN')} disabled={bulkLoading} color="error">Admin</Button>

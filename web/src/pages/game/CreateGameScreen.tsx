@@ -1033,31 +1033,31 @@ export const CreateGameScreen: React.FC = () => {
         </Card>
 
         <Dialog open={templateDialogOpen} onClose={() => setTemplateDialogOpen(false)} fullWidth maxWidth="xs" aria-labelledby="save-template-dialog-title">
-          <DialogTitle id="save-template-dialog-title">Salvar como Template</DialogTitle>
+          <DialogTitle id="save-template-dialog-title">{t('games.create.saveAsTemplate')}</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
               margin="none"
-              label="Nome do template"
+              label={t('games.create.templateNameLabel')}
               fullWidth
               required
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="Ex: Jogo de domingo"
+              placeholder={t('games.create.templateNamePlaceholder')}
               inputProps={{ maxLength: 100 }}
               // #2231: feedback visual de validação (mínimo 3 caracteres) + contador
               error={templateName.trim().length > 0 && templateName.trim().length < 3}
               helperText={
                 templateName.trim().length > 0 && templateName.trim().length < 3
-                  ? 'O nome deve ter pelo menos 3 caracteres'
+                  ? t('games.create.templateNameMinLength')
                   : `${templateName.length}/100`
               }
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setTemplateDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => setTemplateDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleSaveTemplate} variant="contained" disabled={savingTemplate || templateName.trim().length < 3}>
-              {savingTemplate ? <CircularProgress size={20} /> : 'Salvar'}
+              {savingTemplate ? <CircularProgress size={20} /> : t('common.save')}
             </Button>
           </DialogActions>
         </Dialog>

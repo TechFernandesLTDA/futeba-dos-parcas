@@ -401,9 +401,9 @@ export const EditProfileScreen: React.FC = () => {
         loading={saving || uploadingAvatar}
         footer={
           <>
-            <Button onClick={handleCancel} disabled={saving || uploadingAvatar}>Cancelar</Button>
+            <Button onClick={handleCancel} disabled={saving || uploadingAvatar}>{t('common.cancel')}</Button>
             <Button variant="contained" onClick={handleSave} disabled={saving || uploadingAvatar}>
-              {saving || uploadingAvatar ? 'Salvando...' : 'Salvar'}
+              {saving || uploadingAvatar ? t('common.saving') : t('common.save')}
             </Button>
           </>
         }

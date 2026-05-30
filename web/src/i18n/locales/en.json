@@ -452,7 +452,11 @@
       "conflictCheckFailed": "Could not check for time conflicts at this field. Manually verify whether another game already exists at the same time.",
       "createSuccess": "Game created successfully!",
       "createError": "Failed to create game",
-      "covered": "Covered"
+      "covered": "Covered",
+      "saveAsTemplate": "Save as Template",
+      "templateNameLabel": "Template name",
+      "templateNamePlaceholder": "E.g.: Sunday game",
+      "templateNameMinLength": "Name must be at least 3 characters"
     },
     "noGameScheduled": "No game scheduled",
     "noGameScheduledDesc": "Create or join a game to get started",
@@ -810,7 +814,9 @@
     "addLocation": "Add Location",
     "addField": "Add Field",
     "noLocations": "No registered locations",
-    "noLocationsDesc": "Add a new location using the + button"
+    "noLocationsDesc": "Add a new location using the + button",
+    "deleteTitle": "Delete location?",
+    "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone."
   },
   "feedback": {
     "title": "Feedback",

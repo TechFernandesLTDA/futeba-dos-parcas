@@ -452,7 +452,11 @@
       "conflictCheckFailed": "Não foi possível verificar conflitos de horário nesta quadra. Confira manualmente se já existe outro jogo no mesmo horário.",
       "createSuccess": "Jogo criado com sucesso!",
       "createError": "Erro ao criar jogo",
-      "covered": "Coberta"
+      "covered": "Coberta",
+      "saveAsTemplate": "Salvar como Template",
+      "templateNameLabel": "Nome do template",
+      "templateNamePlaceholder": "Ex: Jogo de domingo",
+      "templateNameMinLength": "O nome deve ter pelo menos 3 caracteres"
     },
     "noGameScheduled": "Nenhum jogo agendado",
     "noGameScheduledDesc": "Crie ou entre em um jogo para começar",
@@ -810,7 +814,9 @@
     "addLocation": "Adicionar Local",
     "addField": "Adicionar Quadra",
     "noLocations": "Nenhum local cadastrado",
-    "noLocationsDesc": "Adicione um novo local usando o botão +"
+    "noLocationsDesc": "Adicione um novo local usando o botão +",
+    "deleteTitle": "Excluir local?",
+    "deleteConfirm": "Tem certeza que deseja excluir {{name}}? Esta ação não pode ser desfeita."
   },
   "feedback": {
     "title": "Feedback",

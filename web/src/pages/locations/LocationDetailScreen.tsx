@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -67,6 +68,7 @@ interface LocationReview {
 
 export const LocationDetailScreen: React.FC = () => {
   useDocumentTitle('Detalhes do Local');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
   const { user } = useAuth();
@@ -358,13 +360,13 @@ export const LocationDetailScreen: React.FC = () => {
       </Container>
 
       <Dialog open={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)} aria-labelledby="delete-detail-title">
-        <DialogTitle id="delete-detail-title">Excluir local?</DialogTitle>
+        <DialogTitle id="delete-detail-title">{t('locations.deleteTitle')}</DialogTitle>
         <DialogContent>
-          <DialogContentText>Tem certeza que deseja excluir <strong>{location.name}</strong>? Esta ação não pode ser desfeita.</DialogContentText>
+          <DialogContentText>{t('locations.deleteConfirm', { name: location.name })}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteOpen(false)} disabled={deleting}>Cancelar</Button>
-          <Button onClick={handleDelete} color="error" variant="contained" disabled={deleting} startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}>Excluir</Button>
+          <Button onClick={() => setDeleteOpen(false)} disabled={deleting}>{t('common.cancel')}</Button>
+          <Button onClick={handleDelete} color="error" variant="contained" disabled={deleting} startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}>{t('common.delete')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -380,7 +382,7 @@ export const LocationDetailScreen: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setReviewOpen(false)} disabled={submittingReview}>Cancelar</Button>
+          <Button onClick={() => setReviewOpen(false)} disabled={submittingReview}>{t('common.cancel')}</Button>
           <Button onClick={handleSubmitReview} disabled={submittingReview || !newReviewComment.trim()} startIcon={submittingReview ? <CircularProgress size={16} /> : <SendIcon />} variant="contained">Enviar</Button>
         </DialogActions>
       </Dialog>
