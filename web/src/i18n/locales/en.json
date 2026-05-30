@@ -530,7 +530,8 @@
       "qrCheckInTitle": "Check-in QR Code",
       "qrAlt": "Check-in QR Code",
       "qrInstructions": "Players can scan this QR code to check in",
-      "copyLink": "Copy Link"
+      "copyLink": "Copy Link",
+      "gameActionsMenu": "Game actions menu"
     },
     "events": {
       "goal": "Goal",
@@ -829,6 +830,8 @@
     "cpfFieldLabel": "CPF",
     "cpfHelper": "Only you will see your full CPF",
     "cpfAria": "CPF number",
+    "phoneNumberAria": "Phone number",
+    "smsCodeAria": "SMS code",
     "verifying": "Verifying...",
     "finishVerification": "Finish verification",
     "howWeProtect": "How we protect your CPF:",
@@ -857,6 +860,13 @@
     "checklistConfirmPresenceDesc": "Say you'll show up for the next match",
     "checklistPlayFirstGame": "Play your first match",
     "checklistPlayFirstGameDesc": "Take part in a finished game"
+  },
+  "welcome": {
+    "documentTitle": "Welcome",
+    "subtitle": "Organize your pickup games with friends easily and fun",
+    "haveAccount": "I already have an account",
+    "termsPrefix": "By continuing, you agree to our",
+    "processingInvite": "Processing invite..."
   },
   "group": {
     "detailTitle": "Group Details",

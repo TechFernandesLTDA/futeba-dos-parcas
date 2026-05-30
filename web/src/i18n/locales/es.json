@@ -525,7 +525,8 @@
       "qrCheckInTitle": "Código QR de Check-in",
       "qrAlt": "Código QR para check-in",
       "qrInstructions": "Los jugadores pueden escanear este código QR para hacer check-in",
-      "copyLink": "Copiar Enlace"
+      "copyLink": "Copiar Enlace",
+      "gameActionsMenu": "Menú de acciones del partido"
     },
     "events": {
       "goal": "Gol",
@@ -798,6 +799,8 @@
     "cpfFieldLabel": "CPF",
     "cpfHelper": "Solo tú verás tu CPF completo",
     "cpfAria": "Número de CPF",
+    "phoneNumberAria": "Número de teléfono",
+    "smsCodeAria": "Código SMS",
     "verifying": "Verificando...",
     "finishVerification": "Concluir verificación",
     "howWeProtect": "Cómo protegemos tu CPF:",
@@ -826,6 +829,13 @@
     "checklistConfirmPresenceDesc": "Di que vas a aparecer en el próximo partido",
     "checklistPlayFirstGame": "Juega tu primer partido",
     "checklistPlayFirstGameDesc": "Participa en un partido finalizado"
+  },
+  "welcome": {
+    "documentTitle": "Bienvenido",
+    "subtitle": "Organiza tus peladas con los amigos de forma fácil y divertida",
+    "haveAccount": "Ya tengo cuenta",
+    "termsPrefix": "Al continuar, aceptas nuestros",
+    "processingInvite": "Procesando invitación..."
   },
   "group": {
     "detailTitle": "Detalles del Grupo",
