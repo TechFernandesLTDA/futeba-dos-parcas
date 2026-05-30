@@ -49,7 +49,7 @@ vi.mock('../../services/firebase', () => ({
 
 vi.mock('../../utils/firestoreHelpers', () => ({
   snakeToCamel: (obj: any) => obj,
-}));
+, functions: {}, messagingPromise: Promise.resolve(null) }));
 
 vi.mock('../../utils/logger', () => ({
   createLogger: () => ({
