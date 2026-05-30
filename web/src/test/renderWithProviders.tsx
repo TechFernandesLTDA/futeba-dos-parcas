@@ -127,5 +127,7 @@ export function createTestWrapper() {
 }
 
 // Re-exporta tudo do @testing-library/react para que os testes possam
-// importar screen, waitFor, fireEvent, etc. de um único lugar
+// importar screen, waitFor, fireEvent, etc. de um único lugar.
+// (Arquivo de helper de teste, não de componentes — regra react-refresh não se aplica.)
+// eslint-disable-next-line react-refresh/only-export-components
 export * from '@testing-library/react';

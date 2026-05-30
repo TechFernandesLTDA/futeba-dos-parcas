@@ -45,11 +45,13 @@ vi.mock('firebase/auth', () => ({
 vi.mock('../../services/firebase', () => ({
   db: {},
   auth: {},
+  functions: {},
+  messagingPromise: Promise.resolve(null),
 }));
 
 vi.mock('../../utils/firestoreHelpers', () => ({
   snakeToCamel: (obj: any) => obj,
-, functions: {}, messagingPromise: Promise.resolve(null) }));
+}));
 
 vi.mock('../../utils/logger', () => ({
   createLogger: () => ({

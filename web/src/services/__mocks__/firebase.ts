@@ -10,7 +10,6 @@
  * Para mocks automáticos sem chamada explícita, adicionar ao vitest.config
  * ou usar globalSetup.
  */
-import { vi } from 'vitest';
 
 export const db = {};
 export const auth = { currentUser: null };
