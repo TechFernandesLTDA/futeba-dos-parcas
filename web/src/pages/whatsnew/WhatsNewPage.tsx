@@ -15,20 +15,18 @@ import {
   AccordionSummary,
   Box,
   Container,
-  IconButton,
   Skeleton,
   Stack,
   Typography,
-  useTheme,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   ExpandMore as ExpandMoreIcon,
   NewReleases as NewReleasesIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useReleaseNotes } from '../../hooks/useReleaseNotes';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { ReleaseNoteContent, ReleaseTypeBadge } from '../../components/whatsnew/ReleaseNoteContent';
@@ -72,7 +70,6 @@ const VersionCard: React.FC<{ note: ReleaseNote; defaultExpanded: boolean }> = (
 
 export const WhatsNewPage: React.FC = () => {
   const { t } = useTranslation();
-  const theme = useTheme();
   const goBack = useNavigateBack('/settings');
   const { notes, loading, error, refetch } = useReleaseNotes();
 
@@ -85,27 +82,8 @@ export const WhatsNewPage: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton
-            onClick={goBack}
-            aria-label={t('common.back')}
-          >
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" component="h1" sx={{ ml: 1 }}>
-            {t('whatsNew.title')}
-          </Typography>
-        </Box>
-      </Box>
+      {/* #2174: header padronizado via ScreenHeader */}
+      <ScreenHeader title={t('whatsNew.title')} onBack={goBack} backAriaLabel={t('common.back')} />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {loading && (

@@ -7,7 +7,6 @@ import {
   Typography,
   Card,
   CardContent,
-  IconButton,
   Avatar,
   Grid,
   Button,
@@ -17,7 +16,6 @@ import {
   CircularProgress,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
   ThumbDown as ThumbDownIcon,
   Star as StarIcon,
@@ -29,6 +27,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -211,24 +210,8 @@ export const VoteResultScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Resultado da Votação
-          </Typography>
-        </Box>
-      </Box>
+      {/* #2174: header padronizado via ScreenHeader */}
+      <ScreenHeader title="Resultado da Votação" onBack={navigateBack} />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <div ref={contentRef}>

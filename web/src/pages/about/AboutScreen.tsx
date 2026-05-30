@@ -6,7 +6,6 @@ import {
   Typography,
   Card,
   CardContent,
-  IconButton,
   List,
   ListItem,
   ListItemButton,
@@ -18,7 +17,6 @@ import {
   Chip,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Security as SecurityIcon,
   Gavel as TermsIcon,
   PrivacyTip as PrivacyIcon,
@@ -33,6 +31,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 export const AboutScreen: React.FC = () => {
   useDocumentTitle('Sobre');
@@ -50,24 +49,8 @@ export const AboutScreen: React.FC = () => {
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Sobre
-          </Typography>
-        </Box>
-      </Box>
+      {/* #2174: header padronizado via ScreenHeader */}
+      <ScreenHeader title="Sobre" onBack={goBack} />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Card sx={{ mb: 2, textAlign: 'center' }}>
