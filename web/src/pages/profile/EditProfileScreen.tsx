@@ -298,6 +298,22 @@ export const EditProfileScreen: React.FC = () => {
     }
 
     try {
+      // #2172: Auth primeiro via AuthContext.updateUserProfile (que já tem
+      // rollback Auth↔Firestore para name/photo). Antes o Firestore era
+      // escrito antes do Auth, sem rollback — Auth falhar deixava inconsistente.
+      const profileUpdate: { displayName?: string; photoURL?: string } = {};
+      if (trimmedName !== currentUser.displayName) {
+        profileUpdate.displayName = trimmedName;
+      }
+      if (uploadedPhotoUrl) {
+        profileUpdate.photoURL = uploadedPhotoUrl;
+      }
+      if (Object.keys(profileUpdate).length > 0) {
+        await updateUserProfile?.(profileUpdate);
+      }
+
+      // 3) Persiste demais campos do perfil (somente Firestore) — só executa se
+      // o passo de Auth acima teve sucesso, mantendo a consistência.
       await updateDoc(doc(db, 'users', currentUser.uid), {
         name: trimmedName,
         nickname: formData.nickname,
@@ -315,18 +331,6 @@ export const EditProfileScreen: React.FC = () => {
         gk_rating_set: true,
         updated_at: serverTimestamp(),
       });
-
-      // 3) Atualiza Firebase Auth profile (displayName e/ou photoURL)
-      const profileUpdate: { displayName?: string; photoURL?: string } = {};
-      if (trimmedName !== currentUser.displayName) {
-        profileUpdate.displayName = trimmedName;
-      }
-      if (uploadedPhotoUrl) {
-        profileUpdate.photoURL = uploadedPhotoUrl;
-      }
-      if (Object.keys(profileUpdate).length > 0) {
-        await updateUserProfile?.(profileUpdate);
-      }
 
       setSuccess(true);
       setSelectedFile(null); // limpa file pendente após sucesso
