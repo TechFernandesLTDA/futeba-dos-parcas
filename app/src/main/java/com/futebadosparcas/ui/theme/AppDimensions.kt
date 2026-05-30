@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.theme
 
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -119,13 +118,7 @@ object AppDimensions {
     val streak_fire_size = 20.dp
 }
 
-/**
- * Aliases mais curtos para uso frequente
- */
-val Dp.none: Dp get() = 0.dp
-val Dp.xs: Dp get() = 4.dp
-val Dp.sm: Dp get() = 8.dp
-val Dp.md: Dp get() = 12.dp
-val Dp.lg: Dp get() = 16.dp
-val Dp.xl: Dp get() = 24.dp
-val Dp.xxl: Dp get() = 32.dp
+// NOTA (#2143): os aliases de extensão Dp.md/Dp.lg foram removidos por estarem
+// sem uso e por conflitarem com a convenção do projeto (md=16dp, lg=24dp em
+// Spacing/AdaptiveSpacing). Eles definiam md=12dp/lg=16dp, criando ambiguidade.
+// Use AppDimensions.spacing_* ou AdaptiveSpacing para espaçamento.

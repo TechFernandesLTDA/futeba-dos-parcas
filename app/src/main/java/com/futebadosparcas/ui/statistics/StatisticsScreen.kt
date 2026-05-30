@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.statistics
 
+import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -148,8 +149,8 @@ private fun StatisticsLoadingState(
             .adaptiveContentWidth()
             .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(AppDimensions.spacing_large),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
     ) {
         // Título shimmer
         ShimmerBox(
@@ -162,7 +163,7 @@ private fun StatisticsLoadingState(
         // Botões de navegação shimmer
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             repeat(2) {
                 ShimmerBox(
@@ -177,14 +178,14 @@ private fun StatisticsLoadingState(
         // Card de estatísticas shimmer
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(AppDimensions.radius_large),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.padding(AppDimensions.spacing_large),
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
             ) {
                 ShimmerBox(
                     modifier = Modifier
@@ -194,13 +195,13 @@ private fun StatisticsLoadingState(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
                 ) {
                     repeat(2) {
                         Column(
                             modifier = Modifier.weight(1f),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
                         ) {
                             ShimmerBox(
                                 modifier = Modifier.size(32.dp),
@@ -253,8 +254,8 @@ private fun StatisticsSuccessContent(
             .fillMaxSize()
             .adaptiveContentWidth()
             .background(MaterialTheme.colorScheme.surface),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(AppDimensions.spacing_large),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
     ) {
         // Título
         item {
@@ -294,7 +295,7 @@ private fun StatisticsSuccessContent(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = AppDimensions.spacing_large)
             )
         }
 
@@ -351,7 +352,7 @@ private fun NavigationButtons(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
     ) {
         // Botão principal: Liga (com seletor de período)
         Button(
@@ -366,14 +367,14 @@ private fun NavigationButtons(
                 contentDescription = stringResource(R.string.statistics_league),
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             Text(stringResource(R.string.statistics_league))
         }
 
         // Botões secundários: Ranking e Evolução
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             OutlinedButton(
                 onClick = onNavigateToRanking,
@@ -384,7 +385,7 @@ private fun NavigationButtons(
                     contentDescription = stringResource(R.string.statistics_rankings_general),
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
                 Text(stringResource(R.string.statistics_rankings_general))
             }
 
@@ -397,7 +398,7 @@ private fun NavigationButtons(
                     contentDescription = stringResource(R.string.statistics_evolution),
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
                 Text(stringResource(R.string.statistics_evolution))
             }
         }
@@ -414,14 +415,14 @@ private fun PersonalStatsCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(AppDimensions.spacing_large),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
         ) {
             Text(
                 text = stringResource(R.string.statistics_my_stats),
@@ -433,7 +434,7 @@ private fun PersonalStatsCard(
             // Primeira linha: Jogos e Gols
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
             ) {
                 StatItem(
                     icon = Icons.Default.CalendarMonth,
@@ -454,7 +455,7 @@ private fun PersonalStatsCard(
             // Segunda linha: Melhor Jogador e Presença
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
             ) {
                 StatItem(
                     icon = Icons.Default.Star,
@@ -487,9 +488,9 @@ private fun StatItem(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(12.dp),
+        modifier = modifier.padding(AppDimensions.spacing_medium),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
     ) {
         Icon(
             imageVector = icon,
@@ -522,14 +523,14 @@ private fun GoalEvolutionCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_large),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(AppDimensions.spacing_large),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
         ) {
             Text(
                 text = stringResource(R.string.statistics_goal_evolution),
@@ -583,7 +584,7 @@ private fun GoalEvolutionChart(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
-                .padding(vertical = 8.dp)
+                .padding(vertical = AppDimensions.spacing_small)
         ) {
             if (sortedData.isEmpty()) return@Canvas
 
@@ -700,12 +701,12 @@ private fun RankingSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
     ) {
         // Título da seção com ícone
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             Icon(
                 imageVector = icon,
@@ -723,7 +724,7 @@ private fun RankingSection(
 
         // Lista de jogadores
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
             rankingItems.take(5).forEach { item ->
                 RankingItem(
@@ -748,7 +749,7 @@ private fun RankingItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onPlayerClick(item.userId) },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(AppDimensions.radius_medium),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -757,9 +758,9 @@ private fun RankingItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(AppDimensions.spacing_medium),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
         ) {
             // Posição com destaque para top 3
             Box(
