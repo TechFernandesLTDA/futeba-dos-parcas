@@ -128,6 +128,12 @@ functions/lib/
 # Claude worktrees agent cache
 .claude/worktrees/
 
+# AI tooling scaffolding e runtime (não versionar)
+.claude/scheduled_tasks.lock
+.agents/
+.codex/
+web/.claude/
+
 # iOS — gerados via XcodeGen + CocoaPods
 iosApp/iosApp.xcodeproj/
 iosApp/iosApp.xcworkspace/
