@@ -69,7 +69,7 @@ export function GroupsTab() {
   const hasGroups = !loading && myGroupsCount > 0;
 
   return (
-    <Box sx={{ pb: 8, maxWidth: { xs: '100%', lg: 1200 }, mx: 'auto' }}>
+    <Box sx={{ pb: 8, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
       {/* Barra de busca */}
       <Box sx={{ p: 2, pb: 0 }}>
         {/* Header com título + Criar (md+) */}
@@ -220,7 +220,7 @@ export function GroupsTab() {
             const isOwner = group.role === 'OWNER';
 
             return (
-              <Grid item xs={12} md={6} lg={4} key={group.id}>
+              <Grid item xs={12} md={6} lg={4} xl={3} key={group.id}>
               <Card sx={{ ...(isMd ? { height: '100%' } : { mb: 2 }), ...(isOwner ? { borderLeft: `4px solid ${theme.palette.warning.main}` } : {}) }}>
                 <CardActionArea onClick={() => navigate(`/group/${group.id}`)}>
                   <CardContent>

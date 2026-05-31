@@ -21,6 +21,7 @@ import { ReactNode } from 'react';
 import { useDirtyGuard } from '../../hooks/useDirtyGuard';
 import { useKeyboardInset } from '../../hooks/useKeyboardInset';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
+import { pageSpacing } from '../../theme/pageTokens';
 
 interface FormScaffoldProps {
   /** Título mostrado no header */
@@ -111,7 +112,7 @@ export function FormScaffold({
         sx={{
           flex: 1,
           overflow: 'auto',
-          maxWidth: { md: 720 },
+          maxWidth: pageSpacing.contentMaxWidth,
           width: '100%',
           mx: 'auto',
           px: { xs: 2, md: 3 },
