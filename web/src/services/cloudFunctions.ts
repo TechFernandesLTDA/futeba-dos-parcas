@@ -32,10 +32,12 @@ export const canSendSmsOtp = httpsCallable<
   { allowed: boolean; reason?: string; retryAfterSec?: number }
 >(functions, 'canSendSmsOtp');
 
+// 2026-05-31: timeout explicito de 30s (default do SDK e 70s). Evita que um
+// problema de App Check/rede deixe a verificacao de CPF "validando" por 70s.
 export const verifyCpf = httpsCallable<
   { cpf: string },
   { success: boolean; cpfMasked: string }
->(functions, 'verifyCpf');
+>(functions, 'verifyCpf', { timeout: 30000 });
 
 export const setUserVerified = httpsCallable<
   { uid?: string },
