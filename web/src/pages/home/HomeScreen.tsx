@@ -6,11 +6,14 @@ import {
   Button,
   Skeleton,
   Collapse,
-  IconButton,
+  Typography,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import {
   ExpandLess,
   ExpandMore,
+  AutoAwesome,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { usePrefetchHome } from '../../hooks/usePrefetchHome';
@@ -46,8 +49,9 @@ export function HomeScreen() {
   const { permission, requestPermission } = useNotificationPermission();
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const [mountedTabs, setMountedTabs] = useState<Set<number>>(() => new Set([tabValue]));
-  const [towExpanded, setTowExpanded] = useState(true);
+  const [towExpanded, setTowExpanded] = useState(false);
   const { t } = useTranslation();
+  const theme = useTheme();
   useDocumentTitle(t('common.appName'));
 
   usePrefetchHome();
@@ -71,16 +75,39 @@ export function HomeScreen() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {tabValue === 0 && (
-        <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pb: 0, pt: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <IconButton
-              size="small"
-              onClick={() => setTowExpanded(!towExpanded)}
-              aria-label={towExpanded ? t('home.collapseHighlights', 'Recolher destaques') : t('home.expandHighlights', 'Expandir destaques')}
-              sx={{ mb: 0.5 }}
-            >
-              {towExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-            </IconButton>
+        <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pt: 1, pb: towExpanded ? 0 : 0.5 }}>
+          <Box
+            onClick={() => setTowExpanded(!towExpanded)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setTowExpanded(!towExpanded);
+              }
+            }}
+            aria-expanded={towExpanded}
+            aria-label={t('home.highlightsAria', 'Destaques — Time da Semana e Ações Rápidas')}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              py: 0.75,
+              px: 1.5,
+              borderRadius: 2,
+              mb: towExpanded ? 1 : 0,
+              bgcolor: alpha(theme.palette.primary.main, 0.04),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
+              userSelect: 'none',
+            }}
+          >
+            <Typography variant="subtitle2" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AutoAwesome fontSize="small" color="primary" />
+              {t('home.highlights', 'Destaques')}
+            </Typography>
+            {towExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
           </Box>
           <Collapse in={towExpanded}>
             <Suspense fallback={null}>

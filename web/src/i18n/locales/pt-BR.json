@@ -1083,6 +1083,8 @@
     "teamOfTheWeek": "Time da Semana",
     "round": "Rodada {{week}}",
     "viewFullRanking": "Ver ranking completo",
-    "viewStat": "Ver {{stat}}"
+    "viewStat": "Ver {{stat}}",
+    "highlights": "Destaques",
+    "highlightsAria": "Destaques — Time da Semana e Ações Rápidas"
   }
 }
