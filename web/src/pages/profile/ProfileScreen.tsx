@@ -317,7 +317,7 @@ export const ProfileScreen: React.FC = () => {
           </Grid>
 
           {isOwnProfile && (
-            <Grid item xs={12} md={7}>
+            <Grid item xs={12} md={4}>
               <Card>
                 {/* Ícones tintados com primary.main p/ consistência com AppSidebar
                     e melhor vibrância em ambos os modos (default action.active fica
