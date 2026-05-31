@@ -72,6 +72,24 @@ import { getNextRecurrenceDates, formatRecurrencePreview } from '../../utils/rec
 
 const logger = createLogger('CreateGameScreen');
 
+const DEFAULT_GAME_DURATION_MINUTES = 60;
+const TIME_SLOTS = [
+  '18:00', '18:30', '19:00', '19:30',
+  '20:00', '20:30', '21:00', '21:30',
+  '22:00', '22:30', '23:00',
+];
+
+const parseTime = (t: string) => {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+};
+
+const formatTime = (minutes: number) => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
 interface GameFormData {
   locationId: string;
   locationName: string;
@@ -524,10 +542,6 @@ export const CreateGameScreen: React.FC = () => {
 
       // Verificar sobreposição de horários
       if (formData.fieldId && formData.date) {
-        const parseTime = (t: string) => {
-          const [h, m] = t.split(':').map(Number);
-          return h * 60 + m;
-        };
         try {
           const gamesRef = collection(db, 'games');
           const overlapQuery = query(
@@ -537,22 +551,20 @@ export const CreateGameScreen: React.FC = () => {
           );
           const existingGames = await getDocs(overlapQuery);
           const newStart = parseTime(formData.time);
-          const newEnd = formData.endTime ? parseTime(formData.endTime) : newStart + 120;
+          const newEnd = formData.endTime ? parseTime(formData.endTime) : newStart + DEFAULT_GAME_DURATION_MINUTES;
           const conflicting = existingGames.docs.find((d) => {
             const g = d.data();
             if (g.status === 'CANCELLED') return false;
             const gStart = g.time ? parseTime(g.time) : 0;
-            const gEnd = g.end_time ? parseTime(g.end_time) : gStart + 120;
+            const gEnd = g.end_time ? parseTime(g.end_time) : gStart + DEFAULT_GAME_DURATION_MINUTES;
             return gStart < newEnd && gEnd > newStart;
           });
 
           if (conflicting) {
             const g = conflicting.data();
-            const gStart = g.time ? parseTime(g.time) : 0;
-            const gEnd = g.end_time ? parseTime(g.end_time) : gStart + 120;
 
             const freeSlots: { start: string; end: string }[] = [];
-            const slotDuration = gEnd - gStart;
+            const slotDuration = DEFAULT_GAME_DURATION_MINUTES;
             const dayEnd = 23 * 60;
 
             for (let s = 0; s <= dayEnd - slotDuration; s += 30) {
@@ -562,17 +574,13 @@ export const CreateGameScreen: React.FC = () => {
                 const gd = d.data();
                 if (gd.status === 'CANCELLED') return false;
                 const gs = gd.time ? parseTime(gd.time) : 0;
-                const ge = gd.end_time ? parseTime(gd.end_time) : gs + 120;
+                const ge = gd.end_time ? parseTime(gd.end_time) : gs + DEFAULT_GAME_DURATION_MINUTES;
                 return gs < e && ge > s;
               });
               if (!conflicts) {
-                const sh = Math.floor(s / 60);
-                const sm = s % 60;
-                const eh = Math.floor(e / 60);
-                const em = e % 60;
                 freeSlots.push({
-                  start: `${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}`,
-                  end: `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`,
+                  start: formatTime(s),
+                  end: formatTime(e),
                 });
               }
             }
@@ -957,6 +965,19 @@ export const CreateGameScreen: React.FC = () => {
     </Box>
   );
 
+  const handleStartTimeChange = (time: string) => {
+    handleInputChange('time', time);
+    if (time && !formData.endTime) {
+      const [h, m] = time.split(':').map(Number);
+      const end = formatTime(h * 60 + m + DEFAULT_GAME_DURATION_MINUTES);
+      handleInputChange('endTime', end);
+    }
+  };
+
+  const handleTimeSlotClick = (slot: string) => {
+    handleStartTimeChange(slot);
+  };
+
   const renderDateTimeSection = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <TextField
@@ -971,27 +992,61 @@ export const CreateGameScreen: React.FC = () => {
         InputLabelProps={{ shrink: true }}
       />
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
+      {/* Quick-select time grid */}
+      <Box>
+        <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block', mb: 0.5 }}>
+          Toque no horário de início — o fim é preenchido automaticamente com +1h
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {TIME_SLOTS.map((slot) => {
+            const isSelected = formData.time === slot;
+            const [slotH, slotM] = slot.split(':').map(Number);
+            const endSlot = formatTime(slotH * 60 + slotM + DEFAULT_GAME_DURATION_MINUTES);
+            return (
+              <Chip
+                key={slot}
+                size="small"
+                label={`${slot} → ${endSlot}`}
+                color={isSelected ? 'primary' : 'default'}
+                variant={isSelected ? 'filled' : 'outlined'}
+                onClick={() => handleTimeSlotClick(slot)}
+                sx={{
+                  minWidth: 90,
+                  fontWeight: isSelected ? 600 : 400,
+                }}
+              />
+            );
+          })}
+        </Box>
+      </Box>
+
+      {/* Manual time inputs (pre-filled from chips) */}
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           label={t('games.create.startTime')}
           type="time"
           value={formData.time}
-          onChange={(e) => handleInputChange('time', e.target.value)}
+          onChange={(e) => handleStartTimeChange(e.target.value)}
           error={!!formErrors.time}
-          helperText={formErrors.time}
+          helperText={formErrors.time || 'Início'}
           fullWidth
           required
           InputLabelProps={{ shrink: true }}
+          size="small"
         />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: -2 }}>
+          →
+        </Typography>
         <TextField
           label={t('games.create.endTime')}
           type="time"
           value={formData.endTime}
           onChange={(e) => handleInputChange('endTime', e.target.value)}
           error={!!formErrors.endTime}
-          helperText={formErrors.endTime}
+          helperText={formErrors.endTime || 'Fim (+1h)'}
           fullWidth
           InputLabelProps={{ shrink: true }}
+          size="small"
         />
       </Box>
 
@@ -1000,7 +1055,7 @@ export const CreateGameScreen: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
           <HistoryIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
           <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
-            Horários populares:
+            Horários populares neste campo:
           </Typography>
           {popularTimes.map((pt) => (
             <Chip
@@ -1009,13 +1064,7 @@ export const CreateGameScreen: React.FC = () => {
               label={`${pt.time}`}
               color={formData.time === pt.time ? 'primary' : 'default'}
               variant={formData.time === pt.time ? 'filled' : 'outlined'}
-              onClick={() => {
-                handleInputChange('time', pt.time);
-                const [h, m] = pt.time.split(':').map(Number);
-                const endH = h + 2;
-                const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                handleInputChange('endTime', endTime);
-              }}
+              onClick={() => handleStartTimeChange(pt.time)}
             />
           ))}
         </Box>
