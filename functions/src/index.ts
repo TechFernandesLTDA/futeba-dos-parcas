@@ -2272,3 +2272,11 @@ export {onUserInviteCountChanged} from "./badges/ambassador-badge";
 export {processWeeklyRanking} from "./growth/weekly-ranking";
 export {onGameFinishedCheckBadges} from "./badges/game-badges";
 export {startNewSeason, archiveSeason} from "./growth/season-cycle";
+
+// ==========================================
+// CASHBOX (auditoria 2026-05-30 #2352)
+// ==========================================
+// - onCashboxEntryWritten: recomputa cashbox_summary/current do ledger
+//   imutavel a cada escrita de entry (summary self-healing, balance sempre
+//   consistente com income/expense reais).
+export {onCashboxEntryWritten} from "./cashbox/summary-recompute";
