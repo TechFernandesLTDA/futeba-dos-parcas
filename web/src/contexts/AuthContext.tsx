@@ -238,7 +238,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (lastFetchUid !== firebaseUser.uid) return;
           }
 
-          setUser(userData);
+          // Só seta userData se for não-nulo: createUserDocument pode retornar null
+          // mesmo com firebaseUser autenticado (ex.: Firestore offline).
+          if (userData) {
+            setUser(userData);
+          } else {
+            setError('Erro ao carregar dados da conta. Verifique sua conexão.');
+          }
         } else {
           setUser(null);
         }
@@ -246,13 +252,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       } catch (err) {
         logger.error('Auth state change error:', err);
-        // Só limpa state se ainda for o callback atual
         if (lastFetchUid === currentUid) {
           setUser(null);
           setLoading(false);
           setError('Erro ao verificar autenticação. Tente novamente.');
         }
       }
+    },
+    (err) => {
+      logger.error('onAuthStateChanged observer error:', err);
+      setError('Erro ao monitorar autenticação.');
+      setLoading(false);
     });
 
     return () => unsubscribe();

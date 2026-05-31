@@ -205,7 +205,6 @@ export const PhoneVerificationScreen: React.FC = () => {
       } else if (code === 'auth/credential-already-in-use') {
         msg = 'Este telefone já está vinculado a outra conta.';
       }
-      showError(msg);
       setError(msg);
     } finally {
       setLoading(false);

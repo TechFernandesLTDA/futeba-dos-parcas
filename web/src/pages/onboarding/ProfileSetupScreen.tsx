@@ -54,40 +54,37 @@ export const ProfileSetupScreen: React.FC = () => {
     if (!firebaseUser || !name.trim()) return;
 
     setLoading(true);
+    const originalDisplayName = firebaseUser.displayName;
     try {
       await updateProfile(firebaseUser, { displayName: name });
       
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
-        name,
-        email: firebaseUser.email,
-        photo_url: firebaseUser.photoURL || '',
-        nickname: nickname.trim(),
-        role: 'PLAYER',
-        level: 1,
-        experience_points: 0,
-        striker_rating: 3,
-        mid_rating: 3,
-        defender_rating: 3,
-        gk_rating: 3,
-        preferred_position: preferredPosition,
-        preferred_field_types: preferredFieldTypes,
-        favorite_team: favoriteTeam,
-        total_games: 0,
-        total_goals: 0,
-        total_assists: 0,
-        total_wins: 0,
-        total_draws: 0,
-        total_losses: 0,
-        total_saves: 0,
-        mvp_count: 0,
-        yellow_cards: 0,
-        red_cards: 0,
-        current_streak: 0,
-        best_streak: 0,
-        is_searchable: true,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-      }, { merge: true });
+      try {
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          name,
+          email: firebaseUser.email,
+          photo_url: firebaseUser.photoURL || '',
+          nickname: nickname.trim(),
+          role: 'PLAYER',
+          level: 1,
+          experience_points: 0,
+          preferred_position: preferredPosition,
+          preferred_field_types: preferredFieldTypes,
+          favorite_team: favoriteTeam,
+          is_searchable: true,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        }, { merge: true });
+      } catch (firestoreErr) {
+        logger.error('Firestore setDoc failed, rolling back Auth:', firestoreErr);
+        try {
+          await updateProfile(firebaseUser, { displayName: originalDisplayName ?? undefined });
+        } catch (rollbackErr) {
+          logger.error('Rollback do Auth falhou:', rollbackErr);
+          showError('Perfil pode estar inconsistente. Recarregue o app e tente novamente.');
+        }
+        showError('Erro ao salvar perfil. Tente novamente.');
+        return;
+      }
 
       await refreshUser();
 
