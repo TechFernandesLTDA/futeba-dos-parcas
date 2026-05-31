@@ -265,6 +265,7 @@
     "openPlayerCardAria": "Open player card",
     "levelProgressAria": "Level progress",
     "viewLevelJourneyAria": "View level journey - Level {{level}}",
+    "viewLevelJourney": "View level journey",
     "editProfileError": "Failed to save profile. Please try again.",
     "avatarInvalidType": "Invalid file. Select an image.",
     "avatarTooLarge": "Image too large. Maximum: 2MB.",
@@ -601,7 +602,8 @@
       "emptyDesc": "Come back later or create your own game!",
       "join": "I Want to Play",
       "full": "Full"
-    }
+    },
+    "viewGames": "View games"
   },
   "ranking": {
     "title": "Ranking",
@@ -652,7 +654,9 @@
       "title": "Weekly Ranking",
       "empty": "No games this week yet",
       "emptyDesc": "The ranking shows up when the week has finished games."
-    }
+    },
+    "joinGroupToCompete": "Join a group to compete in the ranking",
+    "participateToAppear": "Play games to appear in the ranking"
   },
   "league": {
     "title": "League",

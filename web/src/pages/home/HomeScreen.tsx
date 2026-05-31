@@ -69,14 +69,14 @@ export function HomeScreen() {
   }, [tabValue]);
 
   return (
-    <Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {tabValue === 0 && (
-        <Box sx={{ px: pageSpacing.pagePadding, pb: 0, pt: 1 }}>
+        <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pb: 0, pt: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <IconButton
               size="small"
               onClick={() => setTowExpanded(!towExpanded)}
-              aria-label={towExpanded ? 'Recolher destaques' : 'Expandir destaques'}
+              aria-label={towExpanded ? t('home.collapseHighlights', 'Recolher destaques') : t('home.expandHighlights', 'Expandir destaques')}
               sx={{ mb: 0.5 }}
             >
               {towExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
@@ -95,7 +95,7 @@ export function HomeScreen() {
         role="tabpanel"
         id="main-tabpanel"
         aria-labelledby={`tab-${tabValue}`}
-        sx={{ flex: 1 }}
+        sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
       >
         <Suspense fallback={<TabSkeleton />}>
           {mountedTabs.has(0) && <Box sx={{ display: tabValue === 0 ? 'block' : 'none' }}><HomeTab /></Box>}
