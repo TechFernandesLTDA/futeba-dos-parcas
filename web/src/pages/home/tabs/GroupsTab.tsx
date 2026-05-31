@@ -163,15 +163,13 @@ export function GroupsTab() {
       {/* Lista de grupos */}
       <PullToRefresh onRefresh={handleRefresh}>
       <Box sx={{ px: pageSpacing.pagePadding }}>
-        {error && (
+        {error ? (
           <ErrorState
             message={error}
             onRetry={() => refetch()}
             retryLabel={t('groups.retry')}
           />
-        )}
-
-        {loading ? (
+        ) : loading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} sx={{ mb: 2 }}>
               <CardContent>

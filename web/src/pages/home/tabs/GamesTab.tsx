@@ -229,15 +229,13 @@ export function GamesTab() {
       </Box>
 
       <Box sx={{ px: pageSpacing.pagePadding, pt: 2 }}>
-        {error && (
+        {error ? (
           <ErrorState
             message={error}
             onRetry={() => refetch()}
             retryLabel={t('common.retry')}
           />
-        )}
-
-        {loading || groupsLoading ? (
+        ) : loading || groupsLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} sx={{ mb: 2 }}>
               <CardContent>

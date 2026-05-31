@@ -124,7 +124,12 @@ const PodiumCard: React.FC<{
           role="button"
           aria-label={`Ver figurinha de ${player.userName}`}
           tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(player.userId)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onAvatarClick(player.userId);
+            }
+          }}
         >
           <Box sx={{ position: 'relative', display: 'inline-block' }}>
             <PlayerAvatar
@@ -782,7 +787,12 @@ const RankingCard = React.memo(function RankingCard({
             role="button"
             aria-label={`Ver figurinha de ${player.userName}`}
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(player.userId)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onAvatarClick(player.userId);
+              }
+            }}
           >
             <PlayerAvatar
               name={player.userName}
