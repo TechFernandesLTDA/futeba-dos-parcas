@@ -4,7 +4,10 @@
 // v1 → v2: corrige bug em que cache-first travava assets antigos
 // mesmo após hash de bundle mudar (BadgesScreen-BexbiUlU.js sticky).
 // v2 → v3: precache de /offline.html como fallback offline dedicado (#2204).
-const CACHE_NAME = 'futeba-v3';
+// v3 → v4: purga o index.html cacheado que carregava o CSP estrito (#2314)
+// que bloqueava o Google Sign-In. Força re-precache do index novo (CSP
+// corrigido, #2356) na proxima ativacao. Bump invalida o cache antigo.
+const CACHE_NAME = 'futeba-v4';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
