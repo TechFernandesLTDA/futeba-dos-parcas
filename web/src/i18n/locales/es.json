@@ -1052,6 +1052,8 @@
     "teamOfTheWeek": "Equipo de la Semana",
     "round": "Jornada {{week}}",
     "viewFullRanking": "Ver ranking completo",
-    "viewStat": "Ver {{stat}}"
+    "viewStat": "Ver {{stat}}",
+    "highlights": "Destacados",
+    "highlightsAria": "Destacados — Equipo de la Semana y Acciones Rápidas"
   }
 }
