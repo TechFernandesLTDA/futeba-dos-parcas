@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getSectionFallback } from '../config/navItems';
 
 interface UseSwipeBackOptions {
   /** Desabilita o gesto (ex.: em telas raiz onde não há para onde voltar). */
@@ -20,8 +21,9 @@ interface UseSwipeBackOptions {
  *   distanceThreshold E for predominantemente horizontal (evita conflito com
  *   scroll vertical).
  * - Ignora multitouch e gestos quando `disabled` (ex.: telas raiz).
+ * - Se não houver history (deep link direto), navega para o fallback da seção.
  *
- * Integra com react-router via navigate(-1).
+ * Integra com react-router via navigate(-1) com proteção anti-no-history.
  */
 export function useSwipeBack({
   disabled = false,
@@ -29,6 +31,7 @@ export function useSwipeBack({
   distanceThreshold = 80,
 }: UseSwipeBackOptions = {}) {
   const navigate = useNavigate();
+  const location = useLocation();
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const trackingRef = useRef(false);
@@ -64,7 +67,11 @@ export function useSwipeBack({
 
       // Movimento horizontal suficiente e predominante (não é scroll vertical).
       if (dx > distanceThreshold && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        navigate(-1);
+        if (location.key === 'default' || window.history.length <= 1) {
+          navigate(getSectionFallback(location.pathname), { replace: true });
+        } else {
+          navigate(-1);
+        }
       }
     };
 
@@ -83,5 +90,5 @@ export function useSwipeBack({
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchCancel);
     };
-  }, [disabled, edgeThreshold, distanceThreshold, navigate]);
+  }, [disabled, edgeThreshold, distanceThreshold, navigate, location.key, location.pathname]);
 }

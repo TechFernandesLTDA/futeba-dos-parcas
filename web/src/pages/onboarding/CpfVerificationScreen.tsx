@@ -15,7 +15,6 @@ import {
   Step,
   StepLabel,
   Fade,
-  LinearProgress,
 } from '@mui/material';
 import {
   Badge as BadgeIcon,
@@ -58,7 +57,6 @@ export const CpfVerificationScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [claimConfirmed, setClaimConfirmed] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = stripCpf(e.target.value).slice(0, 11);
@@ -200,7 +198,6 @@ export const CpfVerificationScreen: React.FC = () => {
         navigate('/', { replace: true });
       } else {
         setSuccess(true);
-        setClaimConfirmed(false);
       }
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -273,19 +270,15 @@ export const CpfVerificationScreen: React.FC = () => {
         <Typography variant="caption" color="text.secondary">
           {t('onboarding.letsPlay')}
         </Typography>
-        {claimConfirmed ? (
-          <LinearProgress sx={{ mt: 3, borderRadius: 1 }} />
-        ) : (
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            sx={{ mt: 3, borderRadius: 2 }}
-            onClick={() => navigate('/')}
-          >
-            Continuar
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          size="large"
+          fullWidth
+          sx={{ mt: 3, borderRadius: 2 }}
+          onClick={() => navigate('/')}
+        >
+          Continuar
+        </Button>
       </Box>
     </Fade>
   );

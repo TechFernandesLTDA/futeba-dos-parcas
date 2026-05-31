@@ -21,9 +21,8 @@ const STATIC_ASSETS = [
 // Instalar: cachear assets estáticos
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 // Ativar: limpar TODOS os caches antigos (qualquer nome != CACHE_NAME)

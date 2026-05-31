@@ -39,7 +39,7 @@ export function ForgotPasswordScreen() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    const normalizedEmail = email.trim();
+    const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) {
       setError(t('auth.forgotPasswordFillEmail'));
       return;
