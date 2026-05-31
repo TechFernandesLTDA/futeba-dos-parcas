@@ -1566,12 +1566,19 @@ service cloud.firestore {
           && member.data.status == 'ACTIVE';
       }
 
-      // Read: qualquer auth (codigos sao random, lookup por code precisa disso)
-      allow read: if isAuthenticated();
+      // Auditoria 2026-05-30 #2351: doc-id == code. Lookup por get(doc-id),
+      // nao por where('code')==X (que era LIST e vazava enumeracao de TODOS
+      // os convites de todos os grupos).
+      // get: qualquer auth (precisa do code/doc-id p/ resolver o convite).
+      // list: apenas admin — bloqueia enumeracao da colecao inteira.
+      allow get: if isAuthenticated();
+      allow list: if isAdmin();
 
-      // Create: somente admin/owner do grupo, e inviter_id == auth.uid
+      // Create: somente admin/owner do grupo, inviter_id == auth.uid, e
+      // doc-id == code (#2351: forca o esquema doc-id=code).
       // H2 FIX: validacao de expires_at — nao pode ser no passado, max 30 dias no futuro
       allow create: if isAuthenticated() &&
+                       inviteId == request.resource.data.code &&
                        request.resource.data.inviter_id == userId() &&
                        request.resource.data.used == false &&
                        request.resource.data.expires_at > request.time &&

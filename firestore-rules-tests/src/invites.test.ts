@@ -93,7 +93,7 @@ afterAll(async () => {
 // ============================================================
 
 describe("invites — leitura", () => {
-  it("Qualquer auth pode ler invite (lookup por code requer isso)", async () => {
+  it("Qualquer auth pode GET invite por doc-id (lookup por code = doc-id)", async () => {
     await assertSucceeds(asPlayerA(testEnv).doc(`invites/${VALID_INVITE}`).get());
     await assertSucceeds(asPlayerB(testEnv).doc(`invites/${VALID_INVITE}`).get());
     await assertSucceeds(asPlayerC(testEnv).doc(`invites/${VALID_INVITE}`).get());
@@ -103,6 +103,16 @@ describe("invites — leitura", () => {
   it("Nao-autenticado NAO pode ler invite", async () => {
     await assertFails(asAnon(testEnv).doc(`invites/${VALID_INVITE}`).get());
   });
+
+  // #2351: list (enumeracao) bloqueado p/ nao-admin
+  it("(NOVO #2351) Player NAO pode LIST a colecao invites (enumeracao)", async () => {
+    await assertFails(asPlayerA(testEnv).collection("invites").get());
+    await assertFails(asPlayerC(testEnv).collection("invites").get());
+  });
+
+  it("(NOVO #2351) Admin PODE LIST a colecao invites", async () => {
+    await assertSucceeds(asAdmin(testEnv).collection("invites").get());
+  });
 });
 
 // ============================================================
@@ -110,11 +120,27 @@ describe("invites — leitura", () => {
 // ============================================================
 
 describe("invites — criacao", () => {
-  it("Group OWNER pode criar invite com inviter_id == self", async () => {
+  // #2351: doc-id DEVE ser igual ao code
+  it("Group OWNER pode criar invite com inviter_id == self e doc-id == code", async () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(
-      db.doc("invites/new-by-owner").set({
+      db.doc("invites/OWN001").set({
         code: "OWN001",
+        group_id: GROUP_ID,
+        group_name: "Grupo Convites",
+        inviter_id: UID_PLAYER_A,
+        inviter_name: "Player A",
+        used: false,
+        expires_at: new Date(Date.now() + 86400000),
+      })
+    );
+  });
+
+  it("(NOVO #2351) Owner NAO pode criar invite com doc-id != code", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("invites/MISMATCH").set({
+        code: "OTHER9",
         group_id: GROUP_ID,
         group_name: "Grupo Convites",
         inviter_id: UID_PLAYER_A,
@@ -128,7 +154,7 @@ describe("invites — criacao", () => {
   it("Member SIMPLES (sem role admin) NAO pode criar invite", async () => {
     const db = asPlayerB(testEnv);
     await assertFails(
-      db.doc("invites/by-member").set({
+      db.doc("invites/MEM001").set({
         code: "MEM001",
         group_id: GROUP_ID,
         group_name: "Grupo Convites",
@@ -143,7 +169,7 @@ describe("invites — criacao", () => {
   it("Nao-membro NAO pode criar invite pra grupo", async () => {
     const db = asPlayerC(testEnv);
     await assertFails(
-      db.doc("invites/by-stranger").set({
+      db.doc("invites/STR001").set({
         code: "STR001",
         group_id: GROUP_ID,
         group_name: "Grupo Convites",
@@ -158,7 +184,7 @@ describe("invites — criacao", () => {
   it("Owner NAO pode criar invite com inviter_id de OUTRO usuario (spoof)", async () => {
     const db = asPlayerA(testEnv);
     await assertFails(
-      db.doc("invites/spoofed").set({
+      db.doc("invites/SPF001").set({
         code: "SPF001",
         group_id: GROUP_ID,
         group_name: "Grupo Convites",
@@ -173,7 +199,7 @@ describe("invites — criacao", () => {
   it("Owner NAO pode criar invite ja marcado como usado", async () => {
     const db = asPlayerA(testEnv);
     await assertFails(
-      db.doc("invites/already-used").set({
+      db.doc("invites/USD001").set({
         code: "USD001",
         group_id: GROUP_ID,
         group_name: "Grupo Convites",

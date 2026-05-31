@@ -161,10 +161,14 @@ export const InvitePlayersScreen: React.FC = () => {
     setInviting(targetUser.id);
     try {
       // Verificar limite de convites pendentes antes de enviar (#1043)
+      // #2351: convites diretos usam a colecao `group_invites` (schema
+      // invited_by_id/invited_user_id). A colecao `invites` agora e exclusiva
+      // de codigos compartilhaveis (doc-id == code); o write antigo aqui caia
+      // no catch-all deny da rule de `invites`.
       const MAX_PENDING_INVITES = 20;
       const existingQuery = query(
-        collection(db, 'invites'),
-        where('from_user_id', '==', user.id),
+        collection(db, 'group_invites'),
+        where('invited_by_id', '==', user.id),
         where('group_id', '==', groupId),
         where('status', '==', 'PENDING')
       );
@@ -174,11 +178,11 @@ export const InvitePlayersScreen: React.FC = () => {
         return;
       }
 
-      await addDoc(collection(db, 'invites'), {
+      await addDoc(collection(db, 'group_invites'), {
         group_id: groupId,
         group_name: groupName,
-        from_user_id: user.id,
-        to_user_id: targetUser.id,
+        invited_by_id: user.id,
+        invited_user_id: targetUser.id,
         status: 'PENDING',
         expires_at: Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),
         created_at: serverTimestamp(),

@@ -1998,15 +1998,14 @@ actual class FirebaseDataSource actual constructor() {
             val normalized = inviteCode.uppercase()
 
             // 1. Tenta resolver via collection invites/
+            // #2351: doc-id == code — lookup por get(doc-id), nao where('code')
+            // (que era LIST e permitia enumerar todos os convites). A rule de
+            // `invites` agora bloqueia list p/ nao-admin.
             val resolvedGroupId: String? = run {
-                val invitesSnap = firestore.collection("invites")
-                    .where { "code" equalTo normalized }
-                    .where { "used" equalTo false }
-                    .limit(1)
-                    .get()
+                val invDoc = firestore.collection("invites").document(normalized).get()
 
-                if (invitesSnap.documents.isEmpty()) return@run null
-                val invDoc = invitesSnap.documents[0]
+                if (!invDoc.exists) return@run null
+                if (invDoc.get<Boolean?>("used") == true) return@run null
                 val expiresAt = invDoc.get<Timestamp?>("expires_at")
                 val nowMs = Clock.System.now().toEpochMilliseconds()
                 if (expiresAt != null && expiresAt.seconds * 1000L < nowMs) return@run null
