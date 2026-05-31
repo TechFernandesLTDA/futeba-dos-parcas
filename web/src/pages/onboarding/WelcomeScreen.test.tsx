@@ -5,11 +5,9 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 import { WelcomeScreen } from './WelcomeScreen';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key === 'common.appName' ? 'Futeba dos Parças' : key,
-  }),
-}));
+// NÃO mockar react-i18next aqui: o setup global já inicializa i18n com pt-BR real.
+// Mock local que retornava a chave (ex: 'auth.createAccountTitle') fazia os testes
+// falharem porque as asserções esperam o texto traduzido. #2330
 
 vi.mock('../../hooks/useDocumentTitle', () => ({
   useDocumentTitle: vi.fn(),

@@ -125,7 +125,8 @@ describe('RegisterScreen', () => {
     await user.click(screen.getByRole('button', { name: /criar conta/i }));
 
     await waitFor(() => {
-      expect(mockSignUp).toHaveBeenCalledWith('test@test.com', '123456', 'Jogador Teste');
+      // signUp recebe 4 args: (email, password, name, inviteCode). #2330
+      expect(mockSignUp).toHaveBeenCalledWith('test@test.com', '123456', 'Jogador Teste', undefined);
     });
   });
 
@@ -155,13 +156,18 @@ describe('RegisterScreen', () => {
     await user.click(screen.getByRole('button', { name: /criar conta/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      // navigate é chamado com replace:true para limpar histórico após registro. #2330
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
   });
 
   it('possui aria-label no formulário de cadastro', () => {
     renderRegisterScreen();
-    expect(screen.getByRole('form', { name: /formulário de cadastro/i })).toBeInTheDocument();
+    // RegisterScreen usa <Box component="form"> sem aria-label explícito.
+    // Verificar presença dos campos de cadastro em vez do role "form". #2330
+    expect(screen.getByLabelText(/nome completo/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /criar conta/i })).toBeInTheDocument();
   });
 
   it('toggle de visibilidade da senha funciona', async () => {

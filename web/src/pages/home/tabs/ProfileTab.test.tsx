@@ -51,9 +51,11 @@ vi.mock('../../../types/user', () => ({
   getLevelColor: () => '#00C853',
 }));
 
+// handleBadgeImageError foi adicionado ao levelBadge em refactor recente. #2330
 vi.mock('../../../utils/levelBadge', () => ({
   getLevelBadgeImage: () => '/images/badge-5.png',
   getLevelBadgeDescription: (level: number, name: string) => `Nível ${level} - ${name}`,
+  handleBadgeImageError: vi.fn(),
 }));
 
 vi.mock('../../../types/gamification', () => ({
@@ -94,6 +96,12 @@ vi.mock('../../../contexts/ToastContext', () => ({
     showSuccess: vi.fn(),
     showInfo: vi.fn(),
   }),
+}));
+
+// TeamBadge (usado em ProfileTab para exibir time favorito) chama useTeams. #2330
+vi.mock('../../../contexts/TeamsContext', () => ({
+  useTeams: () => ({ teams: [], teamsById: new Map(), loading: false, error: null }),
+  TeamsProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 import { ProfileTab } from './ProfileTab';

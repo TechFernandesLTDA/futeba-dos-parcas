@@ -16,15 +16,28 @@ const mockQuery = vi.fn();
 const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
+// mockGetDocs é usado pelos testes de useGames (migrado para useQuery/getDocs)
+const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
+
 vi.mock('firebase/firestore', () => {
-  const timestamp = {
-    now: vi.fn(() => ({ toDate: () => new Date() })),
-    fromDate: vi.fn((d: Date) => ({ toDate: () => d })),
-  };
+  // Timestamp precisa ser classe/construtora para instanceof funcionar em
+  // firestoreHelpers.ts (`ts instanceof Timestamp`). Objeto literal não funciona. #2330
+  class MockTimestamp {
+    _ms: number;
+    constructor(seconds: number, nanoseconds: number) {
+      this._ms = seconds * 1000 + nanoseconds / 1e6;
+    }
+    toDate() { return new Date(this._ms); }
+    toMillis() { return this._ms; }
+    static now() { return new MockTimestamp(Date.now() / 1000, 0); }
+    static fromDate(d: Date) { return new MockTimestamp(d.getTime() / 1000, 0); }
+    static fromMillis(ms: number) { return new MockTimestamp(ms / 1000, 0); }
+  }
   return {
     collection: (...args: any[]) => mockCollection(...args),
     doc: (...args: any[]) => mockDoc(...args),
     getDoc: (...args: any[]) => mockGetDoc(...args),
+    getDocs: (...args: any[]) => mockGetDocs(...args),
     addDoc: (...args: any[]) => mockAddDoc(...args),
     updateDoc: (...args: any[]) => mockUpdateDoc(...args),
     deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
@@ -35,7 +48,7 @@ vi.mock('firebase/firestore', () => {
     limit: (...args: any[]) => mockLimit(...args),
     onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
     serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
-    Timestamp: timestamp,
+    Timestamp: MockTimestamp,
     runTransaction: vi.fn(),
     writeBatch: vi.fn(() => ({ set: vi.fn(), update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) })),
   };
@@ -77,14 +90,16 @@ vi.mock('../utils/logger', () => ({
 
 vi.mock('../contexts/ToastContext', () => ({
   useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
-  ToastProvider: ({ children }) => children,
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 import { useGames, useGameDetail, useConfirmPresence, useCreateGame, useUpdateGameStatus } from './useGames';
 
 describe('useGames', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockOnSnapshot.mockReturnValue(vi.fn()); // retorna unsubscribe
+    // useGames usa useQuery/getDocs (migrado de onSnapshot em #2351)
+    mockGetDocs.mockResolvedValue({ docs: [] });
+    mockOnSnapshot.mockReturnValue(vi.fn()); // useGameDetail ainda usa onSnapshot
     mockQuery.mockReturnValue('mock-query');
     mockCollection.mockReturnValue('mock-collection');
     mockOrderBy.mockReturnValue('mock-order');
@@ -95,27 +110,25 @@ describe('useGames', () => {
     expect(result.current.loading).toBe(true);
   });
 
-  it('configura listener onSnapshot na coleção games', () => {
+  it('configura query na coleção games via getDocs', () => {
+    // useGames foi migrado de onSnapshot → useQuery/getDocs (#2351).
     renderHook(() => useGames(), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'games');
-    expect(mockOnSnapshot).toHaveBeenCalled();
   });
 
-  it('retorna jogos quando snapshot emite dados', async () => {
-    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
-      onNext({
-        docs: [
-          {
-            id: 'game-1',
-            data: () => ({
-              status: 'SCHEDULED',
-              owner_id: 'user-1',
-              dateTime: { toDate: () => new Date('2026-01-01') },
-            }),
-          },
-        ],
-      });
-      return vi.fn();
+  it('retorna jogos quando getDocs emite dados', async () => {
+    // useGames usa useQuery/getDocs — simular retorno via mockGetDocs.
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 'game-1',
+          data: () => ({
+            status: 'SCHEDULED',
+            owner_id: 'user-1',
+            dateTime: { toDate: () => new Date('2026-01-01') },
+          }),
+        },
+      ],
     });
 
     const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
@@ -143,11 +156,9 @@ describe('useGames', () => {
     expect(mockLimit).toHaveBeenCalledWith(5);
   });
 
-  it('trata erros do snapshot', async () => {
-    mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
-      onError(new Error('Firestore error'));
-      return vi.fn();
-    });
+  it('trata erros do getDocs', async () => {
+    // useGames usa useQuery/getDocs — simular erro via mockRejectedValue.
+    mockGetDocs.mockRejectedValueOnce(new Error('Firestore error'));
 
     const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
 
@@ -158,38 +169,36 @@ describe('useGames', () => {
     expect(result.current.error).toBe('Firestore error');
   });
 
-  it('remove listener no unmount', () => {
-    const unsubscribe = vi.fn();
-    mockOnSnapshot.mockReturnValue(unsubscribe);
-
-    const { unmount } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
-    unmount();
-
-    expect(unsubscribe).toHaveBeenCalled();
+  it('usa getDocs (não onSnapshot) para buscar jogos', () => {
+    // useGames usa useQuery/getDocs — não cria listener onSnapshot.
+    // Garantir que a collection 'games' é consultada via getDocs.
+    renderHook(() => useGames(), { wrapper: createTestWrapper() });
+    expect(mockCollection).toHaveBeenCalledWith({}, 'games');
+    // onSnapshot NÃO deve ser chamado pelo hook useGames principal
+    expect(mockOnSnapshot).not.toHaveBeenCalled();
   });
 
   it('exclui jogos com deletedAt do resultado', async () => {
-    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
-      onNext({
-        docs: [
-          {
-            id: 'game-1',
-            data: () => ({
-              status: 'SCHEDULED',
-              dateTime: { toDate: () => new Date() },
-            }),
-          },
-          {
-            id: 'game-2',
-            data: () => ({
-              status: 'FINISHED',
-              dateTime: { toDate: () => new Date() },
-              deleted_at: { toDate: () => new Date() },
-            }),
-          },
-        ],
-      });
-      return vi.fn();
+    // useGames usa getDocs e filtra deletedAt no lado cliente.
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 'game-1',
+          data: () => ({
+            status: 'SCHEDULED',
+            dateTime: { toDate: () => new Date() },
+          }),
+        },
+        {
+          id: 'game-2',
+          data: () => ({
+            status: 'FINISHED',
+            dateTime: { toDate: () => new Date() },
+            // deleted_at como Date simples — firestoreHelpers.toDate reconhece Date diretamente.
+            deleted_at: new Date(),
+          }),
+        },
+      ],
     });
 
     const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });

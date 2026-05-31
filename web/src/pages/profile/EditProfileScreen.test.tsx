@@ -39,6 +39,9 @@ vi.mock('react-i18next', () => ({
         'profile.editProfile': 'Editar Perfil',
         'profile.fullNameLabel': 'Nome completo',
         'profile.saveChanges': 'Salvar alterações',
+        'common.save': 'Salvar',       // botão no footer do FormScaffold
+        'common.cancel': 'Cancelar',
+        'common.saving': 'Salvando...',
       };
       return map[key] || key;
     },
@@ -62,13 +65,14 @@ vi.mock('../../hooks/useDocumentTitle', () => ({
 }));
 
 vi.mock('../../components/layout', () => ({
-  FormScaffold: ({ title, children }: { title: string; children: React.ReactNode }) => (
+  // FormScaffold deve renderizar footer (contém o botão Salvar). #2330
+  FormScaffold: ({ title, children, footer }: { title: string; children: React.ReactNode; footer?: React.ReactNode }) => (
     <div>
       <h1>{title}</h1>
       {children}
+      {footer}
     </div>
   ),
-  // AdaptiveFormSheet é exportado pelo barrel — deve estar presente no mock. #2330
   AdaptiveFormSheet: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
@@ -103,7 +107,8 @@ describe('EditProfileScreen', () => {
   it('renderiza botão de ação (Salvar)', async () => {
     renderWithProviders(<EditProfileScreen />);
     await waitFor(() => {
-      expect(screen.getByText('Salvar alterações')).toBeInTheDocument();
+      // Botão usa t('common.save') = 'Salvar' via i18n real do setup global. #2330
+      expect(screen.getByRole('button', { name: /salvar/i })).toBeInTheDocument();
     }, { timeout: 10000 });
   });
 

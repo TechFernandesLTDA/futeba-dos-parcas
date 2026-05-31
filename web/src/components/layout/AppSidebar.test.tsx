@@ -101,7 +101,8 @@ describe('AppSidebar', () => {
     const user = userEvent.setup();
     renderWithTheme(<AppSidebar />);
 
-    const logos = screen.getAllByRole('link', { name: 'Ir para Início' });
+    // AppSidebar usa aria-label={t('nav.home')} = 'Início' (não 'Ir para Início'). #2330
+    const logos = screen.getAllByRole('link', { name: 'Início' });
     await user.click(logos[0]);
 
     expect(mockNavigate).toHaveBeenCalledWith('/');

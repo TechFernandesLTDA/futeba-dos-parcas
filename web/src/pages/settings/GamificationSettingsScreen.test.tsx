@@ -18,8 +18,9 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('../../services/firebase', () => ({ db: {} }));
 
+// GamificationSettingsScreen requer role ADMIN para renderizar (guarda no componente). #2330
 vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: { id: 'user-1', role: 'ADMIN' } }),
 }));
 
 vi.mock('../../contexts/ToastContext', () => ({

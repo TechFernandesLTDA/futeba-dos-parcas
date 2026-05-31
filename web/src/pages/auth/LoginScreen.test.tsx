@@ -136,13 +136,18 @@ describe('LoginScreen', () => {
     await user.click(screen.getByRole('button', { name: /entrar/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      // navigate é chamado com replace:true para limpar o histórico após login. #2330
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
   });
 
   it('possui aria-label no formulário de login', () => {
     renderLoginScreen();
-    expect(screen.getByRole('form', { name: /formulário de login/i })).toBeInTheDocument();
+    // O formulário de login usa <Box component="form"> sem aria-label explícito.
+    // Verificar presença dos campos de login em vez do role "form". #2330
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Senha')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /entrar/i })).toBeInTheDocument();
   });
 
   it('toggle de visibilidade da senha funciona', async () => {

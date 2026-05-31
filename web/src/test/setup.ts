@@ -57,3 +57,27 @@ function GlobalWrapper({ children }: { children: React.ReactNode }) {
 // configure({ wrapper }) funciona para `render` mas NÃO para `renderHook` no RTL v16.
 // Deixamos para consistência com render (afeta testes de componente).
 configure({ wrapper: GlobalWrapper });
+
+// Polyfill de crypto.subtle para jsdom — Web Crypto API não está disponível em
+// jsdom por padrão. useOfflineQueue usa AES-GCM para criptografar a fila no
+// localStorage. O mock abaixo simula encrypt/decrypt/importKey/exportKey/generateKey
+// de forma síncrona (retorna dados fixos) para que o fluxo de persistência
+// possa ser testado sem a API real. #2330
+if (!globalThis.crypto?.subtle) {
+  const mockKey = { type: 'secret', algorithm: { name: 'AES-GCM' } };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).crypto = {
+    ...globalThis.crypto,
+    getRandomValues: (arr: Uint8Array) => {
+      for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(Math.random() * 256);
+      return arr;
+    },
+    subtle: {
+      generateKey: async () => mockKey,
+      importKey: async () => mockKey,
+      exportKey: async () => new Uint8Array(32).buffer,
+      encrypt: async (_algo: unknown, _key: unknown, data: ArrayBuffer) => data,
+      decrypt: async (_algo: unknown, _key: unknown, data: ArrayBuffer) => data,
+    },
+  };
+}
