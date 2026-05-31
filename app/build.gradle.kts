@@ -29,8 +29,8 @@ android {
         applicationId = "com.futebadosparcas"
         minSdk = 24
         targetSdk = 35
-        versionCode = 53
-        versionName = "1.28.0"
+        versionCode = 54
+        versionName = "1.29.0"
 
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
