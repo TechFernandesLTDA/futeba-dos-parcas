@@ -19,7 +19,7 @@ import {
   Login as LoginIcon,
   SportsSoccer as GameIcon,
 } from '@mui/icons-material';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -75,20 +75,17 @@ export const JoinByInviteScreen: React.FC = () => {
       }
       try {
         const upperCode = code.toUpperCase();
-        const q = query(
-          collection(db, 'invites'),
-          where('code', '==', upperCode),
-        );
-        const snapshot = await getDocs(q);
+        // #2351: lookup por doc-id == code (get), nao where('code') (LIST).
+        const inviteSnap = await getDoc(doc(db, 'invites', upperCode));
         if (cancelled) return;
 
-        if (snapshot.empty) {
+        if (!inviteSnap.exists()) {
           setError('Convite não encontrado. Verifique o código e tente novamente.');
           setLoading(false);
           return;
         }
 
-        const data = snapshot.docs[0].data();
+        const data = inviteSnap.data();
         const expiresAt = data.expires_at?.toDate?.() ?? null;
         const now = Timestamp.now();
         const expired = expiresAt ? expiresAt.getTime() < now.toMillis() : true;

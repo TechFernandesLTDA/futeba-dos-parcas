@@ -4,7 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
-  addDoc,
+  setDoc,
   query,
   where,
   orderBy,
@@ -475,7 +475,9 @@ export function useInvitePlayers() {
         // #1541: expires_at precisa ser 7 dias no futuro; serverTimestamp() criava
         // convites já expirados imediatamente.
         const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        await addDoc(collection(db, 'invites'), {
+        // #2351: doc-id == code — lookup por getDoc(code), sem where('code')
+        // (que era LIST e permitia enumerar todos os convites).
+        await setDoc(doc(db, 'invites', code), {
           code,
           group_id: groupId,
           group_name: groupName,
@@ -508,16 +510,15 @@ export function useInvitePlayers() {
       setError(null);
 
       try {
-        const invitesRef = collection(db, 'invites');
-        const q = query(invitesRef, where('code', '==', code.toUpperCase()), where('used', '==', false));
-        const snapshot = await getDocs(q);
+        // #2351: lookup por doc-id == code (get), nao where('code') (LIST).
+        const inviteRef = doc(db, 'invites', code.toUpperCase());
+        const inviteSnap = await getDoc(inviteRef);
 
-        if (snapshot.empty) {
+        if (!inviteSnap.exists() || inviteSnap.data()?.used === true) {
           throw new Error('Invalid or expired invite code');
         }
 
-        const inviteDoc = snapshot.docs[0];
-        const inviteData = inviteDoc.data();
+        const inviteData = inviteSnap.data();
 
         // #1541: verificar se o convite expirou
         if (inviteData.expires_at && (inviteData.expires_at as Timestamp).toMillis() < Date.now()) {
@@ -564,7 +565,7 @@ export function useInvitePlayers() {
         // Agora: trigger `onMemberWritten` faz increment via admin SDK ao detectar
         // o batch.set(memberRef) acima.
 
-        batch.update(inviteDoc.ref, {
+        batch.update(inviteRef, {
           used: true,
           used_by: uid,
         });
