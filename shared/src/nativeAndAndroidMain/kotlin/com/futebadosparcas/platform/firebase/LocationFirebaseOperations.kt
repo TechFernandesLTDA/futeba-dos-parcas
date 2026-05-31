@@ -1,6 +1,7 @@
 package com.futebadosparcas.platform.firebase
 
 import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.platform.logging.PlatformLogger
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.Timestamp
 
@@ -90,11 +91,11 @@ internal fun DocumentSnapshot.toFieldOrNull(): Field? {
             id = id,
             locationId = get<String?>("location_id") ?: get<String?>("locationId") ?: "",
             name = get<String?>("name") ?: "",
-            type = get<String?>("type") ?: "SOCIETY",
+            type = (get<String?>("type") ?: "SOCIETY").uppercase(),
             description = get<String?>("description"),
             photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
             isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: true,
-            hourlyPrice = get<Double?>("hourly_price") ?: get<Double?>("hourlyPrice") ?: 0.0,
+            hourlyPrice = get<Double?>("hourly_price") ?: get<Double?>("hourlyPrice") ?: get<Double?>("price_per_hour") ?: get<Double?>("pricePerHour") ?: 0.0,
             photos = (get<List<*>?>("photos"))?.mapNotNull { it as? String } ?: emptyList(),
             managers = (get<List<*>?>("managers"))?.mapNotNull { it as? String } ?: emptyList(),
             surface = get<String?>("surface"),
@@ -157,7 +158,7 @@ internal fun DocumentSnapshot.toLocationAuditLogOrNull(): LocationAuditLog? {
             timestamp = safeLongLocation("timestamp") ?: 0L
         )
     } catch (e: Exception) {
-        println("FirebaseDataSource: Erro ao deserializar LocationAuditLog $id: ${e.message}")
+        PlatformLogger.e("LocationMapper", "LocationAuditLog deserialization error [id=$id]: ${e.message}", e)
         null
     }
 }
@@ -186,7 +187,7 @@ internal fun logLocationDeserializationError(
     ownerId: String?,
     error: Throwable
 ) {
-    println("FirebaseDataSource: Location deserialization error [id=$documentId, owner=$ownerId]: ${error.message}")
+    PlatformLogger.e("LocationMapper", "Location deserialization error [id=$documentId, owner=$ownerId]: ${error.message}", error)
 }
 
 /**
@@ -197,7 +198,7 @@ internal fun logFieldDeserializationError(
     locationId: String?,
     error: Throwable
 ) {
-    println("FirebaseDataSource: Field deserialization error [id=$documentId, locationId=$locationId]: ${error.message}")
+    PlatformLogger.e("LocationMapper", "Field deserialization error [id=$documentId, locationId=$locationId]: ${error.message}", error)
 }
 
 /**
@@ -208,7 +209,7 @@ internal fun logLocationReviewDeserializationError(
     locationId: String?,
     error: Throwable
 ) {
-    println("FirebaseDataSource: LocationReview deserialization error [id=$documentId, locationId=$locationId]: ${error.message}")
+    PlatformLogger.e("LocationMapper", "LocationReview deserialization error [id=$documentId, locationId=$locationId]: ${error.message}", error)
 }
 
 /**
@@ -222,7 +223,7 @@ internal fun logLocationQueryError(
     val contextStr = if (context.isNotEmpty()) {
         context.entries.joinToString(", ") { "${it.key}=${it.value}" }
     } else ""
-    println("FirebaseDataSource: Location query error [query=$queryName, $contextStr]: ${error.message}")
+    PlatformLogger.e("LocationQuery", "Location query error [query=$queryName, $contextStr]: ${error.message}", error)
 }
 
 /**
@@ -233,5 +234,5 @@ internal fun logLocationUpdateError(
     operation: String,
     error: Throwable
 ) {
-    println("FirebaseDataSource: Location $operation error [id=$locationId]: ${error.message}")
+    PlatformLogger.e("LocationUpdate", "Location $operation error [id=$locationId]: ${error.message}", error)
 }

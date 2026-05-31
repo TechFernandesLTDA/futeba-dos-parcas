@@ -12,8 +12,10 @@ import com.futebadosparcas.ui.developer.DeveloperViewModel
 import com.futebadosparcas.ui.game_experience.MVPVoteViewModel
 import com.futebadosparcas.ui.game_experience.VoteResultViewModel
 import com.futebadosparcas.ui.games.CreateGameViewModel
+import com.futebadosparcas.ui.games.FieldSelectionViewModel
 import com.futebadosparcas.ui.games.GameDetailViewModel
 import com.futebadosparcas.ui.games.GamesViewModel
+import com.futebadosparcas.ui.games.LocationSelectionViewModel
 import com.futebadosparcas.ui.games.LocationSelectorViewModel
 import com.futebadosparcas.ui.games.teamformation.TeamFormationViewModel
 import com.futebadosparcas.ui.groups.CashboxViewModel
@@ -393,6 +395,10 @@ val viewModelKoinModule = module {
             preferencesManager = get()
         )
     }
+
+    viewModel { LocationSelectionViewModel(get()) }
+
+    viewModel { FieldSelectionViewModel(get()) }
 
     viewModel {
         GameSummonViewModel(

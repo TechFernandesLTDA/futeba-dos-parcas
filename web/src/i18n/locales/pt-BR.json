@@ -411,6 +411,7 @@
       "fieldOrLocation": "Quadra / Local",
       "loadingFields": "Carregando quadras...",
       "fieldsAvailable": "{{count}} quadras disponíveis",
+      "locationsAvailable": "{{count}} locais disponíveis",
       "otherLocation": "Outro local (digitar manualmente)",
       "locationName": "Nome do Local",
       "locationNamePlaceholder": "Ex: Quadra do Parque, Ginásio Municipal",

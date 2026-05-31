@@ -53,6 +53,19 @@ export function snakeToCamel<T = Record<string, unknown>>(obj: Record<string, un
   return result as T;
 }
 
+/**
+ * Normaliza campos de Field que podem ter nomes diferentes no Firestore.
+ * Suporta tanto `hourly_price` (canonico) quanto `price_per_hour` (legado).
+ */
+export function normalizeField<T = Record<string, unknown>>(obj: T): T {
+  const data = obj as Record<string, unknown>;
+  if (!data) return obj;
+  if ('hourlyPrice' in data && data.hourlyPrice === undefined && 'pricePerHour' in data) {
+    return { ...obj, hourlyPrice: data.pricePerHour } as T;
+  }
+  return obj;
+}
+
 export function toDate(ts: Timestamp | Date | null | undefined): Date | undefined {
   if (!ts) return undefined;
   if (ts instanceof Date) return ts;

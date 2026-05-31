@@ -19,10 +19,10 @@ import { MyLocation as GeoIcon } from '@mui/icons-material';
 import {
   doc,
   getDoc,
-  setDoc,
   updateDoc,
   collection,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../services/firebase';
@@ -257,8 +257,10 @@ export const LocationFormScreen: React.FC = () => {
         showSuccess('Local atualizado com sucesso!');
         navigate(`/location/${locationId}`);
       } else {
+        const batch = writeBatch(db);
         const newRef = doc(collection(db, 'locations'));
-        await setDoc(newRef, {
+
+        batch.set(newRef, {
           ...payload,
           owner_id: user.id,
           managers: [user.id],
@@ -270,7 +272,7 @@ export const LocationFormScreen: React.FC = () => {
           opening_time: '06:00',
           closing_time: '23:00',
           min_game_duration_minutes: 60,
-          has_active_fields: false,
+          has_active_fields: form.fieldCount > 0,
           country: 'BR',
           neighborhood: form.district.trim(),
           region: form.state.trim(),
@@ -280,6 +282,23 @@ export const LocationFormScreen: React.FC = () => {
           complement: '',
           created_at: serverTimestamp(),
         });
+
+        for (let i = 1; i <= form.fieldCount; i++) {
+          const fieldRef = doc(collection(db, 'locations', newRef.id, 'fields'));
+          batch.set(fieldRef, {
+            name: form.fieldCount === 1 ? 'Quadra Principal' : `Quadra ${i}`,
+            location_id: newRef.id,
+            type: form.fieldType,
+            is_active: true,
+            hourly_price: 0,
+            amenities: [],
+            photos: [],
+            managers: [user.id],
+            created_at: serverTimestamp(),
+          });
+        }
+
+        await batch.commit();
         showSuccess('Local criado com sucesso!');
         navigate(`/location/${newRef.id}`);
       }
