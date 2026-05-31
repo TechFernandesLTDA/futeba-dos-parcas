@@ -985,8 +985,7 @@ private fun BadgeItem(badge: UserBadge) {
                     Text(
                         text = badge.count.toString(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onError,
-                        fontSize = 10.sp
+                        color = MaterialTheme.colorScheme.onError
                     )
                 }
             }
