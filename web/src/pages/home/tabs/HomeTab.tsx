@@ -804,10 +804,11 @@ export function HomeTab() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <Container sx={{ maxWidth: { lg: 1200, xl: 1536 }, py: 2 }}>
+    <Container sx={{ maxWidth: { lg: 1200, xl: 1536 }, py: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
         sx={{
+          flexShrink: 0,
           mb: pageSpacing.sectionSpacing,
           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
           color: 'primary.contrastText',
@@ -985,14 +986,14 @@ export function HomeTab() {
               '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.1) },
             }}
           >
-            {t('profile.viewLevelJourney') || 'Ver jornada'}
+            {t('profile.viewLevelJourney')}
           </Button>
         </CardContent>
       </Card>
 
       {isMd ? (
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={7}>
+        <Grid container spacing={2} sx={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+          <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column' }}>
             <FirstStepsChecklist
               steps={checklistSteps}
               visible={checklistVisible}
@@ -1008,10 +1009,14 @@ export function HomeTab() {
             <MiniRankingWidget />
           </Grid>
 
-          <Grid item xs={12} md={5}>
-            <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={2} />
+          <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ flexShrink: 0 }}>
+              <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={2} />
+            </Box>
 
-            <RecentActivityFeed activities={activities} loading={activitiesLoading} />
+            <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+              <RecentActivityFeed activities={activities} loading={activitiesLoading} />
+            </Box>
           </Grid>
         </Grid>
       ) : (

@@ -265,6 +265,7 @@
     "openPlayerCardAria": "Abrir tarjeta del jugador",
     "levelProgressAria": "Progreso de nivel",
     "viewLevelJourneyAria": "Ver recorrido de nivel - Nivel {{level}}",
+    "viewLevelJourney": "Ver recorrido",
     "editProfileError": "Error al guardar el perfil. Inténtalo de nuevo.",
     "avatarInvalidType": "Archivo inválido. Selecciona una imagen.",
     "avatarTooLarge": "Imagen demasiado grande. Máximo: 2MB.",
@@ -596,7 +597,8 @@
       "emptyDesc": "¡Vuelve más tarde o crea tu propio partido!",
       "join": "Quiero Jugar",
       "full": "Lleno"
-    }
+    },
+    "viewGames": "Ver partidos"
   },
   "ranking": {
     "title": "Ranking",
@@ -647,7 +649,9 @@
       "title": "Ranking Semanal",
       "empty": "No hay partidos esta semana aún",
       "emptyDesc": "El ranking aparece aquí cuando la semana tenga partidos finalizados."
-    }
+    },
+    "joinGroupToCompete": "Únete a un grupo para competir en el ranking",
+    "participateToAppear": "Juega partidos para aparecer en el ranking"
   },
   "league": {
     "title": "Liga",
