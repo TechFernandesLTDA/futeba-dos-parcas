@@ -120,7 +120,7 @@ export function GamesTab() {
   }, [navigate]);
 
   return (
-    <Box sx={{ pb: 10, maxWidth: { xs: '100%', lg: 1200 }, mx: 'auto' }}>
+    <Box sx={{ pb: 10, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
       {/* Sticky search + filters bar */}
       <Box
         sx={{
@@ -288,7 +288,7 @@ export function GamesTab() {
             const isLive = game.status === 'LIVE';
 
             return (
-              <Grid item xs={12} lg={6} key={game.id}>
+              <Grid item xs={12} lg={6} xl={4} key={game.id}>
               <Card sx={{ mb: 2, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
                   <CardContent>

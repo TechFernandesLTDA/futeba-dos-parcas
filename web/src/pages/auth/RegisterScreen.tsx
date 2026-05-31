@@ -371,7 +371,7 @@ export function RegisterScreen() {
             fullWidth
             variant="outlined"
             size="large"
-            startIcon={<Google />}
+            startIcon={loading ? <CircularProgress size={20} /> : <Google />}
             onClick={handleGoogleLogin}
             disabled={loading}
             sx={{

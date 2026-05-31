@@ -804,7 +804,7 @@ export function HomeTab() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <Container maxWidth="lg" sx={{ py: 2 }}>
+    <Container sx={{ maxWidth: { lg: 1200, xl: 1536 }, py: 2 }}>
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
         sx={{

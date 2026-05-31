@@ -536,9 +536,9 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         sx={{
           width: '100%',
           // #2173: maxWidth compensa a sidebar (88px md / 240px lg) para não
-          // comprimir a área de conteúdo em monitores grandes. xl adicionado
-          // para telas 2K/4K.
-          maxWidth: { xs: '100%', sm: 600, md: 900, lg: 1440, xl: 1600 },
+          // comprimir a área de conteúdo em monitores grandes. xl expandido
+          // para 1920px para melhor aproveitamento em 2K/4K.
+          maxWidth: { xs: '100%', sm: 600, md: 900, lg: 1440, xl: 1920 },
           minHeight: '100dvh',
           bgcolor: 'background.default',
           boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.12)'}` }),
