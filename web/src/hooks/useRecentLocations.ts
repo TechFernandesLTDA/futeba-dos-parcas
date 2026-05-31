@@ -3,6 +3,9 @@ import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('useRecentLocations');
 
 const FAVORITES_STORAGE_KEY = 'favorite_locations';
 
@@ -39,20 +42,25 @@ async function fetchRecentLocationIds(uid: string): Promise<string[]> {
     limit(20),
   );
 
-  const snapshot = await getDocs(q);
-  const seen = new Set<string>();
-  const ids: string[] = [];
+  try {
+    const snapshot = await getDocs(q);
+    const seen = new Set<string>();
+    const ids: string[] = [];
 
-  snapshot.docs.forEach((d) => {
-    const data = d.data();
-    const locId = data.location_id as string;
-    if (locId && !seen.has(locId)) {
-      seen.add(locId);
-      ids.push(locId);
-    }
-  });
+    snapshot.docs.forEach((d) => {
+      const data = d.data();
+      const locId = data.location_id as string;
+      if (locId && !seen.has(locId)) {
+        seen.add(locId);
+        ids.push(locId);
+      }
+    });
 
-  return ids.slice(0, 5);
+    return ids.slice(0, 5);
+  } catch (error) {
+    logger.error('useRecentLocations: failed to fetch recent location ids', error);
+    throw error;
+  }
 }
 
 export function useRecentLocations() {

@@ -14,19 +14,28 @@ const logger = createLogger('useLocations');
 async function fetchLocations(): Promise<Location[]> {
   const locRef = collection(db, 'locations');
   const q = query(locRef, orderBy('name', 'asc'), limit(200));
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((d) => ({
-    ...snakeToCamel<Location>(d.data()),
-    id: d.id,
-  }));
+  try {
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({
+      ...snakeToCamel<Location>(d.data()),
+      id: d.id,
+    }));
+  } catch (error) {
+    logger.error('useLocations: failed to fetch locations', error);
+    throw error;
+  }
 }
 
 // Busca uma localização específica
 async function fetchLocationById(locationId: string): Promise<Location | null> {
-  const locDoc = await getDoc(doc(db, 'locations', locationId));
-  if (!locDoc.exists()) return null;
-  return { ...snakeToCamel<Location>(locDoc.data()), id: locDoc.id };
+  try {
+    const locDoc = await getDoc(doc(db, 'locations', locationId));
+    if (!locDoc.exists()) return null;
+    return { ...snakeToCamel<Location>(locDoc.data()), id: locDoc.id };
+  } catch (error) {
+    logger.error('useLocations: failed to fetch location by id', error);
+    throw error;
+  }
 }
 
 export const useLocations = () => {

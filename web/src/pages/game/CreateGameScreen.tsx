@@ -60,7 +60,7 @@ import { useRecentLocations, toggleFavoriteLocation } from '../../hooks/useRecen
 import { FieldType, PixKeyType, GameVisibility } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
 import { Field } from '../../types/location';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
+import { snakeToCamel, normalizeField } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -177,6 +177,7 @@ export const CreateGameScreen: React.FC = () => {
   const [fields, setFields] = useState<Field[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
   const [fieldsError, setFieldsError] = useState<string | null>(null);
+  const fieldLoadRequestId = useRef(0);
   const [cep, setCep] = useState('');
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
@@ -259,8 +260,7 @@ export const CreateGameScreen: React.FC = () => {
     if (!formData.locationId || useCustomLocation) return;
 
     let cancelled = false;
-    let requestId = 0;
-    const currentRequestId = ++requestId;
+    const currentRequestId = ++fieldLoadRequestId.current;
 
     const loadFields = async () => {
       setFieldsLoading(true);
@@ -269,27 +269,27 @@ export const CreateGameScreen: React.FC = () => {
         const fieldsRef = collection(db, 'locations', formData.locationId, 'fields');
         const q = query(fieldsRef, orderBy('name', 'asc'));
         const snapshot = await getDocs(q);
-        if (cancelled || currentRequestId !== requestId) return;
+        if (cancelled || currentRequestId !== fieldLoadRequestId.current) return;
         let fieldsData = snapshot.docs
-          .map((d) => ({ ...snakeToCamel<Field>(d.data()), id: d.id }))
+          .map((d) => normalizeField<Field>({ ...snakeToCamel<Field>(d.data()), id: d.id }))
           .filter((f) => f.isActive !== false);
 
         const rootFieldsRef = collection(db, 'fields');
         const rootQ = query(rootFieldsRef, where('location_id', '==', formData.locationId));
         const rootSnapshot = await getDocs(rootQ);
-        if (cancelled || currentRequestId !== requestId) return;
+        if (cancelled || currentRequestId !== fieldLoadRequestId.current) return;
 
         const merged = new Map<string, Field>();
         for (const f of fieldsData) merged.set(f.id, f);
         for (const d of rootSnapshot.docs) {
-          const field = { ...snakeToCamel<Field>(d.data()), id: d.id };
+          const field = normalizeField<Field>({ ...snakeToCamel<Field>(d.data()), id: d.id });
           if (field.isActive !== false && !merged.has(field.id)) {
             merged.set(field.id, field);
           }
         }
         fieldsData = Array.from(merged.values());
 
-        if (cancelled || currentRequestId !== requestId) return;
+        if (cancelled || currentRequestId !== fieldLoadRequestId.current) return;
         setFields(fieldsData);
 
         if (fieldsData.length === 1) {
@@ -827,7 +827,7 @@ export const CreateGameScreen: React.FC = () => {
             }
           }}
           error={!!formErrors.locationName}
-          helperText={formErrors.locationName || (locationsLoading ? t('games.create.loadingFields') : t('games.create.fieldsAvailable', { count: locations.length }))}
+          helperText={formErrors.locationName || (locationsLoading ? t('games.create.loadingFields') : t('games.create.locationsAvailable', { count: locations.length }))}
           fullWidth
           required
         >

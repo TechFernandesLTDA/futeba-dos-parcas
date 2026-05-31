@@ -3200,7 +3200,7 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun getAllLocations(): Result<List<Location>> {
         return try {
-            Result.success(firestore.collection("locations").orderBy("name").limit(100).get().documents.mapNotNull { it.toLocationOrNull() })
+            Result.success(firestore.collection("locations").orderBy("name").limit(500).get().documents.mapNotNull { it.toLocationOrNull() })
         } catch (e: Exception) {
             logLocationQueryError("getAllLocations", e)
             Result.failure(e)
@@ -3512,21 +3512,46 @@ actual class FirebaseDataSource actual constructor() {
     actual suspend fun getFieldsByLocation(locationId: String): Result<List<Field>> {
         return try {
             if (locationId.isBlank()) return Result.failure(Exception("ID do local inválido"))
-            Result.success(firestore.collection("fields").where { "location_id" equalTo locationId }
-                .orderBy("type").orderBy("name").get().documents.mapNotNull { it.toFieldOrNull() })
+
+            // Query 1: sub-coleção locations/{id}/fields (formato recomendado)
+            val subFields = firestore.collection("locations").document(locationId).collection("fields")
+                .orderBy("name").get().documents.mapNotNull { it.toFieldOrNull() }
+
+            // Query 2: coleção root fields (legado)
+            val rootFields = firestore.collection("fields").where { "location_id" equalTo locationId }
+                .orderBy("type").orderBy("name").get().documents.mapNotNull { it.toFieldOrNull() }
+
+            // Merge deduplicando por ID
+            val merged = mutableMapOf<String, Field>()
+            subFields.filter { it.isActive }.forEach { merged[it.id] = it }
+            rootFields.filter { it.isActive }.forEach { f ->
+                if (!merged.containsKey(f.id)) merged[f.id] = f
+            }
+
+            Result.success(merged.values.toList().sortedWith(compareBy({ it.type }, { it.name })))
         } catch (e: Exception) { Result.failure(e) }
     }
 
     actual suspend fun getFieldById(fieldId: String): Result<Field> {
         return try {
-            val doc = firestore.collection("fields").document(fieldId).get()
-            Result.success(doc.toFieldOrNull() ?: return Result.failure(Exception("Quadra não encontrada")))
+            // Try root collection first
+            val rootDoc = firestore.collection("fields").document(fieldId).get()
+            if (rootDoc.exists) {
+                return Result.success(rootDoc.toFieldOrNull() ?: return Result.failure(Exception("Quadra não encontrada")))
+            }
+            // Try sub-collections via collectionGroup query
+            val groupSnap = firestore.collectionGroup("fields").where { FieldPath.documentId equalTo fieldId }.get()
+            if (groupSnap.documents.isNotEmpty()) {
+                return Result.success(groupSnap.documents.first().toFieldOrNull() ?: return Result.failure(Exception("Quadra não encontrada")))
+            }
+            Result.failure(Exception("Quadra não encontrada"))
         } catch (e: Exception) { Result.failure(e) }
     }
 
     actual suspend fun createField(field: Field): Result<Field> {
         return try {
-            val docRef = firestore.collection("fields").document
+            // Create in sub-collection (recommended format)
+            val docRef = firestore.collection("locations").document(field.locationId).collection("fields").document
             val fieldWithId = field.copy(id = docRef.id)
             docRef.set(fieldWithId)
             Result.success(fieldWithId)
@@ -3535,16 +3560,40 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun updateField(field: Field): Result<Unit> {
         return try {
-            firestore.collection("fields").document(field.id).set(field)
+            // Try sub-collection first (recommended format)
+            val subRef = firestore.collection("locations").document(field.locationId).collection("fields").document(field.id)
+            subRef.set(field)
             Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
+        } catch (e: Exception) {
+            // Fallback to root collection
+            try {
+                firestore.collection("fields").document(field.id).set(field)
+                Result.success(Unit)
+            } catch (e2: Exception) { Result.failure(e2) }
+        }
     }
 
     actual suspend fun deleteField(fieldId: String): Result<Unit> {
         return try {
+            // Try root collection first (current format)
             firestore.collection("fields").document(fieldId).update(mapOf("is_active" to false))
             Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
+        } catch (e: Exception) {
+            // Fallback: try to find in sub-collection via collectionGroup
+            try {
+                val groupSnap = firestore.collectionGroup("fields").where { FieldPath.documentId equalTo fieldId }.get()
+                if (groupSnap.documents.isNotEmpty()) {
+                    val doc = groupSnap.documents.first()
+                    val locationId = doc.get<String?>("location_id") ?: ""
+                    if (locationId.isNotBlank()) {
+                        firestore.collection("locations").document(locationId).collection("fields").document(fieldId)
+                            .update(mapOf("is_active" to false))
+                        return Result.success(Unit)
+                    }
+                }
+                Result.failure(e)
+            } catch (e2: Exception) { Result.failure(e2) }
+        }
     }
 
     actual suspend fun uploadFieldPhoto(filePath: String): Result<String> {

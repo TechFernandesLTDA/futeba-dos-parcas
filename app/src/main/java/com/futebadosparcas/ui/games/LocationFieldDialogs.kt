@@ -762,9 +762,8 @@ class FieldSelectionViewModel(
         _fields.value = if (_selectedFieldType.value == null) {
             allFields
         } else {
-            // Comparar type String do Field Android com o nome do enum KMP
-            val targetTypeName = _selectedFieldType.value?.name
-            allFields.filter { it.type == targetTypeName }
+            val targetTypeName = _selectedFieldType.value?.name?.uppercase()
+            allFields.filter { it.type.uppercase() == targetTypeName }
         }
     }
 }
