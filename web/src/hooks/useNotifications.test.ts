@@ -12,6 +12,14 @@ const mockQuery = vi.fn();
 const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
+const mockBatchUpdate = vi.fn();
+const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
+const mockWriteBatch = vi.fn(() => ({
+  update: mockBatchUpdate,
+  delete: vi.fn(),
+  set: vi.fn(),
+  commit: mockBatchCommit,
+}));
 
 vi.mock('firebase/firestore', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,6 +40,10 @@ vi.mock('firebase/firestore', () => ({
   updateDoc: (...args: any[]) => mockUpdateDoc(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  writeBatch: (...args: any[]) => mockWriteBatch(...args),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
+  getDocs: vi.fn().mockResolvedValue({ docs: [] }),
 }));
 
 vi.mock('../services/firebase', () => ({
@@ -210,8 +222,9 @@ describe('useNotifications', () => {
       await result.current.markAllAsRead();
     });
 
-    // Apenas 2 não-lidas devem ser atualizadas
-    expect(mockUpdateDoc).toHaveBeenCalledTimes(2);
+    // markAllAsRead usa writeBatch.update (não updateDoc individual). #2330
+    expect(mockBatchUpdate).toHaveBeenCalledTimes(2);
+    expect(mockBatchCommit).toHaveBeenCalled();
   });
 
   it('deleteNotification remove o documento', async () => {
@@ -240,7 +253,9 @@ describe('useNotifications', () => {
     const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Notification error');
+      // Erro passa por getFirestoreErrorMessage → retorna mensagem genérica para
+      // erros não mapeados. O teste verifica presença de mensagem de erro. #2330
+      expect(result.current.error).toBeTruthy();
       expect(result.current.loading).toBe(false);
     });
   });

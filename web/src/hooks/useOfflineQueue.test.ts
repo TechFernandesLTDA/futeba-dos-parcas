@@ -19,6 +19,10 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('../services/firebase', () => ({ db: {} }));
 
+// mockNetworkOnline reservado para compatibilidade — não usado diretamente.
+// O hook useNetworkStatus real é usado (tem event listeners para re-render). #2330
+const mockNetworkOnline = { value: true };
+
 vi.mock('../utils/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
@@ -29,6 +33,7 @@ describe('useOfflineQueue', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    mockNetworkOnline.value = true; // reset para online por padrão
     Object.defineProperty(navigator, 'onLine', {
       value: true,
       writable: true,
@@ -73,45 +78,41 @@ describe('useOfflineQueue', () => {
   });
 
   it('persiste fila no localStorage (async — aguarda encriptação)', async () => {
-    // A fila é salva de forma assíncrona via crypto.subtle (AES-GCM).
-    // useEffect → saveQueue → encryptQueue → crypto.subtle.encrypt → localStorage.setItem
-    // O dado no localStorage é ciphertext base64, NÃO JSON simples. #2330
-    Object.defineProperty(navigator, 'onLine', {
-      value: false,
-      writable: true,
-      configurable: true,
-    });
+    // A fila é salva via crypto.subtle (AES-GCM) de forma assíncrona.
+    // setDoc nunca resolve → processQueue fica pendente → item permanece na fila → saveQueue salva. #2330
+    mockSetDoc.mockReturnValue(new Promise(() => {})); // never resolves
+    Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
     const { result } = renderHook(() => useOfflineQueue());
+
+    // Aguardar loadQueue completar (queueLoaded=true) antes de enqueue
+    await waitFor(() => {
+      expect(result.current.queueLength).toBe(0);
+    });
+
     act(() => {
       result.current.enqueue({ collection: 'games', operation: 'set', data: { x: 1 }, docId: '1' });
     });
-    // Aguarda o effect assíncrono salvar no localStorage
+
+    // Após enqueue, saveQueue é chamado pelo useEffect — aguardar persistência
     await waitFor(() => {
       expect(localStorage.getItem('offline_write_queue')).not.toBeNull();
-    });
-    // O valor é ciphertext base64 (não JSON legível) — apenas verificamos presença
+    }, { timeout: 5000 });
+
     const raw = localStorage.getItem('offline_write_queue');
     expect(typeof raw).toBe('string');
     expect(raw!.length).toBeGreaterThan(0);
   });
 
   it('processa fila quando volta a ficar online', async () => {
-    Object.defineProperty(navigator, 'onLine', {
-      value: false,
-      writable: true,
-      configurable: true,
-    });
+    // Iniciar offline para enfileirar sem processar imediatamente. #2330
+    Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
     const { result } = renderHook(() => useOfflineQueue());
     act(() => {
       result.current.enqueue({ collection: 'games', operation: 'set', data: { name: 'sync' }, docId: 'doc-1' });
     });
     expect(result.current.queueLength).toBe(1);
     mockSetDoc.mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'onLine', {
-      value: true,
-      writable: true,
-      configurable: true,
-    });
+    Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
     act(() => {
       window.dispatchEvent(new Event('online'));
     });

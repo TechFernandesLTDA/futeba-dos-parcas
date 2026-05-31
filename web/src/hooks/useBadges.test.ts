@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createTestWrapper } from '../test/renderWithProviders';
 
-// Mocks
+// Mocks — useBadges usa useQuery/getDocs para dados + onSnapshot para invalidação (#2351)
 const mockOnSnapshot = vi.fn();
+const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
 const mockCollection = vi.fn();
 const mockQuery = vi.fn();
 const mockWhere = vi.fn();
@@ -15,6 +16,8 @@ vi.mock('firebase/firestore', () => ({
   query: (...args: any[]) => mockQuery(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   where: (...args: any[]) => mockWhere(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getDocs: (...args: any[]) => mockGetDocs(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
   limit: vi.fn((...args) => args[0]),
@@ -61,31 +64,28 @@ describe('useBadges', () => {
   });
 
   it('marca badges desbloqueadas com unlockedIds', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
-      onNext({
-        docs: [
-          {
-            id: 'ub-1',
-            data: () => ({
-              user_id: 'user-1',
-              badge_id: 'first_game',
-              count: 1,
-              unlocked_at: { toDate: () => new Date() },
-            }),
-          },
-          {
-            id: 'ub-2',
-            data: () => ({
-              user_id: 'user-1',
-              badge_id: 'streak_3',
-              count: 2,
-              unlocked_at: { toDate: () => new Date() },
-            }),
-          },
-        ],
-      });
-      return vi.fn();
+    // useBadges usa useQuery/getDocs — simular via mockGetDocs. #2330
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 'ub-1',
+          data: () => ({
+            user_id: 'user-1',
+            badge_id: 'first_game',
+            count: 1,
+            unlocked_at: { toDate: () => new Date() },
+          }),
+        },
+        {
+          id: 'ub-2',
+          data: () => ({
+            user_id: 'user-1',
+            badge_id: 'streak_3',
+            count: 2,
+            unlocked_at: { toDate: () => new Date() },
+          }),
+        },
+      ],
     });
 
     const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });

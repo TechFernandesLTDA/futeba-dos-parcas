@@ -3,9 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createTestWrapper } from '../test/renderWithProviders';
 
-// Mocks
+// useLocations usa useQuery/getDocs para dados + onSnapshot para invalidação (#2351)
 const mockOnSnapshot = vi.fn();
 const mockGetDoc = vi.fn();
+const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
 const mockCollection = vi.fn();
 const mockDoc = vi.fn();
 const mockQuery = vi.fn();
@@ -15,6 +16,7 @@ vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
   doc: (...args: any[]) => mockDoc(...args),
   getDoc: (...args: any[]) => mockGetDoc(...args),
+  getDocs: (...args: any[]) => mockGetDocs(...args),
   query: (...args: any[]) => mockQuery(...args),
   orderBy: (...args: any[]) => mockOrderBy(...args),
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
@@ -57,20 +59,18 @@ describe('useLocations', () => {
   });
 
   it('retorna lista de locais do snapshot', async () => {
-    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
-      onNext({
-        docs: [
-          {
-            id: 'loc-1',
-            data: () => ({ name: 'Campo do Zé', address: 'Rua A, 123', rating: 4.5 }),
-          },
-          {
-            id: 'loc-2',
-            data: () => ({ name: 'Arena Parças', address: 'Av. B, 456', rating: 4.0 }),
-          },
-        ],
-      });
-      return vi.fn();
+    // useLocations usa getDocs via useQuery — simular via mockGetDocs. #2330
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 'loc-1',
+          data: () => ({ name: 'Campo do Zé', address: 'Rua A, 123', rating: 4.5 }),
+        },
+        {
+          id: 'loc-2',
+          data: () => ({ name: 'Arena Parças', address: 'Av. B, 456', rating: 4.0 }),
+        },
+      ],
     });
 
     const { result } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });

@@ -13,6 +13,14 @@ const mockQuery = vi.fn();
 const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
+const mockBatchDelete = vi.fn();
+const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
+const mockWriteBatch = vi.fn(() => ({
+  delete: mockBatchDelete,
+  update: vi.fn(),
+  set: vi.fn(),
+  commit: mockBatchCommit,
+}));
 
 vi.mock('firebase/firestore', () => ({
   collection: (...a: any[]) => mockCollection(...a),
@@ -24,6 +32,8 @@ vi.mock('firebase/firestore', () => ({
   addDoc: (...a: any[]) => mockAddDoc(...a),
   deleteDoc: (...a: any[]) => mockDeleteDoc(...a),
   getDocs: (...a: any[]) => mockGetDocs(...a),
+  writeBatch: (...a: any[]) => mockWriteBatch(...a),
+  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
 
 vi.mock('../services/firebase', () => ({ db: {} }));
@@ -128,12 +138,13 @@ describe('useWaitlist', () => {
       empty: false,
       docs: [{ ref: { id: 'a' } }, { ref: { id: 'b' } }],
     });
-    mockDeleteDoc.mockResolvedValue(undefined);
+    // leaveWaitlist usa writeBatch.delete (não deleteDoc individual). #2330
     const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     await act(async () => {
       await result.current.leaveWaitlist();
     });
-    expect(mockDeleteDoc).toHaveBeenCalledTimes(2);
+    expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+    expect(mockBatchCommit).toHaveBeenCalled();
     expect(mockShowSuccess).toHaveBeenCalled();
   });
 });

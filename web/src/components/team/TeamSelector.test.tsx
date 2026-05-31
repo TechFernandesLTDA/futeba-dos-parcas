@@ -29,12 +29,13 @@ function renderWithTheme(ui: React.ReactElement) {
 describe('TeamSelector', () => {
   it('renderiza label padrão', () => {
     renderWithTheme(<TeamSelector value={null} onChange={vi.fn()} />);
-    expect(screen.getByText('Time do Coração')).toBeInTheDocument();
+    // MUI Autocomplete renderiza o label duas vezes (label + aria-hidden span). #2330
+    expect(screen.getAllByText('Time do Coração').length).toBeGreaterThanOrEqual(1);
   });
 
   it('mostra label opcional quando optional=true', () => {
     renderWithTheme(<TeamSelector value={null} onChange={vi.fn()} optional={true} />);
-    expect(screen.getByText('Time do Coração (opcional)')).toBeInTheDocument();
+    expect(screen.getAllByText('Time do Coração (opcional)').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renderiza opções de times', async () => {
@@ -72,6 +73,7 @@ describe('TeamSelector', () => {
     const input = screen.getByRole('combobox');
     await user.click(input);
 
-    expect(screen.getByText('Série A')).toBeInTheDocument();
+    // MUI Autocomplete pode renderizar a categoria múltiplas vezes. #2330
+    expect(screen.getAllByText('Série A').length).toBeGreaterThanOrEqual(1);
   });
 });

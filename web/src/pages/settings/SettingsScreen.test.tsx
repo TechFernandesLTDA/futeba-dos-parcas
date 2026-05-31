@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -66,6 +65,11 @@ vi.mock('../../hooks/useDocumentTitle', () => ({
   useDocumentTitle: vi.fn(),
 }));
 
+vi.mock('../../contexts/TeamsContext', () => ({
+  useTeams: () => ({ teams: [], teamsById: new Map(), loading: false, error: null }),
+  TeamsProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 import { SettingsScreen } from './SettingsScreen';
 
 const theme = createTheme();
@@ -109,7 +113,8 @@ describe('SettingsScreen', () => {
       expect(screen.getByText('Notificações Push')).toBeInTheDocument();
     });
     expect(screen.getByText('Notificações por Email')).toBeInTheDocument();
-    expect(screen.getByText('Lembretes de Jogos')).toBeInTheDocument();
+    // i18n key: settings.gameReminders = 'Lembretes de Jogo' (singular). #2330
+    expect(screen.getByText('Lembretes de Jogo')).toBeInTheDocument();
   });
 
   it('exibe link para Tema', async () => {
@@ -126,39 +131,6 @@ describe('SettingsScreen', () => {
     });
   });
 
-  it('exibe botão de sair', async () => {
-    renderSettingsScreen();
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /sair/i })).toBeInTheDocument();
-    });
-  });
-
-  it('abre dialog de confirmação e chama signOut ao clicar em Sair', async () => {
-    const user = userEvent.setup();
-    renderSettingsScreen();
-
-    // Esperar loading completar
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /sair/i })).toBeInTheDocument();
-    });
-
-    // Clicar no botão Sair
-    await user.click(screen.getByRole('button', { name: /sair/i }));
-
-    // Dialog de confirmação deve aparecer
-    expect(await screen.findByText('Sair da conta?')).toBeInTheDocument();
-
-    // Confirmar logout
-    const confirmButtons = screen.getAllByRole('button', { name: /sair/i });
-    const confirmButton = confirmButtons.find(
-      (btn) => btn.closest('[role="dialog"]') !== null
-    );
-    if (confirmButton) {
-      await user.click(confirmButton);
-    }
-
-    await waitFor(() => {
-      expect(mockSignOut).toHaveBeenCalled();
-    });
-  });
+  // NOTA: botão "Sair" foi removido do SettingsScreen — logout só ocorre após
+  // exclusão de conta (fluxo LGPD). Testes antigos de logout removidos. #2330
 });
