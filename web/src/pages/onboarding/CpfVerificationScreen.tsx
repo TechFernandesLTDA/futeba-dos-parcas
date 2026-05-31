@@ -122,7 +122,17 @@ export const CpfVerificationScreen: React.FC = () => {
       let lastRefreshErr: unknown;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          await firebaseUser.getIdToken(true);
+          // 2026-05-31: timeout no getIdToken — com App Check enforced, se o
+          // reCAPTCHA Enterprise nao mintar token (ex.: CSP/rede/adblock), o
+          // getIdToken(true) NUNCA resolve nem rejeita -> spinner infinito
+          // (nunca chega ao finally). Promise.race garante rejeicao em <=12s
+          // por tentativa -> apos 3 falhas mostra erro acionavel.
+          await Promise.race([
+            firebaseUser.getIdToken(true),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('token-refresh-timeout')), 12000),
+            ),
+          ]);
           tokenRefreshed = true;
           break;
         } catch (refreshErr) {
