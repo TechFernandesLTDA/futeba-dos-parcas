@@ -240,7 +240,7 @@ fun CreateGameScreen(
                 }
 
                 val maxPlayersValue = maxPlayers.toIntOrNull()
-                if (maxPlayersValue == null || maxPlayersValue < 4 || maxPlayersValue > 100) {
+                if (maxPlayersValue == null || maxPlayersValue < 4 || maxPlayersValue > 40) {
                     maxPlayersError = context.getString(R.string.create_game_error_max_players)
                     hasError = true
                 }

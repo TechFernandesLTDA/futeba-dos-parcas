@@ -2280,3 +2280,8 @@ export {startNewSeason, archiveSeason} from "./growth/season-cycle";
 //   imutavel a cada escrita de entry (summary self-healing, balance sempre
 //   consistente com income/expense reais).
 export {onCashboxEntryWritten} from "./cashbox/summary-recompute";
+
+// ==========================================
+// RECURRENCE ENGINE
+// ==========================================
+export {onGameFinishedCreateRecurrence} from "./games/recurrence-engine";
