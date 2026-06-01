@@ -973,7 +973,7 @@ export const enqueueNotificationCallable = secureCallable(
     ) {
       throw new HttpsError(
         "invalid-argument",
-        "userIds e obrigatorio e" +
+        "userIds é obrigatório e" +
         " deve ser um array"
       );
     }
@@ -981,7 +981,7 @@ export const enqueueNotificationCallable = secureCallable(
     if (!title || !body || !type) {
       throw new HttpsError(
         "invalid-argument",
-        "title, body e type sao obrigatorios"
+        "title, body e type são obrigatórios"
       );
     }
 

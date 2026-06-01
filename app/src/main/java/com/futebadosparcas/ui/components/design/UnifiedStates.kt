@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.theme.AppDimensions
 
@@ -535,10 +537,10 @@ fun UnifiedNoResultsState(
     AppStateContainer(
         state = AppUiState.Empty(
             type = AppUiState.Empty.EmptyType.NO_RESULTS,
-            title = "Nenhum resultado encontrado",
-            description = "Nenhum resultado para \"$query\"",
+            title = stringResource(R.string.empty_state_no_results_title),
+            description = stringResource(R.string.empty_state_desc_no_results, query),
             icon = Icons.Default.SearchOff,
-            actionLabel = "Limpar Busca",
+            actionLabel = stringResource(R.string.action_clear_search),
             onAction = onClear
         ),
         modifier = modifier

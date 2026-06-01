@@ -1,4 +1,4 @@
-interface CalendarEvent {
+export interface CalendarEvent {
   title: string;
   description: string;
   location: string;
@@ -23,6 +23,25 @@ export function generateGoogleCalendarUrl(event: CalendarEvent): string {
   });
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+export function generateOutlookCalendarUrl(event: CalendarEvent): string {
+  const startDateTime = `${event.startDate}T${event.startTime}:00`;
+  const endDateTime = event.endTime
+    ? `${event.endDate || event.startDate}T${event.endTime}:00`
+    : startDateTime;
+
+  const params = new URLSearchParams({
+    rru: 'addevent',
+    startdt: startDateTime,
+    enddt: endDateTime,
+    subject: event.title,
+    body: event.description,
+    location: event.location,
+    allday: 'false',
+  });
+
+  return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
 }
 
 export function generateIcsContent(event: CalendarEvent): string {
@@ -73,4 +92,16 @@ export function downloadIcsFile(event: CalendarEvent): void {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export function generateCalendarLinks(event: CalendarEvent): {
+  google: string;
+  ical: string;
+  outlook: string;
+} {
+  return {
+    google: generateGoogleCalendarUrl(event),
+    ical: generateIcsContent(event),
+    outlook: generateOutlookCalendarUrl(event),
+  };
 }

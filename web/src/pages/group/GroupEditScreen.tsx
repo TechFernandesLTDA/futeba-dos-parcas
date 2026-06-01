@@ -39,8 +39,8 @@ const GROUP_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 const GROUP_PHOTO_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export const GroupEditScreen: React.FC = () => {
-  useDocumentTitle('Editar Grupo');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.editGroup'));
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { firebaseUser, user } = useAuth();

@@ -10,6 +10,7 @@
 
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
+import {Timestamp} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
 import {
@@ -83,13 +84,19 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
     const recurrence = after.recurrence as string | undefined;
     if (!recurrence || recurrence === "none") return;
 
-    if (after.next_game_created === true) {
-      logger.info(`[RECURRENCE] Game ${gameId} already spawned next, skipping.`);
+    const db = admin.firestore();
+    const claimed = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(event.data!.after.ref);
+      if (snap.get("next_game_created") === true) return false;
+      tx.update(event.data!.after.ref, {next_game_created: true});
+      return true;
+    });
+    if (!claimed) {
+      logger.info(`[RECURRENCE] ${gameId} já reivindicado, skip.`);
       return;
     }
 
     const parentId = (after.recurrence_parent_id as string) || gameId;
-    const db = admin.firestore();
     const childCount = await countRecurringGames(db, parentId);
     if (childCount >= 52) {
       logger.info(
@@ -101,8 +108,13 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
 
     try {
       const nextDate = getNextDate(after.date as string, recurrence as RecurrenceType);
+      const [hours, minutes] = (after.time || "00:00").split(":").map(Number);
+      const dateTime = Timestamp.fromDate(
+        new Date(`${nextDate}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`)
+      );
 
       const newGame: Record<string, unknown> = {
+        dateTime: dateTime,
         owner_id: after.owner_id,
         owner_name: after.owner_name,
         status: "SCHEDULED",

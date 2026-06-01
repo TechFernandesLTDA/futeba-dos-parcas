@@ -31,6 +31,7 @@ import {
   checkRateLimit,
 } from "../middleware/rate-limiter.js";
 import {db} from "../_db";
+import {ERROR_MSGS} from "../error-messages";
 
 
 /** Dias de retenção antes de deletar */
@@ -68,7 +69,7 @@ export const softDeleteGame =
     if (!userId) {
       throw new functions.https.HttpsError(
         "unauthenticated",
-        "Usuário não autenticado"
+        ERROR_MSGS.UNAUTHENTICATED
       );
     }
 
@@ -76,10 +77,7 @@ export const softDeleteGame =
     // Admin bypass rate limit (não aplicável a admins)
     const isAdmin = request.auth?.token?.role === "ADMIN";
     if (!isAdmin) {
-      const {
-        allowed: rlAllowed,
-        resetAt: rlResetAt,
-      } = await checkRateLimit(userId, {
+      const {allowed: rlAllowed} = await checkRateLimit(userId, {
         maxRequests: 5,
         windowMs: 60 * 1000,
         keyPrefix: "soft_delete_game",
@@ -87,8 +85,7 @@ export const softDeleteGame =
       if (!rlAllowed) {
         throw new functions.https.HttpsError(
           "resource-exhausted",
-          "Rate limit excedido. Tente após " +
-          new Date(rlResetAt).toISOString()
+          ERROR_MSGS.rateLimitGeneric
         );
       }
     }
@@ -230,7 +227,7 @@ export const softDeleteGroup =
     if (!userId) {
       throw new functions.https.HttpsError(
         "unauthenticated",
-        "Usuário não autenticado"
+        ERROR_MSGS.UNAUTHENTICATED
       );
     }
 
@@ -238,10 +235,7 @@ export const softDeleteGroup =
     // Admin bypass rate limit (paridade com softDeleteGame)
     const isAdmin = request.auth?.token?.role === "ADMIN";
     if (!isAdmin) {
-      const {
-        allowed: rlAllowed,
-        resetAt: rlResetAt,
-      } = await checkRateLimit(userId, {
+      const {allowed: rlAllowed} = await checkRateLimit(userId, {
         maxRequests: 3,
         windowMs: 60 * 1000,
         keyPrefix: "soft_delete_group",
@@ -249,8 +243,7 @@ export const softDeleteGroup =
       if (!rlAllowed) {
         throw new functions.https.HttpsError(
           "resource-exhausted",
-          "Rate limit excedido. Tente após " +
-          new Date(rlResetAt).toISOString()
+          ERROR_MSGS.rateLimitGeneric
         );
       }
     }
@@ -399,7 +392,7 @@ export const restoreDeletedGame =
     if (!userId) {
       throw new functions.https.HttpsError(
         "unauthenticated",
-        "Usuário não autenticado"
+        ERROR_MSGS.UNAUTHENTICATED
       );
     }
 
@@ -412,13 +405,9 @@ export const restoreDeletedGame =
       }
     );
     if (!rlRestoreGame.allowed) {
-      const resetIso = new Date(
-        rlRestoreGame.resetAt
-      ).toISOString();
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Rate limit excedido. Tente após " +
-        resetIso
+        ERROR_MSGS.rateLimitGeneric
       );
     }
 
@@ -541,7 +530,7 @@ export const restoreDeletedGroup =
     if (!userId) {
       throw new functions.https.HttpsError(
         "unauthenticated",
-        "Usuário não autenticado"
+        ERROR_MSGS.UNAUTHENTICATED
       );
     }
 
@@ -554,13 +543,9 @@ export const restoreDeletedGroup =
       }
     );
     if (!rlRestoreGroup.allowed) {
-      const resetIso = new Date(
-        rlRestoreGroup.resetAt
-      ).toISOString();
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Rate limit excedido. Tente após " +
-        resetIso
+        ERROR_MSGS.rateLimitGeneric
       );
     }
 

@@ -144,7 +144,7 @@ export const generateMyInviteCode = onCall(
       const userDoc = await userRef.get();
 
       if (!userDoc.exists) {
-        throw new HttpsError("not-found", "Usuario nao encontrado.");
+        throw new HttpsError("not-found", "Usuário não encontrado.");
       }
 
       const existingCode = userDoc.data()?.invite_code as string | undefined;

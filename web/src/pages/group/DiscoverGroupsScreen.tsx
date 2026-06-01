@@ -35,6 +35,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { OfficialGroup, OfficialGroupCategory, OFFICIAL_GROUP_CATEGORY_LABELS } from '../../types/group';
+import { useTranslation } from 'react-i18next';
 
 const CATEGORY_ICONS: Record<OfficialGroupCategory, React.ReactElement> = {
   REGIAO: <LocationIcon />,
@@ -44,7 +45,8 @@ const CATEGORY_ICONS: Record<OfficialGroupCategory, React.ReactElement> = {
 };
 
 export const DiscoverGroupsScreen: React.FC = () => {
-  useDocumentTitle('Descobrir Grupos');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.discoverGroups'));
   const goBack = useNavigateBack('/?tab=2');
   const {
     data: officialGroups = [],

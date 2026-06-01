@@ -67,14 +67,14 @@ interface RawGameOwner {
 }
 
 export const TeamFormationScreen: React.FC = () => {
-  useDocumentTitle('Formação de Times');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.teamFormation'));
   const navigateBack = useNavigateBack('/?tab=1');
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const { showError } = useToast();
-  const { t } = useTranslation();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const navigateRef = useRef(navigate);

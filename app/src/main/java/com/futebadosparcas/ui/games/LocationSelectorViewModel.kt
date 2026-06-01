@@ -22,6 +22,7 @@ import com.futebadosparcas.util.toKmpGameTemplate
 import com.futebadosparcas.util.toKmpCashboxFilter
 import com.futebadosparcas.util.toKmpCashboxEntry
 import com.futebadosparcas.util.toKmpNotificationType
+import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -503,9 +504,17 @@ class LocationSelectorViewModel(
                         hideCreateLocationDialog()
                     },
                     onFailure = { error ->
-                        _createLocationState.value = CreateLocationState.Error(
-                            error.message ?: "Erro ao criar local"
-                        )
+                        // #2430: Mensagem clara para permission-denied
+                        if (error is FirebaseFirestoreException &&
+                            error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                            _createLocationState.value = CreateLocationState.Error(
+                                "Sua conta não tem permissão para cadastrar quadras. Contate o suporte."
+                            )
+                        } else {
+                            _createLocationState.value = CreateLocationState.Error(
+                                error.message ?: "Erro ao criar local"
+                            )
+                        }
                     }
                 )
             } catch (e: Exception) {

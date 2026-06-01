@@ -106,16 +106,17 @@ fun PhoneVerificationScreen(
                         )
                     }
                     Spacer(Modifier.height(AppDimensions.spacing_small))
+                    val stepLabel = stringResource(R.string.phone_verification_step_cd)
                     Text(
-                        text = "Verificar telefone",
+                        text = stringResource(R.string.phone_verification_title),
                         style = MaterialTheme.typography.headlineSmall,
                         modifier = Modifier.semantics {
-                            contentDescription = "Etapa 1 de 2: Verificar telefone"
+                            contentDescription = stepLabel
                         },
                     )
                     Spacer(Modifier.height(AppDimensions.spacing_small))
                     Text(
-                        text = "Confirmamos seu número via SMS para evitar contas falsas. Etapa 1 de 2.",
+                        text = stringResource(R.string.phone_verification_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -138,8 +139,8 @@ fun PhoneVerificationScreen(
                         OutlinedTextField(
                             value = phone,
                             onValueChange = { phone = it },
-                            label = { Text("Telefone (com DDD)") },
-                            placeholder = { Text("+5511999998888") },
+                            label = { Text(stringResource(R.string.phone_verification_label)) },
+                            placeholder = { Text(stringResource(R.string.phone_verification_placeholder)) },
                             singleLine = true,
                             enabled = !loading,
                             modifier = Modifier.fillMaxWidth(),
@@ -147,7 +148,7 @@ fun PhoneVerificationScreen(
                                 keyboardType = KeyboardType.Phone,
                             ),
                             supportingText = {
-                                Text("Formato internacional: +55 + DDD + número")
+                                Text(stringResource(R.string.phone_verification_supporting_text))
                             },
                         )
                         Spacer(Modifier.height(AppDimensions.spacing_large))
@@ -166,14 +167,14 @@ fun PhoneVerificationScreen(
                                     strokeWidth = 2.dp,
                                 )
                                 Spacer(Modifier.size(AppDimensions.spacing_small))
-                                Text("Enviando...")
+                                Text(stringResource(R.string.phone_verification_sending))
                             } else {
-                                Text("Enviar código por SMS")
+                                Text(stringResource(R.string.phone_verification_send_code))
                             }
                         }
                     } else {
                         Text(
-                            text = "Digite o código de 6 dígitos enviado para $phone",
+                            text = stringResource(R.string.phone_verification_enter_code, phone),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Spacer(Modifier.height(AppDimensions.spacing_large))
@@ -184,8 +185,8 @@ fun PhoneVerificationScreen(
                                     otp = it
                                 }
                             },
-                            label = { Text("Código") },
-                            placeholder = { Text("123456") },
+                            label = { Text(stringResource(R.string.phone_verification_code_label)) },
+                            placeholder = { Text(stringResource(R.string.phone_verification_code_placeholder)) },
                             singleLine = true,
                             enabled = !loading,
                             modifier = Modifier.fillMaxWidth(),
@@ -207,7 +208,7 @@ fun PhoneVerificationScreen(
                                             strokeWidth = 2.dp,
                                         )
                                         Spacer(Modifier.size(AppDimensions.spacing_small))
-                                        Text("Verificando...")
+                                        Text(stringResource(R.string.phone_verification_verifying))
                                     } else {
                                         Text(stringResource(R.string.verify))
                                     }
@@ -221,7 +222,7 @@ fun PhoneVerificationScreen(
                                     enabled = !loading,
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
-                                    Text("Voltar")
+                                    Text(stringResource(R.string.back))
                                 }
                             }
                         }

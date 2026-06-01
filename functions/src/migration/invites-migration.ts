@@ -20,6 +20,7 @@ import {logger} from "firebase-functions/v2";
 import {HttpsError} from "firebase-functions/v2/https";
 import {FieldValue} from "firebase-admin/firestore";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
+import {ERROR_MSGS} from "../error-messages";
 import {db} from "../_db";
 
 interface MigrationResult {
@@ -52,7 +53,7 @@ export const migrateGroupsInviteCodeToInvites =
     },
     async (request) => {
       if (!request.auth) {
-        throw new HttpsError("unauthenticated", "User must be authenticated");
+        throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
       }
       const startedAt = Date.now();
       const callerUid = request.auth.uid;

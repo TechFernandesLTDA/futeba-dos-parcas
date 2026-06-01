@@ -23,11 +23,13 @@ import { checkInToGame } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 type CheckInState = 'loading' | 'confirming' | 'success' | 'error';
 
 export const QrCheckInScreen: React.FC = () => {
-  useDocumentTitle('Check-in por QR Code');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.qrCheckIn'));
   const { gameId, token } = useParams<{ gameId: string; token: string }>();
   const navigate = useNavigate();
   const goBack = useNavigateBack();

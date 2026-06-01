@@ -29,6 +29,7 @@ import { ScreenFab } from '../../components/layout';
 import { Game } from '../../types/game';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { pageSpacing } from '../../theme/pageTokens';
+import { useTranslation } from 'react-i18next';
 
 function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick: (game: Game) => void }) {
   const theme = useTheme();
@@ -103,7 +104,8 @@ function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick
 }
 
 export const PublicGamesMapScreen: React.FC = () => {
-  useDocumentTitle('Jogos Públicos');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.publicGames'));
   const navigate = useNavigate();
   const navigateBack = useNavigateBack();
   const theme = useTheme();

@@ -22,6 +22,7 @@ import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 interface PerformanceRecord {
   id: string;
@@ -52,7 +53,8 @@ function getScoreColor(value: number, good: number, poor: number): string {
 }
 
 export const PerformanceDashboard: React.FC = () => {
-  useDocumentTitle('Performance');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.performance'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const { user } = useAuth();

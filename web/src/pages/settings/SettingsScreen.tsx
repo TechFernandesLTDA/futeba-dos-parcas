@@ -60,14 +60,14 @@ interface Settings {
 }
 
 export const SettingsScreen: React.FC = () => {
-  useDocumentTitle('Configurações');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.settings'));
   const navigate = useNavigate();
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
-  const { t } = useTranslation();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // Fluxo de exclusão de conta — LGPD art. 18
   const [deleteStep1Open, setDeleteStep1Open] = useState(false);

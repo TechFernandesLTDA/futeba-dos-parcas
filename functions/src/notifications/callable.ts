@@ -63,25 +63,25 @@ export const sendTestNotification = secureCallable(
     if (!title || typeof title !== "string") {
       throw new HttpsError(
         "invalid-argument",
-        "Titulo e obrigatorio e deve ser string"
+        "Título é obrigatório e deve ser string"
       );
     }
     if (!body || typeof body !== "string") {
       throw new HttpsError(
         "invalid-argument",
-        "Corpo e obrigatorio e deve ser string"
+        "Corpo é obrigatório e deve ser string"
       );
     }
     if (title.length > 200) {
       throw new HttpsError(
         "invalid-argument",
-        "Titulo nao pode exceder 200 caracteres"
+        "Título não pode exceder 200 caracteres"
       );
     }
     if (body.length > 500) {
       throw new HttpsError(
         "invalid-argument",
-        "Corpo nao pode exceder 500 caracteres"
+        "Corpo não pode exceder 500 caracteres"
       );
     }
     if (

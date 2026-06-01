@@ -75,7 +75,7 @@ interface RawMonthlyStats {
 
 export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
-  useDocumentTitle('Evolução');
+  useDocumentTitle(t('page.title.evolution'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));

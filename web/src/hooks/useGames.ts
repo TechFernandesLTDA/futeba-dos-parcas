@@ -288,6 +288,15 @@ export function useCreateGame() {
         // Converter campos do formulário para snake_case do Firestore
         const snakeGameData = camelToSnake(gameData);
 
+        // dateTime is an exception to snake_case convention (canonical field in Firestore)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((gameData as any).dateTime) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          delete (snakeGameData as any).date_time;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (snakeGameData as any).dateTime = (gameData as any).dateTime;
+        }
+
         // Remover campos undefined (Firestore não aceita)
         const cleanData: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(snakeGameData)) {

@@ -34,8 +34,8 @@ const GROUP_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 const GROUP_PHOTO_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export const CreateGroupScreen: React.FC = () => {
-  useDocumentTitle('Criar Grupo');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.createGroup'));
   const navigate = useNavigate();
   const { user } = useAuth();
 

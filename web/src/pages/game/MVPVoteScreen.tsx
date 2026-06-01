@@ -43,11 +43,13 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('MVPVoteScreen');
 
 export const MVPVoteScreen: React.FC = () => {
-  useDocumentTitle('Votação MVP');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.mvpVote'));
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/?tab=1');
@@ -114,6 +116,16 @@ export const MVPVoteScreen: React.FC = () => {
     };
   }, [gameId]);
 
+  useEffect(() => {
+    if (!hasVoted) return;
+
+    const timer = setTimeout(() => {
+      navigate(`/game/${gameId}`);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [hasVoted, gameId, navigate]);
+
   const handleVote = async () => {
     if (!mvpVote || !gameId || !currentUser) return;
 
@@ -167,10 +179,6 @@ export const MVPVoteScreen: React.FC = () => {
       await batch.commit();
 
       setHasVoted(true);
-
-      setTimeout(() => {
-        navigate(`/game/${gameId}`);
-      }, 2000);
     } catch (err) {
       logger.error('Error submitting vote:', err);
       showError((err as Error)?.message || 'Erro ao enviar voto');

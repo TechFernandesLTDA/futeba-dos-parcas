@@ -12,17 +12,25 @@ interface BadgeTrigger {
   icon: string;
   description: string;
   xpReward: number;
-  check: (userId: string) => Promise<boolean>;
+  check: (
+    userId: string,
+    userDoc?: admin.firestore.DocumentSnapshot,
+    confirmationsSnap?: admin.firestore.QuerySnapshot
+  ) => Promise<boolean>;
 }
 
 /**
  * Verifica se usuario tem streak >= 7 jogos consecutivos
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeStreak7(userId: string): Promise<boolean> {
-  const userDoc = await db().collection("users").doc(userId).get();
-  const streak = (userDoc.data()?.current_streak as number) || 0;
+async function checkBadgeStreak7(
+  userId: string,
+  userDoc?: admin.firestore.DocumentSnapshot
+): Promise<boolean> {
+  const doc = userDoc || await db().collection("users").doc(userId).get();
+  const streak = (doc.data()?.current_streak as number) || 0;
   return streak >= 7;
 }
 
@@ -41,76 +49,106 @@ async function checkBadgeStreak10Vitorias(userId: string): Promise<boolean> {
 /**
  * Verifica se usuario tem >= 100 jogos no total
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadge100Jogos(userId: string): Promise<boolean> {
-  const userDoc = await db().collection("users").doc(userId).get();
-  const totalGames = (userDoc.data()?.total_games as number) || 0;
+async function checkBadge100Jogos(
+  userId: string,
+  userDoc?: admin.firestore.DocumentSnapshot
+): Promise<boolean> {
+  const doc = userDoc || await db().collection("users").doc(userId).get();
+  const totalGames = (doc.data()?.total_games as number) || 0;
   return totalGames >= 100;
 }
 
 /**
  * Verifica se usuario tem >= 1 MVP
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeMVP1(userId: string): Promise<boolean> {
-  const userDoc = await db().collection("users").doc(userId).get();
-  const mvpCount = (userDoc.data()?.mvp_count as number) || 0;
+async function checkBadgeMVP1(
+  userId: string,
+  userDoc?: admin.firestore.DocumentSnapshot
+): Promise<boolean> {
+  const doc = userDoc || await db().collection("users").doc(userId).get();
+  const mvpCount = (doc.data()?.mvp_count as number) || 0;
   return mvpCount >= 1;
 }
 
 /**
  * Verifica se usuario tem >= 10 MVPs
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeMVP10(userId: string): Promise<boolean> {
-  const userDoc = await db().collection("users").doc(userId).get();
-  const mvpCount = (userDoc.data()?.mvp_count as number) || 0;
+async function checkBadgeMVP10(
+  userId: string,
+  userDoc?: admin.firestore.DocumentSnapshot
+): Promise<boolean> {
+  const doc = userDoc || await db().collection("users").doc(userId).get();
+  const mvpCount = (doc.data()?.mvp_count as number) || 0;
   return mvpCount >= 10;
 }
 
 /**
  * Verifica se usuario tem >= 10 gols
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeGols10(userId: string): Promise<boolean> {
-  const userDoc = await db().collection("users").doc(userId).get();
-  const goals = (userDoc.data()?.total_goals as number) || 0;
+async function checkBadgeGols10(
+  userId: string,
+  userDoc?: admin.firestore.DocumentSnapshot
+): Promise<boolean> {
+  const doc = userDoc || await db().collection("users").doc(userId).get();
+  const goals = (doc.data()?.total_goals as number) || 0;
   return goals >= 10;
 }
 
 /**
  * Verifica se usuario tem >= 50 assistencias
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeAssistencias50(userId: string): Promise<boolean> {
-  const userDoc = await db().collection("users").doc(userId).get();
-  const assists = (userDoc.data()?.total_assists as number) || 0;
+async function checkBadgeAssistencias50(
+  userId: string,
+  userDoc?: admin.firestore.DocumentSnapshot
+): Promise<boolean> {
+  const doc = userDoc || await db().collection("users").doc(userId).get();
+  const assists = (doc.data()?.total_assists as number) || 0;
   return assists >= 50;
 }
 
 /**
  * Verifica se usuario tem >= 50 vitorias
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeVitorias50(userId: string): Promise<boolean> {
-  const userDoc = await db().collection("users").doc(userId).get();
-  const wins = (userDoc.data()?.total_wins as number) || 0;
+async function checkBadgeVitorias50(
+  userId: string,
+  userDoc?: admin.firestore.DocumentSnapshot
+): Promise<boolean> {
+  const doc = userDoc || await db().collection("users").doc(userId).get();
+  const wins = (doc.data()?.total_wins as number) || 0;
   return wins >= 50;
 }
 
 /**
  * Verifica se usuario jogou em 3+ campos diferentes
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [_userDoc] - Documento do usuario pre-carregado (nao utilizado)
+ * @param {admin.firestore.QuerySnapshot} [confirmationsSnap] - Confirmations pre-carregadas (opcional)
  * @return {Promise<boolean>} true se onipresente
  */
-async function checkBadgeOnipresente(userId: string): Promise<boolean> {
-  const gamesSnap = await db()
+async function checkBadgeOnipresente(
+  userId: string,
+  _userDoc?: admin.firestore.DocumentSnapshot,
+  confirmationsSnap?: admin.firestore.QuerySnapshot
+): Promise<boolean> {
+  const gamesSnap = confirmationsSnap || await db()
     .collection("confirmations")
     .where("user_id", "==", userId)
     .where("was_present", "==", true)
@@ -128,10 +166,16 @@ async function checkBadgeOnipresente(userId: string): Promise<boolean> {
 /**
  * Verifica se usuario tem 10+ quartas-feiras confirmadas
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [_userDoc] - Documento do usuario pre-carregado (nao utilizado)
+ * @param {admin.firestore.QuerySnapshot} [confirmationsSnap] - Confirmations pre-carregadas (opcional)
  * @return {Promise<boolean>} true se rei das quartas
  */
-async function checkBadgeReiDasQuartas(userId: string): Promise<boolean> {
-  const gamesSnap = await db()
+async function checkBadgeReiDasQuartas(
+  userId: string,
+  _userDoc?: admin.firestore.DocumentSnapshot,
+  confirmationsSnap?: admin.firestore.QuerySnapshot
+): Promise<boolean> {
+  const gamesSnap = confirmationsSnap || await db()
     .collection("confirmations")
     .where("user_id", "==", userId)
     .where("was_present", "==", true)
@@ -152,10 +196,16 @@ async function checkBadgeReiDasQuartas(userId: string): Promise<boolean> {
  * Verifica se usuario venceu o mesmo adversario 5x
  * (verifica se ha algum adversario com 5+ derrotas contra o usuario)
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [_userDoc] - Documento do usuario pre-carregado (nao utilizado)
+ * @param {admin.firestore.QuerySnapshot} [confirmationsSnap] - Confirmations pre-carregadas (opcional)
  * @return {Promise<boolean>} true se carrasco de alguem
  */
-async function checkBadgeCarrasco(userId: string): Promise<boolean> {
-  const confSnap = await db()
+async function checkBadgeCarrasco(
+  userId: string,
+  _userDoc?: admin.firestore.DocumentSnapshot,
+  confirmationsSnap?: admin.firestore.QuerySnapshot
+): Promise<boolean> {
+  const confSnap = confirmationsSnap || await db()
     .collection("confirmations")
     .where("user_id", "==", userId)
     .where("was_present", "==", true)
@@ -225,6 +275,8 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
   {
     document: "games/{gameId}",
     region: FUNCTION_REGION,
+    memory: "512MiB",
+    timeoutSeconds: 120,
   },
   async (event) => {
     const before = event.data?.before?.data();
@@ -259,15 +311,27 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
             .doc(userId)
             .collection("badges");
 
-          // Conjunto de badges já conquistados (1 query por usuário).
-          const earnedSnap = await badgesRef.get();
+          // FIX #2365: pré-carrega userDoc (1x por jogador) + todas as
+          // confirmações do usuário (1x por jogador) — evita que 7 badges
+          // façam N+1 individual no users/{uid} e 3 badges façam a mesma
+          // query de confirmations repetida.
+          const [earnedSnap, userDoc, allUserConfirmationsSnap] =
+            await Promise.all([
+              badgesRef.get(),
+              db().collection("users").doc(userId).get(),
+              db()
+                .collection("confirmations")
+                .where("user_id", "==", userId)
+                .where("was_present", "==", true)
+                .get(),
+            ]);
           const earnedIds = new Set(earnedSnap.docs.map((d) => d.id));
 
           for (const trigger of BADGE_TRIGGERS) {
             try {
               if (earnedIds.has(trigger.badgeId)) continue;
 
-              const earned = await trigger.check(userId);
+              const earned = await trigger.check(userId, userDoc, allUserConfirmationsSnap);
               if (earned) {
                 await badgesRef.doc(trigger.badgeId).set({
                   badge_id: trigger.badgeId,

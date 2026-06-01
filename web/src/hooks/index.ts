@@ -25,4 +25,7 @@ export * from './useNextGame';
 export * from './usePrefetchHome';
 export * from './usePerformanceMonitoring';
 export * from './useSeasons';
+export * from './useGameDraft';
+export * from './useHabitualTime';
+export * from './useDuplicateGameCopy';
 

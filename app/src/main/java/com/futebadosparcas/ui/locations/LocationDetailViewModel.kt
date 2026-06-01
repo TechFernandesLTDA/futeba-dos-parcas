@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.locations
 
 import android.net.Uri
+import androidx.annotation.StringRes
+import com.futebadosparcas.R
 import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,6 +20,7 @@ import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.repository.AddressRepository as KmpAddressRepository
 import com.futebadosparcas.util.LocationAnalytics
 import com.futebadosparcas.util.LocationEditTracker
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.futebadosparcas.util.LocationError
 import com.futebadosparcas.util.LocationErrorHandler
 import com.futebadosparcas.util.LocationSources
@@ -163,7 +166,16 @@ class LocationDetailViewModel(
                     _uiState.value = LocationDetailUiState.Success(kmpLocation.toAndroidLocation(), emptyList())
                 },
                 onFailure = { error ->
-                     _uiState.value = LocationDetailUiState.Error.fromThrowable(error)
+                    // #2430: Mensagem clara para permission-denied
+                    if (error is FirebaseFirestoreException &&
+                        error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        _uiState.value = LocationDetailUiState.Error.auth(
+                            "Sua conta não tem permissão para cadastrar quadras. Contate o suporte.",
+                            "permission_denied"
+                        )
+                    } else {
+                        _uiState.value = LocationDetailUiState.Error.fromThrowable(error)
+                    }
                 }
             )
         }
@@ -586,7 +598,8 @@ sealed class LocationDetailUiState {
         val recoveryAction: RecoveryAction = LocationErrorHandler.getRecoveryAction(
             LocationErrorHandler.fromMessage(message)
         ),
-        val originalThrowable: Throwable? = null
+        val originalThrowable: Throwable? = null,
+        @StringRes val errorResId: Int? = null
     ) : LocationDetailUiState() {
 
         companion object {

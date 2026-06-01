@@ -31,6 +31,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { LoadingState, PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('InvitePlayersScreen');
 
@@ -50,7 +51,8 @@ interface GroupMember {
 }
 
 export const InvitePlayersScreen: React.FC = () => {
-  useDocumentTitle('Convidar Jogadores');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.invitePlayers'));
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
   const { showError } = useToast();

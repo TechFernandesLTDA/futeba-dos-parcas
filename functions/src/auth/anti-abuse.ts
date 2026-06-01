@@ -75,7 +75,7 @@ export const canSendSmsOtp = onCall(
       if (!request.auth) {
         throw new HttpsError(
           "unauthenticated",
-          "Login obrigatorio",
+          "Login obrigatório",
         );
       }
 
@@ -165,7 +165,7 @@ export const logVerificationFailure = onCall(
     try {
       const {auth} = request;
       if (!auth) {
-        throw new HttpsError("unauthenticated", "Login obrigatorio");
+        throw new HttpsError("unauthenticated", "Login obrigatório");
       }
 
       // FIX #1310-L8: rate limit por uid. Sem isto, um cliente pode chamar

@@ -86,8 +86,8 @@ data class Group(
         const val MAX_NAME_LENGTH = 50
         const val MAX_DESCRIPTION_LENGTH = 200
         const val DEFAULT_MAX_PLAYERS = 14
-        const val MIN_MAX_PLAYERS = 4
-        const val MAX_MAX_PLAYERS = 40
+        const val MIN_MAX_PLAYERS = 2
+        const val MAX_MAX_PLAYERS = 50
         const val MAX_PRICE = 500.0
     }
 }

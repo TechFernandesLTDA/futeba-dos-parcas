@@ -21,6 +21,7 @@ import {
   sendNotificationToUsers,
   sendAndSaveNotification,
 } from "./helpers";
+import {PRESENCE_NOTIFICATIONS} from "./notification-messages";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -76,9 +77,10 @@ export const onGameConfirmed = onDocumentCreated(
         await sendNotificationToUser(
           game.owner_id,
           {
-            title: "Nova confirmacao!",
-            body: userName +
-              " confirmou presenca no jogo.",
+            title: PRESENCE_NOTIFICATIONS.GAME_CONFIRMED.title["pt-BR"](),
+            body: PRESENCE_NOTIFICATIONS.GAME_CONFIRMED.body["pt-BR"]({
+              userName,
+            }),
             type:
               NotificationType.GAME_CONFIRMED,
             data: {
@@ -160,9 +162,11 @@ export const onGroupInviteCreated =
           invitedUserId,
           {
             userId: invitedUserId,
-            title: "Convite para grupo",
-            body: `${invitedByName} convidou` +
-              ` voce para ${groupName}`,
+            title: PRESENCE_NOTIFICATIONS.GROUP_INVITE.title["pt-BR"](),
+            body: PRESENCE_NOTIFICATIONS.GROUP_INVITE.body["pt-BR"]({
+              invitedByName,
+              groupName,
+            }),
             type: NotificationType.GROUP_INVITE,
             groupId: groupId,
             senderId: senderId,
@@ -343,10 +347,11 @@ export const onGroupInviteResponse =
             invitedById,
             {
               userId: invitedById,
-              title: "Convite aceito!",
-              body: `${invitedUserName}` +
-                " aceitou seu convite" +
-                ` para ${groupName}`,
+              title: PRESENCE_NOTIFICATIONS.GROUP_INVITE_ACCEPTED.title["pt-BR"](),
+              body: PRESENCE_NOTIFICATIONS.GROUP_INVITE_ACCEPTED.body["pt-BR"]({
+                invitedUserName,
+                groupName,
+              }),
               type: NotificationType
                 .GROUP_INVITE_ACCEPTED,
               groupId: grpId,
@@ -359,10 +364,11 @@ export const onGroupInviteResponse =
             invitedById,
             {
               userId: invitedById,
-              title: "Convite recusado",
-              body: `${invitedUserName}` +
-                " recusou seu convite" +
-                ` para ${groupName}`,
+              title: PRESENCE_NOTIFICATIONS.GROUP_INVITE_DECLINED.title["pt-BR"](),
+              body: PRESENCE_NOTIFICATIONS.GROUP_INVITE_DECLINED.body["pt-BR"]({
+                invitedUserName,
+                groupName,
+              }),
               type: NotificationType
                 .GROUP_INVITE_DECLINED,
               groupId:
@@ -464,9 +470,11 @@ export const onMemberJoined = onDocumentCreated(
         await sendNotificationToUsers(
           adminIds,
           {
-            title: "Novo membro!",
-            body: `${memberName}` +
-              ` entrou em ${groupName}`,
+            title: PRESENCE_NOTIFICATIONS.MEMBER_JOINED.title["pt-BR"](),
+            body: PRESENCE_NOTIFICATIONS.MEMBER_JOINED.body["pt-BR"]({
+              memberName,
+              groupName,
+            }),
             type:
               NotificationType.MEMBER_JOINED,
             data: {
@@ -557,9 +565,11 @@ export const onMemberLeft = onDocumentDeleted(
         await sendNotificationToUsers(
           adminIds,
           {
-            title: "Membro saiu",
-            body: `${memberName}` +
-              ` saiu de ${groupName}`,
+            title: PRESENCE_NOTIFICATIONS.MEMBER_LEFT.title["pt-BR"](),
+            body: PRESENCE_NOTIFICATIONS.MEMBER_LEFT.body["pt-BR"]({
+              memberName,
+              groupName,
+            }),
             type:
               NotificationType.MEMBER_LEFT,
             data: {
@@ -660,8 +670,8 @@ export const onCashboxTransaction =
           NotificationType.CASHBOX_EXIT;
 
         const title = isEntry ?
-          "Entrada no caixa" :
-          "Saida do caixa";
+          PRESENCE_NOTIFICATIONS.CASHBOX_ENTRY.title["pt-BR"]() :
+          PRESENCE_NOTIFICATIONS.CASHBOX_EXIT.title["pt-BR"]();
         const amountStr = amount.toFixed(2);
         const verb = isEntry ?
           "adicionado" :

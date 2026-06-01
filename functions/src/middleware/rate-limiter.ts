@@ -18,6 +18,7 @@ import {
   CallableRequest,
 } from "firebase-functions/v2/https";
 import {db} from "../_db";
+import {ERROR_MSGS} from "../error-messages";
 
 
 // ==========================================
@@ -226,7 +227,7 @@ export function withRateLimit<T = unknown>(
     if (!request.auth) {
       throw new HttpsError(
         "unauthenticated",
-        "Usuário não autenticado"
+        ERROR_MSGS.UNAUTHENTICATED
       );
     }
 
@@ -251,9 +252,7 @@ export function withRateLimit<T = unknown>(
 
       throw new HttpsError(
         "resource-exhausted",
-        "Rate limit excedido. Tente " +
-        `novamente em ${resetInSeconds} ` +
-        "segundos.",
+        `Muitas tentativas. Tente novamente em ${resetInSeconds} segundos.`,
         {
           retryAfter: resetInSeconds,
           limit: config.maxRequests,

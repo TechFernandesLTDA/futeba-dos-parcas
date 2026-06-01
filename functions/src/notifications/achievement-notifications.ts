@@ -19,6 +19,7 @@ import {
   saveNotificationToFirestore,
   sendAndSaveNotification,
 } from "./helpers";
+import {ACHIEVEMENT_NOTIFICATIONS} from "./notification-messages";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -61,9 +62,10 @@ export const onLevelUp = onDocumentUpdated(
         "/o/badges%2Flevel_up.png?alt=media";
 
       await sendNotificationToUser(userId, {
-        title: "Subiu de nivel!",
-        body: "Parabens! Voce agora e " +
-          levelName + "!",
+        title: ACHIEVEMENT_NOTIFICATIONS.LEVEL_UP.title["pt-BR"](),
+        body: ACHIEVEMENT_NOTIFICATIONS.LEVEL_UP.body["pt-BR"]({
+          levelName,
+        }),
         type: NotificationType.LEVEL_UP,
         imageUrl: imgBase + imgPath,
       });
@@ -127,9 +129,10 @@ export const onBadgeAwarded = onDocumentCreated(
       // Enviar notificação push
       const notificationSent =
         await sendNotificationToUser(userId, {
-          title: "Conquista Desbloqueada!",
-          body:
-            `Voce desbloqueou: ${badgeName}!`,
+          title: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.title["pt-BR"](),
+          body: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.body["pt-BR"]({
+            badgeName,
+          }),
           type: NotificationType.ACHIEVEMENT,
           imageUrl: badgeIconUrl || undefined,
           data: {
@@ -146,8 +149,10 @@ export const onBadgeAwarded = onDocumentCreated(
       // Salvar notificação no Firestore
       await saveNotificationToFirestore(userId, {
         userId,
-        title: "Conquista Desbloqueada!",
-        body: `Voce desbloqueou: ${badgeName}!`,
+        title: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.title["pt-BR"](),
+        body: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.body["pt-BR"]({
+          badgeName,
+        }),
         type: NotificationType.ACHIEVEMENT,
         action: "badges",
       });
@@ -177,25 +182,23 @@ export const onBadgeAwarded = onDocumentCreated(
 export const STREAK_MILESTONES = [
   {
     streak: 30,
-    title: "Sequencia Epica!",
-    body: "30 jogos consecutivos!" +
-      " Voce e uma lenda!",
+    title: ACHIEVEMENT_NOTIFICATIONS.STREAK_30.title["pt-BR"](),
+    body: ACHIEVEMENT_NOTIFICATIONS.STREAK_30.body["pt-BR"](),
   },
   {
     streak: 10,
-    title: "Sequencia Incrivel!",
-    body: "10 jogos consecutivos! Expert!",
+    title: ACHIEVEMENT_NOTIFICATIONS.STREAK_10.title["pt-BR"](),
+    body: ACHIEVEMENT_NOTIFICATIONS.STREAK_10.body["pt-BR"](),
   },
   {
     streak: 7,
-    title: "Sequencia Forte!",
-    body: "7 jogos consecutivos! Profissional!",
+    title: ACHIEVEMENT_NOTIFICATIONS.STREAK_7.title["pt-BR"](),
+    body: ACHIEVEMENT_NOTIFICATIONS.STREAK_7.body["pt-BR"](),
   },
   {
     streak: 3,
-    title: "Sequencia Iniciada!",
-    body: "3 jogos consecutivos!" +
-      " Continue assim!",
+    title: ACHIEVEMENT_NOTIFICATIONS.STREAK_3.title["pt-BR"](),
+    body: ACHIEVEMENT_NOTIFICATIONS.STREAK_3.body["pt-BR"](),
   },
 ];
 
@@ -309,9 +312,10 @@ export async function notifyMvpAwardedDirect(
 
   await sendAndSaveNotification(mvpId, {
     userId: mvpId,
-    title: "Voce foi eleito MVP!",
-    body: "Parabens! Voce foi escolhido" +
-      ` o Craque da Partida em ${gameName}`,
+    title: ACHIEVEMENT_NOTIFICATIONS.MVP_RECEIVED.title["pt-BR"](),
+    body: ACHIEVEMENT_NOTIFICATIONS.MVP_RECEIVED.body["pt-BR"]({
+      gameName,
+    }),
     type: NotificationType.MVP_RECEIVED,
     gameId: gameId,
     action: "game_detail/" + gameId,
@@ -441,15 +445,13 @@ export const onDivisionChanged =
       const divisionName =
         divisionNames[afterDivision] ||
         afterDivision;
-      const title = isPromotion ?
-        "Promocao de Liga!" :
-        "Mudanca de Liga";
+      const msg = isPromotion ?
+        ACHIEVEMENT_NOTIFICATIONS.DIVISION_PROMOTED :
+        ACHIEVEMENT_NOTIFICATIONS.DIVISION_DEMOTED;
+      const title = msg.title["pt-BR"]();
       const body = isPromotion ?
-        "Parabens! Voce subiu para" +
-          ` a divisao ${divisionName}!` :
-        "Voce desceu para" +
-          ` a divisao ${divisionName}.` +
-          " Continue jogando!";
+        `Parabéns! Você subiu para a divisão ${divisionName}!` :
+        `Você desceu para a divisão ${divisionName}. Continue jogando!`;
 
       try {
         await sendAndSaveNotification(userId, {

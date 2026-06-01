@@ -56,9 +56,11 @@ const logger = createLogger('GroupSettingsScreen');
 
 // Fix #414: ROLE_CONFIG extraído para constants/group.ts (single source of truth)
 import { ROLE_CONFIG, getRoleColor } from '../../constants/group';
+import { useTranslation } from 'react-i18next';
 
 export const GroupSettingsScreen: React.FC = () => {
-  useDocumentTitle('Configurações do Grupo');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.groupSettings'));
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();

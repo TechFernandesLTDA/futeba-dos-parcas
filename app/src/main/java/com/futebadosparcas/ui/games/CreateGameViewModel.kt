@@ -75,8 +75,8 @@ class CreateGameViewModel(
         private const val DEFAULT_MAX_PLAYERS = 14
         private const val RECENT_GAMES_LIMIT = 10
         private const val ONE_HOUR_MS = 3_600_000L
-        private const val MIN_PLAYERS = 4
-        private const val MAX_PLAYERS = 40
+        private const val MIN_PLAYERS = 2
+        private const val MAX_PLAYERS = 50
         private const val MIN_GAME_DURATION_MINUTES = 30
         private const val MIN_NAME_LENGTH = 3
         private const val MAX_NAME_LENGTH = 50

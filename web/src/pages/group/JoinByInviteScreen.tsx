@@ -27,6 +27,7 @@ import { useInvitePlayers } from '../../hooks/useGroups';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('JoinByInviteScreen');
 
@@ -53,7 +54,8 @@ interface InvitePreview {
  * Issue #514.
  */
 export const JoinByInviteScreen: React.FC = () => {
-  useDocumentTitle('Aceitar Convite');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.acceptInvite'));
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const { firebaseUser } = useAuth();

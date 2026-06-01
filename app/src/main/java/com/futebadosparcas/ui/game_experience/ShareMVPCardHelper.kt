@@ -24,6 +24,7 @@ import coil3.request.allowHardware
 import coil3.toBitmap
 import com.futebadosparcas.data.model.MVPVoteResult
 import com.futebadosparcas.domain.model.VoteCategory
+import com.futebadosparcas.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -120,21 +121,20 @@ object ShareMVPCardHelper {
 
                 // Texto de compartilhamento
                 val winner = results.first()
-                val categoryName = getCategoryDisplayName(category)
-                val shareText = buildString {
-                    append("🏆 ")
-                    append(winner.playerName)
-                    append(" foi eleito ")
-                    append(categoryName)
-                    append("!\n")
-                    append("📊 ${winner.voteCount} votos (${winner.percentage.toInt()}%)\n\n")
-                    if (gameInfo != null) {
-                        append("⚽ ${gameInfo.team1Name} ${gameInfo.team1Score} x ${gameInfo.team2Score} ${gameInfo.team2Name}\n")
-                        append("📍 ${gameInfo.location}\n\n")
-                    }
-                    append("Baixe o Futeba dos Parças!\n")
-                    append(PLAY_STORE_URL)
-                }
+                val categoryName = context.getString(getCategoryDisplayNameRes(category))
+                val shareText = context.getString(
+                    R.string.share_card_share_text_winner,
+                    winner.playerName,
+                    categoryName,
+                    winner.voteCount,
+                    winner.percentage.toInt(),
+                    gameInfo?.team1Name ?: "",
+                    gameInfo?.team1Score ?: 0,
+                    gameInfo?.team2Score ?: 0,
+                    gameInfo?.team2Name ?: "",
+                    gameInfo?.location ?: "",
+                    PLAY_STORE_URL
+                )
 
                 // Criar intent de compartilhamento
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -150,7 +150,7 @@ object ShareMVPCardHelper {
                     context.startActivity(shareIntent)
                 } catch (e: Exception) {
                     shareIntent.setPackage(null)
-                    context.startActivity(Intent.createChooser(shareIntent, "Compartilhar resultado via"))
+                    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_card_share_via)))
                 }
 
                 // Limpar recursos
@@ -161,7 +161,7 @@ object ShareMVPCardHelper {
                 e.printStackTrace()
                 Toast.makeText(
                     context,
-                    "Erro ao compartilhar: ${e.message}",
+                    context.getString(R.string.share_card_error, e.message ?: ""),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -240,7 +240,7 @@ object ShareMVPCardHelper {
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             letterSpacing = 0.15f
         }
-        canvas.drawText("⚽ FUTEBA DOS PARÇAS", CARD_WIDTH / 2f, yPos, paint)
+        canvas.drawText(context.getString(R.string.share_card_app_name), CARD_WIDTH / 2f, yPos, paint)
         yPos += 50f
 
         // Categoria
@@ -250,7 +250,7 @@ object ShareMVPCardHelper {
             VoteCategory.WORST -> "😅"
             VoteCategory.CUSTOM -> "⭐"
         }
-        val categoryName = getCategoryDisplayName(category)
+        val categoryName = context.getString(getCategoryDisplayNameRes(category))
 
         paint.apply {
             color = categoryColor
@@ -266,12 +266,13 @@ object ShareMVPCardHelper {
         val winner = top3.getOrNull(0)
         if (winner != null) {
             val winnerPhoto = photoBitmaps[winner.playerId]
+            val winnerVotes = context.getString(R.string.share_card_votes_format, winner.voteCount, winner.percentage.toInt())
             drawPodiumPlayer(
                 canvas, paint,
                 winner, winnerPhoto,
                 CARD_WIDTH / 2f, yPos,
                 80f, GOLD_COLOR, textPrimary, textSecondary,
-                "1º", true
+                "1º", true, winnerVotes
             )
             yPos += 180f
 
@@ -283,24 +284,26 @@ object ShareMVPCardHelper {
                 // Segundo lugar (esquerda)
                 if (second != null) {
                     val secondPhoto = photoBitmaps[second.playerId]
+                    val secondVotes = context.getString(R.string.share_card_votes_format, second.voteCount, second.percentage.toInt())
                     drawPodiumPlayer(
                         canvas, paint,
                         second, secondPhoto,
                         CARD_WIDTH / 4f, yPos,
                         50f, SILVER_COLOR, textPrimary, textSecondary,
-                        "2º", false
+                        "2º", false, secondVotes
                     )
                 }
 
                 // Terceiro lugar (direita)
                 if (third != null) {
                     val thirdPhoto = photoBitmaps[third.playerId]
+                    val thirdVotes = context.getString(R.string.share_card_votes_format, third.voteCount, third.percentage.toInt())
                     drawPodiumPlayer(
                         canvas, paint,
                         third, thirdPhoto,
                         CARD_WIDTH * 3f / 4f, yPos,
                         50f, BRONZE_COLOR, textPrimary, textSecondary,
-                        "3º", false
+                        "3º", false, thirdVotes
                     )
                 }
                 yPos += 140f
@@ -332,7 +335,7 @@ object ShareMVPCardHelper {
             color = GOLD_COLOR
             textSize = 16f
         }
-        canvas.drawText("📲 Baixe o Futeba dos Parças!", CARD_WIDTH / 2f, yPos, paint)
+        canvas.drawText(context.getString(R.string.share_card_download_promo), CARD_WIDTH / 2f, yPos, paint)
         yPos += 22f
         paint.apply {
             color = GREEN_COLOR
@@ -358,7 +361,8 @@ object ShareMVPCardHelper {
         textPrimary: Int,
         textSecondary: Int,
         positionLabel: String,
-        isWinner: Boolean
+        isWinner: Boolean,
+        votesText: String
     ) {
         val photoCenterY = yPos + photoRadius
 
@@ -418,7 +422,7 @@ object ShareMVPCardHelper {
             textSize = if (isWinner) 18f else 14f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
         }
-        canvas.drawText("${result.voteCount} votos (${result.percentage.toInt()}%)", centerX, nameY, paint)
+        canvas.drawText(votesText, centerX, nameY, paint)
     }
 
     /**
@@ -448,6 +452,15 @@ object ShareMVPCardHelper {
             VoteCategory.BEST_GOALKEEPER -> "Melhor Goleiro"
             VoteCategory.WORST -> "Bola Murcha"
             VoteCategory.CUSTOM -> "Categoria Especial"
+        }
+    }
+
+    private fun getCategoryDisplayNameRes(category: VoteCategory): Int {
+        return when (category) {
+            VoteCategory.MVP -> R.string.share_card_category_mvp
+            VoteCategory.BEST_GOALKEEPER -> R.string.share_card_category_goalkeeper
+            VoteCategory.WORST -> R.string.share_card_category_worst
+            VoteCategory.CUSTOM -> R.string.share_card_category_custom
         }
     }
 }

@@ -72,3 +72,9 @@ export const generateCheckinToken = httpsCallable<
   { gameId: string },
   { success: boolean; token: string }
 >(functions, 'generateCheckinToken');
+
+// #2430: Sincroniza custom claim FIELD_OWNER/ADMIN do Firestore para o Auth
+export const syncFieldOwnerClaim = httpsCallable<
+  void,
+  { success: boolean; synced: boolean; role: string; message: string }
+>(functions, 'syncFieldOwnerClaim');

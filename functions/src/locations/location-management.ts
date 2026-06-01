@@ -5,6 +5,7 @@ import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
 import {db} from "../_db";
+import {ERROR_MSGS} from "../error-messages";
 
 interface DeleteLocationRequest {
   locationId: string;
@@ -70,7 +71,7 @@ export const deleteLocation = secureCallable<DeleteLocationRequest>(
   },
   async (request) => {
     if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
     }
     const {locationId} = request.data;
     if (!locationId || typeof locationId !== "string") {

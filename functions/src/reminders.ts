@@ -25,6 +25,10 @@ import {
   NotificationType,
   saveNotificationToFirestore,
 } from "./notifications";
+import {
+  REMINDER_NOTIFICATIONS,
+  GAME_NOTIFICATIONS,
+} from "./notifications/notification-messages";
 
 // Lazy initialization para evitar erro
 // de initializeApp
@@ -608,20 +612,17 @@ async function sendReminder(
     ` em ${game.location_name}` :
     "";
 
-  const title = reminderType === "24h" ?
-    "Jogo amanha! Confirme sua presenca" :
+  const msg = reminderType === "24h" ?
+    REMINDER_NOTIFICATIONS.GAME_24H :
     reminderType === "2h" ?
-      "Jogo em 2 horas! Nao esqueca" :
-      "Jogo em 1 hora! Prepare-se";
+      REMINDER_NOTIFICATIONS.GAME_2H :
+      REMINDER_NOTIFICATIONS.GAME_1H;
 
-  const body = reminderType === "24h" ?
-    `O jogo${locationInfo} acontecera ` +
-    `${formattedDate}. Confirme!` :
-    reminderType === "2h" ?
-      `O jogo${locationInfo} comeca em ` +
-      `2 horas (${formattedDate}). Confirme!` :
-      `O jogo${locationInfo} comeca em ` +
-      `1 hora (${formattedDate}). Prepare-se!`;
+  const title = msg.title["pt-BR"]();
+  const body = msg.body["pt-BR"]({
+    locationInfo,
+    formattedDate,
+  });
 
   logger.info(
     "[REMINDERS] Enviando lembrete " +
@@ -1104,7 +1105,7 @@ export const autoCancelLowQuorum = onSchedule(
             await sendNotificationToUsers(
               confirmedUserIds,
               {
-                title: "Jogo cancelado",
+                title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
                 body:
                   `${gameName} (${gameDate}) ` +
                   "foi cancelado " +
@@ -1126,7 +1127,7 @@ export const autoCancelLowQuorum = onSchedule(
                 uid,
                 {
                   userId: uid,
-                  title: "Jogo cancelado",
+                  title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
                   body:
                     `${gameName} (${gameDate}) ` +
                     "foi cancelado " +
@@ -1318,15 +1319,15 @@ export const processExpiredWaitlistEntries =
             if (hasNext && nextUserId) {
               const action = `game_detail/${gameId}`;
               await sendNotificationToUser(nextUserId, {
-                title: "Vaga Disponivel!",
-                body: "Uma vaga abriu para o jogo. Voce tem 30 minutos para confirmar!",
+                title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.title["pt-BR"](),
+                body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.body["pt-BR"](),
                 type: NotificationType.GAME_SUMMON,
                 data: {gameId, action, urgency: "high"},
               });
               await saveNotificationToFirestore(nextUserId, {
                 userId: nextUserId,
-                title: "Vaga Disponivel!",
-                body: "Uma vaga abriu! Confirme sua presenca em ate 30 minutos.",
+                title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.title["pt-BR"](),
+                body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.body["pt-BR"](),
                 type: NotificationType.GAME_SUMMON,
                 gameId,
                 action,

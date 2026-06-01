@@ -39,8 +39,8 @@ import { sxPresets } from '../../theme/sxPresets';
 import { pageSpacing } from '../../theme/pageTokens';
 
 export function RegisterScreen() {
-  useDocumentTitle('Cadastro');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.register'));
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const [name, setName] = useState('');

@@ -72,8 +72,8 @@ interface RawAdminUserDoc {
 }
 
 export const UserManagementScreen: React.FC = () => {
-  useDocumentTitle('Gerenciar Usuários');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.userManagement'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

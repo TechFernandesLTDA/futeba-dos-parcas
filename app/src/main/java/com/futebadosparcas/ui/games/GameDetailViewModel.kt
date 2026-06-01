@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.games
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
+import com.futebadosparcas.R
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.repository.AuthRepository
@@ -79,7 +81,7 @@ class GameDetailViewModel(
                 }
                 .catch { e ->
                     AppLogger.e(TAG, "Erro no combine de Flows", e)
-                    _uiState.value = GameDetailUiState.Error(e.message ?: "Erro ao carregar jogo")
+                    _uiState.value = GameDetailUiState.Error(e.message ?: "Erro ao carregar jogo", R.string.game_detail_error_load)
                 }
                 .collect { data ->
                     val gameResult = data.gameResult
@@ -90,7 +92,7 @@ class GameDetailViewModel(
                     val waitlistResult = data.waitlistResult
 
                     val game = gameResult.getOrElse {
-                        _uiState.value = GameDetailUiState.Error(it.message ?: "Erro ao carregar jogo")
+                        _uiState.value = GameDetailUiState.Error(it.message ?: "Erro ao carregar jogo", R.string.game_detail_error_load)
                         return@collect
                     }
 
@@ -170,7 +172,7 @@ class GameDetailViewModel(
                 }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao observar detalhes do jogo", e)
-                _uiState.value = GameDetailUiState.Error(e.message ?: "Erro ao carregar jogo")
+                _uiState.value = GameDetailUiState.Error(e.message ?: "Erro ao carregar jogo", R.string.game_detail_error_load)
             }
         }
     }
@@ -1199,7 +1201,7 @@ sealed class GameDetailUiState {
         val isSoftDeleted: Boolean = false,
         val waitlistState: WaitlistState = WaitlistState.Empty
     ) : GameDetailUiState()
-    data class Error(val message: String) : GameDetailUiState()
+    data class Error(val message: String, @StringRes val errorResId: Int? = null) : GameDetailUiState()
 }
 
 sealed class SchedulingEvent {

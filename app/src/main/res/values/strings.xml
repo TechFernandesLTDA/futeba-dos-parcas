@@ -1004,7 +1004,7 @@ subir no ranking!</string>
     <string name="create_game_section_pricing">Preço e Jogadores</string>
     <string name="create_game_error_owner_name">Nome do responsável deve ter pelo menos 3 caracteres</string>
     <string name="create_game_error_price">Preço inválido</string>
-    <string name="create_game_error_max_players">Número de jogadores deve estar entre 4 e 100</string>
+    <string name="create_game_error_max_players">Número de jogadores deve estar entre 2 e 50</string>
     <string name="create_game_no_groups_warning">Você precisa ser Dono ou Administrador de um grupo para criar jogos</string>
     <string name="create_game_search_results">Resultados da Busca</string>
 
@@ -4212,5 +4212,112 @@ subir no ranking!</string>
     <!-- ==================== WEEKLY RANKING ==================== -->
     <string name="weekly_ranking_player_fallback">Jogador</string>
     <string name="weekly_ranking_error_load">Erro ao carregar ranking</string>
+
+    <!-- ==================== PHONE VERIFICATION SCREEN (i18n) ==================== -->
+    <string name="phone_verification_title">Verificar telefone</string>
+    <string name="phone_verification_step_cd">Etapa 1 de 2: Verificar telefone</string>
+    <string name="phone_verification_description">Confirmamos seu número via SMS para evitar contas falsas. Etapa 1 de 2.</string>
+    <string name="phone_verification_label">Telefone (com DDD)</string>
+    <string name="phone_verification_placeholder">+5511999998888</string>
+    <string name="phone_verification_supporting_text">Formato internacional: +55 + DDD + número</string>
+    <string name="phone_verification_sending">Enviando…</string>
+    <string name="phone_verification_send_code">Enviar código por SMS</string>
+    <string name="phone_verification_enter_code">Digite o código de 6 dígitos enviado para %1$s</string>
+    <string name="phone_verification_code_label">Código</string>
+    <string name="phone_verification_code_placeholder">123456</string>
+    <string name="phone_verification_verifying">Verificando…</string>
+
+    <!-- ==================== SHARE CARDS (Canvas drawText i18n) ==================== -->
+    <string name="share_card_app_name">⚽ FUTEBA DOS PARÇAS</string>
+    <string name="share_card_download_promo">📲 Baixe o Futeba dos Parças!</string>
+    <string name="share_card_share_via">Compartilhar resultado via</string>
+    <string name="share_card_share_card_via">Compartilhar cartão via</string>
+    <string name="share_card_error">Erro ao compartilhar: %1$s</string>
+    <string name="share_card_generated_at">Gerado em %1$s</string>
+    <string name="share_card_by">por %1$s</string>
+    <string name="share_card_votes_format">%1$d votos (%2$d%%)</string>
+    <string name="share_card_category_mvp">Craque da Partida</string>
+    <string name="share_card_category_goalkeeper">Melhor Goleiro</string>
+    <string name="share_card_category_worst">Bola Murcha</string>
+    <string name="share_card_category_custom">Categoria Especial</string>
+    <string name="share_card_stat_games">JOGOS</string>
+    <string name="share_card_stat_goals">GOLS</string>
+    <string name="share_card_stat_assists">ASSISTS</string>
+    <string name="share_card_stat_mvps">MVPs</string>
+    <string name="share_card_stat_ratings">RATINGS</string>
+    <string name="share_card_position_attack">ATAQUE</string>
+    <string name="share_card_position_mid">MEIO</string>
+    <string name="share_card_position_defense">DEFESA</string>
+    <string name="share_card_position_goalkeeper">GOLEIRO</string>
+    <string name="share_card_share_text_winner">🏆 %1$s foi eleito %2$s!\n📊 %3$d votos (%4$d%%)\n\n⚽ %5$s %6$d x %7$d %8$s\n📍 %9$s\n\nBaixe o Futeba dos Parças!\n%10$s</string>
+    <string name="share_card_share_text_player_card">⚽ Confira o cartão de %1$s no Futeba dos Parças!\n\n%2$s</string>
+
+    <!-- ==================== EMPTY STATE ILLUSTRATIONS (i18n) ==================== -->
+    <string name="empty_illustration_no_games_title">Nenhum jogo encontrado</string>
+    <string name="empty_illustration_no_games_desc">Que tal organizar uma pelada com os parças?</string>
+    <string name="empty_illustration_no_groups_title">Você não está em nenhum grupo</string>
+    <string name="empty_illustration_no_groups_desc">Entre em um grupo existente ou crie o seu próprio!</string>
+    <string name="empty_illustration_no_groups_action_create">Criar Grupo</string>
+    <string name="empty_illustration_no_groups_action_join">Entrar em Grupo</string>
+    <string name="empty_illustration_no_connection_title">Sem conexão</string>
+    <string name="empty_illustration_no_connection_desc">Verifique sua internet e tente novamente</string>
+    <string name="empty_illustration_no_results_title">Nenhum resultado</string>
+    <string name="empty_illustration_no_results_desc">Não encontramos nada para "%1$s"</string>
+    <string name="empty_illustration_error_title">Ops!</string>
+    <string name="empty_illustration_error_default_desc">Algo deu errado</string>
+    <string name="empty_illustration_clear_search">Limpar Busca</string>
+
+    <!-- ==================== CONFIRMATION DIALOG (i18n) ==================== -->
+    <string name="confirm_dialog_remove_member_title">Remover Membro</string>
+    <string name="confirm_dialog_remove_member_message">Tem certeza que deseja remover %1$s do grupo?</string>
+    <string name="confirm_dialog_promote_member_title">Promover Membro</string>
+    <string name="confirm_dialog_promote_member_message">Tem certeza que deseja promover %1$s a administrador?</string>
+    <string name="confirm_dialog_demote_member_title">Rebaixar Membro</string>
+    <string name="confirm_dialog_demote_member_message">Tem certeza que deseja rebaixar %1$s para membro comum?</string>
+    <string name="confirm_dialog_leave_group_title">Sair do Grupo</string>
+    <string name="confirm_dialog_leave_group_message">Tem certeza que deseja sair do grupo \"%1$s\"?</string>
+    <string name="confirm_dialog_archive_group_title">Arquivar Grupo</string>
+    <string name="confirm_dialog_archive_group_message">Tem certeza que deseja arquivar o grupo \"%1$s\"?</string>
+    <string name="confirm_dialog_delete_item_title">Excluir %1$s</string>
+    <string name="confirm_dialog_delete_item_message">Tem certeza que deseja excluir \"%1$s\"? Esta ação não pode ser desfeita.</string>
+    <string name="confirm_dialog_delete_group_title">Excluir Grupo</string>
+    <string name="confirm_dialog_delete_group_message">Tem certeza que deseja excluir permanentemente o grupo \"%1$s\"? Esta ação não pode ser desfeita.</string>
+    <string name="confirm_dialog_delete">Excluir</string>
+    <string name="confirm_dialog_remove">Remover</string>
+    <string name="confirm_dialog_promote">Promover</string>
+    <string name="confirm_dialog_demote">Rebaixar</string>
+    <string name="confirm_dialog_leave">Sair</string>
+    <string name="confirm_dialog_archive">Arquivar</string>
+
+    <!-- ==================== LOCATION DETAIL PERMISSION ERROR ==================== -->
+    <string name="location_error_no_permission">Sem permissão para editar esta quadra</string>
+    <string name="location_error_field_not_found">Quadra não encontrada</string>
+    <string name="location_error_user_not_auth">Usuário não autenticado</string>
+
+    <!-- ==================== MVP VOTE ERRORS ==================== -->
+    <string name="mvp_vote_error_no_players">Nenhum jogador confirmado para votar.</string>
+    <string name="mvp_vote_error_load_candidates">Erro ao carregar candidatos</string>
+    <string name="mvp_vote_error_submit">Erro ao enviar voto</string>
+    <string name="mvp_vote_error_finalize">Erro ao concluir votação: %1$s</string>
+    <string name="mvp_vote_error_not_auth">Usuário não autenticado</string>
+
+    <!-- ==================== TEAM FORMATION ERRORS ==================== -->
+    <string name="team_formation_error_no_formation_players">Nenhum jogador desta formação está disponível</string>
+
+    <!-- ==================== VIEWMODEL ERROR STRINGS ==================== -->
+    <string name="error_no_permission_restore">Sem permissão para restaurar jogo</string>
+    <string name="error_cpf_verification">Erro ao verificar CPF. Tente novamente.</string>
+    <string name="error_cpf_invalid_digits">CPF inválido. Confira os dígitos.</string>
+    <string name="error_session_expired">Sessão expirou. Faça login novamente.</string>
+    <string name="error_cpf_verified_wait">Verificado! Aguarde alguns segundos e tente novamente.</string>
+    <string name="error_cpf_already_registered">Este CPF já está cadastrado em outra conta</string>
+    <string name="error_cpf_invalid">CPF inválido</string>
+    <string name="error_cpf_contact_support">CPF já cadastrado. Entre em contato com o suporte.</string>
+    <string name="error_login_expired">Login expirou. Faça login novamente.</string>
+    <string name="game_restored_success">Jogo restaurado com sucesso</string>
+    <string name="game_cancel_error">Erro ao cancelar jogo</string>
+    <string name="game_restore_error">Erro ao restaurar jogo: %1$s</string>
+    <string name="game_location_error_field_manager_active">Gerentes de campo não podem alterar status Ativo/Inativo</string>
+    <string name="game_location_error_admin_only_active">Apenas Administradores podem alterar o status Ativo/Inativo</string>
 
 </resources>

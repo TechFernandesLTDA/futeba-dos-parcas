@@ -25,6 +25,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { FirebaseError } from 'firebase/app';
 import { db, storage } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,6 +34,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Location, FieldType, FIELD_TYPE_CONFIG } from '../../types/location';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('LocationFormScreen');
 
@@ -81,6 +83,7 @@ const defaultForm: FormState = {
 };
 
 export const LocationFormScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { locationId } = useParams<{ locationId: string }>();
   const { user } = useAuth();
@@ -89,7 +92,7 @@ export const LocationFormScreen: React.FC = () => {
   showErrorRef.current = showError;
 
   const isEdit = !!locationId;
-  useDocumentTitle(isEdit ? 'Editar Local' : 'Criar Local');
+  useDocumentTitle(t(isEdit ? 'page.title.editLocation' : 'page.title.createLocation'));
 
   const [form, setForm] = useState<FormState>(defaultForm);
   const [initialForm, setInitialForm] = useState<FormState>(defaultForm);
@@ -307,6 +310,10 @@ export const LocationFormScreen: React.FC = () => {
       }
     } catch (err) {
       logger.error('Erro ao salvar local:', err);
+      if (err instanceof FirebaseError && err.code === 'permission-denied') {
+        showError('Sua conta não tem permissão para cadastrar quadras. Contate o suporte.');
+        return;
+      }
       showError('Erro ao salvar local. Tente novamente.');
     } finally {
       setLoading(false);

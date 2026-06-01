@@ -25,6 +25,7 @@ import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -118,7 +119,7 @@ object PlayerCardShareHelper {
                     putExtra(Intent.EXTRA_STREAM, contentUri)
                     putExtra(
                         Intent.EXTRA_TEXT,
-                        "⚽ Confira o cartão de ${user.getDisplayName()} no Futeba dos Parças!\n\n$PLAY_STORE_URL"
+                        context.getString(R.string.share_card_share_text_player_card, user.getDisplayName(), PLAY_STORE_URL)
                     )
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     setPackage("com.whatsapp")
@@ -129,7 +130,7 @@ object PlayerCardShareHelper {
                 } catch (e: Exception) {
                     // Se WhatsApp não estiver instalado, mostrar seletor
                     shareIntent.setPackage(null)
-                    context.startActivity(Intent.createChooser(shareIntent, "Compartilhar cartão via"))
+                    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_card_share_card_via)))
                 }
 
                 // Reciclar bitmaps
@@ -140,7 +141,7 @@ object PlayerCardShareHelper {
                 e.printStackTrace()
                 Toast.makeText(
                     context,
-                    "Erro ao compartilhar: ${e.message}",
+                    context.getString(R.string.share_card_error, e.message ?: ""),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -223,7 +224,7 @@ object PlayerCardShareHelper {
             textAlign = Paint.Align.CENTER
             letterSpacing = 0.15f
         }
-        canvas.drawText("⚽ FUTEBA DOS PARÇAS", CARD_WIDTH / 2f, yPos, textPaint)
+        canvas.drawText(context.getString(R.string.share_card_app_name), CARD_WIDTH / 2f, yPos, textPaint)
         yPos += 50f
 
         // Foto do jogador
@@ -341,10 +342,10 @@ object PlayerCardShareHelper {
             val statsY = yPos
             val statSpacing = (CARD_WIDTH - CARD_PADDING * 2) / 4f
 
-            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 0.5f, statsY, "JOGOS", stats.totalGames.toString(), textPrimary, textSecondary)
-            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 1.5f, statsY, "GOLS", stats.totalGoals.toString(), textPrimary, textSecondary)
-            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 2.5f, statsY, "ASSISTS", stats.totalAssists.toString(), textPrimary, textSecondary)
-            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 3.5f, statsY, "MVPs", stats.mvpCount.toString(), textPrimary, textSecondary)
+            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 0.5f, statsY, context.getString(R.string.share_card_stat_games), stats.totalGames.toString(), textPrimary, textSecondary)
+            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 1.5f, statsY, context.getString(R.string.share_card_stat_goals), stats.totalGoals.toString(), textPrimary, textSecondary)
+            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 2.5f, statsY, context.getString(R.string.share_card_stat_assists), stats.totalAssists.toString(), textPrimary, textSecondary)
+            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 3.5f, statsY, context.getString(R.string.share_card_stat_mvps), stats.mvpCount.toString(), textPrimary, textSecondary)
 
             yPos += 70f
         }
@@ -356,15 +357,15 @@ object PlayerCardShareHelper {
             letterSpacing = 0.2f
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText("RATINGS", CARD_WIDTH / 2f, yPos, textPaint)
+        canvas.drawText(context.getString(R.string.share_card_stat_ratings), CARD_WIDTH / 2f, yPos, textPaint)
         yPos += 32f
 
         // Barras de rating
         val ratings = listOf(
-            Triple("ATAQUE", user.getEffectiveRating(PlayerRatingRole.STRIKER), ATTACK_COLOR),
-            Triple("MEIO", user.getEffectiveRating(PlayerRatingRole.MID), MID_COLOR),
-            Triple("DEFESA", user.getEffectiveRating(PlayerRatingRole.DEFENDER), DEFENSE_COLOR),
-            Triple("GOLEIRO", user.getEffectiveRating(PlayerRatingRole.GOALKEEPER), GOALKEEPER_COLOR)
+            Triple(context.getString(R.string.share_card_position_attack), user.getEffectiveRating(PlayerRatingRole.STRIKER), ATTACK_COLOR),
+            Triple(context.getString(R.string.share_card_position_mid), user.getEffectiveRating(PlayerRatingRole.MID), MID_COLOR),
+            Triple(context.getString(R.string.share_card_position_defense), user.getEffectiveRating(PlayerRatingRole.DEFENDER), DEFENSE_COLOR),
+            Triple(context.getString(R.string.share_card_position_goalkeeper), user.getEffectiveRating(PlayerRatingRole.GOALKEEPER), GOALKEEPER_COLOR)
         )
 
         for ((label, rating, color) in ratings) {
@@ -385,9 +386,9 @@ object PlayerCardShareHelper {
             letterSpacing = 0f
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText("Gerado em ${dateFormat.format(now)}", CARD_WIDTH / 2f, yPos, textPaint)
+        canvas.drawText(context.getString(R.string.share_card_generated_at, dateFormat.format(now)), CARD_WIDTH / 2f, yPos, textPaint)
         yPos += 20f
-        canvas.drawText("por $generatedBy", CARD_WIDTH / 2f, yPos, textPaint)
+        canvas.drawText(context.getString(R.string.share_card_by, generatedBy), CARD_WIDTH / 2f, yPos, textPaint)
         yPos += 32f
 
         // Link do Play Store
@@ -396,7 +397,7 @@ object PlayerCardShareHelper {
             textSize = 16f
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText("📲 Baixe o Futeba dos Parças!", CARD_WIDTH / 2f, yPos, textPaint)
+        canvas.drawText(context.getString(R.string.share_card_download_promo), CARD_WIDTH / 2f, yPos, textPaint)
         yPos += 18f
 
         textPaint.apply {
