@@ -1,0 +1,170 @@
+[
+  {
+    "name": "Copacabana Sports",
+    "id": "WLWKn0C6qhydhyAwX4Eo",
+    "found": true,
+    "phone": {
+      "value": "+55 41 98825-4162",
+      "source": "https://www.benditoguia.com.br/empresa/copacabana-sports-capao-da-imbuia-curitiba-pr",
+      "confidence": "med"
+    },
+    "whatsapp": {
+      "value": "+55 41 98825-4162",
+      "source": "https://www.benditoguia.com.br/empresa/copacabana-sports-capao-da-imbuia-curitiba-pr",
+      "confidence": "low"
+    },
+    "opening_time": {
+      "value": "09:00",
+      "source": "https://www.benditoguia.com.br/empresa/copacabana-sports-capao-da-imbuia-curitiba-pr",
+      "confidence": "low"
+    },
+    "closing_time": {
+      "value": "18:00",
+      "source": "https://www.benditoguia.com.br/empresa/copacabana-sports-capao-da-imbuia-curitiba-pr",
+      "confidence": "low"
+    },
+    "operating_days": {
+      "value": [1, 2, 3, 4, 5, 6, 7],
+      "source": "https://www.cylex.com.br/curitiba/copacabana-sports-13128870.html",
+      "confidence": "low"
+    },
+    "num_fields": null,
+    "amenities": {
+      "value": ["wi-fi", "estacionamento", "acessibilidade", "churrasqueira", "quadra de areia", "quadra society"],
+      "source": "https://www.benditoguia.com.br/empresa/copacabana-sports-capao-da-imbuia-curitiba-pr",
+      "confidence": "low"
+    },
+    "hourly_price": null,
+    "latitude": {
+      "value": -25.4330298,
+      "source": "https://www.benditoguia.com.br/empresa/copacabana-sports-capao-da-imbuia-curitiba-pr",
+      "confidence": "med"
+    },
+    "longitude": {
+      "value": -49.2299467,
+      "source": "https://www.benditoguia.com.br/empresa/copacabana-sports-capao-da-imbuia-curitiba-pr",
+      "confidence": "med"
+    },
+    "website": null,
+    "instagram": {
+      "value": "copacabanasportscwb",
+      "source": "https://www.instagram.com/copacabanasportscwb/",
+      "confidence": "high"
+    },
+    "notes": "Empresa real (CNPJ 37.413.197/0001-09, Quadras Esportivas Copacabana Ltda), confirmada no endereco Rua Antonio Simm 809, Capao da Imbuia. Oficial site copacabanasportscwb.com.br fora do ar (DNS nao resolve) na pesquisa. Horarios divergem entre fontes: Bendito Guia diz seg-sex 09h-18h / sab 09h-13h; Cylex (atualizado 26/08/2025) mostra variacao por dia (seg/qua abrindo 06h, fechando ~01h) - por isso baixa confianca. Wellhub indica 06h-23h. Coordenadas do pin do Bendito Guia/Cylex. Numero de quadras nao publicado de forma confiavel."
+  },
+  {
+    "name": "Arena Santa Quitéria",
+    "id": "finPyX1TdQ0vJcIv5FTd",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nao encontrado. Rua Rezala Simao existe no bairro Santa Quiteria/Portao em Curitiba, mas nao ha nenhum estabelecimento publicado com o nome 'Arena Santa Quiteria' nesse endereco (Rezala Simao 1200). Buscas retornam o clube de futebol U.R.E. Santa Quiteria (entidade diferente, estadio Mauricio Fruet) e imoveis residenciais na rua. Sem fonte real para preencher dados."
+  },
+  {
+    "name": "Quadra Society Barreirinha",
+    "id": "x2JoEFDoQvDtyRMyGLfe",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nao encontrado. Av. Anita Garibaldi existe e cruza o bairro Barreirinha em Curitiba, mas nenhum estabelecimento publicado com o nome 'Quadra Society Barreirinha' no numero 5500 foi localizado em Google/diretorios/Instagram. Nome generico sem correspondencia confiavel. Sem fonte real para preencher dados."
+  },
+  {
+    "name": "Arena Society Araucária",
+    "id": "DYO0hWh7dEu13eEBQ3iO",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nao encontrado com seguranca. Nenhum estabelecimento publicado com o nome 'Arena Society Araucaria' no endereco Rua Dr. Victor do Amaral 900, Centro, Araucaria. Existe um perfil @arena.araucaria no Instagram e um projeto 'Arena Brasil' planejado em Araucaria (bairro Capela Velha), mas nenhum confirma o nome+endereco do input. @arenasocietygru e de Guarulhos-SP (cidade diferente, excluido). Sem match por nome+endereco - nao preenchido para evitar fabricacao."
+  },
+  {
+    "name": "Arena Society Mandirituba",
+    "id": "2g07w8mS1LfUUzBIxA7J",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nao confirmado. Existe 'Arena Society Chaverinho LTDA' registrada em Mandirituba/PR (CNPJ 15.780.881/0001-88), porem o registro consta como BAIXADA (inativa) na Serasa Experian, sem confirmacao de endereco na Rua da Liberdade 500 nem do nome 'Arena Society Mandirituba' do input. Nome do input e generico e nao bate com a razao social ativa. Sem fonte real e atual para preencher dados; marcado found:false para nao fabricar."
+  },
+  {
+    "name": "Ginásio de Esportes Apollo",
+    "id": "O9TJN4sImPCF1ZrgQ32m",
+    "found": true,
+    "phone": {
+      "value": "+55 41 3278-2209",
+      "source": "https://ginasioapollo.com.br/localizacao/",
+      "confidence": "high"
+    },
+    "whatsapp": {
+      "value": "+55 41 99960-2209",
+      "source": "https://ginasioapollo.com.br/localizacao/",
+      "confidence": "high"
+    },
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": {
+      "value": 9,
+      "source": "https://ginasioapollo.com.br/",
+      "confidence": "high"
+    },
+    "amenities": {
+      "value": ["estacionamento", "estacionamento monitorado", "vestiário", "churrasqueira", "bar", "lanchonete", "quadra society", "futsal", "vôlei", "basquete", "beach tênis", "futevôlei", "vôlei de praia"],
+      "source": "https://ginasioapollo.com.br/",
+      "confidence": "high"
+    },
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": {
+      "value": "https://ginasioapollo.com.br/",
+      "source": "https://ginasioapollo.com.br/",
+      "confidence": "high"
+    },
+    "instagram": {
+      "value": "ginasiodeesportesapollo",
+      "source": "https://www.facebook.com/ginasiodeesportesapollo/",
+      "confidence": "med"
+    },
+    "notes": "Confirmado - site oficial ginasioapollo.com.br (CNPJ 00.415.167/0001-13, fundado 1995). Endereco Rua Canal Belem 8027, Uberaba, Curitiba (bate com input). 10.000m2, 9 quadras no total: futsal, volei, basquete, beach tenis, futevolei, volei de praia e society. Estrutura: vestiarios amplos, estacionamento monitorado (130+ vagas, 20 cameras, com seguro), churrasqueiras, bar/lanchonete para 150+ pessoas. Tel fixo (41) 3278-2209 e WhatsApp (41) 99960-2209 do site. Handle Instagram @ginasiodeesportesapollo do Facebook oficial - confianca media pois nao confirmei perfil ativo no Instagram. Horarios e coordenadas exatas e preco/hora nao publicados de forma confiavel - mantidos null."
+  }
+]

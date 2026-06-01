@@ -1,0 +1,505 @@
+[
+  {
+    "id": "MfRt6fKpuSmXQ6B9xpY6",
+    "name": "JB Esportes & Eventos",
+    "address": "Rua João Bettega, 3173 - Portão, Curitiba - PR",
+    "cep": "81070-001",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "jbesportes",
+    "seedFields": 8
+  },
+  {
+    "id": "ELbAu0wkD9aDnD7N7dkx",
+    "name": "Brasil Soccer",
+    "address": "Rua João Bettega, 1250 - Portão, Curitiba - PR",
+    "cep": "81050-030",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "brasilsoccer",
+    "seedFields": 5
+  },
+  {
+    "id": "AjWzq5eV6eQaeSvDwkqo",
+    "name": "Top Sports Centro Esportivo",
+    "address": "Rua João Bettega, 2709 - Portão, Curitiba - PR",
+    "cep": "81070-460",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "topsports",
+    "seedFields": 6
+  },
+  {
+    "id": "zMy9DLGBQpLF0PTILwRl",
+    "name": "Arena Amigos da Bola",
+    "address": "Rua Estados Unidos, 2851 - Boa Vista, Curitiba - PR",
+    "cep": "82540-030",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "arenaamigosdabola",
+    "seedFields": 2
+  },
+  {
+    "id": "oRiWPQX89Z7s7A9vPVDy",
+    "name": "Eco Soccer",
+    "address": "Rua Nilo Peçanha, 2575 - Pilarzinho, Curitiba - PR",
+    "cep": "82120-440",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 3
+  },
+  {
+    "id": "WLWKn0C6qhydhyAwX4Eo",
+    "name": "Copacabana Sports",
+    "address": "Rua Antônio Simm, 809 - Capão da Imbuia, Curitiba - PR",
+    "cep": "82800-290",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "copacabanasportscwb",
+    "seedFields": 3
+  },
+  {
+    "id": "H60z8avNfkEpm9ZutY4u",
+    "name": "Duga Sports",
+    "address": "Rua Dr. Joaquim Ignácio Silveira da Motta, 1211 - Uberaba, Curitiba - PR",
+    "cep": "81530-512",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "dugasports",
+    "seedFields": 2
+  },
+  {
+    "id": "Un9OwAnLThCgRfLP3YEE",
+    "name": "Goleadores Futebol Society",
+    "address": "Av. Senador Salgado Filho, 1690 - Guabirotuba, Curitiba - PR",
+    "cep": "81510-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 7
+  },
+  {
+    "id": "ISRzqt6b4P2aiHqgYYCU",
+    "name": "Meia Alta Society",
+    "address": "Rua Nossa Senhora da Cabeça, 1845 - CIC, Curitiba - PR",
+    "cep": "81310-010",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 3
+  },
+  {
+    "id": "N1ogTZsLavYPYVAYrJAR",
+    "name": "Premium Esportes e Eventos",
+    "address": "Rua Renato Polatti, 2535 - Campo Comprido, Curitiba - PR",
+    "cep": "81230-170",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "premiumsoccer",
+    "seedFields": 4
+  },
+  {
+    "id": "nRkGxfLfHGMVjkTbPTTe",
+    "name": "BR Sports",
+    "address": "BR-116, 15499 - Xaxim, Curitiba - PR",
+    "cep": "81690-300",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 2
+  },
+  {
+    "id": "zGk5CBVm9hbNDnOsv8Ba",
+    "name": "Arena Boqueirão",
+    "address": "Rua Coronel Luiz José dos Santos, 2100 - Boqueirão, Curitiba - PR",
+    "cep": "81750-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 2
+  },
+  {
+    "id": "7YkBwGnX0JRuAYOhj2pG",
+    "name": "Baldan Sports Futsal",
+    "address": "Rua Izaac Ferreira da Cruz, 4500 - Sítio Cercado, Curitiba - PR",
+    "cep": "81900-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 2
+  },
+  {
+    "id": "eIC10pD9MKarRnSwQXeA",
+    "name": "Arena Xaxim",
+    "address": "Rua Francisco Derosso, 5000 - Xaxim, Curitiba - PR",
+    "cep": "81810-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 3
+  },
+  {
+    "id": "finPyX1TdQ0vJcIv5FTd",
+    "name": "Arena Santa Quitéria",
+    "address": "Rua Rezala Simão, 1200 - Santa Quitéria, Curitiba - PR",
+    "cep": "80330-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 2
+  },
+  {
+    "id": "gWlNEVRgIIe7L736US2z",
+    "name": "Arena Orleans",
+    "address": "Rua Professor João Falarz, 3500 - Orleans, Curitiba - PR",
+    "cep": "81200-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 2
+  },
+  {
+    "id": "HeIqGsxzCEouxJvQFatj",
+    "name": "Arena Tarumã",
+    "address": "Rua Konrad Adenauer, 1500 - Tarumã, Curitiba - PR",
+    "cep": "82800-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 2
+  },
+  {
+    "id": "VlUfWNI6kxkjALUQLzy5",
+    "name": "Arena Alto da XV",
+    "address": "Rua Itupava, 1300 - Alto da XV, Curitiba - PR",
+    "cep": "80040-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 2
+  },
+  {
+    "id": "4p7YBDyIA1mCUnJIrzq2",
+    "name": "Arena Bairro Alto",
+    "address": "Rua Alberico Flores Bueno, 2500 - Bairro Alto, Curitiba - PR",
+    "cep": "82840-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  },
+  {
+    "id": "sXKEQAODzlLTi96PVK5T",
+    "name": "Arena Hauer (Fut & Chopp)",
+    "address": "Rua Waldemar Kost, 800 - Hauer, Curitiba - PR",
+    "cep": "81630-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  },
+  {
+    "id": "6HcoPAddX0Jfh4fYKmqS",
+    "name": "Arena Tatuquara",
+    "address": "Rua Enette Dubard, 3000 - Tatuquara, Curitiba - PR",
+    "cep": "81480-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  },
+  {
+    "id": "B6fFiiBIkdKFZkM9jUJJ",
+    "name": "Quadra Society Santa Cândida",
+    "address": "Rua Theodoro Makiolka, 2500 - Santa Cândida, Curitiba - PR",
+    "cep": "82630-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  },
+  {
+    "id": "VSZqcyHZPQ5iGsUZHIAP",
+    "name": "Quadra Society Cajuru",
+    "address": "Avenida Prefeito Maurício Fruet, 2000 - Cajuru, Curitiba - PR",
+    "cep": "82900-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  },
+  {
+    "id": "x2JoEFDoQvDtyRMyGLfe",
+    "name": "Quadra Society Barreirinha",
+    "address": "Avenida Anita Garibaldi, 5500 - Barreirinha, Curitiba - PR",
+    "cep": "82110-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  },
+  {
+    "id": "rraw7mk8wKaPcEVQWcZe",
+    "name": "Quadra Futsal Água Verde",
+    "address": "Rua Brasilio Itiberê, 3000 - Água Verde, Curitiba - PR",
+    "cep": "80230-000",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  },
+  {
+    "id": "gfkNKZgYq78GjbrZObSd",
+    "name": "Camisa 9 Futebol e Diversão",
+    "address": "Av. Ayrton Senna da Silva, 2700 - Centro, Pinhais - PR",
+    "cep": "83323-290",
+    "city": "Pinhais",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "F3pHv28Zo9fA2JPSytB5",
+    "name": "Cancha do Corinthians",
+    "address": "Rua Henrique Coelho Neto, 534 - Vargem Grande, Pinhais - PR",
+    "cep": "83330-021",
+    "city": "Pinhais",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "OuEcqeiHIKGyQdRl0DXh",
+    "name": "Futebol Society Barcelona",
+    "address": "Rua Marialva, 506 - Emiliano Perneta, Pinhais - PR",
+    "cep": "83324-197",
+    "city": "Pinhais",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "FBfwAJkxAwFsFjHxvZUl",
+    "name": "Arena Ceschin Fut7",
+    "address": "Rua Europa, 800 - Centro, Pinhais - PR",
+    "cep": "83320-000",
+    "city": "Pinhais",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "kS4eS2AQnqxZNheeeJtu",
+    "name": "Centro Esportivo Mendes",
+    "address": "Rua Rio Amazonas, 1200 - Weissópolis, Pinhais - PR",
+    "cep": "83322-000",
+    "city": "Pinhais",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "WZjyLQLq3PJLQ9vs8Fkg",
+    "name": "Arena Society Colombo",
+    "address": "Rua XV de Novembro, 1500 - Centro, Colombo - PR",
+    "cep": "83414-000",
+    "city": "Colombo",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "9Rqe4Gjc9VLBQf5EUidU",
+    "name": "Arena Society São José dos Pinhais",
+    "address": "Rua Almirante Alexandrino, 2500 - Afonso Pena, São José dos Pinhais - PR",
+    "cep": "83045-000",
+    "city": "São José dos Pinhais",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "DYO0hWh7dEu13eEBQ3iO",
+    "name": "Arena Society Araucária",
+    "address": "Rua Doutor Victor do Amaral, 900 - Centro, Araucária - PR",
+    "cep": "83702-040",
+    "city": "Araucária",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "ggcCsB8F3n2RBDJSGTBY",
+    "name": "Arena Society Campo Largo",
+    "address": "Rua XV de Novembro, 2000 - Centro, Campo Largo - PR",
+    "cep": "83601-030",
+    "city": "Campo Largo",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "sNNuYZT1OfYzEWMJXVn4",
+    "name": "Arena Society Fazenda Rio Grande",
+    "address": "Rua Jatobá, 1800 - Eucaliptos, Fazenda Rio Grande - PR",
+    "cep": "83820-000",
+    "city": "Fazenda Rio Grande",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "cXFt1WMeYRCZSTXJrn82",
+    "name": "Arena Society Almirante Tamandaré",
+    "address": "Rua Domingos Scucato, 1200 - Centro, Almirante Tamandaré - PR",
+    "cep": "83501-000",
+    "city": "Almirante Tamandaré",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "Ojx204ig6d1lQxBJBLL6",
+    "name": "Arena Society Piraquara",
+    "address": "Rua Barão do Cerro Azul, 900 - Centro, Piraquara - PR",
+    "cep": "83301-000",
+    "city": "Piraquara",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "ivSCYkgLWUd40xReyVka",
+    "name": "Arena Society Quatro Barras",
+    "address": "Rua Nilo Peçanha, 500 - Centro, Quatro Barras - PR",
+    "cep": "83420-000",
+    "city": "Quatro Barras",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "sQYpEfhhzXXdCIZ4ZaPI",
+    "name": "Arena Society Rio Branco do Sul",
+    "address": "Rua Horácio Santos, 600 - Centro, Rio Branco do Sul - PR",
+    "cep": "83540-000",
+    "city": "Rio Branco do Sul",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "6yytP5S1vsfANXBdY4Q8",
+    "name": "Arena Society Campina Grande do Sul",
+    "address": "Rua Nilce Terezinha Zanetti, 700 - Centro, Campina Grande do Sul - PR",
+    "cep": "83430-000",
+    "city": "Campina Grande do Sul",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "AkNFKiFxt3DCafas52XS",
+    "name": "Arena Society Balsa Nova",
+    "address": "Rua José Ferreira, 400 - Centro, Balsa Nova - PR",
+    "cep": "83650-000",
+    "city": "Balsa Nova",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "2g07w8mS1LfUUzBIxA7J",
+    "name": "Arena Society Mandirituba",
+    "address": "Rua da Liberdade, 500 - Centro, Mandirituba - PR",
+    "cep": "83800-000",
+    "city": "Mandirituba",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "gt1NP6d4p48DWe76IjrO",
+    "name": "Arena Society Contenda",
+    "address": "Rua XV de Novembro, 300 - Centro, Contenda - PR",
+    "cep": "83730-000",
+    "city": "Contenda",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "AxL9PLQKQk0XPSxly9kn",
+    "name": "Arena Society Piên",
+    "address": "Rua Amazonas, 450 - Centro, Piên - PR",
+    "cep": "83860-000",
+    "city": "Piên",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "dh83ciyHhRTVl9JKnMrh",
+    "name": "Arena Society Tijucas do Sul",
+    "address": "Rua XV de Novembro, 280 - Centro, Tijucas do Sul - PR",
+    "cep": "83190-000",
+    "city": "Tijucas do Sul",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "yVh5QuEexQMfNikSu8Yv",
+    "name": "Arena Society Campo Magro",
+    "address": "Rua Santo Antônio, 350 - Centro, Campo Magro - PR",
+    "cep": "83535-000",
+    "city": "Campo Magro",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "h6bEPF78tHFW1DGEcAJp",
+    "name": "Arena Society Doutor Ulysses",
+    "address": "Rua Principal, 200 - Centro, Doutor Ulysses - PR",
+    "cep": "83590-000",
+    "city": "Doutor Ulysses",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "6YlOsnxQQhds3XfBqpCi",
+    "name": "Arena Society Adrianópolis",
+    "address": "Rua Prefeito Afonso Gonçalves, 150 - Centro, Adrianópolis - PR",
+    "cep": "83490-000",
+    "city": "Adrianópolis",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "On8jcTb7ZNzOMHMfII4L",
+    "name": "Arena Society Cerro Azul",
+    "address": "Rua XV de Novembro, 500 - Centro, Cerro Azul - PR",
+    "cep": "83570-000",
+    "city": "Cerro Azul",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "1UGW2ZyqMB1q5KxKMmd4",
+    "name": "Arena Society Itaperuçu",
+    "address": "Rua Pedro Bittencourt, 600 - Centro, Itaperuçu - PR",
+    "cep": "83560-000",
+    "city": "Itaperuçu",
+    "state": "PR",
+    "instagram": null
+  },
+  {
+    "id": "O9TJN4sImPCF1ZrgQ32m",
+    "name": "Ginásio de Esportes Apollo",
+    "address": "Rua Canal Belém (Marginal Leste), 8027 - Uberaba, Curitiba - PR",
+    "cep": "81580-190",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "@ginasiodeesportesapollo"
+  },
+  {
+    "id": "2MPmU31JL0LBnRGjOZp0",
+    "name": "Meia Praia Sport Bar",
+    "address": "Rua Engenheiro João Bley Filho, 95 - Pinheirinho, Curitiba - PR",
+    "cep": "81870-370",
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": "meiapraiasports"
+  },
+  {
+    "id": "gWXehNpYa7sEWBURLsL0",
+    "name": "Area Fernandes",
+    "address": "Rua Bituruna, 449 - Curitiba",
+    "cep": null,
+    "city": "Curitiba",
+    "state": "PR",
+    "instagram": null,
+    "seedFields": 1
+  }
+]

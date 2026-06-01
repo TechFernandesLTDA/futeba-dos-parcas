@@ -1,0 +1,150 @@
+[
+  {
+    "name": "Eco Soccer",
+    "id": "oRiWPQX89Z7s7A9vPVDy",
+    "found": true,
+    "phone": {
+      "value": "(41) 99671-8900",
+      "source": "https://naquadra.com.br/perfil-quadra-de-futebol-society-eco-soccer-pr-curitiba-pilarzinho-id-00073",
+      "confidence": "high"
+    },
+    "whatsapp": {
+      "value": "(41) 99671-8900",
+      "source": "https://naquadra.com.br/perfil-quadra-de-futebol-society-eco-soccer-pr-curitiba-pilarzinho-id-00073",
+      "confidence": "med"
+    },
+    "opening_time": {
+      "value": "18:00",
+      "source": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/curitiba-pr/eco-soccer-locacao-de-quadras-sinteticas/62863309911b8129b7e7ae7b",
+      "confidence": "med"
+    },
+    "closing_time": {
+      "value": "00:00",
+      "source": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/curitiba-pr/eco-soccer-locacao-de-quadras-sinteticas/62863309911b8129b7e7ae7b",
+      "confidence": "med"
+    },
+    "operating_days": {
+      "value": [1, 2, 3, 4, 5, 6],
+      "source": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/curitiba-pr/eco-soccer-locacao-de-quadras-sinteticas/62863309911b8129b7e7ae7b",
+      "confidence": "high"
+    },
+    "num_fields": {
+      "value": 2,
+      "source": "https://avaliacoesbrasil.com/campo-de-futebol/curitiba/eco-soccer-locacao-de-quadras-/",
+      "confidence": "med"
+    },
+    "amenities": {
+      "value": ["quadra coberta", "quadra descoberta", "grama sintética", "placar eletrônico", "churrasqueira", "salão de festas"],
+      "source": "https://avaliacoesbrasil.com/campo-de-futebol/curitiba/eco-soccer-locacao-de-quadras-/",
+      "confidence": "med"
+    },
+    "hourly_price": null,
+    "latitude": {
+      "value": -25.398275,
+      "source": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/curitiba-pr/eco-soccer-locacao-de-quadras-sinteticas/62863309911b8129b7e7ae7b",
+      "confidence": "high"
+    },
+    "longitude": {
+      "value": -49.273674,
+      "source": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/curitiba-pr/eco-soccer-locacao-de-quadras-sinteticas/62863309911b8129b7e7ae7b",
+      "confidence": "high"
+    },
+    "website": null,
+    "instagram": {
+      "value": "ecosoccer",
+      "source": "https://www.instagram.com/ecosoccer/",
+      "confidence": "high"
+    },
+    "notes": "Confirmado por nome+endereço (Rua Nilo Peçanha 2575, Pilarzinho, CEP 82120-440). CNPJ 16.480.996/0001-10. 2 quadras de grama sintética (1 coberta + 1 descoberta), placar eletrônico, salão com 2 churrasqueiras. ~421 avaliações no Google. Horário Mon-Sex 18h-00h, Sáb 09h-20h. WhatsApp inferido do mesmo número de telefone (não confirmado explicitamente como WhatsApp)."
+  },
+  {
+    "name": "Arena Xaxim",
+    "id": "eIC10pD9MKarRnSwQXeA",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Não encontrado nenhum estabelecimento chamado 'Arena Xaxim' na Rua Francisco Derosso, 5000. As quadras reais nessa rua estão em números diferentes e com outros nomes: Esporte Clube Olímpico (nº 3269) e Shopping & Sports (nº 3488). Sem match por nome+endereço; provável entrada genérica/seed. Não atribuí dados de outros venues para não violar a regra de match exato."
+  },
+  {
+    "name": "Quadra Society Cajuru",
+    "id": "VSZqcyHZPQ5iGsUZHIAP",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nenhum estabelecimento com este nome encontrado na Av. Prefeito Maurício Fruet, 2000, Cajuru. O endereço corresponde à região da Rua da Cidadania/Administração Regional Cajuru (prédios públicos). Nome genérico sem presença online verificável; provável entrada seed."
+  },
+  {
+    "name": "Arena Society São José dos Pinhais",
+    "id": "9Rqe4Gjc9VLBQf5EUidU",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nome genérico; existem várias arenas em SJP (arena.sjp, Arena ArtGol, Arena São José Society) mas nenhuma confirmada na Rua Almirante Alexandrino, 2500, Afonso Pena. No nº ~2700 dessa rua há academia (Phd Alexandrino/Fit Company), não arena de futebol. Sem match exato por nome+endereço; não atribuí outras arenas para não fabricar dados."
+  },
+  {
+    "name": "Arena Society Balsa Nova",
+    "id": "AkNFKiFxt3DCafas52XS",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nenhum venue chamado 'Arena Society Balsa Nova' encontrado online na Rua José Ferreira, 400, Centro, Balsa Nova - PR. Nome genérico, provável entrada seed sem presença digital."
+  },
+  {
+    "name": "Arena Society Itaperuçu",
+    "id": "1UGW2ZyqMB1q5KxKMmd4",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nenhum venue chamado 'Arena Society Itaperuçu' encontrado online na Rua Pedro Bittencourt, 600, Centro, Itaperuçu - PR. Nome genérico, provável entrada seed sem presença digital."
+  }
+]

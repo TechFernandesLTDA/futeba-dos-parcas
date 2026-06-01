@@ -1,0 +1,206 @@
+[
+  {
+    "name": "Top Sports Centro Esportivo",
+    "id": "AjWzq5eV6eQaeSvDwkqo",
+    "found": true,
+    "phone": {
+      "value": "(41) 3346-1117",
+      "source": "https://www.topfutebol.com.br/quadras",
+      "confidence": "high"
+    },
+    "whatsapp": {
+      "value": "+55 41 98403-9797",
+      "source": "https://www.topfutebol.com.br/quadras",
+      "confidence": "high"
+    },
+    "opening_time": {
+      "value": "07:30",
+      "source": "https://naquadra.com.br/perfil-multi-modalidade-top-sports-pr-curitiba-novo-mundo-id-00116",
+      "confidence": "low"
+    },
+    "closing_time": {
+      "value": "00:30",
+      "source": "https://naquadra.com.br/perfil-multi-modalidade-top-sports-pr-curitiba-novo-mundo-id-00116",
+      "confidence": "low"
+    },
+    "operating_days": {
+      "value": [1, 2, 3, 4, 5, 6, 7],
+      "source": "https://naquadra.com.br/perfil-multi-modalidade-top-sports-pr-curitiba-novo-mundo-id-00116",
+      "confidence": "low"
+    },
+    "num_fields": {
+      "value": 7,
+      "source": "https://www.topfutebol.com.br/topsports",
+      "confidence": "high"
+    },
+    "amenities": {
+      "value": ["estacionamento gratuito", "bar e restaurante", "vestiários", "churrasqueiras", "salão de eventos", "iluminação led", "quadras cobertas", "grama sintética", "quadra de areia", "quadra poliesportiva", "lanchonete"],
+      "source": "https://linktr.ee/topsportscuritiba",
+      "confidence": "high"
+    },
+    "hourly_price": null,
+    "latitude": {
+      "value": -25.4751637,
+      "source": "https://nominatim.openstreetmap.org/search?format=jsonv2&q=Rua+Joao+Bettega+2709+Portao+Curitiba+PR",
+      "confidence": "med"
+    },
+    "longitude": {
+      "value": -49.2989748,
+      "source": "https://nominatim.openstreetmap.org/search?format=jsonv2&q=Rua+Joao+Bettega+2709+Portao+Curitiba+PR",
+      "confidence": "med"
+    },
+    "website": {
+      "value": "https://www.topfutebol.com.br",
+      "source": "https://www.topfutebol.com.br/quadras",
+      "confidence": "high"
+    },
+    "instagram": {
+      "value": "topsportsfutebol",
+      "source": "https://www.instagram.com/topsportsfutebol/",
+      "confidence": "high"
+    },
+    "notes": "Endereço do seed (Rua João Bettega, 2709 - Portão) confere com o site oficial, que indica ser o NOVO endereço. num_fields=7 (4 sintéticas + 2 areia + 1 poliesportiva de madeira) confirmado pelo site oficial. Horários (07:30-00:30 seg-sex, 07:30-23:00 sáb, 09:00-14:00 dom) vêm de listagem Na Quadra atrelada ao ENDEREÇO ANTIGO (Rua Carolina Castelli, Novo Mundo) — confidence baixa, podem ter mudado na nova sede. Coordenadas geocodificadas (nível de rua) via Nominatim a partir do endereço confirmado. Instagram corrigido de 'topsports' para 'topsportsfutebol'. CNPJ 97.486.757/0001-79."
+  },
+  {
+    "name": "Arena Boqueirão",
+    "id": "zGk5CBVm9hbNDnOsv8Ba",
+    "found": true,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": {
+      "value": ["futebol society 7", "beach tennis", "vôlei", "futevôlei", "padel"],
+      "source": "https://www.instagram.com/arenaboqueirao/",
+      "confidence": "med"
+    },
+    "hourly_price": null,
+    "latitude": {
+      "value": -25.4965342,
+      "source": "https://nominatim.openstreetmap.org/search?format=jsonv2&q=Rua+Coronel+Luiz+Jose+dos+Santos+2100+Boqueirao+Curitiba+PR",
+      "confidence": "low"
+    },
+    "longitude": {
+      "value": -49.2427555,
+      "source": "https://nominatim.openstreetmap.org/search?format=jsonv2&q=Rua+Coronel+Luiz+Jose+dos+Santos+2100+Boqueirao+Curitiba+PR",
+      "confidence": "low"
+    },
+    "website": null,
+    "instagram": {
+      "value": "arenaboqueirao",
+      "source": "https://www.instagram.com/arenaboqueirao/",
+      "confidence": "med"
+    },
+    "notes": "Existe um perfil Instagram @arenaboqueirao em Curitiba (~3.097 seguidores) oferecendo Futebol Society 7, Beach Tennis, Vôlei, Futevôlei e Padel — consistente com o nome e a região (Boqueirão). NÃO foi possível confirmar que o endereço exato é Rua Coronel Luiz José dos Santos, 2100: o bio do Instagram não expôs o endereço (conteúdo em imagem) e nenhuma fonte textual confirmou a rua/número. Coordenadas geocodificadas do endereço do seed (nível de rua, confidence baixa) — usar com cautela até confirmar a casa. Não há telefone/whatsapp/horários/preço/num_fields publicados verificáveis vinculados a este endereço."
+  },
+  {
+    "name": "Arena Tatuquara",
+    "id": "6HcoPAddX0Jfh4fYKmqS",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nenhum estabelecimento comercial chamado 'Arena Tatuquara' encontrado online no endereço Rua Enette Dubard, 3000, Tatuquara, Curitiba (sem Instagram/Facebook/site/Google Maps correspondente). Existe uma quadra pública de grama sintética inaugurada pela Prefeitura de Curitiba na Praça Soldado Wagner Sampaio, entre Rua Carlos Munhoz da Rocha e Rua Enette Dubard (fonte: servidor.curitiba.pr.gov.br/noticias/.../76507), mas é equipamento público municipal, sem nome comercial, contato ou agendamento — não corresponde a uma 'Arena' comercial. Marcado found=false por não ser possível verificar o venue do seed."
+  },
+  {
+    "name": "Centro Esportivo Mendes",
+    "id": "kS4eS2AQnqxZNheeeJtu",
+    "found": true,
+    "phone": {
+      "value": "(41) 99788-0133",
+      "source": "https://wellhub.com/pt-br/search/partners/centro-esportivo-mendes-pineville/",
+      "confidence": "high"
+    },
+    "whatsapp": {
+      "value": "(41) 99788-0133",
+      "source": "https://wellhub.com/pt-br/search/partners/centro-esportivo-mendes-pineville/",
+      "confidence": "med"
+    },
+    "opening_time": {
+      "value": "17:45",
+      "source": "https://wellhub.com/pt-br/search/partners/centro-esportivo-mendes-pineville/",
+      "confidence": "med"
+    },
+    "closing_time": {
+      "value": "23:50",
+      "source": "https://wellhub.com/pt-br/search/partners/centro-esportivo-mendes-pineville/",
+      "confidence": "med"
+    },
+    "operating_days": {
+      "value": [1, 2, 3, 4, 5, 6],
+      "source": "https://wellhub.com/pt-br/search/partners/centro-esportivo-mendes-pineville/",
+      "confidence": "med"
+    },
+    "num_fields": null,
+    "amenities": {
+      "value": ["chuveiro", "estacionamento", "loja de artigos esportivos", "mini bar", "personal trainer", "vestiário", "wi-fi", "bar", "espaço para eventos"],
+      "source": "https://wellhub.com/pt-br/search/partners/centro-esportivo-mendes-pineville/",
+      "confidence": "med"
+    },
+    "hourly_price": null,
+    "latitude": {
+      "value": -25.4357101,
+      "source": "https://nominatim.openstreetmap.org/search?format=jsonv2&q=Rua+Libia+161+Pineville+Pinhais+PR",
+      "confidence": "low"
+    },
+    "longitude": {
+      "value": -49.1702156,
+      "source": "https://nominatim.openstreetmap.org/search?format=jsonv2&q=Rua+Libia+161+Pineville+Pinhais+PR",
+      "confidence": "low"
+    },
+    "website": null,
+    "instagram": {
+      "value": "mendesesportes",
+      "source": "https://www.instagram.com/mendesesportes/",
+      "confidence": "high"
+    },
+    "notes": "ALERTA DE ENDEREÇO: o venue real (mesmo nome, mesma cidade Pinhais, CNPJ 04.023.155/0001-02) está em R. Líbia, 161-283, Pineville, Pinhais (confirmado por Wellhub + registro CNPJ), NÃO em Rua Rio Amazonas, Weissópolis (endereço do seed). O endereço do seed não aparece em nenhuma fonte (Wellhub, CNPJ, Instagram, Facebook) — provavelmente desatualizado/incorreto. Tratado como mesmo venue por nome+cidade. Marca-se também como 'Mendes Esportes' / @mendesesportes no Instagram (Fut7 & Areia). Horários: seg-sex 17:45-23:50, sáb 10:30-22:00, dom fechado (Wellhub; pode ser janela do plano Wellhub, não necessariamente horário total). Modalidades: futebol, futevôlei, vôlei de areia. Coordenadas geocodificadas da R. Líbia (nível de rua). num_fields não publicado. Necessário agendamento."
+  },
+  {
+    "name": "Arena Society Rio Branco do Sul",
+    "id": "sQYpEfhhzXXdCIZ4ZaPI",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nenhuma 'Arena Society' encontrada em Rio Branco do Sul/PR no endereço Rua Horácio Santos, 600, Centro (sem Instagram/Facebook/site/Google Maps/diretório de quadras correspondente). Os resultados de 'Arena Society' são todos de OUTRAS cidades/estados (Guarulhos-SP, Cariacica-ES, etc.) e foram descartados pela regra de match nome+cidade. A página topfutebol.com.br/aluguel-de-quadra-de-futebol-society-em-rio-branco-do-sul é landing page de SEO do Top Sports (Curitiba), não um venue local. Marcado found=false."
+  },
+  {
+    "name": "Arena Society Adrianópolis",
+    "id": "6YlOsnxQQhds3XfBqpCi",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nenhuma 'Arena Society' encontrada em Adrianópolis/PR no endereço Rua Prefeito Afonso Gonçalves, 150, Centro (sem Instagram/Facebook/site/Google Maps/diretório correspondente). Todos os perfis 'Arena Society' achados são de outras cidades/estados e descartados pela regra nome+cidade. Adrianópolis é município pequeno do Vale do Ribeira (PR) e o venue não tem presença online verificável. Marcado found=false."
+  }
+]
