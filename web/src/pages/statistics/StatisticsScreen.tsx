@@ -40,14 +40,14 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { DonutChart } from '../../components/charts/DonutChart';
 
 export const StatisticsScreen: React.FC = () => {
-  useDocumentTitle('Estatísticas');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.statistics'));
   const navigate = useNavigate();
   const theme = useTheme();
   const gColors = useGamificationColors();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showError } = useToast();
-  const { t } = useTranslation();
   const navigateBack = useNavigateBack();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -318,14 +318,14 @@ export const StatisticsScreen: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                         <Typography variant="caption" sx={{ width: 70 }}>{t('statistics.currentStreak')}</Typography>
                         <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${(stats.currentStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'warning.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
+                          <Box sx={{ height: '100%', width: `${Math.min((stats.currentStreak / memoizedStats.maxStreak) * 100, 100)}%`, bgcolor: 'warning.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
                         </Box>
                         <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.currentStreak}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="caption" sx={{ width: 70 }}>{t('statistics.bestStreak')}</Typography>
                         <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.success.main, 0.1) }}>
-                          <Box sx={{ height: '100%', width: `${(stats.bestStreak / memoizedStats.maxStreak) * 100}%`, bgcolor: 'success.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
+                          <Box sx={{ height: '100%', width: `${Math.min((stats.bestStreak / memoizedStats.maxStreak) * 100, 100)}%`, bgcolor: 'success.main', borderRadius: 1, transition: (tm) => tm.transitions.create('width', { duration: 500 }) }} />
                         </Box>
                         <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.bestStreak}</Typography>
                       </Box>

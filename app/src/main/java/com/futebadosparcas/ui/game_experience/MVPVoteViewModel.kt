@@ -1,7 +1,9 @@
 package com.futebadosparcas.ui.game_experience
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.MVPVote
 import com.futebadosparcas.domain.model.VoteCategory
@@ -69,7 +71,7 @@ class MVPVoteViewModel(
                     allConfirmations = confirmations.filter { it.status == "CONFIRMED" }
                     
                     if (allConfirmations.isEmpty()) {
-                        _uiState.value = MVPVoteUiState.Error("Nenhum jogador confirmado para votar.", isOwner)
+                        _uiState.value = MVPVoteUiState.Error("Nenhum jogador confirmado para votar.", isOwner, R.string.mvp_vote_error_no_players)
                     } else {
                         // Initial Category: MVP
                         val category = VoteCategory.MVP
@@ -209,5 +211,5 @@ sealed class MVPVoteUiState {
         override val isOwner: Boolean
     ) : MVPVoteUiState()
     data class Finished(override val isOwner: Boolean) : MVPVoteUiState()
-    data class Error(val message: String, override val isOwner: Boolean = false) : MVPVoteUiState()
+    data class Error(val message: String, override val isOwner: Boolean = false, @StringRes val errorResId: Int? = null) : MVPVoteUiState()
 }

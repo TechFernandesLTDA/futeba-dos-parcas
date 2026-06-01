@@ -235,8 +235,8 @@ data class Game(
         const val COLLECTION = "games"
 
         // Limites de jogadores
-        const val MIN_PLAYERS = 4
-        const val MAX_PLAYERS = 40
+        const val MIN_PLAYERS = 2
+        const val MAX_PLAYERS = 50
         const val DEFAULT_MAX_PLAYERS = 14
 
         // Limites de goleiros

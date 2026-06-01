@@ -42,6 +42,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('FieldOwnerDashboardScreen');
 
@@ -141,7 +142,8 @@ const calculateStats = (locations: LocationData[], games: LocationGameData[]): L
 };
 
 export const FieldOwnerDashboardScreen: React.FC = () => {
-  useDocumentTitle('Painel do Dono de Campo');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.fieldOwnerDashboard'));
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/locations');
   const theme = useTheme();

@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
+import QRCode from 'qrcode';
 import {
   Box,
   Container,
@@ -19,6 +20,10 @@ import {
   useTheme,
   useMediaQuery,
   CircularProgress,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   SportsSoccer as SoccerIcon,
@@ -31,6 +36,8 @@ import {
   Edit as EditIcon,
   QrCode2 as QrCodeIcon,
   ArrowBack as BackIcon,
+  ContentCopy as DuplicateIcon,
+  CalendarMonth as CalendarIcon,
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -38,6 +45,7 @@ import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
+import { useDuplicateGameCopy } from '../../hooks/useDuplicateGameCopy';
 import { softDeleteGame, checkInToGame, generateCheckinToken } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -47,6 +55,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorScreen } from '../../components/common/ErrorScreen';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatGameDateLong } from '../../utils/dateFormatters';
+import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl } from '../../utils/calendarLinks';
 import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
 
@@ -68,6 +77,7 @@ export const GameDetailScreen: React.FC = () => {
   const { game, confirmations, loading, error } = useGameDetail(gameId || null);
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
   const { updateStatus, loading: statusLoading } = useUpdateGameStatus();
+  const { duplicateGame, loading: duplicateGameLoading } = useDuplicateGameCopy();
 
   const [tabValue, setTabValue] = useState(0);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -80,6 +90,7 @@ export const GameDetailScreen: React.FC = () => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [calendarAnchorEl, setCalendarAnchorEl] = useState<null | HTMLElement>(null);
   const [editForm, setEditForm] = useState({
     date: '',
     time: '',
@@ -145,26 +156,75 @@ export const GameDetailScreen: React.FC = () => {
     }
   };
 
+  const gameShareUrl = game ? `https://futebadosparcas.web.app/game/${game.id}` : '';
+
   const handleShare = async () => {
     if (!game) return;
 
     const shareData = {
       title: t('games.detail.shareTitle', { location: game.locationName }),
       text: t('games.detail.shareText', { date: formatGameDateLong(game.date), time: game.time, address: game.locationAddress }),
-      url: window.location.href,
+      url: gameShareUrl,
     };
 
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+        await navigator.clipboard.writeText(gameShareUrl);
         showSuccess(t('group.linkCopied'));
       }
     } catch (err) {
       // #2281: ignora cancelamento da share sheet; reporta demais erros.
       if (err instanceof DOMException && err.name === 'AbortError') return;
       showError(t('games.detail.shareError'));
+    }
+  };
+
+  const handleCalendarOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setCalendarAnchorEl(event.currentTarget);
+  };
+
+  const handleCalendarClose = () => {
+    setCalendarAnchorEl(null);
+  };
+
+  const handleAddToCalendar = (type: 'google' | 'ics' | 'outlook') => {
+    if (!game) return;
+    handleCalendarClose();
+
+    const event = {
+      title: `Futeba — ${game.locationName}`,
+      description: [
+        `⚽ Jogo: ${game.locationName}`,
+        `📅 ${game.date} — ${game.time}${game.endTime ? ` às ${game.endTime}` : ''}`,
+        `📍 ${game.locationAddress}`,
+        `👥 ${game.maxPlayers} vagas`,
+        game.rules ? `📋 ${game.rules}` : '',
+        '',
+        `Confirme sua presença: ${gameShareUrl}`,
+      ].filter(Boolean).join('\n'),
+      location: game.locationAddress,
+      startDate: game.date,
+      startTime: game.time,
+      endDate: game.date,
+      endTime: game.endTime || '',
+    };
+
+    if (type === 'google') {
+      window.open(generateGoogleCalendarUrl(event), '_blank');
+    } else if (type === 'outlook') {
+      window.open(generateOutlookCalendarUrl(event), '_blank');
+    } else {
+      downloadIcsFile(event);
+    }
+  };
+
+  const handleDuplicateGame = async () => {
+    if (!gameId) return;
+    const newGameId = await duplicateGame(gameId);
+    if (newGameId) {
+      navigate(`/game/${newGameId}`);
     }
   };
 
@@ -290,6 +350,36 @@ export const GameDetailScreen: React.FC = () => {
     ? `${window.location.origin}/checkin/${gameId}/${qrToken}`
     : null;
 
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrGenerateError, setQrGenerateError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (qrCheckInUrl) {
+      QRCode.toDataURL(qrCheckInUrl, { width: 250, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+        .then((url) => {
+          setQrDataUrl(url);
+          setQrGenerateError(null);
+        })
+        .catch(() => {
+          setQrGenerateError('Erro ao gerar QR code.');
+          setQrDataUrl(null);
+        });
+    } else {
+      setQrDataUrl(null);
+      setQrGenerateError(null);
+    }
+  }, [qrCheckInUrl]);
+
+  const handleDownloadQr = () => {
+    if (!qrDataUrl || !gameId) return;
+    const link = document.createElement('a');
+    link.download = `checkin-${gameId}.png`;
+    link.href = qrDataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
@@ -341,8 +431,48 @@ export const GameDetailScreen: React.FC = () => {
                 <ShareIcon />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Adicionar ao Calendário">
+              <IconButton onClick={handleCalendarOpen} aria-label="Adicionar ao Calendário">
+                <CalendarIcon />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={calendarAnchorEl}
+              open={Boolean(calendarAnchorEl)}
+              onClose={handleCalendarClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem onClick={() => handleAddToCalendar('google')}>
+                <ListItemIcon>
+                  <CalendarIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Google Calendar</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => handleAddToCalendar('ics')}>
+                <ListItemIcon>
+                  <CalendarIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>iCal / Apple</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => handleAddToCalendar('outlook')}>
+                <ListItemIcon>
+                  <CalendarIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Outlook</ListItemText>
+              </MenuItem>
+            </Menu>
             {canManage && (
               <>
+                <Tooltip title="Duplicar Jogo">
+                  <IconButton
+                    onClick={handleDuplicateGame}
+                    aria-label="Duplicar Jogo"
+                    disabled={duplicateGameLoading}
+                  >
+                    {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon />}
+                  </IconButton>
+                </Tooltip>
                 <Tooltip title={t('games.detail.editGame')}>
                   <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')}>
                     <EditIcon />
@@ -640,19 +770,16 @@ export const GameDetailScreen: React.FC = () => {
         <DialogTitle id="qr-dialog-title">{t('games.detail.qrCheckInTitle')}</DialogTitle>
         <DialogContent>
           <Box sx={{ textAlign: 'center', py: 2 }}>
-            {qrCheckInUrl && (
+            {qrCheckInUrl && qrDataUrl ? (
               <>
                 <Box
                   component="img"
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCheckInUrl)}`}
+                  src={qrDataUrl}
                   alt={t('games.detail.qrAlt')}
                   sx={{
                     width: 250,
                     height: 250,
                     mb: 2,
-                    // #2137: QR é preto-sobre-branco — o fundo branco é OBRIGATÓRIO
-                    // para escaneabilidade. Em dark/OLED adicionamos borda visível para
-                    // o "cartão" do QR não se fundir com o fundo escuro do dialog.
                     bgcolor: 'common.white',
                     p: 1,
                     borderRadius: 1,
@@ -665,22 +792,45 @@ export const GameDetailScreen: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   {t('games.detail.qrInstructions')}
                 </Typography>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={async () => {
-                    // #2281: clipboard.writeText pode lançar sem permissão (HTTP/sandbox)
-                    try {
-                      await navigator.clipboard.writeText(qrCheckInUrl);
-                      showSuccess(t('group.linkCopied'));
-                    } catch {
-                      showError(t('group.copyLinkError'));
-                    }
-                  }}
-                >
-                  {t('games.detail.copyLink')}
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(qrCheckInUrl);
+                        showSuccess(t('group.linkCopied'));
+                      } catch {
+                        showError(t('group.copyLinkError'));
+                      }
+                    }}
+                  >
+                    {t('games.detail.copyLink')}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={handleDownloadQr}
+                  >
+                    Baixar QR code
+                  </Button>
+                </Box>
               </>
+            ) : qrGenerateError ? (
+              <Typography variant="body2" color="error" sx={{ py: 4 }}>
+                {qrGenerateError}
+              </Typography>
+            ) : qrCheckInUrl ? (
+              <Box sx={{ py: 4 }}>
+                <CircularProgress size={32} />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Gerando QR code...
+                </Typography>
+              </Box>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
+                Nenhum QR code disponível.
+              </Typography>
             )}
           </Box>
         </DialogContent>

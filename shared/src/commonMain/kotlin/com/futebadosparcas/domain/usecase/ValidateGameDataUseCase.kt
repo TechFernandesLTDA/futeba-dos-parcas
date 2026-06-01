@@ -10,8 +10,8 @@ package com.futebadosparcas.domain.usecase
 object ValidateGameDataUseCase {
 
     // Limites de validacao centralizados
-    const val MIN_PLAYERS = 4
-    const val MAX_PLAYERS = 40
+    const val MIN_PLAYERS = 2
+    const val MAX_PLAYERS = 50
     const val MIN_TEAMS = 2
     const val MAX_TEAMS = 4
     const val MIN_GOALKEEPERS = 0

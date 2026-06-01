@@ -67,8 +67,8 @@ interface LocationReview {
 }
 
 export const LocationDetailScreen: React.FC = () => {
-  useDocumentTitle('Detalhes do Local');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.locationDetail'));
   const navigate = useNavigate();
   const theme = useTheme();
   const { user } = useAuth();
@@ -376,7 +376,7 @@ export const LocationDetailScreen: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography>Nota:</Typography>
-              <Rating value={newReviewRating} onChange={(_, v) => setNewReviewRating(v || 1)} />
+              <Rating value={newReviewRating} onChange={(_, v) => setNewReviewRating(v || 1)} aria-label="Nota da avaliação" />
             </Box>
             <TextField label="Comentário" required multiline rows={3} value={newReviewComment} onChange={(e) => { setNewReviewComment(e.target.value); if (reviewCommentError) setReviewCommentError(false); }} inputProps={{ maxLength: 500 }} error={reviewCommentError} helperText={reviewCommentError ? 'Comentário é obrigatório' : `${newReviewComment.length}/500`} />
           </Box>

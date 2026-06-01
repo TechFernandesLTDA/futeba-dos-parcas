@@ -45,8 +45,8 @@ import { HallOfFame } from '../../components/group/HallOfFame';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 export const GroupLeagueScreen: React.FC = () => {
-  useDocumentTitle('Liga do Grupo');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.groupLeague'));
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const goBack = useNavigateBack();

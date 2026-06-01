@@ -1,7 +1,9 @@
 package com.futebadosparcas.ui.onboarding
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.functions.FirebaseFunctions
@@ -203,5 +205,5 @@ sealed class CpfVerificationUiState {
     object Idle : CpfVerificationUiState()
     object Verifying : CpfVerificationUiState()
     object Success : CpfVerificationUiState()
-    data class Error(val message: String) : CpfVerificationUiState()
+    data class Error(val message: String, @StringRes val errorResId: Int? = null) : CpfVerificationUiState()
 }

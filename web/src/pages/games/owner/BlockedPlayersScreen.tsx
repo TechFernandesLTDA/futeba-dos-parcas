@@ -29,6 +29,7 @@ import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { createLogger } from '../../../utils/logger';
 import { useToast } from '../../../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('BlockedPlayersScreen');
 
@@ -51,7 +52,8 @@ interface RawBlockedUserDoc {
 }
 
 export const BlockedPlayersScreen: React.FC = () => {
-  useDocumentTitle('Jogadores Bloqueados');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.blockedPlayers'));
   const navigateBack = useNavigateBack('/?tab=1');
   const navigate = useNavigate();
   const theme = useTheme();

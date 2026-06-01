@@ -42,6 +42,7 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('HeadToHeadScreen');
 
@@ -83,7 +84,8 @@ async function searchPlayers(term: string): Promise<PlayerSearchResult[]> {
 }
 
 export const HeadToHeadScreen: React.FC = () => {
-  useDocumentTitle('Confronto Direto');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.headToHead'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));

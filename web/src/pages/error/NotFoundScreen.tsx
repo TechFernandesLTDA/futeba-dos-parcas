@@ -6,9 +6,11 @@ import { logError } from '../../utils/errorLogger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ErrorDetailsButton } from '../../components/common/ErrorDetailsButton';
 import type { ErrorLogEntry } from '../../utils/errorLogger';
+import { useTranslation } from 'react-i18next';
 
 export const NotFoundScreen: React.FC = () => {
-  useDocumentTitle('404');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.notFound'));
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();

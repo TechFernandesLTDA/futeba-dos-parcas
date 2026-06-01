@@ -31,6 +31,7 @@ import { LoadingState } from '../../components/common/GameCard';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 const STATUS_CONFIG: Record<string, { label: string; color: 'default' | 'info' | 'success' | 'error' | 'warning' }> = {
   open: { label: 'Aberto', color: 'default' },
@@ -49,7 +50,8 @@ const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactElement }> =
 };
 
 export const MyFeedbacksScreen: React.FC = () => {
-  useDocumentTitle('Meus Feedbacks');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.myFeedbacks'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));

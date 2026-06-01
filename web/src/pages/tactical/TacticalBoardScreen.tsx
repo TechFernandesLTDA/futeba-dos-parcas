@@ -31,6 +31,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -58,7 +59,8 @@ const FORMATIONS = [
 ];
 
 export const TacticalBoardScreen: React.FC = () => {
-  useDocumentTitle('Prancheta Tática');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.tacticalBoard'));
   const navigateBack = useNavigateBack('/?tab=1');
     const theme = useTheme();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));

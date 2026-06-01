@@ -66,14 +66,14 @@ const BASE_LEVELS = LEVEL_TABLE.filter((e) => e.level <= 10);
 const LEGEND_LEVELS = LEVEL_TABLE.filter((e) => e.level >= 11);
 
 export const LevelJourneyScreen: React.FC = () => {
-  useDocumentTitle('Jornada de Nível');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.levelJourney'));
   const navigateBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
-  const { t } = useTranslation();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 

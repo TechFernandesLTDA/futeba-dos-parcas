@@ -8,6 +8,7 @@ import {
   checkRateLimitByIp,
 } from "./middleware/rate-limiter";
 import {sanitizeText} from "./validation/index";
+import {ERROR_MSGS} from "./error-messages";
 
 // 2. Constants
 const START_DATE = new Date(
@@ -133,10 +134,7 @@ export const seedDatabase = onRequest(
       }
     );
     if (!ipRlResult.allowed) {
-      response.status(429).send(
-        "Rate limit excedido." +
-        " Tente novamente em breve."
-      );
+      response.status(429).send(ERROR_MSGS.rateLimitGeneric);
       return;
     }
 

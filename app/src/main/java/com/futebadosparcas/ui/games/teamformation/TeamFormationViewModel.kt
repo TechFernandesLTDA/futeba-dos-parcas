@@ -1,7 +1,9 @@
 package com.futebadosparcas.ui.games.teamformation
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.model.SavedTeamFormation
 import com.futebadosparcas.data.model.DraftState
@@ -789,7 +791,7 @@ sealed class TeamFormationUiState {
         val userMessage: String? = null
     ) : TeamFormationUiState()
 
-    data class Error(val message: String) : TeamFormationUiState()
+    data class Error(val message: String, @StringRes val errorResId: Int? = null) : TeamFormationUiState()
 }
 
 /**

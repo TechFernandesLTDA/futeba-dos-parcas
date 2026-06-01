@@ -147,7 +147,7 @@ function getTimeAgo(date: Date): string {
 
 export const NotificationsScreen: React.FC = () => {
   const { t } = useTranslation();
-  useDocumentTitle('Notificações');
+  useDocumentTitle(t('page.title.notifications'));
   const navigate = useNavigate();
   const goBack = useNavigateBack();
   const theme = useTheme();

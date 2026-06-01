@@ -10,7 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
 
 /**
@@ -160,9 +162,9 @@ fun NoConnectionStateDesign(
 ) {
     EmptyStateDesign(
         icon = Icons.Default.WifiOff,
-        title = "Sem conexão",
-        description = "Verifique sua conexão com a internet e tente novamente",
-        actionLabel = "Tentar Novamente",
+        title = stringResource(R.string.empty_state_no_connection_title),
+        description = stringResource(R.string.empty_state_no_connection_desc),
+        actionLabel = stringResource(R.string.action_try_again),
         onAction = onRetry,
         modifier = modifier
     )
@@ -183,9 +185,9 @@ fun NoSearchResultsStateDesign(
 ) {
     EmptyStateDesign(
         icon = Icons.Default.SearchOff,
-        title = "Nenhum resultado",
-        description = "Nenhum resultado encontrado para \"$query\"",
-        actionLabel = "Limpar Busca",
+        title = stringResource(R.string.empty_state_no_results_title),
+        description = stringResource(R.string.empty_state_desc_no_results, query),
+        actionLabel = stringResource(R.string.action_clear_search),
         onAction = onClear,
         modifier = modifier
     )

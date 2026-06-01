@@ -28,7 +28,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import com.futebadosparcas.R
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.cos
@@ -616,9 +618,9 @@ fun NoGamesEmptyState(
     IllustratedEmptyState(
         config = EmptyStateConfig(
             type = EmptyStateType.NO_GAMES,
-            title = "Nenhum jogo encontrado",
-            message = "Que tal organizar uma pelada com os parças?",
-            primaryAction = EmptyStateAction("Criar Jogo", onCreateGame)
+            title = stringResource(R.string.empty_illustration_no_games_title),
+            message = stringResource(R.string.empty_illustration_no_games_desc),
+            primaryAction = EmptyStateAction(stringResource(R.string.empty_state_no_games_action), onCreateGame)
         ),
         modifier = modifier
     )
@@ -636,10 +638,10 @@ fun NoGroupsEmptyState(
     IllustratedEmptyState(
         config = EmptyStateConfig(
             type = EmptyStateType.NO_GROUPS,
-            title = "Você não está em nenhum grupo",
-            message = "Entre em um grupo existente ou crie o seu próprio!",
-            primaryAction = EmptyStateAction("Criar Grupo", onCreateGroup),
-            secondaryAction = EmptyStateAction("Entrar em Grupo", onJoinGroup)
+            title = stringResource(R.string.empty_illustration_no_groups_title),
+            message = stringResource(R.string.empty_illustration_no_groups_desc),
+            primaryAction = EmptyStateAction(stringResource(R.string.empty_illustration_no_groups_action_create), onCreateGroup),
+            secondaryAction = EmptyStateAction(stringResource(R.string.empty_illustration_no_groups_action_join), onJoinGroup)
         ),
         modifier = modifier
     )
@@ -656,9 +658,9 @@ fun NoConnectionEmptyState(
     IllustratedEmptyState(
         config = EmptyStateConfig(
             type = EmptyStateType.NO_CONNECTION,
-            title = "Sem conexão",
-            message = "Verifique sua internet e tente novamente",
-            primaryAction = EmptyStateAction("Tentar Novamente", onRetry)
+            title = stringResource(R.string.empty_illustration_no_connection_title),
+            message = stringResource(R.string.empty_illustration_no_connection_desc),
+            primaryAction = EmptyStateAction(stringResource(R.string.action_try_again), onRetry)
         ),
         modifier = modifier
     )
@@ -676,9 +678,9 @@ fun NoResultsEmptyState(
     IllustratedEmptyState(
         config = EmptyStateConfig(
             type = EmptyStateType.NO_RESULTS,
-            title = "Nenhum resultado",
-            message = "Não encontramos nada para \"$searchQuery\"",
-            primaryAction = EmptyStateAction("Limpar Busca", onClearSearch)
+            title = stringResource(R.string.empty_illustration_no_results_title),
+            message = stringResource(R.string.empty_illustration_no_results_desc, searchQuery),
+            primaryAction = EmptyStateAction(stringResource(R.string.empty_illustration_clear_search), onClearSearch)
         ),
         modifier = modifier
     )
@@ -696,9 +698,9 @@ fun ErrorEmptyState(
     IllustratedEmptyState(
         config = EmptyStateConfig(
             type = EmptyStateType.ERROR,
-            title = "Ops!",
+            title = stringResource(R.string.empty_illustration_error_title),
             message = message,
-            primaryAction = EmptyStateAction("Tentar Novamente", onRetry)
+            primaryAction = EmptyStateAction(stringResource(R.string.action_try_again), onRetry)
         ),
         modifier = modifier
     )

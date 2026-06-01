@@ -6,6 +6,8 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 
 /**
  * Tipo de diálogo de confirmação
@@ -133,9 +135,9 @@ fun DeleteConfirmationDialog(
 ) {
     ConfirmationDialog(
         visible = visible,
-        title = "Excluir $itemType",
-        message = "Tem certeza que deseja excluir \"$itemName\"? Esta ação não pode ser desfeita.",
-        confirmText = "Excluir",
+        title = stringResource(R.string.confirm_dialog_delete_item_title, itemType),
+        message = stringResource(R.string.confirm_dialog_delete_item_message, itemName),
+        confirmText = stringResource(R.string.confirm_dialog_delete),
         type = ConfirmationDialogType.DESTRUCTIVE,
         icon = Icons.Default.Delete,
         onConfirm = onConfirm,
@@ -155,9 +157,9 @@ fun RemoveMemberDialog(
 ) {
     ConfirmationDialog(
         visible = visible,
-        title = "Remover Membro",
-        message = "Tem certeza que deseja remover $memberName do grupo?",
-        confirmText = "Remover",
+        title = stringResource(R.string.confirm_dialog_remove_member_title),
+        message = stringResource(R.string.confirm_dialog_remove_member_message, memberName),
+        confirmText = stringResource(R.string.confirm_dialog_remove),
         type = ConfirmationDialogType.DESTRUCTIVE,
         icon = Icons.Default.PersonRemove,
         onConfirm = onConfirm,
@@ -177,9 +179,9 @@ fun PromoteMemberDialog(
 ) {
     ConfirmationDialog(
         visible = visible,
-        title = "Promover Membro",
-        message = "Tem certeza que deseja promover $memberName a administrador?",
-        confirmText = "Promover",
+        title = stringResource(R.string.confirm_dialog_promote_member_title),
+        message = stringResource(R.string.confirm_dialog_promote_member_message, memberName),
+        confirmText = stringResource(R.string.confirm_dialog_promote),
         type = ConfirmationDialogType.SUCCESS,
         icon = Icons.Default.AdminPanelSettings,
         onConfirm = onConfirm,
@@ -199,9 +201,9 @@ fun DemoteMemberDialog(
 ) {
     ConfirmationDialog(
         visible = visible,
-        title = "Rebaixar Membro",
-        message = "Tem certeza que deseja rebaixar $memberName para membro comum?",
-        confirmText = "Rebaixar",
+        title = stringResource(R.string.confirm_dialog_demote_member_title),
+        message = stringResource(R.string.confirm_dialog_demote_member_message, memberName),
+        confirmText = stringResource(R.string.confirm_dialog_demote),
         type = ConfirmationDialogType.WARNING,
         icon = Icons.Default.RemoveModerator,
         onConfirm = onConfirm,
@@ -221,9 +223,9 @@ fun LeaveGroupDialog(
 ) {
     ConfirmationDialog(
         visible = visible,
-        title = "Sair do Grupo",
-        message = "Tem certeza que deseja sair do grupo \"$groupName\"?",
-        confirmText = "Sair",
+        title = stringResource(R.string.confirm_dialog_leave_group_title),
+        message = stringResource(R.string.confirm_dialog_leave_group_message, groupName),
+        confirmText = stringResource(R.string.confirm_dialog_leave),
         type = ConfirmationDialogType.WARNING,
         icon = Icons.AutoMirrored.Filled.ExitToApp,
         onConfirm = onConfirm,
@@ -243,9 +245,9 @@ fun ArchiveGroupDialog(
 ) {
     ConfirmationDialog(
         visible = visible,
-        title = "Arquivar Grupo",
-        message = "Tem certeza que deseja arquivar o grupo \"$groupName\"?",
-        confirmText = "Arquivar",
+        title = stringResource(R.string.confirm_dialog_archive_group_title),
+        message = stringResource(R.string.confirm_dialog_archive_group_message, groupName),
+        confirmText = stringResource(R.string.confirm_dialog_archive),
         type = ConfirmationDialogType.WARNING,
         icon = Icons.Default.Archive,
         onConfirm = onConfirm,
@@ -265,9 +267,9 @@ fun DeleteGroupDialog(
 ) {
     ConfirmationDialog(
         visible = visible,
-        title = "Excluir Grupo",
-        message = "Tem certeza que deseja excluir permanentemente o grupo \"$groupName\"? Esta ação não pode ser desfeita.",
-        confirmText = "Excluir",
+        title = stringResource(R.string.confirm_dialog_delete_group_title),
+        message = stringResource(R.string.confirm_dialog_delete_group_message, groupName),
+        confirmText = stringResource(R.string.confirm_dialog_delete),
         type = ConfirmationDialogType.DESTRUCTIVE,
         icon = Icons.Default.Delete,
         onConfirm = onConfirm,

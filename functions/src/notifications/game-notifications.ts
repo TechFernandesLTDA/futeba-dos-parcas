@@ -17,6 +17,7 @@ import {
   NotificationType,
   sendNotificationToUsers,
 } from "./helpers";
+import {GAME_NOTIFICATIONS} from "./notification-messages";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -87,10 +88,10 @@ export const onGameCreated = onDocumentCreated(
           await sendNotificationToUsers(
             memberIds,
             {
-              title: "Novo jogo criado!",
-              body: ownerName +
-                " criou um novo jogo." +
-                " Confirme sua presenca!",
+              title: GAME_NOTIFICATIONS.GAME_CREATED.title["pt-BR"](),
+              body: GAME_NOTIFICATIONS.GAME_CREATED.body["pt-BR"]({
+                ownerName,
+              }),
               type: NotificationType.GAME_INVITE,
               data: {
                 gameId: gameId,
@@ -161,9 +162,8 @@ export const onGameUpdatedNotification =
             await sendNotificationToUsers(
               userIds,
               {
-                title: "Jogo cancelado",
-                body: "O jogo foi cancelado" +
-                  " pelo organizador.",
+                title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
+                body: GAME_NOTIFICATIONS.GAME_CANCELLED.body["pt-BR"](),
                 type:
                   NotificationType.GAME_CANCELLED,
                 data: {
@@ -205,9 +205,8 @@ export const onGameUpdatedNotification =
             await sendNotificationToUsers(
               userIds,
               {
-                title: "Jogo atualizado",
-                body: "Os detalhes do jogo" +
-                  " mudaram. Confira no app.",
+                title: GAME_NOTIFICATIONS.GAME_UPDATED.title["pt-BR"](),
+                body: GAME_NOTIFICATIONS.GAME_UPDATED.body["pt-BR"](),
                 type:
                   NotificationType.GAME_UPDATED,
                 data: {
@@ -369,10 +368,10 @@ export const onGameVacancy = onDocumentUpdated(
           await sendNotificationToUsers(
             waitlistUserIds,
             {
-              title: "Vaga disponivel!",
-              body: "Abriu uma vaga em" +
-                ` ${gameName}. Corra` +
-                " para confirmar!",
+              title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
+              body: GAME_NOTIFICATIONS.GAME_VACANCY.body["pt-BR"]({
+                gameName,
+              }),
               type:
                 NotificationType.GAME_VACANCY,
               data: {
@@ -427,11 +426,11 @@ export const onGameVacancy = onDocumentUpdated(
             await sendNotificationToUsers(
               memberIds,
               {
-                title: "Vaga disponivel!",
-                body: "Abriu uma vaga em" +
-                  ` ${gameName}` +
-                  ` (${gameDate}).` +
-                  " Confirme sua presenca!",
+                title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
+                body: GAME_NOTIFICATIONS.GAME_VACANCY_GROUP.body["pt-BR"]({
+                  gameName,
+                  gameDate,
+                }),
                 type:
                   NotificationType.GAME_VACANCY,
                 data: {

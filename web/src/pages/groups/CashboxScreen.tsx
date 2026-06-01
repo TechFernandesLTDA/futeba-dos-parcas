@@ -166,6 +166,8 @@ export const CashboxScreen: React.FC = () => {
         type: transactionType,
         amount: parsedAmount,
         description,
+        category: 'OTHER',
+        status: 'ACTIVE',
         created_by: user?.id,
         created_by_name: userName,
         created_at: serverTimestamp(),

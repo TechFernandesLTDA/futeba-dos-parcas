@@ -32,9 +32,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { useTranslation } from 'react-i18next';
 
 export const AboutScreen: React.FC = () => {
-  useDocumentTitle('Sobre');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.about'));
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const goBack = useNavigateBack();
   const theme = useTheme();

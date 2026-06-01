@@ -37,6 +37,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp, getLevelEntry, getXpProgress } from '../../types/gamification';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('PostGameReportScreen');
 
@@ -110,7 +111,8 @@ interface RawNamedUserDoc {
 }
 
 export const PostGameReportScreen: React.FC = () => {
-  useDocumentTitle('Relatório Pós-Jogo');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.postGameReport'));
   const navigateBack = useNavigateBack('/?tab=1');
   const navigate = useNavigate();
   const theme = useTheme();

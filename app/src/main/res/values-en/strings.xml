@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Futeba dos Parças</string>
+
+    <!-- Auth -->
+    <string name="login">Sign In</string>
+    <string name="login_with_google">Sign in with Google</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="name">Name</string>
+    <string name="phone">Phone</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="logout">Logout</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_games">Games</string>
+    <string name="nav_players">Players</string>
+    <string name="nav_ranking">Ranking</string>
+    <string name="nav_schedules">Schedules</string>
+    <string name="nav_statistics">Stats</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Games -->
+    <string name="upcoming_games">Upcoming Games</string>
+    <string name="game_details">Game Details</string>
+    <string name="confirm_presence">Confirm</string>
+    <string name="cancel_confirmation">Cancel Confirmation</string>
+    <string name="confirmed">Confirmed</string>
+    <string name="players">Players</string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
+    <string name="location">Location</string>
+    <string name="price">Price</string>
+
+    <!-- Statistics -->
+    <string name="goals">Goals</string>
+    <string name="games">Games</string>
+    <string name="saves">Saves</string>
+    <string name="assists">Assists</string>
+    <string name="wins">Wins</string>
+    <string name="week">Week</string>
+    <string name="month">Month</string>
+    <string name="year">Year</string>
+    <string name="all_time">All Time</string>
+
+    <!-- General -->
+    <string name="loading">Loading\u2026</string>
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="close">Close</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="search">Search</string>
+    <string name="no_data">No data</string>
+    <string name="retry">Retry</string>
+    <string name="confirm">Confirm</string>
+    <string name="verify">Verify</string>
+    <string name="share">Share</string>
+    <string name="back">Back</string>
+
+    <!-- Phone Verification -->
+    <string name="phone_verification_title">Verify Phone</string>
+    <string name="phone_verification_step_cd">Step 1 of 2: Verify Phone</string>
+    <string name="phone_verification_description">We confirm your number via SMS to prevent fake accounts. Step 1 of 2.</string>
+    <string name="phone_verification_label">Phone (with area code)</string>
+    <string name="phone_verification_placeholder">+15551234567</string>
+    <string name="phone_verification_supporting_text">International format: +1 + area code + number</string>
+    <string name="phone_verification_sending">Sending…</string>
+    <string name="phone_verification_send_code">Send code via SMS</string>
+    <string name="phone_verification_enter_code">Enter the 6-digit code sent to %1$s</string>
+    <string name="phone_verification_code_label">Code</string>
+    <string name="phone_verification_code_placeholder">123456</string>
+    <string name="phone_verification_verifying">Verifying…</string>
+
+    <!-- CPF Verification -->
+    <string name="cpf_verification_title">Verify ID</string>
+    <string name="cpf_verification_subtitle">Your ID is used only to prevent fake and duplicate accounts. We do not share with third parties. Step 2 of 2.</string>
+    <string name="cpf_label">ID</string>
+    <string name="cpf_placeholder">999.999.999-99</string>
+    <string name="cpf_verifying">Verifying…</string>
+    <string name="cpf_finish">Complete verification</string>
+
+    <!-- MVP Voting -->
+    <string name="mvp_vote_title">Voting</string>
+    <string name="mvp_category_mvp">Match MVP</string>
+    <string name="mvp_category_goalkeeper">Best Goalkeeper</string>
+    <string name="mvp_category_worst">Worst Player</string>
+    <string name="mvp_category_custom">Special Category</string>
+    <string name="mvp_vote_error_no_players">No confirmed players to vote for.</string>
+    <string name="mvp_vote_error_load_candidates">Error loading candidates</string>
+    <string name="mvp_vote_error_submit">Error submitting vote</string>
+    <string name="mvp_vote_error_not_auth">User not authenticated</string>
+
+    <!-- Team Formation -->
+    <string name="team_formation_title">Team Formation</string>
+    <string name="team_formation_error_no_players_available">No players from this formation are available</string>
+
+    <!-- Share Cards -->
+    <string name="share_card_app_name">⚽ FUTEBA DOS PARÇAS</string>
+    <string name="share_card_download_promo">📲 Download Futeba dos Parças!</string>
+    <string name="share_card_share_via">Share result via</string>
+    <string name="share_card_share_card_via">Share card via</string>
+    <string name="share_card_error">Share error: %1$s</string>
+    <string name="share_card_generated_at">Generated on %1$s</string>
+    <string name="share_card_by">by %1$s</string>
+    <string name="share_card_votes_format">%1$d votes (%2$d%%)</string>
+    <string name="share_card_category_mvp">Match MVP</string>
+    <string name="share_card_category_goalkeeper">Best Goalkeeper</string>
+    <string name="share_card_category_worst">Worst Player</string>
+    <string name="share_card_category_custom">Special Category</string>
+    <string name="share_card_stat_games">GAMES</string>
+    <string name="share_card_stat_goals">GOALS</string>
+    <string name="share_card_stat_assists">ASSISTS</string>
+    <string name="share_card_stat_mvps">MVPs</string>
+    <string name="share_card_stat_ratings">RATINGS</string>
+    <string name="share_card_position_attack">ATTACK</string>
+    <string name="share_card_position_mid">MID</string>
+    <string name="share_card_position_defense">DEFENSE</string>
+    <string name="share_card_position_goalkeeper">GOALKEEPER</string>
+
+    <!-- Empty State Illustrations -->
+    <string name="empty_illustration_no_games_title">No games found</string>
+    <string name="empty_illustration_no_games_desc">How about organizing a match with your buddies?</string>
+    <string name="empty_illustration_no_groups_title">You are not in any group</string>
+    <string name="empty_illustration_no_groups_desc">Join an existing group or create your own!</string>
+    <string name="empty_illustration_no_groups_action_create">Create Group</string>
+    <string name="empty_illustration_no_groups_action_join">Join Group</string>
+    <string name="empty_illustration_no_connection_title">No connection</string>
+    <string name="empty_illustration_no_connection_desc">Check your internet and try again</string>
+    <string name="empty_illustration_no_results_title">No results</string>
+    <string name="empty_illustration_no_results_desc">We found nothing for "%1$s"</string>
+    <string name="empty_illustration_error_title">Oops!</string>
+    <string name="empty_illustration_error_default_desc">Something went wrong</string>
+    <string name="empty_illustration_clear_search">Clear Search</string>
+
+    <!-- Confirmation Dialogs -->
+    <string name="confirm_dialog_remove_member_title">Remove Member</string>
+    <string name="confirm_dialog_remove_member_message">Are you sure you want to remove %1$s from the group?</string>
+    <string name="confirm_dialog_promote_member_title">Promote Member</string>
+    <string name="confirm_dialog_promote_member_message">Are you sure you want to promote %1$s to admin?</string>
+    <string name="confirm_dialog_demote_member_title">Demote Member</string>
+    <string name="confirm_dialog_demote_member_message">Are you sure you want to demote %1$s to regular member?</string>
+    <string name="confirm_dialog_leave_group_title">Leave Group</string>
+    <string name="confirm_dialog_leave_group_message">Are you sure you want to leave the group "%1$s"?</string>
+    <string name="confirm_dialog_archive_group_title">Archive Group</string>
+    <string name="confirm_dialog_archive_group_message">Are you sure you want to archive the group "%1$s"?</string>
+    <string name="confirm_dialog_delete_item_title">Delete %1$s</string>
+    <string name="confirm_dialog_delete_item_message">Are you sure you want to delete "%1$s"? This action cannot be undone.</string>
+    <string name="confirm_dialog_delete_group_title">Delete Group</string>
+    <string name="confirm_dialog_delete_group_message">Are you sure you want to permanently delete the group "%1$s"? This action cannot be undone.</string>
+    <string name="confirm_dialog_delete">Delete</string>
+    <string name="confirm_dialog_remove">Remove</string>
+    <string name="confirm_dialog_promote">Promote</string>
+    <string name="confirm_dialog_demote">Demote</string>
+    <string name="confirm_dialog_leave">Leave</string>
+    <string name="confirm_dialog_archive">Archive</string>
+
+    <!-- Error Messages -->
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_loading_game">Error loading game</string>
+    <string name="error_no_permission_restore">No permission to restore game</string>
+    <string name="error_cpf_verification">Error verifying ID. Please try again.</string>
+    <string name="game_restored_success">Game restored successfully</string>
+    <string name="game_cancel_error">Error cancelling game</string>
+    <string name="location_error_no_permission">No permission to edit this field</string>
+    <string name="location_error_field_not_found">Field not found</string>
+    <string name="location_error_user_not_auth">User not authenticated</string>
+
+    <!-- App States -->
+    <string name="state_loading">Loading…</string>
+    <string name="state_retry">Try again</string>
+    <string name="state_error_title">Something went wrong</string>
+    <string name="action_try_again">Try Again</string>
+    <string name="action_clear_search">Clear Search</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+</resources>

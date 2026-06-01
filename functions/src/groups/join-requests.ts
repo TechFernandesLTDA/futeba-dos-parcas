@@ -21,6 +21,7 @@ import {
   NotificationType,
   sendNotificationToUser,
 } from "../notifications/helpers";
+import {PRESENCE_NOTIFICATIONS} from "../notifications/notification-messages";
 import {isRecord} from "../validation/guards";
 
 const db = () => admin.firestore();
@@ -185,8 +186,10 @@ export const onJoinRequestApproved = onDocumentUpdated(
     try {
       await sendNotificationToUser(userId, {
         type: NotificationType.GROUP_JOIN_APPROVED,
-        title: `Voce foi aceito em ${groupName}!`,
-        body: "Toque pra abrir o grupo e ver os jogos.",
+        title: PRESENCE_NOTIFICATIONS.GROUP_JOIN_APPROVED.title["pt-BR"](),
+        body: PRESENCE_NOTIFICATIONS.GROUP_JOIN_APPROVED.body["pt-BR"]({
+          groupName,
+        }),
         data: {
           groupId,
           action: "OPEN_GROUP",

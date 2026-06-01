@@ -43,6 +43,7 @@ import {
   FIRESTORE_WHERE_IN_LIMIT,
   FUNCTION_REGION,
 } from "../constants";
+import {ERROR_MSGS} from "../error-messages";
 
 const getDb = () => admin.firestore();
 
@@ -142,7 +143,7 @@ export const getLeaderboardCached =
       if (!request.auth) {
         throw new HttpsError(
           "unauthenticated",
-          "Usuário não autenticado"
+          ERROR_MSGS.UNAUTHENTICATED
         );
       }
 
@@ -160,8 +161,7 @@ export const getLeaderboardCached =
       if (!leaderboardRateLimitResult.allowed) {
         throw new HttpsError(
           "resource-exhausted",
-          "Rate limit excedido. " +
-          "Tente novamente em breve."
+          ERROR_MSGS.rateLimitGeneric
         );
       }
 

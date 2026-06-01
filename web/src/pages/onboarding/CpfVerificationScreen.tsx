@@ -37,9 +37,9 @@ const logger = createLogger('CpfVerification');
  * Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md (R3, R6, polish 2026-05-05)
  */
 export const CpfVerificationScreen: React.FC = () => {
-  useDocumentTitle('Verificar CPF');
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.cpfVerification'));
+  const navigate = useNavigate();
   const { firebaseUser } = useAuth();
   const { showSuccess } = useToast();
 

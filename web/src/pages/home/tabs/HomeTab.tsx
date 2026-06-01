@@ -65,6 +65,7 @@ import { LeaguePlayer } from '../../../hooks/useLeague';
 import { StreakWidget } from './StreakWidget';
 import { RecentActivityFeed } from './RecentActivityFeed';
 import type { Activity } from './RecentActivityFeed';
+import { QuickCreateCard } from '../../../components/game/QuickCreateCard';
 
 const logger = createLogger('HomeTab');
 
@@ -1004,6 +1005,8 @@ export function HomeTab() {
               maxIncomplete={2}
             />
 
+            <QuickCreateCard />
+
             <NextGameWidget />
 
             <MiniRankingWidget />
@@ -1030,6 +1033,8 @@ export function HomeTab() {
             }}
             maxIncomplete={2}
           />
+
+          <QuickCreateCard />
 
           <NextGameWidget />
 

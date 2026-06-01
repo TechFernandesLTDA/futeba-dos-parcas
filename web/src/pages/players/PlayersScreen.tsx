@@ -38,6 +38,7 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('PlayersScreen');
 
@@ -52,7 +53,8 @@ interface GroupMember {
 }
 
 export const PlayersScreen: React.FC = () => {
-  useDocumentTitle('Jogadores');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.players'));
   const navigate = useNavigate();
   const theme = useTheme();
   const { groupId } = useParams<{ groupId: string }>();

@@ -34,6 +34,7 @@ import {
   MAX_CONCURRENT_OPS,
   FUNCTION_REGION,
 } from "../constants";
+import {ERROR_MSGS} from "../error-messages";
 import {db} from "../_db";
 
 
@@ -102,7 +103,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
   },
   async (request) => {
     if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
     }
     // ==========================================
     // 3. INPUT VALIDATION
@@ -289,6 +290,130 @@ export const onNewUserCreated = onDocumentCreated(
 );
 
 // ==========================================
+// CLOUD FUNCTION: syncFieldOwnerClaim
+// ==========================================
+
+/**
+ * Sincroniza a custom claim FIELD_OWNER/ADMIN do
+ * Firestore para o Firebase Auth para o usuário atual.
+ *
+ * ISSUE #2430: Quando um usuário tem role
+ * FIELD_OWNER no Firestore mas a custom claim não
+ * está sincronizada no Auth, o token JWT não
+ * contém o claim e as Firestore rules rejeitam
+ * a criação de locais (L1008-1010).
+ *
+ * Esta função lê o role do Firestore e o espelha
+ * no Auth como custom claim, sem exigir privilégios
+ * de ADMIN — qualquer usuário autenticado pode
+ * sincronizar a PRÓPRIA claim.
+ *
+ * @return {Promise<object>} Resultado da sincronização
+ */
+export const syncFieldOwnerClaim = secureCallable(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    rateLimit: {
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+      keyPrefix: "syncClaim",
+    },
+    enableAuditLog: false,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        ERROR_MSGS.UNAUTHENTICATED
+      );
+    }
+
+    const callerUid = request.auth.uid;
+
+    logger.info(
+      "[CUSTOM_CLAIMS] " +
+      `syncFieldOwnerClaim called by ${callerUid}`
+    );
+
+    // Ler role do Firestore
+    const userDoc = await db()
+      .collection("users")
+      .doc(callerUid)
+      .get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError(
+        "not-found",
+        "Documento de usuário não encontrado"
+      );
+    }
+
+    const firestoreRole = userDoc.data()?.role;
+
+    if (
+      firestoreRole !== "FIELD_OWNER" &&
+      firestoreRole !== "ADMIN"
+    ) {
+      return {
+        success: true,
+        synced: false,
+        role: firestoreRole || "PLAYER",
+        message:
+          "Usuário não possui role FIELD_OWNER " +
+          "ou ADMIN. Nenhuma sincronização necessária.",
+      };
+    }
+
+    // Sincronizar claim no Auth
+    const existingClaims =
+      (await admin.auth().getUser(callerUid))
+        .customClaims || {};
+
+    if (existingClaims.role === firestoreRole) {
+      logger.info(
+        "[CUSTOM_CLAIMS] " +
+        `Claim já sincronizada para ${callerUid} ` +
+        `(role=${firestoreRole})`
+      );
+      return {
+        success: true,
+        synced: false,
+        role: firestoreRole,
+        message:
+          "Custom claim já está sincronizada.",
+      };
+    }
+
+    await admin
+      .auth()
+      .setCustomUserClaims(callerUid, {
+        ...existingClaims,
+        role: firestoreRole,
+      });
+
+    // Invalida JWT antigo para forçar refresh
+    await admin.auth().revokeRefreshTokens(callerUid);
+
+    logger.info(
+      "[CUSTOM_CLAIMS] " +
+      `Claim sincronizada para ${callerUid}: ` +
+      `role=${firestoreRole}`
+    );
+
+    return {
+      success: true,
+      synced: true,
+      role: firestoreRole,
+      message:
+        "Custom claim sincronizada com sucesso. " +
+        "Faça logout e login novamente para " +
+        "atualizar o token.",
+    };
+  }
+);
+
+// ==========================================
 // MIGRATION UTILITY (Run once via scripts/)
 // ==========================================
 
@@ -330,7 +455,7 @@ export const migrateAllUsersToCustomClaims = secureCallable(
   },
   async (request) => {
     if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
     }
     // Rate limiting: Apenas uma migração por hora
     // para evitar abuso

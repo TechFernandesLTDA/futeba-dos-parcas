@@ -79,8 +79,8 @@ export const ProfileScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
-  useDocumentTitle('Perfil');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.profile'));
   const queryClient = useQueryClient();
 
   // Monitoramento de performance

@@ -63,7 +63,7 @@ const SectionHeader = React.memo(function SectionHeader({ icon, title }: { icon:
 
 export const NotificationSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
-  useDocumentTitle('Notificações');
+  useDocumentTitle(t('page.title.notifications'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));

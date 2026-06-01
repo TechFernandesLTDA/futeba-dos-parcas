@@ -32,11 +32,13 @@ import { updateProfile } from 'firebase/auth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { avatarSizes } from '../../theme/iconSizes';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('ProfileSetupScreen');
 
 export const ProfileSetupScreen: React.FC = () => {
-  useDocumentTitle('Configurar Perfil');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.profileSetup'));
   const navigate = useNavigate();
   const goBack = useNavigateBack('/welcome');
   const theme = useTheme();

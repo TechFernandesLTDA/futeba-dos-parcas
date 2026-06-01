@@ -37,8 +37,8 @@ import { sxPresets } from '../../theme/sxPresets';
 import { pageSpacing } from '../../theme/pageTokens';
 
 export function LoginScreen() {
-  useDocumentTitle('Login');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.login'));
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const [email, setEmail] = useState('');

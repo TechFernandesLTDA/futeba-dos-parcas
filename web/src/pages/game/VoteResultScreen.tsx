@@ -31,6 +31,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('VoteResultScreen');
 
@@ -85,7 +86,8 @@ interface RawVoteUserDoc {
 }
 
 export const VoteResultScreen: React.FC = () => {
-  useDocumentTitle('Resultado da Votação');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.voteResult'));
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();

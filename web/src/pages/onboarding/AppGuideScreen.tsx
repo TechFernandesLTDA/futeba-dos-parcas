@@ -31,6 +31,7 @@ import { useOnboarding } from '../../hooks/useOnboarding';
 import { useToast } from '../../contexts/ToastContext';
 import { iconSizes } from '../../theme/iconSizes';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('AppGuideScreen');
 
@@ -38,31 +39,32 @@ const SLIDES = [
   {
     id: 'organized',
     icon: <SoccerIcon sx={{ fontSize: iconSizes.hero }} />,
-    title: 'Sua pelada, organizada',
-    subtitle: 'Crie jogos, convoque os parças e acompanhe tudo em um só lugar — sem grupo de WhatsApp bagunçado.',
+    titleKey: 'appGuide.slide1Title',
+    subtitleKey: 'appGuide.slide1Subtitle',
   },
   {
     id: 'xp',
     icon: <TrophyIcon sx={{ fontSize: iconSizes.hero }} />,
-    title: 'Jogou, pontuou',
-    subtitle: 'Cada jogo te dá XP. Suba de nível, desbloqueie badges e dispute o ranking mensal da liga.',
+    titleKey: 'appGuide.slide2Title',
+    subtitleKey: 'appGuide.slide2Subtitle',
   },
   {
     id: 'invite',
     icon: <GroupsIcon sx={{ fontSize: iconSizes.hero }} />,
-    title: 'Chame os parças',
-    subtitle: 'Envie convites, gerencie confirmações e monte os times automaticamente com equilíbrio.',
+    titleKey: 'appGuide.slide3Title',
+    subtitleKey: 'appGuide.slide3Subtitle',
   },
   {
     id: 'start',
     icon: <RocketIcon sx={{ fontSize: iconSizes.hero }} />,
-    title: 'Bora começar!',
-    subtitle: 'Tudo pronto para sua primeira pelada. Crie seu grupo, convide a galera e bora jogar!',
+    titleKey: 'appGuide.slide4Title',
+    subtitleKey: 'appGuide.slide4Subtitle',
   },
 ];
 
 export const AppGuideScreen: React.FC = () => {
-  useDocumentTitle('Bem-vindo ao Futeba');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.appGuide'));
   const navigate = useNavigate();
   const theme = useTheme();
   const { showError } = useToast();
@@ -96,7 +98,7 @@ export const AppGuideScreen: React.FC = () => {
       await onCarouselCompleted();
     } catch (err) {
       logger.error('Falha ao registrar conclusão do onboarding:', err);
-      showError('Não foi possível salvar seu progresso, mas você já pode continuar.');
+      showError(t('appGuide.saveProgressError'));
     }
     navigate('/');
   };
@@ -106,7 +108,7 @@ export const AppGuideScreen: React.FC = () => {
       await onCarouselSkipped(activeStep);
     } catch (err) {
       logger.error('Falha ao registrar skip do onboarding:', err);
-      showError('Não foi possível salvar seu progresso, mas você já pode continuar.');
+      showError(t('appGuide.saveProgressError'));
     }
     navigate('/');
   };
@@ -125,8 +127,8 @@ export const AppGuideScreen: React.FC = () => {
       {/* Botão Pular — apenas nos slides intermediários */}
       <Box sx={{ p: 1, textAlign: 'right', minHeight: 48 }}>
         {!isLastSlide && (
-          <Button onClick={handleSkip} color="inherit" aria-label="Pular onboarding">
-            Pular
+          <Button onClick={handleSkip} color="inherit" aria-label={t('a11y.skipOnboarding')}>
+            {t('appGuide.skip')}
           </Button>
         )}
       </Box>
@@ -155,25 +157,25 @@ export const AppGuideScreen: React.FC = () => {
         </Box>
 
         <Typography variant="h4" component="h2" fontWeight={700} gutterBottom>
-          {slide.title}
+          {t(slide.titleKey)}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 320, mx: 'auto' }}>
-          {slide.subtitle}
+          {t(slide.subtitleKey)}
         </Typography>
       </Container>
 
       {/* Controles */}
       <Box sx={{ p: 2, pb: 4 }}>
         {/* Dots indicadores */}
-        <Stack direction="row" justifyContent="center" spacing={1} sx={{ mb: 3 }} role="tablist" aria-label="Navegação de slides">
+        <Stack direction="row" justifyContent="center" spacing={1} sx={{ mb: 3 }} role="tablist" aria-label={t('a11y.slideNav')}>
           {SLIDES.map((_, index) => (
             <Box
               key={SLIDES[index].id}
               component="button"
               role="tab"
               aria-selected={index === activeStep}
-              aria-label={`Ir para slide ${index + 1} de ${SLIDES.length}`}
+              aria-label={t('a11y.goToSlide', { current: index + 1, total: SLIDES.length })}
               tabIndex={index === activeStep ? 0 : -1}
               onClick={() => setActiveStep(index)}
               onKeyDown={(e: React.KeyboardEvent) => {
@@ -205,9 +207,9 @@ export const AppGuideScreen: React.FC = () => {
               fullWidth
               onClick={handleComplete}
               sx={{ py: 1.5, fontWeight: 700 }}
-              aria-label="Começar a usar o app"
+              aria-label={t('a11y.startApp')}
             >
-              Bora jogar!
+              {t('appGuide.startPlaying')}
             </Button>
           ) : (
             <Stack direction="row" spacing={1.5}>
@@ -217,18 +219,18 @@ export const AppGuideScreen: React.FC = () => {
                 disabled={activeStep === 0}
                 onClick={() => setActiveStep(prev => prev - 1)}
                 sx={{ flex: 1, py: 1.5 }}
-                aria-label="Slide anterior"
+                aria-label={t('a11y.prevSlide')}
               >
-                Voltar
+                {t('appGuide.back')}
               </Button>
               <Button
                 variant="contained"
                 size="large"
                 onClick={() => setActiveStep(prev => prev + 1)}
                 sx={{ flex: 2, py: 1.5, fontWeight: 700 }}
-                aria-label="Próximo slide"
+                aria-label={t('a11y.nextSlide')}
               >
-                Próximo
+                {t('appGuide.next')}
               </Button>
             </Stack>
           )}

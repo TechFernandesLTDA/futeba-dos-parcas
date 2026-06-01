@@ -31,9 +31,11 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export const DevToolsScreen: React.FC = () => {
-  useDocumentTitle('Ferramentas de Dev');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.devTools'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const { user } = useAuth();

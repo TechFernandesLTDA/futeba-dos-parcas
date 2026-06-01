@@ -45,6 +45,7 @@ import {
   MAX_XP_PER_GAME,
   MIN_XP_PER_GAME,
 } from "../constants";
+import {ERROR_MSGS} from "../error-messages";
 import {getLevelForXp} from "../xp/pipeline";
 import {
   getGameDate,
@@ -131,7 +132,7 @@ export const submitMvpVote =
       requireProfileComplete(request);
 
       if (!request.auth) {
-        throw new HttpsError("unauthenticated", "User must be authenticated");
+        throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
       }
       const voterId = request.auth.uid;
 
@@ -154,9 +155,7 @@ export const submitMvpVote =
         );
         throw new HttpsError(
           "resource-exhausted",
-          "Rate limit excedido. Tente " +
-          "novamente em " +
-          `${resetInSeconds} segundos.`,
+          `Muitas tentativas. Tente novamente em ${resetInSeconds} segundos.`,
           {
             retryAfter: resetInSeconds,
             limit: 20,
@@ -498,7 +497,7 @@ export const concludeMvpVoting =
       requireProfileComplete(request);
 
       if (!request.auth) {
-        throw new HttpsError("unauthenticated", "User must be authenticated");
+        throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
       }
       const userId = request.auth.uid;
 
@@ -521,9 +520,7 @@ export const concludeMvpVoting =
         );
         throw new HttpsError(
           "resource-exhausted",
-          "Rate limit excedido. Tente " +
-          "novamente em " +
-          `${resetInSec} segundos.`,
+          `Muitas tentativas. Tente novamente em ${resetInSec} segundos.`,
           {retryAfter: resetInSec, limit: 5}
         );
       }

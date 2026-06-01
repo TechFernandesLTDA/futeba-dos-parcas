@@ -75,7 +75,7 @@ const DEFAULT_PREFS: GamificationPrefs = {
 
 export const GamificationSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
-  useDocumentTitle('Gamificação');
+  useDocumentTitle(t('page.title.gamification'));
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));

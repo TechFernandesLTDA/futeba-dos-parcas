@@ -71,7 +71,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
       >
         <MapIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
         <Typography variant="body2" color="text.secondary">
-          {apiKey ? 'Carregando mapa...' : 'Configure VITE_GOOGLE_MAPS_API_KEY para ver o mapa'}
+          {apiKey ? 'Carregando mapa...' : 'Mapa indisponível no momento.'}
         </Typography>
         <Typography variant="caption" color="text.disabled">
           {locations.length} quadras cadastradas

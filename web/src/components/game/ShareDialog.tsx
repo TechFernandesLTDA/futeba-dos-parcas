@@ -19,7 +19,7 @@ import {
   Download as DownloadIcon,
   CalendarMonth as CalendarIcon,
 } from '@mui/icons-material';
-import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarLinks';
+import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl } from '../../utils/calendarLinks';
 import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
 
@@ -87,7 +87,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, game })
     }
   };
 
-  const handleAddToCalendar = (type: 'google' | 'ics') => {
+  const handleAddToCalendar = (type: 'google' | 'ics' | 'outlook') => {
     const event = {
       title: `Futeba — ${game.locationName}`,
       description: shareText,
@@ -100,6 +100,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, game })
 
     if (type === 'google') {
       window.open(generateGoogleCalendarUrl(event), '_blank');
+    } else if (type === 'outlook') {
+      window.open(generateOutlookCalendarUrl(event), '_blank');
     } else {
       downloadIcsFile(event);
     }
@@ -185,7 +187,15 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, game })
               startIcon={<DownloadIcon />}
               onClick={() => handleAddToCalendar('ics')}
             >
-              iCal / Outlook
+              iCal / Apple
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<CalendarIcon />}
+              onClick={() => handleAddToCalendar('outlook')}
+            >
+              Outlook
             </Button>
           </Box>
         </Box>

@@ -68,8 +68,8 @@ interface RawGameOwner {
 }
 
 export const LiveEventsScreen: React.FC = () => {
-  useDocumentTitle('Eventos ao Vivo');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.liveEvents'));
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // #2238: dialog responsivo

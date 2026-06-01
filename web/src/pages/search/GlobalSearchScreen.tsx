@@ -5,6 +5,7 @@ import { Box, IconButton, Typography, useTheme } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { SearchPanel } from '../../components/search/SearchPanel';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Tela full-page de busca global — preservada como deeplink em /search.
@@ -15,7 +16,8 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
  * anterior garantido em acessos diretos via URL.
  */
 export const GlobalSearchScreen: React.FC = () => {
-  useDocumentTitle('Busca');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.search'));
   const navigate = useNavigate();
   const navigateBack = useNavigateBack();
   const theme = useTheme();

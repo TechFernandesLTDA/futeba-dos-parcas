@@ -45,11 +45,13 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('ManageLocationsScreen');
 
 export const ManageLocationsScreen: React.FC = () => {
-  useDocumentTitle('Gerenciar Locais');
+  const { t } = useTranslation();
+  useDocumentTitle(t('page.title.manageLocations'));
   const navigate = useNavigate();
   const theme = useTheme();
   const { user } = useAuth();

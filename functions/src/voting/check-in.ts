@@ -22,6 +22,7 @@ import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {requireProfileComplete} from "../middleware/require-profile-complete";
 import {FUNCTION_REGION} from "../constants";
+import {ERROR_MSGS} from "../error-messages";
 
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
@@ -72,7 +73,7 @@ export const checkInToGame = onCall(
     requireProfileComplete(request);
 
     if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
     }
     const {auth, data} = request;
     const uid = auth.uid;
@@ -93,7 +94,7 @@ export const checkInToGame = onCall(
       );
       throw new HttpsError(
         "resource-exhausted",
-        `Rate limit excedido. Tente novamente em ${resetInSec}s.`,
+        `Muitas tentativas. Tente novamente em ${resetInSec} segundos.`,
         {retryAfter: resetInSec}
       );
     }
@@ -103,7 +104,7 @@ export const checkInToGame = onCall(
     if (typeof gameId !== "string") {
       throw new HttpsError(
         "invalid-argument",
-        "gameId obrigatorio",
+        "gameId obrigatório",
       );
     }
 
@@ -113,7 +114,7 @@ export const checkInToGame = onCall(
     if (!hasQrToken && !hasGps) {
       throw new HttpsError(
         "invalid-argument",
-        "lat/lng ou qr_token obrigatorios",
+        "lat/lng ou qr_token obrigatórios",
       );
     }
     if (
@@ -153,7 +154,7 @@ export const checkInToGame = onCall(
 
     const gameSnap = await db().doc(`games/${gameId}`).get();
     if (!gameSnap.exists) {
-      throw new HttpsError("not-found", "Jogo nao encontrado");
+      throw new HttpsError("not-found", "Jogo não encontrado");
     }
     const game = gameSnap.data() as Record<string, unknown>;
 
@@ -283,7 +284,7 @@ export const checkInToGame = onCall(
       if (!confSnap.exists) {
         throw new HttpsError(
           "permission-denied",
-          "Voce nao esta confirmado neste jogo",
+          "Você não está confirmado neste jogo",
         );
       }
       const conf =
@@ -360,7 +361,7 @@ export const generateCheckinToken = onCall(
     requireProfileComplete(request);
 
     if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
     }
     const {auth, data} = request;
     const uid = auth.uid;
@@ -369,13 +370,13 @@ export const generateCheckinToken = onCall(
     if (typeof gameId !== "string" || gameId.length === 0 || gameId.length > 128) {
       throw new HttpsError(
         "invalid-argument",
-        "gameId obrigatorio",
+        "gameId obrigatório",
       );
     }
 
     const gameSnap = await db().doc(`games/${gameId}`).get();
     if (!gameSnap.exists) {
-      throw new HttpsError("not-found", "Jogo nao encontrado");
+      throw new HttpsError("not-found", "Jogo não encontrado");
     }
     const game = gameSnap.data() as Record<string, unknown>;
 
