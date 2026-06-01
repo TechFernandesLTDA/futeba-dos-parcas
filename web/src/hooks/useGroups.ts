@@ -348,6 +348,7 @@ export function useCreateGroup() {
           member_count: 1,
           members: [uid],
           total_games_played: 0,
+          status: 'ACTIVE',
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
         };
