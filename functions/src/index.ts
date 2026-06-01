@@ -2033,38 +2033,58 @@ export const onConfirmationWrite =
         statusAfter === "CONFIRMED";
 
       let delta = 0;
+      let gkDelta = 0;
       if (!wasConfirmed && isConfirmed) {
         delta = 1;
+        if (after?.position === "GOALKEEPER") {
+          gkDelta = 1;
+        }
       } else if (wasConfirmed && !isConfirmed) {
         delta = -1;
+        if (before?.position === "GOALKEEPER") {
+          gkDelta = -1;
+        }
+      } else if (wasConfirmed && isConfirmed &&
+        before?.position !== after?.position) {
+        // Troca de posição FIELD ↔ GOALKEEPER
+        if (after?.position === "GOALKEEPER") {
+          gkDelta = 1;
+        } else {
+          gkDelta = -1;
+        }
       }
 
-      if (delta === 0) return;
+      if (delta === 0 && gkDelta === 0) return;
 
       try {
         logger.info(
           "[SYNC] Confirmation status " +
           `changed: ${statusBefore} -> ` +
           `${statusAfter} for game ${gameId} ` +
-          `(delta=${delta})`
+          `(delta=${delta}, gkDelta=${gkDelta})`
         );
+
+        const updateFields: Record<string, unknown> = {
+          players_count:
+            admin.firestore.FieldValue.increment(delta),
+          updated_at: admin.firestore
+            .FieldValue.serverTimestamp(),
+        };
+        if (gkDelta !== 0) {
+          updateFields.goalkeepers_count =
+            admin.firestore.FieldValue.increment(gkDelta);
+        }
 
         // Increment atômico — seguro
         // cross-instance, sem race condition
         await db().collection("games")
           .doc(gameId)
-          .update({
-            players_count:
-              admin.firestore.FieldValue
-                .increment(delta),
-            updated_at: admin.firestore
-              .FieldValue.serverTimestamp(),
-          });
+          .update(updateFields);
 
         logger.info(
           `[SYNC] Game ${gameId}: ` +
-          `players_count ${delta > 0 ? "+" : ""}` +
-          `${delta}`
+          `players_count ${delta > 0 ? "+" : ""}${delta}` +
+          (gkDelta !== 0 ? `, goalkeepers_count ${gkDelta > 0 ? "+" : ""}${gkDelta}` : "")
         );
       } catch (error) {
         logger.error(

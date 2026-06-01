@@ -182,6 +182,7 @@ export function useGameDetail(gameId: string | null) {
 export function useConfirmPresence() {
   const { user, firebaseUser } = useAuth();
   const { showSuccess, showError } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -215,6 +216,7 @@ export function useConfirmPresence() {
         };
 
         await setDoc(confirmationRef, confirmationData);
+        queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         showSuccess('Presença confirmada!');
         setLoading(false);
         return true;
@@ -226,7 +228,7 @@ export function useConfirmPresence() {
         throw err;
       }
     },
-    [firebaseUser, user, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError]
   );
 
   const cancelPresence = useCallback(
@@ -250,6 +252,7 @@ export function useConfirmPresence() {
         // Apenas deletar a confirmação (igual ao Android)
         // O Cloud Function trigger (onConfirmationWrite) atualiza os contadores do jogo
         await deleteDoc(confirmationRef);
+        queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         showSuccess('Presença cancelada.');
         setLoading(false);
         return true;
@@ -261,7 +264,7 @@ export function useConfirmPresence() {
         throw err;
       }
     },
-    [firebaseUser, user, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError]
   );
 
   return { confirmPresence, cancelPresence, loading, error };
