@@ -26,11 +26,12 @@ class LiveGameRepository constructor(
     /**
      * Inicia um jogo ao vivo
      */
-    suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<LiveGameScore> {
+    suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<com.futebadosparcas.data.model.LiveGameScore> {
         return try {
+            val currentUserId = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
             val docRef = scoresCollection.document(gameId)
 
-            val score = LiveGameScore(
+            val score = com.futebadosparcas.data.model.LiveGameScore(
                 id = gameId,
                 gameId = gameId,
                 team1Id = team1Id,
@@ -38,6 +39,7 @@ class LiveGameRepository constructor(
                 team2Id = team2Id,
                 team2Score = 0
             )
+            score.ownerId = currentUserId
 
             docRef.set(score).await()
             AppLogger.d(TAG) { "Jogo ao vivo iniciado: $gameId" }

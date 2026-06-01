@@ -130,6 +130,7 @@ export const useNotifications = (userId?: string) => {
       const { addDoc } = await import('firebase/firestore');
       const notifRef = collection(db, 'notifications');
       await addDoc(notifRef, {
+        created_by: userId,
         user_id: notification.userId,
         type: notification.type,
         title: notification.title,
@@ -149,7 +150,7 @@ export const useNotifications = (userId?: string) => {
       logger.error('Error restoring notification:', err);
       showError('Erro ao restaurar notificação.');
     }
-  }, [showSuccess, showError]);
+  }, [showSuccess, showError, userId]);
 
   const deleteOldNotifications = useCallback(async (daysOld: number) => {
     if (!userId) return;
