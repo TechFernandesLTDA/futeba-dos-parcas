@@ -235,6 +235,8 @@ export const GameDetailScreen: React.FC = () => {
       await softDeleteGame({ gameId });
       setDeleteDialogOpen(false);
       showSuccess(t('games.detail.deleteSuccess'));
+      queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });
       navigate('/?tab=1', { replace: true });
     } catch (err) {
       showError((err as Error)?.message || t('games.detail.deleteError'));

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Container,
@@ -67,6 +68,7 @@ export const GroupSettingsScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { firebaseUser, user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const queryClient = useQueryClient();
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
 
@@ -113,6 +115,7 @@ export const GroupSettingsScreen: React.FC = () => {
 
       logger.info('Usuário saiu do grupo', { groupId, uid });
       showSuccess('Você saiu do grupo.');
+      queryClient.invalidateQueries({ queryKey: ['groups', uid] });
       setLeaveDialogOpen(false);
       navigate('/?tab=2');
     } catch (err) {
@@ -132,6 +135,7 @@ export const GroupSettingsScreen: React.FC = () => {
       await softDeleteGroup({ groupId });
       logger.info('Grupo excluído com sucesso', { groupId });
       showSuccess('Grupo excluído com sucesso.');
+      queryClient.invalidateQueries({ queryKey: ['groups', uid] });
       setDeleteDialogOpen(false);
       navigate('/?tab=2');
     } catch (err) {
