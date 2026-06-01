@@ -22,6 +22,7 @@ interface BadgeTrigger {
 /**
  * Verifica se usuario tem streak >= 7 jogos consecutivos
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
 async function checkBadgeStreak7(
@@ -48,6 +49,7 @@ async function checkBadgeStreak10Vitorias(userId: string): Promise<boolean> {
 /**
  * Verifica se usuario tem >= 100 jogos no total
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
 async function checkBadge100Jogos(
@@ -62,6 +64,7 @@ async function checkBadge100Jogos(
 /**
  * Verifica se usuario tem >= 1 MVP
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
 async function checkBadgeMVP1(
@@ -76,6 +79,7 @@ async function checkBadgeMVP1(
 /**
  * Verifica se usuario tem >= 10 MVPs
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
 async function checkBadgeMVP10(
@@ -90,6 +94,7 @@ async function checkBadgeMVP10(
 /**
  * Verifica se usuario tem >= 10 gols
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
 async function checkBadgeGols10(
@@ -104,6 +109,7 @@ async function checkBadgeGols10(
 /**
  * Verifica se usuario tem >= 50 assistencias
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
 async function checkBadgeAssistencias50(
@@ -118,6 +124,7 @@ async function checkBadgeAssistencias50(
 /**
  * Verifica se usuario tem >= 50 vitorias
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
 async function checkBadgeVitorias50(
@@ -132,6 +139,8 @@ async function checkBadgeVitorias50(
 /**
  * Verifica se usuario jogou em 3+ campos diferentes
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [_userDoc] - Documento do usuario pre-carregado (nao utilizado)
+ * @param {admin.firestore.QuerySnapshot} [confirmationsSnap] - Confirmations pre-carregadas (opcional)
  * @return {Promise<boolean>} true se onipresente
  */
 async function checkBadgeOnipresente(
@@ -157,6 +166,8 @@ async function checkBadgeOnipresente(
 /**
  * Verifica se usuario tem 10+ quartas-feiras confirmadas
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [_userDoc] - Documento do usuario pre-carregado (nao utilizado)
+ * @param {admin.firestore.QuerySnapshot} [confirmationsSnap] - Confirmations pre-carregadas (opcional)
  * @return {Promise<boolean>} true se rei das quartas
  */
 async function checkBadgeReiDasQuartas(
@@ -185,6 +196,8 @@ async function checkBadgeReiDasQuartas(
  * Verifica se usuario venceu o mesmo adversario 5x
  * (verifica se ha algum adversario com 5+ derrotas contra o usuario)
  * @param {string} userId - UID do usuario
+ * @param {admin.firestore.DocumentSnapshot} [_userDoc] - Documento do usuario pre-carregado (nao utilizado)
+ * @param {admin.firestore.QuerySnapshot} [confirmationsSnap] - Confirmations pre-carregadas (opcional)
  * @return {Promise<boolean>} true se carrasco de alguem
  */
 async function checkBadgeCarrasco(
