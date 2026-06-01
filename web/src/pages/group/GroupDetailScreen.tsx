@@ -177,6 +177,7 @@ export const GroupDetailScreen: React.FC = () => {
       await softDeleteGroup({ groupId });
       setDeleteDialogOpen(false);
       showSuccess(t('groupDetail.deleteSuccess'));
+      queryClient.invalidateQueries({ queryKey: ['groups', currentUser?.uid || ''] });
       // #1591: navega diretamente após await sem setTimeout frágil
       navigate('/?tab=2');
     } catch (err) {
