@@ -31,17 +31,24 @@ interface Stats {
 
 /**
  * Infere o tipo de quadra baseado no nome do local.
+ * @param {string} name Nome do local.
+ * @return {string} Tipo de quadra inferido (FUTSAL/CAMPO/AREIA/SOCIETY).
  */
 function inferFieldType(name: string): string {
   const lower = name.toLowerCase();
   if (lower.includes("futsal")) return "FUTSAL";
   if (lower.includes("campo") || lower.includes("grass")) return "CAMPO";
-  if (lower.includes("areia") || lower.includes("beach") || lower.includes("praia"))
+  if (lower.includes("areia") || lower.includes("beach") || lower.includes("praia")) {
     return "AREIA";
+  }
   // society é o mais comum no Brasil para quadras pequenas
   return "SOCIETY";
 }
 
+/**
+ * Cria um field padrão para cada local ativo sem quadras.
+ * @param {boolean} execute Se true, aplica as mudanças; senão dry-run.
+ */
 async function enrich(execute = false): Promise<void> {
   const stats: Stats = {
     total: 0,

@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Meia Alta Society",
+    "id": "ISRzqt6b4P2aiHqgYYCU",
+    "found": true,
+    "phone": {
+      "value": "(41) 98522-9744",
+      "source": "https://www.benditoguia.com.br/empresa/meia-alta-society-novo-mundo-curitiba-pr",
+      "confidence": "med"
+    },
+    "whatsapp": {
+      "value": "(41) 98522-9744",
+      "source": "https://www.benditoguia.com.br/empresa/meia-alta-society-novo-mundo-curitiba-pr",
+      "confidence": "low"
+    },
+    "opening_time": {
+      "value": "09:00",
+      "source": "https://www.benditoguia.com.br/empresa/meia-alta-society-novo-mundo-curitiba-pr",
+      "confidence": "low"
+    },
+    "closing_time": {
+      "value": "00:00",
+      "source": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/curitiba-pr/meia-alta-society/6286357b911b8129b7e7afe4",
+      "confidence": "low"
+    },
+    "operating_days": {
+      "value": [1, 2, 3, 4, 5, 6, 7],
+      "source": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/curitiba-pr/meia-alta-society/6286357b911b8129b7e7afe4",
+      "confidence": "low"
+    },
+    "num_fields": null,
+    "amenities": {
+      "value": ["wi-fi grátis", "estacionamento", "acessibilidade", "lanchonete", "churrasqueira", "quadra coberta", "grama sintética", "escolinha de futebol"],
+      "source": "https://www.benditoguia.com.br/empresa/meia-alta-society-novo-mundo-curitiba-pr",
+      "confidence": "low"
+    },
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": {
+      "value": "@meiaalta_society",
+      "source": "https://www.instagram.com/meiaalta_society/",
+      "confidence": "high"
+    },
+    "notes": "ATENÇÃO: discrepância de endereço. Input traz Rua Nossa Senhora da Cabeça, 1845 - CIC (81310-010), mas todos os diretórios online (Locais do Brasil, Bendito Guia) e o registro de funcionamento listam o endereço Rua Affife Mansur, 698 - Novo Mundo (81050-180). A empresa Meia Alta Society Ltda (CNPJ 50.725.165/0001-07) consta na Econodata no endereço do CIC. Pode ser relocalização ou dois endereços. Telefone/horários/amenities/coords são do endereço Novo Mundo, por isso confidence baixa para o registro do input (CIC). Coords do Novo Mundo (~-25.4953,-49.3036) NÃO atribuídas pois provavelmente não correspondem ao endereço do input. Horários conflitantes entre fontes (Bendito: Seg-Sex 09-18/Sab 09-13; Locais do Brasil: Seg-Sab 09-00, Dom 09-21)."
+  },
+  {
+    "name": "Arena Alto da XV",
+    "id": "VlUfWNI6kxkjALUQLzy5",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Nenhum estabelecimento chamado 'Arena Alto da XV' encontrado na Rua Itupava, 1300 - Alto da XV, Curitiba. Buscas no Google/Instagram/diretórios não retornaram nenhuma quadra/arena de futebol com esse nome nesse endereço. A Rua Itupava no bairro Alto da Rua XV é majoritariamente residencial/comercial. Não foi possível confirmar a existência do local online."
+  },
+  {
+    "name": "Cancha do Corinthians",
+    "id": "F3pHv28Zo9fA2JPSytB5",
+    "found": true,
+    "phone": {
+      "value": "(41) 99944-2404",
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "high"
+    },
+    "whatsapp": {
+      "value": "(41) 99944-2404",
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "low"
+    },
+    "opening_time": {
+      "value": "09:00",
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "med"
+    },
+    "closing_time": {
+      "value": "18:00",
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "low"
+    },
+    "operating_days": {
+      "value": [1, 2, 3, 4, 5, 6],
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "med"
+    },
+    "num_fields": null,
+    "amenities": {
+      "value": ["wi-fi grátis", "estacionamento", "acessibilidade"],
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "med"
+    },
+    "hourly_price": null,
+    "latitude": {
+      "value": -25.4488149,
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "low"
+    },
+    "longitude": {
+      "value": -49.174,
+      "source": "https://www.benditoguia.com.br/empresa/cancha-do-corinthians-campo-de-futebol-suico-e-society-pinhais-pr",
+      "confidence": "low"
+    },
+    "website": null,
+    "instagram": null,
+    "notes": "Endereço confere com o input (R. Henrique Coelho Neto, 534 - Vargem Grande, Pinhais - PR, 83330-021). Oferece campo de futebol Suíço e Society. Horário comercial (Seg-Sex 09-18, Sab 09-13) provavelmente é o do escritório/atendimento, não do uso das quadras (que costuma ir até noite); por isso closing_time confidence baixa. Longitude truncada na fonte (-49.174), por isso coords confidence baixa. WhatsApp inferido do mesmo telefone celular (não confirmado explicitamente)."
+  },
+  {
+    "name": "Arena Society Almirante Tamandaré",
+    "id": "cXFt1WMeYRCZSTXJrn82",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Não foi possível confirmar um estabelecimento chamado 'Arena Society' em Rua Domingos Scucato, 1200 - Centro, Almirante Tamandaré (83501-000). A Rua Domingos Scucato consta no CEP 83501-020 (Jardim Monte Santo). Outras arenas em Almirante Tamandaré foram encontradas (Arena Fut7 Tamandaré @arena.fut7.tamandare; Bini Sports em Rua Fredolin Wolf, 345), mas nenhuma com o nome 'Arena Society' nem nesse endereço. Sem correspondência confiável por nome+endereço."
+  },
+  {
+    "name": "Arena Society Tijucas do Sul",
+    "id": "dh83ciyHhRTVl9JKnMrh",
+    "found": false,
+    "phone": null,
+    "whatsapp": null,
+    "opening_time": null,
+    "closing_time": null,
+    "operating_days": null,
+    "num_fields": null,
+    "amenities": null,
+    "hourly_price": null,
+    "latitude": null,
+    "longitude": null,
+    "website": null,
+    "instagram": null,
+    "notes": "Não foi possível confirmar 'Arena Society' em Tijucas do Sul - PR (Rua XV de Novembro, 280 - Centro, 83190-000). O único 'Fut7 Club / Arena Society' encontrado (@fut7club.tijucas, buscaquadras) fica em Tijucas - SC (Rua Antônio Bayer, 522 - Centro), cidade/estado diferentes => NÃO usado conforme regra de match por nome+endereço. Em Tijucas do Sul-PR, a Rua XV de Novembro abriga predominantemente órgãos municipais (prefeitura nº 1458). Sem correspondência para o local do input."
+  }
+]

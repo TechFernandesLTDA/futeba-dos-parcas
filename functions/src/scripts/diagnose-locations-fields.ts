@@ -27,6 +27,9 @@ interface LocationDiag {
   issues: string[];
 }
 
+/**
+ * Diagnostica o schema real de locations e fields no Firestore.
+ */
 async function diagnose(): Promise<void> {
   console.log("\n🔍 DIAGNÓSTICO COMPLETO — Locations e Fields\n");
 
@@ -121,13 +124,13 @@ async function diagnose(): Promise<void> {
 
   for (const d of diagnostics) {
     const status =
-      d.issues.length > 0
-        ? `❌ ${d.issues.join("; ")}`
-        : d.subCollectionFields > 0 || d.rootFields > 0
-        ? "✅ OK"
-        : d.fieldCount > 0
-        ? "⚠️  field_count > 0 mas SEM fields reais"
-        : "ℹ️  field_count=0 (sem quadras)";
+      d.issues.length > 0 ?
+        `❌ ${d.issues.join("; ")}` :
+        d.subCollectionFields > 0 || d.rootFields > 0 ?
+          "✅ OK" :
+          d.fieldCount > 0 ?
+            "⚠️  field_count > 0 mas SEM fields reais" :
+            "ℹ️  field_count=0 (sem quadras)";
 
     console.log(
       `\n📍 ${d.name} (${d.id})`
@@ -147,8 +150,10 @@ async function diagnose(): Promise<void> {
       console.log("   Sub-collection fields:");
       fields.forEach((f) => {
         const fd = f.data();
+        const price = fd.hourly_price ?? fd.hourlyPrice ?? 0;
         console.log(
-          `     - ${f.id}: name="${fd.name}" type="${fd.type}" active=${fd.is_active} price=${fd.hourly_price ?? fd.hourlyPrice ?? 0}`
+          `     - ${f.id}: name="${fd.name}" type="${fd.type}"` +
+          ` active=${fd.is_active} price=${price}`
         );
       });
     }
@@ -160,8 +165,10 @@ async function diagnose(): Promise<void> {
       console.log("   Root fields:");
       rootFields.forEach((f) => {
         const fd = f.data();
+        const price = fd.hourly_price ?? fd.hourlyPrice ?? 0;
         console.log(
-          `     - ${f.id}: name="${fd.name}" type="${fd.type}" active=${fd.is_active} price=${fd.hourly_price ?? fd.hourlyPrice ?? 0}`
+          `     - ${f.id}: name="${fd.name}" type="${fd.type}"` +
+          ` active=${fd.is_active} price=${price}`
         );
       });
     }
@@ -179,9 +186,9 @@ async function diagnose(): Promise<void> {
     console.log("Campos no primeiro local:");
     for (const [key, value] of Object.entries(sampleData)) {
       const valStr =
-        typeof value === "object" && value !== null
-          ? JSON.stringify(value).substring(0, 80)
-          : String(value);
+        typeof value === "object" && value !== null ?
+          JSON.stringify(value).substring(0, 80) :
+          String(value);
       console.log(`  ${key}: ${valStr}`);
     }
 
@@ -199,9 +206,9 @@ async function diagnose(): Promise<void> {
         console.log("\nCampos no primeiro Field (sub-coleção):");
         for (const [key, value] of Object.entries(fieldData)) {
           const valStr =
-            typeof value === "object" && value !== null
-              ? JSON.stringify(value).substring(0, 80)
-              : String(value);
+            typeof value === "object" && value !== null ?
+              JSON.stringify(value).substring(0, 80) :
+              String(value);
           console.log(`  ${key}: ${valStr}`);
         }
       }
@@ -219,9 +226,9 @@ async function diagnose(): Promise<void> {
         console.log("\nCampos no primeiro Field (root):");
         for (const [key, value] of Object.entries(fieldData)) {
           const valStr =
-            typeof value === "object" && value !== null
-              ? JSON.stringify(value).substring(0, 80)
-              : String(value);
+            typeof value === "object" && value !== null ?
+              JSON.stringify(value).substring(0, 80) :
+              String(value);
           console.log(`  ${key}: ${valStr}`);
         }
       }

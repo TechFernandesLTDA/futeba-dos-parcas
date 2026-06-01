@@ -47,6 +47,7 @@ interface FormState {
   fieldType: FieldType;
   playersPerTeam: number;
   fieldCount: number;
+  hourlyPrice: number;
   description: string;
   hasLighting: boolean;
   hasParking: boolean;
@@ -68,6 +69,7 @@ const defaultForm: FormState = {
   fieldType: 'SOCIETY',
   playersPerTeam: 7,
   fieldCount: 1,
+  hourlyPrice: 0,
   description: '',
   hasLighting: false,
   hasParking: false,
@@ -125,6 +127,7 @@ export const LocationFormScreen: React.FC = () => {
             fieldType: data.fieldType || 'SOCIETY',
             playersPerTeam: data.playersPerTeam || 7,
             fieldCount: data.fieldCount || 1,
+            hourlyPrice: 0,
             description: data.description || '',
             hasLighting: !!data.hasLighting,
             hasParking: !!data.hasParking,
@@ -290,7 +293,7 @@ export const LocationFormScreen: React.FC = () => {
             location_id: newRef.id,
             type: form.fieldType,
             is_active: true,
-            hourly_price: 0,
+            hourly_price: form.hourlyPrice || 0,
             amenities: [],
             photos: [],
             managers: [user.id],
@@ -508,6 +511,16 @@ export const LocationFormScreen: React.FC = () => {
                       inputProps={{ min: 1, max: 20 }}
                     />
                   </Stack>
+                  <TextField
+                    label="Preço por hora (R$)"
+                    type="number"
+                    fullWidth
+                    value={form.hourlyPrice}
+                    onChange={(e) => handleChange('hourlyPrice', parseFloat(e.target.value) || 0)}
+                    error={!!errors.hourlyPrice}
+                    helperText={errors.hourlyPrice || 'Opcional — aplicado a todas as quadras ao criar o local. Deixe 0 se não souber.'}
+                    inputProps={{ min: 0, step: 10 }}
+                  />
                 </Stack>
               </CardContent>
             </Card>
