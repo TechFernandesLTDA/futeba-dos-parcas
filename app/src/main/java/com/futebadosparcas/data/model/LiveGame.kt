@@ -27,6 +27,9 @@ data class LiveGameScore(
     @get:PropertyName("team2_score")
     @set:PropertyName("team2_score")
     var team2Score: Int = 0,
+    @get:PropertyName("owner_id")
+    @set:PropertyName("owner_id")
+    var ownerId: String = "",
     @get:PropertyName("started_at")
     @set:PropertyName("started_at")
     @ServerTimestamp
@@ -46,8 +49,8 @@ data class GameEvent(
     @get:PropertyName("game_id")
     @set:PropertyName("game_id")
     var gameId: String = "",
-    @get:PropertyName("event_type")
-    @set:PropertyName("event_type")
+    @get:PropertyName("type")
+    @set:PropertyName("type")
     var eventType: String = GameEventType.GOAL.name,
     @get:PropertyName("player_id")
     @set:PropertyName("player_id")

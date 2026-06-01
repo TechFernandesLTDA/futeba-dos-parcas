@@ -330,9 +330,9 @@ export const LiveGameScreen: React.FC = () => {
 
     try {
       const player = confirmedPlayers.find((p) => p.id === selectedPlayer);
-      await addDoc(collection(db, 'game_events'), {
-        game_id: gameId,
-        event_type: selectedEventType,
+        await addDoc(collection(db, 'game_events'), {
+          game_id: gameId,
+          type: selectedEventType,
         player_id: selectedPlayer,
         player_name: player?.name || t('profile.defaultPlayerName'),
         minute: Math.floor(elapsedTime / 60),

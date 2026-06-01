@@ -23,6 +23,10 @@ data class AppNotification(
     @set:PropertyName("user_id")
     var userId: String = "",
 
+    @get:PropertyName("created_by")
+    @set:PropertyName("created_by")
+    var createdBy: String = "",
+
     val type: String = NotificationType.GENERAL.name,
 
     val title: String = "",
@@ -207,6 +211,7 @@ data class AppNotification(
         ): AppNotification {
             return AppNotification(
                 userId = userId,
+                createdBy = invitedById,
                 type = NotificationType.GROUP_INVITE.name,
                 title = "Convite para grupo",
                 message = "$invitedByName convidou voce para o grupo $groupName",
@@ -234,6 +239,7 @@ data class AppNotification(
         ): AppNotification {
             return AppNotification(
                 userId = userId,
+                createdBy = summonedById,
                 type = NotificationType.GAME_SUMMON.name,
                 title = "Convocacao para jogo",
                 message = "Voce foi convocado para $gameName ($gameDate) - Grupo $groupName",
@@ -281,6 +287,7 @@ data class AppNotification(
         ): AppNotification {
             return AppNotification(
                 userId = userId,
+                createdBy = memberId,
                 type = NotificationType.MEMBER_JOINED.name,
                 title = "Novo membro",
                 message = "$memberName entrou no grupo $groupName",
