@@ -169,8 +169,8 @@ const defaultFormData: GameFormData = {
 };
 
 export const CreateGameScreen: React.FC = () => {
-  useDocumentTitle('Criar Jogo');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.createGame'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const groupId = searchParams.get('groupId') || undefined;
