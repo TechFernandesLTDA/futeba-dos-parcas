@@ -175,7 +175,7 @@ export const LocationsMapScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
@@ -194,10 +194,10 @@ export const LocationsMapScreen: React.FC = () => {
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar quadras..."
+            placeholder={t('placeholder.searchField')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Buscar quadras"
+            aria-label={t('a11y.searchFields')}
             inputProps={{ maxLength: 200 }}
             InputProps={{
               startAdornment: (
@@ -296,7 +296,7 @@ export const LocationsMapScreen: React.FC = () => {
       {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
       <ScreenFab
         icon={<AddIcon />}
-        aria-label="Adicionar local"
+        aria-label={t('a11y.addLocation')}
         onClick={() => navigate('/location/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },

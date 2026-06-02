@@ -41,6 +41,7 @@ import { formatGameDate } from '../../utils/dateFormatters';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp } from '../../types/gamification';
 import { useToast } from '../../contexts';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('SearchPanel');
 
@@ -129,6 +130,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   placeholder = 'Buscar jogadores, grupos, jogos...',
   autoFocus = true,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
   const { showError } = useToast();
@@ -307,7 +309,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus={autoFocus}
-          aria-label="Buscar jogadores, grupos ou jogos"
+          aria-label={t('a11y.searchPlayersGroupsGames')}
           aria-autocomplete="list"
           aria-controls="search-results-list"
           InputProps={{
@@ -326,7 +328,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           value={tabValue}
           onChange={(_, v) => setTabValue(v as number)}
           variant="fullWidth"
-          aria-label="Filtrar resultados por tipo"
+          aria-label={t('a11y.filterResultsByType')}
           sx={{ borderBottom: `1px solid ${theme.palette.divider}`, flexShrink: 0 }}
         >
           <Tab label="Todos" />
@@ -349,7 +351,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                   <Typography variant="overline" color="text.secondary">
                     Buscas recentes
                   </Typography>
-                  <IconButton size="small" onClick={handleClearHistory} aria-label="Limpar histórico de busca">
+                  <IconButton size="small" onClick={handleClearHistory} aria-label={t('a11y.clearSearchHistory')}>
                     <ClearIcon fontSize="small" />
                   </IconButton>
                 </Box>
@@ -383,7 +385,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             <List
               ref={listRef}
               disablePadding
-              aria-label="Comandos rápidos"
+              aria-label={t('a11y.quickCommands')}
               role="listbox"
               id="search-results-list"
             >
@@ -445,7 +447,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           <List
             ref={listRef}
             disablePadding
-            aria-label="Resultados da busca"
+            aria-label={t('a11y.searchResultsList')}
             role="listbox"
             id="search-results-list"
           >

@@ -928,7 +928,7 @@ export const CreateGameScreen: React.FC = () => {
           sx={{ mt: 0.5 }}
           size="small"
           color="primary"
-          aria-label="Criar novo local"
+          aria-label={t('a11y.createNewLocation')}
         >
           <AddLocationIcon />
         </IconButton>
@@ -1310,7 +1310,7 @@ export const CreateGameScreen: React.FC = () => {
         value={formData.streamUrl}
         onChange={(e) => handleInputChange('streamUrl', e.target.value)}
         fullWidth
-        placeholder="https://youtube.com/watch?v=..."
+        placeholder={t('placeholder.enterYoutubeUrl')}
         helperText="Opcional. Cole uma URL do YouTube ou Twitch para transmitir ao vivo."
         inputProps={{ maxLength: 2048 }}
       />

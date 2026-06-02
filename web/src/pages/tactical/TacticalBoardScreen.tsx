@@ -172,16 +172,16 @@ export const TacticalBoardScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Quadro Tático
           </Typography>
-          <IconButton onClick={() => setSelectedFormation(0)} aria-label="Resetar formação">
+          <IconButton onClick={() => setSelectedFormation(0)} aria-label={t('a11y.resetFormation')}>
             <RefreshIcon />
           </IconButton>
-          <IconButton aria-label="Salvar formação">
+          <IconButton aria-label={t('a11y.saveFormation')}>
             <SaveIcon />
           </IconButton>
         </Box>
@@ -194,7 +194,7 @@ export const TacticalBoardScreen: React.FC = () => {
           onChange={(_, v) => v !== null && applyFormation(v)}
           fullWidth
           sx={{ mb: 2 }}
-          aria-label="Selecionar formação"
+          aria-label={t('a11y.selectFormation')}
         >
           {FORMATIONS.map((f, i) => (
             <ToggleButton key={f.name} value={i}>

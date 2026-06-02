@@ -23,6 +23,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { EmptyState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('GamePhotosTab');
 
@@ -81,6 +82,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   const theme = useTheme();
   const { currentUser } = useAuth();
   const { showError } = useToast();
+  const { t } = useTranslation();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
@@ -170,6 +172,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   };
 
   const canDelete = (photo: GamePhoto) => {
+  const { t } = useTranslation();
     if (!currentUser) return false;
     return photo.uploadedBy === currentUser.uid || isOwner;
   };
@@ -234,7 +237,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
                   <IconButton
                     className="delete-btn"
                     size="small"
-                    aria-label="Excluir foto"
+                    aria-label={t('a11y.deletePhoto')}
                     sx={{
                       position: 'absolute',
                       top: 4,
@@ -269,7 +272,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
           <IconButton
             sx={{ position: 'absolute', top: 8, right: 8, color: theme.palette.common.white, zIndex: 1, bgcolor: alpha(theme.palette.common.black, 0.5) }}
             onClick={() => setSelectedPhoto(null)}
-            aria-label="Fechar"
+            aria-label={t('a11y.close')}
           >
             <CloseIcon />
           </IconButton>

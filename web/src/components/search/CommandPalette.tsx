@@ -12,6 +12,7 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { SearchPanel } from './SearchPanel';
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import { useTranslation } from 'react-i18next';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -34,6 +35,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpen,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
@@ -68,7 +70,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       onClose={onClose}
       fullScreen={isMobile}
       maxWidth={false}
-      aria-label="Busca global e comandos rápidos"
+      aria-label={t('a11y.globalSearchCommands')}
       aria-modal="true"
       PaperProps={{
         sx: {
@@ -131,7 +133,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           <IconButton
             size="small"
             onClick={onClose}
-            aria-label="Fechar busca"
+            aria-label={t('a11y.closeSearch')}
             edge="end"
           >
             <CloseIcon fontSize="small" />

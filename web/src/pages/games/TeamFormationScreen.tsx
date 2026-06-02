@@ -377,7 +377,7 @@ export const TeamFormationScreen: React.FC = () => {
           <IconButton onClick={shuffleTeams} aria-label={t('games.sortTeams')}>
             <ShuffleIcon />
           </IconButton>
-          <IconButton onClick={handleSaveTeams} disabled={saving} aria-label="Salvar times">
+          <IconButton onClick={handleSaveTeams} disabled={saving} aria-label={t('a11y.saveTeams')}>
             <SaveIcon />
           </IconButton>
         </Box>

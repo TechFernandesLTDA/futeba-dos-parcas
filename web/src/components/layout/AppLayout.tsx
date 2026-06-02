@@ -4,14 +4,17 @@ import { AppSidebar } from './AppSidebar';
 import { ConnectionStatus, useOnlineStatus } from '../common/ConnectionStatus';
 import { AppBreadcrumbs } from './AppBreadcrumbs';
 import { useAutoBreadcrumbs } from '../../hooks/useAutoBreadcrumbs';
+import { useTranslation } from 'react-i18next';
 
 function AppBreadcrumbsWrapper() {
+  const { t: _t } = useTranslation();
   const items = useAutoBreadcrumbs();
   return <AppBreadcrumbs items={items} />;
 }
 
 export function AppLayout() {
   const isOnline = useOnlineStatus();
+  const { t } = useTranslation();
 
   return (
     <Box
@@ -25,7 +28,7 @@ export function AppLayout() {
       <Box
         component="nav"
         role="navigation"
-        aria-label="Menu principal"
+        aria-label={t('a11y.mainMenu')}
         sx={{ display: 'flex', flexShrink: 0 }}
       >
         <AppSidebar />

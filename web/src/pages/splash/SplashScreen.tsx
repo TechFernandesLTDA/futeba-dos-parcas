@@ -62,7 +62,7 @@ export const SplashScreen: React.FC = () => {
       <AppLogo
         size="xlarge"
         shape="circle"
-        alt="Futeba dos Parças"
+        alt={t('alt.logo')}
         sx={{
           mb: 3,
           bgcolor: alpha(theme.palette.common.white, 0.2),

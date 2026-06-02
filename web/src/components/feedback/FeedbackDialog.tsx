@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeedback, UserFeedback } from '../../hooks/useFeedback';
 import { captureContext } from '../../utils/captureContext';
+import { useTranslation } from 'react-i18next';
 
 const FEEDBACK_TYPES = [
   { value: 'bug', label: 'Bug', icon: <BugIcon />, description: 'Algo quebrado' },
@@ -49,6 +50,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
   const [severity, setSeverity] = useState('medium');
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { t } = useTranslation();
 
   const resetForm = () => {
     setFeedbackType('');
@@ -110,7 +112,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
         <Typography variant="h5" fontWeight={700}>
           {submitted ? 'Feedback Enviado' : 'Enviar Feedback'}
         </Typography>
-        <IconButton onClick={handleClose} disabled={loading} aria-label="Fechar" size="small">
+        <IconButton onClick={handleClose} disabled={loading} aria-label={t('a11y.close')} size="small">
           <CloseIcon aria-hidden="true" />
         </IconButton>
       </DialogTitle>
@@ -196,7 +198,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
 
             <TextField
               label="Título"
-              placeholder="Resumo do seu feedback"
+              placeholder={t('placeholder.feedbackSummary')}
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -212,7 +214,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
 
             <TextField
               label="Descrição"
-              placeholder="Descreva em detalhes o que você está reportando..."
+              placeholder={t('placeholder.feedbackDescription')}
               value={description}
               onChange={(e) => {
                 setDescription(e.target.value);

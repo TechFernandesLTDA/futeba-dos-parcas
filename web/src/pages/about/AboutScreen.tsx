@@ -58,7 +58,7 @@ export const AboutScreen: React.FC = () => {
         <Card sx={{ mb: 2, textAlign: 'center' }}>
           <CardContent>
             <Avatar
-              aria-label="Logo do Futeba dos Parças"
+              aria-label={t('a11y.logoWithBrand')}
               sx={{
                 width: 80,
                 height: 80,
@@ -82,7 +82,7 @@ export const AboutScreen: React.FC = () => {
         </Card>
 
         <Card sx={{ mb: 2 }}>
-          <List disablePadding aria-label="Links legais">
+          <List disablePadding aria-label={t('a11y.legalLinks')}>
             <ListItemButton onClick={() => window.open('/terms_of_service.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <TermsIcon />
@@ -114,7 +114,7 @@ export const AboutScreen: React.FC = () => {
         </Card>
 
         <Card sx={{ mb: 2 }}>
-          <List disablePadding aria-label="Suporte e contato">
+          <List disablePadding aria-label={t('a11y.supportContact')}>
             <ListItemButton onClick={() => setFeedbackOpen(true)}>
               <ListItemIcon>
                 <BugIcon />
@@ -136,7 +136,7 @@ export const AboutScreen: React.FC = () => {
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Informações do Dispositivo
             </Typography>
-            <List disablePadding dense aria-label="Informações do dispositivo">
+            <List disablePadding dense aria-label={t('a11y.deviceInfo')}>
               <ListItem sx={{ px: 0 }}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <DeviceIcon fontSize="small" />

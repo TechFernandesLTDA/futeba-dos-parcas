@@ -264,7 +264,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -355,7 +355,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                 sx={{ py: 3 }}
               />
             ) : (
-              <List disablePadding aria-label="Minhas quadras">
+              <List disablePadding aria-label={t('a11y.myFields')}>
                 {locations.map((loc, index) => (
                   <Box key={loc.id}>
                     {index > 0 && <Divider />}
@@ -398,7 +398,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               Ações Rápidas
             </Typography>
-            <List disablePadding aria-label="Ações rápidas">
+            <List disablePadding aria-label={t('a11y.quickActions')}>
               <ListItemButton onClick={() => navigate('/location/create')}>
                 <ListItemIcon>
                   <LocationIcon />

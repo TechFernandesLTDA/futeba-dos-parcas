@@ -274,7 +274,7 @@ export const CashboxScreen: React.FC = () => {
             description="Adicione entradas e saídas para controlar o caixa"
           />
         ) : (
-          <List disablePadding aria-label="Histórico de transações">
+          <List disablePadding aria-label={t('a11y.transactionHistory')}>
             {transactions.map((transaction, index) => (
               <Box key={transaction.id}>
                 {index > 0 && <Divider />}

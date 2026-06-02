@@ -264,7 +264,7 @@ export const NotificationsScreen: React.FC = () => {
             {unreadCount > 0 && (
               <IconButton
                 onClick={markAllAsRead}
-                aria-label="Marcar todas como lidas"
+                aria-label={t('a11y.markAllAsRead')}
                 sx={{ padding: theme.spacing(1.25) }}
               >
                 <DoneAllIcon fontSize="small" />
@@ -273,7 +273,7 @@ export const NotificationsScreen: React.FC = () => {
             {notifications.length > 0 && (
               <IconButton
                 onClick={() => setDeleteDialogOpen(true)}
-                aria-label="Limpar todas"
+                aria-label={t('a11y.clearAll')}
                 sx={{ padding: theme.spacing(1.25) }}
               >
                 <DeleteIcon fontSize="small" />
@@ -417,7 +417,7 @@ export const NotificationsScreen: React.FC = () => {
                                 {!notification.read ? (
                                   <IconButton
                                     onClick={() => markAsRead(notification.id)}
-                                    aria-label="Marcar como lida"
+                                    aria-label={t('a11y.markAsRead')}
                                     size="small"
                                     sx={{ padding: theme.spacing(0.5) }}
                                   >
@@ -426,7 +426,7 @@ export const NotificationsScreen: React.FC = () => {
                                 ) : (
                                   <IconButton
                                     onClick={() => toggleRead(notification.id, notification.read)}
-                                    aria-label="Marcar como não lida"
+                                    aria-label={t('a11y.markAsUnread')}
                                     size="small"
                                     sx={{ padding: theme.spacing(0.5) }}
                                   >
@@ -438,7 +438,7 @@ export const NotificationsScreen: React.FC = () => {
                                     handleDismiss(notification.id);
                                     handleDeleteWithUndo(notification);
                                   }}
-                                  aria-label="Excluir notificação"
+                                  aria-label={t('a11y.deleteNotification')}
                                   size="small"
                                   sx={{ padding: theme.spacing(0.5) }}
                                 >

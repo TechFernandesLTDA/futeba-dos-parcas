@@ -2,6 +2,7 @@ import { Breadcrumbs, Link, Typography, Box } from '@mui/material';
 import { NavigateNext } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface BreadcrumbItem {
   label: string;
@@ -17,6 +18,7 @@ interface AppBreadcrumbsProps {
  * Renderiza apenas em md+. Em mobile, ArrowBack do header já é suficiente.
  */
 export function AppBreadcrumbs({ items }: AppBreadcrumbsProps) {
+  const { t } = useTranslation();
   if (items.length === 0) return null;
 
   return (
@@ -29,7 +31,7 @@ export function AppBreadcrumbs({ items }: AppBreadcrumbsProps) {
     >
       <Breadcrumbs
         separator={<NavigateNext fontSize="small" />}
-        aria-label="Breadcrumb"
+        aria-label={t('a11y.breadcrumb')}
       >
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;

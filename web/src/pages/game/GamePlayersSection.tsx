@@ -24,6 +24,7 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { PAYMENT_STATUS_CONFIG } from '../../types/game';
 import type { Game, GameConfirmation } from '../../types/game';
 import { GamePhotosTab } from './GamePhotosTab';
+import { useTranslation } from 'react-i18next';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -62,6 +63,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
   tabValue,
   onTabChange,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   return (
@@ -73,7 +75,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
-          aria-label="Listas de jogadores"
+          aria-label={t('a11y.playerLists')}
           sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
         >
           <Tab label={`Confirmados (${confirmedPlayers.length})`} />
@@ -90,7 +92,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
               description="Seja o primeiro a confirmar presença!"
             />
           ) : (
-            <List disablePadding aria-label="Jogadores confirmados">
+            <List disablePadding aria-label={t('a11y.confirmedPlayers')}>
               {confirmedPlayers.map((player, index) => (
                 <ListItem
                   key={player.id}

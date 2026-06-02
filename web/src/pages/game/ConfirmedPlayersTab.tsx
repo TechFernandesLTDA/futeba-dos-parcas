@@ -12,12 +12,14 @@ import { People as PeopleIcon } from '@mui/icons-material';
 import { GameConfirmation, PAYMENT_STATUS_CONFIG } from '../../types/game';
 import { PlayerAvatar, StatusChip, EmptyState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmedPlayersTabProps {
   players: GameConfirmation[];
 }
 
 const ConfirmedPlayersTab: React.FC<ConfirmedPlayersTabProps> = ({ players }) => {
+  const { t } = useTranslation();
   if (players.length === 0) {
     return (
       <EmptyState
@@ -29,7 +31,7 @@ const ConfirmedPlayersTab: React.FC<ConfirmedPlayersTabProps> = ({ players }) =>
   }
 
   return (
-    <List disablePadding aria-label="Jogadores confirmados">
+    <List disablePadding aria-label={t('a11y.confirmedPlayers')}>
       {players.map((player, index) => (
         <ListItem
           key={player.id}

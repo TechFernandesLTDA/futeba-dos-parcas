@@ -200,7 +200,7 @@ export const WeeklyRecapScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -319,7 +319,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                 sx={{ py: 3 }}
               />
             ) : (
-              <List disablePadding aria-label="Jogos recentes">
+              <List disablePadding aria-label={t('a11y.recentGames')}>
                 {recentGames.map((game, index) => (
                   <Box key={game.id}>
                     {index > 0 && <Divider />}

@@ -81,7 +81,7 @@ export const NotFoundScreen: React.FC = () => {
           variant="contained"
           size="large"
           onClick={() => navigate('/')}
-          aria-label="Voltar para o início"
+          aria-label={t('a11y.backToHome')}
         >
           Voltar pro início
         </Button>

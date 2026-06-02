@@ -84,7 +84,7 @@ export const MyFeedbacksScreen: React.FC = () => {
           />
         ) : (
           <Card>
-            <List disablePadding aria-label="Meus feedbacks">
+            <List disablePadding aria-label={t('a11y.myFeedbacks')}>
               {myFeedbacks.map((feedback, index) => (
                 <React.Fragment key={feedback.id}>
                   <ListItemButton

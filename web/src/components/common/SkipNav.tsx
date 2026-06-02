@@ -1,15 +1,17 @@
 import React from 'react';
 import { Box, Link } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Link de navegação para acessibilidade (skip to content).
  * Visível apenas com foco do teclado, pula direto para o conteúdo principal.
  */
 export const SkipNav = React.memo(function SkipNav() {
+  const { t } = useTranslation();
   return (
     <Box
       component="nav"
-      aria-label="Pular navegação"
+      aria-label={t('a11y.skipNav')}
       sx={{
         position: 'absolute',
         top: -9999,

@@ -434,7 +434,7 @@ export const GameDetailScreen: React.FC = () => {
               </IconButton>
             </Tooltip>
             <Tooltip title="Adicionar ao Calendário">
-              <IconButton onClick={handleCalendarOpen} aria-label="Adicionar ao Calendário">
+              <IconButton onClick={handleCalendarOpen} aria-label={t('a11y.addToCalendar')}>
                 <CalendarIcon />
               </IconButton>
             </Tooltip>
@@ -469,7 +469,7 @@ export const GameDetailScreen: React.FC = () => {
                 <Tooltip title="Duplicar Jogo">
                   <IconButton
                     onClick={handleDuplicateGame}
-                    aria-label="Duplicar Jogo"
+                    aria-label={t('a11y.duplicateGame')}
                     disabled={duplicateGameLoading}
                   >
                     {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon />}

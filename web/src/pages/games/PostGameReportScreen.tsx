@@ -310,13 +310,13 @@ export const PostGameReportScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Relatório do Jogo
           </Typography>
-          <IconButton onClick={handleShare} aria-label="Compartilhar">
+          <IconButton onClick={handleShare} aria-label={t('a11y.share')}>
             <ShareIcon />
           </IconButton>
         </Box>

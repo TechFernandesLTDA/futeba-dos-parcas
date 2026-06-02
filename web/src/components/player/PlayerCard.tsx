@@ -35,6 +35,7 @@ import {
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
+import { useTranslation } from 'react-i18next';
 
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
@@ -54,6 +55,7 @@ interface StatItemProps {
 }
 
 const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   return (
     <Box
@@ -103,6 +105,7 @@ interface PlayerCardProps {
 export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const theme = useTheme();
   const gColors = useGamificationColors();
+  const { t } = useTranslation();
 
   const CARD_GRADIENT = `linear-gradient(160deg, ${theme.palette.success.dark} 0%, ${alpha(theme.palette.success.main, 0.85)} 35%, ${theme.palette.success.main} 60%, ${theme.palette.success.light} 100%)`;
   const CARD_BADGE_BORDER = theme.palette.success.dark;
@@ -211,7 +214,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           <Tooltip title="Fechar">
             <IconButton
               onClick={onClose}
-              aria-label="Fechar card do jogador"
+              aria-label={t('a11y.closePlayerCard')}
               sx={{
                 bgcolor: alpha(theme.palette.common.white, 0.15),
                 color: theme.palette.common.white,
@@ -228,7 +231,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               <IconButton
                 onClick={handleShare}
                 disabled={sharing || loading || !player}
-                aria-label="Compartilhar card do jogador"
+                aria-label={t('a11y.sharePlayerCard')}
                 sx={{
                   bgcolor: alpha(theme.palette.primary.main, 0.9),
                   color: theme.palette.primary.contrastText,

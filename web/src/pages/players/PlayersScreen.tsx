@@ -231,7 +231,7 @@ export const PlayersScreen: React.FC = () => {
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
         actions={
           !loading && !error && isMember && currentUserRole !== 'MEMBER' ? (
-            <IconButton onClick={() => navigate(`/group/${groupId}/invite`)} aria-label="Convidar jogadores">
+            <IconButton onClick={() => navigate(`/group/${groupId}/invite`)} aria-label={t('a11y.invitePlayers')}>
               <PersonAddIcon />
             </IconButton>
           ) : undefined
@@ -273,7 +273,7 @@ export const PlayersScreen: React.FC = () => {
               />
             ) : (
               <Card>
-                <List disablePadding aria-label="Lista de jogadores do grupo">
+                <List disablePadding aria-label={t('a11y.groupPlayersList')}>
                   {members.map((member, index) => (
                     <PlayerMemberItem
                       key={member.id}

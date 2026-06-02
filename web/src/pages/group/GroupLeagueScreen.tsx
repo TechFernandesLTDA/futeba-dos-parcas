@@ -130,7 +130,7 @@ export const GroupLeagueScreen: React.FC = () => {
         title="Liga do Grupo"
         onBack={goBack}
         actions={
-          <IconButton onClick={() => refetch()} aria-label="Atualizar" size="small">
+          <IconButton onClick={() => refetch()} aria-label={t('a11y.refresh')} size="small">
             <RefreshIcon />
           </IconButton>
         }

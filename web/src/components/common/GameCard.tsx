@@ -547,8 +547,9 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
   count = 3,
   type = 'card',
 }) => {
+  const { t } = useTranslation();
   return (
-    <Box role="status" aria-label="Carregando conteúdo">
+    <Box role="status" aria-label={t('a11y.loadingContent')}>
       {Array.from({ length: count }).map((_, index) => (
         <Box key={index}> {/* list never reorders — static shimmer array */}
           {type === 'card' ? <GameCardSkeleton /> : <Skeleton variant="text" height={60} />}
@@ -573,6 +574,7 @@ export const EmptyState: React.FC<{
     onClick: () => void;
   };
 }> = ({ icon, title, description, action }) => {
+  const { t: _t } = useTranslation();
   return (
     <Box
       sx={{
@@ -607,8 +609,9 @@ export const LoadingState: React.FC<{ shimmerCount?: number; itemType?: string }
   shimmerCount = 5,
   itemType: _itemType = 'CARD',
 }) => {
+  const { t } = useTranslation();
   return (
-    <Box role="status" aria-label="Carregando conteúdo">
+    <Box role="status" aria-label={t('a11y.loadingContent')}>
       {Array.from({ length: shimmerCount }).map((_, index) => (
         <Card key={index} sx={{ mb: 1 }}> {/* list never reorders — static shimmer array */}
           <CardContent>

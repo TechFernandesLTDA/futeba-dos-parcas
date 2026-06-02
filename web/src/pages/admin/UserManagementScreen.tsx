@@ -261,7 +261,7 @@ export const UserManagementScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -283,10 +283,10 @@ export const UserManagementScreen: React.FC = () => {
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar usuário..."
+            placeholder={t('placeholder.searchUser')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Buscar usuário"
+            aria-label={t('a11y.searchUser')}
             inputProps={{ maxLength: 200 }}
             InputProps={{
               startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
@@ -341,13 +341,13 @@ export const UserManagementScreen: React.FC = () => {
               {hasMore && !searchQuery ? ' (mais disponíveis)' : ''}
             </Typography>
             <Card>
-              <List disablePadding aria-label="Lista de usuários">
+              <List disablePadding aria-label={t('a11y.userList')}>
                 {filteredUsers.map((u, index) => (
                   <Box key={u.id}>
                     {index > 0 && <Divider />}
                     <ListItem
                       secondaryAction={
-                        <IconButton edge="end" aria-label="Gerenciar permissões" onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
+                        <IconButton edge="end" aria-label={t('a11y.managePermissions')} onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
                           <AdminIcon />
                         </IconButton>
                       }

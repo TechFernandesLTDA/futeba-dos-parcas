@@ -246,7 +246,7 @@ export const LiveEventsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
@@ -275,7 +275,7 @@ export const LiveEventsScreen: React.FC = () => {
             description="Adicione gols, assistências e cartões"
           />
         ) : (
-          <List disablePadding aria-label="Eventos do jogo">
+          <List disablePadding aria-label={t('a11y.gameEvents')}>
             {events.map((event, _index) => {
               const eventStyle = getEventStyle(event.type);
               return (
@@ -313,7 +313,7 @@ export const LiveEventsScreen: React.FC = () => {
       {canManage && (
         <ScreenFab
           icon={<AddIcon />}
-          aria-label="Adicionar evento"
+          aria-label={t('a11y.addEvent')}
           onClick={() => setDialogOpen(true)}
           sx={{
             display: { xs: 'flex', md: 'none' },
@@ -333,7 +333,7 @@ export const LiveEventsScreen: React.FC = () => {
               onChange={(_, v) => v && setEventType(v)}
               fullWidth
               sx={{ mb: 2 }}
-              aria-label="Tipo de evento"
+              aria-label={t('a11y.eventType')}
             >
               <ToggleButton value="GOAL">Gol</ToggleButton>
               <ToggleButton value="ASSIST">Assist</ToggleButton>
@@ -347,7 +347,7 @@ export const LiveEventsScreen: React.FC = () => {
               onChange={(_, v) => v && setSelectedTeam(v)}
               fullWidth
               sx={{ mb: 2 }}
-              aria-label="Selecionar time"
+              aria-label={t('a11y.selectTeam')}
             >
               <ToggleButton value="A">Time A</ToggleButton>
               <ToggleButton value="B">Time B</ToggleButton>
