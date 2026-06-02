@@ -273,8 +273,6 @@ export const GameDetailScreen: React.FC = () => {
 
     setEditLoading(true);
     try {
-      // Reconstruir dateTime Timestamp pra manter date/time/date_time consistentes
-      // (mesmo padrão de CreateGameScreen.handleSubmit)
       const [year, month, day] = editForm.date.split('-').map(Number);
       const [hours, minutes] = editForm.time.split(':').map(Number);
       const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
@@ -283,7 +281,7 @@ export const GameDetailScreen: React.FC = () => {
       await updateDoc(gameRef, {
         date: editForm.date,
         time: editForm.time,
-        date_time: dateTime,
+        dateTime: dateTime,
         max_players: editForm.maxPlayers,
         rules: editForm.rules,
         updated_at: serverTimestamp(),
