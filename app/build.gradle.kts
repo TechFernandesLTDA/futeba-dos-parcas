@@ -259,9 +259,9 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.2.0")
 
     // Testing - JUnit 5 (Jupiter)
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:6.1.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.1.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.1")
 
     // JUnit 4 for Android Instrumentation Tests
