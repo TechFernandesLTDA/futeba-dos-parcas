@@ -198,7 +198,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   sx={{ fontSize: '0.75rem' }}
                 />
                 {hasConflict && (
-                  <Tooltip title="Jogo com horario conflitante" arrow>
+                  <Tooltip title={t('tooltip.conflictingTime')} arrow>
                     <Chip
                       icon={<ConflictIcon sx={{ fontSize: 14 }} />}
                       label="Conflito"
@@ -574,7 +574,6 @@ export const EmptyState: React.FC<{
     onClick: () => void;
   };
 }> = ({ icon, title, description, action }) => {
-  const { t: _t } = useTranslation();
   return (
     <Box
       sx={{

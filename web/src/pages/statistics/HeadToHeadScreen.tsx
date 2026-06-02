@@ -264,8 +264,8 @@ export const HeadToHeadScreen: React.FC = () => {
         {canCompare && !loading && !error && !stats && (
           <EmptyState
             icon={<SoccerIcon />}
-            title="Selecione dois jogadores"
-            description="Escolha dois jogadores para ver o histórico de confrontos."
+            title={t('empty.selectTwoPlayers')}
+            description={t('empty.selectTwoPlayersDesc')}
           />
         )}
 
@@ -282,8 +282,8 @@ export const HeadToHeadScreen: React.FC = () => {
         {canCompare && stats && stats.totalGames === 0 && (
           <EmptyState
             icon={<SoccerIcon />}
-            title="Nenhum jogo em comum"
-            description="Esses jogadores ainda não jogaram juntos."
+            title={t('empty.noCommonGames')}
+            description={t('empty.noCommonGamesDesc')}
           />
         )}
 

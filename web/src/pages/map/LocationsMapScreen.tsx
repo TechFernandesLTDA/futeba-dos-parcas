@@ -224,8 +224,8 @@ export const LocationsMapScreen: React.FC = () => {
         ) : filteredLocations.length === 0 ? (
           <EmptyState
             icon={<LocationIcon />}
-            title="Nenhuma quadra encontrada"
-            description="Adicione quadras para organizarem seus jogos!"
+            title={t('empty.noFieldFound')}
+            description={t('empty.noFieldFoundDesc')}
           />
         ) : (
           <Grid container spacing={2}>

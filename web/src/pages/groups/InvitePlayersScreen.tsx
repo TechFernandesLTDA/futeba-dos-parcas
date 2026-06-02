@@ -238,8 +238,8 @@ export const InvitePlayersScreen: React.FC = () => {
           <Box sx={{ mb: 2 }}>
             <EmptyState
               icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
-              title="Nenhum jogador encontrado"
-              description={`Não encontramos jogadores para "${searchQuery}". Tente outro nome.`}
+              title={t('empty.noPlayerFound')}
+              description={t('empty.noPlayerFoundDesc', { query: searchQuery })}
             />
           </Box>
         )}

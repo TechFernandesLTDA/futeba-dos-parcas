@@ -301,7 +301,7 @@ export const VoteResultScreen: React.FC = () => {
         {!voteResult?.mvp && !voteResult?.bolaMurcha && (
           <EmptyState
             icon={<StarIcon />}
-            title="Votação ainda não realizada"
+            title={t('mvp.notHeldYet')}
           />
         )}
         </div>

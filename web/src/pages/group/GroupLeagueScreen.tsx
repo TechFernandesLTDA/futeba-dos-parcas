@@ -170,9 +170,9 @@ export const GroupLeagueScreen: React.FC = () => {
         ) : standings.length === 0 ? (
           <EmptyState
             icon={<TrophyIcon />}
-            title="Liga não iniciada"
-            description="A liga do grupo ainda não começou. Os jogos finalizados do grupo serão contabilizados automaticamente."
-            actionLabel="Criar Jogo"
+            title={t('empty.leagueNotStarted')}
+            description={t('empty.leagueNotStartedDesc')}
+            actionLabel={t('empty.createGame')}
             actionIcon={<SoccerIcon />}
             onAction={() => navigate(`/game/create?groupId=${groupId}`)}
           />

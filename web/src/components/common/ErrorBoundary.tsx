@@ -110,6 +110,7 @@ interface ErrorFallbackProps {
   onGoHome: () => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ errorId, logEntry, error, errorInfo, onRefresh, onGoHome }) => {
   const { t } = useTranslation();
   return (

@@ -50,7 +50,6 @@ export const useToast = () => {
 };
 
 function UndoProgressBar({ duration }: { duration: number }) {
-  const { t } = useTranslation();
   const [progress, setProgress] = useState(100);
   const startRef = useRef(Date.now());
   const durationRef = useRef(duration);

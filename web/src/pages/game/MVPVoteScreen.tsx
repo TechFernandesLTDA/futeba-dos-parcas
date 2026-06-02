@@ -377,7 +377,7 @@ export const MVPVoteScreen: React.FC = () => {
                         </ListItem>
                       ))}
                     {confirmations.filter((p) => p.position === 'GOALKEEPER').length === 0 && (
-                      <EmptyState icon={<PersonOffIcon />} title="Nenhum goleiro" description="Nenhum goleiro neste jogo" animate={false} />
+                      <EmptyState icon={<PersonOffIcon />} title={t('empty.noGoalkeeper')} description={t('empty.noGoalkeeperDesc')} animate={false} />
                     )}
                   </List>
                 </RadioGroup>

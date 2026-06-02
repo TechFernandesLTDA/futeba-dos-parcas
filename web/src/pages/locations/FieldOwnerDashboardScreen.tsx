@@ -348,8 +348,8 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             {locations.length === 0 ? (
               <EmptyState
                 icon={<LocationIcon />}
-                title="Nenhuma quadra cadastrada"
-                actionLabel="Adicionar Quadra"
+                title={t('empty.noRegisteredField')}
+                actionLabel={t('empty.addLocation')}
                 onAction={() => navigate('/location/create')}
                 animate={false}
                 sx={{ py: 3 }}

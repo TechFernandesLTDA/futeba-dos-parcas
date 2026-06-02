@@ -268,8 +268,8 @@ export const PlayersScreen: React.FC = () => {
             {members.length === 0 ? (
               <EmptyState
                 icon={<PersonIcon sx={{ fontSize: 64 }} />}
-                title="Nenhum membro"
-                description="O grupo ainda não tem membros."
+                title={t('empty.noMembers')}
+                description={t('empty.noMembersDesc')}
               />
             ) : (
               <Card>
@@ -302,9 +302,9 @@ export const PlayersScreen: React.FC = () => {
 
           <ConfirmDialog
             open={!!confirmRemoveId}
-            title="Remover membro"
-            message="Tem certeza que deseja remover este jogador do grupo? Esta ação não pode ser desfeita."
-            confirmLabel="Remover"
+            title={t('players.removeMemberTitle')}
+            message={t('players.removeMemberMessage')}
+            confirmLabel={t('players.removeMemberConfirm')}
             loading={actionLoading === confirmRemoveId}
             onConfirm={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
             onCancel={() => setConfirmRemoveId(null)}

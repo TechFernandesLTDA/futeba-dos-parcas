@@ -271,8 +271,8 @@ export const LiveEventsScreen: React.FC = () => {
         ) : events.length === 0 ? (
           <EmptyState
             icon={<SoccerIcon />}
-            title="Nenhum evento"
-            description="Adicione gols, assistências e cartões"
+            title={t('empty.noEvent')}
+            description={t('empty.noEventDesc')}
           />
         ) : (
           <List disablePadding aria-label={t('a11y.gameEvents')}>

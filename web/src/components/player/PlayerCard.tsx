@@ -1,4 +1,5 @@
 import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,6 @@ import {
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
-import { useTranslation } from 'react-i18next';
 
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
@@ -55,7 +55,6 @@ interface StatItemProps {
 }
 
 const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
   return (
     <Box
@@ -211,7 +210,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             px: 1,
           }}
         >
-          <Tooltip title="Fechar">
+          <Tooltip title={t('tooltip.close')}>
             <IconButton
               onClick={onClose}
               aria-label={t('a11y.closePlayerCard')}

@@ -184,8 +184,8 @@ export const PublicGamesMapScreen: React.FC = () => {
         ) : filteredGames.length === 0 ? (
           <EmptyState
             icon={<SoccerIcon />}
-            title="Nenhum jogo público"
-            description="Crie um jogo e torne-o público para todos!"
+            title={t('empty.noPublicGame')}
+            description={t('empty.noPublicGameDesc')}
           />
         ) : (
           filteredGames.map((game) => (

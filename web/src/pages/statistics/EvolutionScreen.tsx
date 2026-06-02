@@ -175,7 +175,7 @@ export const EvolutionScreen: React.FC = () => {
     return (
       <EmptyState
         icon={<TimelineIcon />}
-        title="Nenhum dado disponível"
+        title={t('empty.noDataAvailable')}
       />
     );
   }

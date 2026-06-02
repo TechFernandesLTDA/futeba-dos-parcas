@@ -336,8 +336,8 @@ export const NotificationsScreen: React.FC = () => {
         ) : filteredNotifications.length === 0 ? (
           <EmptyState
             icon={<NotificationIcon />}
-            title="Nenhuma notificação"
-            description={activeFilter !== 'ALL' ? 'Nenhuma notificação deste tipo encontrada.' : 'Você receberá notificações sobre jogos, conquistas e convites'}
+            title={t('empty.noNotifications')}
+            description={activeFilter !== 'ALL' ? t('empty.noNotificationsFilter') : t('empty.noNotificationsWelcome')}
           />
         ) : (
           <Box>

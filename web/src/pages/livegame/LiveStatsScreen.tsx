@@ -272,7 +272,7 @@ export const LiveStatsScreen: React.FC = () => {
           <Card>
             <List disablePadding aria-label={t('a11y.gameEvents')}>
               {events.length === 0 ? (
-                <EmptyState icon={<SoccerIcon />} title="Nenhum evento ainda" animate={false} sx={{ py: 4 }} />
+                <EmptyState icon={<SoccerIcon />} title={t('empty.noEventYet')} animate={false} sx={{ py: 4 }} />
               ) : (
                 events.map((event, index) => (
                   <Box key={event.id}>

@@ -292,8 +292,8 @@ export const PostGameReportScreen: React.FC = () => {
     return (
       <EmptyState
         icon={<ReportIcon />}
-        title="Relatório não disponível"
-        description="O relatório deste jogo ainda não foi gerado."
+        title={t('empty.noReportAvailable')}
+        description={t('empty.noReportAvailableDesc')}
       />
     );
   }

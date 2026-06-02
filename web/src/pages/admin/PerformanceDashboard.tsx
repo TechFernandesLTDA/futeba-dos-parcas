@@ -145,8 +145,8 @@ export const PerformanceDashboard: React.FC = () => {
         ) : records.length === 0 ? (
           <EmptyState
             icon={<SpeedIcon />}
-            title="Nenhuma métrica coletada ainda"
-            description="As métricas serão coletadas automaticamente conforme você navega pelo app"
+            title={t('empty.noMetricsCollected')}
+            description={t('empty.noMetricsCollectedDesc')}
           />
         ) : (
           <>

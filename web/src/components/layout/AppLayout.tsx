@@ -1,13 +1,12 @@
 import { Box } from '@mui/material';
 import { Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AppSidebar } from './AppSidebar';
 import { ConnectionStatus, useOnlineStatus } from '../common/ConnectionStatus';
 import { AppBreadcrumbs } from './AppBreadcrumbs';
 import { useAutoBreadcrumbs } from '../../hooks/useAutoBreadcrumbs';
-import { useTranslation } from 'react-i18next';
 
 function AppBreadcrumbsWrapper() {
-  const { t: _t } = useTranslation();
   const items = useAutoBreadcrumbs();
   return <AppBreadcrumbs items={items} />;
 }

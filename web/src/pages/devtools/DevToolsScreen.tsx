@@ -144,7 +144,7 @@ export const DevToolsScreen: React.FC = () => {
                 />
               </ListItemButton>
               <Divider />
-              <Tooltip title="Em desenvolvimento" placement="top">
+              <Tooltip title={t('tooltip.inDevelopment')} placement="top">
                 <span>
                   <ListItemButton disabled>
                     <ListItemIcon>

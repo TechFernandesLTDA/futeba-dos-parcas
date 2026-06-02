@@ -433,7 +433,7 @@ export const GameDetailScreen: React.FC = () => {
                 <ShareIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Adicionar ao Calendário">
+            <Tooltip title={t('tooltip.addToCalendar')}>
               <IconButton onClick={handleCalendarOpen} aria-label={t('a11y.addToCalendar')}>
                 <CalendarIcon />
               </IconButton>
@@ -466,7 +466,7 @@ export const GameDetailScreen: React.FC = () => {
             </Menu>
             {canManage && (
               <>
-                <Tooltip title="Duplicar Jogo">
+                <Tooltip title={t('tooltip.duplicateGame')}>
                   <IconButton
                     onClick={handleDuplicateGame}
                     aria-label={t('a11y.duplicateGame')}

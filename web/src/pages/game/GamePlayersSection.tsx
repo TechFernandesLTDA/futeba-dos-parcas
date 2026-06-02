@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -24,7 +25,6 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { PAYMENT_STATUS_CONFIG } from '../../types/game';
 import type { Game, GameConfirmation } from '../../types/game';
 import { GamePhotosTab } from './GamePhotosTab';
-import { useTranslation } from 'react-i18next';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -88,8 +88,8 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           {confirmedPlayers.length === 0 ? (
             <EmptyState
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-              title="Nenhum jogador confirmado"
-              description="Seja o primeiro a confirmar presença!"
+              title={t('empty.noConfirmedPlayers')}
+              description={t('empty.noConfirmedPlayersDesc')}
             />
           ) : (
             <List disablePadding aria-label={t('a11y.confirmedPlayers')}>
@@ -130,8 +130,8 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           {goalkeepers.length === 0 ? (
             <EmptyState
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-              title="Nenhum goleiro"
-              description="Nenhum goleiro confirmado ainda"
+              title={t('empty.noGoalkeeper')}
+              description={t('empty.noGoalkeeperConfirmed')}
             />
           ) : (
             <List disablePadding>
@@ -158,8 +158,8 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           {waitlist.length === 0 ? (
             <EmptyState
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-              title="Nenhum jogador na lista de espera"
-              description="Quando a lista estiver cheia, novos jogadores entram aqui"
+              title={t('empty.noWaitlist')}
+              description={t('empty.noWaitlistDesc')}
             />
           ) : (
             <List disablePadding>

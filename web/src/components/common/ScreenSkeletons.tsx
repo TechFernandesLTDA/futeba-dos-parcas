@@ -3,7 +3,6 @@ import { Box, Skeleton, useTheme, alpha } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 function SkeletonCard({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation();
   return (
     <Box
       sx={{

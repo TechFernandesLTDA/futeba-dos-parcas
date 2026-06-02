@@ -322,16 +322,16 @@ export const UserManagementScreen: React.FC = () => {
           searchQuery ? (
             <EmptyState
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
-              title="Nenhum usuário encontrado"
-              description={`Não encontramos usuários para "${searchQuery}". Tente outro termo.`}
-              actionLabel="Limpar busca"
+              title={t('empty.noUserFound')}
+              description={t('empty.noUserFoundDesc', { query: searchQuery })}
+              actionLabel={t('empty.clearSearch')}
               onAction={() => setSearchQuery('')}
             />
           ) : (
             <EmptyState
               icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
-              title="Nenhum usuário cadastrado"
-              description="Ainda não há usuários no sistema."
+              title={t('empty.noUserRegistered')}
+              description={t('admin.noUserRegisteredDesc')}
             />
           )
         ) : (

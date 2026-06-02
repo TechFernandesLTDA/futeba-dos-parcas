@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -23,7 +24,6 @@ import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { EmptyState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
-import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('GamePhotosTab');
 
@@ -80,9 +80,9 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   isOwner,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { currentUser } = useAuth();
   const { showError } = useToast();
-  const { t } = useTranslation();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
@@ -172,7 +172,6 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   };
 
   const canDelete = (photo: GamePhoto) => {
-  const { t } = useTranslation();
     if (!currentUser) return false;
     return photo.uploadedBy === currentUser.uid || isOwner;
   };
@@ -202,8 +201,8 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
       {photos.length === 0 ? (
         <EmptyState
           icon={<AddIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-          title="Nenhuma foto ainda"
-          description={canUpload ? 'Seja o primeiro a compartilhar uma foto!' : 'Fotos serão exibidas aqui após o jogo.'}
+          title={t('empty.noPhoto')}
+          description={canUpload ? t('empty.noPhotoDescFirst') : t('empty.noPhotoDescAfter')}
         />
       ) : (
         <Grid container spacing={1}>
