@@ -19,6 +19,7 @@ interface WeeklyScores {
     mvp: number;
     wins: number;
     draws: number;
+    losses: number;
     bolaMurcha: number;
   };
 }
@@ -126,6 +127,7 @@ export const processWeeklyRanking = onSchedule(
             mvp: 0,
             wins: 0,
             draws: 0,
+            losses: 0,
             bolaMurcha: 0,
           };
         }
@@ -159,10 +161,13 @@ export const processWeeklyRanking = onSchedule(
 
         if (userTeam) {
           if (teamScores.length >= 2) {
-            const isWin = userTeam.score > Math.min(...teamScores);
-            if (isWin) {
+            const maxScore = Math.max(...teamScores);
+            const minScore = Math.min(...teamScores);
+            if (userTeam.score === maxScore && maxScore !== minScore) {
               s.wins += 1;
               s.points += 2;
+            } else if (userTeam.score === minScore && maxScore !== minScore) {
+              s.losses += 1;
             } else {
               s.draws += 1;
               s.points += 1;
