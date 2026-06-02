@@ -189,6 +189,16 @@
     <string name="state_error_title">Something went wrong</string>
     <string name="action_try_again">Try Again</string>
     <string name="action_clear_search">Clear Search</string>
+    <string name="empty_state_no_connection_title">No connection</string>
+    <string name="empty_state_no_connection_desc">Check your internet connection and try again</string>
+    <string name="empty_state_no_results_title">No results found</string>
+    <string name="empty_state_desc_no_results">No results for \u201C%s\u201D</string>
+    <string name="empty_state_no_games_title">No games scheduled</string>
+    <string name="empty_state_no_games_desc">How about creating the first game and gathering the crew?</string>
+    <string name="empty_state_no_players_title">No players yet</string>
+    <string name="empty_state_no_players_desc">Invite your friends to start playing!</string>
+    <string name="create_game">Create Game</string>
+    <string name="invite_players">Invite Players</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
 

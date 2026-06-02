@@ -189,6 +189,16 @@
     <string name="state_error_title">Algo salió mal</string>
     <string name="action_try_again">Intentar de nuevo</string>
     <string name="action_clear_search">Limpiar búsqueda</string>
+    <string name="empty_state_no_connection_title">Sin conexión</string>
+    <string name="empty_state_no_connection_desc">Verifica tu conexión a internet e intenta de nuevo</string>
+    <string name="empty_state_no_results_title">Sin resultados</string>
+    <string name="empty_state_desc_no_results">Sin resultados para \u201C%s\u201D</string>
+    <string name="empty_state_no_games_title">No hay partidos agendados</string>
+    <string name="empty_state_no_games_desc">¿Qué tal crear el primer partido y juntar a la banda?</string>
+    <string name="empty_state_no_players_title">Sin jugadores</string>
+    <string name="empty_state_no_players_desc">¡Invita a tus amigos para empezar a jugar!</string>
+    <string name="create_game">Crear partido</string>
+    <string name="invite_players">Invitar jugadores</string>
     <string name="yes">Sí</string>
     <string name="no">No</string>
 

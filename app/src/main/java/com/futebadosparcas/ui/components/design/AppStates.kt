@@ -103,7 +103,7 @@ fun ErrorStateDesign(
 ) {
     EmptyStateDesign(
         icon = Icons.Default.Error,
-        title = stringResource(R.string.app_state_error_title),
+        title = stringResource(R.string.error),
         description = message,
         actionLabel = retryText,
         onAction = onRetry,

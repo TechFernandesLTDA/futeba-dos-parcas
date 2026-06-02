@@ -46,7 +46,7 @@ sealed class EmptyStateType {
         val title: String,
         val description: String,
         val icon: ImageVector = Icons.Default.Error,
-        val actionLabel: String = "Tentar Novamente",
+        val actionLabel: String? = null,
         val onRetry: () -> Unit
     ) : EmptyStateType()
 
@@ -54,10 +54,10 @@ sealed class EmptyStateType {
      * Sem conexão com internet
      */
     data class NoConnection(
-        val title: String = "Sem conexão",
-        val description: String = "Verifique sua conexão com a internet e tente novamente",
+        val title: String? = null,
+        val description: String? = null,
         val icon: ImageVector = Icons.Default.WifiOff,
-        val actionLabel: String = "Tentar Novamente",
+        val actionLabel: String? = null,
         val onRetry: () -> Unit
     ) : EmptyStateType()
 
@@ -65,10 +65,10 @@ sealed class EmptyStateType {
      * Busca sem resultados
      */
     data class NoResults(
-        val title: String = "Nenhum resultado encontrado",
+        val title: String? = null,
         val description: String,
         val icon: ImageVector = Icons.Default.SearchOff,
-        val actionLabel: String? = "Limpar Busca",
+        val actionLabel: String? = null,
         val onAction: (() -> Unit)? = null
     ) : EmptyStateType()
 }
@@ -108,25 +108,25 @@ fun EmptyState(
                 title = type.title,
                 description = type.description,
                 iconTint = MaterialTheme.colorScheme.error,
-                actionLabel = type.actionLabel,
+                actionLabel = type.actionLabel ?: stringResource(R.string.action_try_again),
                 onAction = type.onRetry
             )
 
             is EmptyStateType.NoConnection -> EmptyStateContent(
                 icon = type.icon,
-                title = type.title,
-                description = type.description,
+                title = type.title ?: stringResource(R.string.empty_state_no_connection_title),
+                description = type.description ?: stringResource(R.string.empty_state_no_connection_desc),
                 iconTint = MaterialTheme.colorScheme.tertiary,
-                actionLabel = type.actionLabel,
+                actionLabel = type.actionLabel ?: stringResource(R.string.action_try_again),
                 onAction = type.onRetry
             )
 
             is EmptyStateType.NoResults -> EmptyStateContent(
                 icon = type.icon,
-                title = type.title,
+                title = type.title ?: stringResource(R.string.empty_state_no_results_title),
                 description = type.description,
                 iconTint = MaterialTheme.colorScheme.secondary,
-                actionLabel = type.actionLabel,
+                actionLabel = type.actionLabel ?: stringResource(R.string.action_clear_search),
                 onAction = type.onAction
             )
         }
@@ -265,7 +265,7 @@ fun EmptyGamesState(
             title = stringResource(R.string.empty_state_no_games_title),
             description = stringResource(R.string.empty_state_no_games_desc),
             icon = Icons.Default.SportsScore,
-            actionLabel = if (onCreateGame != null) stringResource(R.string.empty_state_create_game) else null,
+            actionLabel = if (onCreateGame != null) stringResource(R.string.create_game) else null,
             onAction = onCreateGame
         ),
         modifier = modifier
@@ -290,7 +290,7 @@ fun EmptyPlayersState(
             title = stringResource(R.string.empty_state_no_players_title),
             description = stringResource(R.string.empty_state_no_players_desc),
             icon = Icons.Default.GroupAdd,
-            actionLabel = if (onInvitePlayers != null) stringResource(R.string.empty_state_invite_players) else null,
+            actionLabel = if (onInvitePlayers != null) stringResource(R.string.invite_players) else null,
             onAction = onInvitePlayers
         ),
         modifier = modifier
@@ -313,8 +313,7 @@ fun EmptySearchState(
 ) {
     EmptyState(
         type = EmptyStateType.NoResults(
-            description = stringResource(R.string.empty_state_no_results_for_query, query),
-            actionLabel = stringResource(R.string.empty_state_clear_search),
+            description = stringResource(R.string.empty_state_desc_no_results, query),
             onAction = onClearSearch
         ),
         modifier = modifier
