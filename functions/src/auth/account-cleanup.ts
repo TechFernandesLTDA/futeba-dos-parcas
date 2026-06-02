@@ -453,8 +453,8 @@ export const onUserDeleted = auth
 
         let anonFailed = false;
 
-        // FIX #1961: cashbox transactions — anonymize created_by_name (LGPD Art. 18 VI)
-        // Cashbox transactions are subcollections under cashbox/*/transactions.
+        // FIX #1961: cashbox entries — anonymize created_by_name (LGPD Art. 18 VI)
+        // Cashbox entries live at groups/{groupId}/cashbox/{entryId}.
         // FIX #2323: paginação por cursor (startAfter) + guarda de iterações.
         // Antes: query sem cursor repetia sempre os mesmos 500 docs (created_by
         // não muda na anonimização, só created_by_NAME) → size sempre 500 →

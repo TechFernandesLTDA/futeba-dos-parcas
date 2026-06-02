@@ -181,6 +181,16 @@
       ]
     },
     {
+      "collectionGroup": "cashbox",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "created_by",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "challenge_progress",
       "queryScope": "COLLECTION",
       "fields": [
