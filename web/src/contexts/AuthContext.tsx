@@ -19,6 +19,7 @@ import { createLogger } from '../utils/logger';
 import { getAuthErrorMessage } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
+import { syncFieldOwnerClaim } from '../services/cloudFunctions';
 
 const logger = createLogger('AuthContext');
 
@@ -93,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const prevUserRef = useRef<FirebaseUser | null>(null);
   const firebaseUserRef = useRef(firebaseUser);
   firebaseUserRef.current = firebaseUser;
+  const lastClaimSyncUidRef = useRef<string | null>(null);
 
   // Fetch user data from Firestore
   // FIX #578: PII (email, fcm_token, birth_date, height_cm, weight_kg, gender)
@@ -242,6 +244,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // mesmo com firebaseUser autenticado (ex.: Firestore offline).
           if (userData) {
             setUser(userData);
+            if (
+              (userData.role === 'FIELD_OWNER' || userData.role === 'ADMIN') &&
+              lastClaimSyncUidRef.current !== firebaseUser.uid
+            ) {
+              lastClaimSyncUidRef.current = firebaseUser.uid;
+              syncFieldOwnerClaim()
+                .then((result) => {
+                  if (result.data.synced) {
+                    logger.info('Claim synced after auth load:', result.data.role);
+                    firebaseUserRef.current?.getIdToken(true).then(() => markClaimRefresh());
+                  }
+                })
+                .catch((err) => {
+                  logger.debug('Claim sync skipped or failed:', err);
+                });
+            }
           } else {
             setError('Erro ao carregar dados da conta. Verifique sua conexão.');
           }
