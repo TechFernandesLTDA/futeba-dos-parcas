@@ -72,6 +72,7 @@
     <string name="phone_verification_description">Confirmamos tu número via SMS para evitar cuentas falsas. Paso 1 de 2.</string>
     <string name="phone_verification_label">Teléfono (con código de área)</string>
     <string name="phone_verification_placeholder">+34912345678</string>
+    <string name="phone_verification_country_code">+34</string>
     <string name="phone_verification_supporting_text">Formato internacional: +34 + código + número</string>
     <string name="phone_verification_sending">Enviando…</string>
     <string name="phone_verification_send_code">Enviar código por SMS</string>

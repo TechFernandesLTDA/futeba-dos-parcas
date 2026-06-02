@@ -57,7 +57,7 @@ fun PhoneVerificationScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    var phone by rememberSaveable { mutableStateOf("+55") }
+    var phone by rememberSaveable { mutableStateOf(context.getString(R.string.phone_verification_country_code)) }
     var otp by rememberSaveable { mutableStateOf("") }
     var step by rememberSaveable { mutableStateOf("phone") } // phone | otp
 

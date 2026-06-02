@@ -4254,6 +4254,7 @@ subir no ranking!</string>
     <string name="phone_verification_description">Confirmamos seu número via SMS para evitar contas falsas. Etapa 1 de 2.</string>
     <string name="phone_verification_label">Telefone (com DDD)</string>
     <string name="phone_verification_placeholder">+5511999998888</string>
+    <string name="phone_verification_country_code">+55</string>
     <string name="phone_verification_supporting_text">Formato internacional: +55 + DDD + número</string>
     <string name="phone_verification_sending">Enviando…</string>
     <string name="phone_verification_send_code">Enviar código por SMS</string>

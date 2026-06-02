@@ -72,6 +72,7 @@
     <string name="phone_verification_description">We confirm your number via SMS to prevent fake accounts. Step 1 of 2.</string>
     <string name="phone_verification_label">Phone (with area code)</string>
     <string name="phone_verification_placeholder">+15551234567</string>
+    <string name="phone_verification_country_code">+1</string>
     <string name="phone_verification_supporting_text">International format: +1 + area code + number</string>
     <string name="phone_verification_sending">Sending…</string>
     <string name="phone_verification_send_code">Send code via SMS</string>
