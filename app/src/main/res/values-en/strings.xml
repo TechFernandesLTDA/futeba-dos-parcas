@@ -112,6 +112,8 @@
     <string name="share_card_generated_at">Generated on %1$s</string>
     <string name="share_card_by">by %1$s</string>
     <string name="share_card_votes_format">%1$d votes (%2$d%%)</string>
+    <string name="share_card_share_text_winner">🏆 %1$s was elected %2$s!\n📊 %3$d votes (%4$d%%)\n\n⚽ %6$d - %7$d\n📍 %9$s\n\nDownload Futeba dos Parças!\n%10$s</string>
+    <string name="share_card_share_text_player_card">⚽ Check out %1$s\'s card on Futeba dos Parças!\n\n%2$s</string>
     <string name="share_card_category_mvp">Match MVP</string>
     <string name="share_card_category_goalkeeper">Best Goalkeeper</string>
     <string name="share_card_category_worst">Worst Player</string>
@@ -125,6 +127,12 @@
     <string name="share_card_position_mid">MID</string>
     <string name="share_card_position_defense">DEFENSE</string>
     <string name="share_card_position_goalkeeper">GOALKEEPER</string>
+    <string name="share_card_podium_first">1st</string>
+    <string name="share_card_podium_second">2nd</string>
+    <string name="share_card_podium_third">3rd</string>
+    <string name="share_card_date_format">MM/dd/yyyy \'at\' HH:mm</string>
+    <string name="share_card_date_format_locale">en-US</string>
+    <string name="share_card_team_score_format">%2$d - %3$d</string>
 
     <!-- Empty State Illustrations -->
     <string name="empty_illustration_no_games_title">No games found</string>

@@ -4284,6 +4284,12 @@ subir no ranking!</string>
     <string name="share_card_position_mid">MEIO</string>
     <string name="share_card_position_defense">DEFESA</string>
     <string name="share_card_position_goalkeeper">GOLEIRO</string>
+    <string name="share_card_podium_first">1º</string>
+    <string name="share_card_podium_second">2º</string>
+    <string name="share_card_podium_third">3º</string>
+    <string name="share_card_date_format">dd/MM/yyyy \'às\' HH:mm</string>
+    <string name="share_card_date_format_locale">pt-BR</string>
+    <string name="share_card_team_score_format">%1$s %2$d x %3$d %4$s</string>
     <string name="share_card_share_text_winner">🏆 %1$s foi eleito %2$s!\n📊 %3$d votos (%4$d%%)\n\n⚽ %5$s %6$d x %7$d %8$s\n📍 %9$s\n\nBaixe o Futeba dos Parças!\n%10$s</string>
     <string name="share_card_share_text_player_card">⚽ Confira o cartão de %1$s no Futeba dos Parças!\n\n%2$s</string>
 

@@ -112,6 +112,8 @@
     <string name="share_card_generated_at">Generado el %1$s</string>
     <string name="share_card_by">por %1$s</string>
     <string name="share_card_votes_format">%1$d votos (%2$d%%)</string>
+    <string name="share_card_share_text_winner">🏆 ¡%1$s fue elegido %2$s!\n📊 %3$d votos (%4$d%%)\n\n⚽ %5$s %6$d - %7$d %8$s\n📍 %9$s\n\n¡Descarga Futeba dos Parças!\n%10$s</string>
+    <string name="share_card_share_text_player_card">⚽ ¡Mira la tarjeta de %1$s en Futeba dos Parças!\n\n%2$s</string>
     <string name="share_card_category_mvp">Mejor Jugador</string>
     <string name="share_card_category_goalkeeper">Mejor Portero</string>
     <string name="share_card_category_worst">Peor Jugador</string>
@@ -125,6 +127,12 @@
     <string name="share_card_position_mid">MEDIO</string>
     <string name="share_card_position_defense">DEFENSA</string>
     <string name="share_card_position_goalkeeper">PORTERO</string>
+    <string name="share_card_podium_first">1º</string>
+    <string name="share_card_podium_second">2º</string>
+    <string name="share_card_podium_third">3º</string>
+    <string name="share_card_date_format">dd/MM/yyyy \'a las\' HH:mm</string>
+    <string name="share_card_date_format_locale">es-ES</string>
+    <string name="share_card_team_score_format">%1$s %2$d - %3$d %4$s</string>
 
     <!-- Empty State Illustrations -->
     <string name="empty_illustration_no_games_title">No se encontraron partidos</string>
