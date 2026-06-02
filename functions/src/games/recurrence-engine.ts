@@ -102,7 +102,6 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
       logger.info(
         `[RECURRENCE] Max recurrences (52) reached for series ${parentId}, stopping.`
       );
-      await event.data?.after.ref.update({next_game_created: true});
       return;
     }
 
@@ -173,7 +172,6 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
       );
 
       await event.data?.after.ref.update({
-        next_game_created: true,
         next_game_id: newGameRef.id,
       });
 
