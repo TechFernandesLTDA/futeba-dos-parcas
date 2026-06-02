@@ -1019,26 +1019,9 @@ async function applyVotingXpDelta(
     .collection("users")
     .doc(userId);
 
-  // FIX #1990: obter game doc para derivar week/month keys e active season
-  // necessários para atualizar season_participation + ranking_deltas.
-  let weekKey: string | null = null;
-  let monthKey: string | null = null;
   let activeSeasonId: string | null = null;
 
   try {
-    const gameSnap = await db
-      .collection("games")
-      .doc(gameId)
-      .get();
-    // FIX #2284: valida o shape antes do cast. Se malformado, trata como
-    // undefined (getGameDate aplica fallback) em vez de cast cego.
-    const rawGame = gameSnap.data();
-    const gameDoc: Game | undefined =
-      isGameShape(rawGame) ? rawGame : undefined;
-    const gameDate = getGameDate(gameDoc);
-    monthKey = gameDate.toISOString().substring(0, 7);
-    weekKey = getWeekKey(gameDate);
-
     const seasonSnap = await db
       .collection("seasons")
       .where("is_active", "==", true)
@@ -1048,11 +1031,11 @@ async function applyVotingXpDelta(
       seasonSnap.docs[0].id :
       null;
   } catch (fetchError) {
-    logger.warn(
-      `[VOTING_XP] Could not fetch game/season for ${gameId}: ` +
-      `${fetchError}. season_participation & ranking_deltas will ` +
-      "not be updated for this XP application."
+    logger.error(
+      `[VOTING_XP] Could not fetch active season: ${fetchError}. ` +
+      "Aborting to prevent XP drift."
     );
+    throw fetchError;
   }
 
   try {
@@ -1066,6 +1049,19 @@ async function applyVotingXpDelta(
         );
         return;
       }
+
+      let weekKey: string | null = null;
+      let monthKey: string | null = null;
+
+      const gameSnap = await txn.get(
+        db.collection("games").doc(gameId)
+      );
+      const rawGame = gameSnap.data();
+      const gameDoc: Game | undefined =
+        isGameShape(rawGame) ? rawGame : undefined;
+      const gameDate = getGameDate(gameDoc);
+      monthKey = gameDate.toISOString().substring(0, 7);
+      weekKey = getWeekKey(gameDate);
 
       // FIX #726: MVP bonus (voting reward) is applied OVER the
       // MAX_XP_PER_GAME cap. The cap only limits game-performance XP
@@ -1135,28 +1131,6 @@ async function applyVotingXpDelta(
       // em vez de recalcular level inline (evita drift por inconsistência).
       const newLevel = getLevelForXp(newXp);
 
-      txn.set(logRef, {
-        user_id: userId,
-        game_id: gameId,
-        xp_earned: clampedXpDelta,
-        xp_before: currentXp,
-        xp_after: newXp,
-        level_before: currentLevel,
-        level_after: newLevel,
-        reason,
-        transaction_id: logId,
-        source: "mvp_voting_concluded",
-        created_at: admin.firestore.FieldValue
-          .serverTimestamp(),
-      });
-      txn.update(userRef, {
-        experience_points:
-          admin.firestore.FieldValue.increment(clampedXpDelta),
-        level: newLevel,
-        updated_at: admin.firestore.FieldValue
-          .serverTimestamp(),
-      });
-
       // FIX #1990: atualizar season_participation e ranking_deltas
       // para que o XP de voto conte nos rankings de temporada.
       const isMvp = reason === "MVP";
@@ -1201,6 +1175,28 @@ async function applyVotingXpDelta(
           {merge: true}
         );
       }
+
+      txn.set(logRef, {
+        user_id: userId,
+        game_id: gameId,
+        xp_earned: clampedXpDelta,
+        xp_before: currentXp,
+        xp_after: newXp,
+        level_before: currentLevel,
+        level_after: newLevel,
+        reason,
+        transaction_id: logId,
+        source: "mvp_voting_concluded",
+        created_at: admin.firestore.FieldValue
+          .serverTimestamp(),
+      });
+      txn.update(userRef, {
+        experience_points:
+          admin.firestore.FieldValue.increment(clampedXpDelta),
+        level: newLevel,
+        updated_at: admin.firestore.FieldValue
+          .serverTimestamp(),
+      });
 
       logger.info(
         `[VOTING_XP] Applied ${clampedXpDelta} XP ` +
