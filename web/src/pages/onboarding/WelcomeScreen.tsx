@@ -1,8 +1,8 @@
 import { Box, Typography, Button, Link, useTheme, alpha } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { ArrowForward as ArrowForwardIcon, SportsSoccer as SoccerIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../theme/iconSizes';
 
 export const WelcomeScreen: React.FC = () => {
