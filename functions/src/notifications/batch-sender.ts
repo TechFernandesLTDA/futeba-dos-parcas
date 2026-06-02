@@ -470,7 +470,7 @@ async function processNotificationQueue():
         sendResult.transientFailed > 0;
       const allFailed =
         sendResult.failed === tokens.length &&
-        sendResult.transientFailed === tokens.length;
+        sendResult.transientFailed === 0;
 
       await doc.ref.update({
         status: allFailed ? "FAILED" :
@@ -665,10 +665,6 @@ async function sendMulticastInChunks(
           invalidTokensCleaned +=
             tokensToRemove.length;
         }
-
-        // Transient errors are tracked separately — they should be retried,
-        // not counted as permanent failures.
-        failed -= transientFailed;
       }
     } catch (error) {
       logger.error(
@@ -678,6 +674,8 @@ async function sendMulticastInChunks(
       failed += chunk.length;
     }
   }
+
+  failed -= transientFailed;
 
   return {sent, failed, transientFailed, invalidTokensCleaned};
 }
