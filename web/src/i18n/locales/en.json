@@ -343,7 +343,8 @@
       "title": "Complete your Profile",
       "message": "To create and join games, you need to complete your profile with CPF and phone.",
       "action": "Complete Profile"
-    }
+    },
+    "skillsHint": "Adjust your skills manually. The system also calculates automatic ratings based on your games."
   },
   "games": {
     "liveStats": {

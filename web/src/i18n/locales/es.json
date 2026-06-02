@@ -343,7 +343,8 @@
       "title": "Completa tu Perfil",
       "message": "Para crear y unirte a partidos, necesitas completar tu perfil con CPF y teléfono.",
       "action": "Completar Perfil"
-    }
+    },
+    "skillsHint": "Ajusta tus habilidades manualmente. El sistema también calcula ratings automáticos basados en tus partidos."
   },
   "games": {
     "liveStats": {

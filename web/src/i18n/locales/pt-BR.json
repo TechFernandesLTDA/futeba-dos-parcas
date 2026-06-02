@@ -343,7 +343,8 @@
       "title": "Complete seu Perfil",
       "message": "Para criar e participar de jogos, você precisa completar seu perfil com CPF e telefone.",
       "action": "Completar Perfil"
-    }
+    },
+    "skillsHint": "Ajuste suas habilidades manualmente. O sistema também calcula ratings automáticos baseado nos seus jogos."
   },
   "games": {
     "liveStats": {

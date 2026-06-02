@@ -107,21 +107,21 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   const contextMenuItems: ContextMenuItem[] = [
     {
       id: 'share',
-      label: 'Compartilhar',
+      label: t('gameCard.share'),
       icon: <ShareIcon fontSize="small" />,
       onClick: onShare ?? (() => {}),
       hidden: !onShare,
     },
     {
       id: 'copy-link',
-      label: 'Copiar link',
+      label: t('gameCard.copyLink'),
       icon: <LinkIcon fontSize="small" />,
       onClick: onCopyLink ?? (() => {}),
       hidden: !onCopyLink,
     },
     {
       id: 'cancel-game',
-      label: 'Cancelar jogo',
+      label: t('gameCard.cancelGame'),
       icon: <CancelIcon fontSize="small" color="error" />,
       onClick: onCancelGame ?? (() => {}),
       hidden: !canCancelViaMenu,
