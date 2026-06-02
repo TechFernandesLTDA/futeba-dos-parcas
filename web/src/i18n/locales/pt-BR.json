@@ -841,7 +841,9 @@
     "noLocations": "Nenhum local cadastrado",
     "noLocationsDesc": "Adicione um novo local usando o botão +",
     "deleteTitle": "Excluir local?",
-    "deleteConfirm": "Tem certeza que deseja excluir {{name}}? Esta ação não pode ser desfeita."
+    "deleteConfirm": "Tem certeza que deseja excluir {{name}}? Esta ação não pode ser desfeita.",
+    "mapUnavailable": "Mapa indisponível no momento.",
+    "mapLoading": "Carregando mapa..."
   },
   "feedback": {
     "title": "Feedback",
@@ -924,7 +926,7 @@
     "protectDesc": "Nunca exposto, mostrado mascarado para outros usuários (***.456.789-**), criptografado em nossos servidores. LGPD-compliant.",
     "termsPrefix": "Ao continuar, você concorda com a",
     "privacyPolicy": "Política de Privacidade",
-    "termsConnector": "e os",
+    "termsConnector": "e a",
     "termsOfUse": "Termos de Uso",
     "errorInvalidCpf": "CPF inválido. Confira os dígitos.",
     "errorSessionExpired": "Sessão expirou. Faça login novamente.",

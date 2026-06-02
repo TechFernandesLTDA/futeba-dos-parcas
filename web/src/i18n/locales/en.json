@@ -841,7 +841,9 @@
     "noLocations": "No registered locations",
     "noLocationsDesc": "Add a new location using the + button",
     "deleteTitle": "Delete location?",
-    "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone."
+    "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "mapUnavailable": "Map is unavailable at the moment.",
+    "mapLoading": "Loading map..."
   },
   "feedback": {
     "title": "Feedback",
