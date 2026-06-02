@@ -696,13 +696,7 @@ private fun isMockLocation(location: android.location.Location): Boolean {
 }
 
 fun inviteToWhatsApp(context: Context, state: GameDetailUiState.Success, inviteTitle: String) {
-    val message = context.getString(
-        R.string.game_detail_invite_whatsapp_message,
-        inviteTitle,
-        state.game.date,
-        state.game.time,
-        state.game.locationName
-    )
+    val message = context.getString(R.string.invite_whatsapp_message, inviteTitle, state.game.date, state.game.time, state.game.locationName)
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("https://wa.me/?text=${Uri.encode(message)}")
@@ -716,7 +710,7 @@ fun inviteToWhatsApp(context: Context, state: GameDetailUiState.Success, inviteT
 fun shareGameDetails(context: Context, state: GameDetailUiState.Success, gameAt: String, share: String) {
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, "$gameAt ${state.game.locationName}")
+        putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_game_at_location, gameAt, state.game.locationName))
     }
     context.startActivity(Intent.createChooser(intent, share))
 }

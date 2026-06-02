@@ -37,7 +37,7 @@ fun WeeklyRankingScreen(
                 title = { Text(stringResource(R.string.weekly_ranking)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 }
             )
@@ -52,7 +52,7 @@ fun WeeklyRankingScreen(
             is WeeklyRankingUiState.Empty -> EmptyState(
                 type = EmptyStateType.NoData(
                     title = stringResource(R.string.weekly_ranking_empty),
-                    description = stringResource(R.string.weekly_ranking_empty_description)
+                    description = stringResource(R.string.weekly_ranking_empty_desc)
                 )
             )
             is WeeklyRankingUiState.Success -> {

@@ -199,6 +199,20 @@
     <string name="empty_state_no_players_desc">¡Invita a tus amigos para empezar a jugar!</string>
     <string name="create_game">Crear partido</string>
     <string name="invite_players">Invitar jugadores</string>
+    <string name="weekly_ranking_empty_desc">Vuelve cuando haya partidos finalizados esta semana.</string>
+    <string name="public_games_empty_desc">¡Vuelve más tarde o crea tu propio partido!</string>
+    <string name="game_fallback">Partido</string>
+    <string name="no_location_defined">Ubicación no definida</string>
+    <string name="game_status_label_scheduled">Programado</string>
+    <string name="game_status_label_confirmed">Confirmado</string>
+    <string name="game_status_label_live">En Vivo</string>
+    <string name="game_status_label_finished">Finalizado</string>
+    <string name="game_status_label_cancelled">Cancelado</string>
+    <string name="badge_unlocked_toast">🏆 Nuevo logro: %1$s</string>
+    <string name="invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* a las *%3$s*\n📍 %4$s\n</string>
+    <string name="share_game_at_location">%1$s %2$s</string>
+    <string name="group_other_description_required">Descripción obligatoria para la categoría \'Otro\'</string>
+    <string name="cep_placeholder">00000</string>
     <string name="yes">Sí</string>
     <string name="no">No</string>
 

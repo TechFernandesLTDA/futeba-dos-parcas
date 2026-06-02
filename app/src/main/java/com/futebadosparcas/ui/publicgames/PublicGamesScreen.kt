@@ -40,7 +40,7 @@ fun PublicGamesScreen(
                 title = { Text(stringResource(R.string.public_games)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 }
             )
@@ -55,7 +55,7 @@ fun PublicGamesScreen(
             is PublicGamesUiState.Empty -> EmptyState(
                 type = EmptyStateType.NoData(
                     title = stringResource(R.string.public_games_empty),
-                    description = stringResource(R.string.public_games_empty_description)
+                    description = stringResource(R.string.public_games_empty_desc)
                 )
             )
             is PublicGamesUiState.Success -> {
@@ -74,7 +74,7 @@ fun PublicGamesScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = game.locationName.ifEmpty { "Pelada" },
+                                        text = game.locationName.ifEmpty { stringResource(R.string.game_fallback) },
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold
                                     )

@@ -199,6 +199,20 @@
     <string name="empty_state_no_players_desc">Invite your friends to start playing!</string>
     <string name="create_game">Create Game</string>
     <string name="invite_players">Invite Players</string>
+    <string name="weekly_ranking_empty_desc">Come back when there are finished games this week.</string>
+    <string name="public_games_empty_desc">Come back later or create your own game!</string>
+    <string name="game_fallback">Game</string>
+    <string name="no_location_defined">Location not set</string>
+    <string name="game_status_label_scheduled">Scheduled</string>
+    <string name="game_status_label_confirmed">Confirmed</string>
+    <string name="game_status_label_live">Live</string>
+    <string name="game_status_label_finished">Finished</string>
+    <string name="game_status_label_cancelled">Cancelled</string>
+    <string name="badge_unlocked_toast">🏆 New achievement: %1$s</string>
+    <string name="invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* at *%3$s*\n📍 %4$s\n</string>
+    <string name="share_game_at_location">%1$s %2$s</string>
+    <string name="group_other_description_required">Description required for \'Other\' category</string>
+    <string name="cep_placeholder">00000-0000</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
 
