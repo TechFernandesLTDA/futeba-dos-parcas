@@ -77,7 +77,7 @@ export function useDuplicateGameCopy() {
           date: newDate,
           time: source.time,
           end_time: source.endTime || null,
-          date_time: dateTime,
+          dateTime: dateTime,
           field_type: source.fieldType,
           game_type: source.gameType || source.fieldType,
           max_players: source.maxPlayers,
