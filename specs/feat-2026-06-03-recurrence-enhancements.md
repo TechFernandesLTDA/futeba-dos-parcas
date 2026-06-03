@@ -107,6 +107,8 @@ Engine — limite efetivo (decisão "ambos"): ao criar a próxima ocorrência (d
 
 Se a ocorrência atual está `recurrence_cancelled`, ainda assim avançar a série a partir da data correta (cancelar ≠ encerrar série).
 
+> **Nota de auditoria (2026-06-03):** existe uma coleção `schedules` + entidade `AndroidSchedule`/`Schedule` (KMP) que o Android grava ao criar jogo recorrente (`CreateGameViewModel.kt:907-928`), além de uma tela `SchedulesScreen`. **Porém nenhuma Cloud Function lê `schedules` para materializar jogos** — as únicas referências em `functions/` são deleção no account-cleanup (`index.ts:1850`). Ou seja, `schedules` é **metadata dormente**; o mecanismo real de recorrência é o chain-on-finish `recurrence-engine.ts`. Esta spec opera sobre o engine real; reconciliar/remover `schedules` está **fora de escopo** (avaliar em épico separado).
+
 ### 3.3 Cloud Functions
 
 | Operação | Onde | Mudança |
