@@ -256,7 +256,7 @@ export const PostGameReportScreen: React.FC = () => {
 
     fetchReport();
     return () => { cancelled = true; };
-  }, [gameId, user?.id, retryCount]);
+  }, [gameId, user?.id, retryCount, t]);
 
   const handleShare = async () => {
     if (!stats) return;

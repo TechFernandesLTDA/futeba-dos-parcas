@@ -117,7 +117,7 @@ export const JoinByInviteScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [code, showError]);
+  }, [code, showError, t]);
 
   const handleJoin = async () => {
     if (!code || !preview) return;

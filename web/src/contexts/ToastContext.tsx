@@ -161,7 +161,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
     }
     dismissToast(toast.id);
-  }, [dismissToast, showSuccess, showError]);
+  }, [dismissToast, showSuccess, showError, t]);
 
   return (
     <ToastContext.Provider

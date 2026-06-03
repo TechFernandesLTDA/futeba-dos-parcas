@@ -72,7 +72,7 @@ export function useTeams() {
     );
 
     return () => unsubscribe();
-  }, [queryClient, showError, currentUser]);
+  }, [queryClient, showError, currentUser, t]);
 
   const teamsById = useMemo(() => {
     const map = new Map<string, FavoriteTeam>();

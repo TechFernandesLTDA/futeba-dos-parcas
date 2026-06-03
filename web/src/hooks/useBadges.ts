@@ -77,7 +77,7 @@ export const useBadges = (userId?: string) => {
     });
 
     return () => unsubscribe();
-  }, [userId, queryClient, showError]);
+  }, [userId, queryClient, showError, t]);
 
   const badges: BadgeDefinition[] = BADGE_DEFINITIONS;
   const userBadges: UserBadge[] = data?.userBadges ?? [];

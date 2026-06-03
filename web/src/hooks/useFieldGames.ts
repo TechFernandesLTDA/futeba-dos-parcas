@@ -112,7 +112,7 @@ export function useFieldGames(fieldId: string, daysAhead: number = 60) {
 
     fetchGames();
     return () => { cancelledRef.current = true; };
-  }, [fieldId, daysAhead]);
+  }, [fieldId, daysAhead, t]);
 
   return { data, loading, error };
 }

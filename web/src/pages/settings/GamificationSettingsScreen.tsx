@@ -103,7 +103,7 @@ export const GamificationSettingsScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, showError]);
+  }, [user, showError, t]);
 
   useEffect(() => {
     if (user) {

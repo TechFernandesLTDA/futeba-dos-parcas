@@ -44,7 +44,7 @@ export function useStatistics(userId: string | undefined): UseStatisticsResult {
         setLoading(false);
       }
     }
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     cancelledRef.current = false;

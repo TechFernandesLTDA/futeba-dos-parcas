@@ -269,7 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [t]);
 
   // Sign in with email/password
   const signIn = useCallback(async (email: string, password: string) => {
@@ -395,7 +395,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(t('feedback.auth.updateDataError2'));
       // mantém usuário anterior — não chama setUser(null)
     }
-  }, []);
+  }, [t]);
 
   // Força refresh do ID token para capturar custom claims atualizados
   const refreshClaims = useCallback(async () => {
@@ -461,7 +461,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUpdatingProfile(false);
     }
-  }, [user, refreshUser]);
+  }, [user, refreshUser, t]);
 
   const value = useMemo<AuthContextType>(() => ({
     firebaseUser,

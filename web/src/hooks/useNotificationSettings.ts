@@ -113,7 +113,7 @@ export function useNotificationSettings(userId?: string) {
       showError(t('feedback.notifications.settingsSaveError'));
       throw err;
     }
-  }, [userId, showSuccess, showError]);
+  }, [userId, showSuccess, showError, t]);
 
   const setPreference = useCallback((key: keyof NotificationSettings, value: boolean | number) => {
     const update = { [key]: value } as Partial<NotificationSettings>;

@@ -117,7 +117,7 @@ export function useWaitlist(gameId: string | null) {
       }
     );
     return () => unsubscribe();
-  }, [gameId]);
+  }, [gameId, t]);
 
   const myEntry = useMemo<WaitlistEntry | null>(() => {
     if (!currentUser) return null;
@@ -178,7 +178,7 @@ export function useWaitlist(gameId: string | null) {
         setActing(false);
       }
     },
-    [gameId, currentUser, waitlist.length, showSuccess, showError]
+    [gameId, currentUser, waitlist.length, showSuccess, showError, t]
   );
 
   const leaveWaitlist = useCallback(async (): Promise<boolean> => {
@@ -209,7 +209,7 @@ export function useWaitlist(gameId: string | null) {
     } finally {
       setActing(false);
     }
-  }, [gameId, currentUser, showSuccess, showError]);
+  }, [gameId, currentUser, showSuccess, showError, t]);
 
   return {
     waitlist,

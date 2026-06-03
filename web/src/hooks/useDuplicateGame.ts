@@ -86,7 +86,7 @@ export function useDuplicateGame() {
     } finally {
       if (!cancelledRef.current) setLoading(false);
     }
-  }, [firebaseUser?.uid, user?.id]);
+  }, [firebaseUser?.uid, user?.id, t]);
 
   useEffect(() => {
     cancelledRef.current = false;

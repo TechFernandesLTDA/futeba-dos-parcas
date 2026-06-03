@@ -119,7 +119,7 @@ export const LocationDetailScreen: React.FC = () => {
     );
 
     return () => { cancelled = true; unsubscribe(); };
-  }, [locationId, reloadKey]);
+  }, [locationId, reloadKey, t]);
 
   useEffect(() => {
     if (!locationId) return;

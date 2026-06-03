@@ -139,7 +139,7 @@ export const LiveStatsScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   const getEventIcon = (type: string) => {
     switch (type) {

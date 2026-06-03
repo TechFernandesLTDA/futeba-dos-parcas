@@ -172,7 +172,7 @@ export const PlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId, user, showError, retryCount]);
+  }, [groupId, user, showError, retryCount, t]);
 
   const handleRemoveMember = async (memberId: string) => {
     if (!groupId || !user || currentUserRole !== 'OWNER') return;

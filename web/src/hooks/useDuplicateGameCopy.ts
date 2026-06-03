@@ -137,7 +137,7 @@ export function useDuplicateGameCopy() {
         return null;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError],
+    [firebaseUser, user, queryClient, showSuccess, showError, t],
   );
 
   return { duplicateGame, loading, error };

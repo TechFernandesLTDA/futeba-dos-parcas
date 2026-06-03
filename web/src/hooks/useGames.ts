@@ -231,7 +231,7 @@ export function useConfirmPresence() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   const cancelPresence = useCallback(
@@ -267,7 +267,7 @@ export function useConfirmPresence() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   return { confirmPresence, cancelPresence, loading, error };
@@ -348,7 +348,7 @@ export function useCreateGame() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   return { createGame, loading, error };
@@ -408,7 +408,7 @@ export function useUpdateGameStatus() {
         throw err;
       }
     },
-    [queryClient, showSuccess, showError]
+    [queryClient, showSuccess, showError, t]
   );
 
   return { updateStatus, loading, error };

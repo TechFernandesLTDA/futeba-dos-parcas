@@ -216,7 +216,7 @@ export const NotificationsScreen: React.FC = () => {
     } catch {
       showError(t('feedback.notifications.declineError'));
     }
-  }, [markAsRead, showSuccess, showError]);
+  }, [markAsRead, showSuccess, showError, t]);
 
   const handleDeleteWithUndo = useCallback(async (notification: typeof notifications[0]) => {
     const deletedNotif = notification;
@@ -231,7 +231,7 @@ export const NotificationsScreen: React.FC = () => {
     } catch {
       showError(t('feedback.notifications.deleteError'));
     }
-  }, [deleteNotification, restoreNotification, showWithAction, showError]);
+  }, [deleteNotification, restoreNotification, showWithAction, showError, t]);
 
   const handleClearAll = useCallback(async () => {
     setDeleting(true);
@@ -243,7 +243,7 @@ export const NotificationsScreen: React.FC = () => {
     } finally {
       setDeleting(false);
     }
-  }, [deleteOldNotifications, showError]);
+  }, [deleteOldNotifications, showError, t]);
 
   const isActionable = (type: string): boolean => {
     return type === 'GROUP_INVITE' || type === 'GAME_INVITE' || type === 'GAME_SUMMON';

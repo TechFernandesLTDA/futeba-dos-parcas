@@ -125,7 +125,7 @@ export const TacticalBoardScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   const applyFormation = (formationIndex: number) => {
     setSelectedFormation(formationIndex);

@@ -113,7 +113,7 @@ export const SchedulesScreen: React.FC = () => {
     );
 
     return () => unsubscribe();
-  }, [groupId, retryCount]);
+  }, [groupId, retryCount, t]);
 
   const handleToggleActive = async (schedule: Schedule) => {
     // Evita spam-toggle enquanto o write está em andamento (#2300)

@@ -393,7 +393,7 @@ export function useCreateGroup() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   return { createGroup, loading, error };
@@ -503,7 +503,7 @@ export function useInvitePlayers() {
         throw err;
       }
     },
-    [firebaseUser, user, showSuccess, showError]
+    [firebaseUser, user, showSuccess, showError, t]
   );
 
   const joinByInviteCode = useCallback(
@@ -588,7 +588,7 @@ export function useInvitePlayers() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   return { generateInviteCode, joinByInviteCode, loading, error };

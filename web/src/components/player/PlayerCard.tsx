@@ -178,7 +178,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       showError(t('feedback.player.cardGenerateError2'));
       setSharing(false);
     }
-  }, [player, showError]);
+  }, [player, showError, t]);
 
   const winRate = useMemo(() => player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)

@@ -200,7 +200,7 @@ export const VoteResultScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   if (error) {
     return <ErrorState message={error} onRetry={handleRetry} />;

@@ -129,7 +129,7 @@ export const InvitePlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId, showError, retryCount]);
+  }, [groupId, showError, retryCount, t]);
 
   const handleSearch = async () => {
     if (searchQuery.trim().length < 2) return;

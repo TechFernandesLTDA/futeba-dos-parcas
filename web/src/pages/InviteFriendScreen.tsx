@@ -62,7 +62,7 @@ export const InviteFriendScreen: React.FC = () => {
       () => showSuccess(t('feedback.share.linkCopiedFriends')),
       () => showError(t('feedback.share.copyLinkError')),
     );
-  }, [inviteLink, showSuccess, showError]);
+  }, [inviteLink, showSuccess, showError, t]);
 
   const handleShare = useCallback(() => {
     if (!inviteLink) return;
@@ -79,7 +79,7 @@ export const InviteFriendScreen: React.FC = () => {
     } else {
       handleCopy();
     }
-  }, [inviteLink, handleCopy, showError]);
+  }, [inviteLink, handleCopy, showError, t]);
 
   const handleGenerate = async () => {
     setGenerating(true);

@@ -86,7 +86,7 @@ export function useGameTemplates() {
     } finally {
       if (!cancelledRef.current) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -131,7 +131,7 @@ export function useGameTemplates() {
       showError(t('feedback.templates.saveError'));
       throw err;
     }
-  }, [fetchTemplates, showError]);
+  }, [fetchTemplates, showError, t]);
 
   const removeTemplate = useCallback(async (templateId: string): Promise<void> => {
     const currentUser = userRef.current;
@@ -151,7 +151,7 @@ export function useGameTemplates() {
       showError(t('feedback.templates.removeError'));
       throw err;
     }
-  }, [showError]);
+  }, [showError, t]);
 
   return { templates, loading, error, saveTemplate, removeTemplate, refetch: fetchTemplates };
 }

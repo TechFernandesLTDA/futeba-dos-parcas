@@ -1084,6 +1084,16 @@
     },
     "admin": {
       "loadMoreUsersError": "Error loading more users."
+    },
+    "optimistic": {
+      "saveError": "Failed to save. Change reverted."
+    },
+    "publicGames": {
+      "loginRequired": "You need to be logged in.",
+      "joinSuccess": "You joined the game \"{{location}}\"!"
+    },
+    "ratingHistory": {
+      "loadError": "Failed to load history"
     }
   },
   "mvp": {

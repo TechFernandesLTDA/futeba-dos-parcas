@@ -222,7 +222,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     } finally {
       if (requestIdRef.current === requestId) setLoading(false);
     }
-  }, [showError]);
+  }, [showError, t]);
 
   useEffect(() => {
     if (!searchQuery.trim()) { setResults([]); return; }

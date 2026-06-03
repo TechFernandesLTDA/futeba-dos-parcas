@@ -175,7 +175,7 @@ export const TeamFormationScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   const shuffleTeams = () => {
     const allPlayers = [...teamA, ...teamB];

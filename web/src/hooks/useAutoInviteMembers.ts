@@ -76,7 +76,7 @@ export function useAutoInviteMembers() {
         return 0;
       }
     },
-    [firebaseUser, user, showError],
+    [firebaseUser, user, showError, t],
   );
 
   return { autoInvite };

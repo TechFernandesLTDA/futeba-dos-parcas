@@ -1084,6 +1084,16 @@
     },
     "admin": {
       "loadMoreUsersError": "Erro ao carregar mais usuários."
+    },
+    "optimistic": {
+      "saveError": "Erro ao salvar. Alteração revertida."
+    },
+    "publicGames": {
+      "loginRequired": "Você precisa estar logado.",
+      "joinSuccess": "Você entrou na pelada \"{{location}}\"!"
+    },
+    "ratingHistory": {
+      "loadError": "Erro ao carregar histórico"
     }
   },
   "mvp": {

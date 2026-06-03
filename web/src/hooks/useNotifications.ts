@@ -85,7 +85,7 @@ export const useNotifications = (userId?: string) => {
     } finally {
       setActing(false);
     }
-  }, [showError]);
+  }, [showError, t]);
 
   const markAllAsRead = useCallback(async () => {
     const unread = notifications.filter((n) => !n.read);
@@ -105,7 +105,7 @@ export const useNotifications = (userId?: string) => {
     } finally {
       setActing(false);
     }
-  }, [notifications, showSuccess, showError]);
+  }, [notifications, showSuccess, showError, t]);
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     setActing(true);
@@ -117,7 +117,7 @@ export const useNotifications = (userId?: string) => {
     } finally {
       setActing(false);
     }
-  }, [showError]);
+  }, [showError, t]);
 
   const toggleRead = useCallback(async (notificationId: string, currentRead: boolean) => {
     try {
@@ -126,7 +126,7 @@ export const useNotifications = (userId?: string) => {
       logger.error('Error toggling notification read status:', err);
       showError(t('feedback.notifications.statusError'));
     }
-  }, [showError]);
+  }, [showError, t]);
 
   const restoreNotification = useCallback(async (notification: Notification) => {
     try {
@@ -153,7 +153,7 @@ export const useNotifications = (userId?: string) => {
       logger.error('Error restoring notification:', err);
       showError(t('feedback.notifications.restoreError'));
     }
-  }, [showSuccess, showError, userId]);
+  }, [showSuccess, showError, userId, t]);
 
   const deleteOldNotifications = useCallback(async (daysOld: number) => {
     if (!userId) return;
@@ -187,7 +187,7 @@ export const useNotifications = (userId?: string) => {
       logger.error('Error deleting old notifications:', err);
       showError(t('feedback.notifications.cleanupError'));
     }
-  }, [userId, showSuccess, showError]);
+  }, [userId, showSuccess, showError, t]);
 
   return {
     notifications,

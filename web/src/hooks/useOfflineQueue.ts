@@ -192,7 +192,7 @@ export function useOfflineQueue() {
 
     setProcessing(false);
     processingRef.current = false;
-  }, [runMutation]);
+  }, [runMutation, t]);
 
   useEffect(() => {
     if (isOnline && queue.length > 0 && !processingRef.current) {

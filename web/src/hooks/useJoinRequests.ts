@@ -116,7 +116,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, user, showSuccess, showError]);
+  }, [groupId, uid, user, showSuccess, showError, t]);
 
   const cancelRequest = useCallback(async () => {
     if (!groupId || !uid) return;
@@ -133,7 +133,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, showSuccess, showError]);
+  }, [groupId, uid, showSuccess, showError, t]);
 
   return {
     request,
@@ -227,7 +227,7 @@ export function usePendingJoinRequests(groupId: string | undefined) {
         showError(t('feedback.joinRequests.approveError'));
       }
     },
-    [groupId, uid, showError]
+    [groupId, uid, showError, t]
   );
 
   const reject = useCallback(
@@ -246,7 +246,7 @@ export function usePendingJoinRequests(groupId: string | undefined) {
         showError(t('feedback.joinRequests.rejectError'));
       }
     },
-    [groupId, uid, showError]
+    [groupId, uid, showError, t]
   );
 
   return { requests, loading, error, approve, reject };

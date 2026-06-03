@@ -152,7 +152,7 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId, user, retryCount]);
+  }, [groupId, user, retryCount, t]);
 
   const handleAddTransaction = useCallback(async () => {
     const parsedAmount = parseFloat(amount);

@@ -8,6 +8,7 @@ export function useRatingHistory(userId: string | null | undefined) {
   const [history, setHistory] = useState<RatingHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!userId) {
@@ -38,7 +39,7 @@ export function useRatingHistory(userId: string | null | undefined) {
         setHistory(entries);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Erro ao carregar histórico');
+          setError(err instanceof Error ? err.message : t('feedback.ratingHistory.loadError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -47,7 +48,7 @@ export function useRatingHistory(userId: string | null | undefined) {
 
     fetchHistory();
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, t]);
 
   return { history, loading, error };
 }
