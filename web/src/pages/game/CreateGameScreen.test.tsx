@@ -89,6 +89,8 @@ vi.mock('firebase/firestore', () => ({
   Timestamp: { fromDate: vi.fn() },
   limit: vi.fn((...args) => args[0]),
   serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
+  // useFieldGames usa onSnapshot para disponibilidade de campo em tempo real
+  onSnapshot: vi.fn(() => vi.fn()),
 }));
 
 import { CreateGameScreen } from './CreateGameScreen';

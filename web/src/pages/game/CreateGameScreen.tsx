@@ -32,6 +32,7 @@ import {
   ListItemButton,
   ListItemText,
   ListItemIcon,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -1207,48 +1208,63 @@ export const CreateGameScreen: React.FC = () => {
     const CustomDay = (props: PickersDayProps<Date>) => {
       const { day, outsideCurrentMonth, ...other } = props;
       const dateStr = formatDate(day, 'yyyy-MM-dd');
-      const hasGames = byDate.has(dateStr);
+      const dayGames = byDate.get(dateStr) || [];
+      const hasGames = dayGames.length > 0;
       const hasConflict = conflictDates.has(dateStr);
       const isFullyBooked = fullyBookedDates.has(dateStr);
       const isWeekendDay = isWeekend(day);
       const isToday = isSameDay(day, new Date());
 
+      const tooltipTitle = hasGames ? (
+        <Box sx={{ textAlign: 'center' }}>
+          {dayGames.sort((a, b) => a.startMinutes - b.startMinutes).map((g, i) => (
+            <Typography key={i} variant="caption" sx={{ display: 'block', lineHeight: 1.4 }}>
+              {formatTime(g.startMinutes)} - {formatTime(g.endMinutes)}
+            </Typography>
+          ))}
+        </Box>
+      ) : '';
+
       return (
-        <Badge
-          key={dateStr}
-          overlap="circular"
-          variant="dot"
-          color={hasConflict ? 'error' : hasGames ? 'warning' : 'default'}
-          invisible={!hasGames}
-          sx={{
-            '& .MuiBadge-dot': {
-              width: 6,
-              height: 6,
-              minWidth: 6,
-              borderRadius: '50%',
-            },
-          }}
-        >
-          <PickersDay
-            {...other}
-            day={day}
-            outsideCurrentMonth={outsideCurrentMonth}
-            selected={false}
-            sx={{
-              ...(isFullyBooked && {
-                bgcolor: (theme) => `${theme.palette.error.main}25`,
-                '&:hover': { bgcolor: (theme) => `${theme.palette.error.main}35` },
-              }),
-              ...(isToday && {
-                border: '2px solid',
-                borderColor: 'primary.main',
-              }),
-              ...(isWeekendDay && !isToday && {
-                color: 'text.secondary',
-              }),
-            }}
-          />
-        </Badge>
+        <Tooltip title={tooltipTitle} arrow disableHoverListener={!hasGames}>
+          <span>
+            <Badge
+              key={dateStr}
+              overlap="circular"
+              variant="dot"
+              color={hasConflict ? 'error' : hasGames ? 'warning' : 'default'}
+              invisible={!hasGames}
+              sx={{
+                '& .MuiBadge-dot': {
+                  width: 6,
+                  height: 6,
+                  minWidth: 6,
+                  borderRadius: '50%',
+                },
+              }}
+            >
+              <PickersDay
+                {...other}
+                day={day}
+                outsideCurrentMonth={outsideCurrentMonth}
+                selected={false}
+                sx={{
+                  ...(isFullyBooked && {
+                    bgcolor: (theme) => `${theme.palette.error.main}25`,
+                    '&:hover': { bgcolor: (theme) => `${theme.palette.error.main}35` },
+                  }),
+                  ...(isToday && {
+                    border: '2px solid',
+                    borderColor: 'primary.main',
+                  }),
+                  ...(isWeekendDay && !isToday && {
+                    color: 'text.secondary',
+                  }),
+                }}
+              />
+            </Badge>
+          </span>
+        </Tooltip>
       );
     };
 
