@@ -554,7 +554,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
             breadcrumbs={breadcrumbs}
           />
         )}
-        <MobileBottomNav>{children}</MobileBottomNav>
+        {user ? <MobileBottomNav>{children}</MobileBottomNav> : children}
       </Box>
     </Box>
   );

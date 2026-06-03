@@ -13,12 +13,13 @@ import {db} from "../_db";
  *
  * Validar a igualdade na rule (float) travaria writes legitimos por
  * arredondamento. Em vez disso, esta CF recomputa o summary a partir do
- * ledger imutavel (`cashbox` ACTIVE) a CADA escrita de entry — tornando o
+ * ledger imutavel (`cashbox`) a CADA escrita de entry — tornando o
  * summary self-healing: o valor exibido converge sempre para os lancamentos
  * reais, independente do que o cliente gravou.
  *
  * Espelha a logica de `recalculateCashboxBalance` (FirebaseDataSource.kt):
- * soma INCOME/EXPENSE de entries ACTIVE, com teto de 1000 entradas (#952).
+ * soma INCOME/EXPENSE de entries nao-VOIDED, com teto de 1000 entradas
+ * (#952). Inclui legacy entries sem campo `status` (#2363).
  */
 const MAX_ENTRIES = 1000;
 
@@ -36,14 +37,13 @@ export const onCashboxEntryWritten = onDocumentWritten(
         .collection("groups")
         .doc(groupId)
         .collection("cashbox")
-        .where("status", "==", "ACTIVE")
         .limit(MAX_ENTRIES + 1)
         .get();
 
       if (snap.size > MAX_ENTRIES) {
         logger.warn(
-          `[CASHBOX] grupo ${groupId} tem >${MAX_ENTRIES} entradas ` +
-          "ACTIVE; summary truncado (paridade com client)."
+          `[CASHBOX] grupo ${groupId} tem >${MAX_ENTRIES} entradas; ` +
+          "summary truncado (paridade com client)."
         );
       }
 
@@ -54,6 +54,7 @@ export const onCashboxEntryWritten = onDocumentWritten(
 
       snap.docs.slice(0, MAX_ENTRIES).forEach((doc) => {
         const data = doc.data();
+        if (data.status === "VOIDED") return;
         const amount = typeof data.amount === "number" ? data.amount : 0;
         if (data.type === "INCOME") {
           totalIncome += amount;
