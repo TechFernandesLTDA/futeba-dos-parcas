@@ -4,6 +4,7 @@ import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { UserStats } from '../types/user';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useStatistics');
 
@@ -15,6 +16,7 @@ interface UseStatisticsResult {
 }
 
 export function useStatistics(userId: string | undefined): UseStatisticsResult {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function useStatistics(userId: string | undefined): UseStatisticsResult {
     } catch (err) {
       if (cancelledRef.current) return;
       logger.error('Error loading stats:', err);
-      setError('Erro ao carregar estatísticas');
+      setError(t('feedback.statistics.loadError'));
     } finally {
       if (!cancelledRef.current) {
         setLoading(false);

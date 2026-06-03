@@ -41,7 +41,7 @@ export function useNavigateBack(fallback?: string) {
  *
  * Uso:
  *   const navigateWithCallback = useNavigateWithCallback();
- *   navigateWithCallback('/group/123', () => showSuccess('Grupo criado!'));
+ *   navigateWithCallback('/group/123', () => showSuccess(t('feedback.groups.createSuccess')));
  */
 export function useNavigateWithCallback() {
   const navigate = useNavigate();

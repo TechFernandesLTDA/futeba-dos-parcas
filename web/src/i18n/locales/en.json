@@ -879,7 +879,212 @@
     "validationDescriptionMax": "Description must be at most 2000 characters",
     "submittedMessage": "Feedback sent!",
     "submittedThankYou": "Thank you for your contribution. Our team will review your feedback.",
-    "trackHint": "Track under \"Settings > My feedback\""
+    "trackHint": "Track under \"Settings > My feedback\"",
+    "app": {
+      "mustBeGroupMember": "You must be a group member to access this page."
+    },
+    "undo": {
+      "success": "Action undone successfully!",
+      "error": "Could not undo the action."
+    },
+    "generic": {
+      "loadDataError": "Error loading data. Please try again."
+    },
+    "auth": {
+      "createAccountError": "Error creating account. Please try again.",
+      "loadAccountError": "Error loading account data. Check your connection.",
+      "verifyAuthError": "Error verifying authentication. Please try again.",
+      "monitorAuthError": "Error monitoring authentication.",
+      "updateDataError": "Could not update your data. Check your connection and try again.",
+      "updateDataError2": "Error updating data. Please try again.",
+      "profileInconsistent": "Profile may be inconsistent. Reload the app and try again.",
+      "notAuthenticated": "User not authenticated"
+    },
+    "share": {
+      "linkCopied": "Link copied!",
+      "linkCopiedFriends": "Link copied! Share with your friends.",
+      "copyLinkError": "Error copying link.",
+      "shareError": "Error sharing",
+      "cannotShare": "Could not share.",
+      "copyToClipboardError": "Could not copy to clipboard",
+      "resultCopied": "Result copied!"
+    },
+    "search": {
+      "error": "Search error. Please try again.",
+      "usersError": "Error searching for users."
+    },
+    "location": {
+      "geolocationUnsupported": "Geolocation not supported by the browser.",
+      "coordinatesSuccess": "Coordinates captured successfully!",
+      "captureError": "Error capturing location. Check permissions.",
+      "updateSuccess": "Location updated successfully!",
+      "createSuccess": "Location created successfully!",
+      "saveError": "Error saving location. Please try again.",
+      "deleteError": "Error deleting location. Please try again.",
+      "loadError": "Could not load this location.",
+      "notFound": "Location not found.",
+      "loadAllError": "Could not load locations. Check your connection and try again.",
+      "onlyImages": "Only images are accepted.",
+      "imageTooLarge": "Image too large (max 5MB).",
+      "noPermissionFields": "Your account does not have permission to register fields. Contact support.",
+      "commentRequired": "Comment is required.",
+      "reviewSuccess": "Review submitted!",
+      "reviewError": "Error submitting review."
+    },
+    "player": {
+      "cardGenerateError": "Failed to generate image. Please try again.",
+      "cardGenerateError2": "Error generating card image. Please try again."
+    },
+    "feedback": {
+      "loadError": "Error loading feedback",
+      "loginRequired": "You need to be logged in to send feedback",
+      "sendSuccess": "Feedback sent successfully!",
+      "sendError": "Error sending feedback. Please try again."
+    },
+    "fieldGames": {
+      "loadError": "Error loading field games"
+    },
+    "groups": {
+      "createSuccess": "Group created!",
+      "inviteCodeGenerated": "Invite code generated!",
+      "joinSuccess": "You joined the group!",
+      "ownerCannotLeave": "The owner cannot leave the group. Transfer ownership first.",
+      "leaveSuccess": "You left the group.",
+      "leaveError": "Error leaving the group. Please try again.",
+      "deleteSuccess": "Group deleted successfully.",
+      "onlyOwnerPromote": "Only the owner can promote admins.",
+      "promoteSuccess": "Member promoted to Admin.",
+      "promoteError": "Error promoting member. Please try again.",
+      "onlyOwnerDemote": "Only the owner can demote admins.",
+      "demoteSuccess": "Member demoted to Member.",
+      "demoteError": "Error demoting member. Please try again.",
+      "removeMemberError": "Error removing member.",
+      "removeMemberError2": "Error removing member. Please try again.",
+      "transferOwnershipError": "Error transferring ownership. Please try again.",
+      "updateSuccess": "Group updated successfully!",
+      "updateError": "Error updating group. Please try again.",
+      "loadMembersError": "Error loading members.",
+      "inviteError": "Error sending invite. Please try again.",
+      "autoInviteError": "Error auto-inviting group members."
+    },
+    "invite": {
+      "codeNotInformed": "Invite code not provided",
+      "notFound": "Invite not found. Check the code and try again.",
+      "loadError": "Could not load the invite. Please try again.",
+      "expired": "This invite has expired. Ask the organizer for a new one.",
+      "alreadyUsed": "This invite has already been used. Ask the organizer for a new one."
+    },
+    "waitlist": {
+      "loadError": "Error loading the waitlist",
+      "loginRequired": "You need to be logged in to join the waitlist",
+      "alreadyIn": "You are already on the waitlist for this game",
+      "joinSuccess": "You joined the waitlist!",
+      "leaveSuccess": "You left the waitlist",
+      "leaveError": "Could not leave the waitlist. Please try again."
+    },
+    "notifications": {
+      "settingsSaved": "Settings saved.",
+      "settingsSaveError": "Error saving settings.",
+      "markReadError": "Error marking notification as read.",
+      "markAllReadError": "Error marking all notifications as read.",
+      "deleteError": "Error deleting notification.",
+      "statusError": "Error changing notification status.",
+      "restoreSuccess": "Notification restored.",
+      "restoreError": "Error restoring notification.",
+      "cleanupError": "Error removing old notifications.",
+      "declineError": "Error declining.",
+      "clearError": "Error clearing notifications.",
+      "navigatingToGroup": "Navigating to group!",
+      "inviteDeclined": "Invite declined."
+    },
+    "badges": {
+      "loadError": "Error loading badges in real time"
+    },
+    "dreamTeam": {
+      "saveSuccess": "Dream Team saved!"
+    },
+    "games": {
+      "confirmSuccess": "Attendance confirmed!",
+      "cancelSuccess": "Attendance canceled.",
+      "createSuccess": "Game created successfully!",
+      "statusUpdateSuccess": "Game status updated successfully!",
+      "previousGameLoaded": "Previous game loaded. Adjust date and time.",
+      "onlyConfirmedCanVote": "Only confirmed players can vote.",
+      "voteResultError": "Error loading vote result.",
+      "checkInLoginRequired": "You need to be logged in to check in",
+      "notFound": "Game not found.",
+      "onlyOwnerAccess": "Only the game owner can access this screen.",
+      "blockedListError": "Error loading blocked list.",
+      "onlyOwnerUnblock": "Only the game owner can unblock players.",
+      "unblockSuccess": "Player unblocked successfully.",
+      "unblockError": "Error unblocking player. Please try again."
+    },
+    "templates": {
+      "loadError": "Error loading templates.",
+      "nameRequired": "Template name is required.",
+      "maxPlayersMinOne": "Maximum number of players must be at least 1.",
+      "saveError": "Error saving template.",
+      "notFound": "Template not found.",
+      "removeError": "Error removing template.",
+      "removeSuccess": "Template removed.",
+      "nameMinLength": "Template name must be at least 3 characters.",
+      "saveSuccess": "Template saved successfully!"
+    },
+    "statistics": {
+      "loadError": "Error loading statistics",
+      "loadLiveError": "Error loading statistics. Please try again."
+    },
+    "challenges": {
+      "sendSuccess": "Challenge sent!"
+    },
+    "joinRequests": {
+      "sendSuccess": "Request sent successfully!",
+      "sendError": "Error requesting to join the group. Please try again.",
+      "cancelSuccess": "Request canceled.",
+      "cancelError": "Error canceling request. Please try again.",
+      "approveError": "Error approving request. Please try again.",
+      "rejectError": "Error rejecting request. Please try again."
+    },
+    "duplicateGame": {
+      "loadRecentError": "Error loading recent games.",
+      "success": "Game duplicated successfully!"
+    },
+    "teams": {
+      "loadError": "Error loading teams in real time"
+    },
+    "profile": {
+      "ratingCooldown": "Wait 1 minute between rating changes.",
+      "nameRequired": "Name cannot be empty.",
+      "saveError": "Error saving profile. Please try again."
+    },
+    "gamification": {
+      "loadError": "Error loading gamification settings."
+    },
+    "cashbox": {
+      "loadError": "Error loading cashbox transactions."
+    },
+    "schedules": {
+      "loadError": "Error loading schedules.",
+      "deleteSuccess": "Schedule deleted.",
+      "createSuccess": "Schedule created successfully!"
+    },
+    "phoneVerification": {
+      "incompleteNumber": "Incomplete number. Include area code + 9 + 8 digits.",
+      "sessionExpired": "Session expired. Please sign in again.",
+      "codeSent": "Code sent via SMS",
+      "code6Digits": "Code must have 6 digits.",
+      "sessionExpiredRestart": "Session expired. Restart the process.",
+      "verifiedSaveError": "Phone verified, but there was an error saving. If the problem persists, contact support."
+    },
+    "tactical": {
+      "loadError": "Error loading tactical board."
+    },
+    "offline": {
+      "syncError": "Failed to sync some offline changes. We will try again."
+    },
+    "admin": {
+      "loadMoreUsersError": "Error loading more users."
+    }
   },
   "mvp": {
     "title": "MVP Vote",

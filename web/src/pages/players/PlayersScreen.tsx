@@ -161,8 +161,8 @@ export const PlayersScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching members:', error);
-          setError('Erro ao carregar membros.');
-          showError('Erro ao carregar membros.');
+          setError(t('feedback.groups.loadMembersError'));
+          showError(t('feedback.groups.loadMembersError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -196,7 +196,7 @@ export const PlayersScreen: React.FC = () => {
       setConfirmRemoveId(null);
     } catch (error) {
       logger.error('Error removing member:', error);
-      showError('Erro ao remover membro.');
+      showError(t('feedback.groups.removeMemberError'));
     } finally {
       setActionLoading(null);
     }

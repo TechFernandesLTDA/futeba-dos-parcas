@@ -71,7 +71,7 @@ export const JoinByInviteScreen: React.FC = () => {
 
     async function lookup() {
       if (!code) {
-        setError('Código de convite não informado');
+        setError(t('feedback.invite.codeNotInformed'));
         setLoading(false);
         return;
       }
@@ -82,7 +82,7 @@ export const JoinByInviteScreen: React.FC = () => {
         if (cancelled) return;
 
         if (!inviteSnap.exists()) {
-          setError('Convite não encontrado. Verifique o código e tente novamente.');
+          setError(t('feedback.invite.notFound'));
           setLoading(false);
           return;
         }
@@ -107,8 +107,8 @@ export const JoinByInviteScreen: React.FC = () => {
       } catch (err) {
         if (cancelled) return;
         logger.error('Erro ao buscar convite:', err);
-        showError('Não foi possível carregar o convite. Tente novamente.');
-        setError('Não foi possível carregar o convite. Tente novamente.');
+        showError(t('feedback.invite.loadError'));
+        setError(t('feedback.invite.loadError'));
         setLoading(false);
       }
     }
@@ -122,11 +122,11 @@ export const JoinByInviteScreen: React.FC = () => {
   const handleJoin = async () => {
     if (!code || !preview) return;
     if (preview.expired) {
-      showError('Este convite expirou. Peça um novo ao organizador.');
+      showError(t('feedback.invite.expired'));
       return;
     }
     if (preview.used) {
-      showError('Este convite já foi utilizado. Peça um novo ao organizador.');
+      showError(t('feedback.invite.alreadyUsed'));
       return;
     }
 

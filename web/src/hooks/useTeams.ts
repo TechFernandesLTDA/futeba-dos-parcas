@@ -7,6 +7,7 @@ import { FavoriteTeam } from '../types/team';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useTeams');
 
@@ -24,6 +25,7 @@ async function fetchTeams(): Promise<FavoriteTeam[]> {
 }
 
 export function useTeams() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   // favorite_teams exige auth (rule allow read: if isAuthenticated()).
   // O TeamsProvider envolve toda a arvore (inclusive login/register), entao
@@ -65,7 +67,7 @@ export function useTeams() {
       (err) => {
         logger.error('Error in teams listener:', err);
         setListenerError(err.message);
-        showError('Erro ao carregar times em tempo real');
+        showError(t('feedback.teams.loadError'));
       }
     );
 

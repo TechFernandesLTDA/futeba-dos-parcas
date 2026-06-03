@@ -94,7 +94,7 @@ export const QrCheckInScreen: React.FC = () => {
 
   const handleCheckIn = async () => {
     if (!gameId || !token || !currentUser) {
-      showError('Você precisa estar logado para fazer check-in');
+      showError(t('feedback.games.checkInLoginRequired'));
       return;
     }
 

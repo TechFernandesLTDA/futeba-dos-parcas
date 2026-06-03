@@ -3,6 +3,7 @@ import { doc, setDoc, updateDoc, deleteDoc, addDoc, collection } from 'firebase/
 import { db } from '../services/firebase';
 import { useNetworkStatus } from './useNetworkStatus';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useOfflineQueue');
 const STORAGE_KEY = 'offline_write_queue';
@@ -94,6 +95,7 @@ async function saveQueue(queue: QueuedMutation[]): Promise<void> {
 }
 
 export function useOfflineQueue() {
+  const { t } = useTranslation();
   const { isOnline } = useNetworkStatus();
   const [queue, setQueue] = useState<QueuedMutation[]>([]);
   const [queueLoaded, setQueueLoaded] = useState(false);
@@ -164,7 +166,7 @@ export function useOfflineQueue() {
         processedIds.add(mutation.id);
       } catch (err) {
         logger.error('Offline mutation failed:', err);
-        setError('Falha ao sincronizar algumas alterações offline. Tentaremos novamente.');
+        setError(t('feedback.offline.syncError'));
         const retries = (mutation.retries ?? 0) + 1;
         if (retries <= MAX_RETRIES) {
           // Re-enfileira para nova tentativa

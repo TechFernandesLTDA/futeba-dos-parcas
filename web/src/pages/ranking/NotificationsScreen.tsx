@@ -199,7 +199,7 @@ export const NotificationsScreen: React.FC = () => {
       if (notification.type === 'GROUP_INVITE' && notification.referenceId) {
         await markAsRead(notification.id);
         navigate(`/group/${notification.referenceId}`);
-        showSuccess('Navegando para o grupo!');
+        showSuccess(t('feedback.notifications.navigatingToGroup'));
       } else if ((notification.type === 'GAME_INVITE' || notification.type === 'GAME_SUMMON') && notification.referenceId) {
         await confirmPresence(notification.referenceId);
         await markAsRead(notification.id);
@@ -212,9 +212,9 @@ export const NotificationsScreen: React.FC = () => {
   const handleDecline = useCallback(async (notification: typeof notifications[0]) => {
     try {
       await markAsRead(notification.id);
-      showSuccess('Convite recusado.');
+      showSuccess(t('feedback.notifications.inviteDeclined'));
     } catch {
-      showError('Erro ao recusar.');
+      showError(t('feedback.notifications.declineError'));
     }
   }, [markAsRead, showSuccess, showError]);
 
@@ -229,7 +229,7 @@ export const NotificationsScreen: React.FC = () => {
         },
       }, 'info');
     } catch {
-      showError('Erro ao excluir notificação.');
+      showError(t('feedback.notifications.deleteError'));
     }
   }, [deleteNotification, restoreNotification, showWithAction, showError]);
 
@@ -239,7 +239,7 @@ export const NotificationsScreen: React.FC = () => {
       await deleteOldNotifications(0);
       setDeleteDialogOpen(false);
     } catch {
-      showError('Erro ao limpar notificações.');
+      showError(t('feedback.notifications.clearError'));
     } finally {
       setDeleting(false);
     }

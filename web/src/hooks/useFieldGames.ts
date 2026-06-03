@@ -3,6 +3,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { format, addDays } from 'date-fns';
 import { db } from '../services/firebase';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useFieldGames');
 
@@ -26,6 +27,7 @@ export interface FieldGameSet {
 }
 
 export function useFieldGames(fieldId: string, daysAhead: number = 60) {
+  const { t } = useTranslation();
   const [data, setData] = useState<FieldGameSet>({
     byDate: new Map(),
     fullyBookedDates: new Set(),
@@ -102,7 +104,7 @@ export function useFieldGames(fieldId: string, daysAhead: number = 60) {
       } catch (err) {
         if (cancelledRef.current) return;
         logger.error('Error fetching field games:', err);
-        setError('Erro ao carregar jogos do campo');
+        setError(t('feedback.fieldGames.loadError'));
       } finally {
         if (!cancelledRef.current) setLoading(false);
       }

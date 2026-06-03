@@ -246,7 +246,7 @@ export const PostGameReportScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching report:', error);
-          setError('Erro ao carregar dados. Tente novamente.');
+          setError(t('feedback.generic.loadDataError'));
           showErrorRef.current('Erro ao carregar dados. Tente novamente.');
         }
       } finally {
@@ -268,14 +268,14 @@ export const PostGameReportScreen: React.FC = () => {
         await navigator.share({ title: 'Futeba dos Parças', text, url: window.location.href });
       } else {
         await navigator.clipboard.writeText(text);
-        showSuccess('Resultado copiado para a área de transferência!');
+        showSuccess(t('feedback.share.resultCopied'));
       }
     } catch {
       try {
         await navigator.clipboard.writeText(text);
-        showSuccess('Resultado copiado!');
+        showSuccess(t('feedback.share.resultCopied'));
       } catch {
-        showError('Não foi possível compartilhar.');
+        showError(t('feedback.share.cannotShare'));
       }
     }
   };

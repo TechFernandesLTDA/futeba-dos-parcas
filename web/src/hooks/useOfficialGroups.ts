@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+
   collection,
   doc,
   getDocs,
@@ -15,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 function parseOfficialGroup(id: string, raw: Record<string, unknown>): OfficialGroup {
   const converted = snakeToCamel(raw);

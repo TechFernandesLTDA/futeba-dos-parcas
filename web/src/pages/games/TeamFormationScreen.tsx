@@ -163,7 +163,7 @@ export const TeamFormationScreen: React.FC = () => {
       } catch (error) {
         logger.error('Error fetching game:', error);
         if (!cancelled) {
-          setError('Erro ao carregar dados. Tente novamente.');
+          setError(t('feedback.generic.loadDataError'));
           showErrorRef.current('Erro ao carregar dados. Tente novamente.');
         }
       } finally {

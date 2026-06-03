@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
+
   collection,
   query,
   orderBy,
@@ -16,6 +17,7 @@ import { GameTemplate, FieldType } from '../types/game';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useGameTemplates');
 
@@ -32,6 +34,7 @@ interface TemplateInput {
 }
 
 export function useGameTemplates() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { showError } = useToast();
   const [templates, setTemplates] = useState<GameTemplate[]>([]);
@@ -79,7 +82,7 @@ export function useGameTemplates() {
       if (!cancelledRef.current) setTemplates(data);
     } catch (err) {
       logger.error('Error fetching templates:', err);
-      if (!cancelledRef.current) setError('Erro ao carregar templates.');
+      if (!cancelledRef.current) setError(t('feedback.templates.loadError'));
     } finally {
       if (!cancelledRef.current) setLoading(false);
     }
@@ -98,11 +101,11 @@ export function useGameTemplates() {
     if (!currentUser) return null;
 
     if (!input.name?.trim()) {
-      showError('O nome do template é obrigatório.');
+      showError(t('feedback.templates.nameRequired'));
       return null;
     }
     if (!input.max_players || input.max_players < 1) {
-      showError('O número máximo de jogadores deve ser pelo menos 1.');
+      showError(t('feedback.templates.maxPlayersMinOne'));
       return null;
     }
 
@@ -125,7 +128,7 @@ export function useGameTemplates() {
       return docRef.id;
     } catch (err) {
       logger.error('Error saving template:', err);
-      showError('Erro ao salvar template.');
+      showError(t('feedback.templates.saveError'));
       throw err;
     }
   }, [fetchTemplates, showError]);
@@ -135,7 +138,7 @@ export function useGameTemplates() {
     if (!currentUser) return;
 
     if (!templateId) {
-      showError('Template não encontrado.');
+      showError(t('feedback.templates.notFound'));
       return;
     }
 
@@ -145,7 +148,7 @@ export function useGameTemplates() {
       setTemplates((prev) => prev.filter((t) => t.id !== templateId));
     } catch (err) {
       logger.error('Error deleting template:', err);
-      showError('Erro ao remover template.');
+      showError(t('feedback.templates.removeError'));
       throw err;
     }
   }, [showError]);

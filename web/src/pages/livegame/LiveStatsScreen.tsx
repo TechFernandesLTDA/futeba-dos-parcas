@@ -127,7 +127,7 @@ export const LiveStatsScreen: React.FC = () => {
       } catch (error) {
         logger.error('Error fetching stats:', error);
         if (!cancelled) {
-          setError('Erro ao carregar estatísticas. Tente novamente.');
+          setError(t('feedback.statistics.loadLiveError'));
           showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
         }
       } finally {

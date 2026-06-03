@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+
   collection,
   doc,
   getDocs,
@@ -15,6 +16,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { getFirestoreErrorMessage } from "../utils/firebaseErrors";
 import { snakeToCamel } from "../utils/firestoreHelpers";
+import { useTranslation } from 'react-i18next';
 
 export interface GroupChallenge {
   id: string;
@@ -82,6 +84,7 @@ export function useGroupChallenges(groupId?: string) {
 }
 
 export function useChallengeGroup() {
+  const { t } = useTranslation();
   const { showError, showSuccess } = useToast();
   const queryClient = useQueryClient();
 
@@ -118,7 +121,7 @@ export function useChallengeGroup() {
       });
     },
     onSuccess: () => {
-      showSuccess("Desafio enviado!");
+      showSuccess(t("feedback.challenges.sendSuccess"));
       queryClient.invalidateQueries({ queryKey: ["group-challenges"] });
     },
     onError: (err) => {

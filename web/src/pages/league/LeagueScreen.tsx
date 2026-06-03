@@ -254,7 +254,7 @@ export const LeagueScreen: React.FC = () => {
         await navigator.clipboard.writeText(`${text}\n${url}`);
         setShareSnack(true);
       } catch {
-        showError('Não foi possível copiar para a área de transferência');
+        showError(t('feedback.share.copyToClipboardError'));
       }
     }
   }, [currentUserPlayer, currentUserPosition, showError]);

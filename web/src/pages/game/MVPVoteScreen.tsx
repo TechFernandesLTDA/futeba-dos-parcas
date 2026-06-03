@@ -133,7 +133,7 @@ export const MVPVoteScreen: React.FC = () => {
       (c) => c.userId === currentUser.uid && c.status === 'CONFIRMED'
     );
     if (!myConfirmation) {
-      showError('Apenas jogadores confirmados podem votar.');
+      showError(t('feedback.games.onlyConfirmedCanVote'));
       return;
     }
 

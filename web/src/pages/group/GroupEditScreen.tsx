@@ -195,11 +195,11 @@ export const GroupEditScreen: React.FC = () => {
       }
 
       logger.info('Grupo atualizado com sucesso', { groupId });
-      showSuccess('Grupo atualizado com sucesso!');
+      showSuccess(t('feedback.groups.updateSuccess'));
       navigate(closeDestination);
     } catch (err) {
       logger.error('Erro ao atualizar grupo:', err);
-      showError('Erro ao atualizar grupo. Tente novamente.');
+      showError(t('feedback.groups.updateError'));
     } finally {
       setSaving(false);
     }

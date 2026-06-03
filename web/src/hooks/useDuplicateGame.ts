@@ -3,6 +3,7 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
+import { useTranslation } from 'react-i18next';
 
 interface RecentGame {
   id: string;
@@ -26,6 +27,7 @@ interface RecentGame {
 }
 
 export function useDuplicateGame() {
+  const { t } = useTranslation();
   const { firebaseUser, user } = useAuth();
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [loading, setLoading] = useState(false);
@@ -79,7 +81,7 @@ export function useDuplicateGame() {
       if (!cancelledRef.current) setRecentGames(games);
     } catch {
       if (!cancelledRef.current) {
-        setError('Erro ao carregar jogos recentes.');
+        setError(t('feedback.duplicateGame.loadRecentError'));
       }
     } finally {
       if (!cancelledRef.current) setLoading(false);

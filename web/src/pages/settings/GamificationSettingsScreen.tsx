@@ -98,8 +98,8 @@ export const GamificationSettingsScreen: React.FC = () => {
       }
     } catch (error) {
       logger.error('Erro ao carregar preferências de gamificação:', error);
-      setError('Erro ao carregar configurações de gamificação.');
-      showError('Erro ao carregar configurações de gamificação.');
+      setError(t('feedback.gamification.loadError'));
+      showError(t('feedback.gamification.loadError'));
     } finally {
       setLoading(false);
     }

@@ -82,9 +82,9 @@ export const ProfileSetupScreen: React.FC = () => {
           await updateProfile(firebaseUser, { displayName: originalDisplayName ?? undefined });
         } catch (rollbackErr) {
           logger.error('Rollback do Auth falhou:', rollbackErr);
-          showError('Perfil pode estar inconsistente. Recarregue o app e tente novamente.');
+          showError(t('feedback.auth.profileInconsistent'));
         }
-        showError('Erro ao salvar perfil. Tente novamente.');
+        showError(t('feedback.profile.saveError'));
         return;
       }
 
@@ -93,7 +93,7 @@ export const ProfileSetupScreen: React.FC = () => {
       navigate('/');
     } catch (error) {
       logger.error('Error saving profile:', error);
-      showError('Erro ao salvar perfil. Tente novamente.');
+      showError(t('feedback.profile.saveError'));
     } finally {
       setLoading(false);
     }

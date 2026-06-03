@@ -7,6 +7,7 @@ import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useDuplicateGameCopy');
 
@@ -31,6 +32,7 @@ function getNextWeekSameDay(dateString: string): string {
 }
 
 export function useDuplicateGameCopy() {
+  const { t } = useTranslation();
   const { firebaseUser, user } = useAuth();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ export function useDuplicateGameCopy() {
     async (gameId: string): Promise<string | null> => {
       const uid = firebaseUser?.uid || user?.id;
       if (!uid) {
-        showError('Usuário não autenticado.');
+        showError(t('feedback.auth.notAuthenticated'));
         return null;
       }
 
@@ -52,7 +54,7 @@ export function useDuplicateGameCopy() {
         const gameRef = doc(db, 'games', gameId);
         const gameSnap = await getDoc(gameRef);
         if (!gameSnap.exists()) {
-          showError('Jogo não encontrado.');
+          showError(t('feedback.games.notFound'));
           setLoading(false);
           return null;
         }
@@ -124,7 +126,7 @@ export function useDuplicateGameCopy() {
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });
 
-        showSuccess('Jogo duplicado com sucesso!');
+        showSuccess(t('feedback.duplicateGame.success'));
         setLoading(false);
         return docRef.id;
       } catch (err) {

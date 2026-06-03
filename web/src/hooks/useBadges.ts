@@ -6,6 +6,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { UserBadge, BadgeDefinition, BADGE_DEFINITIONS } from '../types/gamification';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useBadges');
 
@@ -40,6 +41,7 @@ async function fetchUserBadges(userId: string): Promise<{
 }
 
 export const useBadges = (userId?: string) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data, isLoading: loading, error: queryError } = useQuery({
@@ -71,7 +73,7 @@ export const useBadges = (userId?: string) => {
     }, (err) => {
       logger.error('Error in badges listener:', err);
       setListenerError(err.message);
-      showError('Erro ao carregar badges em tempo real');
+      showError(t('feedback.badges.loadError'));
     });
 
     return () => unsubscribe();

@@ -503,15 +503,15 @@ export const CreateGameScreen: React.FC = () => {
   const handleDeleteTemplate = async (templateId: string) => {
     try {
       await removeTemplate(templateId);
-      showSuccess('Template removido.');
+      showSuccess(t('feedback.templates.removeSuccess'));
     } catch {
-      showError('Erro ao remover template.');
+      showError(t('feedback.templates.removeError'));
     }
   };
 
   const handleSaveTemplate = async () => {
     if (templateName.trim().length < 3) {
-      showError('O nome do template deve ter pelo menos 3 caracteres.');
+      showError(t('feedback.templates.nameMinLength'));
       return;
     }
     setSavingTemplate(true);
@@ -527,11 +527,11 @@ export const CreateGameScreen: React.FC = () => {
         field_type: formData.fieldType,
         rules: formData.rules || undefined,
       });
-      showSuccess('Template salvo com sucesso!');
+      showSuccess(t('feedback.templates.saveSuccess'));
       setTemplateDialogOpen(false);
       setTemplateName('');
     } catch {
-      showError('Erro ao salvar template.');
+      showError(t('feedback.templates.saveError'));
     } finally {
       setSavingTemplate(false);
     }
@@ -564,7 +564,7 @@ export const CreateGameScreen: React.FC = () => {
     }));
     setDuplicateDialogOpen(false);
     setUserInteracted(true);
-    showSuccess('Jogo anterior carregado. Ajuste a data e horário.');
+    showSuccess(t('feedback.games.previousGameLoaded'));
   };
 
   const formatGameDate = (date: string, time: string) => {

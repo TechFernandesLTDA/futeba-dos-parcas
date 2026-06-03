@@ -106,7 +106,7 @@ export const SchedulesScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in schedules listener:', err);
-        setError('Erro ao carregar agendas.');
+        setError(t('feedback.schedules.loadError'));
         showErrorRef.current('Erro ao carregar agendas.');
         setLoading(false);
       }
@@ -140,7 +140,7 @@ export const SchedulesScreen: React.FC = () => {
     setActionLoading(true);
     try {
       await deleteDoc(doc(db, 'schedules', deletingSchedule.id));
-      showSuccess('Agendamento excluído.');
+      showSuccess(t('feedback.schedules.deleteSuccess'));
       setDeleteDialogOpen(false);
       setDeletingSchedule(null);
     } catch (err: unknown) {
@@ -163,7 +163,7 @@ export const SchedulesScreen: React.FC = () => {
         is_active: true,
         created_at: serverTimestamp(),
       });
-      showSuccess('Agendamento criado com sucesso!');
+      showSuccess(t('feedback.schedules.createSuccess'));
       setDialogOpen(false);
       setNewScheduleName('');
       setNewScheduleDay(0);

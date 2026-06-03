@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Snackbar, Alert, AlertColor, IconButton, Box, LinearProgress } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 interface Toast {
   id: string;
@@ -88,6 +89,7 @@ function UndoProgressBar({ duration }: { duration: number }) {
 }
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation();
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = useCallback((message: string, severity: AlertColor = 'info', duration?: number) => {
@@ -153,9 +155,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const handleUndoAction = useCallback((toast: Toast) => {
     if (toast.undo) {
       toast.undo.onUndo().then(() => {
-        showSuccess('Ação desfeita com sucesso!');
+        showSuccess(t('feedback.undo.success'));
       }).catch(() => {
-        showError('Não foi possível desfazer a ação.');
+        showError(t('feedback.undo.error'));
       });
     }
     dismissToast(toast.id);

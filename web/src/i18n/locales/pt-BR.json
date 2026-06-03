@@ -879,7 +879,212 @@
     "validationDescriptionMax": "Descrição deve ter no máximo 2000 caracteres",
     "submittedMessage": "Feedback enviado!",
     "submittedThankYou": "Agradecemos sua contribuição. Nossa equipe analisará seu feedback.",
-    "trackHint": "Acompanhe em \"Configurações > Meus feedbacks\""
+    "trackHint": "Acompanhe em \"Configurações > Meus feedbacks\"",
+    "app": {
+      "mustBeGroupMember": "Você precisa ser membro do grupo para acessar essa página."
+    },
+    "undo": {
+      "success": "Ação desfeita com sucesso!",
+      "error": "Não foi possível desfazer a ação."
+    },
+    "generic": {
+      "loadDataError": "Erro ao carregar dados. Tente novamente."
+    },
+    "auth": {
+      "createAccountError": "Erro ao criar conta. Tente novamente.",
+      "loadAccountError": "Erro ao carregar dados da conta. Verifique sua conexão.",
+      "verifyAuthError": "Erro ao verificar autenticação. Tente novamente.",
+      "monitorAuthError": "Erro ao monitorar autenticação.",
+      "updateDataError": "Não foi possível atualizar seus dados. Verifique a conexão e tente novamente.",
+      "updateDataError2": "Erro ao atualizar dados. Tente novamente.",
+      "profileInconsistent": "Perfil pode estar inconsistente. Recarregue o app e tente novamente.",
+      "notAuthenticated": "Usuário não autenticado."
+    },
+    "share": {
+      "linkCopied": "Link copiado!",
+      "linkCopiedFriends": "Link copiado! Compartilhe com seus amigos.",
+      "copyLinkError": "Erro ao copiar link.",
+      "shareError": "Erro ao compartilhar",
+      "cannotShare": "Não foi possível compartilhar.",
+      "copyToClipboardError": "Não foi possível copiar para a área de transferência",
+      "resultCopied": "Resultado copiado!"
+    },
+    "search": {
+      "error": "Erro ao buscar. Tente novamente.",
+      "usersError": "Erro ao buscar usuários."
+    },
+    "location": {
+      "geolocationUnsupported": "Geolocalização não suportada pelo navegador.",
+      "coordinatesSuccess": "Coordenadas capturadas com sucesso!",
+      "captureError": "Erro ao capturar localização. Verifique as permissões.",
+      "updateSuccess": "Local atualizado com sucesso!",
+      "createSuccess": "Local criado com sucesso!",
+      "saveError": "Erro ao salvar local. Tente novamente.",
+      "deleteError": "Erro ao excluir local. Tente novamente.",
+      "loadError": "Não foi possível carregar este local.",
+      "notFound": "Local não encontrado.",
+      "loadAllError": "Não foi possível carregar os locais. Verifique sua conexão e tente novamente.",
+      "onlyImages": "Apenas imagens são aceitas.",
+      "imageTooLarge": "Imagem muito grande (máx 5MB).",
+      "noPermissionFields": "Sua conta não tem permissão para cadastrar quadras. Contate o suporte.",
+      "commentRequired": "Comentário é obrigatório.",
+      "reviewSuccess": "Avaliação enviada!",
+      "reviewError": "Erro ao enviar avaliação."
+    },
+    "player": {
+      "cardGenerateError": "Falha ao gerar imagem. Tente novamente.",
+      "cardGenerateError2": "Erro ao gerar imagem do card. Tente novamente."
+    },
+    "feedback": {
+      "loadError": "Erro ao carregar feedbacks",
+      "loginRequired": "Você precisa estar logado para enviar feedback",
+      "sendSuccess": "Feedback enviado com sucesso!",
+      "sendError": "Erro ao enviar feedback. Tente novamente."
+    },
+    "fieldGames": {
+      "loadError": "Erro ao carregar jogos do campo"
+    },
+    "groups": {
+      "createSuccess": "Grupo criado!",
+      "inviteCodeGenerated": "Código de convite gerado!",
+      "joinSuccess": "Você entrou no grupo!",
+      "ownerCannotLeave": "O dono não pode sair do grupo. Transfira a propriedade primeiro.",
+      "leaveSuccess": "Você saiu do grupo.",
+      "leaveError": "Erro ao sair do grupo. Tente novamente.",
+      "deleteSuccess": "Grupo excluído com sucesso.",
+      "onlyOwnerPromote": "Apenas o dono pode promover administradores.",
+      "promoteSuccess": "Membro promovido a Admin.",
+      "promoteError": "Erro ao promover membro. Tente novamente.",
+      "onlyOwnerDemote": "Apenas o dono pode rebaixar administradores.",
+      "demoteSuccess": "Membro rebaixado a Membro.",
+      "demoteError": "Erro ao rebaixar membro. Tente novamente.",
+      "removeMemberError": "Erro ao remover membro.",
+      "removeMemberError2": "Erro ao remover membro. Tente novamente.",
+      "transferOwnershipError": "Erro ao transferir propriedade. Tente novamente.",
+      "updateSuccess": "Grupo atualizado com sucesso!",
+      "updateError": "Erro ao atualizar grupo. Tente novamente.",
+      "loadMembersError": "Erro ao carregar membros.",
+      "inviteError": "Erro ao enviar convite. Tente novamente.",
+      "autoInviteError": "Erro ao convidar membros do grupo automaticamente."
+    },
+    "invite": {
+      "codeNotInformed": "Código de convite não informado",
+      "notFound": "Convite não encontrado. Verifique o código e tente novamente.",
+      "loadError": "Não foi possível carregar o convite. Tente novamente.",
+      "expired": "Este convite expirou. Peça um novo ao organizador.",
+      "alreadyUsed": "Este convite já foi utilizado. Peça um novo ao organizador."
+    },
+    "waitlist": {
+      "loadError": "Erro ao carregar a lista de espera",
+      "loginRequired": "Você precisa estar logado para entrar na lista de espera",
+      "alreadyIn": "Você já está na lista de espera deste jogo",
+      "joinSuccess": "Você entrou na lista de espera!",
+      "leaveSuccess": "Você saiu da lista de espera",
+      "leaveError": "Não foi possível sair da lista de espera. Tente novamente."
+    },
+    "notifications": {
+      "settingsSaved": "Configurações salvas.",
+      "settingsSaveError": "Erro ao salvar configurações.",
+      "markReadError": "Erro ao marcar notificação como lida.",
+      "markAllReadError": "Erro ao marcar todas as notificações como lidas.",
+      "deleteError": "Erro ao excluir notificação.",
+      "statusError": "Erro ao alterar status da notificação.",
+      "restoreSuccess": "Notificação restaurada.",
+      "restoreError": "Erro ao restaurar notificação.",
+      "cleanupError": "Erro ao remover notificações antigas.",
+      "declineError": "Erro ao recusar.",
+      "clearError": "Erro ao limpar notificações.",
+      "navigatingToGroup": "Navegando para o grupo!",
+      "inviteDeclined": "Convite recusado."
+    },
+    "badges": {
+      "loadError": "Erro ao carregar badges em tempo real"
+    },
+    "dreamTeam": {
+      "saveSuccess": "Time dos Sonhos salvo!"
+    },
+    "games": {
+      "confirmSuccess": "Presença confirmada!",
+      "cancelSuccess": "Presença cancelada.",
+      "createSuccess": "Jogo criado com sucesso!",
+      "statusUpdateSuccess": "Status do jogo atualizado com sucesso!",
+      "previousGameLoaded": "Jogo anterior carregado. Ajuste a data e horário.",
+      "onlyConfirmedCanVote": "Apenas jogadores confirmados podem votar.",
+      "voteResultError": "Erro ao carregar resultado da votação.",
+      "checkInLoginRequired": "Você precisa estar logado para fazer check-in",
+      "notFound": "Jogo não encontrado.",
+      "onlyOwnerAccess": "Apenas o dono do jogo pode acessar esta tela.",
+      "blockedListError": "Erro ao carregar lista de bloqueados.",
+      "onlyOwnerUnblock": "Apenas o dono do jogo pode desbloquear jogadores.",
+      "unblockSuccess": "Jogador desbloqueado com sucesso.",
+      "unblockError": "Erro ao desbloquear jogador. Tente novamente."
+    },
+    "templates": {
+      "loadError": "Erro ao carregar templates.",
+      "nameRequired": "O nome do template é obrigatório.",
+      "maxPlayersMinOne": "O número máximo de jogadores deve ser pelo menos 1.",
+      "saveError": "Erro ao salvar template.",
+      "notFound": "Template não encontrado.",
+      "removeError": "Erro ao remover template.",
+      "removeSuccess": "Template removido.",
+      "nameMinLength": "O nome do template deve ter pelo menos 3 caracteres.",
+      "saveSuccess": "Template salvo com sucesso!"
+    },
+    "statistics": {
+      "loadError": "Erro ao carregar estatísticas",
+      "loadLiveError": "Erro ao carregar estatísticas. Tente novamente."
+    },
+    "challenges": {
+      "sendSuccess": "Desafio enviado!"
+    },
+    "joinRequests": {
+      "sendSuccess": "Solicitação enviada com sucesso!",
+      "sendError": "Erro ao solicitar entrada no grupo. Tente novamente.",
+      "cancelSuccess": "Solicitação cancelada.",
+      "cancelError": "Erro ao cancelar solicitação. Tente novamente.",
+      "approveError": "Erro ao aprovar solicitação. Tente novamente.",
+      "rejectError": "Erro ao rejeitar solicitação. Tente novamente."
+    },
+    "duplicateGame": {
+      "loadRecentError": "Erro ao carregar jogos recentes.",
+      "success": "Jogo duplicado com sucesso!"
+    },
+    "teams": {
+      "loadError": "Erro ao carregar times em tempo real"
+    },
+    "profile": {
+      "ratingCooldown": "Aguarde 1 minuto entre alterações de rating.",
+      "nameRequired": "Nome não pode estar vazio.",
+      "saveError": "Erro ao salvar perfil. Tente novamente."
+    },
+    "gamification": {
+      "loadError": "Erro ao carregar configurações de gamificação."
+    },
+    "cashbox": {
+      "loadError": "Erro ao carregar transações do caixa."
+    },
+    "schedules": {
+      "loadError": "Erro ao carregar agendas.",
+      "deleteSuccess": "Agendamento excluído.",
+      "createSuccess": "Agendamento criado com sucesso!"
+    },
+    "phoneVerification": {
+      "incompleteNumber": "Número incompleto. Inclua DDD + 9 + 8 dígitos.",
+      "sessionExpired": "Sessão expirou. Faça login novamente.",
+      "codeSent": "Código enviado por SMS",
+      "code6Digits": "O código deve ter 6 dígitos.",
+      "sessionExpiredRestart": "Sessão expirou. Reinicie o processo.",
+      "verifiedSaveError": "Telefone verificado, mas houve um erro ao salvar. Se o problema persistir, contate o suporte."
+    },
+    "tactical": {
+      "loadError": "Erro ao carregar quadro tático."
+    },
+    "offline": {
+      "syncError": "Falha ao sincronizar algumas alterações offline. Tentaremos novamente."
+    },
+    "admin": {
+      "loadMoreUsersError": "Erro ao carregar mais usuários."
+    }
   },
   "mvp": {
     "title": "Votação MVP",

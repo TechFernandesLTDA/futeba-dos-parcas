@@ -4,6 +4,7 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useFeedback');
 
@@ -32,6 +33,7 @@ interface SubmitFeedbackInput {
 }
 
 export function useFeedback() {
+  const { t } = useTranslation();
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const [myFeedbacks, setMyFeedbacks] = useState<UserFeedback[]>([]);
@@ -68,7 +70,7 @@ export function useFeedback() {
       setFetching(false);
     }, (err) => {
       logger.error('Error fetching feedbacks:', err);
-      setError('Erro ao carregar feedbacks');
+      setError(t('feedback.feedback.loadError'));
       setFetching(false);
     });
 
@@ -79,7 +81,7 @@ export function useFeedback() {
 
   const submitFeedback = async (input: SubmitFeedbackInput): Promise<string | null> => {
     if (!currentUser) {
-      showError('Você precisa estar logado para enviar feedback');
+      showError(t('feedback.feedback.loginRequired'));
       return null;
     }
 
@@ -93,11 +95,11 @@ export function useFeedback() {
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       });
-      showSuccess('Feedback enviado com sucesso!');
+      showSuccess(t('feedback.feedback.sendSuccess'));
       return docRef.id;
     } catch (err) {
       logger.error('Error submitting feedback:', err);
-      showError('Erro ao enviar feedback. Tente novamente.');
+      showError(t('feedback.feedback.sendError'));
       return null;
     } finally {
       setLoading(false);

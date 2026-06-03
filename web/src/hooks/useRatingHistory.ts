@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { RatingHistoryEntry } from '../types/user';
+import { useTranslation } from 'react-i18next';
 
 export function useRatingHistory(userId: string | null | undefined) {
   const [history, setHistory] = useState<RatingHistoryEntry[]>([]);

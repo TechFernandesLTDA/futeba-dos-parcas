@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+
   Box,
   TextField,
   InputAdornment,
@@ -41,6 +42,7 @@ import { formatGameDate } from '../../utils/dateFormatters';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp } from '../../types/gamification';
 import { useToast } from '../../contexts';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('SearchPanel');
 
@@ -132,6 +134,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const navigate = useNavigate();
   const theme = useTheme();
   const { showError } = useToast();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -215,7 +218,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     } catch (err) {
       logger.error('Erro ao buscar:', err);
       if (requestIdRef.current !== requestId) return;
-      showError('Erro ao buscar. Tente novamente.');
+      showError(t('feedback.search.error'));
     } finally {
       if (requestIdRef.current === requestId) setLoading(false);
     }

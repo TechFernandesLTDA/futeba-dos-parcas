@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import {
+
   Dialog,
   DialogContent,
   Box,
@@ -35,6 +36,7 @@ import {
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
+import { useTranslation } from 'react-i18next';
 
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
@@ -101,6 +103,7 @@ interface PlayerCardProps {
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const gColors = useGamificationColors();
 
@@ -142,7 +145,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         if (!blob) {
           // Libera spinner se geração de blob falhar (#1128)
           setSharing(false);
-          showError('Falha ao gerar imagem. Tente novamente.');
+          showError(t('feedback.player.cardGenerateError'));
           return;
         }
         const file = new File([blob], `${player.name}-futeba.png`, { type: 'image/png' });
@@ -172,7 +175,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       }, 'image/png');
     } catch (error) {
       logger.error('Erro ao gerar imagem do card:', error);
-      showError('Erro ao gerar imagem do card. Tente novamente.');
+      showError(t('feedback.player.cardGenerateError2'));
       setSharing(false);
     }
   }, [player, showError]);

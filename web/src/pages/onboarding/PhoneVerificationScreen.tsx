@@ -95,11 +95,11 @@ export const PhoneVerificationScreen: React.FC = () => {
     setError(null);
     const normalized = phone.replace(/\D/g, '');
     if (!/^\d{12,13}$/.test(normalized)) {
-      setError('Número incompleto. Inclua DDD + 9 + 8 dígitos.');
+      setError(t('feedback.phoneVerification.incompleteNumber'));
       return;
     }
     if (!firebaseUser) {
-      setError('Sessão expirou. Faça login novamente.');
+      setError(t('feedback.phoneVerification.sessionExpired'));
       return;
     }
     setLoading(true);
@@ -128,7 +128,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       confirmationRef.current = confirmation;
       setStep('otp');
       setResendCooldown(60);
-      showSuccess('Código enviado por SMS');
+      showSuccess(t('feedback.phoneVerification.codeSent'));
     } catch (err) {
       const code = (err as { code?: string }).code;
       let msg = 'Erro ao enviar SMS. Verifique o número e tente novamente.';
@@ -148,11 +148,11 @@ export const PhoneVerificationScreen: React.FC = () => {
   const handleVerifyOtp = async () => {
     setError(null);
     if (!/^\d{6}$/.test(otp)) {
-      setError('O código deve ter 6 dígitos.');
+      setError(t('feedback.phoneVerification.code6Digits'));
       return;
     }
     if (!confirmationRef.current || !firebaseUser) {
-      setError('Sessão expirou. Reinicie o processo.');
+      setError(t('feedback.phoneVerification.sessionExpiredRestart'));
       setStep('phone');
       return;
     }
@@ -178,7 +178,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         });
       } catch (firestoreErr) {
         logger.error('Failed to persist phone to users doc (non-fatal):', firestoreErr);
-        showError('Telefone verificado, mas houve um erro ao salvar. Se o problema persistir, contate o suporte.');
+        showError(t('feedback.phoneVerification.verifiedSaveError'));
       }
 
       navigate('/onboarding/cpf', { replace: true });

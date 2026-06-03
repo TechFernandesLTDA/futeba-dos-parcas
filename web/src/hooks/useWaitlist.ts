@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+
   collection,
   query,
   orderBy,
@@ -14,6 +15,7 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useWaitlist');
 
@@ -59,6 +61,7 @@ const ACTIVE_STATUSES: WaitlistStatus[] = ['WAITING', 'NOTIFIED'];
  * arquitetura anti-race da spec §3.1. Nunca promover no cliente.
  */
 export function useWaitlist(gameId: string | null) {
+  const { t } = useTranslation();
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
 
@@ -109,7 +112,7 @@ export function useWaitlist(gameId: string | null) {
       },
       (err) => {
         logger.error('Erro no listener da lista de espera:', err);
-        setError('Erro ao carregar a lista de espera');
+        setError(t('feedback.waitlist.loadError'));
         setLoading(false);
       }
     );
@@ -124,7 +127,7 @@ export function useWaitlist(gameId: string | null) {
   const joinWaitlist = useCallback(
     async (position: string = 'LINE'): Promise<boolean> => {
       if (!gameId || !currentUser) {
-        showError('Você precisa estar logado para entrar na lista de espera');
+        showError(t('feedback.waitlist.loginRequired'));
         return false;
       }
       setActing(true);
@@ -142,7 +145,7 @@ export function useWaitlist(gameId: string | null) {
           ACTIVE_STATUSES.includes(d.data().status as WaitlistStatus)
         );
         if (alreadyActive) {
-          showError('Você já está na lista de espera deste jogo');
+          showError(t('feedback.waitlist.alreadyIn'));
           return false;
         }
         await addDoc(collection(db, 'games', gameId, 'waitlist'), {
@@ -163,7 +166,7 @@ export function useWaitlist(gameId: string | null) {
           notified_at: null,
           response_deadline: null,
         });
-        showSuccess('Você entrou na lista de espera!');
+        showSuccess(t('feedback.waitlist.joinSuccess'));
         return true;
       } catch (err) {
         logger.error('Erro ao entrar na lista de espera:', err);
@@ -197,11 +200,11 @@ export function useWaitlist(gameId: string | null) {
       const batch = writeBatch(db);
       mine.docs.forEach((d) => batch.delete(d.ref));
       await batch.commit();
-      showSuccess('Você saiu da lista de espera');
+      showSuccess(t('feedback.waitlist.leaveSuccess'));
       return true;
     } catch (err) {
       logger.error('Erro ao sair da lista de espera:', err);
-      showError('Não foi possível sair da lista de espera. Tente novamente.');
+      showError(t('feedback.waitlist.leaveError'));
       return false;
     } finally {
       setActing(false);

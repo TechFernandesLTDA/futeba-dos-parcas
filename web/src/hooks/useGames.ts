@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+
   collection,
   doc,
   getDoc,
@@ -25,6 +26,7 @@ import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { camelToSnake } from '../utils/camelToSnake';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useGames');
 
@@ -180,6 +182,7 @@ export function useGameDetail(gameId: string | null) {
 }
 
 export function useConfirmPresence() {
+  const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
@@ -217,7 +220,7 @@ export function useConfirmPresence() {
 
         await setDoc(confirmationRef, confirmationData);
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
-        showSuccess('Presença confirmada!');
+        showSuccess(t('feedback.games.confirmSuccess'));
         setLoading(false);
         return true;
       } catch (err) {
@@ -253,7 +256,7 @@ export function useConfirmPresence() {
         // O Cloud Function trigger (onConfirmationWrite) atualiza os contadores do jogo
         await deleteDoc(confirmationRef);
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
-        showSuccess('Presença cancelada.');
+        showSuccess(t('feedback.games.cancelSuccess'));
         setLoading(false);
         return true;
       } catch (err) {
@@ -271,6 +274,7 @@ export function useConfirmPresence() {
 }
 
 export function useCreateGame() {
+  const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
@@ -333,7 +337,7 @@ export function useCreateGame() {
         // #2254: public-games agora usa key própria (não está mais sob ['games']),
         // então invalida explicitamente para o mapa/lista refletirem o novo jogo.
         queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });
-        showSuccess('Jogo criado com sucesso!');
+        showSuccess(t('feedback.games.createSuccess'));
         setLoading(false);
         return docRef.id;
       } catch (err) {
@@ -351,6 +355,7 @@ export function useCreateGame() {
 }
 
 export function useUpdateGameStatus() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -392,7 +397,7 @@ export function useUpdateGameStatus() {
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         // #2254: public-games tem key própria — invalida para refletir mudança de status.
         queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });
-        showSuccess('Status do jogo atualizado com sucesso!');
+        showSuccess(t('feedback.games.statusUpdateSuccess'));
         setLoading(false);
         return true;
       } catch (err) {
