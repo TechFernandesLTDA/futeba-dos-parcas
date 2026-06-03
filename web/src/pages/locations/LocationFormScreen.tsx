@@ -34,6 +34,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Location, FieldType, FIELD_TYPE_CONFIG } from '../../types/location';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { createLogger } from '../../utils/logger';
+import { syncFieldOwnerClaim } from '../../services/cloudFunctions';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('LocationFormScreen');
@@ -311,6 +312,7 @@ export const LocationFormScreen: React.FC = () => {
     } catch (err) {
       logger.error('Erro ao salvar local:', err);
       if (err instanceof FirebaseError && err.code === 'permission-denied') {
+        syncFieldOwnerClaim().catch(() => {});
         showError('Sua conta não tem permissão para cadastrar quadras. Contate o suporte.');
         return;
       }
