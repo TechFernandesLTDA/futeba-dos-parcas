@@ -17,19 +17,20 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeedback, UserFeedback } from '../../hooks/useFeedback';
 import { captureContext } from '../../utils/captureContext';
+import { useTranslation } from 'react-i18next';
 
 const FEEDBACK_TYPES = [
-  { value: 'bug', label: 'Bug', icon: <BugIcon />, description: 'Algo quebrado' },
-  { value: 'problem', label: 'Problema', icon: <ProblemIcon />, description: 'UX ruim/lento' },
-  { value: 'improvement', label: 'Melhoria', icon: <ImprovementIcon />, description: 'Pode ser melhor' },
-  { value: 'suggestion', label: 'Sugestão', icon: <SuggestionIcon />, description: 'Nova ideia' },
+  { value: 'bug', labelKey: 'typeBug', descKey: 'typeBugDesc', icon: <BugIcon /> },
+  { value: 'problem', labelKey: 'typeProblem', descKey: 'typeProblemDesc', icon: <ProblemIcon /> },
+  { value: 'improvement', labelKey: 'typeImprovement', descKey: 'typeImprovementDesc', icon: <ImprovementIcon /> },
+  { value: 'suggestion', labelKey: 'typeSuggestion', descKey: 'typeSuggestionDesc', icon: <SuggestionIcon /> },
 ] as const;
 
 const SEVERITY_OPTIONS = [
-  { value: 'low', label: 'Baixa' },
-  { value: 'medium', label: 'Média' },
-  { value: 'high', label: 'Alta' },
-  { value: 'critical', label: 'Crítica' },
+  { value: 'low', labelKey: 'severityLow' },
+  { value: 'medium', labelKey: 'severityMedium' },
+  { value: 'high', labelKey: 'severityHigh' },
+  { value: 'critical', labelKey: 'severityCritical' },
 ] as const;
 
 interface FeedbackDialogProps {
@@ -49,6 +50,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
   const [severity, setSeverity] = useState('medium');
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { t } = useTranslation();
 
   const resetForm = () => {
     setFeedbackType('');
@@ -110,7 +112,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
         <Typography variant="h5" fontWeight={700}>
           {submitted ? 'Feedback Enviado' : 'Enviar Feedback'}
         </Typography>
-        <IconButton onClick={handleClose} disabled={loading} aria-label="Fechar" size="small">
+        <IconButton onClick={handleClose} disabled={loading} aria-label={t('a11y.close')} size="small">
           <CloseIcon aria-hidden="true" />
         </IconButton>
       </DialogTitle>
@@ -164,17 +166,16 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
                 },
               }}
             >
-              {FEEDBACK_TYPES.map(({ value, label, icon }) => (
+              {FEEDBACK_TYPES.map(({ value, labelKey, icon }) => (
                 <ToggleButton
                   key={value}
                   value={value}
-                  aria-label={label}
+                  aria-label={t(`feedback.${labelKey}`)}
                   sx={{
                     flexDirection: 'column',
                     gap: 0.5,
                     py: 1.5,
                     textTransform: 'none',
-                    // #2144: especificidade via &&.Mui-selected vence MUI sem !important
                     '&&.Mui-selected': {
                       bgcolor: alpha(theme.palette.primary.main, 0.08),
                       borderColor: theme.palette.primary.main,
@@ -183,7 +184,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
                 >
                   {icon}
                   <Typography variant="caption" fontWeight={600}>
-                    {label}
+                    {t(`feedback.${labelKey}`)}
                   </Typography>
                 </ToggleButton>
               ))}
@@ -196,7 +197,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
 
             <TextField
               label="Título"
-              placeholder="Resumo do seu feedback"
+              placeholder={t('placeholder.feedbackSummary')}
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -212,7 +213,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
 
             <TextField
               label="Descrição"
-              placeholder="Descreva em detalhes o que você está reportando..."
+              placeholder={t('placeholder.feedbackDescription')}
               value={description}
               onChange={(e) => {
                 setDescription(e.target.value);
@@ -251,9 +252,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
                 },
               }}
             >
-              {SEVERITY_OPTIONS.map(({ value, label }) => (
-                <ToggleButton key={value} value={value} aria-label={label}>
-                  {label}
+              {SEVERITY_OPTIONS.map(({ value, labelKey }) => (
+                <ToggleButton key={value} value={value} aria-label={t(`feedback.${labelKey}`)}>
+                  {t(`feedback.${labelKey}`)}
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
@@ -264,7 +265,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
       {!submitted && (
         <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
           <Button onClick={handleClose} disabled={loading} color="inherit" sx={{ borderRadius: 2 }}>
-            Cancelar
+            {t('feedback.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -273,7 +274,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
             startIcon={loading ? <CircularProgress size={18} color="inherit" aria-hidden="true" /> : <SendIcon aria-hidden="true" />}
             sx={{ borderRadius: 2 }}
           >
-            {loading ? 'Enviando...' : 'Enviar'}
+            {loading ? t('feedback.sending') : t('feedback.submit')}
           </Button>
         </DialogActions>
       )}

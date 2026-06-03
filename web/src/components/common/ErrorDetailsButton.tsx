@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Button, Tooltip } from '@mui/material';
 import { ContentCopy as CopyIcon, Check as CheckIcon } from '@mui/icons-material';
 import type { ErrorLogEntry } from '../../utils/errorLogger';
+import { useTranslation } from 'react-i18next';
 
 interface ErrorDetailsButtonProps {
   entry: Partial<ErrorLogEntry> & { errorId: string };
@@ -17,6 +18,7 @@ export const ErrorDetailsButton: React.FC<ErrorDetailsButtonProps> = ({
   entry,
   size = 'small',
 }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -45,7 +47,7 @@ export const ErrorDetailsButton: React.FC<ErrorDetailsButtonProps> = ({
         color="inherit"
         startIcon={copied ? <CheckIcon /> : <CopyIcon />}
         onClick={handleCopy}
-        aria-label="Copiar detalhes do erro"
+        aria-label={t('a11y.copyErrorDetails')}
         sx={{ textTransform: 'none' }}
       >
         {copied ? 'Copiado!' : 'Copiar detalhes'}

@@ -47,6 +47,7 @@ import {
 const SplashScreen = lazy(() => import('./pages/splash/SplashScreen').then(m => ({ default: m.SplashScreen })));
 const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
 import { VerificationBanner } from './components/auth/VerificationBanner';
+import { useTranslation } from 'react-i18next';
 const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
 const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
@@ -154,6 +155,7 @@ const spinnerKeyframes = {
 };
 
 function RouteFallback() {
+  const { t } = useTranslation();
   const location = useLocation();
   const path = location.pathname;
 
@@ -185,7 +187,7 @@ function RouteFallback() {
           ...spinnerKeyframes,
         }}
         role="status"
-        aria-label="Carregando página"
+        aria-label={t('a11y.loadingPage')}
       />
     </Box>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, CircularProgress, Skeleton, Typography, useTheme, alpha } from '@mui/material';
 import { AppLogo } from './AppLogo';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingScreenProps {
   message?: string;
@@ -15,6 +16,7 @@ export const LoadingScreen = React.memo(function LoadingScreen({
   message,
   variant = 'cards',
 }: LoadingScreenProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   // #2188: variante splash com identidade visual do app (logo + gradiente),
@@ -37,7 +39,7 @@ export const LoadingScreen = React.memo(function LoadingScreen({
         <AppLogo
           size="xlarge"
           shape="circle"
-          alt="Futeba dos Parças"
+          alt={t('alt.logo')}
           sx={{
             bgcolor: alpha(theme.palette.common.white, 0.2),
             animation: 'splashPulse 2s infinite',

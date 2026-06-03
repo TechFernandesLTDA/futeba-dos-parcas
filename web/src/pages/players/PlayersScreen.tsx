@@ -231,7 +231,7 @@ export const PlayersScreen: React.FC = () => {
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
         actions={
           !loading && !error && isMember && currentUserRole !== 'MEMBER' ? (
-            <IconButton onClick={() => navigate(`/group/${groupId}/invite`)} aria-label="Convidar jogadores">
+            <IconButton onClick={() => navigate(`/group/${groupId}/invite`)} aria-label={t('a11y.invitePlayers')}>
               <PersonAddIcon />
             </IconButton>
           ) : undefined
@@ -268,12 +268,12 @@ export const PlayersScreen: React.FC = () => {
             {members.length === 0 ? (
               <EmptyState
                 icon={<PersonIcon sx={{ fontSize: 64 }} />}
-                title="Nenhum membro"
-                description="O grupo ainda não tem membros."
+                title={t('empty.noMembers')}
+                description={t('empty.noMembersDesc')}
               />
             ) : (
               <Card>
-                <List disablePadding aria-label="Lista de jogadores do grupo">
+                <List disablePadding aria-label={t('a11y.groupPlayersList')}>
                   {members.map((member, index) => (
                     <PlayerMemberItem
                       key={member.id}
@@ -302,9 +302,9 @@ export const PlayersScreen: React.FC = () => {
 
           <ConfirmDialog
             open={!!confirmRemoveId}
-            title="Remover membro"
-            message="Tem certeza que deseja remover este jogador do grupo? Esta ação não pode ser desfeita."
-            confirmLabel="Remover"
+            title={t('players.removeMemberTitle')}
+            message={t('players.removeMemberMessage')}
+            confirmLabel={t('players.removeMemberConfirm')}
             loading={actionLoading === confirmRemoveId}
             onConfirm={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
             onCancel={() => setConfirmRemoveId(null)}

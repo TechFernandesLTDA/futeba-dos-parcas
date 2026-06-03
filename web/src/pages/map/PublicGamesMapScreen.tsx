@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 
 function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick: (game: Game) => void }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -88,7 +89,7 @@ function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick
             sx={{ p: 0.5, maxWidth: 200, cursor: 'pointer' }}
             role="button"
             tabIndex={0}
-            aria-label="Abrir detalhes do jogo"
+            aria-label={t('a11y.openGameDetails')}
             onClick={() => onGameClick(selectedGame)}
             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onGameClick(selectedGame)}
           >
@@ -135,7 +136,7 @@ export const PublicGamesMapScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
@@ -154,10 +155,10 @@ export const PublicGamesMapScreen: React.FC = () => {
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar por local..."
+            placeholder={t('placeholder.searchLocationByName')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Buscar jogos por local"
+            aria-label={t('a11y.searchGamesByLocation')}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -183,8 +184,8 @@ export const PublicGamesMapScreen: React.FC = () => {
         ) : filteredGames.length === 0 ? (
           <EmptyState
             icon={<SoccerIcon />}
-            title="Nenhum jogo público"
-            description="Crie um jogo e torne-o público para todos!"
+            title={t('empty.noPublicGame')}
+            description={t('empty.noPublicGameDesc')}
           />
         ) : (
           filteredGames.map((game) => (
@@ -200,7 +201,7 @@ export const PublicGamesMapScreen: React.FC = () => {
       {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
       <ScreenFab
         icon={<SoccerIcon />}
-        aria-label="Criar novo jogo"
+        aria-label={t('a11y.createNewGame')}
         onClick={() => navigate('/game/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },

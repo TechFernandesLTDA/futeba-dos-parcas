@@ -468,7 +468,7 @@ export const LocationFormScreen: React.FC = () => {
                       <Box
                         component="img"
                         src={form.photoPreview}
-                        alt="Preview"
+                        alt={t('alt.preview')}
                         sx={{ mt: 1, width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }}
                       />
                     )}
@@ -575,7 +575,7 @@ export const LocationFormScreen: React.FC = () => {
                     fullWidth
                     value={form.website}
                     onChange={(e) => handleChange('website', e.target.value)}
-                    placeholder="https://"
+                    placeholder={t('placeholder.enterUrl')}
                     type="url"
                     error={!!errors.website}
                     helperText={errors.website}

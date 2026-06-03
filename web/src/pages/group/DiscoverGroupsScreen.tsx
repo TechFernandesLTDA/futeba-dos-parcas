@@ -89,13 +89,13 @@ export const DiscoverGroupsScreen: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-        <IconButton onClick={goBack} aria-label="Voltar">
+        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
         </IconButton>
         <Typography variant="h5" fontWeight="bold" flex={1}>
           Descobrir Grupos
         </Typography>
-        <IconButton onClick={() => refetchOfficial()} aria-label="Atualizar">
+        <IconButton onClick={() => refetchOfficial()} aria-label={t('a11y.refresh')}>
           <RefreshIcon />
         </IconButton>
       </Stack>
@@ -106,7 +106,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
 
       <TextField
         fullWidth
-        placeholder="Buscar por nome ou descrição"
+        placeholder={t('placeholder.searchNameOrDescription')}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         sx={{ mb: 2 }}

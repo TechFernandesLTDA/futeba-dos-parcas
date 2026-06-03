@@ -363,14 +363,14 @@ export const LeagueScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             {t('nav.league')}
           </Typography>
-          <IconButton onClick={() => setShowSearch(v => !v)} aria-label="Buscar jogador" size="small">
+          <IconButton onClick={() => setShowSearch(v => !v)} aria-label={t('a11y.searchPlayer')} size="small">
             <SearchIcon />
           </IconButton>
-          <IconButton onClick={() => setShowSort(v => !v)} aria-label="Ordenar" size="small">
+          <IconButton onClick={() => setShowSort(v => !v)} aria-label={t('a11y.sort')} size="small">
             <SortIcon />
           </IconButton>
           {currentUserPlayer && (
-            <IconButton onClick={handleShare} aria-label="Compartilhar posição" size="small">
+            <IconButton onClick={handleShare} aria-label={t('a11y.sharePosition')} size="small">
               <ShareIcon />
             </IconButton>
           )}
@@ -404,7 +404,7 @@ export const LeagueScreen: React.FC = () => {
             <TextField
               size="small"
               fullWidth
-              placeholder="Buscar jogador..."
+              placeholder={t('placeholder.searchPlayer')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               autoFocus
@@ -413,7 +413,7 @@ export const LeagueScreen: React.FC = () => {
                 startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
                 endAdornment: search ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearch('')} aria-label="Limpar busca" sx={{ minWidth: 44, minHeight: 44 }}><CloseIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => setSearch('')} aria-label={t('a11y.clearSearch')} sx={{ minWidth: 44, minHeight: 44 }}><CloseIcon fontSize="small" /></IconButton>
                   </InputAdornment>
                 ) : null,
               }}
@@ -444,7 +444,7 @@ export const LeagueScreen: React.FC = () => {
           onChange={(_, v) => setTabValue(v)}
           variant="scrollable"
           scrollButtons="auto"
-          aria-label="Divisões da liga"
+          aria-label={t('a11y.leagueDivisions')}
         >
           <Tab
             label={
@@ -689,7 +689,7 @@ export const LeagueScreen: React.FC = () => {
       {currentUserPlayer && !showSticky && (
         <ScreenFab
           icon={<MyLocationIcon />}
-          aria-label="Ir para minha posição"
+          aria-label={t('a11y.goToMyPosition')}
           onClick={scrollToMe}
           sx={{
             bottom: { xs: 80, md: 24 },

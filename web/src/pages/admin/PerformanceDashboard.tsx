@@ -129,7 +129,7 @@ export const PerformanceDashboard: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <SpeedIcon sx={{ color: 'primary.main' }} />
@@ -145,8 +145,8 @@ export const PerformanceDashboard: React.FC = () => {
         ) : records.length === 0 ? (
           <EmptyState
             icon={<SpeedIcon />}
-            title="Nenhuma métrica coletada ainda"
-            description="As métricas serão coletadas automaticamente conforme você navega pelo app"
+            title={t('empty.noMetricsCollected')}
+            description={t('empty.noMetricsCollectedDesc')}
           />
         ) : (
           <>

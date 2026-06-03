@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -79,6 +80,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   isOwner,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { currentUser } = useAuth();
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -199,8 +201,8 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
       {photos.length === 0 ? (
         <EmptyState
           icon={<AddIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-          title="Nenhuma foto ainda"
-          description={canUpload ? 'Seja o primeiro a compartilhar uma foto!' : 'Fotos serão exibidas aqui após o jogo.'}
+          title={t('empty.noPhoto')}
+          description={canUpload ? t('empty.noPhotoDescFirst') : t('empty.noPhotoDescAfter')}
         />
       ) : (
         <Grid container spacing={1}>
@@ -234,7 +236,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
                   <IconButton
                     className="delete-btn"
                     size="small"
-                    aria-label="Excluir foto"
+                    aria-label={t('a11y.deletePhoto')}
                     sx={{
                       position: 'absolute',
                       top: 4,
@@ -269,7 +271,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
           <IconButton
             sx={{ position: 'absolute', top: 8, right: 8, color: theme.palette.common.white, zIndex: 1, bgcolor: alpha(theme.palette.common.black, 0.5) }}
             onClick={() => setSelectedPhoto(null)}
-            aria-label="Fechar"
+            aria-label={t('a11y.close')}
           >
             <CloseIcon />
           </IconButton>

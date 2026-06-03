@@ -270,11 +270,11 @@ export const CashboxScreen: React.FC = () => {
         ) : transactions.length === 0 ? (
           <EmptyState
             icon={<HistoryIcon />}
-            title="Nenhuma transação"
-            description="Adicione entradas e saídas para controlar o caixa"
+            title={t('empty.noTransaction')}
+            description={t('empty.noTransactionDesc')}
           />
         ) : (
-          <List disablePadding aria-label="Histórico de transações">
+          <List disablePadding aria-label={t('a11y.transactionHistory')}>
             {transactions.map((transaction, index) => (
               <Box key={transaction.id}>
                 {index > 0 && <Divider />}
