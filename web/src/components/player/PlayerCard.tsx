@@ -37,7 +37,6 @@ import {
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
-import { useTranslation } from 'react-i18next';
 
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
@@ -107,7 +106,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const gColors = useGamificationColors();
-  const { t } = useTranslation();
 
   const CARD_GRADIENT = `linear-gradient(160deg, ${theme.palette.success.dark} 0%, ${alpha(theme.palette.success.main, 0.85)} 35%, ${theme.palette.success.main} 60%, ${theme.palette.success.light} 100%)`;
   const CARD_BADGE_BORDER = theme.palette.success.dark;

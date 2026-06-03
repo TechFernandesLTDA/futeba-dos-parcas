@@ -50,7 +50,6 @@ const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then
 import { VerificationBanner } from './components/auth/VerificationBanner';
 import { useTranslation } from 'react-i18next';
 const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
-import { useTranslation } from 'react-i18next';
 
 const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
