@@ -110,6 +110,11 @@ export const ERROR_MSGS = {
   NOTIFICATION_FAILED: "Falha ao enviar notificação.",
 } as const;
 
+/**
+ * Lança um HttpsError com código e mensagem.
+ * @param {FunctionsErrorCode} code - Código do erro
+ * @param {string} message - Mensagem de erro
+ */
 export function throwError(
   code: FunctionsErrorCode,
   message: string
@@ -117,8 +122,14 @@ export function throwError(
   throw new HttpsError(code, message);
 }
 
+/**
+ * Retorna mensagem de rate limit com segundos restantes.
+ * @param {number} resetInSeconds - Segundos até reset
+ * @return {string} Mensagem formatada
+ */
 export function getRateLimitMessage(
   resetInSeconds: number
 ): string {
+  // eslint-disable-next-line new-cap
   return ERROR_MSGS.RATE_LIMIT_RETRY(resetInSeconds);
 }

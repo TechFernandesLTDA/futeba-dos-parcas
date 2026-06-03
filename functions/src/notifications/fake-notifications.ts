@@ -43,6 +43,11 @@ export const FAKE_GAME_INVITES: readonly FakeGame[] = [
   },
 ] as const;
 
+/**
+ * Retorna um convite de jogo fictício pelo índice.
+ * @param {number} index - Índice do convite
+ * @return {FakeGame | undefined} Convite ou undefined se fora do range
+ */
 export function getFakeGame(index: number): FakeGame | undefined {
   return FAKE_GAME_INVITES[index];
 }
