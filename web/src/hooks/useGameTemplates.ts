@@ -31,6 +31,11 @@ interface TemplateInput {
   field_name?: string;
   field_type?: FieldType;
   rules?: string;
+  time?: string;
+  recurrence_type?: string;
+  total_cost?: number;
+  daily_price?: number;
+  visibility?: string;
 }
 
 export function useGameTemplates() {
@@ -76,6 +81,11 @@ export function useGameTemplates() {
           field_name: raw.fieldName as string | undefined,
           field_type: raw.fieldType as FieldType | undefined,
           rules: raw.rules as string | undefined,
+          time: raw.time as string | undefined,
+          recurrence_type: raw.recurrenceType as string | undefined,
+          total_cost: raw.totalCost as number | undefined,
+          daily_price: raw.dailyPrice as number | undefined,
+          visibility: raw.visibility as string | undefined,
           created_at: createdAt instanceof Timestamp ? createdAt.toDate() : (createdAt as Date) ?? new Date(),
         };
       });
@@ -122,6 +132,11 @@ export function useGameTemplates() {
         field_name: input.field_name || null,
         field_type: input.field_type || null,
         rules: input.rules || null,
+        time: input.time || null,
+        recurrence_type: input.recurrence_type || null,
+        total_cost: input.total_cost ?? null,
+        daily_price: input.daily_price ?? null,
+        visibility: input.visibility || null,
         created_at: serverTimestamp(),
       });
       await fetchTemplates();

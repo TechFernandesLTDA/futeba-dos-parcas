@@ -464,6 +464,17 @@ export const GameDetailScreen: React.FC = () => {
             </Menu>
             {canManage && (
               <>
+                {game.status === 'CONFIRMED' && (
+                  <Tooltip title={t('games.detail.qrCheckInTitle')}>
+                    <IconButton
+                      onClick={handleGenerateQr}
+                      aria-label={t('games.detail.qrCheckInTitle')}
+                      disabled={qrLoading}
+                    >
+                      {qrLoading ? <CircularProgress size={20} /> : <QrCodeIcon />}
+                    </IconButton>
+                  </Tooltip>
+                )}
                 <Tooltip title={t('tooltip.duplicateGame')}>
                   <IconButton
                     onClick={handleDuplicateGame}
@@ -545,6 +556,16 @@ export const GameDetailScreen: React.FC = () => {
         <Container maxWidth="sm">
           {game.status === 'SCHEDULED' || game.status === 'CONFIRMED' ? (
             <Box sx={{ display: 'flex', gap: 1 }}>
+              {canManage && game.status === 'CONFIRMED' && (
+                <Button
+                  variant="outlined"
+                  startIcon={qrLoading ? <CircularProgress size={16} color="inherit" /> : <QrCodeIcon />}
+                  onClick={handleGenerateQr}
+                  disabled={qrLoading}
+                >
+                  QR Code
+                </Button>
+              )}
               {isConfirmed ? (
                 <>
                   <Button
@@ -812,7 +833,7 @@ export const GameDetailScreen: React.FC = () => {
                     fullWidth
                     onClick={handleDownloadQr}
                   >
-                    Baixar QR code
+                    {t('games.detail.downloadQrCode')}
                   </Button>
                 </Box>
               </>
