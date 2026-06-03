@@ -92,7 +92,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
 
       {showCrumbs && (
         <Box
-          aria-label="Breadcrumb"
+          aria-label={t('a11y.breadcrumb')}
           sx={{
             display: 'flex',
             alignItems: 'center',

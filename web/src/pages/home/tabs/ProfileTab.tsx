@@ -472,7 +472,7 @@ export function ProfileTab() {
       {/* Menu Items */}
       <Box sx={{ mt: 2 }}>
         <Card>
-          <List disablePadding aria-label="Menu do perfil">
+          <List disablePadding aria-label={t('a11y.profileMenu')}>
             {menuItems.map((item, index) => (
               <React.Fragment key={item.label}>
                 {index > 0 && <Divider />}
@@ -500,7 +500,7 @@ export function ProfileTab() {
             Administração
           </Typography>
           <Card sx={{ mt: 0.5 }}>
-            <List disablePadding aria-label="Menu de administração">
+            <List disablePadding aria-label={t('a11y.adminMenu')}>
               {adminMenuItems.map((item, index) => (
                 <React.Fragment key={item.label}>
                   {index > 0 && <Divider />}

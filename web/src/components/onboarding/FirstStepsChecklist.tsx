@@ -28,6 +28,7 @@ import {
   ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export type OnboardingStepId =
   | 'complete_profile'
@@ -53,6 +54,7 @@ interface FirstStepsChecklistProps {
 }
 
 export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }: FirstStepsChecklistProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
@@ -101,7 +103,7 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
             <IconButton
               size="small"
               onClick={onDismiss}
-              aria-label="Fechar checklist de primeiros passos"
+              aria-label={t('a11y.closeFirstStepsChecklist')}
               sx={{ mt: -0.5, mr: -0.5 }}
             >
               <CloseIcon fontSize="small" />
@@ -137,13 +139,13 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
                   <CheckCircleIcon
                     fontSize="small"
                     sx={{ color: 'primary.main', flexShrink: 0 }}
-                    aria-label="Concluído"
+                    aria-label={t('a11y.completed')}
                   />
                 ) : (
                   <UncheckedIcon
                     fontSize="small"
                     sx={{ color: 'text.disabled', flexShrink: 0 }}
-                    aria-label="Pendente"
+                    aria-label={t('a11y.pending')}
                   />
                 )}
 
@@ -193,7 +195,7 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
                         <UncheckedIcon
                           fontSize="small"
                           sx={{ color: 'text.disabled', flexShrink: 0 }}
-                          aria-label="Pendente"
+                          aria-label={t('a11y.pending')}
                         />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography variant="body2" fontWeight={600}>

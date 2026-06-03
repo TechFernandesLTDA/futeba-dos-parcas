@@ -169,7 +169,7 @@ export const BlockedPlayersScreen: React.FC = () => {
           </Box>
         ) : (
           <Card>
-            <List disablePadding aria-label="Jogadores bloqueados">
+            <List disablePadding aria-label={t('a11y.blockedPlayers')}>
               {blockedPlayers.map((player, index) => (
                 <Box key={player.id}>
                   {index > 0 && <Divider />}

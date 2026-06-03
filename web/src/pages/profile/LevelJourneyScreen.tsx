@@ -426,7 +426,7 @@ export const LevelJourneyScreen: React.FC = () => {
                     </Typography>
                   </Box>
                 ) : (
-                  <List disablePadding aria-label="Histórico de XP recente">
+                  <List disablePadding aria-label={t('a11y.recentXpHistory')}>
                     {history.slice(0, 10).map((item, index) => (
                       <Box key={`${item.achievedAt.getTime()}-${item.source}-${index}`}>
                         {index > 0 && <Divider />}

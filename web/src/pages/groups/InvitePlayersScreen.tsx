@@ -208,14 +208,14 @@ export const InvitePlayersScreen: React.FC = () => {
         <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         <TextField
           fullWidth
-          placeholder="Buscar por nome..."
+          placeholder={t('placeholder.searchName')}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
             // Resetar empty state quando o usuário digitar novamente (#1125)
             if (hasSearched) setHasSearched(false);
           }}
-          aria-label="Buscar jogador por nome"
+          aria-label={t('a11y.searchPlayerByName')}
           onKeyDown={(e) => {
             // #2216: ignora Enter enquanto a busca está em andamento
             if (e.key === 'Enter' && !searching && searchQuery.trim().length >= 2) {
@@ -225,7 +225,7 @@ export const InvitePlayersScreen: React.FC = () => {
           inputProps={{ maxLength: 200 }}
           InputProps={{
             endAdornment: (
-              <IconButton onClick={handleSearch} disabled={searching} aria-label="Buscar">
+              <IconButton onClick={handleSearch} disabled={searching} aria-label={t('a11y.search')}>
                 {searching ? <CircularProgress size={24} /> : <SearchIcon />}
               </IconButton>
             ),
@@ -238,15 +238,15 @@ export const InvitePlayersScreen: React.FC = () => {
           <Box sx={{ mb: 2 }}>
             <EmptyState
               icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
-              title="Nenhum jogador encontrado"
-              description={`Não encontramos jogadores para "${searchQuery}". Tente outro nome.`}
+              title={t('empty.noPlayerFound')}
+              description={t('empty.noPlayerFoundDesc', { query: searchQuery })}
             />
           </Box>
         )}
 
         {searchResults.length > 0 && (
           <Card sx={{ mb: 2 }}>
-            <List disablePadding aria-label="Resultados da busca">
+            <List disablePadding aria-label={t('a11y.searchResultsList')}>
               {searchResults.map((result, index) => (
                 <Box key={result.id}>
                   {index > 0 && <Divider />}
@@ -296,7 +296,7 @@ export const InvitePlayersScreen: React.FC = () => {
           <LoadingState shimmerCount={5} itemType="LIST" />
         ) : (
           <Card>
-            <List disablePadding aria-label="Membros do grupo">
+            <List disablePadding aria-label={t('a11y.groupMembers')}>
               {members.map((member, index) => (
                 <Box key={member.id}>
                   {index > 0 && <Divider />}

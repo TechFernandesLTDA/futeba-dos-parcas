@@ -1,6 +1,7 @@
 import React from 'react';
 import { Autocomplete, TextField, Box, Typography, Avatar } from '@mui/material';
 import { useTeams } from '../../contexts/TeamsContext';
+import { useTranslation } from 'react-i18next';
 
 interface TeamSelectorProps {
   value: string | null;
@@ -15,6 +16,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
   label = 'Time do Coração',
   optional = false,
 }) => {
+  const { t } = useTranslation();
   const { teams, loading } = useTeams();
 
   const selectedTeam = teams.find((t) => t.id === value) || null;
@@ -62,7 +64,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
         <TextField
           {...params}
           label={optional ? `${label} (opcional)` : label}
-          placeholder="Buscar time..."
+          placeholder={t('placeholder.searchTeam')}
         />
       )}
       renderTags={() => null}

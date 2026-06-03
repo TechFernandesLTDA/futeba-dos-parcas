@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import { Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AppSidebar } from './AppSidebar';
 import { ConnectionStatus, useOnlineStatus } from '../common/ConnectionStatus';
 import { AppBreadcrumbs } from './AppBreadcrumbs';
@@ -12,6 +13,7 @@ function AppBreadcrumbsWrapper() {
 
 export function AppLayout() {
   const isOnline = useOnlineStatus();
+  const { t } = useTranslation();
 
   return (
     <Box
@@ -25,7 +27,7 @@ export function AppLayout() {
       <Box
         component="nav"
         role="navigation"
-        aria-label="Menu principal"
+        aria-label={t('a11y.mainMenu')}
         sx={{ display: 'flex', flexShrink: 0 }}
       >
         <AppSidebar />

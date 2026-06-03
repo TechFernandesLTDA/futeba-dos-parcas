@@ -148,7 +148,7 @@ export function LoginScreen() {
           <AppLogo
             size="large"
             shape="circle"
-            alt="Futeba dos Parças"
+            alt={t('alt.logo')}
             sx={{ mb: 2, boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}` }}
           />
           <Typography component="h1" variant="h4" fontWeight="bold" color="primary.contrastText">
@@ -188,7 +188,7 @@ export function LoginScreen() {
             <AppLogo
               size="large"
               shape="circle"
-              alt="Futeba dos Parças"
+              alt={t('alt.logo')}
               sx={{
                 mx: 'auto',
                 mb: 2,

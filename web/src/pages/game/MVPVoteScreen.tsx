@@ -274,7 +274,7 @@ export const MVPVoteScreen: React.FC = () => {
                 onChange={(e) => setMvpVote(e.target.value)}
                 sx={{ mt: 2 }}
               >
-                <List disablePadding aria-label="Candidatos a MVP">
+                <List disablePadding aria-label={t('a11y.mvpCandidates')}>
                   {confirmations
                     .filter((p) => p.userId !== currentUser?.uid)
                     .map((player) => (
@@ -335,7 +335,7 @@ export const MVPVoteScreen: React.FC = () => {
                   onChange={(e) => setBestGkVote(e.target.value)}
                   sx={{ mt: 2 }}
                 >
-                  <List disablePadding aria-label="Candidatos a melhor goleiro">
+                  <List disablePadding aria-label={t('a11y.bestGoalkeeperCandidates')}>
                     {confirmations
                       .filter((p) => p.position === 'GOALKEEPER')
                       .map((player) => (
@@ -377,7 +377,7 @@ export const MVPVoteScreen: React.FC = () => {
                         </ListItem>
                       ))}
                     {confirmations.filter((p) => p.position === 'GOALKEEPER').length === 0 && (
-                      <EmptyState icon={<PersonOffIcon />} title="Nenhum goleiro" description="Nenhum goleiro neste jogo" animate={false} />
+                      <EmptyState icon={<PersonOffIcon />} title={t('empty.noGoalkeeper')} description={t('empty.noGoalkeeperDesc')} animate={false} />
                     )}
                   </List>
                 </RadioGroup>
@@ -415,7 +415,7 @@ export const MVPVoteScreen: React.FC = () => {
                   onChange={(e) => setWorstPlayerVote(e.target.value)}
                   sx={{ mt: 2 }}
                 >
-                  <List disablePadding aria-label="Candidatos a bola murcha">
+                  <List disablePadding aria-label={t('a11y.worstPlayerCandidates')}>
                     {confirmations
                       .filter((p) => p.userId !== currentUser?.uid)
                       .map((player) => (

@@ -173,7 +173,7 @@ export function RegisterScreen() {
           <AppLogo
             size="medium"
             shape="circle"
-            alt="Futeba dos Parças"
+            alt={t('alt.logo')}
             sx={{ mb: 2 }}
           />
           <Typography component="h1" variant="h5" fontWeight="bold" color="primary.contrastText">
@@ -221,7 +221,7 @@ export function RegisterScreen() {
             <AppLogo
               size="medium"
               shape="circle"
-              alt="Futeba dos Parças"
+              alt={t('alt.logo')}
               sx={{ mx: 'auto', mb: 2 }}
             />
             <Typography component="h1" variant="h5" fontWeight="bold">

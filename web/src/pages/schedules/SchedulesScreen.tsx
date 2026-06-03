@@ -183,7 +183,7 @@ export const SchedulesScreen: React.FC = () => {
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
         backAriaLabel={t('common.back')}
         actions={
-          <IconButton onClick={() => setDialogOpen(true)} aria-label="Criar agendamento">
+          <IconButton onClick={() => setDialogOpen(true)} aria-label={t('a11y.createSchedule')}>
             <AddIcon />
           </IconButton>
         }
@@ -220,7 +220,7 @@ export const SchedulesScreen: React.FC = () => {
           </Box>
         ) : (
           <Card>
-            <List disablePadding aria-label="Lista de agendamentos">
+            <List disablePadding aria-label={t('a11y.scheduleList')}>
               {schedules.map((schedule, index) => (
                 <Box key={schedule.id}>
                   {index > 0 && <Divider />}
@@ -273,7 +273,7 @@ export const SchedulesScreen: React.FC = () => {
               helperText={scheduleNameTouched && !newScheduleName.trim() ? t('validation.required') : ' '}
               fullWidth
               required
-              placeholder="Ex: Futebol de Sábado"
+              placeholder={t('placeholder.enterScheduleName')}
               inputProps={{ maxLength: 100 }}
             />
             <TextField

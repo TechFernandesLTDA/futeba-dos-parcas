@@ -206,13 +206,13 @@ export const LocationDetailScreen: React.FC = () => {
   const renderHeader = (title: string) => (
     <Box sx={{ position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 10, borderBottom: `1px solid ${theme.palette.divider}` }}>
       <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-        <IconButton onClick={() => navigate(locationsListPath)} aria-label="Voltar"><BackIcon /></IconButton>
+        <IconButton onClick={() => navigate(locationsListPath)} aria-label={t('a11y.back')}><BackIcon /></IconButton>
         <Typography variant="h6" sx={{ ml: 1, flex: 1 }} noWrap>{title}</Typography>
         {userCanEdit && location && (
-          <IconButton onClick={() => navigate(`/location/${location.id}/edit`)} aria-label="Editar local"><EditIcon /></IconButton>
+          <IconButton onClick={() => navigate(`/location/${location.id}/edit`)} aria-label={t('a11y.editLocation')}><EditIcon /></IconButton>
         )}
         {userCanDelete && location && (
-          <IconButton onClick={() => setDeleteOpen(true)} aria-label="Excluir local" color="error"><DeleteIcon /></IconButton>
+          <IconButton onClick={() => setDeleteOpen(true)} aria-label={t('a11y.deleteLocation')} color="error"><DeleteIcon /></IconButton>
         )}
       </Box>
     </Box>
@@ -324,7 +324,7 @@ export const LocationDetailScreen: React.FC = () => {
               </Box>
             ) : (
               <>
-                <List disablePadding aria-label="Avaliações do local">
+                <List disablePadding aria-label={t('a11y.locationReviews')}>
                   {pagedReviews.map((review, index) => (
                     <Box key={review.id}>
                       {index > 0 && <Divider sx={{ my: 1 }} />}
@@ -376,7 +376,7 @@ export const LocationDetailScreen: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography>Nota:</Typography>
-              <Rating value={newReviewRating} onChange={(_, v) => setNewReviewRating(v || 1)} aria-label="Nota da avaliação" />
+              <Rating value={newReviewRating} onChange={(_, v) => setNewReviewRating(v || 1)} aria-label={t('a11y.reviewRating')} />
             </Box>
             <TextField label="Comentário" required multiline rows={3} value={newReviewComment} onChange={(e) => { setNewReviewComment(e.target.value); if (reviewCommentError) setReviewCommentError(false); }} inputProps={{ maxLength: 500 }} error={reviewCommentError} helperText={reviewCommentError ? 'Comentário é obrigatório' : `${newReviewComment.length}/500`} />
           </Box>

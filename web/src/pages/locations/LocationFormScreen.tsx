@@ -34,6 +34,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Location, FieldType, FIELD_TYPE_CONFIG } from '../../types/location';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { createLogger } from '../../utils/logger';
+import { syncFieldOwnerClaim } from '../../services/cloudFunctions';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('LocationFormScreen');
@@ -311,6 +312,7 @@ export const LocationFormScreen: React.FC = () => {
     } catch (err) {
       logger.error('Erro ao salvar local:', err);
       if (err instanceof FirebaseError && err.code === 'permission-denied') {
+        syncFieldOwnerClaim().catch(() => {});
         showError(t('feedback.location.noPermissionFields'));
         return;
       }
@@ -468,7 +470,7 @@ export const LocationFormScreen: React.FC = () => {
                       <Box
                         component="img"
                         src={form.photoPreview}
-                        alt="Preview"
+                        alt={t('alt.preview')}
                         sx={{ mt: 1, width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }}
                       />
                     )}
@@ -575,7 +577,7 @@ export const LocationFormScreen: React.FC = () => {
                     fullWidth
                     value={form.website}
                     onChange={(e) => handleChange('website', e.target.value)}
-                    placeholder="https://"
+                    placeholder={t('placeholder.enterUrl')}
                     type="url"
                     error={!!errors.website}
                     helperText={errors.website}

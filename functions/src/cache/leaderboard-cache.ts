@@ -161,7 +161,7 @@ export const getLeaderboardCached =
       if (!leaderboardRateLimitResult.allowed) {
         throw new HttpsError(
           "resource-exhausted",
-          ERROR_MSGS.rateLimitGeneric
+          ERROR_MSGS.RATE_LIMIT_GENERIC
         );
       }
 

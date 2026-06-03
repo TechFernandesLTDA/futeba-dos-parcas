@@ -100,7 +100,7 @@ export const InviteFriendScreen: React.FC = () => {
   return (
     <Container maxWidth="sm" sx={{ py: 3 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label="Voltar">
+        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
         </IconButton>
         <Typography variant="h6" fontWeight="bold" flex={1}>
@@ -183,7 +183,7 @@ export const InviteFriendScreen: React.FC = () => {
               readOnly: true,
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={handleCopy} aria-label="Copiar link">
+                  <IconButton onClick={handleCopy} aria-label={t('tooltip.copyLink')}>
                     <CopyIcon />
                   </IconButton>
                 </InputAdornment>

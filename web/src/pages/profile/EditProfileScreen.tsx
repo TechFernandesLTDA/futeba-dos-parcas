@@ -541,7 +541,7 @@ export const EditProfileScreen: React.FC = () => {
               <Typography variant="subtitle1" fontWeight={600}>
                 Habilidades por Posição
               </Typography>
-              <Tooltip title="Ajuste suas habilidades manualmente. O sistema também calcula ratings automáticos baseado nos seus jogos.">
+              <Tooltip title={t('profile.skillsHint')}>
                 <InfoIcon fontSize="small" color="action" />
               </Tooltip>
             </Box>

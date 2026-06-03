@@ -107,21 +107,21 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   const contextMenuItems: ContextMenuItem[] = [
     {
       id: 'share',
-      label: 'Compartilhar',
+      label: t('gameCard.share'),
       icon: <ShareIcon fontSize="small" />,
       onClick: onShare ?? (() => {}),
       hidden: !onShare,
     },
     {
       id: 'copy-link',
-      label: 'Copiar link',
+      label: t('gameCard.copyLink'),
       icon: <LinkIcon fontSize="small" />,
       onClick: onCopyLink ?? (() => {}),
       hidden: !onCopyLink,
     },
     {
       id: 'cancel-game',
-      label: 'Cancelar jogo',
+      label: t('gameCard.cancelGame'),
       icon: <CancelIcon fontSize="small" color="error" />,
       onClick: onCancelGame ?? (() => {}),
       hidden: !canCancelViaMenu,
@@ -198,7 +198,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   sx={{ fontSize: '0.75rem' }}
                 />
                 {hasConflict && (
-                  <Tooltip title="Jogo com horario conflitante" arrow>
+                  <Tooltip title={t('tooltip.conflictingTime')} arrow>
                     <Chip
                       icon={<ConflictIcon sx={{ fontSize: 14 }} />}
                       label="Conflito"
@@ -547,8 +547,9 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
   count = 3,
   type = 'card',
 }) => {
+  const { t } = useTranslation();
   return (
-    <Box role="status" aria-label="Carregando conteúdo">
+    <Box role="status" aria-label={t('a11y.loadingContent')}>
       {Array.from({ length: count }).map((_, index) => (
         <Box key={index}> {/* list never reorders — static shimmer array */}
           {type === 'card' ? <GameCardSkeleton /> : <Skeleton variant="text" height={60} />}
@@ -607,8 +608,9 @@ export const LoadingState: React.FC<{ shimmerCount?: number; itemType?: string }
   shimmerCount = 5,
   itemType: _itemType = 'CARD',
 }) => {
+  const { t } = useTranslation();
   return (
-    <Box role="status" aria-label="Carregando conteúdo">
+    <Box role="status" aria-label={t('a11y.loadingContent')}>
       {Array.from({ length: shimmerCount }).map((_, index) => (
         <Card key={index} sx={{ mb: 1 }}> {/* list never reorders — static shimmer array */}
           <CardContent>

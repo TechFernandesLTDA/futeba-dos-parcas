@@ -140,7 +140,7 @@ export const ManageLocationsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate('/?tab=4')} aria-label="Voltar">
+          <IconButton onClick={() => navigate('/?tab=4')} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
@@ -159,10 +159,10 @@ export const ManageLocationsScreen: React.FC = () => {
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar por nome, endereço, cidade ou bairro..."
+            placeholder={t('placeholder.searchGroupNameAddressCity')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Buscar locais"
+            aria-label={t('a11y.searchLocations')}
             inputProps={{ maxLength: 200 }}
             InputProps={{
               startAdornment: (
@@ -172,7 +172,7 @@ export const ManageLocationsScreen: React.FC = () => {
               ),
               endAdornment: searchQuery ? (
                 <InputAdornment position="end">
-                  <IconButton size="small" onClick={handleClearSearch} aria-label="Limpar busca" edge="end" sx={{ minWidth: 44, minHeight: 44 }}>
+                  <IconButton size="small" onClick={handleClearSearch} aria-label={t('a11y.clearSearch')} edge="end" sx={{ minWidth: 44, minHeight: 44 }}>
                     <CloseIcon fontSize="small" />
                   </IconButton>
                 </InputAdornment>
@@ -350,7 +350,7 @@ export const ManageLocationsScreen: React.FC = () => {
       {/* #2178: ScreenFab padronizado — FAB mobile */}
       <ScreenFab
         icon={<AddIcon />}
-        aria-label="Adicionar local"
+        aria-label={t('a11y.addLocation')}
         onClick={() => navigate('/location/create')}
         sx={{
           display: { xs: 'flex', md: 'none' },

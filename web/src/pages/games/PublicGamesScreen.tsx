@@ -49,13 +49,13 @@ export const PublicGamesScreen: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label="Voltar">
+        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
         </IconButton>
         <Typography variant="h5" fontWeight="bold" flex={1}>
           {t('games.public.title')}
         </Typography>
-        <IconButton onClick={() => refetch()} aria-label="Atualizar">
+        <IconButton onClick={() => refetch()} aria-label={t('a11y.refresh')}>
           <RefreshIcon />
         </IconButton>
       </Stack>

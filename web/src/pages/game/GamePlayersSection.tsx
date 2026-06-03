@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -62,6 +63,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
   tabValue,
   onTabChange,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   return (
@@ -73,7 +75,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
-          aria-label="Listas de jogadores"
+          aria-label={t('a11y.playerLists')}
           sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
         >
           <Tab label={`Confirmados (${confirmedPlayers.length})`} />
@@ -86,11 +88,11 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           {confirmedPlayers.length === 0 ? (
             <EmptyState
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-              title="Nenhum jogador confirmado"
-              description="Seja o primeiro a confirmar presença!"
+              title={t('empty.noConfirmedPlayers')}
+              description={t('empty.noConfirmedPlayersDesc')}
             />
           ) : (
-            <List disablePadding aria-label="Jogadores confirmados">
+            <List disablePadding aria-label={t('a11y.confirmedPlayers')}>
               {confirmedPlayers.map((player, index) => (
                 <ListItem
                   key={player.id}
@@ -128,8 +130,8 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           {goalkeepers.length === 0 ? (
             <EmptyState
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-              title="Nenhum goleiro"
-              description="Nenhum goleiro confirmado ainda"
+              title={t('empty.noGoalkeeper')}
+              description={t('empty.noGoalkeeperConfirmed')}
             />
           ) : (
             <List disablePadding>
@@ -156,8 +158,8 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           {waitlist.length === 0 ? (
             <EmptyState
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-              title="Nenhum jogador na lista de espera"
-              description="Quando a lista estiver cheia, novos jogadores entram aqui"
+              title={t('empty.noWaitlist')}
+              description={t('empty.noWaitlistDesc')}
             />
           ) : (
             <List disablePadding>

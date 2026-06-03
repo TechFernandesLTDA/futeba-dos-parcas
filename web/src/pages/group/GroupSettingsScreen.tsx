@@ -268,7 +268,7 @@ export const GroupSettingsScreen: React.FC = () => {
                 <IconButton
                   size="small"
                   onClick={() => navigate(`/group/${groupId}/edit`)}
-                  aria-label="Editar informações do grupo"
+                  aria-label={t('a11y.editGroupInfo')}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
@@ -400,7 +400,7 @@ export const GroupSettingsScreen: React.FC = () => {
               </Typography>
             </CardContent>
           ) : (
-            <List disablePadding aria-label="Lista de membros do grupo">
+            <List disablePadding aria-label={t('a11y.groupMembersList')}>
               {members.map((member, index) => (
                 <React.Fragment key={member.userId}>
                   <ListItem
@@ -470,7 +470,7 @@ export const GroupSettingsScreen: React.FC = () => {
                   startIcon={<LeaveIcon />}
                   fullWidth
                   onClick={() => setLeaveDialogOpen(true)}
-                  aria-label="Sair do grupo"
+                  aria-label={t('a11y.leaveGroup')}
                 >
                   Sair do Grupo
                 </Button>
@@ -484,7 +484,7 @@ export const GroupSettingsScreen: React.FC = () => {
                   startIcon={<DeleteIcon />}
                   fullWidth
                   onClick={() => setDeleteDialogOpen(true)}
-                  aria-label="Excluir grupo"
+                  aria-label={t('a11y.deleteGroup')}
                 >
                   Excluir Grupo
                 </Button>

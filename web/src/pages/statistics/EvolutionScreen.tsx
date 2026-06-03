@@ -175,7 +175,7 @@ export const EvolutionScreen: React.FC = () => {
     return (
       <EmptyState
         icon={<TimelineIcon />}
-        title="Nenhum dado disponível"
+        title={t('empty.noDataAvailable')}
       />
     );
   }
@@ -194,14 +194,14 @@ export const EvolutionScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
             Evolução
           </Typography>
         </Box>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="fullWidth" aria-label="Período de evolução">
+        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="fullWidth" aria-label={t('a11y.evolutionPeriod')}>
           <Tab label="Visão Geral" />
           <Tab label="Mensal" />
         </Tabs>

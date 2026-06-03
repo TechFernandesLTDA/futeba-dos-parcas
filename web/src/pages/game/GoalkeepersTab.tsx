@@ -7,6 +7,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { ShieldOutlined as GoalieIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { GameConfirmation } from '../../types/game';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -16,12 +17,13 @@ interface GoalkeepersTabProps {
 }
 
 const GoalkeepersTab: React.FC<GoalkeepersTabProps> = ({ goalkeepers }) => {
+  const { t } = useTranslation();
   if (goalkeepers.length === 0) {
     return (
       <EmptyState
         icon={<GoalieIcon />}
-        title="Nenhum goleiro"
-        description="Nenhum goleiro confirmado ainda"
+        title={t('empty.noGoalkeeper')}
+        description={t('empty.noGoalkeeperConfirmed')}
       />
     );
   }

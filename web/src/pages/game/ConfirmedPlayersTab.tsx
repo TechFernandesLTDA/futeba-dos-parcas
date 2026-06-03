@@ -9,6 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { People as PeopleIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { GameConfirmation, PAYMENT_STATUS_CONFIG } from '../../types/game';
 import { PlayerAvatar, StatusChip, EmptyState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -18,18 +19,19 @@ interface ConfirmedPlayersTabProps {
 }
 
 const ConfirmedPlayersTab: React.FC<ConfirmedPlayersTabProps> = ({ players }) => {
+  const { t } = useTranslation();
   if (players.length === 0) {
     return (
       <EmptyState
         icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-        title="Nenhum jogador confirmado"
-        description="Seja o primeiro a confirmar presença!"
+        title={t('empty.noConfirmedPlayers')}
+        description={t('empty.noConfirmedPlayersDesc')}
       />
     );
   }
 
   return (
-    <List disablePadding aria-label="Jogadores confirmados">
+    <List disablePadding aria-label={t('a11y.confirmedPlayers')}>
       {players.map((player, index) => (
         <ListItem
           key={player.id}
