@@ -19,7 +19,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
-import { useTranslation } from 'react-i18next';
 
 function parsePublicGame(id: string, raw: Record<string, unknown>): Game {
   const converted = snakeToCamel(raw);
