@@ -362,6 +362,76 @@ class CreateGameViewModelTest {
     }
 
     @Nested
+    @DisplayName("Goleiros e Times (#2400)")
+    inner class GoalkeepersAndTeamsTests {
+
+        private fun newViewModel() = CreateGameViewModel(
+            gameRepository, authRepository, gameTemplateRepository,
+            scheduleRepository, groupRepository, notificationRepository,
+            draftRepository, timeSuggestionService, fieldAvailabilityService,
+            addressRepository
+        )
+
+        @Test
+        @DisplayName("defaults iniciais sao 3 goleiros e 2 times")
+        fun `initial defaults are 3 goalkeepers and 2 teams`() {
+            viewModel = newViewModel()
+            assertEquals(3, viewModel.maxGoalkeepers.value)
+            assertEquals(2, viewModel.numberOfTeams.value)
+        }
+
+        @Test
+        @DisplayName("setMaxGoalkeepers dentro do range atualiza valor")
+        fun `setMaxGoalkeepers within range updates value`() {
+            viewModel = newViewModel()
+            viewModel.setMaxGoalkeepers(0)
+            assertEquals(0, viewModel.maxGoalkeepers.value)
+            viewModel.setMaxGoalkeepers(4)
+            assertEquals(4, viewModel.maxGoalkeepers.value)
+        }
+
+        @Test
+        @DisplayName("setMaxGoalkeepers acima do max faz clamp para 4")
+        fun `setMaxGoalkeepers above max clamps to 4`() {
+            viewModel = newViewModel()
+            viewModel.setMaxGoalkeepers(5)
+            assertEquals(4, viewModel.maxGoalkeepers.value)
+        }
+
+        @Test
+        @DisplayName("setMaxGoalkeepers abaixo do min faz clamp para 0")
+        fun `setMaxGoalkeepers below min clamps to 0`() {
+            viewModel = newViewModel()
+            viewModel.setMaxGoalkeepers(-1)
+            assertEquals(0, viewModel.maxGoalkeepers.value)
+        }
+
+        @Test
+        @DisplayName("setNumberOfTeams dentro do range atualiza valor")
+        fun `setNumberOfTeams within range updates value`() {
+            viewModel = newViewModel()
+            viewModel.setNumberOfTeams(4)
+            assertEquals(4, viewModel.numberOfTeams.value)
+        }
+
+        @Test
+        @DisplayName("setNumberOfTeams abaixo do min faz clamp para 2")
+        fun `setNumberOfTeams below min clamps to 2`() {
+            viewModel = newViewModel()
+            viewModel.setNumberOfTeams(1)
+            assertEquals(2, viewModel.numberOfTeams.value)
+        }
+
+        @Test
+        @DisplayName("setNumberOfTeams acima do max faz clamp para 4")
+        fun `setNumberOfTeams above max clamps to 4`() {
+            viewModel = newViewModel()
+            viewModel.setNumberOfTeams(10)
+            assertEquals(4, viewModel.numberOfTeams.value)
+        }
+    }
+
+    @Nested
     @DisplayName("CEP Lookup")
     inner class CepLookupTests {
 

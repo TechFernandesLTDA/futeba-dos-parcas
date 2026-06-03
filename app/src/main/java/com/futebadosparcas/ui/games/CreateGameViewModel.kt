@@ -36,6 +36,7 @@ import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameVisibility
+import com.futebadosparcas.domain.validation.GameValidation
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpAppNotifications
@@ -133,6 +134,13 @@ class CreateGameViewModel(
     // Estado para visibilidade do jogo
     private val _selectedVisibility = MutableStateFlow(GameVisibility.GROUP_ONLY)
     val selectedVisibility: StateFlow<GameVisibility> = _selectedVisibility
+
+    // Maximo de goleiros e numero de times (paridade com web, spec #2400)
+    private val _maxGoalkeepers = MutableStateFlow(GameValidation.DEFAULT_MAX_GOALKEEPERS)
+    val maxGoalkeepers: StateFlow<Int> = _maxGoalkeepers
+
+    private val _numberOfTeams = MutableStateFlow(GameValidation.DEFAULT_NUMBER_OF_TEAMS)
+    val numberOfTeams: StateFlow<Int> = _numberOfTeams
 
     // Wizard step (Improvement #8)
     private val _currentStep = MutableStateFlow(CreateGameStep.LOCATION)
@@ -351,6 +359,16 @@ class CreateGameViewModel(
         _selectedVisibility.value = visibility
     }
 
+    /** Define o maximo de goleiros, limitado ao range valido (0..4). */
+    fun setMaxGoalkeepers(value: Int) {
+        _maxGoalkeepers.value = GameValidation.coerceGoalkeepers(value)
+    }
+
+    /** Define o numero de times, limitado ao range valido (2..4). */
+    fun setNumberOfTeams(value: Int) {
+        _numberOfTeams.value = GameValidation.coerceNumberOfTeams(value)
+    }
+
     private fun loadOwnerName() {
         viewModelScope.launch {
             try {
@@ -496,6 +514,10 @@ class CreateGameViewModel(
         }
 
         _selectedVisibility.value = game.getVisibilityEnum()
+
+        // Copiar goleiros/times do jogo duplicado (paridade, spec #2400)
+        _maxGoalkeepers.value = GameValidation.coerceGoalkeepers(game.maxGoalkeepers)
+        _numberOfTeams.value = GameValidation.coerceNumberOfTeams(game.numberOfTeams)
 
         val groupId = game.groupId
         if (groupId != null) {
@@ -747,6 +769,10 @@ class CreateGameViewModel(
                    // Carregar visibilidade
                    _selectedVisibility.value = game.getVisibilityEnum()
 
+                   // Restaurar goleiros/times para nao sobrescrever com default ao salvar (spec #2400)
+                   _maxGoalkeepers.value = GameValidation.coerceGoalkeepers(game.maxGoalkeepers)
+                   _numberOfTeams.value = GameValidation.coerceNumberOfTeams(game.numberOfTeams)
+
                 } catch (e: Exception) {
                     // Continuar com valores vazios se parse falhar
                 }
@@ -815,6 +841,16 @@ class CreateGameViewModel(
 
         if (maxPlayers < MIN_PLAYERS || maxPlayers > MAX_PLAYERS) {
             _uiState.value = CreateGameUiState.Error("Numero de jogadores invalido (min $MIN_PLAYERS, max $MAX_PLAYERS)")
+            return
+        }
+
+        if (!GameValidation.isGoalkeepersValid(_maxGoalkeepers.value)) {
+            _uiState.value = CreateGameUiState.Error("Numero de goleiros invalido (min ${GameValidation.MIN_GOALKEEPERS}, max ${GameValidation.MAX_GOALKEEPERS})")
+            return
+        }
+
+        if (!GameValidation.isNumberOfTeamsValid(_numberOfTeams.value)) {
+            _uiState.value = CreateGameUiState.Error("Numero de times invalido (min ${GameValidation.MIN_NUMBER_OF_TEAMS}, max ${GameValidation.MAX_NUMBER_OF_TEAMS})")
             return
         }
 
@@ -925,6 +961,8 @@ class CreateGameViewModel(
                 ownerId = authRepository.getCurrentUserId() ?: "",
                 dailyPrice = price,
                 maxPlayers = maxPlayers,
+                maxGoalkeepers = _maxGoalkeepers.value,
+                numberOfTeams = _numberOfTeams.value,
                 recurrence = recurrence,
                 status = "SCHEDULED",
                 groupId = group?.id,
