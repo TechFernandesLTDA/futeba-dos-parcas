@@ -134,11 +134,21 @@ interface GameFormData {
   visibility: GameVisibility;
   recurrenceEnabled: boolean;
   recurrenceType: 'weekly' | 'biweekly' | 'monthly';
+  // Fim da série (spec #2398): 'forever' = até o teto de 52, 'count' = N jogos
+  // no total, 'until' = repete até a data. count XOR end_date no payload.
+  recurrenceEndMode: 'forever' | 'count' | 'until';
+  recurrenceCount: number;
+  recurrenceEndDate: string;
   streamUrl: string;
   autoInviteMembers: boolean;
 }
 
 const CUSTOM_LOCATION = '__custom__';
+
+// Teto inviolável da série recorrente (1 ano de jogos semanais).
+// Espelha RECURRENCE_HARD_CAP do backend (functions/src/games/recurrence-limits.ts)
+// e a regra Firestore isValidRecurrenceCount (2..52).
+const RECURRENCE_HARD_CAP = 52;
 
 const defaultFormData: GameFormData = {
   locationId: '',
@@ -165,6 +175,9 @@ const defaultFormData: GameFormData = {
   visibility: 'PUBLIC_CLOSED',
   recurrenceEnabled: false,
   recurrenceType: 'weekly',
+  recurrenceEndMode: 'forever',
+  recurrenceCount: 10,
+  recurrenceEndDate: '',
   streamUrl: '',
   autoInviteMembers: true,
 };
@@ -277,10 +290,28 @@ export const CreateGameScreen: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Recurrence preview
-  const recurrencePreview = formData.recurrenceEnabled && formData.date && formData.time
-    ? formatRecurrencePreview(getNextRecurrenceDates(formData.date, formData.time, formData.recurrenceType, 4))
-    : [];
+  // Recurrence preview — respeita o fim-de-série (spec #2398):
+  // 'count' = N jogos no total (mostra count-1 datas futuras),
+  // 'until' = gera o máximo e filtra pela data final,
+  // 'forever' = prévia de 4 datas (limite real = teto de 52 no backend).
+  const recurrencePreview = (() => {
+    if (!formData.recurrenceEnabled || !formData.date || !formData.time) return [];
+    const PREVIEW_CAP = 12;
+    const HARD_CAP_FUTURE = RECURRENCE_HARD_CAP - 1; // série inclui o jogo atual
+    let futureCount: number;
+    if (formData.recurrenceEndMode === 'count') {
+      futureCount = Math.max(0, Math.min(formData.recurrenceCount - 1, HARD_CAP_FUTURE));
+    } else if (formData.recurrenceEndMode === 'until') {
+      futureCount = HARD_CAP_FUTURE;
+    } else {
+      futureCount = 4;
+    }
+    let dates = getNextRecurrenceDates(formData.date, formData.time, formData.recurrenceType, futureCount);
+    if (formData.recurrenceEndMode === 'until' && formData.recurrenceEndDate) {
+      dates = dates.filter((d) => d.toISOString().split('T')[0] <= formData.recurrenceEndDate);
+    }
+    return formatRecurrencePreview(dates.slice(0, PREVIEW_CAP));
+  })();
 
   // Carregar quadras quando local é selecionado
   useEffect(() => {
@@ -837,6 +868,15 @@ export const CreateGameScreen: React.FC = () => {
         rules: formData.rules || '',
         visibility: formData.visibility,
         recurrence: formData.recurrenceEnabled ? formData.recurrenceType : 'none',
+        // Fim-de-série (spec #2398): índice 1-based da 1ª ocorrência + count XOR end_date.
+        // Emite no máximo um dos limites; o não usado fica undefined e é removido em useCreateGame.
+        ...(formData.recurrenceEnabled ? { recurrenceIndex: 1 } : {}),
+        ...(formData.recurrenceEnabled && formData.recurrenceEndMode === 'count'
+          ? { recurrenceCount: formData.recurrenceCount }
+          : {}),
+        ...(formData.recurrenceEnabled && formData.recurrenceEndMode === 'until' && formData.recurrenceEndDate
+          ? { recurrenceEndDate: formData.recurrenceEndDate }
+          : {}),
         team1Name: 'Time 1',
         team2Name: 'Time 2',
         confirmationDeadlineHours: 0,
@@ -1540,19 +1580,61 @@ export const CreateGameScreen: React.FC = () => {
           />
         </Box>
         {formData.recurrenceEnabled && (
-          <TextField
-            select
-            label={t('games.create.frequency')}
-            value={formData.recurrenceType}
-            onChange={(e) => handleInputChange('recurrenceType', e.target.value as 'weekly' | 'biweekly' | 'monthly')}
-            fullWidth
-            size="small"
-            sx={{ mt: 1 }}
-          >
-            <MenuItem value="weekly">{t('games.create.frequencyWeekly')}</MenuItem>
-            <MenuItem value="biweekly">{t('games.create.frequencyBiweekly')}</MenuItem>
-            <MenuItem value="monthly">{t('games.create.frequencyMonthly')}</MenuItem>
-          </TextField>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
+            <TextField
+              select
+              label={t('games.create.frequency')}
+              value={formData.recurrenceType}
+              onChange={(e) => handleInputChange('recurrenceType', e.target.value as 'weekly' | 'biweekly' | 'monthly')}
+              fullWidth
+              size="small"
+            >
+              <MenuItem value="weekly">{t('games.create.frequencyWeekly')}</MenuItem>
+              <MenuItem value="biweekly">{t('games.create.frequencyBiweekly')}</MenuItem>
+              <MenuItem value="monthly">{t('games.create.frequencyMonthly')}</MenuItem>
+            </TextField>
+
+            <FormControl>
+              <FormLabel sx={{ fontSize: '0.8rem' }}>{t('games.create.recurrenceEnd')}</FormLabel>
+              <RadioGroup
+                value={formData.recurrenceEndMode}
+                onChange={(e) => handleInputChange('recurrenceEndMode', e.target.value as 'forever' | 'count' | 'until')}
+              >
+                <FormControlLabel value="forever" control={<Radio size="small" />} label={t('games.create.recurrenceEndForever')} />
+                <FormControlLabel value="count" control={<Radio size="small" />} label={t('games.create.recurrenceEndCount')} />
+                <FormControlLabel value="until" control={<Radio size="small" />} label={t('games.create.recurrenceEndUntil')} />
+              </RadioGroup>
+            </FormControl>
+
+            {formData.recurrenceEndMode === 'count' && (
+              <TextField
+                type="number"
+                size="small"
+                label={t('games.create.recurrenceCountLabel')}
+                value={formData.recurrenceCount}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value);
+                  handleInputChange('recurrenceCount', isNaN(v) ? 2 : Math.max(2, Math.min(RECURRENCE_HARD_CAP, v)));
+                }}
+                inputProps={{ min: 2, max: RECURRENCE_HARD_CAP }}
+                helperText={t('games.create.recurrenceCountHelp')}
+                fullWidth
+              />
+            )}
+
+            {formData.recurrenceEndMode === 'until' && (
+              <TextField
+                type="date"
+                size="small"
+                label={t('games.create.recurrenceUntilLabel')}
+                value={formData.recurrenceEndDate}
+                onChange={(e) => handleInputChange('recurrenceEndDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: formData.date || undefined }}
+                fullWidth
+              />
+            )}
+          </Box>
         )}
       </Card>
 
