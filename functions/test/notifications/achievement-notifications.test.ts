@@ -102,7 +102,7 @@ describe("Achievement Notifications", () => {
 
       expect(mockSendNotificationToUser).toHaveBeenCalledWith(
         "user1",
-        expect.objectContaining({ title: "Subiu de nivel!" }),
+        expect.objectContaining({ title: "Subiu de nível!" }),
       );
     });
 
@@ -218,7 +218,7 @@ describe("Achievement Notifications", () => {
       expect(result).toBe(true);
       expect(mockSendNotificationToUser).toHaveBeenCalledWith(
         "user1",
-        expect.objectContaining({ title: expect.stringContaining("Sequencia") }),
+        expect.objectContaining({ title: expect.stringContaining("Sequência") }),
       );
     });
 
@@ -241,7 +241,7 @@ describe("Achievement Notifications", () => {
 
       expect(mockSendNotificationToUser).toHaveBeenCalledWith(
         "user1",
-        expect.objectContaining({ title: expect.stringContaining("Sequencia") }),
+        expect.objectContaining({ title: expect.stringContaining("Sequência") }),
       );
     });
 
@@ -272,7 +272,7 @@ describe("Achievement Notifications", () => {
 
       expect(mockSendAndSaveNotification).toHaveBeenCalledWith(
         "player1",
-        expect.objectContaining({ title: "Voce foi eleito MVP!" }),
+        expect.objectContaining({ title: "Você foi eleito MVP!" }),
       );
     });
 
@@ -313,7 +313,7 @@ describe("Achievement Notifications", () => {
 
       expect(mockSendAndSaveNotification).toHaveBeenCalledWith(
         "user1",
-        expect.objectContaining({ title: "Promocao de Liga!" }),
+        expect.objectContaining({ title: "Promoção de Liga!" }),
       );
     });
 
@@ -328,7 +328,7 @@ describe("Achievement Notifications", () => {
 
       expect(mockSendAndSaveNotification).toHaveBeenCalledWith(
         "user1",
-        expect.objectContaining({ title: "Mudanca de Liga" }),
+        expect.objectContaining({ title: "Mudança de Liga" }),
       );
     });
 

@@ -152,7 +152,8 @@ describe("onJoinRequestApproved", () => {
       "u1",
       expect.objectContaining({
         type: "GROUP_JOIN_APPROVED",
-        title: expect.stringContaining("Pelada Vila"),
+        title: expect.stringContaining("Pedido aprovado"),
+        body: expect.stringContaining("Pelada Vila"),
       })
     );
   });
