@@ -155,7 +155,7 @@ describe("Notifications Helpers", () => {
     test("milestone 30 is the epic one", () => {
       const m30 = STREAK_MILESTONES.find((m) => m.streak === 30);
       expect(m30).toBeDefined();
-      expect(m30!.title).toContain("Epica");
+      expect(m30!.title).toContain("Épica");
     });
 
     test("finding milestone for exact streak value works", () => {
