@@ -135,7 +135,6 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const navigate = useNavigate();
   const theme = useTheme();
   const { showError } = useToast();
-  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
