@@ -665,7 +665,7 @@ describe("checkInToGame - sem role gate (ownership da confirmation)", () => {
         auth: PLAYER_AUTH,
         data: {gameId: "ghost", lat: -23.5, lng: -46.6},
       })
-    ).rejects.toThrow(/nao encontrado/);
+    ).rejects.toThrow(/não encontrado/);
   });
 
   test("rejeita PLAYER que NAO esta confirmado no jogo (ownership)", async () => {
@@ -687,7 +687,7 @@ describe("checkInToGame - sem role gate (ownership da confirmation)", () => {
         auth: PLAYER_AUTH,
         data: {gameId: "g1", lat: -23.5, lng: -46.6},
       })
-    ).rejects.toThrow(/nao esta confirmado/);
+    ).rejects.toThrow(/não está confirmado/);
   });
 
   // TODO #647-FU: PR #678 mudou check-in flow (rate-limit + null-island +
@@ -726,6 +726,6 @@ describe("checkInToGame - sem role gate (ownership da confirmation)", () => {
         auth: ADMIN_AUTH,
         data: {gameId: "g1", lat: -23.5, lng: -46.6},
       })
-    ).rejects.toThrow(/nao esta confirmado/);
+    ).rejects.toThrow(/não está confirmado/);
   });
 });

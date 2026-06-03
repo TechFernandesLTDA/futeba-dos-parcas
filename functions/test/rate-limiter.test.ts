@@ -259,7 +259,7 @@ describe("Rate Limiter - withRateLimit", () => {
 
     await expect(
       wrapped({ auth: undefined, data: {} } as any)
-    ).rejects.toThrow("não autenticado");
+    ).rejects.toThrow("Login obrigatório.");
   });
 
   test("deve chamar handler quando rate limit permite", async () => {
@@ -308,7 +308,7 @@ describe("Rate Limiter - withRateLimit", () => {
 
     await expect(
       wrapped({ auth: { uid: "user1" } as any, data: {} } as any)
-    ).rejects.toThrow("Rate limit excedido");
+    ).rejects.toThrow("Muitas tentativas");
 
     expect(handler).not.toHaveBeenCalled();
   });
