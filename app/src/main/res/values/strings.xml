@@ -2053,6 +2053,17 @@ subir no ranking!</string>
     <string name="create_game_cd_decrement_goalkeepers">Diminuir máximo de goleiros</string>
     <string name="create_game_cd_increment_teams">Aumentar número de times</string>
     <string name="create_game_cd_decrement_teams">Diminuir número de times</string>
+    <!-- Fim-de-série da recorrência (spec #2398) -->
+    <string name="create_game_recurrence_end_label">Fim da série</string>
+    <string name="create_game_recurrence_end_forever">Sem data de término</string>
+    <string name="create_game_recurrence_end_count">Repetir por N jogos</string>
+    <string name="create_game_recurrence_end_until">Repetir até uma data</string>
+    <string name="create_game_recurrence_count_label">Total de jogos na série</string>
+    <string name="create_game_recurrence_count_increment_cd">Aumentar total de jogos</string>
+    <string name="create_game_recurrence_count_decrement_cd">Diminuir total de jogos</string>
+    <string name="create_game_recurrence_until_hint">Selecionar data de término</string>
+    <string name="create_game_recurrence_until_required">Selecione uma data de término para a série</string>
+    <string name="create_game_recurrence_preview_title">Próximos jogos</string>
     <string name="create_game_button_cancel">Cancelar</string>
     <string name="create_game_button_schedule">Agendar</string>
     <string name="create_game_cd_location_icon">Local</string>

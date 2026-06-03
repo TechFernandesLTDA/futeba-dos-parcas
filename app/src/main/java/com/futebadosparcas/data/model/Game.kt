@@ -88,6 +88,19 @@ data class Game(
     @get:PropertyName("recurrence")
     @set:PropertyName("recurrence")
     var recurrence: String = "none", // none, weekly, biweekly, monthly
+    // Fim-de-série da recorrência (spec #2398, decisão "ambos").
+    // Índice 1-based desta ocorrência na série (a 1ª criada por web/android = 1).
+    @get:PropertyName("recurrence_index")
+    @set:PropertyName("recurrence_index")
+    var recurrenceIndex: Int? = null,
+    // Limite "N jogos no total" (mín. 2, máx. 52). Mutuamente exclusivo com end_date.
+    @get:PropertyName("recurrence_count")
+    @set:PropertyName("recurrence_count")
+    var recurrenceCount: Int? = null,
+    // Limite "até a data" (ISO yyyy-MM-dd). Mutuamente exclusivo com count.
+    @get:PropertyName("recurrence_end_date")
+    @set:PropertyName("recurrence_end_date")
+    var recurrenceEndDate: String? = null,
     @get:PropertyName("is_public")
     @set:PropertyName("is_public")
     var isPublic: Boolean = true,

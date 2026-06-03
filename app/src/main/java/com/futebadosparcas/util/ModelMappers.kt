@@ -554,6 +554,10 @@ fun AndroidGame.toKmpGame(): KmpGame {
         fieldName = fieldName,
         gameType = gameType,
         recurrence = recurrence,
+        // Fim-de-serie da recorrencia (spec #2398)
+        recurrenceIndex = recurrenceIndex,
+        recurrenceCount = recurrenceCount,
+        recurrenceEndDate = recurrenceEndDate,
         visibility = getVisibilityEnum().name,
         createdAt = dateTime?.time,
         xpProcessed = xpProcessed,
@@ -606,6 +610,10 @@ fun KmpGame.toAndroidGame(): AndroidGame {
         fieldName = fieldName,
         gameType = gameType,
         recurrence = recurrence,
+        // Fim-de-serie da recorrencia (spec #2398)
+        recurrenceIndex = recurrenceIndex,
+        recurrenceCount = recurrenceCount,
+        recurrenceEndDate = recurrenceEndDate,
         isPublic = visibilityEnum != KmpGameVisibility.GROUP_ONLY,
         visibility = visibility,
         dateTimeRaw = createdAt?.let { java.util.Date(it) },
