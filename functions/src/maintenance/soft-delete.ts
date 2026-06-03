@@ -85,7 +85,7 @@ export const softDeleteGame =
       if (!rlAllowed) {
         throw new functions.https.HttpsError(
           "resource-exhausted",
-          ERROR_MSGS.rateLimitGeneric
+          ERROR_MSGS.RATE_LIMIT_GENERIC
         );
       }
     }
@@ -243,7 +243,7 @@ export const softDeleteGroup =
       if (!rlAllowed) {
         throw new functions.https.HttpsError(
           "resource-exhausted",
-          ERROR_MSGS.rateLimitGeneric
+          ERROR_MSGS.RATE_LIMIT_GENERIC
         );
       }
     }
@@ -407,7 +407,7 @@ export const restoreDeletedGame =
     if (!rlRestoreGame.allowed) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        ERROR_MSGS.rateLimitGeneric
+        ERROR_MSGS.RATE_LIMIT_GENERIC
       );
     }
 
@@ -545,7 +545,7 @@ export const restoreDeletedGroup =
     if (!rlRestoreGroup.allowed) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        ERROR_MSGS.rateLimitGeneric
+        ERROR_MSGS.RATE_LIMIT_GENERIC
       );
     }
 

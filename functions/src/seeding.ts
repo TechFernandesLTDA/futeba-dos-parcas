@@ -134,7 +134,7 @@ export const seedDatabase = onRequest(
       }
     );
     if (!ipRlResult.allowed) {
-      response.status(429).send(ERROR_MSGS.rateLimitGeneric);
+      response.status(429).send(ERROR_MSGS.RATE_LIMIT_GENERIC);
       return;
     }
 
