@@ -53,6 +53,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
   selectedLocation: Location | null;
   onLocationSelect: (loc: Location | null) => void;
 }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
@@ -71,7 +72,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
       >
         <MapIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
         <Typography variant="body2" color="text.secondary">
-          {apiKey ? 'Carregando mapa...' : 'Mapa indisponível no momento.'}
+          {apiKey ? t('locations.mapLoading') : t('locations.mapUnavailable')}
         </Typography>
         <Typography variant="caption" color="text.disabled">
           {locations.length} quadras cadastradas
