@@ -30,6 +30,7 @@ import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.validation.GameValidation
 import com.futebadosparcas.util.HapticManager
+import com.futebadosparcas.util.nextRecurrenceDates
 import com.futebadosparcas.util.toKmpField
 import java.time.LocalDate
 import java.time.LocalTime
@@ -38,6 +39,9 @@ import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+
+/** Teto de datas exibidas no preview de recorrencia (spec #2398, CA1). */
+private const val RECURRENCE_PREVIEW_CAP = 12
 
 /**
  * Tela moderna de criação/edição de jogos em Jetpack Compose
@@ -76,6 +80,9 @@ fun CreateGameScreen(
     val selectedVisibility by viewModel.selectedVisibility.collectAsStateWithLifecycle()
     val maxGoalkeepers by viewModel.maxGoalkeepers.collectAsStateWithLifecycle()
     val numberOfTeams by viewModel.numberOfTeams.collectAsStateWithLifecycle()
+    val recurrenceEndMode by viewModel.recurrenceEndMode.collectAsStateWithLifecycle()
+    val recurrenceCount by viewModel.recurrenceCount.collectAsStateWithLifecycle()
+    val recurrenceEndDate by viewModel.recurrenceEndDate.collectAsStateWithLifecycle()
     val timeConflicts by viewModel.timeConflicts.collectAsStateWithLifecycle()
     val isEditing by viewModel.isEditing.collectAsStateWithLifecycle()
 
@@ -97,6 +104,7 @@ fun CreateGameScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
+    var showRecurrenceEndDatePicker by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -224,6 +232,15 @@ fun CreateGameScreen(
             onRecurrenceEnabledChange = { recurrenceEnabled = it },
             recurrenceType = recurrenceType,
             onRecurrenceTypeChange = { recurrenceType = it },
+            recurrenceEndMode = recurrenceEndMode,
+            onRecurrenceEndModeChange = { viewModel.setRecurrenceEndMode(it) },
+            recurrenceCount = recurrenceCount,
+            onRecurrenceCountChange = { viewModel.setRecurrenceCount(it) },
+            recurrenceEndDate = recurrenceEndDate,
+            onRecurrenceEndDateClick = {
+                hapticManager.tick()
+                showRecurrenceEndDatePicker = true
+            },
             timeConflicts = timeConflicts,
             onCancelClick = {
                 hapticManager.tick()
@@ -249,6 +266,19 @@ fun CreateGameScreen(
                 val maxPlayersValue = maxPlayers.toIntOrNull()
                 if (maxPlayersValue == null || maxPlayersValue < 2 || maxPlayersValue > 50) {
                     maxPlayersError = context.getString(R.string.create_game_error_max_players)
+                    hasError = true
+                }
+
+                // Guard: modo "until" exige uma data de termino (spec #2398)
+                if (recurrenceEnabled &&
+                    recurrenceEndMode == CreateGameViewModel.RECURRENCE_END_MODE_UNTIL &&
+                    recurrenceEndDate == null
+                ) {
+                    android.widget.Toast.makeText(
+                        context,
+                        context.getString(R.string.create_game_recurrence_until_required),
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
                     hasError = true
                 }
 
@@ -341,6 +371,22 @@ fun CreateGameScreen(
             initialTime = selectedEndTime
         )
     }
+
+    if (showRecurrenceEndDatePicker) {
+        // DatePickerDialog retorna month 0-based (Calendar.MONTH); +1 para LocalDate.
+        DatePickerDialog(
+            onDismiss = { showRecurrenceEndDatePicker = false },
+            onDateSelected = { year, month, day ->
+                val iso = java.time.LocalDate.of(year, month + 1, day)
+                    .format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+                viewModel.setRecurrenceEndDate(iso)
+                showRecurrenceEndDatePicker = false
+            },
+            initialDate = recurrenceEndDate?.let {
+                runCatching { java.time.LocalDate.parse(it) }.getOrNull()
+            } ?: selectedDate
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -378,6 +424,12 @@ private fun CreateGameContent(
     onRecurrenceEnabledChange: (Boolean) -> Unit,
     recurrenceType: String,
     onRecurrenceTypeChange: (String) -> Unit,
+    recurrenceEndMode: String,
+    onRecurrenceEndModeChange: (String) -> Unit,
+    recurrenceCount: Int,
+    onRecurrenceCountChange: (Int) -> Unit,
+    recurrenceEndDate: String?,
+    onRecurrenceEndDateClick: () -> Unit,
     timeConflicts: List<com.futebadosparcas.data.repository.TimeConflict>,
     onCancelClick: () -> Unit,
     onSaveClick: () -> Unit,
@@ -700,6 +752,20 @@ private fun CreateGameContent(
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Fim-de-serie (spec #2398): forever | count | until (count XOR end_date)
+                        RecurrenceEndSelector(
+                            recurrenceType = recurrenceType,
+                            startDate = selectedDate,
+                            endMode = recurrenceEndMode,
+                            onEndModeChange = onRecurrenceEndModeChange,
+                            count = recurrenceCount,
+                            onCountChange = onRecurrenceCountChange,
+                            endDate = recurrenceEndDate,
+                            onEndDateClick = onRecurrenceEndDateClick
+                        )
                     }
                 }
             }
@@ -809,6 +875,137 @@ private fun CreateGameContent(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+/**
+ * Seletor de fim-de-serie da recorrencia (spec #2398, decisao "ambos").
+ *
+ * Tres modos mutuamente exclusivos:
+ * - forever: sem data de termino (serie corre ate o hard cap de 52 no backend).
+ * - count: total de N jogos (min 2, max 52). NAO sao repeticoes adicionais.
+ * - until: repete ate uma data limite.
+ *
+ * Emite no maximo um de count XOR end_date; o motor (recurrence-engine) para
+ * via recurrenceStopReason. Mostra um preview das proximas datas (CA1).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RecurrenceEndSelector(
+    recurrenceType: String,
+    startDate: LocalDate?,
+    endMode: String,
+    onEndModeChange: (String) -> Unit,
+    count: Int,
+    onCountChange: (Int) -> Unit,
+    endDate: String?,
+    onEndDateClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.create_game_recurrence_end_label),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Seletor de modo via FilterChips
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val modes = listOf(
+                CreateGameViewModel.RECURRENCE_END_MODE_FOREVER to
+                    stringResource(R.string.create_game_recurrence_end_forever),
+                CreateGameViewModel.RECURRENCE_END_MODE_COUNT to
+                    stringResource(R.string.create_game_recurrence_end_count),
+                CreateGameViewModel.RECURRENCE_END_MODE_UNTIL to
+                    stringResource(R.string.create_game_recurrence_end_until)
+            )
+            modes.forEach { (mode, label) ->
+                FilterChip(
+                    selected = endMode == mode,
+                    onClick = { onEndModeChange(mode) },
+                    label = { Text(label) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        when (endMode) {
+            CreateGameViewModel.RECURRENCE_END_MODE_COUNT -> {
+                NumberStepper(
+                    label = stringResource(R.string.create_game_recurrence_count_label),
+                    value = count,
+                    min = CreateGameViewModel.MIN_RECURRENCE_COUNT,
+                    max = CreateGameViewModel.MAX_RECURRENCE_COUNT,
+                    onValueChange = onCountChange,
+                    decrementCd = stringResource(R.string.create_game_recurrence_count_decrement_cd),
+                    incrementCd = stringResource(R.string.create_game_recurrence_count_increment_cd),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            CreateGameViewModel.RECURRENCE_END_MODE_UNTIL -> {
+                OutlinedButton(
+                    onClick = onEndDateClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = endDate ?: stringResource(R.string.create_game_recurrence_until_hint)
+                    )
+                }
+            }
+            else -> Unit
+        }
+
+        // Preview das proximas datas (CA1)
+        val previewDates = remember(recurrenceType, startDate, endMode, count, endDate) {
+            if (startDate == null) {
+                emptyList()
+            } else {
+                when (endMode) {
+                    // count = TOTAL de jogos; a 1a ocorrencia ja e a base, entao
+                    // o preview de datas FUTURAS e count-1 (espelha o web).
+                    CreateGameViewModel.RECURRENCE_END_MODE_COUNT ->
+                        nextRecurrenceDates(startDate, recurrenceType, count - 1)
+                    // until: gera ate o teto de preview e filtra por <= end_date.
+                    CreateGameViewModel.RECURRENCE_END_MODE_UNTIL -> {
+                        val limit = endDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                        nextRecurrenceDates(startDate, recurrenceType, RECURRENCE_PREVIEW_CAP)
+                            .filter { limit == null || !it.isAfter(limit) }
+                    }
+                    // forever: apenas uma amostra ate o teto de preview.
+                    else -> nextRecurrenceDates(startDate, recurrenceType, RECURRENCE_PREVIEW_CAP)
+                }
+            }
+        }
+
+        if (previewDates.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.create_game_recurrence_preview_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            val previewFormatter = remember { DateTimeFormatter.ofPattern("EEE, dd/MM/yyyy") }
+            previewDates.forEach { date ->
+                Text(
+                    text = date.format(previewFormatter),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 

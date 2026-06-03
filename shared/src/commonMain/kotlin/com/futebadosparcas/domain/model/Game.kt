@@ -119,6 +119,11 @@ data class Game(
     // Configuracoes
     @SerialName("game_type") val gameType: String = "Society",
     val recurrence: String = "none",
+    // Fim-de-serie da recorrencia (spec #2398, decisao "ambos"): count XOR end_date,
+    // sempre sob o hard cap de 52. recurrence_index e 1-based (1a ocorrencia = 1).
+    @SerialName("recurrence_index") val recurrenceIndex: Int? = null,
+    @SerialName("recurrence_count") val recurrenceCount: Int? = null,
+    @SerialName("recurrence_end_date") val recurrenceEndDate: String? = null,
     val visibility: String = GameVisibility.GROUP_ONLY.name,
     @SerialName("created_at") val createdAt: Long? = null,
 

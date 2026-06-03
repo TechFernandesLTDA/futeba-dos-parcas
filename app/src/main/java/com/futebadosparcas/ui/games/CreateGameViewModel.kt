@@ -73,6 +73,14 @@ class CreateGameViewModel(
     companion object {
         private const val TAG = "CreateGameViewModel"
         private const val AUTO_SAVE_DEBOUNCE_MS = 2000L
+
+        // Fim-de-serie da recorrencia (spec #2398). count = TOTAL de jogos (min 2).
+        const val RECURRENCE_END_MODE_FOREVER = "forever"
+        const val RECURRENCE_END_MODE_COUNT = "count"
+        const val RECURRENCE_END_MODE_UNTIL = "until"
+        const val MIN_RECURRENCE_COUNT = 2
+        const val MAX_RECURRENCE_COUNT = 52
+        const val DEFAULT_RECURRENCE_COUNT = 10
         private const val DEFAULT_MAX_PLAYERS = 14
         private const val RECENT_GAMES_LIMIT = 10
         private const val ONE_HOUR_MS = 3_600_000L
@@ -141,6 +149,19 @@ class CreateGameViewModel(
 
     private val _numberOfTeams = MutableStateFlow(GameValidation.DEFAULT_NUMBER_OF_TEAMS)
     val numberOfTeams: StateFlow<Int> = _numberOfTeams
+
+    // Fim-de-série da recorrencia (paridade com web, spec #2398, decisao "ambos").
+    // Modo: "forever" (sem limite, ate o hard cap 52) | "count" (N jogos) | "until" (ate data).
+    private val _recurrenceEndMode = MutableStateFlow(RECURRENCE_END_MODE_FOREVER)
+    val recurrenceEndMode: StateFlow<String> = _recurrenceEndMode
+
+    // Total de jogos na serie (NAO "repeticoes adicionais"). Min 2, max 52.
+    private val _recurrenceCount = MutableStateFlow(DEFAULT_RECURRENCE_COUNT)
+    val recurrenceCount: StateFlow<Int> = _recurrenceCount
+
+    // Data limite ISO (yyyy-MM-dd) para o modo "until".
+    private val _recurrenceEndDate = MutableStateFlow<String?>(null)
+    val recurrenceEndDate: StateFlow<String?> = _recurrenceEndDate
 
     // Wizard step (Improvement #8)
     private val _currentStep = MutableStateFlow(CreateGameStep.LOCATION)
@@ -369,6 +390,43 @@ class CreateGameViewModel(
         _numberOfTeams.value = GameValidation.coerceNumberOfTeams(value)
     }
 
+    /** Define o modo de fim-de-serie: "forever" | "count" | "until" (spec #2398). */
+    fun setRecurrenceEndMode(value: String) {
+        _recurrenceEndMode.value = value
+    }
+
+    /** Define o total de jogos da serie, limitado a 2..52 (NAO repeticoes adicionais). */
+    fun setRecurrenceCount(value: Int) {
+        _recurrenceCount.value = value.coerceIn(MIN_RECURRENCE_COUNT, MAX_RECURRENCE_COUNT)
+    }
+
+    /** Define a data limite ISO (yyyy-MM-dd) para o modo "until". */
+    fun setRecurrenceEndDate(value: String?) {
+        _recurrenceEndDate.value = value
+    }
+
+    /**
+     * Hidrata o estado de fim-de-serie a partir de um jogo existente (edicao/duplicacao).
+     * count XOR end_date: deriva o modo do campo preenchido (spec #2398).
+     */
+    private fun hydrateRecurrenceEndConfig(game: Game) {
+        when {
+            game.recurrenceCount != null -> {
+                _recurrenceEndMode.value = RECURRENCE_END_MODE_COUNT
+                _recurrenceCount.value = game.recurrenceCount!!.coerceIn(MIN_RECURRENCE_COUNT, MAX_RECURRENCE_COUNT)
+                _recurrenceEndDate.value = null
+            }
+            game.recurrenceEndDate != null -> {
+                _recurrenceEndMode.value = RECURRENCE_END_MODE_UNTIL
+                _recurrenceEndDate.value = game.recurrenceEndDate
+            }
+            else -> {
+                _recurrenceEndMode.value = RECURRENCE_END_MODE_FOREVER
+                _recurrenceEndDate.value = null
+            }
+        }
+    }
+
     private fun loadOwnerName() {
         viewModelScope.launch {
             try {
@@ -518,6 +576,9 @@ class CreateGameViewModel(
         // Copiar goleiros/times do jogo duplicado (paridade, spec #2400)
         _maxGoalkeepers.value = GameValidation.coerceGoalkeepers(game.maxGoalkeepers)
         _numberOfTeams.value = GameValidation.coerceNumberOfTeams(game.numberOfTeams)
+
+        // Copiar fim-de-serie da recorrencia (spec #2398, count XOR end_date)
+        hydrateRecurrenceEndConfig(game)
 
         val groupId = game.groupId
         if (groupId != null) {
@@ -773,6 +834,9 @@ class CreateGameViewModel(
                    _maxGoalkeepers.value = GameValidation.coerceGoalkeepers(game.maxGoalkeepers)
                    _numberOfTeams.value = GameValidation.coerceNumberOfTeams(game.numberOfTeams)
 
+                   // Restaurar fim-de-serie da recorrencia (spec #2398, count XOR end_date)
+                   hydrateRecurrenceEndConfig(game)
+
                 } catch (e: Exception) {
                     // Continuar com valores vazios se parse falhar
                 }
@@ -964,6 +1028,20 @@ class CreateGameViewModel(
                 maxGoalkeepers = _maxGoalkeepers.value,
                 numberOfTeams = _numberOfTeams.value,
                 recurrence = recurrence,
+                // Fim-de-serie (spec #2398, decisao "ambos"): count XOR end_date.
+                // recurrence_index=1 marca a 1a ocorrencia; o motor (recurrence-engine)
+                // propaga count/end_date e para via recurrenceStopReason (hard cap 52).
+                recurrenceIndex = if (recurrence != "none") 1 else null,
+                recurrenceCount = if (recurrence != "none" && _recurrenceEndMode.value == RECURRENCE_END_MODE_COUNT) {
+                    _recurrenceCount.value.coerceIn(MIN_RECURRENCE_COUNT, MAX_RECURRENCE_COUNT)
+                } else {
+                    null
+                },
+                recurrenceEndDate = if (recurrence != "none" && _recurrenceEndMode.value == RECURRENCE_END_MODE_UNTIL) {
+                    _recurrenceEndDate.value
+                } else {
+                    null
+                },
                 status = "SCHEDULED",
                 groupId = group?.id,
                 groupName = group?.groupName,
