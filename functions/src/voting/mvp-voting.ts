@@ -155,7 +155,8 @@ export const submitMvpVote =
         );
         throw new HttpsError(
           "resource-exhausted",
-          `Muitas tentativas. Tente novamente em ${resetInSeconds} segundos.`,
+          // eslint-disable-next-line new-cap
+          ERROR_MSGS.RATE_LIMIT_RETRY(resetInSeconds),
           {
             retryAfter: resetInSeconds,
             limit: 20,
@@ -170,9 +171,6 @@ export const submitMvpVote =
         category,
       } = request.data;
 
-      // ======================================
-      // 2. VALIDAÇÃO DE ENTRADA
-      // ======================================
       if (
         !gameId ||
         typeof gameId !== "string" ||
@@ -180,8 +178,7 @@ export const submitMvpVote =
       ) {
         throw new HttpsError(
           "invalid-argument",
-          "gameId é obrigatório e deve " +
-          "ser uma string válida"
+          ERROR_MSGS.GAME_ID_REQUIRED
         );
       }
       if (
@@ -191,8 +188,8 @@ export const submitMvpVote =
       ) {
         throw new HttpsError(
           "invalid-argument",
-          "votedPlayerId é obrigatório " +
-          "e deve ser uma string válida"
+          // eslint-disable-next-line new-cap
+          ERROR_MSGS.FIELD_REQUIRED("votedPlayerId")
         );
       }
       if (
@@ -201,29 +198,28 @@ export const submitMvpVote =
       ) {
         throw new HttpsError(
           "invalid-argument",
-          "Categoria inválida. Deve ser: " +
-          `${VALID_VOTE_CATEGORIES.join(", ")}`
+          // eslint-disable-next-line new-cap
+          ERROR_MSGS.ALLOWED_VALUES(
+            "Categoria",
+            VALID_VOTE_CATEGORIES as readonly string[]
+          )
         );
       }
 
-      // Votante não pode votar em si mesmo
       if (voterId === votedPlayerId) {
         throw new HttpsError(
           "invalid-argument",
-          "Não é permitido votar em si mesmo"
+          ERROR_MSGS.CANNOT_VOTE_SELF
         );
       }
 
-      // SECURITY: Sanitizar inputs - previne
-      // injection de dados no Firestore
       if (
         gameId.includes("/") ||
         votedPlayerId.includes("/")
       ) {
         throw new HttpsError(
           "invalid-argument",
-          "IDs não podem conter " +
-          "caracteres especiais"
+          ERROR_MSGS.ID_INVALID_CHARS
         );
       }
 
@@ -241,11 +237,10 @@ export const submitMvpVote =
             const gameSnap =
               await transaction.get(gameRef);
 
-            // 3.1: Validar que o jogo existe
             if (!gameSnap.exists) {
               throw new HttpsError(
                 "not-found",
-                "Jogo não encontrado"
+                ERROR_MSGS.GAME_NOT_FOUND
               );
             }
 
@@ -257,25 +252,20 @@ export const submitMvpVote =
               );
             }
 
-            // 3.2: Validar status (FINISHED)
             if (gameData.status !== "FINISHED") {
               throw new HttpsError(
                 "failed-precondition",
-                "Votação disponível apenas " +
-                "para jogos finalizados"
+                ERROR_MSGS.VOTING_NOT_STARTED
               );
             }
 
-            // 3.3: Validar que votação não
-            // foi concluída
             if (
               gameData.voting_status ===
               "CONCLUDED"
             ) {
               throw new HttpsError(
                 "failed-precondition",
-                "Votação já foi encerrada " +
-                "para este jogo"
+                ERROR_MSGS.VOTING_CLOSED
               );
             }
 
@@ -305,9 +295,6 @@ export const submitMvpVote =
                 60 * 60 * 1000
               );
             } else {
-              // FIX #648/B2: sem dateTime, NÃO usar
-              // created_at como fallback (causa timezone
-              // issues). Throw em vez disso.
               throw new HttpsError(
                 "internal",
                 "Dados do jogo incompletos: " +
@@ -318,13 +305,10 @@ export const submitMvpVote =
             if (now > deadline) {
               throw new HttpsError(
                 "failed-precondition",
-                "Prazo de votação expirado " +
-                "(24h após o jogo)"
+                ERROR_MSGS.VOTING_EXPIRED
               );
             }
 
-            // 3.5: Validar que o votante
-            // participou do jogo
             const voterConfId =
               `${gameId}_${voterId}`;
             const voterConfRef = db
@@ -338,8 +322,7 @@ export const submitMvpVote =
             if (!voterConfSnap.exists) {
               throw new HttpsError(
                 "permission-denied",
-                "Apenas jogadores " +
-                "confirmados podem votar"
+                ERROR_MSGS.CONFIRMED_PLAYERS_ONLY
               );
             }
 
@@ -351,14 +334,10 @@ export const submitMvpVote =
             ) {
               throw new HttpsError(
                 "permission-denied",
-                "Apenas jogadores com " +
-                "presença confirmada " +
-                "podem votar"
+                ERROR_MSGS.CONFIRMED_PLAYERS_ONLY
               );
             }
 
-            // 3.6: Validar que o jogador
-            // votado participou do jogo
             const votedConfId =
               `${gameId}_${votedPlayerId}`;
             const votedConfRef = db
@@ -376,13 +355,10 @@ export const submitMvpVote =
             ) {
               throw new HttpsError(
                 "invalid-argument",
-                "Jogador votado não " +
-                "participou deste jogo"
+                ERROR_MSGS.PLAYER_NOT_IN_GAME
               );
             }
 
-            // 3.7: Verificar voto duplicado
-            // (DENTRO da transaction - TOCTOU)
             const voteId =
               `${gameId}_${voterId}` +
               `_${category}`;
@@ -395,9 +371,8 @@ export const submitMvpVote =
             if (existingVote.exists) {
               throw new HttpsError(
                 "already-exists",
-                "Você já votou na " +
-                `categoria ${category} ` +
-                "neste jogo"
+                // eslint-disable-next-line new-cap
+                ERROR_MSGS.ALREADY_VOTED(category)
               );
             }
 
@@ -435,11 +410,9 @@ export const submitMvpVote =
         return {
           success: true,
           voteId: result.voteId,
-          message:
-            "Voto registrado com sucesso",
+          message: ERROR_MSGS.VOTE_REGISTERED,
         };
       } catch (error: unknown) {
-        // Se já é HttpsError, re-throw
         if (error instanceof HttpsError) {
           throw error;
         }
@@ -454,8 +427,7 @@ export const submitMvpVote =
         );
         throw new HttpsError(
           "internal",
-          "Erro ao registrar voto. " +
-          "Tente novamente."
+          ERROR_MSGS.INTERNAL_ERROR
         );
       }
     }
@@ -520,7 +492,8 @@ export const concludeMvpVoting =
         );
         throw new HttpsError(
           "resource-exhausted",
-          `Muitas tentativas. Tente novamente em ${resetInSec} segundos.`,
+          // eslint-disable-next-line new-cap
+          ERROR_MSGS.RATE_LIMIT_RETRY(resetInSec),
           {retryAfter: resetInSec, limit: 5}
         );
       }
@@ -534,18 +507,14 @@ export const concludeMvpVoting =
       ) {
         throw new HttpsError(
           "invalid-argument",
-          "gameId é obrigatório e deve " +
-          "ser uma string válida"
+          ERROR_MSGS.GAME_ID_REQUIRED
         );
       }
 
-      // SECURITY: Sanitizar gameId - previne
-      // path traversal no Firestore
       if (gameId.includes("/")) {
         throw new HttpsError(
           "invalid-argument",
-          "gameId contém caracteres " +
-          "inválidos"
+          ERROR_MSGS.ID_INVALID_CHARS
         );
       }
 
@@ -579,7 +548,7 @@ export const concludeMvpVoting =
               if (!gameSnap.exists) {
                 throw new HttpsError(
                   "not-found",
-                  "Jogo não encontrado"
+                  ERROR_MSGS.GAME_NOT_FOUND
                 );
               }
 
@@ -593,8 +562,6 @@ export const concludeMvpVoting =
                 );
               }
 
-              // 2.3: Validar permissão
-              // (dono, co-organizadores ou admin)
               const coOrganizers =
                 (gameData.co_organizers as string[]) ?? [];
               const isAdmin =
@@ -613,15 +580,12 @@ export const concludeMvpVoting =
                 );
               }
 
-              // 2.4: Validar FINISHED
               if (
                 gameData.status !== "FINISHED"
               ) {
                 throw new HttpsError(
                   "failed-precondition",
-                  "Jogo deve estar " +
-                  "finalizado para " +
-                  "encerrar votação"
+                  ERROR_MSGS.GAME_NOT_FINALIZED
                 );
               }
 
@@ -863,8 +827,7 @@ export const concludeMvpVoting =
           },
           message:
             result.alreadyConcluded ?
-              "Votação já havia sido " +
-              "concluída" :
+              ERROR_MSGS.VOTE_ALREADY_CONCLUDED :
               "Votação encerrada " +
               "com sucesso",
         };
@@ -884,8 +847,7 @@ export const concludeMvpVoting =
         );
         throw new HttpsError(
           "internal",
-          "Erro ao encerrar votação. " +
-          "Tente novamente."
+          ERROR_MSGS.INTERNAL_ERROR
         );
       }
     }
