@@ -310,6 +310,91 @@ describe("games — criação", () => {
       })
     );
   });
+
+  // #2398 — limite de recorrência: recurrence_count (2..52) + recurrence_end_date (string)
+  it("Player pode criar jogo com recurrence_count=4 (modo 'N vezes' válido)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("games/game-recur-count-valid").set({
+        title: "Recorrência por contagem",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        recurrence: "weekly",
+        recurrence_count: 4,
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+        group_id: null,
+        co_organizers: [],
+      })
+    );
+  });
+
+  it("Player pode criar jogo com recurrence_end_date (modo 'até DD/MM')", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("games/game-recur-enddate-valid").set({
+        title: "Recorrência por data-fim",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        recurrence: "weekly",
+        recurrence_end_date: "2026-12-31",
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+        group_id: null,
+        co_organizers: [],
+      })
+    );
+  });
+
+  it("Player NÃO pode criar jogo com recurrence_count=53 (acima do hard cap=52)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-recur-count-high").set({
+        title: "Recorrência exagerada",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        recurrence: "weekly",
+        recurrence_count: 53, // inválido (máximo é 52)
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+      })
+    );
+  });
+
+  it("Player NÃO pode criar jogo com recurrence_count=1 (abaixo do mínimo=2)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-recur-count-low").set({
+        title: "Recorrência de 1",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        recurrence: "weekly",
+        recurrence_count: 1, // inválido (mínimo é 2)
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+      })
+    );
+  });
 });
 
 // ============================================================

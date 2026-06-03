@@ -18,36 +18,11 @@ import {
   NotificationType,
   FcmNotification,
 } from "../notifications/helpers";
-
-type RecurrenceType = "weekly" | "biweekly" | "monthly";
-
-/**
- * Calcula a próxima data com base no tipo de recorrência.
- * @param {string} dateStr - Data base no formato YYYY-MM-DD
- * @param {RecurrenceType} recurrence - Tipo de recorrência
- * @return {string} Próxima data no formato YYYY-MM-DD
- */
-function getNextDate(dateStr: string, recurrence: RecurrenceType): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-
-  switch (recurrence) {
-  case "weekly":
-    date.setDate(date.getDate() + 7);
-    break;
-  case "biweekly":
-    date.setDate(date.getDate() + 14);
-    break;
-  case "monthly":
-    date.setMonth(date.getMonth() + 1);
-    break;
-  }
-
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+import {
+  RecurrenceType,
+  getNextDate,
+  recurrenceStopReason,
+} from "./recurrence-limits";
 
 /**
  * Conta quantos jogos já foram criados nesta série recorrente.
@@ -98,15 +73,41 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
 
     const parentId = (after.recurrence_parent_id as string) || gameId;
     const childCount = await countRecurringGames(db, parentId);
-    if (childCount >= 52) {
-      logger.info(
-        `[RECURRENCE] Max recurrences (52) reached for series ${parentId}, stopping.`
-      );
-      return;
-    }
+
+    // Limite efetivo da série (spec #2398, decisão "ambos"):
+    // count XOR end_date, sempre respeitando o hard cap de 52.
+    // Índice 1-based: a 1ª ocorrência (criada por web/android) não tem
+    // recurrence_index → tratamos como 1.
+    const currentIndex = (after.recurrence_index as number) || 1;
+    const nextIndex = currentIndex + 1;
+    const recurrenceCount =
+      typeof after.recurrence_count === "number" ?
+        (after.recurrence_count as number) :
+        null;
+    const recurrenceEndDate =
+      typeof after.recurrence_end_date === "string" ?
+        (after.recurrence_end_date as string) :
+        null;
 
     try {
       const nextDate = getNextDate(after.date as string, recurrence as RecurrenceType);
+
+      // Decisão de parada centralizada (count XOR end_date, sob hard cap 52).
+      const stop = recurrenceStopReason({
+        currentIndex,
+        childCount,
+        recurrenceCount,
+        recurrenceEndDate,
+        nextDate,
+      });
+      if (stop) {
+        logger.info(
+          `[RECURRENCE] Série ${parentId} encerrada (motivo=${stop}) no índice ` +
+          `${currentIndex}; próxima data seria ${nextDate}.`
+        );
+        return;
+      }
+
       const [hours, minutes] = (after.time || "00:00").split(":").map(Number);
       const dateTime = Timestamp.fromDate(
         new Date(`${nextDate}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`)
@@ -140,6 +141,11 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
         rules: after.rules || "",
         recurrence: recurrence,
         recurrence_parent_id: parentId,
+        // Propaga config de limite da série para a próxima ocorrência (spec #2398).
+        recurrence_index: nextIndex,
+        recurrence_count: recurrenceCount,
+        recurrence_end_date: recurrenceEndDate,
+        recurrence_cancelled: false,
         team1_name: "Time 1",
         team2_name: "Time 2",
         players_count: 0,
