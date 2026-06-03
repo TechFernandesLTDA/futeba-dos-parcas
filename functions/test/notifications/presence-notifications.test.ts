@@ -127,7 +127,7 @@ describe("Presence Notifications", () => {
 
       expect(mockSendNotificationToUser).toHaveBeenCalledWith(
         "owner1",
-        expect.objectContaining({ title: "Nova confirmacao!" }),
+        expect.objectContaining({ title: "Nova confirmação!" }),
       );
     });
 
@@ -463,7 +463,7 @@ describe("Presence Notifications", () => {
 
       expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
         expect.arrayContaining(["admin1", "admin2"]),
-        expect.objectContaining({ title: "Saida do caixa" }),
+        expect.objectContaining({ title: "Saída do caixa" }),
       );
     });
 
