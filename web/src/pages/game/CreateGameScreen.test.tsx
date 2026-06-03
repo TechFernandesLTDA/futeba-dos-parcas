@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -94,13 +95,24 @@ import { CreateGameScreen } from './CreateGameScreen';
 
 const theme = createTheme();
 
+// CreateGameScreen usa useRecentLocations() -> useQuery, que exige um
+// QueryClientProvider na árvore. O wrapper global do setup.ts (configure({ wrapper }))
+// é no-op para render() no RTL v16, então o provider precisa ser explícito aqui. #2330
 function renderCreateGameScreen() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, staleTime: 0, gcTime: 0 },
+      mutations: { retry: false },
+    },
+  });
   return render(
-    <ThemeProvider theme={theme}>
-      <MemoryRouter initialEntries={['/game/create']}>
-        <CreateGameScreen />
-      </MemoryRouter>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <MemoryRouter initialEntries={['/game/create']}>
+          <CreateGameScreen />
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -109,27 +121,39 @@ describe('CreateGameScreen', () => {
     vi.clearAllMocks();
   });
 
-  it('renderiza o título "Criar Jogo"', () => {
+  it('renderiza o título "Criar Jogo" no header', () => {
     renderCreateGameScreen();
-    expect(screen.getByText('Criar Jogo')).toBeInTheDocument();
+    // O FormScaffold renderiza o título como heading (h1); o texto "Criar Jogo"
+    // também aparece no botão de submit, então usamos role=heading para isolar.
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Criar Jogo' }),
+    ).toBeInTheDocument();
   });
 
-  it('exibe as etapas do stepper', () => {
+  it('exibe as seções do formulário de página única', () => {
     renderCreateGameScreen();
-    expect(screen.getByText('Local e Data')).toBeInTheDocument();
-    expect(screen.getByText('Configurações')).toBeInTheDocument();
-    expect(screen.getByText('Pagamento')).toBeInTheDocument();
-    expect(screen.getByText('Regras')).toBeInTheDocument();
+    // Formulário single-page (#2250): seções em vez de stepper.
+    expect(screen.getByText('📍 Local')).toBeInTheDocument();
+    expect(screen.getByText('📅 Data e Horário')).toBeInTheDocument();
+    expect(screen.getByText('⚙️ Configurações')).toBeInTheDocument();
+    expect(screen.getByText('💰 Pagamento')).toBeInTheDocument();
+    expect(screen.getByText('📋 Regras')).toBeInTheDocument();
   });
 
-  it('exibe botão de próximo na primeira etapa', () => {
+  it('exibe o botão de submit "Criar Jogo"', () => {
     renderCreateGameScreen();
-    expect(screen.getByRole('button', { name: /próximo/i })).toBeInTheDocument();
+    // Botão sticky de submit no rodapé do formulário.
+    expect(
+      screen.getByRole('button', { name: 'Criar Jogo' }),
+    ).toBeInTheDocument();
   });
 
-  it('renderiza campos da primeira etapa: data, horário, local', () => {
+  it('renderiza o seletor de quadra/local na seção de local', () => {
     renderCreateGameScreen();
-    expect(screen.getByRole('combobox', { name: /quadra/i })).toBeInTheDocument();
-    expect(screen.getByText('Próximo')).toBeInTheDocument();
+    // Seletor "Quadra / Local" (games.create.fieldOrLocation) — único combobox
+    // com esse rótulo já que useGroups está mockado vazio (sem select de grupo).
+    expect(
+      screen.getByRole('combobox', { name: /quadra \/ local/i }),
+    ).toBeInTheDocument();
   });
 });
