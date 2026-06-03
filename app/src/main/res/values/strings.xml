@@ -2047,6 +2047,12 @@ subir no ranking!</string>
     <string name="create_game_label_visibility">Visibilidade</string>
     <string name="create_game_hint_price">Preço por jogador</string>
     <string name="create_game_hint_max_players">Max Jogadores</string>
+    <string name="create_game_label_max_goalkeepers">Máx. goleiros</string>
+    <string name="create_game_label_number_of_teams">Número de times</string>
+    <string name="create_game_cd_increment_goalkeepers">Aumentar máximo de goleiros</string>
+    <string name="create_game_cd_decrement_goalkeepers">Diminuir máximo de goleiros</string>
+    <string name="create_game_cd_increment_teams">Aumentar número de times</string>
+    <string name="create_game_cd_decrement_teams">Diminuir número de times</string>
     <string name="create_game_button_cancel">Cancelar</string>
     <string name="create_game_button_schedule">Agendar</string>
     <string name="create_game_cd_location_icon">Local</string>

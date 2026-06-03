@@ -28,6 +28,7 @@ import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.model.Location
+import com.futebadosparcas.domain.validation.GameValidation
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.toKmpField
 import java.time.LocalDate
@@ -73,6 +74,8 @@ fun CreateGameScreen(
     val availableGroups by viewModel.availableGroups.collectAsStateWithLifecycle()
     val selectedGroup by viewModel.selectedGroup.collectAsStateWithLifecycle()
     val selectedVisibility by viewModel.selectedVisibility.collectAsStateWithLifecycle()
+    val maxGoalkeepers by viewModel.maxGoalkeepers.collectAsStateWithLifecycle()
+    val numberOfTeams by viewModel.numberOfTeams.collectAsStateWithLifecycle()
     val timeConflicts by viewModel.timeConflicts.collectAsStateWithLifecycle()
     val isEditing by viewModel.isEditing.collectAsStateWithLifecycle()
 
@@ -178,6 +181,10 @@ fun CreateGameScreen(
                 maxPlayersError = null
             },
             maxPlayersError = maxPlayersError,
+            maxGoalkeepers = maxGoalkeepers,
+            onMaxGoalkeepersChange = { viewModel.setMaxGoalkeepers(it) },
+            numberOfTeams = numberOfTeams,
+            onNumberOfTeamsChange = { viewModel.setNumberOfTeams(it) },
             selectedDate = selectedDate,
             onDateClick = {
                 hapticManager.tick()
@@ -348,6 +355,10 @@ private fun CreateGameContent(
     maxPlayers: String,
     onMaxPlayersChange: (String) -> Unit,
     maxPlayersError: String?,
+    maxGoalkeepers: Int,
+    onMaxGoalkeepersChange: (Int) -> Unit,
+    numberOfTeams: Int,
+    onNumberOfTeamsChange: (Int) -> Unit,
     selectedDate: LocalDate?,
     onDateClick: () -> Unit,
     selectedTime: LocalTime?,
@@ -736,6 +747,36 @@ private fun CreateGameContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Maximo de goleiros e numero de times (paridade com web, spec #2400)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            NumberStepper(
+                label = stringResource(R.string.create_game_label_max_goalkeepers),
+                value = maxGoalkeepers,
+                min = GameValidation.MIN_GOALKEEPERS,
+                max = GameValidation.MAX_GOALKEEPERS,
+                onValueChange = onMaxGoalkeepersChange,
+                decrementCd = stringResource(R.string.create_game_cd_decrement_goalkeepers),
+                incrementCd = stringResource(R.string.create_game_cd_increment_goalkeepers),
+                modifier = Modifier.weight(1f)
+            )
+
+            NumberStepper(
+                label = stringResource(R.string.create_game_label_number_of_teams),
+                value = numberOfTeams,
+                min = GameValidation.MIN_NUMBER_OF_TEAMS,
+                max = GameValidation.MAX_NUMBER_OF_TEAMS,
+                onValueChange = onNumberOfTeamsChange,
+                decrementCd = stringResource(R.string.create_game_cd_decrement_teams),
+                incrementCd = stringResource(R.string.create_game_cd_increment_teams),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Botões de ação
@@ -768,6 +809,67 @@ private fun CreateGameContent(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+/**
+ * Stepper numerico (-/+) para ranges pequenos, evitando teclado.
+ * Botoes respeitam touch target de 48dp e desabilitam nos limites.
+ */
+@Composable
+private fun NumberStepper(
+    label: String,
+    value: Int,
+    min: Int,
+    max: Int,
+    onValueChange: (Int) -> Unit,
+    decrementCd: String,
+    incrementCd: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { if (value > min) onValueChange(value - 1) },
+                enabled = value > min,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Remove,
+                    contentDescription = decrementCd,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Text(
+                text = value.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            IconButton(
+                onClick = { if (value < max) onValueChange(value + 1) },
+                enabled = value < max,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = incrementCd,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
     }
 }
 

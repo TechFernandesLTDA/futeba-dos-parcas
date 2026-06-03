@@ -230,6 +230,86 @@ describe("games — criação", () => {
       })
     );
   });
+
+  // #2400 — paridade de validação number_of_teams (2..4), tolerante a ausência
+  it("Player pode criar jogo com number_of_teams=4 (no máximo válido)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("games/game-teams-valid").set({
+        title: "Times válidos",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        number_of_teams: 4,
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+        group_id: null,
+        co_organizers: [],
+      })
+    );
+  });
+
+  it("Player NÃO pode criar jogo com number_of_teams=5 (acima do máximo=4)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-teams-invalid-high").set({
+        title: "Times demais",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        number_of_teams: 5, // inválido (máximo é 4)
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+      })
+    );
+  });
+
+  it("Player NÃO pode criar jogo com number_of_teams=1 (abaixo do mínimo=2)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-teams-invalid-low").set({
+        title: "Times de menos",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        number_of_teams: 1, // inválido (mínimo é 2)
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+      })
+    );
+  });
+
+  it("Player pode criar jogo sem number_of_teams (campo tolerante a ausência — retrocompat)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("games/game-teams-absent").set({
+        title: "Sem campo de times",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+        group_id: null,
+        co_organizers: [],
+      })
+    );
+  });
 });
 
 // ============================================================
