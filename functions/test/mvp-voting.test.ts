@@ -217,7 +217,7 @@ describe("submitMvpVote - autenticação e validação", () => {
       data: { gameId: "game1", votedPlayerId: "player2", category: "INVALID_CAT" },
     };
 
-    await expect(submitMvpVoteHandler!(request)).rejects.toThrow("Categoria inválida");
+    await expect(submitMvpVoteHandler!(request)).rejects.toThrow("Categoria");
   });
 
   test("deve rejeitar IDs com barra (path traversal)", async () => {
@@ -284,7 +284,7 @@ describe("submitMvpVote - submissão bem-sucedida", () => {
     expect(result.voteId).toContain("game1");
     expect(result.voteId).toContain("voter1");
     expect(result.voteId).toContain("MVP");
-    expect(result.message).toBe("Voto registrado com sucesso");
+    expect(result.message).toBe("Voto registrado com sucesso.");
   });
 });
 

@@ -276,7 +276,7 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
     document: "games/{gameId}",
     region: FUNCTION_REGION,
     memory: "512MiB",
-    timeoutSeconds: 120,
+    timeoutSeconds: 180,
   },
   async (event) => {
     const before = event.data?.before?.data();
@@ -327,13 +327,15 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
             ]);
           const earnedIds = new Set(earnedSnap.docs.map((d) => d.id));
 
+          const batch = db().batch();
+          const earnedBadges: BadgeTrigger[] = [];
           for (const trigger of BADGE_TRIGGERS) {
             try {
               if (earnedIds.has(trigger.badgeId)) continue;
 
               const earned = await trigger.check(userId, userDoc, allUserConfirmationsSnap);
               if (earned) {
-                await badgesRef.doc(trigger.badgeId).set({
+                const badgeData = {
                   badge_id: trigger.badgeId,
                   name: trigger.name,
                   icon: trigger.icon,
@@ -341,23 +343,28 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
                   type: trigger.badgeId,
                   earned_at: admin.firestore.FieldValue.serverTimestamp(),
                   earned: true,
-                });
-
+                };
+                batch.set(badgesRef.doc(trigger.badgeId), badgeData);
+                earnedBadges.push(trigger);
                 logger.info("Badge earned", {userId, badgeId: trigger.badgeId});
-
-                try {
-                  await sendNotificationToUser(userId, {
-                    title: `🏆 ${trigger.name}`,
-                    body: trigger.description,
-                    type: NotificationType.ACHIEVEMENT,
-                    data: {badgeId: trigger.badgeId},
-                  });
-                } catch (notifErr) {
-                  logger.error("Failed to send badge notification", {userId, badgeId: trigger.badgeId, notifErr});
-                }
               }
             } catch (err) {
               logger.error("Error checking badge", {userId, badgeId: trigger.badgeId, err});
+            }
+          }
+          if (earnedBadges.length > 0) {
+            await batch.commit();
+            for (const trigger of earnedBadges) {
+              try {
+                await sendNotificationToUser(userId, {
+                  title: `🏆 ${trigger.name}`,
+                  body: trigger.description,
+                  type: NotificationType.ACHIEVEMENT,
+                  data: {badgeId: trigger.badgeId},
+                });
+              } catch (notifErr) {
+                logger.error("Failed to send badge notification", {userId, badgeId: trigger.badgeId, notifErr});
+              }
             }
           }
         })

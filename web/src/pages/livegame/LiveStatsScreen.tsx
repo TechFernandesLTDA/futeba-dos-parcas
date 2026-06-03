@@ -127,7 +127,7 @@ export const LiveStatsScreen: React.FC = () => {
       } catch (error) {
         logger.error('Error fetching stats:', error);
         if (!cancelled) {
-          setError('Erro ao carregar estatísticas. Tente novamente.');
+          setError(t('feedback.statistics.loadLiveError'));
           showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
         }
       } finally {
@@ -139,7 +139,7 @@ export const LiveStatsScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -178,14 +178,14 @@ export const LiveStatsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
             Estatísticas ao Vivo
           </Typography>
         </Box>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="fullWidth" aria-label="Categorias de estatísticas ao vivo">
+        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="fullWidth" aria-label={t('a11y.liveStatsCategories')}>
           <Tab label="Placar" />
           <Tab label="Eventos" />
           <Tab label="Jogadores" />
@@ -270,9 +270,9 @@ export const LiveStatsScreen: React.FC = () => {
 
         {tabValue === 1 && (
           <Card>
-            <List disablePadding aria-label="Eventos do jogo">
+            <List disablePadding aria-label={t('a11y.gameEvents')}>
               {events.length === 0 ? (
-                <EmptyState icon={<SoccerIcon />} title="Nenhum evento ainda" animate={false} sx={{ py: 4 }} />
+                <EmptyState icon={<SoccerIcon />} title={t('empty.noEventYet')} animate={false} sx={{ py: 4 }} />
               ) : (
                 events.map((event, index) => (
                   <Box key={event.id}>

@@ -85,13 +85,13 @@ export const WelcomeScreen: React.FC = () => {
         </Button>
       </Box>
 
-      <Typography variant="caption" sx={{ mt: 4, opacity: 0.7 }}>
+      <Typography variant="caption" sx={{ mt: 4 }}>
         {t('welcome.termsPrefix')}{' '}
-        <Link href="/terms_of_service.html" color="primary" underline="hover">
+        <Link href="/terms_of_service.html" underline="always" sx={{ color: 'primary.contrastText', fontWeight: 600 }}>
           {t('onboarding.termsOfUse')}
         </Link>
         {' '}{t('onboarding.termsConnector')}{' '}
-        <Link href="/privacy_policy.html" color="primary" underline="hover">
+        <Link href="/privacy_policy.html" underline="always" sx={{ color: 'primary.contrastText', fontWeight: 600 }}>
           {t('onboarding.privacyPolicy')}
         </Link>
       </Typography>

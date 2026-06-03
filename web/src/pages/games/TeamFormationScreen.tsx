@@ -163,7 +163,7 @@ export const TeamFormationScreen: React.FC = () => {
       } catch (error) {
         logger.error('Error fetching game:', error);
         if (!cancelled) {
-          setError('Erro ao carregar dados. Tente novamente.');
+          setError(t('feedback.generic.loadDataError'));
           showErrorRef.current('Erro ao carregar dados. Tente novamente.');
         }
       } finally {
@@ -175,7 +175,7 @@ export const TeamFormationScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   const shuffleTeams = () => {
     const allPlayers = [...teamA, ...teamB];
@@ -377,7 +377,7 @@ export const TeamFormationScreen: React.FC = () => {
           <IconButton onClick={shuffleTeams} aria-label={t('games.sortTeams')}>
             <ShuffleIcon />
           </IconButton>
-          <IconButton onClick={handleSaveTeams} disabled={saving} aria-label="Salvar times">
+          <IconButton onClick={handleSaveTeams} disabled={saving} aria-label={t('a11y.saveTeams')}>
             <SaveIcon />
           </IconButton>
         </Box>

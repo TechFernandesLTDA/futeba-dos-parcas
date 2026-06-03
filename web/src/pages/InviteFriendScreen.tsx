@@ -59,10 +59,10 @@ export const InviteFriendScreen: React.FC = () => {
   const handleCopy = useCallback(() => {
     if (!inviteLink) return;
     navigator.clipboard.writeText(inviteLink).then(
-      () => showSuccess('Link copiado! Compartilhe com seus amigos.'),
-      () => showError('Erro ao copiar link.'),
+      () => showSuccess(t('feedback.share.linkCopiedFriends')),
+      () => showError(t('feedback.share.copyLinkError')),
     );
-  }, [inviteLink, showSuccess, showError]);
+  }, [inviteLink, showSuccess, showError, t]);
 
   const handleShare = useCallback(() => {
     if (!inviteLink) return;
@@ -74,18 +74,18 @@ export const InviteFriendScreen: React.FC = () => {
       }).catch((err) => {
         // #2281/#2290: ignora cancelamento da share sheet; reporta demais erros.
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        showError('Erro ao compartilhar');
+        showError(t('feedback.share.shareError'));
       });
     } else {
       handleCopy();
     }
-  }, [inviteLink, handleCopy, showError]);
+  }, [inviteLink, handleCopy, showError, t]);
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
       const result = await generateMyInviteCode();
-      showSuccess('Código de convite gerado!');
+      showSuccess(t('feedback.groups.inviteCodeGenerated'));
       if (user) {
         user.inviteCode = result.data.inviteCode;
         window.location.reload();
@@ -100,7 +100,7 @@ export const InviteFriendScreen: React.FC = () => {
   return (
     <Container maxWidth="sm" sx={{ py: 3 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label="Voltar">
+        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
         </IconButton>
         <Typography variant="h6" fontWeight="bold" flex={1}>
@@ -183,7 +183,7 @@ export const InviteFriendScreen: React.FC = () => {
               readOnly: true,
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={handleCopy} aria-label="Copiar link">
+                  <IconButton onClick={handleCopy} aria-label={t('tooltip.copyLink')}>
                     <CopyIcon />
                   </IconButton>
                 </InputAdornment>

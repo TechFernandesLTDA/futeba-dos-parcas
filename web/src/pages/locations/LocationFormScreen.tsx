@@ -34,6 +34,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Location, FieldType, FIELD_TYPE_CONFIG } from '../../types/location';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { createLogger } from '../../utils/logger';
+import { syncFieldOwnerClaim } from '../../services/cloudFunctions';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('LocationFormScreen');
@@ -194,7 +195,7 @@ export const LocationFormScreen: React.FC = () => {
 
   const captureGeolocation = () => {
     if (!navigator.geolocation) {
-      showError('Geolocalização não suportada pelo navegador.');
+      showError(t('feedback.location.geolocationUnsupported'));
       return;
     }
     setGeoLoading(true);
@@ -205,12 +206,12 @@ export const LocationFormScreen: React.FC = () => {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         }));
-        showSuccess('Coordenadas capturadas com sucesso!');
+        showSuccess(t('feedback.location.coordinatesSuccess'));
         setGeoLoading(false);
       },
       (err) => {
         logger.error('Erro ao capturar geolocalização:', err);
-        showError('Erro ao capturar localização. Verifique as permissões.');
+        showError(t('feedback.location.captureError'));
         setGeoLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -260,7 +261,7 @@ export const LocationFormScreen: React.FC = () => {
 
       if (isEdit && locationId) {
         await updateDoc(doc(db, 'locations', locationId), payload);
-        showSuccess('Local atualizado com sucesso!');
+        showSuccess(t('feedback.location.updateSuccess'));
         navigate(`/location/${locationId}`);
       } else {
         const batch = writeBatch(db);
@@ -305,16 +306,17 @@ export const LocationFormScreen: React.FC = () => {
         }
 
         await batch.commit();
-        showSuccess('Local criado com sucesso!');
+        showSuccess(t('feedback.location.createSuccess'));
         navigate(`/location/${newRef.id}`);
       }
     } catch (err) {
       logger.error('Erro ao salvar local:', err);
       if (err instanceof FirebaseError && err.code === 'permission-denied') {
-        showError('Sua conta não tem permissão para cadastrar quadras. Contate o suporte.');
+        syncFieldOwnerClaim().catch(() => {});
+        showError(t('feedback.location.noPermissionFields'));
         return;
       }
-      showError('Erro ao salvar local. Tente novamente.');
+      showError(t('feedback.location.saveError'));
     } finally {
       setLoading(false);
     }
@@ -450,8 +452,8 @@ export const LocationFormScreen: React.FC = () => {
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
-                        if (!file.type.startsWith('image/')) { showError('Apenas imagens são aceitas.'); return; }
-                        if (file.size > 5 * 1024 * 1024) { showError('Imagem muito grande (máx 5MB).'); return; }
+                        if (!file.type.startsWith('image/')) { showError(t('feedback.location.onlyImages')); return; }
+                        if (file.size > 5 * 1024 * 1024) { showError(t('feedback.location.imageTooLarge')); return; }
                         const url = URL.createObjectURL(file);
                         setForm((prev) => ({ ...prev, photoFile: file, photoPreview: url }));
                       }}
@@ -468,7 +470,7 @@ export const LocationFormScreen: React.FC = () => {
                       <Box
                         component="img"
                         src={form.photoPreview}
-                        alt="Preview"
+                        alt={t('alt.preview')}
                         sx={{ mt: 1, width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }}
                       />
                     )}
@@ -575,7 +577,7 @@ export const LocationFormScreen: React.FC = () => {
                     fullWidth
                     value={form.website}
                     onChange={(e) => handleChange('website', e.target.value)}
-                    placeholder="https://"
+                    placeholder={t('placeholder.enterUrl')}
                     type="url"
                     error={!!errors.website}
                     helperText={errors.website}

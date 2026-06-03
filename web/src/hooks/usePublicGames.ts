@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+
   collection,
   query,
   where,
@@ -18,6 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 function parsePublicGame(id: string, raw: Record<string, unknown>): Game {
   const converted = snakeToCamel(raw);
@@ -98,13 +100,14 @@ export function usePublicGames(variant: PublicGamesVariant = 'open') {
 export function useJoinPublicGame() {
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const uid = user?.id ?? '';
   const userName = user?.name ?? '';
 
   return useMutation({
     mutationFn: async (game: Game) => {
-      if (!uid || !userName) throw new Error('Você precisa estar logado.');
+      if (!uid || !userName) throw new Error(t('feedback.publicGames.loginRequired'));
 
       const gameId = game.id;
       const gameRef = doc(db, 'games', gameId);
@@ -118,7 +121,7 @@ export function useJoinPublicGame() {
       });
     },
     onSuccess: (_, game) => {
-      showSuccess(`Você entrou na pelada "${game.locationName}"!`);
+      showSuccess(t('feedback.publicGames.joinSuccess', { location: game.locationName }));
       queryClient.invalidateQueries({ queryKey: ['public-games'] });
     },
     onError: (err) => {

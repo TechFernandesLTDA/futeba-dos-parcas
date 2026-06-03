@@ -262,7 +262,7 @@ export const SettingsScreen: React.FC = () => {
                       <ListItemIcon>
                         <TrophyIcon />
                       </ListItemIcon>
-                      <ListItemText primary={t('settings.gamification')} secondary={t('settings.gamificationDesc')} />
+                      <ListItemText primary={t('settings.gamificationTitle')} secondary={t('settings.gamificationDesc')} />
                     </ListItemButton>
                     <Divider />
                   </>

@@ -126,7 +126,7 @@ export const CashboxScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in cashbox transactions listener:', err);
-        setError('Erro ao carregar transações do caixa.');
+        setError(t('feedback.cashbox.loadError'));
         setLoading(false);
       }
     );
@@ -152,7 +152,7 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId, user, retryCount]);
+  }, [groupId, user, retryCount, t]);
 
   const handleAddTransaction = useCallback(async () => {
     const parsedAmount = parseFloat(amount);
@@ -270,11 +270,11 @@ export const CashboxScreen: React.FC = () => {
         ) : transactions.length === 0 ? (
           <EmptyState
             icon={<HistoryIcon />}
-            title="Nenhuma transação"
-            description="Adicione entradas e saídas para controlar o caixa"
+            title={t('empty.noTransaction')}
+            description={t('empty.noTransactionDesc')}
           />
         ) : (
-          <List disablePadding aria-label="Histórico de transações">
+          <List disablePadding aria-label={t('a11y.transactionHistory')}>
             {transactions.map((transaction, index) => (
               <Box key={transaction.id}>
                 {index > 0 && <Divider />}

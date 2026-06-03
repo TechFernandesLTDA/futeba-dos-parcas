@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import {
+
   collection,
   doc,
   getDocs,
@@ -10,10 +11,12 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useAutoInviteMembers');
 
 export function useAutoInviteMembers() {
+  const { t } = useTranslation();
   const { firebaseUser, user } = useAuth();
   const { showError } = useToast();
 
@@ -69,11 +72,11 @@ export function useAutoInviteMembers() {
         return inviteCount;
       } catch (err) {
         logger.error('Error auto-inviting members:', err);
-        showError('Erro ao convidar membros do grupo automaticamente.');
+        showError(t('feedback.groups.autoInviteError'));
         return 0;
       }
     },
-    [firebaseUser, user, showError],
+    [firebaseUser, user, showError, t],
   );
 
   return { autoInvite };

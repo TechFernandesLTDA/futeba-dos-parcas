@@ -57,7 +57,8 @@ describe('DiscoverGroupsScreen', () => {
 
   it('renderiza campo de busca', () => {
     renderWithProviders(<DiscoverGroupsScreen />);
-    expect(screen.getByPlaceholderText('Buscar por nome ou descrição')).toBeInTheDocument();
+    // t() retorna a chave em ambiente de teste (mock passthrough)
+    expect(screen.getByPlaceholderText('placeholder.searchNameOrDescription')).toBeInTheDocument();
   });
 
   it('renderiza lista de grupos oficiais', () => {
@@ -69,7 +70,8 @@ describe('DiscoverGroupsScreen', () => {
   it('filtra grupos por nome', async () => {
     const user = userEvent.setup();
     renderWithProviders(<DiscoverGroupsScreen />);
-    const searchInput = screen.getByPlaceholderText('Buscar por nome ou descrição');
+    // t() retorna a chave em ambiente de teste (mock passthrough)
+    const searchInput = screen.getByPlaceholderText('placeholder.searchNameOrDescription');
     await user.type(searchInput, 'Sábado');
     expect(screen.queryByText('Pelada de Terça')).not.toBeInTheDocument();
     expect(screen.getByText('Futebol Sábado')).toBeInTheDocument();
@@ -83,12 +85,14 @@ describe('DiscoverGroupsScreen', () => {
 
   it('renderiza botão de voltar', () => {
     renderWithProviders(<DiscoverGroupsScreen />);
-    expect(screen.getByLabelText('Voltar')).toBeInTheDocument();
+    // t() retorna a chave em ambiente de teste (mock passthrough) → 'a11y.back'
+    expect(screen.getByLabelText('a11y.back')).toBeInTheDocument();
   });
 
   it('renderiza botão de atualizar', () => {
     renderWithProviders(<DiscoverGroupsScreen />);
-    expect(screen.getByLabelText('Atualizar')).toBeInTheDocument();
+    // t() retorna a chave em ambiente de teste (mock passthrough) → 'a11y.refresh'
+    expect(screen.getByLabelText('a11y.refresh')).toBeInTheDocument();
   });
 
   it('mostra descrição do grupo quando disponível', () => {

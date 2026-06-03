@@ -281,7 +281,7 @@ export const EditProfileScreen: React.FC = () => {
       }
       if (Date.now() - lastChanged < RATING_RATE_LIMIT_MS) {
         setSaving(false);
-        showError('Aguarde 1 minuto entre alterações de rating.');
+        showError(t('feedback.profile.ratingCooldown'));
         return;
       }
       try {
@@ -311,7 +311,7 @@ export const EditProfileScreen: React.FC = () => {
     // 2) Persiste demais campos do perfil no Firestore
     const trimmedName = formData.name.trim();
     if (!trimmedName) {
-      showError('Nome não pode estar vazio.');
+      showError(t('feedback.profile.nameRequired'));
       setSaving(false);
       return;
     }
@@ -541,7 +541,7 @@ export const EditProfileScreen: React.FC = () => {
               <Typography variant="subtitle1" fontWeight={600}>
                 Habilidades por Posição
               </Typography>
-              <Tooltip title="Ajuste suas habilidades manualmente. O sistema também calcula ratings automáticos baseado nos seus jogos.">
+              <Tooltip title={t('profile.skillsHint')}>
                 <InfoIcon fontSize="small" color="action" />
               </Tooltip>
             </Box>

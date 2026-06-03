@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
+
   collection,
   doc,
   setDoc,
@@ -14,6 +15,7 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useJoinRequests');
 
@@ -44,6 +46,7 @@ export interface JoinRequest {
  *  - cancel(): deleta proprio request (so funciona se PENDING)
  */
 export function useMyJoinRequest(groupId: string | undefined) {
+  const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const uid = firebaseUser?.uid || user?.id;
@@ -104,16 +107,16 @@ export function useMyJoinRequest(groupId: string | undefined) {
         status: 'PENDING',
         requested_at: serverTimestamp(),
       });
-      showSuccess('Solicitação enviada com sucesso!');
+      showSuccess(t('feedback.joinRequests.sendSuccess'));
     } catch (e) {
       const err = e as Error;
       logger.error('requestJoin failed', err);
       setError(err.message);
-      showError('Erro ao solicitar entrada no grupo. Tente novamente.');
+      showError(t('feedback.joinRequests.sendError'));
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, user, showSuccess, showError]);
+  }, [groupId, uid, user, showSuccess, showError, t]);
 
   const cancelRequest = useCallback(async () => {
     if (!groupId || !uid) return;
@@ -121,16 +124,16 @@ export function useMyJoinRequest(groupId: string | undefined) {
     setError(null);
     try {
       await deleteDoc(doc(db, `groups/${groupId}/join_requests/${uid}`));
-      showSuccess('Solicitação cancelada.');
+      showSuccess(t('feedback.joinRequests.cancelSuccess'));
     } catch (e) {
       const err = e as Error;
       logger.error('cancelRequest failed', err);
       setError(err.message);
-      showError('Erro ao cancelar solicitação. Tente novamente.');
+      showError(t('feedback.joinRequests.cancelError'));
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, showSuccess, showError]);
+  }, [groupId, uid, showSuccess, showError, t]);
 
   return {
     request,
@@ -155,6 +158,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
  *  - reject(requesterId): muda status -> REJECTED.
  */
 export function usePendingJoinRequests(groupId: string | undefined) {
+  const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
   const { showError } = useToast();
   const uid = firebaseUser?.uid || user?.id;
@@ -220,10 +224,10 @@ export function usePendingJoinRequests(groupId: string | undefined) {
         const err = e as Error;
         logger.error('approve failed', err);
         setError(err.message);
-        showError('Erro ao aprovar solicitação. Tente novamente.');
+        showError(t('feedback.joinRequests.approveError'));
       }
     },
-    [groupId, uid, showError]
+    [groupId, uid, showError, t]
   );
 
   const reject = useCallback(
@@ -239,10 +243,10 @@ export function usePendingJoinRequests(groupId: string | undefined) {
         const err = e as Error;
         logger.error('reject failed', err);
         setError(err.message);
-        showError('Erro ao rejeitar solicitação. Tente novamente.');
+        showError(t('feedback.joinRequests.rejectError'));
       }
     },
-    [groupId, uid, showError]
+    [groupId, uid, showError, t]
   );
 
   return { requests, loading, error, approve, reject };

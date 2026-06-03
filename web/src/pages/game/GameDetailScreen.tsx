@@ -273,8 +273,6 @@ export const GameDetailScreen: React.FC = () => {
 
     setEditLoading(true);
     try {
-      // Reconstruir dateTime Timestamp pra manter date/time/date_time consistentes
-      // (mesmo padrão de CreateGameScreen.handleSubmit)
       const [year, month, day] = editForm.date.split('-').map(Number);
       const [hours, minutes] = editForm.time.split(':').map(Number);
       const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
@@ -283,7 +281,7 @@ export const GameDetailScreen: React.FC = () => {
       await updateDoc(gameRef, {
         date: editForm.date,
         time: editForm.time,
-        date_time: dateTime,
+        dateTime: dateTime,
         max_players: editForm.maxPlayers,
         rules: editForm.rules,
         updated_at: serverTimestamp(),
@@ -433,8 +431,8 @@ export const GameDetailScreen: React.FC = () => {
                 <ShareIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Adicionar ao Calendário">
-              <IconButton onClick={handleCalendarOpen} aria-label="Adicionar ao Calendário">
+            <Tooltip title={t('tooltip.addToCalendar')}>
+              <IconButton onClick={handleCalendarOpen} aria-label={t('a11y.addToCalendar')}>
                 <CalendarIcon />
               </IconButton>
             </Tooltip>
@@ -466,10 +464,10 @@ export const GameDetailScreen: React.FC = () => {
             </Menu>
             {canManage && (
               <>
-                <Tooltip title="Duplicar Jogo">
+                <Tooltip title={t('tooltip.duplicateGame')}>
                   <IconButton
                     onClick={handleDuplicateGame}
-                    aria-label="Duplicar Jogo"
+                    aria-label={t('a11y.duplicateGame')}
                     disabled={duplicateGameLoading}
                   >
                     {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon />}

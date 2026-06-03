@@ -246,7 +246,7 @@ export const PostGameReportScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching report:', error);
-          setError('Erro ao carregar dados. Tente novamente.');
+          setError(t('feedback.generic.loadDataError'));
           showErrorRef.current('Erro ao carregar dados. Tente novamente.');
         }
       } finally {
@@ -256,7 +256,7 @@ export const PostGameReportScreen: React.FC = () => {
 
     fetchReport();
     return () => { cancelled = true; };
-  }, [gameId, user?.id, retryCount]);
+  }, [gameId, user?.id, retryCount, t]);
 
   const handleShare = async () => {
     if (!stats) return;
@@ -268,14 +268,14 @@ export const PostGameReportScreen: React.FC = () => {
         await navigator.share({ title: 'Futeba dos Parças', text, url: window.location.href });
       } else {
         await navigator.clipboard.writeText(text);
-        showSuccess('Resultado copiado para a área de transferência!');
+        showSuccess(t('feedback.share.resultCopied'));
       }
     } catch {
       try {
         await navigator.clipboard.writeText(text);
-        showSuccess('Resultado copiado!');
+        showSuccess(t('feedback.share.resultCopied'));
       } catch {
-        showError('Não foi possível compartilhar.');
+        showError(t('feedback.share.cannotShare'));
       }
     }
   };
@@ -292,8 +292,8 @@ export const PostGameReportScreen: React.FC = () => {
     return (
       <EmptyState
         icon={<ReportIcon />}
-        title="Relatório não disponível"
-        description="O relatório deste jogo ainda não foi gerado."
+        title={t('empty.noReportAvailable')}
+        description={t('empty.noReportAvailableDesc')}
       />
     );
   }
@@ -310,13 +310,13 @@ export const PostGameReportScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Relatório do Jogo
           </Typography>
-          <IconButton onClick={handleShare} aria-label="Compartilhar">
+          <IconButton onClick={handleShare} aria-label={t('a11y.share')}>
             <ShareIcon />
           </IconButton>
         </Box>

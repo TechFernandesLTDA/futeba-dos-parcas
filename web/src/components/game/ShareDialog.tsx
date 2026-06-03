@@ -66,10 +66,10 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, game })
     try {
       await navigator.clipboard.writeText(gameUrl);
       setCopied(true);
-      showSuccess('Link copiado!');
+      showSuccess(t('feedback.share.linkCopied'));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      showSuccess('Link copiado!');
+      showSuccess(t('feedback.share.linkCopied'));
     }
   };
 

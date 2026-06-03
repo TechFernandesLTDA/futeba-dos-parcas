@@ -27,6 +27,7 @@ import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
 import {
+
   HomeScreenSkeleton,
   GameDetailSkeleton,
   GroupDetailSkeleton,
@@ -47,7 +48,9 @@ import {
 const SplashScreen = lazy(() => import('./pages/splash/SplashScreen').then(m => ({ default: m.SplashScreen })));
 const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
 import { VerificationBanner } from './components/auth/VerificationBanner';
+import { useTranslation } from 'react-i18next';
 const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
+
 const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
 const AppGuideScreen = lazy(() => import('./pages/onboarding/AppGuideScreen').then(m => ({ default: m.AppGuideScreen })));
@@ -154,6 +157,7 @@ const spinnerKeyframes = {
 };
 
 function RouteFallback() {
+  const { t } = useTranslation();
   const location = useLocation();
   const path = location.pathname;
 
@@ -185,7 +189,7 @@ function RouteFallback() {
           ...spinnerKeyframes,
         }}
         role="status"
-        aria-label="Carregando página"
+        aria-label={t('a11y.loadingPage')}
       />
     </Box>
   );
@@ -307,6 +311,7 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser, loading } = useAuth();
   const { isMember, loading: memberLoading } = useIsGroupMember(groupId);
   const { showError } = useToast();
+  const { t } = useTranslation();
   const [notified, setNotified] = useState(false);
 
   if (loading) return <SplashLoadingFallback />;
@@ -321,7 +326,7 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   if (!isMember) {
     if (!notified) {
       // Feedback explícito para usuário entender o redirect
-      showError('Você precisa ser membro do grupo para acessar essa página.');
+      showError(t('feedback.app.mustBeGroupMember'));
       setNotified(true);
     }
     return <Navigate to={`/group/${groupId}`} replace />;
@@ -554,7 +559,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
             breadcrumbs={breadcrumbs}
           />
         )}
-        <MobileBottomNav>{children}</MobileBottomNav>
+        {user ? <MobileBottomNav>{children}</MobileBottomNav> : children}
       </Box>
     </Box>
   );

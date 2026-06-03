@@ -26,6 +26,7 @@ vi.mock('react-i18next', () => ({
         'nav.notifications': 'Notificações',
         'nav.profile': 'Perfil',
         'common.appName': 'Futeba',
+        'a11y.mainNav': 'Navegação principal',
       };
       return map[key] || key;
     },

@@ -70,7 +70,7 @@ export function AppSidebar() {
             flexDirection: 'column',
           },
         }}
-        aria-label="Navegação principal"
+        aria-label={t('a11y.mainNav')}
       >
         <Box
           sx={{ p: 1.5, cursor: 'pointer', display: 'flex', justifyContent: 'center' }}
@@ -85,7 +85,7 @@ export function AppSidebar() {
             }
           }}
         >
-          <AppLogo size="small" shape="circle" alt="Futeba dos Parças" />
+          <AppLogo size="small" shape="circle" alt={t('alt.logo')} />
         </Box>
         <List sx={{ pt: 1 }}>
           {NAV_ITEMS.map((item, idx) => {
@@ -154,7 +154,7 @@ export function AppSidebar() {
             flexDirection: 'column',
           },
         }}
-        aria-label="Navegação principal"
+        aria-label={t('a11y.mainNav')}
       >
         <Box
           sx={{
@@ -175,7 +175,7 @@ export function AppSidebar() {
             }
           }}
         >
-          <AppLogo size="small" shape="circle" alt="Futeba dos Parças" sx={{ width: 28, height: 28 }} />
+          <AppLogo size="small" shape="circle" alt={t('alt.logo')} sx={{ width: 28, height: 28 }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>

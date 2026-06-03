@@ -6,17 +6,6 @@ import {FUNCTION_REGION} from "../constants";
 const db = () => admin.firestore();
 
 /**
- * Retorna a chave do mes no formato YYYY-MM
- * @param {Date} date - Data base
- * @return {string} Chave do mes
- */
-function getMonthKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
-}
-
-/**
  * Retorna o nome do mes em portugues
  * @param {string} monthKey - Chave no formato YYYY-MM
  * @return {string} Nome do mes
@@ -36,8 +25,11 @@ export const startNewSeason = onSchedule(
     region: FUNCTION_REGION,
   },
   async () => {
-    const now = new Date();
-    const monthKey = getMonthKey(now);
+    const todayStr = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    });
+    const [yearStr, monthStr] = todayStr.split("-");
+    const monthKey = `${yearStr}-${monthStr}`;
     // FIX #2199: removida a variável prevMonth não utilizada (+ void prevMonth).
 
     logger.info("Starting new season", {monthKey});
@@ -84,13 +76,14 @@ export const archiveSeason = onSchedule(
     region: FUNCTION_REGION,
   },
   async () => {
-    const lastDay = new Date();
-    const tomorrow = new Date(lastDay);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayStr = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    });
+    const [yearStr, monthStr, dayStr] = todayStr.split("-");
+    const lastDayOfMonth = new Date(Number(yearStr), Number(monthStr), 0).getDate();
+    if (Number(dayStr) !== lastDayOfMonth) return;
 
-    if (tomorrow.getDate() !== 1) return;
-
-    const monthKey = getMonthKey(lastDay);
+    const monthKey = `${yearStr}-${monthStr}`;
     logger.info("Archiving season", {monthKey});
 
     const groupsSnap = await db().collection("official-groups").get();

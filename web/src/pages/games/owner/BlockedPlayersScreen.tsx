@@ -82,7 +82,7 @@ export const BlockedPlayersScreen: React.FC = () => {
 
           // Guard: apenas o dono do jogo pode acessar esta tela
           if (user && user.id !== ownerId) {
-            showError('Apenas o dono do jogo pode acessar esta tela.');
+            showError(t('feedback.games.onlyOwnerAccess'));
             navigate('/', { replace: true });
             return;
           }
@@ -108,7 +108,7 @@ export const BlockedPlayersScreen: React.FC = () => {
         logger.error('Error fetching blocked players:', error);
         if (!cancelled) {
           setLoadError('Erro ao carregar lista de bloqueados.');
-          showError('Erro ao carregar lista de bloqueados.');
+          showError(t('feedback.games.blockedListError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -119,13 +119,13 @@ export const BlockedPlayersScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, navigate, showError, user]);
+  }, [gameId, navigate, showError, user, t]);
 
   const handleUnblock = async (playerId: string) => {
     if (!gameId || !user) return;
 
     if (user.id !== gameOwnerId) {
-      showError('Apenas o dono do jogo pode desbloquear jogadores.');
+      showError(t('feedback.games.onlyOwnerUnblock'));
       return;
     }
 
@@ -135,10 +135,10 @@ export const BlockedPlayersScreen: React.FC = () => {
         blocked_players: arrayRemove(playerId),
       });
       setBlockedPlayers((prev) => prev.filter((p) => p.id !== playerId));
-      showSuccess('Jogador desbloqueado com sucesso.');
+      showSuccess(t('feedback.games.unblockSuccess'));
     } catch (error) {
       logger.error('Error unblocking player:', error);
-      showError('Erro ao desbloquear jogador. Tente novamente.');
+      showError(t('feedback.games.unblockError'));
     } finally {
       setUnblockingId(null);
     }
@@ -169,7 +169,7 @@ export const BlockedPlayersScreen: React.FC = () => {
           </Box>
         ) : (
           <Card>
-            <List disablePadding aria-label="Jogadores bloqueados">
+            <List disablePadding aria-label={t('a11y.blockedPlayers')}>
               {blockedPlayers.map((player, index) => (
                 <Box key={player.id}>
                   {index > 0 && <Divider />}

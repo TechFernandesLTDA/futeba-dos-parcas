@@ -205,7 +205,7 @@ export const PRESENCE_NOTIFICATIONS = {
   ),
 
   GROUP_JOIN_APPROVED: ptTitleBody(
-    "",
+    "Pedido aprovado! 🎉",
     (p) =>
       `Você foi aceito em ${p?.groupName ?? "o grupo"}! ` +
       "Toque pra abrir o grupo e ver os jogos.",

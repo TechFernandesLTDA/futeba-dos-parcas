@@ -170,8 +170,8 @@ const defaultFormData: GameFormData = {
 };
 
 export const CreateGameScreen: React.FC = () => {
-  useDocumentTitle('Criar Jogo');
   const { t } = useTranslation();
+  useDocumentTitle(t('page.title.createGame'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const groupId = searchParams.get('groupId') || undefined;
@@ -504,15 +504,15 @@ export const CreateGameScreen: React.FC = () => {
   const handleDeleteTemplate = async (templateId: string) => {
     try {
       await removeTemplate(templateId);
-      showSuccess('Template removido.');
+      showSuccess(t('feedback.templates.removeSuccess'));
     } catch {
-      showError('Erro ao remover template.');
+      showError(t('feedback.templates.removeError'));
     }
   };
 
   const handleSaveTemplate = async () => {
     if (templateName.trim().length < 3) {
-      showError('O nome do template deve ter pelo menos 3 caracteres.');
+      showError(t('feedback.templates.nameMinLength'));
       return;
     }
     setSavingTemplate(true);
@@ -528,11 +528,11 @@ export const CreateGameScreen: React.FC = () => {
         field_type: formData.fieldType,
         rules: formData.rules || undefined,
       });
-      showSuccess('Template salvo com sucesso!');
+      showSuccess(t('feedback.templates.saveSuccess'));
       setTemplateDialogOpen(false);
       setTemplateName('');
     } catch {
-      showError('Erro ao salvar template.');
+      showError(t('feedback.templates.saveError'));
     } finally {
       setSavingTemplate(false);
     }
@@ -565,7 +565,7 @@ export const CreateGameScreen: React.FC = () => {
     }));
     setDuplicateDialogOpen(false);
     setUserInteracted(true);
-    showSuccess('Jogo anterior carregado. Ajuste a data e horário.');
+    showSuccess(t('feedback.games.previousGameLoaded'));
   };
 
   const formatGameDate = (date: string, time: string) => {
@@ -929,7 +929,7 @@ export const CreateGameScreen: React.FC = () => {
           sx={{ mt: 0.5 }}
           size="small"
           color="primary"
-          aria-label="Criar novo local"
+          aria-label={t('a11y.createNewLocation')}
         >
           <AddLocationIcon />
         </IconButton>
@@ -1326,7 +1326,7 @@ export const CreateGameScreen: React.FC = () => {
         value={formData.streamUrl}
         onChange={(e) => handleInputChange('streamUrl', e.target.value)}
         fullWidth
-        placeholder="https://youtube.com/watch?v=..."
+        placeholder={t('placeholder.enterYoutubeUrl')}
         helperText="Opcional. Cole uma URL do YouTube ou Twitch para transmitir ao vivo."
         inputProps={{ maxLength: 2048 }}
       />

@@ -106,14 +106,14 @@ export const SchedulesScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in schedules listener:', err);
-        setError('Erro ao carregar agendas.');
+        setError(t('feedback.schedules.loadError'));
         showErrorRef.current('Erro ao carregar agendas.');
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [groupId, retryCount]);
+  }, [groupId, retryCount, t]);
 
   const handleToggleActive = async (schedule: Schedule) => {
     // Evita spam-toggle enquanto o write está em andamento (#2300)
@@ -140,7 +140,7 @@ export const SchedulesScreen: React.FC = () => {
     setActionLoading(true);
     try {
       await deleteDoc(doc(db, 'schedules', deletingSchedule.id));
-      showSuccess('Agendamento excluído.');
+      showSuccess(t('feedback.schedules.deleteSuccess'));
       setDeleteDialogOpen(false);
       setDeletingSchedule(null);
     } catch (err: unknown) {
@@ -163,7 +163,7 @@ export const SchedulesScreen: React.FC = () => {
         is_active: true,
         created_at: serverTimestamp(),
       });
-      showSuccess('Agendamento criado com sucesso!');
+      showSuccess(t('feedback.schedules.createSuccess'));
       setDialogOpen(false);
       setNewScheduleName('');
       setNewScheduleDay(0);
@@ -183,7 +183,7 @@ export const SchedulesScreen: React.FC = () => {
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
         backAriaLabel={t('common.back')}
         actions={
-          <IconButton onClick={() => setDialogOpen(true)} aria-label="Criar agendamento">
+          <IconButton onClick={() => setDialogOpen(true)} aria-label={t('a11y.createSchedule')}>
             <AddIcon />
           </IconButton>
         }
@@ -220,7 +220,7 @@ export const SchedulesScreen: React.FC = () => {
           </Box>
         ) : (
           <Card>
-            <List disablePadding aria-label="Lista de agendamentos">
+            <List disablePadding aria-label={t('a11y.scheduleList')}>
               {schedules.map((schedule, index) => (
                 <Box key={schedule.id}>
                   {index > 0 && <Divider />}
@@ -273,7 +273,7 @@ export const SchedulesScreen: React.FC = () => {
               helperText={scheduleNameTouched && !newScheduleName.trim() ? t('validation.required') : ' '}
               fullWidth
               required
-              placeholder="Ex: Futebol de Sábado"
+              placeholder={t('placeholder.enterScheduleName')}
               inputProps={{ maxLength: 100 }}
             />
             <TextField

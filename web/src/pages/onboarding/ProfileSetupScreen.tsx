@@ -82,9 +82,9 @@ export const ProfileSetupScreen: React.FC = () => {
           await updateProfile(firebaseUser, { displayName: originalDisplayName ?? undefined });
         } catch (rollbackErr) {
           logger.error('Rollback do Auth falhou:', rollbackErr);
-          showError('Perfil pode estar inconsistente. Recarregue o app e tente novamente.');
+          showError(t('feedback.auth.profileInconsistent'));
         }
-        showError('Erro ao salvar perfil. Tente novamente.');
+        showError(t('feedback.profile.saveError'));
         return;
       }
 
@@ -93,7 +93,7 @@ export const ProfileSetupScreen: React.FC = () => {
       navigate('/');
     } catch (error) {
       logger.error('Error saving profile:', error);
-      showError('Erro ao salvar perfil. Tente novamente.');
+      showError(t('feedback.profile.saveError'));
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ export const ProfileSetupScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -144,7 +144,7 @@ export const ProfileSetupScreen: React.FC = () => {
                 '&:hover': { bgcolor: 'background.paper' },
               }}
               size="small"
-              aria-label="Alterar foto de perfil"
+              aria-label={t('a11y.changeProfilePhoto')}
             >
               <CameraIcon />
             </IconButton>
@@ -156,7 +156,7 @@ export const ProfileSetupScreen: React.FC = () => {
           label="Seu nome"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Como seus amigos te chamam?"
+          placeholder={t('placeholder.enterNickname')}
           sx={{ mb: 3 }}
           inputProps={{ maxLength: 100 }}
         />
@@ -182,7 +182,7 @@ export const ProfileSetupScreen: React.FC = () => {
           label="Apelido"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          placeholder="Como você quer ser chamado?"
+          placeholder={t('placeholder.enterDisplayName')}
           sx={{ mb: 3 }}
           inputProps={{ maxLength: 20 }}
         />
@@ -195,14 +195,14 @@ export const ProfileSetupScreen: React.FC = () => {
             value={preferredPosition}
             exclusive
             onChange={(_, val) => setPreferredPosition(val)}
-            aria-label="Posição preferida"
+            aria-label={t('a11y.preferredPosition')}
             size="small"
             fullWidth
           >
-            <ToggleButton value="GK" aria-label="Goleiro">GK</ToggleButton>
-            <ToggleButton value="DEF" aria-label="Defensor">DEF</ToggleButton>
-            <ToggleButton value="MID" aria-label="Meio-campo">MID</ToggleButton>
-            <ToggleButton value="STR" aria-label="Atacante">STR</ToggleButton>
+            <ToggleButton value="GK" aria-label={t('a11y.goalkeeper')}>GK</ToggleButton>
+            <ToggleButton value="DEF" aria-label={t('a11y.defender')}>DEF</ToggleButton>
+            <ToggleButton value="MID" aria-label={t('a11y.midfielder')}>MID</ToggleButton>
+            <ToggleButton value="STR" aria-label={t('a11y.forward')}>STR</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 

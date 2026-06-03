@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
+
   collection,
   query,
   where,
@@ -19,12 +20,14 @@ import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import type { Notification, NotificationType } from '../types';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useNotifications');
 
 export type { Notification, NotificationType };
 
 export const useNotifications = (userId?: string) => {
+  const { t } = useTranslation();
   const { showError, showSuccess } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -78,11 +81,11 @@ export const useNotifications = (userId?: string) => {
       await updateDoc(doc(db, 'notifications', notificationId), { read: true });
     } catch (err) {
       logger.error('Error marking notification as read:', err);
-      showError('Erro ao marcar notificação como lida.');
+      showError(t('feedback.notifications.markReadError'));
     } finally {
       setActing(false);
     }
-  }, [showError]);
+  }, [showError, t]);
 
   const markAllAsRead = useCallback(async () => {
     const unread = notifications.filter((n) => !n.read);
@@ -98,11 +101,11 @@ export const useNotifications = (userId?: string) => {
       showSuccess(`${unread.length} notificações marcadas como lidas.`);
     } catch (err) {
       logger.error('Error marking all notifications as read:', err);
-      showError('Erro ao marcar todas as notificações como lidas.');
+      showError(t('feedback.notifications.markAllReadError'));
     } finally {
       setActing(false);
     }
-  }, [notifications, showSuccess, showError]);
+  }, [notifications, showSuccess, showError, t]);
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     setActing(true);
@@ -110,20 +113,20 @@ export const useNotifications = (userId?: string) => {
       await deleteDoc(doc(db, 'notifications', notificationId));
     } catch (err) {
       logger.error('Error deleting notification:', err);
-      showError('Erro ao excluir notificação.');
+      showError(t('feedback.notifications.deleteError'));
     } finally {
       setActing(false);
     }
-  }, [showError]);
+  }, [showError, t]);
 
   const toggleRead = useCallback(async (notificationId: string, currentRead: boolean) => {
     try {
       await updateDoc(doc(db, 'notifications', notificationId), { read: !currentRead });
     } catch (err) {
       logger.error('Error toggling notification read status:', err);
-      showError('Erro ao alterar status da notificação.');
+      showError(t('feedback.notifications.statusError'));
     }
-  }, [showError]);
+  }, [showError, t]);
 
   const restoreNotification = useCallback(async (notification: Notification) => {
     try {
@@ -145,12 +148,12 @@ export const useNotifications = (userId?: string) => {
         action_type: notification.actionType || null,
         created_at: notification.createdAt || serverTimestamp(),
       });
-      showSuccess('Notificação restaurada.');
+      showSuccess(t('feedback.notifications.restoreSuccess'));
     } catch (err) {
       logger.error('Error restoring notification:', err);
-      showError('Erro ao restaurar notificação.');
+      showError(t('feedback.notifications.restoreError'));
     }
-  }, [showSuccess, showError, userId]);
+  }, [showSuccess, showError, userId, t]);
 
   const deleteOldNotifications = useCallback(async (daysOld: number) => {
     if (!userId) return;
@@ -182,9 +185,9 @@ export const useNotifications = (userId?: string) => {
       showSuccess(`${toDelete.length} notificações antigas removidas.`);
     } catch (err) {
       logger.error('Error deleting old notifications:', err);
-      showError('Erro ao remover notificações antigas.');
+      showError(t('feedback.notifications.cleanupError'));
     }
-  }, [userId, showSuccess, showError]);
+  }, [userId, showSuccess, showError, t]);
 
   return {
     notifications,

@@ -141,7 +141,7 @@ export const HeadToHeadScreen: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
           <IconButton
             onClick={goBack}
-            aria-label="Voltar"
+            aria-label={t('a11y.back')}
           >
             <BackIcon />
           </IconButton>
@@ -196,10 +196,10 @@ export const HeadToHeadScreen: React.FC = () => {
                 Buscar Jogador {selectingPlayer}
               </Typography>
               <TextField
-                aria-label="Buscar jogador"
+                aria-label={t('a11y.searchPlayer')}
                 size="small"
                 fullWidth
-                placeholder="Digite o nome do jogador..."
+                placeholder={t('placeholder.enterPlayerName')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoFocus
@@ -216,7 +216,7 @@ export const HeadToHeadScreen: React.FC = () => {
                     </InputAdornment>
                   ) : searchTerm ? (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setSearchTerm('')} aria-label="Limpar busca" sx={{ minWidth: 44, minHeight: 44 }}>
+                      <IconButton size="small" onClick={() => setSearchTerm('')} aria-label={t('a11y.clearSearch')} sx={{ minWidth: 44, minHeight: 44 }}>
                         <CloseIcon fontSize="small" />
                       </IconButton>
                     </InputAdornment>
@@ -264,8 +264,8 @@ export const HeadToHeadScreen: React.FC = () => {
         {canCompare && !loading && !error && !stats && (
           <EmptyState
             icon={<SoccerIcon />}
-            title="Selecione dois jogadores"
-            description="Escolha dois jogadores para ver o histórico de confrontos."
+            title={t('empty.selectTwoPlayers')}
+            description={t('empty.selectTwoPlayersDesc')}
           />
         )}
 
@@ -282,8 +282,8 @@ export const HeadToHeadScreen: React.FC = () => {
         {canCompare && stats && stats.totalGames === 0 && (
           <EmptyState
             icon={<SoccerIcon />}
-            title="Nenhum jogo em comum"
-            description="Esses jogadores ainda não jogaram juntos."
+            title={t('empty.noCommonGames')}
+            description={t('empty.noCommonGamesDesc')}
           />
         )}
 
@@ -454,6 +454,7 @@ const PlayerSlot: React.FC<{
   onSelect: () => void;
   onClear: () => void;
 }> = ({ label, player, onSelect, onClear }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   if (player) {
@@ -467,7 +468,7 @@ const PlayerSlot: React.FC<{
           <Button size="small" variant="outlined" onClick={onSelect} sx={{ fontSize: theme.typography.caption.fontSize, textTransform: 'none', minHeight: 44 }}>
             Trocar
           </Button>
-          <IconButton onClick={onClear} aria-label="Remover">
+          <IconButton onClick={onClear} aria-label={t('a11y.remove')}>
             <CloseIcon sx={{ fontSize: theme.typography.caption.fontSize }} />
           </IconButton>
         </Box>

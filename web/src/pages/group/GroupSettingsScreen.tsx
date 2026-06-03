@@ -101,7 +101,7 @@ export const GroupSettingsScreen: React.FC = () => {
     if (!groupId || !uid) return;
 
     if (isOwner) {
-      showError('O dono não pode sair do grupo. Transfira a propriedade primeiro.');
+      showError(t('feedback.groups.ownerCannotLeave'));
       return;
     }
 
@@ -114,13 +114,13 @@ export const GroupSettingsScreen: React.FC = () => {
       await batch.commit();
 
       logger.info('Usuário saiu do grupo', { groupId, uid });
-      showSuccess('Você saiu do grupo.');
+      showSuccess(t('feedback.groups.leaveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['groups', uid] });
       setLeaveDialogOpen(false);
       navigate('/?tab=2');
     } catch (err) {
       logger.error('Erro ao sair do grupo:', err);
-      showError('Erro ao sair do grupo. Tente novamente.');
+      showError(t('feedback.groups.leaveError'));
     } finally {
       setActionLoading(false);
     }
@@ -134,7 +134,7 @@ export const GroupSettingsScreen: React.FC = () => {
     try {
       await softDeleteGroup({ groupId });
       logger.info('Grupo excluído com sucesso', { groupId });
-      showSuccess('Grupo excluído com sucesso.');
+      showSuccess(t('feedback.groups.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['groups', uid] });
       setDeleteDialogOpen(false);
       navigate('/?tab=2');
@@ -149,7 +149,7 @@ export const GroupSettingsScreen: React.FC = () => {
   const handlePromoteMember = async (memberId: string) => {
     if (!groupId) return;
     if (!isOwner) {
-      showError('Apenas o dono pode promover administradores.');
+      showError(t('feedback.groups.onlyOwnerPromote'));
       return;
     }
     setMemberMenuAnchor(null);
@@ -158,17 +158,17 @@ export const GroupSettingsScreen: React.FC = () => {
       batch.update(doc(db, 'groups', groupId, 'members', memberId), { role: 'ADMIN' as GroupRole });
       batch.update(doc(db, 'users', memberId, 'groups', groupId), { role: 'ADMIN' });
       await batch.commit();
-      showSuccess('Membro promovido a Admin.');
+      showSuccess(t('feedback.groups.promoteSuccess'));
     } catch (err) {
       logger.error('Erro ao promover membro:', err);
-      showError('Erro ao promover membro. Tente novamente.');
+      showError(t('feedback.groups.promoteError'));
     }
   };
 
   const handleDemoteMember = async (memberId: string) => {
     if (!groupId) return;
     if (!isOwner) {
-      showError('Apenas o dono pode rebaixar administradores.');
+      showError(t('feedback.groups.onlyOwnerDemote'));
       return;
     }
     setMemberMenuAnchor(null);
@@ -177,10 +177,10 @@ export const GroupSettingsScreen: React.FC = () => {
       batch.update(doc(db, 'groups', groupId, 'members', memberId), { role: 'MEMBER' as GroupRole });
       batch.update(doc(db, 'users', memberId, 'groups', groupId), { role: 'MEMBER' });
       await batch.commit();
-      showSuccess('Membro rebaixado a Membro.');
+      showSuccess(t('feedback.groups.demoteSuccess'));
     } catch (err) {
       logger.error('Erro ao rebaixar membro:', err);
-      showError('Erro ao rebaixar membro. Tente novamente.');
+      showError(t('feedback.groups.demoteError'));
     }
   };
 
@@ -197,7 +197,7 @@ export const GroupSettingsScreen: React.FC = () => {
       setSelectedMember(null);
     } catch (err) {
       logger.error('Erro ao remover membro:', err);
-      showError('Erro ao remover membro. Tente novamente.');
+      showError(t('feedback.groups.removeMemberError2'));
     } finally {
       setKickLoading(false);
     }
@@ -222,7 +222,7 @@ export const GroupSettingsScreen: React.FC = () => {
       setSelectedMember(null);
     } catch (err) {
       logger.error('Erro ao transferir propriedade:', err);
-      showError('Erro ao transferir propriedade. Tente novamente.');
+      showError(t('feedback.groups.transferOwnershipError'));
     } finally {
       setTransferLoading(false);
     }
@@ -268,7 +268,7 @@ export const GroupSettingsScreen: React.FC = () => {
                 <IconButton
                   size="small"
                   onClick={() => navigate(`/group/${groupId}/edit`)}
-                  aria-label="Editar informações do grupo"
+                  aria-label={t('a11y.editGroupInfo')}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
@@ -400,7 +400,7 @@ export const GroupSettingsScreen: React.FC = () => {
               </Typography>
             </CardContent>
           ) : (
-            <List disablePadding aria-label="Lista de membros do grupo">
+            <List disablePadding aria-label={t('a11y.groupMembersList')}>
               {members.map((member, index) => (
                 <React.Fragment key={member.userId}>
                   <ListItem
@@ -470,7 +470,7 @@ export const GroupSettingsScreen: React.FC = () => {
                   startIcon={<LeaveIcon />}
                   fullWidth
                   onClick={() => setLeaveDialogOpen(true)}
-                  aria-label="Sair do grupo"
+                  aria-label={t('a11y.leaveGroup')}
                 >
                   Sair do Grupo
                 </Button>
@@ -484,7 +484,7 @@ export const GroupSettingsScreen: React.FC = () => {
                   startIcon={<DeleteIcon />}
                   fullWidth
                   onClick={() => setDeleteDialogOpen(true)}
-                  aria-label="Excluir grupo"
+                  aria-label={t('a11y.deleteGroup')}
                 >
                   Excluir Grupo
                 </Button>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Skeleton, useTheme, alpha } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 function SkeletonCard({ children }: { children: React.ReactNode }) {
   return (
@@ -18,8 +19,9 @@ function SkeletonCard({ children }: { children: React.ReactNode }) {
 }
 
 export const HomeScreenSkeleton: React.FC = React.memo(function HomeScreenSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando tela inicial">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingHome')}>
       <Skeleton variant="text" width="50%" height={28} sx={{ mb: 2 }} />
       <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
         {[1, 2, 3].map(i => (
@@ -48,9 +50,10 @@ export const HomeScreenSkeleton: React.FC = React.memo(function HomeScreenSkelet
 });
 
 export const GameDetailSkeleton: React.FC = React.memo(function GameDetailSkeleton() {
+  const { t } = useTranslation();
   const theme = useTheme();
   return (
-    <Box role="status" aria-label="Carregando detalhes do jogo">
+    <Box role="status" aria-label={t('a11y.loadingGameDetails')}>
       <Box sx={{ height: 200, bgcolor: alpha(theme.palette.primary.main, 0.08), display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', p: 3 }}>
         <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: 1, mb: 1 }} />
         <Skeleton variant="text" width="70%" height={28} sx={{ bgcolor: alpha(theme.palette.common.white, 0.3) }} />
@@ -80,9 +83,10 @@ export const GameDetailSkeleton: React.FC = React.memo(function GameDetailSkelet
 });
 
 export const GroupDetailSkeleton: React.FC = React.memo(function GroupDetailSkeleton() {
+  const { t } = useTranslation();
   const theme = useTheme();
   return (
-    <Box role="status" aria-label="Carregando detalhes do grupo">
+    <Box role="status" aria-label={t('a11y.loadingGroupDetails')}>
       <Box sx={{ height: 160, bgcolor: alpha(theme.palette.primary.main, 0.08), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Skeleton variant="circular" width={80} height={80} />
       </Box>
@@ -113,8 +117,9 @@ export const GroupDetailSkeleton: React.FC = React.memo(function GroupDetailSkel
 });
 
 export const ProfileScreenSkeleton: React.FC = React.memo(function ProfileScreenSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando perfil">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingProfile')}>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
         <Skeleton variant="circular" width={96} height={96} sx={{ mb: 1.5 }} />
         <Skeleton variant="text" width="50%" height={24} />
@@ -139,8 +144,9 @@ export const ProfileScreenSkeleton: React.FC = React.memo(function ProfileScreen
 });
 
 export const RankingScreenSkeleton: React.FC = React.memo(function RankingScreenSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando ranking">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingRanking')}>
       <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
       {Array.from({ length: 8 }).map((_, i) => (
         <Box
@@ -172,8 +178,9 @@ export const RankingScreenSkeleton: React.FC = React.memo(function RankingScreen
 });
 
 export const BadgesSkeleton: React.FC = React.memo(function BadgesSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando conquistas">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingBadges')}>
       <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
       <SkeletonCard>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -205,8 +212,9 @@ export const BadgesSkeleton: React.FC = React.memo(function BadgesSkeleton() {
 });
 
 export const EditProfileSkeleton: React.FC = React.memo(function EditProfileSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando edição de perfil">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingEditProfile')}>
       <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
       <SkeletonCard>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -226,8 +234,9 @@ export const EditProfileSkeleton: React.FC = React.memo(function EditProfileSkel
 });
 
 export const GlobalSearchSkeleton: React.FC = React.memo(function GlobalSearchSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando busca">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingSearch')}>
       <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 2, mb: 2 }} />
       <Skeleton variant="text" width="30%" height={22} sx={{ mb: 1.5 }} />
       {Array.from({ length: 6 }).map((_, i) => (
@@ -244,8 +253,9 @@ export const GlobalSearchSkeleton: React.FC = React.memo(function GlobalSearchSk
 });
 
 export const LevelJourneySkeleton: React.FC = React.memo(function LevelJourneySkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando jornada de níveis">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingLevelJourney')}>
       <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
       <SkeletonCard>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -278,8 +288,9 @@ export const LevelJourneySkeleton: React.FC = React.memo(function LevelJourneySk
 });
 
 export const StatisticSkeleton: React.FC = React.memo(function StatisticSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando estatísticas">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingStatistics')}>
       <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
       <SkeletonCard>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -314,8 +325,9 @@ export const StatisticSkeleton: React.FC = React.memo(function StatisticSkeleton
 });
 
 export const LiveGameSkeleton: React.FC = React.memo(function LiveGameSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando jogo ao vivo">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingLiveGame')}>
       <Skeleton variant="text" width="50%" height={28} sx={{ mb: 2 }} />
       <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
         <Skeleton variant="rounded" sx={{ flex: 1, height: 100, borderRadius: 2 }} />
@@ -343,8 +355,9 @@ export const LiveGameSkeleton: React.FC = React.memo(function LiveGameSkeleton()
 });
 
 export const WeeklyRecapSkeleton: React.FC = React.memo(function WeeklyRecapSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando resumo semanal">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingWeeklyRecap')}>
       <Skeleton variant="text" width="50%" height={28} sx={{ mb: 2 }} />
       <SkeletonCard>
         <Skeleton variant="text" width={80} height={16} sx={{ mb: 1 }} />
@@ -376,8 +389,9 @@ export const WeeklyRecapSkeleton: React.FC = React.memo(function WeeklyRecapSkel
 });
 
 export const AboutSkeleton: React.FC = React.memo(function AboutSkeleton() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label="Carregando sobre">
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingAbout')}>
       <Skeleton variant="text" width="30%" height={28} sx={{ mb: 2 }} />
       <SkeletonCard>
         <Skeleton variant="text" width="50%" height={22} sx={{ mb: 1 }} />

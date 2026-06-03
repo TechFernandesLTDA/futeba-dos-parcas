@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
+
   Dialog,
   DialogTitle,
   DialogContent,
@@ -19,6 +20,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('QuickLocationDialog');
 
@@ -33,6 +35,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   onClose,
   onLocationCreated,
 }) => {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const { user, firebaseUser } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -108,7 +111,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
 
     const uid = firebaseUser?.uid || user?.id;
     if (!uid) {
-      showError('Usuario nao autenticado');
+      showError(t('feedback.auth.notAuthenticated'));
       return;
     }
 

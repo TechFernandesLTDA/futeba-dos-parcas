@@ -195,11 +195,11 @@ export const GroupEditScreen: React.FC = () => {
       }
 
       logger.info('Grupo atualizado com sucesso', { groupId });
-      showSuccess('Grupo atualizado com sucesso!');
+      showSuccess(t('feedback.groups.updateSuccess'));
       navigate(closeDestination);
     } catch (err) {
       logger.error('Erro ao atualizar grupo:', err);
-      showError('Erro ao atualizar grupo. Tente novamente.');
+      showError(t('feedback.groups.updateError'));
     } finally {
       setSaving(false);
     }
@@ -308,8 +308,8 @@ export const GroupEditScreen: React.FC = () => {
                 helperText={formErrors.name || `${formData.name.length}/50 caracteres`}
                 fullWidth
                 required
-                placeholder="Ex: Pelada dos Amigos, Futebol do Sábado"
-                aria-label="Nome do grupo"
+                placeholder={t('placeholder.enterGroupNameExample')}
+                aria-label={t('a11y.groupName')}
                 inputProps={{ maxLength: 100 }}
               />
 
@@ -322,8 +322,8 @@ export const GroupEditScreen: React.FC = () => {
                 fullWidth
                 multiline
                 rows={4}
-                placeholder="Descreva seu grupo, horários habituais, nível dos jogadores..."
-                aria-label="Descrição do grupo"
+                placeholder={t('placeholder.enterGroupDescription')}
+                aria-label={t('a11y.groupDescription')}
                 inputProps={{ maxLength: 500 }}
               />
 
@@ -332,7 +332,7 @@ export const GroupEditScreen: React.FC = () => {
                   <Switch
                     checked={formData.isPublic}
                     onChange={(e) => handleInputChange('isPublic', e.target.checked)}
-                    aria-label="Tornar grupo público"
+                    aria-label={t('a11y.makeGroupPublic')}
                   />
                 }
                 label={
@@ -360,7 +360,7 @@ export const GroupEditScreen: React.FC = () => {
                   disabled={saving || uploadingPhoto}
                   fullWidth
                   startIcon={saving || uploadingPhoto ? <CircularProgress size={20} /> : <SaveIcon />}
-                  aria-label="Salvar alterações do grupo"
+                  aria-label={t('a11y.saveGroupChanges')}
                 >
                   Salvar
                 </Button>

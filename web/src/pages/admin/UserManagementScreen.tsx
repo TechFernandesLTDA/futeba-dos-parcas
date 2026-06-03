@@ -165,7 +165,7 @@ export const UserManagementScreen: React.FC = () => {
     } catch (error) {
       logger.error('Error loading more users:', error);
       setFetchError('Erro ao carregar mais usuários.');
-      showError('Erro ao carregar mais usuários.');
+      showError(t('feedback.admin.loadMoreUsersError'));
     } finally {
       setLoadingMore(false);
     }
@@ -261,7 +261,7 @@ export const UserManagementScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -283,10 +283,10 @@ export const UserManagementScreen: React.FC = () => {
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar usuário..."
+            placeholder={t('placeholder.searchUser')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Buscar usuário"
+            aria-label={t('a11y.searchUser')}
             inputProps={{ maxLength: 200 }}
             InputProps={{
               startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
@@ -322,16 +322,16 @@ export const UserManagementScreen: React.FC = () => {
           searchQuery ? (
             <EmptyState
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
-              title="Nenhum usuário encontrado"
-              description={`Não encontramos usuários para "${searchQuery}". Tente outro termo.`}
-              actionLabel="Limpar busca"
+              title={t('empty.noUserFound')}
+              description={t('empty.noUserFoundDesc', { query: searchQuery })}
+              actionLabel={t('empty.clearSearch')}
               onAction={() => setSearchQuery('')}
             />
           ) : (
             <EmptyState
               icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
-              title="Nenhum usuário cadastrado"
-              description="Ainda não há usuários no sistema."
+              title={t('empty.noUserRegistered')}
+              description={t('admin.noUserRegisteredDesc')}
             />
           )
         ) : (
@@ -341,13 +341,13 @@ export const UserManagementScreen: React.FC = () => {
               {hasMore && !searchQuery ? ' (mais disponíveis)' : ''}
             </Typography>
             <Card>
-              <List disablePadding aria-label="Lista de usuários">
+              <List disablePadding aria-label={t('a11y.userList')}>
                 {filteredUsers.map((u, index) => (
                   <Box key={u.id}>
                     {index > 0 && <Divider />}
                     <ListItem
                       secondaryAction={
-                        <IconButton edge="end" aria-label="Gerenciar permissões" onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
+                        <IconButton edge="end" aria-label={t('a11y.managePermissions')} onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
                           <AdminIcon />
                         </IconButton>
                       }

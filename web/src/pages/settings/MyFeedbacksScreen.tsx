@@ -79,12 +79,12 @@ export const MyFeedbacksScreen: React.FC = () => {
         ) : myFeedbacks.length === 0 ? (
           <EmptyState
             icon={<EmptyIcon />}
-            title="Nenhum feedback enviado"
-            description="Seus feedbacks aparecerão aqui com status de acompanhamento"
+            title={t('feedback.myFeedbacksEmpty')}
+            description={t('feedback.myFeedbacksEmptyDesc')}
           />
         ) : (
           <Card>
-            <List disablePadding aria-label="Meus feedbacks">
+            <List disablePadding aria-label={t('a11y.myFeedbacks')}>
               {myFeedbacks.map((feedback, index) => (
                 <React.Fragment key={feedback.id}>
                   <ListItemButton

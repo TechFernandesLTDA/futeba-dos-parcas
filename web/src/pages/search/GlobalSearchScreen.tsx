@@ -47,7 +47,7 @@ export const GlobalSearchScreen: React.FC = () => {
           flexShrink: 0,
         }}
       >
-        <IconButton onClick={navigateBack} aria-label="Voltar">
+        <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
           <BackIcon />
         </IconButton>
         <Typography variant="h6" sx={{ ml: 1 }}>
