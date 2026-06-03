@@ -163,6 +163,10 @@ class CreateGameViewModel(
     private val _recurrenceEndDate = MutableStateFlow<String?>(null)
     val recurrenceEndDate: StateFlow<String?> = _recurrenceEndDate
 
+    // Indice 1-based da serie carregado de um jogo existente (edicao). Preservado ao
+    // salvar para NAO reiniciar a contagem de parada do motor (spec #2398).
+    private var _loadedRecurrenceIndex: Int? = null
+
     // Wizard step (Improvement #8)
     private val _currentStep = MutableStateFlow(CreateGameStep.LOCATION)
     val currentStep: StateFlow<CreateGameStep> = _currentStep
@@ -410,6 +414,7 @@ class CreateGameViewModel(
      * count XOR end_date: deriva o modo do campo preenchido (spec #2398).
      */
     private fun hydrateRecurrenceEndConfig(game: Game) {
+        _loadedRecurrenceIndex = game.recurrenceIndex
         when {
             game.recurrenceCount != null -> {
                 _recurrenceEndMode.value = RECURRENCE_END_MODE_COUNT
@@ -1029,9 +1034,16 @@ class CreateGameViewModel(
                 numberOfTeams = _numberOfTeams.value,
                 recurrence = recurrence,
                 // Fim-de-serie (spec #2398, decisao "ambos"): count XOR end_date.
-                // recurrence_index=1 marca a 1a ocorrencia; o motor (recurrence-engine)
+                // recurrence_index marca a posicao na serie; o motor (recurrence-engine)
                 // propaga count/end_date e para via recurrenceStopReason (hard cap 52).
-                recurrenceIndex = if (recurrence != "none") 1 else null,
+                // Em criacao/duplicacao esta e a 1a ocorrencia (indice 1). Em EDICAO,
+                // preserva o indice carregado: resetar para 1 faria o motor recontar a
+                // serie do zero e gerar jogos extras alem do total (quebra o count).
+                recurrenceIndex = if (recurrence != "none") {
+                    if (gameId != null || _currentGameId != null) _loadedRecurrenceIndex ?: 1 else 1
+                } else {
+                    null
+                },
                 recurrenceCount = if (recurrence != "none" && _recurrenceEndMode.value == RECURRENCE_END_MODE_COUNT) {
                     _recurrenceCount.value.coerceIn(MIN_RECURRENCE_COUNT, MAX_RECURRENCE_COUNT)
                 } else {
