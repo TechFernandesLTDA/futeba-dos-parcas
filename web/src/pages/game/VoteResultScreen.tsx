@@ -188,7 +188,7 @@ export const VoteResultScreen: React.FC = () => {
       } catch (error) {
         logger.error('Error fetching vote results:', error);
         if (!cancelled) {
-          setError('Erro ao carregar resultado da votação.');
+          setError(t('feedback.games.voteResultError'));
           showErrorRef.current('Erro ao carregar resultado da votação.');
         }
       } finally {
@@ -200,7 +200,7 @@ export const VoteResultScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   if (error) {
     return <ErrorState message={error} onRetry={handleRetry} />;

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 interface OptimisticOptions {
   queryKey: unknown[];
@@ -13,6 +14,7 @@ interface OptimisticOptions {
 export function useOptimisticUpdate() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
+  const { t } = useTranslation();
   const snapshotRef = useRef<unknown>(null);
 
   const execute = useCallback(
@@ -27,10 +29,10 @@ export function useOptimisticUpdate() {
         if (successMessage) showSuccess(successMessage);
       } catch {
         queryClient.setQueryData(queryKey, snapshotRef.current);
-        showError(errorMessage || 'Erro ao salvar. Alteração revertida.');
+        showError(errorMessage || t('feedback.optimistic.saveError'));
       }
     },
-    [queryClient, showSuccess, showError],
+    [queryClient, showSuccess, showError, t],
   );
 
   return { execute };

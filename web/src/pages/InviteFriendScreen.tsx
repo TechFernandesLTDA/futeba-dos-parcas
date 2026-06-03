@@ -59,10 +59,10 @@ export const InviteFriendScreen: React.FC = () => {
   const handleCopy = useCallback(() => {
     if (!inviteLink) return;
     navigator.clipboard.writeText(inviteLink).then(
-      () => showSuccess('Link copiado! Compartilhe com seus amigos.'),
-      () => showError('Erro ao copiar link.'),
+      () => showSuccess(t('feedback.share.linkCopiedFriends')),
+      () => showError(t('feedback.share.copyLinkError')),
     );
-  }, [inviteLink, showSuccess, showError]);
+  }, [inviteLink, showSuccess, showError, t]);
 
   const handleShare = useCallback(() => {
     if (!inviteLink) return;
@@ -74,18 +74,18 @@ export const InviteFriendScreen: React.FC = () => {
       }).catch((err) => {
         // #2281/#2290: ignora cancelamento da share sheet; reporta demais erros.
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        showError('Erro ao compartilhar');
+        showError(t('feedback.share.shareError'));
       });
     } else {
       handleCopy();
     }
-  }, [inviteLink, handleCopy, showError]);
+  }, [inviteLink, handleCopy, showError, t]);
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
       const result = await generateMyInviteCode();
-      showSuccess('Código de convite gerado!');
+      showSuccess(t('feedback.groups.inviteCodeGenerated'));
       if (user) {
         user.inviteCode = result.data.inviteCode;
         window.location.reload();

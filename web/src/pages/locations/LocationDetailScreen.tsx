@@ -102,7 +102,7 @@ export const LocationDetailScreen: React.FC = () => {
       locRef,
       (snap) => {
         if (!snap.exists()) {
-          if (!cancelled) { setError('Local não encontrado.'); setLoading(false); }
+          if (!cancelled) { setError(t('feedback.location.notFound')); setLoading(false); }
           return;
         }
         const locData = { ...snakeToCamel<Location>(snap.data()), id: snap.id };
@@ -112,14 +112,14 @@ export const LocationDetailScreen: React.FC = () => {
         logger.error('Erro ao carregar local:', err);
         if (!cancelled) {
           showErrorRef.current('Não foi possível carregar este local.');
-          setError('Não foi possível carregar este local.');
+          setError(t('feedback.location.loadError'));
           setLoading(false);
         }
       }
     );
 
     return () => { cancelled = true; unsubscribe(); };
-  }, [locationId, reloadKey]);
+  }, [locationId, reloadKey, t]);
 
   useEffect(() => {
     if (!locationId) return;
@@ -166,7 +166,7 @@ export const LocationDetailScreen: React.FC = () => {
       navigate(locationsListPath);
     } catch (err) {
       logger.error('Erro ao excluir local:', err);
-      showError('Erro ao excluir local. Tente novamente.');
+      showError(t('feedback.location.deleteError'));
     } finally {
       setDeleting(false);
       setDeleteOpen(false);
@@ -177,7 +177,7 @@ export const LocationDetailScreen: React.FC = () => {
     if (!user || !locationId) return;
     if (!newReviewComment.trim()) {
       setReviewCommentError(true); // #2231: feedback visual no campo
-      showError('Comentário é obrigatório.');
+      showError(t('feedback.location.commentRequired'));
       return;
     }
     setReviewCommentError(false);
@@ -191,13 +191,13 @@ export const LocationDetailScreen: React.FC = () => {
         comment: newReviewComment.trim(),
         created_at: serverTimestamp(),
       });
-      showSuccess('Avaliação enviada!');
+      showSuccess(t('feedback.location.reviewSuccess'));
       setReviewOpen(false);
       setNewReviewComment('');
       setNewReviewRating(5);
     } catch (err) {
       logger.error('Erro ao enviar avaliação:', err);
-      showError('Erro ao enviar avaliação.');
+      showError(t('feedback.location.reviewError'));
     } finally {
       setSubmittingReview(false);
     }

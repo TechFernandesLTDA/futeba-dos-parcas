@@ -126,7 +126,7 @@ export const CashboxScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in cashbox transactions listener:', err);
-        setError('Erro ao carregar transações do caixa.');
+        setError(t('feedback.cashbox.loadError'));
         setLoading(false);
       }
     );
@@ -152,7 +152,7 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId, user, retryCount]);
+  }, [groupId, user, retryCount, t]);
 
   const handleAddTransaction = useCallback(async () => {
     const parsedAmount = parseFloat(amount);

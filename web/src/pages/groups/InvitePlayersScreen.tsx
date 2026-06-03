@@ -118,8 +118,8 @@ export const InvitePlayersScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching members:', error);
-          setError('Erro ao carregar membros.');
-          showError('Erro ao carregar membros.');
+          setError(t('feedback.groups.loadMembersError'));
+          showError(t('feedback.groups.loadMembersError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -129,7 +129,7 @@ export const InvitePlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId, showError, retryCount]);
+  }, [groupId, showError, retryCount, t]);
 
   const handleSearch = async () => {
     if (searchQuery.trim().length < 2) return;
@@ -151,7 +151,7 @@ export const InvitePlayersScreen: React.FC = () => {
       setSearchResults(results);
     } catch (error) {
       logger.error('Error searching users:', error);
-      showError('Erro ao buscar usuários.');
+      showError(t('feedback.search.usersError'));
     } finally {
       setSearching(false);
     }
@@ -192,7 +192,7 @@ export const InvitePlayersScreen: React.FC = () => {
       setSearchResults((prev) => prev.filter((r) => r.id !== targetUser.id));
     } catch (error) {
       logger.error('Error inviting user:', error);
-      showError('Erro ao enviar convite. Tente novamente.');
+      showError(t('feedback.groups.inviteError'));
     } finally {
       setInviting(null);
     }

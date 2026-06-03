@@ -254,10 +254,10 @@ export const LeagueScreen: React.FC = () => {
         await navigator.clipboard.writeText(`${text}\n${url}`);
         setShareSnack(true);
       } catch {
-        showError('Não foi possível copiar para a área de transferência');
+        showError(t('feedback.share.copyToClipboardError'));
       }
     }
-  }, [currentUserPlayer, currentUserPosition, showError]);
+  }, [currentUserPlayer, currentUserPosition, showError, t]);
 
   // onToggleExpand memoizado: recebe id ao invés de closure inline
   const handleToggleExpand = useCallback((id: string) => {

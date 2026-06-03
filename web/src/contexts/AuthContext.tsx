@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef, ReactNode } from 'react';
 import {
+
   User as FirebaseUser,
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -19,6 +20,7 @@ import { createLogger } from '../utils/logger';
 import { getAuthErrorMessage } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
+import { useTranslation } from 'react-i18next';
 import { syncFieldOwnerClaim } from '../services/cloudFunctions';
 
 const logger = createLogger('AuthContext');
@@ -86,6 +88,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -127,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     } catch (err) {
       logger.error('Error fetching user data:', err);
-      setError('Erro ao carregar dados. Tente novamente.');
+      setError(t('feedback.generic.loadDataError'));
       return null;
     }
   };
@@ -189,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (err) {
       logger.error('Error creating user document:', err);
-      setError('Erro ao criar conta. Tente novamente.');
+      setError(t('feedback.auth.createAccountError'));
       return null;
     }
   };
@@ -261,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
             }
           } else {
-            setError('Erro ao carregar dados da conta. Verifique sua conexão.');
+            setError(t('feedback.auth.loadAccountError'));
           }
         } else {
           setUser(null);
@@ -273,18 +276,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (lastFetchUid === currentUid) {
           setUser(null);
           setLoading(false);
-          setError('Erro ao verificar autenticação. Tente novamente.');
+          setError(t('feedback.auth.verifyAuthError'));
         }
       }
     },
     (err) => {
       logger.error('onAuthStateChanged observer error:', err);
-      setError('Erro ao monitorar autenticação.');
+      setError(t('feedback.auth.monitorAuthError'));
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [t]);
 
   // Sign in with email/password
   const signIn = useCallback(async (email: string, password: string) => {
@@ -402,15 +405,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
       } else {
         // fetchUserData retornou null sem lançar — provavelmente doc não existe
-        setError('Não foi possível atualizar seus dados. Verifique a conexão e tente novamente.');
+        setError(t('feedback.auth.updateDataError'));
         // mantém usuário anterior para evitar wipe da UI
       }
     } catch (err) {
       logger.error('Error refreshing user:', err);
-      setError('Erro ao atualizar dados. Tente novamente.');
+      setError(t('feedback.auth.updateDataError2'));
       // mantém usuário anterior — não chama setUser(null)
     }
-  }, []);
+  }, [t]);
 
   // Força refresh do ID token para capturar custom claims atualizados
   const refreshClaims = useCallback(async () => {
@@ -461,7 +464,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (rollbackErr) {
           // Rollback também falhou — estado pode estar inconsistente
           logger.error('Rollback do Auth falhou:', rollbackErr);
-          setError('Perfil pode estar inconsistente. Recarregue o app e tente novamente.');
+          setError(t('feedback.auth.profileInconsistent'));
           throw firestoreErr;
         }
         setError((firestoreErr as Error).message || 'Erro ao atualizar perfil');
@@ -476,7 +479,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUpdatingProfile(false);
     }
-  }, [user, refreshUser]);
+  }, [user, refreshUser, t]);
 
   const value = useMemo<AuthContextType>(() => ({
     firebaseUser,

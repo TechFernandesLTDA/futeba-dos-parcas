@@ -165,7 +165,7 @@ export const UserManagementScreen: React.FC = () => {
     } catch (error) {
       logger.error('Error loading more users:', error);
       setFetchError('Erro ao carregar mais usuários.');
-      showError('Erro ao carregar mais usuários.');
+      showError(t('feedback.admin.loadMoreUsersError'));
     } finally {
       setLoadingMore(false);
     }

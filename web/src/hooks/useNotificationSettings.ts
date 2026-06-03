@@ -5,6 +5,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useNotificationSettings');
 
@@ -35,6 +36,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 };
 
 export function useNotificationSettings(userId?: string) {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -105,13 +107,13 @@ export function useNotificationSettings(userId?: string) {
         updated_at: serverTimestamp(),
       }, { merge: true });
 
-      showSuccess('Configurações salvas.');
+      showSuccess(t('feedback.notifications.settingsSaved'));
     } catch (err) {
       logger.error('Error saving notification settings:', err);
-      showError('Erro ao salvar configurações.');
+      showError(t('feedback.notifications.settingsSaveError'));
       throw err;
     }
-  }, [userId, showSuccess, showError]);
+  }, [userId, showSuccess, showError, t]);
 
   const setPreference = useCallback((key: keyof NotificationSettings, value: boolean | number) => {
     const update = { [key]: value } as Partial<NotificationSettings>;

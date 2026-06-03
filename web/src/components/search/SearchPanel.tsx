@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+
   Box,
   TextField,
   InputAdornment,
@@ -217,11 +218,11 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     } catch (err) {
       logger.error('Erro ao buscar:', err);
       if (requestIdRef.current !== requestId) return;
-      showError('Erro ao buscar. Tente novamente.');
+      showError(t('feedback.search.error'));
     } finally {
       if (requestIdRef.current === requestId) setLoading(false);
     }
-  }, [showError]);
+  }, [showError, t]);
 
   useEffect(() => {
     if (!searchQuery.trim()) { setResults([]); return; }

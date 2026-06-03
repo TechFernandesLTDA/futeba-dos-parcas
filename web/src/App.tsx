@@ -27,6 +27,7 @@ import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
 import {
+
   HomeScreenSkeleton,
   GameDetailSkeleton,
   GroupDetailSkeleton,
@@ -49,6 +50,7 @@ const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then
 import { VerificationBanner } from './components/auth/VerificationBanner';
 import { useTranslation } from 'react-i18next';
 const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
+
 const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
 const AppGuideScreen = lazy(() => import('./pages/onboarding/AppGuideScreen').then(m => ({ default: m.AppGuideScreen })));
@@ -309,6 +311,7 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser, loading } = useAuth();
   const { isMember, loading: memberLoading } = useIsGroupMember(groupId);
   const { showError } = useToast();
+  const { t } = useTranslation();
   const [notified, setNotified] = useState(false);
 
   if (loading) return <SplashLoadingFallback />;
@@ -323,7 +326,7 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
   if (!isMember) {
     if (!notified) {
       // Feedback explícito para usuário entender o redirect
-      showError('Você precisa ser membro do grupo para acessar essa página.');
+      showError(t('feedback.app.mustBeGroupMember'));
       setNotified(true);
     }
     return <Navigate to={`/group/${groupId}`} replace />;

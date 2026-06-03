@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+
   Dialog,
   DialogContent,
   Box,
@@ -102,9 +103,9 @@ interface PlayerCardProps {
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const gColors = useGamificationColors();
-  const { t } = useTranslation();
 
   const CARD_GRADIENT = `linear-gradient(160deg, ${theme.palette.success.dark} 0%, ${alpha(theme.palette.success.main, 0.85)} 35%, ${theme.palette.success.main} 60%, ${theme.palette.success.light} 100%)`;
   const CARD_BADGE_BORDER = theme.palette.success.dark;
@@ -144,7 +145,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         if (!blob) {
           // Libera spinner se geração de blob falhar (#1128)
           setSharing(false);
-          showError('Falha ao gerar imagem. Tente novamente.');
+          showError(t('feedback.player.cardGenerateError'));
           return;
         }
         const file = new File([blob], `${player.name}-futeba.png`, { type: 'image/png' });
@@ -174,10 +175,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       }, 'image/png');
     } catch (error) {
       logger.error('Erro ao gerar imagem do card:', error);
-      showError('Erro ao gerar imagem do card. Tente novamente.');
+      showError(t('feedback.player.cardGenerateError2'));
       setSharing(false);
     }
-  }, [player, showError]);
+  }, [player, showError, t]);
 
   const winRate = useMemo(() => player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)

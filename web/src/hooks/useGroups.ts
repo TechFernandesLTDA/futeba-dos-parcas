@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
+
   collection,
   doc,
   getDoc,
@@ -24,6 +25,7 @@ import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useGroups');
 
@@ -177,7 +179,6 @@ export function useDiscoverPublicGroups() {
   return { groups, loading, error: error?.message || null, refetch };
 }
 
-// Busca grupos do usuário via subcoleção users/{uid}/groups (igual ao Android)
 // ====== useGroups ======
 export function useGroups() {
   const { user, firebaseUser } = useAuth();
@@ -307,6 +308,7 @@ export function useGroupDetail(groupId: string | null) {
 
 // ====== useCreateGroup ======
 export function useCreateGroup() {
+  const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
@@ -380,7 +382,7 @@ export function useCreateGroup() {
         await batch.commit();
         // Invalidar cache de grupos após criar
         queryClient.invalidateQueries({ queryKey: ['groups', uid] });
-        showSuccess('Grupo criado com sucesso!');
+        showSuccess(t('feedback.groups.createSuccess'));
         setLoading(false);
         return groupRef.id;
       } catch (err) {
@@ -391,7 +393,7 @@ export function useCreateGroup() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   return { createGroup, loading, error };
@@ -456,6 +458,7 @@ export function useCashbox(groupId: string | null) {
 
 // ====== useInvitePlayers ======
 export function useInvitePlayers() {
+  const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
@@ -489,7 +492,7 @@ export function useInvitePlayers() {
           used: false,
         });
 
-        showSuccess('Código de convite gerado!');
+        showSuccess(t('feedback.groups.inviteCodeGenerated'));
         setLoading(false);
         return code;
       } catch (err) {
@@ -500,7 +503,7 @@ export function useInvitePlayers() {
         throw err;
       }
     },
-    [firebaseUser, user, showSuccess, showError]
+    [firebaseUser, user, showSuccess, showError, t]
   );
 
   const joinByInviteCode = useCallback(
@@ -574,7 +577,7 @@ export function useInvitePlayers() {
         await batch.commit();
         // Invalidar cache de grupos após entrar em um
         queryClient.invalidateQueries({ queryKey: ['groups', uid] });
-        showSuccess('Você entrou no grupo!');
+        showSuccess(t('feedback.groups.joinSuccess'));
         setLoading(false);
         return groupId;
       } catch (err) {
@@ -585,7 +588,7 @@ export function useInvitePlayers() {
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   return { generateInviteCode, joinByInviteCode, loading, error };

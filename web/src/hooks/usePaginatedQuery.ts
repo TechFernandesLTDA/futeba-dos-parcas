@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
+
   collection,
   query,
   where,
@@ -15,6 +16,7 @@ import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('usePaginatedQuery');
 
@@ -27,6 +29,7 @@ interface UsePaginatedQueryOptions {
 }
 
 export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePaginatedQueryOptions) {
+  const { t } = useTranslation();
   const {
     collectionName,
     pageSize = 20,
@@ -113,12 +116,12 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
     } catch (err) {
       logger.error(`Error fetching ${collectionName}:`, err);
       setError(err as Error);
-      showError('Erro ao carregar dados. Tente novamente.');
+      showError(t('feedback.generic.loadDataError'));
     } finally {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [collectionName, pageSize, orderByField, orderDirection, showError]);
+  }, [collectionName, pageSize, orderByField, orderDirection, showError, t]);
 
   const loadMore = useCallback(() => {
     if (hasMore && !loading) {

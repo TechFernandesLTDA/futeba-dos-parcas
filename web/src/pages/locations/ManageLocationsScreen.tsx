@@ -87,13 +87,13 @@ export const ManageLocationsScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Erro ao carregar locais:', err);
-        setError('Não foi possível carregar os locais. Verifique sua conexão e tente novamente.');
+        setError(t('feedback.location.loadAllError'));
         setLoading(false);
       },
     );
 
     return () => unsubscribe();
-  }, [reloadKey, isAdmin, user?.id]);
+  }, [reloadKey, isAdmin, user?.id, t]);
 
   const filteredLocations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -119,7 +119,7 @@ export const ManageLocationsScreen: React.FC = () => {
       setDeleteTarget(null);
     } catch (err) {
       logger.error('Erro ao excluir local:', err);
-      showError('Erro ao excluir local. Tente novamente.');
+      showError(t('feedback.location.deleteError'));
     } finally {
       setDeleting(false);
     }

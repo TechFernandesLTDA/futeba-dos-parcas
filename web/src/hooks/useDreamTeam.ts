@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+
   collection,
   doc,
   getDocs,
@@ -13,6 +14,7 @@ import { db } from "../services/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { getFirestoreErrorMessage } from "../utils/firebaseErrors";
+import { useTranslation } from 'react-i18next';
 
 export interface DreamTeamPlayer {
   userId: string;
@@ -111,6 +113,7 @@ export function usePlayedAgainst() {
 }
 
 export function useSaveDreamTeam() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
   const queryClient = useQueryClient();
@@ -131,7 +134,7 @@ export function useSaveDreamTeam() {
       await batch.commit();
     },
     onSuccess: () => {
-      showSuccess("Time dos Sonhos salvo!");
+      showSuccess(t("feedback.dreamTeam.saveSuccess"));
       queryClient.invalidateQueries({ queryKey: ["dream-team", uid] });
     },
     onError: (err) => {

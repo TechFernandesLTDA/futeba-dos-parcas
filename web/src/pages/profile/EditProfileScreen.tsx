@@ -281,7 +281,7 @@ export const EditProfileScreen: React.FC = () => {
       }
       if (Date.now() - lastChanged < RATING_RATE_LIMIT_MS) {
         setSaving(false);
-        showError('Aguarde 1 minuto entre alterações de rating.');
+        showError(t('feedback.profile.ratingCooldown'));
         return;
       }
       try {
@@ -311,7 +311,7 @@ export const EditProfileScreen: React.FC = () => {
     // 2) Persiste demais campos do perfil no Firestore
     const trimmedName = formData.name.trim();
     if (!trimmedName) {
-      showError('Nome não pode estar vazio.');
+      showError(t('feedback.profile.nameRequired'));
       setSaving(false);
       return;
     }

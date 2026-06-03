@@ -155,13 +155,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const handleUndoAction = useCallback((toast: Toast) => {
     if (toast.undo) {
       toast.undo.onUndo().then(() => {
-        showSuccess('Ação desfeita com sucesso!');
+        showSuccess(t('feedback.undo.success'));
       }).catch(() => {
-        showError('Não foi possível desfazer a ação.');
+        showError(t('feedback.undo.error'));
       });
     }
     dismissToast(toast.id);
-  }, [dismissToast, showSuccess, showError]);
+  }, [dismissToast, showSuccess, showError, t]);
 
   return (
     <ToastContext.Provider

@@ -127,7 +127,7 @@ export const LiveStatsScreen: React.FC = () => {
       } catch (error) {
         logger.error('Error fetching stats:', error);
         if (!cancelled) {
-          setError('Erro ao carregar estatísticas. Tente novamente.');
+          setError(t('feedback.statistics.loadLiveError'));
           showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
         }
       } finally {
@@ -139,7 +139,7 @@ export const LiveStatsScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   const getEventIcon = (type: string) => {
     switch (type) {

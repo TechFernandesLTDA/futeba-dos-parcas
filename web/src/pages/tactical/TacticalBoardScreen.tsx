@@ -113,7 +113,7 @@ export const TacticalBoardScreen: React.FC = () => {
       } catch (error) {
         logger.error('Error fetching players:', error);
         if (!cancelled) {
-          setError('Erro ao carregar quadro tático.');
+          setError(t('feedback.tactical.loadError'));
           showErrorRef.current('Erro ao carregar quadro tático.');
         }
       } finally {
@@ -125,7 +125,7 @@ export const TacticalBoardScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount]);
+  }, [gameId, retryCount, t]);
 
   const applyFormation = (formationIndex: number) => {
     setSelectedFormation(formationIndex);
