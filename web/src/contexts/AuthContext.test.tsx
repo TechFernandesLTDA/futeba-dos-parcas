@@ -49,6 +49,14 @@ vi.mock('../services/firebase', () => ({
   auth: { currentUser: null },
   googleProvider: {},
   db: {},
+  // #2430: cloudFunctions.ts importa `functions` em tempo de módulo;
+  // sem este campo o Vitest lança "No 'functions' export" ao avaliar cloudFunctions.ts
+  functions: {},
+}));
+
+// Mock de cloudFunctions para isolar o teste do Cloud Functions real
+vi.mock('../services/cloudFunctions', () => ({
+  syncFieldOwnerClaim: vi.fn().mockResolvedValue({ data: { synced: false, role: '', success: true, message: '' } }),
 }));
 
 vi.mock('../utils/firestoreHelpers', () => ({
