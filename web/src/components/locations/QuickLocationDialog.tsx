@@ -21,13 +21,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import { GAME_VALIDATION } from '../../utils/validationConstants';
 
 const logger = createLogger('QuickLocationDialog');
 
 interface QuickLocationDialogProps {
   open: boolean;
   onClose: () => void;
-  onLocationCreated: (location: { id: string; name: string; address: string }) => void;
+  onLocationCreated: (location: { id: string; name: string; address: string; capacity?: number; defaultPrice?: number }) => void;
 }
 
 export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
@@ -43,6 +44,8 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   const [cep, setCep] = useState('');
   const [address, setAddress] = useState('');
   const [type, setType] = useState<FieldType>('SOCIETY');
+  const [capacity, setCapacity] = useState<number>(14);
+  const [defaultPrice, setDefaultPrice] = useState<number>(0);
   const [cepLoading, setCepLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const cepAbortRef = useRef<AbortController | null>(null);
@@ -52,6 +55,8 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
     setCep('');
     setAddress('');
     setType('SOCIETY');
+    setCapacity(14);
+    setDefaultPrice(0);
     setErrors({});
     setCepLoading(false);
   };
@@ -100,8 +105,11 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!name.trim()) newErrors.name = 'Nome e obrigatorio';
-    if (!address.trim()) newErrors.address = 'Endereco e obrigatorio';
+    if (!name.trim()) newErrors.name = 'Nome é obrigatório';
+    if (!address.trim()) newErrors.address = 'Endereço é obrigatório';
+    if (capacity < GAME_VALIDATION.MIN_PLAYERS) newErrors.capacity = `Capacidade mínima: ${GAME_VALIDATION.MIN_PLAYERS}`;
+    if (capacity > GAME_VALIDATION.MAX_PLAYERS) newErrors.capacity = `Capacidade máxima: ${GAME_VALIDATION.MAX_PLAYERS}`;
+    if (defaultPrice < 0) newErrors.defaultPrice = 'Preço não pode ser negativo';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -124,6 +132,8 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         cep: cep || '',
         field_type: type,
         primary_field_type: type,
+        capacity: capacity,
+        default_hourly_price: defaultPrice,
         owner_id: uid,
         managers: [uid],
         is_verified: false,
@@ -162,6 +172,8 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         id: docRef.id,
         name: name.trim(),
         address: address.trim(),
+        capacity,
+        defaultPrice,
       });
       reset();
     } catch (err) {
@@ -230,6 +242,31 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
               </MenuItem>
             ))}
           </TextField>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              label="Capacidade (jogadores)"
+              type="number"
+              value={capacity}
+              onChange={(e) => { const v = parseInt(e.target.value); setCapacity(isNaN(v) ? 14 : v); setErrors((prev) => ({ ...prev, capacity: '' })); }}
+              error={!!errors.capacity}
+              helperText={errors.capacity || `${GAME_VALIDATION.MIN_PLAYERS}-${GAME_VALIDATION.MAX_PLAYERS} jogadores`}
+              fullWidth
+              inputProps={{ min: GAME_VALIDATION.MIN_PLAYERS, max: GAME_VALIDATION.MAX_PLAYERS }}
+            />
+            <TextField
+              label="Preço/hora (R$)"
+              type="number"
+              value={defaultPrice}
+              onChange={(e) => { const v = parseFloat(e.target.value); setDefaultPrice(isNaN(v) ? 0 : v); setErrors((prev) => ({ ...prev, defaultPrice: '' })); }}
+              error={!!errors.defaultPrice}
+              helperText={errors.defaultPrice || 'Opcional'}
+              fullWidth
+              InputProps={{
+                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+              }}
+              inputProps={{ min: 0, step: 0.01 }}
+            />
+          </Box>
         </Box>
       </DialogContent>
       <DialogActions>

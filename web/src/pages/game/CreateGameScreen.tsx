@@ -71,7 +71,7 @@ import { useDuplicateGame } from '../../hooks/useDuplicateGame';
 import { useAutoInviteMembers } from '../../hooks/useAutoInviteMembers';
 import { useGameDraft } from '../../hooks/useGameDraft';
 import { useRecentLocations, toggleFavoriteLocation } from '../../hooks/useRecentLocations';
-import { FieldType, PixKeyType, GameVisibility } from '../../types/game';
+import { FieldType, PixKeyType, GameVisibility, GameTemplate, Game } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
 import { Field } from '../../types/location';
 import { snakeToCamel, normalizeField } from '../../utils/firestoreHelpers';
@@ -495,6 +495,12 @@ export const CreateGameScreen: React.FC = () => {
       fieldType: template.field_type || prev.fieldType,
       gameType: template.field_type || prev.gameType,
       rules: template.rules || '',
+      time: template.time || prev.time,
+      totalCost: template.total_cost || prev.totalCost,
+      dailyPrice: template.daily_price || prev.dailyPrice,
+      visibility: (template.visibility as GameVisibility) || prev.visibility,
+      recurrenceEnabled: !!template.recurrence_type,
+      recurrenceType: (template.recurrence_type as 'weekly' | 'biweekly' | 'monthly') || prev.recurrenceType,
     }));
     setUserInteracted(true);
     showSuccess(`Template "${template.name}" carregado.`);
@@ -526,6 +532,11 @@ export const CreateGameScreen: React.FC = () => {
         field_name: formData.fieldName || undefined,
         field_type: formData.fieldType,
         rules: formData.rules || undefined,
+        time: formData.time || undefined,
+        recurrence_type: formData.recurrenceEnabled ? formData.recurrenceType : undefined,
+        total_cost: formData.totalCost || undefined,
+        daily_price: formData.dailyPrice || undefined,
+        visibility: formData.visibility || undefined,
       });
       showSuccess(t('feedback.templates.saveSuccess'));
       setTemplateDialogOpen(false);
@@ -565,6 +576,126 @@ export const CreateGameScreen: React.FC = () => {
     setDuplicateDialogOpen(false);
     setUserInteracted(true);
     showSuccess(t('feedback.games.previousGameLoaded'));
+  };
+
+  const calculateNextOccurrence = (time: string, recurrenceType?: string): { date: string; time: string } => {
+    const now = new Date();
+    const today = formatDate(now, 'yyyy-MM-dd');
+    const [hours, minutes] = time.split(':').map(Number);
+    const targetMinutes = hours * 60 + minutes;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    if (recurrenceType === 'weekly' || recurrenceType === 'biweekly' || recurrenceType === 'monthly') {
+      const maxDays = recurrenceType === 'monthly' ? 7 : recurrenceType === 'biweekly' ? 14 : 7;
+      for (let d = 0; d < maxDays; d++) {
+        const checkDate = formatDate(addDays(now, d), 'yyyy-MM-dd');
+        if (d === 0 && targetMinutes <= nowMinutes) continue;
+        return { date: checkDate, time };
+      }
+    }
+
+    const nextDate = targetMinutes <= nowMinutes
+      ? formatDate(addDays(now, 1), 'yyyy-MM-dd')
+      : today;
+    return { date: nextDate, time };
+  };
+
+  const handleQuickCreateFromTemplate = async (template: GameTemplate) => {
+    if (!template.time) {
+      handleLoadTemplate(template.id);
+      showError('Template sem horário definido. Preencha os campos manualmente.');
+      return;
+    }
+
+    const { date, time } = calculateNextOccurrence(template.time, template.recurrence_type);
+    const [year, month, day] = date.split('-').map(Number);
+    const [hours, minutes] = time.split(':').map(Number);
+    const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
+    const endMinutes = hours * 60 + minutes + DEFAULT_GAME_DURATION_MINUTES;
+    const endTime = formatTime(endMinutes);
+
+    try {
+      setFormData((prev) => ({
+        ...prev,
+        maxPlayers: template.max_players,
+        maxGoalkeepers: template.max_goalkeepers,
+        locationId: template.location_id || '',
+        locationName: template.location_name || '',
+        fieldId: template.field_id || '',
+        fieldName: template.field_name || '',
+        fieldType: template.field_type || 'SOCIETY',
+        gameType: template.field_type || 'SOCIETY',
+        rules: template.rules || '',
+        totalCost: template.total_cost || 0,
+        dailyPrice: template.daily_price || 0,
+        visibility: (template.visibility as GameVisibility) || 'PUBLIC_CLOSED',
+        recurrenceEnabled: !!template.recurrence_type,
+        recurrenceType: (template.recurrence_type as 'weekly' | 'biweekly' | 'monthly') || 'weekly',
+        date,
+        time,
+        endTime,
+      }));
+
+      const gamePayload: Record<string, unknown> = {
+        locationId: template.location_id || '',
+        locationName: template.location_name || '',
+        locationAddress: template.location_name || '',
+        fieldId: template.field_id || '',
+        fieldName: template.field_name || '',
+        date,
+        time,
+        endTime,
+        dateTime,
+        fieldType: template.field_type || 'SOCIETY',
+        gameType: template.field_type || 'SOCIETY',
+        maxPlayers: template.max_players,
+        maxGoalkeepers: template.max_goalkeepers,
+        numberOfTeams: 2,
+        dailyPrice: template.daily_price || 0,
+        totalCost: template.total_cost || 0,
+        pixPaymentEnabled: false,
+        rules: template.rules || '',
+        visibility: template.visibility || 'PUBLIC_CLOSED',
+        recurrence: template.recurrence_type || 'none',
+        team1Name: 'Time 1',
+        team2Name: 'Time 2',
+        confirmationDeadlineHours: 0,
+        requireCheckin: false,
+        checkinRadiusMeters: 100,
+      };
+
+      if (groupId) {
+        gamePayload.groupId = groupId;
+        gamePayload.groupName = formData.groupName;
+      }
+
+      const gameId = await createGame(gamePayload as Partial<Game>);
+
+      if (formData.groupId && formData.autoInviteMembers) {
+        const invitedCount = await autoInvite(gameId, formData.groupId);
+        if (invitedCount > 0) {
+          showSuccess(`Jogo "${template.name}" criado e ${invitedCount} membros convidados!`);
+        }
+      }
+
+      clearDraftHook();
+      setCreatedGameData({
+        gameId,
+        date,
+        time,
+        endTime,
+        locationName: template.location_name || '',
+        fieldName: template.field_name || '',
+        locationAddress: template.location_name || '',
+        maxPlayers: template.max_players,
+        dailyPrice: template.daily_price || 0,
+        rules: template.rules || '',
+      });
+      setShareDialogOpen(true);
+    } catch (err: unknown) {
+      logger.error('Error creating game from template:', err);
+      showError(getFunctionsErrorMessage(err, 'createGame', t('games.create.createError')));
+    }
   };
 
   const formatGameDate = (date: string, time: string) => {
@@ -1557,56 +1688,80 @@ export const CreateGameScreen: React.FC = () => {
 
         {/* Templates + Duplicate */}
         <Card sx={{ mb: 2, bgcolor: 'action.hover' }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <TemplateIcon color="action" />
-            <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>
-              Templates
-            </Typography>
-            <TextField
-              select
-              size="small"
-              label="Carregar template"
-              value=""
-              onChange={(e) => handleLoadTemplate(e.target.value)}
-              disabled={templatesLoading || templates.length === 0}
-              sx={{ minWidth: 140 }}
-            >
-              {templates.map((tpl) => (
-                <MenuItem key={tpl.id} value={tpl.id} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  {tpl.name}
-                  <IconButton
-                    size="small"
-                    onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(tpl.id); }}
-                    sx={{ ml: 1 }}
-                    aria-label={`Remover template ${tpl.name}`}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </MenuItem>
-              ))}
-              {templates.length === 0 && (
-                <MenuItem disabled value="">
-                  <em>Nenhum template salvo</em>
-                </MenuItem>
-              )}
-            </TextField>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<SaveIcon />}
-              onClick={() => setTemplateDialogOpen(true)}
-            >
-              Salvar
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<ContentPasteIcon />}
-              onClick={() => setDuplicateDialogOpen(true)}
-              disabled={recentGames.length === 0}
-            >
-              Duplicar anterior
-            </Button>
+          <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TemplateIcon color="action" />
+              <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>
+                Templates
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<SaveIcon />}
+                onClick={() => setTemplateDialogOpen(true)}
+              >
+                Salvar
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ContentPasteIcon />}
+                onClick={() => setDuplicateDialogOpen(true)}
+                disabled={recentGames.length === 0}
+              >
+                Duplicar anterior
+              </Button>
+            </Box>
+            <Divider />
+            {templatesLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+                <CircularProgress size={20} />
+              </Box>
+            ) : templates.length === 0 ? (
+              <Typography variant="caption" color="text.secondary">
+                Nenhum template salvo. Preencha o formulário e salve como template para criação rápida.
+              </Typography>
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                {templates.map((tpl) => (
+                  <Card key={tpl.id} variant="outlined" sx={{ bgcolor: 'background.default' }}>
+                    <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1, '&:last-child': { pb: 1 } }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body2" fontWeight={600} noWrap>
+                          {tpl.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          {tpl.location_name || 'Sem local'} {tpl.time ? `· ${tpl.time}` : ''} {tpl.recurrence_type ? `· ${tpl.recurrence_type === 'weekly' ? 'Semanal' : tpl.recurrence_type === 'biweekly' ? 'Quinzenal' : 'Mensal'}` : ''} {tpl.max_players ? `· ${tpl.max_players} jog.` : ''}
+                        </Typography>
+                      </Box>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleLoadTemplate(tpl.id)}
+                      >
+                        Carregar
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color={tpl.time ? 'primary' : 'inherit'}
+                        disabled={!tpl.time}
+                        onClick={() => handleQuickCreateFromTemplate(tpl)}
+                      >
+                        Criar Agora
+                      </Button>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteTemplate(tpl.id)}
+                        aria-label={`Remover template ${tpl.name}`}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            )}
           </CardContent>
         </Card>
 
@@ -1829,6 +1984,8 @@ export const CreateGameScreen: React.FC = () => {
           locationId: loc.id,
           locationName: loc.name,
           locationAddress: loc.address,
+          maxPlayers: loc.capacity && loc.capacity > 0 ? loc.capacity : prev.maxPlayers,
+          totalCost: loc.defaultPrice && loc.defaultPrice > 0 ? loc.defaultPrice : prev.totalCost,
         }));
         showSuccess(`Local "${loc.name}" selecionado!`);
       }}

@@ -806,6 +806,7 @@
       "qrCode": "Código QR",
       "qrGenerateError": "Error al generar el código QR",
       "qrInstructions": "Los jugadores pueden escanear este código QR para hacer check-in",
+      "downloadQrCode": "Descargar código QR",
       "rulesLabel": "Reglas",
       "shareError": "Error al compartir",
       "shareGame": "Compartir partido",

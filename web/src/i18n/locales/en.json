@@ -806,6 +806,7 @@
       "qrCode": "QR Code",
       "qrGenerateError": "Error generating QR Code",
       "qrInstructions": "Players can scan this QR code to check in",
+      "downloadQrCode": "Download QR code",
       "rulesLabel": "Rules",
       "shareError": "Error sharing",
       "shareGame": "Share game",

@@ -27,6 +27,11 @@ export interface GameTemplate {
   field_name?: string;
   field_type?: FieldType;
   rules?: string;
+  time?: string;
+  recurrence_type?: string;
+  total_cost?: number;
+  daily_price?: number;
+  visibility?: string;
   created_at: Date;
 }
 
