@@ -10,6 +10,48 @@ const POINTS_WIN = 3;
 const POINTS_DRAW = 1;
 const POINTS_LOSS = 0;
 
+/**
+ * FIX #2494: resultado de um time pelo ranking de placar entre TODOS os times
+ * do jogo (modelo "ranking por placar"). Maior placar = WIN, menor = LOSS,
+ * intermediários = DRAW; todos empatados = DRAW. Com 2 times reduz exatamente
+ * ao modelo clássico (vence quem fez mais gols).
+ *
+ * @param {number} score - Placar do time.
+ * @param {number} maxScore - Maior placar do jogo.
+ * @param {number} minScore - Menor placar do jogo.
+ * @return {"WIN" | "DRAW" | "LOSS"} Resultado.
+ */
+export function rankResult(
+  score: number,
+  maxScore: number,
+  minScore: number,
+): "WIN" | "DRAW" | "LOSS" {
+  if (maxScore === minScore) return "DRAW";
+  if (score === maxScore) return "WIN";
+  if (score === minScore) return "LOSS";
+  return "DRAW";
+}
+
+/**
+ * FIX #2494: placar "do oponente" = média (arredondada) dos DEMAIS times.
+ * Com 2 times = placar do único oponente (idêntico ao comportamento antigo),
+ * preservando a consistência de goals_conceded/goal_difference.
+ *
+ * @param {string} teamId - Time de referência.
+ * @param {Array<{id: string, score: number}>} teamScores - Placares de todos.
+ * @return {number} Média dos placares dos demais times.
+ */
+export function opponentAverage(
+  teamId: string,
+  teamScores: Array<{ id: string; score: number }>,
+): number {
+  const others = teamScores
+    .filter((t) => t.id !== teamId)
+    .map((t) => t.score);
+  if (others.length === 0) return 0;
+  return Math.round(others.reduce((a, b) => a + b, 0) / others.length);
+}
+
 export const onGameFinishedGroupLeague = onDocumentUpdated(
   {
     document: "games/{gameId}",
@@ -104,35 +146,43 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
         return;
       }
 
-      // FIX #2480: o cálculo abaixo assume EXATAMENTE 2 times (team1/team2).
-      // Em jogos com 3+ times, jogadores dos times 3+ recebiam resultado
-      // invertido de team2 e placar do oponente errado, corrompendo as
-      // league_standings. Até existir modelagem multi-time correta, ignoramos
-      // explicitamente (early-return + log) em vez de gravar dados errados.
-      // Follow-up: pontuação real de liga para jogos com >2 times.
-      if (teams.length > 2) {
-        logger.warn(
-          "[GROUP_LEAGUE] Jogo com >2 times não suportado pela liga de " +
-          `grupo — pulando para evitar standings corrompidas. game=${gameId} ` +
-          `group=${groupId} teams=${teams.length}`
-        );
-        return;
+      // FIX #2494: pontuação multi-time (N >= 2) — modelo "ranking por placar"
+      // (decisão de produto): maior placar = WIN, menor = LOSS, intermediários
+      // = DRAW; opponentScore = média dos DEMAIS times (cada time comparado ao
+      // campo). Com 2 times reduz EXATAMENTE ao modelo anterior (WIN/DRAW/LOSS
+      // + opponentScore = placar do único oponente), mantendo consistência das
+      // colunas wins/draws/losses/goal_difference. Substitui o skip-guard de
+      // #2480 (que ignorava jogos >2 times) por pontuação real e justa.
+
+      // Resolve o placar de cada time (Map por id).
+      const teamScores = new Map<string, number>();
+      if (teams.length === 2) {
+        // Compat: jogos de 2 times podem trazer team{1,2}_score no doc.
+        const t1 = after.team1_name ?
+          teams.find((t) => t.name === after.team1_name) || teams[0] :
+          teams[0];
+        const t2 = after.team2_name ?
+          teams.find((t) => t.name === after.team2_name) || teams[1] :
+          teams[1];
+        teamScores.set(t1.id, after.team1_score ?? t1.score);
+        teamScores.set(t2.id, after.team2_score ?? t2.score);
+      } else {
+        for (const t of teams) teamScores.set(t.id, t.score);
       }
 
-      const team1Name = after.team1_name;
-      const team2Name = after.team2_name;
+      const scoreOf = (id: string): number => teamScores.get(id) ?? 0;
+      const allScores = teams.map((t) => scoreOf(t.id));
+      const maxScore = Math.max(...allScores);
+      const minScore = Math.min(...allScores);
 
-      const team1 = team1Name ?
-        teams.find((t) => t.name === team1Name) || teams[0] :
-        teams[0];
-      const team2 = team2Name ?
-        teams.find((t) => t.name === team2Name) || teams[1] :
-        teams[1];
+      const resultForTeam = (id: string): "WIN" | "DRAW" | "LOSS" =>
+        rankResult(scoreOf(id), maxScore, minScore);
 
-      const team1Score = after.team1_score ?? team1.score;
-      const team2Score = after.team2_score ?? team2.score;
-      const draw = team1Score === team2Score;
-      const team1Won = !draw && team1Score > team2Score;
+      const opponentAvgFor = (id: string): number =>
+        opponentAverage(
+          id,
+          teams.map((t) => ({id: t.id, score: scoreOf(t.id)}))
+        );
 
       const standingsRef = db()
         .collection("groups")
@@ -154,13 +204,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
         );
         if (!playerTeam) continue;
 
-        let result: "WIN" | "DRAW" | "LOSS" = "DRAW";
-        if (!draw) {
-          const playerOnTeam1 = playerTeam.id === team1.id;
-          result = (playerOnTeam1 && team1Won) || (!playerOnTeam1 && !team1Won) ?
-            "WIN" :
-            "LOSS";
-        }
+        const result = resultForTeam(playerTeam.id);
         playerResults.push({
           user_id: conf.userId,
           team_id: playerTeam.id,
@@ -187,10 +231,8 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
               pr.result === "DRAW" ?
                 POINTS_DRAW :
                 POINTS_LOSS;
-          const myTeamScore =
-            pr.team_id === team1.id ? team1Score : team2Score;
-          const opponentScore =
-            pr.team_id === team1.id ? team2Score : team1Score;
+          const myTeamScore = scoreOf(pr.team_id);
+          const opponentScore = opponentAvgFor(pr.team_id);
 
           const standingDocId = `${seasonId}_${pr.user_id}`;
           tx.set(
@@ -234,14 +276,25 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
           );
         }
 
+        // FIX #2494: registro do match agora suporta N times via `teams`.
+        // Mantém team1/team2_* (primeiros 2 times) para compat com leitores
+        // antigos do doc de match.
+        const teamSummaries = teams.map((t) => ({
+          team_id: t.id,
+          name: t.name,
+          score: scoreOf(t.id),
+          result: resultForTeam(t.id),
+        }));
         tx.set(matchRef, {
           game_id: gameId,
           season_id: seasonId,
           group_id: groupId,
-          team1_name: team1Name || team1.name,
-          team2_name: team2Name || team2.name,
-          team1_score: team1Score,
-          team2_score: team2Score,
+          teams: teamSummaries,
+          num_teams: teams.length,
+          team1_name: teamSummaries[0]?.name ?? "",
+          team2_name: teamSummaries[1]?.name ?? "",
+          team1_score: teamSummaries[0]?.score ?? 0,
+          team2_score: teamSummaries[1]?.score ?? 0,
           date: after.date || "",
           player_results: playerResults,
           created_at: admin.firestore.FieldValue.serverTimestamp(),
