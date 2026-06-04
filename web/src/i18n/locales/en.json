@@ -223,18 +223,46 @@
     "tagline": "Organize your pickup games!"
   },
   "badges": {
-    "title": "Achievements"
+    "categories": {
+      "all": "All",
+      "assists": "Assists",
+      "community": "Community",
+      "goals": "Goals",
+      "level": "Level",
+      "mvp": "MVP",
+      "participation": "Participation",
+      "performance": "Performance",
+      "presence": "Presence",
+      "streak": "Streak",
+      "wins": "Wins"
+    },
+    "clickForDetails": "Click for details",
+    "continue": "Continue",
+    "howToUnlock": "How to unlock",
+    "progressComplete": "{{progress}}% complete",
+    "title": "Achievements",
+    "unlockedCount": "Unlocked achievements",
+    "understood": "Got it",
+    "xpReward": "Reward"
   },
   "cashbox": {
+    "addError": "Error adding transaction",
     "addExpense": "Add Expense",
     "addIncome": "Add Income",
     "amountError": "Enter a value greater than zero",
     "amountLabel": "Amount (R$)",
+    "balanceAriaLabel": "Balance {{status}}: {{value}}",
+    "balanceNegative": "negative",
+    "balancePositive": "positive",
     "confirming": "Confirming...",
+    "currentBalance": "Current Balance",
+    "defaultUserName": "User",
     "descriptionError": "Enter a description",
     "descriptionLabel": "Description",
     "expense": "Expense",
+    "groupTitle": "Group Cashbox",
     "income": "Income",
+    "readOnly": "Read only",
     "title": "Cashbox"
   },
   "challenges": {
@@ -433,7 +461,8 @@
     },
     "cancel": "Cancel",
     "cashbox": {
-      "loadError": "Error loading cashbox transactions."
+      "loadError": "Error loading cashbox transactions.",
+      "roleCheckFailed": "Could not verify your permissions. Please try again."
     },
     "challenges": {
       "sendSuccess": "Challenge sent!"

@@ -145,6 +145,7 @@ export const CashboxScreen: React.FC = () => {
         })
         .catch((err) => {
           logger.error('Error checking member status:', err);
+          showError(t('feedback.cashbox.roleCheckFailed'));
         });
     }
 
@@ -152,14 +153,14 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId, user, retryCount, t]);
+  }, [groupId, user, retryCount, t, showError]);
 
   const handleAddTransaction = useCallback(async () => {
     const parsedAmount = parseFloat(amount);
     if (!groupId || !user || !description || isNaN(parsedAmount) || parsedAmount <= 0) return;
     setSubmitting(true);
     try {
-      const userName = firebaseUser?.displayName || user?.name || 'Usuário';
+      const userName = firebaseUser?.displayName || user?.name || t('cashbox.defaultUserName');
 
       await addDoc(collection(db, 'groups', groupId, 'cashbox'), {
         group_id: groupId,
@@ -177,11 +178,11 @@ export const CashboxScreen: React.FC = () => {
       setAmount('');
       setDescription('');
     } catch (err: unknown) {
-      showError(getFirestoreErrorMessage(err, 'Erro ao adicionar transação'));
+      showError(getFirestoreErrorMessage(err, t('cashbox.addError')));
     } finally {
       setSubmitting(false);
     }
-  }, [amount, description, groupId, user, firebaseUser, transactionType, showError]);
+  }, [amount, description, groupId, user, firebaseUser, transactionType, showError, t]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(navigator.language || 'pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -190,13 +191,13 @@ export const CashboxScreen: React.FC = () => {
   return (
     <Box sx={{ pb: 4 }}>
       <ScreenHeader
-        title="Caixa do Grupo"
+        title={t('cashbox.groupTitle')}
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
         actions={
           isConfirmedMember && !isAdminOrOwner ? (
             <Chip
               icon={<VisibilityIcon />}
-              label="Somente leitura"
+              label={t('cashbox.readOnly')}
               size="small"
               color="info"
               variant="outlined"
@@ -212,7 +213,7 @@ export const CashboxScreen: React.FC = () => {
               <PaymentsIcon sx={{ fontSize: 40, color: balance >= 0 ? 'success.main' : 'error.main' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Saldo Atual
+                  {t('cashbox.currentBalance')}
                 </Typography>
                 {/* #1343 (a11y): saldo não pode depender só de cor. Prefixo
                     "+" no positivo (negativo já vem com "-" do Intl) + label
@@ -221,7 +222,10 @@ export const CashboxScreen: React.FC = () => {
                   variant="h4"
                   fontWeight={700}
                   color={balance >= 0 ? 'success.main' : 'error.main'}
-                  aria-label={`Saldo ${balance >= 0 ? 'positivo' : 'negativo'}: ${formatCurrency(balance)}`}
+                  aria-label={t('cashbox.balanceAriaLabel', {
+                    status: balance >= 0 ? t('cashbox.balancePositive') : t('cashbox.balanceNegative'),
+                    value: formatCurrency(balance),
+                  })}
                 >
                   {balance >= 0 ? '+' : ''}{formatCurrency(balance)}
                 </Typography>

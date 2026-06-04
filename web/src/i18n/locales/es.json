@@ -223,18 +223,46 @@
     "tagline": "¡Organiza tus partidos!"
   },
   "badges": {
-    "title": "Logros"
+    "categories": {
+      "all": "Todas",
+      "assists": "Asistencias",
+      "community": "Comunidad",
+      "goals": "Goles",
+      "level": "Nivel",
+      "mvp": "MVP",
+      "participation": "Participación",
+      "performance": "Rendimiento",
+      "presence": "Presencia",
+      "streak": "Racha",
+      "wins": "Victorias"
+    },
+    "clickForDetails": "Clic para detalles",
+    "continue": "Continuar",
+    "howToUnlock": "Cómo desbloquear",
+    "progressComplete": "{{progress}}% completado",
+    "title": "Logros",
+    "unlockedCount": "Logros desbloqueados",
+    "understood": "Entendido",
+    "xpReward": "Recompensa"
   },
   "cashbox": {
+    "addError": "Error al agregar transacción",
     "addExpense": "Agregar Gasto",
     "addIncome": "Agregar Ingreso",
     "amountError": "Ingrese un valor mayor que cero",
     "amountLabel": "Monto (R$)",
+    "balanceAriaLabel": "Saldo {{status}}: {{value}}",
+    "balanceNegative": "negativo",
+    "balancePositive": "positivo",
     "confirming": "Confirmando...",
+    "currentBalance": "Saldo Actual",
+    "defaultUserName": "Usuario",
     "descriptionError": "Ingrese una descripción",
     "descriptionLabel": "Descripción",
     "expense": "Gasto",
+    "groupTitle": "Caja del Grupo",
     "income": "Ingreso",
+    "readOnly": "Solo lectura",
     "title": "Caja"
   },
   "challenges": {
@@ -433,7 +461,8 @@
     },
     "cancel": "Cancelar",
     "cashbox": {
-      "loadError": "Error al cargar las transacciones de la caja."
+      "loadError": "Error al cargar las transacciones de la caja.",
+      "roleCheckFailed": "No se pudieron verificar sus permisos. Inténtelo de nuevo."
     },
     "challenges": {
       "sendSuccess": "Desafío enviado!"

@@ -28,10 +28,28 @@ vi.mock('../../hooks/useDocumentTitle', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, _opts?: Record<string, unknown>) => {
       const map: Record<string, string> = {
         'badges.title': 'Conquistas',
+        'badges.categories.all': 'Todas',
+        'badges.categories.participation': 'Participação',
+        'badges.categories.streak': 'Sequência',
+        'badges.categories.mvp': 'MVP',
+        'badges.categories.goals': 'Gols',
+        'badges.categories.assists': 'Assistências',
+        'badges.categories.wins': 'Vitórias',
+        'badges.categories.performance': 'Desempenho',
+        'badges.categories.presence': 'Presença',
+        'badges.categories.community': 'Comunidade',
+        'badges.categories.level': 'Nível',
+        'badges.unlockedCount': 'Conquistas desbloqueadas',
+        'badges.clickForDetails': 'Clique para detalhes',
+        'badges.howToUnlock': 'Como desbloquear',
+        'badges.continue': 'Continuar',
+        'badges.understood': 'Entendido',
+        'badges.xpReward': 'Recompensa',
         'common.back': 'Voltar',
+        'feedback.badges.loadError': 'Erro ao carregar conquistas',
       };
       return map[key] || key;
     },
