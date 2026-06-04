@@ -8,3 +8,7 @@ typings/
 # Node.js dependency directory
 node_modules/
 *.local
+
+# Stryker mutation testing — diretorio temporario e relatorios gerados
+.stryker-tmp/
+reports/mutation/
