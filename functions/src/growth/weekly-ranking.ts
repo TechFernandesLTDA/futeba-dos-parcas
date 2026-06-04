@@ -29,11 +29,17 @@ interface WeeklyScores {
  * @param {Date} date - Data base
  * @return {string} Chave da semana
  */
-function getWeekKey(date: Date): string {
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-  return `${date.getFullYear()}-${String(weekNum).padStart(2, "0")}`;
+export function getWeekKey(date: Date): string {
+  // FIX #2497: usa métodos UTC (não locais) para ser determinístico
+  // independentemente do TZ do runtime. Combinado com nowInBrt() no handler,
+  // os campos UTC do Date representam o horário-parede BRT.
+  const year = date.getUTCFullYear();
+  const startOfYear = new Date(Date.UTC(year, 0, 1));
+  const days = Math.floor(
+    (date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000)
+  );
+  const weekNum = Math.ceil((days + startOfYear.getUTCDay() + 1) / 7);
+  return `${year}-${String(weekNum).padStart(2, "0")}`;
 }
 
 /**
@@ -41,16 +47,47 @@ function getWeekKey(date: Date): string {
  * @param {string} weekKey - Chave da semana no formato YYYY-WW
  * @return {Object} Objeto com start e end (Date)
  */
-function getWeekRange(weekKey: string): { start: Date; end: Date } {
+export function getWeekRange(weekKey: string): { start: Date; end: Date } {
+  // FIX #2497: aritmética em UTC (determinística por TZ) E consistente com
+  // getWeekKey. O `+1` que existia aqui tornava getWeekRange(getWeekKey(d))
+  // adiantado em 1 dia → o domingo encerrado caía FORA do range mesmo com a
+  // data correta. Agora o offset espelha exatamente getWeekKey:
+  //   getWeekKey: weekNum = ceil((days + dow0 + 1)/7)
+  //   ⇒ semana w cobre os índices [(w-1)*7 - dow0 , w*7 - dow0 - 1]
   const [year, week] = weekKey.split("-").map(Number);
-  const jan1 = new Date(year, 0, 1);
-  const daysOffset = (week - 1) * 7 - jan1.getDay() + 1;
-  const start = new Date(year, 0, 1 + daysOffset);
-  start.setHours(0, 0, 0, 0);
+  const jan1 = new Date(Date.UTC(year, 0, 1));
+  const daysOffset = (week - 1) * 7 - jan1.getUTCDay();
+  const start = new Date(Date.UTC(year, 0, 1 + daysOffset, 0, 0, 0, 0));
   const end = new Date(start);
-  end.setDate(end.getDate() + 6);
-  end.setHours(23, 59, 59, 999);
+  end.setUTCDate(end.getUTCDate() + 6);
+  end.setUTCHours(23, 59, 59, 999);
   return {start, end};
+}
+
+/**
+ * Retorna um Date cujos campos UTC representam o horário-parede atual em BRT
+ * (America/Sao_Paulo), independentemente do TZ do runtime. TZ-independente
+ * (usa Intl.formatToParts) — base correta para getWeekKey/getWeekRange.
+ *
+ * @return {Date} Instante com campos UTC = horário-parede BRT.
+ */
+export function nowInBrt(): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  // hour pode vir "24" em alguns ICU para meia-noite — normaliza.
+  const hour = get("hour") % 24;
+  return new Date(Date.UTC(
+    get("year"), get("month") - 1, get("day"), hour, get("minute"), get("second")
+  ));
 }
 
 export const processWeeklyRanking = onSchedule(
@@ -62,7 +99,12 @@ export const processWeeklyRanking = onSchedule(
     memory: "512MiB",
   },
   async () => {
-    const now = new Date();
+    // FIX #2497: o cron dispara domingo 23:59 BRT == segunda 02:59 UTC. Com
+    // `new Date()` cru (UTC), getWeekKey/getWeekRange caíam na semana SEGUINTE
+    // → a semana recém-encerrada nunca recebia ranking (off-by-one de TZ).
+    // nowInBrt() retorna um Date com campos UTC = horário-parede BRT, base
+    // correta para a aritmética de semana (agora também em UTC, determinística).
+    const now = nowInBrt();
     const weekKey = getWeekKey(now);
     const {start, end} = getWeekRange(weekKey);
 

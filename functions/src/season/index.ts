@@ -155,6 +155,13 @@ export const checkSeasonEnd = onSchedule(
         if (fa) existingFrozenAt.set(d.id, fa);
       }
 
+      // FIX #2500: rastreia se TODAS as standings foram gravadas. Se houver
+      // timeout no meio, não fechamos a season (passo 3b) — ela será
+      // reprocessada na próxima run (idempotente por doc-id). Antes, o 3b
+      // marcava is_active=false incondicionalmente mesmo com standings
+      // incompletas → histórico permanentemente parcial (#991 incompleto).
+      let standingsComplete = true;
+
       if (!participationsSnap.empty) {
         // Processar em chunks se necessário
         // 100 participações por vez
@@ -171,6 +178,7 @@ export const checkSeasonEnd = onSchedule(
               "processamento de participações " +
               `para season ${seasonId}`
             );
+            standingsComplete = false;
             break;
           }
 
@@ -234,16 +242,23 @@ export const checkSeasonEnd = onSchedule(
                   "[SEASON][TIMEOUT] " +
                   "Timeout após batch commit."
                 );
+                standingsComplete = false;
                 break;
               }
             }
           }
 
-          if (!hasTimeRemaining()) break;
+          if (!hasTimeRemaining()) {
+            standingsComplete = false;
+            break;
+          }
         }
       }
 
       // 3. Create Next Season (Auto-Renewal Monthly)
+      // FIX #2500: nextSeasonReady garante que só fechamos a season atual se a
+      // próxima já existe (seasons não-mensais não precisam). Evita gap (#1040).
+      let nextSeasonReady = !seasonId.startsWith("monthly");
       if (
         seasonId.startsWith("monthly") &&
         hasTimeRemaining()
@@ -331,6 +346,8 @@ export const checkSeasonEnd = onSchedule(
               }
             }
           );
+          // Próxima season criada (ou já existente) com sucesso.
+          nextSeasonReady = true;
         } catch (e) {
           logger.error(
             "[SEASON] Error calculating " +
@@ -346,21 +363,32 @@ export const checkSeasonEnd = onSchedule(
         }
       }
 
-      // 3b. FIX #991: Marcar season como inativa SOMENTE após standings
-      // e próxima season gravadas com sucesso. Isso garante que, se ocorrer
-      // timeout durante as standings, a season não fique parcialmente
-      // fechada (is_active=false sem standings completas).
-      batch.update(doc.ref, {
-        is_active: false,
-        closed_at:
-          admin.firestore.FieldValue.serverTimestamp(),
-      });
-      operationCount++;
-      if (operationCount >= BATCH_LIMIT) {
-        await commitBatch();
+      // 3b. FIX #991 + #2500: Marcar season como inativa SOMENTE se as
+      // standings completaram (sem timeout) E a próxima season está pronta.
+      // Antes este passo era INCONDICIONAL: após um break por timeout no loop
+      // de standings, a season era fechada mesmo com standings incompletas →
+      // histórico permanentemente parcial e irrecuperável (season nunca mais
+      // reprocessada). Agora, se incompleto, NÃO fecha — a próxima run do cron
+      // reprocessa (idempotente por doc-id) e fecha quando completar.
+      if (standingsComplete && nextSeasonReady) {
+        batch.update(doc.ref, {
+          is_active: false,
+          closed_at:
+            admin.firestore.FieldValue.serverTimestamp(),
+        });
+        operationCount++;
+        if (operationCount >= BATCH_LIMIT) {
+          await commitBatch();
+        }
+        processedCount++;
+      } else {
+        logger.warn(
+          `[SEASON] Season ${seasonId} NÃO fechada ` +
+          `(standingsComplete=${standingsComplete}, ` +
+          `nextSeasonReady=${nextSeasonReady}) — será ` +
+          "reprocessada na próxima run."
+        );
       }
-
-      processedCount++;
     }
 
     // Commit final batch

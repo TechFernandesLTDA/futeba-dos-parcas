@@ -711,6 +711,49 @@ async function markReminderSent(
 }
 
 /**
+/**
+ * FIX #2501: envia lembretes em PARALELO (lotes) e marca a idempotência
+ * ANTES do envio (claim). Antes era sequencial (risco de timeout em jogos
+ * populares) e marcava DEPOIS do envio — um crash entre envio e marcação fazia
+ * o retry do scheduler reenviar (push duplicado). Semântica at-most-once:
+ * se a marcação falhar, não envia; se enviar e crashar, o marcador já
+ * persistiu → não reenvia (preferível perder 1 a duplicar).
+ *
+ * @param {string[]} userIds - Destinatários.
+ * @param {Game} game - Jogo.
+ * @param {string} reminderType - Tipo (24h/2h).
+ * @return {Promise<number>} Quantos lembretes foram enviados.
+ */
+async function dispatchReminders(
+  userIds: string[],
+  game: GameForReminder,
+  reminderType: "24h" | "2h",
+): Promise<number> {
+  const BATCH = 25;
+  let sent = 0;
+  for (let i = 0; i < userIds.length; i += BATCH) {
+    const slice = userIds.slice(i, i + BATCH);
+    const results = await Promise.all(
+      slice.map(async (userId) => {
+        try {
+          // Claim idempotente ANTES do envio.
+          await markReminderSent(game.id, userId, reminderType);
+        } catch (e) {
+          logger.error(
+            `[REMINDERS] Falha ao marcar ${userId}, pulando envio:`,
+            e
+          );
+          return false;
+        }
+        return sendReminder(userId, game, reminderType);
+      })
+    );
+    sent += results.filter(Boolean).length;
+  }
+  return sent;
+}
+
+/**
  * Processa lembretes para um tipo especifico
  * (24h ou 2h).
  *
@@ -758,21 +801,11 @@ async function processReminders(
     );
 
     // Processar confirmacoes existentes
-    for (const conf of pendingConfirmations) {
-      const sent = await sendReminder(
-        conf.user_id,
-        game,
-        reminderType
-      );
-      if (sent) {
-        await markReminderSent(
-          game.id,
-          conf.user_id,
-          reminderType
-        );
-        totalSent++;
-      }
-    }
+    totalSent += await dispatchReminders(
+      pendingConfirmations.map((c) => c.user_id),
+      game,
+      reminderType
+    );
 
     // Para jogos de grupo, tambem notificar
     // membros sem confirmacao
@@ -789,21 +822,11 @@ async function processReminders(
         " grupo sem confirmacao"
       );
 
-      for (const memberId of membersNoConf) {
-        const sent = await sendReminder(
-          memberId,
-          game,
-          reminderType
-        );
-        if (sent) {
-          await markReminderSent(
-            game.id,
-            memberId,
-            reminderType
-          );
-          totalSent++;
-        }
-      }
+      totalSent += await dispatchReminders(
+        membersNoConf,
+        game,
+        reminderType
+      );
     }
   }
 
