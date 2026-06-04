@@ -1,0 +1,75 @@
+name: "Semgrep Security Scan"
+
+# Scan estatico de seguranca (SAST) focado nas superficies TypeScript:
+# functions/src e web/src. Guardrail barato contra os pontos-cegos
+# sistematicos de codigo gerado por IA: deserializacao insegura, XSS,
+# secrets hardcoded e validacao de input ausente.
+on:
+  pull_request:
+    branches: [master, develop]
+    paths:
+      - 'functions/**'
+      - 'web/**'
+      # Self-validacao: mudancas no proprio workflow disparam o scan
+      - '.github/workflows/semgrep.yml'
+  schedule:
+    # Semanal — segunda-feira 03:30 UTC.
+    # Horario deslocado do CodeQL (01:30) para nao competir pelo runner.
+    - cron: '30 3 * * 1'
+  workflow_dispatch:
+
+# Cancela scan anterior do mesmo branch/PR (mesmo padrao do codeql.yml/web-ci.yml)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep (TypeScript)
+    # Convencao do repo: self-hosted macOS ARM64 com override via vars.RUNNER_LABELS.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 25
+    permissions:
+      # Necessario para o upload-sarif publicar na aba Security.
+      security-events: write
+      contents: read
+      # Repo privado: upload-sarif exige actions:read (igual ao codeql.yml).
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # A Docker action returntocorp/semgrep nao roda de forma confiavel em
+      # self-hosted macOS ARM64. Usamos o CLI via pip (python3 -m semgrep) para
+      # evitar problemas de PATH dos scripts instalados em ~/Library/Python/.../bin.
+      - name: Install Semgrep CLI
+        run: |
+          python3 -m pip install --user --upgrade semgrep
+          python3 -m semgrep --version
+
+      # Rulesets: TypeScript, React, OWASP Top Ten, Secrets e JavaScript.
+      # SOFT GATE (report-only): o `|| true` garante que findings NAO quebram o
+      # build nesta fase inicial. As ocorrencias aparecem na aba Security via
+      # SARIF. Podemos endurecer depois (remover `|| true`) quando o ruido baixar.
+      - name: Run Semgrep scan
+        run: |
+          python3 -m semgrep \
+            --config p/typescript \
+            --config p/react \
+            --config p/owasp-top-ten \
+            --config p/secrets \
+            --config p/javascript \
+            functions/src web/src \
+            --sarif --output semgrep.sarif \
+            --metrics off || true
+
+      # `if: always()` garante o upload mesmo quando o scan acima encontra
+      # findings (semgrep retorna codigo != 0 nesses casos).
+      - name: Upload SARIF to Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@03e4368ac7daa2bd82b3e85262f3bf87ee112f57  # v3
+        with:
+          sarif_file: semgrep.sarif
+          # Categoria propria — nao colide com o upload do CodeQL.
+          category: semgrep
