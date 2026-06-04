@@ -107,6 +107,8 @@ import {
   sendNotificationToUsers,
   saveNotificationToFirestore,
 } from "../src/notifications";
+import { shouldNotifyUser } from "../src/notifications/helpers";
+import { getNotificationSettings } from "../src/notifications/preferences";
 
 // ==========================================
 // NOTIFICATION TYPE ENUM
@@ -550,5 +552,116 @@ describe("saveNotificationToFirestore", () => {
         game_id: "game-xyz",
       })
     );
+  });
+});
+
+// ==========================================
+// FIX #2477 — opt-out de notificação (schema canônico reader↔writer)
+// Regressão recorrente #785/#926/#1143. Estes testes provam que o GATE
+// (shouldNotifyUser) de fato SUPRIME quando o usuário desativa, lendo
+// `notification_settings/{uid}` e tolerando AMBOS os casings: snake (web) e
+// camel (android). O teste anterior validava o schema FANTASMA
+// (`users.notification_preferences`), dando falsa confiança verde.
+// ==========================================
+
+describe("shouldNotifyUser opt-out (#2477)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // Stub do doc notification_settings/{uid}.
+  const stubSettings = (data: Record<string, unknown> | null) => {
+    mockDocGet.mockResolvedValue({
+      exists: data !== null,
+      data: () => data ?? undefined,
+    });
+  };
+
+  test("suprime quando push global desativado (WEB snake_case)", async () => {
+    stubSettings({ push_enabled: false });
+    expect(await shouldNotifyUser("u1", "GAME_INVITE")).toBe(false);
+  });
+
+  test("suprime quando push global desativado (ANDROID camelCase)", async () => {
+    stubSettings({ enablePushNotifications: false });
+    expect(await shouldNotifyUser("u1", "GAME_INVITE")).toBe(false);
+  });
+
+  test("suprime tipo específico — MVP (web mvp_votes=false)", async () => {
+    stubSettings({ mvp_votes: false });
+    expect(await shouldNotifyUser("u1", "MVP_RECEIVED")).toBe(false);
+  });
+
+  test("suprime invites (android enableInviteNotifications=false)", async () => {
+    stubSettings({ enableInviteNotifications: false });
+    expect(await shouldNotifyUser("u1", "GAME_INVITE")).toBe(false);
+  });
+
+  test("suprime lembrete (web game_reminders=false)", async () => {
+    stubSettings({ game_reminders: false });
+    expect(await shouldNotifyUser("u1", "GAME_REMINDER")).toBe(false);
+  });
+
+  test("suprime quando silenciado (web mute_until futuro)", async () => {
+    const future = new Date(Date.now() + 3600000).toISOString();
+    stubSettings({ mute_until: future });
+    expect(await shouldNotifyUser("u1", "GAME_INVITE")).toBe(false);
+  });
+
+  test("NÃO suprime mute_until passado", async () => {
+    const past = new Date(Date.now() - 3600000).toISOString();
+    stubSettings({ mute_until: past });
+    expect(await shouldNotifyUser("u1", "GAME_INVITE")).toBe(true);
+  });
+
+  test("fail-open: tipo sem toggle dedicado é permitido", async () => {
+    // mvp_votes off não afeta GAME_CONFIRMED (sem toggle mapeado)
+    stubSettings({ mvp_votes: false });
+    expect(await shouldNotifyUser("u1", "GAME_CONFIRMED")).toBe(true);
+  });
+
+  test("fail-open: doc ausente => permite", async () => {
+    stubSettings(null);
+    expect(await shouldNotifyUser("u1", "GAME_INVITE")).toBe(true);
+  });
+
+  test("permite quando push habilitado explicitamente (snake)", async () => {
+    stubSettings({ push_enabled: true, game_invites: true });
+    expect(await shouldNotifyUser("u1", "GAME_INVITE")).toBe(true);
+  });
+});
+
+describe("getNotificationSettings normalização (#2477)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const stub = (data: Record<string, unknown> | null) => {
+    mockDocGet.mockResolvedValue({
+      exists: data !== null,
+      data: () => data ?? undefined,
+    });
+  };
+
+  test("normaliza snake_case (web)", async () => {
+    stub({ push_enabled: false, game_reminders: false });
+    const s = await getNotificationSettings("u1");
+    expect(s.pushEnabled).toBe(false);
+    expect(s.gameReminders).toBe(false);
+  });
+
+  test("normaliza camelCase (android)", async () => {
+    stub({ enablePushNotifications: false, enableGameReminders: false });
+    const s = await getNotificationSettings("u1");
+    expect(s.pushEnabled).toBe(false);
+    expect(s.gameReminders).toBe(false);
+  });
+
+  test("fail-open quando campos ausentes", async () => {
+    stub({});
+    const s = await getNotificationSettings("u1");
+    expect(s.pushEnabled).toBe(true);
+    expect(s.gameReminders).toBe(true);
+    expect(s.muteUntil).toBeNull();
   });
 });
