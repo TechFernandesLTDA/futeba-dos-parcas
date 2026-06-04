@@ -24,6 +24,14 @@ i18n
       lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage'],
     },
+    // Em DEV: loga no console chaves ausentes para facilitar detecção precoce de drift.
+    // Em produção o fallback para pt-BR já cobre — não alterar comportamento prod.
+    saveMissing: import.meta.env.DEV,
+    missingKeyHandler: import.meta.env.DEV
+      ? (_lngs: readonly string[], _ns: string, key: string) => {
+          console.error(`[i18n] chave ausente: "${key}"`);
+        }
+      : undefined,
   });
 
 export default i18n;
