@@ -101,7 +101,7 @@ existentes (aditivo).
 | 2a Stryker functions | ✅ **MERGED** | #2508 | 90% mutation score em `group-league.ts`; job nightly+manual |
 | 2b Stryker web | ✅ **MERGED** | #2510 | vitest-runner, `inPlace:true`; mutation só nightly |
 | 2c PIT (Android/shared) | ⏸️ **DEFERRED** | — | `:shared` é KMP sem target `jvm()`; PIT (bytecode JVM) sobre KMP é finicky. Exige decisão de design (adicionar `jvm()` target só p/ domínio puro) — sondado, não implementado neste ciclo (mesma energia de tar-pit do config-cache) |
-| 3 Diff-coverage gate | ⏳ pendente | — | functions tem jest --coverage; web tem vitest coverage |
+| 3 Diff-coverage gate | 🟢 **functions neste PR** | (este PR) | gate `diff-cover --fail-under=80` no job `test` do `functions-ci.yml` (linhas novas/alteradas do PR, só em `pull_request`). jest emite lcov (`coverageReporters` explícito); venv isolado p/ PEP 668; roda com CWD=`functions/` p/ casar paths lcov↔diff (rodar da raiz daria pass-em-falso). **Web/Android = follow-up:** web tem vitest coverage mas falta wiring lcov+gate no `web-ci.yml`; Android não tem jacoco configurado |
 | 4 Build cache | 🟡 **local** | — | `org.gradle.caching=true` commitado local + `scripts/verify-build-cache.sh`; verify pendente (rodar com runners PAUSADOS p/ evitar OOM em 24GB) |
 | 5 Semgrep | ✅ **MERGED** | #2507 | fix PEP 668 (venv isolado no runner); guarda `hashFiles(semgrep.sarif)` |
 | 6 Affected-only + Playwright + merge_group | 🟢 **F6a neste PR** | (este PR) | CodeQL escopado p/ JS/TS (só analisa JS/TS; cron semanal = safety net). Playwright workers e `merge_group` **diferidos**: merge_group é config morta sem merge queue habilitada (que exige required status checks = mudança de política; hoje `required_status_checks=null`) |
