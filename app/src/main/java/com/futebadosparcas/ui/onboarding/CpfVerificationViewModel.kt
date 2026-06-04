@@ -71,6 +71,7 @@ class CpfVerificationViewModel(
         if (!CpfValidator.isValid(cpf)) {
             _uiState.value = CpfVerificationUiState.Error(
                 "CPF invalido. Confira os digitos.",
+                R.string.error_cpf_invalid_digits,
             )
             return
         }
@@ -78,6 +79,7 @@ class CpfVerificationViewModel(
         if (user == null) {
             _uiState.value = CpfVerificationUiState.Error(
                 "Sessao expirou. Faca login novamente.",
+                R.string.error_session_expired,
             )
             return
         }
@@ -124,8 +126,7 @@ class CpfVerificationViewModel(
                 }
             } catch (e: Exception) {
                 AppLogger.e("CpfVerification", "verifyCpf failed", e)
-                val msg = parseError(e)
-                _uiState.value = CpfVerificationUiState.Error(msg)
+                _uiState.value = CpfVerificationUiState.Error(parseError(e), parseErrorResId(e))
                 return@launch
             }
 
@@ -152,6 +153,7 @@ class CpfVerificationViewModel(
             } else {
                 _uiState.value = CpfVerificationUiState.Error(
                     "Verificado! Aguarde alguns segundos e tente novamente.",
+                    R.string.error_cpf_verified_wait,
                 )
             }
         }
@@ -192,6 +194,37 @@ class CpfVerificationViewModel(
             msg.contains("unauthenticated") ->
                 "Login expirou. Faca login novamente."
             else -> "Erro ao verificar CPF. Tente novamente."
+        }
+    }
+
+    /**
+     * Mapeia excecao para resId de mensagem amigavel (i18n).
+     * Espelha [parseError] para permitir traducao em values-en/values-es.
+     */
+    @StringRes
+    private fun parseErrorResId(e: Exception): Int {
+        val ffe = e as? FirebaseFunctionsException
+            ?: e.cause as? FirebaseFunctionsException
+        if (ffe != null) {
+            return when (ffe.code) {
+                FirebaseFunctionsException.Code.ALREADY_EXISTS ->
+                    R.string.error_cpf_already_registered
+                FirebaseFunctionsException.Code.INVALID_ARGUMENT -> R.string.error_cpf_invalid
+                FirebaseFunctionsException.Code.PERMISSION_DENIED ->
+                    R.string.error_cpf_contact_support
+                FirebaseFunctionsException.Code.UNAUTHENTICATED ->
+                    R.string.error_login_expired
+                else -> R.string.error_cpf_verification
+            }
+        }
+
+        val msg = e.message.orEmpty()
+        return when {
+            msg.contains("already-exists") -> R.string.error_cpf_already_registered
+            msg.contains("invalid-argument") -> R.string.error_cpf_invalid
+            msg.contains("permission-denied") -> R.string.error_cpf_contact_support
+            msg.contains("unauthenticated") -> R.string.error_login_expired
+            else -> R.string.error_cpf_verification
         }
     }
 

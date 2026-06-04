@@ -37,7 +37,7 @@ fun WeeklyRankingScreen(
                 title = { Text(stringResource(R.string.weekly_ranking)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
                     }
                 }
             )
@@ -52,13 +52,13 @@ fun WeeklyRankingScreen(
             is WeeklyRankingUiState.Empty -> EmptyState(
                 type = EmptyStateType.NoData(
                     title = stringResource(R.string.weekly_ranking_empty),
-                    description = "Volte quando houver peladas finalizadas na semana."
+                    description = stringResource(R.string.weekly_ranking_empty_description)
                 )
             )
             is WeeklyRankingUiState.Success -> {
                 Column(modifier = Modifier.padding(padding)) {
                     Text(
-                        text = "Rodada ${state.weekKey}",
+                        text = stringResource(R.string.weekly_ranking_round, state.weekKey),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

@@ -471,7 +471,11 @@ class LocationDetailViewModel(
 
             // Verifica permissao: deve ser owner do local, gerente do local, gerente do campo, ou admin
             if (!isOwner && !isLocationManager && !isFieldManager && !isAdmin) {
-                 _uiState.value = LocationDetailUiState.Error.auth("Sem permissão para editar esta quadra", "permission_denied")
+                 _uiState.value = LocationDetailUiState.Error.auth(
+                     "Sem permissão para editar esta quadra",
+                     "permission_denied",
+                     R.string.location_detail_error_edit_permission
+                 )
                  return@launch
             }
 
@@ -632,12 +636,17 @@ sealed class LocationDetailUiState {
             /**
              * Cria um estado de erro de autenticação.
              */
-            fun auth(message: String, reason: String = "not_authenticated"): Error {
+            fun auth(
+                message: String,
+                reason: String = "not_authenticated",
+                @StringRes errorResId: Int? = null,
+            ): Error {
                 val errorType = LocationError.Auth(reason)
                 return Error(
                     message = message,
                     errorType = errorType,
-                    recoveryAction = LocationErrorHandler.getRecoveryAction(errorType)
+                    recoveryAction = LocationErrorHandler.getRecoveryAction(errorType),
+                    errorResId = errorResId
                 )
             }
         }

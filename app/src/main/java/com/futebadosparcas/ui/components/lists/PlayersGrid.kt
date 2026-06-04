@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,7 +65,7 @@ fun PlayersGrid(
     hasMoreItems: Boolean = false,
     isLoadingMore: Boolean = false,
     onLoadMore: () -> Unit = {},
-    emptyMessage: String = "Nenhum jogador encontrado",
+    emptyMessage: String = stringResource(R.string.players_grid_empty),
     contentPadding: PaddingValues = PaddingValues(8.dp)
 ) {
     // Determina o número de colunas baseado no tamanho da tela

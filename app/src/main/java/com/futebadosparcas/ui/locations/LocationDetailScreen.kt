@@ -161,7 +161,10 @@ fun LocationDetailScreen(
             }
         }
         if (uiState is LocationDetailUiState.Error) {
-             Toast.makeText(context, (uiState as LocationDetailUiState.Error).message, Toast.LENGTH_LONG).show()
+             val errorState = uiState as LocationDetailUiState.Error
+             // Prefere resId i18n; cai para a string crua (legado)
+             val errorMsg = errorState.errorResId?.let { context.getString(it) } ?: errorState.message
+             Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
         }
     }
 

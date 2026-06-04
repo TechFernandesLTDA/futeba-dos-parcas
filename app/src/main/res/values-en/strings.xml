@@ -182,4 +182,30 @@
     <string name="action_clear_search">Clear Search</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+
+    <!-- i18n #2375: ViewModel/component strings + locale coverage -->
+    <string name="action_back">Back</string>
+    <string name="weekly_ranking">Weekly Ranking</string>
+    <string name="weekly_ranking_empty">No weekly ranking yet</string>
+    <string name="weekly_ranking_round">Round %1$s</string>
+    <string name="weekly_ranking_empty_description">Come back when there are games finished this week.</string>
+    <string name="public_games">Public Games</string>
+    <string name="public_games_empty">No public games</string>
+    <string name="public_games_empty_description">Come back later or create your own match!</string>
+    <string name="game_detail_error_load">Failed to load game</string>
+    <string name="game_detail_error_restore_permission">No permission to restore game</string>
+    <string name="game_detail_invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* at *%3$s*\n📍 %4$s\n</string>
+    <string name="location_detail_error_edit_permission">No permission to edit this court</string>
+    <string name="team_formation_error_no_formation_players">No player from this formation is available</string>
+    <string name="create_group_error_description_required">Description required for category \'Other\'</string>
+    <string name="games_list_empty">No games found</string>
+    <string name="players_grid_empty">No players found</string>
+    <string name="main_new_achievement">🏆 New achievement: %1$s</string>
+    <string name="error_cpf_invalid_digits">Invalid CPF. Check the digits.</string>
+    <string name="error_session_expired">Session expired. Please log in again.</string>
+    <string name="error_cpf_verified_wait">Verified! Wait a few seconds and try again.</string>
+    <string name="error_cpf_already_registered">This CPF is already registered to another account</string>
+    <string name="error_cpf_invalid">Invalid CPF</string>
+    <string name="error_cpf_contact_support">CPF already registered. Please contact support.</string>
+    <string name="error_login_expired">Login expired. Please log in again.</string>
 </resources>

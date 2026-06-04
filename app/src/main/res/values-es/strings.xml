@@ -182,4 +182,30 @@
     <string name="action_clear_search">Limpiar búsqueda</string>
     <string name="yes">Sí</string>
     <string name="no">No</string>
+
+    <!-- i18n #2375: strings de ViewModel/componentes + cobertura de idioma -->
+    <string name="action_back">Volver</string>
+    <string name="weekly_ranking">Ranking Semanal</string>
+    <string name="weekly_ranking_empty">Aún no hay ranking semanal</string>
+    <string name="weekly_ranking_round">Ronda %1$s</string>
+    <string name="weekly_ranking_empty_description">Vuelve cuando haya partidos finalizados esta semana.</string>
+    <string name="public_games">Partidos Públicos</string>
+    <string name="public_games_empty">No hay partidos públicos</string>
+    <string name="public_games_empty_description">¡Vuelve más tarde o crea tu propio partido!</string>
+    <string name="game_detail_error_load">Error al cargar el partido</string>
+    <string name="game_detail_error_restore_permission">Sin permiso para restaurar el partido</string>
+    <string name="game_detail_invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* a las *%3$s*\n📍 %4$s\n</string>
+    <string name="location_detail_error_edit_permission">Sin permiso para editar esta cancha</string>
+    <string name="team_formation_error_no_formation_players">Ningún jugador de esta formación está disponible</string>
+    <string name="create_group_error_description_required">Descripción obligatoria para la categoría \'Otro\'</string>
+    <string name="games_list_empty">No se encontraron partidos</string>
+    <string name="players_grid_empty">No se encontraron jugadores</string>
+    <string name="main_new_achievement">🏆 Nuevo logro: %1$s</string>
+    <string name="error_cpf_invalid_digits">CPF inválido. Verifica los dígitos.</string>
+    <string name="error_session_expired">La sesión expiró. Inicia sesión nuevamente.</string>
+    <string name="error_cpf_verified_wait">¡Verificado! Espera unos segundos e inténtalo de nuevo.</string>
+    <string name="error_cpf_already_registered">Este CPF ya está registrado en otra cuenta</string>
+    <string name="error_cpf_invalid">CPF inválido</string>
+    <string name="error_cpf_contact_support">CPF ya registrado. Ponte en contacto con soporte.</string>
+    <string name="error_login_expired">El inicio de sesión expiró. Inicia sesión nuevamente.</string>
 </resources>

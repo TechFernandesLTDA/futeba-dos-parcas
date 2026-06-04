@@ -40,7 +40,7 @@ fun PublicGamesScreen(
                 title = { Text(stringResource(R.string.public_games)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
                     }
                 }
             )
@@ -55,7 +55,7 @@ fun PublicGamesScreen(
             is PublicGamesUiState.Empty -> EmptyState(
                 type = EmptyStateType.NoData(
                     title = stringResource(R.string.public_games_empty),
-                    description = "Volte mais tarde ou crie sua própria pelada!"
+                    description = stringResource(R.string.public_games_empty_description)
                 )
             )
             is PublicGamesUiState.Success -> {

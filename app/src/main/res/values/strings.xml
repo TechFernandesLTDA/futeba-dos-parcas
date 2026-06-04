@@ -4344,4 +4344,16 @@ subir no ranking!</string>
     <string name="game_location_error_field_manager_active">Gerentes de campo não podem alterar status Ativo/Inativo</string>
     <string name="game_location_error_admin_only_active">Apenas Administradores podem alterar o status Ativo/Inativo</string>
 
+    <!-- i18n #2375: strings externalizadas de ViewModels/componentes -->
+    <string name="game_detail_error_restore_permission">Sem permissão para restaurar jogo</string>
+    <string name="location_detail_error_edit_permission">Sem permissão para editar esta quadra</string>
+    <string name="create_group_error_description_required">Descrição obrigatória para categoria \'Outro\'</string>
+    <string name="games_list_empty">Nenhum jogo encontrado</string>
+    <string name="players_grid_empty">Nenhum jogador encontrado</string>
+    <string name="weekly_ranking_round">Rodada %1$s</string>
+    <string name="weekly_ranking_empty_description">Volte quando houver peladas finalizadas na semana.</string>
+    <string name="public_games_empty_description">Volte mais tarde ou crie sua própria pelada!</string>
+    <string name="main_new_achievement">🏆 Nova conquista: %1$s</string>
+    <string name="game_detail_invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* às *%3$s*\n📍 %4$s\n</string>
+
 </resources>

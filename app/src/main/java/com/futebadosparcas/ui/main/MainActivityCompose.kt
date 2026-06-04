@@ -439,7 +439,7 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         badgeAwarder.newBadges.collectLatest { badge ->
             snackbarHostState.showSnackbar(
-                message = "🏆 Nova conquista: ${badge.badgeId}",
+                message = context.getString(R.string.main_new_achievement, badge.badgeId),
                 duration = SnackbarDuration.Short
             )
         }

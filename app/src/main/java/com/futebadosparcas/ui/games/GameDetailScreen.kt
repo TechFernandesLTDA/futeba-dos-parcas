@@ -107,7 +107,9 @@ fun GameDetailScreen(
                 snackbarHostState.showSnackbar(message)
                 viewModel.clearSchedulingEvent()
             }
-            state.userMessage?.let { message ->
+            // Resolve resId quando presente; caso contrário usa a string crua (legado)
+            val userMsg = state.userMessageResId?.let { context.getString(it) } ?: state.userMessage
+            userMsg?.let { message ->
                 snackbarHostState.showSnackbar(message)
                 viewModel.clearUserMessage()
             }
@@ -156,7 +158,8 @@ fun GameDetailScreen(
                     EmptyState(
                         type = EmptyStateType.Error(
                             title = stringResource(R.string.error),
-                            description = state.message,
+                            // Prefere resId i18n; cai para a string crua (legado)
+                            description = state.errorResId?.let { stringResource(it) } ?: state.message,
                             actionLabel = stringResource(R.string.retry),
                             onRetry = { viewModel.loadGameDetails(gameId) }
                         )
@@ -693,7 +696,13 @@ private fun isMockLocation(location: android.location.Location): Boolean {
 }
 
 fun inviteToWhatsApp(context: Context, state: GameDetailUiState.Success, inviteTitle: String) {
-    val message = "⚽ *$inviteTitle*\n\n📅 *${state.game.date}* às *${state.game.time}*\n📍 ${state.game.locationName}\n"
+    val message = context.getString(
+        R.string.game_detail_invite_whatsapp_message,
+        inviteTitle,
+        state.game.date,
+        state.game.time,
+        state.game.locationName
+    )
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("https://wa.me/?text=${Uri.encode(message)}")
