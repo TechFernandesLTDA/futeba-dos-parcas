@@ -41,20 +41,27 @@ jobs:
         uses: actions/checkout@v4
 
       # A Docker action returntocorp/semgrep nao roda de forma confiavel em
-      # self-hosted macOS ARM64. Usamos o CLI via pip (python3 -m semgrep) para
-      # evitar problemas de PATH dos scripts instalados em ~/Library/Python/.../bin.
+      # self-hosted macOS ARM64. O Python do Homebrew no runner e "externally-
+      # managed" (PEP 668), entao `pip install` direto e recusado. Instalamos o
+      # Semgrep num venv isolado em $RUNNER_TEMP: sem poluir o site-packages do
+      # sistema e sem --break-system-packages (que pode quebrar o Homebrew).
       - name: Install Semgrep CLI
         run: |
-          python3 -m pip install --user --upgrade semgrep
-          python3 -m semgrep --version
+          python3 -m venv "$RUNNER_TEMP/semgrep-venv"
+          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet --upgrade pip
+          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet semgrep
+          "$RUNNER_TEMP/semgrep-venv/bin/semgrep" --version
 
       # Rulesets: TypeScript, React, OWASP Top Ten, Secrets e JavaScript.
-      # SOFT GATE (report-only): o `|| true` garante que findings NAO quebram o
-      # build nesta fase inicial. As ocorrencias aparecem na aba Security via
-      # SARIF. Podemos endurecer depois (remover `|| true`) quando o ruido baixar.
+      # SOFT GATE (report-only): findings (exit 1) NAO quebram o build nesta fase
+      # — aparecem na aba Security via SARIF. Mas uma falha de infra (semgrep nao
+      # gerou SARIF) quebra o job de proposito, em vez de ser mascarada por
+      # `|| true` (evita scan silenciosamente vazio passando como verde).
+      # Podemos endurecer depois (falhar em findings) quando o ruido baixar.
       - name: Run Semgrep scan
         run: |
-          python3 -m semgrep \
+          set +e
+          "$RUNNER_TEMP/semgrep-venv/bin/semgrep" \
             --config p/typescript \
             --config p/react \
             --config p/owasp-top-ten \
@@ -62,12 +69,20 @@ jobs:
             --config p/javascript \
             functions/src web/src \
             --sarif --output semgrep.sarif \
-            --metrics off || true
+            --metrics off
+          SCAN_EXIT=$?
+          set -e
+          if [ ! -f semgrep.sarif ]; then
+            echo "::error::Semgrep nao gerou SARIF (exit=$SCAN_EXIT) — scan falhou (infra)."
+            exit 1
+          fi
+          echo "Semgrep concluido (exit=$SCAN_EXIT). Findings publicados via SARIF (soft gate)."
 
-      # `if: always()` garante o upload mesmo quando o scan acima encontra
-      # findings (semgrep retorna codigo != 0 nesses casos).
+      # `if: always() && hashFiles(...)`: faz upload mesmo com findings (semgrep
+      # sai != 0), mas so se o SARIF existir — evita o erro "Path does not exist"
+      # quando o scan falhou antes de gerar o arquivo.
       - name: Upload SARIF to Security tab
-        if: always()
+        if: always() && hashFiles('semgrep.sarif') != ''
         uses: github/codeql-action/upload-sarif@03e4368ac7daa2bd82b3e85262f3bf87ee112f57  # v3
         with:
           sarif_file: semgrep.sarif
