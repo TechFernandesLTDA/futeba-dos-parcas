@@ -941,6 +941,13 @@ subir no ranking!</string>
     <string name="empty_state_invite_players">Convidar Jogadores</string>
     <string name="empty_state_clear_search">Limpar Busca</string>
 
+    <!-- i18n #2374: defaults de EmptyState / ConfirmationDialog -->
+    <string name="empty_state_no_results_for_query">Nenhum resultado para \"%1$s\"</string>
+    <string name="app_state_error_title">Erro</string>
+    <string name="confirm_dialog_confirm">Confirmar</string>
+    <string name="confirm_dialog_cancel">Cancelar</string>
+    <string name="confirm_dialog_default_item_type">item</string>
+
     <!-- Undo Snackbar -->
     <string name="undo">Desfazer</string>
     <string name="undo_action">Desfazer ação</string>

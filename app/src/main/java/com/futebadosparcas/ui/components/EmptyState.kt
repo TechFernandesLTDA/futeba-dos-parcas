@@ -15,8 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 
 @Deprecated(
     message = "Use modern/EmptyState instead",
@@ -260,10 +262,10 @@ fun EmptyGamesState(
 ) {
     EmptyState(
         type = EmptyStateType.NoData(
-            title = "Nenhum jogo agendado",
-            description = "Que tal criar o primeiro jogo e reunir a galera?",
+            title = stringResource(R.string.empty_state_no_games_title),
+            description = stringResource(R.string.empty_state_no_games_desc),
             icon = Icons.Default.SportsScore,
-            actionLabel = if (onCreateGame != null) "Criar Jogo" else null,
+            actionLabel = if (onCreateGame != null) stringResource(R.string.empty_state_create_game) else null,
             onAction = onCreateGame
         ),
         modifier = modifier
@@ -285,10 +287,10 @@ fun EmptyPlayersState(
 ) {
     EmptyState(
         type = EmptyStateType.NoData(
-            title = "Nenhum jogador",
-            description = "Convide seus amigos para começar a jogar!",
+            title = stringResource(R.string.empty_state_no_players_title),
+            description = stringResource(R.string.empty_state_no_players_desc),
             icon = Icons.Default.GroupAdd,
-            actionLabel = if (onInvitePlayers != null) "Convidar Jogadores" else null,
+            actionLabel = if (onInvitePlayers != null) stringResource(R.string.empty_state_invite_players) else null,
             onAction = onInvitePlayers
         ),
         modifier = modifier
@@ -311,8 +313,8 @@ fun EmptySearchState(
 ) {
     EmptyState(
         type = EmptyStateType.NoResults(
-            description = "Nenhum resultado para \"$query\"",
-            actionLabel = "Limpar Busca",
+            description = stringResource(R.string.empty_state_no_results_for_query, query),
+            actionLabel = stringResource(R.string.empty_state_clear_search),
             onAction = onClearSearch
         ),
         modifier = modifier

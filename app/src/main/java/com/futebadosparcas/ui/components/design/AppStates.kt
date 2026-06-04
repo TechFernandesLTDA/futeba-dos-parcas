@@ -99,11 +99,11 @@ fun ErrorStateDesign(
     message: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    retryText: String = "Tentar Novamente"
+    retryText: String = stringResource(R.string.action_try_again)
 ) {
     EmptyStateDesign(
         icon = Icons.Default.Error,
-        title = "Erro",
+        title = stringResource(R.string.app_state_error_title),
         description = message,
         actionLabel = retryText,
         onAction = onRetry,

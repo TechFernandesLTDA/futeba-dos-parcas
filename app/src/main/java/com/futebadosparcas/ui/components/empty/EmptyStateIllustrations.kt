@@ -693,7 +693,7 @@ fun NoResultsEmptyState(
 fun ErrorEmptyState(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    message: String = "Algo deu errado"
+    message: String = stringResource(R.string.empty_illustration_error_default_desc)
 ) {
     IllustratedEmptyState(
         config = EmptyStateConfig(
