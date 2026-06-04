@@ -223,18 +223,46 @@
     "tagline": "Organize suas peladas!"
   },
   "badges": {
-    "title": "Conquistas"
+    "categories": {
+      "all": "Todas",
+      "assists": "Assistências",
+      "community": "Comunidade",
+      "goals": "Gols",
+      "level": "Nível",
+      "mvp": "MVP",
+      "participation": "Participação",
+      "performance": "Desempenho",
+      "presence": "Presença",
+      "streak": "Sequência",
+      "wins": "Vitórias"
+    },
+    "clickForDetails": "Clique para detalhes",
+    "continue": "Continuar",
+    "howToUnlock": "Como desbloquear",
+    "progressComplete": "{{progress}}% completo",
+    "title": "Conquistas",
+    "unlockedCount": "Conquistas desbloqueadas",
+    "understood": "Entendido",
+    "xpReward": "Recompensa"
   },
   "cashbox": {
+    "addError": "Erro ao adicionar transação",
     "addExpense": "Adicionar Saída",
     "addIncome": "Adicionar Entrada",
     "amountError": "Informe um valor maior que zero",
     "amountLabel": "Valor (R$)",
+    "balanceAriaLabel": "Saldo {{status}}: {{value}}",
+    "balanceNegative": "negativo",
+    "balancePositive": "positivo",
     "confirming": "Confirmando...",
+    "currentBalance": "Saldo Atual",
+    "defaultUserName": "Usuário",
     "descriptionError": "Informe uma descrição",
     "descriptionLabel": "Descrição",
     "expense": "Saída",
+    "groupTitle": "Caixa do Grupo",
     "income": "Entrada",
+    "readOnly": "Somente leitura",
     "title": "Caixinha"
   },
   "challenges": {
@@ -433,7 +461,8 @@
     },
     "cancel": "Cancelar",
     "cashbox": {
-      "loadError": "Erro ao carregar transações do caixa."
+      "loadError": "Erro ao carregar transações do caixa.",
+      "roleCheckFailed": "Não foi possível verificar suas permissões. Tente novamente."
     },
     "challenges": {
       "sendSuccess": "Desafio enviado!"

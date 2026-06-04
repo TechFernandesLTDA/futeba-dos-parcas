@@ -49,19 +49,6 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 const ALL_CATEGORIES = ['all', ...new Set(BADGE_DEFINITIONS.map((b) => b.category))] as const;
 type CategoryFilter = (typeof ALL_CATEGORIES)[number];
 
-const CATEGORY_LABELS: Record<CategoryFilter, string> = {
-  all: 'Todas',
-  participation: 'Participação',
-  streak: 'Sequência',
-  mvp: 'MVP',
-  goals: 'Gols',
-  assists: 'Assistências',
-  wins: 'Vitórias',
-  performance: 'Desempenho',
-  presence: 'Presença',
-  community: 'Comunidade',
-  level: 'Nível',
-};
 
 const CATEGORY_ICONS: Record<CategoryFilter, React.ReactElement> = {
   all: <GridViewIcon fontSize="small" />,
@@ -91,6 +78,21 @@ export const BadgesScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [detailBadge, setDetailBadge] = useState<BadgeDefinition | null>(null);
 
+  // Rótulos de categoria traduzidos — recalcula quando o idioma muda.
+  const categoryLabels = useMemo<Record<CategoryFilter, string>>(() => ({
+    all: t('badges.categories.all'),
+    participation: t('badges.categories.participation'),
+    streak: t('badges.categories.streak'),
+    mvp: t('badges.categories.mvp'),
+    goals: t('badges.categories.goals'),
+    assists: t('badges.categories.assists'),
+    wins: t('badges.categories.wins'),
+    performance: t('badges.categories.performance'),
+    presence: t('badges.categories.presence'),
+    community: t('badges.categories.community'),
+    level: t('badges.categories.level'),
+  }), [t]);
+
   const filteredBadges = useMemo(() => {
     if (selectedCategory === 'all') return BADGE_DEFINITIONS;
     return BADGE_DEFINITIONS.filter((b) => b.category === selectedCategory);
@@ -117,7 +119,7 @@ export const BadgesScreen: React.FC = () => {
       <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         {error ? (
           <ErrorState
-            message={`Erro ao carregar conquistas: ${error}`}
+            message={t('feedback.badges.loadError')}
             onRetry={() => queryClient.invalidateQueries()}
           />
         ) : (
@@ -131,7 +133,7 @@ export const BadgesScreen: React.FC = () => {
                       {unlockedIds.size} / {BADGE_DEFINITIONS.length}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Conquistas desbloqueadas
+                      {t('badges.unlockedCount')}
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -139,7 +141,7 @@ export const BadgesScreen: React.FC = () => {
                       sx={{ mt: 1, height: 6, borderRadius: 3, bgcolor: alpha(theme.palette.primary.main, 0.15) }}
                     />
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      {progress}% completo
+                      {t('badges.progressComplete', { progress })}
                     </Typography>
                   </Box>
                 </Box>
@@ -159,7 +161,7 @@ export const BadgesScreen: React.FC = () => {
                   value={cat}
                   icon={CATEGORY_ICONS[cat]}
                   iconPosition="start"
-                  label={CATEGORY_LABELS[cat]}
+                  label={categoryLabels[cat]}
                   sx={{ textTransform: 'none', minWidth: 'auto' }}
                 />
               ))}
@@ -209,8 +211,9 @@ const BadgeItem = React.memo(function BadgeItem({
   rarityMap: Record<string, string>;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Tooltip title={isUnlocked ? `Clique para detalhes` : badge.requirement}>
+    <Tooltip title={isUnlocked ? t('badges.clickForDetails') : badge.requirement}>
       <Card
         onClick={onClick}
         role="button"
@@ -339,7 +342,7 @@ function BadgeDetailDialog({
             }}
           />
           <Chip
-            label={CATEGORY_LABELS[badge.category as CategoryFilter] ?? badge.category}
+            label={t(`badges.categories.${badge.category}`, { defaultValue: badge.category })}
             size="small"
             variant="outlined"
           />
@@ -351,7 +354,7 @@ function BadgeDetailDialog({
               +{badge.xpReward} XP
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Recompensa
+              {t('badges.xpReward')}
             </Typography>
           </CardContent>
         </Card>
@@ -359,7 +362,7 @@ function BadgeDetailDialog({
         <Card sx={{ bgcolor: alpha(theme.palette.info.main, 0.06) }}>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Como desbloquear
+              {t('badges.howToUnlock')}
             </Typography>
             <Typography variant="body2">{badge.requirement}</Typography>
           </CardContent>
@@ -371,7 +374,7 @@ function BadgeDetailDialog({
           fullWidth
           sx={{ mt: 3, borderRadius: 2 }}
         >
-          {isUnlocked ? 'Continuar' : 'Entendido'}
+          {isUnlocked ? t('badges.continue') : t('badges.understood')}
         </Button>
       </DialogContent>
     </Dialog>
