@@ -52,8 +52,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          TAG="v${{ steps.bump.outputs.version }}"
-          BRANCH="chore/bump-version-${{ steps.bump.outputs.version }}"
+          # Tag escopada por plataforma (este workflow auto-bumpa o ANDROID).
+          TAG="android-v${{ steps.bump.outputs.version }}"
+          BRANCH="chore/bump-android-${{ steps.bump.outputs.version }}"
 
           # Idempotência: se a tag já existe (local ou remoto), pula totalmente.
           # Master é protegido — push direto bloqueado por branch protection.
@@ -79,8 +80,8 @@ jobs:
         if: steps.bump.outputs.changed == 'true' && steps.push_pr.outputs.tag_skipped != 'true'
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
         with:
-          tag_name: v${{ steps.bump.outputs.version }}
-          name: Release v${{ steps.bump.outputs.version }}
+          tag_name: android-v${{ steps.bump.outputs.version }}
+          name: Android Release v${{ steps.bump.outputs.version }}
           body: |
             ## What's Changed
 
