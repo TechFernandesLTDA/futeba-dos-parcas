@@ -11,6 +11,10 @@ playwright-report/
 # Coverage
 coverage/
 
+# Stryker mutation testing (artefatos temporários e relatório HTML)
+.stryker-tmp/
+reports/mutation/
+
 # Local env files
 .env.local
 .env.*.local

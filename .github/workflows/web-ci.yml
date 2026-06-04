@@ -12,6 +12,11 @@ on:
       - 'web/**'
       - '.github/workflows/web-ci.yml'
   workflow_dispatch:
+  # Cron noturno (03:00 UTC) — dispara apenas o job de mutation testing.
+  # Os jobs de PR/push (lint/typecheck/test/build) são desativados no schedule
+  # via `if` para não rodar à toa nos runners self-hosted.
+  schedule:
+    - cron: '0 3 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,6 +29,7 @@ defaults:
 jobs:
   lint:
     name: ESLint
+    if: github.event_name != 'schedule'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 10
     steps:
@@ -45,6 +51,7 @@ jobs:
 
   typecheck:
     name: TypeScript Check
+    if: github.event_name != 'schedule'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 10
     steps:
@@ -66,6 +73,7 @@ jobs:
 
   test:
     name: Unit Tests
+    if: github.event_name != 'schedule'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 15
     steps:
@@ -87,6 +95,7 @@ jobs:
 
   build:
     name: Build Check
+    if: github.event_name != 'schedule'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 15
     steps:
@@ -105,3 +114,36 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Mutation testing (Stryker) — mede o SINAL dos testes (mutation score) no
+  # core de utils/services. Roda apenas no cron noturno e via workflow_dispatch,
+  # NUNCA em PR/push, pois é mais lento e relatório-apenas (thresholds.break=null).
+  mutation:
+    name: Mutation Testing (Stryker)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run mutation testing
+        run: npm run test:mutation
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: web/reports/mutation/
+          retention-days: 14
