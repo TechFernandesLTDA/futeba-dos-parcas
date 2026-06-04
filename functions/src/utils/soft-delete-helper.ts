@@ -525,23 +525,29 @@ export async function softDeleteGroupCascade(
     }
 
     // 2. Soft-delete dos jogos do grupo
-    // FIX #757: query unbounded + batch único explodia com >499 jogos.
-    // Agora: paginar query + chunks de 450 ops (1 slot reservado pro grupo).
-    const GAME_CHUNK = 450;
+    // FIX #757 + #2499: paginação + UM acumulador com flush por limiar.
+    // Antes: overflowBatch acumulava 450 ops/página e estourava 500 writes em
+    // grupos com >1000 jogos (INVALID_ARGUMENT). Além disso, o group update
+    // era commitado ANTES dos jogos do overflow → em falha, grupo ficava
+    // DELETED com jogos órfãos ativos e a cascata não podia ser retentada
+    // (guard "Grupo já deletado"). Agora: deleta TODOS os jogos primeiro
+    // (flush a cada BATCH_LIMIT ops), e marca o grupo por ÚLTIMO. Em falha
+    // parcial, o grupo permanece ativo → retry reprocessa (idempotente: pula
+    // jogos já deletados). Verdadeira atomicidade >500 writes é impossível no
+    // Firestore; esta ordem garante retry-safety.
+    const BATCH_LIMIT = 450;
     let gamesDeleted = 0;
     let lastGameDoc: admin.firestore.QueryDocumentSnapshot | undefined;
 
-    // Primeiro commit inclui o group update
-    const firstBatch = db.batch();
-    firstBatch.update(groupRef, {
-      deleted_at: now,
-      deleted_by: deletedBy,
-      deleted_reason:
-        reason || "Grupo deletado pelo proprietário",
-      updated_at: now,
-    });
-    let firstBatchOps = 1; // 1 op = group update
-    let overflowBatch: admin.firestore.WriteBatch | null = null;
+    let batch = db.batch();
+    let ops = 0;
+    const flush = async () => {
+      if (ops > 0) {
+        await batch.commit();
+        batch = db.batch();
+        ops = 0;
+      }
+    };
 
     // Processar jogos em páginas de 500 docs
     while (true) {
@@ -555,57 +561,35 @@ export async function softDeleteGroupCascade(
       const gamesSnap = await q.get();
       if (gamesSnap.empty) break;
 
-      // Filtrar jogos não deletados
-      const toDelete = gamesSnap.docs.filter(
-        (d) => !d.data().deleted_at
-      );
-
-      // Distribuir em chunks de 450 (deixando 1 slot pro group no primeiro)
-      for (let i = 0; i < toDelete.length; i += GAME_CHUNK) {
-        const chunk = toDelete.slice(i, i + GAME_CHUNK);
-        const chunkBatch = i === 0 ? firstBatch : db.batch();
-
-        for (const gameDoc of chunk) {
-          // No primeiro chunk, respeitar slot do group update
-          if (chunkBatch === firstBatch && firstBatchOps >= GAME_CHUNK) {
-            // Overflow para batch separado, commitado APÓS o firstBatch
-            if (!overflowBatch) overflowBatch = db.batch();
-            overflowBatch.update(gameDoc.ref, {
-              deleted_at: now,
-              deleted_by: deletedBy,
-              deleted_reason: `Grupo deletado: ${reason}`,
-              status: "DELETED",
-              updated_at: now,
-            });
-          } else {
-            chunkBatch.update(gameDoc.ref, {
-              deleted_at: now,
-              deleted_by: deletedBy,
-              deleted_reason: `Grupo deletado: ${reason}`,
-              status: "DELETED",
-              updated_at: now,
-            });
-            if (chunkBatch === firstBatch) firstBatchOps++;
-          }
-          gamesDeleted++;
-        }
-
-        if (chunkBatch !== firstBatch) {
-          await chunkBatch.commit();
-        }
+      for (const gameDoc of gamesSnap.docs) {
+        if (gameDoc.data().deleted_at) continue; // idempotente em retry
+        batch.update(gameDoc.ref, {
+          deleted_at: now,
+          deleted_by: deletedBy,
+          deleted_reason: `Grupo deletado: ${reason}`,
+          status: "DELETED",
+          updated_at: now,
+        });
+        ops++;
+        gamesDeleted++;
+        if (ops >= BATCH_LIMIT) await flush();
       }
 
       lastGameDoc = gamesSnap.docs[gamesSnap.docs.length - 1];
       if (gamesSnap.size < 500) break;
     }
 
-    // Commit do primeiro batch (group + primeiros jogos) ANTES do overflow
-    await firstBatch.commit();
+    // Flush dos jogos restantes ANTES de marcar o grupo.
+    await flush();
 
-    // Commit do overflow batch (best-effort — grupo já está deletado)
-    if (overflowBatch) {
-      await overflowBatch.commit();
-    }
+    // Marca o grupo por ÚLTIMO (retry-safety: se algo acima falhar, o grupo
+    // segue ativo e a cascata pode ser reexecutada).
+    await groupRef.update({
+      deleted_at: now,
+      deleted_by: deletedBy,
+      deleted_reason: reason || "Grupo deletado pelo proprietário",
+      updated_at: now,
+    });
 
     logger.info(
       "[SOFT_DELETE_CASCADE] Grupo " +

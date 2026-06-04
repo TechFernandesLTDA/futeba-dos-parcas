@@ -283,7 +283,6 @@ export const checkInToGame = onCall(
     // race entre checar checked_in e escrever.
     const confId = `${gameId}_${uid}`;
     const confRef = db().doc(`confirmations/${confId}`);
-    const gameRef = db().doc(`games/${gameId}`);
 
     await db().runTransaction(async (tx) => {
       const confSnap = await tx.get(confRef);
@@ -310,13 +309,12 @@ export const checkInToGame = onCall(
         };
       }
 
-      // FIX #2051: Invalidate QR token after successful check-in
-      if (qrValid) {
-        tx.update(gameRef, {
-          checkin_qr_token: admin.firestore.FieldValue.delete(),
-          checkin_qr_token_expires_at: admin.firestore.FieldValue.delete(),
-        });
-      }
+      // FIX #2498: NÃO invalidar o token de QR após o check-in. O token é
+      // único por jogo e projetado para reuso por 24h (FIX #2051) —
+      // vários jogadores escaneiam o MESMO QR exibido no campo. Deletá-lo no
+      // 1º uso travava todos os demais com "QR token inválido ou expirado".
+      // O anti-replay por jogador já é garantido por `conf.checked_in === true`
+      // acima; o GPS é sempre validado (FIX #2478).
 
       tx.set(
         confRef,
