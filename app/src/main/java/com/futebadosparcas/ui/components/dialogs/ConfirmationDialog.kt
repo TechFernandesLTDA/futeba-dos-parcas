@@ -64,8 +64,8 @@ fun ConfirmationDialog(
     visible: Boolean,
     title: String,
     message: String,
-    confirmText: String = "Confirmar",
-    dismissText: String = "Cancelar",
+    confirmText: String = stringResource(R.string.confirm_dialog_confirm),
+    dismissText: String = stringResource(R.string.confirm_dialog_cancel),
     type: ConfirmationDialogType = ConfirmationDialogType.NORMAL,
     icon: ImageVector? = null,
     onConfirm: () -> Unit,
@@ -129,7 +129,7 @@ fun ConfirmationDialog(
 fun DeleteConfirmationDialog(
     visible: Boolean,
     itemName: String,
-    itemType: String = "item",
+    itemType: String = stringResource(R.string.confirm_dialog_default_item_type),
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
