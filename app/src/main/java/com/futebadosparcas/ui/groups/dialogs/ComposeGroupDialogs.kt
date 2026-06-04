@@ -520,7 +520,7 @@ fun AddCashboxEntryDialog(
                     label = { Text(stringResource(R.string.label_description)) },
                     isError = descriptionError,
                     supportingText = if (descriptionError) {
-                        { Text("Descrição obrigatória para categoria 'Outro'", color = MaterialTheme.colorScheme.error) }
+                        { Text(stringResource(R.string.create_group_error_description_required), color = MaterialTheme.colorScheme.error) }
                     } else null,
                     modifier = Modifier.fillMaxWidth()
                 )

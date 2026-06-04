@@ -658,7 +658,7 @@ class GameDetailViewModel(
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
 
             if (!currentState.canManageGame && !currentState.isAdmin) {
-                _uiState.value = currentState.copy(userMessage = "Sem permissao para restaurar jogo")
+                _uiState.value = currentState.copy(userMessageResId = R.string.game_detail_error_restore_permission)
                 return@launch
             }
 
@@ -796,7 +796,7 @@ class GameDetailViewModel(
 
     fun clearUserMessage() {
         val currentState = _uiState.value as? GameDetailUiState.Success ?: return
-        _uiState.value = currentState.copy(userMessage = null)
+        _uiState.value = currentState.copy(userMessage = null, userMessageResId = null)
     }
 
     // === PRESENCE & CONFIRMATION FEATURES (Issues #31-40) ===
@@ -1199,7 +1199,9 @@ sealed class GameDetailUiState {
         val hasVoted: Boolean? = null,
         val schedulingEvent: SchedulingEvent? = null,
         val isSoftDeleted: Boolean = false,
-        val waitlistState: WaitlistState = WaitlistState.Empty
+        val waitlistState: WaitlistState = WaitlistState.Empty,
+        // resId opcional para mensagens internacionalizáveis (resolvido na tela)
+        @StringRes val userMessageResId: Int? = null
     ) : GameDetailUiState()
     data class Error(val message: String, @StringRes val errorResId: Int? = null) : GameDetailUiState()
 }

@@ -60,7 +60,7 @@ fun GamesList(
     hasMoreItems: Boolean = false,
     isLoadingMore: Boolean = false,
     onLoadMore: () -> Unit = {},
-    emptyMessage: String = "Nenhum jogo encontrado",
+    emptyMessage: String = stringResource(R.string.games_list_empty),
     emptyIcon: @Composable () -> Unit = {
         Icon(
             imageVector = Icons.Default.SportsScore,

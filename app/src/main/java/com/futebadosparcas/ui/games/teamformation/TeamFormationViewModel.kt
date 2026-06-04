@@ -610,7 +610,7 @@ class TeamFormationViewModel(
         }
 
         if (team1Players.isEmpty() && team2Players.isEmpty()) {
-            _uiState.value = state.copy(userMessage = "Nenhum jogador desta formacao esta disponivel")
+            _uiState.value = state.copy(userMessageResId = R.string.team_formation_error_no_formation_players)
             return
         }
 
@@ -698,7 +698,7 @@ class TeamFormationViewModel(
      */
     fun clearUserMessage() {
         val state = _uiState.value as? TeamFormationUiState.Ready ?: return
-        _uiState.value = state.copy(userMessage = null)
+        _uiState.value = state.copy(userMessage = null, userMessageResId = null)
     }
 
     /**
@@ -788,7 +788,9 @@ sealed class TeamFormationUiState {
         val headToHead: HeadToHeadHistory? = null,
         val rotationSuggestions: List<SwapSuggestion> = emptyList(),
         val draftState: DraftState? = null,
-        val userMessage: String? = null
+        val userMessage: String? = null,
+        // resId opcional para mensagens internacionalizáveis (resolvido na tela)
+        @StringRes val userMessageResId: Int? = null
     ) : TeamFormationUiState()
 
     data class Error(val message: String, @StringRes val errorResId: Int? = null) : TeamFormationUiState()

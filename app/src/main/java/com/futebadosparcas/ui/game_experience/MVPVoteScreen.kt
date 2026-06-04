@@ -149,7 +149,8 @@ fun MVPVoteScreen(
                     EmptyState(
                         type = EmptyStateType.Error(
                             title = stringResource(R.string.error),
-                            description = state.message,
+                            // Prefere resId i18n; cai para a string crua (legado)
+                            description = state.errorResId?.let { stringResource(it) } ?: state.message,
                             actionLabel = stringResource(R.string.retry),
                             onRetry = { viewModel.loadCandidates(gameId) }
                         )

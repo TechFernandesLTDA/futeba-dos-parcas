@@ -130,7 +130,10 @@ fun CpfVerificationScreen(
                     )
                     Spacer(Modifier.height(AppDimensions.spacing_large))
 
-                    val errorMsg = (state as? CpfVerificationUiState.Error)?.message
+                    val errorState = state as? CpfVerificationUiState.Error
+                    // Prefere resId i18n; cai para a string crua (legado)
+                    val errorMsg = errorState?.errorResId?.let { stringResource(it) }
+                        ?: errorState?.message
                     if (errorMsg != null) {
                         Text(
                             text = errorMsg,
