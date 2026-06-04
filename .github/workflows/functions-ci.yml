@@ -78,8 +78,12 @@ jobs:
     needs: [ build ]
 
     steps:
+      # fetch-depth: 0 traz o historico completo. O diff-cover precisa do
+      # merge-base com origin/master para isolar as linhas novas/alteradas do PR.
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -91,8 +95,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Tests
-        run: npm test
+      # test:coverage = "jest --coverage" → gera coverage/lcov.info (reporter
+      # lcov configurado em jest.config.js), consumido pelo gate de diff-coverage.
+      - name: Run Tests (com coverage)
+        run: npm run test:coverage
 
       - name: Upload Test Coverage
         if: always()
@@ -101,6 +107,55 @@ jobs:
           name: functions-coverage
           path: functions/coverage/
           retention-days: 14
+
+      # Gate de DIFF-coverage (Efficiency Hardening F3, spec
+      # feat-2026-06-04-efficiency-hardening.md): as linhas NOVAS/ALTERADAS do
+      # PR devem ter >= 80% de cobertura. Nao e meta global — so o diff.
+      #
+      # Garante origin/master no clone antes de o diff-cover comparar (insurance;
+      # o fetch-depth: 0 do checkout ja deve ter trazido).
+      - name: Garantir base origin/master para o diff
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags origin master
+        working-directory: .
+
+      # diff-cover e uma ferramenta Python (le lcov + git diff). O Python do
+      # Homebrew no runner self-hosted e "externally-managed" (PEP 668), entao
+      # `pip install` direto e recusado. Instalamos em venv isolado em
+      # $RUNNER_TEMP (mesmo padrao do semgrep.yml, PR #2507) — sem poluir o
+      # site-packages do sistema nem usar --break-system-packages.
+      - name: Install diff-cover (venv isolado)
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/dc-venv"
+          "$RUNNER_TEMP/dc-venv/bin/pip" install --quiet --upgrade pip
+          "$RUNNER_TEMP/dc-venv/bin/pip" install --quiet diff-cover
+          "$RUNNER_TEMP/dc-venv/bin/diff-cover" --version
+
+      # GOTCHA verificado (diff-cover 10.0.0): o casamento de caminhos e
+      # relativo a RAIZ DO GIT, independente da CWD. O lcov do jest/istanbul
+      # emite SF relativo ao rootDir (ex.: `src/xp/processing.ts`), que NAO
+      # casa com o path do diff (`functions/src/xp/processing.ts`) → diff-cover
+      # imprime "No lines with coverage information" e sai 0 (passa em falso).
+      # Normalizamos prefixando `functions/` nos paths relativos sob src/.
+      # Paths absolutos (outra forma possivel do istanbul) sao no-op aqui — o
+      # diff-cover ja os relativiza sozinho. sed -i e' BSD no macOS, entao
+      # escrevemos num arquivo temporario em vez de in-place.
+      - name: Normaliza paths do lcov (repo-root-relative)
+        if: github.event_name == 'pull_request'
+        run: sed -E 's#^SF:(\./)?src/#SF:functions/src/#' coverage/lcov.info > "$RUNNER_TEMP/lcov.norm"
+
+      # --fail-under=80: sai != 0 quando a cobertura do diff < 80% (fica vermelho
+      # no PR). A branch protection nao exige status checks hoje
+      # (required_status_checks=null), entao o gate e educativo/informativo, mas
+      # precisa falhar o job para o sinal aparecer.
+      - name: Diff-coverage gate (>= 80% nas linhas do PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          "$RUNNER_TEMP/dc-venv/bin/diff-cover" "$RUNNER_TEMP/lcov.norm" \
+            --compare-branch=origin/master \
+            --diff-range-notation '...' \
+            --fail-under=80
 
   firestore-query-perf:
     name: Firestore Query Performance
