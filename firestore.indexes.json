@@ -19,6 +19,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "field_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "dateTime",
           "order": "ASCENDING"
         },
@@ -177,16 +191,6 @@
         {
           "fieldPath": "reference_date",
           "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "cashbox",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "created_by",
-          "order": "ASCENDING"
         }
       ]
     },
