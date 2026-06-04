@@ -31,14 +31,67 @@ const LOG_FAIL_RATE_LIMIT_PER_HOUR = 20;
  * @param {CallableRequest} request - Requisição callable.
  * @return {string} IP do cliente, ou "unknown".
  */
+/**
+ * Valida formato de IP (IPv4 ou IPv6). Evita persistir lixo forjado nos
+ * audit logs (FIX #2479 — poluição de forense por valores arbitrários de XFF).
+ *
+ * @param {string} value - Candidato a IP.
+ * @return {boolean} true se IPv4/IPv6 bem-formado.
+ */
+function isValidIp(value: string): boolean {
+  const ipv4 =
+    /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
+  // IPv6 frouxo (hex groups + "::"), suficiente para sanitização de log.
+  const ipv6 = /^(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+  return ipv4.test(value) || ipv6.test(value);
+}
+
+/**
+ * Extrai o IP do cliente em GCF v2 atrás de Load Balancer.
+ *
+ * FIX #2479 (parcial): o código anterior usava `split(",")[0]` — o 1º hop de
+ * X-Forwarded-For é justamente a parte CONTROLÁVEL pelo cliente (anti-pattern
+ * OWASP). Aqui agora:
+ *  1. Sanitizamos: só aceitamos IPs bem-formados; lixo vira "unknown". Isso
+ *     elimina de vez a poluição dos audit logs (verification_failures /
+ *     audit_logs) — ângulo durável do bug.
+ *  2. Logamos a cadeia XFF completa (info) para permitir confirmar
+ *     empiricamente a topologia real do deploy (nº de proxies confiáveis)
+ *     ANTES de fixar um offset — o autor da issue alertou para não chutar.
+ *
+ * NOTA: o bypass do rate-limit por-IP (atacante rotacionando o 1º hop) NÃO está
+ * 100% fechado aqui — depende da topologia. Mitigantes já presentes: auth
+ * obrigatório + bucket por-uid (`sms_caller`) independente de XFF. Tracking em
+ * #2479 para finalizar a extração após inspeção da cadeia em produção.
+ *
+ * @param {object} request - Requisição callable.
+ * @return {string} IP sanitizado do cliente, ou "unknown".
+ */
 function clientIp(request: {rawRequest?: {
   ip?: string;
   headers?: Record<string, string | string[] | undefined>;
 }}): string {
-  const xff = request.rawRequest?.headers?.["x-forwarded-for"];
-  const firstHop =
-    typeof xff === "string" ? xff.split(",")[0]?.trim() : "";
-  return firstHop || request.rawRequest?.ip || "unknown";
+  const xffRaw = request.rawRequest?.headers?.["x-forwarded-for"];
+  const xff = typeof xffRaw === "string" ? xffRaw : "";
+  const hops = xff
+    .split(",")
+    .map((h) => h.trim())
+    .filter((h) => h.length > 0);
+
+  if (hops.length > 0) {
+    // Log da cadeia para diagnóstico de topologia (FIX #2479).
+    logger.debug("[ANTI_ABUSE] XFF chain", {hops, count: hops.length});
+  }
+
+  // Primeiro hop (legado), porém só se for um IP válido — caso contrário não
+  // poluímos logs/buckets com lixo.
+  const firstHop = hops[0];
+  if (firstHop && isValidIp(firstHop)) return firstHop;
+
+  const fallback = request.rawRequest?.ip;
+  if (fallback && isValidIp(fallback)) return fallback;
+
+  return "unknown";
 }
 
 /**

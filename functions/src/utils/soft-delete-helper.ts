@@ -366,13 +366,17 @@ export async function isSoftDeleted(
  * @param {number} retentionDays - Dias de retenção
  * @param {number} maxBatches - Máx batches
  * @param {number} batchSize - Tamanho do batch
+ * @param {boolean} recursive - Se true, usa recursiveDelete (apaga
+ *   subcoleções). Necessário para coleções com subcoleções (ex.: groups tem
+ *   members/league_standings, locations tem reviews) — FIX #2481 (LGPD).
  * @return {Promise<CleanupResult>} Resultado
  */
 export async function cleanupSoftDeleted(
   collection: string,
   retentionDays = 30,
   maxBatches = 10,
-  batchSize = 100
+  batchSize = 100,
+  recursive = false
 ): Promise<CleanupResult> {
   const db = getDb();
   const startTime = Date.now();
@@ -406,13 +410,20 @@ export async function cleanupSoftDeleted(
         break;
       }
 
-      // Deletar permanentemente em batch
-      const batch = db.batch();
-      for (const doc of snapshot.docs) {
-        batch.delete(doc.ref);
+      // FIX #2481 (LGPD): batch.delete NÃO apaga subcoleções — deixava
+      // groups/{id}/members/* órfãos (PII retida). Para coleções com
+      // subcoleções, recursiveDelete (BulkWriter) remove a árvore inteira.
+      if (recursive) {
+        await Promise.all(
+          snapshot.docs.map((doc) => db.recursiveDelete(doc.ref))
+        );
+      } else {
+        const batch = db.batch();
+        for (const doc of snapshot.docs) {
+          batch.delete(doc.ref);
+        }
+        await batch.commit();
       }
-
-      await batch.commit();
       totalDeleted += snapshot.size;
       batchCount++;
 

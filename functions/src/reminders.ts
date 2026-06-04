@@ -29,6 +29,11 @@ import {
   REMINDER_NOTIFICATIONS,
   GAME_NOTIFICATIONS,
 } from "./notifications/notification-messages";
+import {
+  getNotificationSettings,
+  isMuted,
+  isGroupMuted,
+} from "./notifications/preferences";
 
 // Lazy initialization para evitar erro
 // de initializeApp
@@ -511,58 +516,29 @@ async function canSendReminderToUser(
   groupId: string | null
 ): Promise<boolean> {
   try {
-    const settingsSnap = await getDb()
-      .collection("notification_settings")
-      .doc(userId)
-      .get();
+    // FIX #2477: usa o helper canônico único (mesmo de shouldNotifyUser),
+    // que lê `notification_settings/{uid}` tolerando snake (web) e camel
+    // (android). Antes lia só camelCase — opt-out de lembrete era ignorado
+    // para a maioria web (`enableGameReminders` undefined ≠ false).
+    const settings = await getNotificationSettings(userId);
 
-    if (!settingsSnap.exists) {
-      // Sem configuracoes = fail-open
-      return true;
-    }
+    if (!settings.pushEnabled) return false;
+    if (!settings.gameReminders) return false;
 
-    const settings =
-      settingsSnap.data() as Record<string, unknown>;
-
-    // Verificar se notificacoes globais estao ativas
-    if (settings.enablePushNotifications === false) {
+    if (isMuted(settings)) {
+      logger.info(
+        `[REMINDERS] Usuario ${userId} silenciado` +
+        " ate " + settings.muteUntil?.toISOString()
+      );
       return false;
     }
 
-    // Verificar se lembretes de jogo estao ativos
-    if (settings.enableGameReminders === false) {
+    if (isGroupMuted(settings, groupId)) {
+      logger.info(
+        `[REMINDERS] Usuario ${userId} silenciou` +
+        ` grupo ${groupId}`
+      );
       return false;
-    }
-
-    // Verificar silenciamento global (muteUntilTime)
-    if (settings.muteUntilTime) {
-      const muteUntil =
-        settings.muteUntilTime instanceof
-          admin.firestore.Timestamp ?
-          settings.muteUntilTime.toDate() :
-          new Date(settings.muteUntilTime as string);
-      if (muteUntil > new Date()) {
-        logger.info(
-          `[REMINDERS] Usuario ${userId}` +
-          " silenciado ate " + muteUntil.toISOString()
-        );
-        return false;
-      }
-    }
-
-    // Verificar mute_groups (array de groupIds)
-    if (groupId) {
-      const muteGroups = settings.muteGroups;
-      if (
-        Array.isArray(muteGroups) &&
-        (muteGroups as string[]).includes(groupId)
-      ) {
-        logger.info(
-          `[REMINDERS] Usuario ${userId} silenciou` +
-          ` grupo ${groupId}`
-        );
-        return false;
-      }
     }
 
     return true;

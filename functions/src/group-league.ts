@@ -104,6 +104,21 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
         return;
       }
 
+      // FIX #2480: o cálculo abaixo assume EXATAMENTE 2 times (team1/team2).
+      // Em jogos com 3+ times, jogadores dos times 3+ recebiam resultado
+      // invertido de team2 e placar do oponente errado, corrompendo as
+      // league_standings. Até existir modelagem multi-time correta, ignoramos
+      // explicitamente (early-return + log) em vez de gravar dados errados.
+      // Follow-up: pontuação real de liga para jogos com >2 times.
+      if (teams.length > 2) {
+        logger.warn(
+          "[GROUP_LEAGUE] Jogo com >2 times não suportado pela liga de " +
+          `grupo — pulando para evitar standings corrompidas. game=${gameId} ` +
+          `group=${groupId} teams=${teams.length}`
+        );
+        return;
+      }
+
       const team1Name = after.team1_name;
       const team2Name = after.team2_name;
 

@@ -683,10 +683,13 @@ export const cleanupAllSoftDeleted =
     const results: CleanupResult[] = [];
 
     // Limpar cada coleção usando helper
+    // FIX #2481 (LGPD): recursive=true para coleções com subcoleções, senão
+    // batch.delete deixa subcoleções órfãs (groups/members,
+    // groups/league_standings, locations/reviews) retendo PII após hard-delete.
     const collections = [
-      {name: "games", batchSize: 100, max: 10},
-      {name: "groups", batchSize: 100, max: 10},
-      {name: "locations", batchSize: 500, max: 20},
+      {name: "games", batchSize: 100, max: 10, recursive: true},
+      {name: "groups", batchSize: 100, max: 10, recursive: true},
+      {name: "locations", batchSize: 500, max: 20, recursive: true},
     ];
 
     for (const col of collections) {
@@ -699,7 +702,8 @@ export const cleanupAllSoftDeleted =
         col.name,
         RETENTION_DAYS,
         col.max,
-        col.batchSize
+        col.batchSize,
+        col.recursive
       );
 
       results.push(result);

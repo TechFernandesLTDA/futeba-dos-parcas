@@ -10,6 +10,12 @@ import {
   FCM_TTL_SECONDS,
   FIRESTORE_WHERE_IN_LIMIT,
 } from "../constants";
+import {
+  getNotificationSettings,
+  isMuted,
+  isGroupMuted,
+  isNotificationTypeEnabled,
+} from "./preferences";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -370,31 +376,15 @@ export async function shouldNotifyUser(
   groupId?: string,
 ): Promise<boolean> {
   try {
-    const userDoc = await getDb()
-      .collection("users")
-      .doc(userId)
-      .get();
-    if (!userDoc.exists) return false;
-    const data =
-      (userDoc.data() ?? {}) as Record<string, unknown>;
-
-    // Push global desabilitado
-    const prefs =
-      (data.notification_preferences ?? {}) as Record<string, unknown>;
-    if (prefs.push_enabled === false) return false;
-
-    // Tipo específico desabilitado
-    if (prefs[notificationType] === false) return false;
-
-    // Grupo silenciado
-    if (
-      groupId &&
-      Array.isArray(data.mute_groups) &&
-      (data.mute_groups as string[]).includes(groupId)
-    ) {
-      return false;
-    }
-
+    // FIX #2477: lê o schema canônico (`notification_settings`) via helper
+    // único, tolerando snake (web) e camel (android). Antes lia
+    // `users.notification_preferences` — campo que NENHUM writer produz, logo
+    // todo opt-out era ignorado (regressão recorrente #785/#926/#1143).
+    const settings = await getNotificationSettings(userId);
+    if (!settings.pushEnabled) return false;
+    if (isMuted(settings)) return false;
+    if (isGroupMuted(settings, groupId)) return false;
+    if (!isNotificationTypeEnabled(settings, notificationType)) return false;
     return true;
   } catch (e) {
     // fail-open: não bloquear notificação em caso de erro de leitura

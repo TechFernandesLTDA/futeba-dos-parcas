@@ -111,10 +111,16 @@ export const checkInToGame = onCall(
     const hasQrToken = typeof qrToken === "string" && qrToken.length > 0;
     const hasGps = typeof lat === "number" && typeof lng === "number";
 
-    if (!hasQrToken && !hasGps) {
+    // FIX #2478: GPS é SEMPRE obrigatório, inclusive com QR. O QR apenas
+    // relaxa o raio (QR_RADIUS_METERS) — NÃO substitui a prova de localização.
+    // Antes, `{ gameId, qrToken }` sem lat/lng passava por aqui e pulava todo o
+    // bloco `if (hasGps)` de validação de distância, permitindo check-in remoto
+    // com um token (válido 24h) repassado por mensagem. Contradizia o próprio
+    // comentário "Always validate GPS when coordinates provided".
+    if (!hasGps) {
       throw new HttpsError(
         "invalid-argument",
-        "lat/lng ou qr_token obrigatórios",
+        "Localização (lat/lng) obrigatória para check-in",
       );
     }
     if (

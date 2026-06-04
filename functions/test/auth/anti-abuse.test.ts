@@ -35,7 +35,7 @@ jest.mock("firebase-functions/v2/https", () => ({
 }));
 
 jest.mock("firebase-functions/v2", () => ({
-  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+  logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
 }));
 
 const mockFieldValue = {
