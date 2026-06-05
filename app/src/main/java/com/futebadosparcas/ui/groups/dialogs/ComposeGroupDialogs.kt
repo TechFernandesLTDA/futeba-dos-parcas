@@ -36,6 +36,11 @@ import com.futebadosparcas.domain.model.CashboxCategory
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.CachedAsyncImage
 import com.futebadosparcas.domain.model.CashboxEntryType
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
@@ -51,12 +56,14 @@ private const val TAG = "ComposeGroupDialogs"
 fun EditGroupDialog(
     group: Group,
     onDismiss: () -> Unit,
-    onSave: (name: String, description: String, photoUri: Uri?) -> Unit
+    onSave: (name: String, description: String, photoUri: Uri?, defaultGender: String?) -> Unit
 ) {
     var name by remember { mutableStateOf(group.name) }
     var description by remember { mutableStateOf(group.description) }
     var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
     var showPhotoOptions by remember { mutableStateOf(false) }
+    // Genero padrao do grupo (FASE 2). null = "Sem padrao".
+    var selectedDefaultGender by remember { mutableStateOf(group.defaultGender) }
 
     val context = LocalContext.current
 
@@ -102,7 +109,8 @@ fun EditGroupDialog(
     // Habilitar botão apenas se houve mudança e os dados são válidos
     val hasChanges = name.trim() != group.name ||
         description.trim() != group.description ||
-        selectedPhotoUri != null
+        selectedPhotoUri != null ||
+        selectedDefaultGender != group.defaultGender
     val isValid = nameValidationError == null && descriptionValidationError == null
     val canSave = hasChanges && isValid
 
@@ -250,6 +258,15 @@ fun EditGroupDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                Spacer(Modifier.height(16.dp))
+
+                // Genero padrao dos jogos do grupo (FASE 2). Opcional: "Sem padrao" = null.
+                GroupDefaultGenderSelector(
+                    selectedGender = selectedDefaultGender,
+                    onGenderSelected = { selectedDefaultGender = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 Spacer(Modifier.height(24.dp))
 
                 Row(
@@ -268,7 +285,7 @@ fun EditGroupDialog(
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            onSave(name.trim(), description.trim(), selectedPhotoUri)
+                            onSave(name.trim(), description.trim(), selectedPhotoUri, selectedDefaultGender)
                         },
                         enabled = canSave
                     ) {
@@ -281,6 +298,57 @@ fun EditGroupDialog(
                         Text(stringResource(R.string.action_save))
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Seletor OPCIONAL de gênero padrão do grupo (FASE 2).
+ *
+ * Quatro opções: Masculino | Feminino | Misto | Sem padrão (→ null).
+ * "Sem padrão" significa que o grupo não impõe um gênero default; cada jogo
+ * escolhe (caindo em MIXED). Emite o valor canônico de [GameGender] ou null.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GroupDefaultGenderSelector(
+    selectedGender: String?,
+    onGenderSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // null como primeira opção = "Sem padrão"; demais sao os 3 valores de jogo.
+    val noDefaultLabel = stringResource(R.string.group_default_gender_none)
+    val options: List<Pair<String?, String>> = listOf(
+        null to noDefaultLabel,
+        GameGender.MALE.name to stringResource(R.string.game_gender_male),
+        GameGender.FEMALE.name to stringResource(R.string.game_gender_female),
+        GameGender.MIXED.name to stringResource(R.string.game_gender_mixed)
+    )
+    // Normaliza: valor invalido (mas nao-null) cai em MIXED; null permanece null.
+    val current: String? = selectedGender?.let { GameGender.fromString(it).name }
+
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.group_default_gender),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(8.dp))
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            options.forEach { (value, label) ->
+                FilterChip(
+                    selected = current == value,
+                    onClick = { onGenderSelected(value) },
+                    label = { Text(label) },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .semantics { contentDescription = label }
+                )
             }
         }
     }

@@ -25,17 +25,27 @@ import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { PreferredPosition } from '../../types/user';
+import { PreferredPosition, UserGender } from '../../types/user';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('EditProfileScreen');
+
+// Opções de gênero do perfil — alinhadas com enum Android User.Gender
+const USER_GENDER_LABELS: Record<UserGender, string> = {
+  MALE: 'Masculino',
+  FEMALE: 'Feminino',
+  OTHER: 'Outro',
+  NOT_INFORMED: 'Prefiro não informar',
+};
+
+const USER_GENDER_VALUES: UserGender[] = ['MALE', 'FEMALE', 'OTHER', 'NOT_INFORMED'];
 
 // Limites para upload do avatar (alinhados com storage.rules: 2MB, image/*)
 const RATING_RATE_LIMIT_MS = 60_000;
@@ -133,6 +143,8 @@ export const EditProfileScreen: React.FC = () => {
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  // Gênero é PII → lido/escrito em users_private/{uid} separadamente
+  const [gender, setGender] = useState<UserGender | ''>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -207,6 +219,19 @@ export const EditProfileScreen: React.FC = () => {
         };
         setFormData(loaded);
         setInitialData(loaded);
+      }
+
+      // Lê gênero de users_private/{uid} (PII — sem bloquear a tela em caso de negação)
+      try {
+        const privateDoc = await getDoc(doc(db, 'users_private', currentUser.uid));
+        if (privateDoc.exists()) {
+          const privateData = snakeToCamel<{ gender?: UserGender }>(privateDoc.data());
+          if (privateData.gender) {
+            setGender(privateData.gender);
+          }
+        }
+      } catch (privateErr) {
+        logger.debug('users_private leitura negada (não-crítico):', privateErr);
       }
     } catch (err) {
       setError(getFirestoreErrorMessage(err));
@@ -350,6 +375,20 @@ export const EditProfileScreen: React.FC = () => {
         gk_rating_set: true,
         updated_at: serverTimestamp(),
       });
+
+      // Persiste gênero em users_private/{uid} (PII — merge para não sobrescrever outros campos)
+      if (gender) {
+        try {
+          await setDoc(
+            doc(db, 'users_private', currentUser.uid),
+            { gender, updated_at: serverTimestamp() },
+            { merge: true }
+          );
+        } catch (privateErr) {
+          logger.error('Falha ao salvar gênero em users_private:', privateErr);
+          // Não bloqueia o fluxo principal — o restante do perfil foi salvo
+        }
+      }
 
       setSuccess(true);
       setSelectedFile(null); // limpa file pendente após sucesso
@@ -520,6 +559,23 @@ export const EditProfileScreen: React.FC = () => {
                 onChange={(teamId) => handleInputChange('favoriteTeam', teamId)}
                 optional
               />
+
+              <TextField
+                select
+                label={t('profile.gender')}
+                value={gender}
+                onChange={(e) => setGender(e.target.value as UserGender | '')}
+                fullWidth
+              >
+                <MenuItem value="">
+                  <em>{t('profile.genderNone')}</em>
+                </MenuItem>
+                {USER_GENDER_VALUES.map((g) => (
+                  <MenuItem key={g} value={g}>
+                    {USER_GENDER_LABELS[g]}
+                  </MenuItem>
+                ))}
+              </TextField>
 
               <TextField
                 label={t('profile.bioLabel')}

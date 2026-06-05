@@ -14,7 +14,8 @@ class CreateGroupUseCase constructor(
     suspend operator fun invoke(
         name: String,
         description: String,
-        photoUri: String? = null
+        photoUri: String? = null,
+        defaultGender: String? = null
     ): Result<Group> {
         val nameResult = ValidateGroupNameUseCase(name)
         if (nameResult.isError()) {
@@ -29,7 +30,7 @@ class CreateGroupUseCase constructor(
         val validatedName = nameResult.getOrNull() ?: name
         val validatedDesc = descResult.getOrNull() ?: description
 
-        return groupRepository.createGroup(validatedName, validatedDesc, photoUri)
+        return groupRepository.createGroup(validatedName, validatedDesc, photoUri, defaultGender)
     }
 }
 

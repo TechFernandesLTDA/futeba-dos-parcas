@@ -806,7 +806,11 @@
       "visibility": "Visibilidade",
       "visibilityGroupOnly": "Apenas membros do grupo",
       "visibilityPublicClosed": "Público (lista fechada)",
-      "visibilityPublicOpen": "Público (aceita solicitações)"
+      "visibilityPublicOpen": "Público (aceita solicitações)",
+      "gender": "Categoria",
+      "genderMale": "Masculino",
+      "genderFemale": "Feminino",
+      "genderMixed": "Misto"
     },
     "createFirst": "Criar Jogo",
     "createGame": "Criar Jogo",
@@ -1117,7 +1121,9 @@
     },
     "title": "Grupos",
     "transferOwnership": "Transferir Propriedade",
-    "tryDifferentSearch": "Tente alterar o termo de busca"
+    "tryDifferentSearch": "Tente alterar o termo de busca",
+    "defaultGender": "Categoria padrão dos jogos",
+    "defaultGenderNone": "Sem padrão"
   },
   "home": {
     "dreamTeam": "Time dos Sonhos",
@@ -1452,7 +1458,13 @@
     "viewLevelJourney": "Ver jornada",
     "viewLevelJourneyAria": "Ver jornada de nível - Nível {{level}}",
     "xp": "XP",
-    "xpToNextLevel": "Faltam {{xp}} XP para {{levelName}}"
+    "xpToNextLevel": "Faltam {{xp}} XP para {{levelName}}",
+    "gender": "Gênero",
+    "genderMale": "Masculino",
+    "genderFemale": "Feminino",
+    "genderOther": "Outro",
+    "genderNotInformed": "Prefiro não informar",
+    "genderNone": "Não informado"
   },
   "ranking": {
     "categoriesAria": "Categorias do ranking",

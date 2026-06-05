@@ -150,8 +150,8 @@ fun GroupDetailScreen(
         EditGroupDialog(
             group = group,
             onDismiss = { showEditDialog = false },
-            onSave = { name, description, photoUri ->
-                viewModel.updateGroup(name, description, photoUri)
+            onSave = { name, description, photoUri, defaultGender ->
+                viewModel.updateGroup(name, description, photoUri, defaultGender)
                 showEditDialog = false
             }
         )

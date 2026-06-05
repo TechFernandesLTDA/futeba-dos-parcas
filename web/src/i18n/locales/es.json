@@ -806,7 +806,11 @@
       "visibility": "Visibilidad",
       "visibilityGroupOnly": "Solo miembros del grupo",
       "visibilityPublicClosed": "Público (lista cerrada)",
-      "visibilityPublicOpen": "Público (acepta solicitudes)"
+      "visibilityPublicOpen": "Público (acepta solicitudes)",
+      "gender": "Categoría",
+      "genderMale": "Masculino",
+      "genderFemale": "Femenino",
+      "genderMixed": "Mixto"
     },
     "createFirst": "Crear Juego",
     "createGame": "Crear Juego",
@@ -1117,7 +1121,9 @@
     },
     "title": "Grupos",
     "transferOwnership": "Transferir Propiedad",
-    "tryDifferentSearch": "Intenta cambiar el término de búsqueda"
+    "tryDifferentSearch": "Intenta cambiar el término de búsqueda",
+    "defaultGender": "Categoría predeterminada de juegos",
+    "defaultGenderNone": "Sin predeterminado"
   },
   "home": {
     "dreamTeam": "Equipo Soñado",
@@ -1452,7 +1458,13 @@
     "viewLevelJourney": "Ver recorrido",
     "viewLevelJourneyAria": "Ver recorrido de nivel - Nivel {{level}}",
     "xp": "XP",
-    "xpToNextLevel": "Faltan {{xp}} XP para {{levelName}}"
+    "xpToNextLevel": "Faltan {{xp}} XP para {{levelName}}",
+    "gender": "Género",
+    "genderMale": "Masculino",
+    "genderFemale": "Femenino",
+    "genderOther": "Otro",
+    "genderNotInformed": "Prefiero no decir",
+    "genderNone": "No informado"
   },
   "ranking": {
     "categoriesAria": "Categorías del ranking",

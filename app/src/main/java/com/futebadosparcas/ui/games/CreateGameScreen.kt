@@ -26,6 +26,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.validation.GameValidation
@@ -78,6 +79,7 @@ fun CreateGameScreen(
     val availableGroups by viewModel.availableGroups.collectAsStateWithLifecycle()
     val selectedGroup by viewModel.selectedGroup.collectAsStateWithLifecycle()
     val selectedVisibility by viewModel.selectedVisibility.collectAsStateWithLifecycle()
+    val selectedGender by viewModel.selectedGender.collectAsStateWithLifecycle()
     val maxGoalkeepers by viewModel.maxGoalkeepers.collectAsStateWithLifecycle()
     val numberOfTeams by viewModel.numberOfTeams.collectAsStateWithLifecycle()
     val recurrenceEndMode by viewModel.recurrenceEndMode.collectAsStateWithLifecycle()
@@ -227,6 +229,11 @@ fun CreateGameScreen(
             onVisibilitySelected = {
                 hapticManager.tick()
                 viewModel.setVisibility(it)
+            },
+            selectedGender = selectedGender,
+            onGenderSelected = {
+                hapticManager.tick()
+                viewModel.setGender(it)
             },
             recurrenceEnabled = recurrenceEnabled,
             onRecurrenceEnabledChange = { recurrenceEnabled = it },
@@ -420,6 +427,8 @@ private fun CreateGameContent(
     onGroupSelected: (com.futebadosparcas.data.model.UserGroup) -> Unit,
     selectedVisibility: GameVisibility,
     onVisibilitySelected: (GameVisibility) -> Unit,
+    selectedGender: String,
+    onGenderSelected: (String) -> Unit,
     recurrenceEnabled: Boolean,
     onRecurrenceEnabledChange: (Boolean) -> Unit,
     recurrenceType: String,
@@ -777,6 +786,14 @@ private fun CreateGameContent(
         VisibilitySelector(
             selectedVisibility = selectedVisibility,
             onVisibilitySelected = onVisibilitySelected
+        )
+
+        // Seção: Gênero/categoria do jogo (FASE 2)
+        SectionTitle(stringResource(R.string.game_gender))
+
+        GenderSelector(
+            selectedGender = selectedGender,
+            onGenderSelected = onGenderSelected
         )
 
         // Seção: Preço e Jogadores
@@ -1229,6 +1246,43 @@ private fun FieldSelectionCard(
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 }
+            )
+        }
+    }
+}
+
+/**
+ * Seletor de gênero/categoria do jogo (FASE 2): Masculino | Feminino | Misto.
+ *
+ * Emite o valor canônico (UPPER_SNAKE) de [GameGender] via [onGenderSelected].
+ * Segue o mesmo padrão de FilterChips em FlowRow usado por [RecurrenceEndSelector].
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GenderSelector(
+    selectedGender: String,
+    onGenderSelected: (String) -> Unit
+) {
+    // Apenas 3 valores para jogos (MALE/FEMALE/MIXED) — distinto do gênero de usuário.
+    val options = listOf(
+        GameGender.MALE.name to stringResource(R.string.game_gender_male),
+        GameGender.FEMALE.name to stringResource(R.string.game_gender_female),
+        GameGender.MIXED.name to stringResource(R.string.game_gender_mixed)
+    )
+    val current = GameGender.fromString(selectedGender).name
+
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        options.forEach { (value, label) ->
+            FilterChip(
+                selected = current == value,
+                onClick = { onGenderSelected(value) },
+                label = { Text(label) },
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .semantics { contentDescription = label }
             )
         }
     }

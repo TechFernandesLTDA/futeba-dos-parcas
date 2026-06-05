@@ -20,8 +20,10 @@ import {
   Save as SaveIcon,
   PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
+import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold } from '../../components/layout';
-import { doc, updateDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { GameGender, GAME_GENDER_LABELS } from '../../types/game';
+import { doc, updateDoc, serverTimestamp, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../services/firebase';
 import { useGroupDetail } from '../../hooks/useGroups';
@@ -49,10 +51,16 @@ export const GroupEditScreen: React.FC = () => {
   const { group, members, loading, error } = useGroupDetail(groupId || null);
   const { showSuccess, showError } = useToast();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    isPublic: boolean;
+    defaultGender?: GameGender;
+  }>({
     name: '',
     description: '',
     isPublic: false,
+    defaultGender: undefined,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -75,6 +83,7 @@ export const GroupEditScreen: React.FC = () => {
         name: group.name || '',
         description: group.description || '',
         isPublic: group.isPublic || false,
+        defaultGender: group.defaultGender,
       });
       setInitialized(true);
     }
@@ -164,6 +173,13 @@ export const GroupEditScreen: React.FC = () => {
       if (photoUrl) {
         updateData.photo_url = photoUrl;
       }
+      // Persiste ou remove categoria padrão dos jogos
+      if (formData.defaultGender) {
+        updateData.default_gender = formData.defaultGender;
+      } else {
+        // Ao limpar a seleção, remove o campo do documento
+        updateData.default_gender = deleteField();
+      }
       await updateDoc(groupRef, updateData);
 
       // Broadcast denormalized data to ALL group members (non-critical)
@@ -246,6 +262,7 @@ export const GroupEditScreen: React.FC = () => {
     (formData.name !== (group.name || '') ||
       formData.description !== (group.description || '') ||
       formData.isPublic !== (group.isPublic || false) ||
+      formData.defaultGender !== (group.defaultGender) ||
       !!selectedFile);
 
   return (
@@ -344,6 +361,21 @@ export const GroupEditScreen: React.FC = () => {
                   </Box>
                 }
               />
+
+              <TextField
+                select
+                label="Categoria padrão dos jogos"
+                value={formData.defaultGender || ''}
+                onChange={(e) =>
+                  handleInputChange('defaultGender', (e.target.value as GameGender) || undefined)
+                }
+                fullWidth
+              >
+                <MenuItem value=""><em>Sem padrão</em></MenuItem>
+                {(Object.entries(GAME_GENDER_LABELS) as [GameGender, string][]).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>{label}</MenuItem>
+                ))}
+              </TextField>
 
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                 <Button

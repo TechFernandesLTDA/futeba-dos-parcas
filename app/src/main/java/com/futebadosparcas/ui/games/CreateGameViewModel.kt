@@ -35,6 +35,7 @@ import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.validation.GameValidation
 import com.futebadosparcas.domain.repository.AddressLookupResult
@@ -142,6 +143,11 @@ class CreateGameViewModel(
     // Estado para visibilidade do jogo
     private val _selectedVisibility = MutableStateFlow(GameVisibility.GROUP_ONLY)
     val selectedVisibility: StateFlow<GameVisibility> = _selectedVisibility
+
+    // Genero/categoria do jogo (MALE/FEMALE/MIXED). Default MIXED; pode vir do
+    // default_gender do grupo selecionado, mas continua editavel (FASE 2).
+    private val _selectedGender = MutableStateFlow(GameGender.MIXED.name)
+    val selectedGender: StateFlow<String> = _selectedGender
 
     // Maximo de goleiros e numero de times (paridade com web, spec #2400)
     private val _maxGoalkeepers = MutableStateFlow(GameValidation.DEFAULT_MAX_GOALKEEPERS)
@@ -378,10 +384,32 @@ class CreateGameViewModel(
 
     fun selectGroup(group: UserGroup?) {
         _selectedGroup.value = group
+
+        // Pre-seleciona o genero a partir do default_gender do grupo (fallback MIXED).
+        // O usuario ainda pode trocar manualmente depois (campo editavel).
+        val groupId = group?.id ?: group?.groupId
+        if (groupId.isNullOrBlank()) {
+            _selectedGender.value = GameGender.MIXED.name
+            return
+        }
+        viewModelScope.launch {
+            groupRepository.getGroupById(groupId)
+                .onSuccess { groupDoc ->
+                    _selectedGender.value = GameGender.fromString(groupDoc.defaultGender).name
+                }
+                .onFailure {
+                    AppLogger.w(TAG) { "Falha ao carregar default_gender do grupo: ${it.message}" }
+                }
+        }
     }
 
     fun setVisibility(visibility: GameVisibility) {
         _selectedVisibility.value = visibility
+    }
+
+    /** Define o genero/categoria do jogo (MALE/FEMALE/MIXED), tolerante a valores invalidos. */
+    fun setGender(value: String) {
+        _selectedGender.value = GameGender.fromString(value).name
     }
 
     /** Define o maximo de goleiros, limitado ao range valido (0..4). */
@@ -581,6 +609,9 @@ class CreateGameViewModel(
         // Copiar goleiros/times do jogo duplicado (paridade, spec #2400)
         _maxGoalkeepers.value = GameValidation.coerceGoalkeepers(game.maxGoalkeepers)
         _numberOfTeams.value = GameValidation.coerceNumberOfTeams(game.numberOfTeams)
+
+        // Copiar genero/categoria do jogo duplicado (FASE 2)
+        _selectedGender.value = GameGender.fromString(game.gender).name
 
         // Copiar fim-de-serie da recorrencia (spec #2398, count XOR end_date)
         hydrateRecurrenceEndConfig(game)
@@ -839,6 +870,9 @@ class CreateGameViewModel(
                    _maxGoalkeepers.value = GameValidation.coerceGoalkeepers(game.maxGoalkeepers)
                    _numberOfTeams.value = GameValidation.coerceNumberOfTeams(game.numberOfTeams)
 
+                   // Restaurar genero/categoria do jogo em edicao (FASE 2)
+                   _selectedGender.value = GameGender.fromString(game.gender).name
+
                    // Restaurar fim-de-serie da recorrencia (spec #2398, count XOR end_date)
                    hydrateRecurrenceEndConfig(game)
 
@@ -1032,6 +1066,8 @@ class CreateGameViewModel(
                 maxPlayers = maxPlayers,
                 maxGoalkeepers = _maxGoalkeepers.value,
                 numberOfTeams = _numberOfTeams.value,
+                // Genero/categoria do jogo (FASE 2). Persiste no campo `gender`.
+                gender = _selectedGender.value,
                 recurrence = recurrence,
                 // Fim-de-serie (spec #2398, decisao "ambos"): count XOR end_date.
                 // recurrence_index marca a posicao na serie; o motor (recurrence-engine)

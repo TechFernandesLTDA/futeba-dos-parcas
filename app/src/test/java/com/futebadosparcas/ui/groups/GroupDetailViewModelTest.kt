@@ -189,12 +189,12 @@ class GroupDetailViewModelTest {
             viewModel.loadGroup("group-1")
             advanceUntilIdle()
 
-            coEvery { updateGroupUseCase.invoke(any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { updateGroupUseCase.invoke(any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
             viewModel.updateGroup("Novo Nome", "Nova descricao")
             advanceUntilIdle()
 
-            coVerify { updateGroupUseCase("group-1", "Novo Nome", "Nova descricao", null) }
+            coVerify { updateGroupUseCase("group-1", "Novo Nome", "Nova descricao", null, null) }
         }
 
         @Test
@@ -205,7 +205,7 @@ class GroupDetailViewModelTest {
             viewModel.loadGroup("group-1")
             advanceUntilIdle()
 
-            coEvery { updateGroupUseCase.invoke(any(), any(), any(), any()) } returns Result.failure(RuntimeException("Erro"))
+            coEvery { updateGroupUseCase.invoke(any(), any(), any(), any(), any()) } returns Result.failure(RuntimeException("Erro"))
 
             viewModel.updateGroup("Novo Nome", "Nova descricao")
             advanceUntilIdle()

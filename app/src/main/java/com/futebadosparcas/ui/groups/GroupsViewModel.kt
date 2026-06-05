@@ -137,11 +137,16 @@ class GroupsViewModel(
         }
     }
 
-    fun createGroup(name: String, description: String, photoUri: Uri? = null) {
+    fun createGroup(
+        name: String,
+        description: String,
+        photoUri: Uri? = null,
+        defaultGender: String? = null
+    ) {
         viewModelScope.launch {
             _createGroupState.value = CreateGroupUiState.Loading
 
-            val result = createGroupUseCase(name, description, photoUri?.toString())
+            val result = createGroupUseCase(name, description, photoUri?.toString(), defaultGender)
 
             result.fold(
                 onSuccess = { group ->
@@ -156,11 +161,17 @@ class GroupsViewModel(
         }
     }
 
-    fun updateGroup(groupId: String, name: String, description: String, photoUri: Uri? = null) {
+    fun updateGroup(
+        groupId: String,
+        name: String,
+        description: String,
+        photoUri: Uri? = null,
+        defaultGender: String? = null
+    ) {
         viewModelScope.launch {
             _actionState.value = GroupActionState.Loading
 
-            val result = updateGroupUseCase(groupId, name, description, photoUri?.toString())
+            val result = updateGroupUseCase(groupId, name, description, photoUri?.toString(), defaultGender)
 
             result.fold(
                 onSuccess = {
