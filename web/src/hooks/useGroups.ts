@@ -292,8 +292,17 @@ export function useGroupDetail(groupId: string | null) {
         setMembers(membersData);
       },
       (err) => {
-        logger.error('Error fetching members:', err);
-        setError(getFirestoreErrorMessage(err));
+        // #2519: a leitura da LISTA de members é negada para não-membros
+        // (rule #1035 só libera isGroupMember/isAdmin para o list query).
+        // Em grupo PÚBLICO isso é esperado: um visitante não-membro ainda
+        // precisa ver o grupo + o botão "Solicitar entrada". Portanto a falha
+        // deste listener NÃO é fatal — degradamos para lista vazia e NÃO
+        // setamos o erro bloqueante (esse fica exclusivamente para a leitura
+        // do GRUPO em si, no listener acima). Antes, o setError aqui fazia o
+        // GroupDetailScreen renderizar o ErrorScreen ("sem permissão") e
+        // esconder o caminho de entrada em grupos públicos.
+        logger.warn('Lista de membros indisponível (provável não-membro):', err);
+        setMembers([]);
         setLoading(false);
       }
     );
