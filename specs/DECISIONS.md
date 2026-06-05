@@ -28,6 +28,50 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-06-04] Read-rule de `groups`: ramo público satisfazível por list query (#2522)
+
+**Contexto:** A tela "Descobrir Grupos" (web, `useGroups.ts` → `fetchPublicGroups`)
+faz uma LIST query `where('is_public','==',true) + orderBy('created_at','desc') + limit(100)`
+e dava `PERMISSION_DENIED` para todos os usuários. Num list query o Firestore
+avalia a read-rule contra CADA doc retornado e nega a query INTEIRA se qualquer
+doc não satisfaz a rule. A regra antiga (L1343) ANDava 3 cláusulas, incluindo um
+gate de `deleted_at` e `isGroupActive(groupId)` (get()-based, status=='ACTIVE'),
+que a query pública não garante. Bastava 1 grupo público SUSPENDED/soft-deleted
+no top-100-por-created_at para quebrar a discovery de todos (bug data-dependente).
+Confirmado no emulador de rules: `Null value error. for 'list' @ L1343`.
+Não é regressão recente — `isGroupActive` na read-rule é de 2026-05-20 (8c912609),
+exposto por mudança de dados.
+
+**Alternativas consideradas:**
+1. **Reestruturar a rule: ramo público sem get()/sem gate de deleted_at; gates
+   estritos só no ramo privado.** Prós: corrige com mudança mínima e nenhuma
+   alteração de query/índice; cliente já filtra DELETED/soft-deleted pós-fetch.
+   Contras: metadata de grupo público archived/soft-deleted vira legível.
+2. **Manter os gates e tornar a query satisfazível com `where('status','==','ACTIVE')`
+   + denormalizar `deleted_at`.** Contras: mais pesado; `where('deleted_at','==',null)`
+   NÃO casa docs sem o campo (trap do campo ausente em Firestore); exige migração
+   de dados e novo índice; ainda assim `isGroupActive` (get()) continuaria
+   inviável em list query. Descartada.
+
+**Decisão:** **Opção 1.** A `allow read` de groups passa a ser:
+`isAuthenticated() && ( isAdmin() || is_public==true || (gates estritos privados) )`,
+onde o ramo privado mantém `deleted_at`-gate + `isGroupActive()` + membership.
+
+**Justificativa:** Opção 1 corrige o bug sem mudar a query nem migrar dados, e
+mantém a proteção de grupos PRIVADOS intacta. O índice `is_public + created_at`
+(que a query já requer) foi adicionado a `firestore.indexes.json` por
+consistência (a query não mudou).
+
+**Consequências:** Tradeoff aceito — metadata de grupo público
+archived/soft-deleted fica legível por qualquer autenticado (baixa
+sensibilidade: já era público). Subcoleções (members, cashbox) seguem
+protegidas pelas suas próprias rules (#1035). Não-regressão de #511/#1035
+provada por testes de rules (557 testes verdes): grupo privado alheio e privado
+soft-deleted seguem invisíveis a não-membro.
+
+**Relacionado:** `specs/BUGFIX_2026-06-04_discover-groups-list-permission.md`;
+issue #2522; relacionado a #511/#1035 (privacidade de grupo privado), #2153.
+
 ### [2026-05-11] iOS Bundle ID: `com.futebadosparcas` (sem sufixo `.ios`)
 
 **Contexto:** Master `iosApp/iosApp/Info.plist` tinha `CFBundleIdentifier` hardcoded como `com.futebadosparcas.ios` (sufixo separava Android/iOS). Ao registrar app iOS no Firebase Console + rodar pela primeira vez no Simulator (PR #1055), decidi unificar com Android (`com.futebadosparcas`).

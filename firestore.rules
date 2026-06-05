@@ -1334,21 +1334,36 @@ service cloud.firestore {
     // COLECAO: groups
     // ============================================
     match /groups/{groupId} {
-      // Usuários podem ler grupos públicos ou onde são membros (EXCETO soft-deleted)
-      // Admins podem ver soft-deleted para recuperação E grupos privados (issue #511)
-      // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
-      // H2 FIX: usa isGroupMember() (que verifica status ACTIVE) em vez de exists()
-      // bare — membro banido/removido nao pode ler o grupo
-      // H2 FIX: isGroupActive() para impedir leitura de grupos ARCHIVED/SUSPENDED
+      // #2522 FIX (list-query vs get()): a tela "Descobrir Grupos" (web) faz uma
+      // LIST query `where('is_public','==',true)`. Num list query o Firestore
+      // avalia a read-rule contra CADA doc retornado e NEGA a query INTEIRA se
+      // qualquer doc não satisfaz a rule (não há "skip"). A regra antiga ANDava
+      // 3 cláusulas — incluindo um gate de `deleted_at` e `isGroupActive()`
+      // (get()-based, status=='ACTIVE') — que a query pública NÃO garante.
+      // Bastava 1 grupo público SUSPENDED/soft-deleted no top-100 para quebrar a
+      // discovery de TODOS (bug data-dependente / PERMISSION_DENIED).
+      //
+      // Solução: o ramo PÚBLICO é satisfazível por list query — sem get() e sem
+      // gate de deleted_at (o cliente já filtra status DELETED/soft-deleted
+      // pós-fetch em useGroups.ts). Os gates ESTRITOS (deleted_at + isGroupActive
+      // + membership) ficam APENAS no ramo PRIVADO — protegendo #511/#1035
+      // (grupo privado alheio/soft-deleted segue invisível a não-membro).
+      //
+      // Tradeoff de segurança: metadata de grupo público archived/soft-deleted
+      // vira legível por qualquer autenticado — baixa sensibilidade (já era
+      // público). Subcoleções (members, cashbox, etc.) seguem protegidas pelas
+      // suas próprias rules (#1035).
+      // H2 FIX: isGroupMember()/isGroupActive() verificam status ACTIVE.
       allow read: if isAuthenticated() && (
-        !('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()
-      ) && (
         isAdmin() ||
+        // Ramo PÚBLICO: satisfazível por list query (sem get(), sem gate deleted_at)
         resource.data.is_public == true ||
-        resource.data.owner_id == userId() ||
-        isGroupMember(groupId)
-      ) && (
-        isAdmin() || isGroupActive(groupId)
+        // Ramo PRIVADO: gates estritos (single-doc get) — não-membro nunca lê
+        (
+          (!('deleted_at' in resource.data) || resource.data.deleted_at == null) &&
+          isGroupActive(groupId) &&
+          (resource.data.owner_id == userId() || isGroupMember(groupId))
+        )
       );
 
       // Profile Complete Gate: criar grupo exige CPF + telefone completos.
