@@ -468,3 +468,118 @@ describe("groups/cashbox — permissões", () => {
     );
   });
 });
+
+// ============================================================
+// DESCOBRIR GRUPOS — list query de grupos públicos (#2522)
+// ============================================================
+//
+// Contexto do bug (#2522):
+// A tela "Descobrir Grupos" no web faz uma LIST query:
+//   query(groups, where('is_public','==',true), orderBy('created_at','desc'), limit(100))
+// Num list query, o Firestore avalia a read-rule contra CADA doc retornado e
+// NEGA a query INTEIRA se qualquer doc não satisfaz a rule (não há "skip").
+//
+// A read-rule antiga tinha 3 cláusulas ANDed, sendo que:
+//   - cláusula de deleted_at (gate de soft-delete)
+//   - cláusula isGroupActive(groupId) — get()-based (status == 'ACTIVE')
+// NÃO são satisfeitas pela query (que só filtra is_public==true). Assim, quando
+// um grupo público no top-100 está SUSPENDED/ARCHIVED ou soft-deleted, a
+// discovery quebrava com PERMISSION_DENIED para TODO MUNDO (bug data-dependente).
+//
+// Fix (#2522): o ramo PÚBLICO da read-rule virou satisfazível por list query —
+// sem get() e sem gate de deleted_at (o cliente já filtra deleted/DELETED após
+// o fetch). Os gates estritos (deleted_at + isGroupActive + membership) ficam
+// APENAS no ramo PRIVADO. Não-regressão de #511/#1035 (privado alheio segue
+// protegido) coberta abaixo.
+describe("groups — descobrir (list query pública #2522)", () => {
+  const GROUP_PUB_SUSPENDED = "group-pub-suspended-2522";
+  const GROUP_PUB_SOFT_DELETED = "group-pub-softdel-2522";
+  const GROUP_PRIV_SOFT_DELETED = "group-priv-softdel-2522";
+
+  beforeAll(async () => {
+    // Grupo PÚBLICO porém SUSPENDED — quebra cláusula isGroupActive() no list
+    await seedDoc(testEnv, `groups/${GROUP_PUB_SUSPENDED}`, {
+      name: "Público Suspenso",
+      owner_id: UID_PLAYER_A,
+      is_public: true,
+      status: "SUSPENDED",
+      description: "Grupo público mas suspenso",
+      member_count: 1,
+    });
+    // Grupo PÚBLICO porém soft-deleted — quebra cláusula deleted_at no list
+    await seedDoc(testEnv, `groups/${GROUP_PUB_SOFT_DELETED}`, {
+      name: "Público Soft-Deletado",
+      owner_id: UID_PLAYER_A,
+      is_public: true,
+      status: "DELETED",
+      description: "Grupo público soft-deletado",
+      deleted_at: new Date(),
+      deleted_by: UID_PLAYER_A,
+      member_count: 1,
+    });
+    // Grupo PRIVADO soft-deleted — não deve vazar para não-membro
+    await seedDoc(testEnv, `groups/${GROUP_PRIV_SOFT_DELETED}`, {
+      name: "Privado Soft-Deletado",
+      owner_id: UID_PLAYER_A,
+      is_public: false,
+      status: "DELETED",
+      description: "Grupo privado soft-deletado",
+      deleted_at: new Date(),
+      deleted_by: UID_PLAYER_A,
+      member_count: 1,
+    });
+  });
+
+  // (a) DISCOVERY: a list query da tela "Descobrir Grupos" passa para um
+  // não-membro autenticado MESMO com grupos públicos SUSPENDED/soft-deleted no
+  // resultado. Antes do fix #2522 esta query falhava (PERMISSION_DENIED).
+  it("Não-membro pode listar grupos públicos (discovery) mesmo com público suspenso/soft-deletado", async () => {
+    const db = asPlayerC(testEnv); // PlayerC não é membro de nenhum grupo
+    await assertSucceeds(
+      db.collection("groups").where("is_public", "==", true).get()
+    );
+  });
+
+  // (b) NÃO-REGRESSÃO (#511/#1035): grupo PRIVADO alheio NÃO é legível por
+  // não-membro — single get.
+  it("Não-membro NÃO pode ler grupo privado alheio (single get) — #511/#1035", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(db.doc(`groups/${GROUP_PRIVATE}`).get());
+  });
+
+  // (b') NÃO-REGRESSÃO: list query de grupos PRIVADOS por não-membro falha
+  // (o ramo público da rule não cobre is_public==false).
+  it("Não-membro NÃO pode listar grupos privados (list query)", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.collection("groups").where("is_public", "==", false).get()
+    );
+  });
+
+  // (c) NÃO-REGRESSÃO: grupo PRIVADO soft-deleted não vaza para não-membro.
+  it("Não-membro NÃO pode ler grupo privado soft-deletado", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(db.doc(`groups/${GROUP_PRIV_SOFT_DELETED}`).get());
+  });
+
+  // (d) Membro lê seu próprio grupo (público) normalmente — single get.
+  it("Membro lê seu próprio grupo normalmente (single get)", async () => {
+    const db = asPlayerB(testEnv); // membro de GROUP_PUBLIC
+    await assertSucceeds(db.doc(`groups/${GROUP_PUBLIC}`).get());
+  });
+
+  // (d') Owner lê seu grupo PRIVADO normalmente.
+  it("Owner lê seu grupo privado normalmente (single get)", async () => {
+    const db = asPlayerA(testEnv); // owner de GROUP_PRIVATE
+    await assertSucceeds(db.doc(`groups/${GROUP_PRIVATE}`).get());
+  });
+
+  // Qualquer autenticado pode ler um grupo público suspenso/soft-deletado via
+  // single get (consistente com o ramo público da rule). O cliente filtra
+  // estado pós-fetch; metadata de grupo público archived ser legível é o
+  // tradeoff aceito (baixa sensibilidade — já era público).
+  it("Qualquer autenticado pode ler grupo público suspenso (single get)", async () => {
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(db.doc(`groups/${GROUP_PUB_SUSPENDED}`).get());
+  });
+});
