@@ -1443,7 +1443,17 @@ service cloud.firestore {
             // Fix: null-check getAfter() result before accessing .data (#540)
             getAfter(/databases/$(database)/documents/groups/$(groupId)) != null &&
             getAfter(/databases/$(database)/documents/groups/$(groupId)).data.owner_id == userId()) ||
-           // #2153: self-create MEMBER exige grupo ativo e publico OU convite aprovado via trigger
+           // #2153 / #2517: self-create MEMBER pelo CLIENTE só é permitido em
+           // grupo ATIVO e PÚBLICO (discovery direto). Este gate NÃO pode ser
+           // afrouxado — é a proteção de #2153 (qualquer auth conhecendo um
+           // groupId privado viraria membro).
+           //
+           // O caminho de CONVITE (que precisa funcionar em grupo PRIVADO) NÃO
+           // passa mais por esta rule: o cliente apenas marca invites/{code}.used,
+           // e o trigger `onInviteRedeemed` (functions/src/groups/invite-redeemed.ts)
+           // cria a membership via admin SDK (bypassa rules), espelhando
+           // `onJoinRequestApproved`. Por isso o gate is_public continua aqui:
+           // ele governa exclusivamente o self-create direto do cliente.
            (request.resource.data.role == 'MEMBER' &&
             request.resource.data.user_id == userId() &&
             memberId == userId() &&

@@ -531,4 +531,44 @@ unilateralmente sem spec viola Regra #1.
 
 ---
 
+### [2026-06-04] Entrar por convite via trigger server-side (Opção A) — #2515/#2516/#2517
+
+**Contexto:** O fluxo de entrar por convite estava quebrado end-to-end. O gate
+`is_public==true` no self-create MEMBER (adicionado por #2153 para fechar
+escalada de acesso) tornava IMPOSSÍVEL entrar por convite em grupo PRIVADO — o
+propósito do convite. A correção de #2153 previa "convite aprovado via trigger",
+mas esse trigger nunca existiu (só join_request ganhou o seu, `onJoinRequestApproved`).
+
+**Alternativas consideradas:**
+- **A — trigger server-side `onInviteRedeemed`**: cliente só marca o invite
+  `used`; trigger cria a membership via admin SDK (bypassa rules → funciona p/
+  privado). Espelha `onJoinRequestApproved`.
+- **B — relaxar a rule** para validar o invite via `get()`. Rejeitada: a rule de
+  member-create não tem acesso ao code do convite (doc-id que o cliente possui,
+  nunca recebido pela rule); exigiria acoplar o doc-id no member doc (frágil) e
+  manteria o drift de schema web↔Android.
+
+**Decisão:** **Opção A.** O trigger vira o único writer da membership de convite
+(unifica schema), é server-authoritative e funciona p/ público e privado. O gate
+`is_public==true` da rule fica INTACTO (governa só self-create direto do cliente,
+exclusivo de grupo público) → **proteção de #2153 preservada** (provado por teste
+de rules: self-create MEMBER sem convite em grupo privado FALHA).
+
+**Justificativa / detalhes:**
+- O trigger NÃO incrementa `member_count` nem seta `_counted_by_join_request`;
+  deixa `onMemberWritten` fazer o único +1 (evita double-count / count=0).
+- Membership virou assíncrona → ambos os clientes aguardam o member doc aparecer
+  (listener web / polling Android, timeout ~8s) antes de resolver sucesso, p/
+  evitar `PERMISSION_DENIED` na leitura de grupo privado pós-join.
+- Convite **legado** (`groups.invite_code`) no Android permanece público-only
+  (joiner não cria `invites/` p/ disparar trigger). Limitação herdada, não
+  regressão. Web não suporta legado.
+- Bug latente corrigido: o caminho Android antigo nunca marcava o convite `used`
+  (single-use furado) — agora o update é o gatilho do trigger.
+
+**Relacionado:** `specs/BUGFIX_2026-06-04_invite-join-private-groups.md`;
+issues #2515/#2516/#2517; regressão de #2153; paridade com #611/#626.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
