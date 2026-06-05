@@ -13,7 +13,7 @@
  */
 import {logger} from "firebase-functions";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 
 /**
@@ -147,8 +147,7 @@ export const onMemberWritten = onDocumentWritten(
           );
           tx.update(groupRef, {
             member_count: updated,
-            updated_at: admin.firestore
-              .FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
           });
           return updated;
         }

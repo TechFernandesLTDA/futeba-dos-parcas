@@ -33,6 +33,5 @@ module.exports = {
     "^@google-cloud/logging$": "<rootDir>/test/__mocks__/google-cloud-logging.ts",
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  clearMocks: true,
   verbose: true,
 };
