@@ -3,7 +3,8 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'android-v*.*.*'  # releases Android (esquema escopado por plataforma)
+      - 'v*.*.*'          # legado (transicao) — releases antigas repo-wide
 
 # Cancela execucoes anteriores
 concurrency:
@@ -126,8 +127,8 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
-          # Pegar commits desde ultima tag
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          # Pegar commits desde a ultima tag de release Android (escopada ou legada)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 --match 'android-v*' --match 'v*' HEAD^ 2>/dev/null || echo "")
           if [ -z "$PREVIOUS_TAG" ]; then
             CHANGELOG=$(git log --pretty=format:"- %s" --no-merges)
           else
@@ -175,9 +176,12 @@ jobs:
 
       - name: Resolve version from tag
         id: ver
-        # release.yml dispara em tags v*.*.* — que sao releases Android.
-        # A versao e o nome da tag sem o prefixo "v".
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        # release.yml dispara em android-v*.*.* (escopado) ou v*.*.* (legado).
+        # Remove o prefixo "android-v" e depois "v" para obter a versao limpa.
+        run: |
+          VERSION="${GITHUB_REF_NAME#android-v}"
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Check release notes source file
         id: notes

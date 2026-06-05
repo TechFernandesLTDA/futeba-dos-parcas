@@ -33,6 +33,17 @@ const VERSIONS_PATH = path.join(ROOT, 'versions.json');
 const PLATFORMS = ['android', 'web', 'ios', 'functions'];
 const BUMP_TYPES = ['major', 'minor', 'patch'];
 
+// Escopos de commit relevantes para cada plataforma (versionamento independente).
+// Commit SEM escopo conta para todas; escopos cross-cutting (shared/firebase)
+// contam para as plataformas que dependem deles. Assim um `feat(web):` nao
+// bumpa o Android, e vice-versa.
+const RELEVANT_SCOPES = {
+  android: ['android', 'shared', 'firebase'],
+  ios: ['ios', 'shared', 'firebase'],
+  web: ['web', 'firebase'],
+  functions: ['functions', 'firebase', 'shared'],
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -41,8 +52,11 @@ const BUMP_TYPES = ['major', 'minor', 'patch'];
  * Executa `git` com argumentos como array (execFile, sem shell — sem risco de
  * injecao de comando).
  */
-function git(args) {
-  return execFileSync('git', args, { encoding: 'utf8' }).trim();
+function git(args, opts = {}) {
+  // opts.silent: ignora stderr (ex.: `git describe` sem tags imprime "fatal:"
+  // mesmo sendo um caso esperado/tratado).
+  const stdio = opts.silent ? ['ignore', 'pipe', 'ignore'] : undefined;
+  return execFileSync('git', args, { encoding: 'utf8', stdio }).trim();
 }
 
 function fail(msg) {
@@ -51,7 +65,8 @@ function fail(msg) {
 }
 
 function usage() {
-  console.error('Uso: node scripts/bump-version.js <android|web|ios|functions> [major|minor|patch]');
+  console.error('Uso: node scripts/bump-version.js <android|web|ios|functions> [major|minor|patch] [--dry-run]');
+  console.error('  --dry-run: calcula e imprime o bump/tag sem alterar nenhum arquivo.');
 }
 
 function readVersions() {
@@ -88,9 +103,14 @@ function applyBump(version, bumpType) {
   return `${v.major}.${v.minor}.${v.patch}`;
 }
 
-function getLastTag() {
+function getLastTag(platform) {
+  // Tag escopada por plataforma: `<platform>-v1.2.3`. Para o android, durante a
+  // transicao, aceita tambem a tag legada `v1.2.3` (releases antigas eram
+  // repo-wide mas rastreavam o android).
+  const args = ['describe', '--tags', '--abbrev=0', '--match', `${platform}-v*`];
+  if (platform === 'android') args.push('--match', 'v*');
   try {
-    return git(['describe', '--tags', '--abbrev=0']);
+    return git(args, { silent: true });
   } catch {
     return null;
   }
@@ -105,9 +125,22 @@ function getCommitsSinceTag(tag) {
   }
 }
 
-function inferBumpType(commits) {
+/**
+ * Verifica se um commit convencional e relevante para a plataforma, com base no
+ * escopo. Commit sem escopo (`feat: ...`) e relevante para todas.
+ */
+function commitMatchesPlatform(msg, platform) {
+  const m = msg.match(/^[a-z]+\(([^)]+)\)!?:/i);
+  if (!m) return true; // sem escopo -> relevante para todas as plataformas
+  const scope = m[1].toLowerCase();
+  return (RELEVANT_SCOPES[platform] || []).includes(scope);
+}
+
+function inferBumpType(commits, platform) {
   let bump = null; // null = sem mudanca relevante
   for (const msg of commits) {
+    // Versionamento independente: ignora commits de outras plataformas.
+    if (!commitMatchesPlatform(msg, platform)) continue;
     if (/BREAKING[\s-]CHANGE/i.test(msg) || /^[a-z]+(\(.+\))?!:/.test(msg)) {
       return 'major';
     }
@@ -165,7 +198,10 @@ function updatePackageJson(relPath, newVersion) {
 // Main
 // ---------------------------------------------------------------------------
 
-const [platform, explicitType] = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
+const dryRun = rawArgs.includes('--dry-run');
+const positional = rawArgs.filter((a) => !a.startsWith('--'));
+const [platform, explicitType] = positional;
 
 if (!platform || !PLATFORMS.includes(platform)) {
   usage();
@@ -190,12 +226,12 @@ console.log(
 
 let bumpType = explicitType;
 if (!bumpType) {
-  const lastTag = getLastTag();
+  const lastTag = getLastTag(platform);
   const commits = getCommitsSinceTag(lastTag);
-  console.log(`Ultima tag: ${lastTag ?? '(nenhuma)'} — ${commits.length} commit(s) desde entao`);
-  bumpType = inferBumpType(commits);
+  console.log(`Ultima tag (${platform}): ${lastTag ?? '(nenhuma)'} — ${commits.length} commit(s) desde entao`);
+  bumpType = inferBumpType(commits, platform);
   if (!bumpType) {
-    console.log('Nenhum commit relevante para bump — sem alteracao.');
+    console.log(`Nenhum commit relevante para "${platform}" — sem alteracao.`);
     process.exit(0);
   }
   console.log(`Tipo inferido: ${bumpType}`);
@@ -207,6 +243,17 @@ const oldVersion = entry.version;
 const newVersion = applyBump(parseVersion(oldVersion), bumpType);
 const hasBuild = entry.buildNumber != null;
 const newBuild = hasBuild ? entry.buildNumber + 1 : undefined;
+const tagName = `${platform}-v${newVersion}`; // tag escopada por plataforma
+
+if (dryRun) {
+  console.log(
+    `\n[DRY RUN] Bump ${bumpType}: ${platform} ${oldVersion} -> ${newVersion}` +
+    (hasBuild ? ` (build ${newBuild})` : '')
+  );
+  console.log(`[DRY RUN] Tag que seria criada: ${tagName}`);
+  console.log('[DRY RUN] Nenhum arquivo foi alterado.');
+  process.exit(0);
+}
 
 // Atualiza versions.json (fonte de verdade)
 entry.version = newVersion;
@@ -230,3 +277,10 @@ console.log(
   (hasBuild ? ` (build ${newBuild})` : '')
 );
 console.log(`Arquivos atualizados: versions.json, ${nativeFile}`);
+console.log(`\nTag desta versao: ${tagName}`);
+if (platform !== 'android') {
+  // Android e tagueado automaticamente pelo workflow version-bump.yml.
+  // Plataformas manuais (web/ios/functions) criam a tag escopada na mao:
+  console.log('Para publicar (plataforma manual):');
+  console.log(`  git tag ${tagName} && git push origin ${tagName}`);
+}
