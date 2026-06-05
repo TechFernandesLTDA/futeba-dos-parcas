@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -531,50 +532,60 @@ export function useInvitePlayers() {
 
         const groupId = inviteData.group_id || inviteData.groupId;
 
-        const batch = writeBatch(db);
-
-        const memberRef = doc(db, 'groups', groupId, 'members', uid);
-        const groupRef = doc(db, 'groups', groupId);
-        const displayName = firebaseUser?.displayName || user?.name || 'Jogador';
-
-        batch.set(memberRef, {
-          id: uid,
-          user_id: uid,
-          user_name: displayName,
-          user_photo_url: firebaseUser?.photoURL || user?.photoUrl || null,
-          role: 'MEMBER' as GroupRole,
-          joined_at: serverTimestamp(),
-          total_games: 0,
-          level: user?.level || 1,
-        });
-
-        // Escrever na subcoleção users/{uid}/groups (igual ao Android)
-        const groupSnap = await getDoc(groupRef);
-        const groupData = groupSnap.data();
-        const userGroupRef = doc(db, 'users', uid, 'groups', groupId);
-        batch.set(userGroupRef, {
-          group_id: groupId,
-          group_name: groupData?.name || inviteData.group_name || 'Grupo',
-          group_photo: groupData?.photo_url || null,
-          role: 'MEMBER',
-          // FIX #611 / #626: member_count é SERVER-AUTHORITATIVE. Cloud Function
-          // `onMemberWritten` increment automático ao detectar member doc creation.
-          // Cliente lê member_count via real-time snapshot da group quando precisar.
-          joined_at: serverTimestamp(),
-        });
-
-        // FIX #611 / #626: REMOVIDO o client-side increment de groups/{gid}.member_count.
-        // Antes: privilege escalation (qualquer auth podia overwrite) + quebrava
-        // join-via-invite quando rule restringia a member-only.
-        // Agora: trigger `onMemberWritten` faz increment via admin SDK ao detectar
-        // o batch.set(memberRef) acima.
-
-        batch.update(inviteRef, {
+        // FIX #2515 / #2517 (regressão #2153): o cliente NÃO cria mais o member
+        // doc nem o users/{uid}/groups. Antes, o self-create MEMBER via cliente
+        // só era permitido em grupo PÚBLICO (gate is_public==true da rule, que
+        // protege #2153) — tornando impossível entrar por convite em grupo
+        // PRIVADO, que é justamente o propósito do convite.
+        //
+        // Agora o cliente apenas marca o convite como usado; o trigger
+        // server-side `onInviteRedeemed` (functions/src/groups/invite-redeemed.ts)
+        // cria a membership via admin SDK (bypassa rules), funcionando tanto p/
+        // grupo público quanto privado, espelhando `onJoinRequestApproved`.
+        // O counter member_count é mantido por `onMemberWritten`.
+        //
+        // A rule de update de invites exige hasOnly(['used','used_by','used_at']),
+        // used==true e used_by==self.
+        await updateDoc(inviteRef, {
           used: true,
           used_by: uid,
+          used_at: serverTimestamp(),
         });
 
-        await batch.commit();
+        // FIX #2517: a membership é criada de forma ASSÍNCRONA pelo trigger
+        // `onInviteRedeemed`. Em grupo PRIVADO, navegar pro detalhe antes do
+        // member doc existir causa PERMISSION_DENIED (a leitura do grupo exige
+        // membership). Aguardamos o member doc aparecer (até ~8s) via listener
+        // antes de resolver sucesso — torna o fluxo síncrono na percepção do
+        // usuário. Timeout não é erro: a membership já está garantida pelo
+        // trigger; só a propagação pode demorar (cold start).
+        const memberRef = doc(db, 'groups', groupId, 'members', uid);
+        await new Promise<void>((resolve) => {
+          // `unsubRef` (holder) declarado antes do onSnapshot: o callback pode
+          // disparar sincronamente (cache hit), então a referência precisa
+          // existir no momento da chamada (evita temporal dead zone).
+          const unsubRef: { fn?: () => void } = {};
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(timeoutId);
+            unsubRef.fn?.();
+            resolve();
+          };
+          const timeoutId = setTimeout(finish, 8000);
+          unsubRef.fn = onSnapshot(
+            memberRef,
+            (snap) => {
+              if (snap.exists()) finish();
+            },
+            (err) => {
+              logger.error('Erro aguardando membership pós-convite:', err);
+              finish();
+            }
+          );
+        });
+
         // Invalidar cache de grupos após entrar em um
         queryClient.invalidateQueries({ queryKey: ['groups', uid] });
         showSuccess(t('feedback.groups.joinSuccess'));

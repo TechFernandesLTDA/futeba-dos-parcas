@@ -13,6 +13,7 @@ import dev.gitlive.firebase.functions.functions
 import dev.gitlive.firebase.storage.storage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
@@ -1997,36 +1998,81 @@ actual class FirebaseDataSource actual constructor() {
             // SPEC: feat-2026-05-08-consolidate-shareable-invites.md
             val normalized = inviteCode.uppercase()
 
-            // 1. Tenta resolver via collection invites/
+            // 1. Tenta resolver via collection invites/ (caminho CANÔNICO).
             // #2351: doc-id == code — lookup por get(doc-id), nao where('code')
             // (que era LIST e permitia enumerar todos os convites). A rule de
             // `invites` agora bloqueia list p/ nao-admin.
-            val resolvedGroupId: String? = run {
-                val invDoc = firestore.collection("invites").document(normalized).get()
-
-                if (!invDoc.exists) return@run null
-                if (invDoc.get<Boolean?>("used") == true) return@run null
+            val invDoc = firestore.collection("invites").document(normalized).get()
+            val isModernInvite = run {
+                if (!invDoc.exists) return@run false
+                if (invDoc.get<Boolean?>("used") == true) return@run false
                 val expiresAt = invDoc.get<Timestamp?>("expires_at")
                 val nowMs = Clock.System.now().toEpochMilliseconds()
-                if (expiresAt != null && expiresAt.seconds * 1000L < nowMs) return@run null
-                invDoc.get<String?>("group_id")
+                if (expiresAt != null && expiresAt.seconds * 1000L < nowMs) return@run false
+                true
             }
 
-            val groupId = if (resolvedGroupId != null) {
-                resolvedGroupId
-            } else {
-                // 2. Fallback: legacy invite_code field em groups/
-                val legacySnap = firestore.collection(COLLECTION_GROUPS)
-                    .where { "invite_code" equalTo normalized }
-                    .where { "status" equalTo "ACTIVE" }
-                    .limit(1)
-                    .get()
+            if (isModernInvite) {
+                // ===== CAMINHO CANÔNICO (invites/) — FIX #2516 / #2517 =====
+                // O cliente NÃO cria mais o member doc nem incrementa member_count.
+                // Apenas marca o convite como usado; o trigger server-side
+                // `onInviteRedeemed` (functions/src/groups/invite-redeemed.ts) cria
+                // a membership via admin SDK (bypassa rules), funcionando p/ grupo
+                // PRIVADO — espelha `onJoinRequestApproved`. O counter member_count
+                // é mantido por `onMemberWritten`.
+                //
+                // BUGFIX: o fluxo Android antigo NUNCA marcava o convite como usado
+                // (criava o member direto), deixando single-use furado. Agora o
+                // update é o gatilho do trigger.
+                val groupId = invDoc.get<String?>("group_id")
+                    ?: return Result.failure(Exception("Convite sem grupo associado"))
 
-                if (legacySnap.documents.isEmpty()) {
-                    return Result.failure(Exception("Código de convite inválido"))
+                // A rule de update de invites exige
+                // hasOnly(['used','used_by','used_at']), used==true e used_by==self.
+                firestore.collection("invites").document(normalized).update(
+                    mapOf(
+                        "used" to true,
+                        "used_by" to userId,
+                        "used_at" to FieldValue.serverTimestamp
+                    )
+                )
+
+                // FIX #2517: a membership é criada de forma ASSÍNCRONA pelo trigger.
+                // Em grupo PRIVADO, voltar antes do member doc existir causaria
+                // PERMISSION_DENIED na leitura do grupo. Aguardamos o member doc
+                // aparecer (até ~8s, polling leve). Timeout não é erro: a
+                // membership já está garantida pelo trigger; só a propagação pode
+                // demorar (cold start).
+                val memberRef = firestore.collection(COLLECTION_GROUPS)
+                    .document(groupId)
+                    .collection("members").document(userId)
+                val deadlineMs = Clock.System.now().toEpochMilliseconds() + 8000L
+                while (Clock.System.now().toEpochMilliseconds() < deadlineMs) {
+                    if (memberRef.get().exists) break
+                    delay(500L)
                 }
-                legacySnap.documents[0].id
+
+                return Result.success(groupId)
             }
+
+            // ===== CAMINHO LEGADO (groups.invite_code) =====
+            // Codes legados, sticky, sem doc em invites/. Um joiner não pode criar
+            // um invites/{code} (a rule exige inviter_id==self + admin do grupo),
+            // logo o trigger NÃO tem como disparar aqui. Mantemos o member-create
+            // pelo cliente — porém ele só é permitido pela rule em grupo PÚBLICO
+            // (gate is_public==true, proteção de #2153). Limitação herdada e
+            // documentada: convite legado em grupo PRIVADO no Android não entra
+            // (a web não suporta legado). Não é regressão deste PR.
+            val legacySnap = firestore.collection(COLLECTION_GROUPS)
+                .where { "invite_code" equalTo normalized }
+                .where { "status" equalTo "ACTIVE" }
+                .limit(1)
+                .get()
+
+            if (legacySnap.documents.isEmpty()) {
+                return Result.failure(Exception("Código de convite inválido"))
+            }
+            val groupId = legacySnap.documents[0].id
 
             val groupDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).get()
             if (!groupDoc.exists) {
@@ -2054,8 +2100,11 @@ actual class FirebaseDataSource actual constructor() {
                 )
                 set(memberRef, memberData)
 
-                val groupRef = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                update(groupRef, mapOf("member_count" to FieldValue.increment(1)))
+                // FIX #2516: REMOVIDO o client-side increment de member_count.
+                // Era server-authoritative (rule exige fieldUnchanged('member_count'))
+                // e o cliente entrando não é owner/admin → a transação inteira era
+                // rejeitada. O trigger `onMemberWritten` faz o +1 via admin SDK ao
+                // detectar o set(memberRef) acima. (Paridade com web FIX #611/#626.)
 
                 val userGroupRef = firestore.collection("users")
                     .document(userId)

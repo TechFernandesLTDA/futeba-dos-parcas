@@ -17,6 +17,7 @@ const mockBatchSet = vi.fn();
 const mockBatchUpdate = vi.fn();
 const mockBatchCommit = vi.fn();
 const mockWriteBatch = vi.fn();
+const mockUpdateDoc = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
@@ -24,7 +25,7 @@ vi.mock('firebase/firestore', () => ({
   getDoc: (...args: any[]) => mockGetDoc(...args),
   getDocs: (...args: any[]) => mockGetDocs(...args),
   addDoc: (...args: any[]) => mockAddDoc(...args),
-  updateDoc: vi.fn(),
+  updateDoc: (...args: any[]) => mockUpdateDoc(...args),
   setDoc: vi.fn(),
   deleteDoc: vi.fn(),
   writeBatch: (...args: any[]) => mockWriteBatch(...args),
@@ -346,7 +347,7 @@ describe('useInvitePlayers', () => {
     expect(code).toBe(code!.toUpperCase());
   });
 
-  it('joinByInviteCode cria documentos de membro e grupo do usuário', async () => {
+  it('joinByInviteCode (#2515/#2517) marca convite usado e aguarda membership do trigger', async () => {
     // #2351: joinByInviteCode usa getDoc(doc(invites, code)) — não getDocs + where. #2330
     mockGetDoc.mockResolvedValue({
       exists: () => true,
@@ -357,14 +358,25 @@ describe('useInvitePlayers', () => {
         expires_at: { toMillis: () => Date.now() + 86400000 }, // expira amanhã
       }),
     });
+    mockUpdateDoc.mockResolvedValue(undefined);
+    // #2517: Opção A — o cliente NÃO cria mais member doc; só marca o convite
+    // usado e aguarda o member doc aparecer (criado pelo trigger onInviteRedeemed).
+    // O onSnapshot dispara imediatamente com exists()=true para resolver o wait.
+    mockOnSnapshot.mockImplementation((_ref: any, onNext: any) => {
+      onNext({ exists: () => true });
+      return vi.fn();
+    });
     const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
     await act(async () => {
       const groupId = await result.current.joinByInviteCode('ABC123');
       expect(groupId).toBe('group-1');
     });
-    expect(mockWriteBatch).toHaveBeenCalled();
-    expect(mockBatchSet).toHaveBeenCalled();
-    expect(mockBatchCommit).toHaveBeenCalled();
+    // Opção A: marca invite used via updateDoc — NÃO usa writeBatch nem cria member.
+    expect(mockUpdateDoc).toHaveBeenCalled();
+    expect(mockWriteBatch).not.toHaveBeenCalled();
+    expect(mockBatchSet).not.toHaveBeenCalled();
+    // Aguardou a membership assíncrona via listener.
+    expect(mockOnSnapshot).toHaveBeenCalled();
   });
 
   it('joinByInviteCode falha com código inválido', async () => {
