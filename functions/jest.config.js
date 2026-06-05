@@ -27,5 +27,11 @@ module.exports = {
     "!src/**/*.d.ts",
   ],
   coverageDirectory: "coverage",
+  // Reporters explicitos: "lcov" gera coverage/lcov.info, consumido pelo gate
+  // de diff-coverage no CI (functions-ci.yml). "text-summary" imprime o resumo
+  // no log do CI e "text" mantem o detalhamento por arquivo. Como definir o
+  // array SUBSTITUI o default do jest (que ja inclui lcov), listamos todos
+  // explicitamente para nao perder os reporters de texto.
+  coverageReporters: ["lcov", "text-summary", "text"],
   verbose: true,
 };

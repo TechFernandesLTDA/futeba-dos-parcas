@@ -71,3 +71,10 @@ Apenas a versão mais recente do app recebe correções de segurança.
 - Seguimos o princípio do **menor privilégio** nas Firestore Security Rules
 - Todas as Cloud Functions sensíveis passam por **rate limiting**
 - Segredos e chaves **nunca** são commitados no repositório
+
+### Análise estática (SAST)
+
+- **Semgrep** roda automaticamente em PRs que tocam superfícies TypeScript (`functions/**`, `web/**`), além de um scan semanal agendado. Rulesets: `p/typescript`, `p/react`, `p/owasp-top-ten`, `p/secrets`, `p/javascript`.
+- Os resultados são publicados como SARIF na aba **Security** do repositório. Atualmente o scan é **report-only** (não bloqueia o build) — será endurecido conforme o ruído baixar.
+- Workflow: [`.github/workflows/semgrep.yml`](.github/workflows/semgrep.yml).
+- **CodeQL** complementa o Semgrep com análise de fluxo de dados em JavaScript/TypeScript ([`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)).

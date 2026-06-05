@@ -91,3 +91,23 @@ existentes (aditivo).
 - [ ] Build cache reativado COM evidência de paridade (sem codegen stale).
 - [ ] Tags escopadas validadas por dry-run + 1 release real de cada plataforma.
 - [ ] Sem strings/cores hardcoded em código novo; comentários PT-BR.
+## 8. Progresso de entrega (atualizado 2026-06-05)
+
+| Fase | Estado | PR | Nota |
+|------|--------|----|------|
+| 0 Spec + DECISIONS | ✅ **LANDED** | — | spec estava presa no branch de tags (#2509); desacoplada para master |
+| 1 Tags por plataforma | ✅ **MERGED** | #2509 | tags escopadas `android-v*` em `version-bump.yml` + `release.yml`; **gap fechado neste PR**: `deploy-production.yml` (Play Store) passou a disparar em `android-v*.*.*` também — sem isso o bump geraria android-v* e o deploy nunca rodaria. `v*.*.*` mantido como legado. Validar no próximo release Android real |
+| 2a Stryker functions | ✅ **MERGED** | #2508 | 90% mutation score em `group-league.ts`; job nightly+manual |
+| 2b Stryker web | ✅ **MERGED** | #2510 | vitest-runner, `inPlace:true`; mutation só nightly |
+| 2c PIT (Android/shared) | ⏸️ **DEFERRED** | — | `:shared` é KMP sem target `jvm()`; PIT (bytecode JVM) sobre KMP é finicky. Exige decisão de design (adicionar `jvm()` target só p/ domínio puro) — sondado, não implementado neste ciclo |
+| 3 Diff-coverage gate | ✅ **MERGED** | #2513 | gate `diff-cover --fail-under=80` no job `test` do `functions-ci.yml` (linhas novas/alteradas, só em `pull_request`). **Web/Android = follow-up** |
+| 4 Build cache | ✅ **MERGED** | #2514 | `org.gradle.caching=true` + `scripts/verify-build-cache.sh`; verify empírico OK (paridade de codegen, hits de cache confirmados) |
+| 5 Semgrep | ✅ **MERGED** | #2507 | fix PEP 668 (venv isolado no runner); guarda `hashFiles(semgrep.sarif)` |
+| 6 Affected-only + Playwright + merge_group | ✅ **F6a MERGED** | #2511 | CodeQL escopado p/ JS/TS (cron semanal = safety net). Playwright workers e `merge_group` **diferidos** (merge_group é config morta sem merge queue, que exige required status checks) |
+| 7 E2E web (jornada crítica) | ✅ **MERGED** | #2512 | jornada login→games-tab em `web/e2e/jornada-jogos.spec.ts` |
+
+**Nota de tooling (2026-06-04):** o modelo local `gemma4:12b-mlx` foi testado como
+motor de análise para a F6. Veredito: forte em prosa PT-BR e em sumarização, mas
+**confident-and-wrong** em raciocínio de CI/segurança — inverteu o achado do CodeQL e
+não levantou a interação com branch protection. **Não rotear raciocínio de
+CI/segurança para ele sob confiança.** Decisão final da F6a foi do lead, verificada.

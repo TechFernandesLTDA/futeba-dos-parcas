@@ -36,6 +36,7 @@ import {
 let testEnv: RulesTestEnvironment;
 
 const GROUP_ID = "group-with-invites";
+const PRIVATE_GROUP_ID = "group-private-invites";
 const VALID_INVITE = "invite-valid";
 const USED_INVITE = "invite-used";
 
@@ -81,6 +82,23 @@ beforeAll(async () => {
     inviter_name: "Player A",
     used: true,
     used_by: UID_PLAYER_C,
+  });
+
+  // #2517: grupo PRIVADO (is_public=false) — Player A é OWNER. Usado para
+  // provar (a) que o self-create MEMBER pelo cliente continua BLOQUEADO em
+  // grupo privado (proteção de #2153) e (b) que o convite redime corretamente
+  // só pelo trigger (não testável aqui; coberto em functions/test).
+  await seedDoc(testEnv, `groups/${PRIVATE_GROUP_ID}`, {
+    name: "Grupo Privado",
+    owner_id: UID_PLAYER_A,
+    is_public: false,
+    status: "ACTIVE",
+    description: "",
+  });
+  await seedDoc(testEnv, `groups/${PRIVATE_GROUP_ID}/members/${UID_PLAYER_A}`, {
+    user_id: UID_PLAYER_A,
+    role: "OWNER",
+    status: "ACTIVE",
   });
 });
 
@@ -270,6 +288,161 @@ describe("invites — uso (update)", () => {
       })
     );
   });
+});
+
+// ============================================================
+// REDENÇÃO DE CONVITE — self-create de membership (#2517 / regressão #2153)
+//
+// Arquitetura Opção A: o cliente NÃO cria mais o member doc na redenção; ele
+// apenas marca invites/{code}.used=true e o trigger `onInviteRedeemed` cria a
+// membership via admin SDK (testado em functions/test/invite-redeemed.test.ts,
+// pois rules-unit-testing não executa triggers).
+//
+// Aqui provamos que a REGRA de self-create MEMBER continua intacta:
+//  - SEM convite, em grupo PRIVADO → BLOQUEIA (proteção de #2153 preservada).
+//  - SEM convite, em grupo PÚBLICO → permite (discovery direto, comportamento
+//    legítimo já existente).
+// ============================================================
+
+describe("membership self-create — proteção #2153 (gate is_public)", () => {
+  it(
+    "(#2153) NÃO-membro NÃO pode self-create MEMBER em grupo PRIVADO " +
+    "(sem convite) — proteção contra escalada de acesso",
+    async () => {
+      const db = asPlayerC(testEnv);
+      await assertFails(
+        db.doc(`groups/${PRIVATE_GROUP_ID}/members/${UID_PLAYER_C}`).set({
+          user_id: UID_PLAYER_C,
+          role: "MEMBER",
+          status: "ACTIVE",
+          joined_at: new Date(),
+        })
+      );
+    }
+  );
+
+  it(
+    "(#2153) self-create MEMBER em grupo privado falha MESMO com status ACTIVE " +
+    "e campos válidos — o gate is_public é a barreira",
+    async () => {
+      const db = asPlayerB(testEnv);
+      await assertFails(
+        db.doc(`groups/${PRIVATE_GROUP_ID}/members/${UID_PLAYER_B}`).set({
+          id: UID_PLAYER_B,
+          user_id: UID_PLAYER_B,
+          user_name: "Player B",
+          role: "MEMBER",
+          status: "ACTIVE",
+          joined_at: new Date(),
+        })
+      );
+    }
+  );
+
+  it(
+    "NÃO-membro PODE self-create MEMBER em grupo PÚBLICO ativo " +
+    "(discovery direto — comportamento legítimo preservado)",
+    async () => {
+      const db = asPlayerC(testEnv);
+      await assertSucceeds(
+        db.doc(`groups/${GROUP_ID}/members/${UID_PLAYER_C}`).set({
+          id: UID_PLAYER_C,
+          user_id: UID_PLAYER_C,
+          user_name: "Player C",
+          role: "MEMBER",
+          status: "ACTIVE",
+          joined_at: new Date(),
+        })
+      );
+    }
+  );
+
+  it(
+    "(#2153) self-create em grupo público SEM status ACTIVE falha",
+    async () => {
+      const db = asPlayerB(testEnv);
+      await assertFails(
+        db.doc(`groups/${GROUP_ID}/members/${UID_PLAYER_B}-x`).set({
+          user_id: UID_PLAYER_B,
+          role: "MEMBER",
+          // status ausente → null != 'ACTIVE'
+          joined_at: new Date(),
+        })
+      );
+    }
+  );
+});
+
+describe("redenção de convite — guards do update (#2517)", () => {
+  it(
+    "(c) convite EXPIRADO não pode ser redimido (used update falha)",
+    async () => {
+      await seedDoc(testEnv, "invites/expired-priv", {
+        code: "EXP001",
+        group_id: PRIVATE_GROUP_ID,
+        group_name: "Grupo Privado",
+        inviter_id: UID_PLAYER_A,
+        inviter_name: "Player A",
+        used: false,
+        expires_at: new Date(Date.now() - 86400000), // expirado ontem
+      });
+      const db = asPlayerC(testEnv);
+      await assertFails(
+        db.doc("invites/expired-priv").update({
+          used: true,
+          used_by: UID_PLAYER_C,
+          used_at: new Date(),
+        })
+      );
+    }
+  );
+
+  it(
+    "convite VÁLIDO de grupo PRIVADO pode ser marcado usado pelo joiner " +
+    "(o trigger cria a membership — testado em functions/test)",
+    async () => {
+      await seedDoc(testEnv, "invites/valid-priv", {
+        code: "PRV001",
+        group_id: PRIVATE_GROUP_ID,
+        group_name: "Grupo Privado",
+        inviter_id: UID_PLAYER_A,
+        inviter_name: "Player A",
+        used: false,
+        expires_at: new Date(Date.now() + 86400000),
+      });
+      const db = asPlayerC(testEnv);
+      await assertSucceeds(
+        db.doc("invites/valid-priv").update({
+          used: true,
+          used_by: UID_PLAYER_C,
+          used_at: new Date(),
+        })
+      );
+    }
+  );
+
+  it(
+    "convite não pode ser marcado usado por OUTRO usuário (used_by != self)",
+    async () => {
+      await seedDoc(testEnv, "invites/spoof-priv", {
+        code: "SPF002",
+        group_id: PRIVATE_GROUP_ID,
+        group_name: "Grupo Privado",
+        inviter_id: UID_PLAYER_A,
+        inviter_name: "Player A",
+        used: false,
+        expires_at: new Date(Date.now() + 86400000),
+      });
+      const db = asPlayerC(testEnv);
+      await assertFails(
+        db.doc("invites/spoof-priv").update({
+          used: true,
+          used_by: UID_PLAYER_B, // tenta atribuir a outro
+          used_at: new Date(),
+        })
+      );
+    }
+  );
 });
 
 // ============================================================
