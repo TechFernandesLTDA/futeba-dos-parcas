@@ -40,6 +40,8 @@ data class Group(
     @SerialName("default_time") val defaultTime: String? = null,
     @SerialName("default_max_players") val defaultMaxPlayers: Int = DEFAULT_MAX_PLAYERS,
     @SerialName("default_price") val defaultPrice: Double = 0.0,
+    // Genero padrao dos jogos do grupo (MALE/FEMALE/MIXED). Null = sem default; jogo escolhe.
+    @SerialName("default_gender") val defaultGender: String? = null,
     @SerialName("created_at") val createdAt: Long? = null,
     @SerialName("updated_at") val updatedAt: Long? = null,
 

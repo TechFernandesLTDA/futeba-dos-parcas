@@ -85,6 +85,10 @@ data class Game(
     @get:PropertyName("game_type")
     @set:PropertyName("game_type")
     var gameType: String = "Society", // Society, Futsal, Campo
+    // Genero/categoria do jogo (MALE/FEMALE/MIXED). Default MIXED preserva jogos legados.
+    @get:PropertyName("gender")
+    @set:PropertyName("gender")
+    var gender: String = "MIXED",
     @get:PropertyName("recurrence")
     @set:PropertyName("recurrence")
     var recurrence: String = "none", // none, weekly, biweekly, monthly

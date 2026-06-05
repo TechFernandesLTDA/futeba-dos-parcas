@@ -2,6 +2,15 @@ export type GameStatus = 'SCHEDULED' | 'CONFIRMED' | 'LIVE' | 'FINISHED' | 'CANC
 
 export type GameVisibility = 'GROUP_ONLY' | 'PUBLIC_CLOSED' | 'PUBLIC_OPEN';
 
+// Genero/categoria do jogo. MIXED e o default (preserva jogos legados sem o campo).
+export type GameGender = 'MALE' | 'FEMALE' | 'MIXED';
+
+export const GAME_GENDER_LABELS: Record<GameGender, string> = {
+  MALE: 'Masculino',
+  FEMALE: 'Feminino',
+  MIXED: 'Misto',
+};
+
 import type { FieldType } from './location';
 export type { FieldType };
 
@@ -156,6 +165,8 @@ export interface Game {
   
   // Type
   gameType: string;
+  // Genero/categoria do jogo (MALE/FEMALE/MIXED). Default MIXED para docs legados.
+  gender?: GameGender;
   fieldType: FieldType;
   recurrence: 'none' | 'weekly' | 'biweekly' | 'monthly';
   
@@ -272,6 +283,14 @@ export function getStatusChipColors(
   status: GameStatus,
 ): { label: string; color: string; bgColor: string } {
   const config = STATUS_CONFIG[status];
+  if (!config) {
+    // Fallback para status desconhecido (ex: valor legacy do Firestore)
+    return {
+      label: status || 'Desconhecido',
+      color: theme.palette.text.disabled,
+      bgColor: theme.palette.action.hover,
+    };
+  }
   if (config.paletteKey === 'default') {
     return {
       label: config.label,
@@ -360,8 +379,15 @@ export function getPaymentChipColors(
 
 function resolvePaletteKeyColors(
   theme: PaletteTheme,
-  config: { label: string; paletteKey: ConfirmationPaletteKey },
+  config: { label: string; paletteKey: ConfirmationPaletteKey } | undefined,
 ): { label: string; color: string; bgColor: string } {
+  if (!config) {
+    return {
+      label: 'Desconhecido',
+      color: theme.palette.text.disabled,
+      bgColor: theme.palette.action.hover,
+    };
+  }
   if (config.paletteKey === 'default') {
     return {
       label: config.label,

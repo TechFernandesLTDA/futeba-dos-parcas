@@ -1,3 +1,5 @@
+import type { GameGender } from './game';
+
 export type GroupRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
 export type GroupType = 'PRIVATE' | 'PUBLIC';
@@ -39,6 +41,8 @@ export interface Group {
   defaultFieldType?: string;
   defaultMaxPlayers?: number;
   defaultPrice?: number;
+  // Genero padrao dos jogos do grupo (MALE/FEMALE/MIXED). Jogos herdam, podem sobrescrever.
+  defaultGender?: GameGender;
   
   // Stats
   totalGamesPlayed: number;

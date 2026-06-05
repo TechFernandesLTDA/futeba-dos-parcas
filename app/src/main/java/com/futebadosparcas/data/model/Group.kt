@@ -59,6 +59,11 @@ data class Group(
     @set:PropertyName("is_public")
     var isPublic: Boolean = false,
 
+    // Genero padrao dos jogos do grupo (MALE/FEMALE/MIXED). Null = sem default.
+    @get:PropertyName("default_gender")
+    @set:PropertyName("default_gender")
+    var defaultGender: String? = null,
+
     // === GAME OWNER FEATURES (Issues #64, #68) ===
 
     // Lista de jogadores bloqueados (Issue #64)
