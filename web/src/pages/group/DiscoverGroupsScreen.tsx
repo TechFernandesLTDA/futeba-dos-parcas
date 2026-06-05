@@ -29,6 +29,7 @@ import {
   CalendarToday as CalendarIcon,
   SportsSoccer as SoccerIcon,
   EmojiPeople as AgeIcon,
+  Wc as GenderIcon,
 } from '@mui/icons-material';
 import { useOfficialGroups, useJoinOfficialGroup, useIsInOfficialGroup } from '../../hooks/useOfficialGroups';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -42,6 +43,7 @@ const CATEGORY_ICONS: Record<OfficialGroupCategory, React.ReactElement> = {
   DIA_SEMANA: <CalendarIcon />,
   TIPO_CAMPO: <SoccerIcon />,
   FAIXA_ETARIA: <AgeIcon />,
+  GENERO: <GenderIcon />,
 };
 
 export const DiscoverGroupsScreen: React.FC = () => {
@@ -72,7 +74,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
 
   const filteredByTab = useMemo(() => {
     if (tab === 0) return filtered;
-    const catKeys: OfficialGroupCategory[] = ['REGIAO', 'DIA_SEMANA', 'TIPO_CAMPO', 'FAIXA_ETARIA'];
+    const catKeys: OfficialGroupCategory[] = ['REGIAO', 'DIA_SEMANA', 'TIPO_CAMPO', 'FAIXA_ETARIA', 'GENERO'];
     const selectedCategory = catKeys[tab - 1];
     return filtered.filter((g: OfficialGroup) => g.category === selectedCategory);
   }, [filtered, tab]);
@@ -128,7 +130,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
         sx={{ mb: 3 }}
       >
         <Tab label="Todos" />
-        {(['REGIAO', 'DIA_SEMANA', 'TIPO_CAMPO', 'FAIXA_ETARIA'] as OfficialGroupCategory[]).map((cat) => (
+        {(['REGIAO', 'DIA_SEMANA', 'TIPO_CAMPO', 'FAIXA_ETARIA', 'GENERO'] as OfficialGroupCategory[]).map((cat) => (
           <Tab key={cat} label={OFFICIAL_GROUP_CATEGORY_LABELS[cat]} />
         ))}
       </Tabs>

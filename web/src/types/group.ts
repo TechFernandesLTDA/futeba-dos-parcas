@@ -87,13 +87,14 @@ export interface CashboxTransaction {
   createdAt: Date;
 }
 
-export type OfficialGroupCategory = 'REGIAO' | 'DIA_SEMANA' | 'TIPO_CAMPO' | 'FAIXA_ETARIA';
+export type OfficialGroupCategory = 'REGIAO' | 'DIA_SEMANA' | 'TIPO_CAMPO' | 'FAIXA_ETARIA' | 'GENERO';
 
 export const OFFICIAL_GROUP_CATEGORY_LABELS: Record<OfficialGroupCategory, string> = {
   REGIAO: 'Região',
   DIA_SEMANA: 'Dia da Semana',
   TIPO_CAMPO: 'Tipo de Campo',
   FAIXA_ETARIA: 'Faixa Etária',
+  GENERO: 'Gênero',
 };
 
 export interface OfficialGroup {

@@ -23,7 +23,7 @@ import com.futebadosparcas.data.local.model.UserEntity
         SearchHistoryEntity::class,
         PopularSearchEntity::class
     ],
-    version = 5,
+    version = 6,
     // TODO: Habilitar exportSchema = true e configurar room.schemaLocation no build.gradle.kts
     // para rastrear migracoes automaticamente
     exportSchema = false
@@ -137,6 +137,16 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Indice de performance para users (TTL cleanup)
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_users_cachedAt ON users(cachedAt)")
+            }
+        }
+
+        // Migracao v5 -> v6: Adiciona coluna gender a tabela games (FASE 3 jogos
+        // masculinos/femininos/mistos). Default 'MIXED' preserva jogos legados.
+        // Espelha o default Kotlin de GameEntity.gender (mesmo padrao de
+        // groups.status DEFAULT 'ACTIVE' na MIGRATION_3_4).
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE games ADD COLUMN gender TEXT NOT NULL DEFAULT 'MIXED'")
             }
         }
     }

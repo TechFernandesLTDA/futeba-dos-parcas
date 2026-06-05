@@ -77,6 +77,9 @@ data class GameEntity(
     val locationLng: Double?,
     val fieldName: String,
     val gameType: String,
+    // Genero do jogo (MALE/FEMALE/MIXED). Default MIXED preserva jogos legados
+    // ao hidratar do cache offline (FASE 3). Espelha GameEntity <-> Game.
+    val gender: String = "MIXED",
     val recurrence: String,
     val createdAt: Long?,
     val dateTime: Long? = null,
@@ -125,6 +128,7 @@ fun GameEntity.toDomain() = Game(
     locationLng = locationLng,
     fieldName = fieldName,
     gameType = gameType,
+    gender = gender,
     recurrence = recurrence,
     createdAt = createdAt // GameEntity.createdAt é Long?, Game.createdAt é Long?
 )
@@ -152,6 +156,7 @@ fun Game.toEntity() = GameEntity(
     locationLng = locationLng,
     fieldName = fieldName,
     gameType = gameType,
+    gender = gender,
     recurrence = recurrence,
     createdAt = createdAt, // Já é Long?
     dateTime = createdAt // Use createdAt (já é Long?)

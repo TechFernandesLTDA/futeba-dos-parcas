@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameDetailConsolidated
 import com.futebadosparcas.domain.model.GameEvent
 import com.futebadosparcas.domain.model.GameFilterType
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.GameWithConfirmations
 import com.futebadosparcas.domain.model.PaginatedGames
 import com.futebadosparcas.domain.model.Team
@@ -29,6 +30,24 @@ interface GameQueryRepository {
      * Busca todos os jogos.
      */
     suspend fun getAllGames(): Result<List<Game>>
+
+    /**
+     * Busca jogos opcionalmente filtrados por genero (FASE 3 — jogos
+     * masculinos/femininos/mistos).
+     *
+     * [gender] nulo = sem filtro de genero (retorna [getAllGames]).
+     * Filtro ortogonal: a implementacao aplica `whereEqualTo("gender", ...)`
+     * no Firestore quando nao-nulo.
+     *
+     * NOTA: jogos legados sem o campo `gender` NAO sao retornados por uma
+     * query de igualdade no Firestore. Para incluir jogos legados ao filtrar
+     * por MIXED, prefira filtro client-side via [GameGender.fromString].
+     *
+     * Implementacao padrao delega para [getAllGames] (sem filtro) para manter
+     * a mudanca aditiva e nao quebrar implementadores existentes.
+     */
+    suspend fun getGamesByGender(gender: GameGender?): Result<List<Game>> =
+        getAllGames()
 
     /**
      * Busca todos os jogos com contagem de confirmacoes.

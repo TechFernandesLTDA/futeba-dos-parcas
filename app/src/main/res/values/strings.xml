@@ -2055,6 +2055,8 @@ subir no ranking!</string>
     <string name="game_gender_male">Masculino</string>
     <string name="game_gender_female">Feminino</string>
     <string name="game_gender_mixed">Misto</string>
+    <!-- Filtro de gênero na lista de jogos (FASE 3) -->
+    <string name="game_gender_filter_all">Todos</string>
     <!-- Group default gender (FASE 2) - padrão opcional do grupo -->
     <string name="group_default_gender">Gênero padrão</string>
     <string name="group_default_gender_none">Sem padrão</string>

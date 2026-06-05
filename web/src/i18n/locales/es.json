@@ -812,6 +812,12 @@
       "genderFemale": "Femenino",
       "genderMixed": "Mixto"
     },
+    "genderFilter": {
+      "all": "Todos",
+      "male": "Masculino",
+      "female": "Femenino",
+      "mixed": "Mixto"
+    },
     "createFirst": "Crear Juego",
     "createGame": "Crear Juego",
     "date": "Fecha",
