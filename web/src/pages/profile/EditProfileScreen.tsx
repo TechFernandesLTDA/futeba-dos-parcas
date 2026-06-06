@@ -145,6 +145,9 @@ export const EditProfileScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   // Gênero é PII → lido/escrito em users_private/{uid} separadamente
   const [gender, setGender] = useState<UserGender | ''>('');
+  // Snapshot inicial do gênero para o dirty-check (gênero fica fora de
+  // initialData/formData por ser PII em coleção separada).
+  const [initialGender, setInitialGender] = useState<UserGender | ''>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -228,6 +231,7 @@ export const EditProfileScreen: React.FC = () => {
           const privateData = snakeToCamel<{ gender?: UserGender }>(privateDoc.data());
           if (privateData.gender) {
             setGender(privateData.gender);
+            setInitialGender(privateData.gender);
           }
         }
       } catch (privateErr) {
@@ -395,6 +399,7 @@ export const EditProfileScreen: React.FC = () => {
       setSuccess(true);
       setSelectedFile(null); // limpa file pendente após sucesso
       setInitialData(formData); // sync para evitar dirty guard após save
+      setInitialGender(gender); // idem para o gênero (PII, fora de formData)
       navigate('/?tab=4');
     } catch (err) {
       // FIX 2026-05-20: usar somente Alert (setError) — antes duplicava
@@ -430,6 +435,7 @@ export const EditProfileScreen: React.FC = () => {
       formData.midRating !== initialData.midRating ||
       formData.defenderRating !== initialData.defenderRating ||
       formData.gkRating !== initialData.gkRating ||
+      gender !== initialGender ||
       selectedFile !== null);
 
   return (
