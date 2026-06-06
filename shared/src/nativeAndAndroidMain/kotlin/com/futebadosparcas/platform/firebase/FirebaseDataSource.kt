@@ -3774,6 +3774,9 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Game
         locationLng = get<Double?>("location_lng") ?: get<Double?>("locationLng"),
         fieldName = get<String?>("field_name") ?: get<String?>("fieldName") ?: "",
         gameType = get<String?>("game_type") ?: get<String?>("gameType") ?: "Society",
+        // Genero/categoria do jogo (Fase 4b) — sem este campo o read KMP/iOS
+        // perdia o gender (caia em MIXED). Literal "MIXED" = GameGender.MIXED.name.
+        gender = get<String?>("gender") ?: "MIXED",
         recurrence = get<String?>("recurrence") ?: "none",
         recurrenceIndex = safeInt("recurrence_index") ?: safeInt("recurrenceIndex"),
         recurrenceCount = safeInt("recurrence_count") ?: safeInt("recurrenceCount"),
@@ -3927,6 +3930,9 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupOrNull(): Gro
         defaultTime = get<String?>("default_time") ?: get<String?>("defaultTime"),
         defaultMaxPlayers = safeInt("default_max_players") ?: safeInt("defaultMaxPlayers") ?: 14,
         defaultPrice = get<Double?>("default_price") ?: get<Double?>("defaultPrice") ?: 0.0,
+        // Genero padrao do grupo (Fase 4b) — sem este campo a pre-selecao do
+        // gender na criacao de jogo caia sempre em MIXED.
+        defaultGender = get<String?>("default_gender") ?: get<String?>("defaultGender"),
         createdAt = safeLong("created_at") ?: safeLong("createdAt"),
         updatedAt = safeLong("updated_at") ?: safeLong("updatedAt")
     )
