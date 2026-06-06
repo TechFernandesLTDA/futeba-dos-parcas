@@ -1,0 +1,81 @@
+name: Functions Integration CI (#2533)
+
+# Roda os testes de INTEGRAÇÃO das Cloud Functions contra o Firebase Emulator
+# Suite (firestore + functions) — sem mocks, disparando triggers reais.
+#
+# Guarda de regressão para o domínio Grupos (#2530):
+#   - onInviteRedeemed + member-counter e2e (#2531) — fecha o gap das
+#     0 invocações em prod do invite-join (#2518).
+#
+# O E2E web (discover/preview público, #2532) é wired em workflow próprio
+# quando aquela suite estiver validada — ver #2533/#2530.
+#
+# Padrão espelha firestore-rules-ci.yml: self-hosted macOS ARM64, JDK 21
+# (requerido por firebase-tools >=15), emulators:exec sobe/derruba o emulador.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "functions/**"
+      - "firestore.rules"
+      - ".github/workflows/functions-integration-ci.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "functions/**"
+      - "firestore.rules"
+      - ".github/workflows/functions-integration-ci.yml"
+  workflow_dispatch:
+
+# Cancela execuções anteriores do mesmo branch/PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  functions-integration:
+    name: Functions Integration — Emulador (firestore+functions)
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Configurar Java 21 (requerido pelo emulador Firestore)
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Instalar Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Instalar dependências
+        working-directory: functions
+        run: npm ci
+
+      - name: Compilar functions (gera lib/ para o emulador)
+        working-directory: functions
+        run: npm run build
+
+      - name: Executar testes de integração no emulador
+        # emulators:exec sobe firestore+functions, exporta FIRESTORE_EMULATOR_HOST,
+        # roda o jest e derruba o emulador ao final. Os triggers v2 são carregados
+        # do build em lib/ pelo emulador de functions.
+        working-directory: functions
+        run: |
+          firebase emulators:exec \
+            --only firestore,functions \
+            --project futebadosparcas \
+            'npx jest -c jest.integration.config.js test/integration --no-coverage --ci'
+        env:
+          CI: "true"
