@@ -12,6 +12,10 @@ import {
   FIRESTORE_WHERE_IN_LIMIT,
   GAME_GENDERS,
   DEFAULT_GAME_GENDER,
+  MAX_GOALS_PER_GAME,
+  MAX_ASSISTS_PER_GAME,
+  MAX_SAVES_PER_GAME,
+  clampStat,
 } from "../constants";
 import {
   Game,
@@ -494,13 +498,21 @@ export function updateRankingDeltas(
   weekKey: string,
   monthKey: string
 ) {
+  // FIX #2525: aplica caps anti-cheat (piso 0 + teto MAX) nos incrementos de
+  // ranking_deltas. A mutação em index.ts já cobre o caminho principal, mas
+  // este clamp garante correção caso updateRankingDeltas seja chamado por
+  // outras rotas sem pré-sanitização.
+  const cappedGoals = clampStat(conf.goals, MAX_GOALS_PER_GAME);
+  const cappedAssists = clampStat(conf.assists, MAX_ASSISTS_PER_GAME);
+  const cappedSaves = clampStat(conf.saves, MAX_SAVES_PER_GAME);
+
   const fields = {
     goals_added: admin.firestore
-      .FieldValue.increment(conf.goals),
+      .FieldValue.increment(cappedGoals),
     assists_added: admin.firestore
-      .FieldValue.increment(conf.assists),
+      .FieldValue.increment(cappedAssists),
     saves_added: admin.firestore
-      .FieldValue.increment(conf.saves),
+      .FieldValue.increment(cappedSaves),
     xp_added: admin.firestore
       .FieldValue.increment(xp),
     games_added: admin.firestore
@@ -601,6 +613,12 @@ export function updateSeasonParticipation(
     3 :
     (result === "DRAW" ? 1 : 0);
 
+  // FIX #2525: calcula valores capeados UMA VEZ antes da factory para que
+  // tanto o campo plano quanto o mapa by_gender.{gender} usem o mesmo valor
+  // sanitizado (piso 0 + teto MAX anti-cheat). Mantém consistência Fase 4b.
+  const cappedGoals = clampStat(conf.goals, MAX_GOALS_PER_GAME);
+  const cappedAssists = clampStat(conf.assists, MAX_ASSISTS_PER_GAME);
+
   // Factory de incrementos — gera instâncias NOVAS de FieldValue a
   // cada chamada para evitar aliasing do mesmo sentinel entre o
   // campo plano (combinado) e o mapa by_gender.{gender} (segmentado).
@@ -612,8 +630,8 @@ export function updateSeasonParticipation(
       wins: inc(result === "WIN" ? 1 : 0),
       draws: inc(result === "DRAW" ? 1 : 0),
       losses: inc(result === "LOSS" ? 1 : 0),
-      goals_scored: inc(conf.goals),
-      assists: inc(conf.assists),
+      goals_scored: inc(cappedGoals),
+      assists: inc(cappedAssists),
       mvp_count: inc(isMvp ? 1 : 0),
     };
   };

@@ -13,6 +13,7 @@ import {
   MAX_GOALS_PER_GAME,
   MAX_ASSISTS_PER_GAME,
   MAX_SAVES_PER_GAME,
+  clampStat,
 } from "./constants";
 import {
   getAllBadgesToAward,
@@ -476,6 +477,10 @@ export const onGameStatusUpdate = onDocumentUpdated(
           );
 
         // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE) — clamp and warn, don't throw
+        // FIX #2525: mutamos conf.goals/assists/saves aqui (piso 0 + teto MAX)
+        // para que TODOS os sinks downstream (statistics, xp_logs, ranking_deltas,
+        // season_participation, by_gender) usem o valor capeado, garantindo
+        // paridade com o XP já calculado com Math.min(conf.goals, MAX_GOALS_PER_GAME).
         for (const conf of validConfirmations) {
           if (conf.goals < 0 || conf.goals > MAX_GOALS_PER_GAME) {
             logger.warn(
@@ -485,6 +490,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
               "— clamping to cap"
             );
           }
+          // Aplica piso 0 + teto MAX antes de qualquer persistência
+          conf.goals = clampStat(conf.goals, MAX_GOALS_PER_GAME);
+
           if (conf.assists < 0 || conf.assists > MAX_ASSISTS_PER_GAME) {
             logger.warn(
               "[ANTI-CHEAT] User " +
@@ -493,6 +501,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
               "— clamping to cap"
             );
           }
+          conf.assists = clampStat(conf.assists, MAX_ASSISTS_PER_GAME);
+
           if (conf.saves < 0 || conf.saves > MAX_SAVES_PER_GAME) {
             logger.warn(
               "[ANTI-CHEAT] User " +
@@ -501,6 +511,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
               "— clamping to cap"
             );
           }
+          conf.saves = clampStat(conf.saves, MAX_SAVES_PER_GAME);
         }
 
         const teams = teamsSnap.docs.map(
