@@ -29,6 +29,10 @@ import * as admin from "firebase-admin";
 
 const getDb = () => admin.firestore();
 
+// Teto de concorrência para recursiveDelete/BulkWriter por batch (#2529).
+// Impede que um batch de 500 docs dispare 500 BulkWriters simultâneos.
+const RECURSIVE_DELETE_CONCURRENCY = 10;
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -413,10 +417,24 @@ export async function cleanupSoftDeleted(
       // FIX #2481 (LGPD): batch.delete NÃO apaga subcoleções — deixava
       // groups/{id}/members/* órfãos (PII retida). Para coleções com
       // subcoleções, recursiveDelete (BulkWriter) remove a árvore inteira.
+      //
+      // FIX #2529 (PERF): limita concorrência de recursiveDelete/BulkWriter.
+      // Promise.all irrestrito disparava até batchSize=500 BulkWriters
+      // simultâneos → risco de OOM no runtime de 512MiB. Processa em chunks
+      // de RECURSIVE_DELETE_CONCURRENCY para manter vazão controlada.
       if (recursive) {
-        await Promise.all(
-          snapshot.docs.map((doc) => db.recursiveDelete(doc.ref))
-        );
+        for (
+          let i = 0;
+          i < snapshot.docs.length;
+          i += RECURSIVE_DELETE_CONCURRENCY
+        ) {
+          const chunk = snapshot.docs.slice(
+            i, i + RECURSIVE_DELETE_CONCURRENCY
+          );
+          await Promise.all(
+            chunk.map((doc) => db.recursiveDelete(doc.ref))
+          );
+        }
       } else {
         const batch = db.batch();
         for (const doc of snapshot.docs) {
