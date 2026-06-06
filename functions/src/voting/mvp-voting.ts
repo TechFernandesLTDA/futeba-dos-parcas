@@ -50,6 +50,7 @@ import {getLevelForXp} from "../xp/pipeline";
 import {
   getGameDate,
   getWeekKey,
+  normalizeGameGender,
 } from "../game/helpers";
 import {Game} from "../models";
 import {isGameShape} from "../validation/guards";
@@ -1100,14 +1101,22 @@ async function applyVotingXpDelta(
 
       if (activeSeasonId) {
         const seasonPartId = `${activeSeasonId}_${userId}`;
+        // Fase 4: espelha o delta de XP/mvp do voto na visão
+        // segmentada by_gender.{gender} (campo plano = combinado).
+        const gender = normalizeGameGender(rawGame?.gender);
+        const inc = admin.firestore.FieldValue.increment;
+        const genderUpdate: Record<string, unknown> = {
+          total_xp: inc(clampedXpDelta),
+        };
         const seasonPartUpdate: Record<string, unknown> = {
-          total_xp: admin.firestore.FieldValue.increment(clampedXpDelta),
+          total_xp: inc(clampedXpDelta),
           updated_at: now,
         };
         if (isMvp) {
-          seasonPartUpdate.mvp_count =
-            admin.firestore.FieldValue.increment(1);
+          seasonPartUpdate.mvp_count = inc(1);
+          genderUpdate.mvp_count = inc(1);
         }
+        seasonPartUpdate.by_gender = {[gender]: genderUpdate};
         txn.set(
           db.collection("season_participation").doc(seasonPartId),
           seasonPartUpdate,

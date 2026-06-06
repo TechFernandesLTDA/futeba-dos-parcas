@@ -28,6 +28,9 @@ export interface Game {
     group_id?: string;
     date?: string;
     dateTime?: admin.firestore.Timestamp;
+    // Fase 4 (gênero): categoria do jogo MALE/FEMALE/MIXED.
+    // Ausente em jogos legados → tratado como MIXED na leitura.
+    gender?: string;
 }
 
 export interface GameConfirmation {

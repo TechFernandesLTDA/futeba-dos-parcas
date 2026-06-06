@@ -1072,7 +1072,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
               result,
               conf,
               isMvp,
-              gameData.group_id
+              gameData.group_id,
+              // Fase 4: segmenta ranking por categoria do jogo.
+              gameData.gender
             );
             currentBatchOps++;
           }
