@@ -484,8 +484,13 @@ expect class FirebaseDataSource() {
 
     /**
      * Flow que observa o ranking da temporada em tempo real.
+     *
+     * @param gender Filtro de gênero (Fase 4b). null/ausente = combinado
+     * (campos planos). MALE/FEMALE/MIXED = segmentado (ordena por
+     * `by_gender.{G}.points` e sobrepõe as stats do sub-mapa). Exige os
+     * índices compostos da Fase 4a.
      */
-    fun observeSeasonRanking(seasonId: String, limit: Int = 50): Flow<List<SeasonParticipation>>
+    fun observeSeasonRanking(seasonId: String, limit: Int = 50, gender: String? = null): Flow<List<SeasonParticipation>>
 
     /**
      * Busca participação de um usuário em uma temporada.

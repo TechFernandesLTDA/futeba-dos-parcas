@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.league
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.model.Season as AndroidSeason
 import com.futebadosparcas.domain.model.SeasonParticipation
@@ -42,6 +43,11 @@ class LeagueViewModel(
 
     private val _selectedSeason = MutableStateFlow<AndroidSeason?>(null)
     val selectedSeason: StateFlow<AndroidSeason?> = _selectedSeason
+
+    // Fase 4b: filtro de gênero do ranking. null = combinado (Todos).
+    // MALE/FEMALE/MIXED = segmentado (by_gender).
+    private val _selectedGender = MutableStateFlow<GameGender?>(null)
+    val selectedGender: StateFlow<GameGender?> = _selectedGender
 
     init {
         loadAvailableSeasons()
@@ -108,6 +114,16 @@ class LeagueViewModel(
     }
 
     /**
+     * Seleciona o filtro de gênero do ranking e recarrega (Fase 4b).
+     * null = combinado (Todos). Ignora se o valor não mudou.
+     */
+    fun selectGender(gender: GameGender?) {
+        if (_selectedGender.value == gender) return
+        _selectedGender.value = gender
+        loadLeagueData()
+    }
+
+    /**
      * Carrega dados da liga
      * Usa ConcurrentHashMap para thread-safety (acesso de Main e IO threads)
      */
@@ -155,8 +171,9 @@ class LeagueViewModel(
                 return@launch
             }
 
-            // Iniciar observação do ranking com tratamento de erros via catch
-            gamificationRepository.observeSeasonRanking(season.id, limit = 100)
+            // Iniciar observação do ranking com tratamento de erros via catch.
+            // Fase 4b: passa o gênero selecionado (null = combinado).
+            gamificationRepository.observeSeasonRanking(season.id, limit = 100, gender = _selectedGender.value?.name)
                 .catch { e ->
                     AppLogger.e(TAG, "Erro no Flow de ranking", e)
                     _uiState.value = LeagueUiState.Error("Erro ao carregar ranking: ${e.message}")

@@ -3187,10 +3187,17 @@ actual class FirebaseDataSource actual constructor() {
         } catch (e: Exception) { Result.failure(e) }
     }
 
-    actual fun observeSeasonRanking(seasonId: String, limit: Int): Flow<List<SeasonParticipation>> {
+    actual fun observeSeasonRanking(seasonId: String, limit: Int, gender: String?): Flow<List<SeasonParticipation>> {
+        // Fase 4b: segmentação por gênero. null/inválido = combinado (campos
+        // planos, comportamento histórico). MALE/FEMALE/MIXED = segmentado:
+        // ordena por `by_gender.{G}.points` (índices da Fase 4a) e sobrepõe as
+        // stats do sub-mapa. Docs sem aquele gênero não têm o campo → ficam
+        // naturalmente fora da query.
+        val genderKey = normalizeSeasonGenderKey(gender)
+        val orderField = if (genderKey != null) "by_gender.$genderKey.points" else "points"
         return firestore.collection("season_participation").where { "season_id" equalTo seasonId }
-            .orderBy("points", Direction.DESCENDING).limit(limit).snapshots()
-            .map { it.documents.mapNotNull { d -> d.toSeasonParticipationOrNull() } }
+            .orderBy(orderField, Direction.DESCENDING).limit(limit).snapshots()
+            .map { it.documents.mapNotNull { d -> d.toSeasonParticipationOrNull(genderKey) } }
             .catch { emit(emptyList()) }
     }
 
@@ -4028,19 +4035,48 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonOrNull(): Se
     )
 }
 
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonParticipationOrNull(): SeasonParticipation? {
+/**
+ * Normaliza o filtro de gênero para a chave do sub-mapa `by_gender` (Fase 4b).
+ * null/ausente/inválido = null (combinado, campos planos). MALE/FEMALE/MIXED
+ * = segmentado. Tolerante a case (mesma semântica de GameGender.fromString,
+ * mas SEM colapsar inválido em MIXED — aqui inválido vira combinado).
+ */
+private fun normalizeSeasonGenderKey(raw: String?): String? {
+    val up = raw?.trim()?.uppercase() ?: return null
+    return if (up == "MALE" || up == "FEMALE" || up == "MIXED") up else null
+}
+
+private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonParticipationOrNull(
+    genderKey: String? = null
+): SeasonParticipation? {
     if (!exists) return null
+
+    // Fase 4b: quando segmentado, as stats vêm do sub-mapa by_gender.{G}.
+    // Valores aninhados chegam como Any? (GitLive não garante Long) → ler como
+    // Number. Campos fora do sub-mapa (division/rating/saves/streaks/xp)
+    // permanecem GLOBAIS, espelhando web e functions.
+    val seg: Map<*, *>? = if (genderKey != null) {
+        (get<Map<*, *>?>("by_gender"))?.get(genderKey) as? Map<*, *>
+    } else null
+    // Quando o sub-mapa existe, ele é AUTORITATIVO (chave ausente = 0), para
+    // nunca vazar o valor combinado plano dentro da visão segmentada. Sem
+    // sub-mapa (combinado, ou doc legado sem by_gender) usa o fallback plano.
+    fun stat(key: String, flat: () -> Int): Int =
+        if (seg != null) (seg[key] as? Number)?.toInt() ?: 0 else flat()
+
     return SeasonParticipation(
         id = id, seasonId = get<String?>("season_id") ?: "", userId = get<String?>("user_id") ?: "",
         division = get<String?>("division") ?: LeagueDivision.BRONZE.name,
         leagueRating = get<Long?>("league_rating")?.toInt() ?: 1000,
-        points = get<Long?>("points")?.toInt() ?: 0,
-        gamesPlayed = get<Long?>("games_played")?.toInt() ?: 0,
-        wins = get<Long?>("wins")?.toInt() ?: 0, draws = get<Long?>("draws")?.toInt() ?: 0,
-        losses = get<Long?>("losses")?.toInt() ?: 0,
-        goals = get<Long?>("goals")?.toInt() ?: get<Long?>("goals_scored")?.toInt() ?: 0,
-        assists = get<Long?>("assists")?.toInt() ?: 0, saves = get<Long?>("saves")?.toInt() ?: 0,
-        mvpCount = get<Long?>("mvp_count")?.toInt() ?: 0,
+        points = stat("points") { get<Long?>("points")?.toInt() ?: 0 },
+        gamesPlayed = stat("games_played") { get<Long?>("games_played")?.toInt() ?: 0 },
+        wins = stat("wins") { get<Long?>("wins")?.toInt() ?: 0 },
+        draws = stat("draws") { get<Long?>("draws")?.toInt() ?: 0 },
+        losses = stat("losses") { get<Long?>("losses")?.toInt() ?: 0 },
+        goals = stat("goals_scored") { get<Long?>("goals")?.toInt() ?: get<Long?>("goals_scored")?.toInt() ?: 0 },
+        assists = stat("assists") { get<Long?>("assists")?.toInt() ?: 0 },
+        saves = get<Long?>("saves")?.toInt() ?: 0,
+        mvpCount = stat("mvp_count") { get<Long?>("mvp_count")?.toInt() ?: 0 },
         bestGkCount = get<Long?>("best_gk_count")?.toInt() ?: 0,
         worstPlayerCount = get<Long?>("worst_player_count")?.toInt() ?: 0,
         currentStreak = get<Long?>("current_streak")?.toInt() ?: 0,

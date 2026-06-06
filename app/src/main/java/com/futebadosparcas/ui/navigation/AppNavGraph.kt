@@ -321,6 +321,7 @@ fun AppNavHost(
             val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
             val availableSeasons by viewModel.availableSeasons.collectAsStateWithLifecycle()
             val selectedSeason by viewModel.selectedSeason.collectAsStateWithLifecycle()
+            val selectedGender by viewModel.selectedGender.collectAsStateWithLifecycle()
             val playerCardUiState by playerCardViewModel.uiState.collectAsStateWithLifecycle()
 
             // Estado para ModalBottomSheet do jogador (fix #2260: migrado de Fragment)
@@ -333,9 +334,11 @@ fun AppNavHost(
                 unreadCount = unreadCount,
                 availableSeasons = availableSeasons,
                 selectedSeason = selectedSeason,
+                selectedGender = selectedGender,
                 onBack = { navController.popBackStack() },
                 onDivisionSelected = { viewModel.filterByDivision(it) },
                 onSeasonSelected = { viewModel.selectSeason(it) },
+                onGenderSelected = { viewModel.selectGender(it) },
                 onRefresh = { selectedSeason?.let { viewModel.selectSeason(it) } },
                 onNavigateNotifications = { navController.navigate(Screen.Notifications.route) },
                 onNavigateGroups = { navController.navigate(Screen.Groups.route) },

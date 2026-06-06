@@ -102,9 +102,11 @@ interface GamificationRepository {
      *
      * @param seasonId ID da temporada
      * @param limit Número máximo de jogadores a retornar (padrão: 50)
+     * @param gender Filtro de gênero (Fase 4b): null = combinado (campos planos);
+     *   MALE/FEMALE/MIXED = segmentado (by_gender.{G})
      * @return Flow<List<SeasonParticipation>> Flow que emite o ranking em tempo real
      */
-    fun observeSeasonRanking(seasonId: String, limit: Int = 50): Flow<List<SeasonParticipation>>
+    fun observeSeasonRanking(seasonId: String, limit: Int = 50, gender: String? = null): Flow<List<SeasonParticipation>>
 
     /**
      * Busca a participação de um usuário em uma temporada.

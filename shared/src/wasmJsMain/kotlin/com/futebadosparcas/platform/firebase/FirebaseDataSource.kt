@@ -290,7 +290,7 @@ actual class FirebaseDataSource {
     actual suspend fun getActiveSeason(): Result<Season?> = stubResult()
     actual suspend fun getAllSeasons(): Result<List<Season>> = stubResult()
     actual suspend fun getSeasonRanking(seasonId: String, limit: Int): Result<List<SeasonParticipation>> = stubResult()
-    actual fun observeSeasonRanking(seasonId: String, limit: Int): Flow<List<SeasonParticipation>> = stubFlowList()
+    actual fun observeSeasonRanking(seasonId: String, limit: Int, gender: String?): Flow<List<SeasonParticipation>> = stubFlowList()
     actual suspend fun getSeasonParticipation(seasonId: String, userId: String): Result<SeasonParticipation?> = stubResult()
     actual suspend fun saveSeasonParticipation(participation: SeasonParticipation): Result<Unit> = stubResult()
 
