@@ -30,13 +30,42 @@ const mockDoc = jest.fn((id: string) => ({
   })),
 }));
 
-const mockCollection = jest.fn(() => ({
-  doc: mockDoc,
-  where: mockWhere,
-  orderBy: mockOrderBy,
-  limit: mockLimit,
-  get: mockCollectionGet,
-}));
+// Set de eventos já processados — simula dedup no Firestore
+const dedupClaimedIds = new Set<string>();
+
+/**
+ * Cria um mock de doc para notif_dedup.
+ * create() é atômico: falha com code 6 se o id já foi reivindicado.
+ */
+function makeDedupDocMock(id: string) {
+  return {
+    id,
+    create: jest.fn().mockImplementation(() => {
+      if (dedupClaimedIds.has(id)) {
+        const err = new Error("ALREADY_EXISTS") as any;
+        err.code = 6;
+        return Promise.reject(err);
+      }
+      dedupClaimedIds.add(id);
+      return Promise.resolve();
+    }),
+  };
+}
+
+const mockCollection = jest.fn((name: string) => {
+  if (name === "notif_dedup") {
+    return {
+      doc: (id: string) => makeDedupDocMock(id),
+    };
+  }
+  return {
+    doc: mockDoc,
+    where: mockWhere,
+    orderBy: mockOrderBy,
+    limit: mockLimit,
+    get: mockCollectionGet,
+  };
+});
 
 const mockFieldValue = {
   serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
@@ -105,6 +134,8 @@ import {
 describe("Presence Notifications", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Limpa o set de dedup entre testes para isolamento
+    dedupClaimedIds.clear();
     mockBatch.mockImplementation(() => ({ update: mockBatchUpdate, set: jest.fn(), delete: jest.fn(), commit: mockBatchCommit }));
   });
 
@@ -518,6 +549,183 @@ describe("Presence Notifications", () => {
       await cleanupExpiredInvites();
 
       expect(mockBatch).not.toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================
+  // TESTES DE IDEMPOTÊNCIA: reentrega at-least-once não duplica
+  // ============================================================
+  describe("idempotência de reentrega (claimOnce)", () => {
+    it("onGameConfirmed: reentrega com mesmo event.id nao duplica push FCM", async () => {
+      mockDocGet
+        .mockResolvedValue({
+          exists: true,
+          data: () => ({ owner_id: "owner1" }),
+        });
+      // Segunda chamada ao mockDocGet (userDoc) — também precisa funcionar na 1ª entrega
+      mockDocGet
+        .mockResolvedValueOnce({ exists: true, data: () => ({ owner_id: "owner1" }) })
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Jogador" }) });
+
+      const event = {
+        id: "evt-game-confirmed-1",
+        data: { data: () => ({ game_id: "game1", user_id: "player1", status: "CONFIRMED" }) },
+        params: { confirmationId: "conf1" },
+      };
+
+      // 1ª entrega — deve processar
+      await onGameConfirmed(event);
+      // 2ª entrega (reentrega) com mesmo event.id — deve pular
+      await onGameConfirmed(event);
+
+      // sendNotificationToUser deve ter sido chamado exatamente 1 vez
+      expect(mockSendNotificationToUser).toHaveBeenCalledTimes(1);
+    });
+
+    it("onGroupInviteCreated: reentrega com mesmo event.id nao duplica sendAndSaveNotification", async () => {
+      const event = {
+        id: "evt-group-invite-1",
+        data: {
+          data: () => ({
+            invited_user_id: "user1",
+            group_id: "group1",
+            group_name: "Pelada FC",
+            invited_by_name: "Joao",
+            invited_by_id: "owner1",
+          }),
+        },
+        params: { inviteId: "inv1" },
+      };
+
+      // 1ª entrega
+      await onGroupInviteCreated(event);
+      // 2ª entrega (reentrega)
+      await onGroupInviteCreated(event);
+
+      // Deve ter enviado exatamente 1 notificação (push + doc)
+      expect(mockSendAndSaveNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("onGroupInviteResponse: reentrega com mesmo event.id nao duplica notificacao", async () => {
+      const event = {
+        id: "evt-invite-response-1",
+        data: {
+          before: { data: () => ({ status: "PENDING" }) },
+          after: {
+            data: () => ({
+              status: "ACCEPTED",
+              invited_by_id: "inviter1",
+              invited_user_name: "Maria",
+              group_name: "Pelada FC",
+              group_id: "group1",
+            }),
+          },
+        },
+        params: { inviteId: "inv1" },
+      };
+
+      await onGroupInviteResponse(event);
+      await onGroupInviteResponse(event);
+
+      expect(mockSendAndSaveNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("onMemberJoined: reentrega com mesmo event.id nao duplica notificacao", async () => {
+      mockDocGet
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Pelada FC" }) })
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Novato" }) });
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ id: "admin1", data: () => ({ role: "ADMIN" }) }],
+        size: 1,
+      });
+
+      const event = {
+        id: "evt-member-joined-1",
+        data: { data: () => ({ role: "MEMBER" }) },
+        params: { groupId: "group1", memberId: "novato1" },
+      };
+
+      await onMemberJoined(event);
+      await onMemberJoined(event);
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledTimes(1);
+    });
+
+    it("onMemberLeft: reentrega com mesmo event.id nao duplica notificacao", async () => {
+      mockDocGet
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Pelada FC" }) })
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Ex-membro" }) });
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ id: "admin1", data: () => ({ role: "ADMIN" }) }],
+        size: 1,
+      });
+
+      const event = {
+        id: "evt-member-left-1",
+        data: { data: () => null },
+        params: { groupId: "group1", memberId: "leaver1" },
+      };
+
+      await onMemberLeft(event);
+      await onMemberLeft(event);
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledTimes(1);
+    });
+
+    it("onCashboxTransaction: reentrega com mesmo event.id nao duplica notificacao", async () => {
+      mockDocGet.mockResolvedValue({ exists: true, data: () => ({ name: "Grupo" }) });
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ id: "admin1", data: () => ({ role: "ADMIN" }) }],
+        size: 1,
+      });
+
+      const event = {
+        id: "evt-cashbox-tx-1",
+        data: {
+          data: () => ({ type: "ENTRY", amount: 100, description: "Mensalidade", created_by_id: "creator1" }),
+        },
+        params: { groupId: "group1", transactionId: "tx1" },
+      };
+
+      await onCashboxTransaction(event);
+      await onCashboxTransaction(event);
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledTimes(1);
+    });
+
+    it("eventos diferentes com event.id distintos sao processados independentemente", async () => {
+      const event1 = {
+        id: "evt-invite-A",
+        data: {
+          data: () => ({
+            invited_user_id: "userA",
+            group_id: "groupA",
+            group_name: "Grupo A",
+            invited_by_name: "Admin",
+            invited_by_id: "adminA",
+          }),
+        },
+        params: { inviteId: "invA" },
+      };
+      const event2 = {
+        id: "evt-invite-B",
+        data: {
+          data: () => ({
+            invited_user_id: "userB",
+            group_id: "groupB",
+            group_name: "Grupo B",
+            invited_by_name: "Admin",
+            invited_by_id: "adminB",
+          }),
+        },
+        params: { inviteId: "invB" },
+      };
+
+      await onGroupInviteCreated(event1);
+      await onGroupInviteCreated(event2);
+
+      // Ambos devem ter disparado — são eventos distintos
+      expect(mockSendAndSaveNotification).toHaveBeenCalledTimes(2);
     });
   });
 });
