@@ -1361,6 +1361,7 @@
     "avatarInvalidType": "Invalid file. Select an image.",
     "avatarTooLarge": "Image too large. Maximum: 2MB.",
     "avatarUploadError": "Failed to upload photo. Please try again.",
+    "genderSaveError": "Profile saved, but the gender could not be saved. Please try again.",
     "badges": "Badges",
     "bioLabel": "Bio",
     "bioPlaceholder": "Tell us a bit about yourself...",

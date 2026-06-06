@@ -386,7 +386,9 @@ export const EditProfileScreen: React.FC = () => {
           );
         } catch (privateErr) {
           logger.error('Falha ao salvar gênero em users_private:', privateErr);
-          // Não bloqueia o fluxo principal — o restante do perfil foi salvo
+          // Não bloqueia o fluxo principal — o restante do perfil foi salvo;
+          // só o gênero (users_private) falhou. Feedback não-fatal (#601 Pattern 2).
+          showError(t('profile.genderSaveError'));
         }
       }
 
