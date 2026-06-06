@@ -14,10 +14,23 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { LeagueDivision, getLevelForXp } from '../types/gamification';
+import type { GameGender } from '../types/game';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useLeague');
+
+// Fase 4b: gêneros válidos para segmentação do ranking.
+const SEGMENT_GENDERS: readonly GameGender[] = ['MALE', 'FEMALE', 'MIXED'];
+
+/**
+ * Resolve o filtro de gênero para a chave de leitura do ranking.
+ * Ausente/inválido = null (combinado, campos planos). MALE/FEMALE/MIXED
+ * = segmentado (by_gender.{G}).
+ */
+function resolveSegmentGender(g?: GameGender | null): GameGender | null {
+  return g && SEGMENT_GENDERS.includes(g) ? g : null;
+}
 
 // #2276: interface tipada para o doc de season_participation (substitui Record<string, any>).
 interface RawSeasonParticipation {
@@ -92,6 +105,9 @@ export interface LeagueFilters {
   groupId?: string | null;
   seasonId?: string | null;
   maxResults?: number;
+  // Fase 4b: filtro de gênero. Ausente/inválido = combinado (campos
+  // planos). MALE/FEMALE/MIXED = segmentado (by_gender.{G}).
+  gender?: GameGender | null;
 }
 
 async function fetchLeagueData(
@@ -100,8 +116,14 @@ async function fetchLeagueData(
 ): Promise<LeaguePlayer[]> {
   const seasonRef = collection(db, 'season_participation');
 
+  // Combinado ordena pelo ponto plano; segmentado pelo ponto da
+  // categoria (by_gender.{G}.points). Docs sem aquele gênero não têm o
+  // campo → naturalmente excluídos da query.
+  const segGender = resolveSegmentGender(filters?.gender);
+  const orderField = segGender ? `by_gender.${segGender}.points` : 'points';
+
   const constraints: QueryConstraint[] = [
-    orderBy('points', 'desc'),
+    orderBy(orderField, 'desc'),
     limit(filters?.maxResults ?? 200)
   ];
   if (filters?.seasonId) {
@@ -122,16 +144,23 @@ async function fetchLeagueData(
     const data = snakeToCamel<RawSeasonParticipation>(raw);
     const userId = data.userId || raw.user_id || docSnapshot.id;
 
+    // Segmentado: stats vêm do sub-objeto by_gender.{G} (snake).
+    // Combinado: campos planos (comportamento histórico).
+    const seg = segGender
+      ? ((raw.by_gender as Record<string, Record<string, number>> | undefined)?.[segGender] ?? {})
+      : null;
+    const num = (v: unknown): number => (typeof v === 'number' ? v : 0);
+
     return {
       id: docSnapshot.id,
       userId,
       level: data.level || 1,
-      points: data.points || 0,
-      gamesPlayed: data.gamesPlayed || raw.games_played || 0,
-      wins: data.wins || 0,
-      goals: data.goals || 0,
-      assists: data.assists || 0,
-      mvpCount: data.mvpCount || raw.mvp_count || 0,
+      points: seg ? num(seg.points) : data.points || 0,
+      gamesPlayed: seg ? num(seg.games_played) : data.gamesPlayed || raw.games_played || 0,
+      wins: seg ? num(seg.wins) : data.wins || 0,
+      goals: seg ? num(seg.goals_scored) : data.goals || 0,
+      assists: seg ? num(seg.assists) : data.assists || 0,
+      mvpCount: seg ? num(seg.mvp_count) : data.mvpCount || raw.mvp_count || 0,
       division: (data.division || 'BRONZE') as LeagueDivision,
     };
   });
@@ -183,7 +212,7 @@ export const useLeague = (
   const enabled = options?.enabled ?? true;
 
   const { data: players = [], isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults],
+    queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults, filters?.gender],
     queryFn: () => fetchLeagueData(currentUserId, filters),
     staleTime: 3 * 60 * 1000, // 3 minutos
     gcTime: 10 * 60 * 1000,
@@ -196,8 +225,10 @@ export const useLeague = (
     if (!enabled) return;
 
     const seasonRef = collection(db, 'season_participation');
+    const segGender = resolveSegmentGender(filters?.gender);
+    const listenerOrderField = segGender ? `by_gender.${segGender}.points` : 'points';
     const listenerConstraints: QueryConstraint[] = [
-      orderBy('points', 'desc'),
+      orderBy(listenerOrderField, 'desc'),
       limit(filters?.maxResults ?? 200)
     ];
     if (filters?.seasonId) {
@@ -215,7 +246,7 @@ export const useLeague = (
         return;
       }
       queryClient.invalidateQueries({
-        queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults],
+        queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults, filters?.gender],
       });
     }, (err) => {
       logger.error('Error in league listener:', err);
@@ -224,7 +255,7 @@ export const useLeague = (
     });
 
     return () => unsubscribe();
-  }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, filters?.maxResults, enabled]);
+  }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, filters?.maxResults, filters?.gender, enabled]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 
