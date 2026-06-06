@@ -1139,18 +1139,12 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
         }
 
-        // Mark Game Processed
-        ensureBatchCapacity(1);
-        currentBatch.update(
-          event.data.after.ref, {
-            xp_processed: true,
-            xp_processing: false,
-            xp_processed_at: now,
-          }
-        );
-        currentBatchOps++;
-
-        // Commit último batch pendente
+        // Commit último batch pendente (SEM o marcador xp_processed —
+        // FIX #2524: o marcador só é gravado APÓS todos os batches de
+        // dados confirmarem. Antes, estava no mesmo batch do último chunk,
+        // de modo que com Promise.allSettled o batch do marcador podia ter
+        // sucesso enquanto batches anteriores falhavam → jogo marcado como
+        // processado com jogadores perdendo XP permanentemente.)
         batchCommits.push(
           currentBatch.commit()
         );
@@ -1167,12 +1161,30 @@ export const onGameStatusUpdate = onDocumentUpdated(
             `[XP] ${failedCommits.length}/${batchCommits.length} ` +
             "batch commits falharam para game " + gameId
           );
-          // Re-throw com detalhes mas sem perder XP parcialmente processado
+          // Re-throw ANTES de marcar processado → retry via at-least-once
+          // pode reprocessar. Limitação remanescente: jogadores cujos
+          // batches bem-sucedidos já receberam FieldValue.increment terão
+          // XP duplicado no retry (double-count parcial). Correção total
+          // exige idempotência por-jogador via xp_logs dedup — fora do
+          // escopo deste fix (#2524 cobre apenas bloquear o xp_processed
+          // prematuro).
           throw new Error(
             `${failedCommits.length} batch(es) XP falharam: ` +
             (failedCommits[0] as PromiseRejectedResult).reason
           );
         }
+
+        // FIX #2524: Todos os batches de dados confirmaram com sucesso.
+        // Somente agora marcamos o jogo como processado, de forma atômica
+        // e separada. Se esta escrita falhar, o trigger re-executa e
+        // reprocessará — double-count neste caso é improvável mas possível
+        // (ver limitação acima). xp_processing=false encerra o lock.
+        await event.data.after.ref.update({
+          xp_processed: true,
+          xp_processing: false,
+          xp_processed_at: now,
+        });
+
         logger.info(
           `Game ${gameId} processing ` +
           "complete " +
