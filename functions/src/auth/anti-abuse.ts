@@ -24,15 +24,6 @@ const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
 const LOG_FAIL_RATE_LIMIT_PER_HOUR = 20;
 
 /**
- * Extrai o IP real do cliente em GCF v2 atrás de Load Balancer.
- *
- * FIX #1309-M4: rawRequest.ip retorna o IP do LB (constante) — inútil para
- * rate limit por IP. O 1º hop de x-forwarded-for é o IP do cliente.
- *
- * @param {CallableRequest} request - Requisição callable.
- * @return {string} IP do cliente, ou "unknown".
- */
-/**
  * Valida formato de IP (IPv4 ou IPv6). Evita persistir lixo forjado nos
  * audit logs (FIX #2479 — poluição de forense por valores arbitrários de XFF).
  *
@@ -48,7 +39,8 @@ function isValidIp(value: string): boolean {
 }
 
 /**
- * Extrai o IP do cliente em GCF v2 atrás de Load Balancer.
+ * Número de hops de proxy confiáveis que a infra GCP/GFE acrescenta ao
+ * X-Forwarded-For APÓS o IP real do cliente.
  *
  * FIX #2479: usar o IP MAIS À DIREITA (rightmost) da cadeia X-Forwarded-For.
  * Em deployments GCP padrão (Firebase Hosting → LB → Cloud Functions), o LB
@@ -60,7 +52,7 @@ function isValidIp(value: string): boolean {
  * direta, normalmente o LB — não ideal para rate-limit mas não-spoofable).
  *
  * @param {object} request - Requisição callable.
- * @return {string} IP sanitizado do cliente, ou "unknown".
+ * @return {string} IP confiável do cliente, ou "unknown".
  */
 function clientIp(request: {rawRequest?: {
   ip?: string;
@@ -78,6 +70,7 @@ function clientIp(request: {rawRequest?: {
   for (let i = hops.length - 1; i >= 0; i--) {
     if (isValidIp(hops[i])) return hops[i];
   }
+
 
   const fallback = request.rawRequest?.ip;
   if (fallback && isValidIp(fallback)) return fallback;

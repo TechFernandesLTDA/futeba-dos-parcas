@@ -30,6 +30,47 @@ const getDb = () => admin.firestore();
 const INVITE_EXPIRATION_MS = 48 * 60 * 60 * 1000;
 
 // ==========================================
+// IDEMPOTÊNCIA: guard contra reentrega at-least-once
+// ==========================================
+
+/**
+ * Tenta criar um documento de dedup com ID = eventId.
+ * Retorna true se o claim foi bem-sucedido (primeira entrega).
+ * Retorna false se o doc já existe (reentrega — pular envio).
+ *
+ * Usa create() que falha atomicamente com código 6 (ALREADY_EXISTS)
+ * se o doc já existir, garantindo que só uma entrega vença a corrida.
+ *
+ * @param {string} eventId - ID único do CloudEvent (estável em reentregas).
+ * @return {Promise<boolean>} true = primeira entrega, false = reentrega.
+ */
+async function claimOnce(eventId: string): Promise<boolean> {
+  try {
+    await getDb()
+      .collection("notif_dedup")
+      .doc(eventId)
+      .create({
+        claimed_at:
+          admin.firestore.FieldValue.serverTimestamp(),
+      });
+    return true;
+  } catch (e: unknown) {
+    const err = e as { code?: number };
+    if (err.code === 6) {
+      // ALREADY_EXISTS → reentrega, pular
+      logger.info(
+        "[NOTIF_DEDUP] Evento já processado," +
+        ` ignorando reentrega: ${eventId}`
+      );
+      return false;
+    }
+    // Outro erro (ex: permissão, rede) → relançar para
+    // deixar o trigger ser entregue novamente pelo Cloud Functions
+    throw e;
+  }
+}
+
+// ==========================================
 // GAME CONFIRMED (player confirmed presence)
 // ==========================================
 
@@ -48,6 +89,9 @@ export const onGameConfirmed = onDocumentCreated(
     ) {
       return;
     }
+
+    // Guard de idempotência: pula reentregas at-least-once
+    if (!await claimOnce(event.id)) return;
 
     const gameId =
       confirmation.game_id || confirmation.gameId;
@@ -148,6 +192,9 @@ export const onGroupInviteCreated =
         );
         return;
       }
+
+      // Guard de idempotência: pula reentregas at-least-once
+      if (!await claimOnce(event.id)) return;
 
       logger.info(
         "[GROUP_INVITE] Enviando notificacao" +
@@ -340,6 +387,9 @@ export const onGroupInviteResponse =
         return;
       }
 
+      // Guard de idempotência: pula reentregas at-least-once
+      if (!await claimOnce(event.id)) return;
+
       logger.info(
         "[GROUP_INVITE_RESPONSE] Convite" +
         ` ${inviteId}: ${beforeStatus}` +
@@ -424,6 +474,9 @@ export const onMemberJoined = onDocumentCreated(
     // Não notifica se é o owner
     const role = member.role || member.memberRole;
     if (role === "OWNER") return;
+
+    // Guard de idempotência: pula reentregas at-least-once
+    if (!await claimOnce(event.id)) return;
 
     logger.info(
       `[MEMBER_JOINED] Member ${memberId}` +
@@ -521,6 +574,9 @@ export const onMemberLeft = onDocumentDeleted(
   async (event) => {
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
+
+    // Guard de idempotência: pula reentregas at-least-once
+    if (!await claimOnce(event.id)) return;
 
     logger.info(
       `[MEMBER_LEFT] Member ${memberId}` +
@@ -635,6 +691,9 @@ export const onCashboxTransaction =
       const createdById =
         transaction.created_by_id ||
         transaction.createdById;
+
+      // Guard de idempotência: pula reentregas at-least-once
+      if (!await claimOnce(event.id)) return;
 
       logger.info(
         `[CASHBOX] Transaction ${transactionId}` +

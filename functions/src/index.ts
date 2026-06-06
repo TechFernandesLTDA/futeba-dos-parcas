@@ -14,6 +14,7 @@ import {
   MAX_GOALS_PER_GAME,
   MAX_ASSISTS_PER_GAME,
   MAX_SAVES_PER_GAME,
+  clampStat,
 } from "./constants";
 import {
   getAllBadgesToAward,
@@ -477,6 +478,10 @@ export const onGameStatusUpdate = onDocumentUpdated(
           );
 
         // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE) — clamp and warn, don't throw
+        // FIX #2525: mutamos conf.goals/assists/saves aqui (piso 0 + teto MAX)
+        // para que TODOS os sinks downstream (statistics, xp_logs, ranking_deltas,
+        // season_participation, by_gender) usem o valor capeado, garantindo
+        // paridade com o XP já calculado com Math.min(conf.goals, MAX_GOALS_PER_GAME).
         for (const conf of validConfirmations) {
           if (conf.goals < 0 || conf.goals > MAX_GOALS_PER_GAME) {
             logger.warn(
@@ -486,6 +491,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
               "— clamping to cap"
             );
           }
+          // Aplica piso 0 + teto MAX antes de qualquer persistência
+          conf.goals = clampStat(conf.goals, MAX_GOALS_PER_GAME);
+
           if (conf.assists < 0 || conf.assists > MAX_ASSISTS_PER_GAME) {
             logger.warn(
               "[ANTI-CHEAT] User " +
@@ -494,6 +502,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
               "— clamping to cap"
             );
           }
+          conf.assists = clampStat(conf.assists, MAX_ASSISTS_PER_GAME);
+
           if (conf.saves < 0 || conf.saves > MAX_SAVES_PER_GAME) {
             logger.warn(
               "[ANTI-CHEAT] User " +
@@ -502,6 +512,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
               "— clamping to cap"
             );
           }
+          conf.saves = clampStat(conf.saves, MAX_SAVES_PER_GAME);
         }
 
         const teams = teamsSnap.docs.map(
@@ -1151,9 +1162,12 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
         }
 
-        // Commit último batch pendente (sem xp_processed —
-        // será setado APÓS confirmação de todos os batches,
-        // prevenindo perda permanente de XP em falha parcial + retry bloqueado)
+        // Commit último batch pendente (SEM o marcador xp_processed —
+        // FIX #2524: o marcador só é gravado APÓS todos os batches de
+        // dados confirmarem. Antes, estava no mesmo batch do último chunk,
+        // de modo que com Promise.allSettled o batch do marcador podia ter
+        // sucesso enquanto batches anteriores falhavam → jogo marcado como
+        // processado com jogadores perdendo XP permanentemente.)
         batchCommits.push(
           currentBatch.commit()
         );
@@ -1170,31 +1184,36 @@ export const onGameStatusUpdate = onDocumentUpdated(
             `[XP] ${failedCommits.length}/${batchCommits.length} ` +
             "batch commits falharam para game " + gameId
           );
-          // Re-throw com detalhes mas sem perder XP parcialmente processado
+          // Re-throw ANTES de marcar processado → retry via at-least-once
+          // pode reprocessar. Limitação remanescente: jogadores cujos
+          // batches bem-sucedidos já receberam FieldValue.increment terão
+          // XP duplicado no retry (double-count parcial). Correção total
+          // exige idempotência por-jogador via xp_logs dedup — fora do
+          // escopo deste fix (#2524 cobre apenas bloquear o xp_processed
+          // prematuro).
           throw new Error(
             `${failedCommits.length} batch(es) XP falharam: ` +
             (failedCommits[0] as PromiseRejectedResult).reason
           );
         }
+
+        // FIX #2524: Todos os batches de dados confirmaram com sucesso.
+        // Somente agora marcamos o jogo como processado, de forma atômica
+        // e separada. Se esta escrita falhar, o trigger re-executa e
+        // reprocessará — double-count neste caso é improvável mas possível
+        // (ver limitação acima). xp_processing=false encerra o lock.
+        await event.data.after.ref.update({
+          xp_processed: true,
+          xp_processing: false,
+          xp_processed_at: now,
+        });
+
         logger.info(
           `Game ${gameId} processing ` +
           "complete " +
           `(${batchCommits.length} ` +
           "batch(es) committed)."
         );
-
-        // FIX #2524: marcar xp_processed SOMENTE após todos
-        // os batches terem sido confirmados com sucesso.
-        // Antes, o flag era setado DENTRO do último batch —
-        // se o batch do flag fosse confirmado mas outros
-        // batches falhassem, o retry ficava bloqueado e a XP
-        // era perdida permanentemente.
-        await event.data.after.ref.update({
-          xp_processed: true,
-          xp_processing: false,
-          xp_processed_at: admin.firestore
-            .FieldValue.serverTimestamp(),
-        });
 
         // Aguardar notificações de streak
         // APÓS batch commit (evita envio

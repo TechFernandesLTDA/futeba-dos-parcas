@@ -22,6 +22,7 @@ const mockBatchUpdate = jest.fn();
 const mockBatchDelete = jest.fn();
 const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
 const mockQueryGet = jest.fn();
+const mockRecursiveDelete = jest.fn().mockResolvedValue(undefined);
 
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
@@ -80,6 +81,7 @@ jest.mock("firebase-admin", () => {
         delete: mockBatchDelete,
         commit: mockBatchCommit,
       })),
+      recursiveDelete: mockRecursiveDelete,
       runTransaction: jest.fn(),
     })),
     initializeApp: jest.fn(),
@@ -465,6 +467,53 @@ describe("cleanupSoftDeleted", () => {
     // Deve retornar sem lançar exceção
     expect(result.totalDeleted).toBe(0);
     expect(result.collection).toBe("games");
+  });
+
+  // FIX #2529: teto de concorrência de recursiveDelete
+  test("deve limitar concorrência de recursiveDelete a no máximo 10 por chunk (fix #2529)", async () => {
+    // Simula 25 docs — mais que o teto de 10 — para forçar múltiplos chunks.
+    const DOC_COUNT = 25;
+    const mockDocs = Array.from({ length: DOC_COUNT }, (_, i) => ({
+      ref: { id: `loc${i}` },
+    }));
+
+    mockQueryGet
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: mockDocs,
+        size: DOC_COUNT,
+      })
+      .mockResolvedValueOnce({ empty: true, docs: [], size: 0 });
+
+    // Rastreia quantos recursiveDelete estão em voo ao mesmo tempo.
+    let inFlight = 0;
+    let maxInFlight = 0;
+    mockRecursiveDelete.mockReset();
+    mockRecursiveDelete.mockImplementation(() => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      return new Promise<void>((resolve) =>
+        setImmediate(() => {
+          inFlight--;
+          resolve();
+        })
+      );
+    });
+
+    const result = await cleanupSoftDeleted(
+      "locations",
+      30,
+      10,
+      DOC_COUNT, // batchSize == DOC_COUNT → força 2ª iteração (consome o mockOnce vazio)
+      true // recursive=true → aciona o caminho de recursiveDelete
+    );
+
+    // Todos os docs devem ter sido processados
+    expect(result.totalDeleted).toBe(DOC_COUNT);
+    expect(mockRecursiveDelete).toHaveBeenCalledTimes(DOC_COUNT);
+
+    // Nunca devem ter mais de RECURSIVE_DELETE_CONCURRENCY=10 em voo
+    expect(maxInFlight).toBeLessThanOrEqual(10);
   });
 });
 

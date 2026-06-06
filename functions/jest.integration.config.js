@@ -1,28 +1,46 @@
 /**
- * Jest config para testes de integração contra emulador Firestore.
+ * Configuração Jest para testes de integração com emulador Firebase.
+ *
+ * Spike #2531: prova que o emulador dispara onInviteRedeemed e que um teste
+ * Jest pode observar deterministicamente o member doc resultante.
  *
  * Usado pelo CI test-harness (#2533) para rodar:
  *   npx jest --config jest.integration.config.js
  *
  * Requer FIRESTORE_EMULATOR_HOST definido (padrão 127.0.0.1:8085).
+ *
+ * Execução:
+ *   firebase emulators:exec --only firestore,functions \
+ *     'npx jest -c jest.integration.config.js test/integration/invite-redeemed.spike.test.ts'
+ *
+ * Diferenças em relação ao jest.config.js padrão:
+ * - testMatch aponta para test/** /*.integration.test.ts
+ * - testTimeout mais alto (30 s) — triggers são assíncronos
+ * - SEM mock de firebase-admin / firebase-functions/v2/firestore
+ *   (o objetivo é bater no emulador real)
+ * - moduleNameMapper mantido para @google-cloud/* stubs (evita SyntaxError ESM)
  */
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/test'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  roots: ["<rootDir>/test"],
   testMatch: [
-    '<rootDir>/test/**/*.integration.test.ts',
+    "<rootDir>/test/**/*.integration.test.ts",
   ],
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  testTimeout: 30000,
+  moduleFileExtensions: ["ts", "js", "json"],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
+    "^.+\\.tsx?$": ["ts-jest", {
+      tsconfig: "tsconfig.json",
+      isolatedModules: true,
     }],
   },
-  setupFilesAfterSetup: [],
-  testTimeout: 30000,
+  moduleNameMapper: {
+    "^@google-cloud/storage$": "<rootDir>/test/__mocks__/google-cloud-storage.ts",
+    "^@google-cloud/logging$": "<rootDir>/test/__mocks__/google-cloud-logging.ts",
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+  },
   verbose: true,
-  // Não coletar coverage — testes de integração medem
-  // comportamento, não coverage de linha
   collectCoverage: false,
 };

@@ -13,6 +13,10 @@ import {
   FIRESTORE_WHERE_IN_LIMIT,
   GAME_GENDERS,
   DEFAULT_GAME_GENDER,
+  MAX_GOALS_PER_GAME,
+  MAX_ASSISTS_PER_GAME,
+  MAX_SAVES_PER_GAME,
+  clampStat,
 } from "../constants";
 import {
   Game,
@@ -196,10 +200,37 @@ export function getWeekKey(d: Date): string {
 // ==========================================
 
 /**
+ * FIX #2526: resultado de um time pelo ranking de placar entre TODOS os times
+ * do jogo (modelo "ranking por placar", espelho de group-league.ts #2494).
+ * Maior placar = WIN, menor = LOSS, intermediários = DRAW; todos empatados =
+ * DRAW. Com 2 times reduz exatamente ao modelo clássico (sem regressão).
+ *
+ * @param {number} score - Placar do time.
+ * @param {number} maxScore - Maior placar do jogo.
+ * @param {number} minScore - Menor placar do jogo.
+ * @return {"WIN" | "DRAW" | "LOSS"} Resultado.
+ */
+function rankResultGlobal(
+  score: number,
+  maxScore: number,
+  minScore: number
+): "WIN" | "DRAW" | "LOSS" {
+  if (maxScore === minScore) return "DRAW";
+  if (score === maxScore) return "WIN";
+  if (score === minScore) return "LOSS";
+  return "DRAW";
+}
+
+/**
  * Determina o resultado de cada time no jogo.
+ * FIX #2526: suporta N times (N >= 2) via modelo "ranking por placar",
+ * espelhando a correção aplicada em group-league.ts (#2494).
+ * Jogadores do 3º time em diante agora recebem WIN/DRAW/LOSS corretos
+ * em vez de DRAW por fallback.
  * @param {Team[]} teams Times participantes.
  * @param {LiveGameScore | null} liveScore
- *   Placar ao vivo.
+ *   Placar ao vivo (apenas para times 1 e 2 no modo LIVE;
+ *   demais times usam team.score).
  * @return {Record<string, string>} Mapa de
  *   resultados por time.
  */
@@ -226,34 +257,28 @@ export function determineGameResults(
     return t.score;
   };
 
-  const scores = teams.map(resolveScore);
-  const maxScore = Math.max(...scores);
-  const minScore = Math.min(...scores);
+  const allScores = teams.map((t) => resolveScore(t));
+  const maxScore = Math.max(...allScores);
+  const minScore = Math.min(...allScores);
 
-  for (let i = 0; i < teams.length; i++) {
-    const id = teams[i].id;
-    const s = scores[i];
-    if (maxScore === minScore) {
-      results[id] = "DRAW";
-    } else if (s === maxScore) {
-      results[id] = "WIN";
-    } else if (s === minScore) {
-      results[id] = "LOSS";
-    } else {
-      results[id] = "DRAW";
-    }
+  for (const t of teams) {
+    results[t.id] = rankResultGlobal(
+      resolveScore(t), maxScore, minScore
+    );
   }
   return results;
 }
 
 /**
- * Calcula o placar do adversário para um time.
- * Retorna -1 se não for possível determinar.
+ * FIX #2526: placar "do oponente" = média (arredondada) dos DEMAIS times,
+ * espelhando opponentAverage() de group-league.ts (#2494).
+ * Com 2 times = placar do único oponente (idêntico ao comportamento antigo,
+ * sem regressão). Elimina o sentinela -1 para times 3+ em jogos LIVE.
  * @param {Team | undefined} team Time do jogador.
  * @param {LiveGameScore | null} liveScore
- *   Placar ao vivo.
+ *   Placar ao vivo (team1/team2 usam placar ao vivo; demais usam team.score).
  * @param {Team[]} teams Todos os times.
- * @return {number} Placar do adversário ou -1.
+ * @return {number} Média dos placares dos demais times (0 se indefinido).
  */
 export function getOpponentScore(
   team: Team | undefined,
@@ -487,13 +512,21 @@ export function updateRankingDeltas(
   weekKey: string,
   monthKey: string
 ) {
+  // FIX #2525: aplica caps anti-cheat (piso 0 + teto MAX) nos incrementos de
+  // ranking_deltas. A mutação em index.ts já cobre o caminho principal, mas
+  // este clamp garante correção caso updateRankingDeltas seja chamado por
+  // outras rotas sem pré-sanitização.
+  const cappedGoals = clampStat(conf.goals, MAX_GOALS_PER_GAME);
+  const cappedAssists = clampStat(conf.assists, MAX_ASSISTS_PER_GAME);
+  const cappedSaves = clampStat(conf.saves, MAX_SAVES_PER_GAME);
+
   const fields = {
     goals_added: admin.firestore
-      .FieldValue.increment(conf.goals),
+      .FieldValue.increment(cappedGoals),
     assists_added: admin.firestore
-      .FieldValue.increment(conf.assists),
+      .FieldValue.increment(cappedAssists),
     saves_added: admin.firestore
-      .FieldValue.increment(conf.saves),
+      .FieldValue.increment(cappedSaves),
     xp_added: admin.firestore
       .FieldValue.increment(xp),
     games_added: admin.firestore
@@ -594,6 +627,12 @@ export function updateSeasonParticipation(
     3 :
     (result === "DRAW" ? 1 : 0);
 
+  // FIX #2525: calcula valores capeados UMA VEZ antes da factory para que
+  // tanto o campo plano quanto o mapa by_gender.{gender} usem o mesmo valor
+  // sanitizado (piso 0 + teto MAX anti-cheat). Mantém consistência Fase 4b.
+  const cappedGoals = clampStat(conf.goals, MAX_GOALS_PER_GAME);
+  const cappedAssists = clampStat(conf.assists, MAX_ASSISTS_PER_GAME);
+
   // Factory de incrementos — gera instâncias NOVAS de FieldValue a
   // cada chamada para evitar aliasing do mesmo sentinel entre o
   // campo plano (combinado) e o mapa by_gender.{gender} (segmentado).
@@ -605,8 +644,8 @@ export function updateSeasonParticipation(
       wins: inc(result === "WIN" ? 1 : 0),
       draws: inc(result === "DRAW" ? 1 : 0),
       losses: inc(result === "LOSS" ? 1 : 0),
-      goals_scored: inc(conf.goals),
-      assists: inc(conf.assists),
+      goals_scored: inc(cappedGoals),
+      assists: inc(cappedAssists),
       mvp_count: inc(isMvp ? 1 : 0),
     };
   };
