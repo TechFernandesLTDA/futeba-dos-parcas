@@ -255,6 +255,28 @@ export const MAX_ASSISTS_PER_GAME =
 export const MAX_SAVES_PER_GAME =
   xpConstants.antiCheatLimits.MAX_SAVES_PER_GAME;
 
+/**
+ * Aplica teto anti-cheat e piso 0 a um contador acumulativo
+ * (gols, assistências, defesas). Valores nulos/undefined viram 0.
+ *
+ * Uso: clampStat(conf.goals, MAX_GOALS_PER_GAME)
+ *
+ * - Piso 0: contadores vitalícios não podem ser decrementados por
+ *   valores negativos recebidos do cliente.
+ * - Teto max: garante paridade entre o XP capeado e as estatísticas
+ *   persistidas, eliminando a inconsistência do issue #2525.
+ *
+ * @param {number | null | undefined} value Valor bruto do stat.
+ * @param {number} max Teto máximo (ex: MAX_GOALS_PER_GAME).
+ * @return {number} Valor clampeado entre 0 e max (inclusive).
+ */
+export function clampStat(
+  value: number | null | undefined,
+  max: number
+): number {
+  return Math.max(0, Math.min(value ?? 0, max));
+}
+
 // ==========================================
 // VOTING
 // ==========================================
