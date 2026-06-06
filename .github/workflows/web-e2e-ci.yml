@@ -94,6 +94,8 @@ jobs:
       - name: Testes — Web E2E (Playwright)
         working-directory: web
         run: npx playwright test --project=chromium
+        env:
+          NODE_PATH: ../functions/node_modules
 
       - name: Upload — Playwright report
         if: always()
