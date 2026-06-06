@@ -1,6 +1,6 @@
 import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 
 
@@ -220,7 +220,7 @@ async function logKeepWarmMetrics(
     await db().collection("metrics").add({
       type: "keep_warm_cycle",
       timestamp:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       function_count: results.length,
       success_count: successCount,

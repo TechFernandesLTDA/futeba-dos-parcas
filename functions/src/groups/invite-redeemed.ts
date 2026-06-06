@@ -28,6 +28,7 @@
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {isRecord} from "../validation/guards";
 
@@ -175,7 +176,7 @@ export const onInviteRedeemed = onDocumentUpdated(
         user_photo: joinerPhoto,
         role: "MEMBER",
         status: "ACTIVE",
-        joined_at: admin.firestore.FieldValue.serverTimestamp(),
+        joined_at: FieldValue.serverTimestamp(),
         joined_via_invite: code,
       });
 
@@ -186,7 +187,7 @@ export const onInviteRedeemed = onDocumentUpdated(
         group_name: groupName,
         group_photo: groupPhoto,
         role: "MEMBER",
-        joined_at: admin.firestore.FieldValue.serverTimestamp(),
+        joined_at: FieldValue.serverTimestamp(),
       });
     });
 

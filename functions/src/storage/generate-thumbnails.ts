@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions/v2";
 import {logger} from "firebase-functions/v2";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {Storage} from "@google-cloud/storage";
 import * as path from "path";
@@ -240,7 +240,7 @@ export const generateProfileThumbnail =
               .update({
                 photo_thumbnail_path: thumbFilePath,
                 photo_thumbnail_updated_at:
-                  admin.firestore.FieldValue
+                  FieldValue
                     .serverTimestamp(),
               });
 
@@ -259,7 +259,7 @@ export const generateProfileThumbnail =
         await db().collection("metrics").add({
           type: "thumbnail_generated",
           timestamp:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           original_file: filePath,
           thumbnail_file: thumbFilePath,
@@ -296,7 +296,7 @@ export const generateProfileThumbnail =
         await db().collection("metrics").add({
           type: "thumbnail_error",
           timestamp:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           original_file: filePath,
           error: String(error),
@@ -454,7 +454,7 @@ export const generateGroupThumbnail =
               .update({
                 photo_thumbnail_path: thumbFilePath,
                 photo_thumbnail_updated_at:
-                  admin.firestore.FieldValue
+                  FieldValue
                     .serverTimestamp(),
               });
 
@@ -471,7 +471,7 @@ export const generateGroupThumbnail =
         await db().collection("metrics").add({
           type: "group_thumbnail_generated",
           timestamp:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           original_file: filePath,
           thumbnail_file: thumbFilePath,
@@ -506,7 +506,7 @@ export const generateGroupThumbnail =
         await db().collection("metrics").add({
           type: "group_thumbnail_error",
           timestamp:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           original_file: filePath,
           error: String(error),

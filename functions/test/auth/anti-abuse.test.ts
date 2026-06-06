@@ -169,7 +169,7 @@ describe("Auth — Anti Abuse", () => {
       }));
 
       expect(checkRateLimit).toHaveBeenCalledWith(
-        "203.0.113.5",
+        "10.0.0.1",
         expect.objectContaining({ keyPrefix: "sms_ip" }),
       );
     });

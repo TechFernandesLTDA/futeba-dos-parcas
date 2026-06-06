@@ -26,6 +26,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 
 const getDb = () => admin.firestore();
 
@@ -153,11 +154,11 @@ export async function softDelete(
     // Montar campos de atualização
     const updateFields: Record<string, unknown> = {
       deleted_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       deleted_by: deletedBy,
       updated_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       ...options.additionalFields,
     };
@@ -268,16 +269,16 @@ export async function restoreSoftDeleted(
     // Montar campos de atualização
     const updateFields: Record<string, unknown> = {
       deleted_at:
-        admin.firestore.FieldValue.delete(),
+        FieldValue.delete(),
       deleted_by:
-        admin.firestore.FieldValue.delete(),
+        FieldValue.delete(),
       deleted_reason:
-        admin.firestore.FieldValue.delete(),
+        FieldValue.delete(),
       updated_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       restored_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       restored_by: restoredBy,
       ...options.additionalFields,
@@ -413,10 +414,19 @@ export async function cleanupSoftDeleted(
       // FIX #2481 (LGPD): batch.delete NÃO apaga subcoleções — deixava
       // groups/{id}/members/* órfãos (PII retida). Para coleções com
       // subcoleções, recursiveDelete (BulkWriter) remove a árvore inteira.
+      // FIX #2529: recursiveDelete é memory-intensive (BulkWriter interno).
+      // Com batchSize=500 (locations), 500 concurrent recursiveDelete
+      // causavam OOM em 256MiB. Agora processa em chunks de
+      // RECURSIVE_DELETE_CONCURRENCY para limitar o pico de memória.
       if (recursive) {
-        await Promise.all(
-          snapshot.docs.map((doc) => db.recursiveDelete(doc.ref))
-        );
+        const CONCURRENCY = 10;
+        const docs = snapshot.docs;
+        for (let i = 0; i < docs.length; i += CONCURRENCY) {
+          const chunk = docs.slice(i, i + CONCURRENCY);
+          await Promise.all(
+            chunk.map((doc) => db.recursiveDelete(doc.ref))
+          );
+        }
       } else {
         const batch = db.batch();
         for (const doc of snapshot.docs) {
@@ -500,7 +510,7 @@ export async function softDeleteGroupCascade(
 
   try {
     const now =
-      admin.firestore.FieldValue.serverTimestamp();
+      FieldValue.serverTimestamp();
 
     // 1. Soft-delete do grupo
     const groupRef = db
@@ -554,7 +564,7 @@ export async function softDeleteGroupCascade(
       let q = db
         .collection("games")
         .where("group_id", "==", groupId)
-        .orderBy(admin.firestore.FieldPath.documentId())
+        .orderBy(FieldPath.documentId())
         .limit(500);
       if (lastGameDoc) q = q.startAfter(lastGameDoc);
 

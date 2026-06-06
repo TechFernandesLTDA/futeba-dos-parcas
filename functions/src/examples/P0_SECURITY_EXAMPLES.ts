@@ -19,6 +19,7 @@ import {
 } from "../middleware/secure-callable-wrapper";
 import {RATE_LIMITS, checkRateLimit} from "../middleware/rate-limiter";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 
 
@@ -68,7 +69,7 @@ export const adminSetUserRole = secureCallable(
     // Sync to Firestore
     await db().collection("users").doc(uid).update({
       role,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -138,8 +139,8 @@ export const createLocation = secureCallable(
       is_active: true,
       is_verified: false, // Admin verifica depois
       rating: 0,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -190,7 +191,7 @@ export const confirmGameParticipation = secureCallable(
       user_id: userId,
       status: "CONFIRMED",
       position,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_at: FieldValue.serverTimestamp(),
     });
 
     return {

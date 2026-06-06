@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import {
@@ -231,7 +232,7 @@ export const checkSeasonEnd = onSchedule(
               // só usa serverTimestamp() na primeira gravação.
               frozen_at:
                 existingFrozenAt.get(standingId) ??
-                admin.firestore.FieldValue.serverTimestamp(),
+                FieldValue.serverTimestamp(),
             });
             operationCount++;
             if (operationCount >= BATCH_LIMIT) {
@@ -323,7 +324,7 @@ export const checkSeasonEnd = onSchedule(
             end_date: nextEndDateStr,
             is_active: true,
             created_at:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
             type: "MONTHLY",
           };
@@ -374,7 +375,7 @@ export const checkSeasonEnd = onSchedule(
         batch.update(doc.ref, {
           is_active: false,
           closed_at:
-            admin.firestore.FieldValue.serverTimestamp(),
+            FieldValue.serverTimestamp(),
         });
         operationCount++;
         if (operationCount >= BATCH_LIMIT) {

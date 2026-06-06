@@ -16,7 +16,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "seed:e2e": "tsx ../scripts/seed-e2e-users.ts",
-    "lighthouse": "lhci autorun"
+    "lighthouse": "lhci autorun",
+    "seed:e2e:groups": "tsx ../scripts/seed-e2e-groups.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.11.3",

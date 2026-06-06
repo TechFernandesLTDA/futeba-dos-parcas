@@ -132,7 +132,6 @@ jest.mock("firebase-functions/v2/scheduler", () => ({
 jest.mock("../src/activities", () => ({}));
 jest.mock("../src/reminders", () => ({}));
 jest.mock("../src/season", () => ({}));
-jest.mock("../src/seeding", () => ({}));
 jest.mock("../src/user-management", () => ({}));
 jest.mock("../src/maintenance/cleanup-old-logs", () => ({}));
 jest.mock("../src/maintenance/soft-delete", () => ({}));

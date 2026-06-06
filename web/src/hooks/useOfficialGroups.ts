@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   orderBy,
   where,
   writeBatch,
+  setDoc,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -86,10 +87,31 @@ export function useJoinOfficialGroup() {
     mutationFn: async (officialGroup: OfficialGroup) => {
       if (!uid || !userName) throw new Error('Você precisa estar logado.');
 
-      const batch = writeBatch(db);
+      const groupRef = doc(db, 'groups', officialGroup.id);
       const memberRef = doc(db, 'groups', officialGroup.id, 'members', uid);
       const userGroupRef = doc(db, 'users', uid, 'groups', officialGroup.id);
-      const groupRef = doc(db, 'groups', officialGroup.id);
+
+      // Verifica se o grupo já existe em groups/. Se não existir,
+      // cria PRIMEIRO (antes do batch) porque as regras do membro
+      // usam get() no doc do grupo, que lê o estado pré-batch.
+      const groupSnap = await getDoc(groupRef);
+      if (!groupSnap.exists()) {
+        // Cria o grupo em write separado (antes do batch) para que
+        // isGroupActive() e .is_public passem na criação do membro
+        await setDoc(groupRef, {
+          name: officialGroup.name,
+          description: officialGroup.description || '',
+          is_public: true,
+          status: 'ACTIVE',
+          owner_id: uid,
+          admin_ids: [uid],
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        });
+      }
+
+      // Agora o grupo já existe — batch com membro + user-group
+      const batch = writeBatch(db);
 
       batch.set(memberRef, {
         user_id: uid,
@@ -109,11 +131,6 @@ export function useJoinOfficialGroup() {
         role: 'MEMBER',
         member_count: officialGroup.memberCount,
         joined_at: serverTimestamp(),
-      });
-
-      batch.update(groupRef, {
-        member_count: (officialGroup.memberCount || 0) + 1,
-        members: [uid],
       });
 
       await batch.commit();

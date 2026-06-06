@@ -8,6 +8,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {
   FIRESTORE_WHERE_IN_LIMIT,
   GAME_GENDERS,
@@ -211,38 +212,35 @@ export function determineGameResults(
   > = {};
   if (teams.length < 2) return results;
 
-  const t1 = teams.find(
-    (t) => t.id === (
-      liveScore ?
-        liveScore.team1Id :
-        teams[0].id
-    )
-  );
-  const t2 = teams.find(
-    (t) => t.id === (
-      liveScore ?
-        liveScore.team2Id :
-        teams[1].id
-    )
-  );
+  // FIX #2526: modelo "ranking por placar" para N >= 2 times.
+  // Maior placar = WIN, menor = LOSS, intermediários = DRAW.
+  // Todos empatados = DRAW. Com 2 times reduz ao modelo clássico.
+  // Usa liveScore como preferência para resolver placar (compat
+  // reversa), fallback para team.score (N times ou ausência de
+  // liveScore).
+  const resolveScore = (t: Team): number => {
+    if (liveScore) {
+      if (t.id === liveScore.team1Id) return liveScore.team1Score;
+      if (t.id === liveScore.team2Id) return liveScore.team2Score;
+    }
+    return t.score;
+  };
 
-  let s1 = t1 ? t1.score : 0;
-  let s2 = t2 ? t2.score : 0;
-  if (liveScore) {
-    s1 = liveScore.team1Score;
-    s2 = liveScore.team2Score;
-  }
+  const scores = teams.map(resolveScore);
+  const maxScore = Math.max(...scores);
+  const minScore = Math.min(...scores);
 
-  if (t1 && t2) {
-    if (s1 > s2) {
-      results[t1.id] = "WIN";
-      results[t2.id] = "LOSS";
-    } else if (s2 > s1) {
-      results[t1.id] = "LOSS";
-      results[t2.id] = "WIN";
+  for (let i = 0; i < teams.length; i++) {
+    const id = teams[i].id;
+    const s = scores[i];
+    if (maxScore === minScore) {
+      results[id] = "DRAW";
+    } else if (s === maxScore) {
+      results[id] = "WIN";
+    } else if (s === minScore) {
+      results[id] = "LOSS";
     } else {
-      results[t1.id] = "DRAW";
-      results[t2.id] = "DRAW";
+      results[id] = "DRAW";
     }
   }
   return results;
@@ -262,29 +260,26 @@ export function getOpponentScore(
   liveScore: LiveGameScore | null,
   teams: Team[]
 ): number {
-  if (liveScore) {
-    if (
-      team &&
-      team.id === liveScore.team1Id
-    ) {
-      return liveScore.team2Score;
-    } else if (
-      team &&
-      team.id === liveScore.team2Id
-    ) {
-      return liveScore.team1Score;
+  if (!team || teams.length < 2) return -1;
+
+  // FIX #2526: para N >= 2 times, usar média (arredondada) dos
+  // placares dos DEMAIS times. Com 2 times = placar do único
+  // oponente (idêntico ao comportamento antigo). Substitui a
+  // lógica antiga que só tratava 2 times e retornava -1 p/ N > 2.
+  const resolveScore = (t: Team): number => {
+    if (liveScore) {
+      if (t.id === liveScore.team1Id) return liveScore.team1Score;
+      if (t.id === liveScore.team2Id) return liveScore.team2Score;
     }
-  } else if (
-    teams.length >= 2 && team
-  ) {
-    const opponent = teams.find(
-      (t) => t.id !== team.id
-    );
-    if (opponent) {
-      return opponent.score;
-    }
-  }
-  return -1;
+    return t.score;
+  };
+
+  const others = teams.filter((t) => t.id !== team.id);
+  if (others.length === 0) return -1;
+  return Math.round(
+    others.reduce((sum, t) => sum + resolveScore(t), 0) /
+      others.length
+  );
 }
 
 // ==========================================
@@ -323,8 +318,7 @@ export async function fetchAllUsers(
     chunks.map((chunk) =>
       db().collection("users")
         .where(
-          admin.firestore
-            .FieldPath.documentId(),
+          FieldPath.documentId(),
           "in",
           chunk
         )
@@ -382,8 +376,7 @@ export async function fetchAllStats(
     chunks.map((chunk) =>
       db().collection("statistics")
         .where(
-          admin.firestore
-            .FieldPath.documentId(),
+          FieldPath.documentId(),
           "in",
           chunk
         )
@@ -605,7 +598,7 @@ export function updateSeasonParticipation(
   // cada chamada para evitar aliasing do mesmo sentinel entre o
   // campo plano (combinado) e o mapa by_gender.{gender} (segmentado).
   const buildStats = (): Record<string, unknown> => {
-    const inc = admin.firestore.FieldValue.increment;
+    const inc = FieldValue.increment;
     return {
       points: inc(pointsToAdd),
       games_played: inc(1),

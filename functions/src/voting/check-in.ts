@@ -16,6 +16,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 // FIX #2199: crypto.randomUUID() era usado sem import (undefined em runtime).
 import crypto from "crypto";
 import {db} from "../_db";
@@ -424,7 +425,7 @@ export const generateCheckinToken = onCall(
       checkin_qr_token_expires_at: admin.firestore.Timestamp.fromMillis(
         Date.now() + 24 * 60 * 60 * 1000
       ),
-      checkin_qr_token_created_at: admin.firestore.FieldValue.serverTimestamp(),
+      checkin_qr_token_created_at: FieldValue.serverTimestamp(),
     });
 
     logger.info("[CHECKIN_QR_TOKEN_GENERATED]", {gameId, uid});

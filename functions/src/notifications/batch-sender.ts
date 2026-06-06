@@ -26,6 +26,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {
   onSchedule,
 } from "firebase-functions/v2/scheduler";
@@ -107,7 +108,7 @@ export interface QueuedNotification {
   /** URL da imagem (opcional) */
   imageUrl?: string;
   /** Timestamp de criação na fila */
-  createdAt?: admin.firestore.FieldValue;
+  createdAt?: FieldValue;
   /** Status: PENDING, PROCESSING, SENT, FAILED */
   status?: string;
   /** Prioridade: HIGH (imediato) ou NORMAL */
@@ -164,7 +165,7 @@ export async function enqueueNotification(
     status: "PENDING",
     priority: notification.priority || "NORMAL",
     createdAt:
-      admin.firestore.FieldValue.serverTimestamp(),
+      FieldValue.serverTimestamp(),
     userIds: notification.userIds,
   });
 
@@ -214,7 +215,7 @@ export async function enqueueNotifications(
       priority:
         notification.priority || "NORMAL",
       createdAt:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
     });
     count++;
@@ -314,7 +315,7 @@ async function processNotificationQueue():
           tx.update(doc.ref, {
             status: "PROCESSING",
             processing_at:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
           });
           return true;
@@ -436,7 +437,7 @@ async function processNotificationQueue():
         await doc.ref.update({
           status: "SENT",
           sent_at:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           result: {
             sent: 0,
@@ -476,7 +477,7 @@ async function processNotificationQueue():
         status: allFailed ? "FAILED" :
           hasTransientFailures ? "PENDING" : "SENT",
         sent_at:
-          admin.firestore.FieldValue
+          FieldValue
             .serverTimestamp(),
         result: {
           sent: sendResult.sent,
@@ -714,7 +715,7 @@ async function fetchTokensInBatch(
         const snapshot = await db
           .collection("users")
           .where(
-            admin.firestore.FieldPath
+            FieldPath
               .documentId(),
             "in",
             chunk
@@ -800,7 +801,7 @@ async function cleanupInvalidTokens(
     for (const chunk of chunks) {
       const snap = await db.collection("users")
         .where(
-          admin.firestore.FieldPath.documentId(),
+          FieldPath.documentId(),
           "in",
           chunk
         )
@@ -833,11 +834,11 @@ async function cleanupInvalidTokens(
 
       if (data?.fcm_token === token) {
         update.fcm_token =
-          admin.firestore.FieldValue.delete();
+          FieldValue.delete();
       }
       if (data?.fcmToken === token) {
         update.fcmToken =
-          admin.firestore.FieldValue.delete();
+          FieldValue.delete();
       }
       const arr = data?.fcmTokens;
       if (
@@ -845,7 +846,7 @@ async function cleanupInvalidTokens(
         (arr as string[]).includes(token)
       ) {
         update.fcmTokens =
-          admin.firestore.FieldValue.arrayRemove(
+          FieldValue.arrayRemove(
             token
           );
       }
@@ -910,7 +911,7 @@ export const processNotificationBatch =
           type:
             "notification_batch_processed",
           timestamp:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           total_targeted:
             result.totalTargeted,
@@ -1174,7 +1175,7 @@ export const cleanupNotificationQueue =
               staleBatch.update(doc.ref, {
                 status: "PENDING",
                 retry_count:
-                  admin.firestore.FieldValue
+                  FieldValue
                     .increment(1),
               });
             }

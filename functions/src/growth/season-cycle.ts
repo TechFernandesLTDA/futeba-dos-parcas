@@ -1,6 +1,7 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 
 const db = () => admin.firestore();
@@ -55,8 +56,8 @@ export const startNewSeason = onSchedule(
         await seasonRef.set({
           name: `Temporada ${getMonthName(monthKey)}`,
           is_active: true,
-          start_date: admin.firestore.FieldValue.serverTimestamp(),
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          start_date: FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         });
 
         logger.info("Created season", {groupId, monthKey});
@@ -128,12 +129,12 @@ export const archiveSeason = onSchedule(
           mvp_points: mvp?.points,
           lanterninha_user_id: lanterninha?.user_id,
           lanterninha_user_name: lanterninha?.user_name,
-          archived_at: admin.firestore.FieldValue.serverTimestamp(),
+          archived_at: FieldValue.serverTimestamp(),
         });
 
         await seasonRef.update({
           is_active: false,
-          end_date: admin.firestore.FieldValue.serverTimestamp(),
+          end_date: FieldValue.serverTimestamp(),
         });
 
         if (mvp) {
@@ -146,7 +147,7 @@ export const archiveSeason = onSchedule(
             name: `MVP da Liga - ${getMonthName(monthKey)}`,
             icon: "🏆",
             type: "MVP_LIGA",
-            earned_at: admin.firestore.FieldValue.serverTimestamp(),
+            earned_at: FieldValue.serverTimestamp(),
             earned: true,
           });
         }

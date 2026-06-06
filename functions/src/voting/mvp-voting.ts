@@ -28,6 +28,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   onCall,
   HttpsError,
@@ -386,7 +387,7 @@ export const submitMvpVote =
               voted_player_id: votedPlayerId,
               category: category,
               voted_at:
-                admin.firestore.FieldValue
+                FieldValue
                   .serverTimestamp(),
               // Campo de rastreabilidade
               attempt_timestamp: Date.now(),
@@ -1097,14 +1098,14 @@ async function applyVotingXpDelta(
       // FIX #1990: atualizar season_participation e ranking_deltas
       // para que o XP de voto conte nos rankings de temporada.
       const isMvp = reason === "MVP";
-      const now = admin.firestore.FieldValue.serverTimestamp();
+      const now = FieldValue.serverTimestamp();
 
       if (activeSeasonId) {
         const seasonPartId = `${activeSeasonId}_${userId}`;
         // Fase 4: espelha o delta de XP/mvp do voto na visão
         // segmentada by_gender.{gender} (campo plano = combinado).
         const gender = normalizeGameGender(rawGame?.gender);
-        const inc = admin.firestore.FieldValue.increment;
+        const inc = FieldValue.increment;
         const genderUpdate: Record<string, unknown> = {
           total_xp: inc(clampedXpDelta),
         };
@@ -1128,12 +1129,12 @@ async function applyVotingXpDelta(
         const weekDeltaId = `week_${weekKey}_${userId}`;
         const monthDeltaId = `month_${monthKey}_${userId}`;
         const rankingFields: Record<string, unknown> = {
-          xp_added: admin.firestore.FieldValue.increment(clampedXpDelta),
+          xp_added: FieldValue.increment(clampedXpDelta),
           updated_at: now,
         };
         if (isMvp) {
           rankingFields.mvp_added =
-            admin.firestore.FieldValue.increment(1);
+            FieldValue.increment(1);
         }
         txn.set(
           db.collection("ranking_deltas").doc(weekDeltaId),
@@ -1158,14 +1159,14 @@ async function applyVotingXpDelta(
         reason,
         transaction_id: logId,
         source: "mvp_voting_concluded",
-        created_at: admin.firestore.FieldValue
+        created_at: FieldValue
           .serverTimestamp(),
       });
       txn.update(userRef, {
         experience_points:
-          admin.firestore.FieldValue.increment(clampedXpDelta),
+          FieldValue.increment(clampedXpDelta),
         level: newLevel,
-        updated_at: admin.firestore.FieldValue
+        updated_at: FieldValue
           .serverTimestamp(),
       });
 

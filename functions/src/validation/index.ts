@@ -9,6 +9,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   MAX_XP_PER_GAME,
   MIN_XP_PER_GAME,
@@ -888,7 +889,7 @@ export async function updateWithOptimisticLock<
           ...updates,
           version: currentVersion + 1,
           updated_at:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
         });
 

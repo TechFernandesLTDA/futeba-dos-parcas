@@ -8,7 +8,6 @@
  * - Validação rigorosa de dados
  */
 
-import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {
@@ -455,10 +454,10 @@ function buildXpLogData(
 
     // Timestamps
     created_at:
-      admin.firestore.FieldValue
+      FieldValue
         .serverTimestamp(),
     processed_at:
-      admin.firestore.FieldValue
+      FieldValue
         .serverTimestamp(),
   };
 }
@@ -633,7 +632,7 @@ export async function processXpIdempotent(
           experience_points: FieldValue.increment(data.xpEarned),
           level: data.levelAfter,
           updated_at:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
         });
 
@@ -644,7 +643,7 @@ export async function processXpIdempotent(
         ) {
           transaction.update(userRef, {
             milestones_achieved:
-              admin.firestore.FieldValue
+              FieldValue
                 .arrayUnion(
                   ...data.metadata
                     .milestonesUnlocked
@@ -854,7 +853,7 @@ export async function processXpBatch(
                 ),
               level: data.levelAfter,
               updated_at:
-                admin.firestore.FieldValue
+                FieldValue
                   .serverTimestamp(),
             });
 
@@ -864,7 +863,7 @@ export async function processXpBatch(
             ) {
               tx.update(userRef, {
                 milestones_achieved:
-                  admin.firestore.FieldValue
+                  FieldValue
                     .arrayUnion(
                       ...data.metadata
                         .milestonesUnlocked

@@ -2,14 +2,16 @@
  * globalSetup do Playwright — executado UMA VEZ antes de qualquer teste.
  *
  * Responsabilidades:
- * 1. Validar que o emulador Firebase Auth está configurado
+ * 1. Validar que os emuladores Firebase estão configurados
  * 2. Executar o seed de usuários E2E no emulador
+ * 3. Executar o seed de grupos E2E no emulador (#2532)
  *
  * Referência Playwright:
  * https://playwright.dev/docs/test-global-setup-teardown
  */
 
 import { seedE2EUsers } from '../../scripts/seed-e2e-users';
+import { seedE2EGroups } from '../../scripts/seed-e2e-groups';
 
 export default async function globalSetup(): Promise<void> {
   // eslint-disable-next-line no-console
@@ -29,6 +31,9 @@ export default async function globalSetup(): Promise<void> {
 
   // Executa o seed dos usuários de teste no emulador
   await seedE2EUsers();
+
+  // Executa o seed de grupos E2E (#2532)
+  await seedE2EGroups();
 
   // eslint-disable-next-line no-console
   console.log('[globalSetup] Setup global concluído. Testes podem iniciar.\n');

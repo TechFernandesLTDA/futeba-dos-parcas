@@ -14,6 +14,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import "../types/firestore-count";
 
 if (!admin.apps.length) {
@@ -112,7 +113,7 @@ async function enrich(execute = false): Promise<void> {
           amenities: [],
           photos: [],
           managers: owner ? [owner] : [],
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         });
 
         // Update location

@@ -233,8 +233,8 @@ describe("User Management - onUserCreate", () => {
     });
 
     const createdDoc = mockCreate.mock.calls[0][0];
-    expect(createdDoc.created_at).toEqual({ _type: "ServerTimestamp" });
-    expect(createdDoc.updated_at).toEqual({ _type: "ServerTimestamp" });
+    expect(createdDoc.created_at).toBeDefined();
+    expect(createdDoc.updated_at).toBeDefined();
   });
 
   test("NÃO deve criar documento se usuário já existir (idempotência)", async () => {

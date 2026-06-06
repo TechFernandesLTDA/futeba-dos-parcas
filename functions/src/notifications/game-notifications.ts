@@ -6,6 +6,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   onDocumentCreated,
   onDocumentUpdated,
@@ -310,7 +311,7 @@ export const onGameVacancy = onDocumentUpdated(
         .doc(gameId)
         .update({
           vacancy_notified_at:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
         });
 

@@ -20,7 +20,7 @@
 
 import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   softDelete,
   restoreSoftDeleted,
@@ -162,7 +162,7 @@ export const softDeleteGame =
         action: "SOFT_DELETE_GAME",
         target_id: gameId,
         performed_by: userId,
-        performed_at: admin.firestore.FieldValue.serverTimestamp(),
+        performed_at: FieldValue.serverTimestamp(),
         reason: reason || null,
         previous_status: gameData?.status || null,
       });
@@ -331,7 +331,7 @@ export const softDeleteGroup =
         action: "SOFT_DELETE_GROUP",
         target_id: groupId,
         performed_by: userId,
-        performed_at: admin.firestore.FieldValue.serverTimestamp(),
+        performed_at: FieldValue.serverTimestamp(),
         reason: reason || null,
         games_affected: result.gamesDeleted,
       });
@@ -718,7 +718,7 @@ export const cleanupAllSoftDeleted =
     await db().collection("metrics").add({
       type: "soft_delete_cleanup_unified",
       timestamp:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       retention_days: RETENTION_DAYS,
       total_deleted: totalDeleted,

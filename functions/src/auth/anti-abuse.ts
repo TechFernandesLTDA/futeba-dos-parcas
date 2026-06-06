@@ -11,6 +11,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
@@ -49,20 +50,14 @@ function isValidIp(value: string): boolean {
 /**
  * Extrai o IP do cliente em GCF v2 atrás de Load Balancer.
  *
- * FIX #2479 (parcial): o código anterior usava `split(",")[0]` — o 1º hop de
- * X-Forwarded-For é justamente a parte CONTROLÁVEL pelo cliente (anti-pattern
- * OWASP). Aqui agora:
- *  1. Sanitizamos: só aceitamos IPs bem-formados; lixo vira "unknown". Isso
- *     elimina de vez a poluição dos audit logs (verification_failures /
- *     audit_logs) — ângulo durável do bug.
- *  2. Logamos a cadeia XFF completa (info) para permitir confirmar
- *     empiricamente a topologia real do deploy (nº de proxies confiáveis)
- *     ANTES de fixar um offset — o autor da issue alertou para não chutar.
+ * FIX #2479: usar o IP MAIS À DIREITA (rightmost) da cadeia X-Forwarded-For.
+ * Em deployments GCP padrão (Firebase Hosting → LB → Cloud Functions), o LB
+ * APPENDA o IP real do cliente à direita da cadeia. O 1º hop (leftmost) é
+ * controlável pelo cliente (pode injetar XFF no request original → bypass de
+ * rate-limit por IP). Usar o rightmost fecha esse vetor.
  *
- * NOTA: o bypass do rate-limit por-IP (atacante rotacionando o 1º hop) NÃO está
- * 100% fechado aqui — depende da topologia. Mitigantes já presentes: auth
- * obrigatório + bucket por-uid (`sms_caller`) independente de XFF. Tracking em
- * #2479 para finalizar a extração após inspeção da cadeia em produção.
+ * Fallback: se nenhum IP válido na cadeia, usa rawRequest.ip (IP da conexão
+ * direta, normalmente o LB — não ideal para rate-limit mas não-spoofable).
  *
  * @param {object} request - Requisição callable.
  * @return {string} IP sanitizado do cliente, ou "unknown".
@@ -78,15 +73,11 @@ function clientIp(request: {rawRequest?: {
     .map((h) => h.trim())
     .filter((h) => h.length > 0);
 
-  if (hops.length > 0) {
-    // Log da cadeia para diagnóstico de topologia (FIX #2479).
-    logger.debug("[ANTI_ABUSE] XFF chain", {hops, count: hops.length});
+  // FIX #2479: rightmost valid IP é o mais confiável em GCP
+  // (LB append). Leftmost era controlável pelo cliente.
+  for (let i = hops.length - 1; i >= 0; i--) {
+    if (isValidIp(hops[i])) return hops[i];
   }
-
-  // Primeiro hop (legado), porém só se for um IP válido — caso contrário não
-  // poluímos logs/buckets com lixo.
-  const firstHop = hops[0];
-  if (firstHop && isValidIp(firstHop)) return firstHop;
 
   const fallback = request.rawRequest?.ip;
   if (fallback && isValidIp(fallback)) return fallback;
@@ -265,7 +256,7 @@ export const logVerificationFailure = onCall(
 
       const ip = clientIp(request);
       const uid = auth.uid;
-      const now = admin.firestore.FieldValue.serverTimestamp();
+      const now = FieldValue.serverTimestamp();
 
       await db().collection("verification_failures").add({
         uid,

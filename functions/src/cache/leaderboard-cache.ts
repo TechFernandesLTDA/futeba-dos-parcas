@@ -28,6 +28,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldPath} from "firebase-admin/firestore";
 import {
   onCall,
   HttpsError,
@@ -512,7 +513,7 @@ async function fetchUsersInBatch(
         const snap = await db
           .collection("users")
           .where(
-            admin.firestore.FieldPath
+            FieldPath
               .documentId(),
             "in",
             chunk

@@ -10,6 +10,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
@@ -162,7 +163,7 @@ export const verifyCpf = onCall(
           );
         }
 
-        const now = admin.firestore.FieldValue.serverTimestamp();
+        const now = FieldValue.serverTimestamp();
 
         tx.set(
           privateRef,
@@ -286,7 +287,7 @@ export const setUserVerified = onCall(
       // Persiste phoneVerifiedAt em users_private (para audit/historico)
       await db.doc(`users_private/${targetUid}`).set(
         {
-          phoneVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+          phoneVerifiedAt: FieldValue.serverTimestamp(),
           phoneNumber: userRecord.phoneNumber,
         },
         {merge: true},
@@ -304,7 +305,7 @@ export const setUserVerified = onCall(
       // Mirror em users/{uid} para listeners cliente (refletir verifiedAt)
       await db.doc(`users/${targetUid}`).set(
         {
-          verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+          verifiedAt: FieldValue.serverTimestamp(),
         },
         {merge: true},
       );
@@ -432,7 +433,7 @@ export const bulkSetVerifiedForExistingUsers = onCall(
                 // Mirror em users/{uid} para listeners cliente
                 await db.doc(`users/${userRecord.uid}`).set(
                   {
-                    verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    verifiedAt: FieldValue.serverTimestamp(),
                   },
                   {merge: true}
                 );

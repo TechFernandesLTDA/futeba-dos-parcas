@@ -1,6 +1,7 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUsers, NotificationType} from "../notifications/helpers";
 
@@ -228,7 +229,7 @@ export const processWeeklyRanking = onSchedule(
       end_date: admin.firestore.Timestamp.fromDate(end),
       rankings,
       total_games: gamesSnap.size,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_at: FieldValue.serverTimestamp(),
     });
 
     // Scout ranking: dream team scoring
@@ -297,7 +298,7 @@ export const processWeeklyRanking = onSchedule(
         week_key: weekKey,
         type: "scout",
         rankings: scoutRankings.slice(0, 50),
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
       });
     }
 
@@ -321,7 +322,7 @@ export const processWeeklyRanking = onSchedule(
           name: `Mito da Rodada ${weekKey}`,
           icon: "👑",
           type: "MITO_RODADA",
-          earned_at: admin.firestore.FieldValue.serverTimestamp(),
+          earned_at: FieldValue.serverTimestamp(),
           expires_at: admin.firestore.Timestamp.fromDate(
             new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           ),

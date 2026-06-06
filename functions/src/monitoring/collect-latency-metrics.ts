@@ -25,7 +25,7 @@
 
 import {logger} from "firebase-functions/v2";
 import * as functions from "firebase-functions/v2";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 
 // ==========================================
@@ -330,7 +330,7 @@ export async function runCollectCallableLatencyMetrics(
   );
 
   const firestoreDb = db();
-  const timestamp = admin.firestore.FieldValue.serverTimestamp();
+  const timestamp = FieldValue.serverTimestamp();
   const batch = firestoreDb.batch();
 
   // Documento de resumo diário

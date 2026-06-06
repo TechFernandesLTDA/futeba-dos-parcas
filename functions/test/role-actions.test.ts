@@ -92,6 +92,9 @@ jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
   },
+  FieldPath: {
+    documentId: jest.fn(() => "__name__"),
+  },
 }));
 
 // FIX #647 STAGE 2: checkInToGame agora chama checkRateLimit ANTES do

@@ -1,6 +1,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 
 const db = () => admin.firestore();
@@ -32,7 +33,7 @@ export const seedOfficialGroups = onCall(
           category: "REGIAO",
           icon: "📍",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Peladeiros da Zona Norte",
@@ -40,7 +41,7 @@ export const seedOfficialGroups = onCall(
           category: "REGIAO",
           icon: "📍",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Peladeiros da Zona Leste",
@@ -48,7 +49,7 @@ export const seedOfficialGroups = onCall(
           category: "REGIAO",
           icon: "📍",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Peladeiros da Zona Oeste",
@@ -56,7 +57,7 @@ export const seedOfficialGroups = onCall(
           category: "REGIAO",
           icon: "📍",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Quarta de Ouro",
@@ -64,7 +65,7 @@ export const seedOfficialGroups = onCall(
           category: "DIA_SEMANA",
           icon: "🗓️",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Sabadão dos Parças",
@@ -72,7 +73,7 @@ export const seedOfficialGroups = onCall(
           category: "DIA_SEMANA",
           icon: "🗓️",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Society Raiz",
@@ -80,7 +81,7 @@ export const seedOfficialGroups = onCall(
           category: "TIPO_CAMPO",
           icon: "⚽",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Campo é Campo",
@@ -88,7 +89,7 @@ export const seedOfficialGroups = onCall(
           category: "TIPO_CAMPO",
           icon: "⚽",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Futsal Nato",
@@ -96,7 +97,7 @@ export const seedOfficialGroups = onCall(
           category: "TIPO_CAMPO",
           icon: "⚽",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Master 35+",
@@ -104,7 +105,7 @@ export const seedOfficialGroups = onCall(
           category: "FAIXA_ETARIA",
           icon: "👴",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
         {
           name: "Sub-30 Crias",
@@ -112,7 +113,7 @@ export const seedOfficialGroups = onCall(
           category: "FAIXA_ETARIA",
           icon: "⚡",
           member_count: 0,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         },
       ];
 

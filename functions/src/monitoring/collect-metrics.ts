@@ -1,6 +1,7 @@
 import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 
 import "../types/firestore-count";
 import {db} from "../_db";
@@ -32,7 +33,7 @@ export const collectHourlyMetrics =
     );
 
     const timestamp =
-      admin.firestore.FieldValue
+      FieldValue
         .serverTimestamp();
     const now = new Date();
 
@@ -286,19 +287,30 @@ export const collectDailyMetrics =
     );
 
     const timestamp =
-      admin.firestore.FieldValue
+      FieldValue
         .serverTimestamp();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // FIX #2528: meia-noite BRT (UTC-3) em vez de UTC.
+    // new Date().setHours(0,0,0,0) no ambiente Cloud
+    // Functions (UTC) setava meia-noite UTC = 21:00 BRT
+    // do dia anterior, deslocando os snapshots diários em 3h.
+    // Agora computa 00:00 BRT = 03:00 UTC explicitamente.
+    const now = new Date();
+    const todayBrt = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      3, 0, 0, 0
+    ));
+    const tomorrowBrt = new Date(todayBrt);
+    tomorrowBrt.setUTCDate(tomorrowBrt.getUTCDate() + 1);
 
     const todayTs =
       admin.firestore.Timestamp
-        .fromDate(today);
+        .fromDate(todayBrt);
     const tomorrowTs =
       admin.firestore.Timestamp
-        .fromDate(tomorrow);
+        .fromDate(tomorrowBrt);
 
     try {
       // Jogos criados hoje
@@ -353,9 +365,9 @@ export const collectDailyMetrics =
       const dailyMetrics = {
         type: "daily_snapshot",
         timestamp: timestamp,
-        date: today.toISOString()
+        date: todayBrt.toISOString()
           .split("T")[0], // YYYY-MM-DD
-        day_of_week: today.getDay(),
+        day_of_week: todayBrt.getDay(),
         games_created:
           gamesCreatedToday.data().count,
         games_finished:

@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
@@ -100,7 +101,7 @@ export async function generateGameFinishedActivityDirect(
         type: "GAME_FINISHED",
         title: fresh.name || "Futebol dos Parcas",
         description,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
         reference_id: gameId,
         reference_type: "GAME",
         user_id: ownerId,

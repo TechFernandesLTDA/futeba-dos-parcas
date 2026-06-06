@@ -41,10 +41,10 @@ const mockCollection = jest.fn((name?: string) => ({
 }));
 
 const indexFieldValue = {
-  serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
-  delete: jest.fn(() => ({ _type: "FieldDelete" })),
-  increment: jest.fn((n: number) => ({ _type: "Increment", value: n })),
-  arrayUnion: jest.fn((...args: any[]) => ({ _type: "ArrayUnion", elements: args })),
+  serverTimestamp: jest.fn(() => ({})),
+  delete: jest.fn(() => ({})),
+  increment: jest.fn((n: number) => ({ operand: n })),
+  arrayUnion: jest.fn((...args: any[]) => ({ elements: args })),
 };
 const indexTimestamp = {
   now: jest.fn(() => ({ toDate: () => new Date(), _type: "Timestamp" })),
@@ -366,7 +366,7 @@ describe("Index — Funcoes do index.ts", () => {
 
       expect(mockDocUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          players_count: { _type: "Increment", value: 1 },
+          players_count: { operand: 1 },
         }),
       );
     });
@@ -379,7 +379,7 @@ describe("Index — Funcoes do index.ts", () => {
 
       expect(mockDocUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          players_count: { _type: "Increment", value: -1 },
+          players_count: { operand: -1 },
         }),
       );
     });
@@ -413,7 +413,7 @@ describe("Index — Funcoes do index.ts", () => {
 
       expect(mockDocUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          players_count: { _type: "Increment", value: 1 },
+          players_count: { operand: 1 },
         }),
       );
     });

@@ -16,6 +16,7 @@
 import {logger} from "firebase-functions";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   FUNCTION_REGION,
 } from "./constants";
@@ -680,7 +681,7 @@ async function markReminderSent(
       await confirmationRef.update({
         [reminderField]: true,
         [tsField]:
-          admin.firestore.FieldValue
+          FieldValue
             .serverTimestamp(),
       });
     } else {
@@ -696,7 +697,7 @@ async function markReminderSent(
           user_id: userId,
           reminder_type: reminderType,
           sent_at:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
         });
     }
@@ -1083,7 +1084,7 @@ export const autoCancelLowQuorum = onSchedule(
             cancel_reason: "Baixo quórum",
             cancelled_by: "system",
             updated_at:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
           });
 
@@ -1270,7 +1271,7 @@ export const processExpiredWaitlistEntries =
               if (freshData?.status !== "NOTIFIED") return; // another worker already handled
 
               // 1. Mark entry as EXPIRED
-              const serverTs = admin.firestore.FieldValue.serverTimestamp();
+              const serverTs = FieldValue.serverTimestamp();
               tx.update(doc.ref, {
                 status: "EXPIRED",
                 expired_at: serverTs,
@@ -1296,7 +1297,7 @@ export const processExpiredWaitlistEntries =
                 const deadlineMs = now.getTime() + 30 * 60 * 1000;
                 const newDeadline = new Date(deadlineMs);
                 const deadlineTs = admin.firestore.Timestamp.fromDate(newDeadline);
-                const notifTs = admin.firestore.FieldValue.serverTimestamp();
+                const notifTs = FieldValue.serverTimestamp();
 
                 // 4. Update status to NOTIFIED
                 tx.update(nextEntry.ref, {

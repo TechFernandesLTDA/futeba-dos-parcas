@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import {db} from "../_db";
@@ -91,7 +92,7 @@ export const onCashboxEntryWritten = onDocumentWritten(
             last_entry_at: lastEntryMillis > 0 ?
               admin.firestore.Timestamp.fromMillis(lastEntryMillis) :
               null,
-            recomputed_at: admin.firestore.FieldValue.serverTimestamp(),
+            recomputed_at: FieldValue.serverTimestamp(),
           },
           {merge: true}
         );

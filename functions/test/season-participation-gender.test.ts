@@ -14,7 +14,7 @@
 jest.mock("firebase-admin", () => {
   const mockFieldValue = {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
-    increment: jest.fn((n: number) => ({_type: "Increment", value: n})),
+    increment: jest.fn((n: number) => ({operand: n})),
   };
   const mockAdmin: Record<string, unknown> = {
     apps: [{name: "test"}],
@@ -39,7 +39,7 @@ import {
 } from "../src/game/helpers";
 import {GameConfirmation} from "../src/models";
 
-type Increment = {_type: "Increment"; value: number};
+type Increment = {operand: number};
 
 /** Cria um batch mock que registra as chamadas set(). */
 function createBatch() {
@@ -99,18 +99,18 @@ describe("updateSeasonParticipation — segmentação by_gender", () => {
     expect(docMock).toHaveBeenCalledWith("2026-06_uid1");
 
     // Campo plano = combinado (comportamento histórico preservado)
-    expect((data.points as Increment).value).toBe(3);
-    expect((data.wins as Increment).value).toBe(1);
-    expect((data.goals_scored as Increment).value).toBe(2);
-    expect((data.assists as Increment).value).toBe(1);
-    expect((data.mvp_count as Increment).value).toBe(1);
+    expect((data.points as Increment).operand).toBe(3);
+    expect((data.wins as Increment).operand).toBe(1);
+    expect((data.goals_scored as Increment).operand).toBe(2);
+    expect((data.assists as Increment).operand).toBe(1);
+    expect((data.mvp_count as Increment).operand).toBe(1);
 
     // Visão segmentada espelha os mesmos incrementos sob MALE
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
-    expect(byGender.MALE.points.value).toBe(3);
-    expect(byGender.MALE.wins.value).toBe(1);
-    expect(byGender.MALE.goals_scored.value).toBe(2);
-    expect(byGender.MALE.mvp_count.value).toBe(1);
+    expect(byGender.MALE.points.operand).toBe(3);
+    expect(byGender.MALE.wins.operand).toBe(1);
+    expect(byGender.MALE.goals_scored.operand).toBe(2);
+    expect(byGender.MALE.mvp_count.operand).toBe(1);
     // NÃO cria buckets de outros gêneros neste write
     expect(byGender.FEMALE).toBeUndefined();
     expect(byGender.MIXED).toBeUndefined();
@@ -133,8 +133,8 @@ describe("updateSeasonParticipation — segmentação by_gender", () => {
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
     // Mesmo valor, mas objetos distintos (factory gera novos sentinels)
     expect(data.points).not.toBe(byGender.FEMALE.points);
-    expect((data.points as Increment).value).toBe(
-      byGender.FEMALE.points.value
+    expect((data.points as Increment).operand).toBe(
+      byGender.FEMALE.points.operand
     );
   });
 
@@ -151,9 +151,9 @@ describe("updateSeasonParticipation — segmentação by_gender", () => {
     );
     const data = calls[0].data;
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
-    expect((data.points as Increment).value).toBe(1); // empate = 1 ponto
-    expect(byGender.MIXED.points.value).toBe(1);
-    expect(byGender.MIXED.draws.value).toBe(1);
+    expect((data.points as Increment).operand).toBe(1); // empate = 1 ponto
+    expect(byGender.MIXED.points.operand).toBe(1);
+    expect(byGender.MIXED.draws.operand).toBe(1);
   });
 
   it("derrota: 0 pontos no plano e no by_gender", () => {
@@ -171,9 +171,9 @@ describe("updateSeasonParticipation — segmentação by_gender", () => {
     );
     const data = calls[0].data;
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
-    expect((data.points as Increment).value).toBe(0);
-    expect((data.losses as Increment).value).toBe(1);
-    expect(byGender.MALE.points.value).toBe(0);
-    expect(byGender.MALE.losses.value).toBe(1);
+    expect((data.points as Increment).operand).toBe(0);
+    expect((data.losses as Increment).operand).toBe(1);
+    expect(byGender.MALE.points.operand).toBe(0);
+    expect(byGender.MALE.losses.operand).toBe(1);
   });
 });

@@ -12,6 +12,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   processXpIdempotent,
   processXpBatch,
@@ -255,12 +256,12 @@ export async function processXpHybrid(
     const userUpdate: Record<string, unknown> = {
       experience_points: params.finalXp,
       level: params.newLevel,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     };
 
     if (params.newMilestones.length > 0) {
       userUpdate.milestones_achieved =
-        admin.firestore.FieldValue.arrayUnion(...params.newMilestones);
+        FieldValue.arrayUnion(...params.newMilestones);
     }
 
     legacyBatch.update(userRef, userUpdate);
@@ -302,7 +303,7 @@ export async function processXpHybrid(
       was_worst_player: params.conf.is_worst_player === true,
       game_result: params.result,
       milestones_unlocked: params.newMilestones,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_at: FieldValue.serverTimestamp(),
     };
 
     legacyBatch.set(logRef, log);
