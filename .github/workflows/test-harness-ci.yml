@@ -103,12 +103,14 @@ jobs:
       - name: Seed — usuários E2E
         run: npx tsx scripts/seed-e2e-users.ts
         env:
+          NODE_PATH: functions/node_modules
           FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
           FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
 
       - name: Seed — grupos E2E
         run: npx tsx scripts/seed-e2e-groups.ts
         env:
+          NODE_PATH: functions/node_modules
           FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
           FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
 
@@ -174,6 +176,5 @@ jobs:
       - name: Stop emulator (cleanup)
         if: always()
         run: |
-          firebase emulators:stop 2>/dev/null || true
           # Mata qualquer processo residual do emulador
           pkill -f "firebase.*emulator" 2>/dev/null || true

@@ -66,6 +66,31 @@ jobs:
         working-directory: web
         run: npx playwright install --with-deps chromium
 
+      - name: Iniciar emuladores (background)
+        run: |
+          firebase emulators:start \
+            --only auth,firestore,functions \
+            --project futebadosparcas &
+          for i in $(seq 1 30); do
+            curl -s http://127.0.0.1:9099 > /dev/null 2>&1 && break
+            sleep 2
+          done
+        continue-on-error: false
+
+      - name: Seed — usuários E2E
+        run: npx tsx scripts/seed-e2e-users.ts
+        env:
+          NODE_PATH: functions/node_modules
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
+
+      - name: Seed — grupos E2E
+        run: npx tsx scripts/seed-e2e-groups.ts
+        env:
+          NODE_PATH: functions/node_modules
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
+
       - name: Build web app
         working-directory: web
         run: npm run build
@@ -77,30 +102,6 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: futebadosparcas.appspot.com
           VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000"
-
-      - name: Seed — usuários E2E
-        run: npx tsx scripts/seed-e2e-users.ts
-        env:
-          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-
-      - name: Seed — grupos E2E
-        run: npx tsx scripts/seed-e2e-groups.ts
-        env:
-          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-
-      - name: Iniciar emuladores
-        run: |
-          firebase emulators:start \
-            --only auth,firestore,functions \
-            --project futebadosparcas &
-          echo "EMULATOR_PID=$!" >> $GITHUB_ENV
-          for i in $(seq 1 30); do
-            curl -s http://127.0.0.1:9099 > /dev/null 2>&1 && break
-            sleep 2
-          done
-        continue-on-error: false
 
       - name: Testes — Web E2E (Playwright)
         working-directory: web
@@ -119,6 +120,4 @@ jobs:
 
       - name: Stop emulator (cleanup)
         if: always()
-        run: |
-          firebase emulators:stop 2>/dev/null || true
-          pkill -f "firebase.*emulator" 2>/dev/null || true
+        run: pkill -f "firebase.*emulator" 2>/dev/null || true
