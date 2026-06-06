@@ -298,6 +298,27 @@ describe("groups — atualização", () => {
       })
     );
   });
+
+  // Fase 4b: default_gender do grupo (mesmo conjunto válido do jogo).
+  it("Owner pode definir default_gender válido (MALE)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        default_gender: "MALE",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner NÃO pode definir default_gender inválido (OTHER)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        default_gender: "OTHER", // inválido
+        updated_at: new Date(),
+      })
+    );
+  });
 });
 
 // ============================================================

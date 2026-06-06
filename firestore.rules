@@ -324,6 +324,14 @@ service cloud.firestore {
       return value == null || value is string;
     }
 
+    // Valida o gênero do jogo (Fase 4b) ∈ {MALE, FEMALE, MIXED}.
+    // Enforcement SOFT: valida apenas a categoria do JOGO, NUNCA o gênero do
+    // usuário (não bloqueia ninguém de confirmar presença). Tolerante a
+    // ausência: jogos legados sem o campo continuam válidos (lidos como MIXED).
+    function isValidGameGender(value) {
+      return value == null || value in ['MALE', 'FEMALE', 'MIXED'];
+    }
+
     // Valida latitude no range -90 a 90 (#29 - Validação de coordenadas)
     function isValidLatitude(lat) {
       return lat == null || (lat is number && lat >= -90.0 && lat <= 90.0);
@@ -608,7 +616,9 @@ service cloud.firestore {
                        isNonNegativeNumber(request.resource.data.players_count) &&
                        isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
                        // Validacao de coordenadas (#29)
-                       hasValidCoordinates(request.resource.data);
+                       hasValidCoordinates(request.resource.data) &&
+                       // Validacao de genero do jogo (Fase 4b) - enforcement SOFT
+                       isValidGameGender(request.resource.data.get('gender', null));
 
       // Apenas o dono pode atualizar o jogo
       // Excecao: contadores (players_count, goalkeepers_count) podem ser
@@ -625,7 +635,9 @@ service cloud.firestore {
          isValidScore(request.resource.data.team1_score) &&
          isValidScore(request.resource.data.team2_score) &&
          isNonNegativeNumber(request.resource.data.players_count) &&
-         isNonNegativeNumber(request.resource.data.goalkeepers_count)) ||
+         isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
+         // Validacao de genero do jogo (Fase 4b) - enforcement SOFT
+         isValidGameGender(request.resource.data.get('gender', null))) ||
         // Outros usuarios so podem atualizar contadores via transacao
         // Bug fix: Restrito a membros do grupo ou participantes confirmados do jogo
         (onlyAllowedFields(['players_count', 'goalkeepers_count']) &&
@@ -1376,7 +1388,10 @@ service cloud.firestore {
                        // H2 FIX: status inicial deve ser ACTIVE (consistente com games que forcam SCHEDULED)
                        request.resource.data.status == 'ACTIVE' &&
                        // Descricao: max 500 caracteres
-                       isValidDescription(request.resource.data.description);
+                       isValidDescription(request.resource.data.description) &&
+                       // Genero padrao do grupo (Fase 4b): mesmo conjunto valido do
+                       // jogo {MALE,FEMALE,MIXED}; null = sem padrao. Enforcement SOFT.
+                       isValidGameGender(request.resource.data.get('default_gender', null));
 
       // Validacoes no update de grupo (issue #515).
       // FIX: validar name/description APENAS quando estao sendo alterados.
@@ -1410,6 +1425,11 @@ service cloud.firestore {
           (
             !('description' in request.resource.data.diff(resource.data).affectedKeys()) ||
             isValidDescription(request.resource.data.description)
+          ) &&
+          // Valida default_gender (Fase 4b) SO se estiver no diff
+          (
+            !('default_gender' in request.resource.data.diff(resource.data).affectedKeys()) ||
+            isValidGameGender(request.resource.data.get('default_gender', null))
           )
         )
         // SECFIX #611 / #626: member_count é SERVER-AUTHORITATIVE.

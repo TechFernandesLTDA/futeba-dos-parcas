@@ -395,6 +395,50 @@ describe("games — criação", () => {
       })
     );
   });
+
+  // Fase 4b: gênero do jogo. Enforcement SOFT — valida apenas a categoria do
+  // JOGO ∈ {MALE,FEMALE,MIXED}, nunca o gênero do usuário.
+  it("Player pode criar jogo com gender válido (FEMALE)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("games/game-gender-female").set({
+        title: "Jogo Feminino",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        gender: "FEMALE",
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+        group_id: null,
+        co_organizers: [],
+      })
+    );
+  });
+
+  it("Player NÃO pode criar jogo com gender inválido (OTHER)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-gender-invalid").set({
+        title: "Gênero Inválido",
+        owner_id: UID_PLAYER_A,
+        status: "SCHEDULED",
+        date_time: futureDate,
+        max_players: 10,
+        max_goalkeepers: 2,
+        gender: "OTHER", // inválido — só MALE/FEMALE/MIXED
+        players_count: 0,
+        goalkeepers_count: 0,
+        team1_score: null,
+        team2_score: null,
+        group_id: null,
+        co_organizers: [],
+      })
+    );
+  });
 });
 
 // ============================================================
@@ -446,6 +490,35 @@ describe("games — atualização", () => {
     const db = asPlayerB(testEnv);
     await assertFails(
       db.doc(`games/${GAME_ACTIVE}`).update({ owner_id: UID_PLAYER_B })
+    );
+  });
+
+  // Fase 4b: dono pode trocar o gênero do jogo desde que válido.
+  it("Dono pode atualizar gênero do jogo para valor válido (FEMALE)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`games/${GAME_PLAYER_A_OWNER}`).update({
+        gender: "FEMALE",
+        status: "SCHEDULED",
+        team1_score: null,
+        team2_score: null,
+        players_count: 0,
+        goalkeepers_count: 0,
+      })
+    );
+  });
+
+  it("Dono NÃO pode atualizar gênero do jogo para valor inválido (OTHER)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`games/${GAME_PLAYER_A_OWNER}`).update({
+        gender: "OTHER", // inválido
+        status: "SCHEDULED",
+        team1_score: null,
+        team2_score: null,
+        players_count: 0,
+        goalkeepers_count: 0,
+      })
     );
   });
 });
