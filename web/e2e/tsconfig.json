@@ -12,6 +12,6 @@
     "outDir": "../dist-e2e",
     "rootDir": "."
   },
-  "include": ["./**/*.ts", "../scripts/seed-e2e-users.ts"],
+  "include": ["./**/*.ts", "../scripts/seed-e2e-users.ts", "../scripts/seed-e2e-groups.ts"],
   "exclude": ["../node_modules"]
 }
