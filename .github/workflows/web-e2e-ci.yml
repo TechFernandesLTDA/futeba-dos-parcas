@@ -1,13 +1,15 @@
 name: Web E2E CI (#2533)
 
 on:
-  pull_request:
-    branches: [master, develop]
-    paths:
-      - "web/**"
-      - "functions/**"
-      - "firestore.rules"
-      - ".github/workflows/web-e2e-ci.yml"
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Filtro opcional de testes (ex: grupos.spec.ts)'
+        required: false
+        default: ''
+  schedule:
+    # Executa diariamente às 5h BRT (8h UTC) para detectar regressões
+    - cron: '0 8 * * *'
 
 jobs:
   web-e2e:
