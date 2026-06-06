@@ -11,7 +11,8 @@
  */
 
 import { seedE2EUsers } from '../../scripts/seed-e2e-users';
-import { seedE2EGroups } from '../../scripts/seed-e2e-groups';
+// seedE2EGroups imported via dynamic import() — o tsconfig CJS do e2e
+// não expõe named exports corretamente para scripts fora do rootDir.
 
 export default async function globalSetup(): Promise<void> {
   // eslint-disable-next-line no-console
@@ -32,7 +33,9 @@ export default async function globalSetup(): Promise<void> {
   // Executa o seed dos usuários de teste no emulador
   await seedE2EUsers();
 
-  // Executa o seed de grupos E2E (#2532)
+  // Executa o seed de grupos E2E (#2532) via dynamic import
+  // (evita SyntaxError de named export em contexto CJS do Playwright)
+  const { seedE2EGroups } = await import('../../scripts/seed-e2e-groups');
   await seedE2EGroups();
 
   // eslint-disable-next-line no-console
