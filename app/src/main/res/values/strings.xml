@@ -2050,6 +2050,17 @@ subir no ranking!</string>
     <string name="statistics_average">media</string>
     <string name="statistics_points">pontos</string>
 
+    <!-- Game Gender / Category (FASE 2) - jogo masculino/feminino/misto -->
+    <string name="game_gender">Gênero do jogo</string>
+    <string name="game_gender_male">Masculino</string>
+    <string name="game_gender_female">Feminino</string>
+    <string name="game_gender_mixed">Misto</string>
+    <!-- Filtro de gênero na lista de jogos (FASE 3) -->
+    <string name="game_gender_filter_all">Todos</string>
+    <!-- Group default gender (FASE 2) - padrão opcional do grupo -->
+    <string name="group_default_gender">Gênero padrão</string>
+    <string name="group_default_gender_none">Sem padrão</string>
+
     <!-- Create Game - Additional (migrated from moko-resources) -->
     <string name="create_game_label_visibility">Visibilidade</string>
     <string name="create_game_hint_price">Preço por jogador</string>

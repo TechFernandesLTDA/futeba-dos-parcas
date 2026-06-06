@@ -16,6 +16,7 @@ import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameDetailConsolidated
 import com.futebadosparcas.domain.model.GameEvent
 import com.futebadosparcas.domain.model.GameFilterType
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.GameWithConfirmations
 import com.futebadosparcas.domain.model.PaginatedGames
 import com.futebadosparcas.domain.model.Team
@@ -381,6 +382,70 @@ class GameQueryRepositoryImpl constructor(
                 } else {
                     Result.success(emptyList())
                 }
+            } catch (localE: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getGamesByGender(gender: GameGender?): Result<List<Game>> {
+        // Sem filtro de genero: reutiliza o caminho padrao.
+        if (gender == null) return getAllGames()
+
+        return try {
+            val uid = auth.currentUser?.uid
+            val genderValue = gender.name
+
+            coroutineScope {
+                // Jogos publicos filtrados por genero (Firestore whereEqualTo).
+                val publicGamesDeferred = async {
+                    gamesCollection
+                        .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
+                        .whereEqualTo("gender", genderValue)
+                        .orderBy("dateTime", Query.Direction.ASCENDING)
+                        .limit(50)
+                        .get()
+                        .await()
+                        .documents.mapNotNull { doc ->
+                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                        }
+                }
+
+                val ownerGamesDeferred = if (uid != null) {
+                    async {
+                        gamesCollection
+                            .whereEqualTo("owner_id", uid)
+                            .whereEqualTo("gender", genderValue)
+                            .orderBy("dateTime", Query.Direction.ASCENDING)
+                            .limit(50)
+                            .get()
+                            .await()
+                            .documents.mapNotNull { doc ->
+                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            }
+                    }
+                } else null
+
+                val publicGames = publicGamesDeferred.await()
+                val ownerGames = ownerGamesDeferred?.await() ?: emptyList()
+
+                val allGames = (publicGames + ownerGames)
+                    .filterNotSoftDeleted()
+                    .distinctBy { it.id }
+                    .sortedBy { it.dateTime }
+                    .take(50)
+
+                Result.success(allGames.toKmpGames())
+            }
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar jogos por genero, tentando local", e)
+            try {
+                // Fallback local: filtra cache por genero (GameGender.fromString
+                // trata jogos legados sem gender como MIXED).
+                val localGames = gameDao.getAllGamesSnapshot()
+                    .map { it.toDomain() }
+                    .filter { GameGender.fromString(it.gender) == gender }
+                Result.success(localGames)
             } catch (localE: Exception) {
                 Result.failure(e)
             }

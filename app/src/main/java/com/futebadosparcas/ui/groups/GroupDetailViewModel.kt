@@ -187,7 +187,12 @@ class GroupDetailViewModel(
     /**
      * Atualiza informações do grupo com validação (CMD-30 #2, #3, #5)
      */
-    fun updateGroup(name: String, description: String, photoUri: Uri? = null) {
+    fun updateGroup(
+        name: String,
+        description: String,
+        photoUri: Uri? = null,
+        defaultGender: String? = null
+    ) {
         // Validação de nome (CMD-30 #2)
         if (!validateGroupName(name)) {
             _actionState.value = GroupActionState.Error("Nome deve ter entre 3 e 50 caracteres")
@@ -207,7 +212,7 @@ class GroupDetailViewModel(
             // Log de ação (CMD-30 #4)
             AppLogger.i("GroupDetailVM") { "Updating group $groupId: name=$name" }
 
-            val result = updateGroupUseCase(groupId, name.trim(), description.trim(), photoUri?.toString())
+            val result = updateGroupUseCase(groupId, name.trim(), description.trim(), photoUri?.toString(), defaultGender)
 
             result.fold(
                 onSuccess = {

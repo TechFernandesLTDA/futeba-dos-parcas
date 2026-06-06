@@ -10,6 +10,8 @@ import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
   FIRESTORE_WHERE_IN_LIMIT,
+  GAME_GENDERS,
+  DEFAULT_GAME_GENDER,
 } from "../constants";
 import {
   Game,
@@ -545,7 +547,32 @@ export function updateRankingDeltas(
 }
 
 /**
+ * Normaliza o gênero/categoria de um jogo para um dos valores
+ * válidos (MALE/FEMALE/MIXED). Jogos legados sem o campo, valores
+ * desconhecidos ou nulos caem no default MIXED — preserva
+ * compatibilidade com docs antigos.
+ * @param {unknown} raw Valor cru de `game.gender`.
+ * @return {string} Gênero normalizado (MALE/FEMALE/MIXED).
+ */
+export function normalizeGameGender(raw: unknown): string {
+  if (typeof raw === "string") {
+    const upper = raw.toUpperCase();
+    if ((GAME_GENDERS as readonly string[]).includes(upper)) {
+      return upper;
+    }
+  }
+  return DEFAULT_GAME_GENDER;
+}
+
+/**
  * Atualiza participação na temporada.
+ *
+ * MODELO ADITIVO (Fase 4 — gênero): mantém os campos planos
+ * (points/wins/...) que agregam TODOS os jogos = visão "combinada"
+ * (comportamento histórico, partId continua `${seasonId}_${uid}`,
+ * sem migração nem double-count). Adiciona em paralelo o mapa
+ * aninhado `by_gender.{MALE|FEMALE|MIXED}` com os mesmos campos,
+ * permitindo rankings segmentados por categoria do JOGO.
  * @param {admin.firestore.WriteBatch} batch
  *   Batch de escrita.
  * @param {string} uid ID do usuário.
@@ -555,6 +582,8 @@ export function updateRankingDeltas(
  * @param {boolean} isMvp Se é MVP.
  * @param {string | null} groupId ID do grupo
  *   (opcional, para filtro por grupo no ranking).
+ * @param {string} gameGender Categoria do jogo
+ *   (MALE/FEMALE/MIXED). Default MIXED para jogos legados.
  */
 export function updateSeasonParticipation(
   batch: admin.firestore.WriteBatch,
@@ -563,40 +592,40 @@ export function updateSeasonParticipation(
   result: string,
   conf: GameConfirmation,
   isMvp: boolean,
-  groupId?: string | null
+  groupId?: string | null,
+  gameGender?: string
 ) {
   const partId = `${seasonId}_${uid}`;
+  const gender = normalizeGameGender(gameGender);
   const pointsToAdd = result === "WIN" ?
     3 :
     (result === "DRAW" ? 1 : 0);
 
+  // Factory de incrementos — gera instâncias NOVAS de FieldValue a
+  // cada chamada para evitar aliasing do mesmo sentinel entre o
+  // campo plano (combinado) e o mapa by_gender.{gender} (segmentado).
+  const buildStats = (): Record<string, unknown> => {
+    const inc = admin.firestore.FieldValue.increment;
+    return {
+      points: inc(pointsToAdd),
+      games_played: inc(1),
+      wins: inc(result === "WIN" ? 1 : 0),
+      draws: inc(result === "DRAW" ? 1 : 0),
+      losses: inc(result === "LOSS" ? 1 : 0),
+      goals_scored: inc(conf.goals),
+      assists: inc(conf.assists),
+      mvp_count: inc(isMvp ? 1 : 0),
+    };
+  };
+
   const data: Record<string, unknown> = {
     user_id: uid,
     season_id: seasonId,
-    points: admin.firestore
-      .FieldValue.increment(pointsToAdd),
-    games_played: admin.firestore
-      .FieldValue.increment(1),
-    wins: admin.firestore
-      .FieldValue.increment(
-        result === "WIN" ? 1 : 0
-      ),
-    draws: admin.firestore
-      .FieldValue.increment(
-        result === "DRAW" ? 1 : 0
-      ),
-    losses: admin.firestore
-      .FieldValue.increment(
-        result === "LOSS" ? 1 : 0
-      ),
-    goals_scored: admin.firestore
-      .FieldValue.increment(conf.goals),
-    assists: admin.firestore
-      .FieldValue.increment(conf.assists),
-    mvp_count: admin.firestore
-      .FieldValue.increment(
-        isMvp ? 1 : 0
-      ),
+    ...buildStats(),
+    // Visão segmentada: mesmos incrementos sob by_gender.{gender}.
+    by_gender: {
+      [gender]: buildStats(),
+    },
     last_calculated_at: admin.firestore
       .FieldValue.serverTimestamp(),
     created_at: admin.firestore

@@ -42,6 +42,7 @@ import {
 import {
   FIRESTORE_WHERE_IN_LIMIT,
   FUNCTION_REGION,
+  GAME_GENDERS,
 } from "../constants";
 import {ERROR_MSGS} from "../error-messages";
 
@@ -107,6 +108,27 @@ interface GetLeaderboardRequest {
   seasonId: string;
   limit?: number;
   forceRefresh?: boolean;
+  // Fase 4b: filtro de gênero. Ausente/"ALL"/inválido = combinado
+  // (campos planos). MALE/FEMALE/MIXED = segmentado (by_gender.{G}).
+  gender?: string;
+}
+
+/** Chave de gênero combinada (sem segmentação). */
+const GENDER_ALL = "ALL";
+
+/**
+ * Normaliza o filtro de gênero do request para a chave de leitura.
+ * @param {unknown} raw Valor cru de request.data.gender.
+ * @return {string} MALE/FEMALE/MIXED (segmentado) ou ALL (combinado).
+ */
+function resolveGenderKey(raw: unknown): string {
+  if (typeof raw === "string") {
+    const upper = raw.toUpperCase();
+    if ((GAME_GENDERS as readonly string[]).includes(upper)) {
+      return upper;
+    }
+  }
+  return GENDER_ALL;
 }
 
 // ==========================================
@@ -167,6 +189,8 @@ export const getLeaderboardCached =
 
       const {seasonId, limit, forceRefresh} =
         request.data;
+      const genderKey =
+        resolveGenderKey(request.data.gender);
 
       if (
         !seasonId ||
@@ -208,7 +232,8 @@ export const getLeaderboardCached =
         const cached =
           await getCachedLeaderboard(
             safeSeasonId,
-            resultLimit
+            resultLimit,
+            genderKey
           );
         if (cached) {
           const cacheAge =
@@ -246,12 +271,20 @@ export const getLeaderboardCached =
 
       const startTime = Date.now();
 
+      // Campo de ordenação: combinado usa o ponto plano; segmentado
+      // ordena pelo ponto da categoria (by_gender.{G}.points). Docs
+      // sem aquele gênero não têm o campo → naturalmente excluídos.
+      const isSegmented = genderKey !== GENDER_ALL;
+      const orderField = isSegmented ?
+        `by_gender.${genderKey}.points` :
+        "points";
+
       // Query principal de ranking
       // FIX #654-B2: secondary sort by user_id for deterministic tie-breaking
       const rankingSnap = await db
         .collection("season_participation")
         .where("season_id", "==", safeSeasonId)
-        .orderBy("points", "desc")
+        .orderBy(orderField, "desc")
         .orderBy("user_id", "asc")
         .limit(resultLimit)
         .get();
@@ -273,12 +306,36 @@ export const getLeaderboardCached =
       const userMap =
         await fetchUsersInBatch(userIds);
 
+      // Lê as stats de ranking do doc: combinado = campos planos;
+      // segmentado = sub-objeto by_gender.{G} (rating/division
+      // permanecem GLOBAIS, não são calculados por gênero).
+      const num = (v: unknown): number =>
+        typeof v === "number" ? v : 0;
+      const readStats = (
+        data: admin.firestore.DocumentData
+      ): Record<string, number> => {
+        const src = isSegmented ?
+          ((data.by_gender || {})[genderKey] || {}) :
+          data;
+        return {
+          points: num(src.points),
+          games_played: num(src.games_played),
+          wins: num(src.wins),
+          draws: num(src.draws),
+          losses: num(src.losses),
+          goals_scored: num(src.goals_scored),
+          assists: num(src.assists),
+          mvp_count: num(src.mvp_count),
+        };
+      };
+
       // Montar leaderboard
       const rankings: LeaderboardEntry[] =
         rankingSnap.docs.map((doc, index) => {
           const data = doc.data();
           const userId = data.user_id;
           const userData = userMap.get(userId);
+          const stats = readStats(data);
 
           return {
             rank: index + 1,
@@ -292,16 +349,14 @@ export const getLeaderboardCached =
               userData?.photoUrl ||
               null,
             rating: data.league_rating || 0,
-            points: data.points || 0,
-            games_played:
-              data.games_played || 0,
-            wins: data.wins || 0,
-            draws: data.draws || 0,
-            losses: data.losses || 0,
-            goals_scored:
-              data.goals_scored || 0,
-            assists: data.assists || 0,
-            mvp_count: data.mvp_count || 0,
+            points: stats.points,
+            games_played: stats.games_played,
+            wins: stats.wins,
+            draws: stats.draws,
+            losses: stats.losses,
+            goals_scored: stats.goals_scored,
+            assists: stats.assists,
+            mvp_count: stats.mvp_count,
             division: data.division || "BRONZE",
           };
         });
@@ -317,7 +372,7 @@ export const getLeaderboardCached =
         );
 
       const cacheDocId =
-        `${safeSeasonId}_${resultLimit}`;
+        `${safeSeasonId}_${genderKey}_${resultLimit}`;
 
       // Salvar cache de forma síncrona
       // (garante persistência antes de retornar)
@@ -327,6 +382,7 @@ export const getLeaderboardCached =
           .doc(cacheDocId)
           .set({
             season_id: safeSeasonId,
+            gender: genderKey,
             rankings,
             cached_at: now,
             expires_at: expiresAt,
@@ -369,16 +425,19 @@ export const getLeaderboardCached =
  *
  * @param {string} seasonId - ID da season
  * @param {number} limit - Limite de resultados
+ * @param {string} genderKey - Chave de gênero
+ *   (ALL combinado ou MALE/FEMALE/MIXED)
  * @return {Promise<CachedLeaderboard|null>}
  *   Dados cacheados ou null se
  *   expirado/inexistente
  */
 async function getCachedLeaderboard(
   seasonId: string,
-  limit: number
+  limit: number,
+  genderKey: string = GENDER_ALL
 ): Promise<CachedLeaderboard | null> {
   const db = getDb();
-  const cacheDocId = `${seasonId}_${limit}`;
+  const cacheDocId = `${seasonId}_${genderKey}_${limit}`;
 
   try {
     const cacheDoc = await db

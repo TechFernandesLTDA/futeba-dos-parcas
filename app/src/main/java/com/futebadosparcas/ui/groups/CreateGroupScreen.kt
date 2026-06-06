@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource as androidStringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -42,6 +43,7 @@ import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.ui.theme.Spacing
 import java.io.File
 import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.GameGender
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -56,7 +58,7 @@ import androidx.compose.ui.res.stringResource
  * - Preparado para KMP (lógica no ViewModel)
  * - Acessibilidade completa
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateGroupScreen(
     viewModel: GroupsViewModel,
@@ -73,6 +75,8 @@ fun CreateGroupScreen(
     var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
+    // Genero padrao do grupo (FASE 2). null = "Sem padrao".
+    var defaultGender by remember { mutableStateOf<String?>(null) }
 
     // Validação inline do nome
     LaunchedEffect(groupName) {
@@ -234,6 +238,40 @@ fun CreateGroupScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
+            // Genero padrao dos jogos do grupo (FASE 2). Opcional: "Sem padrao" = null.
+            Text(
+                text = stringResource(R.string.group_default_gender),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(bottom = 8.dp)
+            )
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val genderOptions: List<Pair<String?, String>> = listOf(
+                    null to stringResource(R.string.group_default_gender_none),
+                    GameGender.MALE.name to stringResource(R.string.game_gender_male),
+                    GameGender.FEMALE.name to stringResource(R.string.game_gender_female),
+                    GameGender.MIXED.name to stringResource(R.string.game_gender_mixed)
+                )
+                genderOptions.forEach { (value, label) ->
+                    FilterChip(
+                        selected = defaultGender == value,
+                        onClick = { defaultGender = value },
+                        label = { Text(label) },
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .semantics { contentDescription = label }
+                    )
+                }
+            }
+
             // Indicador de upload
             AnimatedVisibility(
                 visible = createGroupState is CreateGroupUiState.Loading,
@@ -290,7 +328,8 @@ fun CreateGroupScreen(
                     viewModel.createGroup(
                         name = groupName.trim(),
                         description = groupDescription.trim(),
-                        photoUri = selectedPhotoUri
+                        photoUri = selectedPhotoUri,
+                        defaultGender = defaultGender
                     )
                 },
                 enabled = isCreateButtonEnabled,

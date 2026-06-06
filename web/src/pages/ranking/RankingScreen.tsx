@@ -19,6 +19,8 @@ import {
   useMediaQuery,
   alpha,
   List,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -31,6 +33,7 @@ import { VirtualList } from '../../components/common/VirtualList';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
+import type { GameGender } from '../../types/game';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { DIVISION_CONFIG, getDivisionColor } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
@@ -51,13 +54,16 @@ export const RankingScreen: React.FC = () => {
 
   const [tabValue, setTabValue] = useState(0);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  // Fase 4b: filtro de gênero do ranking ('ALL' = combinado).
+  const [genderFilter, setGenderFilter] = useState<'ALL' | GameGender>('ALL');
 
   // Hook compartilhado: busca temporada ativa (cache 10min)
   const { seasonId: activeSeasonId, loading: seasonLoading } = useActiveSeason();
 
   const filters: LeagueFilters = useMemo(() => ({
     seasonId: activeSeasonId,
-  }), [activeSeasonId]);
+    gender: genderFilter === 'ALL' ? null : genderFilter,
+  }), [activeSeasonId, genderFilter]);
 
   const { players, loading, error, refetch } = useLeague(
     user?.id,
@@ -111,6 +117,29 @@ export const RankingScreen: React.FC = () => {
           <Tab label={t('ranking.tabMvps')} />
           <Tab label={t('ranking.tabScorers')} />
         </Tabs>
+        <Box sx={{ display: 'flex', justifyContent: 'center', px: 1, pb: 1 }}>
+          <ToggleButtonGroup
+            value={genderFilter}
+            exclusive
+            size="small"
+            onChange={(_, v) => v && setGenderFilter(v)}
+            aria-label={t('games.genderFilter.all')}
+            sx={{ flexWrap: 'wrap' }}
+          >
+            <ToggleButton value="ALL" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.all')}
+            </ToggleButton>
+            <ToggleButton value="MALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.male')}
+            </ToggleButton>
+            <ToggleButton value="FEMALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.female')}
+            </ToggleButton>
+            <ToggleButton value="MIXED" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.mixed')}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>

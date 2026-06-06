@@ -57,6 +57,7 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
+import type { GameGender } from '../../types/game';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { useSeasons } from '../../hooks/useSeasons';
@@ -102,6 +103,8 @@ export const LeagueScreen: React.FC = () => {
   const [showSort, setShowSort] = useState(false);
   const [maxResults, setMaxResults] = useState(200);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
+  // Fase 4b: filtro de gênero do ranking ('ALL' = combinado).
+  const [genderFilter, setGenderFilter] = useState<'ALL' | GameGender>('ALL');
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
@@ -131,7 +134,8 @@ export const LeagueScreen: React.FC = () => {
   const filters: LeagueFilters = useMemo(() => ({
     seasonId: effectiveSeasonId,
     maxResults,
-  }), [effectiveSeasonId, maxResults]);
+    gender: genderFilter === 'ALL' ? null : genderFilter,
+  }), [effectiveSeasonId, maxResults, genderFilter]);
 
   const { players: allPlayers, loading, error, refetch } = useLeague(
     user?.id,
@@ -438,6 +442,30 @@ export const LeagueScreen: React.FC = () => {
             </ToggleButtonGroup>
           </Box>
         </Collapse>
+
+        <Box sx={{ px: 2, pb: 1, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+          <ToggleButtonGroup
+            value={genderFilter}
+            exclusive
+            size="small"
+            onChange={(_, v) => v && setGenderFilter(v)}
+            aria-label={t('games.genderFilter.all')}
+            sx={{ flexWrap: 'nowrap' }}
+          >
+            <ToggleButton value="ALL" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.all')}
+            </ToggleButton>
+            <ToggleButton value="MALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.male')}
+            </ToggleButton>
+            <ToggleButton value="FEMALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.female')}
+            </ToggleButton>
+            <ToggleButton value="MIXED" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+              {t('games.genderFilter.mixed')}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
 
         <Tabs
           value={tabValue}

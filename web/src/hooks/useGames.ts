@@ -314,6 +314,8 @@ export function useCreateGame() {
 
         const newGame = {
           ...cleanData,
+          // Garante valor padrão mesmo em fluxos sem seletor (quick-create, duplicate)
+          gender: (cleanData.gender as string) ?? 'MIXED',
           owner_id: uid,
           owner_name: displayName,
           status: 'SCHEDULED' as GameStatus,

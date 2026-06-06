@@ -88,7 +88,12 @@ class GroupRepository constructor(
     /**
      * Cria um novo grupo com o usuário atual como owner
      */
-    suspend fun createGroup(name: String, description: String, photoUri: String? = null): Result<Group> {
+    suspend fun createGroup(
+        name: String,
+        description: String,
+        photoUri: String? = null,
+        defaultGender: String? = null
+    ): Result<Group> {
         return try {
             val userId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("Usuário não autenticado"))
@@ -108,7 +113,9 @@ class GroupRepository constructor(
                 ownerId = userId,
                 ownerName = userName,
                 photoUrl = null,
-                membersCount = 1
+                membersCount = 1,
+                // Padrao opcional de genero para jogos do grupo (FASE 2). null = sem padrao.
+                defaultGender = defaultGender
             )
 
             // 1. Transação para criar grupo e adicionar owner como membro (sem foto)
@@ -414,7 +421,8 @@ class GroupRepository constructor(
         groupId: String,
         name: String,
         description: String,
-        photoUri: String? = null
+        photoUri: String? = null,
+        defaultGender: String? = null
     ): Result<Unit> {
         return try {
             val userId = auth.currentUser?.uid
@@ -438,7 +446,10 @@ class GroupRepository constructor(
             val updates = mutableMapOf<String, Any>(
                 "name" to name,
                 "description" to description,
-                "updated_at" to FieldValue.serverTimestamp()
+                "updated_at" to FieldValue.serverTimestamp(),
+                // Genero padrao do grupo (FASE 2): grava o valor ou apaga o campo
+                // quando "sem padrao" (null) para nao manter um default antigo.
+                "default_gender" to (defaultGender ?: FieldValue.delete())
             )
             if (photoUrl != null) {
                 updates["photo_url"] = photoUrl

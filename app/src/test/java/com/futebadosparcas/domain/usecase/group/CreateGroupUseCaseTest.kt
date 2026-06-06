@@ -38,7 +38,7 @@ class CreateGroupUseCaseTest {
         @DisplayName("Cria grupo com nome e descricao validos")
         fun `creates group with valid name and description`() = runTest {
             val expectedGroup = Group(id = "group-1", name = "Pelada do Parque", description = "Grupo para peladas")
-            coEvery { groupRepository.createGroup(any(), any(), any()) } returns Result.success(expectedGroup)
+            coEvery { groupRepository.createGroup(any(), any(), any(), any()) } returns Result.success(expectedGroup)
 
             val result = useCase("Pelada do Parque", "Grupo para peladas")
 
@@ -71,7 +71,7 @@ class CreateGroupUseCaseTest {
         @DisplayName("Nome com espacos e tratado corretamente")
         fun `name with whitespace is trimmed correctly`() = runTest {
             val expectedGroup = Group(id = "group-1", name = "Pelada Legal", description = "Descricao")
-            coEvery { groupRepository.createGroup(any(), any(), any()) } returns Result.success(expectedGroup)
+            coEvery { groupRepository.createGroup(any(), any(), any(), any()) } returns Result.success(expectedGroup)
 
             val result = useCase("  Pelada Legal  ", "Descricao")
 
@@ -81,7 +81,7 @@ class CreateGroupUseCaseTest {
         @Test
         @DisplayName("Erro do repositorio ao criar grupo propaga falha")
         fun `repository error propagates failure`() = runTest {
-            coEvery { groupRepository.createGroup(any(), any(), any()) } returns Result.failure(RuntimeException("Erro ao criar"))
+            coEvery { groupRepository.createGroup(any(), any(), any(), any()) } returns Result.failure(RuntimeException("Erro ao criar"))
 
             val result = useCase("Pelada do Parque", "Descricao")
 
@@ -93,7 +93,7 @@ class CreateGroupUseCaseTest {
         @DisplayName("Cria grupo com foto")
         fun `creates group with photo`() = runTest {
             val expectedGroup = Group(id = "group-1", name = "Pelada", description = "Desc")
-            coEvery { groupRepository.createGroup(any(), any(), any()) } returns Result.success(expectedGroup)
+            coEvery { groupRepository.createGroup(any(), any(), any(), any()) } returns Result.success(expectedGroup)
 
             val result = useCase("Pelada", "Desc", "https://foto.url")
 

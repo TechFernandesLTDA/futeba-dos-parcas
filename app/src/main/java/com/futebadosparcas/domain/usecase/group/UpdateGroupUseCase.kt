@@ -14,7 +14,8 @@ class UpdateGroupUseCase constructor(
         groupId: String,
         name: String,
         description: String,
-        photoUri: String? = null
+        photoUri: String? = null,
+        defaultGender: String? = null
     ): Result<Unit> {
         val nameResult = ValidateGroupNameUseCase(name)
         if (nameResult.isError()) {
@@ -29,6 +30,6 @@ class UpdateGroupUseCase constructor(
         val validatedName = nameResult.getOrNull() ?: name
         val validatedDesc = descResult.getOrNull() ?: description
 
-        return groupRepository.updateGroup(groupId, validatedName, validatedDesc, photoUri)
+        return groupRepository.updateGroup(groupId, validatedName, validatedDesc, photoUri, defaultGender)
     }
 }

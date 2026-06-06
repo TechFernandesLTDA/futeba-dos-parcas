@@ -543,6 +543,8 @@ fun AndroidGame.toKmpGame(): KmpGame {
         totalCost = totalCost,
         pixKey = pixKey,
         numberOfTeams = numberOfTeams,
+        // Genero/categoria do jogo (FASE 2) — round-trip do campo `gender`.
+        gender = gender,
         ownerId = ownerId,
         ownerName = ownerName,
         locationId = locationId,
@@ -599,6 +601,8 @@ fun KmpGame.toAndroidGame(): AndroidGame {
         totalCost = totalCost,
         pixKey = pixKey,
         numberOfTeams = numberOfTeams,
+        // Genero/categoria do jogo (FASE 2) — round-trip do campo `gender`.
+        gender = gender,
         ownerId = ownerId,
         ownerName = ownerName,
         locationId = locationId,

@@ -7,6 +7,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.domain.model.LeagueDivision as DomainLeagueDivision
@@ -58,9 +61,11 @@ fun LeagueScreen(
     unreadCount: Int,
     availableSeasons: List<Season>,
     selectedSeason: Season?,
+    selectedGender: GameGender?,
     onBack: () -> Unit,
     onDivisionSelected: (LeagueDivision) -> Unit,
     onSeasonSelected: (Season) -> Unit,
+    onGenderSelected: (GameGender?) -> Unit,
     onRefresh: () -> Unit,
     onNavigateNotifications: () -> Unit,
     onNavigateGroups: () -> Unit,
@@ -135,8 +140,10 @@ fun LeagueScreen(
                             state = uiState,
                             availableSeasons = availableSeasons,
                             selectedSeason = selectedSeason,
+                            selectedGender = selectedGender,
                             onDivisionSelected = onDivisionSelected,
                             onSeasonSelected = onSeasonSelected,
+                            onGenderSelected = onGenderSelected,
                             onPlayerClick = onPlayerClick
                         )
                     }
@@ -152,8 +159,10 @@ fun LeagueContent(
     state: LeagueUiState.Success,
     availableSeasons: List<Season>,
     selectedSeason: Season?,
+    selectedGender: GameGender?,
     onDivisionSelected: (LeagueDivision) -> Unit,
     onSeasonSelected: (Season) -> Unit,
+    onGenderSelected: (GameGender?) -> Unit,
     onPlayerClick: (String) -> Unit = {}
 ) {
     // Usa derivedStateOf para evitar recálculos desnecessários durante scroll
@@ -203,6 +212,12 @@ fun LeagueContent(
                 shadowElevation = 2.dp
             ) {
                 Column {
+                    // Fase 4b: filtro de gênero (Todos/Masculino/Feminino/Misto).
+                    GenderFilterRow(
+                        selectedGender = selectedGender,
+                        onGenderSelected = onGenderSelected
+                    )
+
                     DivisionSelector(
                         selectedDivision = state.selectedDivision,
                         onDivisionSelected = onDivisionSelected,
@@ -258,6 +273,42 @@ fun LeagueContent(
         }
     }
     } // fecha Box adaptativo
+}
+
+/**
+ * Filtro de gênero do ranking (Fase 4b). null = Todos (combinado).
+ * MALE/FEMALE/MIXED = segmentado. Enforcement SOFT: apenas filtra a visão,
+ * não bloqueia ninguém.
+ */
+@Composable
+fun GenderFilterRow(
+    selectedGender: GameGender?,
+    onGenderSelected: (GameGender?) -> Unit
+) {
+    // (label, valor) — null representa "Todos"/combinado.
+    val options: List<Pair<String, GameGender?>> = listOf(
+        stringResource(R.string.game_gender_filter_all) to null,
+        stringResource(R.string.game_gender_male) to GameGender.MALE,
+        stringResource(R.string.game_gender_female) to GameGender.FEMALE,
+        stringResource(R.string.game_gender_mixed) to GameGender.MIXED
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = AppDimensions.spacing_small),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
+    ) {
+        options.forEach { (label, value) ->
+            val selected = selectedGender == value
+            FilterChip(
+                selected = selected,
+                onClick = { onGenderSelected(value) },
+                label = { Text(label) }
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

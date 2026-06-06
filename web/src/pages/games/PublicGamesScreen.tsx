@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Alert,
@@ -13,7 +13,11 @@ import {
   IconButton,
   Skeleton,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -22,20 +26,29 @@ import {
   Timer as TimerIcon,
   Group as GroupIcon,
   SportsSoccer as SoccerIcon,
+  Wc as GenderIcon,
 } from '@mui/icons-material';
 import { usePublicGames, useJoinPublicGame } from '../../hooks/usePublicGames';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { Game, FIELD_TYPE_LABELS } from '../../types/game';
+import { Game, FIELD_TYPE_LABELS, GameGender } from '../../types/game';
 import { useTranslation } from 'react-i18next';
 
 export const PublicGamesScreen: React.FC = () => {
   const { t } = useTranslation();
+  const theme = useTheme();
   useDocumentTitle(t('games.public.title'));
   const goBack = useNavigateBack('/?tab=1');
   const { data: games, loading: isLoading, error, refetch } = usePublicGames('open');
   const joinGame = useJoinPublicGame();
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [genderFilter, setGenderFilter] = useState<'all' | GameGender>('all');
+
+  // Filtro de gênero no cliente: ausência de gender é tratada como MIXED
+  const filteredGames = useMemo(() => {
+    if (!games || genderFilter === 'all') return games;
+    return games.filter((g: Game) => (g.gender ?? 'MIXED') === genderFilter);
+  }, [games, genderFilter]);
 
   const handleJoin = async (game: Game) => {
     setJoiningId(game.id);
@@ -60,9 +73,34 @@ export const PublicGamesScreen: React.FC = () => {
         </IconButton>
       </Stack>
 
-      <Alert severity="info" icon={<SoccerIcon />} sx={{ mb: 3 }}>
+      <Alert severity="info" icon={<SoccerIcon />} sx={{ mb: 2 }}>
         {t('games.public.info')}
       </Alert>
+
+      {/* Filtro de gênero */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+        <GenderIcon fontSize="small" color="action" />
+        <ToggleButtonGroup
+          value={genderFilter}
+          exclusive
+          onChange={(_, v: 'all' | GameGender | null) => { if (v !== null) setGenderFilter(v); }}
+          size="small"
+          aria-label={t('games.genderFilter.all')}
+        >
+          <ToggleButton value="all" sx={{ px: 1.5, py: 0.5, textTransform: 'none', fontSize: '0.8rem' }}>
+            {t('games.genderFilter.all')}
+          </ToggleButton>
+          <ToggleButton value="MALE" sx={{ px: 1.5, py: 0.5, textTransform: 'none', fontSize: '0.8rem' }}>
+            {t('games.genderFilter.male')}
+          </ToggleButton>
+          <ToggleButton value="FEMALE" sx={{ px: 1.5, py: 0.5, textTransform: 'none', fontSize: '0.8rem' }}>
+            {t('games.genderFilter.female')}
+          </ToggleButton>
+          <ToggleButton value="MIXED" sx={{ px: 1.5, py: 0.5, textTransform: 'none', fontSize: '0.8rem' }}>
+            {t('games.genderFilter.mixed')}
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
 
       {isLoading && (
         <Stack spacing={2}>
@@ -90,7 +128,7 @@ export const PublicGamesScreen: React.FC = () => {
         <Alert severity="error">{error || 'Erro ao carregar peladas.'}</Alert>
       )}
 
-      {!isLoading && !error && (!games || games.length === 0) && (
+      {!isLoading && !error && (!filteredGames || filteredGames.length === 0) && (
         <EmptyState
           icon={<SoccerIcon />}
           title={t('games.public.empty')}
@@ -98,9 +136,9 @@ export const PublicGamesScreen: React.FC = () => {
         />
       )}
 
-      {!isLoading && !error && games && games.length > 0 && (
+      {!isLoading && !error && filteredGames && filteredGames.length > 0 && (
         <Stack spacing={2}>
-          {games.map((game) => (
+          {filteredGames.map((game) => (
             <Card key={game.id}>
               <CardContent>
                 <Stack direction="row" spacing={2} alignItems="center">
@@ -123,6 +161,25 @@ export const PublicGamesScreen: React.FC = () => {
                         size="small"
                         variant="outlined"
                       />
+                      {/* Badge de gênero: exibido apenas para MALE ou FEMALE */}
+                      {(game.gender === 'MALE' || game.gender === 'FEMALE') && (
+                        <Chip
+                          label={game.gender === 'MALE' ? t('games.genderFilter.male') : t('games.genderFilter.female')}
+                          size="small"
+                          sx={{
+                            fontWeight: 600,
+                            backgroundColor: alpha(
+                              game.gender === 'MALE'
+                                ? theme.palette.info.main
+                                : theme.palette.secondary.main,
+                              0.12
+                            ),
+                            color: theme.palette.mode === 'dark'
+                              ? (game.gender === 'MALE' ? theme.palette.info.light : theme.palette.secondary.light)
+                              : (game.gender === 'MALE' ? theme.palette.info.dark : theme.palette.secondary.dark),
+                          }}
+                        />
+                      )}
                       <Chip
                         icon={<GroupIcon />}
                         label={`${game.playersCount ?? 0}/${game.maxPlayers}`}

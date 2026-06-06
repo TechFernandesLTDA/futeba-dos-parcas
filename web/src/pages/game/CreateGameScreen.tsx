@@ -72,7 +72,7 @@ import { useDuplicateGame } from '../../hooks/useDuplicateGame';
 import { useAutoInviteMembers } from '../../hooks/useAutoInviteMembers';
 import { useGameDraft } from '../../hooks/useGameDraft';
 import { useRecentLocations, toggleFavoriteLocation } from '../../hooks/useRecentLocations';
-import { FieldType, PixKeyType, GameVisibility, GameTemplate, Game } from '../../types/game';
+import { FieldType, PixKeyType, GameVisibility, GameTemplate, Game, GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
 import { Field } from '../../types/location';
 import { snakeToCamel, normalizeField } from '../../utils/firestoreHelpers';
@@ -141,6 +141,7 @@ interface GameFormData {
   recurrenceEndDate: string;
   streamUrl: string;
   autoInviteMembers: boolean;
+  gender: GameGender;
 }
 
 const CUSTOM_LOCATION = '__custom__';
@@ -180,6 +181,7 @@ const defaultFormData: GameFormData = {
   recurrenceEndDate: '',
   streamUrl: '',
   autoInviteMembers: true,
+  gender: 'MIXED' as GameGender,
 };
 
 export const CreateGameScreen: React.FC = () => {
@@ -396,6 +398,13 @@ export const CreateGameScreen: React.FC = () => {
       }));
     }
   }, [group, groupId, formData.groupId]);
+
+  // Pré-seleciona gênero do grupo ao carregar; ignora se o usuário já interagiu
+  useEffect(() => {
+    if (group?.defaultGender && !userInteracted) {
+      setFormData((prev) => ({ ...prev, gender: group.defaultGender as GameGender }));
+    }
+  }, [group?.defaultGender, userInteracted]);
 
   // Track recently selected locations in localStorage
   useEffect(() => {
@@ -896,6 +905,8 @@ export const CreateGameScreen: React.FC = () => {
         gamePayload.pixKeyType = formData.pixKeyType;
         gamePayload.pixBeneficiaryName = formData.pixBeneficiaryName;
       }
+      gamePayload.gender = formData.gender || 'MIXED';
+
       if (formData.streamUrl.trim()) {
         gamePayload.streamUrl = formData.streamUrl.trim();
       }
@@ -1515,6 +1526,20 @@ export const CreateGameScreen: React.FC = () => {
         fullWidth
       >
         {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
+          <MenuItem key={value} value={value}>
+            {label}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <TextField
+        select
+        label={t('games.create.gender')}
+        value={formData.gender}
+        onChange={(e) => { handleInputChange('gender', e.target.value as GameGender); }}
+        fullWidth
+      >
+        {(Object.entries(GAME_GENDER_LABELS) as [GameGender, string][]).map(([value, label]) => (
           <MenuItem key={value} value={value}>
             {label}
           </MenuItem>

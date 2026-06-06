@@ -327,7 +327,7 @@ export function useCreateGroup() {
 
   const createGroup = useCallback(
     async (
-      groupData: { name: string; description?: string; isPublic?: boolean },
+      groupData: { name: string; description?: string; isPublic?: boolean; defaultGender?: string },
       photoFile?: File | null
     ) => {
       const uid = firebaseUser?.uid || user?.id;
@@ -349,7 +349,7 @@ export function useCreateGroup() {
           photoUrl = await getDownloadURL(groupPhotoRef);
         }
 
-        const newGroup = {
+        const newGroup: Record<string, unknown> = {
           name: groupData.name,
           description: groupData.description || '',
           photo_url: photoUrl,
@@ -364,6 +364,10 @@ export function useCreateGroup() {
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
         };
+        // Persiste categoria padrão dos jogos apenas quando selecionada
+        if (groupData.defaultGender) {
+          newGroup.default_gender = groupData.defaultGender;
+        }
 
         batch.set(groupRef, newGroup);
 

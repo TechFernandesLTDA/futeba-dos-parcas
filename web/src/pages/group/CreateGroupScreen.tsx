@@ -19,8 +19,10 @@ import {
   Add as AddIcon,
   PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
+import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { useCreateGroup } from '../../hooks/useGroups';
+import { GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
@@ -42,10 +44,16 @@ export const CreateGroupScreen: React.FC = () => {
   const { createGroup, loading, error } = useCreateGroup();
   const { showError } = useToast();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    isPublic: boolean;
+    defaultGender?: GameGender;
+  }>({
     name: '',
     description: '',
     isPublic: false,
+    defaultGender: undefined,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -217,6 +225,25 @@ export const CreateGroupScreen: React.FC = () => {
                   </Box>
                 }
               />
+
+              <TextField
+                select
+                label={t('groups.defaultGender')}
+                value={formData.defaultGender || ''}
+                onChange={(e) =>
+                  handleInputChange('defaultGender', (e.target.value as GameGender) || undefined)
+                }
+                fullWidth
+              >
+                <MenuItem value="">
+                  <em>{t('groups.defaultGenderNone')}</em>
+                </MenuItem>
+                {(Object.entries(GAME_GENDER_LABELS) as [GameGender, string][]).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </TextField>
 
               <Alert severity="info">
                 <Typography variant="body2">

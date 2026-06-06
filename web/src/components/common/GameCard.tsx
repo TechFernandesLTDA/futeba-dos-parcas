@@ -197,6 +197,26 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   variant="outlined"
                   sx={{ fontSize: '0.75rem' }}
                 />
+                {/* Badge de gênero: exibido apenas para MALE ou FEMALE (MIXED = sem badge) */}
+                {(game.gender === 'MALE' || game.gender === 'FEMALE') && (
+                  <Chip
+                    label={game.gender === 'MALE' ? t('games.genderFilter.male') : t('games.genderFilter.female')}
+                    size="small"
+                    sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      backgroundColor: alpha(
+                        game.gender === 'MALE'
+                          ? theme.palette.info.main
+                          : theme.palette.secondary.main,
+                        0.12
+                      ),
+                      color: theme.palette.mode === 'dark'
+                        ? (game.gender === 'MALE' ? theme.palette.info.light : theme.palette.secondary.light)
+                        : (game.gender === 'MALE' ? theme.palette.info.dark : theme.palette.secondary.dark),
+                    }}
+                  />
+                )}
                 {hasConflict && (
                   <Tooltip title={t('tooltip.conflictingTime')} arrow>
                     <Chip

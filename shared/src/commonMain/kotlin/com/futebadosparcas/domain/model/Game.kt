@@ -118,6 +118,8 @@ data class Game(
 
     // Configuracoes
     @SerialName("game_type") val gameType: String = "Society",
+    // Genero/categoria do jogo (MALE/FEMALE/MIXED). Default MIXED preserva jogos legados.
+    val gender: String = GameGender.MIXED.name,
     val recurrence: String = "none",
     // Fim-de-serie da recorrencia (spec #2398, decisao "ambos"): count XOR end_date,
     // sempre sob o hard cap de 52. recurrence_index e 1-based (1a ocorrencia = 1).

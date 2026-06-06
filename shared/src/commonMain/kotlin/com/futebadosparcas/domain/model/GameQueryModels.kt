@@ -44,6 +44,19 @@ enum class GameFilterType {
 }
 
 /**
+ * Filtro ortogonal de listagem de jogos (FASE 3).
+ *
+ * Combina o filtro de status ([type]) com um filtro opcional de genero
+ * ([gender]). [gender] nulo significa "sem filtro de genero" (todos).
+ * Mantido ortogonal a [GameFilterType] para nao explodir o enum existente.
+ */
+@Serializable
+data class GameListFilter(
+    val type: GameFilterType = GameFilterType.ALL,
+    val gender: GameGender? = null
+)
+
+/**
  * Consolida dados de um jogo com suas confirmacoes e eventos.
  * Otimizacao para reduzir queries sequenciais (~300-400ms) para paralelas (~150-200ms).
  */

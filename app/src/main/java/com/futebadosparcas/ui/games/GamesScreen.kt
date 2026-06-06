@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.ui.components.AnimatedStateContainer
 import com.futebadosparcas.ui.components.StateType
 import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
@@ -158,20 +159,31 @@ private fun GamesSuccessContent(
     viewModel: GamesViewModel
 ) {
     var selectedFilter by remember { mutableStateOf(GameFilterType.ALL) }
+    // Filtro de genero client-side (FASE 3). null = "Todos" (sem filtro).
+    var selectedGender by remember { mutableStateOf<GameGender?>(null) }
     val windowSizeClass = rememberWindowSizeClass()
+
+    // Lista filtrada por genero. GameGender.fromString trata jogos legados
+    // (sem campo gender) como MIXED. Derivada uma unica vez e usada por ambos
+    // os ramos de renderizacao (lista compact + grid medium/expanded).
+    val filteredGames = remember(games, selectedGender) {
+        val g = selectedGender
+        if (g == null) games
+        else games.filter { GameGender.fromString(it.game.gender) == g }
+    }
 
     // Prefetch detalhes dos primeiros 5 jogos quando a lista é carregada.
     // List não é estável no Compose; usamos chave derivada estável (ids dos jogos)
     // para evitar re-execução do efeito a cada recomposição.
-    val gamesKey = remember(games) { games.joinToString(",") { it.game.id } }
+    val gamesKey = remember(filteredGames) { filteredGames.joinToString(",") { it.game.id } }
     LaunchedEffect(gamesKey) {
-        if (games.isNotEmpty()) {
-            viewModel.prefetchGameDetails(games)
+        if (filteredGames.isNotEmpty()) {
+            viewModel.prefetchGameDetails(filteredGames)
         }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Filtros
+        // Filtros de status (Todos/Abertos/Meus Jogos)
         GamesFilters(
             selectedFilter = selectedFilter,
             onFilterChange = { newFilter ->
@@ -181,6 +193,15 @@ private fun GamesSuccessContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = windowSizeClass.horizontalPadding, vertical = AppDimensions.spacing_medium)
+        )
+
+        // Filtro de genero (Todos/Masculino/Feminino/Misto) — client-side
+        GenderFilters(
+            selectedGender = selectedGender,
+            onGenderChange = { selectedGender = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = windowSizeClass.horizontalPadding)
         )
 
         if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
@@ -196,7 +217,7 @@ private fun GamesSuccessContent(
                 ),
                 verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
-                items(games, key = { it.game.id }) { game ->
+                items(filteredGames, key = { it.game.id }) { game ->
                     GameCard(
                         game = game,
                         onClick = { onGameClick(game.game.id) },
@@ -219,7 +240,7 @@ private fun GamesSuccessContent(
                 horizontalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing),
                 verticalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing)
             ) {
-                items(games, key = { it.game.id }) { game ->
+                items(filteredGames, key = { it.game.id }) { game ->
                     GameCard(
                         game = game,
                         onClick = { onGameClick(game.game.id) },
@@ -287,6 +308,57 @@ private fun GamesFilters(
 }
 
 /**
+ * Filtro de genero do jogo (FASE 3) — client-side sobre a lista ja carregada.
+ *
+ * "Todos" (selectedGender == null) nao aplica filtro. Masculino/Feminino/Misto
+ * filtram via [GameGender.fromString], que trata jogos legados como MIXED.
+ */
+@Composable
+private fun GenderFilters(
+    selectedGender: GameGender?,
+    onGenderChange: (GameGender?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
+    ) {
+        val allLabel = stringResource(R.string.game_gender_filter_all)
+        FilterChip(
+            selected = selectedGender == null,
+            onClick = { onGenderChange(null) },
+            label = { Text(allLabel) },
+            modifier = Modifier.semantics { contentDescription = allLabel }
+        )
+
+        val maleLabel = stringResource(R.string.game_gender_male)
+        FilterChip(
+            selected = selectedGender == GameGender.MALE,
+            onClick = { onGenderChange(GameGender.MALE) },
+            label = { Text(maleLabel) },
+            modifier = Modifier.semantics { contentDescription = maleLabel }
+        )
+
+        val femaleLabel = stringResource(R.string.game_gender_female)
+        FilterChip(
+            selected = selectedGender == GameGender.FEMALE,
+            onClick = { onGenderChange(GameGender.FEMALE) },
+            label = { Text(femaleLabel) },
+            modifier = Modifier.semantics { contentDescription = femaleLabel }
+        )
+
+        val mixedLabel = stringResource(R.string.game_gender_mixed)
+        FilterChip(
+            selected = selectedGender == GameGender.MIXED,
+            onClick = { onGenderChange(GameGender.MIXED) },
+            label = { Text(mixedLabel) },
+            modifier = Modifier.semantics { contentDescription = mixedLabel }
+        )
+    }
+}
+
+/**
  * Card individual de jogo
  */
 @Composable
@@ -343,6 +415,12 @@ private fun GameCard(
                         )
                     }
                 }
+
+                // Badge de genero (apenas MALE/FEMALE; MIXED/legado nao exibe badge)
+                GenderBadge(
+                    gender = game.game.gender,
+                    modifier = Modifier.padding(start = AppDimensions.spacing_small)
+                )
 
                 // Badge de tipo de campo
                 Surface(
@@ -426,6 +504,45 @@ private fun GameCard(
                 }
             }
         }
+    }
+}
+
+/**
+ * Badge de genero do jogo (FASE 3).
+ *
+ * Regra: nao exibe nada para [GameGender.MIXED] (default/legado) — apenas
+ * MALE/FEMALE recebem badge, evitando ruido visual em todos os jogos antigos.
+ */
+@Composable
+private fun GenderBadge(
+    gender: String,
+    modifier: Modifier = Modifier
+) {
+    val parsed = GameGender.fromString(gender)
+    if (parsed == GameGender.MIXED) return
+
+    val label = when (parsed) {
+        GameGender.MALE -> stringResource(R.string.game_gender_male)
+        GameGender.FEMALE -> stringResource(R.string.game_gender_female)
+        GameGender.MIXED -> return // inalcancavel (guard acima)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(Spacing.sm),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        modifier = modifier.semantics {
+            contentDescription = label
+        }
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.padding(
+                horizontal = AppDimensions.spacing_small,
+                vertical = AppDimensions.spacing_extraSmall
+            )
+        )
     }
 }
 

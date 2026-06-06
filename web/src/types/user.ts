@@ -2,6 +2,9 @@ export type UserRole = 'PLAYER' | 'FIELD_OWNER' | 'ADMIN';
 
 export type PreferredPosition = 'GOLEIRO' | 'ZAGUEIRO' | 'LATERAL' | 'VOLANTE' | 'MEIA' | 'ATACANTE';
 
+// Gênero do perfil do usuário — alinhado com o enum Android User.Gender
+export type UserGender = 'MALE' | 'FEMALE' | 'OTHER' | 'NOT_INFORMED';
+
 // Import FieldType from game.ts to avoid duplication
 import { FieldType } from './game';
 

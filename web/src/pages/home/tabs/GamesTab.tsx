@@ -34,8 +34,9 @@ import {
   SortByAlpha,
   EventAvailable,
   AccessTime,
+  Wc as GenderIcon,
 } from '@mui/icons-material';
-import { FIELD_TYPE_LABELS, GameStatus, getStatusChipColors } from '../../../types/game';
+import { FIELD_TYPE_LABELS, GameStatus, GameGender, getStatusChipColors } from '../../../types/game';
 import { pageSpacing } from '../../../theme/pageTokens';
 import { useGames } from '../../../hooks/useGames';
 import { useGroups } from '../../../hooks/useGroups';
@@ -73,18 +74,20 @@ export function GamesTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date');
+  const [genderFilter, setGenderFilter] = useState<'all' | GameGender>('all');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const { games, loading, error, refetch } = useGames();
   const { groups, loading: groupsLoading } = useGroups();
   const hasGroups = groups.length > 0;
 
-  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all';
+  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || genderFilter !== 'all';
 
   // Estabilizado: evita recriação em cada render (passado a botões filhos)
   const clearFilters = useCallback(() => {
     setSearchQuery('');
     setStatusFilter('all');
+    setGenderFilter('all');
   }, []);
 
   const filteredGames = useMemo(() => {
@@ -92,6 +95,11 @@ export function GamesTab() {
 
     if (statusFilter !== 'all') {
       result = result.filter(game => game.status === statusFilter);
+    }
+
+    // Filtro de gênero: ausência de gender é tratada como MIXED
+    if (genderFilter !== 'all') {
+      result = result.filter(game => (game.gender ?? 'MIXED') === genderFilter);
     }
 
     if (debouncedSearch) {
@@ -112,7 +120,7 @@ export function GamesTab() {
     }
 
     return result;
-  }, [games, debouncedSearch, statusFilter, sortBy]);
+  }, [games, debouncedSearch, statusFilter, genderFilter, sortBy]);
 
   // Estabilizado: navigate é estável, dep array vazio seguro
   const handleCardClick = useCallback((gameId: string) => {
@@ -226,6 +234,32 @@ export function GamesTab() {
             ))}
           </ToggleButtonGroup>
         </Box>
+
+        {/* Filtro de gênero */}
+        <Box sx={{ display: 'flex', alignItems: 'center', pt: 0.5, pb: 1 }}>
+          <GenderIcon fontSize="small" color="action" sx={{ mr: 1, flexShrink: 0 }} />
+          <ToggleButtonGroup
+            value={genderFilter}
+            exclusive
+            onChange={(_, v: 'all' | GameGender | null) => { if (v !== null) setGenderFilter(v); }}
+            size="small"
+            aria-label={t('games.genderFilter.all')}
+            sx={{ flexWrap: 'nowrap' }}
+          >
+            <ToggleButton value="all" sx={{ px: 1, py: 0.25, textTransform: 'none', fontSize: '0.75rem' }}>
+              {t('games.genderFilter.all')}
+            </ToggleButton>
+            <ToggleButton value="MALE" sx={{ px: 1, py: 0.25, textTransform: 'none', fontSize: '0.75rem' }}>
+              {t('games.genderFilter.male')}
+            </ToggleButton>
+            <ToggleButton value="FEMALE" sx={{ px: 1, py: 0.25, textTransform: 'none', fontSize: '0.75rem' }}>
+              {t('games.genderFilter.female')}
+            </ToggleButton>
+            <ToggleButton value="MIXED" sx={{ px: 1, py: 0.25, textTransform: 'none', fontSize: '0.75rem' }}>
+              {t('games.genderFilter.mixed')}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <Box sx={{ px: pageSpacing.pagePadding, pt: 2 }}>
@@ -329,6 +363,27 @@ export function GamesTab() {
                               size="small"
                               variant="outlined"
                               sx={{ fontSize: '0.75rem', height: 18 }}
+                            />
+                          )}
+                          {/* Badge de gênero: exibido apenas para MALE ou FEMALE */}
+                          {(game.gender === 'MALE' || game.gender === 'FEMALE') && (
+                            <Chip
+                              label={game.gender === 'MALE' ? t('games.genderFilter.male') : t('games.genderFilter.female')}
+                              size="small"
+                              sx={{
+                                fontSize: '0.75rem',
+                                height: 18,
+                                fontWeight: 600,
+                                backgroundColor: alpha(
+                                  game.gender === 'MALE'
+                                    ? theme.palette.info.main
+                                    : theme.palette.secondary.main,
+                                  0.12
+                                ),
+                                color: theme.palette.mode === 'dark'
+                                  ? (game.gender === 'MALE' ? theme.palette.info.light : theme.palette.secondary.light)
+                                  : (game.gender === 'MALE' ? theme.palette.info.dark : theme.palette.secondary.dark),
+                              }}
                             />
                           )}
                         </Box>

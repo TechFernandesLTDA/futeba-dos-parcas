@@ -19,7 +19,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.GameStatus
 import java.util.*
 
@@ -201,8 +204,47 @@ private fun GameCardHeader(game: Game) {
             modifier = Modifier.weight(1f)
         )
 
+        // Badge de genero (apenas MALE/FEMALE; MIXED/legado nao exibe badge)
+        GameGenderBadge(
+            gender = game.gender,
+            modifier = Modifier.padding(end = 8.dp)
+        )
+
         // Status badge
         GameStatusBadge(status = game.getStatusEnum())
+    }
+}
+
+/**
+ * Badge de genero do jogo (FASE 3).
+ * Nao exibe nada para [GameGender.MIXED] (default/legado) — apenas MALE/FEMALE.
+ */
+@Composable
+private fun GameGenderBadge(
+    gender: String,
+    modifier: Modifier = Modifier
+) {
+    val parsed = GameGender.fromString(gender)
+    if (parsed == GameGender.MIXED) return
+
+    val label = when (parsed) {
+        GameGender.MALE -> stringResource(R.string.game_gender_male)
+        GameGender.FEMALE -> stringResource(R.string.game_gender_female)
+        GameGender.MIXED -> return // inalcancavel (guard acima)
+    }
+
+    Surface(
+        modifier = modifier.semantics { contentDescription = label },
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
     }
 }
 

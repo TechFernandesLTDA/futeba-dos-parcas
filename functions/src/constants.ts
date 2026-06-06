@@ -138,6 +138,16 @@ export const MS_30_MINUTES = 30 * 60 * 1000;
 export const DEFAULT_GAME_HOUR = 20;
 
 // ==========================================
+// GÊNERO DO JOGO
+// ==========================================
+
+/** Valores válidos de gênero/categoria de um jogo. MIXED é o default (jogos legados). */
+export const GAME_GENDERS = ["MALE", "FEMALE", "MIXED"] as const;
+
+/** Gênero default quando o campo está ausente no doc (compatibilidade). */
+export const DEFAULT_GAME_GENDER = "MIXED";
+
+// ==========================================
 // LEAGUE / DIVISÕES
 // ==========================================
 

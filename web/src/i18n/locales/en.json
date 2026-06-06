@@ -806,7 +806,17 @@
       "visibility": "Visibility",
       "visibilityGroupOnly": "Group members only",
       "visibilityPublicClosed": "Public (closed list)",
-      "visibilityPublicOpen": "Public (accepts requests)"
+      "visibilityPublicOpen": "Public (accepts requests)",
+      "gender": "Category",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "genderMixed": "Mixed"
+    },
+    "genderFilter": {
+      "all": "All",
+      "male": "Male",
+      "female": "Female",
+      "mixed": "Mixed"
     },
     "createFirst": "Create Game",
     "createGame": "Create Game",
@@ -1117,7 +1127,9 @@
     },
     "title": "Groups",
     "transferOwnership": "Transfer Ownership",
-    "tryDifferentSearch": "Try changing the search term"
+    "tryDifferentSearch": "Try changing the search term",
+    "defaultGender": "Default game category",
+    "defaultGenderNone": "No default"
   },
   "home": {
     "dreamTeam": "Dream Team",
@@ -1349,6 +1361,7 @@
     "avatarInvalidType": "Invalid file. Select an image.",
     "avatarTooLarge": "Image too large. Maximum: 2MB.",
     "avatarUploadError": "Failed to upload photo. Please try again.",
+    "genderSaveError": "Profile saved, but the gender could not be saved. Please try again.",
     "badges": "Badges",
     "bioLabel": "Bio",
     "bioPlaceholder": "Tell us a bit about yourself...",
@@ -1452,7 +1465,13 @@
     "viewLevelJourney": "View level journey",
     "viewLevelJourneyAria": "View level journey - Level {{level}}",
     "xp": "XP",
-    "xpToNextLevel": "{{xp}} XP left to {{levelName}}"
+    "xpToNextLevel": "{{xp}} XP left to {{levelName}}",
+    "gender": "Gender",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "genderOther": "Other",
+    "genderNotInformed": "Prefer not to say",
+    "genderNone": "Not informed"
   },
   "ranking": {
     "categoriesAria": "Ranking categories",

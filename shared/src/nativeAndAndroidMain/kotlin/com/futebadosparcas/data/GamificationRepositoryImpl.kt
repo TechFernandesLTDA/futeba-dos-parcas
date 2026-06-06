@@ -162,8 +162,8 @@ class GamificationRepositoryImpl(
         return dataSource.getSeasonRanking(seasonId, limit)
     }
 
-    override fun observeSeasonRanking(seasonId: String, limit: Int): Flow<List<SeasonParticipation>> {
-        return dataSource.observeSeasonRanking(seasonId, limit)
+    override fun observeSeasonRanking(seasonId: String, limit: Int, gender: String?): Flow<List<SeasonParticipation>> {
+        return dataSource.observeSeasonRanking(seasonId, limit, gender)
     }
 
     override suspend fun getUserParticipation(userId: String, seasonId: String): Result<SeasonParticipation?> {
