@@ -288,10 +288,19 @@ export const collectDailyMetrics =
     const timestamp =
       admin.firestore.FieldValue
         .serverTimestamp();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // FIX #2528: o cron dispara às 23:59 BRT (= 02:59 UTC do dia seguinte).
+    // Com `new Date().setHours(0,0,0,0)` (UTC), "hoje" referia-se ao dia UTC,
+    // deslocando o snapshot 3h. Usamos toLocaleDateString em BRT para derivar
+    // a data-parede correta, mesmo padrão de season/index.ts (FIX #790) e
+    // growth/season-cycle.ts.
+    const todayStr = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    }); // "YYYY-MM-DD" no fuso BRT
+    const [tyear, tmonth, tday] = todayStr.split("-").map(Number);
+    // Meia-noite BRT = UTC+3 (meia-noite BRT = 03:00 UTC).
+    const today = new Date(Date.UTC(tyear, tmonth - 1, tday, 3, 0, 0, 0));
+    const tomorrow = new Date(Date.UTC(tyear, tmonth - 1, tday + 1, 3, 0, 0, 0));
 
     const todayTs =
       admin.firestore.Timestamp
@@ -353,9 +362,8 @@ export const collectDailyMetrics =
       const dailyMetrics = {
         type: "daily_snapshot",
         timestamp: timestamp,
-        date: today.toISOString()
-          .split("T")[0], // YYYY-MM-DD
-        day_of_week: today.getDay(),
+        date: todayStr, // YYYY-MM-DD em BRT
+        day_of_week: today.getUTCDay(), // dia-da-semana em BRT (UTC rep.)
         games_created:
           gamesCreatedToday.data().count,
         games_finished:
