@@ -158,7 +158,9 @@ describe("Auth — Anti Abuse", () => {
       ).rejects.toThrow();
     });
 
-    it("extrai IP corretamente de x-forwarded-for", async () => {
+    // FIX #2479: o hop confiável é o PENÚLTIMO (GFE acrescenta 1 IP ao final).
+    // Cadeia com 2 hops: hops[0]=cliente-real, hops[1]=LB → usa hops[0].
+    it("extrai IP confiável (penúltimo) de cadeia XFF com 2 hops", async () => {
       (checkRateLimit as jest.Mock)
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
@@ -168,6 +170,59 @@ describe("Auth — Anti Abuse", () => {
         rawRequest: { ip: "10.0.0.1", headers: { "x-forwarded-for": "203.0.113.5, 10.0.0.1" } },
       }));
 
+      // Penúltimo = "203.0.113.5" (cliente real), último = "10.0.0.1" (LB)
+      expect(checkRateLimit).toHaveBeenCalledWith(
+        "203.0.113.5",
+        expect.objectContaining({ keyPrefix: "sms_ip" }),
+      );
+    });
+
+    // FIX #2479: prova que o 1º hop (controlável pelo atacante) NÃO é usado
+    // quando a cadeia tem ≥3 IPs (forjado, cliente-real, LB).
+    it("ignora 1º hop forjado pelo atacante em cadeia XFF com 3+ hops", async () => {
+      (checkRateLimit as jest.Mock)
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date(Date.now() + 3600000) });
+
+      // Atacante injeta "1.2.3.4" como primeiro hop para burlar o rate limit.
+      // O GFE acrescenta: "203.0.113.5" (cliente real) e "10.0.0.1" (LB).
+      await canSendSmsOtp(makeRequest({
+        rawRequest: {
+          ip: "10.0.0.1",
+          headers: { "x-forwarded-for": "1.2.3.4, 203.0.113.5, 10.0.0.1" },
+        },
+      }));
+
+      // Deve usar "203.0.113.5" (penúltimo = cliente real via infra confiável)
+      expect(checkRateLimit).toHaveBeenCalledWith(
+        "203.0.113.5",
+        expect.objectContaining({ keyPrefix: "sms_ip" }),
+      );
+
+      // Garante que o IP forjado "1.2.3.4" NÃO foi usado para o bucket sms_ip
+      const ipBucketCall = (checkRateLimit as jest.Mock).mock.calls.find(
+        (call) => call[1]?.keyPrefix === "sms_ip",
+      );
+      expect(ipBucketCall?.[0]).not.toBe("1.2.3.4");
+    });
+
+    // FIX #2479: cadeia XFF com lixo forjado no 1º hop não polui audit logs.
+    it("rejeita IP malformado/lixo no 1º hop e usa hop confiável", async () => {
+      (checkRateLimit as jest.Mock)
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date(Date.now() + 3600000) });
+
+      // Atacante coloca lixo no 1º hop para tentar poluir logs.
+      await canSendSmsOtp(makeRequest({
+        rawRequest: {
+          ip: "10.0.0.1",
+          headers: { "x-forwarded-for": "lixo-forjado, 203.0.113.5, 10.0.0.1" },
+        },
+      }));
+
+      // Penúltimo válido = "203.0.113.5"
       expect(checkRateLimit).toHaveBeenCalledWith(
         "203.0.113.5",
         expect.objectContaining({ keyPrefix: "sms_ip" }),

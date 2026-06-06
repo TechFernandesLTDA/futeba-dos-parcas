@@ -23,15 +23,6 @@ const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
 const LOG_FAIL_RATE_LIMIT_PER_HOUR = 20;
 
 /**
- * Extrai o IP real do cliente em GCF v2 atrás de Load Balancer.
- *
- * FIX #1309-M4: rawRequest.ip retorna o IP do LB (constante) — inútil para
- * rate limit por IP. O 1º hop de x-forwarded-for é o IP do cliente.
- *
- * @param {CallableRequest} request - Requisição callable.
- * @return {string} IP do cliente, ou "unknown".
- */
-/**
  * Valida formato de IP (IPv4 ou IPv6). Evita persistir lixo forjado nos
  * audit logs (FIX #2479 — poluição de forense por valores arbitrários de XFF).
  *
@@ -47,25 +38,42 @@ function isValidIp(value: string): boolean {
 }
 
 /**
- * Extrai o IP do cliente em GCF v2 atrás de Load Balancer.
+ * Número de hops de proxy confiáveis que a infra GCP/GFE acrescenta ao
+ * X-Forwarded-For APÓS o IP real do cliente.
  *
- * FIX #2479 (parcial): o código anterior usava `split(",")[0]` — o 1º hop de
+ * Topologia documentada pelo GCP Load Balancing (Cloud Run/GCF v2):
+ *   X-Forwarded-For: <hops-do-cliente>, <ip-real>, <ip-do-lb/gfe>
+ *
+ * Ou seja, o GFE anexa:  1 IP do LB  (último)
+ * Portanto o IP real do cliente é o PENÚLTIMO hop (offset = 1 a partir do fim).
+ *
+ * Ref: https://cloud.google.com/load-balancing/docs/https/custom-headers-global
+ * ("The load balancer appends <client-ip>,<load-balancer-ip> to the existing
+ * X-Forwarded-For value" — o LB não verifica IPs anteriores ao client-ip.)
+ *
+ * Se a topologia de deploy mudar (ex.: LB adicional na frente), ajuste aqui.
+ */
+const TRUSTED_PROXY_HOP_COUNT = 1;
+
+/**
+ * Extrai o IP confiável do cliente em GCF v2 atrás de Load Balancer/GFE.
+ *
+ * FIX #2479 (completo): o código anterior usava `split(",")[0]` — o 1º hop de
  * X-Forwarded-For é justamente a parte CONTROLÁVEL pelo cliente (anti-pattern
- * OWASP). Aqui agora:
- *  1. Sanitizamos: só aceitamos IPs bem-formados; lixo vira "unknown". Isso
- *     elimina de vez a poluição dos audit logs (verification_failures /
- *     audit_logs) — ângulo durável do bug.
- *  2. Logamos a cadeia XFF completa (info) para permitir confirmar
- *     empiricamente a topologia real do deploy (nº de proxies confiáveis)
- *     ANTES de fixar um offset — o autor da issue alertou para não chutar.
+ * OWASP). O GCP Load Balancing documenta que acrescenta
+ * `<ip-real-cliente>, <ip-do-lb>` ao final do XFF; portanto:
+ *  - hops[last]        = IP do LB/GFE (constante, inútil para rate limit)
+ *  - hops[last - 1]    = IP real do cliente (adicionado pela infra, confiável)
+ *  - hops[0..last-2]   = hops controlados pelo cliente (não confiáveis)
  *
- * NOTA: o bypass do rate-limit por-IP (atacante rotacionando o 1º hop) NÃO está
- * 100% fechado aqui — depende da topologia. Mitigantes já presentes: auth
- * obrigatório + bucket por-uid (`sms_caller`) independente de XFF. Tracking em
- * #2479 para finalizar a extração após inspeção da cadeia em produção.
+ * A extração usa `hops[length - 1 - TRUSTED_PROXY_HOP_COUNT]` para que o
+ * número de proxies confiáveis seja explícito e ajustável.
+ *
+ * Adicionalmente, todos os IPs são validados por formato (IPv4/IPv6) antes de
+ * serem aceitos — elimina poluição de audit logs por valores arbitrários.
  *
  * @param {object} request - Requisição callable.
- * @return {string} IP sanitizado do cliente, ou "unknown".
+ * @return {string} IP confiável do cliente, ou "unknown".
  */
 function clientIp(request: {rawRequest?: {
   ip?: string;
@@ -83,11 +91,19 @@ function clientIp(request: {rawRequest?: {
     logger.debug("[ANTI_ABUSE] XFF chain", {hops, count: hops.length});
   }
 
-  // Primeiro hop (legado), porém só se for um IP válido — caso contrário não
-  // poluímos logs/buckets com lixo.
-  const firstHop = hops[0];
-  if (firstHop && isValidIp(firstHop)) return firstHop;
+  // Índice do hop confiável: penúltimo quando há ≥2 hops
+  // (último = LB/GFE, penúltimo = cliente real).
+  if (hops.length >= TRUSTED_PROXY_HOP_COUNT + 1) {
+    const trustedHop = hops[hops.length - 1 - TRUSTED_PROXY_HOP_COUNT];
+    if (trustedHop && isValidIp(trustedHop)) return trustedHop;
+  }
 
+  // Cadeia curta (≤1 hop): sem LB na frente — aceita único hop se válido.
+  // Cobre emulador local e deploys diretos sem GFE.
+  if (hops.length === 1 && isValidIp(hops[0])) return hops[0];
+
+  // Último recurso: rawRequest.ip (pode ser o IP do LB em prod, mas é melhor
+  // que "unknown" e é o único dado disponível sem XFF).
   const fallback = request.rawRequest?.ip;
   if (fallback && isValidIp(fallback)) return fallback;
 
