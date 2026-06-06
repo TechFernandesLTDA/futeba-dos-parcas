@@ -1040,11 +1040,15 @@ export const onGameStatusUpdate = onDocumentUpdated(
             was_worst_player: isWorstPlayer,
             game_result: result,
             // FIX #1576: armazenar placar real do time para goal_diff
+            // FIX #2526: para jogos com >2 times em modo LIVE, times além do
+            // team2 usam team.score (liveScore só guarda team1/team2).
             my_team_score: team ?
               (liveScore ?
                 (team.id === liveScore.team1Id ?
                   liveScore.team1Score :
-                  liveScore.team2Score) :
+                  team.id === liveScore.team2Id ?
+                    liveScore.team2Score :
+                    team.score) :
                 team.score) :
               0,
             opponent_score: getOpponentScore(

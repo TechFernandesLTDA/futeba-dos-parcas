@@ -199,10 +199,37 @@ export function getWeekKey(d: Date): string {
 // ==========================================
 
 /**
+ * FIX #2526: resultado de um time pelo ranking de placar entre TODOS os times
+ * do jogo (modelo "ranking por placar", espelho de group-league.ts #2494).
+ * Maior placar = WIN, menor = LOSS, intermediários = DRAW; todos empatados =
+ * DRAW. Com 2 times reduz exatamente ao modelo clássico (sem regressão).
+ *
+ * @param {number} score - Placar do time.
+ * @param {number} maxScore - Maior placar do jogo.
+ * @param {number} minScore - Menor placar do jogo.
+ * @return {"WIN" | "DRAW" | "LOSS"} Resultado.
+ */
+function rankResultGlobal(
+  score: number,
+  maxScore: number,
+  minScore: number
+): "WIN" | "DRAW" | "LOSS" {
+  if (maxScore === minScore) return "DRAW";
+  if (score === maxScore) return "WIN";
+  if (score === minScore) return "LOSS";
+  return "DRAW";
+}
+
+/**
  * Determina o resultado de cada time no jogo.
+ * FIX #2526: suporta N times (N >= 2) via modelo "ranking por placar",
+ * espelhando a correção aplicada em group-league.ts (#2494).
+ * Jogadores do 3º time em diante agora recebem WIN/DRAW/LOSS corretos
+ * em vez de DRAW por fallback.
  * @param {Team[]} teams Times participantes.
  * @param {LiveGameScore | null} liveScore
- *   Placar ao vivo.
+ *   Placar ao vivo (apenas para times 1 e 2 no modo LIVE;
+ *   demais times usam team.score).
  * @return {Record<string, string>} Mapa de
  *   resultados por time.
  */
@@ -215,80 +242,70 @@ export function determineGameResults(
   > = {};
   if (teams.length < 2) return results;
 
-  const t1 = teams.find(
-    (t) => t.id === (
-      liveScore ?
-        liveScore.team1Id :
-        teams[0].id
-    )
-  );
-  const t2 = teams.find(
-    (t) => t.id === (
-      liveScore ?
-        liveScore.team2Id :
-        teams[1].id
-    )
-  );
-
-  let s1 = t1 ? t1.score : 0;
-  let s2 = t2 ? t2.score : 0;
-  if (liveScore) {
-    s1 = liveScore.team1Score;
-    s2 = liveScore.team2Score;
-  }
-
-  if (t1 && t2) {
-    if (s1 > s2) {
-      results[t1.id] = "WIN";
-      results[t2.id] = "LOSS";
-    } else if (s2 > s1) {
-      results[t1.id] = "LOSS";
-      results[t2.id] = "WIN";
-    } else {
-      results[t1.id] = "DRAW";
-      results[t2.id] = "DRAW";
+  // Resolver placar de cada time: para jogos LIVE, team1/team2 usam
+  // o placar ao vivo; times adicionais usam team.score.
+  const scoreOf = (t: Team): number => {
+    if (liveScore) {
+      if (t.id === liveScore.team1Id) {
+        return liveScore.team1Score;
+      }
+      if (t.id === liveScore.team2Id) {
+        return liveScore.team2Score;
+      }
     }
+    return t.score;
+  };
+
+  const allScores = teams.map((t) => scoreOf(t));
+  const maxScore = Math.max(...allScores);
+  const minScore = Math.min(...allScores);
+
+  for (const t of teams) {
+    results[t.id] = rankResultGlobal(
+      scoreOf(t), maxScore, minScore
+    );
   }
   return results;
 }
 
 /**
- * Calcula o placar do adversário para um time.
- * Retorna -1 se não for possível determinar.
+ * FIX #2526: placar "do oponente" = média (arredondada) dos DEMAIS times,
+ * espelhando opponentAverage() de group-league.ts (#2494).
+ * Com 2 times = placar do único oponente (idêntico ao comportamento antigo,
+ * sem regressão). Elimina o sentinela -1 para times 3+ em jogos LIVE.
  * @param {Team | undefined} team Time do jogador.
  * @param {LiveGameScore | null} liveScore
- *   Placar ao vivo.
+ *   Placar ao vivo (team1/team2 usam placar ao vivo; demais usam team.score).
  * @param {Team[]} teams Todos os times.
- * @return {number} Placar do adversário ou -1.
+ * @return {number} Média dos placares dos demais times (0 se indefinido).
  */
 export function getOpponentScore(
   team: Team | undefined,
   liveScore: LiveGameScore | null,
   teams: Team[]
 ): number {
-  if (liveScore) {
-    if (
-      team &&
-      team.id === liveScore.team1Id
-    ) {
-      return liveScore.team2Score;
-    } else if (
-      team &&
-      team.id === liveScore.team2Id
-    ) {
-      return liveScore.team1Score;
+  if (!team || teams.length < 2) return 0;
+
+  // Resolver placar de cada time (mesmo critério de determineGameResults)
+  const scoreOf = (t: Team): number => {
+    if (liveScore) {
+      if (t.id === liveScore.team1Id) {
+        return liveScore.team1Score;
+      }
+      if (t.id === liveScore.team2Id) {
+        return liveScore.team2Score;
+      }
     }
-  } else if (
-    teams.length >= 2 && team
-  ) {
-    const opponent = teams.find(
-      (t) => t.id !== team.id
-    );
-    if (opponent) {
-      return opponent.score;
-    }
-  }
-  return -1;
+    return t.score;
+  };
+
+  const others = teams
+    .filter((t) => t.id !== team.id)
+    .map((t) => scoreOf(t));
+  if (others.length === 0) return 0;
+  return Math.round(
+    others.reduce((a, b) => a + b, 0) / others.length
+  );
 }
 
 // ==========================================
