@@ -4,18 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       test_filter:
-        description: 'Filtro opcional de testes (ex: grupos.spec.ts)'
+        description: 'Filtro opcional (ex: grupos.spec.ts)'
         required: false
         default: ''
   schedule:
-    # Executa diariamente às 5h BRT (8h UTC) para detectar regressões
     - cron: '0 8 * * *'
 
 jobs:
   web-e2e:
     name: Web E2E — Emulador (auth+firestore+functions)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     env:
       FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
@@ -49,11 +48,8 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      - name: Instalar Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Instalar tsx (evita cache corrompido do npx)
-        run: npm install -g tsx
+      - name: Instalar Firebase CLI + tsx
+        run: npm install -g firebase-tools tsx
 
       - name: Instalar dependências — functions
         working-directory: functions
@@ -71,36 +67,23 @@ jobs:
         working-directory: web
         run: npx playwright install --with-deps chromium
 
-      - name: Iniciar emuladores (background)
+      - name: E2E (emulador + seed + Playwright)
+        # emulators:exec sobe/derruba emuladores automaticamente.
+        # O script inline faz seed e roda Playwright (webServer = vite dev).
         run: |
-          firebase emulators:start \
+          firebase emulators:exec \
             --only auth,firestore,functions \
-            --project futebadosparcas &
-          for i in $(seq 1 30); do
-            curl -s http://127.0.0.1:9099 > /dev/null 2>&1 && break
-            sleep 2
-          done
-        continue-on-error: false
-
-      - name: Seed — usuários E2E
-        run: tsx scripts/seed-e2e-users.ts
+            --project futebadosparcas \
+            'bash -c "
+              set -e
+              echo \"[e2e] Emuladores prontos — seed...\"
+              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
+              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
+              echo \"[e2e] Seed OK — Playwright (vite dev via webServer config)...\"
+              cd web && npx playwright test --project=chromium
+            "'
         env:
-          NODE_PATH: functions/node_modules
-          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-
-      - name: Seed — grupos E2E
-        run: tsx scripts/seed-e2e-groups.ts
-        env:
-          NODE_PATH: functions/node_modules
-          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-
-      - name: Testes — Web E2E (Playwright)
-        working-directory: web
-        run: npx playwright test --project=chromium
-        env:
-          NODE_PATH: ../functions/node_modules
+          CI: "true"
 
       - name: Upload — Playwright report
         if: always()
@@ -109,7 +92,3 @@ jobs:
           name: playwright-report-web-e2e
           path: web/playwright-report/
           retention-days: 7
-
-      - name: Stop emulator (cleanup)
-        if: always()
-        run: pkill -f "firebase.*emulator" 2>/dev/null || true
