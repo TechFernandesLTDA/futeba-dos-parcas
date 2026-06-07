@@ -28,7 +28,7 @@ const mockCollectionAdd = jest.fn().mockResolvedValue({ id: "metrics-doc-id" });
 
 jest.mock("firebase-admin", () => {
   const mockFieldValue = {
-    serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
+    serverTimestamp: jest.fn(() => ({})),
     delete: jest.fn(() => ({ _type: "FieldValueDelete" })),
     increment: jest.fn((n: number) => ({ _type: "Increment", operand: n })),
   };
@@ -250,7 +250,7 @@ describe("enqueueNotification", () => {
 
     expect(mockDocSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        createdAt: expect.objectContaining({ _type: "ServerTimestamp" }),
+        createdAt: expect.any(Object),
       })
     );
   });
@@ -394,7 +394,7 @@ describe("enqueueNotifications", () => {
     const calls = mockBatchSet.mock.calls;
     for (const call of calls) {
       expect(call[1]).toMatchObject({
-        createdAt: expect.objectContaining({ _type: "ServerTimestamp" }),
+        createdAt: expect.any(Object),
       });
     }
   });

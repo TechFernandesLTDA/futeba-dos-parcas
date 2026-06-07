@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {
@@ -101,7 +101,7 @@ export const deleteLocation = secureCallable<DeleteLocationRequest>(
       location_name: locData.name || null,
       deleted_docs_count: deletedCount,
       subcollections: LOCATION_SUBCOLLECTIONS,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: FieldValue.serverTimestamp(),
     });
 
     logger.info(`Location ${locationId} deleted (cascade: ${deletedCount} docs)`);
@@ -165,7 +165,7 @@ export const calculateAutoRatings = secureCallable<CalculateAutoRatingsRequest>(
       auto_defender_rating: avg(ratings.defender),
       auto_gk_rating: avg(ratings.gk),
       auto_rating_samples: samples,
-      auto_rating_updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      auto_rating_updated_at: FieldValue.serverTimestamp(),
     });
 
     const historyEntries = [
@@ -183,7 +183,7 @@ export const calculateAutoRatings = secureCallable<CalculateAutoRatingsRequest>(
         batch.set(docRef, {
           ...entry,
           samples,
-          calculatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          calculatedAt: FieldValue.serverTimestamp(),
         });
       });
       await batch.commit();
@@ -236,7 +236,7 @@ async function checkAndAwardRatingBadges(userId: string, ratings: {[key: string]
 
   if (newBadges.length > 0) {
     await userRef.update({
-      badges: admin.firestore.FieldValue.arrayUnion(...newBadges),
+      badges: FieldValue.arrayUnion(...newBadges),
     });
   }
 }
@@ -304,7 +304,7 @@ export const recalculateAllAutoRatings = secureCallable<RecalculateAllAutoRating
           auto_defender_rating: avg(ratings.defender),
           auto_gk_rating: avg(ratings.gk),
           auto_rating_samples: samples,
-          auto_rating_updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          auto_rating_updated_at: FieldValue.serverTimestamp(),
         };
 
         await db().collection("users").doc(userId).update(autoRatings);

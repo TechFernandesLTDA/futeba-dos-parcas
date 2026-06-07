@@ -21,6 +21,7 @@ import {
   onDocumentCreated,
 } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
 
@@ -97,7 +98,7 @@ export const onUserDocCreated = onDocumentCreated(
         {
           ...pii,
           piiSyncedAt:
-            admin.firestore.FieldValue.serverTimestamp(),
+            FieldValue.serverTimestamp(),
         },
         {merge: true}
       );
@@ -144,7 +145,7 @@ export const onUserDocUpdated = onDocumentUpdated(
         {
           ...pii,
           piiSyncedAt:
-            admin.firestore.FieldValue.serverTimestamp(),
+            FieldValue.serverTimestamp(),
         },
         {merge: true}
       );
@@ -217,7 +218,7 @@ export const migratePiiToUsersPrivate = onCall(
       while (hasMore) {
         let query = db
           .collection("users")
-          .orderBy(admin.firestore.FieldPath.documentId())
+          .orderBy(FieldPath.documentId())
           .limit(PAGE_SIZE);
         if (lastDoc) query = query.startAfter(lastDoc);
 
@@ -246,9 +247,9 @@ export const migratePiiToUsersPrivate = onCall(
               {
                 ...pii,
                 piiSyncedAt:
-                admin.firestore.FieldValue.serverTimestamp(),
+                FieldValue.serverTimestamp(),
                 migratedAt:
-                admin.firestore.FieldValue.serverTimestamp(),
+                FieldValue.serverTimestamp(),
               },
               {merge: true}
             );
@@ -405,8 +406,8 @@ export const updateUserPii = onCall(
       await ref.set(
         {
           ...updates,
-          piiSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          piiSyncedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         {merge: true}
       );
@@ -477,7 +478,7 @@ export const removePiiFromUsers = onCall(
       while (hasMore) {
         let query = db
           .collection("users")
-          .orderBy(admin.firestore.FieldPath.documentId())
+          .orderBy(FieldPath.documentId())
           .limit(PAGE_SIZE);
         if (lastDoc) query = query.startAfter(lastDoc);
 
@@ -497,7 +498,7 @@ export const removePiiFromUsers = onCall(
           let hasAny = false;
           for (const field of PII_FIELDS) {
             if (data[field] !== undefined && data[field] !== null) {
-              fieldsToDelete[field] = admin.firestore.FieldValue.delete();
+              fieldsToDelete[field] = FieldValue.delete();
               hasAny = true;
             }
           }

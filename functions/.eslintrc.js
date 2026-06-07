@@ -27,6 +27,7 @@ module.exports = {
     "jest.config.js", // Config JS sem tsconfig
     "jest.integration.config.js", // Config JS de integração sem tsconfig
     "jest.perf.config.js", // Config JS de performance sem tsconfig
+    "jest.integration.config.js", // Config JS de integração sem tsconfig
     ".eslintrc.js", // Config JS não precisa de lint
     "src/**/*.d.ts", // Arquivos de declaração de tipo apenas
   ],

@@ -20,6 +20,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
+import {FieldPath} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
 
@@ -192,7 +193,7 @@ export const denormalizeGameLocations = onCall(
       while (true) {
         let q = db
           .collection("games")
-          .orderBy(admin.firestore.FieldPath.documentId())
+          .orderBy(FieldPath.documentId())
           .limit(PAGE_SIZE);
         if (lastDoc) q = q.startAfter(lastDoc);
 

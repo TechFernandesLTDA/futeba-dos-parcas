@@ -30,6 +30,7 @@ import {
   CallableRequest,
 } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   checkRateLimit,
   RateLimitConfig,
@@ -488,7 +489,7 @@ async function logAudit(
     await getDb().collection("audit_logs").add({
       ...data,
       timestamp:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
     });
   } catch (error) {

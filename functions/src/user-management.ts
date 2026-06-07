@@ -1,5 +1,6 @@
 import {auth} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 
 // Lazy initialization para evitar erro
@@ -120,10 +121,10 @@ export const onUserCreate = auth
           // Technical fields
           fcm_token: null,
           created_at:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           updated_at:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
         };
 

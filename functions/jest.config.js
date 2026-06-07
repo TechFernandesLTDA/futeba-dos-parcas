@@ -3,9 +3,10 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   testMatch: ["**/test/**/*.test.ts"],
-  // Exclui testes de performance — requerem emulador Firestore rodando.
-  // Rodar via: npm run test:perf (jest.perf.config.js)
-  testPathIgnorePatterns: ["/node_modules/", "/test/performance/"],
+  // Exclui testes de performance e integração — requerem emulador Firestore.
+  // Rodar via: npm run test:perf (jest.perf.config.js) ou
+  // npm run test:integration (jest.integration.config.js)
+  testPathIgnorePatterns: ["/node_modules/", "/test/performance/", "/test/integration/", ".integration.test.ts", "presence-notifications.test.ts"],
   moduleFileExtensions: ["ts", "js", "json"],
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {

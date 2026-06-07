@@ -16,6 +16,7 @@
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {
   NotificationType,
@@ -154,14 +155,14 @@ export const onJoinRequestApproved = onDocumentUpdated(
         user_photo: after.user_photo ?? null,
         role: "MEMBER",
         status: "ACTIVE",
-        joined_at: admin.firestore.FieldValue.serverTimestamp(),
+        joined_at: FieldValue.serverTimestamp(),
         invited_by: after.responded_by,
         _counted_by_join_request: true,
       });
 
       tx.update(groupRef, {
-        member_count: admin.firestore.FieldValue.increment(1),
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        member_count: FieldValue.increment(1),
+        updated_at: FieldValue.serverTimestamp(),
       });
 
       tx.set(db().doc(`users/${userId}/groups/${groupId}`), {
@@ -172,7 +173,7 @@ export const onJoinRequestApproved = onDocumentUpdated(
         role: "MEMBER",
         // member_count lido na transação + 1 (reflete estado pós-commit)
         member_count: currentMemberCount + 1,
-        joined_at: admin.firestore.FieldValue.serverTimestamp(),
+        joined_at: FieldValue.serverTimestamp(),
       });
     });
 

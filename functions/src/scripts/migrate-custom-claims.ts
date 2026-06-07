@@ -30,6 +30,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import "../types/firestore-count";
 import {db} from "../_db";
 
@@ -96,7 +97,7 @@ async function migrateBatch(
 
           // Atualizar timestamp de migração no Firestore (opcional)
           await db().collection("users").doc(uid).update({
-            claims_migrated_at: admin.firestore.FieldValue.serverTimestamp(),
+            claims_migrated_at: FieldValue.serverTimestamp(),
           });
         } catch (err: unknown) {
           const errMsg =
@@ -114,7 +115,7 @@ async function migrateBatch(
             type: "CUSTOM_CLAIMS_MIGRATION",
             user_id: uid,
             error: errMsg,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            timestamp: FieldValue.serverTimestamp(),
           }).catch(() => {
             // Ignore error logging errors
           });
@@ -181,7 +182,7 @@ export async function runMigration(): Promise<MigrationStats> {
     await db().collection("migration_logs").add({
       type: "CUSTOM_CLAIMS_MIGRATION",
       stats,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: FieldValue.serverTimestamp(),
     });
 
     return stats;

@@ -312,7 +312,11 @@ export const onNewUserCreated = onDocumentCreated(
  */
 export const syncFieldOwnerClaim = secureCallable(
   {
-    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    // App Check desabilitado para esta função: é chamada durante
+    // onAuthStateChanged, quando o token App Check pode não estar
+    // pronto. A segurança é mantida por requireAuth + rateLimit +
+    // validação do doc Firestore do usuário.
+    appCheck: false,
     requireAuth: true,
     rateLimit: {
       maxRequests: 10,

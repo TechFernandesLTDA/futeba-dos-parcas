@@ -4,12 +4,17 @@
  * Spike #2531: prova que o emulador dispara onInviteRedeemed e que um teste
  * Jest pode observar deterministicamente o member doc resultante.
  *
+ * Usado pelo CI test-harness (#2533) para rodar:
+ *   npx jest --config jest.integration.config.js
+ *
+ * Requer FIRESTORE_EMULATOR_HOST definido (padrão 127.0.0.1:8085).
+ *
  * Execução:
  *   firebase emulators:exec --only firestore,functions \
  *     'npx jest -c jest.integration.config.js test/integration/invite-redeemed.spike.test.ts'
  *
  * Diferenças em relação ao jest.config.js padrão:
- * - testMatch aponta para test/integration/
+ * - testMatch aponta para test/** /*.integration.test.ts
  * - testTimeout mais alto (30 s) — triggers são assíncronos
  * - SEM mock de firebase-admin / firebase-functions/v2/firestore
  *   (o objetivo é bater no emulador real)
@@ -19,7 +24,10 @@
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
-  testMatch: ["**/test/integration/**/*.test.ts"],
+  roots: ["<rootDir>/test"],
+  testMatch: [
+    "<rootDir>/test/**/*.integration.test.ts",
+  ],
   testTimeout: 30000,
   moduleFileExtensions: ["ts", "js", "json"],
   transform: {
@@ -34,4 +42,5 @@ module.exports = {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   verbose: true,
+  collectCoverage: false,
 };

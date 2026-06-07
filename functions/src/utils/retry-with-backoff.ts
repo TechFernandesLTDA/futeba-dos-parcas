@@ -29,6 +29,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 
 const getDb = () => admin.firestore();
 
@@ -78,9 +79,9 @@ export interface DeadLetterEntry {
   attempts: number;
   total_duration_ms: number;
   context: Record<string, unknown>;
-  created_at: admin.firestore.FieldValue;
+  created_at: FieldValue;
   status: "PENDING" | "RESOLVED" | "IGNORED";
-  resolved_at?: admin.firestore.FieldValue;
+  resolved_at?: FieldValue;
   resolved_by?: string;
 }
 
@@ -378,7 +379,7 @@ async function sendToDeadLetterQueue(
       total_duration_ms: durationMs,
       context: config.context,
       created_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       status: "PENDING",
     };
@@ -458,7 +459,7 @@ export async function resolveDeadLetterItem(
     .update({
       status: "RESOLVED",
       resolved_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       resolved_by: resolvedBy,
     });

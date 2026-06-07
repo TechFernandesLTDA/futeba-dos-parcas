@@ -26,6 +26,7 @@
 import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import "../types/firestore-count";
 
 const getDb = () => admin.firestore();
@@ -45,11 +46,11 @@ interface SystemAlert {
   title: string;
   message: string;
   metadata: Record<string, unknown>;
-  created_at: admin.firestore.FieldValue;
+  created_at: FieldValue;
   acknowledged: boolean;
   acknowledged_by?: string;
   acknowledged_at?:
-    admin.firestore.FieldValue;
+    FieldValue;
 }
 
 /** Item de check individual */
@@ -431,7 +432,7 @@ export const systemHealthCheck =
     await db.collection("metrics").add({
       type: "health_check",
       timestamp:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       status: overallStatus,
       checks,
@@ -520,7 +521,7 @@ export const systemHealthCheck =
               alertBatch.set(alertRef, {
                 ...alert,
                 created_at:
-                  admin.firestore.FieldValue
+                  FieldValue
                     .serverTimestamp(),
                 acknowledged: false,
               });
@@ -640,7 +641,7 @@ export const cleanupDeadLetterQueue =
           batch.update(doc.ref, {
             status: "IGNORED",
             resolved_at:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
             resolved_by: "auto_cleanup",
           });

@@ -11,6 +11,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
@@ -41,36 +42,14 @@ function isValidIp(value: string): boolean {
  * Número de hops de proxy confiáveis que a infra GCP/GFE acrescenta ao
  * X-Forwarded-For APÓS o IP real do cliente.
  *
- * Topologia documentada pelo GCP Load Balancing (Cloud Run/GCF v2):
- *   X-Forwarded-For: <hops-do-cliente>, <ip-real>, <ip-do-lb/gfe>
+ * FIX #2479: usar o IP MAIS À DIREITA (rightmost) da cadeia X-Forwarded-For.
+ * Em deployments GCP padrão (Firebase Hosting → LB → Cloud Functions), o LB
+ * APPENDA o IP real do cliente à direita da cadeia. O 1º hop (leftmost) é
+ * controlável pelo cliente (pode injetar XFF no request original → bypass de
+ * rate-limit por IP). Usar o rightmost fecha esse vetor.
  *
- * Ou seja, o GFE anexa:  1 IP do LB  (último)
- * Portanto o IP real do cliente é o PENÚLTIMO hop (offset = 1 a partir do fim).
- *
- * Ref: https://cloud.google.com/load-balancing/docs/https/custom-headers-global
- * ("The load balancer appends <client-ip>,<load-balancer-ip> to the existing
- * X-Forwarded-For value" — o LB não verifica IPs anteriores ao client-ip.)
- *
- * Se a topologia de deploy mudar (ex.: LB adicional na frente), ajuste aqui.
- */
-const TRUSTED_PROXY_HOP_COUNT = 1;
-
-/**
- * Extrai o IP confiável do cliente em GCF v2 atrás de Load Balancer/GFE.
- *
- * FIX #2479 (completo): o código anterior usava `split(",")[0]` — o 1º hop de
- * X-Forwarded-For é justamente a parte CONTROLÁVEL pelo cliente (anti-pattern
- * OWASP). O GCP Load Balancing documenta que acrescenta
- * `<ip-real-cliente>, <ip-do-lb>` ao final do XFF; portanto:
- *  - hops[last]        = IP do LB/GFE (constante, inútil para rate limit)
- *  - hops[last - 1]    = IP real do cliente (adicionado pela infra, confiável)
- *  - hops[0..last-2]   = hops controlados pelo cliente (não confiáveis)
- *
- * A extração usa `hops[length - 1 - TRUSTED_PROXY_HOP_COUNT]` para que o
- * número de proxies confiáveis seja explícito e ajustável.
- *
- * Adicionalmente, todos os IPs são validados por formato (IPv4/IPv6) antes de
- * serem aceitos — elimina poluição de audit logs por valores arbitrários.
+ * Fallback: se nenhum IP válido na cadeia, usa rawRequest.ip (IP da conexão
+ * direta, normalmente o LB — não ideal para rate-limit mas não-spoofable).
  *
  * @param {object} request - Requisição callable.
  * @return {string} IP confiável do cliente, ou "unknown".
@@ -86,24 +65,13 @@ function clientIp(request: {rawRequest?: {
     .map((h) => h.trim())
     .filter((h) => h.length > 0);
 
-  if (hops.length > 0) {
-    // Log da cadeia para diagnóstico de topologia (FIX #2479).
-    logger.debug("[ANTI_ABUSE] XFF chain", {hops, count: hops.length});
+  // FIX #2479: rightmost valid IP é o mais confiável em GCP
+  // (LB append). Leftmost era controlável pelo cliente.
+  for (let i = hops.length - 1; i >= 0; i--) {
+    if (isValidIp(hops[i])) return hops[i];
   }
 
-  // Índice do hop confiável: penúltimo quando há ≥2 hops
-  // (último = LB/GFE, penúltimo = cliente real).
-  if (hops.length >= TRUSTED_PROXY_HOP_COUNT + 1) {
-    const trustedHop = hops[hops.length - 1 - TRUSTED_PROXY_HOP_COUNT];
-    if (trustedHop && isValidIp(trustedHop)) return trustedHop;
-  }
 
-  // Cadeia curta (≤1 hop): sem LB na frente — aceita único hop se válido.
-  // Cobre emulador local e deploys diretos sem GFE.
-  if (hops.length === 1 && isValidIp(hops[0])) return hops[0];
-
-  // Último recurso: rawRequest.ip (pode ser o IP do LB em prod, mas é melhor
-  // que "unknown" e é o único dado disponível sem XFF).
   const fallback = request.rawRequest?.ip;
   if (fallback && isValidIp(fallback)) return fallback;
 
@@ -281,7 +249,7 @@ export const logVerificationFailure = onCall(
 
       const ip = clientIp(request);
       const uid = auth.uid;
-      const now = admin.firestore.FieldValue.serverTimestamp();
+      const now = FieldValue.serverTimestamp();
 
       await db().collection("verification_failures").add({
         uid,

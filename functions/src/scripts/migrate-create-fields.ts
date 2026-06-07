@@ -21,6 +21,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import "../types/firestore-count";
 
 // Initialize Firebase Admin
@@ -90,7 +91,7 @@ async function migrateCreateFields(execute = false): Promise<void> {
             amenities: [],
             photos: [],
             managers: [loc.owner_id].filter(Boolean),
-            created_at: admin.firestore.FieldValue.serverTimestamp(),
+            created_at: FieldValue.serverTimestamp(),
           });
         }
 

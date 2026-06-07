@@ -6,6 +6,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   onDocumentCreated,
   onDocumentUpdated,
@@ -17,7 +18,6 @@ import {
 } from "../constants";
 import {
   NotificationType,
-  sendNotificationToUser,
   sendNotificationToUsers,
   sendAndSaveNotification,
 } from "./helpers";
@@ -82,6 +82,7 @@ export const onGameConfirmed = onDocumentCreated(
   {document: "confirmations/{confirmationId}", region: FUNCTION_REGION},
   async (event) => {
     const confirmation = event.data?.data();
+    const confirmationId = event.params.confirmationId;
     if (
       !confirmation ||
       confirmation.status !== "CONFIRMED"
@@ -118,19 +119,22 @@ export const onGameConfirmed = onDocumentCreated(
             "Um jogador") :
           "Um jogador";
 
-        await sendNotificationToUser(
+        // FIX #2527: usar sendAndSaveNotification com docId
+        // determinístico (confirmationId) para idempotência em
+        // retries at-least-once do Firestore
+        await sendAndSaveNotification(
           game.owner_id,
           {
+            userId: game.owner_id,
             title: PRESENCE_NOTIFICATIONS.GAME_CONFIRMED.title["pt-BR"](),
             body: PRESENCE_NOTIFICATIONS.GAME_CONFIRMED.body["pt-BR"]({
               userName,
             }),
-            type:
-              NotificationType.GAME_CONFIRMED,
-            data: {
-              gameId: gameId,
-            },
-          }
+            type: NotificationType.GAME_CONFIRMED,
+            gameId: gameId,
+            action: "game/" + gameId,
+          },
+          `game_cnfmd_${confirmationId}`
         );
       }
     } catch (e) {
@@ -205,6 +209,8 @@ export const onGroupInviteCreated =
           invite.invitedById ||
           null;
 
+        // FIX #2527: docId determinístico (inviteId) para
+        // idempotência em retries at-least-once
         await sendAndSaveNotification(
           invitedUserId,
           {
@@ -220,7 +226,8 @@ export const onGroupInviteCreated =
             senderName: invitedByName,
             action:
               "group_invite/" + inviteId,
-          }
+          },
+          `group_inv_${inviteId}`
         );
 
         logger.info(
@@ -308,7 +315,7 @@ export const cleanupExpiredInvites = onSchedule(
           batch.update(doc.ref, {
             status: "EXPIRED",
             expired_at:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
           });
         }
@@ -393,6 +400,7 @@ export const onGroupInviteResponse =
         if (afterStatus === "ACCEPTED") {
           const grpId =
             after.group_id || after.groupId;
+          // FIX #2527: docId determinístico p/ idempotência
           await sendAndSaveNotification(
             invitedById,
             {
@@ -407,9 +415,11 @@ export const onGroupInviteResponse =
               groupId: grpId,
               action:
                 "group_detail/" + grpId,
-            }
+            },
+            `inv_resp_${inviteId}_ACCEPTED`
           );
         } else {
+          // FIX #2527: docId determinístico p/ idempotência
           await sendAndSaveNotification(
             invitedById,
             {
@@ -424,7 +434,8 @@ export const onGroupInviteResponse =
               groupId:
                 after.group_id ||
                 after.groupId,
-            }
+            },
+            `inv_resp_${inviteId}_DECLINED`
           );
         }
 

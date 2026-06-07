@@ -1,5 +1,5 @@
 import {logger} from "firebase-functions";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
@@ -242,35 +242,35 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
               season_id: seasonId,
               group_id: groupId,
               points:
-                admin.firestore.FieldValue.increment(pointsEarned),
+                FieldValue.increment(pointsEarned),
               games_played:
-                admin.firestore.FieldValue.increment(1),
+                FieldValue.increment(1),
               wins:
-                admin.firestore.FieldValue.increment(
+                FieldValue.increment(
                   pr.result === "WIN" ? 1 : 0
                 ),
               draws:
-                admin.firestore.FieldValue.increment(
+                FieldValue.increment(
                   pr.result === "DRAW" ? 1 : 0
                 ),
               losses:
-                admin.firestore.FieldValue.increment(
+                FieldValue.increment(
                   pr.result === "LOSS" ? 1 : 0
                 ),
               goals_scored:
-                admin.firestore.FieldValue.increment(pr.goals),
+                FieldValue.increment(pr.goals),
               goals_conceded:
-                admin.firestore.FieldValue.increment(opponentScore),
+                FieldValue.increment(opponentScore),
               goal_difference:
-                admin.firestore.FieldValue.increment(
+                FieldValue.increment(
                   myTeamScore - opponentScore
                 ),
               mvp_count:
-                admin.firestore.FieldValue.increment(
+                FieldValue.increment(
                   pr.is_mvp ? 1 : 0
                 ),
               updated_at:
-                admin.firestore.FieldValue.serverTimestamp(),
+                FieldValue.serverTimestamp(),
             },
             {merge: true}
           );
@@ -297,7 +297,7 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
           team2_score: teamSummaries[1]?.score ?? 0,
           date: after.date || "",
           player_results: playerResults,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         });
       });
 

@@ -1,6 +1,7 @@
 import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 
 import "../types/firestore-count";
 import {db} from "../_db";
@@ -32,7 +33,7 @@ export const collectHourlyMetrics =
     );
 
     const timestamp =
-      admin.firestore.FieldValue
+      FieldValue
         .serverTimestamp();
     const now = new Date();
 
@@ -286,28 +287,30 @@ export const collectDailyMetrics =
     );
 
     const timestamp =
-      admin.firestore.FieldValue
+      FieldValue
         .serverTimestamp();
 
-    // FIX #2528: o cron dispara às 23:59 BRT (= 02:59 UTC do dia seguinte).
-    // Com `new Date().setHours(0,0,0,0)` (UTC), "hoje" referia-se ao dia UTC,
-    // deslocando o snapshot 3h. Usamos toLocaleDateString em BRT para derivar
-    // a data-parede correta, mesmo padrão de season/index.ts (FIX #790) e
-    // growth/season-cycle.ts.
-    const todayStr = new Date().toLocaleDateString("en-CA", {
-      timeZone: "America/Sao_Paulo",
-    }); // "YYYY-MM-DD" no fuso BRT
-    const [tyear, tmonth, tday] = todayStr.split("-").map(Number);
-    // Meia-noite BRT = UTC+3 (meia-noite BRT = 03:00 UTC).
-    const today = new Date(Date.UTC(tyear, tmonth - 1, tday, 3, 0, 0, 0));
-    const tomorrow = new Date(Date.UTC(tyear, tmonth - 1, tday + 1, 3, 0, 0, 0));
+    // FIX #2528: meia-noite BRT (UTC-3) em vez de UTC.
+    // new Date().setHours(0,0,0,0) no ambiente Cloud
+    // Functions (UTC) setava meia-noite UTC = 21:00 BRT
+    // do dia anterior, deslocando os snapshots diários em 3h.
+    // Agora computa 00:00 BRT = 03:00 UTC explicitamente.
+    const now = new Date();
+    const todayBrt = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      3, 0, 0, 0
+    ));
+    const tomorrowBrt = new Date(todayBrt);
+    tomorrowBrt.setUTCDate(tomorrowBrt.getUTCDate() + 1);
 
     const todayTs =
       admin.firestore.Timestamp
-        .fromDate(today);
+        .fromDate(todayBrt);
     const tomorrowTs =
       admin.firestore.Timestamp
-        .fromDate(tomorrow);
+        .fromDate(tomorrowBrt);
 
     try {
       // Jogos criados hoje
@@ -362,8 +365,9 @@ export const collectDailyMetrics =
       const dailyMetrics = {
         type: "daily_snapshot",
         timestamp: timestamp,
-        date: todayStr, // YYYY-MM-DD em BRT
-        day_of_week: today.getUTCDay(), // dia-da-semana em BRT (UTC rep.)
+        date: todayBrt.toISOString()
+          .split("T")[0], // YYYY-MM-DD
+        day_of_week: todayBrt.getDay(),
         games_created:
           gamesCreatedToday.data().count,
         games_finished:

@@ -6,6 +6,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 
 // ==========================================
 // MODELS & INTERFACES
@@ -113,7 +114,7 @@ export interface XpLog {
     /** FIX #1576: placar do adversário */
     opponent_score: number;
     milestones_unlocked: string[];
-    created_at: admin.firestore.FieldValue;
+    created_at: FieldValue;
 }
 
 export interface GamificationSettings {

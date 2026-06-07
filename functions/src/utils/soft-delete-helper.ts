@@ -26,6 +26,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 
 const getDb = () => admin.firestore();
 
@@ -157,11 +158,11 @@ export async function softDelete(
     // Montar campos de atualização
     const updateFields: Record<string, unknown> = {
       deleted_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       deleted_by: deletedBy,
       updated_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       ...options.additionalFields,
     };
@@ -272,16 +273,16 @@ export async function restoreSoftDeleted(
     // Montar campos de atualização
     const updateFields: Record<string, unknown> = {
       deleted_at:
-        admin.firestore.FieldValue.delete(),
+        FieldValue.delete(),
       deleted_by:
-        admin.firestore.FieldValue.delete(),
+        FieldValue.delete(),
       deleted_reason:
-        admin.firestore.FieldValue.delete(),
+        FieldValue.delete(),
       updated_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       restored_at:
-        admin.firestore.FieldValue
+        FieldValue
           .serverTimestamp(),
       restored_by: restoredBy,
       ...options.additionalFields,
@@ -518,7 +519,7 @@ export async function softDeleteGroupCascade(
 
   try {
     const now =
-      admin.firestore.FieldValue.serverTimestamp();
+      FieldValue.serverTimestamp();
 
     // 1. Soft-delete do grupo
     const groupRef = db
@@ -572,7 +573,7 @@ export async function softDeleteGroupCascade(
       let q = db
         .collection("games")
         .where("group_id", "==", groupId)
-        .orderBy(admin.firestore.FieldPath.documentId())
+        .orderBy(FieldPath.documentId())
         .limit(500);
       if (lastGameDoc) q = q.startAfter(lastGameDoc);
 

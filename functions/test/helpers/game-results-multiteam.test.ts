@@ -203,8 +203,8 @@ describe("getOpponentScore — 3 times (fix #2526)", () => {
     expect(score).toBe(3);
   });
 
-  it("retorna 0 se team for undefined", () => {
+  it("retorna -1 se team for undefined", () => {
     const teams = [makeTeam("A", 3), makeTeam("B", 1)];
-    expect(getOpponentScore(undefined, null, teams)).toBe(0);
+    expect(getOpponentScore(undefined, null, teams)).toBe(-1);
   });
 });

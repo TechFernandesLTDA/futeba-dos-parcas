@@ -1,6 +1,7 @@
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUser, NotificationType} from "../notifications/helpers";
 
@@ -341,7 +342,7 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
                   icon: trigger.icon,
                   description: trigger.description,
                   type: trigger.badgeId,
-                  earned_at: admin.firestore.FieldValue.serverTimestamp(),
+                  earned_at: FieldValue.serverTimestamp(),
                   earned: true,
                 };
                 batch.set(badgesRef.doc(trigger.badgeId), badgeData);

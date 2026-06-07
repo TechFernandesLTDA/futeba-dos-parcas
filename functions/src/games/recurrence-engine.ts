@@ -10,7 +10,7 @@
 
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
-import {Timestamp} from "firebase-admin/firestore";
+import {Timestamp, FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
 import {
@@ -158,8 +158,8 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
         post_game_report_generated: false,
         auto_closed: false,
         co_organizers: [],
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
       };
 
       if (after.group_id) {
@@ -201,7 +201,7 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
               status: "CONFIRMED",
               position: "FIELD",
               is_casual_player: false,
-              created_at: admin.firestore.FieldValue.serverTimestamp(),
+              created_at: FieldValue.serverTimestamp(),
             }
           );
 
@@ -220,7 +220,7 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
                 status: "PENDING",
                 position: "FIELD",
                 is_casual_player: false,
-                created_at: admin.firestore.FieldValue.serverTimestamp(),
+                created_at: FieldValue.serverTimestamp(),
               }
             );
             memberIds.push(memberId);

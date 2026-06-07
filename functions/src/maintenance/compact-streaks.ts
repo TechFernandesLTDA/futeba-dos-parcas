@@ -69,6 +69,7 @@ import {
   FUNCTION_REGION,
 } from "../constants";
 import {db} from "../_db";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 
 
 /**
@@ -180,8 +181,8 @@ export const maintainStreaksData = onSchedule(
         const snap = await db()
           .collection("users")
           .where(
-            admin.firestore
-              .FieldPath.documentId(),
+            FieldPath
+              .documentId(),
             "in",
             chunk
           )
@@ -276,7 +277,7 @@ export const maintainStreaksData = onSchedule(
             reset_reason:
               "Inatividade 30+ dias",
             reset_at:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
           });
           expiredStreaks++;
@@ -360,7 +361,7 @@ export const maintainStreaksData = onSchedule(
         .set({
           operation: "maintain_streaks",
           timestamp:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           total_streaks:
             allDocs.length,
@@ -390,7 +391,7 @@ export const maintainStreaksData = onSchedule(
         .set({
           operation: "maintain_streaks",
           timestamp:
-            admin.firestore.FieldValue
+            FieldValue
               .serverTimestamp(),
           status: "ERROR",
           error: String(error),

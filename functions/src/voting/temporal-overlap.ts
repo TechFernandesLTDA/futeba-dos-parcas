@@ -13,7 +13,7 @@
  */
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 import {FUNCTION_REGION} from "../constants";
 
@@ -164,7 +164,7 @@ export const onConfirmationCreated = onDocumentCreated(
         target_user_id: userId,
         target_game_id: gameId,
         conflict_conf_ids: overlaps,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: FieldValue.serverTimestamp(),
       },
     );
     await batch.commit();

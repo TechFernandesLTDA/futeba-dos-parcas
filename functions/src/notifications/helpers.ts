@@ -6,6 +6,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {
   FCM_TTL_SECONDS,
   FIRESTORE_WHERE_IN_LIMIT,
@@ -299,11 +300,11 @@ async function removeInvalidToken(
     // Limpar campos legados se correspondem
     if (data?.fcm_token === invalidToken) {
       update.fcm_token =
-        admin.firestore.FieldValue.delete();
+        FieldValue.delete();
     }
     if (data?.fcmToken === invalidToken) {
       update.fcmToken =
-        admin.firestore.FieldValue.delete();
+        FieldValue.delete();
     }
 
     // Remover do array fcmTokens
@@ -311,7 +312,7 @@ async function removeInvalidToken(
     if (Array.isArray(arr) &&
         (arr as string[]).includes(invalidToken)) {
       update.fcmTokens =
-        admin.firestore.FieldValue.arrayRemove(
+        FieldValue.arrayRemove(
           invalidToken
         );
     }
@@ -418,7 +419,7 @@ async function getUserFcmTokensWithMapping(
       const snapshot = await getDb()
         .collection("users")
         .where(
-          admin.firestore.FieldPath.documentId(),
+          FieldPath.documentId(),
           "in",
           chunk
         )
@@ -848,15 +849,22 @@ export async function sendNotificationToUsers(
  *
  * @param {string} userId - ID do usuário
  * @param {NotificationPayload} payload - Dados
+ * @param {string} [docId] - ID determinístico opcional
+ *   para idempotência em retries at-least-once
  * @return {Promise<string>} ID da notificação
  */
 export async function saveNotificationToFirestore(
   userId: string,
-  payload: NotificationPayload
+  payload: NotificationPayload,
+  docId?: string
 ): Promise<string> {
-  const notificationRef = getDb()
-    .collection("notifications")
-    .doc();
+  // FIX #2527: docId determinístico permite idempotência em
+  // retries at-least-once do Firestore. Quando fornecido, usa
+  // set() (não add()) → re-entrega do trigger sobreescreve o
+  // mesmo doc em vez de criar duplicata.
+  const notificationRef = docId ?
+    getDb().collection("notifications").doc(docId) :
+    getDb().collection("notifications").doc();
 
   await notificationRef.set({
     id: notificationRef.id,
@@ -871,7 +879,7 @@ export async function saveNotificationToFirestore(
     action: payload.action || null,
     read: false,
     created_at:
-      admin.firestore.FieldValue.serverTimestamp(),
+      FieldValue.serverTimestamp(),
   });
 
   return notificationRef.id;
@@ -912,11 +920,14 @@ function stripPiiFields(
  *
  * @param {string} userId - ID do usuário
  * @param {NotificationPayload} payload - Dados
+ * @param {string} [docId] - ID determinístico opcional
+ *   para idempotência em retries at-least-once
  * @return {Promise<boolean>} true se enviou
  */
 export async function sendAndSaveNotification(
   userId: string,
-  payload: NotificationPayload
+  payload: NotificationPayload,
+  docId?: string
 ): Promise<boolean> {
   // B3: Evitar auto-notificacao
   if (payload.senderId && payload.senderId === userId) {
@@ -930,9 +941,12 @@ export async function sendAndSaveNotification(
   // B4: Remover campos PII antes de persistir/enviar
   const cleanPayload = stripPiiFields(payload);
 
+  // FIX #2527: docId determinístico previne duplicação
+  // de notificação em retries at-least-once do Firestore
   await saveNotificationToFirestore(
     userId,
-    cleanPayload
+    cleanPayload,
+    docId
   );
 
   return await sendNotificationToUser(userId, {

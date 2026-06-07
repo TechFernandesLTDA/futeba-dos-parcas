@@ -1,6 +1,7 @@
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 
 const db = () => admin.firestore();
@@ -42,7 +43,7 @@ async function awardAmbassadorBadge(userId: string, inviteCount: number) {
       type: "AMBASSADOR",
       rarity: threshold.level === "LENDA" ? "LENDARIO" : threshold.level === "OURO" ? "EPICO" : threshold.level === "PRATA" ? "RARO" : "COMUM",
       level: threshold.level,
-      earned_at: admin.firestore.FieldValue.serverTimestamp(),
+      earned_at: FieldValue.serverTimestamp(),
       earned: true,
     });
 

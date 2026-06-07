@@ -12,6 +12,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {
   HttpsError,
@@ -159,7 +160,7 @@ export async function checkRateLimit(
             user_id: userId,
             key_prefix: keyPrefix,
             last_updated:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
             expires_at:
               admin.firestore.Timestamp
@@ -409,7 +410,7 @@ export async function checkRateLimitByIp(
             requests: updatedRequests,
             ip_address: ipAddress,
             last_updated:
-              admin.firestore.FieldValue
+              FieldValue
                 .serverTimestamp(),
             expires_at:
               admin.firestore.Timestamp

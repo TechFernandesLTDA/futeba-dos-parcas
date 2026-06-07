@@ -11,6 +11,26 @@ import { createLogger } from './logger';
 
 const logger = createLogger('errorLogger');
 
+/**
+ * Remove recursivamente campos com valor `undefined` de um objeto.
+ * Firestore rejeita `undefined` (só aceita `null`).
+ */
+/**
+ * Remove campos com valor `undefined` de um objeto (shallow).
+ * Firestore rejeita `undefined` (só aceita `null`).
+ * NÃO é recursivo — evita corromper sentinelas do Firestore
+ * como FieldValue.serverTimestamp().
+ */
+function removeUndefined<T extends Record<string, unknown>>(obj: T): T {
+  const result = { ...obj };
+  for (const key of Object.keys(result)) {
+    if (result[key] === undefined) {
+      delete result[key];
+    }
+  }
+  return result;
+}
+
 const LOCAL_STORAGE_KEY = 'futeba_error_logs';
 const MAX_LOCAL_LOGS = 50;
 // Limita stack a ~10KB para evitar documento Firestore gigante
@@ -167,7 +187,9 @@ export async function logError(
       language: navigator.language,
       viewport: `${window.innerWidth}x${window.innerHeight}`,
       appVersion: import.meta.env.VITE_APP_VERSION || 'unknown',
-      breadcrumbs: getBreadcrumbs(),
+      breadcrumbs: getBreadcrumbs().map((b) =>
+        b.data !== undefined ? b : ({ category: b.category, message: b.message, timestamp: b.timestamp }),
+      ),
       context: contextForLog,
       createdAt: new Date().toISOString(),
     };
@@ -179,10 +201,10 @@ export async function logError(
     try {
       const firestoreFields = { ...entry } as Partial<ErrorLogEntry>;
       delete firestoreFields.createdAt;
-      await addDoc(collection(db, 'error_logs'), {
+      await addDoc(collection(db, 'error_logs'), removeUndefined({
         ...firestoreFields,
         createdAt: serverTimestamp(),
-      });
+      } as unknown as Record<string, unknown>));
     } catch (firestoreErr) {
       // Firestore pode falhar por permission-denied (usuário deslogado) — aceitável
       logger.warn('Falha ao persistir error_log no Firestore', { firestoreErr, errorId });

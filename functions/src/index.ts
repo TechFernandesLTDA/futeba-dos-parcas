@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {logger, setGlobalOptions} from "firebase-functions/v2";
 import {
   onDocumentUpdated,
@@ -561,28 +562,29 @@ export const onGameStatusUpdate = onDocumentUpdated(
         const teamResults =
           determineGameResults(teams, liveScore);
 
-        // 2.5 IDEMPOTENCY GUARD: Check for
-        // already-processed users (fixes #644)
+        // 2.5 IDEMPOTENCY GUARD: Check per-player via
+        // deterministic doc path (fixes #2548, follow-up to #2524).
         //
-        // When Promise.all(batchCommits) partially
-        // fails (some batches committed, some not)
-        // and the CF retries, users from committed
-        // batches would get XP double-credited via
-        // FieldValue.increment. Since xp_logs use
-        // deterministic IDs (game_{id}_user_{uid}),
-        // already-existing xp_log docs serve as
-        // idempotency markers to skip on retry.
-        const existingXpLogsSnap = await db()
-          .collection("xp_logs")
-          .where("game_id", "==", gameId)
-          .select("user_id")
-          .get();
+        // On retry after partial batch failure, some players may
+        // have XP already committed from batches that succeeded
+        // in a previous invocation. We check each player's xp_log
+        // doc by its deterministic ID (game_{id}_user_{uid}) — a
+        // direct doc read is strongly consistent and avoids any
+        // query-level inconsistency.
+        const xpLogReads = validConfirmations.map((c) =>
+          db()
+            .collection("xp_logs")
+            .doc(`game_${gameId}_user_${c.userId}`)
+            .get()
+        );
+        const xpLogSnaps = await Promise.all(xpLogReads);
         const alreadyProcessedUserIds =
           new Set<string>();
-        existingXpLogsSnap.docs.forEach((doc) => {
-          const uid = doc.data().user_id as
-            string | undefined;
-          if (uid) alreadyProcessedUserIds.add(uid);
+        xpLogSnaps.forEach((snap, idx) => {
+          if (snap.exists) {
+            const uid = validConfirmations[idx]?.userId;
+            if (uid) alreadyProcessedUserIds.add(uid);
+          }
         });
         if (alreadyProcessedUserIds.size > 0) {
           logger.info(
@@ -672,6 +674,23 @@ export const onGameStatusUpdate = onDocumentUpdated(
             (teamResults[team.id] || "DRAW") :
             "DRAW";
 
+          // Clamp anti-cheat values para TODAS as escritas downstream
+          // (stats, ranking, season, xp_log) — antes só o cálculo de XP
+          // usava caps, permitindo stats/ranking ilimitados (#2525)
+          const cappedGoals = Math.max(0,
+            Math.min(conf.goals, MAX_GOALS_PER_GAME));
+          const cappedAssists = Math.max(0,
+            Math.min(conf.assists, MAX_ASSISTS_PER_GAME));
+          const cappedSaves = Math.max(0,
+            Math.min(conf.saves, MAX_SAVES_PER_GAME));
+
+          // Propagar caps para funções downstream
+          // (updateRankingDeltas, updateSeasonParticipation,
+          // badge checks) sem alterar assinaturas
+          conf.goals = cappedGoals;
+          conf.assists = cappedAssists;
+          conf.saves = cappedSaves;
+
           // Get pre-fetched data
           // (NO Firestore calls - sync lookup)
           const userEntry =
@@ -760,15 +779,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
           // Calc XP (COM TETOS ANTI-CHEAT)
           let xp = settings.xp_presence;
-          xp += Math.min(
-            conf.goals, MAX_GOALS_PER_GAME
-          ) * settings.xp_per_goal;
-          xp += Math.min(
-            conf.assists, MAX_ASSISTS_PER_GAME
-          ) * settings.xp_per_assist;
-          xp += Math.min(
-            conf.saves, MAX_SAVES_PER_GAME
-          ) * settings.xp_per_save;
+          xp += cappedGoals * settings.xp_per_goal;
+          xp += cappedAssists * settings.xp_per_assist;
+          xp += cappedSaves * settings.xp_per_save;
 
           // Result XP
           if (result === "WIN") {
@@ -870,13 +883,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
               (stats.totalGames || 0) + 1,
             totalGoals:
               (stats.totalGoals || 0) +
-              conf.goals,
+              cappedGoals,
             totalAssists:
               (stats.totalAssists || 0) +
-              conf.assists,
+              cappedAssists,
             totalSaves:
               (stats.totalSaves || 0) +
-              conf.saves,
+              cappedSaves,
             totalYellowCards:
               (stats.totalYellowCards || 0) +
               conf.yellowCards,
@@ -967,17 +980,17 @@ export const onGameStatusUpdate = onDocumentUpdated(
             db().collection("statistics")
               .doc(uid),
             {
-              totalGames: admin.firestore.FieldValue.increment(1),
-              totalGoals: admin.firestore.FieldValue.increment(conf.goals),
-              totalAssists: admin.firestore.FieldValue.increment(conf.assists),
-              totalSaves: admin.firestore.FieldValue.increment(conf.saves),
-              totalYellowCards: admin.firestore.FieldValue.increment(conf.yellowCards),
-              totalRedCards: admin.firestore.FieldValue.increment(conf.redCards),
-              gamesWon: admin.firestore.FieldValue.increment(result === "WIN" ? 1 : 0),
-              gamesLost: admin.firestore.FieldValue.increment(result === "LOSS" ? 1 : 0),
-              gamesDraw: admin.firestore.FieldValue.increment(result === "DRAW" ? 1 : 0),
-              bestPlayerCount: admin.firestore.FieldValue.increment(isMvp ? 1 : 0),
-              worstPlayerCount: admin.firestore.FieldValue.increment(isWorstPlayer ? 1 : 0),
+              totalGames: FieldValue.increment(1),
+              totalGoals: FieldValue.increment(cappedGoals),
+              totalAssists: FieldValue.increment(cappedAssists),
+              totalSaves: FieldValue.increment(cappedSaves),
+              totalYellowCards: FieldValue.increment(conf.yellowCards),
+              totalRedCards: FieldValue.increment(conf.redCards),
+              gamesWon: FieldValue.increment(result === "WIN" ? 1 : 0),
+              gamesLost: FieldValue.increment(result === "LOSS" ? 1 : 0),
+              gamesDraw: FieldValue.increment(result === "DRAW" ? 1 : 0),
+              bestPlayerCount: FieldValue.increment(isMvp ? 1 : 0),
+              worstPlayerCount: FieldValue.increment(isWorstPlayer ? 1 : 0),
               currentMvpStreak: newMvpStreak,
               bestMvpStreak: Math.max(stats.bestMvpStreak || 0, newMvpStreak),
               updated_at: now,
@@ -1011,15 +1024,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
             level_after: newLevel,
             xp_participation:
               settings.xp_presence,
-            xp_goals: Math.min(
-              conf.goals, MAX_GOALS_PER_GAME
-            ) * settings.xp_per_goal,
-            xp_assists: Math.min(
-              conf.assists, MAX_ASSISTS_PER_GAME
-            ) * settings.xp_per_assist,
-            xp_saves: Math.min(
-              conf.saves, MAX_SAVES_PER_GAME
-            ) * settings.xp_per_save,
+            xp_goals: cappedGoals * settings.xp_per_goal,
+            xp_assists: cappedAssists * settings.xp_per_assist,
+            xp_saves: cappedSaves * settings.xp_per_save,
             xp_result: result === "WIN" ?
               settings.xp_win :
               (result === "DRAW" ?
@@ -1031,17 +1038,18 @@ export const onGameStatusUpdate = onDocumentUpdated(
             xp_milestones: milesXp,
             xp_streak: streakXp,
             xp_penalty: penaltyXp,
-            goals: conf.goals,
-            assists: conf.assists,
-            saves: conf.saves,
+            goals: cappedGoals,
+            assists: cappedAssists,
+            saves: cappedSaves,
             was_mvp: isMvp,
             // NOVO: Flag clean sheet
             was_clean_sheet: cleanSheetXp > 0,
             was_worst_player: isWorstPlayer,
             game_result: result,
             // FIX #1576: armazenar placar real do time para goal_diff
-            // FIX #2526: para jogos com >2 times em modo LIVE, times além do
-            // team2 usam team.score (liveScore só guarda team1/team2).
+            // FIX #2526: fallback para team.score quando liveScore
+            // não contém o team (N > 2 times). Antes caía em
+            // liveScore.team2Score para times 3+.
             my_team_score: team ?
               (liveScore ?
                 (team.id === liveScore.team1Id ?
@@ -1391,8 +1399,7 @@ export const recalculateLeagueRating =
             tx.update(partRef, {
               league_processing: true,
               league_processing_at:
-                admin.firestore.FieldValue
-                  .serverTimestamp(),
+                FieldValue.serverTimestamp(),
             });
             return {
               shouldProcess: true,
@@ -1500,11 +1507,9 @@ export const recalculateLeagueRating =
               newLeagueState.protectionGames,
             recent_games: recentGames,
             league_processing:
-              admin.firestore.FieldValue
-                .delete(),
+              FieldValue.delete(),
             league_processing_at:
-              admin.firestore.FieldValue
-                .delete(),
+              FieldValue.delete(),
           });
         });
 
@@ -1542,11 +1547,9 @@ export const recalculateLeagueRating =
         // permitir retry limpo
         await partRef.update({
           league_processing:
-            admin.firestore.FieldValue
-              .delete(),
+            FieldValue.delete(),
           league_processing_at:
-            admin.firestore.FieldValue
-              .delete(),
+            FieldValue.delete(),
         }).catch((cleanupErr) => {
           logger.error(
             "[LEAGUE] Falha ao liberar lock " +
@@ -1898,8 +1901,7 @@ export const onGroupDeleted = onDocumentDeleted(
         let q = db()
           .collectionGroup("groups")
           .where(
-            admin.firestore
-              .FieldPath.documentId(),
+            FieldPath.documentId(),
             "==",
             groupId
           )
@@ -2095,13 +2097,13 @@ export const onConfirmationWrite =
 
         const updateFields: Record<string, unknown> = {
           players_count:
-            admin.firestore.FieldValue.increment(delta),
+            FieldValue.increment(delta),
           updated_at: admin.firestore
             .FieldValue.serverTimestamp(),
         };
         if (gkDelta !== 0) {
           updateFields.goalkeepers_count =
-            admin.firestore.FieldValue.increment(gkDelta);
+            FieldValue.increment(gkDelta);
         }
 
         // Increment atômico — seguro
@@ -2131,7 +2133,6 @@ export * from "./activities";
 export * from "./notifications";
 export * from "./reminders";
 export * from "./season";
-export * from "./seeding";
 export * from "./user-management";
 
 // Issue #517 Phase 2: request-to-join em grupos publicos
