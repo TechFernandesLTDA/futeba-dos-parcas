@@ -51,7 +51,7 @@ async function claimOnce(eventId: string): Promise<boolean> {
       .doc(eventId)
       .create({
         claimed_at:
-          admin.firestore.FieldValue.serverTimestamp(),
+          FieldValue.serverTimestamp(),
       });
     return true;
   } catch (e: unknown) {
