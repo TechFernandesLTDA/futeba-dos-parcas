@@ -13,7 +13,7 @@
 jest.mock("firebase-admin", () => {
   const mockFieldValue = {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
-    increment: jest.fn((n: number) => ({_type: "Increment", value: n})),
+    increment: jest.fn((n: number) => ({operand: n})),
   };
   const mockAdmin: Record<string, unknown> = {
     apps: [{name: "test"}],
@@ -38,7 +38,7 @@ import {
 } from "../../src/game/helpers";
 import {GameConfirmation} from "../../src/models";
 
-type Increment = {_type: "Increment"; value: number};
+type Increment = {operand: number};
 
 /** Cria um batch mock que registra chamadas set() e update(). */
 function createBatch() {
@@ -118,11 +118,11 @@ describe("updateSeasonParticipation — caps anti-cheat #2525", () => {
     const data = setCalls[0].data;
 
     // Campo plano capeado em 15
-    expect((data.goals_scored as Increment).value).toBe(15);
+    expect((data.goals_scored as Increment).operand).toBe(15);
 
     // by_gender também capeado — Fase 4b consistente
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
-    expect(byGender.MALE.goals_scored.value).toBe(15);
+    expect(byGender.MALE.goals_scored.operand).toBe(15);
   });
 
   it("assists=99 persiste como 10 no campo plano E no by_gender", () => {
@@ -142,9 +142,9 @@ describe("updateSeasonParticipation — caps anti-cheat #2525", () => {
     );
 
     const data = setCalls[0].data;
-    expect((data.assists as Increment).value).toBe(10);
+    expect((data.assists as Increment).operand).toBe(10);
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
-    expect(byGender.FEMALE.assists.value).toBe(10);
+    expect(byGender.FEMALE.assists.operand).toBe(10);
   });
 
   it("goals=-3 persiste como 0 (piso — não decrementa contadores vitalícios)", () => {
@@ -164,11 +164,11 @@ describe("updateSeasonParticipation — caps anti-cheat #2525", () => {
     );
 
     const data = setCalls[0].data;
-    expect((data.goals_scored as Increment).value).toBe(0);
-    expect((data.assists as Increment).value).toBe(0);
+    expect((data.goals_scored as Increment).operand).toBe(0);
+    expect((data.assists as Increment).operand).toBe(0);
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
-    expect(byGender.MIXED.goals_scored.value).toBe(0);
-    expect(byGender.MIXED.assists.value).toBe(0);
+    expect(byGender.MIXED.goals_scored.operand).toBe(0);
+    expect(byGender.MIXED.assists.operand).toBe(0);
   });
 
   it("valores normais passam sem alteração", () => {
@@ -188,11 +188,11 @@ describe("updateSeasonParticipation — caps anti-cheat #2525", () => {
     );
 
     const data = setCalls[0].data;
-    expect((data.goals_scored as Increment).value).toBe(2);
-    expect((data.assists as Increment).value).toBe(1);
+    expect((data.goals_scored as Increment).operand).toBe(2);
+    expect((data.assists as Increment).operand).toBe(1);
     const byGender = data.by_gender as Record<string, Record<string, Increment>>;
-    expect(byGender.MALE.goals_scored.value).toBe(2);
-    expect(byGender.MALE.assists.value).toBe(1);
+    expect(byGender.MALE.goals_scored.operand).toBe(2);
+    expect(byGender.MALE.assists.operand).toBe(1);
   });
 });
 
@@ -224,7 +224,7 @@ describe("updateRankingDeltas — caps anti-cheat #2525", () => {
     // week + month = 2 writes
     expect(setCalls).toHaveLength(2);
     const weekData = setCalls[0].data;
-    expect((weekData.goals_added as Increment).value).toBe(15);
+    expect((weekData.goals_added as Increment).operand).toBe(15);
   });
 
   it("saves=99 persiste como 30 em saves_added", () => {
@@ -244,7 +244,7 @@ describe("updateRankingDeltas — caps anti-cheat #2525", () => {
     );
 
     const weekData = setCalls[0].data;
-    expect((weekData.saves_added as Increment).value).toBe(30);
+    expect((weekData.saves_added as Increment).operand).toBe(30);
   });
 
   it("assists=-5 persiste como 0 (piso)", () => {
@@ -264,6 +264,6 @@ describe("updateRankingDeltas — caps anti-cheat #2525", () => {
     );
 
     const weekData = setCalls[0].data;
-    expect((weekData.assists_added as Increment).value).toBe(0);
+    expect((weekData.assists_added as Increment).operand).toBe(0);
   });
 });
