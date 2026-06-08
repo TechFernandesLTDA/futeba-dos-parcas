@@ -52,10 +52,10 @@ function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick
       >
         <MapIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
         <Typography variant="body2" color="text.secondary">
-          {apiKey ? 'Carregando mapa...' : 'Configure VITE_GOOGLE_MAPS_API_KEY para ver o mapa'}
+          {apiKey ? t('games.public.mapLoading') : t('games.public.mapNoApiKey')}
         </Typography>
         <Typography variant="caption" color="text.disabled">
-          {games.length} jogos públicos encontrados
+          {t('games.public.gamesFound', { count: games.length })}
         </Typography>
       </Box>
     );
@@ -95,7 +95,7 @@ function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick
           >
             <Typography variant="subtitle2" fontWeight={600}>{selectedGame.locationName}</Typography>
             <Typography variant="caption" color="text.secondary">
-              {selectedGame.date} às {selectedGame.time} • {selectedGame.playersCount}/{selectedGame.maxPlayers}
+              {selectedGame.date} {t('games.public.dateTimeSeparator')} {selectedGame.time} • {selectedGame.playersCount}/{selectedGame.maxPlayers}
             </Typography>
           </Box>
         </InfoWindowF>
@@ -140,7 +140,7 @@ export const PublicGamesMapScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Jogos Públicos
+            {t('page.title.publicGames')}
           </Typography>
           <Button
             variant="contained"
@@ -148,7 +148,7 @@ export const PublicGamesMapScreen: React.FC = () => {
             onClick={() => navigate('/game/create')}
             sx={{ display: { xs: 'none', md: 'inline-flex' } }}
           >
-            Criar Jogo
+            {t('games.createGame')}
           </Button>
         </Box>
         <Box sx={{ px: 2, pb: 2 }}>
