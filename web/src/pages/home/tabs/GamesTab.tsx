@@ -312,7 +312,6 @@ export function GamesTab() {
             onAction={hasActiveFilters ? clearFilters : () => navigate(hasGroups ? '/game/create' : '/groups/discover')}
           />
         ) : (
-          <Box sx={{ px: isLg ? 2 : 0 }}>
             <Grid container spacing={2}>
           {filteredGames.map((game) => {
             const progress = game.maxPlayers > 0 ? Math.min((game.playersCount / game.maxPlayers) * 100, 100) : 0;
@@ -463,7 +462,6 @@ export function GamesTab() {
             );
           })}
             </Grid>
-          </Box>
         )}
       </Box>
 
