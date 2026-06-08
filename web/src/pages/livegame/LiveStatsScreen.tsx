@@ -286,7 +286,7 @@ export const LiveStatsScreen: React.FC = () => {
                       </ListItemAvatar>
                       <ListItemText
                         primary={event.playerName}
-                        secondary={`${event.type === 'GOAL' ? 'Gol' : event.type === 'ASSIST' ? 'Assistência' : event.type} • Time ${event.team}`}
+                        secondary={`${event.type === 'GOAL' ? t('games.events.goal') : event.type === 'ASSIST' ? t('games.events.assist') : event.type} • ${t('games.live.team', { team: event.team })}`}
                       />
                       <Chip label={`${event.minute}'`} size="small" />
                     </ListItem>

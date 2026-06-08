@@ -106,7 +106,7 @@ export const LiveEventsScreen: React.FC = () => {
         }
       } catch (err) {
         logger.error('Erro ao verificar permissão de gerenciamento:', err);
-        if (!cancelled) showErrorRef.current('Erro ao verificar permissões. Tente novamente.');
+        if (!cancelled) showErrorRef.current(t('games.live.checkPermissionError'));
       }
     };
 
@@ -139,7 +139,7 @@ export const LiveEventsScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in live game events listener:', err);
-        showErrorRef.current('Erro ao carregar eventos do jogo.');
+        showErrorRef.current(t('games.live.loadEventsError'));
         setLoading(false);
       }
     );
@@ -225,11 +225,11 @@ export const LiveEventsScreen: React.FC = () => {
 
   const getEventLabel = (type: string) => {
     switch (type) {
-      case 'GOAL': return 'Gol';
-      case 'ASSIST': return 'Assistência';
-      case 'YELLOW_CARD': return 'Cartão Amarelo';
-      case 'RED_CARD': return 'Cartão Vermelho';
-      case 'SAVE': return 'Defesa';
+      case 'GOAL': return t('games.events.goal');
+      case 'ASSIST': return t('games.events.assist');
+      case 'YELLOW_CARD': return t('games.events.yellow_card');
+      case 'RED_CARD': return t('games.events.red_card');
+      case 'SAVE': return t('games.events.save');
       default: return type;
     }
   };
@@ -250,7 +250,7 @@ export const LiveEventsScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Eventos do Jogo
+            {t('games.live.gameEvents')}
           </Typography>
           {canManage && (
             <Button
@@ -324,7 +324,7 @@ export const LiveEventsScreen: React.FC = () => {
       )}
 
       <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setPlayerNameTouched(false); setMinuteTouched(false); }} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
-        <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
+        <DialogTitle id="add-event-dialog-title">              Adicionar Evento</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
             <ToggleButtonGroup
