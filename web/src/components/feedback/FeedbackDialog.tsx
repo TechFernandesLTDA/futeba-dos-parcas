@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeedback, UserFeedback } from '../../hooks/useFeedback';
 import { captureContext } from '../../utils/captureContext';
+import { iconSizes } from '../../theme/iconSizes';
 import { useTranslation } from 'react-i18next';
 
 const FEEDBACK_TYPES = [
@@ -120,7 +121,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
       <DialogContent dividers sx={{ pt: 2 }}>
         {submitted ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <SuccessIcon sx={{ fontSize: 64, color: theme.palette.success.main, mb: 2 }} aria-hidden="true" />
+            <SuccessIcon sx={{ fontSize: iconSizes.hero, color: theme.palette.success.main, mb: 2 }} aria-hidden="true" />
             <Typography variant="h6" gutterBottom>
               Feedback enviado!
             </Typography>

@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Container,
   IconButton,
   Select,
   MenuItem,
@@ -22,6 +21,7 @@ import {
   Star as StarIcon,
 } from "@mui/icons-material";
 import { useDreamTeam, usePlayedAgainst, useSaveDreamTeam, DreamTeamPlayer } from "../hooks/useDreamTeam";
+import { PageContainer } from "../components/common/PageContainer";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useTranslation } from "react-i18next";
 import { ErrorState } from "../components/common/ErrorState";
@@ -71,20 +71,20 @@ export const DreamTeamScreen: React.FC = () => {
 
   if (teamLoading || playersLoading) {
     return (
-      <Container maxWidth="md" sx={{ py: 3 }}>
+      <PageContainer maxWidth="form">
         <Stack spacing={2}>
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} variant="rounded" height={80} />
           ))}
         </Stack>
-      </Container>
+      </PageContainer>
     );
   }
 
   // #2215: estado de erro dedicado quando qualquer um dos hooks falha.
   if (teamError || playersError) {
     return (
-      <Container maxWidth="md" sx={{ py: 3 }}>
+      <PageContainer maxWidth="form">
         <ErrorState
           message={t("dreamTeam.loadError")}
           onRetry={() => {
@@ -92,12 +92,12 @@ export const DreamTeamScreen: React.FC = () => {
             if (playersError) refetchPlayers();
           }}
         />
-      </Container>
+      </PageContainer>
     );
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
+    <PageContainer maxWidth="form">
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
         <IconButton onClick={goBack} aria-label={t("common.back")}>
           <BackIcon />
@@ -182,6 +182,6 @@ export const DreamTeamScreen: React.FC = () => {
       >
         {saveTeam.isPending ? <CircularProgress size={24} color="inherit" /> : t("dreamTeam.saveTeam")}
       </Button>
-    </Container>
+    </PageContainer>
   );
 };

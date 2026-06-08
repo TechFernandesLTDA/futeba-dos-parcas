@@ -5,7 +5,6 @@ import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -16,7 +15,6 @@ import {
   Alert,
   Button,
   useTheme,
-  useMediaQuery,
   alpha,
   List,
   ToggleButtonGroup,
@@ -30,6 +28,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { VirtualList } from '../../components/common/VirtualList';
+import { PageContainer } from '../../components/common/PageContainer';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
@@ -45,7 +44,6 @@ export const RankingScreen: React.FC = () => {
   const navigate = useNavigate();
   const goBack = useNavigateBack('/?tab=3');
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { t } = useTranslation();
 
@@ -89,7 +87,7 @@ export const RankingScreen: React.FC = () => {
   const listRanked = hasPodium ? ranked.slice(3) : ranked;
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       <Box
         sx={{
           position: 'sticky',
@@ -142,7 +140,7 @@ export const RankingScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {loading || seasonLoading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
         ) : error ? (
@@ -229,7 +227,7 @@ export const RankingScreen: React.FC = () => {
             onClose={() => setSelectedPlayerId(null)}
           />
         )}
-      </Container>
+      </PageContainer>
 
       {/* Performance Overlay (dev mode apenas) */}
       <PerformanceOverlay metrics={metrics} />

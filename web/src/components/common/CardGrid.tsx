@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
-import { Grid, type SxProps, type Theme } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import { type SxProps, type Theme } from '@mui/material';
 import { gridLayout, type GridVariant } from '../../theme/pageTokens';
 import { pageSpacing } from '../../theme/pageTokens';
 
@@ -32,7 +33,7 @@ export const CardGrid = React.memo(function CardGrid({
       ]}
     >
       {React.Children.map(children, (child) => (
-        <Grid item {...breakpoints} sx={{ display: 'flex' }}>
+        <Grid {...breakpoints} sx={{ display: 'flex' }}>
           {child}
         </Grid>
       ))}

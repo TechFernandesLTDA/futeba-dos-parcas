@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button, Container, Paper, Chip } from '@mui/material';
 import { Error as ErrorIcon, Refresh as RefreshIcon, Home as HomeIcon } from '@mui/icons-material';
+import { iconSizes } from '../../theme/iconSizes';
 import { createLogger } from '../../utils/logger';
 import { logError } from '../../utils/errorLogger';
 import { ErrorDetailsButton } from './ErrorDetailsButton';
@@ -133,7 +134,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ errorId, logEntry, error,
           role="alert"
           aria-live="assertive"
         >
-          <ErrorIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
+          <ErrorIcon sx={{ fontSize: iconSizes.hero, color: 'error.main', mb: 2 }} />
 
           <Typography variant="h5" gutterBottom fontWeight={600}>
             {t('errorBoundary.title')}

@@ -4,16 +4,13 @@ import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   ButtonBase,
-  Container,
   Typography,
   IconButton,
   Avatar,
-  Grid,
   Paper,
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
-  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -22,12 +19,14 @@ import {
   Refresh as RefreshIcon,
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
+import Grid from '@mui/material/Unstable_Grid2';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
+import { PageContainer } from '../../components/common/PageContainer';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -63,7 +62,6 @@ export const TacticalBoardScreen: React.FC = () => {
   useDocumentTitle(t('page.title.tacticalBoard'));
   const navigateBack = useNavigateBack('/?tab=1');
     const theme = useTheme();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
   const { showError } = useToast();
@@ -161,7 +159,7 @@ export const TacticalBoardScreen: React.FC = () => {
   }
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       <Box
         sx={{
           position: 'sticky',
@@ -187,7 +185,7 @@ export const TacticalBoardScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <ToggleButtonGroup
           value={selectedFormation}
           exclusive
@@ -340,7 +338,7 @@ export const TacticalBoardScreen: React.FC = () => {
         </Paper>
 
         <Grid container spacing={2}>
-          <Grid xs={6}>
+          <Grid xs={6} md={4} lg={3}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
               <Typography variant="subtitle2" color="primary" gutterBottom>
                 {t('games.teamA')}
@@ -350,7 +348,7 @@ export const TacticalBoardScreen: React.FC = () => {
               </Typography>
             </Paper>
           </Grid>
-          <Grid xs={6}>
+          <Grid xs={6} md={4} lg={3}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
               <Typography variant="subtitle2" color="secondary" gutterBottom>
                 {t('games.teamB')}
@@ -361,7 +359,7 @@ export const TacticalBoardScreen: React.FC = () => {
             </Paper>
           </Grid>
         </Grid>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

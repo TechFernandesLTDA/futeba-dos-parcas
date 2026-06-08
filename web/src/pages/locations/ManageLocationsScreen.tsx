@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -22,6 +21,7 @@ import {
   DialogActions,
   CircularProgress,
 } from '@mui/material';
+import PageContainer from '../../components/common/PageContainer';
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,
@@ -128,7 +128,7 @@ export const ManageLocationsScreen: React.FC = () => {
   const handleClearSearch = () => setSearchQuery('');
 
   return (
-    <Box sx={{ pb: 10 }}>
+    <>
       {/* Header sticky */}
       <Box
         sx={{
@@ -182,7 +182,7 @@ export const ManageLocationsScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="md" sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {error && (
           <ErrorState message={error} onRetry={() => setReloadKey((k) => k + 1)} />
         )}
@@ -345,7 +345,7 @@ export const ManageLocationsScreen: React.FC = () => {
             </Box>
           )
         )}
-      </Container>
+      </PageContainer>
 
       {/* #2178: ScreenFab padronizado — FAB mobile */}
       <ScreenFab
@@ -386,6 +386,6 @@ export const ManageLocationsScreen: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };

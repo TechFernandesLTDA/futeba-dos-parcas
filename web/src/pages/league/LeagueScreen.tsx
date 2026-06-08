@@ -5,7 +5,6 @@ import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -16,7 +15,6 @@ import {
   Alert,
   Button,
   useTheme,
-  useMediaQuery,
   alpha,
   List,
   TextField,
@@ -54,6 +52,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
@@ -87,7 +86,6 @@ export const LeagueScreen: React.FC = () => {
   const navigate = useNavigate();
   const goBack = useNavigateBack('/?tab=3');
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { t } = useTranslation();
   useDocumentTitle(t('nav.league'));
@@ -349,7 +347,7 @@ export const LeagueScreen: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       <Box
         ref={headerRef}
         sx={{
@@ -558,14 +556,13 @@ export const LeagueScreen: React.FC = () => {
       )}
 
       <PullToRefresh onRefresh={handleRefresh}>
-      <Container
-        maxWidth={isMd ? 'md' : 'sm'}
-        sx={{ py: 2 }}
+      <Box
         ref={listContainerRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+      <PageContainer maxWidth="list">
         {isLoading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
         ) : error ? (
@@ -710,7 +707,8 @@ export const LeagueScreen: React.FC = () => {
           </Box>
           </Fade>
         )}
-      </Container>
+      </PageContainer>
+      </Box>
       </PullToRefresh>
 
       {/* #2178: ScreenFab padronizado — navega para posição do usuário */}

@@ -47,4 +47,24 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      // Regras de sizing para telas (src/pages/) — #2581
+      // TODO: re-enable after fixing remaining violations (~65 warn in 05/2026)
+      files: ['src/pages/**/*.tsx'],
+      rules: {
+        'no-restricted-syntax': [
+          'off',
+          {
+            selector: "JSXOpeningElement[name.name='Container'] JSXAttribute[name.name='maxWidth']",
+            message: 'Use `<PageContainer maxWidth="tier">` com tokens de pageTokens.ts. Tiers: focused(xs) | form(md) | list(lg) | detail(lg) | dashboard(xl).',
+          },
+          {
+            selector: "Property[key.name='maxWidth'] > Literal[raw=/^[0-9]+$/]",
+            message: 'Use tokens semanticos de pageTokens.ts em vez de larguras numericas hardcoded.',
+          },
+        ],
+      },
+    },
+  ],
 };

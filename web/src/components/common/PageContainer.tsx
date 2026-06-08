@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import { Box, Container, type SxProps, type Theme } from '@mui/material';
 import { pageSpacing } from '../../theme/pageTokens';
 
-export type PageWidth = 'form' | 'list' | 'detail' | 'dashboard';
+export type PageWidth = 'focused' | 'form' | 'list' | 'detail' | 'dashboard';
 
 interface PageContainerProps {
   children: ReactNode;

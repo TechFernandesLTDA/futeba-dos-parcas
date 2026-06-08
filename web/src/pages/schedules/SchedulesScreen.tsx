@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   IconButton,
@@ -33,6 +32,7 @@ import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, delet
 import { db } from '../../services/firebase';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
+import { PageContainer } from '../../components/common/PageContainer';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -56,7 +56,6 @@ interface Schedule {
 export const SchedulesScreen: React.FC = () => {
   const navigate = useNavigate();
     const theme = useTheme();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { showError, showSuccess } = useToast();
@@ -176,7 +175,7 @@ export const SchedulesScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       <ScreenHeader
         title={t('schedule.title')}
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
@@ -188,7 +187,7 @@ export const SchedulesScreen: React.FC = () => {
         }
       />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {error ? (
           <Alert severity="error" action={
             <Button color="inherit" size="small" onClick={handleRetry}>
@@ -256,7 +255,7 @@ export const SchedulesScreen: React.FC = () => {
             </List>
           </Card>
         )}
-      </Container>
+      </PageContainer>
 
       <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setScheduleNameTouched(false); setScheduleTimeTouched(false); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="new-schedule-dialog-title">
         <DialogTitle id="new-schedule-dialog-title">{t('schedule.newTitle')}</DialogTitle>

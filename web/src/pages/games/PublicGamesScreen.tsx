@@ -9,7 +9,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Container,
   IconButton,
   Skeleton,
   Stack,
@@ -30,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { usePublicGames, useJoinPublicGame } from '../../hooks/usePublicGames';
 import { EmptyState } from '../../components/common/EmptyState';
+import { PageContainer } from '../../components/common/PageContainer';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Game, FIELD_TYPE_LABELS, GameGender } from '../../types/game';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +60,7 @@ export const PublicGamesScreen: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
+    <PageContainer maxWidth="list">
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
         <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
@@ -214,6 +214,6 @@ export const PublicGamesScreen: React.FC = () => {
           ))}
         </Stack>
       )}
-    </Container>
+    </PageContainer>
   );
 };

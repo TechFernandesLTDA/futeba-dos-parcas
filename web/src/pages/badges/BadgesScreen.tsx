@@ -3,19 +3,16 @@ import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   IconButton,
   Button,
-  Grid,
   Chip,
   Dialog,
   DialogContent,
   DialogTitle,
   useTheme,
-  useMediaQuery,
   alpha,
   Tooltip,
   LinearProgress,
@@ -36,6 +33,7 @@ import {
   Groups as GroupsIcon,
   MilitaryTech as MilitaryTechIcon,
 } from '@mui/icons-material';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
@@ -44,6 +42,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { BADGE_DEFINITIONS, BadgeDefinition } from '../../types/gamification';
 import { rarityColors, rarityColorsDark } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { PageContainer } from '../../components/common/PageContainer';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const ALL_CATEGORIES = ['all', ...new Set(BADGE_DEFINITIONS.map((b) => b.category))] as const;
@@ -69,7 +68,6 @@ export const BadgesScreen: React.FC = () => {
   useDocumentTitle(t('badges.title'));
   const goBack = useNavigateBack();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -113,10 +111,10 @@ export const BadgesScreen: React.FC = () => {
   }, [rarityMap]);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       <ScreenHeader title={t('badges.title')} onBack={goBack} />
 
-      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="dashboard">
         {error ? (
           <ErrorState
             message={t('feedback.badges.loadError')}
@@ -172,7 +170,7 @@ export const BadgesScreen: React.FC = () => {
             ) : (
               <Grid container spacing={2}>
                 {filteredBadges.map((badge) => (
-                  <Grid item xs={6} sm={4} md={3} lg={2} key={badge.id}>
+                  <Grid xs={6} sm={4} md={3} lg={2} xl={2} key={badge.id}>
                     <BadgeItem
                       badge={badge}
                       isUnlocked={unlockedIds.has(badge.id)}
@@ -186,7 +184,7 @@ export const BadgesScreen: React.FC = () => {
             )}
           </>
         )}
-      </Container>
+      </PageContainer>
 
       <BadgeDetailDialog
         badge={detailBadge}

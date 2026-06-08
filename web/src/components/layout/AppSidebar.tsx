@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { AppLogo } from '../common/AppLogo';
+import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import {
   NAV_ITEMS,
   RAIL_WIDTH_RESPONSIVE,
@@ -175,7 +176,7 @@ export function AppSidebar() {
             }
           }}
         >
-          <AppLogo size="small" shape="circle" alt={t('alt.logo')} sx={{ width: 28, height: 28 }} />
+          <AppLogo size="small" shape="circle" alt={t('alt.logo')} sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>
@@ -254,7 +255,7 @@ export function AppSidebar() {
         </Box>
         <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar src={user?.photoUrl} sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
+            <Avatar src={user?.photoUrl} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main' }}>
               {userInitial}
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>

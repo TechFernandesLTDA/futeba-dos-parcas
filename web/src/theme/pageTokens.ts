@@ -2,6 +2,7 @@ import type { Breakpoint } from '@mui/material/styles';
 
 export const pageSpacing = {
   containerMaxWidth: {
+    focused: 'xs' as const,     // fluxos centrados (auth/onboarding/welcome) — NAO alargar
     form: 'md' as const,        // formularios
     list: 'lg' as const,        // listas
     detail: 'lg' as const,      // telas de detalhe
@@ -35,3 +36,8 @@ export const gridLayout = {
 } as const;
 
 export type GridVariant = keyof typeof gridLayout;
+
+export const componentMaxWidth = {
+  stateMessage: 320,
+  bottomBar: 480,
+} as const;

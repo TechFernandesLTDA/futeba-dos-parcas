@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import { AccessTime as TimeIcon } from '@mui/icons-material';
+import { iconSizes } from '../../theme/iconSizes';
 
 interface StaleIndicatorProps {
   updatedAt: number | Date | null | undefined;
@@ -76,7 +77,7 @@ export const StaleIndicator: React.FC<StaleIndicatorProps> = ({
             bgcolor: isStale ? 'warning.main' : 'success.main',
           }}
         />
-        <TimeIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+        <TimeIcon sx={{ fontSize: iconSizes.xs, color: 'text.secondary' }} />
         <Typography
           variant="caption"
           sx={{

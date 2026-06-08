@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   List,
@@ -25,6 +24,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../../components/common/GameCard';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { ScreenHeader } from '../../../components/common/ScreenHeader';
+import { PageContainer } from '../../../components/common/PageContainer';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { createLogger } from '../../../utils/logger';
@@ -149,7 +149,7 @@ export const BlockedPlayersScreen: React.FC = () => {
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title="Jogadores Bloqueados" onBack={navigateBack} />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {loadError ? (
           <ErrorState
             message={loadError}
@@ -206,7 +206,7 @@ export const BlockedPlayersScreen: React.FC = () => {
             <strong>Dica:</strong> Jogadores bloqueados não receberão notificações sobre este jogo e não poderão confirmar presença.
           </Typography>
         </Box>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

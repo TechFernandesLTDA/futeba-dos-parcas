@@ -19,6 +19,7 @@ export const iconSizes = {
   xl: 36,
   xxl: 48,
   hero: 64,
+  sidebar: 28,
 } as const;
 
 export type IconSize = keyof typeof iconSizes;
@@ -32,6 +33,7 @@ export const avatarSizes = {
   lg: 64,
   xl: 96,
   xxl: 120,
+  sidebar: 36,
 } as const;
 
 export type AvatarSize = keyof typeof avatarSizes;

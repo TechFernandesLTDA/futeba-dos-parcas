@@ -8,6 +8,7 @@ import {
   alpha,
 } from '@mui/material';
 import { iconSizes } from '../../theme/iconSizes';
+import { componentMaxWidth } from '../../theme/pageTokens';
 import {
   ErrorOutline as ErrorIcon,
   Refresh as RefreshIcon,
@@ -62,7 +63,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         Ops! Algo deu errado
       </Typography>
 
-      <Typography variant="body2" color="text.disabled" sx={{ mb: 3, maxWidth: 320 }}>
+      <Typography variant="body2" color="text.disabled" sx={{ mb: 3, maxWidth: componentMaxWidth.stateMessage }}>
         {message}
       </Typography>
 

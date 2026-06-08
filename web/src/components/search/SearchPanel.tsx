@@ -41,6 +41,7 @@ import { LoadingState } from '../common/GameCard';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp } from '../../types/gamification';
+import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { useToast } from '../../contexts';
 import { useTranslation } from 'react-i18next';
 
@@ -363,8 +364,8 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                     sx={{ py: 0.75 }}
                   >
                     <ListItemAvatar sx={{ minWidth: 36 }}>
-                      <Avatar sx={{ width: 24, height: 24, bgcolor: alpha(theme.palette.text.secondary, 0.1), color: 'text.secondary' }}>
-                        <HistoryIcon sx={{ fontSize: 14 }} />
+                      <Avatar sx={{ width: iconSizes.lg, height: iconSizes.lg, bgcolor: alpha(theme.palette.text.secondary, 0.1), color: 'text.secondary' }}>
+                        <HistoryIcon sx={{ fontSize: iconSizes.xs }} />
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
@@ -402,7 +403,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                     sx={{ py: 1, '&.Mui-selected': { bgcolor: alpha(theme.palette.primary.main, 0.12) } }}
                   >
                     <ListItemAvatar sx={{ minWidth: 40 }}>
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(theme.palette.info.main, 0.15), color: theme.palette.info.main }}>
+                      <Avatar sx={{ width: avatarSizes.sm, height: avatarSizes.sm, bgcolor: alpha(theme.palette.info.main, 0.15), color: theme.palette.info.main }}>
                         {quickIcon(cmd.name)}
                       </Avatar>
                     </ListItemAvatar>
@@ -440,7 +441,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           </Box>
         ) : results.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 6 }}>
-            <SearchIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1.5 }} />
+            <SearchIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 1.5 }} />
             <Typography variant="body2" color="text.secondary">Nenhum resultado encontrado</Typography>
             <Typography variant="caption" color="text.disabled" display="block">Tente outros termos</Typography>
           </Box>
@@ -465,9 +466,9 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                 >
                   <ListItemAvatar>
                     {result.photoUrl ? (
-                      <Avatar src={result.photoUrl} alt={result.name} slotProps={{ img: { loading: 'lazy' } }} sx={{ width: 36, height: 36 }} />
+                      <Avatar src={result.photoUrl} alt={result.name} slotProps={{ img: { loading: 'lazy' } }} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar }} />
                     ) : (
-                      <Avatar sx={{ width: 36, height: 36, bgcolor: alpha(typeColor(result.type), 0.15), color: typeColor(result.type) }}>
+                      <Avatar sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: alpha(typeColor(result.type), 0.15), color: typeColor(result.type) }}>
                         {typeIcon(result.type)}
                       </Avatar>
                     )}

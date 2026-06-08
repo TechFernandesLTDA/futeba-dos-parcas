@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { EmojiEvents as TrophyIcon } from "@mui/icons-material";
 import { useHallOfFame } from "../../hooks/useHallOfFame";
+import { iconSizes } from "../../theme/iconSizes";
 import { useTranslation } from "react-i18next";
 
 interface Props {
@@ -36,7 +37,7 @@ export const HallOfFame: React.FC<Props> = ({ groupId }) => {
   if (!seasons || seasons.length === 0) {
     return (
       <Stack alignItems="center" spacing={2} py={4}>
-        <TrophyIcon sx={{ fontSize: 48, color: "text.secondary" }} />
+        <TrophyIcon sx={{ fontSize: iconSizes.xxl, color: "text.secondary" }} />
         <Typography variant="body1" color="text.secondary">
           {t("group.hallOfFameEmpty")}
         </Typography>
