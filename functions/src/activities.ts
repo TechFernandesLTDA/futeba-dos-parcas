@@ -4,10 +4,7 @@ import {
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
-
-// Lazy initialization - admin.initializeApp() é chamado
-// em index.ts
-const getDb = () => admin.firestore();
+import {db} from "./_db";
 
 /**
  * Gera atividade de jogo finalizado diretamente
@@ -173,7 +170,7 @@ export const generateActivityOnGameFinish =
           await generateGameFinishedActivityDirect(
             gameId,
             after,
-            getDb()
+            db()
           );
         } catch (error) {
           logger.error(

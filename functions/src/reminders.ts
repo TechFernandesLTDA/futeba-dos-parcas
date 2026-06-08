@@ -36,9 +36,7 @@ import {
   isGroupMuted,
 } from "./notifications/preferences";
 
-// Lazy initialization para evitar erro
-// de initializeApp
-const getDb = () => admin.firestore();
+import {db} from "./_db";
 
 // ==========================================
 // CONSTANTES
@@ -236,7 +234,7 @@ async function fetchGamesInReminderWindow(
     admin.firestore.Timestamp.fromDate(
       windowEnd
     );
-  const gamesSnap = await getDb()
+  const gamesSnap = await db()
     .collection("games")
     .where("dateTime", ">=", startTs)
     .where("dateTime", "<=", endTs)
@@ -277,7 +275,7 @@ async function fetchGamesInReminderWindow(
   // para created_at. Jogos criados antes da
   // migracao podem nao ter o campo dateTime.
   try {
-    const noDateTimeSnap = await getDb()
+    const noDateTimeSnap = await db()
       .collection("games")
       .where("dateTime", "==", null)
       .orderBy("created_at", "desc")
@@ -371,7 +369,7 @@ async function fetchPendingConfirmations(
         "reminder_1h_sent";
 
   // Buscar todas as confirmacoes do jogo
-  const confirmationsSnap = await getDb()
+  const confirmationsSnap = await db()
     .collection("confirmations")
     .where("game_id", "==", gameId)
     .get();
@@ -435,7 +433,7 @@ async function fetchGroupMembersWithoutConfirmation(
         "reminder_2h_sent" :
         "reminder_1h_sent";
 
-  const membersSnap = await getDb()
+  const membersSnap = await db()
     .collection("groups")
     .doc(groupId)
     .collection("members")
@@ -450,7 +448,7 @@ async function fetchGroupMembersWithoutConfirmation(
     (doc) => doc.id
   );
 
-  const confirmationsSnap = await getDb()
+  const confirmationsSnap = await db()
     .collection("confirmations")
     .where("game_id", "==", gameId)
     .get();
@@ -472,7 +470,7 @@ async function fetchGroupMembersWithoutConfirmation(
 
   // B2: Verificar tambem tracking collection
   // para membros sem confirmacao (evita spam)
-  const trackingSnap = await getDb()
+  const trackingSnap = await db()
     .collection("reminder_tracking")
     .where("game_id", "==", gameId)
     .where("reminder_type", "==", reminderType)
@@ -669,7 +667,7 @@ async function markReminderSent(
       "reminder_2h_sent";
 
   try {
-    const confirmationRef = getDb()
+    const confirmationRef = db()
       .collection("confirmations")
       .doc(confirmationId);
     const confirmationDoc =
@@ -689,7 +687,7 @@ async function markReminderSent(
       // em vez de criar doc PENDING falso
       const trackingId =
         `${gameId}_${userId}_${reminderType}`;
-      await getDb()
+      await db()
         .collection("reminder_tracking")
         .doc(trackingId)
         .set({
@@ -946,7 +944,7 @@ export const testGameReminders = onSchedule(
     );
 
     // Buscar proximos jogos para debug
-    const upcomingGamesSnap = await getDb()
+    const upcomingGamesSnap = await db()
       .collection("games")
       .where(
         "status",
@@ -1036,7 +1034,7 @@ export const autoCancelLowQuorum = onSchedule(
           windowEnd
         );
 
-      const gamesSnap = await getDb()
+      const gamesSnap = await db()
         .collection("games")
         .where("status", "==", "CONFIRMED")
         .where("dateTime", ">=", nowTs)
@@ -1062,7 +1060,7 @@ export const autoCancelLowQuorum = onSchedule(
           gameData.min_players ||
           AUTO_CANCEL_MIN_PLAYERS;
 
-        const confirmationsSnap = await getDb()
+        const confirmationsSnap = await db()
           .collection("confirmations")
           .where("game_id", "==", gameId)
           .where("status", "==", "CONFIRMED")
@@ -1228,7 +1226,7 @@ export const processExpiredWaitlistEntries =
           admin.firestore.Timestamp.fromDate(
             now
           );
-        const waitlistQuery = await getDb()
+        const waitlistQuery = await db()
           .collectionGroup("waitlist")
           .where("status", "==", "NOTIFIED")
           .where(
@@ -1263,7 +1261,7 @@ export const processExpiredWaitlistEntries =
             let nextUserName: string | undefined;
             let hasNext = false;
 
-            await getDb().runTransaction(async (tx) => {
+            await db().runTransaction(async (tx) => {
               // Re-read the entry inside the transaction (TOCTOU guard)
               const freshEntrySnap = await tx.get(doc.ref);
               if (!freshEntrySnap.exists) return;
@@ -1279,7 +1277,7 @@ export const processExpiredWaitlistEntries =
 
               // 2. Find next WAITING entry
               const nextQuery = await tx.get(
-                getDb()
+                db()
                   .collection("games")
                   .doc(gameId)
                   .collection("waitlist")

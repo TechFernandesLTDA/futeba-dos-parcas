@@ -44,15 +44,17 @@ function challengeErrorMessage(err: unknown): string {
 }
 
 /**
- * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
- * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
- * Não envolver no contrato { data, loading, error }.
+ * #2251: originalmente expunha o resultado bruto de useQuery.
+ * Agora envolve no contrato { challenges, loading, error, refetch }
+ * seguindo o padrão dos demais hooks, mantendo `data`/`isLoading`
+ * para compatibilidade retroativa com consumidores que usam a
+ * API do TanStack Query diretamente.
  */
 export function useGroupChallenges(groupId?: string) {
   const { user } = useAuth();
   const uid = user?.id ?? "";
 
-  return useQuery({
+  const { data, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ["group-challenges", groupId],
     queryFn: async () => {
       if (!groupId || !uid) return [];
@@ -81,6 +83,8 @@ export function useGroupChallenges(groupId?: string) {
     staleTime: 2 * 60 * 1000,
     enabled: !!groupId,
   });
+
+  return { data, isLoading, challenges: data, loading: isLoading, error: queryError?.message ?? null, refetch };
 }
 
 export function useChallengeGroup() {

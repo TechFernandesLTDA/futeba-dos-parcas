@@ -19,9 +19,7 @@ import {
   sendNotificationToUsers,
 } from "./helpers";
 import {GAME_NOTIFICATIONS} from "./notification-messages";
-
-// Lazy initialization para evitar erro de initializeApp
-const getDb = () => admin.firestore();
+import {db} from "../_db";
 
 // ==========================================
 // GAME CREATED
@@ -56,7 +54,7 @@ export const onGameCreated = onDocumentCreated(
 
     if (game.group_id) {
       try {
-        const membersSnap = await getDb()
+        const membersSnap = await db()
           .collection("groups")
           .doc(game.group_id)
           .collection("members")
@@ -76,7 +74,7 @@ export const onGameCreated = onDocumentCreated(
           );
 
         if (memberIds.length > 0) {
-          const ownerDoc = await getDb()
+          const ownerDoc = await db()
             .collection("users")
             .doc(ownerId)
             .get();
@@ -102,7 +100,7 @@ export const onGameCreated = onDocumentCreated(
           );
 
           // Marcar como enviado para idempotência
-          await getDb()
+          await db()
             .collection("games")
             .doc(gameId)
             .update({
@@ -143,7 +141,7 @@ export const onGameUpdatedNotification =
         after.status === "CANCELLED"
       ) {
         try {
-          const confirmationsSnap = await getDb()
+          const confirmationsSnap = await db()
             .collection("confirmations")
             .where("game_id", "==", gameId)
             .where("status", "==", "CONFIRMED")
@@ -186,7 +184,7 @@ export const onGameUpdatedNotification =
         before.location_id !== after.location_id
       ) {
         try {
-          const confirmationsSnap = await getDb()
+          const confirmationsSnap = await db()
             .collection("confirmations")
             .where("game_id", "==", gameId)
             .where("status", "==", "CONFIRMED")
@@ -266,7 +264,7 @@ export const onGameVacancy = onDocumentUpdated(
 
     try {
       // Buscar dados do jogo
-      const gameDoc = await getDb()
+      const gameDoc = await db()
         .collection("games")
         .doc(gameId)
         .get();
@@ -306,7 +304,7 @@ export const onGameVacancy = onDocumentUpdated(
       // Marcar como notificada para idempotencia
       // (antes de enviar, para evitar race condition
       // com triggers paralelos)
-      await getDb()
+      await db()
         .collection("games")
         .doc(gameId)
         .update({
@@ -328,7 +326,7 @@ export const onGameVacancy = onDocumentUpdated(
       const gameDate = game.date || "";
 
       // Contar confirmações atuais
-      const confirmationsSnap = await getDb()
+      const confirmationsSnap = await db()
         .collection("confirmations")
         .where("game_id", "==", gameId)
         .where("status", "==", "CONFIRMED")
@@ -346,7 +344,7 @@ export const onGameVacancy = onDocumentUpdated(
         // FIX #753: era .collection("waitlist") raiz inexistente.
         // Android escreve em games/{gameId}/waitlist/ (subcollection).
         // Usar subcollection direta com gameId já disponível.
-        const waitlistSnap = await getDb()
+        const waitlistSnap = await db()
           .collection("games")
           .doc(gameId)
           .collection("waitlist")
@@ -396,7 +394,7 @@ export const onGameVacancy = onDocumentUpdated(
           groupId &&
           waitlistUserIds.length < 3
         ) {
-          const membersSnap = await getDb()
+          const membersSnap = await db()
             .collection("groups")
             .doc(groupId)
             .collection("members")

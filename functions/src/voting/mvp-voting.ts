@@ -56,7 +56,7 @@ import {
 import {Game} from "../models";
 import {isGameShape} from "../validation/guards";
 
-const getDb = () => admin.firestore();
+import {db as getFirestore} from "../_db";
 
 // ==========================================
 // CONSTANTES
@@ -225,7 +225,7 @@ export const submitMvpVote =
         );
       }
 
-      const db = getDb();
+      const db = getFirestore();
 
       // ======================================
       // 3. TRANSACTION: Verificar + Escrever
@@ -520,7 +520,7 @@ export const concludeMvpVoting =
         );
       }
 
-      const db = getDb();
+      const db = getFirestore();
 
       try {
         // ====================================

@@ -186,6 +186,7 @@ export const InvitePlayersScreen: React.FC = () => {
         invited_by_id: user.id,
         invited_user_id: targetUser.id,
         status: 'PENDING',
+        // AUDIT: client-clock drift accepted for 24h invite expiry window
         expires_at: Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),
         created_at: serverTimestamp(),
       });

@@ -18,8 +18,7 @@ import {
   isNotificationTypeEnabled,
 } from "./preferences";
 
-// Lazy initialization para evitar erro de initializeApp
-const getDb = () => admin.firestore();
+import {db} from "../_db";
 const getFcm = () => admin.messaging();
 
 // ==========================================
@@ -272,7 +271,7 @@ async function removeInvalidToken(
   invalidToken: string
 ): Promise<void> {
   try {
-    const userDoc = await getDb()
+    const userDoc = await db()
       .collection("users")
       .doc(userId)
       .get();
@@ -318,7 +317,7 @@ async function removeInvalidToken(
     }
 
     if (Object.keys(update).length > 0) {
-      await getDb()
+      await db()
         .collection("users")
         .doc(userId)
         .update(update);
@@ -343,7 +342,7 @@ async function getUserFcmTokens(
   userId: string
 ): Promise<string[]> {
   try {
-    const userDoc = await getDb()
+    const userDoc = await db()
       .collection("users")
       .doc(userId)
       .get();
@@ -416,7 +415,7 @@ async function getUserFcmTokensWithMapping(
 
   for (const chunk of chunks) {
     try {
-      const snapshot = await getDb()
+      const snapshot = await db()
         .collection("users")
         .where(
           FieldPath.documentId(),
@@ -458,7 +457,7 @@ async function getUnreadCount(
   userId: string
 ): Promise<number> {
   try {
-    const snap = await getDb()
+    const snap = await db()
       .collection("notifications")
       .where("user_id", "==", userId)
       .where("read", "==", false)
@@ -863,8 +862,8 @@ export async function saveNotificationToFirestore(
   // set() (não add()) → re-entrega do trigger sobreescreve o
   // mesmo doc em vez de criar duplicata.
   const notificationRef = docId ?
-    getDb().collection("notifications").doc(docId) :
-    getDb().collection("notifications").doc();
+    db().collection("notifications").doc(docId) :
+    db().collection("notifications").doc();
 
   await notificationRef.set({
     id: notificationRef.id,

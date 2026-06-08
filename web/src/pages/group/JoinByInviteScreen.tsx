@@ -19,7 +19,7 @@ import {
   Login as LoginIcon,
   SportsSoccer as GameIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -89,8 +89,7 @@ export const JoinByInviteScreen: React.FC = () => {
 
         const data = inviteSnap.data();
         const expiresAt = data.expires_at?.toDate?.() ?? null;
-        const now = Timestamp.now();
-        const expired = expiresAt ? expiresAt.getTime() < now.toMillis() : true;
+        const expired = expiresAt ? expiresAt.getTime() < Date.now() : true;
         const used = data.used === true;
 
         setPreview({

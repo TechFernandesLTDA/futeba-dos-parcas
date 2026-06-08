@@ -102,6 +102,7 @@ export function useOfflineQueue() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const processingRef = useRef(false);
+  const mountedRef = useRef(false);
   // #2171: ref espelha a fila para que processQueue leia sempre o estado atual,
   // evitando closures obsoletas e o race em que enqueue durante o processamento
   // era sobrescrito por setQueue([]).
@@ -109,10 +110,14 @@ export function useOfflineQueue() {
   queueRef.current = queue;
 
   useEffect(() => {
+    mountedRef.current = true;
     loadQueue().then((loaded) => {
-      setQueue(loaded);
-      setQueueLoaded(true);
+      if (mountedRef.current) {
+        setQueue(loaded);
+        setQueueLoaded(true);
+      }
     });
+    return () => { mountedRef.current = false; };
   }, []);
 
   useEffect(() => {

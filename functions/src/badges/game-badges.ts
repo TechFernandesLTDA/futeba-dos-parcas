@@ -4,8 +4,7 @@ import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUser, NotificationType} from "../notifications/helpers";
-
-const db = () => admin.firestore();
+import {db} from "../_db";
 
 interface BadgeTrigger {
   badgeId: string;

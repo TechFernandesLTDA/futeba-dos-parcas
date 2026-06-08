@@ -53,7 +53,7 @@ import {
   isInvalidTokenError,
 } from "./helpers";
 
-const getDb = () => admin.firestore();
+import {db as getFirestore} from "../_db";
 const getFcm = () => admin.messaging();
 
 // ==========================================
@@ -80,14 +80,6 @@ const QUEUE_COLLECTION = "notification_queue";
  * marcar como FAILED permanente.
  */
 const MAX_RETRY_COUNT = 3;
-
-/**
- * Delay entre chunks de multicast para evitar
- * throttling do FCM (ms) - reservado para
- * uso futuro.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const CHUNK_SEND_DELAY_MS = 100;
 
 // ==========================================
 // INTERFACES
@@ -144,7 +136,7 @@ interface BatchSendResult {
 export async function enqueueNotification(
   notification: QueuedNotification
 ): Promise<string> {
-  const db = getDb();
+  const db = getFirestore();
 
   if (
     !notification.userIds ||
@@ -189,7 +181,7 @@ export async function enqueueNotification(
 export async function enqueueNotifications(
   notifications: QueuedNotification[]
 ): Promise<number> {
-  const db = getDb();
+  const db = getFirestore();
 
   if (notifications.length === 0) return 0;
 
@@ -258,7 +250,7 @@ export async function enqueueNotifications(
  */
 async function processNotificationQueue():
   Promise<BatchSendResult> {
-  const db = getDb();
+  const db = getFirestore();
   const startTime = Date.now();
 
   let totalTargeted = 0;
@@ -699,7 +691,7 @@ async function sendMulticastInChunks(
 async function fetchTokensInBatch(
   userIds: string[]
 ): Promise<Map<string, string[]>> {
-  const db = getDb();
+  const db = getFirestore();
   const tokenMap = new Map<string, string[]>();
 
   // Chunks de 10 (limite do whereIn)
@@ -782,7 +774,7 @@ async function cleanupInvalidTokens(
     userId: string;
   }[]
 ): Promise<void> {
-  const db = getDb();
+  const db = getFirestore();
 
   // Buscar docs para saber quais campos deletar
   const userIds = [
@@ -906,7 +898,7 @@ export const processNotificationBatch =
 
       // Registrar métricas se houve processamento
       if (result.totalTargeted > 0) {
-        const db = getDb();
+        const db = getFirestore();
         await db.collection("metrics").add({
           type:
             "notification_batch_processed",
@@ -939,7 +931,7 @@ export const processNotificationBatch =
  */
 export const enqueueNotificationCallable = secureCallable(
   {
-    appCheck: false,
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {
@@ -1087,7 +1079,7 @@ export const cleanupNotificationQueue =
       timeoutSeconds: 120,
     },
     async () => {
-      const db = getDb();
+      const db = getFirestore();
 
       const oneDayAgo = new Date();
       oneDayAgo.setDate(

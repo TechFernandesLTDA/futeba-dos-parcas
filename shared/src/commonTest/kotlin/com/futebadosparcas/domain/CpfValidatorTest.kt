@@ -52,6 +52,11 @@ class CpfValidatorTest {
     }
 
     @Test
+    fun `mask returns *** for invalid CPF`() {
+        assertEquals("***", CpfValidator.mask("123"))
+    }
+
+    @Test
     fun `format adds full mask`() {
         assertEquals("111.444.777-35", CpfValidator.format("11144477735"))
     }

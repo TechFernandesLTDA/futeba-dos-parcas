@@ -3,7 +3,7 @@
 ## Fórmulas de Soma
 
 O XP total de uma partida para um jogador `P` é a soma linear de seus méritos:
-`XP_Partida(P) = (Gols * 10) + (Assists * 7) + (Defesas * 5) + (Resultado) + (MVP) + (Presença) + (Bônus_Sequência)`
+`XP_Partida(P) = (Gols * 10) + (Assists * 7) + (Defesas * 8) + (Resultado) + (MVP) + (Presença) + (Bônus_Sequência) + (CLEAN_SHEET)`
 
 Onde `Resultado` é:
 
@@ -14,6 +14,11 @@ Onde `Resultado` é:
 Onde `MVP` é:
 
 * `30` se foi eleito.
+* `0` caso contrário.
+
+Onde `CLEAN_SHEET` é:
+
+* `15` se a defesa não sofreu gols.
 * `0` caso contrário.
 
 Onde `Presença` é:
@@ -28,6 +33,7 @@ Onde `Presença` é:
 4. **Bônus de Presença (Fidelidade):** +10 XP.
 5. **Bônus de Sequência (Streak):**
     * 3 jogos seguidos: +20 XP EXTRA.
+    * 5 jogos seguidos: +35 XP EXTRA.
     * 7 jogos seguidos: +50 XP EXTRA.
     * 10+ jogos seguidos: +100 XP EXTRA.
 6. **Persistência Atômica:** Gravação no perfil e Log.
@@ -35,10 +41,10 @@ Onde `Presença` é:
 ## Casos Especiais
 
 1. **Empate e MVP:** Se um jogo termina empatado e um jogador é MVP, ele recebe `10 (Empate) + 30 (MVP) + Atributos Técnicos`.
-2. **O Goleiro Artilheiro:** Se um jogador na posição de Goleiro marcar um gol, ele recebe o XP do Gol (+10) e o XP das Defesas (+5 por defesa). A posição não anula o mérito de artilharia.
-3. **Partida sem Eventos:** Se um jogador participou da partida mas não teve gols, assistências ou defesas, e seu time perdeu, ele recebe **0 XP**. A participação per se não gera XP automático (anti-AFK).
+2. **O Goleiro Artilheiro:** Se um jogador na posição de Goleiro marcar um gol, ele recebe o XP do Gol (+10) e o XP das Defesas (+8 por defesa). A posição não anula o mérito de artilharia.
+3. **Partida sem Eventos:** Se um jogador participou da partida mas não teve gols, assistências ou defesas, e seu time perdeu, ele recebe **10 XP** (Presença). A participação sempre gera +10 XP.
 
 ## Limites
 
-* Não há teto máximo de XP por partida, desde que os eventos sejam reais e validados.
-* XP nunca pode ser negativo.
+* XP máximo por partida: **500 XP** (MAX_XP_PER_GAME).
+* Bola Murcha penalty = -10.

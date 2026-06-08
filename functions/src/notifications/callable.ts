@@ -4,7 +4,6 @@
  * de teste e debug.
  */
 
-import * as admin from "firebase-admin";
 import {HttpsError} from "firebase-functions/v2/https";
 import {
   sanitizeText,
@@ -17,9 +16,7 @@ import {
   sendNotificationToUser,
   saveNotificationToFirestore,
 } from "./helpers";
-
-// Lazy initialization para evitar erro de initializeApp
-const getDb = () => admin.firestore();
+import {db} from "../_db";
 
 // ==========================================
 // SEND TEST NOTIFICATION
@@ -173,7 +170,7 @@ export const createFakeGameNotifications = secureCallable(
         ) :
         3;
 
-    const userDoc = await getDb()
+    const userDoc = await db()
       .collection("users")
       .doc(userId)
       .get();
