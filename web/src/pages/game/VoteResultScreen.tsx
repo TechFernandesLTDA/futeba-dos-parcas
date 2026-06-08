@@ -127,7 +127,7 @@ export const VoteResultScreen: React.FC = () => {
       pdf.save(`resultado-jogo-${gameId}.pdf`);
     } catch (err) {
       logger.error('Error exporting PDF:', err);
-      showErrorRef.current('Erro ao exportar PDF');
+      showErrorRef.current(t('mvp.exportError'));
     } finally {
       setExporting(false);
     }
@@ -159,7 +159,7 @@ export const VoteResultScreen: React.FC = () => {
                 ...prev,
                 mvp: {
                   userId: mvpId,
-                  userName: userData.name || 'Jogador',
+                  userName: userData.name || t('players.defaultName'),
                   userPhoto: userData.photoUrl,
                   votes: data.mvpVotes || 0,
                 },
@@ -177,7 +177,7 @@ export const VoteResultScreen: React.FC = () => {
                 ...prev,
                 bolaMurcha: {
                   userId: bolaMurchaId,
-                  userName: userData.name || 'Jogador',
+                  userName: userData.name || t('players.defaultName'),
                   userPhoto: userData.photoUrl,
                   votes: data.bolaMurchaVotes || 0,
                 },
@@ -189,7 +189,7 @@ export const VoteResultScreen: React.FC = () => {
         logger.error('Error fetching vote results:', error);
         if (!cancelled) {
           setError(t('feedback.games.voteResultError'));
-          showErrorRef.current('Erro ao carregar resultado da votação.');
+          showErrorRef.current(t('mvp.voteResultError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -213,7 +213,7 @@ export const VoteResultScreen: React.FC = () => {
   return (
     <Box sx={{ pb: 4 }}>
       {/* #2174: header padronizado via ScreenHeader */}
-      <ScreenHeader title="Resultado da Votação" onBack={navigateBack} />
+      <ScreenHeader title={t('page.title.voteResult')} onBack={navigateBack} />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <div ref={contentRef}>
@@ -221,7 +221,7 @@ export const VoteResultScreen: React.FC = () => {
           <Card sx={{ mb: 2, textAlign: 'center' }}>
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Resultado Final
+                {t('mvp.finalResult')}
               </Typography>
               <Grid container spacing={2} alignItems="center">
                 <Grid xs={5}>
@@ -255,11 +255,11 @@ export const VoteResultScreen: React.FC = () => {
                 </Avatar>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" color="warning.main" fontWeight={600}>
-                    MVP - Melhor Jogador
+                    {t('mvp.bestPlayerCaption')}
                   </Typography>
                   <Typography variant="h6">{voteResult.mvp.userName}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {voteResult.mvp.votes} votos
+                    {t('mvp.votesCount', { count: voteResult.mvp.votes })}
                   </Typography>
                 </Box>
                 <PlayerAvatar
@@ -281,11 +281,11 @@ export const VoteResultScreen: React.FC = () => {
                 </Avatar>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" color="error.main" fontWeight={600}>
-                    Bola Murcha
+                    {t('mvp.worstPlayer')}
                   </Typography>
                   <Typography variant="h6">{voteResult.bolaMurcha.userName}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {voteResult.bolaMurcha.votes} votos
+                    {t('mvp.votesCount', { count: voteResult.bolaMurcha.votes })}
                   </Typography>
                 </Box>
                 <PlayerAvatar
@@ -314,10 +314,10 @@ export const VoteResultScreen: React.FC = () => {
             disabled={exporting}
             fullWidth
           >
-            {exporting ? 'Exportando...' : 'Exportar PDF'}
+            {exporting ? t('mvp.exporting') : t('mvp.exportPdf')}
           </Button>
           <Button variant="outlined" fullWidth onClick={navigateBack}>
-            Voltar
+            {t('common.back')}
           </Button>
         </Box>
       </Container>
