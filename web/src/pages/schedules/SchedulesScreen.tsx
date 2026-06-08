@@ -53,8 +53,6 @@ interface Schedule {
   isActive: boolean;
 }
 
-const _DAYS_OF_WEEK = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-
 export const SchedulesScreen: React.FC = () => {
   const navigate = useNavigate();
     const theme = useTheme();
@@ -65,7 +63,7 @@ export const SchedulesScreen: React.FC = () => {
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const { t } = useTranslation();
-  const daysOfWeek = t('schedule.days', { returnObjects: true }) as unknown as string[];
+  const daysOfWeek = [0, 1, 2, 3, 4, 5, 6].map((i) => t(`schedule.day${i}`));
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
