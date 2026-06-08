@@ -1012,7 +1012,13 @@
       "full": "Full",
       "info": "Open games near you. Join, play, and meet new players!",
       "join": "I Want to Play",
-      "title": "Open Games"
+      "title": "Open Games",
+      "dateTimeSeparator": "at",
+      "gamesFound": "{{count}} public games found",
+      "gamesFound_one": "{{count}} public game found",
+      "gamesFound_other": "{{count}} public games found",
+      "mapLoading": "Loading map...",
+      "mapNoApiKey": "Set VITE_GOOGLE_MAPS_API_KEY to view the map"
     },
     "search": {
       "clear": "Clear search",
@@ -1153,7 +1159,9 @@
     "sectionsAria": "Group sections",
     "shareInviteLink": "Share the link below to invite players",
     "viewDetails": "View Details",
-    "viewStandings": "View Standings"
+    "viewStandings": "View Standings",
+    "shareText": "Come play with us in the {{name}} group!",
+    "shareTitle": "Invite: {{name}}"
   },
   "groups": {
     "archiveGroup": "Archive Group",
@@ -2027,5 +2035,27 @@
     "typeMajor": "Major update",
     "typeMinor": "New features",
     "typePatch": "Fixes"
+  },
+  "fieldOwner": {
+    "addNewField": "Add New Field",
+    "averageRating": "Average Rating",
+    "comingSoon": "Coming soon",
+    "fieldNameFallback": "Field",
+    "fieldsCount": "{{count}} fields",
+    "fieldsCount_one": "{{count}} field",
+    "fieldsCount_other": "{{count}} fields",
+    "gamesLast30Days": "Games in the last 30 days",
+    "gamesThisWeek": "Games this week",
+    "loadDashboardError": "Error loading dashboard. Please try again.",
+    "loadGamesError": "Error loading field games.",
+    "manage": "Manage",
+    "managePlayers": "Manage Players",
+    "myFields": "My Fields",
+    "myFieldsCount": "My Fields ({{count}})",
+    "quickActions": "Quick Actions",
+    "summary": "Summary",
+    "title": "Owner Dashboard",
+    "upcomingGames": "Upcoming Games",
+    "viewSchedule": "View Schedule"
   }
 }
