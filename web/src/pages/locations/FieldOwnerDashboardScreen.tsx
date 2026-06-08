@@ -151,6 +151,8 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const [stats, setStats] = useState<LocationStats | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
@@ -182,7 +184,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
           const data = snakeToCamel<RawLocationDoc>(d.data());
           return {
             id: d.id,
-            name: data.name || 'Quadra',
+            name: data.name || tRef.current('fieldOwner.fieldNameFallback'),
             city: data.city || '',
             photoUrl: data.photoUrl,
             fieldCount: data.fieldCount || 1,
@@ -195,7 +197,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error fetching owner locations:', err);
-        showErrorRef.current('Erro ao carregar dashboard. Tente novamente.');
+        showErrorRef.current(tRef.current('fieldOwner.loadDashboardError'));
         setError(getFirestoreErrorMessage(err));
         setLoading(false);
       }
@@ -231,7 +233,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
         },
         (err) => {
           logger.error('Error fetching location games:', err);
-          showErrorRef.current('Erro ao carregar jogos das quadras.');
+          showErrorRef.current(tRef.current('fieldOwner.loadGamesError'));
           setError(getFirestoreErrorMessage(err));
         }
       );
@@ -268,7 +270,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Dashboard do Proprietário
+            {t('fieldOwner.title')}
           </Typography>
         </Box>
       </Box>
@@ -278,7 +280,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Resumo
+                {t('fieldOwner.summary')}
               </Typography>
               <Grid container spacing={2}>
                 <Grid xs={6}>
@@ -288,7 +290,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                       {stats.gamesLast30Days}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Jogos nos últimos 30 dias
+                      {t('fieldOwner.gamesLast30Days')}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -299,7 +301,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                       {stats.gamesThisWeek}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Jogos esta semana
+                      {t('fieldOwner.gamesThisWeek')}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -310,7 +312,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                       {stats.averageRating.toFixed(1)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Avaliação Média
+                      {t('fieldOwner.averageRating')}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -321,7 +323,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                       {stats.upcomingGames}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Próximos Jogos
+                      {t('fieldOwner.upcomingGames')}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -334,14 +336,14 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="subtitle1" fontWeight={600}>
-                Minhas Quadras ({locations.length})
+                {t('fieldOwner.myFieldsCount', { count: locations.length })}
               </Typography>
               <Button
                 size="small"
                 startIcon={<EditIcon />}
                 onClick={() => navigate('/locations')}
               >
-                Gerenciar
+                {t('fieldOwner.manage')}
               </Button>
             </Box>
             
@@ -382,7 +384,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                         </ListItemAvatar>
                         <ListItemText
                           primary={loc.name}
-                          secondary={`${loc.city || ''} • ${loc.fieldCount || 1} campos`}
+                          secondary={loc.city ? `${loc.city} • ${t('fieldOwner.fieldsCount', { count: loc.fieldCount || 1 })}` : t('fieldOwner.fieldsCount', { count: loc.fieldCount || 1 })}
                         />
                       </ListItemButton>
                     </ListItem>
@@ -395,29 +397,29 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
 
         <Card>
           <CardContent>
-            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-              Ações Rápidas
-            </Typography>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                {t('fieldOwner.quickActions')}
+              </Typography>
             <List disablePadding aria-label={t('a11y.quickActions')}>
               <ListItemButton onClick={() => navigate('/location/create')}>
                 <ListItemIcon>
                   <LocationIcon />
                 </ListItemIcon>
-                <ListItemText primary="Adicionar Nova Quadra" />
+                <ListItemText primary={t('fieldOwner.addNewField')} />
               </ListItemButton>
               <Divider />
               <ListItemButton onClick={() => navigate('/?tab=1')}>
                 <ListItemIcon>
                   <CalendarIcon />
                 </ListItemIcon>
-                <ListItemText primary="Ver Agenda" />
+                <ListItemText primary={t('fieldOwner.viewSchedule')} />
               </ListItemButton>
               <Divider />
               <ListItemButton disabled>
                 <ListItemIcon>
                   <PeopleIcon />
                 </ListItemIcon>
-                <ListItemText primary="Gerenciar Jogadores" secondary="Em breve" />
+                <ListItemText primary={t('fieldOwner.managePlayers')} secondary={t('fieldOwner.comingSoon')} />
               </ListItemButton>
             </List>
           </CardContent>

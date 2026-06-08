@@ -241,9 +241,9 @@ export const GroupSettingsScreen: React.FC = () => {
   if (error || !group) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
+        <Alert severity="error">{error || t('group.settings.groupNotFound')}</Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(`/group/${groupId}`)} sx={{ mt: 2 }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Container>
     );
@@ -252,7 +252,7 @@ export const GroupSettingsScreen: React.FC = () => {
   return (
     <Box sx={{ pb: 4 }}>
       <ScreenHeader
-        title="Configurações"
+        title={t('group.settings.title')}
         onBack={() => navigate(`/group/${groupId}`)}
       />
 
@@ -262,7 +262,7 @@ export const GroupSettingsScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary">
-                Informações do Grupo
+                {t('group.settings.groupInfo')}
               </Typography>
               {(isOwner || myMember?.role === 'ADMIN') && (
                 <IconButton
@@ -301,9 +301,9 @@ export const GroupSettingsScreen: React.FC = () => {
                     {pluralizeCount(group.memberCount || members.length, 'membro', 'membros')}
                   </Typography>
                   {group.isPublic ? (
-                    <Chip label="Público" size="small" variant="outlined" />
+                    <Chip label={t('group.public')} size="small" variant="outlined" />
                   ) : (
-                    <Chip label="Privado" size="small" color="default" />
+                    <Chip label={t('group.settings.private')} size="small" color="default" />
                   )}
                 </Box>
               </Box>
@@ -316,7 +316,7 @@ export const GroupSettingsScreen: React.FC = () => {
           <Card sx={{ mb: 2 }}>
             <CardContent sx={{ pb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                Solicitações pendentes ({pendingRequests.length})
+                {t('group.settings.pendingRequests', { count: pendingRequests.length })}
               </Typography>
               {pendingLoading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
@@ -325,7 +325,7 @@ export const GroupSettingsScreen: React.FC = () => {
               )}
               {!pendingLoading && pendingRequests.length === 0 && (
                 <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 1 }}>
-                  Nenhuma solicitação pendente
+                  {t('group.settings.noPendingRequests')}
                 </Typography>
               )}
               {!pendingLoading && pendingRequests.length > 0 && (
@@ -348,7 +348,7 @@ export const GroupSettingsScreen: React.FC = () => {
                                   await approve(req.userId);
                                   setPendingActioningId(null);
                                 }}
-                                aria-label={`Aprovar pedido de ${req.userName}`}
+                                aria-label={t('group.settings.approveRequest', { name: req.userName })}
                               >
                                 {acting ? <CircularProgress size={20} /> : <CheckIcon />}
                               </IconButton>
@@ -361,7 +361,7 @@ export const GroupSettingsScreen: React.FC = () => {
                                   await reject(req.userId);
                                   setPendingActioningId(null);
                                 }}
-                                aria-label={`Recusar pedido de ${req.userName}`}
+                                aria-label={t('group.settings.rejectRequest', { name: req.userName })}
                               >
                                 <CloseIcon />
                               </IconButton>
@@ -373,7 +373,7 @@ export const GroupSettingsScreen: React.FC = () => {
                           </ListItemAvatar>
                           <ListItemText
                             primary={req.userName}
-                            secondary={req.requestedAt ? `Pediu em ${req.requestedAt.toLocaleDateString('pt-BR')}` : null}
+                            secondary={req.requestedAt ? t('group.settings.requestedAt', { date: req.requestedAt.toLocaleDateString() }) : null}
                           />
                         </ListItem>
                         {!isLast && <Divider variant="inset" component="li" />}
@@ -390,13 +390,13 @@ export const GroupSettingsScreen: React.FC = () => {
         <Card sx={{ mb: 2 }}>
           <CardContent sx={{ pb: 0 }}>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-              Membros ({members.length})
+              {t('group.settings.membersTitle', { count: members.length })}
             </Typography>
           </CardContent>
           {members.length === 0 ? (
             <CardContent>
               <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center' }}>
-                Nenhum membro encontrado
+                {t('group.settings.noMembersFound')}
               </Typography>
             </CardContent>
           ) : (
@@ -408,7 +408,7 @@ export const GroupSettingsScreen: React.FC = () => {
                     secondaryAction={
                       <IconButton
                         edge="end"
-                        aria-label={`Ações para ${member.userName}`}
+                        aria-label={t('group.settings.actionsForMember', { name: member.userName })}
                         onClick={(e) => {
                           setSelectedMember(member);
                           setMemberMenuAnchor(e.currentTarget);
@@ -433,7 +433,7 @@ export const GroupSettingsScreen: React.FC = () => {
                             {member.userName}
                           </Typography>
                           <Chip
-                            label={ROLE_CONFIG[member.role]?.label || 'Membro'}
+                            label={ROLE_CONFIG[member.role]?.label || t('profile.member')}
                             size="small"
                             sx={{
                               height: 20,
@@ -458,7 +458,7 @@ export const GroupSettingsScreen: React.FC = () => {
         <Card>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-              Ações
+              {t('group.settings.actions')}
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
