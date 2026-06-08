@@ -115,7 +115,7 @@ export const ManageLocationsScreen: React.FC = () => {
     setDeleting(true);
     try {
       await deleteLocation({ locationId: deleteTarget.id });
-      showSuccess(`Local "${deleteTarget.name}" excluído com sucesso.`);
+      showSuccess(t('locations.deleteSuccess', { name: deleteTarget.name }));
       setDeleteTarget(null);
     } catch (err) {
       logger.error('Erro ao excluir local:', err);
@@ -144,7 +144,7 @@ export const ManageLocationsScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Gerenciar Locais
+            {t('locations.manage')}
           </Typography>
           <Button
             variant="contained"
@@ -152,7 +152,7 @@ export const ManageLocationsScreen: React.FC = () => {
             onClick={() => navigate('/location/create')}
             sx={{ display: { xs: 'none', md: 'inline-flex' } }}
           >
-            Adicionar Local
+            {t('locations.addLocation')}
           </Button>
         </Box>
         <Box sx={{ px: 2, pb: 2 }}>
@@ -189,8 +189,8 @@ export const ManageLocationsScreen: React.FC = () => {
 
         {!loading && !error && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {filteredLocations.length} {filteredLocations.length === 1 ? 'local' : 'locais'}
-            {searchQuery && ` para "${searchQuery}"`}
+            {t('locations.localsCount', { count: filteredLocations.length })}
+            {searchQuery && ` ${t('locations.searchingFor', { query: searchQuery })}`}
           </Typography>
         )}
 
@@ -199,13 +199,13 @@ export const ManageLocationsScreen: React.FC = () => {
         ) : (loading || error) ? null : filteredLocations.length === 0 ? (
           <EmptyState
             icon={<LocationIcon />}
-            title={searchQuery ? 'Nenhum local encontrado' : 'Nenhum local cadastrado'}
+            title={searchQuery ? t('locations.noLocationsFound') : t('locations.noLocations')}
             description={
               searchQuery
-                ? 'Tente alterar os termos da busca'
-                : 'Adicione locais para organizar seus jogos!'
+                ? t('locations.tryDifferentSearch')
+                : t('locations.addLocationsDesc')
             }
-            actionLabel={searchQuery ? 'Limpar busca' : 'Adicionar primeiro local'}
+            actionLabel={searchQuery ? t('empty.clearSearch') : t('locations.addFirstLocation')}
             actionIcon={searchQuery ? undefined : <AddIcon />}
             onAction={searchQuery ? handleClearSearch : () => navigate('/location/create')}
             actionVariant={searchQuery ? 'outlined' : 'contained'}
@@ -292,7 +292,7 @@ export const ManageLocationsScreen: React.FC = () => {
                               )}
                               {(location.fieldCount ?? 0) > 0 && (
                                 <Chip
-                                  label={`${location.fieldCount} ${location.fieldCount === 1 ? 'campo' : 'campos'}`}
+                                  label={t('locations.fieldsCount', { count: location.fieldCount ?? 0 })}
                                   size="small"
                                   variant="outlined"
                                 />
@@ -318,7 +318,7 @@ export const ManageLocationsScreen: React.FC = () => {
                             e.stopPropagation();
                             navigate(`/location/${location.id}/edit`);
                           }}
-                          aria-label={`Editar ${location.name}`}
+                            aria-label={t('locations.editAriaLabel', { name: location.name })}
                           sx={{ bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}
                         >
                           <EditIcon fontSize="small" />
@@ -331,7 +331,7 @@ export const ManageLocationsScreen: React.FC = () => {
                               e.stopPropagation();
                               setDeleteTarget(location);
                             }}
-                            aria-label={`Excluir ${location.name}`}
+                              aria-label={t('locations.deleteLocationAria', { name: location.name })}
                             sx={{ bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}
                           >
                             <DeleteIcon fontSize="small" color="error" />
@@ -365,15 +365,15 @@ export const ManageLocationsScreen: React.FC = () => {
         onClose={() => !deleting && setDeleteTarget(null)}
         aria-labelledby="delete-location-title"
       >
-        <DialogTitle id="delete-location-title">Excluir local?</DialogTitle>
+        <DialogTitle id="delete-location-title">{t('locations.deleteTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
+            {t('locations.deleteConfirm', { name: deleteTarget?.name ?? '' })}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)} disabled={deleting}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleDelete}
@@ -382,7 +382,7 @@ export const ManageLocationsScreen: React.FC = () => {
             disabled={deleting}
             startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}
           >
-            Excluir
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

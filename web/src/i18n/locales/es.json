@@ -151,6 +151,26 @@
     "visibility": "Visibilidad",
     "worstPlayerCandidates": "Candidatos a bola murcha"
   },
+  "about": {
+    "browser": "Navegador",
+    "browserUnknown": "Desconocido",
+    "childSafety": "Seguridad Infantil",
+    "contact": "Contacto",
+    "copyright": "© 2024-{{year}} Futeba dos Parças",
+    "deleteAccount": "Eliminar Cuenta",
+    "deleteAccountDesc": "Cómo solicitar la eliminación de la cuenta",
+    "deviceInfo": "Información del Dispositivo",
+    "madeWithLove": "Hecho con ❤️ para los amantes del fútbol",
+    "notLoggedIn": "No has iniciado sesión",
+    "platform": "Plataforma",
+    "platformWeb": "Web",
+    "privacyPolicy": "Política de Privacidad",
+    "reportProblem": "Reportar Problema",
+    "tagline": "Organiza tus partidos con los amigos",
+    "termsOfUse": "Términos de Uso",
+    "title": "Acerca de",
+    "user": "Usuario"
+  },
   "admin": {
     "noUserRegisteredDesc": "Aún no hay usuarios en el sistema."
   },
@@ -159,6 +179,9 @@
     "logoWithBrand": "Logo de Futeba dos Parças",
     "noPhoto": "Sin foto",
     "preview": "Vista previa"
+  },
+  "app": {
+    "name": "Futeba dos Parças"
   },
   "appGuide": {
     "back": "Volver",
@@ -174,9 +197,6 @@
     "slide4Subtitle": "Todo listo para tu primer partido. Crea tu grupo, invita a la gente y ¡a jugar!",
     "slide4Title": "¡Vamos a empezar!",
     "startPlaying": "¡A jugar!"
-  },
-  "app": {
-    "name": "Futeba dos Parças"
   },
   "auth": {
     "alreadyHaveAccount": "¿Ya tiene cuenta?",
@@ -285,6 +305,22 @@
     "statusPending": "Pendiente",
     "title": "Desafíos"
   },
+  "checkin": {
+    "backToHome": "Volver al inicio",
+    "checkingIn": "Haciendo check-in...",
+    "confirm": "Confirmar Check-in",
+    "errorTitle": "Error de Check-in",
+    "gameFallback": "Partido",
+    "invalidLink": "Enlace inválido",
+    "invalidOrExpired": "Enlace de check-in inválido o expirado",
+    "notAvailable": "Check-in no disponible",
+    "submitError": "Error al hacer check-in",
+    "success": "¡Check-in exitoso!",
+    "title": "Check-in",
+    "validating": "Validando...",
+    "validationError": "Error al validar check-in",
+    "viewGameDetails": "Ver detalles del partido"
+  },
   "common": {
     "activate": "Activar",
     "appName": "Futeba dos Parças",
@@ -322,7 +358,8 @@
     "success": "Éxito",
     "synchronize": "Sincronizar",
     "viewGames": "Ver Partidos",
-    "viewGroups": "Ver Grupos"
+    "viewGroups": "Ver Grupos",
+    "moreOptions": "Más opciones"
   },
   "connection": {
     "offlineLimited": "Estás sin conexión — funciones limitadas",
@@ -616,9 +653,12 @@
     },
     "reportBug": "Reportar Error",
     "schedules": {
-      "createSuccess": "Horario creado con éxito!",
-      "deleteSuccess": "Horario eliminado.",
-      "loadError": "Error al cargar horarios."
+      "createError": "Error al crear horario. Inténtalo de nuevo.",
+      "createSuccess": "¡Horario creado con éxito!",
+      "deleteError": "Error al eliminar horario. Inténtalo de nuevo.",
+      "deleteSuccess": "Horario eliminado con éxito.",
+      "loadError": "Error al cargar horarios.",
+      "toggleError": "Error al cambiar el estado del horario. Inténtalo de nuevo."
     },
     "search": {
       "error": "Error al buscar. Inténtalo de nuevo.",
@@ -693,6 +733,11 @@
       "leaveSuccess": "Saliste de la lista de espera",
       "loadError": "Error al cargar la lista de espera",
       "loginRequired": "Necesitas iniciar sesión para entrar en la lista de espera"
+    },
+    "mvp": {
+      "loadGameError": "Error al cargar los datos del partido.",
+      "loadConfirmationsError": "Error al cargar confirmaciones del partido.",
+      "submitVoteError": "Error al enviar voto"
     }
   },
   "gameCard": {
@@ -919,12 +964,25 @@
       "show": "Mostrar",
       "startGame": "Iniciar Partido",
       "starting": "Iniciando...",
-      "statsDelayWarning": "Algunas estadísticas pueden tardar en aparecer."
+      "statsDelayWarning": "Algunas estadísticas pueden tardar en aparecer.",
+      "checkPermissionError": "Error al verificar permisos. Inténtalo de nuevo.",
+      "loadEventsError": "Error al cargar eventos del partido.",
+      "playerName": "Nombre del Jugador",
+      "minute": "Minuto",
+      "team": "Equipo {{team}}"
     },
     "liveNow": "¡Partido en vivo!",
     "liveStats": {
       "perPlayerSoon": "Estadísticas por jugador próximamente",
-      "title": "Estadísticas en Vivo"
+      "title": "Estadísticas en Vivo",
+      "tabScoreboard": "Marcador",
+      "tabEvents": "Eventos",
+      "tabPlayers": "Jugadores",
+      "topScorerA": "Goleador Equipo A",
+      "topScorerB": "Goleador Equipo B",
+      "noGoals": "Sin goles",
+      "goals": "{{count}} goles",
+      "loadError": "Error al cargar estadísticas. Inténtalo de nuevo."
     },
     "liveTitle": "Partido en Vivo",
     "loadError": "Error al cargar partidos",
@@ -1030,7 +1088,44 @@
     "shareError": "Error al compartir",
     "tabCashbox": "Caja",
     "tabGames": "Partidos",
-    "tabMembers": "Miembros"
+    "tabMembers": "Miembros",
+    "settings": {
+      "actions": "Acciones",
+      "actionsForMember": "Acciones para {{name}}",
+      "approveRequest": "Aprobar solicitud de {{name}}",
+      "delete": "Eliminar",
+      "deleteConfirm": "¿Estás seguro de que deseas eliminar el grupo \"{{name}}\"? Esta acción puede ser revertida por un administrador.",
+      "deleteGroup": "Eliminar Grupo",
+      "deleteGroupErrorFallback": "Error al eliminar el grupo. Inténtalo de nuevo.",
+      "deleting": "Eliminando...",
+      "demoteToMember": "Degradar a Miembro",
+      "groupInfo": "Información del Grupo",
+      "groupNotFound": "Grupo no encontrado",
+      "leave": "Salir",
+      "leaveConfirm": "¿Estás seguro de que deseas salir del grupo \"{{name}}\"? Necesitarás una nueva invitación para volver.",
+      "leaveGroup": "Salir del Grupo",
+      "leaving": "Saliendo...",
+      "memberRemoved": "{{name}} fue eliminado del grupo.",
+      "membersTitle": "Miembros ({{count}})",
+      "noMembersFound": "No se encontraron miembros",
+      "noPendingRequests": "Ninguna solicitud pendiente",
+      "ownershipTransferred": "Propiedad transferida a {{name}}.",
+      "pendingRequests": "Solicitudes pendientes ({{count}})",
+      "private": "Privado",
+      "promoteToAdmin": "Promover a Admin",
+      "rejectRequest": "Rechazar solicitud de {{name}}",
+      "remove": "Eliminar",
+      "removeConfirm": "¿Estás seguro de que deseas eliminar a {{name}} del grupo \"{{groupName}}\"?",
+      "removeFromGroup": "Eliminar del Grupo",
+      "removeMember": "Eliminar Miembro",
+      "removing": "Eliminando...",
+      "requestedAt": "Solicitado el {{date}}",
+      "title": "Configuración",
+      "transfer": "Transferir",
+      "transferConfirm": "¿Estás seguro de que deseas transferir la propiedad del grupo \"{{groupName}}\" a {{name}}? Te convertirás en Admin del grupo.",
+      "transferOwnership": "Transferir Propiedad",
+      "transferring": "Transferiendo..."
+    }
   },
   "groupDetail": {
     "closedDesc": "El grupo ya no está activo.",
@@ -1129,7 +1224,8 @@
     "transferOwnership": "Transferir Propiedad",
     "tryDifferentSearch": "Intenta cambiar el término de búsqueda",
     "defaultGender": "Categoría predeterminada de juegos",
-    "defaultGenderNone": "Sin predeterminado"
+    "defaultGenderNone": "Sin predeterminado",
+    "onlyOwnerOrAdminEdit": "Solo el dueño o administradores pueden editar el grupo."
   },
   "home": {
     "dreamTeam": "Equipo Soñado",
@@ -1143,6 +1239,31 @@
     "viewFullRanking": "Ver ranking completo",
     "viewStat": "Ver {{stat}}",
     "weeklyRanking": "Ranking Semanal"
+  },
+  "invite": {
+    "ambassadorLevel": "Nivel de Embajador",
+    "ambassadorLevels": {
+      "bronze": "Bronce",
+      "gold": "Oro",
+      "initiate": "Iniciado",
+      "legend": "Leyenda",
+      "silver": "Plata"
+    },
+    "conquered": "Conquistado",
+    "countInvited": "{{count}} invitado(s)",
+    "generateCode": "Generar Código",
+    "generateError": "Error al generar código de invitación",
+    "generating": "Generando...",
+    "invited": "Invitado",
+    "levels": "Niveles",
+    "nextLevel": "Próximo Nivel",
+    "noCodeDesc": "Genera un código de invitación para compartir con tus amigos.",
+    "noCodeTitle": "Ningún código generado",
+    "share": "Compartir",
+    "shareDescription": "¡Invita a tus amigos a Futeba dos Parças!",
+    "shareText": "¡Únete a Futeba dos Parças y organiza tus partidos!",
+    "title": "Invitar Amigos",
+    "yourCode": "Tu código"
   },
   "league": {
     "assists": "Asistencias",
@@ -1174,7 +1295,57 @@
   },
   "level": {
     "currentBadge": "ACTUAL",
-    "maxReached": "¡Nivel máximo alcanzado! ¡Eres el Rey del Fútbol!"
+    "maxReached": "¡Nivel máximo alcanzado! ¡Eres el Rey del Fútbol!",
+    "baseProgression": "PROGRESIÓN BASE",
+    "howToEarnXp": "Cómo ganar XP",
+    "legendsOfFootball": "LEYENDAS DEL FÚTBOL",
+    "noRecordsYet": "Sin registros aún",
+    "recentHistory": "HISTORIAL RECIENTE",
+    "xpGuideTip": "💡 Consejo: ¡Juega regularmente y mantén tu racha para ganar bonos de XP!",
+    "xpSourceGame": "Partido",
+    "xpTotal": "{{xp}} XP total",
+    "xpGuide": {
+      "participation": {
+        "label": "Participación",
+        "desc": "Juega un partido"
+      },
+      "goal": {
+        "label": "Gol",
+        "desc": "Marca un gol"
+      },
+      "assist": {
+        "label": "Asistencia",
+        "desc": "Da una asistencia"
+      },
+      "save": {
+        "label": "Defensa",
+        "desc": "Haz una atajada (portero)"
+      },
+      "win": {
+        "label": "Victoria",
+        "desc": "Gana el partido"
+      },
+      "mvp": {
+        "label": "MVP",
+        "desc": "Sé elegido el mejor del partido"
+      },
+      "bestGk": {
+        "label": "Mejor Portero",
+        "desc": "Sé elegido mejor portero"
+      },
+      "streak3": {
+        "label": "Racha 3+",
+        "desc": "Juega 3+ partidos seguidos"
+      },
+      "streak7": {
+        "label": "Racha 7+",
+        "desc": "Juega 7+ partidos seguidos"
+      },
+      "streak10": {
+        "label": "Racha 10+",
+        "desc": "Juega 10+ partidos seguidos"
+      }
+    }
   },
   "locations": {
     "addField": "Agregar Cancha",
@@ -1188,7 +1359,21 @@
     "mapUnavailable": "Mapa no disponible en este momento.",
     "noLocations": "Sin ubicaciones registradas",
     "noLocationsDesc": "Agrega una nueva ubicación usando el botón +",
-    "title": "Ubicaciones"
+    "title": "Ubicaciones",
+    "addFirstLocation": "Agregar primer lugar",
+    "addLocationsDesc": "¡Agrega lugares para organizar tus juegos!",
+    "deleteLocationAria": "Eliminar {{name}}",
+    "deleteSuccess": "Lugar \"{{name}}\" eliminado con éxito.",
+    "editAriaLabel": "Editar {{name}}",
+    "fieldsCount_one": "{{count}} cancha",
+    "fieldsCount_other": "{{count}} canchas",
+    "fieldsCount": "{{count}} canchas",
+    "localsCount_one": "{{count}} lugar",
+    "localsCount_other": "{{count}} lugares",
+    "localsCount": "{{count}} lugares",
+    "noLocationsFound": "No se encontraron lugares",
+    "searchingFor": "para \"{{query}}\"",
+    "tryDifferentSearch": "Intenta cambiar los términos de búsqueda"
   },
   "mvp": {
     "bestGoalkeeper": "Mejor Portero",
@@ -1197,7 +1382,19 @@
     "results": "Resultados",
     "title": "Votación MVP",
     "voteRegistered": "¡Voto Registrado!",
-    "worstPlayer": "Peor Jugador"
+    "worstPlayer": "Peor Jugador",
+    "finalResult": "Resultado Final",
+    "votesCount": "{{count}} votos",
+    "exportPdf": "Exportar PDF",
+    "exporting": "Exportando...",
+    "exportError": "Error al exportar PDF",
+    "bestPlayerLabel": "Mejor Jugador (MVP)",
+    "chooseWorstPlayer": "Elige al Peor Jugador",
+    "chooseWorstPlayerDesc": "Vota por el jugador que menos se destacó",
+    "submitVote": "Enviar Voto",
+    "chooseMvp": "Elige al MVP del Partido",
+    "chooseMvpDesc": "Vota por el jugador que más se destacó",
+    "thankYou": "Gracias por participar en la votación"
   },
   "nav": {
     "about": "Acerca de",
@@ -1345,7 +1542,14 @@
   "players": {
     "removeMemberConfirm": "Eliminar",
     "removeMemberMessage": "¿Estás seguro de que quieres eliminar a este jugador del grupo? Esta acción no se puede deshacer.",
-    "removeMemberTitle": "Eliminar miembro"
+    "removeMemberTitle": "Eliminar miembro",
+    "defaultName": "Jugador",
+    "removeMemberAria": "Eliminar {{name}} — confirmación requerida",
+    "restrictedAccess": "Acceso restringido",
+    "restrictedAccessDesc": "Necesitas ser miembro de este grupo para ver a los jugadores.",
+    "title": "Jugadores",
+    "titleWithCount": "Jugadores ({{count}})",
+    "viewPlayerCardAria": "Ver figurita de {{name}}"
   },
   "profile": {
     "achievements": "Logros",
@@ -1471,7 +1675,10 @@
     "genderFemale": "Femenino",
     "genderOther": "Otro",
     "genderNotInformed": "Prefiero no decir",
-    "genderNone": "No informado"
+    "genderNone": "No informado",
+    "autoRatingBasedOn": "Basado en {{count}} partido(s) evaluado(s) automáticamente",
+    "autoRatingNote": "Nota: las calificaciones automáticas se calculan en base a tus últimos 50 partidos. Cuantos más partidos, más confiable será el cálculo.",
+    "autoRatingPrefix": "Auto"
   },
   "ranking": {
     "categoriesAria": "Categorías del ranking",
@@ -1530,7 +1737,35 @@
     "create": "Crear Recurrencia",
     "noSchedules": "Sin recurrencias activas",
     "noSchedulesDesc": "Tus juegos recurrentes aparecerán aquí.",
-    "title": "Horarios"
+    "title": "Horarios",
+    "activate": "Activar",
+    "createFirst": "Crear primer horario",
+    "creating": "Creando...",
+    "dayOfWeekLabel": "Día de la semana",
+    "days": "días",
+    "deactivate": "Desactivar",
+    "deleteAria": "Eliminar horario",
+    "deleteConfirm": "¿Estás seguro de que deseas eliminar este horario?",
+    "deleteTitle": "¿Eliminar horario?",
+    "emptyDesc": "Registra horarios fijos para el grupo.",
+    "emptyTitle": "No hay horarios registrados",
+    "inactive": "Inactivo",
+    "itemDescription": "{{days}} a las {{time}}",
+    "nameLabel": "Nombre del horario",
+    "newTitle": "Nuevo horario",
+    "timeLabel": "Hora",
+    "createError": "Error al crear horario",
+    "deleteError": "Error al eliminar horario",
+    "itemDescription_other": "{{day}} a las {{time}} • {{players}} jugadores",
+    "playersCount": "{{count}} jugadores",
+    "toggleError": "Error al cambiar estado",
+    "day0": "Domingo",
+    "day1": "Lunes",
+    "day2": "Martes",
+    "day3": "Miércoles",
+    "day4": "Jueves",
+    "day5": "Viernes",
+    "day6": "Sábado"
   },
   "settings": {
     "aboutApp": "Acerca de la App",
@@ -1702,6 +1937,14 @@
     "wins": "Victorias",
     "yellow": "Amarillas",
     "yourStats": "Tus Estadísticas"
+  },
+  "tactical": {
+    "defaultPlayerName": "Jugador",
+    "playersCount_one": "{{count}} jugador",
+    "playersCount_other": "{{count}} jugadores",
+    "playersCount": "{{count}} jugadores",
+    "selectPlayerAria": "Seleccionar jugador {{name}}",
+    "title": "Pizarra Táctica"
   },
   "theme": {
     "auto": "Automático (sistema)",

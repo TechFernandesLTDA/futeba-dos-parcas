@@ -88,7 +88,7 @@ export const MVPVoteScreen: React.FC = () => {
       setLoading(false);
     }, (err) => {
       logger.error('Error in MVP vote game listener:', err);
-      showErrorRef.current('Erro ao carregar dados do jogo.');
+      showErrorRef.current(t('feedback.mvp.loadGameError'));
       setLoading(false);
     });
 
@@ -107,14 +107,14 @@ export const MVPVoteScreen: React.FC = () => {
       setConfirmations(confirmationsData);
     }, (err) => {
       logger.error('Error in MVP vote confirmations listener:', err);
-      showErrorRef.current('Erro ao carregar confirmações do jogo.');
+      showErrorRef.current(t('feedback.mvp.loadConfirmationsError'));
     });
 
     return () => {
       unsubscribeGame();
       unsubscribeConfirmations();
     };
-  }, [gameId]);
+  }, [gameId, t]);
 
   useEffect(() => {
     if (!hasVoted) return;
@@ -181,7 +181,7 @@ export const MVPVoteScreen: React.FC = () => {
       setHasVoted(true);
     } catch (err) {
       logger.error('Error submitting vote:', err);
-      showError((err as Error)?.message || 'Erro ao enviar voto');
+      showError((err as Error)?.message || t('feedback.mvp.submitVoteError'));
     } finally {
       setSubmitting(false);
     }
@@ -212,9 +212,9 @@ export const MVPVoteScreen: React.FC = () => {
   if (!game) {
     return (
       <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="error">Jogo não encontrado</Alert>
+        <Alert severity="error">{t('games.notFound')}</Alert>
         <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Container>
     );
@@ -227,10 +227,10 @@ export const MVPVoteScreen: React.FC = () => {
           <CardContent sx={{ py: 6 }}>
             <TrophyIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
             <Typography variant="h5" gutterBottom>
-              Voto Registrado!
+                {t('mvp.voteRegistered')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Obrigado por participar da votação
+              {t('mvp.thankYou')}
             </Typography>
           </CardContent>
         </Card>
@@ -241,7 +241,7 @@ export const MVPVoteScreen: React.FC = () => {
   return (
     <Box sx={{ pb: 10 }}>
       {/* #2174: header padronizado via ScreenHeader */}
-      <ScreenHeader title="Votação MVP" onBack={navigateBack} />
+      <ScreenHeader title={t('mvp.title')} onBack={navigateBack} />
 
       <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
@@ -250,10 +250,10 @@ export const MVPVoteScreen: React.FC = () => {
               <TrophyIcon color="warning" sx={{ fontSize: 40 }} />
               <Box>
                 <Typography variant="subtitle1" fontWeight={600}>
-                  Escolha o MVP do Jogo
+                  {t('mvp.chooseMvp')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Vote no jogador que mais se destacou
+                  {t('mvp.chooseMvpDesc')}
                 </Typography>
               </Box>
             </Box>
@@ -266,7 +266,7 @@ export const MVPVoteScreen: React.FC = () => {
               <FormLabel component="legend">
                 <Typography variant="subtitle1" fontWeight={600}>
                   <TrophyIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-                  Melhor Jogador (MVP)
+                  {t('mvp.bestPlayerLabel')}
                 </Typography>
               </FormLabel>
               <RadioGroup
@@ -312,7 +312,7 @@ export const MVPVoteScreen: React.FC = () => {
                             <TeamBadge teamId={player.favoriteTeam} size={18} />
                           </Box>
                         }
-                        secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
+                        secondary={player.position === 'GOALKEEPER' ? t('a11y.goalkeeper') : t('games.detail.fieldPlayer')}
                       />
                     </ListItem>
                   ))}
@@ -327,7 +327,7 @@ export const MVPVoteScreen: React.FC = () => {
               <FormControl component="fieldset" sx={{ width: '100%' }}>
                 <FormLabel component="legend">
                   <Typography variant="subtitle1" fontWeight={600}>
-                    Melhor Goleiro
+                    {t('mvp.bestGoalkeeper')}
                   </Typography>
                 </FormLabel>
                 <RadioGroup
@@ -391,10 +391,10 @@ export const MVPVoteScreen: React.FC = () => {
                 <BolaMurchaIcon sx={{ fontSize: 40, color: theme.palette.error.main }} />
                 <Box>
                   <Typography variant="subtitle1" fontWeight={600}>
-                    Escolha a Bola Murcha
+                    {t('mvp.chooseWorstPlayer')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Vote no jogador que menos se destacou
+                    {t('mvp.chooseWorstPlayerDesc')}
                   </Typography>
                 </Box>
               </Box>
@@ -407,7 +407,7 @@ export const MVPVoteScreen: React.FC = () => {
                 <FormLabel component="legend">
                   <Typography variant="subtitle1" fontWeight={600}>
                     <BolaMurchaIcon sx={{ verticalAlign: 'middle', mr: 1, color: theme.palette.error.main }} />
-                    Bola Murcha
+                    {t('mvp.worstPlayer')}
                   </Typography>
                 </FormLabel>
                 <RadioGroup
@@ -453,7 +453,7 @@ export const MVPVoteScreen: React.FC = () => {
                                 <TeamBadge teamId={player.favoriteTeam} size={18} />
                               </Box>
                             }
-                            secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
+                            secondary={player.position === 'GOALKEEPER' ? t('a11y.goalkeeper') : t('games.detail.fieldPlayer')}
                           />
                         </ListItem>
                       ))}
@@ -476,7 +476,7 @@ export const MVPVoteScreen: React.FC = () => {
             onClick={handleVote}
             startIcon={submitting ? <CircularProgress size={20} /> : <VoteIcon />}
           >
-            {submitting ? 'Enviando...' : 'Enviar Voto'}
+            {submitting ? t('feedback.sending') : t('mvp.submitVote')}
           </Button>
         </Container>
       </FixedBottomBar>

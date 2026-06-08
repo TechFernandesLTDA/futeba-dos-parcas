@@ -47,12 +47,12 @@ export const AboutScreen: React.FC = () => {
   const buildNumber = import.meta.env.VITE_APP_BUILD ?? 'dev';
 
   const ua = navigator.userAgent;
-  const browser = ua.includes('Firefox') ? 'Firefox' : ua.includes('Edg') ? 'Edge' : ua.includes('Chrome') ? 'Chrome' : ua.includes('Safari') ? 'Safari' : 'Desconhecido';
+  const browser = ua.includes('Firefox') ? 'Firefox' : ua.includes('Edg') ? 'Edge' : ua.includes('Chrome') ? 'Chrome' : ua.includes('Safari') ? 'Safari' : t('about.browserUnknown');
 
   return (
     <Box sx={{ pb: 4 }}>
       {/* #2174: header padronizado via ScreenHeader */}
-      <ScreenHeader title="Sobre" onBack={goBack} />
+      <ScreenHeader title={t('about.title')} onBack={goBack} />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Card sx={{ mb: 2, textAlign: 'center' }}>
@@ -70,10 +70,10 @@ export const AboutScreen: React.FC = () => {
               <SoccerIcon sx={{ fontSize: 40, color: theme.palette.primary.contrastText }} />
             </Avatar>
             <Typography variant="h5" fontWeight={700}>
-              Futeba dos Parças
+              {t('common.appName')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Organize suas peladas com os amigos
+              {t('about.tagline')}
             </Typography>
             <Box sx={{ mt: 2 }}>
               <Chip label={`v${appVersion} (${buildNumber})`} size="small" />
@@ -87,28 +87,28 @@ export const AboutScreen: React.FC = () => {
               <ListItemIcon>
                 <TermsIcon />
               </ListItemIcon>
-              <ListItemText primary="Termos de Uso" />
+              <ListItemText primary={t('about.termsOfUse')} />
             </ListItemButton>
             <Divider />
             <ListItemButton onClick={() => window.open('/privacy_policy.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <PrivacyIcon />
               </ListItemIcon>
-              <ListItemText primary="Política de Privacidade" />
+              <ListItemText primary={t('about.privacyPolicy')} />
             </ListItemButton>
             <Divider />
             <ListItemButton onClick={() => window.open('/child_safety.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <SecurityIcon />
               </ListItemIcon>
-              <ListItemText primary="Segurança Infantil" />
+              <ListItemText primary={t('about.childSafety')} />
             </ListItemButton>
             <Divider />
             <ListItemButton onClick={() => window.open('/delete_account.html', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <DeleteIcon />
               </ListItemIcon>
-              <ListItemText primary="Excluir Conta" secondary="Como solicitar exclusão da conta" />
+              <ListItemText primary={t('about.deleteAccount')} secondary={t('about.deleteAccountDesc')} />
             </ListItemButton>
           </List>
         </Card>
@@ -119,14 +119,14 @@ export const AboutScreen: React.FC = () => {
               <ListItemIcon>
                 <BugIcon />
               </ListItemIcon>
-              <ListItemText primary="Reportar Problema" />
+              <ListItemText primary={t('about.reportProblem')} />
             </ListItemButton>
             <Divider />
             <ListItemButton onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank', 'noopener,noreferrer')}>
               <ListItemIcon>
                 <EmailIcon />
               </ListItemIcon>
-              <ListItemText primary="Contato" secondary="techfernandesltda@gmail.com" />
+              <ListItemText primary={t('about.contact')} secondary="techfernandesltda@gmail.com" />
             </ListItemButton>
           </List>
         </Card>
@@ -134,26 +134,26 @@ export const AboutScreen: React.FC = () => {
         <Card sx={{ mb: 2 }}>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Informações do Dispositivo
+              {t('about.deviceInfo')}
             </Typography>
             <List disablePadding dense aria-label={t('a11y.deviceInfo')}>
               <ListItem sx={{ px: 0 }}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <DeviceIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary="Plataforma" secondary="Web" />
+                <ListItemText primary={t('about.platform')} secondary={t('about.platformWeb')} />
               </ListItem>
               <ListItem sx={{ px: 0 }}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <LanguageIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary="Navegador" secondary={browser} />
+                <ListItemText primary={t('about.browser')} secondary={browser} />
               </ListItem>
               <ListItem sx={{ px: 0 }}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <DataIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary="Usuário" secondary={user?.email || 'Não logado'} />
+                <ListItemText primary={t('about.user')} secondary={user?.email || t('about.notLoggedIn')} />
               </ListItem>
             </List>
           </CardContent>
@@ -161,10 +161,10 @@ export const AboutScreen: React.FC = () => {
 
         <Box sx={{ textAlign: 'center', py: 2 }}>
           <Typography variant="caption" color="text.disabled">
-            {`© 2024-${new Date().getFullYear()} Futeba dos Parças`}
+            {t('about.copyright', { year: new Date().getFullYear() })}
           </Typography>
           <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
-            Feito com ❤️ para os amantes do futebol
+            {t('about.madeWithLove')}
           </Typography>
         </Box>
       </Container>
