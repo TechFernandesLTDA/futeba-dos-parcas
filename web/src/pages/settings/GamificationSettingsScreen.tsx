@@ -45,6 +45,7 @@ import {
   XP_STREAK_7,
 } from '../../utils/constants';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import PageContainer from '../../components/common/PageContainer';
 import { ErrorState } from '../../components/common/ErrorState';
 
 const logger = createLogger('GamificationSettingsScreen');
@@ -140,7 +141,7 @@ export const GamificationSettingsScreen: React.FC = () => {
   }
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <PageContainer maxWidth="form">
       <ScreenHeader title="Gamificação" onBack={goBack} />
 
       {error ? (
@@ -153,7 +154,7 @@ export const GamificationSettingsScreen: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+        <>
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
@@ -313,8 +314,8 @@ export const GamificationSettingsScreen: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-        </Container>
+        </>
       )}
-    </Box>
+    </PageContainer>
   );
 };

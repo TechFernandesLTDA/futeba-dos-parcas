@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   IconButton,
@@ -41,6 +40,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { PageContainer } from '../../components/common/PageContainer';
 // #2176: EmptyState canônico (rico, com i18n) vive em common/EmptyState — não no GameCard.
 import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';

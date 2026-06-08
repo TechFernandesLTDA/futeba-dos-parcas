@@ -5,7 +5,6 @@ import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePer
 import { RatingEvolutionChart } from '../../components/profile/RatingEvolutionChart';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -18,7 +17,6 @@ import {
   ListItemText,
   Button,
   useTheme,
-  useMediaQuery,
   alpha,
   Grid,
   Paper,
@@ -50,6 +48,7 @@ import { ErrorScreen } from '../../components/common/ErrorScreen';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { PageContainer } from '../../components/common/PageContainer';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 import { getEffectiveRating, type User } from '../../types/user';
@@ -76,7 +75,6 @@ export const ProfileScreen: React.FC = () => {
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/?tab=4');
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
@@ -130,7 +128,7 @@ export const ProfileScreen: React.FC = () => {
   const divisionConfig = DIVISION_CONFIG[profile.division as keyof typeof DIVISION_CONFIG] || DIVISION_CONFIG.BRONZE;
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       <ScreenHeader
         title={t('profile.title')}
         onBack={navigateBack}
@@ -144,9 +142,9 @@ export const ProfileScreen: React.FC = () => {
         }
       />
 
-      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <Grid container spacing={2}>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Card sx={{ mb: 2 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -182,7 +180,7 @@ export const ProfileScreen: React.FC = () => {
                 </Box>
 
                 <Grid container spacing={2}>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 6, sm: 4, md: 3, lg: 3, xl: 3 }}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="primary">
                         {animatedLevel}
@@ -192,7 +190,7 @@ export const ProfileScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 6, sm: 4, md: 3, lg: 3, xl: 3 }}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="secondary">
                         {animatedXp}
@@ -202,7 +200,7 @@ export const ProfileScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 6, sm: 4, md: 3, lg: 3, xl: 3 }}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="warning.main">
                         {animatedMvps}
@@ -222,7 +220,7 @@ export const ProfileScreen: React.FC = () => {
                   {t('profile.statistics')}
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3, lg: 3, xl: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SoccerIcon color="action" />
                       <Box>
@@ -233,7 +231,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3, lg: 3, xl: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TrophyIcon color="action" />
                       <Box>
@@ -244,7 +242,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3, lg: 3, xl: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SoccerIcon color="success" />
                       <Box>
@@ -255,7 +253,7 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3, lg: 3, xl: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TrendingIcon color="info" />
                       <Box>
@@ -284,7 +282,7 @@ export const ProfileScreen: React.FC = () => {
                   ]).map(({ role, label, icon }) => {
                     const rating = getEffectiveRating(profile as unknown as User, role);
                     return (
-                      <Grid item xs={6} md={3} key={role}>
+                      <Grid size={{ xs: 6, sm: 6, md: 3, lg: 3, xl: 3 }} key={role}>
                         <Paper variant="outlined" sx={{ p: 1.5 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                             {icon}
@@ -317,7 +315,7 @@ export const ProfileScreen: React.FC = () => {
           </Grid>
 
           {isOwnProfile && (
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card>
                 {/* Ícones tintados com primary.main p/ consistência com AppSidebar
                     e melhor vibrância em ambos os modos (default action.active fica
@@ -355,7 +353,7 @@ export const ProfileScreen: React.FC = () => {
             </Grid>
           )}
         </Grid>
-      </Container>
+      </PageContainer>
 
       {/* Performance Overlay (dev mode apenas) */}
       <PerformanceOverlay metrics={metrics} />

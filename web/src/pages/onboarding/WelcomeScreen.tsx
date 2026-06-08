@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../theme/iconSizes';
+import PageContainer from '../../components/common/PageContainer';
 
 export const WelcomeScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -21,9 +22,9 @@ export const WelcomeScreen: React.FC = () => {
         justifyContent: 'center',
         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         color: theme.palette.primary.contrastText,
-        p: 3,
       }}
     >
+      <PageContainer maxWidth="focused">
       <Box
         sx={{
           width: 120,
@@ -43,11 +44,11 @@ export const WelcomeScreen: React.FC = () => {
         {t('common.appName')}
       </Typography>
 
-      <Typography variant="h6" sx={{ textAlign: 'center', opacity: 0.9, mb: 4, maxWidth: 300 }}>
+      <Typography variant="h6" sx={{ textAlign: 'center', opacity: 0.9, mb: 4 }}>
         {t('welcome.subtitle')}
       </Typography>
 
-      <Box sx={{ width: '100%', maxWidth: 300 }}>
+      <Box sx={{ width: '100%' }}>
         <Button
           fullWidth
           variant="contained"
@@ -95,6 +96,7 @@ export const WelcomeScreen: React.FC = () => {
           {t('onboarding.privacyPolicy')}
         </Link>
       </Typography>
+      </PageContainer>
     </Box>
   );
 };

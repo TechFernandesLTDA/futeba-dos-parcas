@@ -14,7 +14,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Container,
   Skeleton,
   Stack,
   Typography,
@@ -27,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useReleaseNotes } from '../../hooks/useReleaseNotes';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { ReleaseNoteContent, ReleaseTypeBadge } from '../../components/whatsnew/ReleaseNoteContent';
@@ -81,47 +81,45 @@ export const WhatsNewPage: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <PageContainer maxWidth="list">
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title={t('whatsNew.title')} onBack={goBack} backAriaLabel={t('common.back')} />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        {loading && (
-          <Stack spacing={2}>
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} variant="rounded" height={88} />
-            ))}
-          </Stack>
-        )}
+      {loading && (
+        <Stack spacing={2}>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} variant="rounded" height={88} />
+          ))}
+        </Stack>
+      )}
 
-        {!loading && error && (
-          <ErrorState
-            message={t('whatsNew.error')}
-            error={error}
-            onRetry={() => refetch()}
-          />
-        )}
+      {!loading && error && (
+        <ErrorState
+          message={t('whatsNew.error')}
+          error={error}
+          onRetry={() => refetch()}
+        />
+      )}
 
-        {!loading && !error && notes.length === 0 && (
-          <EmptyState
-            icon={<NewReleasesIcon />}
-            title={t('whatsNew.emptyTitle')}
-            description={t('whatsNew.emptyDesc')}
-          />
-        )}
+      {!loading && !error && notes.length === 0 && (
+        <EmptyState
+          icon={<NewReleasesIcon />}
+          title={t('whatsNew.emptyTitle')}
+          description={t('whatsNew.emptyDesc')}
+        />
+      )}
 
-        {!loading && !error && notes.length > 0 && (
-          <Stack spacing={1}>
-            {notes.map((note, index) => (
-              <VersionCard
-                key={`${note.platform}/${note.version}`}
-                note={note}
-                defaultExpanded={index === 0}
-              />
-            ))}
-          </Stack>
-        )}
-      </Container>
-    </Box>
+      {!loading && !error && notes.length > 0 && (
+        <Stack spacing={1}>
+          {notes.map((note, index) => (
+            <VersionCard
+              key={`${note.platform}/${note.version}`}
+              note={note}
+              defaultExpanded={index === 0}
+            />
+          ))}
+        </Stack>
+      )}
+    </PageContainer>
   );
 };

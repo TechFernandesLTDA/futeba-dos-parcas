@@ -35,6 +35,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../components/common/ErrorState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import PageContainer from '../../components/common/PageContainer';
 
 const MUTE_OPTIONS = [
   { hours: 1, label: '1 hora' },
@@ -125,11 +126,10 @@ export const NotificationSettingsScreen: React.FC = () => {
     : 0;
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <PageContainer maxWidth="form">
       <ScreenHeader title="Notificações" onBack={goBack} />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
-        {error ? (
+      {error ? (
           <ErrorState
             message={error || t('settings.loadError')}
             error={error}
@@ -334,7 +334,6 @@ export const NotificationSettingsScreen: React.FC = () => {
             </Card>
           </>
         )}
-      </Container>
-    </Box>
+      </PageContainer>
   );
 };

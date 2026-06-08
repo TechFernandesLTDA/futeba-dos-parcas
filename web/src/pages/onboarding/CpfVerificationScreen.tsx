@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
   TextField,
   Typography,
   Alert,
@@ -29,6 +28,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { iconSizes } from '../../theme/iconSizes';
 import { useTranslation } from 'react-i18next';
+import PageContainer from '../../components/common/PageContainer';
 
 const logger = createLogger('CpfVerification');
 
@@ -290,10 +290,9 @@ export const CpfVerificationScreen: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         bgcolor: 'background.default',
-        py: 3,
       }}
     >
-      <Container maxWidth="sm">
+      <PageContainer maxWidth="focused">
         <Card elevation={3}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
             <ProgressHeader />
@@ -414,7 +413,7 @@ export const CpfVerificationScreen: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

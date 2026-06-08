@@ -33,6 +33,7 @@ import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { AppLogo } from '../../components/common/AppLogo';
+import PageContainer from '../../components/common/PageContainer';
 import { sxPresets } from '../../theme/sxPresets';
 import { pageSpacing } from '../../theme/pageTokens';
 
@@ -165,7 +166,6 @@ export function LoginScreen() {
           display: 'flex',
           alignItems: { xs: 'flex-start', md: 'center' },
           justifyContent: 'center',
-          p: 2,
           ...(isMd
             ? { bgcolor: 'background.paper' }
             : {
@@ -174,9 +174,9 @@ export function LoginScreen() {
               }),
         }}
       >
+      <PageContainer maxWidth="focused">
       <Card
         sx={{
-          maxWidth: 420,
           width: '100%',
           borderRadius: 4,
           boxShadow: isMd ? undefined : (t) => t.shadows[16],
@@ -325,6 +325,7 @@ export function LoginScreen() {
           </Box>
         </CardContent>
       </Card>
+      </PageContainer>
       </Box>
     </Box>
   );

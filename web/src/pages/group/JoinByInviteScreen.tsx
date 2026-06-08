@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Container,
   Stack,
   Typography,
 } from '@mui/material';
@@ -24,6 +23,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useInvitePlayers } from '../../hooks/useGroups';
+import { PageContainer } from '../../components/common/PageContainer';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
@@ -147,7 +147,7 @@ export const JoinByInviteScreen: React.FC = () => {
   if (!firebaseUser) {
     // ProtectedRoute geralmente cuida disso, mas garantia extra
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -164,24 +164,24 @@ export const JoinByInviteScreen: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Stack alignItems="center" spacing={2}>
           <CircularProgress />
           <Typography color="text.secondary">Carregando convite…</Typography>
         </Stack>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (error || !preview) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -196,13 +196,13 @@ export const JoinByInviteScreen: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (preview.expired || preview.used) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -221,14 +221,14 @@ export const JoinByInviteScreen: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     );
   }
 
   const isGameInvite = preview.type === 'GAME' && preview.gameId;
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
+    <PageContainer maxWidth="form">
       <Card>
         <CardContent>
           <Stack alignItems="center" spacing={3}>
@@ -278,6 +278,6 @@ export const JoinByInviteScreen: React.FC = () => {
           </Stack>
         </CardContent>
       </Card>
-    </Container>
+    </PageContainer>
   );
 };

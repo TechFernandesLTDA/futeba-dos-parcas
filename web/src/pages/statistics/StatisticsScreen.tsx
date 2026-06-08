@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -14,7 +13,6 @@ import {
   Skeleton,
   Grid,
   useTheme,
-  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -36,6 +34,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { AppBreadcrumbs } from '../../components/layout/AppBreadcrumbs';
+import PageContainer from '../../components/common/PageContainer';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { DonutChart } from '../../components/charts/DonutChart';
 
@@ -45,7 +44,6 @@ export const StatisticsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const gColors = useGamificationColors();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showError } = useToast();
   const navigateBack = useNavigateBack();
@@ -77,7 +75,7 @@ export const StatisticsScreen: React.FC = () => {
   }, [error, showError]);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <>
       <Box
         sx={{
           position: 'sticky',
@@ -108,7 +106,7 @@ export const StatisticsScreen: React.FC = () => {
         </Tabs>
       </Box>
 
-      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="dashboard">
         <AppBreadcrumbs
           items={[
             { label: t('common.home'), to: '/' },
@@ -138,7 +136,7 @@ export const StatisticsScreen: React.FC = () => {
                 </Box>
                 <Grid container spacing={2} sx={{ mt: 2 }}>
                   {[1, 2, 3, 4].map(i => (
-                    <Grid item xs={3} key={i}>
+                    <Grid size={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }} key={i}>
                       <Skeleton variant="text" width="100%" height={48} />
                       <Skeleton variant="text" width="60%" height={16} sx={{ mx: 'auto' }} />
                     </Grid>
@@ -211,7 +209,7 @@ export const StatisticsScreen: React.FC = () => {
                       {t('statistics.totalGames')}
                     </Typography>
                     <Grid container spacing={2}>
-                      <Grid item xs={3}>
+                      <Grid size={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h4" fontWeight={700} color="primary">
                             {stats.totalGames}
@@ -221,7 +219,7 @@ export const StatisticsScreen: React.FC = () => {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={3}>
+                      <Grid size={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h4" fontWeight={700} color="success.main">
                             {stats.totalWins}
@@ -231,7 +229,7 @@ export const StatisticsScreen: React.FC = () => {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={3}>
+                      <Grid size={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h4" fontWeight={700} color="warning.main">
                             {stats.totalDraws}
@@ -241,7 +239,7 @@ export const StatisticsScreen: React.FC = () => {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={3}>
+                      <Grid size={{ xs: 6, sm: 3, md: 3, lg: 3, xl: 3 }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h4" fontWeight={700} color="error.main">
                             {stats.totalLosses}
@@ -343,7 +341,7 @@ export const StatisticsScreen: React.FC = () => {
                       {t('statistics.goalsAndAssists')}
                     </Typography>
                     <Grid container spacing={2}>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                         <Box
                           sx={{
                             textAlign: 'center',
@@ -364,7 +362,7 @@ export const StatisticsScreen: React.FC = () => {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                         <Box
                           sx={{
                             textAlign: 'center',
@@ -448,7 +446,7 @@ export const StatisticsScreen: React.FC = () => {
                       {t('statistics.awards')}
                     </Typography>
                     <Grid container spacing={2}>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(gColors.gold, 0.1), borderRadius: 2 }}>
                           <TrophyIcon sx={{ fontSize: 40, color: gColors.gold }} />
                           <Typography variant="h4" fontWeight={700}>
@@ -459,7 +457,7 @@ export const StatisticsScreen: React.FC = () => {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(gColors.level, 0.1), borderRadius: 2 }}>
                           <MedalIcon sx={{ fontSize: 40, color: gColors.level }} />
                           <Typography variant="h4" fontWeight={700}>
@@ -480,7 +478,7 @@ export const StatisticsScreen: React.FC = () => {
                       {t('statistics.cards')}
                     </Typography>
                     <Grid container spacing={2}>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                         <Box
                           sx={{
                             textAlign: 'center',
@@ -498,7 +496,7 @@ export const StatisticsScreen: React.FC = () => {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                         <Box
                           sx={{
                             textAlign: 'center',
@@ -523,7 +521,7 @@ export const StatisticsScreen: React.FC = () => {
             )}
           </Box>
         )}
-      </Container>
-    </Box>
+      </PageContainer>
+    </>
   );
 };

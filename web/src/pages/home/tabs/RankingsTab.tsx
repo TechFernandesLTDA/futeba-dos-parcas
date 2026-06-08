@@ -4,6 +4,7 @@ import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { iconSizes } from '../../../theme/iconSizes';
 import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
 import { getLevelColor } from '../../../types/user';
+import PageContainer from '../../../components/common/PageContainer';
 import {
   Box,
   Container,
@@ -317,7 +318,6 @@ const PodiumSection: React.FC<{
 export function RankingsTab() {
     const theme = useTheme();
     const gColors = useGamificationColors();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
     const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();

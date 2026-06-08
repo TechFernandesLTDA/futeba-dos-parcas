@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
   TextField,
   Typography,
   Alert,
@@ -37,6 +36,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 import { canSendSmsOtp } from '../../services/cloudFunctions';
+import PageContainer from '../../components/common/PageContainer';
 
 const logger = createLogger('PhoneVerification');
 
@@ -246,10 +246,9 @@ export const PhoneVerificationScreen: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         bgcolor: 'background.default',
-        py: 3,
       }}
     >
-      <Container maxWidth="sm">
+      <PageContainer maxWidth="focused">
         <Card elevation={3}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
             <ProgressHeader />
@@ -420,7 +419,7 @@ export const PhoneVerificationScreen: React.FC = () => {
             <div ref={recaptchaContainerRef} />
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

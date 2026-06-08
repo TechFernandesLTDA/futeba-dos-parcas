@@ -23,6 +23,7 @@ import { checkInToGame } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { PageContainer } from '../../components/common/PageContainer';
 import { useTranslation } from 'react-i18next';
 
 type CheckInState = 'loading' | 'confirming' | 'success' | 'error';
@@ -114,7 +115,7 @@ export const QrCheckInScreen: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <PageContainer maxWidth="form">
       <Box sx={{ mb: 3 }}>
         <Button startIcon={<BackIcon />} onClick={goBack}>
           {t('common.back')}
@@ -210,6 +211,6 @@ export const QrCheckInScreen: React.FC = () => {
           )}
         </CardContent>
       </Card>
-    </Container>
+    </PageContainer>
   );
 };

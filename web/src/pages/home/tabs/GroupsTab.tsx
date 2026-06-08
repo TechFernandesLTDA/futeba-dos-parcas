@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import PageContainer from '../../../components/common/PageContainer';
 import {
   Box,
   Typography,
@@ -69,7 +70,7 @@ export function GroupsTab() {
   const hasGroups = !loading && myGroupsCount > 0;
 
   return (
-    <Box sx={{ pb: 8, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
+    <PageContainer maxWidth="list">
       {/* Barra de busca */}
       <Box sx={{ p: 2, pb: 0 }}>
         {/* Header com título + Criar (md+) */}
@@ -162,7 +163,7 @@ export function GroupsTab() {
 
       {/* Lista de grupos */}
       <PullToRefresh onRefresh={handleRefresh}>
-      <Box sx={{ px: pageSpacing.pagePadding }}>
+      <Box>
         {error ? (
           <ErrorState
             message={error}
@@ -218,7 +219,7 @@ export function GroupsTab() {
             const isOwner = group.role === 'OWNER';
 
             return (
-              <Grid item xs={12} md={6} lg={4} xl={3} key={group.id}>
+              <Grid size={{ xs: 12, md: 6, lg: 4, xl: 3 }} key={group.id}>
               <Card sx={{ ...(isMd ? { height: '100%' } : { mb: 2 }), ...(isOwner ? { borderLeft: `4px solid ${theme.palette.warning.main}` } : {}) }}>
                 <CardActionArea onClick={() => navigate(`/group/${group.id}`)}>
                   <CardContent>
@@ -367,6 +368,7 @@ export function GroupsTab() {
         )}
       </Box>
       </PullToRefresh>
+    </PageContainer>
 
       {/* #2178: ScreenFab padronizado (xs/sm only) */}
       <ScreenFab
@@ -379,6 +381,5 @@ export function GroupsTab() {
           right: { xs: 16, md: 24 },
         }}
       />
-    </Box>
   );
 }

@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { AppLogo } from '../../components/common/AppLogo';
+import PageContainer from '../../components/common/PageContainer';
 import { sxPresets } from '../../theme/sxPresets';
 
 export function ForgotPasswordScreen() {
@@ -109,7 +110,6 @@ export function ForgotPasswordScreen() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          p: 2,
           ...(isMd
             ? { bgcolor: 'background.paper' }
             : {
@@ -118,9 +118,9 @@ export function ForgotPasswordScreen() {
               }),
         }}
       >
+      <PageContainer maxWidth="focused">
       <Card
         sx={{
-          maxWidth: 420,
           width: '100%',
           borderRadius: 4,
           boxShadow: isMd ? undefined : (t) => t.shadows[16],
@@ -223,6 +223,7 @@ export function ForgotPasswordScreen() {
           </Box>
         </CardContent>
       </Card>
+      </PageContainer>
       </Box>
     </Box>
   );

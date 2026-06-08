@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Container,
   IconButton,
   Paper,
   Stack,
@@ -29,6 +28,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useGamificationColors } from '../hooks/useGamificationColors';
 import { functions } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
+import PageContainer from '../components/common/PageContainer';
 
 const generateMyInviteCode = httpsCallable<object, { inviteCode: string }>(functions, 'generateMyInviteCode');
 
@@ -97,7 +97,7 @@ export const InviteFriendScreen: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 3 }}>
+    <PageContainer maxWidth="focused">
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
         <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
@@ -214,7 +214,7 @@ export const InviteFriendScreen: React.FC = () => {
           </Button>
         </Paper>
       )}
-    </Container>
+    </PageContainer>
   );
 };
 

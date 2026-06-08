@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   IconButton,
-  Grid,
   Chip,
   LinearProgress,
   useTheme,
   alpha,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   ArrowBack as BackIcon,
   Speed as SpeedIcon,
 } from '@mui/icons-material';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { EmptyState } from '../../components/common/EmptyState';
+import { PageContainer } from '../../components/common/PageContainer';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';

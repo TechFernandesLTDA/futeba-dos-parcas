@@ -29,6 +29,7 @@ import { useFeedback } from '../../hooks/useFeedback';
 import { isValidUrl } from '../../utils/validation';
 import { LoadingState } from '../../components/common/GameCard';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import PageContainer from '../../components/common/PageContainer';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useTranslation } from 'react-i18next';
@@ -61,18 +62,16 @@ export const MyFeedbacksScreen: React.FC = () => {
 
   if (!currentUser) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <PageContainer maxWidth="list">
         <Alert severity="warning">Faça login para ver seus feedbacks</Alert>
-      </Container>
+      </PageContainer>
     );
   }
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <PageContainer maxWidth="list">
       <ScreenHeader title="Meus Feedbacks" onBack={goBack} />
-
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
-        {fetching ? (
+      {fetching ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : error ? (
           <ErrorState message={error} onRetry={() => queryClient.invalidateQueries()} />
@@ -138,7 +137,6 @@ export const MyFeedbacksScreen: React.FC = () => {
             </List>
           </Card>
         )}
-      </Container>
-    </Box>
+    </PageContainer>
   );
 };

@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -15,7 +14,6 @@ import {
   ListItemText,
   Collapse,
   useTheme,
-  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -36,6 +34,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
+import { PageContainer } from '../../components/common/PageContainer';
 import {
   LEVEL_TABLE,
   LevelEntry,
@@ -70,7 +69,6 @@ export const LevelJourneyScreen: React.FC = () => {
   useDocumentTitle(t('page.title.levelJourney'));
   const navigateBack = useNavigateBack();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();

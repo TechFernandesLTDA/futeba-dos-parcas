@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import {
   Tabs,
   Tab,
   useTheme,
-  useMediaQuery,
   alpha,
   Grid,
   Paper,
@@ -34,6 +32,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import PageContainer from '../../components/common/PageContainer';
 
 const logger = createLogger('EvolutionScreen');
 
@@ -78,7 +77,6 @@ export const EvolutionScreen: React.FC = () => {
   useDocumentTitle(t('page.title.evolution'));
   const goBack = useNavigateBack();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
@@ -183,7 +181,7 @@ export const EvolutionScreen: React.FC = () => {
   const maxValue = Math.max(...evolutionData.map((d) => d.gamesPlayed), 1);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <>
       <Box
         sx={{
           position: 'sticky',
@@ -207,7 +205,7 @@ export const EvolutionScreen: React.FC = () => {
         </Tabs>
       </Box>
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         {tabValue === 0 && (
           <>
             <Card sx={{ mb: 2 }}>
@@ -216,7 +214,7 @@ export const EvolutionScreen: React.FC = () => {
                   Resumo Geral
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid xs={6}>
+                  <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <SoccerIcon color="primary" sx={{ mb: 0.5 }} />
                       <Typography variant="h5" fontWeight={600}>
@@ -227,7 +225,7 @@ export const EvolutionScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <TrophyIcon color="warning" sx={{ mb: 0.5 }} />
                       <Typography variant="h5" fontWeight={600}>
@@ -238,7 +236,7 @@ export const EvolutionScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={600} color="success.main">
                         {summary.totalGoals}
@@ -248,7 +246,7 @@ export const EvolutionScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={600} color="info.main">
                         {summary.totalAssists}
@@ -367,7 +365,7 @@ export const EvolutionScreen: React.FC = () => {
             </CardContent>
           </Card>
         )}
-      </Container>
-    </Box>
+      </PageContainer>
+    </>
   );
 };

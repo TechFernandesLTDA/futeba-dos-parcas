@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -19,7 +18,6 @@ import {
   Chip,
   Divider,
   useTheme,
-  useMediaQuery,
   alpha,
   CircularProgress,
 } from '@mui/material';
@@ -43,6 +41,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
+import PageContainer from '../../components/common/PageContainer';
 
 const logger = createLogger('HeadToHeadScreen');
 
@@ -88,7 +87,6 @@ export const HeadToHeadScreen: React.FC = () => {
   useDocumentTitle(t('page.title.headToHead'));
   const goBack = useNavigateBack();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectingPlayer, setSelectingPlayer] = useState<1 | 2 | null>(null);
@@ -128,7 +126,7 @@ export const HeadToHeadScreen: React.FC = () => {
   const canCompare = !!player1 && !!player2 && player1.id !== player2.id;
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <>
       <Box
         sx={{
           position: 'sticky',
@@ -151,14 +149,14 @@ export const HeadToHeadScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <Card sx={{ mb: 2 }}>
           <CardContent>
             <Typography variant="subtitle2" fontWeight={600} gutterBottom>
               Selecionar Jogadores
             </Typography>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={5}>
+              <Grid size={{ xs: 5, sm: 5, md: 5, lg: 5, xl: 5 }}>
                 <PlayerSlot
                   label="Jogador 1"
                   player={player1}
@@ -166,13 +164,13 @@ export const HeadToHeadScreen: React.FC = () => {
                   onClear={() => handleClearPlayer(1)}
                 />
               </Grid>
-              <Grid item xs={2} sx={{ textAlign: 'center' }}>
+              <Grid size={{ xs: 2, sm: 2, md: 2, lg: 2, xl: 2 }} sx={{ textAlign: 'center' }}>
                 <CompareIcon sx={{ fontSize: 32, color: 'text.disabled' }} />
                 <Typography variant="caption" display="block" color="text.secondary">
                   VS
                 </Typography>
               </Grid>
-              <Grid item xs={5}>
+              <Grid size={{ xs: 5, sm: 5, md: 5, lg: 5, xl: 5 }}>
                 <PlayerSlot
                   label="Jogador 2"
                   player={player2}
@@ -295,7 +293,7 @@ export const HeadToHeadScreen: React.FC = () => {
                   Resumo Geral
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 4, sm: 4, md: 4, lg: 4, xl: 4 }}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="primary">
                         {stats.totalGames}
@@ -305,7 +303,7 @@ export const HeadToHeadScreen: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 4, sm: 4, md: 4, lg: 4, xl: 4 }}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="error.main">
                         {stats.gamesAgainst}
@@ -315,7 +313,7 @@ export const HeadToHeadScreen: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 4, sm: 4, md: 4, lg: 4, xl: 4 }}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={700} color="success.main">
                         {stats.gamesTogether}
@@ -336,7 +334,7 @@ export const HeadToHeadScreen: React.FC = () => {
                     Confrontos Diretos
                   </Typography>
                   <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={5} sx={{ textAlign: 'center' }}>
+                    <Grid size={{ xs: 5, sm: 5, md: 5, lg: 5, xl: 5 }} sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" fontWeight={700} color="success.main">
                         {stats.p1WinsAgainst}
                       </Typography>
@@ -344,14 +342,14 @@ export const HeadToHeadScreen: React.FC = () => {
                         {player1.name}
                       </Typography>
                     </Grid>
-                    <Grid item xs={2} sx={{ textAlign: 'center' }}>
+                    <Grid size={{ xs: 2, sm: 2, md: 2, lg: 2, xl: 2 }} sx={{ textAlign: 'center' }}>
                       <Chip
                         label={`${stats.drawsAgainst}E`}
                         size="small"
                         sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1), color: 'text.primary' }}
                       />
                     </Grid>
-                    <Grid item xs={5} sx={{ textAlign: 'center' }}>
+                    <Grid size={{ xs: 5, sm: 5, md: 5, lg: 5, xl: 5 }} sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" fontWeight={700} color="success.main">
                         {stats.p2WinsAgainst}
                       </Typography>
@@ -443,8 +441,8 @@ export const HeadToHeadScreen: React.FC = () => {
             </Card>
           </Box>
         )}
-      </Container>
-    </Box>
+      </PageContainer>
+    </>
   );
 };
 
@@ -514,7 +512,7 @@ const StatCompareRow: React.FC<{
   const p2Highlight = p2Num > p1Num;
 
   return (
-    <Grid item xs={12}>
+    <Grid size={{ xs: 12 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant="body2"

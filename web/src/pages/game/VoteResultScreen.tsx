@@ -28,6 +28,7 @@ import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { PageContainer } from '../../components/common/PageContainer';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -215,7 +216,7 @@ export const VoteResultScreen: React.FC = () => {
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title={t('page.title.voteResult')} onBack={navigateBack} />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <div ref={contentRef}>
         {gameResult && (
           <Card sx={{ mb: 2, textAlign: 'center' }}>
@@ -224,18 +225,18 @@ export const VoteResultScreen: React.FC = () => {
                 {t('mvp.finalResult')}
               </Typography>
               <Grid container spacing={2} alignItems="center">
-                <Grid xs={5}>
+                <Grid size={{ xs: 5 }}>
                   <Typography variant="h3" fontWeight={700} color={gameResult.winner === 'A' ? 'success.main' : 'text.primary'}>
                     {gameResult.teamAScore}
                   </Typography>
                   <Chip label="Time A" size="small" color={gameResult.winner === 'A' ? 'success' : 'default'} />
                 </Grid>
-                <Grid xs={2}>
+                <Grid size={{ xs: 2 }}>
                   <Typography variant="h5" color="text.secondary">
                     X
                   </Typography>
                 </Grid>
-                <Grid xs={5}>
+                <Grid size={{ xs: 5 }}>
                   <Typography variant="h3" fontWeight={700} color={gameResult.winner === 'B' ? 'success.main' : 'text.primary'}>
                     {gameResult.teamBScore}
                   </Typography>
@@ -320,7 +321,7 @@ export const VoteResultScreen: React.FC = () => {
             {t('common.back')}
           </Button>
         </Box>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

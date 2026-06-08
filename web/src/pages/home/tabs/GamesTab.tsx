@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PageContainer from '../../../components/common/PageContainer';
 import {
   Box,
   Typography,
@@ -16,7 +17,6 @@ import {
   Button,
   alpha,
   useTheme,
-  useMediaQuery,
   Grid,
   IconButton,
   ToggleButtonGroup,
@@ -68,7 +68,6 @@ const SORT_OPTIONS: { value: SortBy; labelKey: string; icon: React.ReactNode }[]
 export function GamesTab() {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isLg = useMediaQuery(theme.breakpoints.up('lg'));
   const { t } = useTranslation();
   useDocumentTitle(t('nav.games'));
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,7 +127,7 @@ export function GamesTab() {
   }, [navigate]);
 
   return (
-    <Box sx={{ pb: 10, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
+    <PageContainer maxWidth="list">
       {/* Sticky search + filters bar */}
       <Box
         sx={{
@@ -262,7 +261,7 @@ export function GamesTab() {
         </Box>
       </Box>
 
-      <Box sx={{ px: pageSpacing.pagePadding, pt: 2 }}>
+      <Box sx={{ pt: 2 }}>
         {error ? (
           <ErrorState
             message={error}
@@ -320,7 +319,7 @@ export function GamesTab() {
             const isLive = game.status === 'LIVE';
 
             return (
-              <Grid item xs={12} lg={6} xl={4} key={game.id}>
+              <Grid size={{ xs: 12, md: 6, lg: 6, xl: 4 }} key={game.id}>
               <Card sx={{ mb: 2, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
                   <CardContent>
@@ -466,6 +465,7 @@ export function GamesTab() {
           </Box>
         )}
       </Box>
+    </PageContainer>
 
       {/* #2178: ScreenFab padronizado */}
       <ScreenFab
@@ -478,6 +478,5 @@ export function GamesTab() {
           right: { xs: 16, md: 24 },
         }}
       />
-    </Box>
   );
 }

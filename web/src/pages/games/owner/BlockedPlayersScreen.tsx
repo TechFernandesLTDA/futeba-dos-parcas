@@ -25,6 +25,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../../components/common/GameCard';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { ScreenHeader } from '../../../components/common/ScreenHeader';
+import { PageContainer } from '../../../components/common/PageContainer';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { createLogger } from '../../../utils/logger';

@@ -44,6 +44,7 @@ import { useTranslation } from 'react-i18next';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import PageContainer from '../../components/common/PageContainer';
 
 const logger = createLogger('ThemeSettingsScreen');
 
@@ -113,14 +114,13 @@ export const ThemeSettingsScreen: React.FC = () => {
   }, [setEmailNotifications]);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <PageContainer maxWidth="form">
       <ScreenHeader
         title={t('common.appearance')}
         onBack={goBack}
       />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
-        {notifError ? (
+      {notifError ? (
           <Alert severity="error" sx={{ mb: 2 }}>{notifError}</Alert>
         ) : notifLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
@@ -265,7 +265,6 @@ export const ThemeSettingsScreen: React.FC = () => {
             </ListItemButton>
           </List>
         </Card>
-      </Container>
-    </Box>
+      </PageContainer>
   );
 };

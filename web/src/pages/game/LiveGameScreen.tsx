@@ -46,6 +46,7 @@ import {
   ArrowBack as BackIcon,
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { PageContainer } from '../../components/common/PageContainer';
 import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
@@ -458,15 +459,15 @@ export const LiveGameScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 4 }}>
+      <PageContainer maxWidth="detail">
         <LoadingState shimmerCount={3} itemType="CARD" />
-      </Container>
+      </PageContainer>
     );
   }
 
   if (error || !game) {
     return (
-      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 4 }}>
+      <PageContainer maxWidth="detail">
         <Alert severity="error">{error || t('games.notFound')}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
           <Button startIcon={<BackIcon />} onClick={navigateBack}>
@@ -478,7 +479,7 @@ export const LiveGameScreen: React.FC = () => {
             </Button>
           )}
         </Box>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -507,7 +508,7 @@ export const LiveGameScreen: React.FC = () => {
         }
       />
 
-      <Container maxWidth={isDesktop ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <Card
           sx={{
             mb: 2,
@@ -717,7 +718,7 @@ export const LiveGameScreen: React.FC = () => {
             </Card>
           ) : null;
         })()}
-      </Container>
+      </PageContainer>
 
       {/* #2178: FixedBottomBar. #2164: tela full-screen (fora do AppLayout),
           centraliza no viewport — sem offset de sidebar. */}

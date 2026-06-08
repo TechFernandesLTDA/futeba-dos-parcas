@@ -46,6 +46,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import PageContainer from '../../components/common/PageContainer';
 import { ErrorState } from '../../components/common/ErrorState';
 import { deleteAccount } from '../../services/cloudFunctions';
 import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
@@ -166,14 +167,13 @@ export const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <PageContainer maxWidth="form">
       <ScreenHeader
         title={t('settings.title')}
         onBack={goBack}
         backAriaLabel={t('common.back')}
       />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {error ? (
           <ErrorState
             message={error}
@@ -324,7 +324,6 @@ export const SettingsScreen: React.FC = () => {
             </Box>
           </>
         )}
-      </Container>
 
       <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 
@@ -423,6 +422,6 @@ export const SettingsScreen: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };

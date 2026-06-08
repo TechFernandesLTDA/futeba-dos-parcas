@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   IconButton,
   Avatar,
-  Grid,
   Paper,
   Chip,
   Divider,
@@ -22,6 +20,8 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import PageContainer from '../../components/common/PageContainer';
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
@@ -253,7 +253,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   }
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <>
       <Box
         sx={{
           position: 'sticky',
@@ -273,7 +273,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="dashboard">
         {stats && (
           <Card sx={{ mb: 2 }}>
             <CardContent>
@@ -281,7 +281,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                 {t('fieldOwner.summary')}
               </Typography>
               <Grid container spacing={2}>
-                <Grid xs={6}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                     <SoccerIcon color="primary" sx={{ mb: 0.5 }} />
                     <Typography variant="h5" fontWeight={600}>
@@ -292,7 +292,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                     </Typography>
                   </Paper>
                 </Grid>
-                <Grid xs={6}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                     <CalendarIcon color="success" sx={{ mb: 0.5 }} />
                     <Typography variant="h5" fontWeight={600}>
@@ -303,7 +303,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                     </Typography>
                   </Paper>
                 </Grid>
-                <Grid xs={6}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                     <StarIcon color="warning" sx={{ mb: 0.5 }} />
                     <Typography variant="h5" fontWeight={600}>
@@ -314,7 +314,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                     </Typography>
                   </Paper>
                 </Grid>
-                <Grid xs={6}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                     <CalendarIcon color="info" sx={{ mb: 0.5 }} />
                     <Typography variant="h5" fontWeight={600}>
@@ -422,7 +422,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             </List>
           </CardContent>
         </Card>
-      </Container>
-    </Box>
+      </PageContainer>
+    </>
   );
 };

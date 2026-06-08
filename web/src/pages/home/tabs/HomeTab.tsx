@@ -7,9 +7,9 @@ import { useOnboarding } from '../../../hooks/useOnboarding';
 import { PullToRefresh } from '../../../components/common/PullToRefresh';
 import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsChecklist';
 import type { ChecklistStep } from '../../../components/onboarding/FirstStepsChecklist';
+import PageContainer from '../../../components/common/PageContainer';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -805,7 +805,7 @@ export function HomeTab() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <Container sx={{ maxWidth: { lg: 1200, xl: 1536 }, py: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <PageContainer maxWidth="dashboard">
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
         sx={{
@@ -994,7 +994,7 @@ export function HomeTab() {
 
       {isMd ? (
         <Grid container spacing={2} sx={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
-          <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Grid size={{ xs: 12, md: 7, lg: 7, xl: 7 }} sx={{ display: 'flex', flexDirection: 'column' }}>
             <FirstStepsChecklist
               steps={checklistSteps}
               visible={checklistVisible}
@@ -1012,7 +1012,7 @@ export function HomeTab() {
             <MiniRankingWidget />
           </Grid>
 
-          <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Grid size={{ xs: 12, md: 5, lg: 5, xl: 5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ flexShrink: 0 }}>
               <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={2} />
             </Box>
@@ -1050,7 +1050,7 @@ export function HomeTab() {
       {isPlayerCardOpen && (
         <PlayerCard userId={user?.id || null} onClose={() => setIsPlayerCardOpen(false)} />
       )}
-    </Container>
+    </PageContainer>
     </PullToRefresh>
   );
 }

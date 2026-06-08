@@ -56,6 +56,7 @@ import { ptBR as dateFnsPtBR } from 'date-fns/locale';
 import { format as formatDate, isWeekend, isSameDay, addDays, parse } from 'date-fns';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
+import { PageContainer } from '../../components/common/PageContainer';
 import { ShareDialog } from '../../components/game/ShareDialog';
 import { QuickLocationDialog } from '../../components/locations/QuickLocationDialog';
 import { FieldAvailabilityTimeline } from '../../components/game/FieldAvailabilityTimeline';
@@ -1792,7 +1793,7 @@ export const CreateGameScreen: React.FC = () => {
       isDirty={isDirty}
       loading={loading}
     >
-      <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} role="alert" aria-live="assertive">
             {error}
@@ -2084,7 +2085,7 @@ export const CreateGameScreen: React.FC = () => {
             {loading ? 'Criando...' : t('games.createGame')}
           </Button>
         </Box>
-      </Container>
+      </PageContainer>
     </FormScaffold>
     </AdaptiveFormSheet>
     </LocalizationProvider>

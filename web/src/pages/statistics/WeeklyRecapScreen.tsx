@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -13,7 +12,6 @@ import {
   Grid,
   Paper,
   useTheme,
-  useMediaQuery,
   alpha,
   List,
   ListItem,
@@ -41,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
+import PageContainer from '../../components/common/PageContainer';
 
 const logger = createLogger('WeeklyRecapScreen');
 
@@ -82,7 +81,6 @@ export const WeeklyRecapScreen: React.FC = () => {
   const navigate = useNavigate();
   const goBack = useNavigateBack();
     const theme = useTheme();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
@@ -189,7 +187,7 @@ export const WeeklyRecapScreen: React.FC = () => {
   }
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <>
       <Box
         sx={{
           position: 'sticky',
@@ -209,14 +207,14 @@ export const WeeklyRecapScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               {t('weeklyRecap.last7Days')}
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4, sm: 4, md: 4, lg: 4, xl: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" fontWeight={700} color="primary">
                     {weeklyStats.gamesPlayed}
@@ -226,7 +224,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4, sm: 4, md: 4, lg: 4, xl: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" fontWeight={700} color="success.main">
                     {weeklyStats.wins}
@@ -236,7 +234,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4, sm: 4, md: 4, lg: 4, xl: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" fontWeight={700} color="warning.main">
                     +{weeklyStats.xpEarned}
@@ -256,7 +254,7 @@ export const WeeklyRecapScreen: React.FC = () => {
               {t('weeklyRecap.weekStats')}
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <SoccerIcon color="success" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>
@@ -267,7 +265,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <TrendingIcon color="info" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>
@@ -278,7 +276,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <StarIcon color="warning" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>
@@ -289,7 +287,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6, xl: 6 }}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <FireIcon color="error" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>
@@ -360,7 +358,7 @@ export const WeeklyRecapScreen: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      </Container>
-    </Box>
+      </PageContainer>
+    </>
   );
 };

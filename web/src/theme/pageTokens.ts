@@ -2,6 +2,7 @@ import type { Breakpoint } from '@mui/material/styles';
 
 export const pageSpacing = {
   containerMaxWidth: {
+    focused: 'xs' as const,     // fluxos centrados (auth/onboarding/welcome) — NAO alargar
     form: 'md' as const,        // formularios
     list: 'lg' as const,        // listas
     detail: 'lg' as const,      // telas de detalhe
