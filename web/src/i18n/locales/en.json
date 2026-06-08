@@ -1088,6 +1088,11 @@
     "linkCopied": "Link copied!",
     "membersAria": "Group members",
     "public": "Public",
+    "role": {
+      "admin": "Admin",
+      "member": "Member",
+      "owner": "Owner"
+    },
     "requestJoin": "Request to join",
     "requestRejected": "Your request was rejected",
     "sending": "Sending…",
@@ -1249,7 +1254,7 @@
     "weeklyRanking": "Weekly Ranking"
   },
   "invite": {
-    "ambassadorLevel": "Ambassador Level",
+    "ambassadorLevel": "Your Ambassador Level",
     "ambassadorLevels": {
       "bronze": "Bronze",
       "gold": "Gold",
@@ -1259,19 +1264,22 @@
     },
     "conquered": "Conquered",
     "countInvited": "{{count}} invited",
-    "generateCode": "Generate Code",
-    "generateError": "Error generating invite code",
+    "generateCode": "Generate My Code",
+    "generateError": "Error generating code.",
     "generating": "Generating...",
     "invited": "Invited",
-    "levels": "Levels",
-    "nextLevel": "Next Level",
+    "levels": "Ambassador Levels",
+    "nextLevel": "next level",
     "noCodeDesc": "Generate an invite code to share with your friends.",
     "noCodeTitle": "No code generated",
     "share": "Share",
-    "shareDescription": "Invite your friends to Futeba dos Parças!",
-    "shareText": "Join Futeba dos Parças and organize your games!",
+    "shareDescription": "Share this link with your friends. When they sign up, you earn Ambassador points!",
+    "shareText": "Let's play a game? Join Futeba dos Parças with my invite: {{link}}",
+    "invitedCount": "invited",
+    "noCodeYetTitle": "You don't have an invite code yet",
+    "noCodeYetDesc": "Generate your code to start inviting friends and earn Ambassador badges!",
     "title": "Invite Friends",
-    "yourCode": "Your code"
+    "yourCode": "Your invite code"
   },
   "league": {
     "assists": "Assists",
@@ -1397,6 +1405,8 @@
     "exporting": "Exporting...",
     "exportError": "Error exporting PDF",
     "bestPlayerLabel": "Best Player (MVP)",
+    "bestPlayerCaption": "MVP - Best Player",
+    "voteResultError": "Error loading voting results.",
     "chooseWorstPlayer": "Choose the Worst Player",
     "chooseWorstPlayerDesc": "Vote for the player who stood out the least",
     "submitVote": "Submit Vote",

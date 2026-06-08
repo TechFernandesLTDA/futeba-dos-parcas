@@ -1088,6 +1088,11 @@
     "linkCopied": "¡Enlace copiado!",
     "membersAria": "Miembros del grupo",
     "public": "Público",
+    "role": {
+      "admin": "Admin",
+      "member": "Miembro",
+      "owner": "Dueño"
+    },
     "requestJoin": "Solicitar entrada",
     "requestRejected": "Tu solicitud fue rechazada",
     "sending": "Enviando…",
@@ -1249,7 +1254,7 @@
     "weeklyRanking": "Ranking Semanal"
   },
   "invite": {
-    "ambassadorLevel": "Nivel de Embajador",
+    "ambassadorLevel": "Tu nivel de Embajador",
     "ambassadorLevels": {
       "bronze": "Bronce",
       "gold": "Oro",
@@ -1258,20 +1263,23 @@
       "silver": "Plata"
     },
     "conquered": "Conquistado",
-    "countInvited": "{{count}} invitado(s)",
-    "generateCode": "Generar Código",
-    "generateError": "Error al generar código de invitación",
+    "countInvited": "{{count}} invitados",
+    "generateCode": "Generar Mi Código",
+    "generateError": "Error al generar código.",
     "generating": "Generando...",
     "invited": "Invitado",
-    "levels": "Niveles",
-    "nextLevel": "Próximo Nivel",
+    "levels": "Niveles de Embajador",
+    "nextLevel": "próximo nivel",
     "noCodeDesc": "Genera un código de invitación para compartir con tus amigos.",
     "noCodeTitle": "Ningún código generado",
     "share": "Compartir",
-    "shareDescription": "¡Invita a tus amigos a Futeba dos Parças!",
-    "shareText": "¡Únete a Futeba dos Parças y organiza tus partidos!",
+    "shareDescription": "¡Comparte este enlace con tus amigos. Cuando se registren, ganas puntos de Embajador!",
+    "shareText": "¿Vamos a jugar un partido? Únete a Futeba dos Parças con mi invitación: {{link}}",
+    "invitedCount": "invitados",
+    "noCodeYetTitle": "Aún no tienes un código de invitación",
+    "noCodeYetDesc": "¡Genera tu código para empezar a invitar amigos y ganar insignias de Embajador!",
     "title": "Invitar Amigos",
-    "yourCode": "Tu código"
+    "yourCode": "Tu código de invitación"
   },
   "league": {
     "assists": "Asistencias",
@@ -1397,6 +1405,8 @@
     "exporting": "Exportando...",
     "exportError": "Error al exportar PDF",
     "bestPlayerLabel": "Mejor Jugador (MVP)",
+    "bestPlayerCaption": "MVP - Mejor Jugador",
+    "voteResultError": "Error al cargar el resultado de la votación.",
     "chooseWorstPlayer": "Elige al Peor Jugador",
     "chooseWorstPlayerDesc": "Vota por el jugador que menos se destacó",
     "submitVote": "Enviar Voto",

@@ -140,7 +140,7 @@ export const GroupSettingsScreen: React.FC = () => {
       navigate('/?tab=2');
     } catch (err) {
       logger.error('Erro ao excluir grupo:', err);
-      showError((err as Error)?.message || 'Erro ao excluir grupo. Tente novamente.');
+      showError((err as Error)?.message || t('group.settings.deleteGroupErrorFallback'));
     } finally {
       setActionLoading(false);
     }
@@ -192,7 +192,7 @@ export const GroupSettingsScreen: React.FC = () => {
       batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { status: 'REMOVED' });
       batch.delete(doc(db, 'users', selectedMember.userId, 'groups', groupId));
       await batch.commit();
-      showSuccess(`${selectedMember.userName} foi removido do grupo.`);
+      showSuccess(t('group.settings.memberRemoved', { name: selectedMember.userName }));
       setKickDialogOpen(false);
       setSelectedMember(null);
     } catch (err) {
@@ -217,7 +217,7 @@ export const GroupSettingsScreen: React.FC = () => {
       batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { role: 'OWNER' as GroupRole });
       batch.update(doc(db, 'users', selectedMember.userId, 'groups', groupId), { role: 'OWNER', group_name: group!.name });
       await batch.commit();
-      showSuccess(`Propriedade transferida para ${selectedMember.userName}.`);
+      showSuccess(t('group.settings.ownershipTransferred', { name: selectedMember.userName }));
       setTransferDialogOpen(false);
       setSelectedMember(null);
     } catch (err) {
@@ -241,9 +241,9 @@ export const GroupSettingsScreen: React.FC = () => {
   if (error || !group) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
+        <Alert severity="error">{error || t('group.settings.groupNotFound')}</Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(`/group/${groupId}`)} sx={{ mt: 2 }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Container>
     );
@@ -252,7 +252,7 @@ export const GroupSettingsScreen: React.FC = () => {
   return (
     <Box sx={{ pb: 4 }}>
       <ScreenHeader
-        title="Configurações"
+        title={t('group.settings.title')}
         onBack={() => navigate(`/group/${groupId}`)}
       />
 
@@ -262,7 +262,7 @@ export const GroupSettingsScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary">
-                Informações do Grupo
+                {t('group.settings.groupInfo')}
               </Typography>
               {(isOwner || myMember?.role === 'ADMIN') && (
                 <IconButton
@@ -301,9 +301,9 @@ export const GroupSettingsScreen: React.FC = () => {
                     {pluralizeCount(group.memberCount || members.length, 'membro', 'membros')}
                   </Typography>
                   {group.isPublic ? (
-                    <Chip label="Público" size="small" variant="outlined" />
+                    <Chip label={t('group.public')} size="small" variant="outlined" />
                   ) : (
-                    <Chip label="Privado" size="small" color="default" />
+                    <Chip label={t('group.settings.private')} size="small" color="default" />
                   )}
                 </Box>
               </Box>
@@ -316,7 +316,7 @@ export const GroupSettingsScreen: React.FC = () => {
           <Card sx={{ mb: 2 }}>
             <CardContent sx={{ pb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                Solicitações pendentes ({pendingRequests.length})
+                {t('group.settings.pendingRequests', { count: pendingRequests.length })}
               </Typography>
               {pendingLoading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
@@ -325,7 +325,7 @@ export const GroupSettingsScreen: React.FC = () => {
               )}
               {!pendingLoading && pendingRequests.length === 0 && (
                 <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 1 }}>
-                  Nenhuma solicitação pendente
+                  {t('group.settings.noPendingRequests')}
                 </Typography>
               )}
               {!pendingLoading && pendingRequests.length > 0 && (
@@ -348,7 +348,7 @@ export const GroupSettingsScreen: React.FC = () => {
                                   await approve(req.userId);
                                   setPendingActioningId(null);
                                 }}
-                                aria-label={`Aprovar pedido de ${req.userName}`}
+                                aria-label={t('group.settings.approveRequest', { name: req.userName })}
                               >
                                 {acting ? <CircularProgress size={20} /> : <CheckIcon />}
                               </IconButton>
@@ -361,7 +361,7 @@ export const GroupSettingsScreen: React.FC = () => {
                                   await reject(req.userId);
                                   setPendingActioningId(null);
                                 }}
-                                aria-label={`Recusar pedido de ${req.userName}`}
+                                aria-label={t('group.settings.rejectRequest', { name: req.userName })}
                               >
                                 <CloseIcon />
                               </IconButton>
@@ -373,7 +373,7 @@ export const GroupSettingsScreen: React.FC = () => {
                           </ListItemAvatar>
                           <ListItemText
                             primary={req.userName}
-                            secondary={req.requestedAt ? `Pediu em ${req.requestedAt.toLocaleDateString('pt-BR')}` : null}
+                            secondary={req.requestedAt ? t('group.settings.requestedAt', { date: req.requestedAt.toLocaleDateString('pt-BR') }) : null}
                           />
                         </ListItem>
                         {!isLast && <Divider variant="inset" component="li" />}
@@ -390,13 +390,13 @@ export const GroupSettingsScreen: React.FC = () => {
         <Card sx={{ mb: 2 }}>
           <CardContent sx={{ pb: 0 }}>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-              Membros ({members.length})
+              {t('group.settings.membersTitle', { count: members.length })}
             </Typography>
           </CardContent>
           {members.length === 0 ? (
             <CardContent>
               <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center' }}>
-                Nenhum membro encontrado
+                {t('group.settings.noMembersFound')}
               </Typography>
             </CardContent>
           ) : (
@@ -408,7 +408,7 @@ export const GroupSettingsScreen: React.FC = () => {
                     secondaryAction={
                       <IconButton
                         edge="end"
-                        aria-label={`Ações para ${member.userName}`}
+                        aria-label={t('group.settings.actionsForMember', { name: member.userName })}
                         onClick={(e) => {
                           setSelectedMember(member);
                           setMemberMenuAnchor(e.currentTarget);
@@ -433,7 +433,7 @@ export const GroupSettingsScreen: React.FC = () => {
                             {member.userName}
                           </Typography>
                           <Chip
-                            label={ROLE_CONFIG[member.role]?.label || 'Membro'}
+                            label={ROLE_CONFIG[member.role]?.label || t('group.role.member')}
                             size="small"
                             sx={{
                               height: 20,
@@ -458,7 +458,7 @@ export const GroupSettingsScreen: React.FC = () => {
         <Card>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-              Ações
+              {t('group.settings.actions')}
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -472,7 +472,7 @@ export const GroupSettingsScreen: React.FC = () => {
                   onClick={() => setLeaveDialogOpen(true)}
                   aria-label={t('a11y.leaveGroup')}
                 >
-                  Sair do Grupo
+                  {t('group.settings.leaveGroup')}
                 </Button>
               )}
 
@@ -486,7 +486,7 @@ export const GroupSettingsScreen: React.FC = () => {
                   onClick={() => setDeleteDialogOpen(true)}
                   aria-label={t('a11y.deleteGroup')}
                 >
-                  Excluir Grupo
+                  {t('group.settings.deleteGroup')}
                 </Button>
               )}
             </Box>
@@ -503,16 +503,15 @@ export const GroupSettingsScreen: React.FC = () => {
         maxWidth="sm"
         aria-labelledby="leave-group-dialog-title"
       >
-        <DialogTitle id="leave-group-dialog-title">Sair do Grupo</DialogTitle>
+        <DialogTitle id="leave-group-dialog-title">{t('group.settings.leaveGroup')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Tem certeza que deseja sair do grupo &quot;{group.name}&quot;?
-            Você precisará de um novo convite para voltar.
+            {t('group.settings.leaveConfirm', { name: group.name })}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setLeaveDialogOpen(false)} disabled={actionLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleLeaveGroup}
@@ -521,7 +520,7 @@ export const GroupSettingsScreen: React.FC = () => {
             disabled={actionLoading}
             startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}
           >
-            {actionLoading ? 'Saindo...' : 'Sair'}
+            {actionLoading ? t('group.settings.leaving') : t('group.settings.leave')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -535,11 +534,10 @@ export const GroupSettingsScreen: React.FC = () => {
         maxWidth="sm"
         aria-labelledby="delete-group-dialog-title"
       >
-        <DialogTitle id="delete-group-dialog-title">Excluir Grupo</DialogTitle>
+        <DialogTitle id="delete-group-dialog-title">{t('group.settings.deleteGroup')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Tem certeza que deseja excluir o grupo &quot;{group.name}&quot;?
-            Esta ação pode ser revertida por um administrador.
+            {t('group.settings.deleteConfirm', { name: group.name })}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -553,7 +551,7 @@ export const GroupSettingsScreen: React.FC = () => {
             disabled={actionLoading}
             startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}
           >
-            {actionLoading ? 'Excluindo...' : 'Excluir'}
+            {actionLoading ? t('group.settings.deleting') : t('group.settings.delete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -567,12 +565,12 @@ export const GroupSettingsScreen: React.FC = () => {
       >
         {selectedMember && isOwner && selectedMember.role === 'MEMBER' && (
           <MenuItem onClick={() => handlePromoteMember(selectedMember.userId)}>
-            Promover a Admin
+            {t('group.settings.promoteToAdmin')}
           </MenuItem>
         )}
         {selectedMember && isOwner && selectedMember.role === 'ADMIN' && (
           <MenuItem onClick={() => handleDemoteMember(selectedMember.userId)}>
-            Rebaixar a Membro
+            {t('group.settings.demoteToMember')}
           </MenuItem>
         )}
         {selectedMember && selectedMember.userId !== uid && (isOwner || myMember?.role === 'ADMIN') && (
@@ -583,7 +581,7 @@ export const GroupSettingsScreen: React.FC = () => {
             }}
             sx={{ color: 'error.main' }}
           >
-            Remover do Grupo
+            {t('group.settings.removeFromGroup')}
           </MenuItem>
         )}
         {selectedMember && isOwner && selectedMember.userId !== uid && (
@@ -593,7 +591,7 @@ export const GroupSettingsScreen: React.FC = () => {
               setTransferDialogOpen(true);
             }}
           >
-            Transferir Propriedade
+            {t('group.settings.transferOwnership')}
           </MenuItem>
         )}
       </Menu>
@@ -606,10 +604,10 @@ export const GroupSettingsScreen: React.FC = () => {
         maxWidth="sm"
         aria-labelledby="kick-member-dialog-title"
       >
-        <DialogTitle id="kick-member-dialog-title">Remover Membro</DialogTitle>
+        <DialogTitle id="kick-member-dialog-title">{t('group.settings.removeMember')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Tem certeza que deseja remover {selectedMember?.userName} do grupo &quot;{group.name}&quot;?
+            {t('group.settings.removeConfirm', { name: selectedMember?.userName, groupName: group.name })}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -623,7 +621,7 @@ export const GroupSettingsScreen: React.FC = () => {
             disabled={kickLoading}
             startIcon={kickLoading ? <CircularProgress size={16} /> : undefined}
           >
-            {kickLoading ? 'Removendo...' : 'Remover'}
+            {kickLoading ? t('group.settings.removing') : t('group.settings.remove')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -636,11 +634,10 @@ export const GroupSettingsScreen: React.FC = () => {
         maxWidth="sm"
         aria-labelledby="transfer-ownership-dialog-title"
       >
-        <DialogTitle id="transfer-ownership-dialog-title">Transferir Propriedade</DialogTitle>
+        <DialogTitle id="transfer-ownership-dialog-title">{t('group.settings.transferOwnership')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Tem certeza que deseja transferir a propriedade do grupo &quot;{group.name}&quot; para {selectedMember?.userName}?
-            Você se tornará Admin do grupo.
+            {t('group.settings.transferConfirm', { groupName: group.name, name: selectedMember?.userName })}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -654,7 +651,7 @@ export const GroupSettingsScreen: React.FC = () => {
             disabled={transferLoading}
             startIcon={transferLoading ? <CircularProgress size={16} /> : undefined}
           >
-            {transferLoading ? 'Transferindo...' : 'Transferir'}
+            {transferLoading ? t('group.settings.transferring') : t('group.settings.transfer')}
           </Button>
         </DialogActions>
       </Dialog>
