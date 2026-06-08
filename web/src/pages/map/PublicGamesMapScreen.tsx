@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   IconButton,
   TextField,
@@ -12,6 +11,7 @@ import {
   alpha,
   Button,
 } from '@mui/material';
+import PageContainer from '../../components/common/PageContainer';
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,
@@ -125,7 +125,7 @@ export const PublicGamesMapScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ pb: 8 }}>
+    <>
       <Box
         sx={{
           position: 'sticky',
@@ -175,7 +175,7 @@ export const PublicGamesMapScreen: React.FC = () => {
         <PublicGamesMapView games={filteredGames} onGameClick={handleGameClick} />
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {error && (
           <ErrorState message={error} onRetry={() => refetch()} />
         )}
@@ -196,7 +196,7 @@ export const PublicGamesMapScreen: React.FC = () => {
             />
           ))
         )}
-      </Container>
+      </PageContainer>
 
       {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
       <ScreenFab
@@ -209,6 +209,6 @@ export const PublicGamesMapScreen: React.FC = () => {
           right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' },
         }}
       />
-    </Box>
+    </>
   );
 };

@@ -15,7 +15,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
   Tooltip,
   useTheme,
   useMediaQuery,
@@ -25,6 +24,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   SportsSoccer as SoccerIcon,
   Check as CheckIcon,
@@ -41,6 +41,7 @@ import {
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { PageContainer } from '../../components/common/PageContainer';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
@@ -71,7 +72,6 @@ export const GameDetailScreen: React.FC = () => {
 
   // Breakpoints para layout responsivo
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
   const navigateBack = useNavigateBack('/?tab=1');
 
@@ -384,9 +384,9 @@ export const GameDetailScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <ShimmerLoading count={3} type="card" />
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -404,7 +404,7 @@ export const GameDetailScreen: React.FC = () => {
 
   if (!game) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <EmptyState
           icon={<SoccerIcon sx={{ fontSize: 64 }} />}
           title={t('games.notFound')}
@@ -415,7 +415,7 @@ export const GameDetailScreen: React.FC = () => {
             {t('common.back')}
           </Button>
         </Box>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -555,12 +555,12 @@ export const GameDetailScreen: React.FC = () => {
 
       {/* ====== Painel de informações + Listas de jogadores ====== */}
       {isLg ? (
-        <Container maxWidth="xl" sx={{ py: 2 }}>
+        <PageContainer maxWidth="detail">
           <Grid container spacing={3}>
-            <Grid item xs={12} lg={4}>
+            <Grid xs={12} lg={4}>
               <GameInfoPanel game={game} />
             </Grid>
-            <Grid item xs={12} lg={8}>
+            <Grid xs={12} lg={8}>
               <GamePlayersSection
                 game={game}
                 gameId={gameId!}
@@ -575,9 +575,9 @@ export const GameDetailScreen: React.FC = () => {
               />
             </Grid>
           </Grid>
-        </Container>
+        </PageContainer>
       ) : (
-        <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+        <PageContainer maxWidth="detail">
           <GameInfoPanel game={game} />
           <GamePlayersSection
             game={game}
@@ -591,7 +591,7 @@ export const GameDetailScreen: React.FC = () => {
             tabValue={tabValue}
             onTabChange={setTabValue}
           />
-        </Container>
+        </PageContainer>
       )}
 
       {/* ====== Bottom Action Bar (#2178: FixedBottomBar) ====== */}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Autocomplete, TextField, Box, Typography, Avatar } from '@mui/material';
 import { useTeams } from '../../contexts/TeamsContext';
 import { useTranslation } from 'react-i18next';
+import { iconSizes } from '../../theme/iconSizes';
 
 interface TeamSelectorProps {
   value: string | null;
@@ -41,11 +42,11 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
               <Avatar
                 src={option.badgeUrl}
                 alt={option.name}
-                sx={{ width: 28, height: 28 }}
+                sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar }}
                 imgProps={{ style: { objectFit: 'contain' } }}
               />
             ) : (
-              <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: 'primary.light' }}>
+              <Avatar sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar, fontSize: 12, bgcolor: 'primary.light' }}>
                 {option.shortName || option.name.substring(0, 3)}
               </Avatar>
             )}

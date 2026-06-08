@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -12,7 +11,6 @@ import {
   Divider,
   Button,
   useTheme,
-  Grid,
   Rating,
   Paper,
   List,
@@ -26,6 +24,8 @@ import {
   TextField,
   Pagination,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import PageContainer from '../../components/common/PageContainer';
 import {
   ArrowBack as BackIcon,
   LocationOn as LocationIcon,
@@ -220,26 +220,26 @@ export const LocationDetailScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Box>
+      <>
         {renderHeader('Carregando...')}
-        <Container maxWidth="md" sx={{ py: 2 }}><LoadingState shimmerCount={5} itemType="CARD" /></Container>
-      </Box>
+        <PageContainer maxWidth="detail"><LoadingState shimmerCount={5} itemType="CARD" /></PageContainer>
+      </>
     );
   }
 
   if (error || !location) {
     return (
-      <Box>
+      <>
         {renderHeader('Local')}
-        <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+        <PageContainer maxWidth="detail" sx={{ textAlign: 'center' }}>
           <LocationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>{error || 'Local não encontrado'}</Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mt: 2 }}>
             <Button variant="outlined" onClick={() => navigate(locationsListPath)}>Ver todos os locais</Button>
             {error && <Button variant="contained" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</Button>}
           </Box>
-        </Container>
-      </Box>
+        </PageContainer>
+      </>
     );
   }
 
@@ -252,9 +252,9 @@ export const LocationDetailScreen: React.FC = () => {
   const pagedReviews = reviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <>
       {renderHeader(location.name)}
-      <Container maxWidth="md" sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         {!location.isVerified && <Alert severity="info" sx={{ mb: 2 }}>Este local ainda não foi verificado.</Alert>}
 
         <Card sx={{ mb: 2 }}>
@@ -289,7 +289,7 @@ export const LocationDetailScreen: React.FC = () => {
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>Características</Typography>
             <Grid container spacing={1.5}>
-              <Grid xs={6} sm={4}>
+              <Grid xs={6} sm={4} md={3} lg={3} xl={3}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <SoccerIcon color="primary" />
                   <Typography variant="body2" sx={{ mt: 0.5 }}>{fieldTypeLabel}</Typography>
@@ -297,16 +297,16 @@ export const LocationDetailScreen: React.FC = () => {
                 </Paper>
               </Grid>
               {location.playersPerTeam && (
-                <Grid xs={6} sm={4}>
+                <Grid xs={6} sm={4} md={3} lg={3} xl={3}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                     <Typography variant="h6" fontWeight={700} color="primary">{location.playersPerTeam}v{location.playersPerTeam}</Typography>
                     <Typography variant="caption" color="text.secondary">Jogadores</Typography>
                   </Paper>
                 </Grid>
               )}
-              {location.hasLighting && <Grid xs={6} sm={4}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><LightbulbIcon color="warning" /><Typography variant="body2" sx={{ mt: 0.5 }}>Iluminação</Typography></Paper></Grid>}
-              {location.hasParking && <Grid xs={6} sm={4}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><ParkingIcon color="info" /><Typography variant="body2" sx={{ mt: 0.5 }}>Estacionamento</Typography></Paper></Grid>}
-              {location.hasShowers && <Grid xs={6} sm={4}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><ShowerIcon color="info" /><Typography variant="body2" sx={{ mt: 0.5 }}>Vestiários</Typography></Paper></Grid>}
+              {location.hasLighting && <Grid xs={6} sm={4} md={3} lg={3} xl={3}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><LightbulbIcon color="warning" /><Typography variant="body2" sx={{ mt: 0.5 }}>Iluminação</Typography></Paper></Grid>}
+              {location.hasParking && <Grid xs={6} sm={4} md={3} lg={3} xl={3}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><ParkingIcon color="info" /><Typography variant="body2" sx={{ mt: 0.5 }}>Estacionamento</Typography></Paper></Grid>}
+              {location.hasShowers && <Grid xs={6} sm={4} md={3} lg={3} xl={3}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><ShowerIcon color="info" /><Typography variant="body2" sx={{ mt: 0.5 }}>Vestiários</Typography></Paper></Grid>}
             </Grid>
           </CardContent>
         </Card>
@@ -357,7 +357,7 @@ export const LocationDetailScreen: React.FC = () => {
             Obter Direções
           </Button>
         )}
-      </Container>
+      </PageContainer>
 
       <Dialog open={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)} aria-labelledby="delete-detail-title">
         <DialogTitle id="delete-detail-title">{t('locations.deleteTitle')}</DialogTitle>
@@ -386,6 +386,6 @@ export const LocationDetailScreen: React.FC = () => {
           <Button onClick={handleSubmitReview} disabled={submittingReview || !newReviewComment.trim()} startIcon={submittingReview ? <CircularProgress size={16} /> : <SendIcon />} variant="contained">Enviar</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };

@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { usePlayerCard } from '../../hooks/usePlayerCard';
 import { useToast } from '../../contexts/ToastContext';
+import { iconSizes } from '../../theme/iconSizes';
 import { createLogger } from '../../utils/logger';
 import { TeamBadge } from '../team/TeamBadge';
 
@@ -306,7 +307,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 gap: 0.5,
               }}
             >
-              <SoccerIcon sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: 14 }} />
+              <SoccerIcon sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: iconSizes.xs }} />
               <Typography
                 variant="overline"
                 sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '0.75rem', letterSpacing: '0.1em' }}

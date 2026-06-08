@@ -19,7 +19,6 @@ import {
   Alert,
   Skeleton,
   useTheme,
-  useMediaQuery,
   alpha,
   CircularProgress,
 } from '@mui/material';
@@ -39,6 +38,7 @@ import { PlayerAvatar } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { FixedBottomBar } from '../../components/layout';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { PageContainer } from '../../components/common/PageContainer';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -54,7 +54,6 @@ export const MVPVoteScreen: React.FC = () => {
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // #2238: layout responsivo
   const { currentUser } = useAuth();
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -194,7 +193,7 @@ export const MVPVoteScreen: React.FC = () => {
           <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
           <Skeleton variant="text" width={120} height={28} />
         </Box>
-        <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
+        <PageContainer maxWidth="form">
           <Skeleton variant="rounded" height={80} sx={{ mb: 3 }} />
           <Skeleton variant="text" width="50%" height={24} sx={{ mb: 1 }} />
           {[0, 1, 2, 3].map((i) => (
@@ -204,25 +203,25 @@ export const MVPVoteScreen: React.FC = () => {
               <Skeleton variant="circular" width={20} height={20} sx={{ ml: 2, flexShrink: 0 }} />
             </Box>
           ))}
-        </Container>
+        </PageContainer>
       </Box>
     );
   }
 
   if (!game) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <PageContainer maxWidth="form">
         <Alert severity="error">{t('games.notFound')}</Alert>
         <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
           {t('common.back')}
         </Button>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (hasVoted) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent sx={{ py: 6 }}>
             <TrophyIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
@@ -234,7 +233,7 @@ export const MVPVoteScreen: React.FC = () => {
             </Typography>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -243,7 +242,7 @@ export const MVPVoteScreen: React.FC = () => {
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title={t('mvp.title')} onBack={navigateBack} />
 
-      <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
+      <PageContainer maxWidth="form">
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -462,7 +461,7 @@ export const MVPVoteScreen: React.FC = () => {
               </FormControl>
             </CardContent>
           </Card>
-        </Container>
+        </PageContainer>
 
       {/* #2178: FixedBottomBar. #2164: tela full-screen (rota fora do AppLayout),
           centraliza no viewport — sem offset de sidebar. */}

@@ -30,6 +30,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useToast } from '../../contexts/ToastContext';
 import { iconSizes } from '../../theme/iconSizes';
+import { componentMaxWidth } from '../../theme/pageTokens';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 
@@ -160,7 +161,7 @@ export const AppGuideScreen: React.FC = () => {
           {t(slide.titleKey)}
         </Typography>
 
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 320, mx: 'auto' }}>
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: componentMaxWidth.stateMessage, mx: 'auto' }}>
           {t(slide.subtitleKey)}
         </Typography>
       </Container>

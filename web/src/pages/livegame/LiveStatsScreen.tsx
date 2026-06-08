@@ -3,14 +3,12 @@ import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   IconButton,
   Tabs,
   Tab,
-  Grid,
   Paper,
   Avatar,
   List,
@@ -20,9 +18,9 @@ import {
   Divider,
   Chip,
   useTheme,
-  useMediaQuery,
   alpha,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
@@ -39,6 +37,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { PageContainer } from '../../components/common/PageContainer';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('LiveStatsScreen');
@@ -75,7 +74,6 @@ export const LiveStatsScreen: React.FC = () => {
   useDocumentTitle(t('games.liveStats.title'));
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // #2238: layout responsivo
   const { gameId } = useParams<{ gameId: string }>();
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -203,7 +201,7 @@ export const LiveStatsScreen: React.FC = () => {
         </Tabs>
       </Box>
 
-      <Container maxWidth={isMobile ? false : 'sm'} sx={{ py: 2, px: isMobile ? 1 : undefined }}>
+      <PageContainer maxWidth="dashboard">
         {tabValue === 0 && stats && (
           <>
             <Card sx={{ mb: 2, textAlign: 'center' }}>
@@ -231,7 +229,7 @@ export const LiveStatsScreen: React.FC = () => {
             </Card>
 
             <Grid container spacing={2}>
-              <Grid xs={6}>
+              <Grid xs={12} sm={6}>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="caption" color="text.secondary">
                     {t('games.liveStats.topScorerA')}
@@ -253,7 +251,7 @@ export const LiveStatsScreen: React.FC = () => {
                   )}
                 </Paper>
               </Grid>
-              <Grid xs={6}>
+              <Grid xs={12} sm={6}>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="caption" color="text.secondary">
                     {t('games.liveStats.topScorerB')}
@@ -313,7 +311,7 @@ export const LiveStatsScreen: React.FC = () => {
             <Typography color="text.secondary">{t('games.liveStats.perPlayerSoon')}</Typography>
           </Box>
         )}
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

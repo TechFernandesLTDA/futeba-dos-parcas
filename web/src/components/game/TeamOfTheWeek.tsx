@@ -13,6 +13,7 @@ import {
 import { EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import { useWeeklyRanking } from '../../hooks/useWeeklyRanking';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
+import { iconSizes } from '../../theme/iconSizes';
 import { useTranslation } from 'react-i18next';
 
 export const TeamOfTheWeek: React.FC = () => {
@@ -75,7 +76,7 @@ export const TeamOfTheWeek: React.FC = () => {
                 onClick={() => navigate(`/profile/${player.userId}`)}
               >
                 {index < 3 ? (
-                  <TrophyIcon sx={{ color: medalColors[index], fontSize: 20 }} />
+                  <TrophyIcon sx={{ color: medalColors[index], fontSize: iconSizes.md }} />
                 ) : (
                   <Typography variant="body2" fontWeight="bold" fontSize="0.75rem">
                     {positionLabels[index]}º

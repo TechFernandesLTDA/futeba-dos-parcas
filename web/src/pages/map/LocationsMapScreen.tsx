@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   IconButton,
   TextField,
@@ -16,8 +15,9 @@ import {
   useTheme,
   alpha,
   Button,
-  Grid,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import PageContainer from '../../components/common/PageContainer';
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,
@@ -165,7 +165,7 @@ export const LocationsMapScreen: React.FC = () => {
   );
 
   return (
-    <Box sx={{ pb: 8 }}>
+    <>
       <Box
         sx={{
           position: 'sticky',
@@ -216,7 +216,7 @@ export const LocationsMapScreen: React.FC = () => {
         <LocationsMapView locations={filteredLocations} selectedLocation={selectedLocation} onLocationSelect={setSelectedLocation} />
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {errorState && (
           <ErrorState message={errorState} onRetry={() => { setErrorState(null); setLoading(true); setRetryCount((count) => count + 1); }} />
         )}
@@ -231,7 +231,7 @@ export const LocationsMapScreen: React.FC = () => {
         ) : (
           <Grid container spacing={2}>
             {filteredLocations.map((location) => (
-              <Grid xs={12} key={location.id}>
+              <Grid xs={12} sm={12} md={6} lg={4} xl={3} key={location.id}>
                 <Card
                   role="button"
                   tabIndex={0}
@@ -292,7 +292,7 @@ export const LocationsMapScreen: React.FC = () => {
             ))}
           </Grid>
         )}
-      </Container>
+      </PageContainer>
 
       {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
       <ScreenFab
@@ -305,6 +305,6 @@ export const LocationsMapScreen: React.FC = () => {
           right: { xs: 16, sm: 'max(16px, calc(50% - 300px + 16px))' },
         }}
       />
-    </Box>
+    </>
   );
 };

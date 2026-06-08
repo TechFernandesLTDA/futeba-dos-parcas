@@ -2,6 +2,7 @@ import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, NavigateNext } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { iconSizes } from '../../theme/iconSizes';
 import { NotificationBell } from '../common/NotificationBell';
 import { AppLogo } from '../common/AppLogo';
 import type { BreadcrumbItem } from './AppBreadcrumbs';
@@ -75,7 +76,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
           </IconButton>
         ) : (
           // Logo padronizada — brand asset (não ícone Material genérico)
-          <AppLogo size="small" shape="circle" sx={{ width: 28, height: 28, mr: 1 }} />
+          <AppLogo size="small" shape="circle" sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar, mr: 1 }} />
         )}
         <Typography
           variant="h6"

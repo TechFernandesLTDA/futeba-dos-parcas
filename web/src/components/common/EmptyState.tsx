@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button, SxProps, Theme } from '@mui/material';
 import { iconSizes } from '../../theme/iconSizes';
+import { componentMaxWidth } from '../../theme/pageTokens';
 import {
   SportsSoccer as GamesIcon,
   People as GroupsIcon,
@@ -87,7 +88,7 @@ const EmptyStateBase = React.memo(function EmptyState({
         {title}
       </Typography>
       {description && (
-        <Typography variant="body2" color="text.disabled" sx={{ mb: 2, maxWidth: 320, mx: 'auto' }}>
+        <Typography variant="body2" color="text.disabled" sx={{ mb: 2, maxWidth: componentMaxWidth.stateMessage, mx: 'auto' }}>
           {description}
         </Typography>
       )}

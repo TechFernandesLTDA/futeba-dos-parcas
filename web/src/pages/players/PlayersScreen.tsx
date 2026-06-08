@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   IconButton,
@@ -30,6 +29,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -225,7 +225,7 @@ export const PlayersScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       <ScreenHeader
         title={!loading && !error && isMember ? t('players.titleWithCount', { count: members.length }) : t('players.title')}
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
@@ -241,15 +241,15 @@ export const PlayersScreen: React.FC = () => {
         <LoadingState shimmerCount={6} itemType="LIST" />
       ) : error ? (
         <PullToRefresh onRefresh={handleRefresh}>
-        <Container maxWidth="sm" sx={{ py: 2 }}>
+        <PageContainer maxWidth="list">
           <ErrorState
             message={error}
             onRetry={handleRetry}
           />
-        </Container>
+        </PageContainer>
         </PullToRefresh>
       ) : !isMember ? (
-        <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+        <PageContainer maxWidth="list" sx={{ textAlign: 'center' }}>
           <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
             {t('players.restrictedAccess')}
@@ -260,11 +260,11 @@ export const PlayersScreen: React.FC = () => {
           <Button variant="outlined" onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}>
             {t('common.back')}
           </Button>
-        </Container>
+        </PageContainer>
       ) : (
         <>
           <PullToRefresh onRefresh={handleRefresh}>
-          <Container maxWidth="sm" sx={{ py: 2 }}>
+          <PageContainer maxWidth="list">
             {members.length === 0 ? (
               <EmptyState
                 icon={<PersonIcon sx={{ fontSize: 64 }} />}
@@ -292,7 +292,7 @@ export const PlayersScreen: React.FC = () => {
                 </List>
               </Card>
             )}
-          </Container>
+          </PageContainer>
           </PullToRefresh>
 
           {/* Card de jogador estilo figurinha */}

@@ -3,13 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   IconButton,
   Avatar,
-  Grid,
   Button,
   useTheme,
   alpha,
@@ -18,6 +16,7 @@ import {
   LinearProgress,
   Tooltip,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   ArrowBack as BackIcon,
   ArrowForward,
@@ -37,6 +36,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { getLevelForXp } from '../../types/gamification';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { PageContainer } from '../../components/common/PageContainer';
 import { createLogger } from '../../utils/logger';
 import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
@@ -383,9 +383,9 @@ export const TeamFormationScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <Grid container spacing={2}>
-          <Grid xs={6}>
+          <Grid xs={12} lg={6}>
             <Card
               data-team="A"
               onDragOver={(e) => handleDragOver(e, 'A')}
@@ -444,7 +444,7 @@ export const TeamFormationScreen: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={6}>
+          <Grid xs={12} lg={6}>
             <Card
               data-team="B"
               onDragOver={(e) => handleDragOver(e, 'B')}
@@ -552,7 +552,7 @@ export const TeamFormationScreen: React.FC = () => {
         >
           {saving ? 'Salvando...' : 'Confirmar Times'}
         </Button>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

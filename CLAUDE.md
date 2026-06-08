@@ -526,6 +526,27 @@ web/src/
 └── utils/                    # Utility functions
 ```
 
+### Web Sizing & Layout (Epic #2581)
+
+**NUNCA** usar `<Container maxWidth>` raw em páginas. O padrão canônico é `<PageContainer>` com tiers semânticos de `web/src/theme/pageTokens.ts`.
+
+| Tier | maxWidth MUI | px aprox. | Usar em |
+|---|---|---|---|
+| `focused` | `xs` | ~444px | auth, onboarding, welcome (fluxos centrados, NÃO alargar) |
+| `form` | `md` | ~900px | formulários de criação/edição |
+| `list` | `lg` | ~1200px | listas |
+| `detail` | `lg` | ~1200px | detalhe de 1 entidade |
+| `dashboard` | `xl` | ~1536px | home, estatísticas, dashboards densos |
+
+**Regras-chave**:
+- Todo grid de múltiplos itens escala colunas `xs → md → lg → xl`
+- Grid v2 (Unstable_Grid2 no MUI 5): `<Grid xs={12} md={6}>` (não `<Grid item>`)
+- Padding via tokens `pageSpacing` do `pageTokens.ts` (nunca `py:2` ad-hoc)
+- Tokens de `gridLayout.cards` / `gridLayout.cardsWide` para grids comuns
+- `iconSizes`/`avatarSizes` de `iconSizes.ts` para ícones e avatares
+- ESLint Rules 3 e 4 guardam contra container raw e maxWidth numérico
+- Detalhes completos em `.claude/rules/web-react.md` → Pattern 3
+
 ---
 
 ## CMP Migration Status

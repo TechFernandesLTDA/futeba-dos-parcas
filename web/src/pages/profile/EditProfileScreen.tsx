@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   TextField,
   Button,
@@ -22,6 +21,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
+import { PageContainer } from '../../components/common/PageContainer';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -419,9 +419,9 @@ export const EditProfileScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+      <PageContainer maxWidth="form" sx={{ textAlign: 'center' }}>
         <CircularProgress />
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -457,7 +457,7 @@ export const EditProfileScreen: React.FC = () => {
           </>
         }
       >
-        <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
+        <PageContainer maxWidth="form">
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -649,7 +649,7 @@ export const EditProfileScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-      </Container>
+      </PageContainer>
       </FormScaffold>
     </AdaptiveFormSheet>
   );

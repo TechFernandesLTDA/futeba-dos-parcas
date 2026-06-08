@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Box, type SxProps, type Theme } from '@mui/material';
 import { RAIL_WIDTH, DRAWER_WIDTH } from '../../config/navItems';
+import { componentMaxWidth } from '../../theme/pageTokens';
 
 interface FixedBottomBarProps {
   children: ReactNode;
@@ -62,7 +63,7 @@ export const FixedBottomBar = React.memo(function FixedBottomBar({
           right: { xs: 0, sm: 'auto' },
           transform: { sm: 'translateX(-50%)' },
           width: { xs: '100%', sm: 480 },
-          maxWidth: 480,
+          maxWidth: componentMaxWidth.bottomBar,
           bgcolor: 'background.paper',
           borderTop: 1,
           borderColor: 'divider',

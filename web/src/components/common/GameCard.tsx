@@ -29,6 +29,7 @@ import {
   Warning as ConflictIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { iconSizes } from '../../theme/iconSizes';
 import { Game, FIELD_TYPE_LABELS, getStatusChipColors, ConfirmationPaletteKey } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { InteractiveCard } from './InteractiveCard';
@@ -220,7 +221,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                 {hasConflict && (
                   <Tooltip title={t('tooltip.conflictingTime')} arrow>
                     <Chip
-                      icon={<ConflictIcon sx={{ fontSize: 14 }} />}
+                      icon={<ConflictIcon sx={{ fontSize: iconSizes.xs }} />}
                       label="Conflito"
                       size="small"
                       sx={{
@@ -606,7 +607,7 @@ export const EmptyState: React.FC<{
         textAlign: 'center',
       }}
     >
-      {icon || <SoccerIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
+      {icon || <SoccerIcon sx={{ fontSize: iconSizes.hero, color: 'text.disabled', mb: 2 }} />}
       <Typography variant="h6" color="text.secondary" gutterBottom>
         {title}
       </Typography>

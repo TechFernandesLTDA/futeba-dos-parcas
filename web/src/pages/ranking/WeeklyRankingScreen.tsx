@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Container,
   IconButton,
   Skeleton,
   Stack,
@@ -24,6 +23,7 @@ import {
 } from "@mui/icons-material";
 import { useWeeklyRanking } from "../../hooks/useWeeklyRanking";
 import { useGamificationColors } from "../../hooks/useGamificationColors";
+import { PageContainer } from "../../components/common/PageContainer";
 import { EmptyState } from "../../components/common/EmptyState";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { useTranslation } from "react-i18next";
@@ -40,7 +40,7 @@ export const WeeklyRankingScreen: React.FC = () => {
   const MEDAL_COLORS = [gColors.gold, gColors.silver, gColors.bronze];
 
   return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
+    <PageContainer maxWidth="list">
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
         <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
@@ -166,6 +166,6 @@ export const WeeklyRankingScreen: React.FC = () => {
           ))}
         </Stack>
       )}
-    </Container>
+    </PageContainer>
   );
 };

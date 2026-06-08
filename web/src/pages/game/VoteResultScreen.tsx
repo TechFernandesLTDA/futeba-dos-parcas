@@ -3,18 +3,17 @@ import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   Avatar,
-  Grid,
   Button,
   useTheme,
   alpha,
   Chip,
   CircularProgress,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   EmojiEvents as TrophyIcon,
   ThumbDown as ThumbDownIcon,
@@ -28,6 +27,7 @@ import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { PageContainer } from '../../components/common/PageContainer';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -215,7 +215,7 @@ export const VoteResultScreen: React.FC = () => {
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title={t('page.title.voteResult')} onBack={navigateBack} />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <div ref={contentRef}>
         {gameResult && (
           <Card sx={{ mb: 2, textAlign: 'center' }}>
@@ -320,7 +320,7 @@ export const VoteResultScreen: React.FC = () => {
             {t('common.back')}
           </Button>
         </Box>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

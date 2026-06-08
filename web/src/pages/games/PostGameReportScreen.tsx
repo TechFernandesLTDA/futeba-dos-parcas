@@ -3,13 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   IconButton,
   Avatar,
-  Grid,
   Divider,
   Button,
   useTheme,
@@ -18,6 +16,7 @@ import {
   List,
   LinearProgress,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
@@ -35,6 +34,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { PageContainer } from '../../components/common/PageContainer';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp, getLevelEntry, getXpProgress } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
@@ -322,7 +322,7 @@ export const PostGameReportScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <Card sx={{ mb: 2, textAlign: 'center' }}>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -575,7 +575,7 @@ export const PostGameReportScreen: React.FC = () => {
         <Button variant="outlined" fullWidth onClick={navigateBack}>
           Voltar
         </Button>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

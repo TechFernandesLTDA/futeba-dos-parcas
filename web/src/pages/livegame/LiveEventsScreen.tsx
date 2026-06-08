@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   IconButton,
@@ -46,6 +45,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { PageContainer } from '../../components/common/PageContainer';
 import { pageSpacing } from '../../theme/pageTokens';
 
 const logger = createLogger('LiveEventsScreen');
@@ -265,7 +265,7 @@ export const LiveEventsScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {loading ? (
           <LoadingState shimmerCount={6} itemType="LIST" />
         ) : events.length === 0 ? (
@@ -307,7 +307,7 @@ export const LiveEventsScreen: React.FC = () => {
             })}
           </List>
         )}
-      </Container>
+      </PageContainer>
 
       {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
       {canManage && (

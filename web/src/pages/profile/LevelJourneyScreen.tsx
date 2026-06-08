@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -15,7 +14,6 @@ import {
   ListItemText,
   Collapse,
   useTheme,
-  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -35,6 +33,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
+import { PageContainer } from '../../components/common/PageContainer';
 import { ErrorState } from '../../components/common/ErrorState';
 import {
   LEVEL_TABLE,
@@ -70,7 +69,6 @@ export const LevelJourneyScreen: React.FC = () => {
   useDocumentTitle(t('page.title.levelJourney'));
   const navigateBack = useNavigateBack();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
@@ -149,7 +147,7 @@ export const LevelJourneyScreen: React.FC = () => {
   const color = getLevelColor(currentLevel, theme);
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       {/* Header */}
       <Box
         sx={{
@@ -170,7 +168,7 @@ export const LevelJourneyScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="list">
         {loading ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : error ? (
@@ -453,7 +451,7 @@ export const LevelJourneyScreen: React.FC = () => {
             </Card>
           </>
         )}
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

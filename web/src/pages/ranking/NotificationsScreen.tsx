@@ -13,7 +13,6 @@ import {
   Badge,
   Skeleton,
   useTheme,
-  useMediaQuery,
   alpha,
   Chip,
   Button,
@@ -152,7 +151,6 @@ export const NotificationsScreen: React.FC = () => {
   const goBack = useNavigateBack();
   const theme = useTheme();
   const gColors = useGamificationColors();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showSuccess, showError, showWithAction } = useToast();
 
@@ -250,7 +248,7 @@ export const NotificationsScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box>
       {/* Cabeçalho padronizado — badge de não-lidas + ações de gestão via `actions` */}
       <ScreenHeader
         title="Notificações"
@@ -316,7 +314,7 @@ export const NotificationsScreen: React.FC = () => {
         ))}
       </Box>
 
-      <PageContainer maxWidth={isMd ? 'detail' : 'list'}>
+      <PageContainer maxWidth="list">
         {error ? (
           <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
         ) : loading ? (
