@@ -920,12 +920,25 @@
       "show": "Show",
       "startGame": "Start Game",
       "starting": "Starting...",
-      "statsDelayWarning": "Some stats may take a while to appear."
+      "statsDelayWarning": "Some stats may take a while to appear.",
+      "checkPermissionError": "Error checking permissions. Please try again.",
+      "loadEventsError": "Error loading game events.",
+      "playerName": "Player Name",
+      "minute": "Minute",
+      "team": "Team {{team}}"
     },
     "liveNow": "Game live!",
     "liveStats": {
       "perPlayerSoon": "Per-player stats coming soon",
-      "title": "Live Stats"
+      "title": "Live Stats",
+      "tabScoreboard": "Scoreboard",
+      "tabEvents": "Events",
+      "tabPlayers": "Players",
+      "topScorerA": "Top Scorer Team A",
+      "topScorerB": "Top Scorer Team B",
+      "noGoals": "No goals",
+      "goals": "{{count}} goals",
+      "loadError": "Error loading statistics. Please try again."
     },
     "liveTitle": "Live Game",
     "loadError": "Failed to load games",
@@ -1031,7 +1044,44 @@
     "shareError": "Failed to share",
     "tabCashbox": "Cashbox",
     "tabGames": "Games",
-    "tabMembers": "Members"
+    "tabMembers": "Members",
+    "settings": {
+      "actions": "Actions",
+      "actionsForMember": "Actions for {{name}}",
+      "approveRequest": "Approve request from {{name}}",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete the group \"{{name}}\"? This action can be reverted by an administrator.",
+      "deleteGroup": "Delete Group",
+      "deleteGroupErrorFallback": "Error deleting group. Please try again.",
+      "deleting": "Deleting...",
+      "demoteToMember": "Demote to Member",
+      "groupInfo": "Group Info",
+      "groupNotFound": "Group not found",
+      "leave": "Leave",
+      "leaveConfirm": "Are you sure you want to leave the group \"{{name}}\"? You will need a new invitation to rejoin.",
+      "leaveGroup": "Leave Group",
+      "leaving": "Leaving...",
+      "memberRemoved": "{{name}} was removed from the group.",
+      "membersTitle": "Members ({{count}})",
+      "noMembersFound": "No members found",
+      "noPendingRequests": "No pending requests",
+      "ownershipTransferred": "Ownership transferred to {{name}}.",
+      "pendingRequests": "Pending requests ({{count}})",
+      "private": "Private",
+      "promoteToAdmin": "Promote to Admin",
+      "rejectRequest": "Reject request from {{name}}",
+      "remove": "Remove",
+      "removeConfirm": "Are you sure you want to remove {{name}} from the group \"{{groupName}}\"?",
+      "removeFromGroup": "Remove from Group",
+      "removeMember": "Remove Member",
+      "removing": "Removing...",
+      "requestedAt": "Requested on {{date}}",
+      "title": "Settings",
+      "transfer": "Transfer",
+      "transferConfirm": "Are you sure you want to transfer ownership of the group \"{{groupName}}\" to {{name}}? You will become an Admin of the group.",
+      "transferOwnership": "Transfer Ownership",
+      "transferring": "Transferring..."
+    }
   },
   "groupDetail": {
     "closedDesc": "The group is no longer active.",
@@ -1130,7 +1180,8 @@
     "transferOwnership": "Transfer Ownership",
     "tryDifferentSearch": "Try changing the search term",
     "defaultGender": "Default game category",
-    "defaultGenderNone": "No default"
+    "defaultGenderNone": "No default",
+    "onlyOwnerOrAdminEdit": "Only the owner or admins can edit the group."
   },
   "home": {
     "dreamTeam": "Dream Team",
@@ -1175,7 +1226,57 @@
   },
   "level": {
     "currentBadge": "CURRENT",
-    "maxReached": "Max level reached! You are the Football King!"
+    "maxReached": "Max level reached! You are the Football King!",
+    "baseProgression": "BASE PROGRESSION",
+    "howToEarnXp": "How to earn XP",
+    "legendsOfFootball": "FOOTBALL LEGENDS",
+    "noRecordsYet": "No records yet",
+    "recentHistory": "RECENT HISTORY",
+    "xpGuideTip": "💡 Tip: Play regularly and keep your streak to earn XP bonuses!",
+    "xpSourceGame": "Game",
+    "xpTotal": "{{xp}} XP total",
+    "xpGuide": {
+      "participation": {
+        "label": "Participation",
+        "desc": "Play a match"
+      },
+      "goal": {
+        "label": "Goal",
+        "desc": "Score a goal"
+      },
+      "assist": {
+        "label": "Assist",
+        "desc": "Provide an assist"
+      },
+      "save": {
+        "label": "Save",
+        "desc": "Make a save (goalkeeper)"
+      },
+      "win": {
+        "label": "Win",
+        "desc": "Win the match"
+      },
+      "mvp": {
+        "label": "MVP",
+        "desc": "Be elected match MVP"
+      },
+      "bestGk": {
+        "label": "Best Goalkeeper",
+        "desc": "Be elected best goalkeeper"
+      },
+      "streak3": {
+        "label": "Streak 3+",
+        "desc": "Play 3+ matches in a row"
+      },
+      "streak7": {
+        "label": "Streak 7+",
+        "desc": "Play 7+ matches in a row"
+      },
+      "streak10": {
+        "label": "Streak 10+",
+        "desc": "Play 10+ matches in a row"
+      }
+    }
   },
   "locations": {
     "addField": "Add Field",
@@ -1212,7 +1313,12 @@
     "results": "Results",
     "title": "MVP Vote",
     "voteRegistered": "Vote Registered!",
-    "worstPlayer": "Worst Player"
+    "worstPlayer": "Worst Player",
+    "finalResult": "Final Result",
+    "votesCount": "{{count}} votes",
+    "exportPdf": "Export PDF",
+    "exporting": "Exporting...",
+    "exportError": "Error exporting PDF"
   },
   "nav": {
     "about": "About",
@@ -1493,7 +1599,10 @@
     "genderFemale": "Female",
     "genderOther": "Other",
     "genderNotInformed": "Prefer not to say",
-    "genderNone": "Not informed"
+    "genderNone": "Not informed",
+    "autoRatingBasedOn": "Based on {{count}} automatically rated game(s)",
+    "autoRatingNote": "Note: automatic ratings are calculated based on your last 50 games. The more games, the more confident the calculation.",
+    "autoRatingPrefix": "Auto"
   },
   "ranking": {
     "categoriesAria": "Ranking categories",

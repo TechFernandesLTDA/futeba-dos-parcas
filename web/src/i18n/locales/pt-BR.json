@@ -920,12 +920,25 @@
       "show": "Mostrar",
       "startGame": "Iniciar Jogo",
       "starting": "Iniciando...",
-      "statsDelayWarning": "Algumas estatísticas podem demorar a aparecer."
+      "statsDelayWarning": "Algumas estatísticas podem demorar a aparecer.",
+      "checkPermissionError": "Erro ao verificar permissões. Tente novamente.",
+      "loadEventsError": "Erro ao carregar eventos do jogo.",
+      "playerName": "Nome do Jogador",
+      "minute": "Minuto",
+      "team": "Time {{team}}"
     },
     "liveNow": "Jogo ao vivo!",
     "liveStats": {
       "perPlayerSoon": "Estatísticas por jogador em breve",
-      "title": "Estatísticas ao Vivo"
+      "title": "Estatísticas ao Vivo",
+      "tabScoreboard": "Placar",
+      "tabEvents": "Eventos",
+      "tabPlayers": "Jogadores",
+      "topScorerA": "Artilheiro Time A",
+      "topScorerB": "Artilheiro Time B",
+      "noGoals": "Sem gols",
+      "goals": "{{count}} gols",
+      "loadError": "Erro ao carregar estatísticas. Tente novamente."
     },
     "liveTitle": "Jogo ao Vivo",
     "loadError": "Erro ao carregar jogos",
@@ -1031,7 +1044,44 @@
     "shareError": "Erro ao compartilhar",
     "tabCashbox": "Caixa",
     "tabGames": "Jogos",
-    "tabMembers": "Membros"
+    "tabMembers": "Membros",
+    "settings": {
+      "actions": "Ações",
+      "actionsForMember": "Ações para {{name}}",
+      "approveRequest": "Aprovar pedido de {{name}}",
+      "delete": "Excluir",
+      "deleteConfirm": "Tem certeza que deseja excluir o grupo \"{{name}}\"? Esta ação pode ser revertida por um administrador.",
+      "deleteGroup": "Excluir Grupo",
+      "deleteGroupErrorFallback": "Erro ao excluir grupo. Tente novamente.",
+      "deleting": "Excluindo...",
+      "demoteToMember": "Rebaixar a Membro",
+      "groupInfo": "Informações do Grupo",
+      "groupNotFound": "Grupo não encontrado",
+      "leave": "Sair",
+      "leaveConfirm": "Tem certeza que deseja sair do grupo \"{{name}}\"? Você precisará de um novo convite para voltar.",
+      "leaveGroup": "Sair do Grupo",
+      "leaving": "Saindo...",
+      "memberRemoved": "{{name}} foi removido do grupo.",
+      "membersTitle": "Membros ({{count}})",
+      "noMembersFound": "Nenhum membro encontrado",
+      "noPendingRequests": "Nenhuma solicitação pendente",
+      "ownershipTransferred": "Propriedade transferida para {{name}}.",
+      "pendingRequests": "Solicitações pendentes ({{count}})",
+      "private": "Privado",
+      "promoteToAdmin": "Promover a Admin",
+      "rejectRequest": "Recusar pedido de {{name}}",
+      "remove": "Remover",
+      "removeConfirm": "Tem certeza que deseja remover {{name}} do grupo \"{{groupName}}\"?",
+      "removeFromGroup": "Remover do Grupo",
+      "removeMember": "Remover Membro",
+      "removing": "Removendo...",
+      "requestedAt": "Pediu em {{date}}",
+      "title": "Configurações",
+      "transfer": "Transferir",
+      "transferConfirm": "Tem certeza que deseja transferir a propriedade do grupo \"{{groupName}}\" para {{name}}? Você se tornará Admin do grupo.",
+      "transferOwnership": "Transferir Propriedade",
+      "transferring": "Transferindo..."
+    }
   },
   "groupDetail": {
     "closedDesc": "O grupo não está mais ativo.",
@@ -1130,7 +1180,8 @@
     "transferOwnership": "Transferir Propriedade",
     "tryDifferentSearch": "Tente alterar o termo de busca",
     "defaultGender": "Categoria padrão dos jogos",
-    "defaultGenderNone": "Sem padrão"
+    "defaultGenderNone": "Sem padrão",
+    "onlyOwnerOrAdminEdit": "Apenas o dono ou administradores podem editar o grupo."
   },
   "home": {
     "dreamTeam": "Time dos Sonhos",
@@ -1175,7 +1226,57 @@
   },
   "level": {
     "currentBadge": "ATUAL",
-    "maxReached": "Nível máximo atingido! Você é o Rei do Futebol!"
+    "maxReached": "Nível máximo atingido! Você é o Rei do Futebol!",
+    "baseProgression": "PROGRESSÃO BASE",
+    "howToEarnXp": "Como ganhar XP",
+    "legendsOfFootball": "LENDAS DO FUTEBOL",
+    "noRecordsYet": "Nenhum registro ainda",
+    "recentHistory": "HISTÓRICO RECENTE",
+    "xpGuideTip": "💡 Dica: Jogue regularmente e mantenha sua sequência para ganhar bônus de XP!",
+    "xpSourceGame": "Jogo",
+    "xpTotal": "{{xp}} XP total",
+    "xpGuide": {
+      "participation": {
+        "label": "Participação",
+        "desc": "Jogue uma partida"
+      },
+      "goal": {
+        "label": "Gol",
+        "desc": "Marque um gol"
+      },
+      "assist": {
+        "label": "Assistência",
+        "desc": "Dê uma assistência"
+      },
+      "save": {
+        "label": "Defesa",
+        "desc": "Faça uma defesa (goleiro)"
+      },
+      "win": {
+        "label": "Vitória",
+        "desc": "Vença a partida"
+      },
+      "mvp": {
+        "label": "MVP",
+        "desc": "Seja eleito o melhor da partida"
+      },
+      "bestGk": {
+        "label": "Melhor Goleiro",
+        "desc": "Seja eleito o melhor goleiro"
+      },
+      "streak3": {
+        "label": "Sequência 3+",
+        "desc": "Jogue 3+ partidas seguidas"
+      },
+      "streak7": {
+        "label": "Sequência 7+",
+        "desc": "Jogue 7+ partidas seguidas"
+      },
+      "streak10": {
+        "label": "Sequência 10+",
+        "desc": "Jogue 10+ partidas seguidas"
+      }
+    }
   },
   "locations": {
     "addField": "Adicionar Quadra",
@@ -1212,7 +1313,12 @@
     "results": "Resultados",
     "title": "Votação MVP",
     "voteRegistered": "Voto Registrado!",
-    "worstPlayer": "Bola Murcha"
+    "worstPlayer": "Bola Murcha",
+    "finalResult": "Resultado Final",
+    "votesCount": "{{count}} votos",
+    "exportPdf": "Exportar PDF",
+    "exporting": "Exportando...",
+    "exportError": "Erro ao exportar PDF"
   },
   "nav": {
     "about": "Sobre",
@@ -1493,7 +1599,10 @@
     "genderFemale": "Feminino",
     "genderOther": "Outro",
     "genderNotInformed": "Prefiro não informar",
-    "genderNone": "Não informado"
+    "genderNone": "Não informado",
+    "autoRatingBasedOn": "Baseado em {{count}} jogo(s) avaliado(s) automaticamente",
+    "autoRatingNote": "Nota: ratings automáticos são calculados com base nos seus últimos 50 jogos. Quanto mais jogos, maior a confiança do cálculo.",
+    "autoRatingPrefix": "Auto"
   },
   "ranking": {
     "categoriesAria": "Categorias do ranking",
@@ -1820,9 +1929,9 @@
     "defaultPlayerName": "Jogador",
     "playersCount_one": "{{count}} jogador",
     "playersCount_other": "{{count}} jogadores",
-    "playersCount": "{{count}} jogadores",
     "selectPlayerAria": "Selecionar jogador {{name}}",
-    "title": "Quadro Tático"
+    "title": "Prancheta Tática",
+    "playersCount": "{{count}} jogadores"
   },
   "theme": {
     "auto": "Automático (sistema)",

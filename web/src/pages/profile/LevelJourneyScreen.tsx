@@ -119,7 +119,7 @@ export const LevelJourneyScreen: React.FC = () => {
           level: (logData.newLevel as number) || 0,
           achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
           xpGained: (logData.xpGained as number) || 0,
-          source: (logData.source as string) || 'Jogo',
+          source: (logData.source as string) || t('level.xpSourceGame'),
         };
       });
 
@@ -217,7 +217,7 @@ export const LevelJourneyScreen: React.FC = () => {
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}>
                     <Typography variant="body2" color="text.secondary">
-                      {currentUser?.name || 'Jogador'}
+                      {currentUser?.name || t('profile.defaultPlayerName')}
                     </Typography>
                     <TeamBadge teamId={currentUser?.favoriteTeam} size={24} />
                   </Box>
@@ -232,7 +232,7 @@ export const LevelJourneyScreen: React.FC = () => {
                     "{currentEntry.phrase}"
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    {currentXp.toLocaleString('pt-BR')} XP total
+                    {t('level.xpTotal', { xp: currentXp.toLocaleString('pt-BR') })}
                   </Typography>
                 </Box>
 
@@ -241,13 +241,13 @@ export const LevelJourneyScreen: React.FC = () => {
                   <Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Typography variant="caption" color="text.secondary">
-                        Nível {currentLevel}
+                        {t('profile.levelLabel', { level: currentLevel })}
                       </Typography>
                       <Typography variant="caption" fontWeight={600} color={color}>
                         {Math.round(progress * 100)}%
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Nível {currentLevel + 1}
+                        {t('profile.levelLabel', { level: currentLevel + 1 })}
                       </Typography>
                     </Box>
                     <Box
@@ -270,7 +270,7 @@ export const LevelJourneyScreen: React.FC = () => {
                       />
                     </Box>
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', textAlign: 'center' }}>
-                      Faltam <b>{xpRemaining.toLocaleString('pt-BR')}</b> XP para <b>{nextEntry.name}</b>
+                      {t('profile.xpToNextLevel', { xp: xpRemaining.toLocaleString('pt-BR'), levelName: nextEntry.name })}
                     </Typography>
                   </Box>
                 )}
@@ -320,7 +320,7 @@ export const LevelJourneyScreen: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <StarIcon color="primary" fontSize="small" />
                   <Typography variant="subtitle2" fontWeight={600}>
-                    Como ganhar XP
+                    {t('level.howToEarnXp')}
                   </Typography>
                 </Box>
                 {xpGuideOpen ? <ExpandLessIcon color="action" /> : <ExpandMoreIcon color="action" />}
@@ -329,17 +329,20 @@ export const LevelJourneyScreen: React.FC = () => {
                 <Box sx={{ px: 2, pb: 2 }}>
                   <Divider sx={{ mb: 1.5 }} />
                   {[
-                    { label: 'Participação', desc: 'Jogue uma partida', value: XP_VALUES.PARTICIPATION },
-                    { label: 'Gol', desc: 'Marque um gol', value: XP_VALUES.GOAL },
-                    { label: 'Assistência', desc: 'Dê uma assistência', value: XP_VALUES.ASSIST },
-                    { label: 'Defesa', desc: 'Faça uma defesa (goleiro)', value: XP_VALUES.SAVE },
-                    { label: 'Vitória', desc: 'Vença a partida', value: XP_VALUES.WIN },
-                    { label: 'MVP', desc: 'Seja eleito o melhor da partida', value: XP_VALUES.MVP },
-                    { label: 'Melhor Goleiro', desc: 'Seja eleito o melhor goleiro', value: XP_VALUES.BEST_GK },
-                    { label: 'Sequência 3+', desc: 'Jogue 3+ partidas seguidas', value: XP_VALUES.STREAK_3 },
-                    { label: 'Sequência 7+', desc: 'Jogue 7+ partidas seguidas', value: XP_VALUES.STREAK_7 },
-                    { label: 'Sequência 10+', desc: 'Jogue 10+ partidas seguidas', value: XP_VALUES.STREAK_10 },
-                  ].map((item, i) => (
+                    { key: 'participation', value: XP_VALUES.PARTICIPATION },
+                    { key: 'goal', value: XP_VALUES.GOAL },
+                    { key: 'assist', value: XP_VALUES.ASSIST },
+                    { key: 'save', value: XP_VALUES.SAVE },
+                    { key: 'win', value: XP_VALUES.WIN },
+                    { key: 'mvp', value: XP_VALUES.MVP },
+                    { key: 'bestGk', value: XP_VALUES.BEST_GK },
+                    { key: 'streak3', value: XP_VALUES.STREAK_3 },
+                    { key: 'streak7', value: XP_VALUES.STREAK_7 },
+                    { key: 'streak10', value: XP_VALUES.STREAK_10 },
+                  ].map((item, i) => {
+                    const label = t(`level.xpGuide.${item.key}.label`);
+                    const desc = t(`level.xpGuide.${item.key}.desc`);
+                    return (
                     <Box
                       key={i}
                       sx={{
@@ -352,20 +355,20 @@ export const LevelJourneyScreen: React.FC = () => {
                     >
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {item.label}
+                          {label}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {item.desc}
+                          {desc}
                         </Typography>
                       </Box>
                       <Typography variant="body2" fontWeight={700} color="success.main">
                         +{item.value}
                       </Typography>
                     </Box>
-                  ))}
+                )})}
                   <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.08) }}>
                     <Typography variant="caption" color="text.secondary">
-                      💡 Dica: Jogue regularmente e mantenha sua sequência para ganhar bônus de XP!
+                      {t('level.xpGuideTip')}
                     </Typography>
                   </Box>
                 </Box>
@@ -376,7 +379,7 @@ export const LevelJourneyScreen: React.FC = () => {
             <Box sx={{ mb: 1, mt: 3 }}>
               <Divider sx={{ mb: 1.5 }}>
                 <Typography variant="caption" fontWeight={600} color="text.secondary">
-                  PROGRESSÃO BASE
+                  {t('level.baseProgression')}
                 </Typography>
               </Divider>
             </Box>
@@ -394,7 +397,7 @@ export const LevelJourneyScreen: React.FC = () => {
             <Box sx={{ mb: 1, mt: 3 }}>
               <Divider sx={{ mb: 1.5 }}>
                 <Typography variant="caption" fontWeight={600} color="text.secondary">
-                  LENDAS DO FUTEBOL
+                  {t('level.legendsOfFootball')}
                 </Typography>
               </Divider>
             </Box>
@@ -412,7 +415,7 @@ export const LevelJourneyScreen: React.FC = () => {
             <Box sx={{ mt: 3 }}>
               <Divider sx={{ mb: 1.5 }}>
                 <Typography variant="caption" fontWeight={600} color="text.secondary">
-                  HISTÓRICO RECENTE
+                  {t('level.recentHistory')}
                 </Typography>
               </Divider>
             </Box>
@@ -422,7 +425,7 @@ export const LevelJourneyScreen: React.FC = () => {
                   <Box sx={{ textAlign: 'center', py: 3 }}>
                     <FireIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      Nenhum registro ainda
+                      {t('level.noRecordsYet')}
                     </Typography>
                   </Box>
                 ) : (
