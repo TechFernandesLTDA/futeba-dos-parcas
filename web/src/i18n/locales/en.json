@@ -151,6 +151,26 @@
     "visibility": "Visibility",
     "worstPlayerCandidates": "Worst player candidates"
   },
+  "about": {
+    "browser": "Browser",
+    "browserUnknown": "Unknown",
+    "childSafety": "Child Safety",
+    "contact": "Contact",
+    "copyright": "© 2024-{{year}} Futeba dos Parças",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDesc": "How to request account deletion",
+    "deviceInfo": "Device Information",
+    "madeWithLove": "Made with ❤️ for football lovers",
+    "notLoggedIn": "Not logged in",
+    "platform": "Platform",
+    "platformWeb": "Web",
+    "privacyPolicy": "Privacy Policy",
+    "reportProblem": "Report a Problem",
+    "tagline": "Organize your pickup games with friends",
+    "termsOfUse": "Terms of Use",
+    "title": "About",
+    "user": "User"
+  },
   "admin": {
     "noUserRegisteredDesc": "There are no users in the system yet."
   },
@@ -284,6 +304,22 @@
     "statusFinished": "Finished",
     "statusPending": "Pending",
     "title": "Challenges"
+  },
+  "checkin": {
+    "backToHome": "Back to home",
+    "checkingIn": "Checking in...",
+    "confirm": "Confirm Check-in",
+    "errorTitle": "Check-in Error",
+    "gameFallback": "Game",
+    "invalidLink": "Invalid link",
+    "invalidOrExpired": "Invalid or expired check-in link",
+    "notAvailable": "Check-in not available",
+    "submitError": "Error checking in",
+    "success": "Check-in successful!",
+    "title": "Check-in",
+    "validating": "Validating...",
+    "validationError": "Error validating check-in",
+    "viewGameDetails": "View game details"
   },
   "common": {
     "activate": "Activate",
@@ -617,9 +653,12 @@
     },
     "reportBug": "Report Bug",
     "schedules": {
-      "createSuccess": "Schedule created successfully!",
-      "deleteSuccess": "Schedule deleted.",
-      "loadError": "Error loading schedules."
+      "createError": "Error creating schedule",
+      "deleteError": "Error deleting schedule",
+      "toggleError": "Error changing status",
+      "loadError": "Error loading schedules.",
+      "deleteSuccess": "Schedule deleted successfully.",
+      "createSuccess": "Schedule created successfully!"
     },
     "search": {
       "error": "Search error. Please try again.",
@@ -694,6 +733,11 @@
       "leaveSuccess": "You left the waitlist",
       "loadError": "Error loading the waitlist",
       "loginRequired": "You need to be logged in to join the waitlist"
+    },
+    "mvp": {
+      "loadGameError": "Error loading game data.",
+      "loadConfirmationsError": "Error loading game confirmations.",
+      "submitVoteError": "Error submitting vote"
     }
   },
   "gameCard": {
@@ -1196,6 +1240,31 @@
     "viewStat": "View {{stat}}",
     "weeklyRanking": "Weekly Ranking"
   },
+  "invite": {
+    "ambassadorLevel": "Ambassador Level",
+    "ambassadorLevels": {
+      "bronze": "Bronze",
+      "gold": "Gold",
+      "initiate": "Initiate",
+      "legend": "Legend",
+      "silver": "Silver"
+    },
+    "conquered": "Conquered",
+    "countInvited": "{{count}} invited",
+    "generateCode": "Generate Code",
+    "generateError": "Error generating invite code",
+    "generating": "Generating...",
+    "invited": "Invited",
+    "levels": "Levels",
+    "nextLevel": "Next Level",
+    "noCodeDesc": "Generate an invite code to share with your friends.",
+    "noCodeTitle": "No code generated",
+    "share": "Share",
+    "shareDescription": "Invite your friends to Futeba dos Parças!",
+    "shareText": "Join Futeba dos Parças and organize your games!",
+    "title": "Invite Friends",
+    "yourCode": "Your code"
+  },
   "league": {
     "assists": "Assists",
     "bronze": "Bronze",
@@ -1318,7 +1387,14 @@
     "votesCount": "{{count}} votes",
     "exportPdf": "Export PDF",
     "exporting": "Exporting...",
-    "exportError": "Error exporting PDF"
+    "exportError": "Error exporting PDF",
+    "bestPlayerLabel": "Best Player (MVP)",
+    "chooseWorstPlayer": "Choose the Worst Player",
+    "chooseWorstPlayerDesc": "Vote for the player who stood out the least",
+    "submitVote": "Submit Vote",
+    "chooseMvp": "Choose the Game MVP",
+    "chooseMvpDesc": "Vote for the player who stood out the most",
+    "thankYou": "Thank you for participating in the vote"
   },
   "nav": {
     "about": "About",
@@ -1661,7 +1737,35 @@
     "create": "Create Recurrence",
     "noSchedules": "No active recurrences",
     "noSchedulesDesc": "Your recurring games will appear here.",
-    "title": "Schedules"
+    "title": "Schedules",
+    "activate": "Activate",
+    "createFirst": "Create first schedule",
+    "creating": "Creating...",
+    "dayOfWeekLabel": "Day of Week",
+    "days": "days",
+    "deactivate": "Deactivate",
+    "deleteAria": "Delete {{name}}",
+    "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "deleteTitle": "Delete Schedule",
+    "emptyDesc": "Create schedules for recurring games",
+    "emptyTitle": "No schedules",
+    "inactive": "Inactive",
+    "itemDescription": "{{day}} at {{time}} • {{players}} players",
+    "nameLabel": "Name",
+    "newTitle": "New Schedule",
+    "timeLabel": "Time",
+    "createError": "Error creating schedule",
+    "deleteError": "Error deleting schedule",
+    "itemDescription_other": "{{day}} at {{time}} • {{players}} players",
+    "playersCount": "{{count}} players",
+    "toggleError": "Error changing status",
+    "day0": "Sunday",
+    "day1": "Monday",
+    "day2": "Tuesday",
+    "day3": "Wednesday",
+    "day4": "Thursday",
+    "day5": "Friday",
+    "day6": "Saturday"
   },
   "settings": {
     "aboutApp": "About the App",
@@ -1778,97 +1882,6 @@
     "tip": "Tip: press ? at any time to open this dialog.",
     "title": "Keyboard shortcuts"
   },
-  "toast": {},
-  "tooltip": {
-    "addToCalendar": "Add to Calendar",
-    "close": "Close",
-    "closeDialog": "Close",
-    "conflictingTime": "Game with conflicting time",
-    "copyLink": "Copy link",
-    "deleteItem": "Delete",
-    "duplicateGame": "Duplicate Game",
-    "editItem": "Edit",
-    "fieldInfo": "Field info",
-    "inDevelopment": "In development",
-    "languageSettings": "Language settings",
-    "moreOptions": "More options",
-    "notificationSettings": "Notification settings",
-    "playerLevel": "Player level",
-    "shareItem": "Share",
-    "teamA": "Team A",
-    "teamB": "Team B",
-    "toggleTheme": "Toggle theme",
-    "viewDetails": "View details"
-  },
-  "validation": {
-    "dateRequired": "Date is required",
-    "minLength": "Minimum {{min}} characters",
-    "positiveNumber": "Enter a valid number (≥ 0)",
-    "required": "Required field",
-    "selectRequired": "Please select an option"
-  },
-  "weeklyRecap": {
-    "assists": "Assists",
-    "games": "Games",
-    "goToGames": "Go to games",
-    "goals": "Goals",
-    "last7Days": "Last 7 days",
-    "loadError": "Failed to load weekly recap.",
-    "mvps": "MVPs",
-    "noDataAvailable": "No data available",
-    "noGamesThisWeek": "No games this week",
-    "recentGames": "Recent Games",
-    "retry": "Retry",
-    "startPlayingPrompt": "Join games to see your recap here",
-    "streak": "Streak",
-    "title": "Weekly Recap",
-    "weekStats": "Week Stats",
-    "wins": "Wins",
-    "xp": "XP"
-  },
-  "welcome": {
-    "documentTitle": "Welcome",
-    "haveAccount": "I already have an account",
-    "processingInvite": "Processing invite...",
-    "subtitle": "Organize your pickup games with friends easily and fun",
-    "termsPrefix": "By continuing, you agree to our"
-  },
-  "whatsNew": {
-    "emptyDesc": "Release notes will appear here once there is an update.",
-    "emptyTitle": "Nothing new yet",
-    "error": "Could not load what's new.",
-    "popupDismiss": "Got it",
-    "popupEyebrow": "What's new in version {{version}}",
-    "sectionAdded": "New",
-    "sectionFixed": "Fixes",
-    "sectionImproved": "Improvements",
-    "settingsDesc": "See what changed in recent updates",
-    "settingsTitle": "What's New",
-    "title": "What's New",
-    "typeMajor": "Major update",
-    "typeMinor": "New features",
-    "typePatch": "Fixes"
-  },
-  "about": {
-    "browser": "Browser",
-    "browserUnknown": "Unknown",
-    "childSafety": "Child Safety",
-    "contact": "Contact",
-    "copyright": "© 2024-{{year}} Futeba dos Parças",
-    "deleteAccount": "Delete Account",
-    "deleteAccountDesc": "How to request account deletion",
-    "deviceInfo": "Device Information",
-    "madeWithLove": "Made with ❤️ for football lovers",
-    "notLoggedIn": "Not logged in",
-    "platform": "Platform",
-    "platformWeb": "Web",
-    "privacyPolicy": "Privacy Policy",
-    "reportProblem": "Report a Problem",
-    "tagline": "Organize your pickup games with friends",
-    "termsOfUse": "Terms of Use",
-    "title": "About",
-    "user": "User"
-  },
   "splash": {
     "tagline": "Organize your games"
   },
@@ -1943,5 +1956,76 @@
     "selectTheme": "Select app theme",
     "system": "System",
     "title": "Theme"
+  },
+  "toast": {},
+  "tooltip": {
+    "addToCalendar": "Add to Calendar",
+    "close": "Close",
+    "closeDialog": "Close",
+    "conflictingTime": "Game with conflicting time",
+    "copyLink": "Copy link",
+    "deleteItem": "Delete",
+    "duplicateGame": "Duplicate Game",
+    "editItem": "Edit",
+    "fieldInfo": "Field info",
+    "inDevelopment": "In development",
+    "languageSettings": "Language settings",
+    "moreOptions": "More options",
+    "notificationSettings": "Notification settings",
+    "playerLevel": "Player level",
+    "shareItem": "Share",
+    "teamA": "Team A",
+    "teamB": "Team B",
+    "toggleTheme": "Toggle theme",
+    "viewDetails": "View details"
+  },
+  "validation": {
+    "dateRequired": "Date is required",
+    "minLength": "Minimum {{min}} characters",
+    "positiveNumber": "Enter a valid number (≥ 0)",
+    "required": "Required field",
+    "selectRequired": "Please select an option"
+  },
+  "weeklyRecap": {
+    "assists": "Assists",
+    "games": "Games",
+    "goToGames": "Go to games",
+    "goals": "Goals",
+    "last7Days": "Last 7 days",
+    "loadError": "Failed to load weekly recap.",
+    "mvps": "MVPs",
+    "noDataAvailable": "No data available",
+    "noGamesThisWeek": "No games this week",
+    "recentGames": "Recent Games",
+    "retry": "Retry",
+    "startPlayingPrompt": "Join games to see your recap here",
+    "streak": "Streak",
+    "title": "Weekly Recap",
+    "weekStats": "Week Stats",
+    "wins": "Wins",
+    "xp": "XP"
+  },
+  "welcome": {
+    "documentTitle": "Welcome",
+    "haveAccount": "I already have an account",
+    "processingInvite": "Processing invite...",
+    "subtitle": "Organize your pickup games with friends easily and fun",
+    "termsPrefix": "By continuing, you agree to our"
+  },
+  "whatsNew": {
+    "emptyDesc": "Release notes will appear here once there is an update.",
+    "emptyTitle": "Nothing new yet",
+    "error": "Could not load what's new.",
+    "popupDismiss": "Got it",
+    "popupEyebrow": "What's new in version {{version}}",
+    "sectionAdded": "New",
+    "sectionFixed": "Fixes",
+    "sectionImproved": "Improvements",
+    "settingsDesc": "See what changed in recent updates",
+    "settingsTitle": "What's New",
+    "title": "What's New",
+    "typeMajor": "Major update",
+    "typeMinor": "New features",
+    "typePatch": "Fixes"
   }
 }

@@ -151,6 +151,26 @@
     "visibility": "Visibilidade",
     "worstPlayerCandidates": "Candidatos a bola murcha"
   },
+  "about": {
+    "browser": "Navegador",
+    "browserUnknown": "Desconhecido",
+    "childSafety": "Segurança Infantil",
+    "contact": "Contato",
+    "copyright": "© 2024-{{year}} Futeba dos Parças",
+    "deleteAccount": "Excluir Conta",
+    "deleteAccountDesc": "Como solicitar exclusão da conta",
+    "deviceInfo": "Informações do Dispositivo",
+    "madeWithLove": "Feito com ❤️ para os amantes do futebol",
+    "notLoggedIn": "Não logado",
+    "platform": "Plataforma",
+    "platformWeb": "Web",
+    "privacyPolicy": "Política de Privacidade",
+    "reportProblem": "Reportar Problema",
+    "tagline": "Organize suas peladas com os amigos",
+    "termsOfUse": "Termos de Uso",
+    "title": "Sobre",
+    "user": "Usuário"
+  },
   "admin": {
     "noUserRegisteredDesc": "Ainda não há usuários no sistema."
   },
@@ -284,6 +304,22 @@
     "statusFinished": "Finalizado",
     "statusPending": "Pendente",
     "title": "Desafios"
+  },
+  "checkin": {
+    "backToHome": "Voltar ao início",
+    "checkingIn": "Fazendo check-in...",
+    "confirm": "Confirmar Check-in",
+    "errorTitle": "Erro no check-in",
+    "gameFallback": "Jogo",
+    "invalidLink": "Link inválido",
+    "invalidOrExpired": "Link de check-in inválido ou expirado",
+    "notAvailable": "Check-in não disponível",
+    "submitError": "Erro ao realizar check-in",
+    "success": "Check-in realizado com sucesso!",
+    "title": "Check-in",
+    "validating": "Validando...",
+    "validationError": "Erro ao validar check-in",
+    "viewGameDetails": "Ver detalhes do jogo"
   },
   "common": {
     "activate": "Ativar",
@@ -617,9 +653,12 @@
     },
     "reportBug": "Reportar Bug",
     "schedules": {
-      "createSuccess": "Agendamento criado com sucesso!",
-      "deleteSuccess": "Agendamento excluído.",
-      "loadError": "Erro ao carregar agendas."
+      "createError": "Erro ao criar agendamento",
+      "deleteError": "Erro ao excluir agendamento",
+      "toggleError": "Erro ao alterar status",
+      "loadError": "Erro ao carregar horários.",
+      "deleteSuccess": "Horário excluído com sucesso.",
+      "createSuccess": "Horário criado com sucesso!"
     },
     "search": {
       "error": "Erro ao buscar. Tente novamente.",
@@ -694,6 +733,11 @@
       "leaveSuccess": "Você saiu da lista de espera",
       "loadError": "Erro ao carregar a lista de espera",
       "loginRequired": "Você precisa estar logado para entrar na lista de espera"
+    },
+    "mvp": {
+      "loadGameError": "Erro ao carregar dados do jogo.",
+      "loadConfirmationsError": "Erro ao carregar confirmações do jogo.",
+      "submitVoteError": "Erro ao enviar voto"
     }
   },
   "gameCard": {
@@ -1196,6 +1240,31 @@
     "viewStat": "Ver {{stat}}",
     "weeklyRanking": "Ranking Semanal"
   },
+  "invite": {
+    "ambassadorLevel": "Nível de Embaixador",
+    "ambassadorLevels": {
+      "bronze": "Bronze",
+      "gold": "Ouro",
+      "initiate": "Iniciante",
+      "legend": "Lenda",
+      "silver": "Prata"
+    },
+    "conquered": "Conquistado",
+    "countInvited": "{{count}} convidado(s)",
+    "generateCode": "Gerar Código",
+    "generateError": "Erro ao gerar código de convite",
+    "generating": "Gerando...",
+    "invited": "Convidado",
+    "levels": "Níveis",
+    "nextLevel": "Próximo Nível",
+    "noCodeDesc": "Gere um código de convite para compartilhar com seus amigos.",
+    "noCodeTitle": "Nenhum código gerado",
+    "share": "Compartilhar",
+    "shareDescription": "Convide seus amigos para o Futeba dos Parças!",
+    "shareText": "Entre no Futeba dos Parças e organize suas peladas!",
+    "title": "Convidar Amigos",
+    "yourCode": "Seu código"
+  },
   "league": {
     "assists": "Assistências",
     "bronze": "Bronze",
@@ -1318,7 +1387,14 @@
     "votesCount": "{{count}} votos",
     "exportPdf": "Exportar PDF",
     "exporting": "Exportando...",
-    "exportError": "Erro ao exportar PDF"
+    "exportError": "Erro ao exportar PDF",
+    "bestPlayerLabel": "Melhor Jogador (MVP)",
+    "chooseWorstPlayer": "Escolha a Bola Murcha",
+    "chooseWorstPlayerDesc": "Vote no jogador que menos se destacou",
+    "submitVote": "Enviar Voto",
+    "chooseMvp": "Escolha o MVP do Jogo",
+    "chooseMvpDesc": "Vote no jogador que mais se destacou",
+    "thankYou": "Obrigado por participar da votação"
   },
   "nav": {
     "about": "Sobre",
@@ -1661,7 +1737,35 @@
     "create": "Criar Recorrência",
     "noSchedules": "Nenhuma recorrência ativa",
     "noSchedulesDesc": "Seus jogos recorrentes aparecerão aqui.",
-    "title": "Horários"
+    "title": "Agendamentos",
+    "activate": "Ativar",
+    "createFirst": "Criar primeiro agendamento",
+    "creating": "Criando...",
+    "dayOfWeekLabel": "Dia da Semana",
+    "days": "dias",
+    "deactivate": "Desativar",
+    "deleteAria": "Excluir {{name}}",
+    "deleteConfirm": "Tem certeza que deseja excluir \"{{name}}\"? Esta ação não pode ser desfeita.",
+    "deleteTitle": "Excluir Agendamento",
+    "emptyDesc": "Crie agendamentos para jogos recorrentes",
+    "emptyTitle": "Nenhum agendamento",
+    "inactive": "Inativo",
+    "itemDescription": "{{day}} às {{time}} • {{players}} jogadores",
+    "nameLabel": "Nome",
+    "newTitle": "Novo Agendamento",
+    "timeLabel": "Horário",
+    "createError": "Erro ao criar agendamento",
+    "deleteError": "Erro ao excluir agendamento",
+    "itemDescription_other": "{{day}} às {{time}} • {{players}} jogadores",
+    "playersCount": "{{count}} jogadores",
+    "toggleError": "Erro ao alterar status",
+    "day0": "Domingo",
+    "day1": "Segunda-feira",
+    "day2": "Terça-feira",
+    "day3": "Quarta-feira",
+    "day4": "Quinta-feira",
+    "day5": "Sexta-feira",
+    "day6": "Sábado"
   },
   "settings": {
     "aboutApp": "Sobre o App",
@@ -1778,97 +1882,6 @@
     "tip": "Dica: pressione ? a qualquer momento para abrir este diálogo.",
     "title": "Atalhos de teclado"
   },
-  "toast": {},
-  "tooltip": {
-    "addToCalendar": "Adicionar ao Calendário",
-    "close": "Fechar",
-    "closeDialog": "Fechar",
-    "conflictingTime": "Jogo com horário conflitante",
-    "copyLink": "Copiar link",
-    "deleteItem": "Excluir",
-    "duplicateGame": "Duplicar Jogo",
-    "editItem": "Editar",
-    "fieldInfo": "Informações da quadra",
-    "inDevelopment": "Em desenvolvimento",
-    "languageSettings": "Configurações de idioma",
-    "moreOptions": "Mais opções",
-    "notificationSettings": "Configurações de notificação",
-    "playerLevel": "Nível do jogador",
-    "shareItem": "Compartilhar",
-    "teamA": "Time A",
-    "teamB": "Time B",
-    "toggleTheme": "Alternar tema",
-    "viewDetails": "Ver detalhes"
-  },
-  "validation": {
-    "dateRequired": "Data obrigatória",
-    "minLength": "Mínimo {{min}} caracteres",
-    "positiveNumber": "Informe um número válido (≥ 0)",
-    "required": "Campo obrigatório",
-    "selectRequired": "Selecione uma opção"
-  },
-  "weeklyRecap": {
-    "assists": "Assistências",
-    "games": "Jogos",
-    "goToGames": "Ver jogos",
-    "goals": "Gols",
-    "last7Days": "Últimos 7 dias",
-    "loadError": "Erro ao carregar recap semanal.",
-    "mvps": "MVPs",
-    "noDataAvailable": "Nenhum dado disponível",
-    "noGamesThisWeek": "Nenhum jogo esta semana",
-    "recentGames": "Jogos Recentes",
-    "retry": "Tentar novamente",
-    "startPlayingPrompt": "Participe de jogos para ver seu resumo aqui",
-    "streak": "Sequência",
-    "title": "Resumo Semanal",
-    "weekStats": "Estatísticas da Semana",
-    "wins": "Vitórias",
-    "xp": "XP"
-  },
-  "welcome": {
-    "documentTitle": "Bem-vindo",
-    "haveAccount": "Já tenho conta",
-    "processingInvite": "Processando convite...",
-    "subtitle": "Organize suas peladas com os amigos de forma fácil e divertida",
-    "termsPrefix": "Ao continuar, você concorda com nossos"
-  },
-  "whatsNew": {
-    "emptyDesc": "As notas de versão aparecerão aqui assim que houver uma atualização.",
-    "emptyTitle": "Nenhuma novidade ainda",
-    "error": "Não foi possível carregar as novidades.",
-    "popupDismiss": "Entendi",
-    "popupEyebrow": "Novidades da versão {{version}}",
-    "sectionAdded": "Novidades",
-    "sectionFixed": "Correções",
-    "sectionImproved": "Melhorias",
-    "settingsDesc": "Veja o que mudou nas últimas atualizações",
-    "settingsTitle": "Novidades",
-    "title": "Novidades",
-    "typeMajor": "Atualização principal",
-    "typeMinor": "Novidades",
-    "typePatch": "Correções"
-  },
-  "about": {
-    "browser": "Navegador",
-    "browserUnknown": "Desconhecido",
-    "childSafety": "Segurança Infantil",
-    "contact": "Contato",
-    "copyright": "© 2024-{{year}} Futeba dos Parças",
-    "deleteAccount": "Excluir Conta",
-    "deleteAccountDesc": "Como solicitar exclusão da conta",
-    "deviceInfo": "Informações do Dispositivo",
-    "madeWithLove": "Feito com ❤️ para os amantes do futebol",
-    "notLoggedIn": "Não logado",
-    "platform": "Plataforma",
-    "platformWeb": "Web",
-    "privacyPolicy": "Política de Privacidade",
-    "reportProblem": "Reportar Problema",
-    "tagline": "Organize suas peladas com os amigos",
-    "termsOfUse": "Termos de Uso",
-    "title": "Sobre",
-    "user": "Usuário"
-  },
   "splash": {
     "tagline": "Organize suas peladas"
   },
@@ -1943,5 +1956,76 @@
     "selectTheme": "Selecione o tema do aplicativo",
     "system": "Sistema",
     "title": "Tema"
+  },
+  "toast": {},
+  "tooltip": {
+    "addToCalendar": "Adicionar ao Calendário",
+    "close": "Fechar",
+    "closeDialog": "Fechar",
+    "conflictingTime": "Jogo com horário conflitante",
+    "copyLink": "Copiar link",
+    "deleteItem": "Excluir",
+    "duplicateGame": "Duplicar Jogo",
+    "editItem": "Editar",
+    "fieldInfo": "Informações da quadra",
+    "inDevelopment": "Em desenvolvimento",
+    "languageSettings": "Configurações de idioma",
+    "moreOptions": "Mais opções",
+    "notificationSettings": "Configurações de notificação",
+    "playerLevel": "Nível do jogador",
+    "shareItem": "Compartilhar",
+    "teamA": "Time A",
+    "teamB": "Time B",
+    "toggleTheme": "Alternar tema",
+    "viewDetails": "Ver detalhes"
+  },
+  "validation": {
+    "dateRequired": "Data obrigatória",
+    "minLength": "Mínimo {{min}} caracteres",
+    "positiveNumber": "Informe um número válido (≥ 0)",
+    "required": "Campo obrigatório",
+    "selectRequired": "Selecione uma opção"
+  },
+  "weeklyRecap": {
+    "assists": "Assistências",
+    "games": "Jogos",
+    "goToGames": "Ver jogos",
+    "goals": "Gols",
+    "last7Days": "Últimos 7 dias",
+    "loadError": "Erro ao carregar recap semanal.",
+    "mvps": "MVPs",
+    "noDataAvailable": "Nenhum dado disponível",
+    "noGamesThisWeek": "Nenhum jogo esta semana",
+    "recentGames": "Jogos Recentes",
+    "retry": "Tentar novamente",
+    "startPlayingPrompt": "Participe de jogos para ver seu resumo aqui",
+    "streak": "Sequência",
+    "title": "Resumo Semanal",
+    "weekStats": "Estatísticas da Semana",
+    "wins": "Vitórias",
+    "xp": "XP"
+  },
+  "welcome": {
+    "documentTitle": "Bem-vindo",
+    "haveAccount": "Já tenho conta",
+    "processingInvite": "Processando convite...",
+    "subtitle": "Organize suas peladas com os amigos de forma fácil e divertida",
+    "termsPrefix": "Ao continuar, você concorda com nossos"
+  },
+  "whatsNew": {
+    "emptyDesc": "As notas de versão aparecerão aqui assim que houver uma atualização.",
+    "emptyTitle": "Nenhuma novidade ainda",
+    "error": "Não foi possível carregar as novidades.",
+    "popupDismiss": "Entendi",
+    "popupEyebrow": "Novidades da versão {{version}}",
+    "sectionAdded": "Novidades",
+    "sectionFixed": "Correções",
+    "sectionImproved": "Melhorias",
+    "settingsDesc": "Veja o que mudou nas últimas atualizações",
+    "settingsTitle": "Novidades",
+    "title": "Novidades",
+    "typeMajor": "Atualização principal",
+    "typeMinor": "Novidades",
+    "typePatch": "Correções"
   }
 }

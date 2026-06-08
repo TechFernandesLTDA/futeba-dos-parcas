@@ -273,14 +273,14 @@ export const ProfileScreen: React.FC = () => {
             <Card sx={{ mt: 2 }}>
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-                  Habilidades por Posição
+                  {t('profile.skillsByPosition')}
                 </Typography>
                 <Grid container spacing={2}>
                   {([
-                    { role: 'STRIKER' as const, label: 'Atacante', icon: <RunnerIcon color="error" /> },
-                    { role: 'MID' as const, label: 'Meio-campo', icon: <MidIcon color="warning" /> },
-                    { role: 'DEFENDER' as const, label: 'Zagueiro', icon: <DefIcon color="info" /> },
-                    { role: 'GOALKEEPER' as const, label: 'Goleiro', icon: <ShieldIcon color="success" /> },
+                    { role: 'STRIKER' as const, label: t('profile.positionForward'), icon: <RunnerIcon color="error" /> },
+                    { role: 'MID' as const, label: t('profile.midfield'), icon: <MidIcon color="warning" /> },
+                    { role: 'DEFENDER' as const, label: t('profile.positionDefender'), icon: <DefIcon color="info" /> },
+                    { role: 'GOALKEEPER' as const, label: t('profile.positionGoalkeeper'), icon: <ShieldIcon color="success" /> },
                   ]).map(({ role, label, icon }) => {
                     const rating = getEffectiveRating(profile as unknown as User, role);
                     return (
@@ -305,7 +305,7 @@ export const ProfileScreen: React.FC = () => {
                 </Grid>
                 {profile.autoRatingSamples > 0 && (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    Baseado em {profile.autoRatingSamples} jogo(s) avaliado(s) automaticamente
+                    {t('profile.autoRatingBasedOn', { count: profile.autoRatingSamples })}
                   </Typography>
                 )}
               </CardContent>
