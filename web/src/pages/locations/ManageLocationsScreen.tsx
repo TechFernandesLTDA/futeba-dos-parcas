@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -22,6 +21,7 @@ import {
   DialogActions,
   CircularProgress,
 } from '@mui/material';
+import PageContainer from '../../components/common/PageContainer';
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,

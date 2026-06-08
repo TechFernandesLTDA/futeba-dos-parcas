@@ -9,7 +9,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Container,
   IconButton,
   InputAdornment,
   Skeleton,
@@ -34,6 +33,7 @@ import {
 import { useOfficialGroups, useJoinOfficialGroup, useIsInOfficialGroup } from '../../hooks/useOfficialGroups';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { PageContainer } from '../../components/common/PageContainer';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { OfficialGroup, OfficialGroupCategory, OFFICIAL_GROUP_CATEGORY_LABELS } from '../../types/group';
 import { useTranslation } from 'react-i18next';

@@ -69,7 +69,8 @@ export function GroupsTab() {
   const hasGroups = !loading && myGroupsCount > 0;
 
   return (
-    <Box sx={{ pb: 8, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
+    <>
+    <PageContainer maxWidth="list">
       {/* Barra de busca */}
       <Box sx={{ p: 2, pb: 0 }}>
         {/* Header com título + Criar (md+) */}
@@ -379,6 +380,7 @@ export function GroupsTab() {
           right: { xs: 16, md: 24 },
         }}
       />
-    </Box>
+    </PageContainer>
+    </>
   );
 }

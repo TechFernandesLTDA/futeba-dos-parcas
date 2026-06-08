@@ -8,10 +8,10 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Container,
   Stack,
   Typography,
 } from '@mui/material';
+import { PageContainer } from '../../components/common/PageContainer';
 import {
   Group as GroupIcon,
   CheckCircle as CheckIcon,
@@ -147,7 +147,7 @@ export const JoinByInviteScreen: React.FC = () => {
   if (!firebaseUser) {
     // ProtectedRoute geralmente cuida disso, mas garantia extra
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -170,7 +170,7 @@ export const JoinByInviteScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Stack alignItems="center" spacing={2}>
           <CircularProgress />
           <Typography color="text.secondary">Carregando convite…</Typography>
@@ -181,7 +181,7 @@ export const JoinByInviteScreen: React.FC = () => {
 
   if (error || !preview) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -202,7 +202,7 @@ export const JoinByInviteScreen: React.FC = () => {
 
   if (preview.expired || preview.used) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -228,7 +228,7 @@ export const JoinByInviteScreen: React.FC = () => {
   const isGameInvite = preview.type === 'GAME' && preview.gameId;
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
+    <PageContainer maxWidth="form">
       <Card>
         <CardContent>
           <Stack alignItems="center" spacing={3}>

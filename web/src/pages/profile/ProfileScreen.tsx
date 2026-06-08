@@ -5,7 +5,6 @@ import { usePerformanceMonitoring, PerformanceOverlay } from '../../hooks/usePer
 import { RatingEvolutionChart } from '../../components/profile/RatingEvolutionChart';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -18,7 +17,6 @@ import {
   ListItemText,
   Button,
   useTheme,
-  useMediaQuery,
   alpha,
   Grid,
   Paper,

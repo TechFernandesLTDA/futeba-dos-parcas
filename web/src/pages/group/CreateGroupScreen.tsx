@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   TextField,
   Button,
@@ -21,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
+import { PageContainer } from '../../components/common/PageContainer';
 import { useCreateGroup } from '../../hooks/useGroups';
 import { GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { useAuth } from '../../contexts/AuthContext';
@@ -134,7 +134,7 @@ export const CreateGroupScreen: React.FC = () => {
       isDirty={isDirty}
       loading={loading}
     >
-      <Container maxWidth="sm" disableGutters sx={{ py: 3 }}>
+      <PageContainer maxWidth="form">
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -272,7 +272,7 @@ export const CreateGroupScreen: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     </FormScaffold>
     </AdaptiveFormSheet>
   );

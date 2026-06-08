@@ -128,7 +128,8 @@ export function GamesTab() {
   }, [navigate]);
 
   return (
-    <Box sx={{ pb: 10, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
+    <>
+    <PageContainer maxWidth="list">
       {/* Sticky search + filters bar */}
       <Box
         sx={{
@@ -262,7 +263,7 @@ export function GamesTab() {
         </Box>
       </Box>
 
-      <Box sx={{ px: pageSpacing.pagePadding, pt: 2 }}>
+      <Box sx={{ pt: 2 }}>
         {error ? (
           <ErrorState
             message={error}
@@ -465,7 +466,7 @@ export function GamesTab() {
             </Grid>
           </Box>
         )}
-      </Box>
+      </PageContainer>
 
       {/* #2178: ScreenFab padronizado */}
       <ScreenFab
@@ -478,6 +479,6 @@ export function GamesTab() {
           right: { xs: 16, md: 24 },
         }}
       />
-    </Box>
+    </>
   );
 }

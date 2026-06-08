@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   TextField,
   Button,
@@ -22,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold } from '../../components/layout';
+import { PageContainer } from '../../components/common/PageContainer';
 import { GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { doc, updateDoc, serverTimestamp, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -224,35 +224,35 @@ export const GroupEditScreen: React.FC = () => {
   // Estado de carregamento
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         <ShimmerLoading count={3} type="card" />
-      </Container>
+      </PageContainer>
     );
   }
 
   // Estado de erro
   if (error || !group) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         <Alert severity="error">{error || t('groupDetail.notFound')}</Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(closeDestination)} sx={{ mt: 2 }}>
           {t('common.back')}
         </Button>
-      </Container>
+      </PageContainer>
     );
   }
 
   // Verificar permissão de edição
   if (!isAdmin) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         <Alert severity="warning">
           {t('groups.onlyOwnerOrAdminEdit')}
         </Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(closeDestination)} sx={{ mt: 2 }}>
           {t('common.back')}
         </Button>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -273,7 +273,7 @@ export const GroupEditScreen: React.FC = () => {
       isDirty={isDirty}
       loading={saving}
     >
-      <Container maxWidth="sm" disableGutters sx={{ py: 3 }}>
+      <PageContainer maxWidth="form">
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -400,7 +400,7 @@ export const GroupEditScreen: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     </FormScaffold>
   );
 };

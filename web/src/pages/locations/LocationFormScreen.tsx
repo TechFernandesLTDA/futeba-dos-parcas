@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
-  Container,
   TextField,
   Button,
   Card,
@@ -15,6 +14,7 @@ import {
   MenuItem,
   Stack,
 } from '@mui/material';
+import PageContainer from '../../components/common/PageContainer';
 import { MyLocation as GeoIcon } from '@mui/icons-material';
 import {
   doc,
@@ -332,9 +332,9 @@ export const LocationFormScreen: React.FC = () => {
     return (
       <AdaptiveFormSheet closeDestination={closeDestination}>
         <FormScaffold title={isEdit ? 'Editar Local' : 'Criar Local'} closeDestination={closeDestination} closeVariant="X">
-          <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+          <PageContainer maxWidth="form" sx={{ textAlign: 'center' }}>
             <CircularProgress />
-          </Container>
+          </PageContainer>
         </FormScaffold>
       </AdaptiveFormSheet>
     );
@@ -344,12 +344,12 @@ export const LocationFormScreen: React.FC = () => {
     return (
       <AdaptiveFormSheet closeDestination={closeDestination}>
         <FormScaffold title="Editar Local" closeDestination={closeDestination} closeVariant="X">
-          <Container maxWidth="sm" sx={{ py: 4 }}>
+          <PageContainer maxWidth="form">
             <Alert severity="error" sx={{ mb: 2 }} role="alert" aria-live="assertive">{fetchError}</Alert>
             <Button variant="outlined" fullWidth onClick={() => navigate('/locations')}>
               Voltar para Locais
             </Button>
-          </Container>
+          </PageContainer>
         </FormScaffold>
       </AdaptiveFormSheet>
     );
@@ -374,7 +374,7 @@ export const LocationFormScreen: React.FC = () => {
           </Box>
         }
       >
-        <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
+        <PageContainer maxWidth="form" disablePadding>
           <Stack spacing={2}>
             <Card>
               <CardContent>
@@ -598,7 +598,7 @@ export const LocationFormScreen: React.FC = () => {
             </Card>
 
           </Stack>
-        </Container>
+        </PageContainer>
       </FormScaffold>
     </AdaptiveFormSheet>
   );
