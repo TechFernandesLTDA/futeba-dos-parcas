@@ -47,11 +47,11 @@ export const InviteFriendScreen: React.FC = () => {
   const inviteLink = inviteCode ? `https://futebadosparcas.web.app/invite/${inviteCode}` : '';
 
   const getAmbassadorLevel = (count: number): { level: string; icon: string; color: string; next: number } => {
-    if (count >= 100) return { level: 'Lenda', icon: '👑', color: gColors.gold, next: 0 };
-    if (count >= 30) return { level: 'Ouro', icon: '🟡', color: gColors.gold, next: 100 };
-    if (count >= 10) return { level: 'Prata', icon: '⚪', color: gColors.silver, next: 30 };
-    if (count >= 3) return { level: 'Bronze', icon: '🟤', color: gColors.bronze, next: 10 };
-    return { level: 'Iniciante', icon: '', color: '', next: 3 };
+    if (count >= 100) return { level: t('invite.ambassadorLevels.legend'), icon: '👑', color: gColors.gold, next: 0 };
+    if (count >= 30) return { level: t('invite.ambassadorLevels.gold'), icon: '🟡', color: gColors.gold, next: 100 };
+    if (count >= 10) return { level: t('invite.ambassadorLevels.silver'), icon: '⚪', color: gColors.silver, next: 30 };
+    if (count >= 3) return { level: t('invite.ambassadorLevels.bronze'), icon: '🟤', color: gColors.bronze, next: 10 };
+    return { level: t('invite.ambassadorLevels.initiate'), icon: '', color: '', next: 3 };
   };
 
   const ambassador = getAmbassadorLevel(inviteCount);
@@ -68,8 +68,8 @@ export const InviteFriendScreen: React.FC = () => {
     if (!inviteLink) return;
     if (navigator.share) {
       navigator.share({
-        title: 'Futeba dos Parças',
-        text: `Bora jogar uma pelada? Entra no Futeba dos Parças com meu convite: ${inviteLink}`,
+        title: t('common.appName'),
+        text: t('invite.shareText', { link: inviteLink }),
         url: inviteLink,
       }).catch((err) => {
         // #2281/#2290: ignora cancelamento da share sheet; reporta demais erros.
@@ -91,7 +91,7 @@ export const InviteFriendScreen: React.FC = () => {
         window.location.reload();
       }
     } catch (err) {
-      showError((err as Error).message || 'Erro ao gerar código.');
+      showError((err as Error).message || t('invite.generateError'));
     } finally {
       setGenerating(false);
     }
@@ -104,13 +104,13 @@ export const InviteFriendScreen: React.FC = () => {
           <BackIcon />
         </IconButton>
         <Typography variant="h6" fontWeight="bold" flex={1}>
-          Convidar Amigos
+          {t('invite.title')}
         </Typography>
       </Stack>
 
       <Paper sx={{ p: 3, mb: 3, textAlign: 'center', bgcolor: (t) => t.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          Seu nível de Embaixador
+          {t('invite.ambassadorLevel')}
         </Typography>
         <Typography variant="h3" fontWeight="bold" sx={{ mb: 0.5 }}>
           {ambassador.icon} {ambassador.level}
@@ -119,13 +119,13 @@ export const InviteFriendScreen: React.FC = () => {
           <Stack alignItems="center">
             <PeopleIcon sx={{ color: 'primary.main', fontSize: 28 }} />
             <Typography variant="h6" fontWeight="bold">{inviteCount}</Typography>
-            <Typography variant="caption" color="text.secondary">convidados</Typography>
+            <Typography variant="caption" color="text.secondary">{t('invite.invited')}</Typography>
           </Stack>
           {ambassador.next > 0 && (
             <Stack alignItems="center">
               <TrophyIcon sx={{ color: 'warning.main', fontSize: 28 }} />
               <Typography variant="h6" fontWeight="bold">{ambassador.next}</Typography>
-              <Typography variant="caption" color="text.secondary">próximo nível</Typography>
+              <Typography variant="caption" color="text.secondary">{t('invite.nextLevel')}</Typography>
             </Stack>
           )}
         </Stack>
@@ -133,13 +133,13 @@ export const InviteFriendScreen: React.FC = () => {
 
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-          Níveis de Embaixador
+          {t('invite.levels')}
         </Typography>
         {[
-          { level: 'Bronze', icon: '🥉', count: 3, color: gColors.bronze },
-          { level: 'Prata', icon: '🥈', count: 10, color: gColors.silver },
-          { level: 'Ouro', icon: '🥇', count: 30, color: gColors.gold },
-          { level: 'Lenda', icon: '👑', count: 100, color: gColors.gold },
+          { level: t('invite.ambassadorLevels.bronze'), icon: '🥉', count: 3, color: gColors.bronze },
+          { level: t('invite.ambassadorLevels.silver'), icon: '🥈', count: 10, color: gColors.silver },
+          { level: t('invite.ambassadorLevels.gold'), icon: '🥇', count: 30, color: gColors.gold },
+          { level: t('invite.ambassadorLevels.legend'), icon: '👑', count: 100, color: gColors.gold },
         ].map((l) => (
           <Stack
             key={l.level}
@@ -160,10 +160,10 @@ export const InviteFriendScreen: React.FC = () => {
                 {l.level}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {l.count} convidados
+                {t('invite.countInvited', { count: l.count })}
               </Typography>
             </Box>
-            {inviteCount >= l.count && <ConqueredChip label="Conquistado" />}
+            {inviteCount >= l.count && <ConqueredChip label={t('invite.conquered')} />}
           </Stack>
         ))}
       </Paper>
@@ -171,10 +171,10 @@ export const InviteFriendScreen: React.FC = () => {
       {inviteCode ? (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            Seu código de convite
+            {t('invite.yourCode')}
           </Typography>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Compartilhe este link com seus amigos. Quando eles se cadastrarem, você ganha pontos de Embaixador!
+            {t('invite.shareDescription')}
           </Typography>
           <TextField
             fullWidth
@@ -192,17 +192,17 @@ export const InviteFriendScreen: React.FC = () => {
             sx={{ mb: 2 }}
           />
           <Button fullWidth variant="contained" startIcon={<ShareIcon />} onClick={handleShare}>
-            Compartilhar
+            {t('invite.share')}
           </Button>
         </Paper>
       ) : (
         <Paper sx={{ p: 3, mb: 3, textAlign: 'center' }}>
           <InviteIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            Você ainda não tem um código de convite
+            {t('invite.noCodeTitle')}
           </Typography>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Gere seu código para começar a convidar amigos e ganhar badges de Embaixador!
+            {t('invite.noCodeDesc')}
           </Typography>
           <Button
             variant="contained"
@@ -211,7 +211,7 @@ export const InviteFriendScreen: React.FC = () => {
             onClick={handleGenerate}
             disabled={generating}
           >
-            {generating ? 'Gerando...' : 'Gerar Meu Código'}
+            {generating ? t('invite.generating') : t('invite.generateCode')}
           </Button>
         </Paper>
       )}
