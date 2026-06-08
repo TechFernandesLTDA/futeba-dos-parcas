@@ -151,6 +151,26 @@
     "visibility": "Visibility",
     "worstPlayerCandidates": "Worst player candidates"
   },
+  "about": {
+    "browser": "Browser",
+    "browserUnknown": "Unknown",
+    "childSafety": "Child Safety",
+    "contact": "Contact",
+    "copyright": "© 2024-{{year}} Futeba dos Parças",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDesc": "How to request account deletion",
+    "deviceInfo": "Device Information",
+    "madeWithLove": "Made with ❤️ for football lovers",
+    "notLoggedIn": "Not logged in",
+    "platform": "Platform",
+    "platformWeb": "Web",
+    "privacyPolicy": "Privacy Policy",
+    "reportProblem": "Report a Problem",
+    "tagline": "Organize your pickup games with friends",
+    "termsOfUse": "Terms of Use",
+    "title": "About",
+    "user": "User"
+  },
   "admin": {
     "noUserRegisteredDesc": "There are no users in the system yet."
   },
@@ -159,6 +179,9 @@
     "logoWithBrand": "Futeba dos Parças logo",
     "noPhoto": "No photo",
     "preview": "Preview"
+  },
+  "app": {
+    "name": "Futeba dos Parças"
   },
   "appGuide": {
     "back": "Back",
@@ -174,9 +197,6 @@
     "slide4Subtitle": "Everything ready for your first game. Create your group, invite the crew and let's play!",
     "slide4Title": "Let's get started!",
     "startPlaying": "Let's play!"
-  },
-  "app": {
-    "name": "Futeba dos Parças"
   },
   "auth": {
     "alreadyHaveAccount": "Already have an account?",
@@ -285,6 +305,22 @@
     "statusPending": "Pending",
     "title": "Challenges"
   },
+  "checkin": {
+    "backToHome": "Back to home",
+    "checkingIn": "Checking in...",
+    "confirm": "Confirm Check-in",
+    "errorTitle": "Check-in Error",
+    "gameFallback": "Game",
+    "invalidLink": "Invalid link",
+    "invalidOrExpired": "Invalid or expired check-in link",
+    "notAvailable": "Check-in not available",
+    "submitError": "Error checking in",
+    "success": "Check-in successful!",
+    "title": "Check-in",
+    "validating": "Validating...",
+    "validationError": "Error validating check-in",
+    "viewGameDetails": "View game details"
+  },
   "common": {
     "activate": "Activate",
     "appName": "Futeba dos Parças",
@@ -322,7 +358,8 @@
     "success": "Success",
     "synchronize": "Synchronize",
     "viewGames": "View Games",
-    "viewGroups": "View Groups"
+    "viewGroups": "View Groups",
+    "moreOptions": "More options"
   },
   "connection": {
     "offlineLimited": "You are offline — limited functions",
@@ -616,9 +653,12 @@
     },
     "reportBug": "Report Bug",
     "schedules": {
-      "createSuccess": "Schedule created successfully!",
-      "deleteSuccess": "Schedule deleted.",
-      "loadError": "Error loading schedules."
+      "createError": "Error creating schedule",
+      "deleteError": "Error deleting schedule",
+      "toggleError": "Error changing status",
+      "loadError": "Error loading schedules.",
+      "deleteSuccess": "Schedule deleted successfully.",
+      "createSuccess": "Schedule created successfully!"
     },
     "search": {
       "error": "Search error. Please try again.",
@@ -693,6 +733,11 @@
       "leaveSuccess": "You left the waitlist",
       "loadError": "Error loading the waitlist",
       "loginRequired": "You need to be logged in to join the waitlist"
+    },
+    "mvp": {
+      "loadGameError": "Error loading game data.",
+      "loadConfirmationsError": "Error loading game confirmations.",
+      "submitVoteError": "Error submitting vote"
     }
   },
   "gameCard": {
@@ -919,12 +964,25 @@
       "show": "Show",
       "startGame": "Start Game",
       "starting": "Starting...",
-      "statsDelayWarning": "Some stats may take a while to appear."
+      "statsDelayWarning": "Some stats may take a while to appear.",
+      "checkPermissionError": "Error checking permissions. Please try again.",
+      "loadEventsError": "Error loading game events.",
+      "playerName": "Player Name",
+      "minute": "Minute",
+      "team": "Team {{team}}"
     },
     "liveNow": "Game live!",
     "liveStats": {
       "perPlayerSoon": "Per-player stats coming soon",
-      "title": "Live Stats"
+      "title": "Live Stats",
+      "tabScoreboard": "Scoreboard",
+      "tabEvents": "Events",
+      "tabPlayers": "Players",
+      "topScorerA": "Top Scorer Team A",
+      "topScorerB": "Top Scorer Team B",
+      "noGoals": "No goals",
+      "goals": "{{count}} goals",
+      "loadError": "Error loading statistics. Please try again."
     },
     "liveTitle": "Live Game",
     "loadError": "Failed to load games",
@@ -1030,7 +1088,44 @@
     "shareError": "Failed to share",
     "tabCashbox": "Cashbox",
     "tabGames": "Games",
-    "tabMembers": "Members"
+    "tabMembers": "Members",
+    "settings": {
+      "actions": "Actions",
+      "actionsForMember": "Actions for {{name}}",
+      "approveRequest": "Approve request from {{name}}",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete the group \"{{name}}\"? This action can be reverted by an administrator.",
+      "deleteGroup": "Delete Group",
+      "deleteGroupErrorFallback": "Error deleting group. Please try again.",
+      "deleting": "Deleting...",
+      "demoteToMember": "Demote to Member",
+      "groupInfo": "Group Info",
+      "groupNotFound": "Group not found",
+      "leave": "Leave",
+      "leaveConfirm": "Are you sure you want to leave the group \"{{name}}\"? You will need a new invitation to rejoin.",
+      "leaveGroup": "Leave Group",
+      "leaving": "Leaving...",
+      "memberRemoved": "{{name}} was removed from the group.",
+      "membersTitle": "Members ({{count}})",
+      "noMembersFound": "No members found",
+      "noPendingRequests": "No pending requests",
+      "ownershipTransferred": "Ownership transferred to {{name}}.",
+      "pendingRequests": "Pending requests ({{count}})",
+      "private": "Private",
+      "promoteToAdmin": "Promote to Admin",
+      "rejectRequest": "Reject request from {{name}}",
+      "remove": "Remove",
+      "removeConfirm": "Are you sure you want to remove {{name}} from the group \"{{groupName}}\"?",
+      "removeFromGroup": "Remove from Group",
+      "removeMember": "Remove Member",
+      "removing": "Removing...",
+      "requestedAt": "Requested on {{date}}",
+      "title": "Settings",
+      "transfer": "Transfer",
+      "transferConfirm": "Are you sure you want to transfer ownership of the group \"{{groupName}}\" to {{name}}? You will become an Admin of the group.",
+      "transferOwnership": "Transfer Ownership",
+      "transferring": "Transferring..."
+    }
   },
   "groupDetail": {
     "closedDesc": "The group is no longer active.",
@@ -1129,7 +1224,8 @@
     "transferOwnership": "Transfer Ownership",
     "tryDifferentSearch": "Try changing the search term",
     "defaultGender": "Default game category",
-    "defaultGenderNone": "No default"
+    "defaultGenderNone": "No default",
+    "onlyOwnerOrAdminEdit": "Only the owner or admins can edit the group."
   },
   "home": {
     "dreamTeam": "Dream Team",
@@ -1143,6 +1239,31 @@
     "viewFullRanking": "View full ranking",
     "viewStat": "View {{stat}}",
     "weeklyRanking": "Weekly Ranking"
+  },
+  "invite": {
+    "ambassadorLevel": "Ambassador Level",
+    "ambassadorLevels": {
+      "bronze": "Bronze",
+      "gold": "Gold",
+      "initiate": "Initiate",
+      "legend": "Legend",
+      "silver": "Silver"
+    },
+    "conquered": "Conquered",
+    "countInvited": "{{count}} invited",
+    "generateCode": "Generate Code",
+    "generateError": "Error generating invite code",
+    "generating": "Generating...",
+    "invited": "Invited",
+    "levels": "Levels",
+    "nextLevel": "Next Level",
+    "noCodeDesc": "Generate an invite code to share with your friends.",
+    "noCodeTitle": "No code generated",
+    "share": "Share",
+    "shareDescription": "Invite your friends to Futeba dos Parças!",
+    "shareText": "Join Futeba dos Parças and organize your games!",
+    "title": "Invite Friends",
+    "yourCode": "Your code"
   },
   "league": {
     "assists": "Assists",
@@ -1174,7 +1295,57 @@
   },
   "level": {
     "currentBadge": "CURRENT",
-    "maxReached": "Max level reached! You are the Football King!"
+    "maxReached": "Max level reached! You are the Football King!",
+    "baseProgression": "BASE PROGRESSION",
+    "howToEarnXp": "How to earn XP",
+    "legendsOfFootball": "FOOTBALL LEGENDS",
+    "noRecordsYet": "No records yet",
+    "recentHistory": "RECENT HISTORY",
+    "xpGuideTip": "💡 Tip: Play regularly and keep your streak to earn XP bonuses!",
+    "xpSourceGame": "Game",
+    "xpTotal": "{{xp}} XP total",
+    "xpGuide": {
+      "participation": {
+        "label": "Participation",
+        "desc": "Play a match"
+      },
+      "goal": {
+        "label": "Goal",
+        "desc": "Score a goal"
+      },
+      "assist": {
+        "label": "Assist",
+        "desc": "Provide an assist"
+      },
+      "save": {
+        "label": "Save",
+        "desc": "Make a save (goalkeeper)"
+      },
+      "win": {
+        "label": "Win",
+        "desc": "Win the match"
+      },
+      "mvp": {
+        "label": "MVP",
+        "desc": "Be elected match MVP"
+      },
+      "bestGk": {
+        "label": "Best Goalkeeper",
+        "desc": "Be elected best goalkeeper"
+      },
+      "streak3": {
+        "label": "Streak 3+",
+        "desc": "Play 3+ matches in a row"
+      },
+      "streak7": {
+        "label": "Streak 7+",
+        "desc": "Play 7+ matches in a row"
+      },
+      "streak10": {
+        "label": "Streak 10+",
+        "desc": "Play 10+ matches in a row"
+      }
+    }
   },
   "locations": {
     "addField": "Add Field",
@@ -1188,7 +1359,21 @@
     "mapUnavailable": "Map is unavailable at the moment.",
     "noLocations": "No registered locations",
     "noLocationsDesc": "Add a new location using the + button",
-    "title": "Locations"
+    "title": "Locations",
+    "addFirstLocation": "Add first location",
+    "addLocationsDesc": "Add locations to organize your games!",
+    "deleteLocationAria": "Delete {{name}}",
+    "deleteSuccess": "Location \"{{name}}\" deleted successfully.",
+    "editAriaLabel": "Edit {{name}}",
+    "fieldsCount_one": "{{count}} field",
+    "fieldsCount_other": "{{count}} fields",
+    "fieldsCount": "{{count}} fields",
+    "localsCount_one": "{{count}} location",
+    "localsCount_other": "{{count}} locations",
+    "localsCount": "{{count}} locations",
+    "noLocationsFound": "No locations found",
+    "searchingFor": "for \"{{query}}\"",
+    "tryDifferentSearch": "Try changing your search terms"
   },
   "mvp": {
     "bestGoalkeeper": "Best Goalkeeper",
@@ -1197,7 +1382,19 @@
     "results": "Results",
     "title": "MVP Vote",
     "voteRegistered": "Vote Registered!",
-    "worstPlayer": "Worst Player"
+    "worstPlayer": "Worst Player",
+    "finalResult": "Final Result",
+    "votesCount": "{{count}} votes",
+    "exportPdf": "Export PDF",
+    "exporting": "Exporting...",
+    "exportError": "Error exporting PDF",
+    "bestPlayerLabel": "Best Player (MVP)",
+    "chooseWorstPlayer": "Choose the Worst Player",
+    "chooseWorstPlayerDesc": "Vote for the player who stood out the least",
+    "submitVote": "Submit Vote",
+    "chooseMvp": "Choose the Game MVP",
+    "chooseMvpDesc": "Vote for the player who stood out the most",
+    "thankYou": "Thank you for participating in the vote"
   },
   "nav": {
     "about": "About",
@@ -1345,7 +1542,14 @@
   "players": {
     "removeMemberConfirm": "Remove",
     "removeMemberMessage": "Are you sure you want to remove this player from the group? This action cannot be undone.",
-    "removeMemberTitle": "Remove member"
+    "removeMemberTitle": "Remove member",
+    "defaultName": "Player",
+    "removeMemberAria": "Remove {{name}} — confirmation required",
+    "restrictedAccess": "Restricted access",
+    "restrictedAccessDesc": "You need to be a member of this group to see the players.",
+    "title": "Players",
+    "titleWithCount": "Players ({{count}})",
+    "viewPlayerCardAria": "View {{name}}'s player card"
   },
   "profile": {
     "achievements": "Achievements",
@@ -1471,7 +1675,10 @@
     "genderFemale": "Female",
     "genderOther": "Other",
     "genderNotInformed": "Prefer not to say",
-    "genderNone": "Not informed"
+    "genderNone": "Not informed",
+    "autoRatingBasedOn": "Based on {{count}} automatically rated game(s)",
+    "autoRatingNote": "Note: automatic ratings are calculated based on your last 50 games. The more games, the more confident the calculation.",
+    "autoRatingPrefix": "Auto"
   },
   "ranking": {
     "categoriesAria": "Ranking categories",
@@ -1530,7 +1737,35 @@
     "create": "Create Recurrence",
     "noSchedules": "No active recurrences",
     "noSchedulesDesc": "Your recurring games will appear here.",
-    "title": "Schedules"
+    "title": "Schedules",
+    "activate": "Activate",
+    "createFirst": "Create first schedule",
+    "creating": "Creating...",
+    "dayOfWeekLabel": "Day of Week",
+    "days": "days",
+    "deactivate": "Deactivate",
+    "deleteAria": "Delete {{name}}",
+    "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "deleteTitle": "Delete Schedule",
+    "emptyDesc": "Create schedules for recurring games",
+    "emptyTitle": "No schedules",
+    "inactive": "Inactive",
+    "itemDescription": "{{day}} at {{time}} • {{players}} players",
+    "nameLabel": "Name",
+    "newTitle": "New Schedule",
+    "timeLabel": "Time",
+    "createError": "Error creating schedule",
+    "deleteError": "Error deleting schedule",
+    "itemDescription_other": "{{day}} at {{time}} • {{players}} players",
+    "playersCount": "{{count}} players",
+    "toggleError": "Error changing status",
+    "day0": "Sunday",
+    "day1": "Monday",
+    "day2": "Tuesday",
+    "day3": "Wednesday",
+    "day4": "Thursday",
+    "day5": "Friday",
+    "day6": "Saturday"
   },
   "settings": {
     "aboutApp": "About the App",
@@ -1702,6 +1937,14 @@
     "wins": "Wins",
     "yellow": "Yellow",
     "yourStats": "Your Statistics"
+  },
+  "tactical": {
+    "defaultPlayerName": "Player",
+    "playersCount_one": "{{count}} player",
+    "playersCount_other": "{{count}} players",
+    "playersCount": "{{count}} players",
+    "selectPlayerAria": "Select player {{name}}",
+    "title": "Tactical Board"
   },
   "theme": {
     "auto": "Auto (system)",

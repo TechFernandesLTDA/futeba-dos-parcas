@@ -94,7 +94,7 @@ export const TacticalBoardScreen: React.FC = () => {
           const data = snakeToCamel(gameDoc.data()) as Record<string, RawPlayerData[]>;
           const teamA = (data.teamA || []).map((p: RawPlayerData, i: number) => ({
             id: p.id || `a-${i}`,
-            name: p.name || 'Jogador',
+            name: p.name || t('tactical.defaultPlayerName'),
             photoUrl: p.photoUrl,
             x: FORMATIONS[0].positions[i]?.[0] || 50,
             y: FORMATIONS[0].positions[i]?.[1] || 70,
@@ -102,7 +102,7 @@ export const TacticalBoardScreen: React.FC = () => {
           }));
           const teamB = (data.teamB || []).map((p: RawPlayerData, i: number) => ({
             id: p.id || `b-${i}`,
-            name: p.name || 'Jogador',
+            name: p.name || t('tactical.defaultPlayerName'),
             photoUrl: p.photoUrl,
             x: FORMATIONS[0].positions[i]?.[0] || 50,
             y: FORMATIONS[0].positions[i]?.[1] || 30,
@@ -114,7 +114,7 @@ export const TacticalBoardScreen: React.FC = () => {
         logger.error('Error fetching players:', error);
         if (!cancelled) {
           setError(t('feedback.tactical.loadError'));
-          showErrorRef.current('Erro ao carregar quadro tático.');
+          showErrorRef.current(t('feedback.tactical.loadError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -176,7 +176,7 @@ export const TacticalBoardScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Quadro Tático
+            {t('tactical.title')}
           </Typography>
           <IconButton onClick={() => setSelectedFormation(0)} aria-label={t('a11y.resetFormation')}>
             <RefreshIcon />
@@ -267,7 +267,7 @@ export const TacticalBoardScreen: React.FC = () => {
             <ButtonBase
               key={player.id}
               onClick={() => setSelectedPlayer(player.id)}
-              aria-label={`Selecionar jogador ${player.name}`}
+              aria-label={t('tactical.selectPlayerAria', { name: player.name })}
               aria-pressed={selectedPlayer === player.id}
               focusRipple
               sx={{
@@ -343,20 +343,20 @@ export const TacticalBoardScreen: React.FC = () => {
           <Grid xs={6}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
               <Typography variant="subtitle2" color="primary" gutterBottom>
-                Time A
+                {t('games.teamA')}
               </Typography>
               <Typography variant="body2">
-                {players.filter((p) => p.team === 'A').length} jogadores
+                {t('tactical.playersCount', { count: players.filter((p) => p.team === 'A').length })}
               </Typography>
             </Paper>
           </Grid>
           <Grid xs={6}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
               <Typography variant="subtitle2" color="secondary" gutterBottom>
-                Time B
+                {t('games.teamB')}
               </Typography>
               <Typography variant="body2">
-                {players.filter((p) => p.team === 'B').length} jogadores
+                {t('tactical.playersCount', { count: players.filter((p) => p.team === 'B').length })}
               </Typography>
             </Paper>
           </Grid>

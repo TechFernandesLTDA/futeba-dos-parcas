@@ -38,13 +38,6 @@ import { useTranslation } from 'react-i18next';
 const logger = createLogger('EditProfileScreen');
 
 // Opções de gênero do perfil — alinhadas com enum Android User.Gender
-const USER_GENDER_LABELS: Record<UserGender, string> = {
-  MALE: 'Masculino',
-  FEMALE: 'Feminino',
-  OTHER: 'Outro',
-  NOT_INFORMED: 'Prefiro não informar',
-};
-
 const USER_GENDER_VALUES: UserGender[] = ['MALE', 'FEMALE', 'OTHER', 'NOT_INFORMED'];
 
 // Limites para upload do avatar (alinhados com storage.rules: 2MB, image/*)
@@ -117,6 +110,14 @@ export const EditProfileScreen: React.FC = () => {
     VOLANTE: t('profile.positionDefMidfielder'),
     MEIA: t('profile.positionMidfielder'),
     ATACANTE: t('profile.positionForward'),
+  };
+
+  // Gêneros traduzidos — derivadas dentro do componente para usar t()
+  const USER_GENDER_LABELS: Record<UserGender, string> = {
+    MALE: t('profile.genderMale'),
+    FEMALE: t('profile.genderFemale'),
+    OTHER: t('profile.genderOther'),
+    NOT_INFORMED: t('profile.genderNotInformed'),
   };
 
   const [loading, setLoading] = useState(false);
@@ -603,24 +604,24 @@ export const EditProfileScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Typography variant="subtitle1" fontWeight={600}>
-                Habilidades por Posição
+                {t('profile.skillsByPosition')}
               </Typography>
               <Tooltip title={t('profile.skillsHint')}>
                 <InfoIcon fontSize="small" color="action" />
               </Tooltip>
             </Box>
             {[
-              { key: 'strikerRating' as const, label: 'Atacante', autoKey: 'autoStrikerRating' as const },
-              { key: 'midRating' as const, label: 'Meio-campo', autoKey: 'autoMidRating' as const },
-              { key: 'defenderRating' as const, label: 'Zagueiro', autoKey: 'autoDefenderRating' as const },
-              { key: 'gkRating' as const, label: 'Goleiro', autoKey: 'autoGkRating' as const },
+              { key: 'strikerRating' as const, label: t('profile.positionForward'), autoKey: 'autoStrikerRating' as const },
+              { key: 'midRating' as const, label: t('profile.midfield'), autoKey: 'autoMidRating' as const },
+              { key: 'defenderRating' as const, label: t('profile.positionDefender'), autoKey: 'autoDefenderRating' as const },
+              { key: 'gkRating' as const, label: t('profile.positionGoalkeeper'), autoKey: 'autoGkRating' as const },
             ].map(({ key, label, autoKey }) => (
               <Box key={key} sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {label}: {formData[key]?.toFixed(1) || '0.0'}
                   {formData[autoKey] > 0 && (
                     <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 1 }}>
-                      Auto: {formData[autoKey].toFixed(1)}
+                      {t('profile.autoRatingPrefix')}: {formData[autoKey].toFixed(1)}
                     </Typography>
                   )}
                 </Typography>
@@ -642,7 +643,7 @@ export const EditProfileScreen: React.FC = () => {
             ))}
             <Divider sx={{ my: 2 }} />
             <Typography variant="caption" color="text.secondary">
-              Nota: ratings automáticos são calculados com base nos seus últimos 50 jogos. Quanto mais jogos, maior a confiança do cálculo.
+              {t('profile.autoRatingNote')}
             </Typography>
           </CardContent>
         </Card>

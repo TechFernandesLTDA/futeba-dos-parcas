@@ -147,7 +147,7 @@ export const PlayersScreen: React.FC = () => {
 
             return {
               id: uid,
-              name: (d.name as string) || 'Jogador',
+              name: (d.name as string) || t('players.defaultName'),
               email: (d.email as string) || '',
               photoUrl: d.photoUrl as string | undefined,
               favoriteTeam: ((d.favorite_team || d.favoriteTeam) as string | undefined),
@@ -227,7 +227,7 @@ export const PlayersScreen: React.FC = () => {
   return (
     <Box sx={{ pb: 4 }}>
       <ScreenHeader
-        title={!loading && !error && isMember ? `Jogadores (${members.length})` : 'Jogadores'}
+        title={!loading && !error && isMember ? t('players.titleWithCount', { count: members.length }) : t('players.title')}
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
         actions={
           !loading && !error && isMember && currentUserRole !== 'MEMBER' ? (
@@ -252,13 +252,13 @@ export const PlayersScreen: React.FC = () => {
         <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
           <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            Acesso restrito
+            {t('players.restrictedAccess')}
           </Typography>
           <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
-            Você precisa ser membro deste grupo para ver os jogadores.
+            {t('players.restrictedAccessDesc')}
           </Typography>
           <Button variant="outlined" onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}>
-            Voltar
+            {t('common.back')}
           </Button>
         </Container>
       ) : (
@@ -286,6 +286,7 @@ export const PlayersScreen: React.FC = () => {
                       getRoleColor={getRoleColor}
                       getRoleLabel={getRoleLabel}
                       currentUserRole={currentUserRole}
+                      t={t}
                     />
                   ))}
                 </List>
@@ -325,6 +326,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   getRoleColor,
   getRoleLabel,
   currentUserRole,
+  t,
 }: {
   member: GroupMember;
   showDivider: boolean;
@@ -335,6 +337,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   getRoleColor: (role: string) => string;
   getRoleLabel: (role: string) => string;
   currentUserRole: string | null;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }) {
   return (
     <Box>
@@ -349,7 +352,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
               <IconButton
                 edge="end"
                 onClick={() => onRemove(member.id)}
-                aria-label={`Remover ${member.name} - confirmação necessária`}
+                aria-label={t('players.removeMemberAria', { name: member.name })}
               >
                 <PersonRemoveIcon color="error" />
               </IconButton>
@@ -363,7 +366,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
             onClick={() => onAvatarClick(member.id)}
             sx={{ cursor: 'pointer' }}
             role="button"
-            aria-label={`Ver figurinha de ${member.name}`}
+            aria-label={t('players.viewPlayerCardAria', { name: member.name })}
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(member.id)}
           >

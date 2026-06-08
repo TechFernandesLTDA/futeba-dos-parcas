@@ -44,7 +44,7 @@ export const QrCheckInScreen: React.FC = () => {
   useEffect(() => {
     if (!gameId || !token) {
       setState('error');
-      setErrorMessage('Link inválido');
+      setErrorMessage(t('checkin.invalidLink'));
       return;
     }
 
@@ -56,24 +56,24 @@ export const QrCheckInScreen: React.FC = () => {
         if (cancelled) return;
         if (!gameSnap.exists()) {
           setState('error');
-          setErrorMessage('Jogo não encontrado');
+          setErrorMessage(t('games.notFound'));
           return;
         }
 
         const gameData = gameSnap.data();
-        setGameName(gameData.location_name || gameData.locationName || 'Jogo');
+        setGameName(gameData.location_name || gameData.locationName || t('checkin.gameFallback'));
 
         const storedToken = gameData.checkin_qr_token;
         if (!storedToken || storedToken !== token) {
           setState('error');
-          setErrorMessage('QR Code inválido ou expirado');
+          setErrorMessage(t('checkin.invalidOrExpired'));
           return;
         }
 
         const status = gameData.status;
         if (status !== 'CONFIRMED' && status !== 'LIVE') {
           setState('error');
-          setErrorMessage('Check-in não disponível para este jogo');
+          setErrorMessage(t('checkin.notAvailable'));
           return;
         }
 
@@ -81,7 +81,7 @@ export const QrCheckInScreen: React.FC = () => {
       } catch {
         if (!cancelled) {
           setState('error');
-          setErrorMessage('Erro ao validar QR Code');
+          setErrorMessage(t('checkin.validationError'));
         }
       }
     };
@@ -90,7 +90,7 @@ export const QrCheckInScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, token]);
+  }, [gameId, token, t]);
 
   const handleCheckIn = async () => {
     if (!gameId || !token || !currentUser) {
@@ -106,7 +106,7 @@ export const QrCheckInScreen: React.FC = () => {
       });
       setState('success');
     } catch (err) {
-      setErrorMessage((err as Error)?.message || 'Erro ao realizar check-in');
+      setErrorMessage((err as Error)?.message || t('checkin.submitError'));
       setState('error');
     } finally {
       setCheckingIn(false);
@@ -117,7 +117,7 @@ export const QrCheckInScreen: React.FC = () => {
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Box sx={{ mb: 3 }}>
         <Button startIcon={<BackIcon />} onClick={goBack}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Box>
 
@@ -127,7 +127,7 @@ export const QrCheckInScreen: React.FC = () => {
             <Box sx={{ py: 4 }}>
               <CircularProgress size={48} />
               <Typography variant="body1" sx={{ mt: 2 }}>
-                Validando QR Code...
+                {t('checkin.validating')}
               </Typography>
             </Box>
           )}
@@ -142,7 +142,7 @@ export const QrCheckInScreen: React.FC = () => {
                 }}
               />
               <Typography variant="h5" gutterBottom>
-                Check-in por QR Code
+                {t('checkin.title')}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 {gameName}
@@ -155,7 +155,7 @@ export const QrCheckInScreen: React.FC = () => {
                 disabled={checkingIn}
                 startIcon={checkingIn ? <CircularProgress size={20} color="inherit" /> : undefined}
               >
-                {checkingIn ? 'Realizando check-in...' : 'Confirmar Check-in'}
+                {checkingIn ? t('checkin.checkingIn') : t('checkin.confirm')}
               </Button>
             </>
           )}
@@ -170,7 +170,7 @@ export const QrCheckInScreen: React.FC = () => {
                 }}
               />
               <Typography variant="h5" gutterBottom>
-                Check-in realizado!
+                {t('checkin.success')}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 {gameName}
@@ -179,7 +179,7 @@ export const QrCheckInScreen: React.FC = () => {
                 variant="contained"
                 onClick={() => navigate(`/game/${gameId}`)}
               >
-                Ver detalhes do jogo
+                {t('checkin.viewGameDetails')}
               </Button>
             </>
           )}
@@ -194,7 +194,7 @@ export const QrCheckInScreen: React.FC = () => {
                 }}
               />
               <Typography variant="h5" gutterBottom>
-                Erro no check-in
+                {t('checkin.errorTitle')}
               </Typography>
               <Alert severity="error" sx={{ mt: 2, textAlign: 'left' }}>
                 {errorMessage}
@@ -204,7 +204,7 @@ export const QrCheckInScreen: React.FC = () => {
                 sx={{ mt: 3 }}
                 onClick={() => navigate('/')}
               >
-                Voltar ao início
+                {t('checkin.backToHome')}
               </Button>
             </>
           )}

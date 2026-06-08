@@ -250,7 +250,7 @@ export const LiveEventsScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Eventos do Jogo
+            {t('games.live.gameEvents')}
           </Typography>
           {canManage && (
             <Button

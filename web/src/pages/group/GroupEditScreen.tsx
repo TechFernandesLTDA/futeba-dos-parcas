@@ -234,9 +234,9 @@ export const GroupEditScreen: React.FC = () => {
   if (error || !group) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
+        <Alert severity="error">{error || t('groupDetail.notFound')}</Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(closeDestination)} sx={{ mt: 2 }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Container>
     );
@@ -247,10 +247,10 @@ export const GroupEditScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Alert severity="warning">
-          Apenas o dono ou administradores podem editar o grupo.
+          {t('groups.onlyOwnerOrAdminEdit')}
         </Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(closeDestination)} sx={{ mt: 2 }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Container>
     );
@@ -267,7 +267,7 @@ export const GroupEditScreen: React.FC = () => {
 
   return (
     <FormScaffold
-      title="Editar Grupo"
+      title={t("groups.editGroup")}
       closeDestination={closeDestination}
       closeVariant="X"
       isDirty={isDirty}
@@ -318,11 +318,11 @@ export const GroupEditScreen: React.FC = () => {
               </Box>
 
               <TextField
-                label="Nome do Grupo *"
+                label={t("groups.groupNameRequired")}
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 error={!!formErrors.name}
-                helperText={formErrors.name || `${formData.name.length}/50 caracteres`}
+                helperText={formErrors.name || t('common.charCount', { current: formData.name.length, max: 50 })}
                 fullWidth
                 required
                 placeholder={t('placeholder.enterGroupNameExample')}
@@ -331,11 +331,11 @@ export const GroupEditScreen: React.FC = () => {
               />
 
               <TextField
-                label="Descrição"
+                label={t("groups.description")}
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 error={!!formErrors.description}
-                helperText={formErrors.description || `${formData.description.length}/500 caracteres`}
+                helperText={formErrors.description || t('common.charCount', { current: formData.description.length, max: 500 })}
                 fullWidth
                 multiline
                 rows={4}
@@ -354,9 +354,9 @@ export const GroupEditScreen: React.FC = () => {
                 }
                 label={
                   <Box>
-                    <Typography variant="body1">Grupo Público</Typography>
+                    <Typography variant="body1">{t("groups.publicGroup")}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Grupos públicos podem ser encontrados na busca
+                      {t("groups.publicGroupDesc")}
                     </Typography>
                   </Box>
                 }
@@ -364,14 +364,14 @@ export const GroupEditScreen: React.FC = () => {
 
               <TextField
                 select
-                label="Categoria padrão dos jogos"
+                label={t("groups.defaultGender")}
                 value={formData.defaultGender || ''}
                 onChange={(e) =>
                   handleInputChange('defaultGender', (e.target.value as GameGender) || undefined)
                 }
                 fullWidth
               >
-                <MenuItem value=""><em>Sem padrão</em></MenuItem>
+                <MenuItem value=""><em>{t("groups.defaultGenderNone")}</em></MenuItem>
                 {(Object.entries(GAME_GENDER_LABELS) as [GameGender, string][]).map(([value, label]) => (
                   <MenuItem key={value} value={value}>{label}</MenuItem>
                 ))}
@@ -384,7 +384,7 @@ export const GroupEditScreen: React.FC = () => {
                   fullWidth
                   disabled={saving || uploadingPhoto}
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="contained"
@@ -394,7 +394,7 @@ export const GroupEditScreen: React.FC = () => {
                   startIcon={saving || uploadingPhoto ? <CircularProgress size={20} /> : <SaveIcon />}
                   aria-label={t('a11y.saveGroupChanges')}
                 >
-                  Salvar
+                  {t('common.save')}
                 </Button>
               </Box>
             </Box>
