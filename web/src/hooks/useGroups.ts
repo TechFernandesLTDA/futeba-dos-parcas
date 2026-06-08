@@ -492,6 +492,7 @@ export function useInvitePlayers() {
 
         // #1541: expires_at precisa ser 7 dias no futuro; serverTimestamp() criava
         // convites já expirados imediatamente.
+        // AUDIT: client-clock drift accepted for 7-day invite expiry window
         const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
         // #2351: doc-id == code — lookup por getDoc(code), sem where('code')
         // (que era LIST e permitia enumerar todos os convites).

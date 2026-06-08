@@ -548,6 +548,14 @@ service cloud.firestore {
         allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
         allow create, update, delete: if false;
       }
+
+      // ============================================
+      // SUBCOLECAO: badges
+      // ============================================
+      match /badges/{badgeId} {
+        allow read: if isAuthenticated() && request.auth.uid == userId;
+        allow write: if false;
+      }
     }
 
     // ============================================
@@ -1613,6 +1621,22 @@ service cloud.firestore {
           request.resource.data.user_name is string &&
           request.resource.data.reason is string;
         allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+      }
+
+      // ============================================
+      // SUB-COLECAO: league_standings
+      // ============================================
+      match /league_standings/{docId} {
+        allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow write: if false;
+      }
+
+      // ============================================
+      // SUB-COLECAO: league_seasons
+      // ============================================
+      match /league_seasons/{docId} {
+        allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow write: if false;
       }
     }
 

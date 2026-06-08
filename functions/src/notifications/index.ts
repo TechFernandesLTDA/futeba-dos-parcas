@@ -65,7 +65,6 @@ export {
   processNotificationBatch,
   enqueueNotificationCallable,
   cleanupNotificationQueue,
-  CHUNK_SEND_DELAY_MS,
 } from "./batch-sender";
 export type {
   QueuedNotification,

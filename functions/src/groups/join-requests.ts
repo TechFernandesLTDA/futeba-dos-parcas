@@ -15,7 +15,6 @@
 
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
-import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {
@@ -24,8 +23,7 @@ import {
 } from "../notifications/helpers";
 import {PRESENCE_NOTIFICATIONS} from "../notifications/notification-messages";
 import {isRecord} from "../validation/guards";
-
-const db = () => admin.firestore();
+import {db} from "../_db";
 
 interface JoinRequestData {
   user_id: string;

@@ -22,15 +22,17 @@ export interface DreamTeamPlayer {
 }
 
 /**
- * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
- * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
- * Não envolver no contrato { data, loading, error }.
+ * #2251: originalmente expunha o resultado bruto de useQuery.
+ * Agora envolve no contrato { dreamTeam, loading, error, refetch }
+ * seguindo o padrão dos demais hooks, mantendo `data`/`isLoading`
+ * para compatibilidade retroativa com consumidores que usam a
+ * API do TanStack Query diretamente.
  */
 export function useDreamTeam() {
   const { user } = useAuth();
   const uid = user?.id ?? "";
 
-  return useQuery({
+  const { data, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ["dream-team", uid],
     queryFn: async () => {
       if (!uid) return null;
@@ -42,17 +44,22 @@ export function useDreamTeam() {
     staleTime: 5 * 60 * 1000,
     enabled: !!uid,
   });
+
+  return { data, isLoading, dreamTeam: data, loading: isLoading, error: queryError?.message ?? null, refetch };
 }
 
 /**
- * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery.
- * Não envolver no contrato { data, loading, error }.
+ * #2251: originalmente expunha o resultado bruto de useQuery.
+ * Agora envolve no contrato { players, loading, error, refetch }
+ * seguindo o padrão dos demais hooks, mantendo `data`/`isLoading`
+ * para compatibilidade retroativa com consumidores que usam a
+ * API do TanStack Query diretamente.
  */
 export function usePlayedAgainst() {
   const { user } = useAuth();
   const uid = user?.id ?? "";
 
-  return useQuery({
+  const { data, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ["played-against", uid],
     queryFn: async () => {
       if (!uid) return [];
@@ -110,6 +117,8 @@ export function usePlayedAgainst() {
     staleTime: 10 * 60 * 1000,
     enabled: !!uid,
   });
+
+  return { data, isLoading, players: data, loading: isLoading, error: queryError?.message ?? null, refetch };
 }
 
 export function useSaveDreamTeam() {

@@ -5,8 +5,7 @@
  * do módulo notifications/batch-sender.ts:
  * - enqueueNotification: enfileira notificação única
  * - enqueueNotifications: enfileira múltiplas notificações
- * - CHUNK_SEND_DELAY_MS: constante exportada
- */
+ *  */
 
 jest.mock("../src/middleware/rate-limiter");
 
@@ -109,20 +108,8 @@ jest.mock("firebase-functions/v2/https", () => ({
 import {
   enqueueNotification,
   enqueueNotifications,
-  CHUNK_SEND_DELAY_MS,
   QueuedNotification,
 } from "../src/notifications/batch-sender";
-
-// ==========================================
-// CONSTANTES
-// ==========================================
-
-describe("CHUNK_SEND_DELAY_MS", () => {
-  test("deve ser um número positivo", () => {
-    expect(typeof CHUNK_SEND_DELAY_MS).toBe("number");
-    expect(CHUNK_SEND_DELAY_MS).toBeGreaterThan(0);
-  });
-});
 
 // ==========================================
 // enqueueNotification

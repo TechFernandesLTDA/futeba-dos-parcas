@@ -3,9 +3,7 @@ import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 
-// Lazy initialization para evitar erro
-// de initializeApp
-const getDb = () => admin.firestore();
+import {db} from "./_db";
 
 /**
  * Cloud Function: onUserCreate
@@ -34,12 +32,11 @@ export const onUserCreate = auth
   .onCreate(
     async (user: admin.auth.UserRecord) => {
       const userId = user.uid;
-      const db = getDb();
 
       try {
         // Idempotencia: verificar se
         // documento ja existe
-        const existingDoc = await db
+        const existingDoc = await db()
           .collection("users")
           .doc(userId)
           .get();
@@ -129,7 +126,7 @@ export const onUserCreate = auth
         };
 
         try {
-          await db
+          await db()
             .collection("users")
             .doc(userId)
             .create(newUserDoc);

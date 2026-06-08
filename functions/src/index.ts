@@ -597,7 +597,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
         // 3. Pre-fetch ALL player data in parallel
         // (PERF: reduces 60+ sequential ops to ~3)
-        const userIds = confirmations
+        const userIds = validConfirmations
           .map((c) => c.userId);
 
         // Fetch all data in PARALLEL - key opt!
@@ -1259,7 +1259,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         );
         await event.data.after.ref.update({
           xp_processing: false,
-          xp_processing_error: String(error),
+          xp_processing_error: "Internal processing error. Reference: game_" + gameId,
         });
         // Re-throw para permitir retry
         throw error;

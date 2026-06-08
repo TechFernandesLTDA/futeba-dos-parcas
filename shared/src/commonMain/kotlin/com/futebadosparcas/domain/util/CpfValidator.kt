@@ -51,7 +51,7 @@ object CpfValidator {
      */
     fun mask(cpf: String): String {
         val digits = strip(cpf)
-        if (digits.length != 11) return cpf
+        if (digits.length != 11) return "***"
         return "***.${digits.substring(3, 6)}.${digits.substring(6, 9)}-**"
     }
 
