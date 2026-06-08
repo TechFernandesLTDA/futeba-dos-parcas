@@ -120,6 +120,7 @@ export const EditProfileScreen: React.FC = () => {
     NOT_INFORMED: t('profile.genderNotInformed'),
   };
 
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
