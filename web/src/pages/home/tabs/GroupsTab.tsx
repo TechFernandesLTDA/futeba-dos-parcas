@@ -376,7 +376,7 @@ export function GroupsTab() {
         sx={{
           display: { xs: 'flex', md: 'none' },
           bottom: { xs: pageSpacing.bottomBarHeight + 16, sm: pageSpacing.bottomBarHeight + 16, md: 24 },
-          right: { xs: 16, sm: 'calc(50% - 240px + 16px)', md: 24 },
+          right: { xs: 16, md: 24 },
         }}
       />
     </Box>

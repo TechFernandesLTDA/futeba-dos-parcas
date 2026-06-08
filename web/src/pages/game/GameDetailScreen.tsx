@@ -38,6 +38,7 @@ import {
   ArrowBack as BackIcon,
   ContentCopy as DuplicateIcon,
   CalendarMonth as CalendarIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -91,6 +92,7 @@ export const GameDetailScreen: React.FC = () => {
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [calendarAnchorEl, setCalendarAnchorEl] = useState<null | HTMLElement>(null);
+  const [moreAnchorEl, setMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [editForm, setEditForm] = useState({
     date: '',
     time: '',
@@ -464,36 +466,78 @@ export const GameDetailScreen: React.FC = () => {
             </Menu>
             {canManage && (
               <>
-                {game.status === 'CONFIRMED' && (
-                  <Tooltip title={t('games.detail.qrCheckInTitle')}>
+                <Tooltip title={t('common.moreOptions')}>
+                  <IconButton
+                    onClick={(e) => setMoreAnchorEl(e.currentTarget)}
+                    aria-label={t('common.moreOptions')}
+                    sx={{ display: { xs: 'inline-flex', md: 'none' } }}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  anchorEl={moreAnchorEl}
+                  open={Boolean(moreAnchorEl)}
+                  onClose={() => setMoreAnchorEl(null)}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  sx={{ display: { xs: 'block', md: 'none' } }}
+                >
+                  {game.status === 'CONFIRMED' && (
+                    <MenuItem onClick={() => { setMoreAnchorEl(null); handleGenerateQr(); }} disabled={qrLoading}>
+                      <ListItemIcon>
+                        {qrLoading ? <CircularProgress size={20} /> : <QrCodeIcon fontSize="small" />}
+                      </ListItemIcon>
+                      <ListItemText>{t('games.detail.qrCheckInTitle')}</ListItemText>
+                    </MenuItem>
+                  )}
+                  <MenuItem onClick={() => { setMoreAnchorEl(null); handleDuplicateGame(); }} disabled={duplicateGameLoading}>
+                    <ListItemIcon>
+                      {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon fontSize="small" />}
+                    </ListItemIcon>
+                    <ListItemText>{t('tooltip.duplicateGame')}</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={() => { setMoreAnchorEl(null); openEditDialog(); }}>
+                    <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                    <ListItemText>{t('games.detail.editGame')}</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={() => { setMoreAnchorEl(null); setDeleteDialogOpen(true); }}>
+                    <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
+                    <ListItemText>{t('games.detail.deleteGame')}</ListItemText>
+                  </MenuItem>
+                </Menu>
+                <Box sx={{ display: { xs: 'none', md: 'contents' } }}>
+                  {game.status === 'CONFIRMED' && (
+                    <Tooltip title={t('games.detail.qrCheckInTitle')}>
+                      <IconButton
+                        onClick={handleGenerateQr}
+                        aria-label={t('games.detail.qrCheckInTitle')}
+                        disabled={qrLoading}
+                      >
+                        {qrLoading ? <CircularProgress size={20} /> : <QrCodeIcon />}
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Tooltip title={t('tooltip.duplicateGame')}>
                     <IconButton
-                      onClick={handleGenerateQr}
-                      aria-label={t('games.detail.qrCheckInTitle')}
-                      disabled={qrLoading}
+                      onClick={handleDuplicateGame}
+                      aria-label={t('a11y.duplicateGame')}
+                      disabled={duplicateGameLoading}
                     >
-                      {qrLoading ? <CircularProgress size={20} /> : <QrCodeIcon />}
+                      {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon />}
                     </IconButton>
                   </Tooltip>
-                )}
-                <Tooltip title={t('tooltip.duplicateGame')}>
-                  <IconButton
-                    onClick={handleDuplicateGame}
-                    aria-label={t('a11y.duplicateGame')}
-                    disabled={duplicateGameLoading}
-                  >
-                    {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon />}
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={t('games.detail.editGame')}>
-                  <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')}>
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={t('games.detail.deleteGame')}>
-                  <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('games.detail.deleteGame')}>
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
+                  <Tooltip title={t('games.detail.editGame')}>
+                    <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')}>
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={t('games.detail.deleteGame')}>
+                    <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('games.detail.deleteGame')}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </>
             )}
           </>

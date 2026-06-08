@@ -120,6 +120,7 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
                     return (
                       <Box
                         key={slotStart}
+                        sx={{ minHeight: 44, display: 'flex', alignItems: 'center', cursor: occupied ? 'default' : 'pointer' }}
                         onClick={() => {
                           if (!occupied) {
                             const h = Math.floor(slotStart / 60);
@@ -127,29 +128,32 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
                             onSlotSelect(dayStr, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
                           }
                         }}
-                        sx={{
-                          height: 6,
-                          borderRadius: 1,
-                          cursor: occupied ? 'default' : 'pointer',
-                          bgcolor: selected
-                            ? 'primary.main'
-                            : occupied
-                            ? 'error.main'
-                            : 'success.light',
-                          border: selected ? '1px solid' : undefined,
-                          borderColor: selected ? 'primary.dark' : undefined,
-                          opacity: occupied && !selected ? 0.6 : 1,
-                          '&:hover': {
-                            opacity: occupied ? 0.6 : 0.9,
-                          },
-                          transition: 'opacity 0.15s',
-                        }}
                         title={
                           occupied
                             ? `Ocupado ${formatTimeLabel(slotStart)}`
                             : `Livre ${formatTimeLabel(slotStart)}`
                         }
-                      />
+                      >
+                        <Box
+                          sx={{
+                            height: 6,
+                            width: '100%',
+                            borderRadius: 1,
+                            bgcolor: selected
+                              ? 'primary.main'
+                              : occupied
+                              ? 'error.main'
+                              : 'success.light',
+                            border: selected ? '1px solid' : undefined,
+                            borderColor: selected ? 'primary.dark' : undefined,
+                            opacity: occupied && !selected ? 0.6 : 1,
+                            '&:hover': {
+                              opacity: occupied ? 0.6 : 0.9,
+                            },
+                            transition: 'opacity 0.15s',
+                          }}
+                        />
+                      </Box>
                     );
                   })}
                 </Box>
