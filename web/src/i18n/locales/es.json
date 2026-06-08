@@ -1012,7 +1012,13 @@
       "full": "Lleno",
       "info": "Partidos abiertos al público cerca de ti. ¡Entra, juega y conoce nuevos cracks!",
       "join": "Quiero Jugar",
-      "title": "Partidos Abiertos"
+      "title": "Partidos Abiertos",
+      "dateTimeSeparator": "a las",
+      "gamesFound": "{{count}} partidos públicos encontrados",
+      "gamesFound_one": "{{count}} partido público encontrado",
+      "gamesFound_other": "{{count}} partidos públicos encontrados",
+      "mapLoading": "Cargando mapa...",
+      "mapNoApiKey": "Configura VITE_GOOGLE_MAPS_API_KEY para ver el mapa"
     },
     "search": {
       "clear": "Limpiar búsqueda",
@@ -1153,7 +1159,9 @@
     "sectionsAria": "Secciones del grupo",
     "shareInviteLink": "Comparte el enlace de abajo para invitar jugadores",
     "viewDetails": "Ver Detalles",
-    "viewStandings": "Ver Clasificación"
+    "viewStandings": "Ver Clasificación",
+    "shareText": "¡Ven a jugar con nosotros en el grupo {{name}}!",
+    "shareTitle": "Invitación: {{name}}"
   },
   "groups": {
     "archiveGroup": "Archivar Grupo",
@@ -2027,5 +2035,27 @@
     "typeMajor": "Actualización principal",
     "typeMinor": "Novedades",
     "typePatch": "Correcciones"
+  },
+  "fieldOwner": {
+    "addNewField": "Agregar Nueva Cancha",
+    "averageRating": "Calificación Promedio",
+    "comingSoon": "Próximamente",
+    "fieldNameFallback": "Cancha",
+    "fieldsCount": "{{count}} canchas",
+    "fieldsCount_one": "{{count}} cancha",
+    "fieldsCount_other": "{{count}} canchas",
+    "gamesLast30Days": "Partidos en los últimos 30 días",
+    "gamesThisWeek": "Partidos esta semana",
+    "loadDashboardError": "Error al cargar el panel. Inténtalo de nuevo.",
+    "loadGamesError": "Error al cargar partidos de las canchas.",
+    "manage": "Gestionar",
+    "managePlayers": "Gestionar Jugadores",
+    "myFields": "Mis Canchas",
+    "myFieldsCount": "Mis Canchas ({{count}})",
+    "quickActions": "Acciones Rápidas",
+    "summary": "Resumen",
+    "title": "Panel del Propietario",
+    "upcomingGames": "Próximos Partidos",
+    "viewSchedule": "Ver Agenda"
   }
 }

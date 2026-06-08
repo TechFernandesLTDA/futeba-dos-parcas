@@ -1012,7 +1012,13 @@
       "full": "Lotado",
       "info": "Peladas abertas ao público perto de você. Entre, jogue e conheça novos craques!",
       "join": "Quero Jogar",
-      "title": "Peladas Abertas"
+      "title": "Peladas Abertas",
+      "dateTimeSeparator": "às",
+      "gamesFound": "{{count}} jogos públicos encontrados",
+      "gamesFound_one": "{{count}} jogo público encontrado",
+      "gamesFound_other": "{{count}} jogos públicos encontrados",
+      "mapLoading": "Carregando mapa...",
+      "mapNoApiKey": "Configure VITE_GOOGLE_MAPS_API_KEY para ver o mapa"
     },
     "search": {
       "clear": "Limpar busca",
@@ -1153,7 +1159,9 @@
     "sectionsAria": "Seções do grupo",
     "shareInviteLink": "Compartilhe o link abaixo para convidar jogadores",
     "viewDetails": "Ver Detalhes",
-    "viewStandings": "Ver Classificação"
+    "viewStandings": "Ver Classificação",
+    "shareText": "Venha jogar com a gente no grupo {{name}}!",
+    "shareTitle": "Convite: {{name}}"
   },
   "groups": {
     "archiveGroup": "Arquivar Grupo",
@@ -2027,5 +2035,27 @@
     "typeMajor": "Atualização principal",
     "typeMinor": "Novidades",
     "typePatch": "Correções"
+  },
+  "fieldOwner": {
+    "addNewField": "Adicionar Nova Quadra",
+    "averageRating": "Avaliação Média",
+    "comingSoon": "Em breve",
+    "fieldNameFallback": "Quadra",
+    "fieldsCount": "{{count}} campos",
+    "fieldsCount_one": "{{count}} campo",
+    "fieldsCount_other": "{{count}} campos",
+    "gamesLast30Days": "Jogos nos últimos 30 dias",
+    "gamesThisWeek": "Jogos esta semana",
+    "loadDashboardError": "Erro ao carregar dashboard. Tente novamente.",
+    "loadGamesError": "Erro ao carregar jogos das quadras.",
+    "manage": "Gerenciar",
+    "managePlayers": "Gerenciar Jogadores",
+    "myFields": "Minhas Quadras",
+    "myFieldsCount": "Minhas Quadras ({{count}})",
+    "quickActions": "Ações Rápidas",
+    "summary": "Resumo",
+    "title": "Dashboard do Proprietário",
+    "upcomingGames": "Próximos Jogos",
+    "viewSchedule": "Ver Agenda"
   }
 }
