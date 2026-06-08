@@ -72,6 +72,7 @@
     <string name="phone_verification_description">We confirm your number via SMS to prevent fake accounts. Step 1 of 2.</string>
     <string name="phone_verification_label">Phone (with area code)</string>
     <string name="phone_verification_placeholder">+15551234567</string>
+    <string name="phone_verification_country_code">+1</string>
     <string name="phone_verification_supporting_text">International format: +1 + area code + number</string>
     <string name="phone_verification_sending">Sending…</string>
     <string name="phone_verification_send_code">Send code via SMS</string>
@@ -112,6 +113,8 @@
     <string name="share_card_generated_at">Generated on %1$s</string>
     <string name="share_card_by">by %1$s</string>
     <string name="share_card_votes_format">%1$d votes (%2$d%%)</string>
+    <string name="share_card_share_text_winner">🏆 %1$s was elected %2$s!\n📊 %3$d votes (%4$d%%)\n\n⚽ %6$d - %7$d\n📍 %9$s\n\nDownload Futeba dos Parças!\n%10$s</string>
+    <string name="share_card_share_text_player_card">⚽ Check out %1$s\'s card on Futeba dos Parças!\n\n%2$s</string>
     <string name="share_card_category_mvp">Match MVP</string>
     <string name="share_card_category_goalkeeper">Best Goalkeeper</string>
     <string name="share_card_category_worst">Worst Player</string>
@@ -125,6 +128,12 @@
     <string name="share_card_position_mid">MID</string>
     <string name="share_card_position_defense">DEFENSE</string>
     <string name="share_card_position_goalkeeper">GOALKEEPER</string>
+    <string name="share_card_podium_first">1st</string>
+    <string name="share_card_podium_second">2nd</string>
+    <string name="share_card_podium_third">3rd</string>
+    <string name="share_card_date_format">MM/dd/yyyy \'at\' HH:mm</string>
+    <string name="share_card_date_format_locale">en-US</string>
+    <string name="share_card_team_score_format">%2$d - %3$d</string>
 
     <!-- Empty State Illustrations -->
     <string name="empty_illustration_no_games_title">No games found</string>
@@ -180,6 +189,30 @@
     <string name="state_error_title">Something went wrong</string>
     <string name="action_try_again">Try Again</string>
     <string name="action_clear_search">Clear Search</string>
+    <string name="empty_state_no_connection_title">No connection</string>
+    <string name="empty_state_no_connection_desc">Check your internet connection and try again</string>
+    <string name="empty_state_no_results_title">No results found</string>
+    <string name="empty_state_desc_no_results">No results for \u201C%s\u201D</string>
+    <string name="empty_state_no_games_title">No games scheduled</string>
+    <string name="empty_state_no_games_desc">How about creating the first game and gathering the crew?</string>
+    <string name="empty_state_no_players_title">No players yet</string>
+    <string name="empty_state_no_players_desc">Invite your friends to start playing!</string>
+    <string name="create_game">Create Game</string>
+    <string name="invite_players">Invite Players</string>
+    <string name="weekly_ranking_empty_desc">Come back when there are finished games this week.</string>
+    <string name="public_games_empty_desc">Come back later or create your own game!</string>
+    <string name="game_fallback">Game</string>
+    <string name="no_location_defined">Location not set</string>
+    <string name="game_status_label_scheduled">Scheduled</string>
+    <string name="game_status_label_confirmed">Confirmed</string>
+    <string name="game_status_label_live">Live</string>
+    <string name="game_status_label_finished">Finished</string>
+    <string name="game_status_label_cancelled">Cancelled</string>
+    <string name="badge_unlocked_toast">🏆 New achievement: %1$s</string>
+    <string name="invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* at *%3$s*\n📍 %4$s\n</string>
+    <string name="share_game_at_location">%1$s %2$s</string>
+    <string name="group_other_description_required">Description required for \'Other\' category</string>
+    <string name="cep_placeholder">00000-0000</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
 

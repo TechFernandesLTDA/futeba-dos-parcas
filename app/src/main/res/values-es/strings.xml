@@ -72,6 +72,7 @@
     <string name="phone_verification_description">Confirmamos tu número via SMS para evitar cuentas falsas. Paso 1 de 2.</string>
     <string name="phone_verification_label">Teléfono (con código de área)</string>
     <string name="phone_verification_placeholder">+34912345678</string>
+    <string name="phone_verification_country_code">+34</string>
     <string name="phone_verification_supporting_text">Formato internacional: +34 + código + número</string>
     <string name="phone_verification_sending">Enviando…</string>
     <string name="phone_verification_send_code">Enviar código por SMS</string>
@@ -112,6 +113,8 @@
     <string name="share_card_generated_at">Generado el %1$s</string>
     <string name="share_card_by">por %1$s</string>
     <string name="share_card_votes_format">%1$d votos (%2$d%%)</string>
+    <string name="share_card_share_text_winner">🏆 ¡%1$s fue elegido %2$s!\n📊 %3$d votos (%4$d%%)\n\n⚽ %5$s %6$d - %7$d %8$s\n📍 %9$s\n\n¡Descarga Futeba dos Parças!\n%10$s</string>
+    <string name="share_card_share_text_player_card">⚽ ¡Mira la tarjeta de %1$s en Futeba dos Parças!\n\n%2$s</string>
     <string name="share_card_category_mvp">Mejor Jugador</string>
     <string name="share_card_category_goalkeeper">Mejor Portero</string>
     <string name="share_card_category_worst">Peor Jugador</string>
@@ -125,6 +128,12 @@
     <string name="share_card_position_mid">MEDIO</string>
     <string name="share_card_position_defense">DEFENSA</string>
     <string name="share_card_position_goalkeeper">PORTERO</string>
+    <string name="share_card_podium_first">1º</string>
+    <string name="share_card_podium_second">2º</string>
+    <string name="share_card_podium_third">3º</string>
+    <string name="share_card_date_format">dd/MM/yyyy \'a las\' HH:mm</string>
+    <string name="share_card_date_format_locale">es-ES</string>
+    <string name="share_card_team_score_format">%1$s %2$d - %3$d %4$s</string>
 
     <!-- Empty State Illustrations -->
     <string name="empty_illustration_no_games_title">No se encontraron partidos</string>
@@ -180,6 +189,30 @@
     <string name="state_error_title">Algo salió mal</string>
     <string name="action_try_again">Intentar de nuevo</string>
     <string name="action_clear_search">Limpiar búsqueda</string>
+    <string name="empty_state_no_connection_title">Sin conexión</string>
+    <string name="empty_state_no_connection_desc">Verifica tu conexión a internet e intenta de nuevo</string>
+    <string name="empty_state_no_results_title">Sin resultados</string>
+    <string name="empty_state_desc_no_results">Sin resultados para \u201C%s\u201D</string>
+    <string name="empty_state_no_games_title">No hay partidos agendados</string>
+    <string name="empty_state_no_games_desc">¿Qué tal crear el primer partido y juntar a la banda?</string>
+    <string name="empty_state_no_players_title">Sin jugadores</string>
+    <string name="empty_state_no_players_desc">¡Invita a tus amigos para empezar a jugar!</string>
+    <string name="create_game">Crear partido</string>
+    <string name="invite_players">Invitar jugadores</string>
+    <string name="weekly_ranking_empty_desc">Vuelve cuando haya partidos finalizados esta semana.</string>
+    <string name="public_games_empty_desc">¡Vuelve más tarde o crea tu propio partido!</string>
+    <string name="game_fallback">Partido</string>
+    <string name="no_location_defined">Ubicación no definida</string>
+    <string name="game_status_label_scheduled">Programado</string>
+    <string name="game_status_label_confirmed">Confirmado</string>
+    <string name="game_status_label_live">En Vivo</string>
+    <string name="game_status_label_finished">Finalizado</string>
+    <string name="game_status_label_cancelled">Cancelado</string>
+    <string name="badge_unlocked_toast">🏆 Nuevo logro: %1$s</string>
+    <string name="invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* a las *%3$s*\n📍 %4$s\n</string>
+    <string name="share_game_at_location">%1$s %2$s</string>
+    <string name="group_other_description_required">Descripción obligatoria para la categoría \'Otro\'</string>
+    <string name="cep_placeholder">00000</string>
     <string name="yes">Sí</string>
     <string name="no">No</string>
 

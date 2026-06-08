@@ -87,7 +87,7 @@ fun CepLookupField(
                 onCepChange(formatted.filter { it.isDigit() })
             },
             label = { Text(stringResource(R.string.create_game_cep_label)) },
-            placeholder = { Text("00000-000") },
+            placeholder = { Text(stringResource(R.string.cep_placeholder)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.LocationOn,

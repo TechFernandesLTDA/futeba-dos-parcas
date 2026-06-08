@@ -109,6 +109,7 @@ sealed class AppUiState {
              * Cria um estado Empty a partir de um [EmptyStateType] existente.
              * Útil para migração gradual do código legado.
              */
+            @Composable
             fun fromLegacy(legacyType: EmptyStateType): Empty {
                 return when (legacyType) {
                     is EmptyStateType.NoData -> Empty(
@@ -121,10 +122,10 @@ sealed class AppUiState {
                     )
                     is EmptyStateType.NoResults -> Empty(
                         type = EmptyType.NO_RESULTS,
-                        title = legacyType.title,
+                        title = legacyType.title ?: stringResource(R.string.empty_state_no_results_title),
                         description = legacyType.description,
                         icon = legacyType.icon,
-                        actionLabel = legacyType.actionLabel,
+                        actionLabel = legacyType.actionLabel ?: stringResource(R.string.action_clear_search),
                         onAction = legacyType.onAction
                     )
                     is EmptyStateType.Error -> Empty(
@@ -132,15 +133,15 @@ sealed class AppUiState {
                         title = legacyType.title,
                         description = legacyType.description,
                         icon = legacyType.icon,
-                        actionLabel = legacyType.actionLabel,
+                        actionLabel = legacyType.actionLabel ?: stringResource(R.string.action_try_again),
                         onAction = legacyType.onRetry
                     )
                     is EmptyStateType.NoConnection -> Empty(
                         type = EmptyType.UNAVAILABLE,
-                        title = legacyType.title,
-                        description = legacyType.description,
+                        title = legacyType.title ?: stringResource(R.string.empty_state_no_connection_title),
+                        description = legacyType.description ?: stringResource(R.string.empty_state_no_connection_desc),
                         icon = legacyType.icon,
-                        actionLabel = legacyType.actionLabel,
+                        actionLabel = legacyType.actionLabel ?: stringResource(R.string.action_try_again),
                         onAction = legacyType.onRetry
                     )
                 }
@@ -154,16 +155,16 @@ sealed class AppUiState {
      * Exibe mensagem de erro com opção de retry.
      *
      * @param message Mensagem de erro para o usuário
-     * @param title Título do erro (padrão: "Erro")
+     * @param title Título do erro (padrão: R.string.error)
      * @param icon Ícone de erro
      * @param retryLabel Texto do botão de retry
      * @param onRetry Callback para tentar novamente
      */
     data class Error(
         val message: String,
-        val title: String = "Erro",
+        val title: String? = null,
         val icon: ImageVector = Icons.Default.Error,
-        val retryLabel: String = "Tentar Novamente",
+        val retryLabel: String? = null,
         val onRetry: (() -> Unit)? = null
     ) : AppUiState()
 
@@ -172,15 +173,15 @@ sealed class AppUiState {
      *
      * Estado especializado para falhas de rede.
      *
-     * @param title Título (padrão: "Sem conexão")
+     * @param title Título (padrão: R.string.empty_state_no_connection_title)
      * @param message Mensagem explicativa
      * @param retryLabel Texto do botão de retry
      * @param onRetry Callback para tentar novamente
      */
     data class NoConnection(
-        val title: String = "Sem conexão",
-        val message: String = "Verifique sua conexão com a internet e tente novamente",
-        val retryLabel: String = "Tentar Novamente",
+        val title: String? = null,
+        val message: String? = null,
+        val retryLabel: String? = null,
         val onRetry: (() -> Unit)? = null
     ) : AppUiState()
 }
@@ -240,16 +241,16 @@ fun AppStateContainer(
 
             is AppUiState.Error -> ErrorContent(
                 icon = state.icon,
-                title = state.title,
+                title = state.title ?: stringResource(R.string.error),
                 message = state.message,
-                actionLabel = state.retryLabel,
+                actionLabel = state.retryLabel ?: stringResource(R.string.action_try_again),
                 onAction = state.onRetry
             )
 
             is AppUiState.NoConnection -> NoConnectionContent(
-                title = state.title,
-                message = state.message,
-                actionLabel = state.retryLabel,
+                title = state.title ?: stringResource(R.string.empty_state_no_connection_title),
+                message = state.message ?: stringResource(R.string.empty_state_no_connection_desc),
+                actionLabel = state.retryLabel ?: stringResource(R.string.action_try_again),
                 onAction = state.onRetry
             )
         }

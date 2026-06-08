@@ -4188,7 +4188,21 @@ subir no ranking!</string>
     <string name="dream_team">Time dos Sonhos</string>
     <string name="group_challenges_title">Desafios</string>
     <string name="weekly_ranking_empty">Nenhuma pelada essa semana ainda</string>
+    <string name="weekly_ranking_empty_desc">Volte quando houver peladas finalizadas na semana.</string>
     <string name="public_games_empty">Nenhuma pelada pública no momento</string>
+    <string name="public_games_empty_desc">Volte mais tarde ou crie sua própria pelada!</string>
+    <string name="game_fallback">Pelada</string>
+    <string name="no_location_defined">Local não definido</string>
+    <string name="game_status_label_scheduled">Agendado</string>
+    <string name="game_status_label_confirmed">Confirmado</string>
+    <string name="game_status_label_live">Ao Vivo</string>
+    <string name="game_status_label_finished">Finalizado</string>
+    <string name="game_status_label_cancelled">Cancelado</string>
+    <string name="badge_unlocked_toast">🏆 Nova conquista: %1$s</string>
+    <string name="invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* às *%3$s*\n📍 %4$s\n</string>
+    <string name="share_game_at_location">%1$s %2$s</string>
+    <string name="group_other_description_required">Descrição obrigatória para categoria \'Outro\'</string>
+    <string name="cep_placeholder">00000-000</string>
     <string name="public_games_lotado">Lotado</string>
     <string name="quero_jogar">Quero Jogar</string>
     <string name="entrar">Entrar</string>
@@ -4254,6 +4268,7 @@ subir no ranking!</string>
     <string name="phone_verification_description">Confirmamos seu número via SMS para evitar contas falsas. Etapa 1 de 2.</string>
     <string name="phone_verification_label">Telefone (com DDD)</string>
     <string name="phone_verification_placeholder">+5511999998888</string>
+    <string name="phone_verification_country_code">+55</string>
     <string name="phone_verification_supporting_text">Formato internacional: +55 + DDD + número</string>
     <string name="phone_verification_sending">Enviando…</string>
     <string name="phone_verification_send_code">Enviar código por SMS</string>
@@ -4284,6 +4299,12 @@ subir no ranking!</string>
     <string name="share_card_position_mid">MEIO</string>
     <string name="share_card_position_defense">DEFESA</string>
     <string name="share_card_position_goalkeeper">GOLEIRO</string>
+    <string name="share_card_podium_first">1º</string>
+    <string name="share_card_podium_second">2º</string>
+    <string name="share_card_podium_third">3º</string>
+    <string name="share_card_date_format">dd/MM/yyyy \'às\' HH:mm</string>
+    <string name="share_card_date_format_locale">pt-BR</string>
+    <string name="share_card_team_score_format">%1$s %2$d x %3$d %4$s</string>
     <string name="share_card_share_text_winner">🏆 %1$s foi eleito %2$s!\n📊 %3$d votos (%4$d%%)\n\n⚽ %5$s %6$d x %7$d %8$s\n📍 %9$s\n\nBaixe o Futeba dos Parças!\n%10$s</string>
     <string name="share_card_share_text_player_card">⚽ Confira o cartão de %1$s no Futeba dos Parças!\n\n%2$s</string>
 

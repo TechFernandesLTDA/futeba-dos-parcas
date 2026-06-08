@@ -203,7 +203,10 @@ object ShareMVPCardHelper {
         isDarkMode: Boolean,
         photoBitmaps: Map<String, Bitmap?>
     ): Bitmap {
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR"))
+        val dateFormat = SimpleDateFormat(
+            context.getString(R.string.share_card_date_format),
+            Locale.forLanguageTag(context.getString(R.string.share_card_date_format_locale))
+        )
 
         // Cores baseadas no tema
         val bgColor = if (isDarkMode) DARK_BG else LIGHT_BG
@@ -272,7 +275,7 @@ object ShareMVPCardHelper {
                 winner, winnerPhoto,
                 CARD_WIDTH / 2f, yPos,
                 80f, GOLD_COLOR, textPrimary, textSecondary,
-                "1º", true, winnerVotes
+                context.getString(R.string.share_card_podium_first), true, winnerVotes
             )
             yPos += 180f
 
@@ -290,7 +293,7 @@ object ShareMVPCardHelper {
                         second, secondPhoto,
                         CARD_WIDTH / 4f, yPos,
                         50f, SILVER_COLOR, textPrimary, textSecondary,
-                        "2º", false, secondVotes
+                        context.getString(R.string.share_card_podium_second), false, secondVotes
                     )
                 }
 
@@ -303,7 +306,7 @@ object ShareMVPCardHelper {
                         third, thirdPhoto,
                         CARD_WIDTH * 3f / 4f, yPos,
                         50f, BRONZE_COLOR, textPrimary, textSecondary,
-                        "3º", false, thirdVotes
+                        context.getString(R.string.share_card_podium_third), false, thirdVotes
                     )
                 }
                 yPos += 140f
@@ -319,7 +322,13 @@ object ShareMVPCardHelper {
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
             }
             canvas.drawText(
-                "${gameInfo.team1Name} ${gameInfo.team1Score} x ${gameInfo.team2Score} ${gameInfo.team2Name}",
+                context.getString(
+                    R.string.share_card_team_score_format,
+                    gameInfo.team1Name,
+                    gameInfo.team1Score,
+                    gameInfo.team2Score,
+                    gameInfo.team2Name
+                ),
                 CARD_WIDTH / 2f, yPos, paint
             )
             yPos += 24f

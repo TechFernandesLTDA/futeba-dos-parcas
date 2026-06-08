@@ -184,7 +184,10 @@ object PlayerCardShareHelper {
         isDarkMode: Boolean,
         photoBitmap: Bitmap?
     ): Bitmap {
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR"))
+        val dateFormat = SimpleDateFormat(
+            context.getString(R.string.share_card_date_format),
+            Locale.forLanguageTag(context.getString(R.string.share_card_date_format_locale))
+        )
         val now = Date()
 
         // Cores baseadas no tema

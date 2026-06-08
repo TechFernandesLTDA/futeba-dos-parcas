@@ -263,7 +263,7 @@ private fun GameCardLocation(game: Game) {
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = game.locationName.ifEmpty { "Local não definido" },
+                text = game.locationName.ifEmpty { stringResource(R.string.no_location_defined) },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -369,7 +369,7 @@ private fun GameStatusBadge(
                 MaterialTheme.colorScheme.secondary,
                 MaterialTheme.colorScheme.onSecondary,
                 Icons.Default.Schedule,
-                "Agendado"
+                stringResource(R.string.game_status_label_scheduled)
             )
         }
         GameStatus.CONFIRMED -> {
@@ -377,7 +377,7 @@ private fun GameStatusBadge(
                 MaterialTheme.colorScheme.primary,
                 MaterialTheme.colorScheme.onPrimary,
                 Icons.Default.CheckCircle,
-                "Confirmado"
+                stringResource(R.string.game_status_label_confirmed)
             )
         }
         GameStatus.LIVE -> {
@@ -385,7 +385,7 @@ private fun GameStatusBadge(
                 MaterialTheme.colorScheme.error,
                 MaterialTheme.colorScheme.onError,
                 Icons.Default.SportsScore,
-                "Ao Vivo"
+                stringResource(R.string.game_status_label_live)
             )
         }
         GameStatus.FINISHED -> {
@@ -393,7 +393,7 @@ private fun GameStatusBadge(
                 MaterialTheme.colorScheme.surfaceVariant,
                 MaterialTheme.colorScheme.onSurfaceVariant,
                 Icons.Default.Flag,
-                "Finalizado"
+                stringResource(R.string.game_status_label_finished)
             )
         }
         GameStatus.CANCELLED -> {
@@ -401,7 +401,7 @@ private fun GameStatusBadge(
                 MaterialTheme.colorScheme.errorContainer,
                 MaterialTheme.colorScheme.onErrorContainer,
                 Icons.Default.Cancel,
-                "Cancelado"
+                stringResource(R.string.game_status_label_cancelled)
             )
         }
     }
