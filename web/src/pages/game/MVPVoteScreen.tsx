@@ -114,7 +114,7 @@ export const MVPVoteScreen: React.FC = () => {
       unsubscribeGame();
       unsubscribeConfirmations();
     };
-  }, [gameId]);
+  }, [gameId, t]);
 
   useEffect(() => {
     if (!hasVoted) return;
