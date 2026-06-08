@@ -290,6 +290,7 @@
     "checkingIn": "Realizando check-in...",
     "confirm": "Confirmar Check-in",
     "errorTitle": "Erro no check-in",
+    "gameFallback": "Jogo",
     "invalidLink": "Link inválido",
     "invalidOrExpired": "QR Code inválido ou expirado",
     "notAvailable": "Check-in não disponível para este jogo",
@@ -322,6 +323,7 @@
     "language": "Idioma",
     "later": "Depois",
     "loading": "Carregando...",
+    "moreOptions": "Mais opções",
     "navigationError": "Não foi possível navegar. Tente novamente.",
     "next": "Próximo",
     "noData": "Sem dados",
@@ -1873,6 +1875,13 @@
   },
   "splash": {
     "tagline": "Organize suas peladas"
+  },
+  "tactical": {
+    "defaultPlayerName": "Jogador",
+    "playersCount_one": "{{count}} jogador",
+    "playersCount_other": "{{count}} jogadores",
+    "selectPlayerAria": "Selecionar jogador {{name}}",
+    "title": "Prancheta Tática"
   },
   "statistics": {
     "assists": "Assistências",

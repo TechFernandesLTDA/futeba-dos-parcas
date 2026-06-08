@@ -290,6 +290,7 @@
     "checkingIn": "Realizando check-in...",
     "confirm": "Confirmar Check-in",
     "errorTitle": "Error en check-in",
+    "gameFallback": "Partido",
     "invalidLink": "Enlace inválido",
     "invalidOrExpired": "Código QR inválido o expirado",
     "notAvailable": "Check-in no disponible para este partido",
@@ -322,6 +323,7 @@
     "language": "Idioma",
     "later": "Después",
     "loading": "Cargando...",
+    "moreOptions": "Más opciones",
     "navigationError": "No se pudo navegar. Inténtalo de nuevo.",
     "next": "Siguiente",
     "noData": "Sin datos",
@@ -1873,6 +1875,13 @@
   },
   "splash": {
     "tagline": "Organiza tus partidos"
+  },
+  "tactical": {
+    "defaultPlayerName": "Jugador",
+    "playersCount_one": "{{count}} jugador",
+    "playersCount_other": "{{count}} jugadores",
+    "selectPlayerAria": "Seleccionar jugador {{name}}",
+    "title": "Pizarra Táctica"
   },
   "statistics": {
     "assists": "Asistencias",

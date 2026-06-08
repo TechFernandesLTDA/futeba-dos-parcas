@@ -259,7 +259,7 @@ export const LiveEventsScreen: React.FC = () => {
               onClick={() => setDialogOpen(true)}
               sx={{ display: { xs: 'none', md: 'inline-flex' } }}
             >
-              Adicionar Evento
+              {t('games.live.addEvent')}
             </Button>
           )}
         </Box>
@@ -298,7 +298,7 @@ export const LiveEventsScreen: React.FC = () => {
                         />
                       </Box>
                     }
-                    secondary={`Time ${event.team}`}
+                    secondary={t('games.live.team', { team: event.team })}
                   />
                   <Chip label={`${event.minute}'`} variant="outlined" />
                 </ListItem>
@@ -335,10 +335,10 @@ export const LiveEventsScreen: React.FC = () => {
               sx={{ mb: 2 }}
               aria-label={t('a11y.eventType')}
             >
-              <ToggleButton value="GOAL">Gol</ToggleButton>
-              <ToggleButton value="ASSIST">Assist</ToggleButton>
-              <ToggleButton value="YELLOW_CARD">Amarelo</ToggleButton>
-              <ToggleButton value="RED_CARD">Vermelho</ToggleButton>
+              <ToggleButton value="GOAL">{t('games.events.goal')}</ToggleButton>
+              <ToggleButton value="ASSIST">{t('games.events.assist')}</ToggleButton>
+              <ToggleButton value="YELLOW_CARD">{t('games.events.yellow_card')}</ToggleButton>
+              <ToggleButton value="RED_CARD">{t('games.events.red_card')}</ToggleButton>
             </ToggleButtonGroup>
 
             <ToggleButtonGroup
@@ -349,13 +349,13 @@ export const LiveEventsScreen: React.FC = () => {
               sx={{ mb: 2 }}
               aria-label={t('a11y.selectTeam')}
             >
-              <ToggleButton value="A">Time A</ToggleButton>
-              <ToggleButton value="B">Time B</ToggleButton>
+              <ToggleButton value="A">{t('games.teams.A')}</ToggleButton>
+              <ToggleButton value="B">{t('games.teams.B')}</ToggleButton>
             </ToggleButtonGroup>
 
             <TextField
               fullWidth
-              label="Nome do Jogador"
+              label={t('games.live.playerName')}
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               onBlur={() => setPlayerNameTouched(true)}
@@ -367,7 +367,7 @@ export const LiveEventsScreen: React.FC = () => {
 
             <TextField
               fullWidth
-              label="Minuto"
+              label={t('games.live.minute')}
               type="number"
               value={minute}
               onChange={(e) => setMinute(e.target.value)}

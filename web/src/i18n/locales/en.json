@@ -290,6 +290,7 @@
     "checkingIn": "Checking in...",
     "confirm": "Confirm Check-in",
     "errorTitle": "Check-in Error",
+    "gameFallback": "Game",
     "invalidLink": "Invalid link",
     "invalidOrExpired": "Invalid or expired QR Code",
     "notAvailable": "Check-in not available for this game",
@@ -322,6 +323,7 @@
     "language": "Language",
     "later": "Later",
     "loading": "Loading...",
+    "moreOptions": "More options",
     "navigationError": "Could not navigate. Please try again.",
     "next": "Next",
     "noData": "No data",
@@ -1873,6 +1875,13 @@
   },
   "splash": {
     "tagline": "Organize your games"
+  },
+  "tactical": {
+    "defaultPlayerName": "Player",
+    "playersCount_one": "{{count}} player",
+    "playersCount_other": "{{count}} players",
+    "selectPlayerAria": "Select player {{name}}",
+    "title": "Tactical Board"
   },
   "statistics": {
     "assists": "Assists",

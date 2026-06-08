@@ -151,6 +151,8 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const [stats, setStats] = useState<LocationStats | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
@@ -182,7 +184,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
           const data = snakeToCamel<RawLocationDoc>(d.data());
           return {
             id: d.id,
-            name: data.name || t('fieldOwner.fieldNameFallback'),
+            name: data.name || tRef.current('fieldOwner.fieldNameFallback'),
             city: data.city || '',
             photoUrl: data.photoUrl,
             fieldCount: data.fieldCount || 1,
@@ -195,7 +197,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error fetching owner locations:', err);
-        showErrorRef.current(t('fieldOwner.loadDashboardError'));
+        showErrorRef.current(tRef.current('fieldOwner.loadDashboardError'));
         setError(getFirestoreErrorMessage(err));
         setLoading(false);
       }
@@ -231,7 +233,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
         },
         (err) => {
           logger.error('Error fetching location games:', err);
-          showErrorRef.current(t('fieldOwner.loadGamesError'));
+          showErrorRef.current(tRef.current('fieldOwner.loadGamesError'));
           setError(getFirestoreErrorMessage(err));
         }
       );

@@ -140,7 +140,7 @@ export const GroupSettingsScreen: React.FC = () => {
       navigate('/?tab=2');
     } catch (err) {
       logger.error('Erro ao excluir grupo:', err);
-      showError((err as Error)?.message || 'Erro ao excluir grupo. Tente novamente.');
+      showError((err as Error)?.message || t('group.settings.deleteGroupErrorFallback'));
     } finally {
       setActionLoading(false);
     }
@@ -192,7 +192,7 @@ export const GroupSettingsScreen: React.FC = () => {
       batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { status: 'REMOVED' });
       batch.delete(doc(db, 'users', selectedMember.userId, 'groups', groupId));
       await batch.commit();
-      showSuccess(`${selectedMember.userName} foi removido do grupo.`);
+      showSuccess(t('group.settings.memberRemoved', { name: selectedMember.userName }));
       setKickDialogOpen(false);
       setSelectedMember(null);
     } catch (err) {
@@ -217,7 +217,7 @@ export const GroupSettingsScreen: React.FC = () => {
       batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { role: 'OWNER' as GroupRole });
       batch.update(doc(db, 'users', selectedMember.userId, 'groups', groupId), { role: 'OWNER', group_name: group!.name });
       await batch.commit();
-      showSuccess(`Propriedade transferida para ${selectedMember.userName}.`);
+      showSuccess(t('group.settings.ownershipTransferred', { name: selectedMember.userName }));
       setTransferDialogOpen(false);
       setSelectedMember(null);
     } catch (err) {
