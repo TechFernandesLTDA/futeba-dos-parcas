@@ -160,6 +160,9 @@
     "noPhoto": "No photo",
     "preview": "Preview"
   },
+  "app": {
+    "name": "Futeba dos Parças"
+  },
   "appGuide": {
     "back": "Back",
     "next": "Next",
@@ -174,9 +177,6 @@
     "slide4Subtitle": "Everything ready for your first game. Create your group, invite the crew and let's play!",
     "slide4Title": "Let's get started!",
     "startPlaying": "Let's play!"
-  },
-  "app": {
-    "name": "Futeba dos Parças"
   },
   "auth": {
     "alreadyHaveAccount": "Already have an account?",
@@ -322,7 +322,8 @@
     "success": "Success",
     "synchronize": "Synchronize",
     "viewGames": "View Games",
-    "viewGroups": "View Groups"
+    "viewGroups": "View Groups",
+    "moreOptions": "More options"
   },
   "connection": {
     "offlineLimited": "You are offline — limited functions",
@@ -1188,7 +1189,21 @@
     "mapUnavailable": "Map is unavailable at the moment.",
     "noLocations": "No registered locations",
     "noLocationsDesc": "Add a new location using the + button",
-    "title": "Locations"
+    "title": "Locations",
+    "addFirstLocation": "Add first location",
+    "addLocationsDesc": "Add locations to organize your games!",
+    "deleteLocationAria": "Delete {{name}}",
+    "deleteSuccess": "Location \"{{name}}\" deleted successfully.",
+    "editAriaLabel": "Edit {{name}}",
+    "fieldsCount_one": "{{count}} field",
+    "fieldsCount_other": "{{count}} fields",
+    "fieldsCount": "{{count}} fields",
+    "localsCount_one": "{{count}} location",
+    "localsCount_other": "{{count}} locations",
+    "localsCount": "{{count}} locations",
+    "noLocationsFound": "No locations found",
+    "searchingFor": "for \"{{query}}\"",
+    "tryDifferentSearch": "Try changing your search terms"
   },
   "mvp": {
     "bestGoalkeeper": "Best Goalkeeper",
@@ -1345,7 +1360,14 @@
   "players": {
     "removeMemberConfirm": "Remove",
     "removeMemberMessage": "Are you sure you want to remove this player from the group? This action cannot be undone.",
-    "removeMemberTitle": "Remove member"
+    "removeMemberTitle": "Remove member",
+    "defaultName": "Player",
+    "removeMemberAria": "Remove {{name}} — confirmation required",
+    "restrictedAccess": "Restricted access",
+    "restrictedAccessDesc": "You need to be a member of this group to see the players.",
+    "title": "Players",
+    "titleWithCount": "Players ({{count}})",
+    "viewPlayerCardAria": "View {{name}}'s player card"
   },
   "profile": {
     "achievements": "Achievements",
@@ -1647,73 +1669,6 @@
     "tip": "Tip: press ? at any time to open this dialog.",
     "title": "Keyboard shortcuts"
   },
-  "splash": {
-    "tagline": "Organize your games"
-  },
-  "statistics": {
-    "assists": "Assists",
-    "awards": "Awards",
-    "bestGoalkeeper": "Best Goalkeeper",
-    "bestStreak": "Record",
-    "browseGames": "Browse games",
-    "cards": "Cards",
-    "currentStreak": "Current",
-    "defensive": "Defensive",
-    "draws": "Draws",
-    "evolution": "Evolution",
-    "general": "General",
-    "goals": "Goals",
-    "goalsAndAssists": "Goals & Assists",
-    "goalsPerGame": "Avg Goals",
-    "joinGamesPrompt": "Join games to see your stats!",
-    "league": "League",
-    "level": "Level",
-    "loadError": "Error loading statistics. Try again.",
-    "loadEvolutionError": "Could not load evolution data. Try again.",
-    "losses": "Losses",
-    "mvp": "MVP",
-    "noStatsAvailable": "No statistics available",
-    "noStatsYet": "No statistics yet",
-    "noStatsYetDesc": "Play your first matches to get started.",
-    "offensive": "Offensive",
-    "perGame": "per game",
-    "presenceRate": "Attendance",
-    "rankingsGeneral": "General Rankings",
-    "recentPerformance": "Recent Performance",
-    "red": "Red",
-    "retry": "Retry",
-    "savesGoalkeeper": "Saves (Goalkeeper)",
-    "savesMade": "Saves made",
-    "seasonPerformance": "Season Performance",
-    "streak": "Streak",
-    "tabs": {
-      "achievements": "Achievements",
-      "general": "General",
-      "goals": "Goals"
-    },
-    "title": "Statistics",
-    "topGoalkeepers": "Best Goalkeepers",
-    "topPlayers": "Best Players",
-    "topScorers": "Top Scorers",
-    "total": "Total",
-    "totalGames": "Games",
-    "weeklyRecap": "Weekly Recap",
-    "winRate": "Win Rate",
-    "wins": "Wins",
-    "yellow": "Yellow",
-    "yourStats": "Your Statistics"
-  },
-  "theme": {
-    "auto": "Auto (system)",
-    "dark": "Dark",
-    "darkMode": "Dark mode",
-    "light": "Light",
-    "lightMode": "Light mode",
-    "oled": "OLED",
-    "selectTheme": "Select app theme",
-    "system": "System",
-    "title": "Theme"
-  },
   "toast": {},
   "tooltip": {
     "addToCalendar": "Add to Calendar",
@@ -1784,5 +1739,100 @@
     "typeMajor": "Major update",
     "typeMinor": "New features",
     "typePatch": "Fixes"
+  },
+  "about": {
+    "browser": "Browser",
+    "browserUnknown": "Unknown",
+    "childSafety": "Child Safety",
+    "contact": "Contact",
+    "copyright": "© 2024-{{year}} Futeba dos Parças",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDesc": "How to request account deletion",
+    "deviceInfo": "Device Information",
+    "madeWithLove": "Made with ❤️ for football lovers",
+    "notLoggedIn": "Not logged in",
+    "platform": "Platform",
+    "platformWeb": "Web",
+    "privacyPolicy": "Privacy Policy",
+    "reportProblem": "Report a Problem",
+    "tagline": "Organize your pickup games with friends",
+    "termsOfUse": "Terms of Use",
+    "title": "About",
+    "user": "User"
+  },
+  "splash": {
+    "tagline": "Organize your games"
+  },
+  "statistics": {
+    "assists": "Assists",
+    "awards": "Awards",
+    "bestGoalkeeper": "Best Goalkeeper",
+    "bestStreak": "Record",
+    "browseGames": "Browse games",
+    "cards": "Cards",
+    "currentStreak": "Current",
+    "defensive": "Defensive",
+    "draws": "Draws",
+    "evolution": "Evolution",
+    "general": "General",
+    "goals": "Goals",
+    "goalsAndAssists": "Goals & Assists",
+    "goalsPerGame": "Avg Goals",
+    "joinGamesPrompt": "Join games to see your stats!",
+    "league": "League",
+    "level": "Level",
+    "loadError": "Error loading statistics. Try again.",
+    "loadEvolutionError": "Could not load evolution data. Try again.",
+    "losses": "Losses",
+    "mvp": "MVP",
+    "noStatsAvailable": "No statistics available",
+    "noStatsYet": "No statistics yet",
+    "noStatsYetDesc": "Play your first matches to get started.",
+    "offensive": "Offensive",
+    "perGame": "per game",
+    "presenceRate": "Attendance",
+    "rankingsGeneral": "General Rankings",
+    "recentPerformance": "Recent Performance",
+    "red": "Red",
+    "retry": "Retry",
+    "savesGoalkeeper": "Saves (Goalkeeper)",
+    "savesMade": "Saves made",
+    "seasonPerformance": "Season Performance",
+    "streak": "Streak",
+    "tabs": {
+      "achievements": "Achievements",
+      "general": "General",
+      "goals": "Goals"
+    },
+    "title": "Statistics",
+    "topGoalkeepers": "Best Goalkeepers",
+    "topPlayers": "Best Players",
+    "topScorers": "Top Scorers",
+    "total": "Total",
+    "totalGames": "Games",
+    "weeklyRecap": "Weekly Recap",
+    "winRate": "Win Rate",
+    "wins": "Wins",
+    "yellow": "Yellow",
+    "yourStats": "Your Statistics"
+  },
+  "tactical": {
+    "defaultPlayerName": "Player",
+    "playersCount_one": "{{count}} player",
+    "playersCount_other": "{{count}} players",
+    "playersCount": "{{count}} players",
+    "selectPlayerAria": "Select player {{name}}",
+    "title": "Tactical Board"
+  },
+  "theme": {
+    "auto": "Auto (system)",
+    "dark": "Dark",
+    "darkMode": "Dark mode",
+    "light": "Light",
+    "lightMode": "Light mode",
+    "oled": "OLED",
+    "selectTheme": "Select app theme",
+    "system": "System",
+    "title": "Theme"
   }
 }

@@ -160,6 +160,9 @@
     "noPhoto": "Sin foto",
     "preview": "Vista previa"
   },
+  "app": {
+    "name": "Futeba dos Parças"
+  },
   "appGuide": {
     "back": "Volver",
     "next": "Siguiente",
@@ -174,9 +177,6 @@
     "slide4Subtitle": "Todo listo para tu primer partido. Crea tu grupo, invita a la gente y ¡a jugar!",
     "slide4Title": "¡Vamos a empezar!",
     "startPlaying": "¡A jugar!"
-  },
-  "app": {
-    "name": "Futeba dos Parças"
   },
   "auth": {
     "alreadyHaveAccount": "¿Ya tiene cuenta?",
@@ -322,7 +322,8 @@
     "success": "Éxito",
     "synchronize": "Sincronizar",
     "viewGames": "Ver Partidos",
-    "viewGroups": "Ver Grupos"
+    "viewGroups": "Ver Grupos",
+    "moreOptions": "Más opciones"
   },
   "connection": {
     "offlineLimited": "Estás sin conexión — funciones limitadas",
@@ -1188,7 +1189,21 @@
     "mapUnavailable": "Mapa no disponible en este momento.",
     "noLocations": "Sin ubicaciones registradas",
     "noLocationsDesc": "Agrega una nueva ubicación usando el botón +",
-    "title": "Ubicaciones"
+    "title": "Ubicaciones",
+    "addFirstLocation": "Agregar primer lugar",
+    "addLocationsDesc": "¡Agrega lugares para organizar tus juegos!",
+    "deleteLocationAria": "Eliminar {{name}}",
+    "deleteSuccess": "Lugar \"{{name}}\" eliminado con éxito.",
+    "editAriaLabel": "Editar {{name}}",
+    "fieldsCount_one": "{{count}} cancha",
+    "fieldsCount_other": "{{count}} canchas",
+    "fieldsCount": "{{count}} canchas",
+    "localsCount_one": "{{count}} lugar",
+    "localsCount_other": "{{count}} lugares",
+    "localsCount": "{{count}} lugares",
+    "noLocationsFound": "No se encontraron lugares",
+    "searchingFor": "para \"{{query}}\"",
+    "tryDifferentSearch": "Intenta cambiar los términos de búsqueda"
   },
   "mvp": {
     "bestGoalkeeper": "Mejor Portero",
@@ -1345,7 +1360,14 @@
   "players": {
     "removeMemberConfirm": "Eliminar",
     "removeMemberMessage": "¿Estás seguro de que quieres eliminar a este jugador del grupo? Esta acción no se puede deshacer.",
-    "removeMemberTitle": "Eliminar miembro"
+    "removeMemberTitle": "Eliminar miembro",
+    "defaultName": "Jugador",
+    "removeMemberAria": "Eliminar {{name}} — confirmación requerida",
+    "restrictedAccess": "Acceso restringido",
+    "restrictedAccessDesc": "Necesitas ser miembro de este grupo para ver a los jugadores.",
+    "title": "Jugadores",
+    "titleWithCount": "Jugadores ({{count}})",
+    "viewPlayerCardAria": "Ver figurita de {{name}}"
   },
   "profile": {
     "achievements": "Logros",
@@ -1647,73 +1669,6 @@
     "tip": "Consejo: presiona ? en cualquier momento para abrir este diálogo.",
     "title": "Atajos de teclado"
   },
-  "splash": {
-    "tagline": "Organiza tus partidos"
-  },
-  "statistics": {
-    "assists": "Asistencias",
-    "awards": "Premios",
-    "bestGoalkeeper": "Mejor Portero",
-    "bestStreak": "Récord",
-    "browseGames": "Ver partidos disponibles",
-    "cards": "Tarjetas",
-    "currentStreak": "Actual",
-    "defensive": "Defensivo",
-    "draws": "Empates",
-    "evolution": "Evolución",
-    "general": "General",
-    "goals": "Goles",
-    "goalsAndAssists": "Goles y Asistencias",
-    "goalsPerGame": "Promedio Goles",
-    "joinGamesPrompt": "¡Participa en partidos para ver tus estadísticas!",
-    "league": "Liga",
-    "level": "Nivel",
-    "loadError": "Error al cargar estadísticas. Intenta de nuevo.",
-    "loadEvolutionError": "No se pudieron cargar los datos de evolución. Intenta de nuevo.",
-    "losses": "Derrotas",
-    "mvp": "MVP",
-    "noStatsAvailable": "No hay estadísticas disponibles",
-    "noStatsYet": "Sin estadísticas aún",
-    "noStatsYetDesc": "Juega tus primeros partidos para empezar.",
-    "offensive": "Ofensivo",
-    "perGame": "por partido",
-    "presenceRate": "Asistencia",
-    "rankingsGeneral": "Rankings Generales",
-    "recentPerformance": "Rendimiento Reciente",
-    "red": "Rojas",
-    "retry": "Reintentar",
-    "savesGoalkeeper": "Atajadas (Portero)",
-    "savesMade": "Atajadas realizadas",
-    "seasonPerformance": "Rendimiento de Temporada",
-    "streak": "Racha",
-    "tabs": {
-      "achievements": "Logros",
-      "general": "General",
-      "goals": "Goles"
-    },
-    "title": "Estadísticas",
-    "topGoalkeepers": "Mejores Porteros",
-    "topPlayers": "Mejores Jugadores",
-    "topScorers": "Goleadores",
-    "total": "Total",
-    "totalGames": "Partidos",
-    "weeklyRecap": "Resumen Semanal",
-    "winRate": "Tasa de Victoria",
-    "wins": "Victorias",
-    "yellow": "Amarillas",
-    "yourStats": "Tus Estadísticas"
-  },
-  "theme": {
-    "auto": "Automático (sistema)",
-    "dark": "Oscuro",
-    "darkMode": "Modo oscuro",
-    "light": "Claro",
-    "lightMode": "Modo claro",
-    "oled": "OLED",
-    "selectTheme": "Seleccionar tema de la app",
-    "system": "Sistema",
-    "title": "Tema"
-  },
   "toast": {},
   "tooltip": {
     "addToCalendar": "Añadir al Calendario",
@@ -1784,5 +1739,100 @@
     "typeMajor": "Actualización principal",
     "typeMinor": "Novedades",
     "typePatch": "Correcciones"
+  },
+  "about": {
+    "browser": "Navegador",
+    "browserUnknown": "Desconocido",
+    "childSafety": "Seguridad Infantil",
+    "contact": "Contacto",
+    "copyright": "© 2024-{{year}} Futeba dos Parças",
+    "deleteAccount": "Eliminar Cuenta",
+    "deleteAccountDesc": "Cómo solicitar la eliminación de la cuenta",
+    "deviceInfo": "Información del Dispositivo",
+    "madeWithLove": "Hecho con ❤️ para los amantes del fútbol",
+    "notLoggedIn": "No has iniciado sesión",
+    "platform": "Plataforma",
+    "platformWeb": "Web",
+    "privacyPolicy": "Política de Privacidad",
+    "reportProblem": "Reportar Problema",
+    "tagline": "Organiza tus partidos con los amigos",
+    "termsOfUse": "Términos de Uso",
+    "title": "Acerca de",
+    "user": "Usuario"
+  },
+  "splash": {
+    "tagline": "Organiza tus partidos"
+  },
+  "statistics": {
+    "assists": "Asistencias",
+    "awards": "Premios",
+    "bestGoalkeeper": "Mejor Portero",
+    "bestStreak": "Récord",
+    "browseGames": "Ver partidos disponibles",
+    "cards": "Tarjetas",
+    "currentStreak": "Actual",
+    "defensive": "Defensivo",
+    "draws": "Empates",
+    "evolution": "Evolución",
+    "general": "General",
+    "goals": "Goles",
+    "goalsAndAssists": "Goles y Asistencias",
+    "goalsPerGame": "Promedio Goles",
+    "joinGamesPrompt": "¡Participa en partidos para ver tus estadísticas!",
+    "league": "Liga",
+    "level": "Nivel",
+    "loadError": "Error al cargar estadísticas. Intenta de nuevo.",
+    "loadEvolutionError": "No se pudieron cargar los datos de evolución. Intenta de nuevo.",
+    "losses": "Derrotas",
+    "mvp": "MVP",
+    "noStatsAvailable": "No hay estadísticas disponibles",
+    "noStatsYet": "Sin estadísticas aún",
+    "noStatsYetDesc": "Juega tus primeros partidos para empezar.",
+    "offensive": "Ofensivo",
+    "perGame": "por partido",
+    "presenceRate": "Asistencia",
+    "rankingsGeneral": "Rankings Generales",
+    "recentPerformance": "Rendimiento Reciente",
+    "red": "Rojas",
+    "retry": "Reintentar",
+    "savesGoalkeeper": "Atajadas (Portero)",
+    "savesMade": "Atajadas realizadas",
+    "seasonPerformance": "Rendimiento de Temporada",
+    "streak": "Racha",
+    "tabs": {
+      "achievements": "Logros",
+      "general": "General",
+      "goals": "Goles"
+    },
+    "title": "Estadísticas",
+    "topGoalkeepers": "Mejores Porteros",
+    "topPlayers": "Mejores Jugadores",
+    "topScorers": "Goleadores",
+    "total": "Total",
+    "totalGames": "Partidos",
+    "weeklyRecap": "Resumen Semanal",
+    "winRate": "Tasa de Victoria",
+    "wins": "Victorias",
+    "yellow": "Amarillas",
+    "yourStats": "Tus Estadísticas"
+  },
+  "tactical": {
+    "defaultPlayerName": "Jugador",
+    "playersCount_one": "{{count}} jugador",
+    "playersCount_other": "{{count}} jugadores",
+    "playersCount": "{{count}} jugadores",
+    "selectPlayerAria": "Seleccionar jugador {{name}}",
+    "title": "Pizarra Táctica"
+  },
+  "theme": {
+    "auto": "Automático (sistema)",
+    "dark": "Oscuro",
+    "darkMode": "Modo oscuro",
+    "light": "Claro",
+    "lightMode": "Modo claro",
+    "oled": "OLED",
+    "selectTheme": "Seleccionar tema de la app",
+    "system": "Sistema",
+    "title": "Tema"
   }
 }
