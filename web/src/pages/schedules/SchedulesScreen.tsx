@@ -204,10 +204,10 @@ export const SchedulesScreen: React.FC = () => {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <ScheduleIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              Nenhum agendamento
+              {t('schedule.emptyTitle')}
             </Typography>
             <Typography variant="body2" color="text.disabled">
-              Crie agendamentos para jogos recorrentes
+              {t('schedule.emptyDesc')}
             </Typography>
             <Button
               variant="contained"
@@ -215,7 +215,7 @@ export const SchedulesScreen: React.FC = () => {
               onClick={() => setDialogOpen(true)}
               sx={{ mt: 2 }}
             >
-              Criar primeiro agendamento
+              {t('schedule.createFirst')}
             </Button>
           </Box>
         ) : (
@@ -232,9 +232,9 @@ export const SchedulesScreen: React.FC = () => {
                           onChange={() => handleToggleActive(schedule)}
                           disabled={togglingId === schedule.id}
                           size="small"
-                          inputProps={{ 'aria-label': `${schedule.isActive ? 'Desativar' : 'Ativar'} ${schedule.name}` }}
+                          inputProps={{ 'aria-label': schedule.isActive ? t('schedule.deactivate', { name: schedule.name }) : t('schedule.activate', { name: schedule.name }) }}
                         />
-                        <IconButton onClick={() => handleDeleteClick(schedule)} aria-label={`Excluir ${schedule.name}`}>
+                        <IconButton onClick={() => handleDeleteClick(schedule)} aria-label={t('schedule.deleteAria', { name: schedule.name })}>
                           <DeleteIcon color="error" />
                         </IconButton>
                       </Box>
@@ -245,11 +245,11 @@ export const SchedulesScreen: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           {schedule.name}
                           {!schedule.isActive && (
-                            <Chip label="Inativo" size="small" color="default" />
+                            <Chip label={t('schedule.inactive')} size="small" color="default" />
                           )}
                         </Box>
                       }
-                      secondary={`${DAYS_OF_WEEK[schedule.dayOfWeek]} às ${schedule.time} • ${schedule.maxPlayers} jogadores`}
+                      secondary={t('schedule.itemDescription', { day: daysOfWeek[schedule.dayOfWeek], time: schedule.time, players: schedule.maxPlayers })}
                     />
                   </ListItem>
                 </Box>
@@ -260,12 +260,12 @@ export const SchedulesScreen: React.FC = () => {
       </Container>
 
       <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setScheduleNameTouched(false); setScheduleTimeTouched(false); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="new-schedule-dialog-title">
-        <DialogTitle id="new-schedule-dialog-title">Novo Agendamento</DialogTitle>
+        <DialogTitle id="new-schedule-dialog-title">{t('schedule.newTitle')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
               autoFocus
-              label="Nome"
+              label={t('schedule.nameLabel')}
               value={newScheduleName}
               onChange={(e) => setNewScheduleName(e.target.value)}
               onBlur={() => setScheduleNameTouched(true)}
@@ -278,17 +278,17 @@ export const SchedulesScreen: React.FC = () => {
             />
             <TextField
               select
-              label="Dia da Semana"
+              label={t('schedule.dayOfWeekLabel')}
               value={newScheduleDay}
               onChange={(e) => setNewScheduleDay(Number(e.target.value))}
               fullWidth
             >
-              {DAYS_OF_WEEK.map((day, idx) => (
+              {daysOfWeek.map((day, idx) => (
                 <MenuItem key={idx} value={idx}>{day}</MenuItem>
               ))}
             </TextField>
             <TextField
-              label="Horário"
+              label={t('schedule.timeLabel')}
               type="time"
               value={newScheduleTime}
               onChange={(e) => setNewScheduleTime(e.target.value)}
@@ -300,7 +300,7 @@ export const SchedulesScreen: React.FC = () => {
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              label="Máx. Jogadores"
+              label={t('games.create.maxPlayers')}
               type="number"
               value={newScheduleMaxPlayers}
               onChange={(e) => { const v = parseInt(e.target.value); setNewScheduleMaxPlayers(isNaN(v) ? 14 : v); }}
@@ -312,19 +312,19 @@ export const SchedulesScreen: React.FC = () => {
         <DialogActions>
           <Button onClick={() => { setDialogOpen(false); setScheduleNameTouched(false); setScheduleTimeTouched(false); }} disabled={actionLoading}>{t('common.cancel')}</Button>
           <Button variant="contained" onClick={handleCreateSchedule} disabled={actionLoading || !newScheduleName.trim() || !newScheduleTime} startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}>
-            {actionLoading ? 'Criando...' : t('common.save')}
+            {actionLoading ? t('schedule.creating') : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}
-        title="Excluir Agendamento"
-        message={`Tem certeza que deseja excluir "${deletingSchedule?.name}"? Esta ação não pode ser desfeita.`}
+        title={t('schedule.deleteTitle')}
+        message={t('schedule.deleteConfirm', { name: deletingSchedule?.name })}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         loading={actionLoading}
-        loadingLabel="Excluindo..."
+        loadingLabel={t('common.deleting')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialogOpen(false)}
       />
