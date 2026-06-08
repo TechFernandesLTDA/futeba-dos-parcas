@@ -128,7 +128,7 @@ export const LiveStatsScreen: React.FC = () => {
         logger.error('Error fetching stats:', error);
         if (!cancelled) {
           setError(t('feedback.statistics.loadLiveError'));
-          showErrorRef.current('Erro ao carregar estatísticas. Tente novamente.');
+          showErrorRef.current(t('games.liveStats.loadError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -182,13 +182,13 @@ export const LiveStatsScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Estatísticas ao Vivo
+            {t('games.liveStats.title')}
           </Typography>
         </Box>
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="fullWidth" aria-label={t('a11y.liveStatsCategories')}>
-          <Tab label="Placar" />
-          <Tab label="Eventos" />
-          <Tab label="Jogadores" />
+          <Tab label={t('games.liveStats.tabScoreboard')} />
+          <Tab label={t('games.liveStats.tabEvents')} />
+          <Tab label={t('games.liveStats.tabPlayers')} />
         </Tabs>
       </Box>
 
@@ -202,7 +202,7 @@ export const LiveStatsScreen: React.FC = () => {
                     <Typography variant="h2" fontWeight={700} color="primary">
                       {stats.teamAScore}
                     </Typography>
-                    <Chip label="Time A" color="primary" />
+                    <Chip label={t('games.teams.A')} color="primary" />
                   </Grid>
                   <Grid xs={2}>
                     <Typography variant="h5" color="text.secondary">
@@ -213,7 +213,7 @@ export const LiveStatsScreen: React.FC = () => {
                     <Typography variant="h2" fontWeight={700} color="secondary">
                       {stats.teamBScore}
                     </Typography>
-                    <Chip label="Time B" color="secondary" />
+                    <Chip label={t('games.teams.B')} color="secondary" />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -223,7 +223,7 @@ export const LiveStatsScreen: React.FC = () => {
               <Grid xs={6}>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Artilheiro Time A
+                    {t('games.liveStats.topScorerA')}
                   </Typography>
                   {stats.topScorerA ? (
                     <>
@@ -232,12 +232,12 @@ export const LiveStatsScreen: React.FC = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <SoccerIcon fontSize="small" color="success" />
-                        <Typography>{stats.topScorerA.goals} gols</Typography>
+                        <Typography>{t('games.liveStats.goals', { count: stats.topScorerA.goals })}</Typography>
                       </Box>
                     </>
                   ) : (
                     <Typography variant="body2" color="text.disabled">
-                      Sem gols
+                      {t('games.liveStats.noGoals')}
                     </Typography>
                   )}
                 </Paper>
@@ -245,7 +245,7 @@ export const LiveStatsScreen: React.FC = () => {
               <Grid xs={6}>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Artilheiro Time B
+                    {t('games.liveStats.topScorerB')}
                   </Typography>
                   {stats.topScorerB ? (
                     <>
@@ -254,12 +254,12 @@ export const LiveStatsScreen: React.FC = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <SoccerIcon fontSize="small" color="success" />
-                        <Typography>{stats.topScorerB.goals} gols</Typography>
+                        <Typography>{t('games.liveStats.goals', { count: stats.topScorerB.goals })}</Typography>
                       </Box>
                     </>
                   ) : (
                     <Typography variant="body2" color="text.disabled">
-                      Sem gols
+                      {t('games.liveStats.noGoals')}
                     </Typography>
                   )}
                 </Paper>

@@ -156,8 +156,8 @@ export const GroupDetailScreen: React.FC = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Convite: ${group?.name}`,
-          text: `Venha jogar com a gente no grupo ${group?.name}!`,
+          title: t('groupDetail.shareTitle', { name: group?.name || '' }),
+          text: t('groupDetail.shareText', { name: group?.name || '' }),
           url: link,
         });
       } catch (err) {
@@ -268,7 +268,7 @@ export const GroupDetailScreen: React.FC = () => {
 
       <AppBreadcrumbs
         items={[
-          { label: 'Grupos', to: '/?tab=2' },
+          { label: t('nav.groups'), to: '/?tab=2' },
           { label: group.name },
         ]}
       />
