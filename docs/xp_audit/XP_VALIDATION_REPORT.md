@@ -2,7 +2,7 @@
 
 ## 📊 Status Geral: ✅ VALIDADO E CORRIGIDO
 
-Após a intervenção técnica, o sistema de XP do Futeba dos Parças está em conformidade com o Contrato Público e organizacional.
+Após a intervenção técnica, o sistema de XP do Futeba dos Parças está em conformidade com o contrato público e organizacional.
 
 ---
 
@@ -20,9 +20,9 @@ Após a intervenção técnica, o sistema de XP do Futeba dos Parças está em c
 * **Bônus de Presença:** +10 XP (Funcionalidade de fidelidade mantida).
 * **Bônus de Sequência (Streak):** Implementado bônus extra para 3 (+20), 7 (+50) e 10+ (+100) partidas seguidas.
 
-### 3. Integridade e Mérito
-* **Goleiro Artilheiro:** Bloqueio removido. Goleiros pontuam gols e assistências normalmente.
-* **Sem Teto de Performance:** Limites artificiais removidos. Todo mérito técnico é contabilizado.
+### 3. Integridade e mérito
+* **Goleiro artilheiro:** Bloqueio removido. Goleiros pontuam gols e assistências normalmente.
+* **Sem teto de performance:** Limites artificiais removidos. Todo mérito técnico é contabilizado.
 
 ### 4. Arquitetura de Software
 * **Atomicidade:** Uso de `WriteBatch` garantido.
@@ -31,12 +31,12 @@ Após a intervenção técnica, o sistema de XP do Futeba dos Parças está em c
 
 ---
 
-## 🛠️ Ações Realizadas
+## 🛠️ Ações realizadas
 As recomendações anteriores foram totalmente endereçadas:
 
-1. **Sincronização:** `XPCalculator.kt` atualizado com valores contratuais.
-2. **Participação e Streak:** Mantidos como features de engajamento (Fidelidade), conforme decisão de produto.
-3. **Limites:** Removidos do código (`minOf` retirados).
+1. **Sincronização:** `XPCalculator.kt` atualizado com os valores contratuais.
+2. **Participação e streak:** Mantidos como features de engajamento (fidelidade), conforme decisão de produto.
+3. **Limites:** Removidos do código (chamadas a `minOf` retiradas).
 4. **Goleiro:** Lógica condicional removida para permitir pontuação completa.
 
 ---

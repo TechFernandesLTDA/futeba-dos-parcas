@@ -34,7 +34,7 @@ Diagnosticar e resolver o erro "Usuário não autenticado" no Google Sign-In par
 ```
 
 ### 4. Dependencies ✅
-- **Firebase BOM:** 33.7.0 (latest)
+- **Firebase BOM:** 33.7.0
 - **Credentials:** 1.3.0
 - **Google ID:** 1.1.1
 - **Status:** ✅ All up-to-date

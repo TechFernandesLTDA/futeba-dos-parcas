@@ -2,18 +2,18 @@
 
 ## Reportando vulnerabilidades
 
-Se você descobrir uma vulnerabilidade de segurança, **não abra uma issue pública**. Entre em contato diretamente pelo email:
+Se você descobrir uma vulnerabilidade de segurança, **não abra uma issue pública**. Entre em contato diretamente pelo e-mail:
 
 **[support@futebadosparcas.com](mailto:support@futebadosparcas.com)**
 
-Inclua o máximo de informações possíveis para nos ajudar a reproduzir e entender o problema:
+Inclua o máximo de informações possível para nos ajudar a reproduzir e entender o problema:
 - Descrição detalhada da vulnerabilidade
 - Passos para reproduzir
 - Impacto potencial
 - Sugestões de mitigação (se houver)
 
 ### Criptografia
-Se desejar enviar informações sensíveis de forma segura, use nossa chave PGP:
+Se desejar enviar informações sensíveis de forma segura, utilize nossa chave PGP:
 
 **Fingerprint:** `XXXX XXXX XXXX XXXX XXXX  XXXX XXXX XXXX XXXX XXXX`
 **Chave pública:** https://futebadosparcas.web.app/pgp-key.asc
@@ -28,7 +28,7 @@ Se desejar enviar informações sensíveis de forma segura, use nossa chave PGP:
 | Baixa | 2 semanas | Próximo release |
 
 ## Programa de Recompensas
-Atualmente não oferecemos recompensas financeiras, mas todo reporte válido receberá:
+Atualmente não oferecemos recompensas financeiras, mas todo relato válido receberá:
 - Crédito público no README e changelog
 - Badge exclusivo "Security Researcher" no app (se aplicável)
 
@@ -52,7 +52,7 @@ O programa de segurança cobre:
 2. **Análise**: Nossa equipe investigará a vulnerabilidade e determinará o impacto.
 3. **Correção**: Uma vez validada, trabalharemos em uma correção.
 4. **Divulgação**: Após a correção ser publicada, divulgaremos a vulnerabilidade de forma responsável.
-5. **Crédito**: Com seu consentimento, daremos crédito público pelo reporte.
+5. **Crédito**: Com seu consentimento, daremos crédito público pelo relato.
 
 ## Versões suportadas
 

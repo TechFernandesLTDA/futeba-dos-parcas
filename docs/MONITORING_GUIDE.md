@@ -69,10 +69,13 @@ gcloud pubsub topics create budget-alerts
 3. Criar Cloud Function listener (opcional):
 ```typescript
 // functions/src/monitoring/budget-alerts.ts
-export const onBudgetAlert = functions.pubsub
-  .topic("budget-alerts")
-  .onPublish(async (message) => {
-    const budgetData = message.json;
+// Cloud Functions v2 — usa onMessagePublished do firebase-functions/v2/pubsub
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
+
+export const onBudgetAlert = onMessagePublished(
+  { topic: "budget-alerts" },
+  async (event) => {
+    const budgetData = event.data.message.json;
     const costAmount = budgetData.costAmount;
     const budgetAmount = budgetData.budgetAmount;
     const percentageUsed = (costAmount / budgetAmount) * 100;
@@ -82,7 +85,8 @@ export const onBudgetAlert = functions.pubsub
     // Enviar notificação no app
     // Desabilitar features não-essenciais se >90%
     // etc.
-  });
+  }
+);
 ```
 
 ---
@@ -384,9 +388,9 @@ suspend fun getMetricsLast7Days(): List<DailyMetric> {
 }
 ```
 
-#### Opção 3: Google Data Studio (recomendado para produção)
+#### Opção 3: Looker Studio / Google Data Studio (recomendado para produção)
 
-1. Acessar: https://datastudio.google.com
+1. Acessar: https://lookerstudio.google.com (antigo `datastudio.google.com`, redireciona automaticamente)
 2. Criar novo relatório
 3. Conectar ao Firestore:
    - Data source: **BigQuery**
@@ -527,7 +531,7 @@ gcloud pubsub topics publish budget-alerts --message '{"test": true}'
 
 - [ ] Implementar cache Redis para queries frequentes
 - [ ] Exportar Firestore para BigQuery (analytics)
-- [ ] Dashboard visual com Data Studio
+- [ ] Dashboard visual com Looker Studio
 - [ ] Alertas proativos (Slack/Discord webhook)
 - [ ] Auto-scaling de Cloud Functions
 - [ ] CDN para imagens (Cloud CDN ou Cloudflare)

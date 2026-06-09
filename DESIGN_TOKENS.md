@@ -1,6 +1,6 @@
 # Design Tokens — Futeba dos Parças
 
-> **Fonte única de design system cross-platform.** Documenta os tokens
+> **Fonte única do design system cross-platform.** Documenta os tokens
 > canônicos compartilhados entre Web (React + MUI 5) e Android (Compose +
 > Material 3). Toda nova feature deve consumir estes tokens — nunca valores
 > hardcoded.
@@ -52,7 +52,7 @@ neutro/OLED. **Unificar é decisão de produto** — registrada em
 
 ## 2. Gamificação (medalhas, MVP, divisões)
 
-**Canônico = Android** (`GamificationColors` em `Color.kt`), documentado também
+**Canônico = Android** (`GamificationColors` em `Color.kt`); documentado também
 em `.claude/rules/material3-compose-reference.md`.
 
 | Token   | HEX base canônico | Web light                   | Web dark                        | Android (`GamificationColors`)    |
@@ -237,6 +237,6 @@ Statistics, Confirmations**.
 
 ## Manutenção
 
-Atualizar este arquivo como parte de qualquer feature que introduza/altere um
-token. Decisões de divergência (ex.: dark background, bottom nav) vão para
-`specs/DECISIONS.md`.
+Atualize este arquivo como parte de qualquer feature que introduza ou altere um
+token. Decisões de divergência (ex.: dark background, bottom nav) devem ser
+registradas em `specs/DECISIONS.md`.

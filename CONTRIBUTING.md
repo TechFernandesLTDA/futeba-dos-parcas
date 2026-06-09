@@ -1,6 +1,6 @@
 # Guia de Contribuição - Futeba dos Parças
 
-Obrigado por considerar contribuir! 🎉
+Obrigado por considerar contribuir!
 
 > **Nota:** Este é um repositório privado. Contribuidores externos devem solicitar acesso antes de enviar contribuições. Entre em contato pelo email [techfernandesltda@gmail.com](mailto:techfernandesltda@gmail.com).
 
@@ -20,7 +20,7 @@ Obrigado por considerar contribuir! 🎉
 
 ## Code of Conduct
 
-Este projeto segue um código de conduta. Ao participar, você concorda em seguir estas diretrizes.
+Este projeto segue um código de conduta. Ao participar, você concorda em respeitar estas diretrizes.
 
 ---
 
@@ -80,7 +80,7 @@ Abra um PR no GitHub seguindo o [template](.github/pull_request_template.md).
 - Android SDK 35
 - Git
 - Firebase CLI (para Functions)
-- Node.js 20+ (para Web e Functions)
+- Node.js 22+ (para Web e Functions)
 
 ### Setup Android
 
@@ -224,7 +224,7 @@ UI (Compose) → ViewModel (StateFlow) → UseCase → Repository → DataSource
 
 ## Conventional Commits
 
-Usamos [Conventional Commits](https://www.conventionalcommits.org/) em português (PT-BR) para padronizar mensagens de commit.
+Usamos [Conventional Commits](https://www.conventionalcommits.org/) para padronizar mensagens de commit. As descrições devem ser escritas em português (PT-BR).
 
 ### Formato
 
@@ -306,4 +306,4 @@ Use o [Bug Report Template](https://github.com/TechFernandesLTDA/futeba-dos-parc
 
 ---
 
-**Obrigado por contribuir! ⚽**
+**Obrigado por contribuir!**

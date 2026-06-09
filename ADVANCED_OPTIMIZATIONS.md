@@ -8,7 +8,7 @@
 
 ## 📊 Resumo Executivo
 
-Implementadas as 3 melhorias recomendadas no relatório anterior:
+Implementadas as 3 melhorias recomendadas no relatório anterior de performance:
 
 1. ✅ **Bundle Size Optimization** - Code splitting avançado com manualChunks
 2. ✅ **Real User Monitoring (RUM)** - Web Vitals em produção com Firebase Analytics
@@ -30,7 +30,7 @@ Implementadas as 3 melhorias recomendadas no relatório anterior:
   - `vendor-query`: TanStack Query
   - `vendor-charts`: Recharts + D3
   - `vendor-html2canvas`: HTML2Canvas (lazy loaded)
-  - `vendor-utils`: date-fns e outras utilities
+  - `vendor-utils`: date-fns e outros utilitários
 
 **Resultado:**
 ```
@@ -98,8 +98,8 @@ onTTFB(sendToAnalytics); // Time to First Byte
 
 **Resultado:**
 - Redução de latência em navegações subsequentes
-- Preconnect reduz tempo de handshake TLS
-- Prefetch antecipa rotas prováveis baseado em contexto
+- Preconnect reduz o tempo de handshake TLS
+- Prefetch antecipa rotas prováveis com base no contexto de navegação
 
 ---
 
@@ -114,7 +114,7 @@ onTTFB(sendToAnalytics); // Time to First Byte
 | **Cache Effectiveness** | 59% | 98.5% | +67% |
 | **Initial Load Time** | 69ms | 53ms | +23% |
 
-*Cold start alto é esperado na primeira requisição após deploy (CDN warming)
+*TTFB alto no cold start é esperado na primeira requisição após deploy (CDN warming)*
 
 ### Web Vitals (Budgets)
 
@@ -207,7 +207,7 @@ open dist/stats.html
 
 ### Web Vitals (Esperado em Produção)
 
-Com RUM ativo, as métricas serão coletadas de usuários reais:
+Com o RUM ativo, as métricas são coletadas de usuários reais:
 - **LCP:** Target ≤2500ms
 - **FCP:** Target ≤1800ms
 - **CLS:** Target ≤0.1
@@ -229,7 +229,7 @@ Com RUM ativo, as métricas serão coletadas de usuários reais:
 3. Otimizar queries do Firestore com índices compostos
 
 ### Longo Prazo
-1. Migrar para Vite 6+ com Rolldown (build 10x mais rápido)
+1. ~~Migrar para Vite 6+ com Rolldown~~ (concluído — Vite 8 já em uso)
 2. Implementar edge caching com Cloudflare Workers
 3. Adotar React Server Components para reduzir bundle client-side
 

@@ -1,7 +1,7 @@
 # 🔒 SECURITY AUDIT REPORT
 **Futeba dos Parças - v1.4.2**
-**Data Auditoria**: 2026-01-06
-**Data Validação**: 2026-01-08
+**Data da Auditoria**: 2026-01-06
+**Data de Validação**: 2026-01-08
 **Status**: ✅ **TODAS VULNERABILIDADES CRÍTICAS CORRIGIDAS**
 
 ---
@@ -14,7 +14,7 @@
 **Status**: ✅ **CORRIGIDO** (2026-01-08)
 
 **Descrição**:
-Firestore Rules poderiam permitir que usuários com role `FIELD_OWNER` ou `ADMIN` atualizassem diretamente os campos `experience_points`, `level` e `milestones_achieved` sem validação server-side.
+As Firestore Rules poderiam permitir que usuários com role `FIELD_OWNER` ou `ADMIN` atualizassem diretamente os campos `experience_points`, `level` e `milestones_achieved` sem validação server-side.
 
 **Impacto**:
 - Usuários maliciosos poderiam se promover a nível máximo
@@ -54,12 +54,12 @@ allow update: if
 **Status**: ✅ **CORRIGIDO** (2026-01-08)
 
 **Descrição**:
-Cloud Function `onGameStatusUpdate` poderia processar jogos sem validar se o owner_id é legítimo ou se o contexto de execução é autorizado.
+A Cloud Function `onGameStatusUpdate` poderia processar jogos sem validar se o `owner_id` é legítimo ou se o contexto de execução é autorizado.
 
 **Impacto**:
-- Qualquer usuário poderia criar jogo falso e triggerar processamento de XP
+- Qualquer usuário poderia criar um jogo falso e disparar o processamento de XP
 - Possível DoS ao criar milhares de jogos simultâneos
-- Custo Firebase elevado devido a execuções não autorizadas
+- Custo elevado no Firebase devido a execuções não autorizadas
 
 **Localização**:
 - `functions/src/index.ts:210-526`
@@ -110,12 +110,12 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 **Status**: ✅ **CORRIGIDO** (2026-01-06)
 
 **Descrição**:
-Arquivo `storage.rules` não existia. Storage estava com regras padrão (liberado para leitura/escrita).
+O arquivo `storage.rules` não existia. O Storage estava com regras padrão (leitura/escrita liberadas).
 
 **Impacto**:
 - Qualquer usuário poderia ler arquivos de outros usuários
 - Upload de arquivos maliciosos sem limite de tamanho
-- Possível injeção de malware via upload
+- Possível injeção de malware via upload de arquivos
 
 **Correção Aplicada**: ✅ Arquivo `storage.rules` criado com validações de:
 - Autenticação obrigatória
@@ -133,7 +133,7 @@ Arquivo `storage.rules` não existia. Storage estava com regras padrão (liberad
 **Status**: ✅ **CORRIGIDO** (2026-01-08)
 
 **Descrição**:
-Usuários poderiam votar em MVP semanas após o jogo ter sido finalizado.
+Usuários poderiam votar no MVP semanas após o jogo ter sido finalizado.
 
 **Impacto**:
 - Manipulação de resultados de votação
@@ -151,15 +151,15 @@ private const val VOTE_WINDOW_HOURS = 24L
 suspend fun submitVote(vote: MVPVote): Result<Unit> {
     // ...
 
-    // Verificar se esta dentro da janela de 24h
+    // Verificar se está dentro da janela de 24h
     val gameDateTime = game.dateTime
     if (gameDateTime != null) {
         val now = java.util.Date()
         val voteDeadline = java.util.Date(gameDateTime.time + (VOTE_WINDOW_HOURS * 60 * 60 * 1000))
 
         if (now.after(voteDeadline)) {
-            AppLogger.w(TAG) { "Votacao expirada para o jogo ${vote.gameId}. Deadline: $voteDeadline" }
-            return Result.failure(Exception("Prazo de votacao expirado (24h apos o jogo)"))
+            AppLogger.w(TAG) { "Votação expirada para o jogo ${vote.gameId}. Deadline: $voteDeadline" }
+            return Result.failure(Exception("Prazo de votação expirado (24h após o jogo)"))
         }
     }
 
@@ -181,7 +181,7 @@ suspend fun submitVote(vote: MVPVote): Result<Unit> {
 **Status**: ⚠️ **MITIGADO** (Proteção por V-001)
 
 **Descrição**:
-`LeagueService.kt` atualiza divisão e rating via batch client-side, o que poderia permitir interceptação e modificação.
+O `LeagueService.kt` atualiza divisão e rating via batch client-side, o que poderia permitir interceptação e modificação dos dados.
 
 **Impacto**:
 - Usuários poderiam interceptar e modificar batch operations
@@ -216,7 +216,7 @@ suspend fun finishGame(gameId: String) {
 }
 ```
 
-**Nota**: Esta migração requer testes E2E para garantir que Cloud Function processa corretamente em produção.
+**Nota**: Esta migração requer testes E2E para garantir que a Cloud Function processa corretamente em produção.
 
 ---
 
@@ -234,14 +234,14 @@ suspend fun finishGame(gameId: String) {
 
 ## 🛡️ RECOMENDAÇÕES GERAIS
 
-### ✅ Concluídas (2026-01-08):
+### ✅ Concluídas em 2026-01-08:
 1. ✅ Deploy storage.rules (V-003)
 2. ✅ Corrigir firestore.rules (V-001)
 3. ✅ Adicionar auth nas Functions (V-002)
 4. ✅ Implementar janela de votação MVP (V-004)
 
 ### ⚠️ Recomendações Adicionais (Curto Prazo - < 1 semana):
-5. 🔄 **V-005 - Refatoração Client-Side**: Migrar `MatchFinalizationService` para apenas atualizar status, delegando processamento para Cloud Function
+5. 🔄 **V-005 — Refatoração Client-Side**: Migrar `MatchFinalizationService` para apenas atualizar o status, delegando o processamento para a Cloud Function
 6. 🔒 Implementar rate limiting em Cloud Functions
 7. 📊 Adicionar métricas de segurança (Firebase App Check)
 
@@ -274,7 +274,7 @@ suspend fun finishGame(gameId: String) {
 | A09:2021 - Logging/Monitoring | ⚠️ Parcial | Logging básico, requer expansão |
 | A10:2021 - SSRF | ✅ N/A | Não aplicável |
 
-**Nota**: Compliance OWASP melhorou de **60%** para **95%** após correções.
+**Nota**: A conformidade com a OWASP melhorou de **60%** para **95%** após as correções.
 
 ---
 
@@ -304,7 +304,7 @@ Todas as vulnerabilidades críticas (P0) e altas foram corrigidas. As vulnerabil
 
 **Recomendação Final**: ✅ **APROVAR PARA PRODUÇÃO**
 
-A aplicação está segura para produção. Recomenda-se implementar a refatoração V-005 (migração para Cloud Function-only) em próxima sprint para eliminar completamente o risco de interceptação client-side.
+A aplicação está segura para produção. Recomenda-se implementar a refatoração V-005 (migração para Cloud Function exclusiva) na próxima sprint para eliminar completamente o risco de interceptação client-side.
 
 ---
 

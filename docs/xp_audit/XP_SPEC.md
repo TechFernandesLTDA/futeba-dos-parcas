@@ -1,4 +1,4 @@
-# XP_SPEC.md - Especificação Formal de XP
+# XP_SPEC.md - Especificação formal de XP
 
 ## O que é XP no Futeba dos Parças?
 
@@ -8,7 +8,7 @@ O XP (Experience Points) é a unidade fundamental de progresso e engajamento do 
 
 A geração de XP ocorre única e exclusivamente através de eventos validados dentro de uma partida (Match) que atinja o estado de ciclo de vida **FINALIZADA**. Nenhum XP existe juridicamente no sistema antes da transição do estado da partida para `FINISHED`.
 
-## Quando XP NUNCA pode ser Gerado?
+## Quando XP nunca pode ser gerado?
 
 1. Partidas em estado `SCHEDULED`, `CONFIRMED` ou `LIVE`.
 2. Partidas em estado `CANCELLED`.
@@ -17,11 +17,11 @@ A geração de XP ocorre única e exclusivamente através de eventos validados d
 
 ## Relação XP → Nível → Liga → Ranking
 
-* **XP (Átomo):** Acúmulo bruto resultante de ações em campo.
-* **Nível (Progresso):** Calculado com base no XP total acumulado (Lifetime XP). Define a "patente" do jogador.
-* **Liga (Status):** Agrupamento sazonal (mensal/anual) baseado no XP acumulado no período.
-* **Ranking (Competição):** A posição relativa do jogador em comparação a outros, ordenada prioritariamente pelo XP (e secundariamente por critérios de desempate como vitórias).
+* **XP (átomo):** Acúmulo bruto resultante de ações em campo.
+* **Nível (progresso):** Calculado com base no XP total acumulado (Lifetime XP). Define a "patente" do jogador.
+* **Liga (status):** Agrupamento sazonal (mensal/anual) baseado no XP acumulado no período.
+* **Ranking (competição):** Posição relativa do jogador em comparação aos demais, ordenada prioritariamente pelo XP (e secundariamente por critérios de desempate como vitórias).
 
-## Backend como Fonte Única de Verdade
+## Backend como fonte única de verdade
 
-O cálculo, a validação e a persistência do XP são responsabilidades exclusivas do backend (ou camada de serviço de domínio via transação atômica). O aplicativo (Mobile UI) atua estritamente como um visor de dados persistidos, sendo proibido de realizar qualquer lógica aritmética de soma de XP para fins de persistência.
+O cálculo, a validação e a persistência do XP são responsabilidades exclusivas do backend (ou camada de serviço de domínio via transação atômica). O aplicativo (Mobile UI) atua estritamente como um visor de dados persistidos, sendo proibido de executar qualquer lógica aritmética de soma de XP para fins de persistência.

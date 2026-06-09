@@ -1,4 +1,4 @@
-# XP_SCENARIOS.md - Matriz de Cenários de Teste e Validação
+# XP_SCENARIOS.md - Matriz de cenários de teste e validação
 
 ## Cenário 1: Vitória com Performance Sólida
 
@@ -36,12 +36,12 @@
 * **Resultado Esperado:** 0 XP para todos. Os gols não são contabilizados para XP.
 * **Invariantes:** CANCELADO gera 0 XP.
 
-## Cenário 5: Tentativa de Reprocessamento (Ajuste de Placar)
+## Cenário 5: Tentativa de reprocessamento (ajuste de placar)
 
 * **Entrada:** Partida já no estado `FINISHED`.
 * **Ação:** Tentar editar gols para disparar novo cálculo.
-* **Resultado Esperado:** **ERRO/BLOQUEIO**. A UI não deve permitir edição e o backend deve rejeitar a transação.
-* **Invariantes:** Jogo FINALIZADO é imutável, XP nunca é recalculado.
+* **Resultado esperado:** **ERRO/BLOQUEIO**. A UI não deve permitir edição e o backend deve rejeitar a transação.
+* **Invariantes:** Jogo `FINISHED` é imutável; XP nunca é recalculado.
 
 ## Cenário 6: Goleiro com Defesas e Vitória
 

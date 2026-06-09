@@ -25,7 +25,7 @@ A versão web do **Futeba dos Parças** é construída com **Kotlin/Wasm** (WebA
 ### Pré-requisitos
 
 - **JDK 17+** (recomendado JDK 21)
-- **Node.js 18+** (para servir arquivos estáticos)
+- **Node.js 22+** (para servir arquivos estáticos; versão definida em `.nvmrc`)
 - **Browser moderno** com suporte a WebAssembly (Chrome, Firefox, Edge, Safari 14+)
 
 ### Desenvolvimento

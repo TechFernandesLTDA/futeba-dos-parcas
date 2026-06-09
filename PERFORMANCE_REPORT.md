@@ -41,7 +41,7 @@
 | `vendor-mui-DGuenD1l.js` | 544.6KB | 8ms | 6ms |
 | `vendor-firebase-CaKeWVDG.js` | 493.4KB | 5ms | 6ms |
 
-**Total Bundle Size:** 1291KB (⚠️ acima do ideal de 1000KB, mas dentro do aceitável)
+**Tamanho total do bundle:** 1291KB (⚠️ acima do ideal de 1000KB, mas dentro do aceitável)
 
 ---
 
@@ -57,17 +57,17 @@
 - ✅ Service Worker com cache-first strategy
 - ✅ 97% de melhoria no TTFB após cache warm
 
-### 3. **Performance Monitoring**
-- ✅ `usePerformanceMonitoring` hook em todas as telas principais
+### 3. **Monitoramento de Performance**
+- ✅ Hook `usePerformanceMonitoring` em todas as telas principais
 - ✅ `PerformanceOverlay` em dev mode (visível em desenvolvimento)
 - ✅ `PerformanceDashboard` em `/admin/performance`
-- ✅ Tracking de Web Vitals (LCP, FCP, CLS)
-- ✅ Tracking de Firestore queries e data downloaded
+- ✅ Rastreamento de Web Vitals (LCP, FCP, CLS)
+- ✅ Rastreamento de queries Firestore e dados transferidos
 
-### 4. **User Experience**
-- ✅ Reduced motion support (`@media prefers-reduced-motion`)
+### 4. **Experiência do Usuário**
+- ✅ Suporte a reduced motion (`@media prefers-reduced-motion`)
 - ✅ Skeletons específicos por tela (Home, Game, Group, Profile, Ranking)
-- ✅ Loading states otimizados
+- ✅ Estados de carregamento otimizados
 - ✅ Lazy loading de rotas
 
 ---
@@ -96,7 +96,7 @@
 
 ### Recursos Carregados
 - **Total de arquivos:** 13
-- **Tamanho total:** 350.2KB (após compressão)
+- **Tamanho total:** 350,2 KB (após compressão)
 
 ---
 

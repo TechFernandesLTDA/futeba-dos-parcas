@@ -1,6 +1,6 @@
 # Repository Adapters a Remover (após Task #1)
 
-**Status:** ⏸️ BLOQUEADO - Aguardando Task #1 (consolidar-models)
+**Status:** ⏸️ BLOQUEADO — Aguardando Task #1 (consolidar-models)
 
 ## Lista de Adapters
 
@@ -44,7 +44,7 @@
 
 ## Interfaces Android a Remover
 
-Após remover adapters, deletar as interfaces Android (que usam modelos Android):
+Após remover os adapters, deletar as interfaces Android (que utilizam modelos Android):
 
 1. `app/src/main/java/com/futebadosparcas/data/repository/ActivityRepository.kt`
 2. `app/src/main/java/com/futebadosparcas/data/repository/StatisticsRepository.kt`
@@ -52,9 +52,9 @@ Após remover adapters, deletar as interfaces Android (que usam modelos Android)
 
 ---
 
-## Imports a Atualizar em ViewModels
+## Imports a Atualizar nos ViewModels
 
-Substituir interfaces Android por interfaces KMP domain:
+Substituir interfaces Android por interfaces KMP de domínio:
 
 ### Exemplo: HomeViewModel
 ```kotlin
@@ -73,7 +73,7 @@ class HomeViewModel(
 )
 ```
 
-### Comandos para encontrar referências:
+### Comandos para encontrar referências
 ```bash
 # ActivityRepository
 grep -r "com.futebadosparcas.data.repository.ActivityRepository" app/src/main/java/
@@ -99,9 +99,9 @@ grep -r "com.futebadosparcas.data.repository.GameTeamRepository" app/src/main/ja
 
 ---
 
-## Mudanças no RepositoryKoinModule.kt
+## Alterações em RepositoryKoinModule.kt
 
-### Remover imports (linhas 21, 23-27, 31):
+### Remover imports (linhas 21, 23–27, 31):
 ```kotlin
 import com.futebadosparcas.data.repository.ActivityRepositoryAdapter
 import com.futebadosparcas.data.repository.GameEventsRepositoryAdapter
@@ -112,7 +112,7 @@ import com.futebadosparcas.data.repository.GameTeamRepositoryAdapter
 import com.futebadosparcas.data.repository.StatisticsRepositoryAdapter
 ```
 
-### Remover bindings de adapters (linhas 147-173):
+### Remover bindings dos adapters (linhas 147–173):
 ```kotlin
 // DELETAR TODO ESTE BLOCO:
 // Adaptadores para compatibilidade com UI Android
@@ -149,13 +149,13 @@ single<com.futebadosparcas.data.repository.GameTeamRepository> {
 
 ## Checklist de Execução (após Task #1)
 
-- [ ] Task #1 completa (models consolidados)
+- [ ] Task #1 concluída (models consolidados)
 - [ ] Buscar todas as referências aos 7 adapters
-- [ ] Atualizar imports em ViewModels (Android → domain)
-- [ ] Atualizar RepositoryKoinModule (remover bindings de adapters)
-- [ ] Deletar 3 arquivos de adapters
-- [ ] Deletar 3 arquivos de interfaces Android
-- [ ] Verificar se há mappers a remover (ex: `ActivityMapper`)
+- [ ] Atualizar imports nos ViewModels (Android → domain)
+- [ ] Atualizar `RepositoryKoinModule` (remover bindings dos adapters)
+- [ ] Deletar os 3 arquivos de adapters
+- [ ] Deletar os 3 arquivos de interfaces Android
+- [ ] Verificar se há mappers a remover (ex.: `ActivityMapper`)
 - [ ] Build: `./gradlew :app:compileDebugKotlin`
 - [ ] Testes: `./gradlew :app:testDebugUnitTest`
 - [ ] Detekt: `./gradlew detekt`

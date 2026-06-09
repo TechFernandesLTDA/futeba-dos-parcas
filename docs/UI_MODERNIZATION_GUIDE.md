@@ -1,6 +1,6 @@
-# Guia de Modernização da UI - Material Design 3 & WindowInsets
+# Guia de Modernização da UI — Material Design 3 & WindowInsets
 
-Este documento detalha as mudanças implementadas para modernizar a UI do app com **Material Design 3**, **WindowInsets** e **Type-Safe Navigation**.
+Este documento detalha as mudanças implementadas para modernizar a UI do app com **Material Design 3**, **WindowInsets** e **navegação tipada (Type-Safe Navigation)**.
 
 ## 📋 Resumo das Mudanças
 
@@ -15,7 +15,7 @@ Este documento detalha as mudanças implementadas para modernizar a UI do app co
 **Melhorias:**
 - Edge-to-edge habilitado antes de `super.onCreate()` para garantir aplicação correta
 - Status bar completamente transparente
-- Navigation bar semi-transparente (efeito premium)
+- Navigation bar semitransparente (efeito premium)
 - `WindowCompat.setDecorFitsSystemWindows(false)` aplicado
 - Modifier extensions para gerenciar insets de forma consistente
 
@@ -244,7 +244,7 @@ navController.popBackStackSafe(NavDestinations.Games, inclusive = true)
 
 ---
 
-## 🎯 MainActivity - Edge-to-Edge
+## 🎯 MainActivity — Edge-to-Edge
 
 ### Mudanças principais
 
@@ -259,7 +259,7 @@ navController.popBackStackSafe(NavDestinations.Games, inclusive = true)
    window.statusBarColor = android.graphics.Color.TRANSPARENT
    ```
 
-3. **Navigation bar semi-transparente**
+3. **Navigation bar semitransparente**
    ```kotlin
    val navBarColor = if (isDark) {
        android.graphics.Color.argb(230, 15, 17, 20) // Dark
@@ -294,7 +294,7 @@ fun GameDetailScreen(
                 title = { Text("Detalhes do Jogo") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -350,7 +350,7 @@ fun GameDetailScreen(
 
 ### Estratégia recomendada
 
-1. **Fragments existentes continuam usando XML navigation**
+1. **Fragments existentes continuam usando navegação XML**
    - `nav_graph.xml` mantido intacto
    - ViewBinding continua funcionando
 
@@ -358,8 +358,8 @@ fun GameDetailScreen(
    - Adicionar composables em `NavGraph.kt`
    - Usar `NavDestinations` para navegação tipada
 
-3. **Migração de Fragment → Compose**
-   - Converter Fragment para Composable
+3. **Migração Fragment → Compose**
+   - Converter o Fragment para Composable
    - Adicionar rota em `NavGraph.kt`
    - Atualizar chamadas de navegação
 
@@ -367,7 +367,7 @@ fun GameDetailScreen(
 
 ## 🎨 Tipografia
 
-A tipografia já está configurada para MD3 em `Typography.kt`:
+A tipografia já está configurada para MD3 em `Typography.kt`. Exemplos:
 
 ```kotlin
 MaterialTheme.typography.displayLarge  // 57sp, Bold
@@ -394,9 +394,9 @@ Modifier.statusBarsPadding()  // Apenas topo
 Modifier.navigationBarsPadding() // Apenas bottom
 ```
 
-### Cores não aplicando no tema
+### Cores não aplicam no tema
 
-Certifique-se de usar `MaterialTheme.colorScheme.X` ao invés de `Color(0xFF...)` diretamente.
+Certifique-se de usar `MaterialTheme.colorScheme.X` em vez de `Color(0xFF...)` diretamente.
 
 ### Navegação não funciona
 

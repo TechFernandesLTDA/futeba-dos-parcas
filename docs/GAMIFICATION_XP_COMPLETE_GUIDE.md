@@ -58,10 +58,10 @@ O sistema de gamificação do **Futeba dos Parças** foi projetado para engajar 
 | **Participação** | Por jogar uma partida | +10 XP por jogo |
 | **Gols** | Por cada gol marcado | +10 XP por gol |
 | **Assistências** | Por cada assistência | +7 XP por assist |
-| **Defesas** | Por cada defesa (goleiro) | +5 XP por defesa |
+| **Defesas** | Por cada defesa (goleiro) | +8 XP por defesa |
 | **Resultado** | Por vitória/empate | +20 XP vitória, +10 empate |
 | **MVP** | Por ser o melhor da partida | +30 XP |
-| **Streak** | Por jogos consecutivos | +20/50/100 XP |
+| **Streak** | Por jogos consecutivos | +20/35/50/100 XP |
 | **Penalidade** | Por ser "Bola Murcha" | -10 XP |
 
 ---
@@ -80,11 +80,13 @@ XP Total = Participação + Gols + Assistências + Defesas + Resultado + MVP + S
 XP_PRESENCA         = 10   // Por participar
 XP_PER_GOAL         = 10   // Por cada gol
 XP_PER_ASSIST       = 7    // Por cada assistência
-XP_PER_SAVE         = 5    // Por cada defesa (goleiro)
+XP_PER_SAVE         = 8    // Por cada defesa (goleiro)
+XP_CLEAN_SHEET      = 15   // Por não sofrer gols (goleiro)
 XP_WIN              = 20   // Por vitória
 XP_DRAW             = 10   // Por empate
 XP_MVP              = 30   // Por ser MVP
 XP_STREAK_3         = 20   // 3 jogos consecutivos
+XP_STREAK_5         = 35   // 5 jogos consecutivos
 XP_STREAK_7         = 50   // 7 jogos consecutivos
 XP_STREAK_10        = 100  // 10+ jogos consecutivos
 XP_WORST_PLAYER     = -10  // Penalidade "Bola Murcha"
@@ -110,10 +112,10 @@ Assistências (1 × 7): 7 XP
 Defesas: 0 XP (não é goleiro)
 Resultado (Vitória): 20 XP
 MVP: 0 XP
-Streak (5 jogos): 50 XP (Streak 7)
+Streak (5 jogos): 35 XP
 Penalidade: 0 XP
 
-TOTAL: 10 + 20 + 7 + 0 + 20 + 0 + 50 - 0 = 107 XP
+TOTAL: 10 + 20 + 7 + 0 + 20 + 0 + 35 - 0 = 92 XP
 ```
 
 ### Configurações Dinâmicas
@@ -125,11 +127,13 @@ data class GamificationSettings(
     val xpPresence: Int = 10,
     val xpPerGoal: Int = 10,
     val xpPerAssist: Int = 7,
-    val xpPerSave: Int = 5,
+    val xpPerSave: Int = 8,
+    val xpCleanSheet: Int = 15,
     val xpWin: Int = 20,
     val xpDraw: Int = 10,
     val xpMvp: Int = 30,
     val xpStreak3: Int = 20,
+    val xpStreak5: Int = 35,
     val xpStreak7: Int = 50,
     val xpStreak10: Int = 100,
     val xpWorstPlayerPenalty: Int = -10
@@ -192,7 +196,7 @@ progressPercent = ((currentXp - xpForCurrentLevel) * 100) / (xpForNextLevel - xp
 
 ### O Que São Badges?
 
-**Badges** = Medalhas/digital concedidas por alcançar marcos específicos.
+**Badges** = Medalhas digitais concedidas por alcançar marcos específicos.
 
 ### Tipos de Badges
 
@@ -261,6 +265,7 @@ if (user.goalsTotal >= 100) {
 | Streak | Bônus XP |
 |--------|----------|
 | 3 jogos | +20 XP |
+| 5 jogos | +35 XP |
 | 7 jogos | +50 XP |
 | 10+ jogos | +100 XP |
 
@@ -560,7 +565,7 @@ weekly_challenges/{challengeId}
            └─> Barra de progresso animada
 ```
 
-### Diagrama de Seqüência
+### Diagrama de Sequência
 
 ```
 User          UI          ViewModel      Repository      CloudFunction

@@ -1,12 +1,12 @@
 # Plano de Remoção de Repository Adapters
 
-**Status:** BLOQUEADO - Aguardando Task #1 (Consolidar models no shared/commonMain)
+**Status:** BLOQUEADO — Aguardando Task #1 (Consolidar models no shared/commonMain)
 
 ## Contexto
 
 Os 7 repository adapters em `app/src/main/java/com/futebadosparcas/data/repository/` foram criados para fazer a ponte entre:
-- **Interfaces Android** (usam modelos Android em `data.model.*`)
-- **Interfaces KMP** (usam modelos KMP em `domain.model.*`)
+- **Interfaces Android** — utilizam modelos Android em `data.model.*`
+- **Interfaces KMP** — utilizam modelos KMP em `domain.model.*`
 
 Esses adapters convertem entre os dois conjuntos de modelos, mas só podem ser removidos após a consolidação dos models no KMP.
 
@@ -130,7 +130,7 @@ Os adapters fazem conversão entre modelos duplicados:
 - `Team`
 - `PlayerPosition`
 
-**Ação necessária:** Task #1 deve consolidar esses modelos no `shared/commonMain` e remover as versões Android.
+**Ação necessária:** A Task #1 deve consolidar esses modelos no `shared/commonMain` e remover as versões Android.
 
 ---
 
@@ -172,10 +172,10 @@ single<com.futebadosparcas.data.repository.GameTeamRepository> {
 
 ---
 
-## Plano de Remoção (Executar APÓS Task #1)
+## Plano de Remoção (executar APÓS Task #1)
 
 ### Passo 1: Atualizar ViewModels
-Substituir injeções de interfaces Android por interfaces KMP:
+Substituir as injeções de interfaces Android por interfaces KMP:
 
 ```kotlin
 // ANTES
@@ -189,7 +189,7 @@ private val activityRepository: com.futebadosparcas.domain.repository.ActivityRe
 - `HomeViewModel.kt` (já identificado)
 - Todos os ViewModels que injetam as 7 interfaces Android
 
-**Comando de busca:**
+**Comandos de busca:**
 ```bash
 grep -r "com.futebadosparcas.data.repository.ActivityRepository" app/src/main/java/
 grep -r "com.futebadosparcas.data.repository.StatisticsRepository" app/src/main/java/
@@ -201,7 +201,7 @@ grep -r "com.futebadosparcas.data.repository.GameTeamRepository" app/src/main/ja
 ```
 
 ### Passo 2: Atualizar RepositoryKoinModule.kt
-Remover os 7 bindings de adapters (linhas 147-173) e os imports correspondentes (linhas 21, 23-27, 31).
+Remover os 7 bindings dos adapters (linhas 147–173) e os imports correspondentes (linhas 21, 23–27, 31).
 
 ```kotlin
 // REMOVER estas linhas (147-173):
@@ -212,7 +212,7 @@ single<com.futebadosparcas.data.repository.ActivityRepository> {
 ```
 
 ### Passo 3: Remover interfaces Android
-Deletar as 7 interfaces em `app/src/main/java/com/futebadosparcas/data/repository/`:
+Deletar as interfaces em `app/src/main/java/com/futebadosparcas/data/repository/`:
 - `ActivityRepository.kt` (interface)
 - `StatisticsRepository.kt` (interface)
 - `GameRepositories.kt` (contém 5 interfaces)
@@ -232,7 +232,7 @@ Deletar:
 ### Passo 5: Remover mappers (se existirem)
 Verificar se há mappers dedicados à conversão Android ↔ KMP:
 - `ActivityMapper` (mencionado no adapter)
-- Outros mappers relacionados
+- Demais mappers relacionados
 
 **Comando:**
 ```bash
@@ -251,10 +251,10 @@ find app/src/main/java -name "*Mapper.kt" -type f
 
 ## Checklist Final
 
-- [ ] Task #1 completa (models consolidados no shared/commonMain)
-- [ ] ViewModels atualizados para usar interfaces domain
-- [ ] RepositoryKoinModule sem bindings de adapters
-- [ ] Interfaces Android removidas (ActivityRepository.kt, etc)
+- [ ] Task #1 concluída (models consolidados no shared/commonMain)
+- [ ] ViewModels atualizados para usar interfaces de domínio
+- [ ] `RepositoryKoinModule` sem bindings de adapters
+- [ ] Interfaces Android removidas (`ActivityRepository.kt`, etc.)
 - [ ] Arquivos de adapters deletados (3 arquivos)
 - [ ] Mappers de conversão removidos (se aplicável)
 - [ ] Build passando (`compileDebugKotlin`)
@@ -266,6 +266,6 @@ find app/src/main/java -name "*Mapper.kt" -type f
 
 ## Estimativa
 
-**Tempo:** ~2 horas após Task #1 completar
-**Complexidade:** Média (muitas referências para atualizar)
+**Tempo:** ~2 horas após a conclusão da Task #1
+**Complexidade:** Média (muitas referências a atualizar)
 **Risco:** Baixo (mudanças mecânicas e bem definidas)

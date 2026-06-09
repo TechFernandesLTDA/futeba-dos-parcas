@@ -104,7 +104,7 @@ firebase functions:log --only onGameStatusUpdate --limit 20 | grep "execution to
   - Resize: 200x200px
 
 - [ ] **Dependências instaladas**
-  - `sharp` (v0.33+)
+  - `sharp` (v0.34+)
   - `@google-cloud/storage` (v7+)
 
 - [ ] **Usuários atualizados com photo_thumbnail_url**

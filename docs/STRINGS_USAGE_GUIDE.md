@@ -1,6 +1,6 @@
 # Guia de Uso: Strings Centralizadas
 
-## Como Usar as Strings em Diferentes Contextos
+## Como Usar Strings em Diferentes Contextos
 
 ### 1. Em Jetpack Compose
 
@@ -49,7 +49,7 @@ AlertDialog(
 )
 ```
 
-### 2. Em ViewModels (para Error Messages)
+### 2. Em ViewModels (mensagens de erro)
 
 ```kotlin
 // ❌ Antes
@@ -64,12 +64,12 @@ _uiState.value = GameUiState.Error(
 ### 3. Em Repositories
 
 ```kotlin
-// ❌ Antes (Hardcoded)
+// ❌ Antes (hardcoded)
 if (locations.isEmpty()) {
     throw Exception("Nenhum local cadastrado")
 }
 
-// ✅ Depois (Context required)
+// ✅ Depois (context necessário)
 if (locations.isEmpty()) {
     val message = context.getString(R.string.location_no_registered)
     throw Exception(message)
@@ -253,7 +253,7 @@ Text(rarityLabel)
 
 ## Dicas Importantes
 
-### 1. Sempre Usar stringResource() em Compose
+### 1. Sempre usar `stringResource()` no Compose
 ```kotlin
 // ❌ Não faça isso
 Text("Confirmar")
@@ -262,8 +262,8 @@ Text("Confirmar")
 Text(stringResource(R.string.action_confirm))
 ```
 
-### 2. Para Formatação com Placeholders
-Se você precisa inserir dados dinâmicos, use placeholders na string XML:
+### 2. Formatação com placeholders
+Quando precisar inserir dados dinâmicos, defina placeholders diretamente no `strings.xml`:
 
 ```xml
 <!-- Em strings.xml -->
@@ -276,15 +276,15 @@ val locationText = stringResource(R.string.game_location_format, locationName)
 Text(locationText)
 ```
 
-### 3. Adicionar Novas Strings
-Quando precisa de uma nova string:
+### 3. Adicionar novas strings
+Quando precisar de uma nova string:
 
-1. Adicione ao `strings.xml` seguindo o padrão
-2. Use imediatamente em seu código
-3. Reutilize em outros locais quando possível
+1. Adicione ao `strings.xml` seguindo o padrão de nomenclatura
+2. Referencie imediatamente no código
+3. Reutilize em outros locais sempre que possível
 
 ```xml
-<!-- Novo exemplo -->
+<!-- Exemplo -->
 <string name="feature_new_action">Minha Nova Ação</string>
 ```
 
@@ -294,7 +294,7 @@ Button(onClick = { doSomething() }) {
 }
 ```
 
-### 4. Evitar Anti-patterns
+### 4. Evitar anti-patterns
 
 ```kotlin
 // ❌ Não concatene strings hardcoded
@@ -304,33 +304,33 @@ Text(stringResource(R.string.action_confirm) + " Jogador")
 // strings.xml: <string name="confirm_player">Confirmar %1$s</string>
 Text(stringResource(R.string.confirm_player, "Jogador"))
 
-// ❌ Não use em condições
+// ❌ Não compare com literais hardcoded
 if (status == "CONFIRMED") { }
 
-// ✅ Compare com constantes
+// ✅ Compare com constantes do domínio
 if (status == GameStatus.CONFIRMED.value) { }
 ```
 
 ## Checklist para Code Review
 
-Ao revisar código com strings:
+Ao revisar código que envolve strings:
 
 - [ ] Todas as strings visíveis ao usuário estão em `strings.xml`?
 - [ ] O padrão de nomenclatura está sendo seguido?
-- [ ] Não há duplicação de strings?
-- [ ] Todas as strings em português?
-- [ ] Strings complexas têm placeholders apropriados?
-- [ ] Erros mostram mensagens amigáveis ao usuário?
+- [ ] Não há strings duplicadas?
+- [ ] Todas as strings estão em português?
+- [ ] Strings dinâmicas usam placeholders adequados?
+- [ ] Erros exibem mensagens amigáveis ao usuário?
 
 ## Ferramenta: Encontrar Strings Hardcoded
 
-Para encontrar strings que ainda precisam ser centralizadas:
+Para localizar strings que ainda precisam ser centralizadas:
 
 ```bash
-# Buscar strings com aspas duplas e letras maiúsculas
+# Buscar strings com aspas duplas iniciando com letra maiúscula
 grep -r "\"[A-Z]" app/src/main/java/com/futebadosparcas/ui --include="*.kt"
 
-# Contar strings por arquivo
+# Contar ocorrências por arquivo (do mais crítico ao menos crítico)
 grep -r "\"[A-Z]" app/src/main/java/com/futebadosparcas --include="*.kt" | \
 cut -d: -f1 | sort | uniq -c | sort -rn
 ```
@@ -342,7 +342,7 @@ cut -d: -f1 | sort | uniq -c | sort -rn
 2. `FirebaseDataSourceImpl.kt` (59 strings)
 3. `MockDataHelper.kt` (58 strings)
 
-### Migração Típica
+### Padrão de Migração
 ```kotlin
 // ❌ Antes
 AppLogger.e(TAG, "Erro ao carregar jogo", exception)
@@ -356,5 +356,5 @@ _uiState.value = GameUiState.Error(errorMsg)
 
 ---
 
-**Última Atualização**: 2026-01-07
+**Última Atualização**: 2026-01-07  
 **Versão**: 1.0

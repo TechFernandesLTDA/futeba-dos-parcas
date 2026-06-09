@@ -67,8 +67,8 @@ processors=12
 ```bash
 sudo apt update && sudo apt install -y curl git unzip jq
 
-# Node 20 (.nvmrc do projeto)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs
+# Node 22 (.nvmrc do projeto)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt install -y nodejs
 
 # JDK 17 (Android/Gradle)
 sudo apt install -y openjdk-17-jdk

@@ -3,9 +3,7 @@
 ## Índice
 - [Pré-requisitos](#pré-requisitos)
 - [Setup Android](#setup-android)
-- [Setup Backend](#setup-backend)
 - [Setup Firebase](#setup-firebase)
-- [Setup do Banco de Dados](#setup-do-banco-de-dados)
 - [Variáveis de Ambiente](#variáveis-de-ambiente)
 - [Verificação de Saúde](#verificação-de-saúde)
 - [Troubleshooting](#troubleshooting)
@@ -40,21 +38,19 @@
   - Emulador: Mínimo 2GB RAM, preferível 4GB
   - Physical Device: Android 7.0+ com USB Debug habilitado
 
-### Setup Backend
+### Setup Cloud Functions & Web
 
 **Requisitos:**
-- **Node.js** v18+ (LTS recomendado: v20)
+- **Node.js** v22 (LTS obrigatório — ver `.nvmrc`)
   - Download: [https://nodejs.org](https://nodejs.org)
+  - Recomendado: use `nvm` — `nvm use` na raiz já seleciona a versão correta
   - Verificar: `node --version && npm --version`
 
-- **PostgreSQL** v15+
-  - Download: [https://www.postgresql.org/download](https://www.postgresql.org/download)
-  - Ou Docker: `docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:15`
-  - Verificar: `psql --version`
+- **Firebase CLI** v13+
+  - Install: `npm install -g firebase-tools`
+  - Verificar: `firebase --version`
 
-- **npm ou yarn**
-  - Incluído com Node.js (npm)
-  - Ou install yarn: `npm install -g yarn`
+> **Nota:** O backend REST Express+PostgreSQL está **arquivado** em `archive/backend/` e não é usado em produção (decisão #1356). A stack de produção usa Firestore + Cloud Functions diretamente.
 
 ### Setup Firebase (Desenvolvimento)
 
@@ -145,121 +141,6 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 
 ---
 
-## Setup Backend
-
-### Passo 1: Entrar na Pasta Backend
-
-```bash
-cd backend
-```
-
-### Passo 2: Instalar Dependências
-
-```bash
-npm install
-# ou
-yarn install
-```
-
-### Passo 3: Configurar Variáveis de Ambiente
-
-1. Copie o arquivo exemplo:
-```bash
-cp .env.example .env
-```
-
-2. Edite `.env` com suas configurações:
-
-```env
-# Node
-NODE_ENV=development
-PORT=3000
-HOST=localhost
-
-# Database (PostgreSQL)
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_DATABASE=futeba_db
-
-# JWT
-JWT_SECRET=sua-chave-secreta-min-32-caracteres-mudeme-produção
-JWT_EXPIRATION=7d
-
-# Firebase (Será configurado depois)
-FIREBASE_PROJECT_ID=futebadosparcas
-FIREBASE_PRIVATE_KEY=seu-private-key-aqui
-FIREBASE_CLIENT_EMAIL=seu-email@projeto.iam.gserviceaccount.com
-FIREBASE_DATABASE_URL=https://futebadosparcas.firebaseio.com
-FIREBASE_STORAGE_BUCKET=futebadosparcas.appspot.com
-
-# Cron Jobs
-GAME_GENERATION_DAYS_AHEAD=30
-AUTO_CLOSE_CONFIRMATIONS_HOURS=2
-
-# CORS
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-```
-
-### Passo 4: Criar Banco de Dados PostgreSQL
-
-**Opção A: Com PostgreSQL Local**
-
-```bash
-# Abra psql
-psql -U postgres
-
-# Dentro do psql
-CREATE DATABASE futeba_db;
-\q  # Sair
-```
-
-**Opção B: Com Docker**
-
-```bash
-docker run -d \
-  --name postgres-futeba \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=futeba_db \
-  -p 5432:5432 \
-  postgres:15
-```
-
-Verificar: `psql -h localhost -U postgres -d futeba_db -c "SELECT 1"`
-
-### Passo 5: Executar Migrações do Banco
-
-```bash
-# De dentro da pasta backend
-
-# Gerar migrações (se houver mudanças em entities)
-npm run migration:generate -- -n InitialSchema
-
-# Executar todas as migrações
-npm run migration:run
-
-# Verificar status
-psql -h localhost -U postgres -d futeba_db -c "\dt"  # Listar tabelas
-```
-
-### Passo 6: Rodar Backend
-
-```bash
-# Desenvolvimento (com hot reload)
-npm run dev
-
-# Deve exibir algo como:
-# ✓ Server running at http://localhost:3000
-# ✓ Health check: GET http://localhost:3000/health
-```
-
-**Teste o backend:**
-```bash
-curl http://localhost:3000/health
-# Resultado esperado: {"status":"ok","timestamp":"2024-01-01T00:00:00Z"}
-```
-
 ---
 
 ## Setup Firebase
@@ -274,15 +155,15 @@ firebase use futebadosparcas
 # Ou configure em .firebaserc
 ```
 
-### Passo 2: Download Service Account (para Backend)
+### Passo 2: Download Service Account (para Cloud Functions/scripts)
 
 1. Firebase Console → Settings → Service Accounts
 2. Clique em **Generate New Private Key**
 3. Arquivo JSON será baixado
-4. Coloque em: `backend/firebase-key.json`
-5. Atualize `.env`:
-```env
-FIREBASE_CREDENTIALS_PATH=./firebase-key.json
+4. Coloque em: `functions/service-account-key.json` (nunca versionado)
+5. Use em scripts administrativos via variável de ambiente:
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=./service-account-key.json
 ```
 
 ### Passo 3: Emulador Firestore (Desenvolvimento Local)
@@ -316,40 +197,6 @@ firebase deploy --only firestore:rules
 
 ---
 
-## Setup do Banco de Dados
-
-### Opção 1: Migrations Automáticas
-
-```bash
-cd backend
-
-# TypeORM sincroniza automaticamente em desenvolvimento
-# (configurado em src/config/database.ts)
-npm run dev
-```
-
-### Opção 2: Seed Data (Dados de Teste)
-
-```bash
-cd scripts
-
-# Adicionar locais e campos de exemplo
-node seed.js
-
-# Ou com dados reais
-python populate_real_data.py
-```
-
-### Verificar Integridade
-
-```bash
-# Verificar duplicatas
-node check_duplicates.js
-
-# Validar estrutura de dados
-node validate_data.js
-```
-
 ---
 
 ## Variáveis de Ambiente
@@ -366,18 +213,19 @@ MAPS_API_KEY=seu-google-maps-api-key
 2. Create OAuth 2.0 Key (Android)
 3. Forneça SHA-1 fingerprint do APK (gerado via Gradle)
 
-### Backend (`.env`)
+### Web (`web/.env` e `web/.env.production`)
 
 ```env
-# Desenvolvimento
-NODE_ENV=development
-DEBUG=true
-
-# Produção (Never commit!)
-NODE_ENV=production
-JWT_SECRET=sua-chave-super-secreta-min-32-chars
-ALLOWED_ORIGINS=https://seu-dominio.com
+# Configuração Firebase para o web app
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=futebadosparcas
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
 ```
+
+> **Atenção:** Esses arquivos são `.gitignore`d — copie-os antes de rodar o build. Ver `web/.env.example` se existir.
 
 ---
 
@@ -396,17 +244,14 @@ ALLOWED_ORIGINS=https://seu-dominio.com
 adb devices
 ```
 
-### Backend
+### Cloud Functions (local)
 
 ```bash
-# Health check
-curl http://localhost:3000/health
+# Iniciar emuladores com Functions
+firebase emulators:start
 
-# Test a rota
-curl -X GET http://localhost:3000/api/locations
-
-# Logs
-npm run dev  # Verá logs em tempo real
+# Checar logs
+firebase functions:log
 ```
 
 ### Firebase
@@ -417,16 +262,6 @@ curl http://localhost:4000/api/status
 
 # Logs das functions
 firebase functions:log
-```
-
-### Database
-
-```bash
-# Verificar tabelas
-psql -h localhost -U postgres -d futeba_db -c "\dt"
-
-# Contar registros por tabela
-psql -h localhost -U postgres -d futeba_db -c "SELECT tablename FROM pg_tables WHERE schemaname='public';"
 ```
 
 ---
@@ -463,53 +298,6 @@ adb devices
 - Fazer Sync Gradle: Ctrl+Alt+S
 - Rebuild: Ctrl+F9
 
-### Backend
-
-**Problema: "Port 3000 already in use"**
-```bash
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
-
-# macOS/Linux
-lsof -i :3000
-kill -9 <PID>
-
-# Ou mudar porta em .env: PORT=3001
-```
-
-**Problema: "Database connection refused"**
-```bash
-# Verificar PostgreSQL rodando
-psql -U postgres
-
-# Se não funcionar, iniciar PostgreSQL
-# Windows: Services → postgresql-x64-15 → Start
-# macOS: brew services start postgresql
-# Linux: sudo systemctl start postgresql
-
-# Com Docker
-docker start postgres-futeba
-```
-
-**Problema: "Cannot find module 'dotenv'"**
-```bash
-npm install  # Reinstalar dependências
-```
-
-**Problema: Migrations falhando**
-```bash
-# Revert última migration
-npm run migration:revert
-
-# Ou droppar schema (CUIDADO - perde dados!)
-npm run migration:revert -- --all
-
-# Recriar
-npm run migration:generate -- -n FreshStart
-npm run migration:run
-```
-
 ### Firebase
 
 **Problema: "Permission denied" ao fazer deploy**
@@ -532,26 +320,25 @@ firebase emulators:start --only firestore --port=8090
 ## Próximos Passos
 
 1. **Explorar Documentação:**
-   - [ARCHITECTURE.md](./ARCHITECTURE.md) - Visão geral da arquitetura
-   - [API_REFERENCE.md](./API_REFERENCE.md) - Endpoints disponíveis
-   - [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) - Schema do banco
+   - [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) - Padrões de código e Git workflow
+   - [KMP_QUICK_START.md](./KMP_QUICK_START.md) - Kotlin Multiplatform rápido
 
 2. **Criar Primeiro Jogo:**
    - Rodar Android app
    - Registrar/fazer login
    - Criar um jogo
-   - Verificar dados em backend
+   - Verificar dados no Firestore Console
 
 3. **Entender Fluxos:**
    - Leia [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)
    - Explore código em `app/src/main/java/com/futebadosparcas`
-   - Trace uma feature completa (e.g., criar jogo)
+   - Trace uma feature completa (ex.: criar jogo)
 
 4. **Contribuir:**
-   - Fork do repositório
-   - Criar branch: `git checkout -b feature/sua-feature`
-   - Fazer commits: `git commit -m "feat: descrição"`
-   - Push e PR
+   - Leia [CONTRIBUTING.md](../CONTRIBUTING.md)
+   - Crie branch: `git checkout -b feat/sua-feature`
+   - Commits Conventional: `git commit -m "feat: descrição"`
+   - Abra PR (squash-merge para `master`)
 
 ---
 
@@ -561,4 +348,4 @@ firebase emulators:start --only firestore --port=8090
 - Email: seu@email.com
 - Discord/Slack: [Link para comunidade]
 
-**Última atualização:** Dezembro 2025
+**Última atualização:** Junho 2026

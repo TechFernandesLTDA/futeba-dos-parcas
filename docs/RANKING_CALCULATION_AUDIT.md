@@ -97,22 +97,22 @@ Todas as fontes de dados são atualizadas atomicamente via:
 2. `LeagueService.updateLeague()` - temporada
 3. Transações Firestore para atomicidade
 
-## Problemas Identificados e Soluções
+## Problemas identificados e soluções
 
-### 1. Jogos não Confirmados
-- **Problema**: Jogos criados mas não finalizados/confirmados não entram no ranking
-- **Solução**: Status `FINISHED` é obrigatório para processamento
-- **Validação**: Apenas confirmations com status `CONFIRMED` são contabilizadas
+### 1. Jogos não confirmados
+- **Problema**: Jogos criados mas não finalizados/confirmados não entram no ranking.
+- **Solução**: O status `FINISHED` é obrigatório para processamento.
+- **Validação**: Apenas confirmations com status `CONFIRMED` são contabilizadas.
 
-### 2. Race Condition em XP
-- **Problema**: Múltiplas tentativas de processar o mesmo jogo
-- **Solução**: Flag `xpProcessed` no documento do jogo com verificação atômica
-- **Implementação**: Transação Firestore que marca `xp_processed=true` antes de processar
+### 2. Race condition em XP
+- **Problema**: Múltiplas tentativas de processar o mesmo jogo.
+- **Solução**: Flag `xpProcessed` no documento do jogo com verificação atômica.
+- **Implementação**: Transação Firestore que marca `xp_processed=true` antes de processar.
 
-### 3. Cálculo de Goal Difference
-- **Problema**: Saldo de gols calculado incorretamente em alguns casos
-- **Solução**: `goalsConceded` é obtido corretamente do `liveScore`
-- **Implementação**: `goalDiff = confirmation.goals - goalsConceded`
+### 3. Cálculo de goal difference
+- **Problema**: Saldo de gols calculado incorretamente em alguns casos.
+- **Solução**: `goalsConceded` é obtido corretamente do `liveScore`.
+- **Implementação**: `goalDiff = confirmation.goals - goalsConceded`.
 
 ## Fórmulas de Cálculo
 
@@ -143,30 +143,30 @@ Onde:
 - mvpScore = (mvpRate / 0.5) * 100 (cap em 50%)
 ```
 
-## Performance e Caching
+## Performance e caching
 
-### Estratégia de Cache
-- **LRU Cache** para usuários (max 200 entries, 5min TTL)
-- **Batching** paralelo com `async/awaitAll`
-- **Firestore composite indexes** para queries complexas
+### Estratégia de cache
+- **LRU Cache** para usuários (max 200 entradas, TTL de 5 min).
+- **Batching** paralelo com `async/awaitAll`.
+- **Firestore composite indexes** para queries complexas.
 
-### Otimizações Aplicadas
-1. **Cancelamento de queries stale** - Jobs cancelados ao mudar de temporada
-2. **Cache de confirmação** - TTL local para evitar re-fetch
-3. **Image caching** - Coil com memória cache
+### Otimizações aplicadas
+1. **Cancelamento de queries obsoletas** — jobs cancelados ao mudar de temporada.
+2. **Cache de confirmação** — TTL local para evitar re-fetch.
+3. **Cache de imagens** — Coil com memória cache.
 
-## Conclusão da Auditoria
+## Conclusão da auditoria
 
 **Status**: ✅ **APROVADO**
 
 O sistema de cálculo de ranking está:
-1. **Consistente** - Todas as fontes são atualizadas atomicamente
-2. **Correto** - Fórmulas validadas e testadas
-3. **Performance** - Otimizado com cache e batching
-4. **Seguro** - Protegido contra race conditions e XP duplicado
+1. **Consistente** — todas as fontes são atualizadas atomicamente.
+2. **Correto** — fórmulas validadas e testadas.
+3. **Performático** — otimizado com cache e batching.
+4. **Seguro** — protegido contra race conditions e XP duplicado.
 
 ### Recomendações
-1. Manter o sistema de validação de jogos confirmados
-2. Continuar usando transações atômicas para atualizações
-3. Monitorar performance do ranking em tempo real
-4. Considerar agregação adicional para dashboards
+1. Manter o sistema de validação de jogos confirmados.
+2. Continuar usando transações atômicas para atualizações.
+3. Monitorar a performance do ranking em tempo real.
+4. Considerar agregação adicional para dashboards.

@@ -1,4 +1,4 @@
-# 🚀 Roadmap de Melhorias - Futeba dos Parças
+# 🚀 Roadmap de Melhorias — Futeba dos Parças
 ## 100 Oportunidades de Modernização e Otimização
 
 **Versão**: 1.0
@@ -26,16 +26,16 @@
 
 ## 🎯 Legenda de Prioridades
 
-- 🔴 **CRITICAL** - Impacta funcionalidade, segurança ou experiência do usuário
-- 🟠 **HIGH** - Importante para qualidade e evolução do produto
-- 🟡 **MEDIUM** - Melhoria incremental significativa
-- 🟢 **LOW** - Nice to have, preparação para futuro
+- 🔴 **CRITICAL** — Impacta funcionalidade, segurança ou experiência do usuário
+- 🟠 **HIGH** — Importante para qualidade e evolução do produto
+- 🟡 **MEDIUM** — Melhoria incremental significativa
+- 🟢 **LOW** — Nice to have; preparação para o futuro
 
 ### Esforço
 
-- ⚡ **QUICK WIN** (1-3 dias) - Alto impacto, baixo esforço
-- 🔨 **MEDIUM** (1-2 semanas) - Esforço moderado
-- 🏗️ **LARGE** (3+ semanas) - Projeto complexo, múltiplas dependências
+- ⚡ **QUICK WIN** (1–3 dias) — Alto impacto, baixo esforço
+- 🔨 **MEDIUM** (1–2 semanas) — Esforço moderado
+- 🏗️ **LARGE** (3+ semanas) — Projeto complexo, múltiplas dependências
 
 ---
 
@@ -75,7 +75,7 @@
   - ✅ Reutilização de lógica
   - ✅ ViewModels 50% menores
   - ✅ Preparação para KMP
-- **TODOs encontrados**: 47 comentários indicando lógica a extrair
+- **TODOs encontrados**: 47 comentários indicando lógica a ser extraída
 - **Checklist**:
   - [ ] Criar estrutura base de Use Cases
   - [ ] Migrar GameViewModel → CreateGameUseCase, UpdateGameUseCase, etc.
@@ -104,7 +104,7 @@
 #### #004 - Consolidar Data Sources
 - **Prioridade**: 🟡 MEDIUM
 - **Esforço**: 🔨 MEDIUM (1 semana)
-- **Descrição**: Unificar FirebaseDataSource, FirebaseDataSourceImpl, MatchManagementDataSource
+- **Descrição**: Unificar `FirebaseDataSource`, `FirebaseDataSourceImpl` e `MatchManagementDataSource`
 - **Arquivos**:
   - Refatorar: `data/datasource/*.kt`
   - Criar: `data/datasource/UnifiedFirebaseDataSource.kt`
@@ -394,7 +394,7 @@
 - **Prioridade**: 🟠 HIGH
 - **Esforço**: ⚡ QUICK WIN (2 horas)
 - **Descrição**: Aplicar `AppTopBar.surfaceColors()` em todos os TopAppBars
-- **Arquivos inconsistentes** (6):
+- **Arquivos inconsistentes (6)**:
   - `ui/games/GameDetailScreen.kt`
   - `ui/groups/GroupDetailScreen.kt`
   - `ui/players/PlayerDetailScreen.kt`
@@ -535,7 +535,7 @@
 - **Descrição**: Atualizar BottomBar com contador de notificações
 - **Arquivos**:
   - Modificar: `ui/main/MainActivityCompose.kt`
-- **Já existe**: Badge count em Profile tab, expandir para Games
+- **Já existe**: Badge count na aba Profile; expandir para Games
 - **Checklist**:
   - [ ] Adicionar badge em Games (jogos confirmados pendentes)
   - [ ] Adicionar badge em Notifications (não lidas)

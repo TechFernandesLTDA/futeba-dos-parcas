@@ -1,6 +1,6 @@
 # Resumo da Conversão - DialogFragments XML → Jetpack Compose
 
-## Objetivo Completo ✅
+## Objetivo Concluído ✅
 
 Converter 3 DialogFragments XML para Jetpack Compose, mantendo 100% da funcionalidade original e seguindo os padrões do projeto.
 
@@ -110,10 +110,10 @@ Resumo executivo da conversão
 | FieldEditDialog.kt | 150 | FieldEditDialog | ✅ |
 | **Total** | **450** | **643** | **✅** |
 
-*Aumento de linhas esperado devido a:*
-- Code formatting no Compose é mais verboso
-- Melhor separação de concerns
-- Validações mais claras
+*Aumento de linhas esperado pelos seguintes motivos:*
+- Formatação de código no Compose é mais verbosa
+- Melhor separação de responsabilidades
+- Validações mais explícitas
 - Documentação inline
 
 ---
@@ -314,28 +314,28 @@ Recomendação: Manter até que todas as referências sejam migradas para Compos
 ## Notas Importantes
 
 ### MaterialTimePicker
-- Não tem equivalente direto em Compose
-- Requer FragmentManager (do Fragment/Activity)
-- Solução: Passar callback de contexto para invocar via Fragment
+- Não possui equivalente direto no Compose
+- Requer `FragmentManager` (do Fragment/Activity)
+- Solução: passar callback de contexto para invocar via Fragment
 
-### Foto Upload
-- Coil para carregamento (AsyncImage)
-- ActivityResultContract para seleção
-- FileProvider para câmera
+### Upload de Foto
+- Coil para carregamento (`AsyncImage`)
+- `ActivityResultContract` para seleção
+- `FileProvider` para câmera
 
 ### Performance
-- LazyColumn para listas (FieldEditDialog)
-- MutableState para estado local
-- StateFlow para estado observável
+- `LazyColumn` para listas (`FieldEditDialog`)
+- `MutableState` para estado local
+- `StateFlow` para estado observável
 
 ---
 
-## Contato / Suporte
+## Suporte
 
 Para dúvidas na migração:
-1. Consulte DIALOG_MIGRATION_GUIDE.md
-2. Veja exemplos em COMPOSE_DIALOG_EXAMPLES.md
-3. Revise código comentado nos composables
+1. Consulte `DIALOG_MIGRATION_GUIDE.md`
+2. Veja exemplos em `COMPOSE_DIALOG_EXAMPLES.md`
+3. Revise os comentários inline nos composables
 
 ---
 
@@ -345,7 +345,7 @@ Para dúvidas na migração:
 
 - 100% de funcionalidade preservada
 - Padrões do projeto mantidos
-- Validações melhoradas
+- Validações aprimoradas
 - Código compilável e pronto para produção
 - Documentação completa fornecida
 

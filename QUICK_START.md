@@ -1,7 +1,7 @@
 # ⚡ Quick Start - Futeba dos Parças
 
 > **Guia rápido para desenvolvedores e LLMs**
-> **Última Atualização:** 2026-05-02 | **Versão:** 1.21.0
+> **Última Atualização:** 2026-06-08 | **Versão:** 1.31.0
 
 ---
 
@@ -114,12 +114,12 @@ when (uiState) {
 
 | Ação | XP | Ação | XP |
 |------|-----|------|-----|
-| Participação | +10 | MVP | +50 |
-| Gol | +5 | Vitória | +20 |
-| Assistência | +3 | Streak 3+ | +10 |
-| Defesa (GK) | +2 | Streak 10+ | +30 |
+| Participação | +10 | MVP | +30 |
+| Gol | +10 | Vitória | +20 |
+| Assistência | +7 | Streak 3 | +20 |
+| Defesa (GK) | +8 | Streak 10 | +100 |
 
-**Divisões:** Bronze (0-499) → Prata (500-1499) → Ouro (1500-2999) → Diamante (3000+)
+**Divisões (League Rating 0–100):** Bronze → Prata → Ouro → Diamante
 
 ---
 

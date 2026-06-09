@@ -15,9 +15,9 @@
 ## Visão Geral
 
 Este guia estabelece padrões de desenvolvimento para o Futeba dos Parças. Cobrimos:
-- **Kotlin** (Android)
-- **TypeScript** (Backend/Cloud Functions)
-- **SQL** (Migrations)
+- **Kotlin** (Android + KMP)
+- **TypeScript** (Cloud Functions — `functions/src/`)
+- **React + TypeScript** (Web — `web/src/`)
 
 Todos devem seguir estas práticas para manter qualidade e consistência.
 
@@ -187,159 +187,60 @@ class GameDetailFragment : Fragment() {
 }
 ```
 
-### TypeScript (Backend)
+### TypeScript (Cloud Functions)
 
-#### Nomenclatura
+As Cloud Functions vivem em `functions/src/` e usam Node 22. Siga os mesmos padrões de nomenclatura Kotlin (camelCase para funções, UPPER_SNAKE_CASE para constantes).
 
-```typescript
-// Classes/Interfaces: PascalCase
-class GameService {}
-interface IGame {}
-type GameStatus = 'SCHEDULED' | 'CONFIRMED' | 'FINISHED';
-
-// Funções: camelCase
-async function getUpcomingGames() {}
-function calculateXP() {}
-
-// Variáveis: camelCase
-const userName: string;
-let currentGameId: string;
-
-// Constantes: UPPER_SNAKE_CASE
-const MAX_PLAYERS = 12;
-const GAME_TIMEOUT_MS = 5000;
-
-// Enums: PascalCase
-enum GameStatus {
-  SCHEDULED = 'SCHEDULED',
-  CONFIRMED = 'CONFIRMED',
-  FINISHED = 'FINISHED'
-}
-```
-
-#### Estrutura de Serviços
+#### Estrutura de Cloud Functions
 
 ```typescript
-// ✅ GOOD: Lógica separada, DI, error handling claro
-@Injectable()
-class GameService {
-    constructor(
-        private gameRepository: GameRepository,
-        private statsService: StatisticsService,
-        private notificationService: NotificationService,
-        private logger: Logger
-    ) {}
+// ✅ GOOD: Callable function com validação e error handling
+import { onCall } from 'firebase-functions/v2/https';
+import * as logger from 'firebase-functions/logger';
 
-    async createGame(data: CreateGameDto): Promise<Game> {
-        // 1. Validar
-        this.validateGameData(data);
-
-        // 2. Executar
-        try {
-            const game = await this.gameRepository.save(data);
-            this.logger.log(`Game created: ${game.id}`);
-
-            // 3. Side effects (notificações, etc)
-            await this.notificationService.notifyGameCreated(game);
-
-            return game;
-        } catch (error) {
-            // 4. Error handling específico
-            if (error instanceof ConflictError) {
-                throw new BadRequestException('Conflicting schedule');
-            }
-            throw error;
-        }
+export const createGame = onCall(async (request) => {
+    // 1. Autenticação
+    if (!request.auth) {
+        throw new Error('Unauthenticated');
     }
 
-    private validateGameData(data: CreateGameDto): void {
-        if (!data.date) {
-            throw new BadRequestException('Date is required');
-        }
-        if (data.date < new Date()) {
-            throw new BadRequestException('Date must be in the future');
-        }
+    // 2. Validar
+    const data = request.data as CreateGameData;
+    if (!data.date) {
+        throw new Error('Date is required');
     }
-}
+
+    // 3. Executar
+    try {
+        const game = await db.collection('games').add({
+            ...data,
+            createdAt: FieldValue.serverTimestamp(),
+            createdBy: request.auth.uid,
+        });
+        logger.info(`Game created: ${game.id}`);
+        return { gameId: game.id };
+    } catch (error) {
+        logger.error('Failed to create game', error);
+        throw error;
+    }
+});
 ```
 
 #### Evitar Anti-Padrões
 
 ```typescript
-// ❌ AVOID: Callbacks
-function getGame(id, callback) {
-    repository.find(id, (err, game) => {
-        if (err) callback(err);
-        else callback(null, game);
-    });
-}
-
-// ✅ PREFER: Promises/Async-Await
-async function getGame(id: string): Promise<Game> {
-    return await gameRepository.findById(id);
-}
-
-// ❌ AVOID: Any type
-function processData(data: any): any {
-    return data.game.id;
-}
+// ❌ AVOID: any type
+function processData(data: any): any { ... }
 
 // ✅ PREFER: Strong typing
-function processData(data: GameData): string {
-    return data.game.id;
-}
+function processData(data: GameData): string { ... }
 
-// ❌ AVOID: Unhandled rejections
-async function finishGame(id: string) {
-    gameRepository.update(id, { status: 'FINISHED' });
-}
+// ❌ AVOID: new Date() em dados Firestore
+await doc.set({ createdAt: new Date() });
 
-// ✅ PREFER: Tratamento explícito
-async function finishGame(id: string): Promise<void> {
-    try {
-        await gameRepository.update(id, { status: 'FINISHED' });
-    } catch (error) {
-        this.logger.error(`Failed to finish game ${id}`, error);
-        throw new InternalServerErrorException('Failed to finish game');
-    }
-}
-```
-
-### SQL/Migrations
-
-```sql
--- ✅ GOOD: Claro, comentado
-CREATE TABLE games (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    schedule_id UUID NOT NULL REFERENCES schedules(id),
-
-    -- Temporal fields
-    date DATE NOT NULL,
-    time TIME NOT NULL,
-
-    -- Status tracking
-    status VARCHAR(20) CHECK (status IN ('SCHEDULED', 'CONFIRMED', 'FINISHED')),
-    confirmation_closes_at TIMESTAMP,
-
-    -- Metadata
-    max_players INT CHECK (max_players > 0),
-    daily_price DECIMAL(10, 2) CHECK (daily_price >= 0),
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Índices críticos para queries frequentes
-CREATE INDEX idx_games_status_date ON games(status, date DESC);
-CREATE INDEX idx_games_upcoming ON games(status, date)
-    WHERE status IN ('SCHEDULED', 'CONFIRMED');
-
--- ❌ AVOID: Sem verificações
-CREATE TABLE games (
-    id VARCHAR(100),
-    date TEXT,
-    status TEXT
-);
+// ✅ PREFER: serverTimestamp() para consistência
+import { FieldValue } from 'firebase-admin/firestore';
+await doc.set({ createdAt: FieldValue.serverTimestamp() });
 ```
 
 ---
@@ -349,20 +250,19 @@ CREATE TABLE games (
 ### Branches
 
 ```bash
-# Main branch: production-ready
-main
-
-# Development branch: próximo release
-develop
+# Branch principal (production-ready) — squash-merge only
+master
 
 # Feature branches: novo trabalho
-feature/add-team-balancing
-feature/fix-xp-calculation
-feature/refactor-game-repo
+feat/add-team-balancing
+feat/fix-xp-calculation
+feat/refactor-game-repo
 
 # Hotfix branches: correções urgentes em prod
-hotfix/critical-game-crash
+fix/critical-game-crash
 ```
+
+> **Atenção:** O projeto usa **squash-merge** exclusivo para `master`. Não existe branch `develop`. Nunca faça push direto a `master`.
 
 ### Commits
 
@@ -419,7 +319,7 @@ git commit -m "asdf"
 - [ ] Código segue padrões do projeto
 - [ ] Testes adicionados/atualizados
 - [ ] Documentação atualizada
-- [ ] Sem conflitos com develop
+- [ ] Sem conflitos com `master`
 - [ ] Lint passa (`npm run lint`)
 - [ ] Build passa (`npm run build`)
 
@@ -485,49 +385,25 @@ class GameRepositoryTest {
 }
 ```
 
-### Backend - Unit Tests
+### Cloud Functions - Unit Tests
 
 ```typescript
-// ✅ GOOD: Teste com mocks claros
-describe('GameService', () => {
-    let service: GameService;
-    let mockRepository: GameRepository;
+// ✅ GOOD: Jest + mock do Firestore
+jest.mock('../src/middleware/rate-limiter');
 
-    beforeEach(() => {
-        mockRepository = createMock<GameRepository>();
-        service = new GameService(mockRepository);
-    });
-
-    it('should create game with valid data', async () => {
-        // Arrange
-        const data: CreateGameDto = {
-            date: tomorrow(),
-            fieldId: 'field-uuid',
-            maxPlayers: 12
-        };
-        const savedGame = { id: 'game-uuid', ...data };
-        mockRepository.save.mockResolvedValue(savedGame);
-
-        // Act
-        const result = await service.createGame(data);
-
-        // Assert
-        expect(result).toEqual(savedGame);
-        expect(mockRepository.save).toHaveBeenCalledWith(data);
-    });
-
-    it('should throw error for past date', async () => {
-        // Arrange
-        const data: CreateGameDto = {
-            date: yesterday(),
-            fieldId: 'field-uuid',
-            maxPlayers: 12
-        };
-
-        // Act & Assert
-        await expect(service.createGame(data)).rejects.toThrow(BadRequestException);
+describe('XP processing', () => {
+    it('should award XP for participation', async () => {
+        // Arrange / Act / Assert ...
     });
 });
+```
+
+```bash
+# Cloud Functions
+cd functions && npx jest --no-coverage
+
+# Arquivo específico
+npx jest test/xp.test.ts
 ```
 
 ### Cobertura de Teste
@@ -537,9 +413,8 @@ describe('GameService', () => {
 ./gradlew testDebugUnitTest --tests "*GameRepository*"
 ./gradlew createDebugCoverageReport
 
-# Backend
-npm run test
-npm run test:coverage
+# Cloud Functions
+cd functions && npx jest
 ```
 
 ---
@@ -688,17 +563,14 @@ adb logcat | grep "futebadosparcas"
 Layout Inspector → Device → Select process → futebadosparcas
 ```
 
-### Backend (VS Code / WebStorm)
+### Cloud Functions (VS Code / WebStorm)
 
 ```bash
-# Debugger
-node --inspect=9229 dist/server.js
+# Iniciar emuladores com Functions
+firebase emulators:start
 
-# Então attach com Chrome DevTools
-chrome://inspect
-
-# Ou usar debugger do IDE
-Code → Run → Start Debugging
+# Logs em tempo real
+firebase functions:log --follow
 ```
 
 ### Firebase
@@ -719,10 +591,10 @@ Firebase Console → Firestore → Monitoring
 ## Veja Também
 
 - [SETUP_GUIDE.md](./SETUP_GUIDE.md) - Environment setup
-- [API_REFERENCE.md](./API_REFERENCE.md) - Endpoints para testar
-- [docs/BUSINESS_RULES.md](./docs/BUSINESS_RULES.md) - Regras implementadas
+- [KMP_QUICK_START.md](./KMP_QUICK_START.md) - Kotlin Multiplatform
+- [CI_CD_SETUP.md](./CI_CD_SETUP.md) - GitHub Actions e deploy
 
 ---
 
-**Última atualização:** Dezembro 2025
-**Versão:** 1.0.0
+**Última atualização:** Junho 2026
+**Versão:** 1.31.0

@@ -2,7 +2,7 @@
 
 ## Objetivo Realizado
 
-Centralizar 40+ strings hardcoded espalhadas pelo código Kotlin em um repositório único (`strings.xml`), seguindo as melhores práticas Android para internacionalização e manutenibilidade.
+Centralizar 40+ strings hardcoded espalhadas pelo código Kotlin em um repositório único (`strings.xml`), seguindo as melhores práticas Android de internacionalização e manutenibilidade.
 
 ## Resultados Alcançados
 
@@ -194,12 +194,12 @@ Todas as novas strings foram inseridas com comentários organizacionais:
 
 ## Conclusão
 
-A Fase 1 de centralização de strings foi bem-sucedida, com **220 strings críticas** agora centralizadas em `strings.xml`. O padrão de nomenclatura está bem documentado, e as próximas fases estão claramente delineadas para completar a migração dos 299 strings remanescentes.
+A Fase 1 de centralização de strings foi bem-sucedida, com **220 strings críticas** agora centralizadas em `strings.xml`. O padrão de nomenclatura está documentado, e as próximas fases estão claramente delineadas para completar a migração das 299 strings remanescentes.
 
-Esta refatoração melhora significativamente a manutenibilidade, prepare o app para internacionalização, e estabelece padrões sólidos para a equipe de desenvolvimento.
+Esta refatoração melhora significativamente a manutenibilidade, prepara o app para internacionalização e estabelece padrões sólidos para a equipe de desenvolvimento.
 
 ---
 
-**Status**: COMPLETADO - Fase 1
-**Data**: 2026-01-07
+**Status**: CONCLUÍDO — Fase 1  
+**Data**: 2026-01-07  
 **Próxima Revisão**: Após merge da Fase 1

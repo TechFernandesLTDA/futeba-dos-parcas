@@ -1,7 +1,7 @@
 # Handoff — Onda 4: Test Harness de Grupos (emulador)
 
-> Documento de orientação para continuar a Onda 4 (ex.: com DeepSeek).
-> Gerado em 2026-06-06. Autocontido — não precisa do contexto da sessão anterior.
+> Documento de orientação para continuar a Onda 4 (ex.: com DeepSeek).  
+> Gerado em 2026-06-06. Autocontido — não requer o contexto da sessão anterior.  
 > Umbrella: **#2530**. Issues: **#2547, #2532, #2533, #2548**.
 
 ---
@@ -17,7 +17,7 @@
 
 ## 1. Contexto e estado atual
 
-A Onda 4 cria um **harness de teste autônomo** (sem ação humana em prod) que exercita os fluxos de Grupos contra o **Firebase Emulator Suite**, como guarda de regressão permanente para:
+A Onda 4 cria um **harness de teste autônomo** (sem ação humana em produção) que exercita os fluxos de Grupos contra o **Firebase Emulator Suite**, como guarda de regressão permanente para:
 - **invite-join** (#2518) — trigger `onInviteRedeemed` tinha **0 invocações em prod**, nunca testado e2e.
 - **discover** (#2523) — regressão de LIST query (grupo público soft-deleted derrubava a lista).
 - **preview público** (#2519) — listener de members tornava a tela fatal.
@@ -45,7 +45,7 @@ admin.firestore.FieldPath.documentId()          // 💥
 
 …**crasha no emulador** com `TypeError: Cannot read properties of undefined (reading 'serverTimestamp'|'increment'|'documentId')`.
 
-**Em produção funciona** (sem sandbox). É bug de **paridade emulador↔prod**, prod-safe. O fix é a API modular:
+**Em produção funciona** (sem sandbox). Trata-se de um bug de **paridade emulador↔prod**, seguro em produção. O fix é usar a API modular:
 
 ```ts
 import {FieldValue, FieldPath} from "firebase-admin/firestore";
@@ -54,7 +54,7 @@ FieldValue.increment(1);
 FieldPath.documentId();
 ```
 
-⚠️ **NÃO** trocar `admin.firestore.Timestamp` nem tipos `admin.firestore.DocumentData/QueryDocumentSnapshot/...` — esses **não** têm o problema (Timestamp funciona; tipos são compile-time). Focar **só** em `FieldValue` e `FieldPath`.
+⚠️ **NÃO** trocar `admin.firestore.Timestamp` nem tipos como `admin.firestore.DocumentData/QueryDocumentSnapshot/...` — esses **não** apresentam o problema (Timestamp funciona; tipos são compile-time). Focar **somente** em `FieldValue` e `FieldPath`.
 
 ---
 
@@ -86,7 +86,7 @@ Emulador Firestore default: `127.0.0.1:8085`. `emulators:exec` exporta `FIRESTOR
 
 ## 4. #2547 — Sweep `admin.firestore.FieldValue/FieldPath` → import modular
 
-**Por quê:** desbloqueia o harness — ao semear usuários (`onUserCreated`→PII sync) ou deletar grupos (`onGroupDeleted`) no emulador, esses triggers crasham hoje. Mesma classe do bug já corrigido no #2531.
+**Por quê:** desbloqueia o harness — ao semear usuários (`onUserCreated` → PII sync) ou deletar grupos (`onGroupDeleted`) no emulador, esses triggers crasham hoje. Mesma classe do bug já corrigida no #2531.
 
 **Escopo:** `git grep -nE "admin\.firestore\.(FieldValue|FieldPath)" functions/src` → **144 ocorrências em 42 arquivos**. Trocar todas para a API modular (seção 2).
 
@@ -109,7 +109,7 @@ Emulador Firestore default: `127.0.0.1:8085`. `emulators:exec` exporta `FIRESTOR
 
 ## 5. #2532 — Web E2E (Playwright + emulador): REWORK não-tautológico
 
-**Depende de #2547.** A WIP atual (`web/e2e/grupos.spec.ts` + `scripts/seed-e2e-groups.ts`) é **fraca/tautológica** — corrigir:
+**Depende de #2547.** A WIP atual (`web/e2e/grupos.spec.ts` + `scripts/seed-e2e-groups.ts`) é **fraca/tautológica** — pontos a corrigir:
 
 | Jornada | Problema na WIP | O que o teste DEVE fazer |
 |---|---|---|
@@ -143,7 +143,7 @@ Evitar asserções de `member_count` via `body` textContent ("contains 2") — u
 
 ## 7. #2548 — Idempotência de XP por-jogador (follow-up #2524, independente)
 
-O #2524 corrigiu a perda permanente de XP (marca `xp_processed` só após todos os batches). **Limitação:** no retry, jogadores cujos batches já tiveram sucesso têm XP **re-incrementado** (double-count parcial).
+O #2524 corrigiu a perda permanente de XP (marca `xp_processed` somente após todos os batches). **Limitação:** no retry, jogadores cujos batches já tiveram sucesso têm o XP **re-incrementado** (double-count parcial).
 
 **Fazer:** dedup por `(gameId, userId)` — ex. doc determinístico `xp_logs/${gameId}_${userId}` (ou campo `processed_game_ids`), gravado na transação/batch do jogador; no retry, pular quem já tem marcador.
 
@@ -154,7 +154,7 @@ O #2524 corrigiu a perda permanente de XP (marca `xp_processed` só após todos 
 ## 8. Gotchas operacionais (do projeto)
 
 - **NUNCA push direto a master.** Sempre branch + PR + admin merge (`gh pr merge --squash --admin`). Branch protection exige 1 review + code owner; `--admin` faz bypass.
-- **Auto-close de issue só com keyword EN** no corpo do PR: `Closes #N` / `Fixes #N` (PT "Fecha #N" NÃO fecha).
+- **Auto-close de issue funciona somente com keyword em inglês** no corpo do PR: `Closes #N` / `Fixes #N` (PT "Fecha #N" NÃO fecha).
 - **Conventional Commits** (commitlint). Scope ∈ {functions, web, android, ios, shared, firebase, ci}. Subject minúsculo.
 - **Worktrees frescos** podem não ter hooks da raiz → commit/push com `--no-verify` (após validar build/teste manualmente).
 - **Collection canônica de convites = `invites/`** (não `group_invites/`). O trigger `onInviteRedeemed` escuta `invites/{code}`.
