@@ -107,6 +107,7 @@ import {
   sendNotificationToUsers,
   saveNotificationToFirestore,
 } from "../src/notifications";
+import { resetDb } from "../src/_db";
 import { shouldNotifyUser } from "../src/notifications/helpers";
 import { getNotificationSettings } from "../src/notifications/preferences";
 
@@ -361,6 +362,7 @@ describe("sendNotificationToUser", () => {
 describe("sendNotificationToUsers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetDb();
   });
 
   test("deve retornar 0 quando lista de usuários está vazia", async () => {
