@@ -35,3 +35,7 @@ export const db = (): FirebaseFirestore.Firestore => {
   }
   return _db;
 };
+
+export const resetDb = (): void => {
+  _db = undefined;
+};
