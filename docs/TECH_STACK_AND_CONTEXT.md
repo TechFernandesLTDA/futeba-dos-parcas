@@ -15,17 +15,18 @@
 
 ## Visão Geral do Projeto
 
-**Futeba dos Parças** é uma plataforma mobile integrada (Android) para gerenciar jogos de futsal/pelada com foco em:
+**Futeba dos Parças** é uma plataforma multiplataforma (Android + Web) para gerenciar jogos de futsal/pelada com foco em:
 
 ```
 ┌─────────────────────────────────────────┐
 │  FUTEBA DOS PARÇAS PLATFORM             │
 ├─────────────────────────────────────────┤
 │                                         │
-│  Frontend: Android (Kotlin)             │
-│  Backend: Node.js/Express/TypeORM       │
-│  Database: PostgreSQL + Firestore       │
-│  Cloud: Google Firebase + Cloud Run     │
+│  Mobile: Android (Kotlin/Compose)       │
+│  Web: React 18 + TypeScript + MUI 5     │
+│  Backend: Firebase Cloud Functions v2   │
+│  Database: Firestore (NoSQL)            │
+│  Cloud: Google Firebase                 │
 │                                         │
 │  Gamification: XP, Badges, Seasons      │
 │  Community: Groups, Social Features     │
@@ -36,9 +37,11 @@
 └─────────────────────────────────────────┘
 ```
 
-**Usuários Primários:** Jogadores de futsal amador (Brasil, São Paulo area)
+> **Nota:** O backend REST (Node.js/Express/TypeORM/PostgreSQL) está **arquivado** em `archive/backend/` sem consumidores. Toda a lógica de backend é executada via Firestore + Cloud Functions v2 diretamente (decisão #1356).
+
+**Usuários Primários:** Jogadores de futsal amador (Brasil, região de São Paulo)
 **Linguagem Principal:** Português (PT-BR)
-**Market:** Google Play Store (futuro)
+**Market:** Google Play Store
 
 ---
 
@@ -48,10 +51,11 @@
 
 | Componente | Tecnologia | Versão | Propósito |
 |------------|------------|--------|----------|
-| **Linguagem** | Kotlin | 2.0.x | Type-safe, null-safe language |
+| **Linguagem** | Kotlin | 2.2.10 | Type-safe, null-safe language |
 | **Min SDK** | Android | 24 (7.0) | Support older devices |
 | **Target SDK** | Android | 35 (15.0) | Latest OS features + security |
-| **Compilação** | Gradle** | 8.7+ | Build system |
+| **compileSdk** | Android | 36 | Compile target |
+| **Compilação** | Gradle (AGP 9.0.1) | 8.7+ | Build system |
 | **JDK** | OpenJDK | 17+ | Gradle requirement |
 
 ### 2. UI Layer (Android)
@@ -75,12 +79,13 @@
 | **ViewModel** | Jetpack ViewModel | 2.x.x | Lifecycle-aware state holder |
 | **Lifecycle** | Jetpack Lifecycle | 2.x.x | Lifecycle-aware components |
 
-### 4. Dependency Injection (Android)
+### 4. Dependency Injection (Android + KMP)
 
 | Componente | Tecnologia | Versão | Propósito |
 |------------|------------|--------|----------|
-| **DI Framework** | Hilt (Dagger) | 2.51.1 | Compile-time safe injection |
-| **Hilt Plugins** | Gradle Plugin | 2.51.1 | Annotation processing |
+| **DI Framework** | Koin | 4.1.1 | Multiplatform DI (substituiu Hilt na CMP Phase 1) |
+| **Koin Android** | koin-android | 4.1.1 | ViewModels e injeção Android |
+| **Koin Compose** | koin-androidx-compose | 4.1.1 | Integração com Jetpack Compose |
 
 ### 5. Data Layer (Android)
 
@@ -100,19 +105,23 @@
 |------------|------------|--------|----------|
 | **HTTP Client** | Retrofit 2 | 2.9.0+ | REST API calls |
 | **Serialization** | Gson/Kotlinx | Latest | JSON ↔ Kotlin objects |
-| **Image Loading** | Coil | 2.7.0 | Efficient image management |
+| **Image Loading** | Coil 3 | 3.3.0 | Efficient image management |
 
-### 7. Backend (Node.js/Express)
+### 7. Backend (Node.js/Express) — ⚠️ ARQUIVADO
+
+> **Atenção:** Este backend REST (Express/TypeORM/PostgreSQL) está **arquivado** em `archive/backend/` e **não é usado em produção**. Toda a lógica de backend é executada via Cloud Functions v2 diretamente sobre Firestore. Ver decisão #1356.
 
 | Componente | Tecnologia | Versão | Propósito |
 |------------|------------|--------|----------|
-| **Runtime** | Node.js | 20 LTS | JavaScript runtime |
+| **Runtime** | Node.js | 22 LTS | JavaScript runtime |
 | **Framework** | Express.js | 4.18.x | HTTP server + routing |
 | **Language** | TypeScript | 5.x | Type-safe JavaScript |
 | **Package Mgr** | npm | 10.x+ | Dependency management |
 | **Transpiler** | TypeScript Compiler | 5.x | TS → JS compilation |
 
-### 8. Backend Architecture
+### 8. Backend Architecture — ⚠️ ARQUIVADO
+
+> **Atenção:** Refere-se ao backend REST arquivado. Ver seção 7.
 
 | Componente | Tecnologia | Versão | Propósito |
 |------------|------------|--------|----------|
@@ -123,14 +132,16 @@
 | **Logging** | Winston | 3.x | Structured logging |
 | **Error Handling** | Custom middleware | - | Consistent error responses |
 
-### 9. Database (Backend & Cloud)
+### 9. Database — ⚠️ PostgreSQL ARQUIVADO
+
+> **Atenção:** O PostgreSQL pertence ao backend REST arquivado. Em produção o banco é exclusivamente Firestore (NoSQL).
 
 | Componente | Tecnologia | Versão | Propósito |
 |------------|------------|--------|----------|
-| **SQL DB** | PostgreSQL | 15+ | Relational data |
-| **Connection Pool** | node-postgres | 8.x | Efficient connections |
-| **NoSQL DB** | Firebase Firestore | Firebase BOM | Real-time NoSQL cloud |
-| **Admin SDK** | Firebase Admin SDK | 12.x+ | Backend Firestore access |
+| **SQL DB** | PostgreSQL | 15+ | Relational data (arquivado) |
+| **Connection Pool** | node-postgres | 8.x | Efficient connections (arquivado) |
+| **NoSQL DB** | Firebase Firestore | Firebase BOM | Real-time NoSQL cloud (em uso) |
+| **Admin SDK** | Firebase Admin SDK | 12.x+ | Backend Firestore access (em uso) |
 
 ### 10. Cloud Functions
 
@@ -247,17 +258,20 @@ Trade-offs:
   ✗ Complex queries (NoSQL limitations)
   ✗ Cost scaling (pay-per-read/write)
 
-Mitigação: Backend API com PostgreSQL como fonte de verdade
-  (Firestore = cache real-time, PostgreSQL = analytics + backup)
+Estratégia atual: Firestore como fonte de verdade
+  (lógica de negócio = Cloud Functions v2; sem backend REST separado)
 ```
 
-### Por que Node.js/Express para Backend?
+### Por que Node.js/Express para Backend? — ⚠️ ARQUIVADO
+
+> Esta decisão de arquitetura foi **supersedida** pela decisão #1356. O backend Node.js/Express/TypeORM/PostgreSQL foi arquivado em `archive/backend/`. O contexto histórico é mantido apenas para referência.
 
 ```
-✅ ESCOLHIDO: Node.js + Express + TypeScript + TypeORM
-❌ Alternativas: Python/FastAPI, Java/Spring, Go
+⚠️ ARQUIVADO — decisão #1356 (2026-05-19)
+ESCOLHIDO ORIGINALMENTE: Node.js + Express + TypeScript + TypeORM
+Alternativas consideradas: Python/FastAPI, Java/Spring, Go
 
-Razões:
+Razões originais:
   1. Full-stack JS (Kotlin/Android familiar to TS)
   2. Rapid development (npm ecosystem)
   3. TypeScript (type safety)
@@ -266,54 +280,44 @@ Razões:
   6. Cloud Run deployment (containers)
   7. Cost-effective (lightweight)
 
-TypeORM escolhido porque:
-  - Type-safe queries
-  - Decorators (@Entity, @Column)
-  - Migrations support
-  - Query builder API
-  - Supports PostgreSQL, MySQL, SQLite
+Decisão atual: Cloud Functions v2 + Firestore direto
+  (sem backend REST separado, sem PostgreSQL)
 ```
 
-### Por que PostgreSQL?
+### Por que PostgreSQL? — ⚠️ ARQUIVADO
+
+> Esta decisão foi **supersedida** pela decisão #1356. O PostgreSQL foi removido da stack ativa; o banco de dados em produção é exclusivamente Firestore.
 
 ```
-✅ ESCOLHIDO: PostgreSQL 15+
-❌ Alternativas: MySQL, SQLite, MongoDB
+⚠️ ARQUIVADO — decisão #1356 (2026-05-19)
+ESCOLHIDO ORIGINALMENTE: PostgreSQL 15+
+Alternativas consideradas: MySQL, SQLite, MongoDB
 
-Razões:
-  1. Advanced features (JSONB, Arrays, etc)
-  2. Strong ACID guarantees
-  3. Excellent for structured data
-  4. Free and open-source
-  5. Cloud providers support it
-  6. Good for analytics queries
+Firestore vs PostgreSQL (contexto histórico):
 
-Firestore vs PostgreSQL:
-
-  Firebase Firestore:
+  Firebase Firestore (em uso):
     ✓ Real-time updates
     ✓ Offline-first
     ✓ Automatic scaling
     ✗ Limited queries
     ✗ Eventual consistency
 
-  PostgreSQL:
+  PostgreSQL (arquivado):
     ✓ Complex queries
     ✓ Strong consistency
     ✓ Analytics ready
     ✗ Manual scaling
     ✗ No real-time out-of-box
 
-  Estratégia Híbrida:
-    - Firestore = Real-time cache (app reads)
-    - PostgreSQL = Source of truth (backend writes)
-    - Cloud Functions = Sync between both
+  Estratégia atual: Firestore como única fonte de verdade
+    - Cloud Functions v2 processam toda a lógica de negócio
+    - Sem PostgreSQL em produção
 ```
 
 ### Por que Cloud Functions?
 
 ```
-✅ ESCOLHIDO: Firebase Cloud Functions (Node.js 20)
+✅ ESCOLHIDO: Firebase Cloud Functions (Node.js 22)
 ❌ Alternativas: Backend API, Cloud Run
 
 Razões:
@@ -344,8 +348,8 @@ Quando NÃO usar:
 ### Android SDK Versioning
 
 ```
-Compilação: SDK 35 (Android 15)
-Target: SDK 35
+compileSdk: SDK 36 (Android 16)
+Target: SDK 35 (Android 15)
 Mínimo: SDK 24 (Android 7.0)
 JDK: 17+
 
@@ -363,7 +367,7 @@ Por quê SDK 24 como mínimo?
 androidx.compose:compose-bom:2024.09.00  (latest stable Compose)
 androidx.room:room-runtime:2.6.1+         (Kotlin code generation)
 androidx.lifecycle:lifecycle-runtime:2.x  (ViewModel, LiveData)
-com.google.dagger:hilt-android:2.51.1    (compile-time DI)
+io.insert-koin:koin-android:4.1.1        (multiplatform DI)
 ```
 
 **Firebase BOM (Bill of Materials):**
@@ -380,7 +384,7 @@ firebase-bom:33.7.0  (controls all Firebase libs)
 **Networking:**
 ```
 com.squareup.retrofit2:retrofit:2.9.0     (HTTP client)
-io.coil-kt:coil:2.7.0                     (image loading)
+io.coil-kt.coil3:coil-compose:3.3.0       (image loading)
 ```
 
 **Backend (Node.js):**
@@ -396,13 +400,13 @@ firebase-functions: ^7.x                  (Cloud Functions)
 
 | Componente | Min Version | Recomendado | Max Version | Status |
 |-----------|---|---|---|---|
-| Kotlin | 1.9.x | 2.0.x | Latest | ✅ Active |
-| Gradle | 8.0.x | 8.7.x | Latest | ✅ Active |
+| Kotlin | 2.0.x | 2.2.10 | Latest | ✅ Active |
+| Gradle (AGP) | 8.0.x | 9.0.1 | Latest | ✅ Active |
 | JDK | 17 | 21 | Latest | ✅ Active |
-| Android SDK | 24 | 35 | Current | ✅ Current |
+| Android SDK | 24 (min) | 36 (compile) / 35 (target) | Current | ✅ Current |
 | Firebase | 33.0.x | 33.7.x | 34+ (beta) | ✅ Stable |
-| Node.js | 18 | 20 LTS | 22 | ✅ LTS Active |
-| PostgreSQL | 12 | 15+ | Latest | ✅ Active |
+| Node.js | 22 | 22 LTS | 22 | ✅ LTS Active |
+| PostgreSQL | 12 | 15+ | Latest | ⚠️ Arquivado |
 | TypeScript | 5.0.x | 5.3.x | Latest | ✅ Active |
 
 ---
@@ -433,7 +437,7 @@ futeba-dos-parcas/
 │   ├── MODULES.md                  # Feature modules guide
 │   └── MODULES.md                  # Feature modules guide
 │
-├── backend/                        # Node.js/Express API
+├── archive/backend/                # ⚠️ ARQUIVADO — Node.js/Express API (sem consumidores, decisão #1356)
 │   ├── src/
 │   │   ├── controllers/            # HTTP request handlers
 │   │   ├── services/               # Business logic
@@ -446,11 +450,7 @@ futeba-dos-parcas/
 │   ├── test/                       # Backend tests
 │   ├── package.json                # Dependencies
 │   ├── tsconfig.json               # TypeScript config
-│   ├── docker-compose.yml          # Local dev services
-│   ├── README.md                   # Backend setup
-│   ├── ARCHITECTURE.md             # Backend architecture
-│   ├── SERVICES.md                 # Service layer docs
-│   └── CONTROLLERS.md              # Controller docs
+│   └── README.md                   # Backend setup
 │
 ├── functions/                      # Firebase Cloud Functions
 │   ├── src/
@@ -658,15 +658,17 @@ UI renderiza "Confirmado! 11/12"
 
 ### ADR-001: Usar Firestore + PostgreSQL Híbrido
 
-**Status:** ✅ ACCEPTED
+**Status:** ~~✅ ACCEPTED~~ ⚠️ **SUPERSEDED — ver decisão #1356 (2026-05-19)**
 
-**Problema:** Firestore sozinho é limitado para queries analíticas. PostgreSQL sozinho perde real-time.
+> O backend REST/PostgreSQL foi arquivado em `archive/backend/`. A arquitetura em produção é **Firestore + Cloud Functions v2 diretamente**, sem camada REST separada. Toda a lógica analítica é tratada via Firestore aggregations e Cloud Functions.
 
-**Decisão:** Dois bancos de dados complementares:
+**Problema original:** Firestore sozinho é limitado para queries analíticas. PostgreSQL sozinho não tem real-time.
+
+**Decisão original:** Dois bancos de dados complementares:
 - **Firestore** = Cache real-time (app reads, Cloud Functions write)
 - **PostgreSQL** = Source of truth (backend analytics, historical)
 
-**Consequências:**
+**Consequências originais:**
 - ✓ Real-time na app (Firestore listeners)
 - ✓ Complex queries no analytics (PostgreSQL)
 - ✗ Sync logic necessário (Cloud Functions)
@@ -754,7 +756,7 @@ dependencies {
 
 ```bash
 # 1. Check Node version
-node --version  # Should be 20 LTS
+node --version  # Should be 22 LTS
 
 # 2. Update npm
 npm install -g npm@latest
@@ -775,18 +777,9 @@ npm run build
 firebase deploy --only functions
 ```
 
-### Upgrade PostgreSQL
+### Upgrade PostgreSQL — ⚠️ N/A (Arquivado)
 
-```bash
-# Local development:
-# docker-compose.yml version → 15
-
-# Production:
-# Cloud SQL → gcloud sql upgrade instance [ID] --db-version POSTGRES_16
-
-# Backup antes:
-pg_dump -h [host] -U [user] [database] > backup.sql
-```
+> PostgreSQL não está em uso em produção. Ver decisão #1356.
 
 ---
 
@@ -800,6 +793,6 @@ pg_dump -h [host] -U [user] [database] > backup.sql
 
 ---
 
-**Última atualização:** Dezembro 2025
-**Versão:** 2.0 (Completa e LLM-otimizada)
+**Última atualização:** Junho 2026
+**Versão:** 2.1 (Atualizada: Koin 4.1.1, Kotlin 2.2.10, backend arquivado, compileSdk 36)
 **Mantido por:** Desenvolvimento Team

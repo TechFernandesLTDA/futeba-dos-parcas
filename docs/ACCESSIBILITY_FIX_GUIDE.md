@@ -3,30 +3,32 @@
 ## Status Atual
 
 ### Problemas Identificados
-- **611 Icons** sem `contentDescription`
-- **85 Images** sem `contentDescription`
-- **169 Clickables** sem `onClickLabel`
-- **Total**: 865 accessibility issues
+- **611 ícones** sem `contentDescription`
+- **85 imagens** sem `contentDescription`
+- **169 clicáveis** sem `onClickLabel`
+- **Total**: 865 issues de acessibilidade
 
 ### Progresso
-✅ **Fase 1 Completa**: Strings.xml atualizado com 70+ content descriptions
-✅ **Fase 2 Completa**: 46 arquivos modificados pelo script inicial
+✅ **Fase 1 Concluída**: `strings.xml` atualizado com 70+ content descriptions
+✅ **Fase 2 Concluída**: 46 arquivos modificados pelo script inicial
 ✅ **Scripts Criados**: 4 scripts de automação disponíveis
 
 ---
 
-## Opção 1: Correção Automática Completa (Recomendado)
+## Opção 1: Correção Automática por Script
+
+> **Atenção**: Os scripts funcionam bem para casos simples. Para código Compose complexo, prefira as opções 2 ou 3. Consulte `ACCESSIBILITY_LESSONS_LEARNED.md` para detalhes.
 
 ### Scripts Disponíveis
 
-#### 1. JavaScript Node.js (Mais Robusto)
+#### 1. JavaScript/Node.js (Mais Robusto)
 ```bash
 node scripts/fix-accessibility.js
 ```
 
-**Features**:
-- Detecta Icons sem contentDescription
-- Mapeia 70+ ícones para strings apropriadas
+**Funcionalidades**:
+- Detecta ícones sem `contentDescription`
+- Mapeia 70+ ícones para strings adequadas
 - Adiciona imports automaticamente
 - Processa 496 arquivos Kotlin
 
@@ -35,18 +37,18 @@ node scripts/fix-accessibility.js
 python scripts/fix_accessibility.py
 ```
 
-**Features**:
-- Regex-based pattern matching
-- Suporta multiline Icon calls
-- Fix para AsyncImage e .clickable
+**Funcionalidades**:
+- Pattern matching via regex
+- Suporte a chamadas `Icon` multiline
+- Correção para `AsyncImage` e `.clickable`
 
 #### 3. Bash Script (Linux/Mac/WSL)
 ```bash
 bash scripts/fix_all_icons.sh
 ```
 
-**Features**:
-- Usa sed e perl para replacements
+**Funcionalidades**:
+- Usa `sed` e `perl` para substituições
 - Backup automático
 - Contador de modificações
 
@@ -54,7 +56,7 @@ bash scripts/fix_all_icons.sh
 
 ## Opção 2: Correção Manual por Arquivo
 
-### Padrão 1: Icon Simples
+### Padrão 1: Ícone Simples
 ```kotlin
 // ANTES:
 Icon(Icons.Default.Settings)
@@ -66,7 +68,7 @@ Icon(
 )
 ```
 
-### Padrão 2: Icon com Parâmetros
+### Padrão 2: Ícone com Parâmetros
 ```kotlin
 // ANTES:
 Icon(
@@ -82,12 +84,12 @@ Icon(
 )
 ```
 
-### Padrão 3: Icon Decorativo
+### Padrão 3: Ícone Decorativo
 ```kotlin
 // Para ícones puramente decorativos:
 Icon(
     imageVector = Icons.Default.ChevronRight,
-    contentDescription = null  // Explicitly null for decorative icons
+    contentDescription = null  // Explicitamente null para ícones decorativos
 )
 ```
 
@@ -120,7 +122,7 @@ AsyncImage(
 
 ---
 
-## Opção 3: Lint-Driven Approach (Mais Preciso)
+## Opção 3: Abordagem via Lint (Mais Precisa)
 
 ### Passo 1: Gerar Relatório de Lint
 ```bash
@@ -140,10 +142,10 @@ No relatório, buscar por:
 - `Missing clickable action label`
 
 ### Passo 4: Corrigir Issues por Prioridade
-1. **Priority 10** (Critical): Telas principais (Home, Games, Profile)
-2. **Priority 8** (High): Components reutilizáveis
-3. **Priority 6** (Medium): Telas secundárias
-4. **Priority 4** (Low): Telas de admin/debug
+1. **Priority 10** (Crítico): Telas principais (Home, Games, Profile)
+2. **Priority 8** (Alto): Componentes reutilizáveis
+3. **Priority 6** (Médio): Telas secundárias
+4. **Priority 4** (Baixo): Telas de admin/debug
 
 ---
 
@@ -208,11 +210,11 @@ Deve compilar sem erros.
 ./gradlew lint
 ```
 
-Verifique que os issues de ContentDescription foram reduzidos.
+Verifique que os issues de `ContentDescription` foram reduzidos.
 
-### 3. Talkback Test (Manual)
-1. Ativar Talkback no dispositivo Android
-2. Navegar pela app
+### 3. Teste com TalkBack (Manual)
+1. Ativar TalkBack no dispositivo Android
+2. Navegar pelo app
 3. Verificar que todos os elementos interativos têm descrições audíveis
 
 ---
@@ -244,18 +246,18 @@ app/src/main/java/com/futebadosparcas/ui/badges/
 ## Troubleshooting
 
 ### Problema: Script não modifica nenhum arquivo
-**Causa**: Arquivos já foram parcialmente editados.
-**Solução**: Rode o lint para ver issues remanescentes.
+**Causa**: Os arquivos já foram parcialmente editados.
+**Solução**: Execute o lint para ver os issues remanescentes.
 
-### Problema: Build falha após correções
-**Causa**: Import `stringResource` ausente.
+### Problema: Build falha após as correções
+**Causa**: Import de `stringResource` ausente.
 **Solução**: Adicione em cada arquivo modificado:
 ```kotlin
 import androidx.compose.ui.res.stringResource
 ```
 
 ### Problema: "Unresolved reference: R"
-**Causa**: Import do R ausente.
+**Causa**: Import da classe `R` ausente.
 **Solução**: Adicione:
 ```kotlin
 import com.futebadosparcas.R
@@ -297,10 +299,10 @@ grep -r "contentDescription" app/src/main/java --include='*.kt' | wc -l
 
 Após corrigir os 865 issues:
 
-1. **Adicionar ao CI/CD**: Configurar lint check para falhar se novos issues forem introduzidos
-2. **Pre-commit Hook**: Bloquear commits com Icons sem contentDescription
+1. **CI/CD**: Configurar lint check para falhar se novos issues forem introduzidos
+2. **Pre-commit hook**: Bloquear commits com ícones sem `contentDescription`
 3. **Template de PR**: Adicionar checklist de acessibilidade
-4. **Documentação**: Atualizar CLAUDE.md com regras de acessibilidade
+4. **Documentação**: Atualizar `CLAUDE.md` com regras de acessibilidade
 
 ---
 

@@ -43,8 +43,10 @@ override fun onCleared() {
 
 ### Uso
 ```kotlin
-@HiltViewModel
-class MyViewModel @Inject constructor(...) : BaseViewModel<UiState, UiEvent>() {
+// Koin injection (o projeto migrou de Hilt para Koin na CMP Fase 1)
+class MyViewModel(
+    private val firestore: FirebaseFirestore
+) : BaseViewModel<UiState, UiEvent>() {
 
     fun observeData() {
         val listener = firestore.collection("games")
@@ -200,10 +202,10 @@ Configuração básica de cache, sem otimizações.
 **ImageModule.kt** atualizado:
 
 ```kotlin
-@Provides
-@Singleton
-fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
-    return ImageLoader.Builder(context)
+// Koin module — single { } substitui @Provides/@Singleton do Hilt
+single {
+    val context: Context = get()
+    ImageLoader.Builder(context)
         // Disk Cache: 100MB (~500 avatares + fotos)
         .diskCache {
             DiskCache.Builder()
@@ -227,6 +229,7 @@ fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
         .build()
 }
 ```
+> **Nota**: Em módulos Koin (`single { }`), use `get()` para injetar `Context` em vez de `@ApplicationContext`.
 
 ### Impacto
 - ✅ **Redução de 50% no uso de memória** para imagens (RGB565)
@@ -422,4 +425,4 @@ adb shell am start -W -n com.futebadosparcas/.ui.main.MainActivityCompose
 
 **Documentação criada por:** Agent-UI
 **Data:** 2026-02-02
-**Versão do App:** 1.8.0
+**Versão do App:** 1.31.0

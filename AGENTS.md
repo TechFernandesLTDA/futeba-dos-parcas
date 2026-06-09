@@ -10,7 +10,7 @@
 - **Squash-merge only** on `master`. `delete_branch_on_merge: true`.
 - **Branch protection**: 1 approving review required, code owner review required, no force-push, no deletions.
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bump PRs get closed — deps handled in batch via `npm audit fix`.
-- **Node 20** required (see `.nvmrc`). Use `nvm use` before working in `web/` or `functions/`.
+- **Node 22** required (see `.nvmrc`). Use `nvm use` before working in `web/` or `functions/`.
 - **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`).
 
 ---
@@ -101,7 +101,7 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 ### CPF validation (critical constraint)
 - The CPF check-digit algorithm is implemented in **3 places**: `functions/src/validation/cpf.ts`, `web/src/utils/cpfValidator.ts`, and `shared/.../CpfValidator.kt`.
 - **All three MUST stay in sync.** If the algorithm changes, update all three simultaneously.
-- The formula `(sum * 10) % 11` (with `10 → 0`) is mathematically equivalent to the standard `11 - (sum % 11)` algorithm.<
+- The formula `(sum * 10) % 11` (with `10 → 0`) is mathematically equivalent to the standard `11 - (sum % 11)` algorithm.
 
 ### States every screen must handle
 ```typescript

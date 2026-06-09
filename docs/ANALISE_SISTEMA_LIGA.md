@@ -166,7 +166,7 @@ Verdadeiro problema: O cálculo penaliza severamente com poucos jogos
 
 **Impacto:**
 - Novo mês começa com rating enganosamente baixo
-- Mesmo jogadores OURO/DIAMANTE veem seu rating despencarse
+- Mesmo jogadores OURO/DIAMANTE veem seu rating despencar
 - Não reflete habilidade real no início da temporada
 - Necessidade de "aquecimento" de ~10 jogos toda temporada
 
@@ -768,12 +768,12 @@ Processo Completo:
    └─ Carregamento de dados do jogo
    └─ Para cada jogador confirmado:
       ├─ Calcula XP (XPCalculator)
-      │  ├─ Participação: +30 XP
-      │  ├─ Gol: +50 XP * goals
-      │  ├─ Assistência: +40 XP * assists
-      │  ├─ Defesa: +20 XP * saves
-      │  ├─ MVP: +100 XP
-      │  ├─ Resultado: +50 (WIN) / +10 (DRAW) / 0 (LOSS)
+      │  ├─ Participação: +10 XP
+      │  ├─ Gol: +10 XP * goals
+      │  ├─ Assistência: +7 XP * assists
+      │  ├─ Defesa: +8 XP * saves
+      │  ├─ MVP: +30 XP
+      │  ├─ Resultado: +20 (WIN) / +10 (DRAW) / 0 (LOSS)
       │  └─ Milestones: +XP bonus (uma vez)
       │
       ├─ Atualiza Global Statistics (totalGames, totalGoals, etc)
@@ -1021,7 +1021,7 @@ Score: 2/10 - Status: CRÍTICO
 **Aplicar ao Futeba:**
 - Implementar **visual progress** (LP/RR equivalente)
 - Adicionar **série de promoção** (best of 3 no limiar)
-- Temporadas **formalmente marcadas** com ceremônia
+- Temporadas **formalmente marcadas** com cerimônia
 - Notificações automáticas de mudanças
 
 ---

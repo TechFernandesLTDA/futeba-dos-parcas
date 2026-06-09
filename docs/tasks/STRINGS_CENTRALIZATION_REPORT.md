@@ -6,13 +6,13 @@
 
 ## Resumo Executivo
 
-Foram identificadas **519 strings únicas hardcoded** no código Kotlin da camada UI (especialmente em Compose). Como primeira fase, foram **adicionadas 220 strings** mais críticas e frequentemente reutilizadas ao arquivo `strings.xml` centralizado.
+Foram identificadas **519 strings únicas hardcoded** no código Kotlin da camada de UI (especialmente em Compose). Como primeira fase, foram **adicionadas 220 strings** — as mais críticas e reutilizadas — ao arquivo `strings.xml` centralizado.
 
-### Metricas
-- **Total de strings em strings.xml antes**: 967
+### Métricas
+- **Total de strings em `strings.xml` antes**: 967
 - **Strings adicionadas nesta fase**: 220
 - **Total após**: 1.187 strings
-- **Aumento**: +22.7%
+- **Aumento**: +22,7%
 
 ## Arquivos Analisados (Top 10 com mais strings hardcoded)
 
@@ -371,15 +371,15 @@ Strings remanescentes em dialogs customizados e fragments antigos ainda não mig
 
 ### Vantagens da Centralização
 1. **Manutenibilidade**: Todas as strings em um único ponto de referência
-2. **Internacionalização (i18n)**: Facilita tradução para múltiplos idiomas
+2. **Internacionalização (i18n)**: Facilita a tradução para múltiplos idiomas
 3. **Consistência**: Evita duplicação e inconsistência de textos
 4. **Localização**: Suporte automático a diferentes locales do sistema
-5. **Busca e Substituição**: Mais fácil rastrear onde cada string é usada
+5. **Busca e substituição**: Mais fácil rastrear onde cada string é usada
 
 ### Recomendações de Implementação
-1. Usar `@string/key` em lugar de strings hardcoded em Compose
-2. Documentar padrão de nomenclatura para novos contribuidores
-3. Revisar arquivos de seed para melhor estruturação de dados de teste
+1. Usar `@string/key` em vez de strings hardcoded no Compose
+2. Documentar o padrão de nomenclatura para novos contribuidores
+3. Revisar arquivos de seed para melhor estruturação dos dados de teste
 4. Considerar arquivo separado para strings de desenvolvedor (`dev_*`)
 
 ## Arquivos Modificados
@@ -396,6 +396,6 @@ Strings remanescentes em dialogs customizados e fragments antigos ainda não mig
 
 ---
 
-**Relatório Gerado**: 2026-01-07
-**Responsável**: Especialista em Refatoração Android
-**Status**: Fase 1 Concluída - 220/519 strings centralizadas (42%)
+**Relatório Gerado**: 2026-01-07  
+**Responsável**: Especialista em Refatoração Android  
+**Status**: Fase 1 concluída — 220/519 strings centralizadas (42%)

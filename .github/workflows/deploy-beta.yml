@@ -78,13 +78,17 @@ jobs:
           printf '%s\n' "$COMMIT_MSG" >> /tmp/release-notes.txt
 
       - name: Upload APK to Firebase App Distribution
-        uses: wzieba/Firebase-Distribution-Github-Action@bd494989dd4bec0343f78adee87fe66e48279ad6  # v1
-        with:
-          appId: ${{ secrets.FIREBASE_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          groups: beta-testers
-          file: app/build/outputs/apk/release/app-release.apk
-          releaseNotesFile: /tmp/release-notes.txt
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          npx firebase-tools appdistribution:distribute app/build/outputs/apk/release/app-release.apk \
+            --app "$FIREBASE_APP_ID" \
+            --project futebadosparcas \
+            --groups beta-testers \
+            --release-notes-file /tmp/release-notes.txt
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

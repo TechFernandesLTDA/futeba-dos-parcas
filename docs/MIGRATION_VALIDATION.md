@@ -202,9 +202,9 @@ Status Compilação:        ✅ SEM ERROS
 ✅ **MIGRAÇÃO COMPLETA E VALIDADA**
 
 A tela de início (HomeScreen) foi completamente validada e está 100% funcional em Jetpack Compose.
-As 3 principais migrações (CreateGame, CreateGroup, LiveGame) foram completadas com sucesso.
+As 3 principais migrações (CreateGame, CreateGroup, LiveGame) foram concluídas com sucesso.
 
-O código está pronto para produção com recomendação de remover fragmentos antigos em uma próxima fase.
+O código está pronto para produção. Recomenda-se remover os fragmentos antigos em uma próxima fase.
 
 ---
 

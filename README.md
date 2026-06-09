@@ -3,7 +3,7 @@
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
 [![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
-[![Version](https://img.shields.io/badge/version-1.21.3-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Version](https://img.shields.io/badge/version-1.31.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
@@ -85,7 +85,7 @@
 - **Auth:** Firebase Authentication
 - **Database:** Cloud Firestore
 - **Storage:** Cloud Storage
-- **Serverless:** Cloud Functions v2 (Node 20, TypeScript)
+- **Serverless:** Cloud Functions v2 (Node 22, TypeScript)
 - **Push:** Firebase Cloud Messaging
 - **Monitoring:** Crashlytics + App Check
 
@@ -99,7 +99,7 @@
 - Android Studio Ladybug (2024.2.1+) ou Hedgehog (2024.1.1+)
 - Android SDK 36 (compileSdk) / minSdk 24 / targetSdk 35
 - Firebase CLI (para Functions)
-- Node.js 20 (para Functions e Web)
+- Node.js 22 (para Functions e Web)
 
 ### Clone & Build
 
@@ -149,7 +149,7 @@ futeba-dos-parcas/
 ├── shared/                 # Kotlin Multiplatform (business logic)
 ├── composeApp/             # Compose Multiplatform UI (Android + iOS)
 ├── iosApp/                 # iOS app (Swift + KMP)
-├── functions/              # Cloud Functions (TypeScript, Node 20)
+├── functions/              # Cloud Functions (TypeScript, Node 22)
 ├── web/                    # Web app (React + TypeScript + MUI)
 │   ├── src/pages/          # 55+ telas
 │   ├── src/hooks/          # React hooks (useGames, useGroups, etc.)
@@ -222,7 +222,7 @@ Este repositório é configurado com variáveis de ambiente e chaves de acesso p
 
 ## 📊 Status do Projeto
 
-- ✅ **Android:** Produção (v1.21.0 na Play Store)
+- ✅ **Android:** Produção (v1.31.0 na Play Store)
 - ✅ **Web:** Produção (https://futebadosparcas.web.app)
 - ✅ **Backend:** Firebase Cloud Functions v2
 - ✅ **CI/CD:** GitHub Actions (14+ workflows)
@@ -235,14 +235,20 @@ Este repositório é configurado com variáveis de ambiente e chaves de acesso p
 | Ação | XP |
 |------|-----|
 | Participação | +10 |
-| Gol | +5 |
-| Assistência | +3 |
-| Defesa (Goleiro) | +2 |
-| MVP | +50 |
+| Gol | +10 |
+| Assistência | +7 |
+| Defesa (Goleiro) | +8 |
+| Clean Sheet (Goleiro) | +15 |
 | Vitória | +20 |
-| Streak 3+ | +10 |
-| Streak 7+ | +20 |
-| Streak 10+ | +30 |
+| Empate | +10 |
+| MVP | +30 |
+| Bola Murcha (pior jogador) | -10 |
+| Streak 3 | +20 |
+| Streak 5 | +35 |
+| Streak 7 | +50 |
+| Streak 10 | +100 |
+
+> Valores padrão — grupos podem customizar via `GamificationSettings`. Fonte da verdade: `shared/xp-constants.json`.
 
 **Reset de Temporada**: Mensal no dia 1. XP global nunca reseta.
 

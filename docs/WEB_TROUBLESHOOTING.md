@@ -401,4 +401,4 @@ Quando algo não funcionar:
 
 ---
 
-**Última atualização**: Fevereiro 2026
+**Última atualização**: Junho 2026

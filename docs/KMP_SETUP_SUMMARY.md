@@ -1,7 +1,7 @@
 # Resumo da Configuração KMP - Futeba dos Parças
 
 ## Data
-Janeiro 2026
+Junho 2026
 
 ## Status
 ✅ **Concluído** - Estrutura base KMP funcional no Android
@@ -17,13 +17,13 @@ O módulo `shared/` já existia com a estrutura básica. Foram adicionados:
 ##### AndroidMain (`shared/src/androidMain/kotlin/`)
 - `com/futebadosparcas/domain/repository/RepositoryFactory.kt`
   - Factory stub para organização
-  - Documentação sobre uso de Hilt no Android
+  - Documentação sobre uso de Koin no Android
 
 ##### iOSMain (`shared/src/iosMain/kotlin/`)
 - `com/futebadosparcas/domain/repository/RepositoryFactory.kt`
   - Factory stub para implementação futura no iOS
   - Documentação sobre Firebase iOS SDK
-  - **PENDENTE**: Requer Mac/Xcode para implementação
+  - **PENDENTE**: Implementações iOS em `shared/src/iosMain/`
 
 #### **Use Cases Compartilhados** (`shared/src/commonMain/kotlin/com/futebadosparcas/domain/usecase/`)
 
@@ -330,12 +330,12 @@ if (matchInfo.isFavorite()) {
 
 ## Próximos Passos (Futuro)
 
-### Para iOS (Requer Mac/Xcode)
-1. Criar projeto SwiftUI (`iosApp/`)
-2. Configurar CocoaPods no módulo shared
-3. Implementar repositórios iOS usando Firebase iOS SDK
+### Para iOS (scaffold em `iosApp/`)
+1. O projeto iOS já existe em `iosApp/` (xcodegen + CocoaPods)
+2. Consulte `iosApp/SETUP.md` para instruções de primeira execução
+3. Implementar repositórios iOS em `shared/src/iosMain/` usando Firebase iOS SDK
 4. Criar ViewModels iOS consumindo use cases compartilhados
-5. Implementar UI iOS (SwiftUI)
+5. Expandir UI no `composeApp/` (CMP Fase 3)
 
 ### Para Android (Opcional)
 1. Migrar mais use cases do `app/` para `shared/`
@@ -353,7 +353,7 @@ if (matchInfo.isFavorite()) {
 
 1. **Android Funcional**: Todo o código compartilhado funciona perfeitamente no Android
 2. **iOS Pendente**: Implementação iOS requer ambiente Mac/Xcode
-3. **Repositories**: Implementações de repositórios permanecem no `app/` (Android) usando Hilt
+3. **Repositories**: Implementações de repositórios permanecem no `app/` (Android) usando Koin
 4. **Sem Quebras**: Código existente no `app/` continua funcionando normalmente
 5. **Gradual**: Migração pode ser feita gradualmente, sem pressa
 
@@ -365,7 +365,7 @@ Futeba dos Parças/
 │   ├── src/main/java/
 │   │   └── com/futebadosparcas/
 │   │       ├── ui/                     # UI Android (Fragments, Compose)
-│   │       ├── di/                     # Hilt Modules
+│   │       ├── di/                     # Koin Modules
 │   │       ├── data/
 │   │       │   ├── model/              # Models Android (com Firebase annotations)
 │   │       │   └── repository/         # Implementações Android (Firebase, Room)
@@ -416,5 +416,5 @@ Futeba dos Parças/
 ---
 
 **Criado por**: Claude AI Assistant
-**Data**: Janeiro 2026
+**Data**: Junho 2026
 **Status**: ✅ Concluído

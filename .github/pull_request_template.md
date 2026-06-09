@@ -29,7 +29,7 @@ Closes # (se aplicável)
 - [ ] Estados: Loading, Empty, Error, Success
 
 ## ✅ Checklist Web
-- [ ] Responsivo (mobile-first, max-width 480dp)
+- [ ] Responsivo (mobile-first, max-width 480px)
 - [ ] Acessibilidade (aria-label, roles)
 - [ ] Estados: Loading (Shimmer), Empty, Error, Success
 

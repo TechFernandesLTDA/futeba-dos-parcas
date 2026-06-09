@@ -1,6 +1,6 @@
-# Soft Delete - Exemplos de Implementação
+# Soft Delete — Exemplos de Implementação
 
-Guia prático de como implementar soft-delete no app Android.
+Guia prático de implementação de soft delete no app Android.
 
 ---
 
@@ -41,7 +41,7 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun softDeleteGame(gameId: String): Result<Unit> {
         return try {
-            // Opção 1: Via callable function (recomendado - validações no backend)
+            // Opção 1: Via callable function (recomendado — validações no backend)
             val softDelete = functions.getHttpsCallable("softDeleteGame")
             softDelete.call(hashMapOf("gameId" to gameId)).await()
 
@@ -51,7 +51,7 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
-    // Opção 2: Direct Firestore update (se permitido pelas rules)
+    // Opção 2: Atualização direta no Firestore (se permitido pelas rules)
     suspend fun softDeleteGameDirect(gameId: String): Result<Unit> {
         return try {
             val userId = auth.currentUser?.uid
@@ -123,11 +123,11 @@ data class Game(
 
     // ... outros campos
 ) {
-    // Helper: verifica se foi soft-deleted
+    // Helper: verifica se o documento foi soft-deleted
     val isDeleted: Boolean
         get() = deleted_at != null
 
-    // Helper: tempo até deletar permanentemente (90 dias)
+    // Helper: dias restantes até a exclusão permanente (90 dias)
     fun daysUntilPermanentDeletion(): Int? {
         if (deleted_at == null) return null
 
@@ -146,9 +146,7 @@ data class Game(
 
 ---
 
-## 3. ViewModel
-
-### GameDetailViewModel.kt
+## 3. ViewModel (GameDetailViewModel.kt)
 
 ```kotlin
 @HiltViewModel
@@ -190,9 +188,7 @@ sealed class GameDetailUiState {
 
 ---
 
-## 4. UI (Compose)
-
-### GameDetailScreen.kt
+## 4. UI Compose (GameDetailScreen.kt)
 
 ```kotlin
 @Composable
@@ -294,9 +290,7 @@ fun GameDetailScreen(
 
 ---
 
-## 5. Admin Recovery Screen (Opcional)
-
-### DeletedGamesScreen.kt
+## 5. Tela de Recuperação (Admin) — Opcional (DeletedGamesScreen.kt)
 
 ```kotlin
 @Composable
@@ -384,9 +378,7 @@ private fun DeletedGameItem(
 
 ---
 
-## 6. Testes
-
-### GameRepositoryTest.kt
+## 6. Testes (GameRepositoryTest.kt)
 
 ```kotlin
 @Test
@@ -428,9 +420,7 @@ fun `recoverGame removes deleted_at field`() = runTest {
 
 ---
 
-## 7. Strings Resources
-
-### strings.xml
+## 7. Recursos de Strings (strings.xml)
 
 ```xml
 <resources>
@@ -455,9 +445,9 @@ fun `recoverGame removes deleted_at field`() = runTest {
 
 ---
 
-## 8. Migration Guide (Para Features Existentes)
+## 8. Guia de Migração (para features existentes)
 
-### Passo 1: Adicionar campos no Model
+### Passo 1: Adicionar campos no model
 
 ```kotlin
 // Antes
@@ -477,7 +467,7 @@ data class Game(
 )
 ```
 
-### Passo 2: Atualizar Queries
+### Passo 2: Atualizar queries
 
 ```kotlin
 // Antes
@@ -498,7 +488,7 @@ fun getGames(): Flow<List<Game>> {
 }
 ```
 
-### Passo 3: Substituir Delete por Soft-Delete
+### Passo 3: Substituir delete por soft delete
 
 ```kotlin
 // Antes
@@ -525,9 +515,9 @@ suspend fun softDeleteGame(gameId: String): Result<Unit> {
 
 ---
 
-## 9. Performance Considerations
+## 9. Considerações de Performance
 
-### Indexes Necessários
+### Índices Necessários
 
 ```javascript
 // Firestore Console → Indexes → Composite
@@ -546,7 +536,7 @@ Fields:
 
 ### Cache Local
 
-Para melhor performance, considere cachear queries de soft-delete:
+Para melhor performance, considere cachear queries com filtro de soft delete:
 
 ```kotlin
 fun getActiveGames(): Flow<List<Game>> {
@@ -571,11 +561,11 @@ fun getActiveGames(): Flow<List<Game>> {
 
 ---
 
-## 10. Rollback Plan
+## 10. Plano de Rollback
 
-Se precisar reverter soft-delete:
+Se necessário reverter o soft delete:
 
-### Opção 1: Migração de Dados (Converter soft-delete para hard-delete)
+### Opção 1: Migração de dados (converter soft delete em hard delete)
 
 ```bash
 # Cloud Function para deletar permanentemente todos os soft-deleted
@@ -588,7 +578,7 @@ firebase functions:shell
 > await batch.commit();
 ```
 
-### Opção 2: Remover Filtros (Voltar a mostrar deletados)
+### Opção 2: Remover filtros (voltar a exibir documentos deletados)
 
 ```kotlin
 // Remover filtro de soft-delete temporariamente
@@ -605,23 +595,23 @@ fun getGames(): Flow<List<Game>> {
 
 ## Conclusão
 
-Soft-delete oferece:
-- ✅ Recuperação de dados deletados acidentalmente
+O soft delete oferece:
+- ✅ Recuperação de dados excluídos acidentalmente
 - ✅ Período de graça de 90 dias
-- ✅ Compliance com LGPD (dados podem ser recuperados temporariamente)
+- ✅ Conformidade com a LGPD (dados podem ser recuperados temporariamente)
 - ✅ Histórico de quem deletou e quando
 
 Custos:
-- ❌ Storage adicional (documentos não são deletados imediatamente)
-- ❌ Queries mais complexas (filtrar `deleted_at`)
-- ❌ Necessidade de cleanup automático (via Cloud Functions)
+- ❌ Armazenamento adicional (documentos não são excluídos imediatamente)
+- ❌ Queries mais complexas (necessidade de filtrar `deleted_at`)
+- ❌ Necessidade de limpeza automática (via Cloud Functions)
 
-**Recomendação**: Implementar soft-delete em:
-- ✅ Games (jogos podem ser deletados acidentalmente)
-- ✅ Groups (grupos têm membros e histórico)
+**Recomendação**: Implementar soft delete em:
+- ✅ Games (jogos podem ser excluídos acidentalmente)
+- ✅ Groups (grupos possuem membros e histórico)
 - ✅ Locations (locais podem ter jogos vinculados)
 
 **Não implementar** em:
-- ❌ Notifications (deletar é permanente)
-- ❌ Activities (feed não precisa recuperação)
+- ❌ Notifications (exclusão permanente)
+- ❌ Activities (feed não necessita recuperação)
 - ❌ XP Logs (histórico imutável)

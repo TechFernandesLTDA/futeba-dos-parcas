@@ -1,6 +1,6 @@
 # XP_EVENTS.md - Catálogo de Eventos de XP
 
-Este documento lista todos os gatilhos operacionais que resultam na atribuição de XP.
+Este documento lista todos os gatilhos operacionais que resultam em atribuição de XP.
 
 | Evento | Disparador (Trigger) | Pré-condições | Bloqueios | Gera XP? | Valor |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -13,7 +13,7 @@ Este documento lista todos os gatilhos operacionais que resultam na atribuição
 | **Cancelamento** | Mudança de Estado | Partida movida para `CANCELLED` | Impede qualquer cálculo posterior | Não | 0 XP |
 | **Finalização** | Ação de Admin/Dono | Partida movida de `LIVE` para `FINISHED` | Bloqueia edição de eventos pós-trigger | N/A | Gatilho |
 
-## Observações de Fluxo
+## Observações de fluxo
 
-* Todos os eventos acima são agregados no momento da **Finalização**.
-* Se um jogador marca 2 gols e o time vence, o trigger de Finalização processa: `(2 * 10) + 20 = 40 XP`.
+* Todos os eventos acima são agregados no momento da **finalização**.
+* Se um jogador marca 2 gols e o time vence, o trigger de finalização processa: `(2 × 10) + 20 = 40 XP`.

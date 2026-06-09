@@ -32,7 +32,7 @@ Para cada problema detectado, cria uma issue com:
 Aplica automaticamente:
 - **Por severidade:** `priority: critical`, `priority: high`, `priority: medium`
 - **Por tipo:** `bug`, `security`, `performance`, `memory-leak`
-- **Por módulo:** `module: games`, `module: players`, etc (detecta automaticamente)
+- **Por módulo:** `module: games`, `module: players`, etc. (detectado automaticamente)
 - **Controle:** `automated`, `needs-triage`
 
 ### 4. **Rastreamento no PR**
@@ -155,7 +155,7 @@ O workflow busca por estes padrões nos comentários:
 
 1. Acesse a aba **Issues** do repositório
 2. Filtrar por label: `automated` ou `needs-triage`
-3. Revisar e fazer triage:
+3. Revisar e fazer triagem:
    - Confirmar severidade
    - Atribuir responsável
    - Ajustar labels se necessário
@@ -231,7 +231,7 @@ permissions:
 **R:** Sem limite técnico, mas tipicamente 2-5 issues por review completo.
 
 ### P: E se eu não quiser uma issue específica?
-**R:** Apenas feche a issue criada com comentário "false positive" ou "won't fix".
+**R:** Basta fechar a issue criada com comentário "false positive" ou "won't fix".
 
 ### P: Como personalizar os padrões detectados?
 **R:** Edite o array `criticalPatterns` no arquivo `pr-review-to-issues.yml`.

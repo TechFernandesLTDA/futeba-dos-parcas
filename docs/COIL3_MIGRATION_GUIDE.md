@@ -1,75 +1,75 @@
-# Coil 3 Migration Guide - Futeba dos Parças
+# Guia de Migração Coil 3 — Futeba dos Parças
 
-**Migração completa de Coil 2.7.0 → Coil 3.0.4 com suporte Kotlin Multiplatform**
+**Migração completa de Coil 2.7.0 → Coil 3.0.4 com suporte a Kotlin Multiplatform**
 
-Data: Fevereiro 2026
-Status: ✅ Concluído
+Data: Fevereiro 2026  
+Status: ✅ Concluído  
 Impacto: 40 arquivos migrados, 0 breaking changes em código de UI
 
 ---
 
-## Table of Contents
+## Sumário
 
-1. [Overview](#overview)
-2. [Why Coil 3?](#why-coil-3)
-3. [Migration Steps](#migration-steps)
-4. [API Changes - Breaking](#api-changes-breaking)
-5. [API Changes - Compatible](#api-changes-compatible)
-6. [Common Issues & Solutions](#common-issues--solutions)
-7. [Testing Checklist](#testing-checklist)
-8. [Rollback Plan](#rollback-plan)
-9. [References](#references)
-
----
-
-## Overview
-
-Coil 3 is a major rewrite that brings **Kotlin Multiplatform** support to the popular Android image loading library. This guide documents our complete migration from Coil 2.7.0 to Coil 3.0.4.
-
-**Key Benefits:**
-- ✅ Kotlin Multiplatform support (Android, iOS, Web, Desktop)
-- ✅ Improved performance and memory management
-- ✅ Modern Compose integration
-- ✅ Better caching strategies
-
-**Migration Stats:**
-- **Files updated:** 40 Kotlin files
-- **Configuration files:** 3 (FutebaApplication, CoilConfig, ImageKoinModule)
-- **Breaking changes in UI code:** 0 (AsyncImage API is stable!)
-- **Time to migrate:** ~2 hours
-- **Compile errors after migration:** 0
+1. [Visão Geral](#overview)
+2. [Por Que Coil 3?](#why-coil-3)
+3. [Passos de Migração](#migration-steps)
+4. [Mudanças de API — Breaking](#api-changes-breaking)
+5. [Mudanças de API — Compatíveis](#api-changes-compatible)
+6. [Problemas Comuns e Soluções](#common-issues--solutions)
+7. [Checklist de Testes](#testing-checklist)
+8. [Plano de Rollback](#rollback-plan)
+9. [Referências](#references)
 
 ---
 
-## Why Coil 3?
+## Visão Geral
 
-### Kotlin Multiplatform Support
+O Coil 3 é uma reescrita completa que adiciona suporte a **Kotlin Multiplatform** à popular biblioteca Android de carregamento de imagens. Este guia documenta a migração completa de Coil 2.7.0 para Coil 3.0.4 no projeto.
 
-Coil 3 is built from the ground up as a Kotlin Multiplatform library, allowing us to:
-- Share image loading logic across Android, iOS, and Web
-- Use the same APIs on all platforms
-- Reduce code duplication in our KMP modules
+**Principais benefícios:**
+- ✅ Suporte a Kotlin Multiplatform (Android, iOS, Web, Desktop)
+- ✅ Melhor desempenho e gerenciamento de memória
+- ✅ Integração moderna com o Compose
+- ✅ Estratégias de cache aprimoradas
 
-### Improved Architecture
-
-- **Better caching:** More efficient memory and disk cache
-- **Network abstraction:** Explicit network fetcher configuration
-- **Modern APIs:** Uses `okio.Path` instead of `java.io.File`
-- **Compose-first:** Optimized for Jetpack Compose
-
-### Future-Proof
-
-- Active development and community support
-- Regular updates and bug fixes
-- Growing ecosystem of plugins and extensions
+**Estatísticas da migração:**
+- **Arquivos atualizados:** 40 arquivos Kotlin
+- **Arquivos de configuração:** 3 (FutebaApplication, CoilConfig, ImageKoinModule)
+- **Breaking changes em código de UI:** 0 (a API do AsyncImage é estável!)
+- **Tempo de migração:** ~2 horas
+- **Erros de compilação após a migração:** 0
 
 ---
 
-## Migration Steps
+## Por Que Coil 3?
 
-### Step 1: Update Dependencies
+### Suporte a Kotlin Multiplatform
 
-**Before (Coil 2.7.0):**
+O Coil 3 foi construído desde o início como uma biblioteca Kotlin Multiplatform, o que permite:
+- Compartilhar lógica de carregamento de imagens entre Android, iOS e Web
+- Usar as mesmas APIs em todas as plataformas
+- Reduzir duplicação de código nos módulos KMP
+
+### Arquitetura Aprimorada
+
+- **Cache melhorado:** Memória e disco mais eficientes
+- **Abstração de rede:** Configuração explícita do fetcher de rede
+- **APIs modernas:** Utiliza `okio.Path` em vez de `java.io.File`
+- **Compose-first:** Otimizado para Jetpack Compose
+
+### Preparado para o Futuro
+
+- Desenvolvimento ativo e suporte da comunidade
+- Atualizações e correções regulares
+- Ecossistema crescente de plugins e extensões
+
+---
+
+## Passos de Migração
+
+### Passo 1: Atualizar Dependências
+
+**Antes (Coil 2.7.0):**
 ```kotlin
 // app/build.gradle.kts
 dependencies {
@@ -78,7 +78,7 @@ dependencies {
 }
 ```
 
-**After (Coil 3.0.4):**
+**Depois (Coil 3.0.4):**
 ```kotlin
 // app/build.gradle.kts
 dependencies {
@@ -102,36 +102,36 @@ kotlin {
 }
 ```
 
-**Note:** The group ID changed from `io.coil-kt` to `io.coil-kt.coil3`.
+**Observação:** O group ID mudou de `io.coil-kt` para `io.coil-kt.coil3`.
 
-### Step 2: Update Imports (Global Replace)
+### Passo 2: Atualizar Imports (substituição global)
 
-**Automated approach (recommended):**
+**Abordagem automatizada (recomendada):**
 ```bash
 # Replace all coil imports with coil3 in Kotlin files
 find app/src/main/java -name "*.kt" -type f -exec sed -i 's/import coil\./import coil3./g' {} \;
 ```
 
-**Manual imports to update:**
+**Imports a atualizar manualmente:**
 ```kotlin
-// Before
+// Antes
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 
-// After
+// Depois
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.transform.CircleCropTransformation
 ```
 
-### Step 3: Update Configuration
+### Passo 3: Atualizar a Configuração
 
 #### 3.1 Singleton ImageLoader
 
-**Before (Coil 2):**
+**Antes (Coil 2):**
 ```kotlin
 // FutebaApplication.kt
 import coil.Coil
@@ -144,24 +144,24 @@ val imageLoader = ImageLoader.Builder(context)
 Coil.setImageLoader(imageLoader)
 ```
 
-**After (Coil 3):**
+**Depois (Coil 3):**
 ```kotlin
 // FutebaApplication.kt
 import coil3.SingletonImageLoader
 import coil3.ImageLoader
 
 val imageLoader = ImageLoader.Builder(context)
-    // ... configuration
+    // ... configuração
     .build()
 
 SingletonImageLoader.setSafe { imageLoader }
 ```
 
-**Key change:** `Coil.setImageLoader()` → `SingletonImageLoader.setSafe { }`
+**Mudança principal:** `Coil.setImageLoader()` → `SingletonImageLoader.setSafe { }`
 
 #### 3.2 Memory Cache
 
-**Before (Coil 2):**
+**Antes (Coil 2):**
 ```kotlin
 import coil.memory.MemoryCache
 
@@ -172,7 +172,7 @@ import coil.memory.MemoryCache
 }
 ```
 
-**After (Coil 3):**
+**Depois (Coil 3):**
 ```kotlin
 import coil3.memory.MemoryCache
 
@@ -183,13 +183,13 @@ import coil3.memory.MemoryCache
 }
 ```
 
-**Key changes:**
-- Constructor no longer takes `context`
-- `maxSizePercent()` now requires named parameters
+**Mudanças principais:**
+- O construtor não recebe mais `context`
+- `maxSizePercent()` agora exige parâmetros nomeados
 
 #### 3.3 Disk Cache
 
-**Before (Coil 2):**
+**Antes (Coil 2):**
 ```kotlin
 import coil.disk.DiskCache
 import java.io.File
@@ -202,7 +202,7 @@ import java.io.File
 }
 ```
 
-**After (Coil 3):**
+**Depois (Coil 3):**
 ```kotlin
 import coil3.disk.DiskCache
 import okio.Path.Companion.toOkioPath
@@ -215,19 +215,19 @@ import okio.Path.Companion.toOkioPath
 }
 ```
 
-**Key changes:**
-- `directory()` now requires `okio.Path` instead of `java.io.File`
-- Use `.toPath().toOkioPath()` to convert
+**Mudanças principais:**
+- `directory()` agora exige `okio.Path` em vez de `java.io.File`
+- Use `.toPath().toOkioPath()` para converter
 
-#### 3.4 Network Fetcher (NEW - Required!)
+#### 3.4 Network Fetcher (NOVO — obrigatório!)
 
-**Before (Coil 2):**
+**Antes (Coil 2):**
 ```kotlin
-// Network support was automatic via coil-base
-// No explicit configuration needed
+// Suporte a rede era automático via coil-base
+// Nenhuma configuração explícita era necessária
 ```
 
-**After (Coil 3):**
+**Depois (Coil 3):**
 ```kotlin
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import okhttp3.OkHttpClient
@@ -245,14 +245,14 @@ ImageLoader.Builder(context)
     .build()
 ```
 
-**Key change:** Network fetcher must be **explicitly added** via `.components { }`
+**Mudança principal:** O network fetcher deve ser **adicionado explicitamente** via `.components { }`
 
-### Step 4: Update UI Components
+### Passo 4: Atualizar Componentes de UI
 
-**Good news:** AsyncImage API is **100% backward compatible!** 🎉
+**Boa notícia:** a API do `AsyncImage` é **100% retrocompatível!**
 
 ```kotlin
-// This code works in both Coil 2 AND Coil 3 (no changes needed!)
+// Este código funciona tanto no Coil 2 quanto no Coil 3 (sem alterações necessárias!)
 @Composable
 fun UserAvatar(photoUrl: String?) {
     AsyncImage(
@@ -264,9 +264,9 @@ fun UserAvatar(photoUrl: String?) {
 }
 ```
 
-**Optional simplification:**
+**Simplificação opcional:**
 ```kotlin
-// Coil 2 (with builder)
+// Coil 2 (com builder)
 AsyncImage(
     model = ImageRequest.Builder(LocalContext.current)
         .data(imageUrl)
@@ -275,47 +275,47 @@ AsyncImage(
     contentDescription = "Image"
 )
 
-// Coil 3 (simplified - context not needed!)
+// Coil 3 (simplificado — context não é mais necessário!)
 AsyncImage(
     model = imageUrl,
     contentDescription = "Image"
 )
 ```
 
-**Note:** `ImageRequest.Builder(context)` still works in Coil 3 because it accepts `PlatformContext` (which is a typealias for `Context` on Android).
+**Observação:** `ImageRequest.Builder(context)` ainda funciona no Coil 3 porque aceita `PlatformContext` (que é um typealias para `Context` no Android).
 
 ---
 
-## API Changes - Breaking
+## Mudanças de API — Breaking
 
-### 1. DiskCache Directory Path
+### 1. Caminho do DiskCache
 
-**Issue:** `DiskCache.Builder().directory()` now requires `okio.Path` instead of `java.io.File`.
+**Problema:** `DiskCache.Builder().directory()` agora exige `okio.Path` em vez de `java.io.File`.
 
-**Before:**
+**Antes:**
 ```kotlin
 .directory(context.cacheDir.resolve("image_cache"))
 ```
 
-**After:**
+**Depois:**
 ```kotlin
 import okio.Path.Companion.toOkioPath
 
 .directory(context.cacheDir.resolve("image_cache").toPath().toOkioPath())
 ```
 
-**Why:** Coil 3 uses Okio for cross-platform file I/O.
+**Motivo:** O Coil 3 usa Okio para I/O de arquivos multiplataforma.
 
-### 2. Network Fetcher Required
+### 2. Network Fetcher obrigatório
 
-**Issue:** Network loading is not automatic in Coil 3.
+**Problema:** O carregamento via rede não é automático no Coil 3.
 
-**Before:**
+**Antes:**
 ```kotlin
-// Network support was automatic
+// Suporte a rede era automático
 ```
 
-**After:**
+**Depois:**
 ```kotlin
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 
@@ -324,67 +324,67 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 }
 ```
 
-**Why:** Allows flexibility to use different network libraries (Ktor, OkHttp, etc.).
+**Motivo:** Permite flexibilidade para usar diferentes bibliotecas de rede (Ktor, OkHttp, etc.).
 
-### 3. MemoryCache Builder Constructor
+### 3. Construtor do MemoryCache
 
-**Issue:** `MemoryCache.Builder` no longer takes `context` in constructor.
+**Problema:** `MemoryCache.Builder` não recebe mais `context` no construtor.
 
-**Before:**
+**Antes:**
 ```kotlin
 MemoryCache.Builder(context)
     .maxSizePercent(0.25)
     .build()
 ```
 
-**After:**
+**Depois:**
 ```kotlin
 MemoryCache.Builder()
     .maxSizePercent(percent = 0.25, context = context)
     .build()
 ```
 
-**Why:** Better separation of concerns; context only needed for size calculation.
+**Motivo:** Melhor separação de responsabilidades; o `context` só é necessário para o cálculo do tamanho.
 
-### 4. Singleton ImageLoader API
+### 4. API do Singleton ImageLoader
 
-**Issue:** `Coil.setImageLoader()` is deprecated.
+**Problema:** `Coil.setImageLoader()` está depreciado.
 
-**Before:**
+**Antes:**
 ```kotlin
 import coil.Coil
 
 Coil.setImageLoader(imageLoader)
 ```
 
-**After:**
+**Depois:**
 ```kotlin
 import coil3.SingletonImageLoader
 
 SingletonImageLoader.setSafe { imageLoader }
 ```
 
-**Why:** New API supports thread-safe lazy initialization.
+**Motivo:** A nova API suporta inicialização lazy com segurança para threads.
 
-### 5. Removed APIs
+### 5. APIs Removidas
 
-The following APIs were removed from `ImageLoader.Builder`:
+As seguintes APIs foram removidas do `ImageLoader.Builder`:
 
-| Removed API | Coil 3 Alternative |
-|-------------|-------------------|
-| `.crossfade(durationMillis)` | Set via `ImageRequest` only |
-| `.respectCacheHeaders(boolean)` | Removed (deprecated) |
+| API Removida | Alternativa no Coil 3 |
+|---|---|
+| `.crossfade(durationMillis)` | Definir via `ImageRequest` |
+| `.respectCacheHeaders(boolean)` | Removido (estava depreciado) |
 
 ---
 
-## API Changes - Compatible
+## Mudanças de API — Compatíveis
 
-### AsyncImage (100% Compatible! 🎉)
+### AsyncImage (100% compatível!)
 
-The `AsyncImage` Composable API is **completely backward compatible**:
+A API do Composable `AsyncImage` é **completamente retrocompatível**:
 
 ```kotlin
-// Works in both Coil 2 AND Coil 3 (no changes needed!)
+// Funciona tanto no Coil 2 quanto no Coil 3 (sem alterações necessárias!)
 @Composable
 fun ProfileImage(url: String?) {
     AsyncImage(
@@ -396,18 +396,18 @@ fun ProfileImage(url: String?) {
 }
 ```
 
-**Key points:**
-- ✅ `model` parameter works the same
-- ✅ `AsyncImagePainter.State` unchanged
-- ✅ `placeholder`, `error`, `fallback` still supported
-- ✅ State handling (`onState`, `onSuccess`, `onError`) unchanged
+**Pontos principais:**
+- ✅ Parâmetro `model` funciona da mesma forma
+- ✅ `AsyncImagePainter.State` sem alterações
+- ✅ `placeholder`, `error` e `fallback` continuam suportados
+- ✅ Tratamento de estado (`onState`, `onSuccess`, `onError`) sem alterações
 
-### ImageRequest.Builder (Compatible with Context)
+### ImageRequest.Builder (compatível com Context)
 
-`ImageRequest.Builder(context)` still works because it accepts `PlatformContext`:
+`ImageRequest.Builder(context)` ainda funciona porque aceita `PlatformContext`:
 
 ```kotlin
-// This still works in Coil 3!
+// Ainda funciona no Coil 3!
 val request = ImageRequest.Builder(LocalContext.current)
     .data(imageUrl)
     .transformations(CircleCropTransformation())
@@ -419,36 +419,36 @@ AsyncImage(
 )
 ```
 
-**Note:** On Android, `PlatformContext` is a typealias for `Context`, so existing code is compatible.
+**Observação:** No Android, `PlatformContext` é um typealias para `Context`, portanto o código existente permanece compatível.
 
 ---
 
-## Common Issues & Solutions
+## Problemas Comuns e Soluções
 
-### Issue 1: "Argument type mismatch: actual type is 'File', but 'Path' was expected"
+### Problema 1: "Argument type mismatch: actual type is 'File', but 'Path' was expected"
 
-**Error:**
+**Erro:**
 ```
 e: DiskCache.Builder().directory() expects okio.Path, got java.io.File
 ```
 
-**Solution:**
+**Solução:**
 ```kotlin
 import okio.Path.Companion.toOkioPath
 
-// Convert File → java.nio.file.Path → okio.Path
+// Converter File → java.nio.file.Path → okio.Path
 .directory(context.cacheDir.resolve("image_cache").toPath().toOkioPath())
 ```
 
-### Issue 2: "Unresolved reference 'coil3'"
+### Problema 2: "Unresolved reference 'coil3'"
 
-**Error:**
+**Erro:**
 ```
 e: Unresolved reference 'coil3'
 ```
 
-**Solution:**
-Add Coil 3 dependency to your module's `build.gradle.kts`:
+**Solução:**
+Adicionar a dependência do Coil 3 ao `build.gradle.kts` do módulo:
 ```kotlin
 dependencies {
     implementation("io.coil-kt.coil3:coil:3.0.4")
@@ -457,13 +457,13 @@ dependencies {
 }
 ```
 
-### Issue 3: Images not loading from network
+### Problema 3: Imagens não carregam da rede
 
-**Error:**
-Images load from resources but not from URLs.
+**Sintoma:**
+Imagens de recursos locais carregam normalmente, mas URLs de rede não.
 
-**Solution:**
-Add network fetcher:
+**Solução:**
+Adicionar o network fetcher:
 ```kotlin
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 
@@ -474,113 +474,113 @@ ImageLoader.Builder(context)
     .build()
 ```
 
-### Issue 4: "Unresolved reference 'Coil'"
+### Problema 4: "Unresolved reference 'Coil'"
 
-**Error:**
+**Erro:**
 ```
 e: Unresolved reference 'Coil'
 ```
 
-**Solution:**
-Update to new API:
+**Solução:**
+Atualizar para a nova API:
 ```kotlin
-// Before
+// Antes
 import coil.Coil
 Coil.setImageLoader(imageLoader)
 
-// After
+// Depois
 import coil3.SingletonImageLoader
 SingletonImageLoader.setSafe { imageLoader }
 ```
 
-### Issue 5: Fully qualified names not updated
+### Problema 5: Nomes totalmente qualificados não atualizados
 
-**Error:**
+**Sintoma:**
 ```kotlin
-// Old code using fully qualified name
+// Código antigo usando nome totalmente qualificado
 coil.compose.AsyncImage(...)
 ```
 
-**Solution:**
+**Solução:**
 ```kotlin
-// Update to coil3
+// Atualizar para coil3
 coil3.compose.AsyncImage(...)
 
-// Or add import
+// Ou adicionar o import
 import coil3.compose.AsyncImage
 AsyncImage(...)
 ```
 
 ---
 
-## Testing Checklist
+## Checklist de Testes
 
-After migration, verify:
+Após a migração, verifique:
 
-### Basic Functionality
-- [ ] Images load from Firebase Storage URLs
-- [ ] Images load from local resources (R.drawable)
-- [ ] Placeholder images display during loading
-- [ ] Error images display on load failure
-- [ ] Crossfade transitions work
+### Funcionalidades Básicas
+- [ ] Imagens carregam a partir de URLs do Firebase Storage
+- [ ] Imagens carregam a partir de recursos locais (`R.drawable`)
+- [ ] Imagens de placeholder exibidas durante o carregamento
+- [ ] Imagens de erro exibidas em caso de falha
+- [ ] Transições crossfade funcionam
 
-### Caching
-- [ ] Memory cache works (images load instantly on scroll)
-- [ ] Disk cache persists across app restarts
-- [ ] Cache size limits are respected
+### Cache
+- [ ] Memory cache funciona (imagens carregam instantaneamente ao rolar)
+- [ ] Disk cache persiste entre reinicializações do app
+- [ ] Limites de tamanho do cache são respeitados
 
-### Transformations
-- [ ] CircleCropTransformation works
-- [ ] Custom transformations work
-- [ ] RoundedCornersTransformation works
+### Transformações
+- [ ] `CircleCropTransformation` funciona
+- [ ] Transformações personalizadas funcionam
+- [ ] `RoundedCornersTransformation` funciona
 
-### Custom Components
-- [ ] `CachedAsyncImage` works
-- [ ] `CachedProfileImage` works
-- [ ] `CachedFieldImage` works
-- [ ] `CachedGroupImage` works
+### Componentes Customizados
+- [ ] `CachedAsyncImage` funciona
+- [ ] `CachedProfileImage` funciona
+- [ ] `CachedFieldImage` funciona
+- [ ] `CachedGroupImage` funciona
 
 ### Performance
-- [ ] No memory leaks (check LeakCanary)
-- [ ] Smooth scrolling in LazyColumns with images
-- [ ] Reasonable memory usage (check Android Profiler)
+- [ ] Sem vazamentos de memória (verificar com LeakCanary)
+- [ ] Rolagem suave em `LazyColumn` com imagens
+- [ ] Uso razoável de memória (verificar com Android Profiler)
 
-### Edge Cases
-- [ ] Null/empty URLs handled gracefully
-- [ ] Large images (>5MB) load correctly
-- [ ] Network errors display fallback images
-- [ ] Offline mode uses cached images
+### Casos Extremos
+- [ ] URLs nulas ou vazias tratadas sem erros
+- [ ] Imagens grandes (>5 MB) carregam corretamente
+- [ ] Erros de rede exibem imagens de fallback
+- [ ] Modo offline usa imagens em cache
 
 ---
 
-## Rollback Plan
+## Plano de Rollback
 
-If critical issues are found with Coil 3, follow this rollback procedure:
+Se forem encontrados problemas críticos com o Coil 3, siga este procedimento de rollback:
 
-### Step 1: Revert Dependencies
+### Passo 1: Reverter Dependências
 
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    // Remove Coil 3
+    // Remover Coil 3
     // implementation("io.coil-kt.coil3:coil:3.0.4")
     // implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     // implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 
-    // Add back Coil 2
+    // Restaurar Coil 2
     implementation("io.coil-kt:coil:2.7.0")
     implementation("io.coil-kt:coil-compose:2.7.0")
 }
 ```
 
-### Step 2: Revert Imports
+### Passo 2: Reverter Imports
 
 ```bash
-# Replace all coil3 imports back to coil
+# Substituir todos os imports coil3 de volta para coil
 find app/src/main/java -name "*.kt" -type f -exec sed -i 's/import coil3\./import coil./g' {} \;
 ```
 
-### Step 3: Revert Configuration
+### Passo 3: Reverter Configuração
 
 ```kotlin
 // FutebaApplication.kt
@@ -607,59 +607,59 @@ val imageLoader = ImageLoader.Builder(context)
 Coil.setImageLoader(imageLoader)
 ```
 
-### Step 4: Test & Deploy
+### Passo 4: Testar e Fazer Deploy
 
 ```bash
 ./gradlew clean
 ./gradlew :app:compileDebugKotlin
 ./gradlew :app:installDebug
-# Test thoroughly before deploying
+# Testar exaustivamente antes de fazer deploy
 ```
 
 ---
 
-## References
+## Referências
 
-### Official Documentation
-- [Coil 3 Upgrade Guide](https://coil-kt.github.io/coil/upgrading_to_coil3/)
-- [Coil 3 Release Announcement](https://code.cash.app/multiplatform-image-loading)
+### Documentação Oficial
+- [Guia de Atualização Coil 3](https://coil-kt.github.io/coil/upgrading_to_coil3/)
+- [Anúncio de Lançamento do Coil 3](https://code.cash.app/multiplatform-image-loading)
 - [Coil Image Requests](https://coil-kt.github.io/coil/image_requests/)
-- [Coil Compose Integration](https://coil-kt.github.io/coil/compose/)
-- [Coil GitHub Repository](https://github.com/coil-kt/coil)
+- [Integração Coil com Compose](https://coil-kt.github.io/coil/compose/)
+- [Repositório Coil no GitHub](https://github.com/coil-kt/coil)
 
-### Related Guides
-- [Kotlin Multiplatform Setup](KMP_SETUP_SUMMARY.md)
-- [Compose Patterns](COMPOSE_PATTERNS.md)
-- [Material 3 Best Practices](MATERIAL3_BEST_PRACTICES.md)
+### Guias Relacionados
+- [Configuração Kotlin Multiplatform](KMP_SETUP_SUMMARY.md)
+- [Padrões Compose](COMPOSE_PATTERNS.md)
+- [Boas Práticas Material 3](MATERIAL3_BEST_PRACTICES.md)
 
-### Version History
-- **Coil 2.7.0:** Last Android-only version (December 2024)
-- **Coil 3.0.0:** First KMP version (January 2025)
-- **Coil 3.0.4:** Current stable version (February 2025)
-
----
-
-## Migration Summary
-
-**Date:** February 2026
-**Duration:** ~2 hours
-**Files Changed:** 40 Kotlin files, 3 configuration files
-**Breaking Changes in UI:** 0
-**Compile Errors:** 0
-**Result:** ✅ Success
-
-**Key Learnings:**
-1. AsyncImage API is stable across versions (no UI code changes needed!)
-2. Main changes are in configuration (ImageLoader setup)
-3. Network fetcher must be explicitly added in Coil 3
-4. Use `okio.Path` instead of `java.io.File` for disk cache
-5. Migration is straightforward with global find/replace for imports
-
-**Recommendation:**
-✅ **Coil 3 is production-ready** and brings significant benefits for KMP projects. The migration is low-risk and high-value.
+### Histórico de Versões
+- **Coil 2.7.0:** Última versão exclusiva para Android (dezembro de 2024)
+- **Coil 3.0.0:** Primeira versão KMP (janeiro de 2025)
+- **Coil 3.0.4:** Versão estável atual (fevereiro de 2025)
 
 ---
 
-**Last Updated:** February 19, 2026
-**Author:** Claude Code (migrar-coil teammate)
-**Status:** ✅ Complete
+## Resumo da Migração
+
+**Data:** Fevereiro de 2026  
+**Duração:** ~2 horas  
+**Arquivos alterados:** 40 arquivos Kotlin, 3 arquivos de configuração  
+**Breaking changes em UI:** 0  
+**Erros de compilação:** 0  
+**Resultado:** ✅ Sucesso
+
+**Principais aprendizados:**
+1. A API do `AsyncImage` é estável entre versões (sem alterações necessárias em código de UI)
+2. As principais mudanças estão na configuração do `ImageLoader`
+3. O network fetcher deve ser adicionado explicitamente no Coil 3
+4. Usar `okio.Path` em vez de `java.io.File` para o disk cache
+5. A migração é direta com substituição global de imports
+
+**Recomendação:**
+O **Coil 3 está pronto para produção** e traz benefícios significativos para projetos KMP. A migração é de baixo risco e alto valor.
+
+---
+
+**Última Atualização:** 19 de fevereiro de 2026  
+**Autor:** Claude Code (teammate migrar-coil)  
+**Status:** ✅ Concluído

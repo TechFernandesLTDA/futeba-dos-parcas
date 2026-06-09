@@ -1,11 +1,11 @@
-# Estrategia de Branches - Futeba dos Parcas
+# Estratégia de Branches — Futeba dos Parças
 
-## Visao Geral
+## Visão Geral
 
 ```
-master (producao)
+master (produção)
   |
-  +-- develop (integracao)
+  +-- develop (integração)
        |
        +-- feature/SPEC-XXX-descricao
        +-- fix/BUG-XXX-descricao
@@ -16,24 +16,24 @@ master (producao)
 
 ## Branches Principais
 
-| Branch | Proposito | Protecao |
+| Branch | Propósito | Proteção |
 |--------|-----------|----------|
-| `master` | Codigo em producao, sempre estavel | Protegida, requer PR + review |
-| `develop` | Integracao de features, pre-release | Protegida, requer PR |
+| `master` | Código em produção, sempre estável | Protegida, requer PR + review |
+| `develop` | Integração de features, pré-release | Protegida, requer PR |
 
 ## Branches de Trabalho
 
 | Prefixo | Uso | Exemplo |
 |---------|-----|---------|
 | `feature/` | Nova funcionalidade (requer spec aprovada) | `feature/SPEC-015-notificacoes-push` |
-| `fix/` | Correcao de bug | `fix/BUG-042-crash-ao-abrir-jogo` |
-| `perf/` | Otimizacao de performance | `perf/PERF-003-cache-firestore` |
-| `docs/` | Documentacao | `docs/atualizar-readme` |
-| `chore/` | Configuracao, CI/CD, tooling | `chore/atualizar-dependencias` |
-| `release/` | Preparacao de release | `release/1.9.0` |
-| `hotfix/` | Correcao urgente em producao | `hotfix/crash-login` |
+| `fix/` | Correção de bug | `fix/BUG-042-crash-ao-abrir-jogo` |
+| `perf/` | Otimização de performance | `perf/PERF-003-cache-firestore` |
+| `docs/` | Documentação | `docs/atualizar-readme` |
+| `chore/` | Configuração, CI/CD, tooling | `chore/atualizar-dependencias` |
+| `release/` | Preparação de release | `release/1.9.0` |
+| `hotfix/` | Correção urgente em produção | `hotfix/crash-login` |
 
-## Convencao de Nomes
+## Convenção de Nomes
 
 ### Branches
 
@@ -41,9 +41,9 @@ master (producao)
 <tipo>/<referencia>-<descricao-curta>
 ```
 
-- Usar kebab-case (palavras separadas por hifen)
-- Referencia ao spec/bug quando aplicavel
-- Descricao curta e objetiva (max 5 palavras)
+- Usar kebab-case (palavras separadas por hífen)
+- Referenciar spec/bug quando aplicável
+- Descrição curta e objetiva (máx. 5 palavras)
 
 ### Commits
 
@@ -62,16 +62,16 @@ style(ui): ajustar espacamento do card
 
 **Tipos permitidos:**
 
-| Tipo | Descricao |
+| Tipo | Descrição |
 |------|-----------|
 | `feat` | Nova funcionalidade |
-| `fix` | Correcao de bug |
+| `fix` | Correção de bug |
 | `perf` | Melhoria de performance |
-| `refactor` | Refatoracao sem mudar comportamento |
-| `docs` | Documentacao |
+| `refactor` | Refatoração sem mudar comportamento |
+| `docs` | Documentação |
 | `test` | Testes |
 | `chore` | Build, CI, tooling |
-| `style` | Formatacao, lint |
+| `style` | Formatação, lint |
 
 **Escopos comuns:** `game`, `auth`, `group`, `ui`, `firestore`, `functions`, `ci`, `deps`, `navigation`
 
@@ -80,9 +80,9 @@ style(ui): ajustar espacamento do card
 ### Feature Nova
 
 ```
-1. Criar spec em /specs/ e obter aprovacao
+1. Criar spec em /specs/ e obter aprovação
 2. Criar branch: git checkout -b feature/SPEC-XXX-descricao develop
-3. Implementar com commits atomicos
+3. Implementar com commits atômicos
 4. Abrir PR para develop
 5. Code review + CI passa
 6. Squash merge para develop
@@ -98,57 +98,57 @@ style(ui): ajustar espacamento do card
 5. Squash merge para develop
 ```
 
-### Hotfix (urgente em producao)
+### Hotfix (urgente em produção)
 
 ```
 1. Criar branch: git checkout -b hotfix/descricao master
 2. Corrigir o problema
 3. Abrir PR para master E develop
-4. Merge (nao squash) para manter historico
+4. Merge (não squash) para manter histórico
 ```
 
 ### Release
 
 ```
 1. Criar branch: git checkout -b release/X.Y.Z develop
-2. Bump versao (scripts/bump-version.js)
+2. Bump de versão (scripts/bump-version.js)
 3. Testes finais
-4. Merge para master (nao squash)
+4. Merge para master (não squash)
 5. Tag: git tag vX.Y.Z
 6. Merge de volta para develop
 ```
 
-## Estrategia de Merge
+## Estratégia de Merge
 
-| Situacao | Estrategia | Motivo |
+| Situação | Estratégia | Motivo |
 |----------|------------|--------|
-| Feature -> develop | **Squash merge** | Historico limpo, 1 commit por feature |
-| Fix -> develop | **Squash merge** | Historico limpo |
-| Release -> master | **Merge commit** | Preservar historico de release |
+| Feature -> develop | **Squash merge** | Histórico limpo, 1 commit por feature |
+| Fix -> develop | **Squash merge** | Histórico limpo |
+| Release -> master | **Merge commit** | Preservar histórico de release |
 | Hotfix -> master | **Merge commit** | Rastreabilidade |
 | develop -> feature | **Rebase** | Manter branch atualizada |
 
-## Protecao de Branches
+## Proteção de Branches
 
 ### master
 
 - Requer Pull Request para merge
 - Requer pelo menos 1 review aprovado
 - Requer CI (lint, detekt, tests, build) passando
-- Nao permitir force push
-- Nao permitir delete
+- Não permitir force push
+- Não permitir delete
 
 ### develop
 
 - Requer Pull Request para merge
 - Requer CI passando
-- Nao permitir force push
+- Não permitir force push
 
 ## Regras Importantes
 
 1. **NUNCA** fazer push direto para `master` ou `develop`
-2. **SEMPRE** criar PR, mesmo para mudancas pequenas
+2. **SEMPRE** criar PR, mesmo para mudanças pequenas
 3. **SEMPRE** referenciar spec/issue no PR
 4. **SEMPRE** garantir que CI passa antes de solicitar review
 5. **NUNCA** fazer merge com testes falhando
-6. **SEMPRE** deletar branch apos merge
+6. **SEMPRE** deletar branch após merge

@@ -1,10 +1,10 @@
-# Dialog Migration Guide - DialogFragments to Jetpack Compose
+# Guia de Migração de Diálogos — DialogFragments para Jetpack Compose
 
-Este documento descreve a migração de 3 DialogFragments XML para Jetpack Compose, mantendo 100% da funcionalidade original.
+Este documento descreve a migração de 3 `DialogFragment`s XML para Jetpack Compose, preservando 100% da funcionalidade original.
 
 ## Resumo das Conversões
 
-### 1. EditScheduleDialogFragment → EditScheduleDialog (Compose)
+### 1. `EditScheduleDialogFragment` → `EditScheduleDialog` (Compose)
 
 **Arquivo original:** `app/src/main/java/com/futebadosparcas/ui/schedules/EditScheduleDialogFragment.kt`
 
@@ -18,9 +18,9 @@ Este documento descreve a migração de 3 DialogFragments XML para Jetpack Compo
 - Validação de campos obrigatórios
 
 **Diferenças na implementação:**
-- O MaterialTimePicker requer FragmentManager, então a função Compose aceita um callback `onTimePickerClick` que deve ser implementado no Fragment/ViewModel
-- DropdownMenu em vez de AutoCompleteTextView
-- Validação inline com supportingText
+- O `MaterialTimePicker` requer `FragmentManager`; por isso, a função Compose aceita um callback `onTimePickerClick` que deve ser implementado no Fragment ou ViewModel
+- `DropdownMenu` em vez de `AutoCompleteTextView`
+- Validação inline com `supportingText`
 
 **Como usar:**
 ```kotlin
@@ -44,7 +44,7 @@ EditScheduleDialog(
 
 ---
 
-### 2. AddCashboxEntryDialogFragment → AddCashboxEntryDialog (Compose)
+### 2. `AddCashboxEntryDialogFragment` → `AddCashboxEntryDialog` (Compose)
 
 **Arquivo original:** `app/src/main/java/com/futebadosparcas/ui/groups/dialogs/AddCashboxEntryDialogFragment.kt`
 
@@ -63,10 +63,10 @@ EditScheduleDialog(
 - Preview de foto do recebimento
 
 **Melhorias implementadas:**
-- Validação melhorada do botão de salvar
+- Validação aprimorada do botão de salvar
 - Suporte completo para câmera e galeria
-- Erro handling com Toast
-- Logging com AppLogger
+- Tratamento de erros com `Toast`
+- Log com `AppLogger`
 
 **Como usar:**
 ```kotlin
@@ -81,7 +81,7 @@ AddCashboxEntryDialog(
 
 ---
 
-### 3. FieldEditDialog → FieldEditDialog (Compose)
+### 3. `FieldEditDialog` → `FieldEditDialog` (Compose)
 
 **Arquivo original:** `app/src/main/java/com/futebadosparcas/ui/locations/FieldEditDialog.kt`
 
@@ -98,10 +98,10 @@ AddCashboxEntryDialog(
 - Suporte para múltiplos tipos de quadra (SOCIETY, FUTSAL, CAMPO, AREIA, OUTROS)
 
 **Melhorias implementadas:**
-- LazyColumn para scrolling em caso de conteúdo extenso
-- Validação inline com supportingText
-- Melhor UX com foto preview
-- Logout com AppLogger
+- `LazyColumn` para scrolling em caso de conteúdo extenso
+- Validação inline com `supportingText`
+- Melhor UX com preview da foto
+- Log com `AppLogger`
 
 **Como usar:**
 ```kotlin
@@ -134,7 +134,7 @@ FieldEditDialog(
 
 ## Padrões Aplicados
 
-Todos os novos Compose dialogs seguem os padrões estabelecidos no projeto:
+Todos os novos diálogos Compose seguem os padrões estabelecidos no projeto:
 
 ### 1. **State Management**
 ```kotlin
@@ -183,7 +183,7 @@ Box {
 
 ## Migração de Fragmentos (Próximos Passos)
 
-Para usar estes novos dialogs em uma Screen Compose, substitua as chamadas de Fragment:
+Para usar estes novos diálogos em uma Screen Compose, substitua as chamadas de Fragment:
 
 ### Antes (Fragment):
 ```kotlin
@@ -251,18 +251,18 @@ if (showScheduleDialog) {
 ## Próximas Migrações
 
 Os seguintes arquivos XML/Fragment ainda podem ser migrados:
-- Outros dialogs em `ui/games/`
-- Dialogs em `ui/players/`
-- Dialogs em `ui/league/`
+- Outros diálogos em `ui/games/`
+- Diálogos em `ui/players/`
+- Diálogos em `ui/league/`
 
 ---
 
 ## Notas Importantes
 
-1. **MaterialTimePicker**: Continua usando a implementação nativa (FragmentManager) pois Compose ainda não tem equivalente direto
+1. **MaterialTimePicker**: Continua usando a implementação nativa via `FragmentManager`, pois o Compose ainda não tem equivalente direto
 2. **AsyncImage**: Usa Coil para carregamento lazy de imagens
-3. **Photo Pickers**: Suportam câmera (via FileProvider) e galeria
-4. **Validação**: Toda validação é feita inline com feedback visual imediato
+3. **Photo Pickers**: Suportam câmera (via `FileProvider`) e galeria
+4. **Validação**: Toda validação é feita inline, com feedback visual imediato
 
 ---
 

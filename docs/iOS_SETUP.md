@@ -23,55 +23,35 @@ pod --version  # Deve mostrar 1.12+ ou superior
 xcodebuild -version  # Deve mostrar Xcode 15+
 ```
 
-## Criação do Projeto iOS
+## Scaffold iOS existente
 
-### 1. Criar Projeto no Xcode
+O scaffold iOS já está em `iosApp/` e usa **xcodegen + CocoaPods**. Não é necessário criar o projeto do zero.
 
-1. Abrir Xcode
-2. File → New → Project
-3. Selecionar **iOS** → **App**
-4. Configurar:
-   - **Product Name**: FutebaDosParças
-   - **Team**: Sua conta Apple Developer
-   - **Organization Identifier**: com.futebadosparcas
-   - **Interface**: SwiftUI
-   - **Language**: Swift
-   - **Desmarcar**: Core Data, Tests
-5. Salvar em: `C:\Projetos\Futeba dos Parças\iosApp`
+Consulte `iosApp/SETUP.md` para instruções detalhadas de primeira execução.
 
-### 2. Configurar shared Module via CocoaPods
+### 1. Compilar o framework KMP
 
-Criar arquivo `Podfile` na raiz de `iosApp/`:
+Execute a partir da **raiz do projeto**:
 
-```ruby
-platform :ios, '14.0'
-use_frameworks!
+```bash
+# M1/M2/M3/M4 Mac (Simulator ARM64)
+./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
 
-target 'FutebaDosParças' do
-    # Shared KMP module
-    pod 'shared', :path => '../shared'
-
-    # Firebase iOS SDK
-    pod 'FirebaseAuth'
-    pod 'FirebaseFirestore'
-    pod 'FirebaseStorage'
-    pod 'FirebaseMessaging'
-    pod 'FirebaseAnalytics'
-    pod 'FirebaseCrashlytics'
-end
+# Intel Mac (Simulator x86_64)
+./gradlew :shared:linkDebugFrameworkIosX64
 ```
 
-### 3. Instalar Dependências
+### 2. Instalar dependências CocoaPods
 
 ```bash
 cd iosApp
 pod install
 ```
 
-### 4. Abrir Workspace (NÃO o .xcodeproj)
+### 3. Abrir Workspace (NÃO o .xcodeproj)
 
 ```bash
-open FutebaDosParças.xcworkspace
+open iosApp/iosApp.xcworkspace
 ```
 
 ## Configuração do Firebase iOS
@@ -178,12 +158,7 @@ class UserViewModel: ObservableObject {
 
 ### 1. Compilar Shared Framework
 
-```bash
-cd shared
-./gradlew linkDebugFrameworkIosSimulatorArm64  # Para M1/M2 Mac
-# OU
-./gradlew linkDebugFrameworkIosX64  # Para Intel Mac
-```
+Veja a seção "Scaffold iOS existente" acima — o comando deve ser executado da raiz do projeto.
 
 ### 2. Build no Xcode
 

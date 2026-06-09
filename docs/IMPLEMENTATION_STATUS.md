@@ -1,12 +1,12 @@
-# Implementation Status - 100 Improvements Project
+# Status de Implementação — 100 Melhorias
 
-## Overall Progress: 100/100 (100%) ✅
+## Progresso Geral: 100/100 (100%) ✅
 
-Last Updated: 2026-01-22
+Última Atualização: 2026-01-22
 
 ---
 
-## ✅ Completed: Core Infrastructure & Utilities (55 files)
+## ✅ Concluído: Infraestrutura e Utilitários (55 arquivos)
 
 ### Security & Authentication (3)
 - ✅ BiometricHelper - Fingerprint/face authentication
@@ -96,7 +96,7 @@ Last Updated: 2026-01-22
 
 ---
 
-## ✅ Completed: Domain Use Cases (50 files)
+## ✅ Concluído: Casos de Uso de Domínio (50 arquivos)
 
 ### Game Use Cases (10)
 - ✅ CreateGameUseCase - Create new games with validation
@@ -174,50 +174,50 @@ Last Updated: 2026-01-22
 
 ---
 
-## ✅ Completed: Testing Infrastructure (33 files)
+## ✅ Concluído: Infraestrutura de Testes (33 arquivos)
 
-### Test Utilities (7)
-- ✅ TestDispatchers - Test coroutine dispatchers
-- ✅ TestDataFactory - Test data generation
-- ✅ FlowTestExtensions - Flow testing helpers
-- ✅ TestCoroutineRule - JUnit coroutine rule
-- ✅ TestFixtures - Common test fixtures
-- ✅ FakeRepositories - Fake repository implementations
-- ✅ InstantTaskExecutorExtension - LiveData testing
-- ✅ MockLogExtension - Mock Android Log class
+### Utilitários de Teste (7)
+- ✅ TestDispatchers - Dispatchers de coroutines para testes
+- ✅ TestDataFactory - Geração de dados de teste
+- ✅ FlowTestExtensions - Helpers para testes de Flow
+- ✅ TestCoroutineRule - JUnit rule para coroutines
+- ✅ TestFixtures - Fixtures comuns de teste
+- ✅ FakeRepositories - Implementações fake de repositórios
+- ✅ InstantTaskExecutorExtension - Testes de LiveData
+- ✅ MockLogExtension - Mock da classe Android Log
 
-### ViewModel Tests (6)
-- ✅ HomeViewModelTest - Home screen tests
-- ✅ GamesViewModelTest - Games screen tests
-- ✅ PlayersViewModelTest - Players screen tests
-- ✅ StatisticsViewModelTest - Statistics screen tests
-- ✅ LoginViewModelTest - Login flow tests
-- ✅ InviteViewModelTest - Invite flow tests
-- ✅ ProfileViewModelTest - Profile screen tests
+### Testes de ViewModel (6)
+- ✅ HomeViewModelTest - Testes da tela inicial
+- ✅ GamesViewModelTest - Testes da tela de jogos
+- ✅ PlayersViewModelTest - Testes da tela de jogadores
+- ✅ StatisticsViewModelTest - Testes da tela de estatísticas
+- ✅ LoginViewModelTest - Testes do fluxo de login
+- ✅ InviteViewModelTest - Testes do fluxo de convite
+- ✅ ProfileViewModelTest - Testes da tela de perfil
 
-### Use Case Tests (4)
-- ✅ GetUpcomingGamesUseCaseTest - Game listing tests
-- ✅ ConfirmPresenceUseCaseTest - Presence confirmation tests
-- ✅ CalculateTeamBalanceUseCaseTest - Team balancing tests
+### Testes de Casos de Uso (4)
+- ✅ GetUpcomingGamesUseCaseTest - Testes de listagem de jogos
+- ✅ ConfirmPresenceUseCaseTest - Testes de confirmação de presença
+- ✅ CalculateTeamBalanceUseCaseTest - Testes de balanceamento de times
 
-### Domain Logic Tests (10)
-- ✅ XPCalculatorTest - XP calculation tests
-- ✅ ValidationHelperTest - Validation logic tests
-- ✅ TeamBalancerTest - Team balancing algorithm tests
-- ✅ UserPermissionsTest - Authorization tests
-- ✅ MilestoneCheckerTest - Milestone logic tests
-- ✅ LeagueRatingCalculatorTest - Rating calculation tests
-- ✅ LevelCalculatorTest - Level calculation tests
-- ✅ DateTimeUtilsTest - Date/time utility tests
+### Testes de Lógica de Domínio (10)
+- ✅ XPCalculatorTest - Testes de cálculo de XP
+- ✅ ValidationHelperTest - Testes de lógica de validação
+- ✅ TeamBalancerTest - Testes do algoritmo de balanceamento
+- ✅ UserPermissionsTest - Testes de autorização
+- ✅ MilestoneCheckerTest - Testes de lógica de marcos
+- ✅ LeagueRatingCalculatorTest - Testes de cálculo de rating
+- ✅ LevelCalculatorTest - Testes de cálculo de nível
+- ✅ DateTimeUtilsTest - Testes de utilitários de data/hora
 
-### Model Tests (7)
-- ✅ FieldTypeTest - Field type enum tests
-- ✅ GameResultTest - Game result model tests
-- ✅ LeagueDivisionTest - League division tests
-- ✅ PlayerPositionTest - Player position tests
-- ✅ StatisticsTest - Statistics model tests
-- ✅ UserTest - User model tests
-- ✅ XpLogTest - XP log model tests
+### Testes de Modelos (7)
+- ✅ FieldTypeTest - Testes do enum de tipo de campo
+- ✅ GameResultTest - Testes do modelo de resultado de jogo
+- ✅ LeagueDivisionTest - Testes de divisão de liga
+- ✅ PlayerPositionTest - Testes de posição de jogador
+- ✅ StatisticsTest - Testes do modelo de estatísticas
+- ✅ UserTest - Testes do modelo de usuário
+- ✅ XpLogTest - Testes do modelo de log de XP
 
 ---
 
@@ -231,49 +231,49 @@ Last Updated: 2026-01-22
 | Test Files | 33 |
 | **Total Files** | **138** |
 
-### Code Quality
-- **Compilation Status**: ✅ All code compiles successfully
-- **Architecture Pattern**: ✅ MVVM + Clean Architecture
-- **Dependency Injection**: ✅ Hilt configured
-- **Reactive Patterns**: ✅ Flow-based
+### Qualidade de Código
+- **Status de Compilação**: ✅ Código compila com sucesso
+- **Padrão Arquitetural**: ✅ MVVM + Clean Architecture
+- **Injeção de Dependências**: ✅ Hilt configurado
+- **Padrões Reativos**: ✅ Baseado em Flow
 
-### Architecture
-- **MVVM Pattern**: ✅ Implemented
-- **Clean Architecture**: ✅ Layers separated
-- **Dependency Injection**: ✅ Hilt configured
-- **Reactive Patterns**: ✅ StateFlow/Flow-based
-
----
-
-## 📝 Technical Notes
-
-### Use Case Patterns
-All use cases follow standardized patterns:
-- `SuspendUseCase<Params, Result>` - For one-shot operations
-- `FlowUseCase<Params, Result>` - For streaming data
-- `CompletableUseCase<Params>` - For side-effect operations
-- `BatchUseCase<Params, Result>` - For batch operations
-
-### Utility Classes
-All utility classes are:
-- `@Singleton` with Hilt DI
-- Material 3 compliant
-- Dark theme support via ThemeHelper
-- Accessibility features via AccessibilityHelper
-- Performance monitoring via PerformanceMonitor
-- Error tracking via ErrorTracker + Firebase Crashlytics
-
-### Data Layer
-- Firestore as primary backend
-- LRU caching with TTL
-- Offline-first patterns where applicable
-- Pagination for large lists (50 items/page)
-- Batch queries chunked to 10 (Firestore whereIn limit)
+### Arquitetura
+- **Padrão MVVM**: ✅ Implementado
+- **Clean Architecture**: ✅ Camadas separadas
+- **Injeção de Dependências**: ✅ Hilt configurado
+- **Padrões Reativos**: ✅ StateFlow/Flow-based
 
 ---
 
-## 🔗 Related Documents
+## 📝 Notas Técnicas
 
-- [IMPROVEMENT_ROADMAP.md](./IMPROVEMENT_ROADMAP.md) - Full list of planned improvements
-- [CLAUDE.md](../CLAUDE.md) - Project guidelines and patterns
-- [KOTLIN_MULTIPLATFORM_PLAN.md](../KOTLIN_MULTIPLATFORM_PLAN.md) - KMP migration plan
+### Padrões de Casos de Uso
+Todos os casos de uso seguem padrões padronizados:
+- `SuspendUseCase<Params, Result>` — Para operações pontuais
+- `FlowUseCase<Params, Result>` — Para dados em streaming
+- `CompletableUseCase<Params>` — Para operações de efeito colateral
+- `BatchUseCase<Params, Result>` — Para operações em lote
+
+### Classes Utilitárias
+Todas as classes utilitárias são:
+- `@Singleton` com Hilt DI
+- Compatíveis com Material 3
+- Suporte a tema escuro via ThemeHelper
+- Funcionalidades de acessibilidade via AccessibilityHelper
+- Monitoramento de performance via PerformanceMonitor
+- Rastreamento de erros via ErrorTracker + Firebase Crashlytics
+
+### Camada de Dados
+- Firestore como backend principal
+- Cache LRU com TTL
+- Padrões offline-first onde aplicável
+- Paginação para listas grandes (50 itens/página)
+- Queries em lote fragmentadas em 10 itens (limite do `whereIn` do Firestore)
+
+---
+
+## 🔗 Documentos Relacionados
+
+- [IMPROVEMENT_ROADMAP.md](./IMPROVEMENT_ROADMAP.md) — Lista completa de melhorias planejadas
+- [CLAUDE.md](../CLAUDE.md) — Diretrizes e padrões do projeto
+- [KOTLIN_MULTIPLATFORM_PLAN.md](../KOTLIN_MULTIPLATFORM_PLAN.md) — Plano de migração KMP

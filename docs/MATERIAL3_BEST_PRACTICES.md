@@ -1,6 +1,6 @@
-# Material Design 3 - Best Practices
+# Material Design 3 - Melhores Práticas
 
-Guia completo de melhores praticas Material 3 baseado nos projetos:
+Guia completo de melhores práticas para Material 3, baseado nos projetos:
 - **BeerCSS** - Framework CSS Material 3 (Web)
 - **Gramophone** - Music Player Android com M3
 
@@ -8,7 +8,7 @@ Guia completo de melhores praticas Material 3 baseado nos projetos:
 
 ## 1. Sistema de Cores (Color System)
 
-### 1.1 Tokens Semanticos Obrigatorios
+### 1.1 Tokens Semânticos Obrigatórios
 
 Material 3 define **29 tokens de cor** que DEVEM ser usados:
 
@@ -52,26 +52,26 @@ MaterialTheme.colorScheme.inversePrimary
 MaterialTheme.colorScheme.scrim
 ```
 
-### 1.2 Surface Containers (M3 Novidade)
+### 1.2 Surface Containers (Novidade do M3)
 
-Material 3 introduziu novos tokens para hierarquia de superficies:
+Material 3 introduziu novos tokens para hierarquia de superfícies:
 
 ```kotlin
-// Hierarquia de elevacao visual (sem sombra)
-MaterialTheme.colorScheme.surfaceContainerLowest  // Nivel mais baixo
+// Hierarquia de elevação visual (sem sombra)
+MaterialTheme.colorScheme.surfaceContainerLowest  // Nível mais baixo
 MaterialTheme.colorScheme.surfaceContainerLow
-MaterialTheme.colorScheme.surfaceContainer        // Padrao
+MaterialTheme.colorScheme.surfaceContainer        // Padrão
 MaterialTheme.colorScheme.surfaceContainerHigh
-MaterialTheme.colorScheme.surfaceContainerHighest // Nivel mais alto
+MaterialTheme.colorScheme.surfaceContainerHighest // Nível mais alto
 
-// Brilho de superficie
+// Brilho de superfície
 MaterialTheme.colorScheme.surfaceDim
 MaterialTheme.colorScheme.surfaceBright
 ```
 
-**Uso Pratico:**
+**Uso Prático:**
 ```kotlin
-// Cards em diferentes niveis
+// Cards em diferentes níveis
 Card(
     colors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -95,7 +95,7 @@ ModalBottomSheet(
 @Composable
 fun FutebaDosParçasTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true, // Ativar por padrao
+    dynamicColor: Boolean = true, // Ativar por padrão
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -119,7 +119,7 @@ fun FutebaDosParçasTheme(
 ### 2.2 Fallback para Android < 12
 
 ```kotlin
-// Cores estaticas para dispositivos sem Monet
+// Cores estáticas para dispositivos sem Monet
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xFF58CC02),      // Verde Futeba
     onPrimary = Color.White,
@@ -145,19 +145,19 @@ private val DarkColorScheme = darkColorScheme(
 ### 3.1 Buttons (Hierarquia)
 
 ```kotlin
-// ALTA enfase - Acao principal
+// ALTA ênfase — Ação principal
 Button(onClick = {}) { Text("Confirmar") }
 
-// MEDIA enfase - Acao secundaria
+// MÉDIA ênfase — Ação secundária
 FilledTonalButton(onClick = {}) { Text("Editar") }
 
-// BAIXA enfase - Acao terciaria
+// BAIXA ênfase — Ação terciária
 OutlinedButton(onClick = {}) { Text("Cancelar") }
 
-// MINIMA enfase - Links/acoes sutis
+// MÍNIMA ênfase — Links/ações sutis
 TextButton(onClick = {}) { Text("Saiba mais") }
 
-// Acao flutuante
+// Ação flutuante
 FloatingActionButton(onClick = {}) { Icon(...) }
 ExtendedFloatingActionButton(onClick = {}, icon = {...}, text = {...})
 ```
@@ -165,10 +165,10 @@ ExtendedFloatingActionButton(onClick = {}, icon = {...}, text = {...})
 ### 3.2 Cards (Tipos)
 
 ```kotlin
-// Card padrao (elevado)
+// Card padrão (elevado)
 Card { ... }
 
-// Card preenchido (sem elevacao)
+// Card preenchido (sem elevação)
 Card(
     colors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -183,14 +183,14 @@ OutlinedCard { ... }
 ### 3.3 TopAppBar (Tipos M3)
 
 ```kotlin
-// TopAppBar pequena (padrao)
+// TopAppBar pequena (padrão)
 TopAppBar(
     title = { Text("Titulo") },
     navigationIcon = { IconButton(...) },
     actions = { ... }
 )
 
-// TopAppBar media (com titulo grande em scroll)
+// TopAppBar média (com título grande em scroll)
 MediumTopAppBar(
     title = { Text("Titulo") },
     scrollBehavior = scrollBehavior
@@ -202,7 +202,7 @@ LargeTopAppBar(
     scrollBehavior = scrollBehavior
 )
 
-// Center-aligned (iOS style)
+// Center-aligned (estilo iOS)
 CenterAlignedTopAppBar(
     title = { Text("Titulo") }
 )
@@ -211,7 +211,7 @@ CenterAlignedTopAppBar(
 ### 3.4 Navigation
 
 ```kotlin
-// Bottom Navigation (3-5 destinos)
+// Bottom Navigation (3–5 destinos)
 NavigationBar {
     destinations.forEach { dest ->
         NavigationBarItem(
@@ -240,33 +240,33 @@ ModalNavigationDrawer(
 
 ## 4. Tipografia
 
-### 4.1 Escala Tipografica M3
+### 4.1 Escala Tipográfica M3
 
 ```kotlin
-// Display - Titulos hero (muito grandes)
+// Display — Títulos hero (muito grandes)
 MaterialTheme.typography.displayLarge   // 57sp
 MaterialTheme.typography.displayMedium  // 45sp
 MaterialTheme.typography.displaySmall   // 36sp
 
-// Headline - Titulos de secao
+// Headline — Títulos de seção
 MaterialTheme.typography.headlineLarge  // 32sp
 MaterialTheme.typography.headlineMedium // 28sp
 MaterialTheme.typography.headlineSmall  // 24sp
 
-// Title - Subtitulos
+// Title — Subtítulos
 MaterialTheme.typography.titleLarge     // 22sp
-MaterialTheme.typography.titleMedium    // 16sp (Medium weight)
-MaterialTheme.typography.titleSmall     // 14sp (Medium weight)
+MaterialTheme.typography.titleMedium    // 16sp (peso Medium)
+MaterialTheme.typography.titleSmall     // 14sp (peso Medium)
 
-// Body - Texto corrido
+// Body — Texto corrido
 MaterialTheme.typography.bodyLarge      // 16sp
 MaterialTheme.typography.bodyMedium     // 14sp
 MaterialTheme.typography.bodySmall      // 12sp
 
-// Label - Botoes, chips, captions
-MaterialTheme.typography.labelLarge     // 14sp (Medium weight)
-MaterialTheme.typography.labelMedium    // 12sp (Medium weight)
-MaterialTheme.typography.labelSmall     // 11sp (Medium weight)
+// Label — Botões, chips, captions
+MaterialTheme.typography.labelLarge     // 14sp (peso Medium)
+MaterialTheme.typography.labelMedium    // 12sp (peso Medium)
+MaterialTheme.typography.labelSmall     // 11sp (peso Medium)
 ```
 
 ### 4.2 Uso Correto
@@ -274,27 +274,27 @@ MaterialTheme.typography.labelSmall     // 11sp (Medium weight)
 ```kotlin
 // CORRETO
 Text(
-    text = "Proximo Jogo",
+    text = "Próximo Jogo",
     style = MaterialTheme.typography.titleMedium
 )
 
-// ERRADO - Nunca usar fontSize diretamente
+// ERRADO — Nunca usar fontSize diretamente
 Text(
-    text = "Proximo Jogo",
+    text = "Próximo Jogo",
     fontSize = 16.sp  // Evitar!
 )
 ```
 
 ---
 
-## 5. Espacamento e Layout
+## 5. Espaçamento e Layout
 
 ### 5.1 Grid de 4dp
 
-Material 3 usa grid de 4dp para espacamentos:
+Material 3 usa um grid de 4dp para espaçamentos:
 
 ```kotlin
-// Espacamentos padrao
+// Espaçamentos padrão
 val spacing4 = 4.dp
 val spacing8 = 8.dp
 val spacing12 = 12.dp
@@ -303,10 +303,10 @@ val spacing24 = 24.dp
 val spacing32 = 32.dp
 val spacing48 = 48.dp
 
-// Padding de conteudo
+// Padding de conteúdo
 Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
 
-// Espaco entre elementos
+// Espaço entre elementos
 Spacer(modifier = Modifier.height(8.dp))
 ```
 
@@ -328,21 +328,21 @@ Card(
 
 ---
 
-## 6. Icones
+## 6. Ícones
 
 ### 6.1 Material Symbols
 
 ```kotlin
-// Usar Material Symbols (nao Material Icons legado)
+// Usar Material Symbols (não Material Icons legado)
 implementation("androidx.compose.material:material-icons-extended")
 
-// Icones direcionais devem usar AutoMirrored
+// Ícones direcionais devem usar AutoMirrored
 Icon(
     imageVector = Icons.AutoMirrored.Filled.ArrowBack,  // CORRETO
     contentDescription = "Voltar"
 )
 
-// NAO usar
+// NÃO usar
 Icon(
     imageVector = Icons.Filled.ArrowBack,  // ERRADO para RTL
     contentDescription = "Voltar"
@@ -358,13 +358,13 @@ Icon(
     tint = MaterialTheme.colorScheme.primary
 )
 
-// Para icones em superficies
+// Para ícones em superfícies
 Icon(
     imageVector = Icons.Default.Info,
     tint = MaterialTheme.colorScheme.onSurface
 )
 
-// Para icones desabilitados
+// Para ícones desabilitados
 Icon(
     imageVector = Icons.Default.Lock,
     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
@@ -373,24 +373,24 @@ Icon(
 
 ---
 
-## 7. Animacoes e Motion
+## 7. Animações e Motion
 
-### 7.1 Durações Padrao
+### 7.1 Durações Padrão
 
 ```kotlin
-// Duracoes Material 3
+// Durações Material 3
 object MotionTokens {
-    const val DurationShort1 = 50   // Micro interacoes
+    const val DurationShort1 = 50   // Micro-interações
     const val DurationShort2 = 100
     const val DurationShort3 = 150
     const val DurationShort4 = 200
 
-    const val DurationMedium1 = 250 // Transicoes simples
+    const val DurationMedium1 = 250 // Transições simples
     const val DurationMedium2 = 300
     const val DurationMedium3 = 350
     const val DurationMedium4 = 400
 
-    const val DurationLong1 = 450   // Transicoes complexas
+    const val DurationLong1 = 450   // Transições complexas
     const val DurationLong2 = 500
     const val DurationLong3 = 550
     const val DurationLong4 = 600
@@ -411,10 +411,10 @@ val StandardEasing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
 
 ## 8. Acessibilidade
 
-### 8.1 Contraste Minimo
+### 8.1 Contraste Mínimo
 
 ```kotlin
-// WCAG AA - 4.5:1 para texto normal, 3:1 para texto grande
+// WCAG AA — 4.5:1 para texto normal, 3:1 para texto grande
 // Usar ContrastHelper do projeto
 
 val textColor = ContrastHelper.getContrastingTextColor(backgroundColor)
@@ -423,10 +423,10 @@ val textColor = ContrastHelper.getContrastingTextColor(backgroundColor)
 ### 8.2 Touch Target
 
 ```kotlin
-// Minimo 48dp para touch targets
+// Mínimo 48dp para touch targets
 IconButton(
     onClick = { },
-    modifier = Modifier.size(48.dp)  // Minimo 48dp
+    modifier = Modifier.size(48.dp)  // Mínimo 48dp
 ) {
     Icon(...)
 }
@@ -438,19 +438,19 @@ IconButton(
 // SEMPRE fornecer contentDescription para elementos interativos
 Icon(
     imageVector = Icons.Default.Delete,
-    contentDescription = "Remover jogador"  // Obrigatorio!
+    contentDescription = "Remover jogador"  // Obrigatório!
 )
 
 // Para elementos decorativos
 Icon(
     imageVector = Icons.Default.Star,
-    contentDescription = null  // Explicito que e decorativo
+    contentDescription = null  // Explícito que é decorativo
 )
 ```
 
 ---
 
-## 9. Checklist de Revisao
+## 9. Checklist de Revisão
 
 Antes de cada PR, verificar:
 
@@ -458,7 +458,7 @@ Antes de cada PR, verificar:
 - [ ] Nenhum `Color.Black`, `Color.White`, `Color.Gray` hardcoded
 - [ ] Tipografia usa `MaterialTheme.typography.*`
 - [ ] Shapes usam `MaterialTheme.shapes.*`
-- [ ] Icones direcionais usam `Icons.AutoMirrored.*`
+- [ ] Ícones direcionais usam `Icons.AutoMirrored.*`
 - [ ] Touch targets >= 48dp
 - [ ] Content descriptions em elementos interativos
 - [ ] Testado em dark mode

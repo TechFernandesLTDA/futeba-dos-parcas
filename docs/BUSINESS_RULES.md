@@ -55,14 +55,20 @@ Cada jogador ganha XP de múltiplas fontes durante um jogo:
 | Componente | Valor | Condição | Código |
 |------------|-------|----------|--------|
 | **Presença Básica** | +10 XP | Sempre (por comparecer) | `functions/src/index.ts:calculateXP()` |
-| **Gol** | +5 XP | Por gol marcado | `calculateXP()` |
-| **Assistência** | +3 XP | Por assist registrado | `calculateXP()` |
-| **Defesa/Bloqueio** | +2 XP | Por save (goleiro) | `calculateXP()` |
-| **MVP** | +50 XP | Votado como melhor jogador | `calculateXP()` |
+| **Gol** | +10 XP | Por gol marcado | `calculateXP()` |
+| **Assistência** | +7 XP | Por assist registrado | `calculateXP()` |
+| **Defesa/Bloqueio** | +8 XP | Por save (goleiro) | `calculateXP()` |
+| **Clean Sheet** | +15 XP | Goleiro não leva gol | `calculateXP()` |
+| **MVP** | +30 XP | Votado como melhor jogador | `calculateXP()` |
+| **Bola Murcha** | −10 XP | Votado como pior jogador | `calculateXP()` |
 | **Vitória do Time** | +20 XP | Se o time ganhou | `calculateXP()` |
-| **Streak 3+** | +10 XP | 3+ jogos consecutivos | `calculateXP()` |
-| **Streak 7+** | +20 XP | 7+ jogos consecutivos | `calculateXP()` |
-| **Streak 10+** | +30 XP | 10+ jogos consecutivos | `calculateXP()` |
+| **Empate** | +10 XP | Resultado empatado | `calculateXP()` |
+| **Streak 3** | +20 XP | Exatos 3 jogos consecutivos | `calculateXP()` |
+| **Streak 5** | +35 XP | Exatos 5 jogos consecutivos | `calculateXP()` |
+| **Streak 7** | +50 XP | Exatos 7 jogos consecutivos | `calculateXP()` |
+| **Streak 10** | +100 XP | 10+ jogos consecutivos | `calculateXP()` |
+
+> **Anti-cheat caps por jogo:** Gols ≤ 15, Assists ≤ 10, Saves ≤ 30, XP total máx +500 / mín −100. Apenas o tier de streak mais alto é aplicado. Fonte canônica: `shared/xp-constants.json`.
 
 ### 2. Exemplo Completo de Cálculo
 
@@ -70,13 +76,13 @@ Cada jogador ganha XP de múltiplas fontes durante um jogo:
 
 ```
 Base:           +10 XP  (presença)
-2 gols:         +10 XP  (2 × 5)
-1 assist:       +3  XP  (1 × 3)
-MVP:            +50 XP  (votação)
+2 gols:         +20 XP  (2 × 10)
+1 assist:       +7  XP  (1 × 7)
+MVP:            +30 XP  (votação)
 Vitória:        +20 XP  (time ganhou)
-Streak 7+:      +20 XP  (8 jogos consecutivos)
+Streak 7:       +50 XP  (tier de 7 consecutivos; é o mais alto aplicável)
 ────────────────────
-TOTAL:          +113 XP
+TOTAL:          +137 XP
 ```
 
 **Referência de Código:**
@@ -88,13 +94,19 @@ TOTAL:          +113 XP
 Um streak é uma sequência de jogos em que o jogador compareceu consecutivamente:
 
 ```
-Jogo 1 ✓  → Streak = 1 (sem bônus)
-Jogo 2 ✓  → Streak = 2 (sem bônus)
-Jogo 3 ✓  → Streak = 3 (+10 XP bônus)  ⭐
-Jogo 4 ✓  → Streak = 4 (+10 XP bônus)
-Jogo 5 ✗  → Streak = 0 (resetou)       ❌
-Jogo 6 ✓  → Streak = 1 (recomeça)
+Jogo 1 ✓  → Streak = 1  (sem bônus)
+Jogo 2 ✓  → Streak = 2  (sem bônus)
+Jogo 3 ✓  → Streak = 3  (+20 XP bônus)  ⭐
+Jogo 4 ✓  → Streak = 4  (+20 XP bônus)
+Jogo 5 ✓  → Streak = 5  (+35 XP bônus)  ⭐⭐
+Jogo 6 ✓  → Streak = 6  (+35 XP bônus)
+Jogo 7 ✓  → Streak = 7  (+50 XP bônus)  ⭐⭐⭐
+Jogo 8 ✓  → Streak = 8  (+50 XP bônus)
+Jogo 9 ✗  → Streak = 0  (resetou)        ❌
+Jogo 10 ✓ → Streak = 1  (recomeça)
 ```
+
+> **Regra:** apenas o tier mais alto é aplicado por jogo. Ex.: streak = 10 → +100 XP (não soma os tiers anteriores).
 
 **Ações que resetam o streak:**
 - Não confirmar presença antes do jogo
@@ -232,7 +244,7 @@ Uma **Season** dura exatamente um mês calendário:
 **Ciclo Automático (Cloud Function Scheduled):**
 
 ```
-todo 1º de cada mês às 00:00 (US/Eastern, que é 01:00 em São Paulo)
+todo 1º de cada mês às 00:00 (America/Sao_Paulo)
     ↓
 [onSeasonEnd function dispara]
     ↓
@@ -255,41 +267,23 @@ todo 1º de cada mês às 00:00 (US/Eastern, que é 01:00 em São Paulo)
 Um jogo passa pelos seguintes estados até a finalização:
 
 ```
-1. CREATED
-   └─ Um organizador criou o jogo
-   └─ Aguardando confirmações de presença
-
-2. SCHEDULED
-   └─ Mínimo de jogadores confirmados
-   └─ Horário está no futuro
-
-3. CONFIRMED
-   └─ Times foram balanceados (AI)
-   └─ Teams geradas
-   └─ Pronto para começar
-
-4. LIVE
-   └─ Jogo começou
-   └─ Eventos sendo registrados (gols, cards)
-
-5. FINISHED
-   └─ Placar final registrado
-   └─ Stats preenchidas
-   └─ Aguardando processamento
-
-6. PROCESSED
-   └─ Cloud Function completou
-   └─ XP distribuído
-   └─ Badges desbloqueadas
-   └─ Rankings atualizados
-   └─ Estado final permanente
+SCHEDULED → CONFIRMED → LIVE → FINISHED
 ```
+
+| Estado | Descrição |
+|--------|-----------|
+| **SCHEDULED** | Jogo criado, aguardando confirmações de presença |
+| **CONFIRMED** | Lista fechada, times gerados e balanceados |
+| **LIVE** | Jogo em andamento; eventos registrados (gols, assists, saves, cards) |
+| **FINISHED** | Placar final registrado, votação de MVP concluída, XP processado |
+
+> **Nota:** O processamento de XP, badges e rankings ocorre automaticamente (via Cloud Function `onGameFinished`) quando o jogo entra em `FINISHED`. Não há estado `PROCESSED` separado no modelo canônico.
 
 ### Transições de Estado Detalhadas
 
 ```
-┌─ CREATED ─────────────────────────────┐
-│ triggers:                              │
+┌─ SCHEDULED ───────────────────────────┐
+│ trigger:                               │
 │  - user.createGame(gameData)           │
 │ validations:                           │
 │  - date >= now + 2 hours?              │
@@ -298,17 +292,7 @@ Um jogo passa pelos seguintes estados até a finalização:
 └──────────────┬──────────────────────────┘
                │
                ↓
-    [Aguardando confirmações por 2h]
-               ↓
-┌─ SCHEDULED ───────────────────────────┐
-│ trigger:                               │
-│  - confirmed_count >= min_players      │
-│  - game.updateState('SCHEDULED')       │
-│ ou tempo chegou (2h antes do jogo)     │
-└──────────────┬──────────────────────────┘
-               │
-               ↓
-    [Teams gerados via IA]
+    [Times gerados via IA]
                ↓
 ┌─ CONFIRMED ───────────────────────────┐
 │ trigger:                               │
@@ -344,14 +328,8 @@ Um jogo passa pelos seguintes estados até a finalização:
 │  - status == LIVE                      │
 │  - score is valid                      │
 │  - all players confirmed present       │
-└──────────────┬──────────────────────────┘
-               │
-               ↓
-  [Cloud Function onGameComplete fires]
-               ↓
-┌─ PROCESSED ───────────────────────────┐
 │ auto-triggered:                        │
-│  - onGameComplete() runs               │
+│  - onGameFinished() Cloud Function     │
 │  - calculateXP() for each player       │
 │  - checkBadges() for unlocks           │
 │  - updateRanking() for leaderboard     │
@@ -364,20 +342,17 @@ Um jogo passa pelos seguintes estados até a finalização:
 ```
 
 **Referência de Código:**
-- `backend/CONTROLLERS.md:GameController` - endpoints para transições
-- `functions/FUNCTIONS.md:onGameComplete` - processamento automático
+- `functions/src/index.ts:onGameFinished` - processamento automático pós-jogo
 - `app/MODULES.md:Games Module` - UI para cada estado
 
 ### Regras de Validação por Estado
 
 | Estado | Pode Confirmar? | Pode Gerar Times? | Pode Iniciar? | Pode Finalizar? |
 |--------|---|---|---|---|
-| CREATED | ✅ Sim | ❌ Não | ❌ Não | ❌ Não |
-| SCHEDULED | ✅ Ainda pode | ❌ Não | ❌ Não | ❌ Não |
+| SCHEDULED | ✅ Sim | ❌ Não | ❌ Não | ❌ Não |
 | CONFIRMED | ❌ Não | ❌ Não | ✅ Sim | ❌ Não |
 | LIVE | ❌ Não | ❌ Não | ❌ Não | ✅ Sim |
 | FINISHED | ❌ Não | ❌ Não | ❌ Não | ❌ Não |
-| PROCESSED | ❌ Não | ❌ Não | ❌ Não | ❌ Não |
 
 ---
 
@@ -529,7 +504,7 @@ Exemplo: Após 10 jogos = R$ 200 no caixa
 
 ```yaml
 Match Results:
-  - ✅ Imutável após status = PROCESSED
+  - ✅ Imutável após status = FINISHED
   - Não pode: deletar, editar stats
   - Pode: Revisar em caso de erro administrativo (admin only)
   - Log completo mantido para auditoria
@@ -580,7 +555,7 @@ validate: {
 |------|---|---|
 | Um player não pode estar em 2 times no mesmo jogo | Database unique constraint | CRÍTICA |
 | MVP deve ser um player que jogou | Cloud Function validation | CRÍTICA |
-| XP total nunca decresce | Stored Procedure invariant | CRÍTICA |
+| XP total não é modificado diretamente pelo cliente | Cloud Function invariant | CRÍTICA |
 | Badges nunca são removidas | Firestore rule | CRÍTICA |
 | Season XP reseta todo mês | Cloud Scheduled Function | ALTA |
 | Streak reseta se faltar um jogo | Batch update weekly | ALTA |
@@ -641,45 +616,45 @@ MVP Votado: Ana (2 gols, jogou bem)
 
 ```
 JOÃO (GK, Time A vencedor, Streak=15)
-  Base:       +10 (presença)
-  Saves:      +6  (3 saves × 2)
-  Defesa:     +0  (não PAREDAO - levou 2)
-  Vitória:    +20 (time ganhou)
-  Streak 15:  +30 (streak >= 10)
+  Base:       +10  (presença)
+  Saves:      +24  (3 saves × 8)
+  Defesa:     +0   (não clean sheet — levou 2)
+  Vitória:    +20  (time ganhou)
+  Streak 10+: +100 (tier mais alto: streak >= 10)
   ──────
-  TOTAL:      +66 XP
+  TOTAL:      +154 XP
 
 ANA (Atacante, MVP, Time A, Streak=5)
-  Base:       +10 (presença)
-  Gols:       +10 (2 gols × 5)
+  Base:       +10  (presença)
+  Gols:       +20  (2 gols × 10)
   Assists:    +0
-  MVP:        +50 (votado)
-  Vitória:    +20 (time ganhou)
-  Streak 5:   +0  (precisa >= 7 para bônus)
-  Badges:     +50 HAT_TRICK (não, só 2 gols)
+  MVP:        +30  (votado)
+  Vitória:    +20  (time ganhou)
+  Streak 5:   +35  (tier de 5 consecutivos)
+  Badges:     +0   HAT_TRICK (não — só 2 gols; requer 3)
   ──────
-  TOTAL:      +90 XP
+  TOTAL:      +115 XP
 
 CARLOS (Atacante, Time B, Streak=2)
-  Base:       +10 (presença)
-  Gols:       +5  (1 gol × 5)
-  Assists:    +3  (1 assist × 3)
-  MVP:        +0  (não votado)
-  Vitória:    +0  (perdeu)
-  Streak 2:   +0  (sem bônus)
+  Base:       +10  (presença)
+  Gols:       +10  (1 gol × 10)
+  Assists:    +7   (1 assist × 7)
+  MVP:        +0   (não votado)
+  Vitória:    +0   (perdeu)
+  Streak 2:   +0   (sem bônus)
   ──────
-  TOTAL:      +18 XP
+  TOTAL:      +27 XP
 
 PEDRO (GK, Time B, Streak=1)
-  Base:       +10 (presença)
-  Saves:      +6  (3 saves × 2)
-  Defesa:     +0  (não PAREDAO - levou 4)
-  Vitória:    +0  (perdeu)
+  Base:       +10  (presença)
+  Saves:      +24  (3 saves × 8)
+  Defesa:     +0   (não clean sheet — levou 4)
+  Vitória:    +0   (perdeu)
   Streak 1:   +0
   ──────
-  TOTAL:      +16 XP
+  TOTAL:      +34 XP
 
-[Outros 5 jogadores: média +15-25 XP cada]
+[Outros 6 jogadores: média +20-35 XP cada]
 ```
 
 **Badges Desbloqueadas:**
@@ -692,22 +667,16 @@ PEDRO (GK, Time B, Streak=1)
 
 ```
 GLOBAL XP (all-time):
-  João:  1245 → 1311 XP (+66)
-  Ana:   3890 → 3980 XP (+90)
-  Carlos: 524 → 542 XP (+18)
-  Pedro:  892 → 908 XP (+16)
+  João:  1245 → 1399 XP (+154)
+  Ana:   3890 → 4005 XP (+115)
+  Carlos: 524 → 551 XP (+27)
+  Pedro:  892 → 926 XP (+34)
 
 SEASONAL XP (dezembro):
-  João:  128 → 194 XP (+66)
-  Ana:   425 → 515 XP (+90)
-  Carlos: 180 → 198 XP (+18)
-  Pedro:  75 → 91 XP (+16)
-
-LEVELS:
-  João:  nível 1 (1311 / 1000)
-  Ana:   nível 3 (3980 / 6000) = 66%
-  Carlos: nível 1 (542 / 1000)
-  Pedro:  nível 1 (908 / 1000)
+  João:  128 → 282 XP (+154)
+  Ana:   425 → 540 XP (+115)
+  Carlos: 180 → 207 XP (+27)
+  Pedro:  75 → 109 XP (+34)
 ```
 
 ### Exemplo 2: Season End - Distribuição de Prêmios
@@ -789,5 +758,5 @@ JOÃO SANTOS (2º lugar):
 
 ---
 
-**Última atualização:** Dezembro 2025
-**Versão:** 2.0 (Completa e LLM-otimizada)
+**Última atualização:** Junho 2026
+**Versão:** 2.1 (XP canônico corrigido: Gol +10, Assist +7, Save +8, MVP +30; streaks 3/5/7/10; 4 estados de jogo)

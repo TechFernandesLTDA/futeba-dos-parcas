@@ -1,4 +1,4 @@
-# Padrões de Jetpack Compose - Futeba dos Parças
+# Padrões de Jetpack Compose — Futeba dos Parças
 
 **Data:** 2026-01-05
 **Versão:** 1.0
@@ -24,7 +24,7 @@ Este documento define os padrões estabelecidos para desenvolvimento em Jetpack 
 
 ### Padrão Estabelecido
 
-Cada tela é composta por **2 arquivos**:
+Cada tela é composta por **2 arquivos** distintos:
 
 ```
 📁 ui/feature/
@@ -35,9 +35,9 @@ Cada tela é composta por **2 arquivos**:
 ### FeatureFragment.kt
 
 **Responsabilidades:**
-- ✅ Setup do ComposeView
-- ✅ Navegação (findNavController, safe-args)
-- ✅ Integração com dialogs legados (DialogFragment)
+- ✅ Configuração do `ComposeView`
+- ✅ Navegação (`findNavController`, safe-args)
+- ✅ Integração com diálogos legados (`DialogFragment`)
 - ❌ NÃO contém lógica de UI
 - ❌ NÃO contém composables
 
@@ -104,10 +104,10 @@ class FeatureFragment : Fragment() {
 
 **Responsabilidades:**
 - ✅ Toda a lógica de UI em Compose
-- ✅ Observar ViewModel via `collectAsStateWithLifecycle()`
+- ✅ Observar o ViewModel via `collectAsStateWithLifecycle()`
 - ✅ Gerenciar estado local com `remember { mutableStateOf() }`
 - ✅ Definir todos os composables da tela
-- ✅ Gerenciar diálogos internos (AlertDialog)
+- ✅ Gerenciar diálogos internos (`AlertDialog`)
 
 **Template:**
 
@@ -191,10 +191,10 @@ private fun FeatureContent(
 ```
 
 **Regras:**
-- ✅ Função principal `@Composable` pública
+- ✅ Função `@Composable` principal pública
 - ✅ Composables auxiliares `private`
 - ✅ Usar `collectAsStateWithLifecycle()` para ViewModels
-- ✅ LaunchedEffect para side effects (inicialização, argumentos)
+- ✅ `LaunchedEffect` para side effects (inicialização, argumentos)
 - ✅ Diálogos gerenciados com `remember { mutableStateOf() }`
 
 ---
@@ -393,7 +393,7 @@ RankingItemShimmer()
 
 ## 🔄 Gerenciamento de Estado
 
-### ViewModel State Pattern
+### Padrão de Estado no ViewModel
 
 ```kotlin
 // Sealed class para UI State
@@ -458,19 +458,19 @@ fun FeatureScreen(viewModel: FeatureViewModel) {
 ```
 
 **Regras:**
-- ✅ ViewModel State: dados que sobrevivem recomposições e mudanças de configuração
-- ✅ Local State: estados temporários de UI (dialogs, inputs, seleções)
-- ✅ `collectAsStateWithLifecycle()` para observar StateFlow
+- ✅ Estado do ViewModel: dados que sobrevivem a recomposições e mudanças de configuração
+- ✅ Estado local: estados temporários de UI (diálogos, inputs, seleções)
+- ✅ `collectAsStateWithLifecycle()` para observar `StateFlow`
 - ✅ `LaunchedEffect` para side effects baseados em mudanças de estado
-- ❌ NUNCA usar LiveData em novos componentes Compose
+- ❌ NUNCA usar `LiveData` em novos componentes Compose
 
 ---
 
 ## 🚦 Navegação e Callbacks
 
-### Pattern: Callbacks para o Fragment
+### Padrão: Callbacks para o Fragment
 
-**Screen NÃO navega diretamente**, apenas chama callbacks:
+**A Screen NÃO navega diretamente**, apenas chama callbacks:
 
 ```kotlin
 // Screen.kt
@@ -505,9 +505,9 @@ FeatureScreen(
 ```
 
 **Regras:**
-- ✅ Callbacks SEMPRE têm valores default `= {}`
+- ✅ Callbacks SEMPRE têm valores padrão `= {}`
 - ✅ Fragment SEMPRE verifica `if (isAdded)` antes de navegar
-- ✅ Screen NÃO tem dependência de Navigation
+- ✅ Screen NÃO tem dependência do módulo Navigation
 - ✅ Usar safe-args para type safety
 
 ---
@@ -563,10 +563,10 @@ private fun FeatureContent(...) { }
 
 ### Comentários
 
-- ✅ **Português (PT-BR)** para todos os comentários
+- ✅ **Português (PT-BR)** em todos os comentários
 - ✅ KDoc para composables públicos
 - ✅ Comentários inline para lógica complexa
-- ❌ Evitar comentários óbvios
+- ❌ Evitar comentários óbvios que apenas descrevem o que o código já diz
 
 ```kotlin
 // ✅ BOM
@@ -603,7 +603,7 @@ MaterialTheme.colorScheme.primary
 CardDefaults.cardColors()
 TopAppBar(...)
 
-// ❌ ERRADO
+// ❌ ERRADO — Material 2 (legado)
 import androidx.compose.material.*
 
 MaterialTheme.colors.primary // Material 2
@@ -644,7 +644,7 @@ MaterialTheme.colors.primary // Material 2
 
 ## 📊 Métricas de Sucesso
 
-Após aplicar esses padrões, espera-se:
+Após aplicar estes padrões, espera-se:
 
 | Métrica | Antes | Depois | Melhoria |
 |---------|-------|--------|----------|
@@ -667,4 +667,4 @@ Após aplicar esses padrões, espera-se:
 
 **Última atualização:** 2026-01-05
 **Autor:** Claude Code
-**Status:** ✅ Ativo - FASE 3.5 Consolidação Completa
+**Status:** ✅ Ativo — FASE 3.5 Consolidação Completa

@@ -55,6 +55,8 @@ Documentação organizada do projeto Futeba dos Parças.
 | Arquivo | Descrição |
 |---------|-----------|
 | [iOS_SETUP.md](iOS_SETUP.md) | Setup Xcode, CocoaPods, Firebase iOS |
+| [KMP_QUICK_START.md](KMP_QUICK_START.md) | Guia rápido de uso do módulo `shared` |
+| [KMP_SETUP_SUMMARY.md](KMP_SETUP_SUMMARY.md) | Resumo da configuração KMP |
 | [KOTLIN_MULTIPLATFORM_PLAN.md](../KOTLIN_MULTIPLATFORM_PLAN.md) | Plano de migração KMP |
 
 ---
@@ -129,5 +131,5 @@ Regras específicas para Claude Code em [../.claude/rules/](../.claude/rules/)
 
 ---
 
-**Última Atualização:** 2026-01-08
+**Última Atualização:** 2026-06-08
 **Status:** ✅ Documentação organizada e atualizada

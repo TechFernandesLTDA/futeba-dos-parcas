@@ -5,111 +5,111 @@
 
 ## Visão Geral
 
-| Categoria | Contagem |
-|-----------|----------|
-| Compose Screens | 39 |
-| XML Fragments | 0 |
-| XML Layouts (auxiliares) | 3 |
+| Categoria | Quantidade |
+|-----------|------------|
+| Telas Compose | 39 |
+| Fragments XML | 0 |
+| Layouts XML (auxiliares) | 3 |
 
 ## Telas por Módulo
 
-### Auth (2 telas)
-- [x] `LoginScreen.kt` - Tela de login
-- [x] `RegisterScreen.kt` - Tela de registro
+### Autenticação (2 telas)
+- [x] `LoginScreen.kt` — Tela de login
+- [x] `RegisterScreen.kt` — Tela de registro
 
 ### Home (1 tela)
-- [x] `HomeScreen.kt` - Tela principal
+- [x] `HomeScreen.kt` — Tela principal
 
-### Games (3 telas)
-- [x] `GamesScreen.kt` - Lista de jogos
-- [x] `CreateGameScreen.kt` - Criar jogo
-- [x] `GameDetailScreen.kt` - Detalhe do jogo
+### Jogos (3 telas)
+- [x] `GamesScreen.kt` — Lista de jogos
+- [x] `CreateGameScreen.kt` — Criar jogo
+- [x] `GameDetailScreen.kt` — Detalhe do jogo
 
-### Live Game (3 telas)
-- [x] `LiveGameScreen.kt` - Jogo ao vivo
-- [x] `LiveStatsScreen.kt` - Estatísticas ao vivo
-- [x] `LiveEventsScreen.kt` - Eventos ao vivo
+### Jogo ao Vivo (3 telas)
+- [x] `LiveGameScreen.kt` — Jogo ao vivo
+- [x] `LiveStatsScreen.kt` — Estatísticas ao vivo
+- [x] `LiveEventsScreen.kt` — Eventos ao vivo
 
-### Game Experience (1 tela)
-- [x] `MVPVoteScreen.kt` - Votação de MVP
+### Experiência do Jogo (1 tela)
+- [x] `MVPVoteScreen.kt` — Votação de MVP
 
-### Groups (5 telas)
-- [x] `GroupsScreen.kt` - Lista de grupos
-- [x] `CreateGroupScreen.kt` - Criar grupo
-- [x] `GroupDetailScreen.kt` - Detalhe do grupo
-- [x] `CashboxScreen.kt` - Caixinha do grupo
-- [x] `InvitePlayersScreen.kt` - Convidar jogadores
+### Grupos (5 telas)
+- [x] `GroupsScreen.kt` — Lista de grupos
+- [x] `CreateGroupScreen.kt` — Criar grupo
+- [x] `GroupDetailScreen.kt` — Detalhe do grupo
+- [x] `CashboxScreen.kt` — Caixinha do grupo
+- [x] `InvitePlayersScreen.kt` — Convidar jogadores
 
-### Players (1 tela)
-- [x] `PlayersScreen.kt` - Lista de jogadores
+### Jogadores (1 tela)
+- [x] `PlayersScreen.kt` — Lista de jogadores
 
-### Profile (3 telas)
-- [x] `ProfileScreen.kt` - Perfil do usuário
-- [x] `EditProfileScreen.kt` - Editar perfil
-- [x] `LevelJourneyScreen.kt` - Jornada de nível
+### Perfil (3 telas)
+- [x] `ProfileScreen.kt` — Perfil do usuário
+- [x] `EditProfileScreen.kt` — Editar perfil
+- [x] `LevelJourneyScreen.kt` — Jornada de nível
 
-### Statistics (3 telas)
-- [x] `StatisticsScreen.kt` - Estatísticas
-- [x] `RankingScreen.kt` - Ranking
-- [x] `EvolutionScreen.kt` - Evolução
+### Estatísticas (3 telas)
+- [x] `StatisticsScreen.kt` — Estatísticas
+- [x] `RankingScreen.kt` — Ranking
+- [x] `EvolutionScreen.kt` — Evolução
 
-### League (1 tela)
-- [x] `LeagueScreen.kt` - Liga/Temporada
+### Liga (1 tela)
+- [x] `LeagueScreen.kt` — Liga/Temporada
 
-### Locations (4 telas)
-- [x] `LocationsMapScreen.kt` - Mapa de locais
-- [x] `LocationDetailScreen.kt` - Detalhe do local
-- [x] `ManageLocationsScreen.kt` - Gerenciar locais
-- [x] `FieldOwnerDashboardScreen.kt` - Dashboard do dono
+### Locais (4 telas)
+- [x] `LocationsMapScreen.kt` — Mapa de locais
+- [x] `LocationDetailScreen.kt` — Detalhe do local
+- [x] `ManageLocationsScreen.kt` — Gerenciar locais
+- [x] `FieldOwnerDashboardScreen.kt` — Dashboard do dono do campo
 
-### Schedules (1 tela)
-- [x] `SchedulesScreen.kt` - Agendamentos
+### Agendamentos (1 tela)
+- [x] `SchedulesScreen.kt` — Agendamentos
 
-### Notifications (1 tela)
-- [x] `NotificationsScreen.kt` - Notificações
+### Notificações (1 tela)
+- [x] `NotificationsScreen.kt` — Notificações
 
 ### Badges (1 tela)
-- [x] `BadgesScreen.kt` - Badges/Conquistas
+- [x] `BadgesScreen.kt` — Badges/Conquistas
 
-### Tactical (1 tela)
-- [x] `TacticalBoardScreen.kt` - Quadro tático
+### Tático (1 tela)
+- [x] `TacticalBoardScreen.kt` — Quadro tático
 
-### Settings (3 telas)
-- [x] `PreferencesScreen.kt` - Preferências
-- [x] `ThemeSettingsScreen.kt` - Configurações de tema
-- [x] `GamificationSettingsScreen.kt` - Config. gamificação
+### Configurações (3 telas)
+- [x] `PreferencesScreen.kt` — Preferências
+- [x] `ThemeSettingsScreen.kt` — Configurações de tema
+- [x] `GamificationSettingsScreen.kt` — Configurações de gamificação
 
-### Admin (1 tela)
-- [x] `UserManagementScreen.kt` - Gerenciar usuários
+### Administração (1 tela)
+- [x] `UserManagementScreen.kt` — Gerenciar usuários
 
-### Developer (2 telas)
-- [x] `DeveloperScreen.kt` - Tela de desenvolvedor
-- [x] `DevToolsScreen.kt` - Ferramentas de dev
+### Desenvolvedor (2 telas)
+- [x] `DeveloperScreen.kt` — Tela de desenvolvedor
+- [x] `DevToolsScreen.kt` — Ferramentas de desenvolvimento
 
-### About (1 tela)
-- [x] `AboutScreen.kt` - Sobre o app
+### Sobre (1 tela)
+- [x] `AboutScreen.kt` — Sobre o app
 
 ### Splash (1 tela)
-- [x] `SplashScreen.kt` - Splash screen
+- [x] `SplashScreen.kt` — Splash screen
 
 ## Layouts XML Auxiliares
 
 | Arquivo | Uso |
 |---------|-----|
 | `layout_empty_state.xml` | Estado vazio para listas |
-| `layout_share_card.xml` | Card para compartilhamento |
-| `skeleton_profile.xml` | Skeleton loading do perfil |
+| `layout_share_card.xml` | Card de compartilhamento |
+| `skeleton_profile.xml` | Skeleton de carregamento do perfil |
 
 ## Checklist de Validação Material 3
 
 ### Padrões Obrigatórios
 
 - [ ] Uso de `MaterialTheme.colorScheme.*` (nunca cores hardcoded)
-- [ ] TopAppBar com `AppTopBar.*Colors()` padronizado
+- [ ] `TopAppBar` com `AppTopBar.*Colors()` padronizado
 - [ ] Ícones com tint de `MaterialTheme.colorScheme.*`
-- [ ] Botões usando Material 3 (Button, OutlinedButton, etc.)
+- [ ] Botões usando componentes Material 3 (`Button`, `OutlinedButton`, etc.)
 - [ ] Cards com `CardDefaults.cardColors()`
-- [ ] Dividers usando `HorizontalDivider` (não `Divider`)
+- [ ] Divisores usando `HorizontalDivider` (não `Divider`, que está depreciado)
 - [ ] Pull-to-refresh usando `PullToRefreshBox`
 - [ ] Ícones direcionais usando `Icons.AutoMirrored.*`
 

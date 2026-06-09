@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este documento mostra exemplos reais de como o código ficará após migração para usar as strings centralizadas.
+Este documento apresenta exemplos reais de como o código fica após a migração para strings centralizadas.
 
 ---
 
@@ -173,7 +173,7 @@ fun GameDetailScreen(
 }
 ```
 
-**Benefícios**:
+**Benefícios:**
 - ✅ Sem strings hardcoded
 - ✅ Fácil de traduzir
 - ✅ Manutenção centralizada
@@ -385,7 +385,7 @@ fun CashboxScreen(
 }
 ```
 
-**Benefícios**:
+**Benefícios:**
 - ✅ 10 strings removidas do código
 - ✅ Título e diálogos centralizados
 - ✅ Fácil manutenção de mensagens
@@ -499,13 +499,13 @@ class CreateGameViewModel @Inject constructor(
 }
 ```
 
-**Nota**: Strings precisariam ser adicionadas ao strings.xml com placeholders:
+**Observação:** As strings abaixo precisariam ser adicionadas ao `strings.xml` com placeholders:
 ```xml
 <string name="create_game_success_format">Jogo de %1$s - %2$s</string>
 <string name="create_game_error_date_future">A data e horário do início devem ser futuros</string>
 ```
 
-**Benefícios**:
+**Benefícios:**
 - ✅ Mensagens de erro centralizadas
 - ✅ Fácil identificar todas as mensagens de validação
 - ✅ Pronto para tradução
@@ -669,7 +669,7 @@ fun ProfileScreen(
 }
 ```
 
-**Benefícios**:
+**Benefícios:**
 - ✅ 15+ strings removidas
 - ✅ Menu reutilizável em diferentes locais
 - ✅ Nomes de roles centralizados
@@ -831,7 +831,7 @@ fun LeagueScreen(viewModel: LeagueViewModel) {
 }
 ```
 
-**Benefícios**:
+**Benefícios:**
 - ✅ 14 strings removidas
 - ✅ Divisões padronizadas
 - ✅ Mensagens de erro consistentes
@@ -841,20 +841,20 @@ fun LeagueScreen(viewModel: LeagueViewModel) {
 
 ## Conclusão
 
-Todos esses exemplos mostram como o código fica mais **limpo**, **fácil de manter** e **pronto para tradução** após usar as strings centralizadas.
+Todos esses exemplos demonstram como o código fica mais **limpo**, **fácil de manter** e **pronto para tradução** após a adoção de strings centralizadas.
 
-### Resumo dos Benefícios:
+### Resumo dos Benefícios
 1. ✅ Menos strings hardcoded no código
 2. ✅ Repositório centralizado para manutenção
 3. ✅ Preparado para internacionalização
 4. ✅ Reutilização de strings comuns
 5. ✅ Código mais legível
-6. ✅ Facilita code review
+6. ✅ Facilita o code review
 7. ✅ Reduz erros de digitação
 
 ---
 
-**Nota**: Alguns dos strings nestes exemplos ("create_game_error_date_future", "create_game_success_format") precisariam ser adicionados ao strings.xml. Este é um exemplo das próximas fases (Fase 2+).
+**Observação:** Algumas strings dos exemplos acima (`create_game_error_date_future`, `create_game_success_format`) precisariam ser adicionadas ao `strings.xml`. Elas fazem parte do escopo das próximas fases (Fase 2+).
 
-**Gerado em**: 2026-01-07
+**Gerado em**: 2026-01-07  
 **Versão**: 1.0

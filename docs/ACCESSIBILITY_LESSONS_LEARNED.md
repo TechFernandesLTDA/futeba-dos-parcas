@@ -37,7 +37,7 @@
 ## O Que Não Funcionou
 
 ### 1. ❌ Regex não é suficiente para Kotlin/Compose
-**Problema**: Compose usa DSLs complexos e nested lambdas.
+**Problema**: Compose usa DSLs complexas e lambdas aninhadas.
 
 **Exemplos de falhas**:
 ```kotlin
@@ -58,8 +58,8 @@ Image(painter = painterResource(
 .clickable { onClick() } // ← Difícil identificar contexto correto
 ```
 
-###2. ❌ Parsing de AST necessário
-**Por quê regex falha**:
+### 2. ❌ Parsing de AST necessário
+**Por que regex falha**:
 - Não entende escopos/contextos
 - Não diferencia parâmetros de funções diferentes
 - Não rastreia parênteses balanceados corretamente em código multiline
@@ -72,8 +72,8 @@ Image(painter = painterResource(
 ### 3. ❌ Build quebrou com scripts automatizados
 **Erros introduzidos**:
 - 122 erros de compilação
-- contentDescription em lugares errados
-- Unresolved references
+- `contentDescription` inserido em lugares errados
+- Referências não resolvidas (`Unresolved reference`)
 
 ---
 
@@ -114,14 +114,14 @@ Image(painter = painterResource(
 ### Opção C: Android Studio Inspections (Recomendada)
 ```
 1. Analyze > Inspect Code
-2. Filter: "Accessibility"
-3. Bulk fix com "Alt+Enter" em cada item
-4. Review changes via diff
+2. Filtrar por: "Accessibility"
+3. Correção em lote com "Alt+Enter" em cada item
+4. Revisar alterações via diff
 ```
 
 **Prós**:
 - ✅ IDE entende o AST
-- ✅ Correções context-aware
+- ✅ Correções sensíveis ao contexto
 - ✅ Preview antes de aplicar
 
 **Contras**:
@@ -144,23 +144,23 @@ Image(painter = painterResource(
 
 ## Lições para Futuras Automações
 
-### 1. Parse do AST é obrigatório para Kotlin/Compose
+### 1. Parsing de AST é obrigatório para Kotlin/Compose
 - Regex funciona para mudanças triviais
 - Código complexo requer parsing semântico
 
 ### 2. Teste em lote pequeno primeiro
-- Sempre testar em 5-10 arquivos
-- Build após cada modificação
-- Revert rápido se algo der errado
+- Sempre testar em 5–10 arquivos
+- Compilar após cada modificação
+- Reverter rapidamente se algo der errado
 
 ### 3. Lint > Grep para detecção
-- Lint já entende o AST
+- O Lint já entende o AST
 - Usa o compilador Kotlin
-- Report HTML navegável
+- Relatório HTML navegável
 
-### 4. IDE tools > Scripts externos
-- Android Studio/IntelliJ tem quick-fixes built-in
-- "Alt+Enter" resolve 90% dos cases
+### 4. Ferramentas da IDE > Scripts externos
+- Android Studio/IntelliJ tem quick-fixes nativos
+- "Alt+Enter" resolve 90% dos casos
 - Structural Search & Replace para padrões complexos
 
 ---
@@ -214,11 +214,11 @@ Image(painter = painterResource(
 A tentativa de automação 100% **falhou tecnicamente**, mas foi **extremamente valiosa**:
 
 1. **Aprendemos** os limites de regex para Kotlin/Compose
-2. **Criamos infraestrutura** reutilizável (strings, docs)
+2. **Criamos infraestrutura** reutilizável (strings, documentação)
 3. **Documentamos** a abordagem correta (lint-driven)
-4. **Identificamos ferramentas certas** (IDE inspections)
+4. **Identificamos as ferramentas certas** (IDE inspections)
 
-**Estimativa realista para correção completa**: 8-12 horas de trabalho manual-assistido usando Android Studio Inspections.
+**Estimativa realista para correção completa**: 8–12 horas de trabalho manual-assistido usando Android Studio Inspections.
 
 ---
 

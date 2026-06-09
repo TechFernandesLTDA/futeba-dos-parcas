@@ -1,4 +1,4 @@
-# XP_RULES.md - Regras de Cálculo e Composição
+# XP_RULES.md - Regras de cálculo e composição
 
 ## Fórmulas de Soma
 
@@ -38,13 +38,13 @@ Onde `Presença` é:
     * 10+ jogos seguidos: +100 XP EXTRA.
 6. **Persistência Atômica:** Gravação no perfil e Log.
 
-## Casos Especiais
+## Casos especiais
 
 1. **Empate e MVP:** Se um jogo termina empatado e um jogador é MVP, ele recebe `10 (Empate) + 30 (MVP) + Atributos Técnicos`.
-2. **O Goleiro Artilheiro:** Se um jogador na posição de Goleiro marcar um gol, ele recebe o XP do Gol (+10) e o XP das Defesas (+8 por defesa). A posição não anula o mérito de artilharia.
-3. **Partida sem Eventos:** Se um jogador participou da partida mas não teve gols, assistências ou defesas, e seu time perdeu, ele recebe **10 XP** (Presença). A participação sempre gera +10 XP.
+2. **Goleiro artilheiro:** Se um jogador na posição de goleiro marcar um gol, ele recebe o XP do gol (+10) e o XP das defesas (+8 por defesa). A posição não anula o mérito de artilharia.
+3. **Partida sem eventos:** Se um jogador participou da partida mas não registrou gols, assistências ou defesas, e seu time perdeu, ele recebe **10 XP** (presença). A participação sempre gera +10 XP.
 
 ## Limites
 
-* XP máximo por partida: **500 XP** (MAX_XP_PER_GAME).
-* Bola Murcha penalty = -10.
+* XP máximo por partida: **500 XP** (`MAX_XP_PER_GAME`).
+* Penalidade Bola Murcha: -10 XP.

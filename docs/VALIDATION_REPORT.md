@@ -9,13 +9,13 @@
 
 ✅ **45 itens validados com sucesso**
 
-A série de validações abrangeu Segurança, Integridade de Dados e Race Conditions em Cliente (Kotlin) + Servidor (Cloud Functions/Security Rules).
+A série de validações abrangeu segurança, integridade de dados e race conditions no cliente (Kotlin) e no servidor (Cloud Functions/Security Rules).
 
 ---
 
 ## 1. Infraestrutura de Validação
 
-### 1.1 ValidationHelper.kt (KMP-ready)
+### 1.1 ValidationHelper.kt (pronto para KMP)
 **Arquivo:** `app/src/main/java/com/futebadosparcas/domain/validation/ValidationHelper.kt`
 
 - ✅ Validação de strings (email, nome, comprimento)
@@ -37,10 +37,10 @@ A série de validações abrangeu Segurança, Integridade de Dados e Race Condit
 ## 2. Validação nos Data Models (Kotlin)
 
 ### Padrão Implementado
-Todos os modelos agora têm:
-- `init {}` block para normalização automática
-- `validate()` method para validação explícita
-- `isValid()` helper para verificação rápida
+Todos os modelos agora possuem:
+- Bloco `init {}` para normalização automática
+- Método `validate()` para validação explícita
+- Helper `isValid()` para verificação rápida
 
 | Modelo | Validações |
 |--------|------------|
@@ -97,12 +97,12 @@ match /temp_fields/{userId}/{fileName} {
 
 ## 5. Cloud Functions (TypeScript)
 
-### 5.1 Módulo de Validação
+### 5.1 Módulo de Validação (TypeScript)
 **Arquivo:** `functions/src/validation/index.ts`
 
 - ✅ 27+ funções de validação
 - ✅ Constantes sincronizadas com Kotlin
-- ✅ Optimistic locking para race conditions
+- ✅ Locking otimista para race conditions
 - ✅ Validação de estatísticas anti-cheat
 
 ### 5.2 League Rating Bounds
@@ -170,7 +170,7 @@ return Math.max(0, Math.min(100, rating));
 - ✅ MVP validation (CVE-2 fix)
 
 ### 9.4 Sistema de Ligas
-- ✅ 4 divisões com thresholds corretos
+- ✅ 4 divisões com limiares corretos
 - ✅ 3 jogos para promoção/rebaixamento
 - ✅ 5 jogos de proteção
 - ✅ League Rating: 40% PPJ + 30% WR + 20% GD + 10% MVP
@@ -241,7 +241,7 @@ return Math.max(0, Math.min(100, rating));
 
 ## Conclusão
 
-O sistema está agora com camadas robustas de validação em:
+O sistema conta agora com camadas robustas de validação em:
 
 - **Cliente:** Normalização automática + validação explícita
 - **Servidor:** Security Rules + Cloud Functions

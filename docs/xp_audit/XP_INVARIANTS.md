@@ -1,4 +1,4 @@
-# XP_INVARIANTS.md - Invariantes de Integridade do Sistema
+# XP_INVARIANTS.md - Invariantes de integridade do sistema
 
 As regras abaixo são invioláveis. Qualquer desvio detectado em auditoria técnica é considerado um **Bug Crítico (P0)**.
 

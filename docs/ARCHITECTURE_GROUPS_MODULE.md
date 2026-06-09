@@ -1,5 +1,7 @@
 # Arquitetura do Módulo de Grupos - Futeba dos Parças
 
+> **Nota:** Este é um documento de design original (plano de implementação). O módulo de Grupos foi implementado. Para o esquema de coleções ativo em produção, consulte `firestore.rules` e `CLAUDE.md`. Os modelos Kotlin e os padrões arquiteturais descritos aqui ainda são referência válida.
+
 ## Resumo Executivo
 
 Este documento detalha a arquitetura completa para o módulo de **Grupos**, incluindo:

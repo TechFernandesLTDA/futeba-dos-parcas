@@ -2,6 +2,7 @@
 
 ## Índice de Strings por Categoria
 
+
 ### 🎮 Game Module (108 strings)
 
 #### Status
@@ -474,7 +475,7 @@
 
 ## Busca por Padrão
 
-Procurando uma string? Use o padrão:
+Ao procurar uma string, siga o padrão de nomenclatura:
 
 ```
 <categoria>_<subcategoria>_<descrição>
@@ -489,6 +490,6 @@ Procurando uma string? Use o padrão:
 
 ---
 
-**Total de Strings**: 220
-**Última Atualização**: 2026-01-07
+**Total de Strings**: 220  
+**Última Atualização**: 2026-01-07  
 **Versão**: 1.0

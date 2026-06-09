@@ -52,7 +52,7 @@ when (descResult) {
 #### Calcular XP Ganho em Jogo
 
 ```kotlin
-class GameFinalizationViewModel @Inject constructor() : ViewModel() {
+class GameFinalizationViewModel : ViewModel() {
 
     private val xpUseCase = CalculatePlayerXpUseCase()
 
@@ -93,7 +93,7 @@ class GameFinalizationViewModel @Inject constructor() : ViewModel() {
 #### Mostrar Nível e Progresso
 
 ```kotlin
-class ProfileViewModel @Inject constructor() : ViewModel() {
+class ProfileViewModel : ViewModel() {
 
     private val levelUseCase = CalculateLevelUseCase()
 
@@ -128,7 +128,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
 #### Balancear Times de Forma Justa
 
 ```kotlin
-class TeamBalancerViewModel @Inject constructor() : ViewModel() {
+class TeamBalancerViewModel : ViewModel() {
 
     private val balanceUseCase = BalanceTeamsUseCase()
 
@@ -195,7 +195,7 @@ class TeamBalancerViewModel @Inject constructor() : ViewModel() {
 #### Verificar Conquistas Desbloqueadas
 
 ```kotlin
-class MilestoneViewModel @Inject constructor() : ViewModel() {
+class MilestoneViewModel : ViewModel() {
 
     private val milestonesUseCase = CheckMilestonesUseCase()
 
@@ -235,7 +235,7 @@ class MilestoneViewModel @Inject constructor() : ViewModel() {
 #### Calcular Novo Rating Após Partida
 
 ```kotlin
-class RatingViewModel @Inject constructor() : ViewModel() {
+class RatingViewModel : ViewModel() {
 
     private val ratingUseCase = CalculateLeagueRatingUseCase()
 
@@ -376,7 +376,7 @@ fun BalancedTeamsView(players: List<User>) {
                 }
             }
 
-            Divider(modifier = Modifier.width(1.dp).fillMaxHeight())
+            VerticalDivider(modifier = Modifier.fillMaxHeight())
 
             // Time 2
             Column(modifier = Modifier.weight(1f)) {
@@ -391,8 +391,8 @@ fun BalancedTeamsView(players: List<User>) {
 
         if (teams.ratingDifference < 0.5) {
             Text(
-                "✅ Times perfeitamente balanceados!",
-                color = Color.Green
+                "Times perfeitamente balanceados!",
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }

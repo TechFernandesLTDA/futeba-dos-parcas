@@ -12,7 +12,7 @@ assignees: []
 - [ ] Desejável (nice to have)
 
 ### Problema que a feature resolve
-Descreva de forma clara qual é o problema que você está enfrentando. Ex: "Sempre me frustro quando [...]"
+Descreva de forma clara qual é o problema que você está enfrentando. Ex.: "Sempre me frustro quando [...]"
 
 ### Descrição da solução desejada
 Descreva o que você gostaria que acontecesse. Seja específico sobre como a funcionalidade deve se comportar.
