@@ -676,8 +676,11 @@ service cloud.firestore {
          onlyAllowedFields(['mvp_id']))
       );
 
-      // Apenas o dono ou admin pode deletar
-      allow delete: if isAdmin() || canManageGame(resource.data);
+      // Apenas o dono ou admin pode deletar.
+      // SECFIX #2649: Bloqueia delete de jogo FINISHED — o XP/stats ja foram
+      // processados e o historico deve ser preservado.
+      allow delete: if (isAdmin() || canManageGame(resource.data)) &&
+                       resource.data.status != 'FINISHED';
 
       // ============================================
       // SUBCOLECAO: waitlist (games/{gameId}/waitlist/{waitlistId})
@@ -939,13 +942,16 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Dono do jogo ou admin pode criar/atualizar estatisticas de jogadores
-      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists - max 100)
+      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
+      // SECFIX #2649: saves tambem validado — era permitido valor arbitrario.
       allow create, update: if isAuthenticated() &&
                                (isAdmin() || isGameOwner(request.resource.data.game_id)) &&
                                // Valida goals (se presente) <= 100
                                isValidScore(request.resource.data.get('goals', null)) &&
                                // Valida assists (se presente) - mesmo limite para consistencia
-                               isValidScore(request.resource.data.get('assists', null));
+                               isValidScore(request.resource.data.get('assists', null)) &&
+                               // Valida saves (se presente) - mesmo limite para consistencia
+                               isValidScore(request.resource.data.get('saves', null));
 
       allow delete: if isAuthenticated() &&
                        (isAdmin() || isGameOwner(resource.data.game_id));
@@ -970,11 +976,13 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         // #1036: confirmado não-owner só pode agir em eventos criados por si mesmo.
         // Owner e admin operam sem restrição de autoria.
+        // SECFIX #2649: type whitelist — previne criação de eventos com tipos
+        // arbitrários que o cliente não deveria emitir.
         allow create: if isAuthenticated() && (
           isAdmin() ||
           isGameOwner(gameId) ||
           (isConfirmedPlayer(gameId) && request.resource.data.created_by == userId())
-        );
+        ) && request.resource.data.type in ['goal', 'assist', 'save', 'foul', 'yellow_card', 'red_card', 'substitution', 'other'];
         allow update: if isAuthenticated() && (
           isAdmin() ||
           isGameOwner(gameId) ||
@@ -2256,12 +2264,15 @@ service cloud.firestore {
       // Usuario pode criar/atualizar seu proprio progresso OU admin pode gerenciar qualquer
       // FIX #576: era `firestore.exists()` (sintaxe invalida) + `(default)` literal → colecao
       // permanentemente unwritable. Correto: bare `exists()` + `$(database)` placeholder.
-      // FIXME #2627: progresso ainda e client-writable — qualquer usuario pode auto-completar
-      // desafios inflando o proprio progresso. A escrita deve migrar para Cloud Function
-      // (trigger em game_events) com validacao server-side de incrementos.
+      // FIXME #2627: progresso ainda e client-writable — a escrita deve migrar para
+      // Cloud Function (trigger em game_events) com validacao server-side de incrementos.
+      // Mitigacao imediata: bounds nos campos (progress >= 0, completed somente via server).
       allow create, update: if isAuthenticated() && (
         request.resource.data.userId == userId() || isAdmin()
-      ) && exists(/databases/$(database)/documents/challenges/$(request.resource.data.challengeId));
+      ) && exists(/databases/$(database)/documents/challenges/$(request.resource.data.challengeId)) &&
+        (!('progress' in request.resource.data) || request.resource.data.progress is number) &&
+        request.resource.data.progress >= 0 &&
+        (!('completed' in request.resource.data) || request.resource.data.completed == false || isAdmin());
 
       // Apenas admin pode deletar progresso
       allow delete: if isAdmin();

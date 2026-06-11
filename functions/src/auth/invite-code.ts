@@ -25,14 +25,26 @@ function generateInviteCode(length = 6): string {
 }
 
 /**
- * Gera um invite_code unico consultando se ja existe no Firestore.
+ * Reserva um invite_code atomicamente via colecao invite_codes.
+ * FIX #2650: o padrao anterior (check-then-write em users) tinha
+ * race condition entre usuarios criados simultaneamente — ambos
+ * podiam receber o mesmo codigo. Agora usamos invite_codes/{code}
+ * como lock atomico: Firestore garante que dois docs com o mesmo ID
+ * nunca sao criados concorrentemente.
  */
 async function generateUniqueCode(): Promise<string> {
-  const usersRef = db().collection("users");
+  const inviteCodesRef = db().collection("invite_codes");
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateInviteCode();
-    const snap = await usersRef.where("invite_code", "==", code).limit(1).get();
-    if (snap.empty) return code;
+    try {
+      await inviteCodesRef.doc(code).create({
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return code;
+    } catch (e: unknown) {
+      if ((e as {code?: number}).code === 6) continue; // ALREADY_EXISTS
+      throw e;
+    }
   }
   return generateInviteCode(8);
 }
