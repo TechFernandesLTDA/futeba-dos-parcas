@@ -892,15 +892,13 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
            'status', 'goals', 'assists', 'saves', 'goalkeeper',
            'is_mvp', 'is_best_gk', 'is_worst_player', 'was_present',
-           'team', 'updated_at',
-         ])) ||
-        // Jogadores confirmados podem atualizar flags de MVP (para votação)
-        // SECFIX #2608: REMOVIDO — branch permitia que qualquer confirmado
-        // setasse is_mvp, is_best_gk, is_worst_player na propria confirmacao
-        // ou de terceiros. group-league.ts e weekly-ranking.ts consumiam essas
-        // flags sem revalidacao contra game.mvp_id/worst_player_id, inflando
-        // league rating e ranking semanal. A votacao ja tem colecao propria
-        // mvp_votes com validacao correta (FASE 5 #448).
+            'team', 'updated_at',
+          ]))
+        // SECFIX #2608: branch de isConfirmedPlayer para flags is_mvp/
+        // is_best_gk/is_worst_player removido — group-league.ts e
+        // weekly-ranking.ts consumiam essas flags sem revalidacao contra
+        // game.mvp_id/worst_player_id. Votacao usa colecao propria mvp_votes
+        // com validacao correta (FASE 5 #448).
       )
 
       // Usuario pode deletar sua propria confirmacao
