@@ -6,6 +6,26 @@ import {FieldValue} from "firebase-admin/firestore";
 import "../types/firestore-count";
 import {db} from "../_db";
 
+// Timeout seguro: 8 min (margem de 1 min para limite de 9)
+const SAFE_TIMEOUT_MS = 8 * 60 * 1000;
+
+/**
+ * Verifica se ainda ha tempo restante antes do timeout da Cloud Function.
+ * @param {number} startTime - Timestamp de inicio (Date.now())
+ * @return {boolean} true se ainda ha tempo
+ */
+function hasTimeRemaining(startTime: number): boolean {
+  const elapsed = Date.now() - startTime;
+  if (elapsed >= SAFE_TIMEOUT_MS) {
+    logger.warn(
+      "[METRICS_CLEANUP] Tempo esgotado: " +
+      `${elapsed}ms decorridos. Parando.`
+    );
+    return false;
+  }
+  return true;
+}
+
 
 /**
  * Coleta métricas de uso da aplicação.
@@ -275,7 +295,7 @@ export const collectHourlyMetrics =
  */
 export const collectDailyMetrics =
   functions.scheduler.onSchedule({
-    schedule: "59 23 * * *", // 23:59
+    schedule: "58 23 * * *", // 23:58 (offset 1min para evitar colisao com season-cycle e weekly-ranking)
     timeZone: "America/Sao_Paulo",
     region: "southamerica-east1",
     memory: "512MiB",
@@ -430,6 +450,7 @@ export const cleanupOldMetrics =
     timeoutSeconds: 540,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
+    const startTime = Date.now();
     logger.info(
       "[METRICS] Starting metrics cleanup " +
       "(TTL: 90 days)"
@@ -447,20 +468,38 @@ export const cleanupOldMetrics =
     let batchCount = 0;
 
     try {
-      const query = db().collection("metrics")
+      // FIX #2646: cursor+loop+timeout-guard pattern — evita reprocessar os
+      // mesmos docs e para graciosamente antes do timeout (padrao cleanup-old-logs.ts).
+      const baseQuery = db().collection("metrics")
         .where("timestamp", "<", cutoffDate)
         .orderBy("timestamp")
         .limit(500);
 
       let hasMore = true;
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
 
       while (hasMore) {
-        const snapshot = await query.get();
+        if (!hasTimeRemaining(startTime)) {
+          logger.warn(
+            "[METRICS] Parando metrics cleanup " +
+            "por timeout. Deletados: " +
+            `${totalDeleted}. Continuara na proxima execucao.`
+          );
+          hasMore = false;
+          break;
+        }
+
+        const pageQuery = lastDoc ?
+          baseQuery.startAfter(lastDoc) :
+          baseQuery;
+        const snapshot = await pageQuery.get();
 
         if (snapshot.empty) {
           hasMore = false;
           break;
         }
+
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
         const batch = db().batch();
         snapshot.docs.forEach((doc) => {

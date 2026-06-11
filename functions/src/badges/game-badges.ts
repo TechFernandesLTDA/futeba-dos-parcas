@@ -42,7 +42,8 @@ async function checkBadgeStreak7(
 async function checkBadgeStreak10Vitorias(userId: string): Promise<boolean> {
   const statsDoc = await db().collection("statistics").doc(userId).get();
   if (!statsDoc.exists) return false;
-  const wins = (statsDoc.data()?.wins as number) || 0;
+  const data = statsDoc.data();
+  const wins = (data?.gamesWon as number) || (data?.total_wins as number) || 0;
   return wins >= 10;
 }
 
@@ -52,12 +53,10 @@ async function checkBadgeStreak10Vitorias(userId: string): Promise<boolean> {
  * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadge100Jogos(
-  userId: string,
-  userDoc?: admin.firestore.DocumentSnapshot
-): Promise<boolean> {
-  const doc = userDoc || await db().collection("users").doc(userId).get();
-  const totalGames = (doc.data()?.total_games as number) || 0;
+async function checkBadge100Jogos(userId: string): Promise<boolean> {
+  const statsDoc = await db().collection("statistics").doc(userId).get();
+  if (!statsDoc.exists) return false;
+  const totalGames = (statsDoc.data()?.totalGames as number) || 0;
   return totalGames >= 100;
 }
 
@@ -67,12 +66,10 @@ async function checkBadge100Jogos(
  * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeMVP1(
-  userId: string,
-  userDoc?: admin.firestore.DocumentSnapshot
-): Promise<boolean> {
-  const doc = userDoc || await db().collection("users").doc(userId).get();
-  const mvpCount = (doc.data()?.mvp_count as number) || 0;
+async function checkBadgeMVP1(userId: string): Promise<boolean> {
+  const statsDoc = await db().collection("statistics").doc(userId).get();
+  if (!statsDoc.exists) return false;
+  const mvpCount = (statsDoc.data()?.bestPlayerCount as number) || 0;
   return mvpCount >= 1;
 }
 
@@ -82,12 +79,10 @@ async function checkBadgeMVP1(
  * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeMVP10(
-  userId: string,
-  userDoc?: admin.firestore.DocumentSnapshot
-): Promise<boolean> {
-  const doc = userDoc || await db().collection("users").doc(userId).get();
-  const mvpCount = (doc.data()?.mvp_count as number) || 0;
+async function checkBadgeMVP10(userId: string): Promise<boolean> {
+  const statsDoc = await db().collection("statistics").doc(userId).get();
+  if (!statsDoc.exists) return false;
+  const mvpCount = (statsDoc.data()?.bestPlayerCount as number) || 0;
   return mvpCount >= 10;
 }
 
@@ -97,12 +92,10 @@ async function checkBadgeMVP10(
  * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeGols10(
-  userId: string,
-  userDoc?: admin.firestore.DocumentSnapshot
-): Promise<boolean> {
-  const doc = userDoc || await db().collection("users").doc(userId).get();
-  const goals = (doc.data()?.total_goals as number) || 0;
+async function checkBadgeGols10(userId: string): Promise<boolean> {
+  const statsDoc = await db().collection("statistics").doc(userId).get();
+  if (!statsDoc.exists) return false;
+  const goals = (statsDoc.data()?.totalGoals as number) || 0;
   return goals >= 10;
 }
 
@@ -112,12 +105,10 @@ async function checkBadgeGols10(
  * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeAssistencias50(
-  userId: string,
-  userDoc?: admin.firestore.DocumentSnapshot
-): Promise<boolean> {
-  const doc = userDoc || await db().collection("users").doc(userId).get();
-  const assists = (doc.data()?.total_assists as number) || 0;
+async function checkBadgeAssistencias50(userId: string): Promise<boolean> {
+  const statsDoc = await db().collection("statistics").doc(userId).get();
+  if (!statsDoc.exists) return false;
+  const assists = (statsDoc.data()?.totalAssists as number) || 0;
   return assists >= 50;
 }
 
@@ -127,12 +118,11 @@ async function checkBadgeAssistencias50(
  * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
  */
-async function checkBadgeVitorias50(
-  userId: string,
-  userDoc?: admin.firestore.DocumentSnapshot
-): Promise<boolean> {
-  const doc = userDoc || await db().collection("users").doc(userId).get();
-  const wins = (doc.data()?.total_wins as number) || 0;
+async function checkBadgeVitorias50(userId: string): Promise<boolean> {
+  const statsDoc = await db().collection("statistics").doc(userId).get();
+  if (!statsDoc.exists) return false;
+  const data = statsDoc.data();
+  const wins = (data?.gamesWon as number) || (data?.total_wins as number) || 0;
   return wins >= 50;
 }
 

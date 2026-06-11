@@ -222,12 +222,13 @@ export const checkSeasonEnd = onSchedule(
             batch.set(standingRef, {
               season_id: seasonId,
               user_id: rawUserId,
-              final_division: p.division,
+              final_division: p.division ?? "BRONZE",
               final_rating: p.league_rating || 0,
-              points: p.points,
-              wins: p.wins,
-              draws: p.draws,
-              losses: p.losses,
+              points: p.points ?? 0,
+              wins: p.wins ?? 0,
+              draws: p.draws ?? 0,
+              losses: p.losses ?? 0,
+              games_played: p.games_played ?? 0,
               // FIX #1290: mantém o frozen_at original se já existe;
               // só usa serverTimestamp() na primeira gravação.
               frozen_at:
@@ -260,6 +261,8 @@ export const checkSeasonEnd = onSchedule(
       // FIX #2500: nextSeasonReady garante que só fechamos a season atual se a
       // próxima já existe (seasons não-mensais não precisam). Evita gap (#1040).
       let nextSeasonReady = !seasonId.startsWith("monthly");
+      let nextSeasonRef:
+        admin.firestore.DocumentReference | null = null;
       if (
         seasonId.startsWith("monthly") &&
         hasTimeRemaining()
@@ -316,13 +319,18 @@ export const checkSeasonEnd = onSchedule(
           const nextName =
             `Temporada ${getMonthName(nextStart.getUTCMonth())} ${nextYear}`;
 
-          const nextSeasonRef =
+          nextSeasonRef =
             seasonsRef.doc(nextId);
+          // FIX #2620: criar com is_active=false + pending=true.
+          // A ativação (is_active=true, delete pending) será feita no
+          // MESMO batch que desativa a season atual (passo 3b), eliminando
+          // a janela com duas seasons ativas.
           const nextSeasonData = {
             name: nextName,
             start_date: nextStartDateStr,
             end_date: nextEndDateStr,
-            is_active: true,
+            is_active: false,
+            pending: true,
             created_at:
               FieldValue
                 .serverTimestamp(),
@@ -333,16 +341,18 @@ export const checkSeasonEnd = onSchedule(
           // to prevent concurrent runs from creating duplicate seasons
           await db().runTransaction(
             async (transaction) => {
+              // nextSeasonRef is always set before this point
+              // (assigned on the line above the transaction)
               const nextSeasonSnap =
-                await transaction.get(nextSeasonRef);
+                await transaction.get(nextSeasonRef!);
               if (!nextSeasonSnap.exists) {
                 transaction.set(
-                  nextSeasonRef,
+                  nextSeasonRef!,
                   nextSeasonData
                 );
                 logger.info(
                   "[SEASON] Created next " +
-                  `season: ${nextId}`
+                  `season (pending): ${nextId}`
                 );
               }
             }
@@ -355,17 +365,19 @@ export const checkSeasonEnd = onSchedule(
             "next season",
             e
           );
-          // FIX #1040: Re-throw para que o scheduler faça retry.
-          // A season atual permanece ativa (is_active=false é gravado DEPOIS,
-          // no passo 3b) — nunca ficará sem próxima season criada.
-          // Sem o throw, a season seria fechada mesmo sem próxima season,
-          // causando gap de temporada visível aos usuários.
-          throw e;
+          // FIX #2621: Se falhar a criação da próxima season para ESTA
+          // season, loga e continua com as demais. Antes o throw e
+          // abortava o loop, bloqueando todas as seasons subsequentes.
+          // A season atual permanece ativa e será reprocessada na
+          // próxima run do cron.
+          continue;
         }
       }
 
-      // 3b. FIX #991 + #2500: Marcar season como inativa SOMENTE se as
-      // standings completaram (sem timeout) E a próxima season está pronta.
+      // 3b. FIX #991 + #2500 + #2620: Marcar season como inativa SOMENTE
+      // se as standings completaram (sem timeout) E a próxima season está
+      // pronta. No MESMO batch, ativa a próxima season (is_active=true +
+      // delete pending), eliminando a janela de duas seasons ativas (#2620).
       // Antes este passo era INCONDICIONAL: após um break por timeout no loop
       // de standings, a season era fechada mesmo com standings incompletas →
       // histórico permanentemente parcial e irrecuperável (season nunca mais
@@ -378,6 +390,16 @@ export const checkSeasonEnd = onSchedule(
             FieldValue.serverTimestamp(),
         });
         operationCount++;
+        // FIX #2620: Ativar próxima season no MESMO batch — elimina
+        // janela de duas seasons ativas entre a criação (is_active=false)
+        // e a desativação da atual.
+        if (nextSeasonRef) {
+          batch.update(nextSeasonRef, {
+            is_active: true,
+            pending: FieldValue.delete(),
+          });
+          operationCount++;
+        }
         if (operationCount >= BATCH_LIMIT) {
           await commitBatch();
         }

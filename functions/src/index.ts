@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import {FieldValue, FieldPath} from "firebase-admin/firestore";
+import {FieldValue} from "firebase-admin/firestore";
 import {logger, setGlobalOptions} from "firebase-functions/v2";
 import {
   onDocumentUpdated,
@@ -28,7 +28,15 @@ import {isGameShape} from "./validation/guards";
 // FIX #2152: maxInstances global de 10 evita "bill shock" — sem teto, um
 // pico/loop de gatilhos pode escalar para centenas de instâncias e estourar
 // a fatura. 10 cobre o tráfego atual com folga.
-setGlobalOptions({region: FUNCTION_REGION, maxInstances: 10});
+setGlobalOptions({
+  region: FUNCTION_REGION,
+  maxInstances: 10,
+  // FIX #2611: defaults removidos do firebase.json (runtimeOptions nao e chave
+  // valida no schema do firebase.json para CF v2). Funcoes sem opcoes explicitas
+  // (startNewSeason, archiveSeason, seedOfficialGroups) rodavam com 256MiB/60s.
+  memory: "512MiB",
+  timeoutSeconds: 120,
+});
 
 // ==========================================
 // IMPORTS DOS MÓDULOS EXTRAÍDOS
@@ -318,7 +326,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
               Date.now() - (
                 fresh.xp_processing_at?.toMillis ?
                   fresh.xp_processing_at.toMillis() :
-                  Date.now()
+                  0
               );
             if (lockAge < LOCK_TTL_MS) {
               return {
@@ -646,11 +654,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
         };
 
-        // Date keys for Rankings
+        // Date keys for Rankings (BRT timezone)
         const d = getGameDate(gameDoc);
         // yyyy-MM
         const monthKey =
-          d.toISOString().substring(0, 7);
+          d.toLocaleDateString("en-CA", {
+            timeZone: "America/Sao_Paulo",
+          }).substring(0, 7);
         const weekKey = getWeekKey(d);
 
         // Coletar promises de notificações de
@@ -947,8 +957,12 @@ export const onGameStatusUpdate = onDocumentUpdated(
           // + badges(0-N)
           // Mínimo ~6 ops por jogador,
           // garantir espaço antes de iniciar
-          // Reserva conservadora por jogador
-          ensureBatchCapacity(10);
+          // FIX #2625: reserva cobre o pior caso do jogador inteiro
+          // (user + stats + confirmation + xp_log + ranking + season +
+          //  max 6 badges) para evitar split entre batches que perde
+          // dados em retry parcial.
+          // Antes: 10 ops (insuficiente para jogador com 4+ badges).
+          ensureBatchCapacity(20);
 
           // 1. Update User
           // Usar FieldValue.increment() para evitar lost update
@@ -1149,9 +1163,6 @@ export const onGameStatusUpdate = onDocumentUpdated(
             currentBatch.set(badgeRef, {
               user_id: uid,
               badge_id: badge,
-              unlocked_at: admin.firestore
-                .FieldValue
-                .serverTimestamp(),
               last_earned_at: admin.firestore
                 .FieldValue
                 .serverTimestamp(),
@@ -1274,8 +1285,11 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
 // FIX #752: options object (era 2-arg sem region → us-central1 default)
 // FIX #2199: region agora vem de setGlobalOptions (linha 30), removida daqui.
+// FIX #2613: onDocumentWritten captura CREATE + UPDATE — o primeiro jogo da season
+// cria o doc via batch.set({merge:true}) (evento CREATE), e onDocumentUpdated nao
+// dispara nesse caso. Jogador com 1 jogo ficava sem league_rating/division.
 export const recalculateLeagueRating =
-  onDocumentUpdated(
+  onDocumentWritten(
     {
       document: "season_participation/{partId}",
       memory: "512MiB",
@@ -1286,9 +1300,11 @@ export const recalculateLeagueRating =
 
       const partId = event.params.partId;
       const before =
-        event.data.before.data();
+        event.data.before?.data();
       const after =
-        event.data.after.data();
+        event.data.after?.data();
+
+      if (!after) return;
       const userId = after.user_id;
 
       // ======================================
@@ -1381,7 +1397,7 @@ export const recalculateLeagueRating =
                 Date.now() - (
                   fresh.league_processing_at?.toMillis ?
                     fresh.league_processing_at.toMillis() :
-                    Date.now()
+                    0
                 );
               if (lockAge < LOCK_TTL_MS) {
                 return {
@@ -1409,6 +1425,13 @@ export const recalculateLeagueRating =
         );
 
       if (!lockResult.shouldProcess) {
+        // FIX #2624: skip silencioso em lock ativo impedia retry do Eventarc.
+        // Agora lanca erro para que o retry aconteca quando o lock liberar.
+        if (lockResult.reason === "processing") {
+          throw new Error(
+            `[LEAGUE] ${partId}: league_processing lock active — retrying`
+          );
+        }
         logger.info(
           `[LEAGUE] ${partId} skipped ` +
           `(${lockResult.reason})`
@@ -1893,36 +1916,29 @@ export const onGroupDeleted = onDocumentDeleted(
         "schedules to delete"
       );
 
-      // 6. Update users who had this group (paginated)
-      const usersWithGroupDocs: admin.firestore.QueryDocumentSnapshot[] = [];
-      let lastUserDoc: admin.firestore.QueryDocumentSnapshot | undefined;
-
-      while (true) {
-        let q = db()
-          .collectionGroup("groups")
-          .where(
-            FieldPath.documentId(),
-            "==",
-            groupId
-          )
-          .limit(500);
-        if (lastUserDoc) q = q.startAfter(lastUserDoc);
-
-        const snap = await q.get();
-        if (snap.empty) break;
-
-        usersWithGroupDocs.push(...snap.docs);
-        lastUserDoc = snap.docs[snap.docs.length - 1];
-        if (snap.size < 500) break;
+      // 6. Delete user group references (users/{uid}/groups/{groupId})
+      // FIX #2605: collectionGroup("groups").where(documentId(), "==", groupId)
+      // falhava com "odd number of segments" — documentId() em collection-group
+      // exige path completo de documento, nao ID de 1 segmento.
+      // Substituido por iteracao nos membros conhecidos (ja lidos no passo 1)
+      // deletando users/{uid}/groups/{groupId} por path direto.
+      for (const memberDoc of membersSnap.docs) {
+        const memberData = memberDoc.data();
+        const uid = memberData.user_id;
+        if (uid) {
+          const userGroupRef = db()
+            .collection("users")
+            .doc(uid)
+            .collection("groups")
+            .doc(groupId);
+          allOps.push({
+            type: "delete", ref: userGroupRef,
+          });
+        }
       }
-      usersWithGroupDocs.forEach(
-        (doc) => allOps.push({
-          type: "delete", ref: doc.ref,
-        })
-      );
       logger.info(
         "[CASCADE DELETE] Found " +
-        `${usersWithGroupDocs.length} ` +
+        `${membersSnap.size} ` +
         "user group references to delete"
       );
 
@@ -2054,7 +2070,14 @@ export const onConfirmationWrite =
       const statusBefore = before?.status;
       const statusAfter = after?.status;
 
-      if (statusBefore === statusAfter) return;
+      // FIX #2616: early-return so se status E posicao nao mudaram.
+      // Antes, o terceiro branch (troca de posicao) era dead code pq
+      // statusBefore === statusAfter retornava antes de checar position.
+      const positionBefore = before?.position;
+      const positionAfter = after?.position;
+
+      if (statusBefore === statusAfter &&
+          positionBefore === positionAfter) return;
 
       // Calcular delta atômico baseado na
       // transição de status
@@ -2076,7 +2099,7 @@ export const onConfirmationWrite =
           gkDelta = -1;
         }
       } else if (wasConfirmed && isConfirmed &&
-        before?.position !== after?.position) {
+        positionBefore !== positionAfter) {
         // Troca de posição FIELD ↔ GOALKEEPER
         if (after?.position === "GOALKEEPER") {
           gkDelta = 1;
@@ -2150,10 +2173,13 @@ export * from "./groups/member-counter";
 // Infrastructure & Monitoring
 export * from "./maintenance/cleanup-old-logs";
 export * from "./maintenance/soft-delete";
+// FIX #2610: maintainStreaksData nunca foi exportado — job mensal de compactacao
+// de streaks (0 4 1 * *) nunca rodou em producao.
+export {maintainStreaksData} from "./maintenance/compact-streaks";
 // FIX #760: keepWarmFunctions removido — escrevia em Firestore mas não aquecia
 // containers de outras funções (isolamento por função em CF v2).
 // Use minInstances na declaração das funções críticas se necessário.
-// export * from "./maintenance/keep-warm";
+// Arquivo keep-warm.ts deletado (#2643).
 export * from "./monitoring/collect-metrics";
 export {collectCallableLatencyMetrics} from "./monitoring/collect-latency-metrics";
 export * from "./storage/generate-thumbnails";

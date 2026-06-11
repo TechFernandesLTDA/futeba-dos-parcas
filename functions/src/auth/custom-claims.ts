@@ -418,11 +418,18 @@ export const syncFieldOwnerClaim = secureCallable(
 );
 
 // ==========================================
-// MIGRATION UTILITY (Run once via scripts/)
+// MIGRATION UTILITY (ONE-TIME — Run once via scripts/)
 // ==========================================
+//
+// FIX #2644: Esta função é uma migração one-time. NÃO deve ser
+// executada repetidamente em production. Após a migração inicial,
+// manutenha exportada apenas para scripts administrativos isolados;
+// considere remover do index.ts público para evitar chamadas acidentais.
+// O rate limit de 1h + system_lock mitiga reexecução, mas o ideal é
+// que esta função NÃO seja parte do deploy regular de functions.
 
 /**
- * Migra todos os usuários existentes para
+ * ONE-TIME MIGRATION: Migra todos os usuários existentes para
  * Custom Claims.
  *
  * USAGE:

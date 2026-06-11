@@ -465,21 +465,96 @@ async function processNotificationQueue():
         sendResult.failed === tokens.length &&
         sendResult.transientFailed === 0;
 
-      await doc.ref.update({
-        status: allFailed ? "FAILED" :
-          hasTransientFailures ? "PENDING" : "SENT",
-        sent_at:
-          FieldValue
-            .serverTimestamp(),
-        result: {
-          sent: sendResult.sent,
-          failed: sendResult.failed,
-          transientFailed: sendResult.transientFailed,
-          invalidTokensCleaned:
-            sendResult.invalidTokensCleaned,
-          totalTokens: tokens.length,
-        },
-      });
+      const currentRetryCount =
+        (data.retry_count as number) || 0;
+      const nextRetryCount = currentRetryCount + 1;
+
+      if (allFailed) {
+        await doc.ref.update({
+          status: "FAILED",
+          sent_at:
+            FieldValue
+              .serverTimestamp(),
+          result: {
+            sent: sendResult.sent,
+            failed: sendResult.failed,
+            transientFailed: sendResult.transientFailed,
+            invalidTokensCleaned:
+              sendResult.invalidTokensCleaned,
+            totalTokens: tokens.length,
+          },
+        });
+      } else if (hasTransientFailures) {
+        const pendingUserIds =
+          Array.from(sendResult.pendingUserIds);
+        const deliveredUserIdsArray =
+          Array.from(sendResult.deliveredUserIds);
+
+        if (
+          nextRetryCount >= MAX_RETRY_COUNT ||
+          pendingUserIds.length === 0
+        ) {
+          await doc.ref.update({
+            status: "FAILED",
+            retry_count: nextRetryCount,
+            failure_reason:
+              nextRetryCount >= MAX_RETRY_COUNT ?
+                `Excedeu ${MAX_RETRY_COUNT} tentativas de envio` :
+                "Todos os destinos foram entregues ou falharam permanentemente",
+            sent_at:
+              FieldValue
+                .serverTimestamp(),
+            delivered_user_ids:
+              deliveredUserIdsArray.length > 0 ?
+                FieldValue.arrayUnion(...deliveredUserIdsArray) :
+                FieldValue.delete(),
+            result: {
+              sent: sendResult.sent,
+              failed: sendResult.failed,
+              transientFailed: sendResult.transientFailed,
+              invalidTokensCleaned:
+                sendResult.invalidTokensCleaned,
+              totalTokens: tokens.length,
+            },
+          });
+        } else {
+          await doc.ref.update({
+            status: "PENDING",
+            userIds: pendingUserIds,
+            retry_count: nextRetryCount,
+            delivered_user_ids:
+              deliveredUserIdsArray.length > 0 ?
+                FieldValue.arrayUnion(...deliveredUserIdsArray) :
+                FieldValue.delete(),
+            sent_at:
+              FieldValue
+                .serverTimestamp(),
+            result: {
+              sent: sendResult.sent,
+              failed: sendResult.failed,
+              transientFailed: sendResult.transientFailed,
+              invalidTokensCleaned:
+                sendResult.invalidTokensCleaned,
+              totalTokens: tokens.length,
+            },
+          });
+        }
+      } else {
+        await doc.ref.update({
+          status: "SENT",
+          sent_at:
+            FieldValue
+              .serverTimestamp(),
+          result: {
+            sent: sendResult.sent,
+            failed: sendResult.failed,
+            transientFailed: sendResult.transientFailed,
+            invalidTokensCleaned:
+              sendResult.invalidTokensCleaned,
+            totalTokens: tokens.length,
+          },
+        });
+      }
     }
   } catch (error) {
     logger.error(
@@ -536,11 +611,22 @@ async function sendMulticastInChunks(
   failed: number;
   transientFailed: number;
   invalidTokensCleaned: number;
+  deliveredUserIds: Set<string>;
+  pendingUserIds: Set<string>;
 }> {
   let sent = 0;
   let failed = 0;
   let transientFailed = 0;
   let invalidTokensCleaned = 0;
+
+  const userHadSuccess = new Map<string, boolean>();
+  const userHadTransient = new Map<string, boolean>();
+  for (const [, userId] of tokenToUser) {
+    if (!userHadSuccess.has(userId)) {
+      userHadSuccess.set(userId, false);
+      userHadTransient.set(userId, false);
+    }
+  }
 
   // Dividir tokens em chunks de 500
   const chunks: string[][] = [];
@@ -617,10 +703,14 @@ async function sendMulticastInChunks(
         response.responses.forEach(
           (sendResponse: admin.messaging.SendResponse,
             index: number) => {
-            if (
-              !sendResponse.success &&
-              sendResponse.error
-            ) {
+            if (sendResponse.success) {
+              const succeededToken = chunk[index];
+              const succeededUserId =
+                tokenToUser.get(succeededToken);
+              if (succeededUserId) {
+                userHadSuccess.set(succeededUserId, true);
+              }
+            } else if (sendResponse.error) {
               const failedToken = chunk[index];
               const userId =
                 tokenToUser.get(failedToken);
@@ -645,6 +735,9 @@ async function sendMulticastInChunks(
                   `[BATCH_FCM] Transient FCM error for token ${failedToken.slice(0, 8)}...: ${errorCode}`
                 );
                 transientFailed++;
+                if (userId) {
+                  userHadTransient.set(userId, true);
+                }
               }
             }
           }
@@ -670,7 +763,17 @@ async function sendMulticastInChunks(
 
   failed -= transientFailed;
 
-  return {sent, failed, transientFailed, invalidTokensCleaned};
+  const deliveredUserIds = new Set<string>();
+  const pendingUserIds = new Set<string>();
+  for (const [userId, hadSuccess] of userHadSuccess) {
+    if (hadSuccess) {
+      deliveredUserIds.add(userId);
+    } else if (userHadTransient.get(userId)) {
+      pendingUserIds.add(userId);
+    }
+  }
+
+  return {sent, failed, transientFailed, invalidTokensCleaned, deliveredUserIds, pendingUserIds};
 }
 
 // ==========================================
@@ -1089,40 +1192,76 @@ export const cleanupNotificationQueue =
         admin.firestore.Timestamp
           .fromDate(oneDayAgo);
 
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(
+        sevenDaysAgo.getDate() - 7
+      );
+      const staleCutoffDate =
+        admin.firestore.Timestamp
+          .fromDate(sevenDaysAgo);
+
       let totalDeleted = 0;
 
       try {
-        // Deletar notificações processadas > 24h
-        const query = db
-          .collection(QUEUE_COLLECTION)
-          .where(
-            "status",
-            "in",
-            ["SENT", "FAILED"]
-          )
-          .where("createdAt", "<", cutoffDate)
-          .limit(FIRESTORE_PAGINATION_LIMIT);
+        // Deletar notificações processadas > 24h (SENT, FAILED)
+        // ou PENDING presas > 7 dias (stuck em retry loop)
+        {
+          let lastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          while (true) {
+            const whereIn =
+              ["SENT", "FAILED"];
+            let query = db
+              .collection(QUEUE_COLLECTION)
+              .where("status", "in", whereIn)
+              .where("createdAt", "<", cutoffDate)
+              .limit(FIRESTORE_PAGINATION_LIMIT);
 
-        const snapshot = await query.get();
+            if (lastDoc) {
+              query = query.startAfter(lastDoc);
+            }
+            const snapshot = await query.get();
+            if (snapshot.empty) break;
 
-        // FIX #1400: não early-return quando snapshot.empty — o rescue de
-        // PROCESSING travadas abaixo precisa rodar SEMPRE, independente de
-        // haver SENT/FAILED a limpar. Antes: em apps com baixo volume ou
-        // logo após primeira execução, o rescue ficava unreachable e docs
-        // PROCESSING ficavam stuck indefinidamente.
-        if (!snapshot.empty) {
-          const batch = db.batch();
-          snapshot.docs.forEach((doc) => {
-            batch.delete(doc.ref);
-          });
+            const batch = db.batch();
+            snapshot.docs.forEach((doc) => {
+              batch.delete(doc.ref);
+            });
+            await batch.commit();
+            totalDeleted += snapshot.size;
 
-          await batch.commit();
-          totalDeleted = snapshot.size;
-        } else {
-          logger.info(
-            "[BATCH_FCM_CLEANUP] Nenhuma" +
-            " notificacao antiga para limpar"
-          );
+            if (snapshot.size < FIRESTORE_PAGINATION_LIMIT) break;
+            lastDoc = snapshot.docs[snapshot.size - 1];
+          }
+        }
+
+        // Deletar PENDING presas > 7 dias (stuck em retry loop)
+        {
+          let lastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          while (true) {
+            let query = db
+              .collection(QUEUE_COLLECTION)
+              .where("status", "==", "PENDING")
+              .where("createdAt", "<", staleCutoffDate)
+              .limit(FIRESTORE_PAGINATION_LIMIT);
+
+            if (lastDoc) {
+              query = query.startAfter(lastDoc);
+            }
+            const snapshot = await query.get();
+            if (snapshot.empty) break;
+
+            const batch = db.batch();
+            snapshot.docs.forEach((doc) => {
+              batch.delete(doc.ref);
+            });
+            await batch.commit();
+            totalDeleted += snapshot.size;
+
+            if (snapshot.size < FIRESTORE_PAGINATION_LIMIT) break;
+            lastDoc = snapshot.docs[snapshot.size - 1];
+          }
         }
 
         // Limpar PROCESSING travadas (> 10 min)

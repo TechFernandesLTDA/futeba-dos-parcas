@@ -782,6 +782,8 @@ export const concludeMvpVoting =
         // sem recovery automático.
         // Separado em dois try/catch independentes para que falha no MVP
         // não impeça aplicação do XP do Bola Murcha e vice-versa.
+        let mvpXpApplied = false;
+        let worstXpApplied = false;
         if (result.mvpId) {
           try {
             await applyVotingXpDelta(
@@ -791,10 +793,11 @@ export const concludeMvpVoting =
               "MVP",
               XP_ACTIONS.MVP
             );
+            mvpXpApplied = true;
           } catch (xpError) {
             logger.error(
               "[VOTING_XP] MVP application failed " +
-              "(will be safe on retry — idempotente):",
+              "(will be retried on next call):",
               xpError
             );
           }
@@ -808,14 +811,18 @@ export const concludeMvpVoting =
               "BOLA_MURCHA",
               XP_ACTIONS.WORST_PLAYER
             );
+            worstXpApplied = true;
           } catch (xpError) {
             logger.error(
               "[VOTING_XP] Bola Murcha application failed " +
-              "(will be safe on retry — idempotente):",
+              "(will be retried on next call):",
               xpError
             );
           }
         }
+
+        const xpAllOk = (!result.mvpId || mvpXpApplied) &&
+          (!result.worstPlayerId || worstXpApplied);
 
         return {
           success: true,
@@ -826,6 +833,11 @@ export const concludeMvpVoting =
             bestGkId: result.bestGkId,
             worstPlayerId:
               result.worstPlayerId,
+          },
+          xpApplied: {
+            mvp: mvpXpApplied,
+            worst: worstXpApplied,
+            allOk: xpAllOk,
           },
           message:
             result.alreadyConcluded ?
@@ -1009,9 +1021,23 @@ async function applyVotingXpDelta(
         logger.info(
           `[VOTING_XP] Skipping ${reason} XP ` +
           `for ${userId} in ${gameId} ` +
-          "— log already exists (idempotent)"
+          "- log already exists (idempotent)"
         );
         return;
+      }
+
+      if (reason === "MVP") {
+        const mainXpLogRef = db
+          .collection("xp_logs")
+          .doc(`game_${gameId}_user_${userId}`);
+        const mainXpLog = await txn.get(mainXpLogRef);
+        if (mainXpLog.exists && (mainXpLog.data()?.xp_mvp as number) > 0) {
+          logger.info(
+            `[VOTING_XP] Skipping MVP XP for ${userId} in ${gameId} ` +
+            "- main trigger already paid MVP XP (dedup)"
+          );
+          return;
+        }
       }
 
       let weekKey: string | null = null;
@@ -1024,7 +1050,9 @@ async function applyVotingXpDelta(
       const gameDoc: Game | undefined =
         isGameShape(rawGame) ? rawGame : undefined;
       const gameDate = getGameDate(gameDoc);
-      monthKey = gameDate.toISOString().substring(0, 7);
+      monthKey = gameDate.toLocaleDateString("en-CA", {
+        timeZone: "America/Sao_Paulo",
+      }).substring(0, 7);
       weekKey = getWeekKey(gameDate);
 
       // FIX #726: MVP bonus (voting reward) is applied OVER the
@@ -1073,6 +1101,23 @@ async function applyVotingXpDelta(
           `skipping ${reason} XP for ${gameId}`
         );
         return;
+      }
+
+      if (reason === "MVP") {
+        const statsRef = db.collection("statistics").doc(userId);
+        const statsDoc = await txn.get(statsRef);
+        const statsData = statsDoc.data() || {};
+        const currentMvpStreak =
+          ((statsData.currentMvpStreak as number) || 0) + 1;
+        const bestMvpStreak = Math.max(
+          (statsData.bestMvpStreak as number) || 0,
+          currentMvpStreak
+        );
+        txn.set(statsRef, {
+          bestPlayerCount: FieldValue.increment(1),
+          currentMvpStreak,
+          bestMvpStreak,
+        }, {merge: true});
       }
 
       const currentXp =
@@ -1184,5 +1229,6 @@ async function applyVotingXpDelta(
       `XP for ${userId} in ${gameId}:`,
       error
     );
+    throw error;
   }
 }

@@ -34,56 +34,58 @@ export const onCashboxEntryWritten = onDocumentWritten(
   async (event) => {
     const groupId = event.params.groupId;
     try {
-      const snap = await db()
-        .collection("groups")
-        .doc(groupId)
-        .collection("cashbox")
-        .limit(MAX_ENTRIES + 1)
-        .get();
-
-      if (snap.size > MAX_ENTRIES) {
-        logger.warn(
-          `[CASHBOX] grupo ${groupId} tem >${MAX_ENTRIES} entradas; ` +
-          "summary truncado (paridade com client)."
+      await db().runTransaction(async (tx) => {
+        const snap = await tx.get(
+          db()
+            .collection("groups")
+            .doc(groupId)
+            .collection("cashbox")
+            .limit(MAX_ENTRIES + 1)
         );
-      }
 
-      let totalIncome = 0;
-      let totalExpense = 0;
-      let entryCount = 0;
-      let lastEntryMillis = 0;
-
-      snap.docs.slice(0, MAX_ENTRIES).forEach((doc) => {
-        const data = doc.data();
-        if (data.status === "VOIDED") return;
-        const amount = typeof data.amount === "number" ? data.amount : 0;
-        if (data.type === "INCOME") {
-          totalIncome += amount;
-        } else if (data.type === "EXPENSE") {
-          totalExpense += amount;
+        if (snap.size > MAX_ENTRIES) {
+          logger.warn(
+            `[CASHBOX] grupo ${groupId} tem >${MAX_ENTRIES} entradas; ` +
+            "summary truncado (paridade com client)."
+          );
         }
-        entryCount++;
 
-        const createdAt = data.created_at;
-        let createdMillis = 0;
-        if (createdAt instanceof admin.firestore.Timestamp) {
-          createdMillis = createdAt.toMillis();
-        } else if (typeof createdAt === "number") {
-          createdMillis = createdAt;
-        }
-        if (createdMillis > lastEntryMillis) {
-          lastEntryMillis = createdMillis;
-        }
-      });
+        let totalIncome = 0;
+        let totalExpense = 0;
+        let entryCount = 0;
+        let lastEntryMillis = 0;
 
-      const balance = totalIncome - totalExpense;
+        snap.docs.slice(0, MAX_ENTRIES).forEach((doc) => {
+          const data = doc.data();
+          if (data.status === "VOIDED") return;
+          const amount = typeof data.amount === "number" ? data.amount : 0;
+          if (data.type === "INCOME") {
+            totalIncome += amount;
+          } else if (data.type === "EXPENSE") {
+            totalExpense += amount;
+          }
+          entryCount++;
 
-      await db()
-        .collection("groups")
-        .doc(groupId)
-        .collection("cashbox_summary")
-        .doc("current")
-        .set(
+          const createdAt = data.created_at;
+          let createdMillis = 0;
+          if (createdAt instanceof admin.firestore.Timestamp) {
+            createdMillis = createdAt.toMillis();
+          } else if (typeof createdAt === "number") {
+            createdMillis = createdAt;
+          }
+          if (createdMillis > lastEntryMillis) {
+            lastEntryMillis = createdMillis;
+          }
+        });
+
+        const balance = totalIncome - totalExpense;
+
+        tx.set(
+          db()
+            .collection("groups")
+            .doc(groupId)
+            .collection("cashbox_summary")
+            .doc("current"),
           {
             balance,
             total_income: totalIncome,
@@ -96,17 +98,17 @@ export const onCashboxEntryWritten = onDocumentWritten(
           },
           {merge: true}
         );
+      });
 
       logger.info(
-        `[CASHBOX] summary recomputado grupo ${groupId}: ` +
-        `balance=${balance} income=${totalIncome} ` +
-        `expense=${totalExpense} entries=${entryCount}`
+        `[CASHBOX] summary recomputado grupo ${groupId}`
       );
     } catch (err) {
       logger.error(
         `[CASHBOX] recompute falhou para grupo ${groupId}:`,
         err
       );
+      throw err;
     }
   }
 );

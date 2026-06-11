@@ -290,14 +290,21 @@ describe("checkSeasonEnd - encerramento de season expirada", () => {
 
     await checkSeasonEndHandler!();
 
-    // Deve ter criado a próxima season via transaction.set (FIX #1470)
+    // FIX #2620: próxima season é criada com is_active=false + pending=true.
+    // A ativação (is_active=true) ocorre no MESMO batch que desativa a atual.
     expect(mockTransactionSet).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        is_active: true,
+        is_active: false,
+        pending: true,
         type: "MONTHLY",
         start_date: "2026-02-01",
       })
+    );
+    // FIX #2620: ativação da próxima season no mesmo batch
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ is_active: true }),
     );
   });
 
@@ -321,9 +328,9 @@ describe("checkSeasonEnd - encerramento de season expirada", () => {
 
     await checkSeasonEndHandler!();
 
-    // Não deve ter tentado criar nova season via transaction.set (FIX #1470)
+    // Não deve ter tentado criar nova season via transaction.set (FIX #1470, #2620)
     const setCallsWithNewSeason = (mockTransactionSet.mock.calls as any[]).filter(
-      ([, data]) => data?.is_active === true && data?.type === "MONTHLY"
+      ([, data]) => data?.type === "MONTHLY"
     );
     expect(setCallsWithNewSeason).toHaveLength(0);
   });
@@ -397,7 +404,7 @@ describe("checkSeasonEnd - seasons não mensais", () => {
 
     // Mas não deve criar próxima season (transaction nem é chamada p/ não-mensal)
     const setCallsWithNewSeason = (mockTransactionSet.mock.calls as any[]).filter(
-      ([, data]) => data?.is_active === true
+      ([, data]) => data?.type === "MONTHLY"
     );
     expect(setCallsWithNewSeason).toHaveLength(0);
   });

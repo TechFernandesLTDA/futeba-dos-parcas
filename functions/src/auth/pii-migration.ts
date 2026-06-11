@@ -24,6 +24,7 @@ import * as admin from "firebase-admin";
 import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 const PII_FIELDS = [
   "email",
@@ -201,6 +202,43 @@ export const migratePiiToUsersPrivate = onCall(
 
       const db = admin.firestore();
 
+      // FIX #2641: system_lock + rate limit — impede execuções concorrentes
+      // e reexecução em intervalo curto (padrão de custom-claims.ts:464-507).
+      const RATE_LIMIT_MS = 60 * 60 * 1000;
+      const lockRef = db
+        .collection("system_locks")
+        .doc("pii_migration");
+      const lockDoc = await lockRef.get();
+
+      if (lockDoc.exists) {
+        const lastRun =
+          lockDoc.data()?.last_run_at?.toDate?.();
+        if (
+          lastRun &&
+          (Date.now() - lastRun.getTime()) < RATE_LIMIT_MS
+        ) {
+          const minutesRemaining = Math.ceil(
+            (RATE_LIMIT_MS - (Date.now() - lastRun.getTime())) / 60000
+          );
+          logger.warn(
+            "[PII_MIGRATION] Rate limited: " +
+            `migration already ran at ${lastRun.toISOString()}. ` +
+            `Try again in ${minutesRemaining} minutes.`
+          );
+          throw new HttpsError(
+            "resource-exhausted",
+            "PII migration already ran recently. " +
+            `Try again in ${minutesRemaining} minutes.`
+          );
+        }
+      }
+
+      await lockRef.set({
+        last_run_at: FieldValue.serverTimestamp(),
+        started_by: auth.uid,
+        status: "running",
+      });
+
       let migrated = 0;
       let skipped = 0;
       let total = 0;
@@ -293,6 +331,14 @@ export const migratePiiToUsersPrivate = onCall(
         `${skipped} skipped, ${errors.length} errors`
       );
 
+      await lockRef.update({
+        status: "completed",
+        completed_at: FieldValue.serverTimestamp(),
+        migrated,
+        skipped,
+        errors_count: errors.length,
+      });
+
       return {
         success: true,
         migrated,
@@ -301,6 +347,18 @@ export const migratePiiToUsersPrivate = onCall(
         total,
       };
     } catch (error) {
+      try {
+        await admin.firestore().collection("system_locks")
+          .doc("pii_migration")
+          .update({
+            status: "failed",
+            failed_at: FieldValue.serverTimestamp(),
+            error: String(error),
+          });
+      } catch {
+        // ignore lock update failure
+      }
+
       if (error instanceof HttpsError) throw error;
       logger.error("migratePiiToUsersPrivate failed", {error, uid: request.auth?.uid});
       throw new HttpsError("internal", "An unexpected error occurred");
@@ -374,6 +432,23 @@ export const updateUserPii = onCall(
       const {auth, data} = request;
       if (!auth) {
         throw new HttpsError("unauthenticated", "Login obrigatório");
+      }
+
+      // FIX #2650: rate limit per uid — impede abuso via chamadas repetidas
+      const rl = await checkRateLimit(auth.uid, {
+        maxRequests: 10,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "update_pii",
+      });
+      if (!rl.allowed) {
+        const retryAfterSec = Math.ceil(
+          (rl.resetAt.getTime() - Date.now()) / 1000,
+        );
+        throw new HttpsError(
+          "resource-exhausted",
+          "Muitas tentativas. Tente novamente mais tarde.",
+          {retryAfter: retryAfterSec},
+        );
       }
 
       if (!data || typeof data !== "object") {
@@ -463,6 +538,42 @@ export const removePiiFromUsers = onCall(
 
       const db = admin.firestore();
 
+      // FIX #2641: system_lock + rate limit — impede execuções concorrentes
+      const RATE_LIMIT_MS = 60 * 60 * 1000;
+      const lockRef = db
+        .collection("system_locks")
+        .doc("pii_remove_cleanup");
+      const lockDoc = await lockRef.get();
+
+      if (lockDoc.exists) {
+        const lastRun =
+          lockDoc.data()?.last_run_at?.toDate?.();
+        if (
+          lastRun &&
+          (Date.now() - lastRun.getTime()) < RATE_LIMIT_MS
+        ) {
+          const minutesRemaining = Math.ceil(
+            (RATE_LIMIT_MS - (Date.now() - lastRun.getTime())) / 60000
+          );
+          logger.warn(
+            "[PII_CLEANUP] Rate limited: " +
+            `cleanup already ran at ${lastRun.toISOString()}. ` +
+            `Try again in ${minutesRemaining} minutes.`
+          );
+          throw new HttpsError(
+            "resource-exhausted",
+            "PII cleanup already ran recently. " +
+            `Try again in ${minutesRemaining} minutes.`
+          );
+        }
+      }
+
+      await lockRef.set({
+        last_run_at: FieldValue.serverTimestamp(),
+        started_by: auth.uid,
+        status: "running",
+      });
+
       let cleaned = 0;
       let skipped = 0;
       let total = 0;
@@ -550,6 +661,14 @@ export const removePiiFromUsers = onCall(
         `${skipped} skipped, ${errors.length} errors`
       );
 
+      await lockRef.update({
+        status: "completed",
+        completed_at: FieldValue.serverTimestamp(),
+        cleaned,
+        skipped,
+        errors_count: errors.length,
+      });
+
       return {
         success: true,
         cleaned,
@@ -558,6 +677,18 @@ export const removePiiFromUsers = onCall(
         total,
       };
     } catch (error) {
+      try {
+        await admin.firestore().collection("system_locks")
+          .doc("pii_remove_cleanup")
+          .update({
+            status: "failed",
+            failed_at: FieldValue.serverTimestamp(),
+            error: String(error),
+          });
+      } catch {
+        // ignore lock update failure
+      }
+
       if (error instanceof HttpsError) throw error;
       logger.error("removePiiFromUsers failed", {error, uid: request.auth?.uid});
       throw new HttpsError("internal", "An unexpected error occurred");

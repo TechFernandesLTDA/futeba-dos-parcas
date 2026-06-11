@@ -254,7 +254,7 @@ export const recalculateAllAutoRatings = secureCallable<RecalculateAllAutoRating
     enableAuditLog: true,
   },
   async (request) => {
-    const batchSize = request.data?.batchSize || 50;
+    const batchSize = Math.max(1, Math.min(Number(request.data?.batchSize) || 50, 500));
 
     const usersSnap = await db()
       .collection("users")

@@ -271,8 +271,7 @@ export function calculateLeagueRating(
 
   const gamesCount = recentGames.length;
 
-  // PPJ - Pontos (XP) por Jogo
-  // (max LEAGUE_MAX_AVG_XP = 100 pontos)
+  // PPJ Score (avgXp / LEAGUE_MAX_AVG_XP, max 100 pontos)
   const totalXp = recentGames.reduce(
     (sum, g) => sum + (g.xp_earned || 0), 0
   );

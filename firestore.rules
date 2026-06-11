@@ -430,6 +430,8 @@ service cloud.firestore {
       // STAGE 2 (PR futuro): clientes leem PII de users_private (apenas owner+admin),
       // PII removida de users via cleanup callable. Firestore não tem field-level
       // deny on read — denormalização é o approach correto.
+      // FIXME: STAGE 2 — PII fields exposed to any authenticated user when is_searchable.
+      // Migrate to users_private collection. See #2630.
       allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true && (!('deleted_at' in resource.data) || resource.data.deleted_at == null));
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
@@ -637,7 +639,16 @@ service cloud.firestore {
         isAdmin() ||
         // SECFIX #423: Dono pode atualizar mas com transicao status valida
         // (impede skip SCHEDULED->FINISHED e reversao FINISHED->X)
+        // SECFIX #2607: fieldUnchanged em campos sensiveis — impedia backdating,
+        // MVP self-award, owner_id mutavel e flags de processamento.
         (canManageGame(resource.data) &&
+         fieldUnchanged('owner_id') &&
+         fieldUnchanged('created_at') &&
+         fieldUnchanged('date_time') &&
+         fieldUnchanged('group_id') &&
+         fieldUnchanged('mvp_id') &&
+         fieldUnchanged('xp_processed_at') &&
+         fieldUnchanged('xp_processing') &&
          isValidGameStatusTransition(resource.data.status, request.resource.data.status) &&
          // P0 #30: Validacao estrita de scores - Previne exploits de XP
          isValidScore(request.resource.data.team1_score) &&
@@ -648,19 +659,28 @@ service cloud.firestore {
          isValidGameGender(request.resource.data.get('gender', null))) ||
         // Outros usuarios so podem atualizar contadores via transacao
         // Bug fix: Restrito a membros do grupo ou participantes confirmados do jogo
-        (onlyAllowedFields(['players_count', 'goalkeepers_count']) &&
+        // SECFIX #2631: delta de ±1 para impedir manipulacao arbitraria dos contadores
+        ((onlyAllowedFields(['players_count']) &&
+          (request.resource.data.players_count == resource.data.players_count + 1 ||
+           request.resource.data.players_count == resource.data.players_count - 1)) ||
+         (onlyAllowedFields(['goalkeepers_count']) &&
+          (request.resource.data.goalkeepers_count == resource.data.goalkeepers_count + 1 ||
+           request.resource.data.goalkeepers_count == resource.data.goalkeepers_count - 1))) &&
          isNonNegativeNumber(request.resource.data.players_count) &&
          isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
          (isConfirmedPlayer(gameId) ||
-          ('group_id' in resource.data && resource.data.group_id != null && isGroupMember(resource.data.group_id)))) ||
+          ('group_id' in resource.data && resource.data.group_id != null && isGroupMember(resource.data.group_id))) ||
         // Bug fix: Apenas dono do jogo ou admin pode definir MVP, e jogo deve estar FINISHED
         ((canManageGame(resource.data) || isAdmin()) &&
          resource.data.status == 'FINISHED' &&
          onlyAllowedFields(['mvp_id']))
       );
 
-      // Apenas o dono ou admin pode deletar
-      allow delete: if isAdmin() || canManageGame(resource.data);
+      // Apenas o dono ou admin pode deletar.
+      // SECFIX #2649: Bloqueia delete de jogo FINISHED — o XP/stats ja foram
+      // processados e o historico deve ser preservado.
+      allow delete: if (isAdmin() || canManageGame(resource.data)) &&
+                       resource.data.status != 'FINISHED';
 
       // ============================================
       // SUBCOLECAO: waitlist (games/{gameId}/waitlist/{waitlistId})
@@ -749,6 +769,19 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if isAuthenticated() && isGameOwner(gameId);
       }
+    }
+
+    // ============================================
+    // COLLECTION-GROUP: cancellations (#2636)
+    // ============================================
+    // A query collectionGroup("cancellations").where("user_id", ...) do Android
+    // (ConfirmationUseCase.updateAttendanceRate) exige match collection-group.
+    // O match dentro de games/{gameId} nao cobre collection-group queries.
+    match /{path=**}/cancellations/{cancellationId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.user_id == userId()
+      );
     }
 
     // ============================================
@@ -862,9 +895,13 @@ service cloud.firestore {
            'team', 'updated_at',
          ])) ||
         // Jogadores confirmados podem atualizar flags de MVP (para votação)
-        (isConfirmedPlayer(resource.data.game_id) &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_mvp', 'is_best_gk', 'is_worst_player']))
-        );
+        // SECFIX #2608: REMOVIDO — branch permitia que qualquer confirmado
+        // setasse is_mvp, is_best_gk, is_worst_player na propria confirmacao
+        // ou de terceiros. group-league.ts e weekly-ranking.ts consumiam essas
+        // flags sem revalidacao contra game.mvp_id/worst_player_id, inflando
+        // league rating e ranking semanal. A votacao ja tem colecao propria
+        // mvp_votes com validacao correta (FASE 5 #448).
+      )
 
       // Usuario pode deletar sua propria confirmacao
       // OU dono do jogo / admin pode remover qualquer jogador
@@ -905,13 +942,16 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Dono do jogo ou admin pode criar/atualizar estatisticas de jogadores
-      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists - max 100)
+      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
+      // SECFIX #2649: saves tambem validado — era permitido valor arbitrario.
       allow create, update: if isAuthenticated() &&
                                (isAdmin() || isGameOwner(request.resource.data.game_id)) &&
                                // Valida goals (se presente) <= 100
                                isValidScore(request.resource.data.get('goals', null)) &&
                                // Valida assists (se presente) - mesmo limite para consistencia
-                               isValidScore(request.resource.data.get('assists', null));
+                               isValidScore(request.resource.data.get('assists', null)) &&
+                               // Valida saves (se presente) - mesmo limite para consistencia
+                               isValidScore(request.resource.data.get('saves', null));
 
       allow delete: if isAuthenticated() &&
                        (isAdmin() || isGameOwner(resource.data.game_id));
@@ -936,11 +976,13 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         // #1036: confirmado não-owner só pode agir em eventos criados por si mesmo.
         // Owner e admin operam sem restrição de autoria.
+        // SECFIX #2649: type whitelist — previne criação de eventos com tipos
+        // arbitrários que o cliente não deveria emitir.
         allow create: if isAuthenticated() && (
           isAdmin() ||
           isGameOwner(gameId) ||
           (isConfirmedPlayer(gameId) && request.resource.data.created_by == userId())
-        );
+        ) && request.resource.data.type in ['goal', 'assist', 'save', 'foul', 'yellow_card', 'red_card', 'substitution', 'other'];
         allow update: if isAuthenticated() && (
           isAdmin() ||
           isGameOwner(gameId) ||
@@ -1509,8 +1551,11 @@ service cloud.firestore {
         // Deve transferir a propriedade antes. Mesmo guard do Android (LeaveGroupUseCase).
         // Aplica tanto pra isGroupAdmin quanto isGroupOwnerById em self-update.
         // #1496: Admin nao pode alterar o role de membros — somente o OWNER pode promover/rebaixar.
+        // SECFIX #2609: Admin nao pode editar o doc do OWNER (previne admin
+        // banir/desativar o dono do grupo — golpe de privilegio).
         allow update: if isAuthenticated() && (
-           (isGroupAdmin(groupId) && (fieldUnchanged('role') || isGroupOwnerById(groupId)) && (memberId != userId() || resource.data.role != 'OWNER' || fieldUnchanged('status'))) ||
+           (isGroupAdmin(groupId) && fieldUnchanged('role') && resource.data.role != 'OWNER' && fieldUnchanged('user_id') && fieldUnchanged('joined_at') && request.resource.data.status in ['ACTIVE','INACTIVE','BANNED']) ||
+           (isGroupAdmin(groupId) && isGroupOwnerById(groupId) && (fieldUnchanged('role') || resource.data.role == 'OWNER') && (memberId != userId() || resource.data.role != 'OWNER' || fieldUnchanged('status'))) ||
            (memberId == userId() && isGroupOwnerById(groupId) && (resource.data.role != 'OWNER' || fieldUnchanged('status')))
         );
 
@@ -1789,10 +1834,16 @@ service cloud.firestore {
 
       // C-003 fix: validacao de created_by e user_id
       // #1037.5: isAdmin() bypass — admin nunca pode ficar bloqueado por exists() de user soft-deleted
+      // SECFIX #2628: whitelist de type + limite de tamanho de title/body +
+      // exigencia de vinculo entre remetente e destinatario (mesmo grupo ou jogo).
+      // Previne spam/phishing in-app entre usuarios sem relacao previa.
       allow create: if isAuthenticated() && (
         isAdmin() ||
         (request.resource.data.created_by == userId() &&
          request.resource.data.user_id != userId() &&
+         request.resource.data.type in ['game_invite', 'group_invite', 'achievement', 'reminder', 'checkin', 'system', 'league', 'cashbox', 'admin'] &&
+         request.resource.data.title.size() <= 100 &&
+         request.resource.data.body.size() <= 500 &&
          exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
          request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']))
       );
@@ -2030,19 +2081,15 @@ service cloud.firestore {
     // ============================================
     match /mvp_votes/{voteId} {
       // SECFIX #858: anominidade das votações — leitura individual restrita ao próprio voter ou admin.
-      // Game owners e confirmed players podem listar votos apenas para agregação de resultados
-      // (sem identificar quem votou em quem — o voteId é opaco / UUID do voter).
+      // SECFIX #2632: list removido para nao-admins — o doc contem voter_id e mvp_id,
+      // quebrando a anonimidade declarada. Agregacao de resultados e server-side (Cloud Function).
       allow get: if isAuthenticated() && (
         resource.data.voter_id == userId() ||
         isAdmin() ||
         isGameOwner(resource.data.game_id) ||
         isConfirmedPlayer(resource.data.game_id)
       );
-      allow list: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        isConfirmedPlayer(resource.data.game_id)
-      );
+      allow list: if isAdmin();
 
       // FASE 5 #448: votar MVP exige verified (30-day grace)
       allow create: if isVerifiedOrGrace() && (
@@ -2177,8 +2224,12 @@ service cloud.firestore {
         resource.data.user_id == userId()
       );
 
+      // SECFIX #2629: user_id deve ser igual a created_by — qualquer usuario
+      // publicava atividade PUBLIC atribuida a outro jogador (feed falsificavel).
+      // Tambem validado tamanho dos campos de texto.
       allow create: if isAuthenticated() &&
                        request.resource.data.created_by == userId() &&
+                       request.resource.data.user_id == userId() &&
                        (request.resource.data.visibility == 'PUBLIC' || request.resource.data.visibility == 'PRIVATE') &&
                        request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'visibility']);
 
@@ -2211,11 +2262,17 @@ service cloud.firestore {
       );
 
       // Usuario pode criar/atualizar seu proprio progresso OU admin pode gerenciar qualquer
-      // FIX #576: era `firestore.exists()` (sintaxe inválida) + `(default)` literal → coleção
+      // FIX #576: era `firestore.exists()` (sintaxe invalida) + `(default)` literal → colecao
       // permanentemente unwritable. Correto: bare `exists()` + `$(database)` placeholder.
+      // FIXME #2627: progresso ainda e client-writable — a escrita deve migrar para
+      // Cloud Function (trigger em game_events) com validacao server-side de incrementos.
+      // Mitigacao imediata: bounds nos campos (progress >= 0, completed somente via server).
       allow create, update: if isAuthenticated() && (
         request.resource.data.userId == userId() || isAdmin()
-      ) && exists(/databases/$(database)/documents/challenges/$(request.resource.data.challengeId));
+      ) && exists(/databases/$(database)/documents/challenges/$(request.resource.data.challengeId)) &&
+        (!('progress' in request.resource.data) || request.resource.data.progress is number) &&
+        request.resource.data.progress >= 0 &&
+        (!('completed' in request.resource.data) || request.resource.data.completed == false || isAdmin());
 
       // Apenas admin pode deletar progresso
       allow delete: if isAdmin();

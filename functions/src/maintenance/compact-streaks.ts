@@ -111,14 +111,20 @@ export const maintainStreaksData = onSchedule(
     );
 
     try {
-      // FASE 1: Coleta de streaks ativas
-      // FIX #788: era .limit(1000) sem paginação — usuários #1001+ nunca
-      // tinham streaks resetadas. Agora: filtrar apenas current_streak > 0
-      // (streaks zeradas não precisam processing).
-      // FIX #1842: limit(5000) sem paginação — streaks beyond 5000 nunca
-      // processadas. Substituído por cursor-based pagination que garante
-      // cobertura completa independente do tamanho da coleção.
-      let allDocs: admin.firestore.QueryDocumentSnapshot[] = [];
+      let maxStreak = 0;
+      let totalStreak = 0;
+      let activeStreaks = 0;
+      let expiredStreaks = 0;
+      let invalidDocuments = 0;
+      let totalDocs = 0;
+      const now = new Date();
+      const thirtyDaysAgo = new Date(
+        now.getTime() -
+        30 * 24 * 60 * 60 * 1000
+      );
+
+      let batch = db().batch();
+      let batchOps = 0;
       let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
 
       while (true) {
@@ -134,180 +140,106 @@ export const maintainStreaksData = onSchedule(
         const pageSnap = await query.get();
         if (pageSnap.empty) break;
 
-        allDocs = allDocs.concat(pageSnap.docs);
+        const pageDocs = pageSnap.docs;
+        totalDocs += pageDocs.length;
+
+        const pageUserIds = pageDocs
+          .map((doc) => doc.data().user_id)
+          .filter((id): id is string => !!id);
+        const uniquePageUserIds = [...new Set(pageUserIds)];
+        const pageExistingUsers = new Set<string>();
+
+        for (
+          let i = 0;
+          i < uniquePageUserIds.length;
+          i += 10
+        ) {
+          const chunk = uniquePageUserIds.slice(i, i + 10);
+          const snap = await db()
+            .collection("users")
+            .where(FieldPath.documentId(), "in", chunk)
+            .get();
+          snap.docs.forEach((d) => pageExistingUsers.add(d.id));
+        }
+
+        for (const streakDoc of pageDocs) {
+          const data = streakDoc.data();
+          const userId = data.user_id;
+
+          if (
+            !userId ||
+            typeof data.current_streak !== "number"
+          ) {
+            logger.warn(
+              "[STREAK_MAINTENANCE] Documento invalido: " +
+              `${streakDoc.id}, marcando para remocao`
+            );
+            batch.delete(streakDoc.ref);
+            invalidDocuments++;
+            batchOps++;
+            continue;
+          }
+
+          if (!pageExistingUsers.has(userId)) {
+            logger.info(
+              "[STREAK_MAINTENANCE] " +
+              `Usuario ${userId} deletado, removendo streak`
+            );
+            batch.delete(streakDoc.ref);
+            batchOps++;
+            continue;
+          }
+
+          let lastGameDate: Date | null = null;
+          if (data.last_game_date) {
+            lastGameDate = new Date(data.last_game_date);
+            if (isNaN(lastGameDate.getTime())) {
+              logger.warn(
+                "[STREAK_MAINTENANCE] Data invalida para " +
+                `${userId}: ${data.last_game_date}`
+              );
+              lastGameDate = null;
+            }
+          }
+
+          if (
+            lastGameDate &&
+            lastGameDate < thirtyDaysAgo &&
+            data.current_streak > 0
+          ) {
+            logger.info(
+              "[STREAK_MAINTENANCE] Streak expirado para " +
+              `${userId}. Resetando: ${data.current_streak} -> 0`
+            );
+            batch.update(streakDoc.ref, {
+              current_streak: 0,
+              last_game_date: null,
+              streak_started_at: null,
+              reset_reason: "Inatividade 30+ dias",
+              reset_at: FieldValue.serverTimestamp(),
+            });
+            expiredStreaks++;
+            batchOps++;
+          } else {
+            const currentStreak = data.current_streak || 0;
+            totalStreak += currentStreak;
+            if (currentStreak > 0) activeStreaks++;
+            if (currentStreak > maxStreak) maxStreak = currentStreak;
+          }
+
+          if (batchOps >= FIRESTORE_BATCH_SAFE_LIMIT) {
+            await batch.commit();
+            logger.info(
+              "[STREAK_MAINTENANCE] " +
+              `Batch de ${batchOps} operacoes commitado`
+            );
+            batchOps = 0;
+            batch = db().batch();
+          }
+        }
 
         if (pageSnap.size < 5000) break;
         lastDoc = pageSnap.docs[pageSnap.size - 1];
-      }
-      logger.info(
-        "[STREAK_MAINTENANCE] Total de " +
-        "streaks ativas encontradas: " +
-        `${allDocs.length}`
-      );
-
-      // Metricas
-      let maxStreak = 0;
-      let totalStreak = 0;
-      let activeStreaks = 0;
-      let expiredStreaks = 0;
-      let invalidDocuments = 0;
-      const now = new Date();
-      const thirtyDaysAgo = new Date(
-        now.getTime() -
-        30 * 24 * 60 * 60 * 1000
-      );
-
-      // FASE 1.5: Pre-fetch de todos os
-      // usuarios em batch (corrige N+1)
-      const allUserIds = allDocs
-        .map((doc) => doc.data().user_id)
-        .filter(
-          (id): id is string => !!id
-        );
-
-      const uniqueUserIds = [
-        ...new Set(allUserIds),
-      ];
-      const existingUserIds =
-        new Set<string>();
-
-      for (
-        let i = 0;
-        i < uniqueUserIds.length;
-        i += 10
-      ) {
-        const chunk =
-          uniqueUserIds.slice(i, i + 10);
-        const snap = await db()
-          .collection("users")
-          .where(
-            FieldPath
-              .documentId(),
-            "in",
-            chunk
-          )
-          .get();
-        snap.docs.forEach(
-          (d) => existingUserIds.add(d.id)
-        );
-      }
-      logger.info(
-        "[STREAK_MAINTENANCE] Usuarios " +
-        "existentes: " +
-        `${existingUserIds.size}/` +
-        `${uniqueUserIds.length}`
-      );
-
-      let batch = db().batch();
-      let batchOps = 0;
-
-      // FASE 2: Processar cada streak
-      for (
-        const streakDoc of
-        allDocs
-      ) {
-        const data = streakDoc.data();
-        const userId = data.user_id;
-
-        // 2.1: Validacao de dados
-        if (
-          !userId ||
-          typeof data.current_streak !==
-          "number"
-        ) {
-          logger.warn(
-            "[STREAK_MAINTENANCE] " +
-            "Documento invalido: " +
-            `${streakDoc.id}, ` +
-            "marcando para remocao"
-          );
-          batch.delete(streakDoc.ref);
-          invalidDocuments++;
-          batchOps++;
-          continue;
-        }
-
-        // 2.2: Verificar se usuario existe
-        // (usa Set pre-carregado)
-        if (!existingUserIds.has(userId)) {
-          logger.info(
-            "[STREAK_MAINTENANCE] " +
-            `Usuario ${userId} deletado, ` +
-            "removendo streak"
-          );
-          batch.delete(streakDoc.ref);
-          batchOps++;
-          continue;
-        }
-
-        // 2.3: Verificar expiracao
-        // (streak quebrado > 30 dias)
-        // FIX #1283: new Date() nunca lança — o try/catch era código morto.
-        // Substituído por checagem explícita de isNaN para detectar datas corrompidas.
-        let lastGameDate: Date | null = null;
-        if (data.last_game_date) {
-          lastGameDate =
-            new Date(data.last_game_date);
-          if (isNaN(lastGameDate.getTime())) {
-            logger.warn(
-              "[STREAK_MAINTENANCE] " +
-              "Data invalida para " +
-              `${userId}: ` +
-              `${data.last_game_date}`
-            );
-            lastGameDate = null;
-          }
-        }
-
-        if (
-          lastGameDate &&
-          lastGameDate < thirtyDaysAgo &&
-          data.current_streak > 0
-        ) {
-          logger.info(
-            "[STREAK_MAINTENANCE] " +
-            "Streak expirado para " +
-            `${userId}. Resetando: ` +
-            `${data.current_streak} -> 0`
-          );
-          batch.update(streakDoc.ref, {
-            current_streak: 0,
-            last_game_date: null,
-            streak_started_at: null,
-            reset_reason:
-              "Inatividade 30+ dias",
-            reset_at:
-              FieldValue
-                .serverTimestamp(),
-          });
-          expiredStreaks++;
-          batchOps++;
-        } else {
-          // 2.4: Coletar metricas
-          // (apenas streaks validos/ativos)
-          const currentStreak =
-            data.current_streak || 0;
-          totalStreak += currentStreak;
-          if (currentStreak > 0) {
-            activeStreaks++;
-          }
-          if (currentStreak > maxStreak) {
-            maxStreak = currentStreak;
-          }
-        }
-
-        // Commit batch se atingir limite
-        if (batchOps >= FIRESTORE_BATCH_SAFE_LIMIT) {
-          await batch.commit();
-          logger.info(
-            "[STREAK_MAINTENANCE] " +
-            `Batch de ${batchOps} ` +
-            "operacoes commitado"
-          );
-          batchOps = 0;
-          // FIX #654-B1: re-create batch after commit
-          batch = db().batch();
-        }
       }
 
       // FASE 3: Commit final
@@ -363,8 +295,7 @@ export const maintainStreaksData = onSchedule(
           timestamp:
             FieldValue
               .serverTimestamp(),
-          total_streaks:
-            allDocs.length,
+          total_streaks: totalDocs,
           active_streaks: activeStreaks,
           expired_streaks: expiredStreaks,
           invalid_documents:

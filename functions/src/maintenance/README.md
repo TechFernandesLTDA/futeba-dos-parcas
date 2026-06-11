@@ -54,23 +54,23 @@ db.collection("notifications")
 ### 4. `cleanupSoftDeletedGames`
 
 **Schedule**: Sábado às 02:00
-**TTL**: 90 dias após `deleted_at`
+**TTL**: 30 dias após `deleted_at`
 **Coleção**: `games`
 
-Documentos soft-deleted são mantidos por 90 dias para recuperação, depois deletados permanentemente.
+Documentos soft-deleted são mantidos por 30 dias para recuperação, depois deletados permanentemente.
 
 **NOTA**: Games têm cascade delete, então limit é menor (100 docs/batch).
 
 ### 5. `cleanupSoftDeletedGroups`
 
 **Schedule**: Sábado às 02:30
-**TTL**: 90 dias
+**TTL**: 30 dias
 **Coleção**: `groups`
 
 ### 6. `cleanupSoftDeletedLocations`
 
 **Schedule**: Sábado às 03:00
-**TTL**: 90 dias
+**TTL**: 30 dias
 **Coleção**: `locations`
 
 ### 7. `softDeleteGame` (Callable)
@@ -87,7 +87,7 @@ val result = softDeleteGame.call(hashMapOf("gameId" to gameId)).await()
 **Regras**:
 - Apenas owner pode soft-delete
 - Marca com `deleted_at`, `deleted_by`, `status: DELETED`
-- Após 90 dias, cleanup permanente via scheduled function
+- Após 30 dias, cleanup permanente via scheduled function
 
 ## Deploy
 

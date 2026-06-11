@@ -186,7 +186,12 @@ export const resetXpRateLimit =
             "Rate limit reset for user " +
             `${targetUserId}`,
         };
-      } catch {
+      } catch (error) {
+        logger.error(
+          "[XP_RATE_LIMIT] Failed to reset rate limit " +
+          `for user ${targetUserId}:`,
+          error
+        );
         throw new HttpsError(
           "internal",
           "Failed to reset rate limit"
