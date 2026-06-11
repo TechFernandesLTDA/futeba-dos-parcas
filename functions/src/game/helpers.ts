@@ -176,19 +176,30 @@ export function getGameDate(
 
 /**
  * Retorna a chave da semana no formato
- * yyyy-WNN.
+ * yyyy-WNN, usando timezone America/Sao_Paulo.
  * @param {Date} d Data de referência.
  * @return {string} Chave da semana.
  */
 export function getWeekKey(d: Date): string {
-  const year = d.getFullYear();
-  const firstDayOfYear = new Date(year, 0, 1);
+  // FIX #2619: usar America/Sao_Paulo para weekKey, mantendo
+  // consistência com o cron (timeZone: "America/Sao_Paulo").
+  // Evita off-by-one quando a data UTC já virou o dia/mês/ano
+  // mas BRT ainda não (ex: 01:00 UTC de 01/Fev = 22:00 BRT 31/Jan).
+  const brtStr = d.toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  });
+  const [yearStr, monthStr, dayStr] = brtStr.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  const day = parseInt(dayStr, 10);
+  const brtDate = new Date(Date.UTC(year, month, day));
+  const firstDayOfYear = new Date(Date.UTC(year, 0, 1));
   const pastDaysOfYear =
-    (d.getTime() - firstDayOfYear.getTime()) /
+    (brtDate.getTime() - firstDayOfYear.getTime()) /
     86400000;
   const weekNumber = Math.ceil(
     (pastDaysOfYear +
-      firstDayOfYear.getDay() + 1) / 7
+      firstDayOfYear.getUTCDay() + 1) / 7
   );
   return `${year}-W${weekNumber
     .toString()
@@ -660,8 +671,9 @@ export function updateSeasonParticipation(
     },
     last_calculated_at: admin.firestore
       .FieldValue.serverTimestamp(),
-    created_at: admin.firestore
-      .FieldValue.serverTimestamp(),
+    // FIX #2648: não incluir created_at — a cada jogo o merge
+    // sobrescrevia o timestamp de criação original. A criação
+    // inicial é feita por applyVotingXpDelta.
     updated_at: admin.firestore
       .FieldValue.serverTimestamp(),
   };

@@ -607,37 +607,70 @@ export const cleanupDeadLetterQueue =
     let totalDeleted = 0;
 
     try {
-      // Deletar itens resolvidos > 30 dias
-      const resolvedSnap = await db
+      // FIX #2646: cursor+loop pattern — iterar todas as páginas,
+      // não apenas a primeira de 500.
+      const resolvedBaseQuery = db
         .collection("dead_letter_queue")
         .where(
           "status", "in",
           ["RESOLVED", "IGNORED"]
         )
         .where("created_at", "<", cutoff)
-        .limit(500)
-        .get();
+        .orderBy("created_at")
+        .limit(500);
 
-      if (!resolvedSnap.empty) {
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+      let hasMore = true;
+
+      while (hasMore) {
+        const pageQuery = lastDoc ?
+          resolvedBaseQuery.startAfter(lastDoc) :
+          resolvedBaseQuery;
+        const resolvedSnap = await pageQuery.get();
+
+        if (resolvedSnap.empty) {
+          hasMore = false;
+          break;
+        }
+
         const batch = db.batch();
         resolvedSnap.docs.forEach(
           (doc) => batch.delete(doc.ref)
         );
         await batch.commit();
-        totalDeleted = resolvedSnap.size;
+        totalDeleted += resolvedSnap.size;
+
+        if (resolvedSnap.size < 500) {
+          hasMore = false;
+        } else {
+          lastDoc = resolvedSnap.docs[resolvedSnap.docs.length - 1];
+        }
       }
 
-      // Marcar PENDING antigos como IGNORED
-      const stalePendingSnap = await db
+      // Marcar PENDING antigos como IGNORED (cursor+loop)
+      const pendingBaseQuery = db
         .collection("dead_letter_queue")
         .where("status", "==", "PENDING")
         .where("created_at", "<", cutoff)
-        .limit(100)
-        .get();
+        .orderBy("created_at")
+        .limit(100);
 
-      if (!stalePendingSnap.empty) {
+      let pendingLastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+      let pendingHasMore = true;
+
+      while (pendingHasMore) {
+        const pendingPageQuery: FirebaseFirestore.Query = pendingLastDoc ?
+          pendingBaseQuery.startAfter(pendingLastDoc) :
+          pendingBaseQuery;
+        const stalePendingSnap = await pendingPageQuery.get();
+
+        if (stalePendingSnap.empty) {
+          pendingHasMore = false;
+          break;
+        }
+
         const batch = db.batch();
-        stalePendingSnap.docs.forEach((doc) => {
+        stalePendingSnap.docs.forEach((doc: admin.firestore.QueryDocumentSnapshot) => {
           batch.update(doc.ref, {
             status: "IGNORED",
             resolved_at:
@@ -653,6 +686,12 @@ export const cleanupDeadLetterQueue =
           `${stalePendingSnap.size} itens ` +
           "pendentes antigos marcados IGNORED"
         );
+
+        if (stalePendingSnap.size < 100) {
+          pendingHasMore = false;
+        } else {
+          pendingLastDoc = stalePendingSnap.docs[stalePendingSnap.docs.length - 1];
+        }
       }
 
       logger.info(
@@ -663,6 +702,7 @@ export const cleanupDeadLetterQueue =
       logger.error(
         "[DLQ_CLEANUP] Erro:", error
       );
+      throw error;
     }
   });
 
@@ -677,7 +717,7 @@ export const cleanupDeadLetterQueue =
  */
 export const cleanupExpiredRateLimits =
   functions.scheduler.onSchedule({
-    schedule: "0 * * * *", // A cada hora
+    schedule: "2 * * * *", // A cada hora (offset 2min para evitar colisao com collect-metrics)
     timeZone: "America/Sao_Paulo",
     region: "southamerica-east1",
     memory: "256MiB",
@@ -696,38 +736,59 @@ export const cleanupExpiredRateLimits =
     let totalDeleted = 0;
 
     try {
-      // Buscar buckets expirados
-      const expiredSnap = await db
+      // FIX #2646: cursor+loop pattern — iterar todas as páginas
+      // de buckets expirados, não apenas uma página de 500.
+      const baseQuery = db
         .collection("rate_limits")
         .where("expires_at", "<", now)
-        .limit(500)
-        .get();
+        .orderBy("expires_at")
+        .limit(500);
 
-      if (expiredSnap.empty) {
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+      let hasMore = true;
+
+      while (hasMore) {
+        const pageQuery = lastDoc ?
+          baseQuery.startAfter(lastDoc) :
+          baseQuery;
+        const expiredSnap = await pageQuery.get();
+
+        if (expiredSnap.empty) {
+          hasMore = false;
+          break;
+        }
+
+        const batch = db.batch();
+        expiredSnap.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        totalDeleted += expiredSnap.size;
+
+        if (expiredSnap.size < 500) {
+          hasMore = false;
+        } else {
+          lastDoc = expiredSnap.docs[expiredSnap.docs.length - 1];
+        }
+      }
+
+      if (totalDeleted === 0) {
         logger.info(
           "[RATE_LIMIT_CLEANUP] Nenhum " +
           "bucket expirado encontrado"
         );
-        return;
+      } else {
+        logger.info(
+          "[RATE_LIMIT_CLEANUP] " +
+          `${totalDeleted} buckets removidos`
+        );
       }
-
-      // Deletar em batch
-      const batch = db.batch();
-      expiredSnap.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-
-      await batch.commit();
-      totalDeleted = expiredSnap.size;
-
-      logger.info(
-        "[RATE_LIMIT_CLEANUP] " +
-        `${totalDeleted} buckets removidos`
-      );
     } catch (error) {
       logger.error(
         "[RATE_LIMIT_CLEANUP] Erro:", error
       );
+      throw error;
     }
   });
 
@@ -759,36 +820,62 @@ export const cleanupOldAlerts =
         thirtyDaysAgo
       );
 
+    let totalDeleted = 0;
+
     try {
-      const oldAlertsSnap = await db
+      // FIX #2646: cursor+loop pattern — iterar todas as paginas
+      // de alertas acknowledged antigos, não apenas uma pagina de 500.
+      const baseQuery = db
         .collection("alerts")
         .where("acknowledged", "==", true)
         .where("created_at", "<", cutoff)
-        .limit(500)
-        .get();
+        .orderBy("created_at")
+        .limit(500);
 
-      if (oldAlertsSnap.empty) {
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+      let hasMore = true;
+
+      while (hasMore) {
+        const pageQuery = lastDoc ?
+          baseQuery.startAfter(lastDoc) :
+          baseQuery;
+        const oldAlertsSnap = await pageQuery.get();
+
+        if (oldAlertsSnap.empty) {
+          hasMore = false;
+          break;
+        }
+
+        const batch = db.batch();
+        oldAlertsSnap.docs.forEach(
+          (doc) => batch.delete(doc.ref)
+        );
+        await batch.commit();
+        totalDeleted += oldAlertsSnap.size;
+
+        if (oldAlertsSnap.size < 500) {
+          hasMore = false;
+        } else {
+          lastDoc = oldAlertsSnap.docs[oldAlertsSnap.docs.length - 1];
+        }
+      }
+
+      if (totalDeleted === 0) {
         logger.info(
           "[ALERTS_CLEANUP] Nenhum alerta " +
           "antigo para limpar"
         );
-        return;
+      } else {
+        logger.info(
+          "[ALERTS_CLEANUP] " +
+          `${totalDeleted} alertas ` +
+          "antigos removidos"
+        );
       }
-
-      const batch = db.batch();
-      oldAlertsSnap.docs.forEach(
-        (doc) => batch.delete(doc.ref)
-      );
-      await batch.commit();
-
-      logger.info(
-        "[ALERTS_CLEANUP] " +
-        `${oldAlertsSnap.size} alertas ` +
-        "antigos removidos"
-      );
     } catch (error) {
       logger.error(
         "[ALERTS_CLEANUP] Erro:", error
       );
+      throw error;
     }
   });

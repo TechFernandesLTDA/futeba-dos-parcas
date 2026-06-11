@@ -93,7 +93,7 @@ export function nowInBrt(): Date {
 
 export const processWeeklyRanking = onSchedule(
   {
-    schedule: "every sunday 23:59",
+    schedule: "every sunday 23:57",
     timeZone: "America/Sao_Paulo",
     region: FUNCTION_REGION,
     timeoutSeconds: 540,
@@ -127,24 +127,34 @@ export const processWeeklyRanking = onSchedule(
 
     // FIX #2198: confirmations/teams vivem na coleção RAIZ filtrada por
     // game_id (path canônico igual a index.ts), e são lidas em paralelo
-    // (Promise.all) em vez de sequencialmente por jogo.
-    const perGameSnaps = await Promise.all(
-      gamesSnap.docs.map(async (gameDoc) => {
-        const gameId = gameDoc.id;
-        const [confSnap, teamsSnap] = await Promise.all([
-          db()
-            .collection("confirmations")
-            .where("game_id", "==", gameId)
-            .where("was_present", "==", true)
-            .get(),
-          db()
-            .collection("teams")
-            .where("game_id", "==", gameId)
-            .get(),
-        ]);
-        return {confSnap, teamsSnap};
-      })
-    );
+    // por jogo, em chunks de 10 para limitar concorrência.
+    const perGameSnaps: Array<{
+      confSnap: admin.firestore.QuerySnapshot;
+      teamsSnap: admin.firestore.QuerySnapshot;
+    }> = [];
+    const CHUNK_SIZE = 10;
+    const gameDocs = gamesSnap.docs;
+    for (let i = 0; i < gameDocs.length; i += CHUNK_SIZE) {
+      const chunk = gameDocs.slice(i, i + CHUNK_SIZE);
+      const chunkResults = await Promise.all(
+        chunk.map(async (gameDoc) => {
+          const gameId = gameDoc.id;
+          const [confSnap, teamsSnap] = await Promise.all([
+            db()
+              .collection("confirmations")
+              .where("game_id", "==", gameId)
+              .where("was_present", "==", true)
+              .get(),
+            db()
+              .collection("teams")
+              .where("game_id", "==", gameId)
+              .get(),
+          ]);
+          return {confSnap, teamsSnap};
+        })
+      );
+      perGameSnaps.push(...chunkResults);
+    }
 
     for (const {confSnap, teamsSnap} of perGameSnaps) {
       const teams = teamsSnap.docs.map((t) => ({
@@ -221,13 +231,15 @@ export const processWeeklyRanking = onSchedule(
     }
 
     const rankings = Object.values(scores).sort((a, b) => b.points - a.points);
+    const topRankings = rankings.slice(0, 100);
 
     const rankingDoc = db().collection("weekly-rankings").doc(weekKey);
     await rankingDoc.set({
       week_key: weekKey,
       start_date: admin.firestore.Timestamp.fromDate(start),
       end_date: admin.firestore.Timestamp.fromDate(end),
-      rankings,
+      rankings: topRankings,
+      total_players: rankings.length,
       total_games: gamesSnap.size,
       created_at: FieldValue.serverTimestamp(),
     });
@@ -237,39 +249,50 @@ export const processWeeklyRanking = onSchedule(
     // dream_team de cada um, usa collectionGroup("dream_team") que retorna
     // SOMENTE os usuários que de fato montaram um time dos sonhos. O doc
     // canônico é users/{uid}/dream_team/current (vide web/useDreamTeam.ts).
+    // FIX #2647: adiciona cursor-based pagination ao collectionGroup para
+    // evitar timeout em bases grandes.
     const scoutRankings: Array<{ userId: string; userName: string; points: number }> = [];
-
-    const dreamTeamsSnap = await db()
-      .collectionGroup("dream_team")
-      .get();
-
-    // Mapa de pontos por dono de time (apenas pontos positivos entram).
     const pointsByOwner: Array<{ userId: string; points: number }> = [];
 
-    for (const teamDoc of dreamTeamsSnap.docs) {
-      // Considera apenas o doc "current" (ignora histórico/outros docs).
-      if (teamDoc.id !== "current") continue;
-
-      // O dono do time é o pai do pai: users/{uid}/dream_team/current.
-      const ownerId = teamDoc.ref.parent.parent?.id;
-      if (!ownerId) continue;
-
-      const teamData = teamDoc.data();
-      // FIX #2284: valida o shape antes do cast.
-      const rawPlayers = teamData?.players;
-      if (!Array.isArray(rawPlayers) || rawPlayers.length === 0) continue;
-      const players = rawPlayers as Array<{ userId: string }>;
-
-      let teamPoints = 0;
-      for (const player of players) {
-        const playerScore = rankings.find((r) => r.userId === player.userId);
-        if (playerScore) {
-          teamPoints += playerScore.points;
+    {
+      let lastDoc:
+        admin.firestore.QueryDocumentSnapshot | null = null;
+      const DREAM_TEAM_PAGE_LIMIT = 500;
+      while (true) {
+        let dtQuery = db().collectionGroup("dream_team")
+          .limit(DREAM_TEAM_PAGE_LIMIT);
+        if (lastDoc) {
+          dtQuery = dtQuery.startAfter(lastDoc);
         }
-      }
+        const dreamTeamsSnap = await dtQuery.get();
+        if (dreamTeamsSnap.empty) break;
 
-      if (teamPoints > 0) {
-        pointsByOwner.push({userId: ownerId, points: teamPoints});
+        for (const teamDoc of dreamTeamsSnap.docs) {
+          if (teamDoc.id !== "current") continue;
+
+          const ownerId = teamDoc.ref.parent.parent?.id;
+          if (!ownerId) continue;
+
+          const teamData = teamDoc.data();
+          const rawPlayers = teamData?.players;
+          if (!Array.isArray(rawPlayers) || rawPlayers.length === 0) continue;
+          const players = rawPlayers as Array<{ userId: string }>;
+
+          let teamPoints = 0;
+          for (const player of players) {
+            const playerScore = rankings.find((r) => r.userId === player.userId);
+            if (playerScore) {
+              teamPoints += playerScore.points;
+            }
+          }
+
+          if (teamPoints > 0) {
+            pointsByOwner.push({userId: ownerId, points: teamPoints});
+          }
+        }
+
+        if (dreamTeamsSnap.size < DREAM_TEAM_PAGE_LIMIT) break;
+        lastDoc = dreamTeamsSnap.docs[dreamTeamsSnap.size - 1];
       }
     }
 

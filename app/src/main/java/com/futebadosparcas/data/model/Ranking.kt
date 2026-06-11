@@ -369,9 +369,9 @@ object LeagueRatingCalculator {
 
         val gamesCount = recentGames.size
 
-        // PPJ - Pontos (XP) por Jogo (max 200 = 100 pontos)
+        // PPJ Score (avgXp / LEAGUE_MAX_AVG_XP, max 100 pontos)
         val avgXp = recentGames.map { it.xpEarned }.average()
-        val ppjScore = (avgXp / 200.0).coerceAtMost(1.0) * 100
+        val ppjScore = (avgXp / 500.0).coerceAtMost(1.0) * 100
 
         // WR - Win Rate (100% = 100 pontos)
         val winRate = recentGames.count { it.won }.toDouble() / gamesCount * 100

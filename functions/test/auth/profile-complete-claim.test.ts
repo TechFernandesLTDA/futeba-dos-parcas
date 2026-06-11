@@ -26,6 +26,19 @@ jest.mock("firebase-functions/v2", () => ({
   logger: {
     info: jest.fn(),
     warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+jest.mock("../../src/middleware/rate-limiter", () => ({
+  checkRateLimit: jest.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 10,
+    resetAt: new Date(Date.now() + 60000),
+  }),
+  RATE_LIMITS: {
+    DEFAULT: { maxRequests: 10, windowMs: 60000 },
+    BATCH_OPERATION: { maxRequests: 5, windowMs: 60000, keyPrefix: "batch" },
   },
 }));
 

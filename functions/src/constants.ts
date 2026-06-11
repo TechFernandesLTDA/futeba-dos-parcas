@@ -257,7 +257,7 @@ export const MAX_SAVES_PER_GAME =
 
 /**
  * Aplica teto anti-cheat e piso 0 a um contador acumulativo
- * (gols, assistências, defesas). Valores nulos/undefined viram 0.
+ * (gols, assistências, defesas). Valores nulos/undefined/NaN viram 0.
  *
  * Uso: clampStat(conf.goals, MAX_GOALS_PER_GAME)
  *
@@ -265,16 +265,21 @@ export const MAX_SAVES_PER_GAME =
  *   valores negativos recebidos do cliente.
  * - Teto max: garante paridade entre o XP capeado e as estatísticas
  *   persistidas, eliminando a inconsistência do issue #2525.
+ * - FIX #2648: Number.isFinite protege contra NaN (que é typeof "number"
+ *   mas não é null/undefined, então escapava do ?? 0).
  *
- * @param {number | null | undefined} value Valor bruto do stat.
+ * @param {unknown} value Valor bruto do stat.
  * @param {number} max Teto máximo (ex: MAX_GOALS_PER_GAME).
- * @return {number} Valor clampeado entre 0 e max (inclusive).
+ * @param {number} min Piso mínimo (default 0).
+ * @return {number} Valor clampeado entre min e max (inclusive).
  */
 export function clampStat(
-  value: number | null | undefined,
-  max: number
+  value: unknown,
+  max: number,
+  min: number = 0
 ): number {
-  return Math.max(0, Math.min(value ?? 0, max));
+  const v = Number.isFinite(value as number) ? (value as number) : 0;
+  return Math.max(min, Math.min(v, max));
 }
 
 // ==========================================

@@ -46,7 +46,8 @@ service firebase.storage {
       let memberDoc = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
       return isAuthenticated() &&
              memberDoc != null &&
-             memberDoc.data.role in ['OWNER', 'ADMIN'];
+             memberDoc.data.role in ['OWNER', 'ADMIN'] &&
+             memberDoc.data.status == 'ACTIVE';
     }
 
     // Verifica se o usuário é admin do sistema via Custom Claims (zero Firestore reads).
@@ -75,14 +76,15 @@ service firebase.storage {
     match /users/{userId}/{fileName} {
       // Qualquer usuário autenticado pode ler fotos de perfil
       // As regras de cache são definidas via metadados no upload
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && fileName in ['profile.jpg', 'thumb.jpg'];
 
       // Apenas o próprio usuário pode escrever suas fotos
       // Máximo 2MB, apenas imagem, valida contentType
-      allow write: if isOwner(userId) && isImage() && isUnderSize(2);
+      // FIX #2649: restringe filenames para prevenir quota abuse
+      allow write: if isOwner(userId) && isImage() && isUnderSize(2) && fileName in ['profile.jpg', 'thumb.jpg'];
 
       // Apenas o próprio usuário pode deletar
-      allow delete: if isOwner(userId);
+      allow delete: if isOwner(userId) && fileName in ['profile.jpg', 'thumb.jpg'];
     }
 
     // ============================================

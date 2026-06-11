@@ -196,7 +196,6 @@ jest.mock("../src/monitoring/alerting", () => ({}));
 jest.mock("../src/cache/leaderboard-cache", () => ({}));
 jest.mock("../src/xp/parallel-processing", () => ({}));
 jest.mock("../src/voting/mvp-voting", () => ({}));
-jest.mock("../src/maintenance/keep-warm", () => ({}));
 
 // Mock badges
 jest.mock("../src/badges/badge-helper", () => ({
@@ -656,6 +655,29 @@ describe("onGameStatusUpdate", () => {
 
     test("should skip processing when xp_processing is already true (concurrent lock)", async () => {
       setupStandardGameMocks({ playerCount: 8, xpProcessing: true });
+
+      // FIX #2648: lock TTL fallback uses xp_processing_at to detect stale
+      // locks. When xp_processing_at is missing, lockAge becomes Date.now() - 0
+      // which exceeds the TTL, so the lock is treated as stale and taken over.
+      // Override the transaction mock to include xp_processing_at with a
+      // recent timestamp so the lock is considered valid and the test correctly
+      // asserts skip behavior.
+      mockRunTransaction.mockImplementation(async (callback: Function) => {
+        const mockTx = {
+          get: jest.fn().mockResolvedValue({
+            data: () => ({
+              status: "FINISHED",
+              owner_id: "owner1",
+              xp_processed: false,
+              xp_processing: true,
+              xp_processing_at: { toMillis: () => Date.now() },
+            }),
+            exists: true,
+          }),
+          update: jest.fn(),
+        };
+        return callback(mockTx);
+      });
 
       const event = createMockEvent("game1",
         { status: "LIVE", owner_id: "owner1" },

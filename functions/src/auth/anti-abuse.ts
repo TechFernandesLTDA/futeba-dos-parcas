@@ -12,9 +12,20 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
+import {createHash} from "crypto";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
+
+/**
+ * FIX #2650: Hash phone number with SHA-256 for rate_limits doc-ID.
+ * Prevents storing plaintext E.164 phone numbers as Firestore document IDs.
+ * @param {string} phone - E.164 phone number
+ * @return {string} Hashed phone (first 32 chars of SHA-256 hex)
+ */
+function hashPhone(phone: string): string {
+  return createHash("sha256").update(phone).digest("hex").substring(0, 32);
+}
 
 const SMS_RATE_LIMIT_PER_PHONE_HOUR = 3;
 const SMS_RATE_LIMIT_PER_IP_HOUR = 10;
@@ -145,7 +156,10 @@ export const canSendSmsOtp = onCall(
         };
       }
 
-      const phoneCheck = await checkRateLimit(phone, {
+      // FIX #2650: usar hash do phone em vez de plaintext E.164 como doc-ID
+      // no rate_limits. Previne vazamento de telefones via ids de documentos.
+      const phoneHash = hashPhone(phone);
+      const phoneCheck = await checkRateLimit(phoneHash, {
         maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR,
         windowMs: 60 * 60 * 1000,
         keyPrefix: "sms_phone",

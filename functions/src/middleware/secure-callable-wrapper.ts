@@ -279,7 +279,14 @@ export function secureCallable<
         // ======================================
         // 4. AUTHORIZATION CHECK (Role-based)
         // ======================================
-        if (config.requiredRole && userId) {
+        if (config.requiredRole) {
+          if (!userId) {
+            throw new HttpsError(
+              "permission-denied",
+              "Authentication required for this operation"
+            );
+          }
+
           const userRole =
             await getUserRole(
               userId,

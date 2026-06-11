@@ -2,24 +2,26 @@ import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
+import {randomBytes} from "crypto";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 
 const db = () => admin.firestore();
 
-const ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
 /**
- * Gera um codigo alfanumerico aleatorio de comprimento especificado.
+ * Gera um codigo alfanumerico aleatorio usando crypto.randomBytes.
  * @param {number} length - Comprimento do codigo (default 6)
  * @return {string} Codigo gerado
  */
 function generateInviteCode(length = 6): string {
-  let code = "";
-  for (let i = 0; i < length; i++) {
-    code += ALPHANUMERIC.charAt(Math.floor(Math.random() * ALPHANUMERIC.length));
-  }
-  return code;
+  // FIX #2650: substitui Math.random() por crypto.randomBytes para
+  // aleatoriedade criptograficamente segura.
+  return randomBytes(length)
+    .toString("base64")
+    .replace(/[+/=]/g, "")
+    .substring(0, length)
+    .toUpperCase();
 }
 
 /**
@@ -66,7 +68,7 @@ export const onUserCreatedGenerateInviteCode = onDocumentCreated(
       invite_count: 0,
     });
 
-    logger.info("Generated invite code for user", {userId, inviteCode});
+    logger.info("Generated invite code for user", {userId});
   }
 );
 
@@ -87,6 +89,13 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
     const invitedByUid = data.invited_by as string | undefined;
     if (!invitedByUid) return;
 
+    // FIX #2650: validate that the invite code is NOT triggered by
+    // an invite code field from the requesting user itself (self-referral).
+    if (invitedByUid === userId) {
+      logger.warn("Self-referral blocked", {userId});
+      return;
+    }
+
     try {
       const inviterRef = db().collection("users").doc(invitedByUid);
       const inviterDoc = await inviterRef.get();
@@ -96,14 +105,25 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
         return;
       }
 
-      const currentCount = (inviterDoc.data()?.invite_count as number) || 0;
+      // FIX #2650: validate that the inviter actually has an invite_code.
+      // invited_by is a client-writable field — must be verified server-side.
+      const inviterData = inviterDoc.data();
+      if (!inviterData?.invite_code || typeof inviterData.invite_code !== "string") {
+        logger.warn("Inviter has no invite_code — possible client forgery", {
+          invitedByUid,
+          newUser: userId,
+        });
+        return;
+      }
+
+      // FIX #2650: use FieldValue.increment(1) instead of read-then-update
+      // to avoid race conditions on concurrent invites.
       await inviterRef.update({
-        invite_count: currentCount + 1,
+        invite_count: FieldValue.increment(1),
       });
 
       logger.info("Incremented invite count for inviter", {
         inviterUid: invitedByUid,
-        newCount: currentCount + 1,
         invitedUser: userId,
       });
     } catch (err) {
@@ -157,7 +177,7 @@ export const generateMyInviteCode = onCall(
         invite_count: userDoc.data()?.invite_count || 0,
       });
 
-      logger.info("Generated invite code on demand", {uid, inviteCode});
+      logger.info("Generated invite code on demand", {uid});
 
       return {inviteCode};
     } catch (error) {

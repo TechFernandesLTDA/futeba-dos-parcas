@@ -26,6 +26,15 @@ export const seedOfficialGroups = onCall(
         );
       }
 
+      // FIX #2644: idempotency guard — verifica se official-groups já tem documentos
+      const existing = await db().collection("official-groups").limit(1).get();
+      if (!existing.empty) {
+        throw new HttpsError(
+          "failed-precondition",
+          "official-groups already seeded"
+        );
+      }
+
       const officialGroups = [
         {
           name: "Peladeiros da Zona Sul",

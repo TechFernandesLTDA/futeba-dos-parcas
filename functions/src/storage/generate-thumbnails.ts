@@ -2,7 +2,7 @@ import * as functions from "firebase-functions/v2";
 import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
-import {Storage} from "@google-cloud/storage";
+import {getStorage} from "firebase-admin/storage";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs/promises";
@@ -10,19 +10,6 @@ import {db} from "../_db";
 // sharp é carregado dinamicamente dentro dos handlers
 // para evitar cold start cost em todas as outras functions
 // (~10MB de binário nativo carregado apenas quando necessário)
-
-let _storage: Storage | null = null;
-/**
- * Lazy singleton do Storage client.
- * FIX #1592: evita cold start overhead em todas as functions.
- * @return {Storage} Storage client instance.
- */
-function getStorage(): Storage {
-  if (!_storage) {
-    _storage = new Storage();
-  }
-  return _storage;
-}
 
 /**
  * Tamanho máximo permitido para upload de imagem
@@ -183,11 +170,6 @@ export const generateProfileThumbnail =
         );
         const sharp = (await import("sharp")).default;
         await sharp(tempFilePath)
-          .withMetadata({
-            exif: undefined,
-            icc: undefined,
-            xmp: undefined,
-          } as Record<string, undefined>)
           .resize(200, 200, {
             fit: "cover",
             position: "center",
@@ -402,11 +384,6 @@ export const generateGroupThumbnail =
 
         const sharp = (await import("sharp")).default;
         await sharp(tempFilePath)
-          .withMetadata({
-            exif: undefined,
-            icc: undefined,
-            xmp: undefined,
-          } as Record<string, undefined>)
           .resize(200, 200, {
             fit: "cover",
             position: "center",

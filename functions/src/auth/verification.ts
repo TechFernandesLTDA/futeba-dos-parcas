@@ -235,7 +235,10 @@ export const setUserVerified = onCall(
         throw new HttpsError("unauthenticated", "Login obrigatório");
       }
 
-      const targetUid: string = data?.uid ?? auth.uid;
+      const targetUid: unknown = data?.uid ?? auth.uid;
+      if (typeof targetUid !== "string" || targetUid.length === 0) {
+        throw new HttpsError("invalid-argument", "uid must be a non-empty string");
+      }
       const isAdmin = auth.token?.role === "ADMIN";
       const isSelf = targetUid === auth.uid;
 
@@ -243,6 +246,23 @@ export const setUserVerified = onCall(
         throw new HttpsError(
           "permission-denied",
           "Apenas o próprio usuário ou ADMIN podem chamar setUserVerified",
+        );
+      }
+
+      // FIX #2650: rate limit per target uid — impede abuso via chamadas repetidas
+      const rl = await checkRateLimit(auth.uid, {
+        maxRequests: 5,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "set_verified",
+      });
+      if (!rl.allowed) {
+        const retryAfterSec = Math.ceil(
+          (rl.resetAt.getTime() - Date.now()) / 1000,
+        );
+        throw new HttpsError(
+          "resource-exhausted",
+          "Muitas tentativas. Tente novamente mais tarde.",
+          {retryAfter: retryAfterSec},
         );
       }
 
@@ -359,8 +379,46 @@ export const bulkSetVerifiedForExistingUsers = onCall(
         );
       }
 
-      const auth = admin.auth();
       const db = admin.firestore();
+
+      // FIX #2641: system_lock + rate limit — impede execuções concorrentes
+      // e reexecução em intervalo curto (padrão de custom-claims.ts:464-507).
+      const RATE_LIMIT_MS = 60 * 60 * 1000;
+      const lockRef = db
+        .collection("system_locks")
+        .doc("bulk_verify_migration");
+      const lockDoc = await lockRef.get();
+
+      if (lockDoc.exists) {
+        const lastRun =
+          lockDoc.data()?.last_run_at?.toDate?.();
+        if (
+          lastRun &&
+          (Date.now() - lastRun.getTime()) < RATE_LIMIT_MS
+        ) {
+          const minutesRemaining = Math.ceil(
+            (RATE_LIMIT_MS - (Date.now() - lastRun.getTime())) / 60000
+          );
+          logger.warn(
+            "[BULK_VERIFY] Rate limited: " +
+            `migration already ran at ${lastRun.toISOString()}. ` +
+            `Try again in ${minutesRemaining} minutes.`
+          );
+          throw new HttpsError(
+            "resource-exhausted",
+            "Backfill already ran recently. " +
+            `Try again in ${minutesRemaining} minutes.`
+          );
+        }
+      }
+
+      await lockRef.set({
+        last_run_at: FieldValue.serverTimestamp(),
+        started_by: request.auth.uid,
+        status: "running",
+      });
+
+      const auth = admin.auth();
 
       let totalProcessed = 0;
       let totalSetVerified = 0;
@@ -420,7 +478,7 @@ export const bulkSetVerifiedForExistingUsers = onCall(
                 return;
               }
 
-              // Elegível — setar claim verified=true
+              // Elegivel — setar claim verified=true
               try {
                 const currentClaims = userRecord.customClaims ?? {};
                 await auth.setCustomUserClaims(userRecord.uid, {
@@ -428,7 +486,11 @@ export const bulkSetVerifiedForExistingUsers = onCall(
                   verified: true,
                 });
 
-                await auth.revokeRefreshTokens(userRecord.uid);
+                // FIX #2641: only revoke when claim actually changed
+                // (defense against concurrent runs that already set the claim)
+                if (currentClaims.verified !== true) {
+                  await auth.revokeRefreshTokens(userRecord.uid);
+                }
 
                 // Mirror em users/{uid} para listeners cliente
                 await db.doc(`users/${userRecord.uid}`).set(
@@ -468,12 +530,32 @@ export const bulkSetVerifiedForExistingUsers = onCall(
       `errors=${errors.length}`
       );
 
+      await lockRef.update({
+        status: "completed",
+        completed_at: FieldValue.serverTimestamp(),
+        total_processed: totalProcessed,
+        total_set_verified: totalSetVerified,
+        errors_count: errors.length,
+      });
+
       return {
         totalProcessed,
         totalSetVerified,
         errors,
       };
     } catch (error) {
+      try {
+        await admin.firestore().collection("system_locks")
+          .doc("bulk_verify_migration")
+          .update({
+            status: "failed",
+            failed_at: FieldValue.serverTimestamp(),
+            error: String(error),
+          });
+      } catch {
+        // ignore lock update failure
+      }
+
       if (error instanceof HttpsError) throw error;
       logger.error("bulkSetVerifiedForExistingUsers failed", {error, uid: request.auth?.uid});
       throw new HttpsError("internal", "An unexpected error occurred");

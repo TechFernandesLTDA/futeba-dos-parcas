@@ -10,6 +10,7 @@ import {
 import {FUNCTION_REGION} from "../constants";
 import {isValidPhoneBR} from "../validation/phone-br";
 import {isRecord} from "../validation/guards";
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 interface UserProfileData {
   cpfVerifiedAt?: unknown;
@@ -130,6 +131,23 @@ export const recomputeMyProfileClaim = onCall(
         throw new HttpsError(
           "unauthenticated",
           "auth required"
+        );
+      }
+
+      // FIX #2650: rate limit per uid — impede abuso via chamadas repetidas
+      const rl = await checkRateLimit(request.auth.uid, {
+        maxRequests: 10,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: "recompute_profile_claim",
+      });
+      if (!rl.allowed) {
+        const retryAfterSec = Math.ceil(
+          (rl.resetAt.getTime() - Date.now()) / 1000,
+        );
+        throw new HttpsError(
+          "resource-exhausted",
+          "Muitas tentativas. Tente novamente mais tarde.",
+          {retryAfter: retryAfterSec},
         );
       }
 

@@ -271,30 +271,18 @@ describe("Index — Funcoes do index.ts", () => {
   });
 
   describe("onGroupDeleted", () => {
-    const mockCgWhere = jest.fn().mockReturnThis();
-    const mockCgLimit = jest.fn().mockReturnThis();
-    const mockCgStartAfter = jest.fn().mockReturnThis();
-    const mockCgGet = jest.fn();
-
-    const cgChain: any = { where: mockCgWhere, limit: mockCgLimit, startAfter: mockCgStartAfter, get: mockCgGet };
-    mockCgWhere.mockReturnValue(cgChain);
-    mockCgLimit.mockReturnValue(cgChain);
-    mockCgStartAfter.mockReturnValue(cgChain);
-
-    beforeEach(() => {
-      mockCollectionGroup.mockReturnValue(cgChain);
-    });
-
     it("deleta membros e subcolecoes em cascata", async () => {
+      // FIX #2605: member-based iteration for user group refs.
+      // Member docs must include data() with user_id so the new code
+      // can extract the uid to delete users/{uid}/groups/{groupId}.
       mockCollectionGet
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "m1" } }], size: 1 })
+        .mockResolvedValueOnce({ docs: [{ ref: { id: "m1" }, data: () => ({ user_id: "user1" }) }], size: 1 })
         .mockResolvedValueOnce({ docs: [{ ref: { id: "tx1" } }], size: 1 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 });
-      mockCgGet.mockResolvedValueOnce({ empty: true, docs: [], size: 0 });
-      mockCollectionGet.mockResolvedValueOnce({ docs: [{ ref: { id: "g1" } }], size: 1 });
+        .mockResolvedValueOnce({ docs: [], size: 0 })
+        .mockResolvedValueOnce({ docs: [{ ref: { id: "g1" } }], size: 1 });
 
       await onGroupDeleted({
         data: { data: () => null },
@@ -313,9 +301,8 @@ describe("Index — Funcoes do index.ts", () => {
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [{ ref: { id: "jr1" } }], size: 1 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
+        .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 });
-      mockCgGet.mockResolvedValueOnce({ empty: true, docs: [], size: 0 });
-      mockCollectionGet.mockResolvedValueOnce({ docs: [], size: 0 });
 
       await onGroupDeleted({
         data: { data: () => null },
@@ -332,9 +319,7 @@ describe("Index — Funcoes do index.ts", () => {
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 });
-      mockCgGet.mockResolvedValueOnce({ empty: true, docs: [], size: 0 });
-      mockCollectionGet
+        .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [{ ref: { id: "game1" }, data: () => ({}) }], size: 1 });
 
       await onGroupDeleted({

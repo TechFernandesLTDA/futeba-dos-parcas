@@ -706,6 +706,7 @@ async function markReminderSent(
       `para ${userId}:`,
       e
     );
+    throw e;
   }
 }
 
