@@ -7,7 +7,9 @@
 // v3 → v4: purga o index.html cacheado que carregava o CSP estrito (#2314)
 // que bloqueava o Google Sign-In. Força re-precache do index novo (CSP
 // corrigido, #2356) na proxima ativacao. Bump invalida o cache antigo.
-const CACHE_NAME = 'futeba-v4';
+// v4 → v5: ignora schemes nao-cacheaveis (ex: chrome-extension://) para
+// evitar erro Cache.put quando extensoes interceptam requests.
+const CACHE_NAME = 'futeba-v5';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
@@ -44,6 +46,7 @@ self.addEventListener('fetch', (event) => {
 
   // Ignorar requests não-GET e Firebase
   if (request.method !== 'GET') return;
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
   if (url.hostname.includes('googleapis.com')) return;
   if (url.hostname.includes('firebaseio.com')) return;
   if (url.hostname.includes('gstatic.com')) return;
