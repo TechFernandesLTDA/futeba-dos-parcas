@@ -33,8 +33,10 @@ import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {
   checkRateLimit,
+  checkRateLimitByIp,
   RateLimitConfig,
 } from "./rate-limiter";
+import {clientIp} from "../auth/anti-abuse";
 
 /**
  * Obtém instância do Firestore com lazy init.
@@ -224,10 +226,17 @@ export function secureCallable<
         // attackers spamming role-protected endpoints
         // get rate-limited, not just permission-denied.
         // ======================================
-        if (config.rateLimit && userId) {
-          const rl = await checkRateLimit(
-            userId, config.rateLimit
-          );
+        if (config.rateLimit) {
+          type ClientRequest = {
+            rawRequest?: {
+              ip?: string;
+              headers?: Record<string, string | string[] | undefined>;
+            };
+          };
+          const ip = clientIp(request as unknown as ClientRequest);
+          const rl = userId ?
+            await checkRateLimit(userId, config.rateLimit) :
+            await checkRateLimitByIp(ip, config.rateLimit);
 
           if (!rl.allowed) {
             const resetSec = Math.ceil(
@@ -236,8 +245,9 @@ export function secureCallable<
             );
 
             logger.warn(
-              "[SECURE_CALLABLE] User " +
-              `${userId} exceeded rate limit ` +
+              "[SECURE_CALLABLE] " +
+              `${userId ? "User " + userId : "IP " + ip} ` +
+              "exceeded rate limit " +
               `(${config.rateLimit.maxRequests}` +
               `/${config.rateLimit.windowMs}ms` +
               `). Reset in ${resetSec}s`
@@ -246,7 +256,7 @@ export function secureCallable<
             await logAudit({
               requestId,
               type: "RATE_LIMIT_EXCEEDED",
-              userId,
+              userId: userId || ip,
               limit:
                 config.rateLimit.maxRequests,
               window:
@@ -269,8 +279,9 @@ export function secureCallable<
           }
 
           logger.info(
-            "[SECURE_CALLABLE] User " +
-            `${userId}: ${rl.remaining}/` +
+            "[SECURE_CALLABLE] " +
+            `${userId ? "User " + userId : "IP " + ip}: ` +
+            `${rl.remaining}/` +
             `${config.rateLimit.maxRequests} ` +
             "requests remaining"
           );

@@ -1,8 +1,8 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   IconButton,
@@ -206,7 +206,7 @@ export const InvitePlayersScreen: React.FC = () => {
         closeDestination={closeDestination}
         closeVariant="back"
       >
-        <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
+        <PageContainer maxWidth="form">
         <TextField
           fullWidth
           placeholder={t('placeholder.searchName')}
@@ -322,7 +322,7 @@ export const InvitePlayersScreen: React.FC = () => {
             </List>
           </Card>
         )}
-      </Container>
+      </PageContainer>
       </FormScaffold>
     </AdaptiveFormSheet>
   );

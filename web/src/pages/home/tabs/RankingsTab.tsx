@@ -1,3 +1,4 @@
+import { PageContainer } from '../../../components/common/PageContainer';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
@@ -6,7 +7,6 @@ import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
 import { getLevelColor } from '../../../types/user';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -317,7 +317,6 @@ const PodiumSection: React.FC<{
 export function RankingsTab() {
     const theme = useTheme();
     const gColors = useGamificationColors();
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
     const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -460,7 +459,7 @@ export function RankingsTab() {
       </Tabs>
 
       <PullToRefresh onRefresh={handleRefresh}>
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="dashboard">
         {errorState && (
           <ErrorState
             message={errorState}
@@ -712,7 +711,7 @@ export function RankingsTab() {
             </>
           )
         )}
-      </Container>
+      </PageContainer>
       </PullToRefresh>
 
       {/* Figurinha do jogador */}

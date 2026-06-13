@@ -1,3 +1,4 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -5,7 +6,6 @@ import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -14,7 +14,6 @@ import {
   Alert,
   Button,
   useTheme,
-  useMediaQuery,
   alpha,
   List,
   Tooltip,
@@ -51,7 +50,6 @@ export const GroupLeagueScreen: React.FC = () => {
   const navigate = useNavigate();
   const goBack = useNavigateBack();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
 
   const { isMember, loading: memberLoading } = useIsGroupMember(groupId);
@@ -105,22 +103,22 @@ export const GroupLeagueScreen: React.FC = () => {
   // cair no return undefined (tela em branco durante memberLoading).
   if (memberLoading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <PageContainer maxWidth="dashboard">
         <LoadingState shimmerCount={8} itemType="RANKING" />
-      </Container>
+      </PageContainer>
     );
   }
 
   if (!isMember) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <PageContainer maxWidth="dashboard">
         <Alert severity="warning" sx={{ mb: 2 }}>
           Você precisa ser membro do grupo para ver a liga.
         </Alert>
         <Button startIcon={<BackIcon />} onClick={goBack}>
           Voltar
         </Button>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -159,7 +157,7 @@ export const GroupLeagueScreen: React.FC = () => {
         </Box>
       )}
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="dashboard">
         {loading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
         ) : error ? (
@@ -231,7 +229,7 @@ export const GroupLeagueScreen: React.FC = () => {
         <Divider sx={{ my: 3 }} />
 
         <HallOfFame groupId={groupId || ''} />
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

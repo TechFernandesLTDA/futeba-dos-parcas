@@ -1,3 +1,4 @@
+import { PageContainer } from '../components/common/PageContainer';
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigateBack } from "../hooks/useNavigateBack";
@@ -9,7 +10,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Container,
   IconButton,
   Skeleton,
   Stack,
@@ -89,7 +89,7 @@ export const GroupChallengesScreen: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
+    <PageContainer maxWidth="list">
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
         <IconButton onClick={goBack} aria-label={t("common.back")}>
           <BackIcon />
@@ -252,6 +252,6 @@ export const GroupChallengesScreen: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 };

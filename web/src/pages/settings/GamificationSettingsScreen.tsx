@@ -1,9 +1,9 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -14,8 +14,6 @@ import {
   Divider,
   Switch,
   Slider,
-  useTheme,
-  useMediaQuery,
   Chip,
   Button,
   CircularProgress,
@@ -77,8 +75,6 @@ export const GamificationSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.gamification'));
   const goBack = useNavigateBack();
-  const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
 
@@ -153,7 +149,7 @@ export const GamificationSettingsScreen: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+        <PageContainer maxWidth="form">
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
@@ -313,7 +309,7 @@ export const GamificationSettingsScreen: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-        </Container>
+        </PageContainer>
       )}
     </Box>
   );

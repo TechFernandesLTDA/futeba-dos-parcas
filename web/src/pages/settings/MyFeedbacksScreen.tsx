@@ -1,9 +1,9 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
   Box,
-  Container,
   Typography,
   Card,
   Button,
@@ -12,8 +12,6 @@ import {
   Divider,
   Chip,
   Alert,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import {
   BugReport as BugIcon,
@@ -53,17 +51,15 @@ export const MyFeedbacksScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.myFeedbacks'));
   const goBack = useNavigateBack();
-  const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
   const { myFeedbacks, fetching, error } = useFeedback();
 
   if (!currentUser) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <PageContainer maxWidth="form">
         <Alert severity="warning">Faça login para ver seus feedbacks</Alert>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -71,7 +67,7 @@ export const MyFeedbacksScreen: React.FC = () => {
     <Box sx={{ pb: 4 }}>
       <ScreenHeader title="Meus Feedbacks" onBack={goBack} />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         {fetching ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : error ? (
@@ -138,7 +134,7 @@ export const MyFeedbacksScreen: React.FC = () => {
             </List>
           </Card>
         )}
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

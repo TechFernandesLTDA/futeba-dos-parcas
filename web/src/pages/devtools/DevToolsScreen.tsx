@@ -1,8 +1,8 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useState } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -100,7 +100,7 @@ export const DevToolsScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="focused">
         {import.meta.env.MODE === 'production' && (
           <Alert severity="error" sx={{ mb: 2 }}>
             <strong>⚠️ AMBIENTE DE PRODUÇÃO</strong>
@@ -236,7 +236,7 @@ export const DevToolsScreen: React.FC = () => {
         >
           Recarregar Aplicação
         </Button>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

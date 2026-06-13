@@ -1,12 +1,12 @@
+import Grid from '@mui/material/Unstable_Grid2';
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
   IconButton,
-  Grid,
   Chip,
   LinearProgress,
   useTheme,
@@ -139,7 +139,7 @@ export const PerformanceDashboard: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageContainer maxWidth="dashboard">
         {loading ? (
           <LinearProgress />
         ) : records.length === 0 ? (
@@ -157,7 +157,7 @@ export const PerformanceDashboard: React.FC = () => {
                   Resumo Geral
                 </Typography>
                 <Grid container spacing={2} sx={{ mt: 1 }}>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" fontWeight={700} color="primary">
                         {records.length}
@@ -167,7 +167,7 @@ export const PerformanceDashboard: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" fontWeight={700} color="primary">
                         {Object.keys(screenStats).length}
@@ -177,7 +177,7 @@ export const PerformanceDashboard: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" fontWeight={700} color="success.main">
                         {Math.round(records.reduce((sum, r) => sum + r.timeToInteractive, 0) / records.length)}ms
@@ -187,7 +187,7 @@ export const PerformanceDashboard: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" fontWeight={700} color="warning.main">
                         {records.filter(r => r.performanceViolations).length}
@@ -207,7 +207,7 @@ export const PerformanceDashboard: React.FC = () => {
             </Typography>
             <Grid container spacing={2}>
               {sortedScreens.map(([screenName, stats]) => (
-                <Grid item xs={12} sm={6} md={4} key={screenName}>
+                <Grid xs={12} sm={6} md={4} key={screenName}>
                   <Card>
                     <CardContent>
                       <Typography variant="subtitle1" fontWeight={700} gutterBottom>
@@ -298,7 +298,7 @@ export const PerformanceDashboard: React.FC = () => {
               <CardContent>
                 <Grid container spacing={2}>
                   {Object.entries(PERFORMANCE_BUDGETS).map(([key, budget]) => (
-                    <Grid item xs={12} sm={6} md={4} key={key}>
+                    <Grid xs={12} sm={6} md={4} key={key}>
                       <Box sx={{ p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
                         <Typography variant="subtitle2" fontWeight={700} gutterBottom>
                           {budget.label}
@@ -327,7 +327,7 @@ export const PerformanceDashboard: React.FC = () => {
             </Card>
           </>
         )}
-      </Container>
+      </PageContainer>
     </Box>
   );
 };
