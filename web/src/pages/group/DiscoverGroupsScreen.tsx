@@ -1,3 +1,4 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useMemo, useState } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -9,7 +10,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Container,
   IconButton,
   InputAdornment,
   Skeleton,
@@ -89,7 +89,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
+    <PageContainer maxWidth="list">
       <Stack direction="row" alignItems="center" spacing={1} mb={2}>
         <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
@@ -183,7 +183,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
           ))}
         </Stack>
       )}
-    </Container>
+    </PageContainer>
   );
 };
 

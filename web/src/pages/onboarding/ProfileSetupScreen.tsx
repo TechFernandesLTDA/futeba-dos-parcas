@@ -1,9 +1,9 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   TextField,
   Button,
@@ -120,7 +120,7 @@ export const ProfileSetupScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <PageContainer maxWidth="focused">
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Box sx={{ position: 'relative', display: 'inline-block' }}>
             <Avatar
@@ -250,7 +250,7 @@ export const ProfileSetupScreen: React.FC = () => {
         >
           {loading ? 'Salvando...' : 'Continuar'}
         </Button>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

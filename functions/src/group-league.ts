@@ -158,14 +158,10 @@ export const onGameFinishedGroupLeague = onDocumentUpdated(
       const teamScores = new Map<string, number>();
       if (teams.length === 2) {
         // Compat: jogos de 2 times podem trazer team{1,2}_score no doc.
-        const t1 = after.team1_name ?
-          teams.find((t) => t.name === after.team1_name) || teams[0] :
-          teams[0];
-        const t2 = after.team2_name ?
-          teams.find((t) => t.name === after.team2_name) || teams[1] :
-          teams[1];
-        teamScores.set(t1.id, after.team1_score ?? t1.score);
-        teamScores.set(t2.id, after.team2_score ?? t2.score);
+        // Resolução posicional (FIX #2660): usa índices do array teams,
+        // não nomes, para evitar colisão quando times têm nome igual.
+        teamScores.set(teams[0].id, after.team1_score ?? teams[0].score);
+        teamScores.set(teams[1].id, after.team2_score ?? teams[1].score);
       } else {
         for (const t of teams) teamScores.set(t.id, t.score);
       }

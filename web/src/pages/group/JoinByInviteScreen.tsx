@@ -1,3 +1,4 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -8,7 +9,6 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Container,
   Stack,
   Typography,
 } from '@mui/material';
@@ -146,7 +146,7 @@ export const JoinByInviteScreen: React.FC = () => {
   if (!firebaseUser) {
     // ProtectedRoute geralmente cuida disso, mas garantia extra
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="focused">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -163,24 +163,24 @@ export const JoinByInviteScreen: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="focused">
         <Stack alignItems="center" spacing={2}>
           <CircularProgress />
           <Typography color="text.secondary">Carregando convite…</Typography>
         </Stack>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (error || !preview) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="focused">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -195,13 +195,13 @@ export const JoinByInviteScreen: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     );
   }
 
   if (preview.expired || preview.used) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <PageContainer maxWidth="focused">
         <Card>
           <CardContent>
             <Stack alignItems="center" spacing={2}>
@@ -220,14 +220,14 @@ export const JoinByInviteScreen: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     );
   }
 
   const isGameInvite = preview.type === 'GAME' && preview.gameId;
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
+    <PageContainer maxWidth="focused">
       <Card>
         <CardContent>
           <Stack alignItems="center" spacing={3}>
@@ -277,6 +277,6 @@ export const JoinByInviteScreen: React.FC = () => {
           </Stack>
         </CardContent>
       </Card>
-    </Container>
+    </PageContainer>
   );
 };

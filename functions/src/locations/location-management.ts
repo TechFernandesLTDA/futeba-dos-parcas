@@ -4,6 +4,7 @@ import {logger} from "firebase-functions/v2";
 import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
+import {calculateAutoRatingsFromStats} from "../ratings/auto-ratings";
 import {db} from "../_db";
 import {ERROR_MSGS} from "../error-messages";
 
@@ -128,73 +129,40 @@ export const calculateAutoRatings = secureCallable<CalculateAutoRatingsRequest>(
       throw new HttpsError("not-found", `User ${userId} not found`);
     }
 
-    const gamesSnap = await db()
-      .collection("games")
-      .where("confirmed_players", "array-contains", userId)
-      .where("status", "==", "completed")
-      .orderBy("date", "desc")
-      .limit(50)
-      .get();
-
-    if (gamesSnap.empty) {
+    // FIX #2657: query real aggregation stats (statistics/{userId})
+    // instead of non-existent games.confirmed_players / games.ratings_map.
+    const statsDoc = await db().collection("statistics").doc(userId).get();
+    if (!statsDoc.exists) {
+      logger.info(`[AUTO_RATINGS] No statistics doc for user ${userId}`);
       return {success: true};
     }
 
-    const ratings = {striker: [] as number[], mid: [] as number[], defender: [] as number[], gk: [] as number[]};
-
-    for (const gameDoc of gamesSnap.docs) {
-      const game = gameDoc.data();
-      // eslint-disable-next-line camelcase
-      const ratings_map = game.ratings_map || {};
-      // eslint-disable-next-line camelcase
-      const userRating = ratings_map[userId];
-      if (!userRating) continue;
-
-      if (userRating.striker > 0) ratings.striker.push(userRating.striker);
-      if (userRating.mid > 0) ratings.mid.push(userRating.mid);
-      if (userRating.defender > 0) ratings.defender.push(userRating.defender);
-      if (userRating.gk > 0) ratings.gk.push(userRating.gk);
+    const stats = statsDoc.data();
+    if (!stats || (stats.total_games ?? stats.totalGames ?? 0) < 1) {
+      return {success: true};
     }
 
-    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-    const samples = Math.max(ratings.striker.length, ratings.mid.length, ratings.defender.length, ratings.gk.length);
+    const ratings = calculateAutoRatingsFromStats(stats);
 
     await db().collection("users").doc(userId).update({
-      auto_striker_rating: avg(ratings.striker),
-      auto_mid_rating: avg(ratings.mid),
-      auto_defender_rating: avg(ratings.defender),
-      auto_gk_rating: avg(ratings.gk),
-      auto_rating_samples: samples,
+      auto_striker_rating: ratings.striker,
+      auto_mid_rating: ratings.mid,
+      auto_defender_rating: ratings.defender,
+      auto_gk_rating: ratings.gk,
+      auto_rating_samples: ratings.sampleSize,
       auto_rating_updated_at: FieldValue.serverTimestamp(),
     });
 
-    const historyEntries = [
-      {position: "STRIKER", rating: avg(ratings.striker)},
-      {position: "MID", rating: avg(ratings.mid)},
-      {position: "DEFENDER", rating: avg(ratings.defender)},
-      {position: "GOALKEEPER", rating: avg(ratings.gk)},
-    ].filter((e) => e.rating > 0);
-
-    if (historyEntries.length > 0) {
-      const historyRef = db().collection("users").doc(userId).collection("rating_history");
-      const batch = db().batch();
-      historyEntries.forEach((entry) => {
-        const docRef = historyRef.doc();
-        batch.set(docRef, {
-          ...entry,
-          samples,
-          calculatedAt: FieldValue.serverTimestamp(),
-        });
-      });
-      await batch.commit();
-    }
-
     await checkAndAwardRatingBadges(userId, {
-      auto_striker_rating: avg(ratings.striker),
-      auto_mid_rating: avg(ratings.mid),
-      auto_defender_rating: avg(ratings.defender),
-      auto_gk_rating: avg(ratings.gk),
+      auto_striker_rating: ratings.striker,
+      auto_mid_rating: ratings.mid,
+      auto_defender_rating: ratings.defender,
+      auto_gk_rating: ratings.gk,
     });
+
+    logger.info(`[AUTO_RATINGS] Calculated for user ${userId} — samples=${ratings.sampleSize}` +
+      ` striker=${ratings.striker.toFixed(2)} mid=${ratings.mid.toFixed(2)}` +
+      ` defender=${ratings.defender.toFixed(2)} gk=${ratings.gk.toFixed(2)}`);
 
     return {success: true};
   }
@@ -266,53 +234,30 @@ export const recalculateAllAutoRatings = secureCallable<RecalculateAllAutoRating
     for (const userDoc of usersSnap.docs) {
       const userId = userDoc.id;
       try {
-        const gamesSnap = await db()
-          .collection("games")
-          .where("confirmed_players", "array-contains", userId)
-          .where("status", "==", "completed")
-          .orderBy("date", "desc")
-          .limit(50)
-          .get();
+        // FIX #2657: read real aggregation stats instead of
+        // non-existent games.confirmed_players / games.ratings_map.
+        const statsDoc = await db().collection("statistics").doc(userId).get();
+        if (!statsDoc.exists) continue;
 
-        if (gamesSnap.empty) continue;
+        const stats = statsDoc.data();
+        if (!stats || (stats.total_games ?? stats.totalGames ?? 0) < 1) continue;
 
-        const ratings = {striker: [] as number[], mid: [] as number[], defender: [] as number[], gk: [] as number[]};
+        const ratings = calculateAutoRatingsFromStats(stats);
 
-        for (const gameDoc of gamesSnap.docs) {
-          const game = gameDoc.data();
-          // eslint-disable-next-line camelcase
-          const ratings_map = game.ratings_map || {};
-          // eslint-disable-next-line camelcase
-          const userRating = ratings_map[userId];
-          if (!userRating) continue;
-
-          if (userRating.striker > 0) ratings.striker.push(userRating.striker);
-          if (userRating.mid > 0) ratings.mid.push(userRating.mid);
-          if (userRating.defender > 0) ratings.defender.push(userRating.defender);
-          if (userRating.gk > 0) ratings.gk.push(userRating.gk);
-        }
-
-        const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-        const samples = Math.max(
-          ratings.striker.length, ratings.mid.length,
-          ratings.defender.length, ratings.gk.length
-        );
-
-        const autoRatings = {
-          auto_striker_rating: avg(ratings.striker),
-          auto_mid_rating: avg(ratings.mid),
-          auto_defender_rating: avg(ratings.defender),
-          auto_gk_rating: avg(ratings.gk),
-          auto_rating_samples: samples,
+        await db().collection("users").doc(userId).update({
+          auto_striker_rating: ratings.striker,
+          auto_mid_rating: ratings.mid,
+          auto_defender_rating: ratings.defender,
+          auto_gk_rating: ratings.gk,
+          auto_rating_samples: ratings.sampleSize,
           auto_rating_updated_at: FieldValue.serverTimestamp(),
-        };
+        });
 
-        await db().collection("users").doc(userId).update(autoRatings);
         await checkAndAwardRatingBadges(userId, {
-          auto_striker_rating: autoRatings.auto_striker_rating,
-          auto_mid_rating: autoRatings.auto_mid_rating,
-          auto_defender_rating: autoRatings.auto_defender_rating,
-          auto_gk_rating: autoRatings.auto_gk_rating,
+          auto_striker_rating: ratings.striker,
+          auto_mid_rating: ratings.mid,
+          auto_defender_rating: ratings.defender,
+          auto_gk_rating: ratings.gk,
         });
         processedCount++;
       } catch (err) {

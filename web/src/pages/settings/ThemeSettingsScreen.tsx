@@ -1,10 +1,10 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useCallback } from 'react';
 import { createLogger } from '../../utils/logger';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -17,8 +17,6 @@ import {
   Switch,
   ToggleButton,
   ToggleButtonGroup,
-  useTheme,
-  useMediaQuery,
   Chip,
   CircularProgress,
   Alert,
@@ -51,8 +49,6 @@ export const ThemeSettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('settings.theme.title'));
   const goBack = useNavigateBack();
-  const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { mode, setMode } = useThemeContext();
   const { language, setLanguage } = useLanguage();
   const { user } = useAuth();
@@ -119,7 +115,7 @@ export const ThemeSettingsScreen: React.FC = () => {
         onBack={goBack}
       />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         {notifError ? (
           <Alert severity="error" sx={{ mb: 2 }}>{notifError}</Alert>
         ) : notifLoading ? (
@@ -265,7 +261,7 @@ export const ThemeSettingsScreen: React.FC = () => {
             </ListItemButton>
           </List>
         </Card>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

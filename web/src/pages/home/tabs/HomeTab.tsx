@@ -1,3 +1,5 @@
+import Grid from '@mui/material/Unstable_Grid2';
+import { PageContainer } from '../../../components/common/PageContainer';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +11,6 @@ import { FirstStepsChecklist } from '../../../components/onboarding/FirstStepsCh
 import type { ChecklistStep } from '../../../components/onboarding/FirstStepsChecklist';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -28,7 +29,6 @@ import {
   Button,
   ButtonBase,
   CircularProgress,
-  Grid,
   useTheme,
   useMediaQuery,
   alpha,
@@ -805,7 +805,7 @@ export function HomeTab() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <Container sx={{ maxWidth: { lg: 1200, xl: 1536 }, py: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <PageContainer maxWidth="dashboard">
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
         sx={{
@@ -994,7 +994,7 @@ export function HomeTab() {
 
       {isMd ? (
         <Grid container spacing={2} sx={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
-          <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Grid xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column' }}>
             <FirstStepsChecklist
               steps={checklistSteps}
               visible={checklistVisible}
@@ -1012,7 +1012,7 @@ export function HomeTab() {
             <MiniRankingWidget />
           </Grid>
 
-          <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Grid xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ flexShrink: 0 }}>
               <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={2} />
             </Box>
@@ -1050,7 +1050,7 @@ export function HomeTab() {
       {isPlayerCardOpen && (
         <PlayerCard userId={user?.id || null} onClose={() => setIsPlayerCardOpen(false)} />
       )}
-    </Container>
+    </PageContainer>
     </PullToRefresh>
   );
 }

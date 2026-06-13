@@ -65,7 +65,7 @@ function isValidIp(value: string): boolean {
  * @param {object} request - Requisição callable.
  * @return {string} IP confiável do cliente, ou "unknown".
  */
-function clientIp(request: {rawRequest?: {
+export function clientIp(request: {rawRequest?: {
   ip?: string;
   headers?: Record<string, string | string[] | undefined>;
 }}): string {

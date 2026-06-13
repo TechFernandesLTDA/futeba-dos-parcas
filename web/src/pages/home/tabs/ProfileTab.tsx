@@ -1,8 +1,8 @@
+import { PageContainer } from '../../../components/common/PageContainer';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -356,7 +356,7 @@ export function ProfileTab() {
         </Card>
       </Box>
 
-      <Container maxWidth="md">
+      <PageContainer maxWidth="list">
       {/* Stats Cards */}
       <Box sx={{ mt: -3 }}>
         <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
@@ -564,7 +564,7 @@ export function ProfileTab() {
           </Button>
         </DialogActions>
       </Dialog>
-      </Container>
+      </PageContainer>
     </Box>
   );
 }

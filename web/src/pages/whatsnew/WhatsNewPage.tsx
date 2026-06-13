@@ -7,6 +7,7 @@
  * Spec: feat-2026-05-22-version-control-release-notes.md — Fase F, task #21.
  */
 
+import { PageContainer } from '../../components/common/PageContainer';
 import { useEffect } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -14,7 +15,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Container,
   Skeleton,
   Stack,
   Typography,
@@ -85,7 +85,7 @@ export const WhatsNewPage: React.FC = () => {
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title={t('whatsNew.title')} onBack={goBack} backAriaLabel={t('common.back')} />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         {loading && (
           <Stack spacing={2}>
             {[0, 1, 2].map((i) => (
@@ -121,7 +121,7 @@ export const WhatsNewPage: React.FC = () => {
             ))}
           </Stack>
         )}
-      </Container>
+      </PageContainer>
     </Box>
   );
 };
