@@ -899,7 +899,7 @@ service cloud.firestore {
         // weekly-ranking.ts consumiam essas flags sem revalidacao contra
         // game.mvp_id/worst_player_id. Votacao usa colecao propria mvp_votes
         // com validacao correta (FASE 5 #448).
-      )
+      );
 
       // Usuario pode deletar sua propria confirmacao
       // OU dono do jogo / admin pode remover qualquer jogador
@@ -1839,11 +1839,26 @@ service cloud.firestore {
         isAdmin() ||
         (request.resource.data.created_by == userId() &&
          request.resource.data.user_id != userId() &&
-         request.resource.data.type in ['game_invite', 'group_invite', 'achievement', 'reminder', 'checkin', 'system', 'league', 'cashbox', 'admin'] &&
+         request.resource.data.type in [
+           'game_invite', 'group_invite', 'achievement', 'reminder',
+           'checkin', 'system', 'league', 'cashbox', 'admin',
+           'GAME_INVITE', 'GAME_SUMMON', 'GAME_CONFIRMED', 'GAME_REMINDER',
+           'GAME_CANCELLED', 'GAME_UPDATED', 'GAME_VACANCY',
+           'GROUP_INVITE', 'GROUP_INVITE_ACCEPTED', 'GROUP_INVITE_DECLINED',
+           'MEMBER_JOINED', 'MEMBER_LEFT', 'ACHIEVEMENT', 'BADGE_UNLOCKED',
+           'LEVEL_UP', 'MVP_RECEIVED', 'MVP_VOTE', 'STREAK_BROKEN', 'SYSTEM'
+         ] &&
+         request.resource.data.title is string &&
          request.resource.data.title.size() <= 100 &&
-         request.resource.data.body.size() <= 500 &&
+         (
+           (request.resource.data.body is string &&
+            request.resource.data.body.size() <= 500) ||
+           (request.resource.data.message is string &&
+            request.resource.data.message.size() <= 500)
+         ) &&
          exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
-         request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']))
+         request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']) &&
+         request.resource.data.keys().hasAny(['body', 'message']))
       );
 
       allow update: if isAuthenticated() &&

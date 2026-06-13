@@ -45,6 +45,7 @@ import {db} from "./_db";
 // Janelas de tempo para lembretes (ms)
 const REMINDER_24H_MS = 24 * 60 * 60 * 1000;
 const REMINDER_2H_MS = 2 * 60 * 60 * 1000;
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 // Tolerancia para a janela de busca (min)
 // Rodando a cada hora, precisamos de uma
@@ -179,7 +180,7 @@ export function formatGameDateTime(
  * Busca jogos que estao na janela de lembrete.
  *
  * @param {number} hoursBeforeGame - Horas antes
- *   do jogo (24 ou 2).
+ *   do jogo (24, 2 ou 1).
  * @return {Promise<GameForReminder[]>} Jogos
  *   na janela.
  */
@@ -187,10 +188,11 @@ async function fetchGamesInReminderWindow(
   hoursBeforeGame: number
 ): Promise<GameForReminder[]> {
   const now = new Date();
-  const reminderTimeMs =
-    hoursBeforeGame === 24 ?
-      REMINDER_24H_MS :
-      REMINDER_2H_MS;
+  const reminderTimeMs = hoursBeforeGame === 24 ?
+    REMINDER_24H_MS :
+    hoursBeforeGame === 2 ?
+      REMINDER_2H_MS :
+      hoursBeforeGame * ONE_HOUR_MS;
 
   // Calcular janela de busca
   // Se o jogo e as 20:00 e queremos lembrar

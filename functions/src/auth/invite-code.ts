@@ -3,25 +3,26 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
-import {randomBytes} from "crypto";
+import {randomInt} from "crypto";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 
 const db = () => admin.firestore();
+const INVITE_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /**
- * Gera um codigo alfanumerico aleatorio usando crypto.randomBytes.
+ * Gera um codigo alfanumerico aleatorio usando crypto.randomInt.
  * @param {number} length - Comprimento do codigo (default 6)
  * @return {string} Codigo gerado
  */
 function generateInviteCode(length = 6): string {
-  // FIX #2650: substitui Math.random() por crypto.randomBytes para
+  // FIX #2650: substitui Math.random() por crypto.randomInt para
   // aleatoriedade criptograficamente segura.
-  return randomBytes(length)
-    .toString("base64")
-    .replace(/[+/=]/g, "")
-    .substring(0, length)
-    .toUpperCase();
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)];
+  }
+  return code;
 }
 
 /**
@@ -34,8 +35,23 @@ function generateInviteCode(length = 6): string {
  */
 async function generateUniqueCode(): Promise<string> {
   const inviteCodesRef = db().collection("invite_codes");
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const code = generateInviteCode();
+  for (const length of [6, 8]) {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = generateInviteCode(length);
+      try {
+        await inviteCodesRef.doc(code).create({
+          created_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return code;
+      } catch (e: unknown) {
+        if ((e as {code?: number}).code === 6) continue; // ALREADY_EXISTS
+        throw e;
+      }
+    }
+  }
+
+  while (true) {
+    const code = generateInviteCode(10);
     try {
       await inviteCodesRef.doc(code).create({
         created_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -46,7 +62,6 @@ async function generateUniqueCode(): Promise<string> {
       throw e;
     }
   }
-  return generateInviteCode(8);
 }
 
 /**
