@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { FieldAvailabilityTimeline } from './FieldAvailabilityTimeline';
 
 const mockUseFieldGames = vi.fn();
@@ -184,9 +186,8 @@ describe('FieldAvailabilityTimeline', () => {
     renderTimeline({ fieldId: 'field-1' });
 
     const today = new Date();
-    const dayNames = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
-    const todayLabel = dayNames[today.getDay()];
-    const todayNum = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const todayLabel = format(today, 'EEE', { locale: ptBR }).toLowerCase();
+    const todayNum = format(today, 'dd/MM');
 
     const todayElement = screen.getByText((content) => {
       const text = content.toLowerCase();
