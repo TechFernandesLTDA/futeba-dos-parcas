@@ -1,8 +1,8 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useCallback } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -15,7 +15,6 @@ import {
   Select,
   MenuItem,
   useTheme,
-  useMediaQuery,
   Divider,
   alpha,
 } from '@mui/material';
@@ -66,7 +65,6 @@ export const NotificationSettingsScreen: React.FC = () => {
   useDocumentTitle(t('page.title.notifications'));
   const goBack = useNavigateBack();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -128,7 +126,7 @@ export const NotificationSettingsScreen: React.FC = () => {
     <Box sx={{ pb: 4 }}>
       <ScreenHeader title="Notificações" onBack={goBack} />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         {error ? (
           <ErrorState
             message={error || t('settings.loadError')}
@@ -334,7 +332,7 @@ export const NotificationSettingsScreen: React.FC = () => {
             </Card>
           </>
         )}
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

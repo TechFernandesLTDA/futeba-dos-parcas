@@ -1,9 +1,9 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   IconButton,
@@ -307,7 +307,7 @@ export const UserManagementScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="focused">
         {fetchError ? (
           <Alert severity="error" action={
             <Button color="inherit" size="small" onClick={handleRetry}>
@@ -399,7 +399,7 @@ export const UserManagementScreen: React.FC = () => {
             )}
           </>
         )}
-      </Container>
+      </PageContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="manage-user-dialog-title">
         <DialogTitle id="manage-user-dialog-title">Gerenciar Usuário</DialogTitle>

@@ -109,8 +109,9 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
       }
 
       const [hours, minutes] = (after.time || "00:00").split(":").map(Number);
+      const pad2 = (n: number) => String(n).padStart(2, "0");
       const dateTime = Timestamp.fromDate(
-        new Date(`${nextDate}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`)
+        new Date(`${nextDate}T${pad2(hours)}:${pad2(minutes)}:00-03:00`)
       );
 
       const newGame: Record<string, unknown> = {

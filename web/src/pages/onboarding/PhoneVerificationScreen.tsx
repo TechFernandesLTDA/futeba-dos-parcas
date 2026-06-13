@@ -1,3 +1,4 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -5,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
   TextField,
   Typography,
   Alert,
@@ -249,7 +249,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         py: 3,
       }}
     >
-      <Container maxWidth="sm">
+      <PageContainer maxWidth="focused">
         <Card elevation={3}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
             <ProgressHeader />
@@ -420,7 +420,7 @@ export const PhoneVerificationScreen: React.FC = () => {
             <div ref={recaptchaContainerRef} />
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
     </Box>
   );
 };

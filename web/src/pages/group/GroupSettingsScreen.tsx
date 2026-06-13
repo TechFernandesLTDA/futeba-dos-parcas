@@ -1,9 +1,9 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -231,21 +231,21 @@ export const GroupSettingsScreen: React.FC = () => {
   // Estado de carregamento
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         <ShimmerLoading count={3} type="card" />
-      </Container>
+      </PageContainer>
     );
   }
 
   // Estado de erro
   if (error || !group) {
     return (
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         <Alert severity="error">{error || t('group.settings.groupNotFound')}</Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(`/group/${groupId}`)} sx={{ mt: 2 }}>
           {t('common.back')}
         </Button>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -256,7 +256,7 @@ export const GroupSettingsScreen: React.FC = () => {
         onBack={() => navigate(`/group/${groupId}`)}
       />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         {/* Informações do grupo (resumo) */}
         <Card sx={{ mb: 2 }}>
           <CardContent>
@@ -492,7 +492,7 @@ export const GroupSettingsScreen: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
-      </Container>
+      </PageContainer>
 
       {/* Dialog de confirmação: Sair do grupo */}
       <Dialog

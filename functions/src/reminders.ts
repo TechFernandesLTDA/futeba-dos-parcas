@@ -657,14 +657,16 @@ async function sendReminder(
 async function markReminderSent(
   gameId: string,
   userId: string,
-  reminderType: "24h" | "2h"
+  reminderType: "24h" | "2h" | "1h"
 ): Promise<void> {
   const confirmationId =
     `${gameId}_${userId}`;
-  const reminderField =
-    reminderType === "24h" ?
-      "reminder_24h_sent" :
-      "reminder_2h_sent";
+  const REMINDER_FIELDS: Record<"24h" | "2h" | "1h", string> = {
+    "24h": "reminder_24h_sent",
+    "2h": "reminder_2h_sent",
+    "1h": "reminder_1h_sent",
+  };
+  const reminderField = REMINDER_FIELDS[reminderType];
 
   try {
     const confirmationRef = db()
@@ -727,7 +729,7 @@ async function markReminderSent(
 async function dispatchReminders(
   userIds: string[],
   game: GameForReminder,
-  reminderType: "24h" | "2h",
+  reminderType: "24h" | "2h" | "1h",
 ): Promise<number> {
   const BATCH = 25;
   let sent = 0;
@@ -762,10 +764,14 @@ async function dispatchReminders(
  *   enviados.
  */
 async function processReminders(
-  reminderType: "24h" | "2h"
+  reminderType: "24h" | "2h" | "1h"
 ): Promise<number> {
-  const hoursBeforeGame =
-    reminderType === "24h" ? 24 : 2;
+  const HOURS_MAP: Record<"24h" | "2h" | "1h", number> = {
+    "24h": 24,
+    "2h": 2,
+    "1h": 1,
+  };
+  const hoursBeforeGame = HOURS_MAP[reminderType];
   let totalSent = 0;
 
   logger.info(
@@ -889,7 +895,11 @@ export const checkGameReminders = onSchedule(
       const sent2h =
         await processReminders("2h");
 
-      const total = sent24h + sent2h;
+      // Processar lembretes de 1h
+      const sent1h =
+        await processReminders("1h");
+
+      const total = sent24h + sent2h + sent1h;
       logger.info(
         "\n========================================"
       );
@@ -902,6 +912,9 @@ export const checkGameReminders = onSchedule(
       );
       logger.info(
         `  - Lembretes 2h: ${sent2h}`
+      );
+      logger.info(
+        `  - Lembretes 1h: ${sent1h}`
       );
       logger.info(
         "========================================\n"
@@ -974,6 +987,7 @@ export const testGameReminders = onSchedule(
     // Executar processamento real
     await processReminders("24h");
     await processReminders("2h");
+    await processReminders("1h");
 
     logger.info(
       "[REMINDERS TEST] Teste concluido!"

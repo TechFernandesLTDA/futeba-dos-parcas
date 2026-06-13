@@ -1,9 +1,9 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -206,7 +206,7 @@ export const CashboxScreen: React.FC = () => {
         }
       />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         <Card sx={{ mb: 2, bgcolor: balance >= 0 ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.error.main, 0.1) }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -309,7 +309,7 @@ export const CashboxScreen: React.FC = () => {
             ))}
           </List>
         )}
-      </Container>
+      </PageContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cashbox-dialog-title">
         <DialogTitle id="cashbox-dialog-title">

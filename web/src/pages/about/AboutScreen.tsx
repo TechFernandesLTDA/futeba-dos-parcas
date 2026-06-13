@@ -1,8 +1,8 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import { useState } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -54,7 +54,7 @@ export const AboutScreen: React.FC = () => {
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title={t('about.title')} onBack={goBack} />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <PageContainer maxWidth="focused">
         <Card sx={{ mb: 2, textAlign: 'center' }}>
           <CardContent>
             <Avatar
@@ -167,7 +167,7 @@ export const AboutScreen: React.FC = () => {
             {t('about.madeWithLove')}
           </Typography>
         </Box>
-      </Container>
+      </PageContainer>
 
       <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </Box>

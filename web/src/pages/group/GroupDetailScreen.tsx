@@ -1,9 +1,10 @@
+import Grid from '@mui/material/Unstable_Grid2';
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -26,7 +27,6 @@ import {
   Stack,
   Tab,
   Tabs,
-  Grid,
   useTheme,
   useMediaQuery,
   alpha,
@@ -189,15 +189,15 @@ export const GroupDetailScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <ShimmerLoading count={3} type="card" />
-      </Container>
+      </PageContainer>
     );
   }
 
   if (groupDeleted) {
     return (
-      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <EmptyState
           icon={<GroupIcon sx={{ fontSize: iconSizes.hero }} />}
           title={t('groupDetail.closedTitle')}
@@ -208,7 +208,7 @@ export const GroupDetailScreen: React.FC = () => {
             {t('common.back')}
           </Button>
         </Box>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -227,7 +227,7 @@ export const GroupDetailScreen: React.FC = () => {
 
   if (!group) {
     return (
-      <Container maxWidth={containerMaxWidth} sx={{ py: 2 }}>
+      <PageContainer maxWidth="detail">
         <EmptyState
           icon={<GroupIcon sx={{ fontSize: iconSizes.hero }} />}
           title={t('groupDetail.notFound')}
@@ -238,7 +238,7 @@ export const GroupDetailScreen: React.FC = () => {
             {t('common.back')}
           </Button>
         </Box>
-      </Container>
+      </PageContainer>
     );
   }
 
@@ -492,35 +492,35 @@ export const GroupDetailScreen: React.FC = () => {
         // lg+: split-pane com sidebar de informações
         if (isLg) {
           return (
-            <Container maxWidth="xl" sx={{ py: 2 }}>
+            <PageContainer maxWidth="detail">
               <Grid container spacing={3}>
-                <Grid item xs={12} lg={4}>
+                <Grid xs={12} lg={4}>
                   {infoPanel}
                 </Grid>
-                <Grid item xs={12} lg={8}>
+                <Grid xs={12} lg={8}>
                   {mainContent}
                 </Grid>
               </Grid>
-            </Container>
+            </PageContainer>
           );
         }
 
         // md: container mais largo, layout linear
         if (isMd) {
           return (
-            <Container maxWidth="md" sx={{ py: 2 }}>
+            <PageContainer maxWidth="detail">
               {infoPanel}
               {mainContent}
-            </Container>
+            </PageContainer>
           );
         }
 
         // xs/sm: comportamento original (sem mudança)
         return (
-          <Container maxWidth="sm" sx={{ py: 2 }}>
+          <PageContainer maxWidth="detail">
             {infoPanel}
             {mainContent}
-          </Container>
+          </PageContainer>
         );
       })()}
 
@@ -531,7 +531,7 @@ export const GroupDetailScreen: React.FC = () => {
       {/* #2164/#2270: barra fixa via FixedBottomBar (centralizada no conteúdo
           + safe-area), substituindo a versão hand-rolled centrada no viewport. */}
       <FixedBottomBar>
-        <Container maxWidth="sm">
+        <PageContainer maxWidth="detail">
           <Button
             variant="contained"
             fullWidth
@@ -540,7 +540,7 @@ export const GroupDetailScreen: React.FC = () => {
           >
             {t('games.createGame')}
           </Button>
-        </Container>
+        </PageContainer>
       </FixedBottomBar>
 
       <Dialog open={inviteDialogOpen} onClose={() => { setInviteDialogOpen(false); setInviteCode(''); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">

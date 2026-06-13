@@ -1,9 +1,9 @@
+import { PageContainer } from '../../components/common/PageContainer';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -23,8 +23,6 @@ import {
   DialogContentText,
   DialogActions,
   TextField,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -64,8 +62,6 @@ export const SettingsScreen: React.FC = () => {
   useDocumentTitle(t('page.title.settings'));
   const navigate = useNavigate();
   const goBack = useNavigateBack();
-  const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -173,7 +169,7 @@ export const SettingsScreen: React.FC = () => {
         backAriaLabel={t('common.back')}
       />
 
-      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
+      <PageContainer maxWidth="form">
         {error ? (
           <ErrorState
             message={error}
@@ -324,7 +320,7 @@ export const SettingsScreen: React.FC = () => {
             </Box>
           </>
         )}
-      </Container>
+      </PageContainer>
 
       <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 
