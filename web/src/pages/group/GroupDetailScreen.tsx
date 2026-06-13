@@ -531,7 +531,7 @@ export const GroupDetailScreen: React.FC = () => {
       {/* #2164/#2270: barra fixa via FixedBottomBar (centralizada no conteúdo
           + safe-area), substituindo a versão hand-rolled centrada no viewport. */}
       <FixedBottomBar>
-        <PageContainer maxWidth="detail">
+        <PageContainer maxWidth="detail" disablePadding>
           <Button
             variant="contained"
             fullWidth

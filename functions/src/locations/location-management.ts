@@ -16,6 +16,15 @@ interface CalculateAutoRatingsRequest {
   userId: string;
 }
 
+interface AutoRatingsForUser {
+  auto_striker_rating: number;
+  auto_mid_rating: number;
+  auto_defender_rating: number;
+  auto_gk_rating: number;
+  auto_rating_samples: number;
+  auto_rating_updated_at: FirebaseFirestore.FieldValue;
+}
+
 const DELETE_BATCH_SIZE = 500;
 const LOCATION_SUBCOLLECTIONS = [
   "reviews",
@@ -23,6 +32,66 @@ const LOCATION_SUBCOLLECTIONS = [
   "availability",
   "audit_logs",
 ];
+
+/**
+ * Atualiza ratings automaticos e historico a partir de statistics/{userId}.
+ * @param {string} userId ID do usuario.
+ * @param {FirebaseFirestore.DocumentData} stats Documento statistics.
+ * @return {Promise<{ratings: AutoRatingsForUser, sampleSize: number}>}
+ */
+async function updateAutoRatingsFromStats(
+  userId: string,
+  stats: FirebaseFirestore.DocumentData
+): Promise<{ratings: AutoRatingsForUser; sampleSize: number}> {
+  const calculated = calculateAutoRatingsFromStats(stats);
+  const autoRatings: AutoRatingsForUser = {
+    auto_striker_rating: calculated.striker,
+    auto_mid_rating: calculated.mid,
+    auto_defender_rating: calculated.defender,
+    auto_gk_rating: calculated.gk,
+    auto_rating_samples: calculated.sampleSize,
+    auto_rating_updated_at: FieldValue.serverTimestamp(),
+  };
+
+  await db()
+    .collection("users")
+    .doc(userId)
+    .update(
+      autoRatings as unknown as
+        FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>
+    );
+
+  const historyEntries = [
+    {position: "STRIKER", rating: calculated.striker},
+    {position: "MID", rating: calculated.mid},
+    {position: "DEFENDER", rating: calculated.defender},
+    {position: "GOALKEEPER", rating: calculated.gk},
+  ].filter((entry) => entry.rating > 0);
+
+  if (historyEntries.length > 0) {
+    const historyRef = db()
+      .collection("users")
+      .doc(userId)
+      .collection("rating_history");
+    const batch = db().batch();
+    for (const entry of historyEntries) {
+      batch.set(historyRef.doc(), {
+        ...entry,
+        samples: calculated.sampleSize,
+        calculatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  await checkAndAwardRatingBadges(userId, {
+    auto_striker_rating: calculated.striker,
+    auto_mid_rating: calculated.mid,
+    auto_defender_rating: calculated.defender,
+    auto_gk_rating: calculated.gk,
+  });
+  return {ratings: autoRatings, sampleSize: calculated.sampleSize};
+}
 
 /**
  * Deletes every document in a location subcollection using paged batches.
@@ -142,27 +211,12 @@ export const calculateAutoRatings = secureCallable<CalculateAutoRatingsRequest>(
       return {success: true};
     }
 
-    const ratings = calculateAutoRatingsFromStats(stats);
+    const result = await updateAutoRatingsFromStats(userId, stats);
 
-    await db().collection("users").doc(userId).update({
-      auto_striker_rating: ratings.striker,
-      auto_mid_rating: ratings.mid,
-      auto_defender_rating: ratings.defender,
-      auto_gk_rating: ratings.gk,
-      auto_rating_samples: ratings.sampleSize,
-      auto_rating_updated_at: FieldValue.serverTimestamp(),
-    });
-
-    await checkAndAwardRatingBadges(userId, {
-      auto_striker_rating: ratings.striker,
-      auto_mid_rating: ratings.mid,
-      auto_defender_rating: ratings.defender,
-      auto_gk_rating: ratings.gk,
-    });
-
-    logger.info(`[AUTO_RATINGS] Calculated for user ${userId} — samples=${ratings.sampleSize}` +
-      ` striker=${ratings.striker.toFixed(2)} mid=${ratings.mid.toFixed(2)}` +
-      ` defender=${ratings.defender.toFixed(2)} gk=${ratings.gk.toFixed(2)}`);
+    logger.info(
+      `[AUTO_RATINGS] Calculated for user ${userId} ` +
+      `samples=${result.sampleSize}`
+    );
 
     return {success: true};
   }
@@ -224,41 +278,19 @@ export const recalculateAllAutoRatings = secureCallable<RecalculateAllAutoRating
   async (request) => {
     const batchSize = Math.max(1, Math.min(Number(request.data?.batchSize) || 50, 500));
 
-    const usersSnap = await db()
-      .collection("users")
-      .where("auto_rating_samples", ">", 0)
+    const statsSnap = await db()
+      .collection("statistics")
       .limit(batchSize)
       .get();
 
     let processedCount = 0;
-    for (const userDoc of usersSnap.docs) {
-      const userId = userDoc.id;
+    for (const statsDoc of statsSnap.docs) {
+      const userId = statsDoc.id;
       try {
-        // FIX #2657: read real aggregation stats instead of
-        // non-existent games.confirmed_players / games.ratings_map.
-        const statsDoc = await db().collection("statistics").doc(userId).get();
-        if (!statsDoc.exists) continue;
-
         const stats = statsDoc.data();
         if (!stats || (stats.total_games ?? stats.totalGames ?? 0) < 1) continue;
 
-        const ratings = calculateAutoRatingsFromStats(stats);
-
-        await db().collection("users").doc(userId).update({
-          auto_striker_rating: ratings.striker,
-          auto_mid_rating: ratings.mid,
-          auto_defender_rating: ratings.defender,
-          auto_gk_rating: ratings.gk,
-          auto_rating_samples: ratings.sampleSize,
-          auto_rating_updated_at: FieldValue.serverTimestamp(),
-        });
-
-        await checkAndAwardRatingBadges(userId, {
-          auto_striker_rating: ratings.striker,
-          auto_mid_rating: ratings.mid,
-          auto_defender_rating: ratings.defender,
-          auto_gk_rating: ratings.gk,
-        });
+        await updateAutoRatingsFromStats(userId, stats);
         processedCount++;
       } catch (err) {
         logger.warn(`Failed to recalculate ratings for user ${userId}: ${err}`);

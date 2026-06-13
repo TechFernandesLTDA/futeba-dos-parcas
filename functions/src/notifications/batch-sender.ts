@@ -693,6 +693,19 @@ async function sendMulticastInChunks(
       sent += response.successCount;
       failed += response.failureCount;
 
+      // Registrar sucessos em todos os chunks; mesmo um chunk sem falhas
+      // pode ser do mesmo usuario que teve falha transiente em outro token.
+      response.responses.forEach(
+        (sendResponse: admin.messaging.SendResponse, index: number) => {
+          if (!sendResponse.success) return;
+          const succeededToken = chunk[index];
+          const succeededUserId = tokenToUser.get(succeededToken);
+          if (succeededUserId) {
+            userHadSuccess.set(succeededUserId, true);
+          }
+        }
+      );
+
       // Processar falhas para tokens invalidos e transientes
       if (response.failureCount > 0) {
         const tokensToRemove: {
@@ -703,14 +716,7 @@ async function sendMulticastInChunks(
         response.responses.forEach(
           (sendResponse: admin.messaging.SendResponse,
             index: number) => {
-            if (sendResponse.success) {
-              const succeededToken = chunk[index];
-              const succeededUserId =
-                tokenToUser.get(succeededToken);
-              if (succeededUserId) {
-                userHadSuccess.set(succeededUserId, true);
-              }
-            } else if (sendResponse.error) {
+            if (sendResponse.error) {
               const failedToken = chunk[index];
               const userId =
                 tokenToUser.get(failedToken);
