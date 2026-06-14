@@ -15,6 +15,7 @@ import { EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import { useWeeklyRanking } from '../../hooks/useWeeklyRanking';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 import { iconSizes } from '../../theme/iconSizes';
+import { radii } from '../../theme';
 import { useTranslation } from 'react-i18next';
 
 export const TeamOfTheWeek: React.FC = () => {
@@ -76,7 +77,7 @@ export const TeamOfTheWeek: React.FC = () => {
                 sx={{
                   flex: 1,
                   maxWidth: 80,
-                  borderRadius: 2,
+                  borderRadius: `${radii.xl}px`,
                   p: 0.5,
                   display: 'flex',
                   flexDirection: 'column',

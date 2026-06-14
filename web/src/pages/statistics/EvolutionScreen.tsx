@@ -214,7 +214,7 @@ export const EvolutionScreen: React.FC = () => {
                   Resumo Geral
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid xs={6}>
+                  <Grid xs={12} sm={6}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <SoccerIcon color="primary" sx={{ mb: 0.5 }} />
                       <Typography variant="h5" fontWeight={600}>
@@ -225,7 +225,7 @@ export const EvolutionScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid xs={12} sm={6}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <TrophyIcon color="warning" sx={{ mb: 0.5 }} />
                       <Typography variant="h5" fontWeight={600}>
@@ -236,7 +236,7 @@ export const EvolutionScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid xs={12} sm={6}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={600} color="success.main">
                         {summary.totalGoals}
@@ -246,7 +246,7 @@ export const EvolutionScreen: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid xs={6}>
+                  <Grid xs={12} sm={6}>
                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                       <Typography variant="h5" fontWeight={600} color="info.main">
                         {summary.totalAssists}

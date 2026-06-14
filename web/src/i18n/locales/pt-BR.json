@@ -1417,10 +1417,12 @@
   },
   "nav": {
     "about": "Sobre",
+    "badges": "Conquistas",
     "games": "Jogos",
     "groups": "Grupos",
     "home": "Início",
     "league": "Liga",
+    "locations": "Quadras",
     "logout": "Sair",
     "map": "Mapa",
     "notifications": "Notificações",
@@ -1429,6 +1431,8 @@
     "ranking": "Ranking",
     "schedules": "Horários",
     "search": "Buscar",
+    "sectionMore": "Mais",
+    "sectionPrimary": "Principal",
     "settings": "Configurações",
     "statistics": "Estatísticas"
   },

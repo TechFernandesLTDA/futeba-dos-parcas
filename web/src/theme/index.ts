@@ -1,12 +1,15 @@
 import { createTheme, alpha } from '@mui/material/styles';
+import { motionDuration, motionEasing } from './motion';
 
 // Augment MUI palette with custom surface tokens
 declare module '@mui/material/styles' {
   interface Theme {
     shadowsCustom: Record<string, string>;
+    radii: typeof radii;
   }
   interface ThemeOptions {
     shadowsCustom?: Record<string, string>;
+    radii?: typeof radii;
   }
   interface Palette {
     surfaceContainer: string;
@@ -115,6 +118,15 @@ export const shadowTokens = {
   cardPremium: '0 0 0 1px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)',
 };
 
+export const radii = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  full: 999,
+} as const;
+
 export const futebaTheme = createTheme({
   palette: {
     mode: 'light',
@@ -198,19 +210,27 @@ export const futebaTheme = createTheme({
     shadowTokens.modal,                                                                              // 24 — modal max
   ] as const,
   shadowsCustom: shadowTokens,
+  radii,
   shape: {
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
   // #1570: tokens de transição para animações consistentes entre telas
+  // #2726: adota motionDuration / motionEasing do design system
   transitions: {
     duration: {
-      shortest: 150,
-      shorter: 200,
-      short: 250,
-      standard: 300,
-      complex: 375,
+      shortest: motionDuration.short,
+      shorter: motionDuration.medium,
+      short: motionDuration.long,
+      standard: motionDuration.medium,
+      complex: motionDuration.long,
       enteringScreen: 225,
       leavingScreen: 195,
+    },
+    easing: {
+      easeInOut: motionEasing.emphasized,
+      easeOut: motionEasing.decelerate,
+      easeIn: motionEasing.accelerate,
+      sharp: motionEasing.accelerate,
     },
   },
   components: {
@@ -219,7 +239,7 @@ export const futebaTheme = createTheme({
         root: {
           textTransform: 'none',
           fontWeight: 600,
-          borderRadius: 12,
+          borderRadius: radii.md,
           padding: '10px 24px',
           touchAction: 'manipulation',
         },
@@ -253,7 +273,7 @@ export const futebaTheme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
-          borderRadius: 16,
+          borderRadius: radii.lg,
           border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
           boxShadow: shadowTokens.card,
         }),
@@ -264,14 +284,18 @@ export const futebaTheme = createTheme({
     // via override global em MuiCssBaseline.
     MuiCardActionArea: {
       styleOverrides: {
-        root: {
-          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-          '@media (hover: hover)': {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          transition: theme.transitions.create(['transform', 'box-shadow'], {
+            duration: theme.transitions.duration.shortest,
+          }),
+          '@media (hover: hover) and (prefers-reduced-motion: no-preference)': {
             '&:hover': {
-              transform: 'translateY(-2px)',
+              transform: 'translateY(-3px)',
+              boxShadow: shadowTokens.cardHover,
+              '& .MuiCardActionArea-focusHighlight': { opacity: 0.04 },
             },
           },
-        },
+        }),
       },
     },
     MuiPaper: {
@@ -285,7 +309,7 @@ export const futebaTheme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 12,
+            borderRadius: radii.md,
           },
         },
       },
@@ -314,6 +338,7 @@ export const futebaTheme = createTheme({
       styleOverrides: {
         root: {
           fontWeight: 500,
+          borderRadius: radii.full,
         },
       },
     },
@@ -335,6 +360,9 @@ export const futebaTheme = createTheme({
     // home indicator) centralizadamente, em vez de patch por tela (12+ dialogs).
     MuiDialog: {
       styleOverrides: {
+        paper: {
+          borderRadius: radii.lg,
+        },
         paperFullScreen: {
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -351,6 +379,10 @@ export const futebaTheme = createTheme({
           transitionDuration: '0.25s',
           transitionTimingFunction: 'ease',
         },
+        // #2725: View Transitions API — cross-fade em navegações (Chrome 111+)
+        '@view-transition': {
+          navigation: 'auto',
+        },
         '@media (prefers-reduced-motion: reduce)': {
           '*, *::before, *::after': {
             animationDuration: '0.01ms !important',
@@ -358,7 +390,29 @@ export const futebaTheme = createTheme({
             transitionDuration: '0.01ms !important',
             scrollBehavior: 'auto !important',
           },
+          '.stagger-fade-in > *': { opacity: 1, animation: 'none' },
+          '@view-transition': { navigation: 'none' },
         },
+        '@keyframes fadeInUp': {
+          from: { opacity: 0, transform: 'translateY(12px)' },
+          to: { opacity: 1, transform: 'translateY(0)' },
+        },
+        '.stagger-fade-in > *': {
+          opacity: 0,
+          animation: 'fadeInUp 0.35s ease-out forwards',
+        },
+        '.stagger-fade-in > *:nth-child(1)': { animationDelay: '0ms' },
+        '.stagger-fade-in > *:nth-child(2)': { animationDelay: '40ms' },
+        '.stagger-fade-in > *:nth-child(3)': { animationDelay: '80ms' },
+        '.stagger-fade-in > *:nth-child(4)': { animationDelay: '120ms' },
+        '.stagger-fade-in > *:nth-child(5)': { animationDelay: '160ms' },
+        '.stagger-fade-in > *:nth-child(6)': { animationDelay: '200ms' },
+        '.stagger-fade-in > *:nth-child(7)': { animationDelay: '240ms' },
+        '.stagger-fade-in > *:nth-child(8)': { animationDelay: '280ms' },
+        '.stagger-fade-in > *:nth-child(9)': { animationDelay: '320ms' },
+        '.stagger-fade-in > *:nth-child(10)': { animationDelay: '360ms' },
+        '.stagger-fade-in > *:nth-child(11)': { animationDelay: '400ms' },
+        '.stagger-fade-in > *:nth-child(12)': { animationDelay: '400ms' },
         '.MuiCard-root': {
           contentVisibility: 'auto',
           containIntrinsicSize: 'auto 200px',
@@ -382,7 +436,24 @@ export const futebaTheme = createTheme({
         ':focus-visible': {
           outline: '3px solid var(--futeba-focus-ring, #1B5E20)',
           outlineOffset: '2px',
-          borderRadius: '4px',
+          borderRadius: `${radii.xs}px`,
+        },
+        // #2739: prefers-reduced-transparency — desabilita glass (blur/backdrop-filter)
+        '@media (prefers-reduced-transparency: reduce)': {
+          '.MuiDrawer-paper, .MuiAppBar-root, .MuiPaper-root[style*="backdrop-filter"]': {
+            backdropFilter: 'none !important',
+          },
+        },
+        // #2739: prefers-contrast — reforça bordas e texto
+        '@media (prefers-contrast: more)': {
+          '.MuiDivider-root': { borderColor: 'currentColor', opacity: 0.5 },
+          '.MuiOutlinedInput-notchedOutline': { borderColor: 'currentColor', opacity: 0.6 },
+        },
+        // #2739: forced-colors — anéis de foco e UI essencial
+        '@media (forced-colors: active)': {
+          '.MuiButton-contained': { border: '2px solid ButtonText' },
+          '.MuiChip-root': { border: '1px solid ButtonText' },
+          ':focus-visible': { outline: '3px solid Highlight' },
         },
         // #2177: padding inferior do #mobile-shell removido. O spacer dentro
         // de MobileBottomNav (height = bottomBarHeight + safe-area) já reserva
@@ -442,6 +513,7 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           backgroundColor: theme.palette.background.paper,
+          borderRadius: theme.radii.lg,
           border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
           boxShadow: shadowTokens.card,
         }),
@@ -505,6 +577,7 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         paper: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           backgroundColor: theme.palette.background.paper,
+          borderRadius: theme.radii.lg,
           boxShadow: theme.shadows[16],
         }),
         // #2169: safe-area em fullScreen (este bloco sobrescreve o spread do
@@ -519,7 +592,7 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           '& .MuiOutlinedInput-root': {
-            borderRadius: 12,
+            borderRadius: theme.radii.md,
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: theme.palette.divider,
             },
@@ -557,6 +630,7 @@ export const futebaDarkOledTheme = createTheme({
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           backgroundColor: theme.palette.background.paper,
+          borderRadius: theme.radii.lg,
           border: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
           boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.3)}, 0 4px 16px ${alpha(theme.palette.common.black, 0.2)}`,
         }),

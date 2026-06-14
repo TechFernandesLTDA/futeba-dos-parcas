@@ -1,4 +1,5 @@
 import React from 'react';
+import { alpha } from '@mui/material/styles';
 import {
   Box,
   Drawer,
@@ -6,6 +7,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   Typography,
   Tooltip,
   Badge,
@@ -15,11 +17,20 @@ import {
   Avatar,
   Chip,
 } from '@mui/material';
-import { Add as AddIcon, KeyboardCommandKey as KeyboardIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  KeyboardCommandKey as KeyboardIcon,
+  Search as SearchIcon,
+  BarChart as BarChartIcon,
+  EmojiEvents as TrophyIcon,
+  LocationOn as LocationIcon,
+  Settings as SettingsIcon,
+} from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import {
@@ -42,6 +53,7 @@ export function AppSidebar() {
   const { user } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
+  const reducedMotion = useReducedMotion();
 
   // #2226: índice ativo via fonte única (compartilhada com MobileBottomNav).
   // Substitui o antigo isItemActive (lógica duplicada que destacava a seção
@@ -66,7 +78,10 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            bgcolor: 'surfaceContainerHigh',
+            backdropFilter: 'blur(16px)',
+            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.8),
+            '@supports not (backdrop-filter: blur(16px))': { backgroundColor: 'background.paper' },
+            '@media (prefers-reduced-transparency: reduce)': { backdropFilter: 'none', backgroundColor: 'background.paper' },
             display: 'flex',
             flexDirection: 'column',
           },
@@ -87,6 +102,45 @@ export function AppSidebar() {
           }}
         >
           <AppLogo size="small" shape="circle" alt={t('alt.logo')} />
+        </Box>
+        <Box sx={{ px: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Tooltip title={t('nav.search')} placement="right">
+            <ListItemButton
+              onClick={() => {
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
+              }}
+              sx={{ flexDirection: 'column', py: 1, borderRadius: 2 }}
+              aria-label={t('nav.search')}
+            >
+              <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
+                <SearchIcon />
+              </ListItemIcon>
+              <Typography variant="caption" color="text.secondary" fontSize="0.65rem">
+                {t('nav.search')}
+              </Typography>
+            </ListItemButton>
+          </Tooltip>
+          <Tooltip title={t('games.createGame')} placement="right">
+            <ListItemButton
+              onClick={() => navigate('/game/create')}
+              sx={{
+                flexDirection: 'column',
+                py: 1,
+                borderRadius: 2,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': { bgcolor: 'primary.dark' },
+              }}
+              aria-label={t('games.createGame')}
+            >
+              <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5, color: 'inherit' }}>
+                <AddIcon />
+              </ListItemIcon>
+              <Typography variant="caption" color="inherit" fontSize="0.65rem">
+                {t('games.createGame')}
+              </Typography>
+            </ListItemButton>
+          </Tooltip>
         </Box>
         <List sx={{ pt: 1 }}>
           {NAV_ITEMS.map((item, idx) => {
@@ -116,7 +170,7 @@ export function AppSidebar() {
                       minWidth: 0,
                       justifyContent: 'center',
                       mb: 0.5,
-                      animation: isNotifItem && unreadCount > 0 ? `${pulse} 2s ease-in-out infinite` : undefined,
+                      animation: isNotifItem && unreadCount > 0 && !reducedMotion ? `${pulse} 2s ease-in-out infinite` : undefined,
                     }}
                   >
                     {React.cloneElement(icon, { 'aria-hidden': true })}
@@ -150,7 +204,10 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            bgcolor: 'surfaceContainerHigh',
+            backdropFilter: 'blur(16px)',
+            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.8),
+            '@supports not (backdrop-filter: blur(16px))': { backgroundColor: 'background.paper' },
+            '@media (prefers-reduced-transparency: reduce)': { backdropFilter: 'none', backgroundColor: 'background.paper' },
             display: 'flex',
             flexDirection: 'column',
           },
@@ -193,15 +250,33 @@ export function AppSidebar() {
           </Button>
         </Box>
         <Divider sx={{ mx: 2, mb: 1 }} />
+        <Box sx={{ px: 2, pb: 1 }}>
+          <Button
+            variant="outlined"
+            fullWidth
+            startIcon={<SearchIcon />}
+            onClick={() => {
+              window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
+            }}
+            sx={{
+              borderRadius: 2,
+              justifyContent: 'flex-start',
+              color: 'text.secondary',
+              borderColor: 'divider',
+              textTransform: 'none',
+              '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
+            }}
+          >
+            <Box sx={{ flex: 1, textAlign: 'left' }}>{t('nav.search')}...</Box>
+            <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem', ml: 1 }} />
+          </Button>
+        </Box>
         <List>
-          {NAV_ITEMS.map((item, idx) => {
+          <ListSubheader sx={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: 2 }}>
+            {t('nav.sectionPrimary')}
+          </ListSubheader>
+          {NAV_ITEMS.slice(0, 5).map((item, idx) => {
             const active = activeIndex === idx;
-            const isNotifItem = item.path === '/notifications';
-            const icon = isNotifItem ? (
-              <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
-                {item.icon}
-              </Badge>
-            ) : item.icon;
             return (
               <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
                 <ListItemButton
@@ -221,19 +296,48 @@ export function AppSidebar() {
                     },
                   }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      color: 'text.secondary',
-                      animation: isNotifItem && unreadCount > 0 ? `${pulse} 2s ease-in-out infinite` : undefined,
-                    }}
-                  >
-                    {React.cloneElement(icon, { 'aria-hidden': true })}
+                  <ListItemIcon sx={{ color: 'text.secondary' }}>
+                    {item.icon}
                   </ListItemIcon>
                   <ListItemText primary={t(item.labelKey)} />
                 </ListItemButton>
               </Tooltip>
             );
           })}
+          <ListSubheader sx={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: 2 }}>
+            {t('nav.sectionMore')}
+          </ListSubheader>
+          {[
+            { labelKey: 'nav.statistics', path: '/statistics', icon: <BarChartIcon aria-hidden /> },
+            { labelKey: 'nav.badges', path: '/badges', icon: <TrophyIcon aria-hidden /> },
+            { labelKey: 'nav.locations', path: '/locations', icon: <LocationIcon aria-hidden /> },
+            { labelKey: 'nav.settings', path: '/settings', icon: <SettingsIcon aria-hidden /> },
+          ].map((item) => (
+            <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
+              <ListItemButton
+                selected={location.pathname.startsWith(item.path)}
+                onClick={() => navigate(item.path)}
+                sx={{
+                  borderRadius: 2,
+                  mx: 1,
+                  my: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'action.selected',
+                    '& .MuiListItemIcon-root': { color: 'primary.main' },
+                    '& .MuiListItemText-primary': {
+                      color: 'primary.main',
+                      fontWeight: 600,
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: 'text.secondary' }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={t(item.labelKey)} />
+              </ListItemButton>
+            </Tooltip>
+          ))}
         </List>
         {/* #2192: entrada descobrível para os atalhos de teclado. Antes só
             acessíveis pressionando "?", sem nenhuma pista visual. */}

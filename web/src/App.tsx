@@ -4,7 +4,7 @@ import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
 import { AuthProvider, ThemeProvider, LanguageProvider, useAuth, TeamsProvider } from './contexts';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, useTheme, useMediaQuery } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { ErrorBoundary, withErrorBoundary } from './components/common/ErrorBoundary';
 import { ErrorOutline } from '@mui/icons-material';
@@ -33,7 +33,6 @@ import {
   GameDetailSkeleton,
   GroupDetailSkeleton,
   ProfileScreenSkeleton,
-  RankingScreenSkeleton,
   BadgesSkeleton,
   EditProfileSkeleton,
   GlobalSearchSkeleton,
@@ -42,6 +41,9 @@ import {
   LiveGameSkeleton,
   WeeklyRecapSkeleton,
   AboutSkeleton,
+  CardGridSkeleton,
+  ListSkeleton,
+  FormSkeleton,
 } from './components/common/ScreenSkeletons';
 
 
@@ -150,50 +152,29 @@ const PerformanceDashboard = lazy(() => import('./pages/admin/PerformanceDashboa
 // Error pages
 const NotFoundScreen = lazy(() => import('./pages/error/NotFoundScreen').then(m => ({ default: m.NotFoundScreen })));
 
-const spinnerKeyframes = {
-  '@keyframes spin': {
-    '0%': { transform: 'rotate(0deg)' },
-    '100%': { transform: 'rotate(360deg)' },
-  },
-};
-
 function RouteFallback() {
-  const { t } = useTranslation();
   const location = useLocation();
   const path = location.pathname;
 
   if (path === '/' || path === '') return <HomeScreenSkeleton />;
   if (path.startsWith('/game/') && path.endsWith('/live')) return <LiveGameSkeleton />;
   if (path.startsWith('/game/')) return <GameDetailSkeleton />;
-  if (path.startsWith('/group/') && !path.includes('/edit') && !path.includes('/settings') && !path.includes('/cashbox')) return <GroupDetailSkeleton />;
+  if (path.startsWith('/group/') && (path.endsWith('/edit') || path.endsWith('/settings'))) return <FormSkeleton />;
+  if (path.startsWith('/group/') && !path.includes('/cashbox')) return <GroupDetailSkeleton />;
   if (path.startsWith('/profile/edit')) return <EditProfileSkeleton />;
   if (path.startsWith('/profile')) return <ProfileScreenSkeleton />;
-  if (path === '/league') return <RankingScreenSkeleton />;
+  if (path.startsWith('/league')) return <ListSkeleton />;
   if (path === '/badges') return <BadgesSkeleton />;
   if (path === '/search') return <GlobalSearchSkeleton />;
   if (path.startsWith('/level-journey')) return <LevelJourneySkeleton />;
   if (path === '/statistics') return <StatisticSkeleton />;
   if (path.startsWith('/weekly-recap')) return <WeeklyRecapSkeleton />;
   if (path === '/about') return <AboutSkeleton />;
+  if (path.startsWith('/locations')) return <CardGridSkeleton />;
+  if (path.startsWith('/admin')) return <ListSkeleton />;
+  if (path.startsWith('/settings')) return <FormSkeleton />;
 
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-      <Box
-        sx={{
-          width: 24,
-          height: 24,
-          border: '2px solid',
-          borderColor: 'primary.main',
-          borderTopColor: 'transparent',
-          borderRadius: '50%',
-          animation: 'spin 0.6s linear infinite',
-          ...spinnerKeyframes,
-        }}
-        role="status"
-        aria-label={t('a11y.loadingPage')}
-      />
-    </Box>
-  );
+  return <CardGridSkeleton />;
 }
 
 function AppLoadingFallback() {
@@ -648,6 +629,8 @@ function SWUpdateListener() {
 }
 
 function App() {
+  const _theme = useTheme();
+  const isDesktop = useMediaQuery(_theme.breakpoints.up('md'));
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
@@ -700,14 +683,23 @@ function App() {
                 />
               </SilentToastBoundary>
               <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
-              <MobileShell>
-                <VerificationBanner />
-                <RouteAnnouncer />
-                <Box component="main" id="main-content" tabIndex={-1}>
+              {isDesktop ? (
+                <>
+                  <VerificationBanner />
+                  <RouteAnnouncer />
                   <SafeScreen />
-                </Box>
-                <ConnectionStatusWrapper />
-              </MobileShell>
+                  <ConnectionStatusWrapper />
+                </>
+              ) : (
+                <MobileShell>
+                  <VerificationBanner />
+                  <RouteAnnouncer />
+                  <Box component="main" id="main-content" tabIndex={-1}>
+                    <SafeScreen />
+                  </Box>
+                  <ConnectionStatusWrapper />
+                </MobileShell>
+              )}
             </LanguageProvider>
             </TeamsProvider>
             </ToastProvider>
