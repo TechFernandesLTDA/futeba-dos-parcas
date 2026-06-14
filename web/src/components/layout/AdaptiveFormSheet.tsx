@@ -88,9 +88,12 @@ export function AdaptiveFormSheet({
         open={true}
         variant="temporary"
         onClose={handleClose}
+        aria-labelledby="form-scaffold-title"
         ModalProps={{
           // keepMounted=false garante unmount ao navegar — sem vazamento de estado
           keepMounted: false,
+          role: 'dialog',
+          'aria-modal': true,
         }}
         PaperProps={{
           sx: {

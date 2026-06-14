@@ -2,6 +2,12 @@ import { createTheme, alpha } from '@mui/material/styles';
 
 // Augment MUI palette with custom surface tokens
 declare module '@mui/material/styles' {
+  interface Theme {
+    shadowsCustom: Record<string, string>;
+  }
+  interface ThemeOptions {
+    shadowsCustom?: Record<string, string>;
+  }
   interface Palette {
     surfaceContainer: string;
     surfaceContainerHigh: string;
@@ -98,6 +104,17 @@ export const gamificationColorsDark = {
   streak: '#FF7043',
 };
 
+// #2705: semantic shadow tokens — layered, single light-source (vertical ~2x horizontal)
+export const shadowTokens = {
+  card: '0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)',
+  cardHover: '0 2px 4px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06)',
+  nav: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+  dropdown: '0 4px 6px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.08)',
+  overlay: '0 8px 16px rgba(0,0,0,0.08), 0 24px 48px rgba(0,0,0,0.12)',
+  modal: '0 16px 32px rgba(0,0,0,0.12), 0 48px 64px rgba(0,0,0,0.16)',
+  cardPremium: '0 0 0 1px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)',
+};
+
 export const futebaTheme = createTheme({
   palette: {
     mode: 'light',
@@ -138,49 +155,49 @@ export const futebaTheme = createTheme({
   },
   typography: {
     fontFamily: appFontFamily,
-    h1: { fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.2 },
-    h2: { fontSize: '2rem', fontWeight: 700, lineHeight: 1.3 },
-    h3: { fontSize: '1.75rem', fontWeight: 600, lineHeight: 1.3 },
-    h4: { fontSize: '1.5rem', fontWeight: 600, lineHeight: 1.4 },
-    h5: { fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.4 },
-    h6: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.5 },
+    h1: { fontSize: 'clamp(2rem, 1.4rem + 2vw, 2.75rem)', fontWeight: 700, lineHeight: 1.2 },
+    h2: { fontSize: 'clamp(1.5rem, 1rem + 1.5vw, 2rem)', fontWeight: 700, lineHeight: 1.25 },
+    h3: { fontSize: 'clamp(1.25rem, 0.9rem + 1vw, 1.5rem)', fontWeight: 600, lineHeight: 1.3 },
+    h4: { fontSize: 'clamp(1.1rem, 0.85rem + 0.75vw, 1.25rem)', fontWeight: 600, lineHeight: 1.35 },
+    h5: { fontSize: 'clamp(1rem, 0.8rem + 0.5vw, 1.1rem)', fontWeight: 600, lineHeight: 1.4 },
+    h6: { fontSize: 'clamp(0.875rem, 0.75rem + 0.3vw, 1rem)', fontWeight: 600, lineHeight: 1.4 },
     subtitle1: { fontSize: '1rem', fontWeight: 500, lineHeight: 1.5 },
     subtitle2: { fontSize: '0.875rem', fontWeight: 500, lineHeight: 1.5 },
-    body1: { fontSize: '1rem', lineHeight: 1.6 },
-    body2: { fontSize: '0.875rem', lineHeight: 1.6 },
+    body1: { fontSize: '1rem', lineHeight: 1.6, fontVariantNumeric: 'tabular-nums' },
+    body2: { fontSize: '0.875rem', lineHeight: 1.6, fontVariantNumeric: 'tabular-nums' },
     button: { fontWeight: 600, textTransform: 'none' as const },
     caption: { fontSize: '0.75rem', lineHeight: 1.5 },
     overline: { fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const },
   },
-  // #1806: sombras customizadas — tokens para uso com theme.shadows[n]
-  // 1=sutil, 4=padrão (Card/Paper), 8=elevado (Fab/Dialog), 16=máximo (Modal)
+  // #2705: premium multi-layer shadow ramp — semantic tokens at key elevations
   shadows: [
-    'none',
-    '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
-    '0 1px 5px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.08)',
-    '0 2px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)',
-    '0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
-    '0 3px 10px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08)',
-    '0 3px 12px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.1)',
-    '0 4px 12px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.1)',
-    '0 4px 14px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.12)',
-    '0px 5px 6px -3px rgba(0,0,0,0.2),0px 9px 12px 1px rgba(0,0,0,0.14),0px 3px 16px 2px rgba(0,0,0,0.12)',
-    '0px 6px 6px -3px rgba(0,0,0,0.2),0px 10px 14px 1px rgba(0,0,0,0.14),0px 4px 18px 3px rgba(0,0,0,0.12)',
-    '0px 6px 7px -4px rgba(0,0,0,0.2),0px 11px 15px 1px rgba(0,0,0,0.14),0px 4px 20px 3px rgba(0,0,0,0.12)',
-    '0px 7px 8px -4px rgba(0,0,0,0.2),0px 12px 17px 2px rgba(0,0,0,0.14),0px 5px 22px 4px rgba(0,0,0,0.12)',
-    '0px 7px 8px -4px rgba(0,0,0,0.2),0px 13px 19px 2px rgba(0,0,0,0.14),0px 5px 24px 4px rgba(0,0,0,0.12)',
-    '0px 7px 9px -4px rgba(0,0,0,0.2),0px 14px 21px 2px rgba(0,0,0,0.14),0px 5px 26px 4px rgba(0,0,0,0.12)',
-    '0px 8px 9px -5px rgba(0,0,0,0.2),0px 15px 22px 2px rgba(0,0,0,0.14),0px 6px 28px 5px rgba(0,0,0,0.12)',
-    '0 8px 32px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.15)',
-    '0px 8px 11px -5px rgba(0,0,0,0.2),0px 17px 26px 2px rgba(0,0,0,0.14),0px 6px 32px 5px rgba(0,0,0,0.12)',
-    '0px 9px 11px -5px rgba(0,0,0,0.2),0px 18px 28px 2px rgba(0,0,0,0.14),0px 7px 34px 6px rgba(0,0,0,0.12)',
-    '0px 9px 12px -6px rgba(0,0,0,0.2),0px 19px 29px 2px rgba(0,0,0,0.14),0px 7px 36px 6px rgba(0,0,0,0.12)',
-    '0px 10px 13px -6px rgba(0,0,0,0.2),0px 20px 31px 3px rgba(0,0,0,0.14),0px 8px 38px 7px rgba(0,0,0,0.12)',
-    '0px 10px 13px -6px rgba(0,0,0,0.2),0px 21px 33px 3px rgba(0,0,0,0.14),0px 8px 40px 7px rgba(0,0,0,0.12)',
-    '0px 10px 14px -6px rgba(0,0,0,0.2),0px 22px 35px 3px rgba(0,0,0,0.14),0px 8px 42px 7px rgba(0,0,0,0.12)',
-    '0px 11px 14px -7px rgba(0,0,0,0.2),0px 23px 36px 3px rgba(0,0,0,0.14),0px 9px 44px 8px rgba(0,0,0,0.12)',
-    '0px 11px 15px -7px rgba(0,0,0,0.2),0px 24px 38px 3px rgba(0,0,0,0.14),0px 9px 46px 8px rgba(0,0,0,0.12)',
+    'none',                                                                                          // 0
+    shadowTokens.nav,                                                                                // 1 — nav/subtle
+    shadowTokens.card,                                                                               // 2 — card default
+    '0 2px 8px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.06)',                                     // 3
+    '0 2px 10px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06)',                                     // 4 — paper default
+    '0 4px 12px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06)',                                     // 5
+    '0 4px 14px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',                                    // 6
+    '0 4px 14px rgba(0,0,0,0.12), 0 3px 10px rgba(0,0,0,0.08)',                                   // 7
+    shadowTokens.dropdown,                                                                           // 8 — dropdown/popover
+    '0 5px 6px rgba(0,0,0,0.12), 0 9px 12px rgba(0,0,0,0.08), 0 4px 18px rgba(0,0,0,0.06)',      // 9
+    '0 6px 6px rgba(0,0,0,0.12), 0 10px 14px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.06)',     // 10
+    '0 6px 7px rgba(0,0,0,0.12), 0 11px 15px rgba(0,0,0,0.08), 0 4px 22px rgba(0,0,0,0.08)',     // 11
+    '0 7px 8px rgba(0,0,0,0.14), 0 12px 17px rgba(0,0,0,0.1), 0 5px 24px rgba(0,0,0,0.08)',      // 12
+    '0 7px 8px rgba(0,0,0,0.14), 0 13px 19px rgba(0,0,0,0.1), 0 5px 26px rgba(0,0,0,0.08)',      // 13
+    '0 7px 9px rgba(0,0,0,0.14), 0 14px 21px rgba(0,0,0,0.1), 0 5px 28px rgba(0,0,0,0.08)',      // 14
+    '0 8px 9px rgba(0,0,0,0.14), 0 15px 22px rgba(0,0,0,0.1), 0 6px 30px rgba(0,0,0,0.08)',      // 15
+    shadowTokens.overlay,                                                                            // 16 — dialog
+    '0 8px 11px rgba(0,0,0,0.14), 0 17px 26px rgba(0,0,0,0.1), 0 6px 34px rgba(0,0,0,0.08)',     // 17
+    '0 9px 11px rgba(0,0,0,0.14), 0 18px 28px rgba(0,0,0,0.1), 0 7px 36px rgba(0,0,0,0.1)',      // 18
+    '0 9px 12px rgba(0,0,0,0.16), 0 19px 29px rgba(0,0,0,0.1), 0 7px 38px rgba(0,0,0,0.1)',      // 19
+    '0 10px 13px rgba(0,0,0,0.16), 0 20px 31px rgba(0,0,0,0.1), 0 8px 40px rgba(0,0,0,0.1)',     // 20
+    '0 10px 13px rgba(0,0,0,0.16), 0 21px 33px rgba(0,0,0,0.1), 0 8px 42px rgba(0,0,0,0.1)',     // 21
+    '0 10px 14px rgba(0,0,0,0.16), 0 22px 35px rgba(0,0,0,0.1), 0 8px 44px rgba(0,0,0,0.12)',    // 22
+    '0 11px 14px rgba(0,0,0,0.16), 0 23px 36px rgba(0,0,0,0.12), 0 9px 46px rgba(0,0,0,0.12)',   // 23
+    shadowTokens.modal,                                                                              // 24 — modal max
   ] as const,
+  shadowsCustom: shadowTokens,
   shape: {
     borderRadius: 12,
   },
@@ -235,9 +252,11 @@ export const futebaTheme = createTheme({
     },
     MuiCard: {
       styleOverrides: {
-        root: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           borderRadius: 16,
-        },
+          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          boxShadow: shadowTokens.card,
+        }),
       },
     },
     // #2230: hover/transition consistente em cards interativos (envoltos em
@@ -347,6 +366,10 @@ export const futebaTheme = createTheme({
         '.MuiTypography-noWrap': {
           textOverflow: 'ellipsis',
         },
+        // #2706: cap max-width for readability on wide surfaces (~68ch)
+        '.MuiTypography-body1, .MuiTypography-body2': {
+          maxWidth: '68ch',
+        },
         // #2240: foco visível consistente para usuários de teclado (WCAG 2.4.7).
         // Outline de 3px com offset; a cor vem de --futeba-focus-ring, definida
         // por tema (light abaixo; dark/OLED sobrescreve em seu MuiCssBaseline)
@@ -419,24 +442,25 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+          boxShadow: shadowTokens.card,
         }),
       },
     },
-    // Sombras do light (rgba 0,0,0,0.08) ficam invisíveis no #0F172A → densificar no dark
+    // #2705: dark-mode shadows use surface tint (light gradient on dark bg)
+    // instead of pure-black rgba which disappears on #0F172A
     MuiPaper: {
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
-          boxShadow: theme.shadows[8],
-          ...(theme.palette.mode === 'dark' && {
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0))',
-          }),
+          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.2)}, 0 4px 16px ${alpha(theme.palette.common.black, 0.15)}`,
+          backgroundImage: `linear-gradient(${alpha(theme.palette.common.white, 0.035)}, ${alpha(theme.palette.common.white, 0)})`,
         }),
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
-          boxShadow: theme.shadows[8],
+          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.2)}, 0 4px 12px ${alpha(theme.palette.common.black, 0.12)}`,
         }),
       },
     },
@@ -517,6 +541,34 @@ export const futebaDarkOledTheme = createTheme({
     divider: '#1F2937',
     surfaceContainer: '#101010',
     surfaceContainerHigh: '#171717',
+  },
+  // #2705: OLED shadows use tint-based elevation (subtle light) to work on near-black
+  components: {
+    ...futebaDarkTheme.components,
+    MuiPaper: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.3)}, 0 4px 16px ${alpha(theme.palette.common.black, 0.25)}`,
+          backgroundImage: `linear-gradient(${alpha(theme.palette.common.white, 0.05)}, ${alpha(theme.palette.common.white, 0)})`,
+        }),
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
+          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.3)}, 0 4px 16px ${alpha(theme.palette.common.black, 0.2)}`,
+        }),
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.4)}, 0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`,
+        }),
+      },
+    },
   },
 });
 

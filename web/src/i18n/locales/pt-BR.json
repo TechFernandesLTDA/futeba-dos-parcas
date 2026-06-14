@@ -140,6 +140,7 @@
     "sharePosition": "Compartilhar posição",
     "showPassword": "Mostrar senha",
     "skipNav": "Pular navegação",
+    "skipToContent": "Pular para conteúdo",
     "skipOnboarding": "Pular onboarding",
     "slideNav": "Navegação de slides",
     "sort": "Ordenar",
@@ -1427,6 +1428,7 @@
     "profile": "Perfil",
     "ranking": "Ranking",
     "schedules": "Horários",
+    "search": "Buscar",
     "settings": "Configurações",
     "statistics": "Estatísticas"
   },
@@ -2068,5 +2070,9 @@
     "title": "Dashboard do Proprietário",
     "upcomingGames": "Próximos Jogos",
     "viewSchedule": "Ver Agenda"
+  },
+  "sw": {
+    "updateAvailable": "Nova versão disponível",
+    "updateAction": "Atualizar"
   }
 }

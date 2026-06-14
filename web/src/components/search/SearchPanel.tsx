@@ -155,6 +155,13 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
 
   useEffect(() => { setSelectedIndex(-1); }, [navigableItems.length, searchQuery]);
 
+  const activeDescendant =
+    selectedIndex >= 0
+      ? showQuickCommands
+        ? `quick-cmd-${selectedIndex}`
+        : `search-result-${selectedIndex}`
+      : undefined;
+
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchHistory(loadSearchHistory());
@@ -311,9 +318,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus={autoFocus}
+          role="combobox"
           aria-label={t('a11y.searchPlayersGroupsGames')}
           aria-autocomplete="list"
-          aria-controls="search-results-list"
+          aria-expanded={navigableItems.length > 0}
+          aria-controls={showQuickCommands ? 'search-commands-list' : 'search-results-list'}
+          aria-activedescendant={activeDescendant}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -389,12 +399,13 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               disablePadding
               aria-label={t('a11y.quickCommands')}
               role="listbox"
-              id="search-results-list"
+              id="search-commands-list"
             >
               {QUICK_COMMANDS.map((cmd, idx) => (
                 <Box key={cmd.name}>
                   {idx > 0 && <Divider component="li" />}
                   <ListItemButton
+                    id={`quick-cmd-${idx}`}
                     data-index={idx}
                     selected={selectedIndex === idx}
                     onClick={() => navToResult({ ...cmd, id: `quick-${idx}` })}
@@ -457,6 +468,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               <Box key={`${result.type}-${result.id}`}>
                 {idx > 0 && <Divider component="li" />}
                 <ListItemButton
+                  id={`search-result-${idx}`}
                   data-index={idx}
                   selected={selectedIndex === idx}
                   onClick={() => navToResult(result)}

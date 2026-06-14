@@ -140,6 +140,7 @@
     "sharePosition": "Compartir posición",
     "showPassword": "Mostrar contraseña",
     "skipNav": "Saltar navegación",
+    "skipToContent": "Saltar al contenido",
     "skipOnboarding": "Saltar introducción",
     "slideNav": "Navegación de diapositivas",
     "sort": "Ordenar",
@@ -1427,6 +1428,7 @@
     "profile": "Perfil",
     "ranking": "Ranking",
     "schedules": "Horarios",
+    "search": "Buscar",
     "settings": "Configuración",
     "statistics": "Estadísticas"
   },
@@ -2068,5 +2070,9 @@
     "title": "Panel del Propietario",
     "upcomingGames": "Próximos Partidos",
     "viewSchedule": "Ver Agenda"
+  },
+  "sw": {
+    "updateAvailable": "Nueva versión disponible",
+    "updateAction": "Actualizar"
   }
 }

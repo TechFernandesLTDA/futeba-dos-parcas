@@ -201,6 +201,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         >
           <Alert
             severity={toast.severity}
+            role={toast.severity === 'error' || toast.severity === 'warning' ? 'alert' : 'status'}
+            aria-live={toast.severity === 'error' || toast.severity === 'warning' ? 'assertive' : 'polite'}
             onClose={handleClose(toast.id)}
             action={
               toast.undo ? (

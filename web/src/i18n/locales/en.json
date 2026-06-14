@@ -140,6 +140,7 @@
     "sharePosition": "Share position",
     "showPassword": "Show password",
     "skipNav": "Skip navigation",
+    "skipToContent": "Skip to content",
     "skipOnboarding": "Skip onboarding",
     "slideNav": "Slide navigation",
     "sort": "Sort",
@@ -1427,6 +1428,7 @@
     "profile": "Profile",
     "ranking": "Ranking",
     "schedules": "Schedules",
+    "search": "Search",
     "settings": "Settings",
     "statistics": "Statistics"
   },
@@ -2068,5 +2070,9 @@
     "title": "Owner Dashboard",
     "upcomingGames": "Upcoming Games",
     "viewSchedule": "View Schedule"
+  },
+  "sw": {
+    "updateAvailable": "New version available",
+    "updateAction": "Update"
   }
 }

@@ -36,6 +36,7 @@ export function AppLayout() {
         component="main"
         role="main"
         id="main-content"
+        tabIndex={-1}
         sx={{
           flex: 1,
           minWidth: 0,
