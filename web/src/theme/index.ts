@@ -107,6 +107,14 @@ export const gamificationColorsDark = {
   streak: '#FF7043',
 };
 
+// #2707: OKLCH variants — wider gamut, perceptually uniform. Progressive
+// enhancement: browsers that don't support OKLCH fall back to hex values above.
+export const oklchAccent = {
+  green50: 'oklch(0.95 0.04 142)',
+  green500: 'oklch(0.55 0.18 142)',
+  green900: 'oklch(0.28 0.10 142)',
+};
+
 // #2705: semantic shadow tokens — layered, single light-source (vertical ~2x horizontal)
 export const shadowTokens = {
   card: '0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)',
@@ -454,6 +462,21 @@ export const futebaTheme = createTheme({
           '.MuiButton-contained': { border: '2px solid ButtonText' },
           '.MuiChip-root': { border: '1px solid ButtonText' },
           ':focus-visible': { outline: '3px solid Highlight' },
+        },
+        // #2707: OKLCH progressive enhancement — browsers with OKLCH support
+        // get perceptually uniform green accent via CSS custom properties.
+        '@supports (color: oklch(0 0 0))': {
+          ':root': {
+            '--primary-oklch': oklchAccent.green500,
+            '--primary-light-oklch': oklchAccent.green50,
+            '--primary-dark-oklch': oklchAccent.green900,
+          },
+        },
+        // #2707: P3 wide-gamut support for displays like Apple XDR / OLED HDR.
+        '@media (color-gamut: p3)': {
+          ':root': {
+            '--accent-p3': 'color(display-p3 0 0.53 0.16)',
+          },
         },
         // #2177: padding inferior do #mobile-shell removido. O spacer dentro
         // de MobileBottomNav (height = bottomBarHeight + safe-area) já reserva

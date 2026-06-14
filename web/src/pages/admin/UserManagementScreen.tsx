@@ -1,5 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -25,6 +25,13 @@ import {
   Alert,
   Checkbox,
   MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -77,6 +84,9 @@ export const UserManagementScreen: React.FC = () => {
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
+  const [sortField, setSortField] = useState<'name' | 'email' | 'role' | 'createdAt'>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const { user: currentUser } = useAuth();
   const { showError, showSuccess } = useToast();
   const showErrorRef = useRef(showError);
@@ -226,13 +236,39 @@ export const UserManagementScreen: React.FC = () => {
     });
   };
 
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  const filteredUsers = useMemo(() => {
+    let result = users.filter((u) => {
+      const matchesSearch =
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+      return matchesSearch && matchesRole;
+    });
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    result = [...result].sort((a, b) => {
+      switch (sortField) {
+        case 'name': return dir * a.name.localeCompare(b.name);
+        case 'email': return dir * a.email.localeCompare(b.email);
+        case 'role': return dir * a.role.localeCompare(b.role);
+        case 'createdAt': {
+          const aTime = a.createdAt?.getTime?.() ?? 0;
+          const bTime = b.createdAt?.getTime?.() ?? 0;
+          return dir * (bTime - aTime);
+        }
+        default: return 0;
+      }
+    });
+    return result;
+  }, [users, searchQuery, roleFilter, sortField, sortDirection]);
+
+  const handleTableSort = useCallback((field: 'name' | 'email' | 'role' | 'createdAt') => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  }, [sortField]);
 
   const isPendingSelfDemotion =
     pendingRoleChange?.user.id === currentUser?.id && pendingRoleChange?.role !== 'ADMIN';
@@ -307,7 +343,7 @@ export const UserManagementScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <PageContainer maxWidth="focused">
+      <PageContainer maxWidth="list">
         {fetchError ? (
           <Alert severity="error" action={
             <Button color="inherit" size="small" onClick={handleRetry}>
@@ -340,52 +376,148 @@ export const UserManagementScreen: React.FC = () => {
               {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} exibido{filteredUsers.length !== 1 ? 's' : ''}
               {hasMore && !searchQuery ? ' (mais disponíveis)' : ''}
             </Typography>
-            <Card>
-              <List disablePadding aria-label={t('a11y.userList')}>
-                {filteredUsers.map((u, index) => (
-                  <Box key={u.id}>
-                    {index > 0 && <Divider />}
-                    <ListItem
-                      secondaryAction={
-                        <IconButton edge="end" aria-label={t('a11y.managePermissions')} onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
-                          <AdminIcon />
-                        </IconButton>
-                      }
-                    >
-                      <Checkbox
-                        checked={selectedUsers.has(u.id)}
-                        onChange={() => toggleSelect(u.id)}
-                        disabled={u.id === currentUser?.id}
-                        sx={{ mr: 1 }}
-                      />
-                      <ListItemButton
-                        onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
-                      >
-                        <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {u.name}
-                              {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
-                              <Chip
-                                label={u.role}
-                                size="small"
-                                sx={{
-                                  bgcolor: alpha(getRoleColor(u.role), 0.1),
-                                  color: getRoleColor(u.role),
-                                }}
-                              />
-                            </Box>
-                          }
-                          secondary={`${u.email} • ${u.gamesPlayed} jogos`}
-                          sx={{ ml: 1 }}
+            {isMdUp ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedUsers.size > 0 && selectedUsers.size === filteredUsers.filter(u => u.id !== currentUser?.id).length}
+                          indeterminate={selectedUsers.size > 0 && selectedUsers.size < filteredUsers.filter(u => u.id !== currentUser?.id).length}
+                          onChange={() => {
+                            const eligible = filteredUsers.filter(u => u.id !== currentUser?.id);
+                            if (selectedUsers.size === eligible.length) {
+                              setSelectedUsers(new Set());
+                            } else {
+                              setSelectedUsers(new Set(eligible.map(u => u.id)));
+                            }
+                          }}
                         />
-                      </ListItemButton>
-                    </ListItem>
-                  </Box>
-                ))}
-              </List>
-            </Card>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        <TableSortLabel active={sortField === 'name'} direction={sortField === 'name' ? sortDirection : 'desc'} onClick={() => handleTableSort('name')}>
+                          Nome
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        <TableSortLabel active={sortField === 'email'} direction={sortField === 'email' ? sortDirection : 'desc'} onClick={() => handleTableSort('email')}>
+                          Email
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        <TableSortLabel active={sortField === 'role'} direction={sortField === 'role' ? sortDirection : 'desc'} onClick={() => handleTableSort('role')}>
+                          Role
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        <TableSortLabel active={sortField === 'createdAt'} direction={sortField === 'createdAt' ? sortDirection : 'desc'} onClick={() => handleTableSort('createdAt')}>
+                          Criado em
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }} align="center">Ações</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredUsers.map((u) => (
+                      <TableRow key={u.id} hover selected={selectedUsers.has(u.id)}>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={selectedUsers.has(u.id)}
+                            onChange={() => toggleSelect(u.id)}
+                            disabled={u.id === currentUser?.id}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={32} level={u.level} />
+                            <Typography variant="body2" fontWeight={600}>
+                              {u.name}
+                              {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }} />}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">{u.email}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={u.role}
+                            size="small"
+                            sx={{
+                              bgcolor: alpha(getRoleColor(u.role), 0.1),
+                              color: getRoleColor(u.role),
+                              fontWeight: 600,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip label="Ativo" size="small" color="success" variant="outlined" />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {u.createdAt ? u.createdAt.toLocaleDateString() : '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton size="small" onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }} aria-label={t('a11y.managePermissions')}>
+                            <AdminIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Card>
+                <List disablePadding aria-label={t('a11y.userList')}>
+                  {filteredUsers.map((u, index) => (
+                    <Box key={u.id}>
+                      {index > 0 && <Divider />}
+                      <ListItem
+                        secondaryAction={
+                          <IconButton edge="end" aria-label={t('a11y.managePermissions')} onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
+                            <AdminIcon />
+                          </IconButton>
+                        }
+                      >
+                        <Checkbox
+                          checked={selectedUsers.has(u.id)}
+                          onChange={() => toggleSelect(u.id)}
+                          disabled={u.id === currentUser?.id}
+                          sx={{ mr: 1 }}
+                        />
+                        <ListItemButton
+                          onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
+                        >
+                          <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {u.name}
+                                {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
+                                <Chip
+                                  label={u.role}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: alpha(getRoleColor(u.role), 0.1),
+                                    color: getRoleColor(u.role),
+                                  }}
+                                />
+                              </Box>
+                            }
+                            secondary={`${u.email} • ${u.gamesPlayed} jogos`}
+                            sx={{ ml: 1 }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    </Box>
+                  ))}
+                </List>
+              </Card>
+            )}
             {hasMore && !searchQuery && (
               <Button
                 fullWidth
