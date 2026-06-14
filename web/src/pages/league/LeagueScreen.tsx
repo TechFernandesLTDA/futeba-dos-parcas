@@ -31,6 +31,16 @@ import {
   Select,
   MenuItem,
   InputLabel,
+  useMediaQuery,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -64,7 +74,7 @@ import { DIVISION_CONFIG, LeagueDivision, getDivisionColor } from '../../types/g
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-type SortField = 'points' | 'goals' | 'wins' | 'gamesPlayed' | 'assists' | 'mvpCount';
+type SortField = 'points' | 'goals' | 'wins' | 'gamesPlayed' | 'assists' | 'mvpCount' | 'winRate' | 'losses' | 'name';
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'points', label: 'Pontos' },
@@ -103,6 +113,9 @@ export const LeagueScreen: React.FC = () => {
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
   // Fase 4b: filtro de gênero do ranking ('ALL' = combinado).
   const [genderFilter, setGenderFilter] = useState<'ALL' | GameGender>('ALL');
+  const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [dense, setDense] = useState(true);
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
@@ -165,11 +178,26 @@ export const LeagueScreen: React.FC = () => {
       const q = normalizeText(search.trim());
       result = result.filter(p => normalizeText(p.userName).includes(q));
     }
-    if (sortField !== 'points') {
-      result = [...result].sort((a, b) => (b[sortField] || 0) - (a[sortField] || 0));
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    const getVal = (p: LeaguePlayer, field: SortField): number => {
+      switch (field) {
+        case 'winRate': return p.gamesPlayed > 0 ? (p.wins / p.gamesPlayed) : 0;
+        case 'losses': return Math.max(0, p.gamesPlayed - p.wins);
+        case 'name': return 0;
+        default: return p[field] || 0;
+      }
+    };
+    if (sortField === 'name') {
+      result = [...result].sort((a, b) => dir * a.userName.localeCompare(b.userName));
+    } else if (sortField !== 'points' || sortDirection !== 'desc') {
+      result = [...result].sort((a, b) => {
+        const aVal = getVal(a, sortField);
+        const bVal = getVal(b, sortField);
+        return dir * (bVal - aVal);
+      });
     }
     return result;
-  }, [players, search, sortField]);
+  }, [players, search, sortField, sortDirection]);
 
   // Sort consolidado: 1 único sort usado por realPositions E pointsToNext
   const sortedByPoints = useMemo(
@@ -346,6 +374,15 @@ export const LeagueScreen: React.FC = () => {
     setMaxResults(200);
   }, []);
 
+  const handleTableSort = useCallback((field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  }, [sortField]);
+
   return (
     <Box>
       <Box
@@ -368,9 +405,11 @@ export const LeagueScreen: React.FC = () => {
           <IconButton onClick={() => setShowSearch(v => !v)} aria-label={t('a11y.searchPlayer')} size="small">
             <SearchIcon />
           </IconButton>
-          <IconButton onClick={() => setShowSort(v => !v)} aria-label={t('a11y.sort')} size="small">
-            <SortIcon />
-          </IconButton>
+          {!isMdUp && (
+            <IconButton onClick={() => setShowSort(v => !v)} aria-label={t('a11y.sort')} size="small">
+              <SortIcon />
+            </IconButton>
+          )}
           {currentUserPlayer && (
             <IconButton onClick={handleShare} aria-label={t('a11y.sharePosition')} size="small">
               <ShareIcon />
@@ -423,6 +462,7 @@ export const LeagueScreen: React.FC = () => {
           </Box>
         </Collapse>
 
+        {!isMdUp && (
         <Collapse in={showSort}>
           <Box sx={{ px: 2, pb: 1, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
             <ToggleButtonGroup
@@ -440,6 +480,7 @@ export const LeagueScreen: React.FC = () => {
             </ToggleButtonGroup>
           </Box>
         </Collapse>
+        )}
 
         <Box sx={{ px: 2, pb: 1, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
           <ToggleButtonGroup
@@ -670,28 +711,139 @@ export const LeagueScreen: React.FC = () => {
               </Card>
             )}
 
-            <List disablePadding aria-label={t('league.standingsAria')}>
-              {filteredAndSorted.map((player) => {
-                const position = realPositions.get(player.id) ?? -1;
-                const isPromoZone = position >= 1 && position <= PROMO_TOP;
-                const isRelegZone = position > allPlayers.length - RELEG_BOTTOM && allPlayers.length > RELEG_BOTTOM * 2 && position > 0;
-                return (
-                  <LeaguePlayerItem
-                    key={player.id}
-                    player={player}
-                    position={position}
-                    positionStyle={getPositionStyle(position)}
-                    positionTooltip={getPositionTooltip(position)}
-                    isExpanded={expandedId === player.id}
-                    onToggleExpand={handleToggleExpand}
-                    isPromoZone={isPromoZone}
-                    isRelegZone={isRelegZone}
-                    cardRef={player.isCurrentUser ? userCardRef : undefined}
-                    totalPlayers={allPlayers.length}
+            {isMdUp ? (
+              <>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                  <FormControlLabel
+                    control={<Switch checked={dense} onChange={(e) => setDense(e.target.checked)} size="small" />}
+                    label="Compacto"
                   />
-                );
-              })}
-            </List>
+                </Box>
+                <TableContainer>
+                  <Table size={dense ? 'small' : 'medium'} stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell padding="checkbox" sx={{ fontWeight: 700 }}>#</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'name'} direction={sortField === 'name' ? sortDirection : 'desc'} onClick={() => handleTableSort('name')}>
+                            Jogador
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'points'} direction={sortField === 'points' ? sortDirection : 'desc'} onClick={() => handleTableSort('points')}>
+                            Pontos
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'gamesPlayed'} direction={sortField === 'gamesPlayed' ? sortDirection : 'desc'} onClick={() => handleTableSort('gamesPlayed')}>
+                            Jogos
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'wins'} direction={sortField === 'wins' ? sortDirection : 'desc'} onClick={() => handleTableSort('wins')}>
+                            V
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>E</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'losses'} direction={sortField === 'losses' ? sortDirection : 'desc'} onClick={() => handleTableSort('losses')}>
+                            D
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'goals'} direction={sortField === 'goals' ? sortDirection : 'desc'} onClick={() => handleTableSort('goals')}>
+                            GP
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>GC</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>SG</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'mvpCount'} direction={sortField === 'mvpCount' ? sortDirection : 'desc'} onClick={() => handleTableSort('mvpCount')}>
+                            MVP
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          <TableSortLabel active={sortField === 'winRate'} direction={sortField === 'winRate' ? sortDirection : 'desc'} onClick={() => handleTableSort('winRate')}>
+                            %
+                          </TableSortLabel>
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredAndSorted.map((player) => {
+                        const position = realPositions.get(player.id) ?? -1;
+                        const winRate = player.gamesPlayed > 0 ? Math.round((player.wins / player.gamesPlayed) * 100) : 0;
+                        const lossCount = Math.max(0, player.gamesPlayed - player.wins);
+                        return (
+                          <TableRow
+                            key={player.id}
+                            hover
+                            selected={player.isCurrentUser}
+                            sx={player.isCurrentUser ? { bgcolor: (t) => alpha(t.palette.primary.main, 0.08) } : undefined}
+                          >
+                            <TableCell padding="checkbox">
+                              <Tooltip title={getPositionTooltip(position)} arrow placement="top">
+                                <Box sx={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem', ...getPositionStyle(position) }}>
+                                  {position >= 1 && position <= 3 ? <TrophyIcon sx={{ fontSize: 14 }} /> : position > 0 ? position : '—'}
+                                </Box>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={32} level={player.level} />
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Typography variant="body2" fontWeight={600} noWrap>{player.userName}</Typography>
+                                  <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <TeamBadge teamId={player.favoriteTeam} size={14} />
+                                    <Chip label={DIVISION_CONFIG[player.division]?.label ?? player.division} size="small" sx={{ height: 16, fontSize: '0.65rem' }} />
+                                    {player.isCurrentUser && <Chip label="Você" size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem' }} />}
+                                  </Box>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight={700} color={getDivisionColor(player.division, theme)}>{player.points}</Typography>
+                            </TableCell>
+                            <TableCell align="right">{player.gamesPlayed}</TableCell>
+                            <TableCell align="right">{player.wins}</TableCell>
+                            <TableCell align="right">—</TableCell>
+                            <TableCell align="right">{lossCount}</TableCell>
+                            <TableCell align="right">{player.goals}</TableCell>
+                            <TableCell align="right">—</TableCell>
+                            <TableCell align="right">—</TableCell>
+                            <TableCell align="right">{player.mvpCount || 0}</TableCell>
+                            <TableCell align="right">{winRate}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            ) : (
+              <List disablePadding aria-label={t('league.standingsAria')}>
+                {filteredAndSorted.map((player) => {
+                  const position = realPositions.get(player.id) ?? -1;
+                  const isPromoZone = position >= 1 && position <= PROMO_TOP;
+                  const isRelegZone = position > allPlayers.length - RELEG_BOTTOM && allPlayers.length > RELEG_BOTTOM * 2 && position > 0;
+                  return (
+                    <LeaguePlayerItem
+                      key={player.id}
+                      player={player}
+                      position={position}
+                      positionStyle={getPositionStyle(position)}
+                      positionTooltip={getPositionTooltip(position)}
+                      isExpanded={expandedId === player.id}
+                      onToggleExpand={handleToggleExpand}
+                      isPromoZone={isPromoZone}
+                      isRelegZone={isRelegZone}
+                      cardRef={player.isCurrentUser ? userCardRef : undefined}
+                      totalPlayers={allPlayers.length}
+                    />
+                  );
+                })}
+              </List>
+            )}
 
             {filteredAndSorted.length >= maxResults && (
               <Box sx={{ textAlign: 'center', py: 2 }}>

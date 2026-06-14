@@ -507,7 +507,8 @@ function MobileShell({ children }: { children: React.ReactNode }) {
   const isSecondary = location.pathname !== '/' && location.pathname !== '';
   const goBack = useNavigateBack();
   // #2194: swipe-back só em rotas secundárias (na raiz não há para onde voltar).
-  useSwipeBack({ disabled: !isSecondary });
+  // #2722: expõe dragProgress para visual feedback durante o arraste.
+  const { dragProgress } = useSwipeBack({ disabled: !isSecondary });
 
   return (
     <Box
@@ -530,7 +531,11 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           bgcolor: 'background.default',
           boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}` }),
           position: 'relative',
-          transform: { xs: 'none', sm: 'translateZ(0)' },
+          transform: dragProgress > 0
+            ? `translateX(${dragProgress * 80}px)`
+            : { xs: 'none', sm: 'translateZ(0)' },
+          opacity: dragProgress > 0 ? 1 - dragProgress * 0.15 : 1,
+          transition: dragProgress === 0 ? 'transform 0.2s ease, opacity 0.2s ease' : 'none',
         }}
       >
         {user && (
