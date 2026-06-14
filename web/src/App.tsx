@@ -595,6 +595,58 @@ function SilentToastBoundary({ children, message }: { children: React.ReactNode;
   );
 }
 
+function RouteAnnouncer() {
+  const location = useLocation();
+  const [title, setTitle] = useState(document.title);
+
+  useEffect(() => {
+    setTitle(document.title);
+  }, [location.pathname]);
+
+  return (
+    <Box
+      component="span"
+      aria-live="polite"
+      sx={{
+        position: 'absolute',
+        width: 1,
+        height: 1,
+        overflow: 'hidden',
+        clip: 'rect(1px, 1px, 1px, 1px)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {title}
+    </Box>
+  );
+}
+
+function SWUpdateListener() {
+  const { showWithAction } = useToast();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const registration = (e as CustomEvent).detail as ServiceWorkerRegistration;
+      showWithAction(
+        `${t('sw.updateAvailable')} — ${t('sw.updateAction')}`,
+        {
+          label: t('sw.updateAction'),
+          onClick: () => {
+            registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+            window.location.reload();
+          },
+        },
+        'info'
+      );
+    };
+    window.addEventListener('sw-update-available', handler);
+    return () => window.removeEventListener('sw-update-available', handler);
+  }, [showWithAction, t]);
+
+  return null;
+}
+
 function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = useCallback(() => setPaletteOpen(true), []);
@@ -634,6 +686,7 @@ function App() {
             <TeamsProvider>
             <LanguageProvider>
               <SkipNav />
+              <SWUpdateListener />
               {/* CommandPalette montado fora do MobileShell para não sofrer restrição
                   de largura, mas wrapped em ErrorBoundary próprio — se SearchPanel
                   der throw síncrono (ex: Firestore query inválida), não derruba
@@ -649,7 +702,8 @@ function App() {
               <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
               <MobileShell>
                 <VerificationBanner />
-                <Box component="main" id="main-content">
+                <RouteAnnouncer />
+                <Box component="main" id="main-content" tabIndex={-1}>
                   <SafeScreen />
                 </Box>
                 <ConnectionStatusWrapper />

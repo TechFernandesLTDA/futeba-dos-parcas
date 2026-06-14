@@ -1,5 +1,6 @@
 import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, NavigateNext } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
+import { ArrowBack as ArrowBackIcon, NavigateNext, Search as SearchIcon } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../theme/iconSizes';
@@ -56,12 +57,21 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
       elevation={0}
       sx={{
         display: { xs: 'flex', md: 'none' },
-        bgcolor: 'background.paper',
+        backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.72),
         color: 'text.primary',
         borderBottom: 1,
         borderColor: 'divider',
-        // Respeita safe-area iOS (notch/dynamic island)
         pt: 'env(safe-area-inset-top, 0px)',
+        pl: 'env(safe-area-inset-left, 0px)',
+        pr: 'env(safe-area-inset-right, 0px)',
+        backdropFilter: 'blur(12px)',
+        '@supports not (backdrop-filter: blur(12px))': {
+          backgroundColor: 'background.paper',
+        },
+        '@media (prefers-reduced-transparency: reduce)': {
+          backdropFilter: 'none',
+          backgroundColor: 'background.paper',
+        },
       }}
     >
       <Toolbar variant="dense">
@@ -87,8 +97,21 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
         >
           {screenTitle ?? t('common.appName')}
         </Typography>
-        {/* Sino apenas nas rotas raiz; oculto em telas secundárias para reduzir ruído */}
-        {!showBack && <NotificationBell unreadCount={unreadCount} />}
+        {/* Lupa de busca e sino apenas nas rotas raiz */}
+        {!showBack && (
+          <>
+            <IconButton
+              aria-label={t('nav.search')}
+              onClick={() => {
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
+              }}
+              sx={{ color: 'text.primary' }}
+            >
+              <SearchIcon />
+            </IconButton>
+            <NotificationBell unreadCount={unreadCount} />
+          </>
+        )}
       </Toolbar>
 
       {showCrumbs && (

@@ -100,6 +100,7 @@ export function FormScaffold({
           <Typography
             variant="h6"
             component="h1"
+            id="form-scaffold-title"
             sx={{ flex: 1, fontWeight: 600 }}
             noWrap
           >

@@ -523,6 +523,7 @@ export const EditProfileScreen: React.FC = () => {
                 helperText={formErrors.name}
                 fullWidth
                 required
+                autoComplete="name"
                 inputProps={{ maxLength: 100 }}
               />
 
@@ -543,8 +544,10 @@ export const EditProfileScreen: React.FC = () => {
                 error={!!formErrors.phone}
                 helperText={formErrors.phone}
                 fullWidth
+                type="tel"
+                autoComplete="tel"
                 placeholder={t('profile.phonePlaceholder')}
-                inputProps={{ maxLength: 20 }}
+                inputProps={{ maxLength: 20, inputMode: 'tel' }}
               />
 
               <TextField

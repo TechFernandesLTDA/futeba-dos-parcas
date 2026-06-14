@@ -43,7 +43,7 @@ export const SkipNav = React.memo(function SkipNav() {
           },
         }}
       >
-        Pular para o conteúdo
+        {t('a11y.skipToContent')}
       </Link>
     </Box>
   );

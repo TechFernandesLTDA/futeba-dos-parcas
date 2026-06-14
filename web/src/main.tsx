@@ -17,31 +17,22 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
-        // #2204: detecta nova versão do SW e a ativa automaticamente.
-        // Antes o SW novo ficava "waiting" indefinidamente (SKIP_WAITING nunca era enviado).
+        // #2717: notifica o app sobre nova versão via evento customizado
+        // em vez de auto-ativar e recarregar a página silenciosamente.
+        // O usuário decide quando atualizar via toast no React.
         registration.addEventListener('updatefound', () => {
           const installing = registration.installing;
           if (!installing) return;
           installing.addEventListener('statechange', () => {
-            // Só dispara o update quando há um controller anterior (já havia versão ativa).
             if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-              swLogger.info('Nova versão do app disponível — ativando.');
-              registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+              swLogger.info('Nova versão do app disponível.');
+              window.dispatchEvent(new CustomEvent('sw-update-available', { detail: registration }));
             }
           });
         });
       })
       .catch((err) => {
-        // #2204/#2290: registra a falha em vez de engolir silenciosamente.
         swLogger.error('Falha ao registrar o Service Worker:', err);
       });
-
-    // Recarrega a página quando o novo SW assume o controle, garantindo assets atualizados.
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
-    });
   });
 }

@@ -9,6 +9,7 @@ import {
   Slide,
   Box,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { pageSpacing } from '../../theme/pageTokens';
 import { NAV_ITEMS, getActiveNavIndex } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
@@ -46,9 +47,22 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             left: 0,
             right: 0,
             pb: 'env(safe-area-inset-bottom, 0px)',
+            pl: 'env(safe-area-inset-left, 0px)',
+            pr: 'env(safe-area-inset-right, 0px)',
             zIndex: 1100,
             display: { xs: 'flex', md: 'none' },
             justifyContent: 'center',
+            backdropFilter: 'blur(12px)',
+            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.72),
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            '@supports not (backdrop-filter: blur(12px))': {
+              backgroundColor: 'background.paper',
+            },
+            '@media (prefers-reduced-transparency: reduce)': {
+              backdropFilter: 'none',
+              backgroundColor: 'background.paper',
+            },
           }}
           elevation={3}
         >
