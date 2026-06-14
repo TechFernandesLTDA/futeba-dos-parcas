@@ -137,7 +137,7 @@ export function LoginScreen() {
         <Box
           sx={{
             flex: 1,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            ...sxPresets.gradientHero(theme),
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -169,7 +169,7 @@ export function LoginScreen() {
           ...(isMd
             ? { bgcolor: 'background.paper' }
             : {
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                ...sxPresets.gradientHero(theme),
                 minHeight: '100dvh',
               }),
         }}

@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
 import { AuthProvider, ThemeProvider, LanguageProvider, useAuth, TeamsProvider } from './contexts';
 import { Box, Typography, Button } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ErrorBoundary, withErrorBoundary } from './components/common/ErrorBoundary';
 import { ErrorOutline } from '@mui/icons-material';
 import { ToastProvider } from './contexts/ToastContext';
@@ -546,7 +547,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           maxWidth: { xs: '100%', sm: 600, md: 900, lg: 1440, xl: 1920 },
           minHeight: '100dvh',
           bgcolor: 'background.default',
-          boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.12)'}` }),
+          boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}` }),
           position: 'relative',
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}

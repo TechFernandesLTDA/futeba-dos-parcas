@@ -1686,6 +1686,7 @@
     "victories": "Vitórias",
     "viewLevelJourney": "Ver jornada",
     "viewLevelJourneyAria": "Ver jornada de nível - Nível {{level}}",
+    "viewProfileAria": "Ver perfil de {{name}}",
     "xp": "XP",
     "xpToNextLevel": "Faltam {{xp}} XP para {{levelName}}",
     "gender": "Gênero",

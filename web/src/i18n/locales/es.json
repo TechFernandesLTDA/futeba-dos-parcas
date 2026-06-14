@@ -1686,6 +1686,7 @@
     "victories": "Victorias",
     "viewLevelJourney": "Ver recorrido",
     "viewLevelJourneyAria": "Ver recorrido de nivel - Nivel {{level}}",
+    "viewProfileAria": "Ver perfil de {{name}}",
     "xp": "XP",
     "xpToNextLevel": "Faltan {{xp}} XP para {{levelName}}",
     "gender": "Género",
