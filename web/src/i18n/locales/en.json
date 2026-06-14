@@ -1417,10 +1417,12 @@
   },
   "nav": {
     "about": "About",
+    "badges": "Badges",
     "games": "Games",
     "groups": "Groups",
     "home": "Home",
     "league": "League",
+    "locations": "Locations",
     "logout": "Logout",
     "map": "Map",
     "notifications": "Notifications",
@@ -1429,6 +1431,8 @@
     "ranking": "Ranking",
     "schedules": "Schedules",
     "search": "Search",
+    "sectionMore": "More",
+    "sectionPrimary": "Main",
     "settings": "Settings",
     "statistics": "Statistics"
   },

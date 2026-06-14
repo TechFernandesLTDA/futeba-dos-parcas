@@ -34,6 +34,7 @@ import {
   MilitaryTech as MilitaryTechIcon,
 } from '@mui/icons-material';
 import Grid from '@mui/material/Unstable_Grid2';
+import { gridLayout } from '../../theme/pageTokens';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
@@ -170,7 +171,7 @@ export const BadgesScreen: React.FC = () => {
             ) : (
               <Grid container spacing={2}>
                 {filteredBadges.map((badge) => (
-                  <Grid xs={6} sm={4} md={3} lg={2} xl={2} key={badge.id}>
+                  <Grid {...gridLayout.cards} key={badge.id}>
                     <BadgeItem
                       badge={badge}
                       isUnlocked={unlockedIds.has(badge.id)}

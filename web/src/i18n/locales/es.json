@@ -1417,10 +1417,12 @@
   },
   "nav": {
     "about": "Acerca de",
+    "badges": "Insignias",
     "games": "Juegos",
     "groups": "Grupos",
     "home": "Inicio",
     "league": "Liga",
+    "locations": "Canchas",
     "logout": "Salir",
     "map": "Mapa",
     "notifications": "Notificaciones",
@@ -1429,6 +1431,8 @@
     "ranking": "Ranking",
     "schedules": "Horarios",
     "search": "Buscar",
+    "sectionMore": "Más",
+    "sectionPrimary": "Principal",
     "settings": "Configuración",
     "statistics": "Estadísticas"
   },

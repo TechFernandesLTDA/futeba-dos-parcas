@@ -388,6 +388,64 @@ export const WeeklyRecapSkeleton: React.FC = React.memo(function WeeklyRecapSkel
   );
 });
 
+export const CardGridSkeleton: React.FC = React.memo(function CardGridSkeleton() {
+  const { t } = useTranslation();
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingPage')}>
+      <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+      <SkeletonCard>
+        <Skeleton variant="text" width="30%" height={20} />
+        <Box sx={{ display: 'flex', gap: 1.5, mt: 1 }}>
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} variant="rounded" sx={{ flex: 1, height: 80, borderRadius: 2 }} />
+          ))}
+        </Box>
+      </SkeletonCard>
+      <SkeletonCard>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          {[1, 2].map(i => (
+            <Skeleton key={i} variant="rounded" sx={{ flex: 1, height: 100, borderRadius: 2 }} />
+          ))}
+        </Box>
+      </SkeletonCard>
+    </Box>
+  );
+});
+
+export const ListSkeleton: React.FC = React.memo(function ListSkeleton() {
+  const { t } = useTranslation();
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingPage')}>
+      <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, p: 1.5, borderRadius: 2, bgcolor: 'background.paper' }}>
+          <Skeleton variant="circular" width={36} height={36} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="50%" height={18} />
+            <Skeleton variant="text" width="30%" height={14} />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+});
+
+export const FormSkeleton: React.FC = React.memo(function FormSkeleton() {
+  const { t } = useTranslation();
+  return (
+    <Box sx={{ p: 2 }} role="status" aria-label={t('a11y.loadingPage')}>
+      <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <SkeletonCard key={i}>
+          <Skeleton variant="text" width={80} height={14} sx={{ mb: 0.5 }} />
+          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+        </SkeletonCard>
+      ))}
+      <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 2, mt: 2 }} />
+    </Box>
+  );
+});
+
 export const AboutSkeleton: React.FC = React.memo(function AboutSkeleton() {
   const { t } = useTranslation();
   return (

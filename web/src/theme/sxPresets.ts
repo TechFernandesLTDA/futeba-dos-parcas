@@ -18,15 +18,10 @@ export const sxPresets = {
   } as SxProps<Theme>,
 
   cardHover: {
-    '@media (hover: hover)': {
-      '&:hover': {
-        boxShadow: 4,
-        transform: 'translateY(-2px)',
-      },
+    transition: 'transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s cubic-bezier(0.2, 0, 0, 1)',
+    '@media (hover: hover) and (prefers-reduced-motion: no-preference)': {
+      '&:hover': { transform: 'translateY(-3px)' },
     },
-    transition: (theme) => theme.transitions.create(['box-shadow', 'transform'], {
-      duration: theme.transitions.duration.shortest,
-    }),
   } as SxProps<Theme>,
 
   fullHeight: {
@@ -59,11 +54,11 @@ export const sxPresets = {
     fontSize: '0.75rem',
   }),
 
-  roundedProgress: {
+  roundedProgress: (theme: Theme) => ({
     height: 8,
-    borderRadius: 4,
+    borderRadius: theme.radii.full,
     '& .MuiLinearProgress-bar': {
-      borderRadius: 4,
+      borderRadius: theme.radii.full,
     },
-  },
+  }),
 };
