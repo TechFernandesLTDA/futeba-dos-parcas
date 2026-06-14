@@ -22,11 +22,14 @@ const primary = {
 };
 
 const secondary = {
-  main: '#2979FF',
+  // Escurecido para AA quando usado como texto/ícone pequeno sobre fundo claro.
+  main: '#005FCC',
   light: '#5CC8FF',
-  dark: '#0055CC',
+  dark: '#004399',
   contrastText: '#FFFFFF',
 };
+
+const appFontFamily = 'Inter, "Plus Jakarta Sans", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 // Badge rarity colors — suporta nomes PT-BR (canônico do BadgeRarity) e EN (legacy).
 // BADGE_DEFINITIONS usa COMUM/RARO/EPICO/LENDARIO; aliases EN ficam por compat.
@@ -106,9 +109,10 @@ export const futebaTheme = createTheme({
       dark: '#B71C1C',
     },
     warning: {
-      main: '#FF6D00',
+      // Escurecido para contraste AA em chips/labels pequenos no light mode.
+      main: '#B45309',
       light: '#FF9E40',
-      dark: '#CC4E00',
+      dark: '#8A3A00',
     },
     success: {
       main: '#00852A',     // WCAG AA 4.76:1 vs branco
@@ -116,9 +120,9 @@ export const futebaTheme = createTheme({
       dark: '#005A1C',
     },
     info: {
-      main: '#2979FF',
+      main: '#005FCC',
       light: '#5CC8FF',
-      dark: '#0055CC',
+      dark: '#004399',
     },
     background: {
       default: '#FCFCFC',
@@ -133,7 +137,7 @@ export const futebaTheme = createTheme({
     surfaceContainerHigh: '#ECECEF',
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: appFontFamily,
     h1: { fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.2 },
     h2: { fontSize: '2rem', fontWeight: 700, lineHeight: 1.3 },
     h3: { fontSize: '1.75rem', fontWeight: 600, lineHeight: 1.3 },

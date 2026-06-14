@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Avatar,
   Button,
+  ButtonBase,
   Card,
   CardContent,
   Chip,
@@ -68,12 +69,20 @@ export const TeamOfTheWeek: React.FC = () => {
           {top5.map((player, index) => {
             const positionLabels = [1, 2, 3, 4, 5];
             return (
-              <Stack
+              <ButtonBase
                 key={player.userId}
-                alignItems="center"
-                spacing={0.5}
-                sx={{ cursor: 'pointer', flex: 1, maxWidth: 80 }}
+                aria-label={t('profile.viewProfileAria', { name: player.userName })}
                 onClick={() => navigate(`/profile/${player.userId}`)}
+                sx={{
+                  flex: 1,
+                  maxWidth: 80,
+                  borderRadius: 2,
+                  p: 0.5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0.5,
+                  alignItems: 'center',
+                }}
               >
                 {index < 3 ? (
                   <TrophyIcon sx={{ color: medalColors[index], fontSize: iconSizes.md }} />
@@ -109,7 +118,7 @@ export const TeamOfTheWeek: React.FC = () => {
                 >
                   {player.points} pts
                 </Typography>
-              </Stack>
+              </ButtonBase>
             );
           })}
         </Stack>

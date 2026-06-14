@@ -49,6 +49,7 @@ import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, getD
 import { db } from '../../../services/firebase';
 import { iconSizes } from '../../../theme/iconSizes';
 import { pageSpacing } from '../../../theme/pageTokens';
+import { sxPresets } from '../../../theme/sxPresets';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { useConfirmPresence } from '../../../hooks/useGames';
 import { useNextGame } from '../../../hooks/useNextGame';
@@ -206,11 +207,7 @@ function NextGameWidget() {
   if (!nextGame) {
     return (
       <Card
-        sx={{
-          mb: pageSpacing.sectionSpacing,
-          bgcolor: alpha(theme.palette.primary.main, 0.04),
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-        }}
+        sx={[sxPresets.softOutlinedCard('primary'), { mb: pageSpacing.sectionSpacing }]}
       >
         <CardContent sx={{ py: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -245,11 +242,7 @@ function NextGameWidget() {
   if (nextGame.status === 'LIVE') {
     return (
       <Card
-        sx={{
-          mb: pageSpacing.sectionSpacing,
-          bgcolor: alpha(theme.palette.error.main, 0.06),
-          border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
-        }}
+        sx={[sxPresets.softOutlinedCard('error'), { mb: pageSpacing.sectionSpacing }]}
       >
         <CardActionArea onClick={() => navigate(`/game/${nextGame.id}`)}>
           <CardContent sx={{ py: 2 }}>
@@ -295,24 +288,14 @@ function NextGameWidget() {
               <Chip
                 label={statusLabels[nextGame.status]}
                 size="small"
-                sx={{
-                  bgcolor: alpha(statusColors[nextGame.status] || theme.palette.primary.main, 0.12),
-                  color: statusColors[nextGame.status] || theme.palette.primary.main,
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                }}
+                sx={sxPresets.softStatusChip(statusColors[nextGame.status] || theme.palette.primary.main)}
               />
               {isConfirmed && (
                 <Chip
-                    icon={<CheckCircle sx={{ fontSize: iconSizes.xs }} />}
+                  icon={<CheckCircle sx={{ fontSize: iconSizes.xs }} />}
                   label={t('games.confirmed_chip')}
                   size="small"
-                  sx={{
-                    bgcolor: alpha(theme.palette.success.main, 0.12),
-                    color: theme.palette.success.main,
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                  }}
+                  sx={sxPresets.softStatusChip(theme.palette.success.main)}
                 />
               )}
             </Box>
@@ -808,14 +791,7 @@ export function HomeTab() {
     <PageContainer maxWidth="dashboard">
       {/* Hub Header — informações do jogador sempre primeiro */}
       <Card
-        sx={{
-          flexShrink: 0,
-          mb: pageSpacing.sectionSpacing,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-          color: 'primary.contrastText',
-          overflow: 'visible',
-          position: 'relative',
-        }}
+        sx={[sxPresets.gradientHero, { flexShrink: 0, mb: pageSpacing.sectionSpacing }]}
       >
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
@@ -848,6 +824,7 @@ export function HomeTab() {
               </Avatar>
               <Box
                 component="button"
+                type="button"
                 onClick={() => navigate('/level-journey')}
                 aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })}
                 sx={{
@@ -865,6 +842,7 @@ export function HomeTab() {
                   borderColor: 'background.paper',
                   boxShadow: `0 0 8px ${levelColor}80`,
                   cursor: 'pointer',
+                  appearance: 'none',
                   p: 0,
                 }}
               >
@@ -923,15 +901,16 @@ export function HomeTab() {
               variant="determinate"
               value={progress * 100}
               aria-label={t('profile.levelProgressAria')}
-              sx={{
-                height: 8,
-                borderRadius: 4,
-                bgcolor: alpha(theme.palette.common.white, 0.15),
-                '& .MuiLinearProgress-bar': {
-                  borderRadius: 4,
-                  bgcolor: alpha(theme.palette.common.white, 0.9),
+              sx={[
+                sxPresets.roundedProgress,
+                {
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 4,
+                    bgcolor: alpha(theme.palette.common.white, 0.9),
+                  },
                 },
-              }}
+              ]}
             />
             {currentLevel < 20 && (
               <Typography variant="caption" sx={{ opacity: 0.7, mt: 0.5, display: 'block' }}>
