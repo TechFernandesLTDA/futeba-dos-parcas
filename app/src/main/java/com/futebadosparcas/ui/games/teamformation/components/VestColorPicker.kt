@@ -195,7 +195,7 @@ private fun ColorGrid(
     val haptic = LocalHapticFeedback.current
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(5),
+        columns = GridCells.Adaptive(minSize = 48.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.height(140.dp)
@@ -303,7 +303,7 @@ fun VestColorPickerDialog(
         },
         text = {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
+                columns = GridCells.Adaptive(minSize = 56.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

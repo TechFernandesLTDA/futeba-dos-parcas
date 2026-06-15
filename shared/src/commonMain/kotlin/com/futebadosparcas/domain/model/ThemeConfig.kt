@@ -38,6 +38,6 @@ data class AppThemeConfig(
         primary = 0xFF00852A.toInt(), // Verde Futeba AA (ARGB: FF 00 85 2A)
         secondary = 0xFFFF9600.toInt() // Laranja Badge (ARGB: FF FF 96 00)
     ),
-    val mode: ThemeMode = ThemeMode.LIGHT,
+    val mode: ThemeMode = ThemeMode.SYSTEM,
     val contrastLevel: ContrastLevel = ContrastLevel.NORMAL
 )

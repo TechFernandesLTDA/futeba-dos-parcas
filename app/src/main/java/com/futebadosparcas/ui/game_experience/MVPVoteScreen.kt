@@ -229,7 +229,7 @@ private fun VotingContent(
 
         // Candidates Grid
         LazyVerticalGrid(
-            columns = GridCells.Fixed(columns),
+            columns = GridCells.Adaptive(minSize = 140.dp),
             modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
             contentPadding = PaddingValues(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -450,7 +450,7 @@ private fun MVPVoteLoadingState() {
         }
 
         LazyVerticalGrid(
-            columns = GridCells.Fixed(shimmerColumns),
+            columns = GridCells.Adaptive(minSize = 140.dp),
             modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)

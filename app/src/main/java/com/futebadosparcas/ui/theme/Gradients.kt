@@ -63,11 +63,20 @@ object GradientColors {
     val DarkSurfaceEnd = Color(0xFF16213E)
 }
 
-// ==================== Predefined Gradients ====================
-
 /**
- * Gradientes predefinidos para uso comum.
+ * Gradientes derivados do colorScheme ativo (#2690).
+ * Prefira estas funções em vez de GradientColors hardcoded para
+ * adaptar-se ao tema dinâmico do usuário.
  */
+@Composable
+fun primaryGradient(): Brush = Brush.linearGradient(
+    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
+)
+
+@Composable
+fun surfaceGradient(): Brush = Brush.linearGradient(
+    listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceContainer)
+)
 object AppGradients {
 
     // ==================== Linear Gradients ====================

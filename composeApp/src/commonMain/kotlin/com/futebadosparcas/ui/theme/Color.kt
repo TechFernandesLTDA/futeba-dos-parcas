@@ -245,8 +245,14 @@ object GamificationColors {
     val PurpleLight = Color(0xFFB388FF)
 
     val XpGreen = Color(0xFF00852A)  // WCAG AA
+    val Xp = Color(0xFF9C27B0)       // Purple XP
     val XpLightGreen = Color(0xFF64DD17)
+    val Level = Color(0xFF00BCD4)     // Cyan level
+    val Streak = Color(0xFFFF5722)    // Orange streak
     val LevelUpGold = Color(0xFFFFAB00)
+
+    val Platinum = Color(0xFF00E676)   // Platinum division
+    val Champion = Color(0xFFE91E63)   // Champion division
 
     // Contraste para texto/ícones
     val DiamondDark = Color(0xFF008394) // Cyan 700

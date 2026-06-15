@@ -44,8 +44,15 @@ object AppDimensions {
     val radius_small = 8.dp
     val radius_medium = 12.dp
     val radius_large = 16.dp
-    val radius_extraLarge = 20.dp
-    val radius_full = 28.dp
+    val radius_extraLarge = 24.dp
+    val radius_full = 999.dp
+
+    // Aliases alinhados com web (radii) e composeApp (Shape)
+    val radius_xs = spacing_extraSmall   // 4dp
+    val radius_sm = radius_small         // 8dp
+    val radius_md = radius_medium        // 12dp
+    val radius_lg = radius_large         // 16dp
+    val radius_xl = radius_extraLarge    // 24dp
 
     // ==========================================
     // ICONS - Tamanhos de ícones
@@ -67,9 +74,16 @@ object AppDimensions {
     // ELEVATION - Sombras
     // ==========================================
     val elevation_none = 0.dp
-    val elevation_small = 1.dp
-    val elevation_medium = 4.dp
-    val elevation_large = 8.dp
+    val elevation_small = 1.dp    // nav / subtle chrome
+    val elevation_medium = 4.dp   // card / surface
+    val elevation_large = 8.dp    // dropdown / popover
+    val elevation_modal = 16.dp   // dialog / modal
+
+    // Aliases semânticos (#2754)
+    val elevation_nav = elevation_small
+    val elevation_card = elevation_medium
+    val elevation_dropdown = elevation_large
+    val elevation_overlay = elevation_large
 
     // ==========================================
     // HEIGHTS - Alturas de componentes

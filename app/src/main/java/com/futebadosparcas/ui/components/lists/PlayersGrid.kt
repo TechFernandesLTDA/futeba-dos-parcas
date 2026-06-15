@@ -362,7 +362,7 @@ fun PlayersGridShimmer(
 ) {
     LazyVerticalGrid(
         modifier = modifier.fillMaxSize(),
-        columns = GridCells.Fixed(columns),
+        columns = GridCells.Adaptive(minSize = 120.dp),
         contentPadding = PaddingValues(8.dp)
     ) {
         items(itemCount, key = { "shimmer_$it" }) {
@@ -423,7 +423,7 @@ private fun PaginatedLazyVerticalGrid(
             LazyVerticalGrid(
                 modifier = Modifier.fillMaxSize(),
                 state = state,
-                columns = GridCells.Fixed(columns),
+                columns = GridCells.Adaptive(minSize = 120.dp),
                 contentPadding = contentPadding
             ) {
                 content()
@@ -445,7 +445,7 @@ private fun PaginatedLazyVerticalGrid(
         LazyVerticalGrid(
             modifier = modifier.fillMaxSize(),
             state = state,
-            columns = GridCells.Fixed(columns),
+            columns = GridCells.Adaptive(minSize = 120.dp),
             contentPadding = contentPadding
         ) {
             content()
