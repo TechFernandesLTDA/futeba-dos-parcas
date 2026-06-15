@@ -15,11 +15,24 @@ object DynamicThemeEngine {
         return Color(ColorUtils.blendARGB(base.toArgb(), target.toArgb(), ratio))
     }
 
+    private fun contrastRatio(fg: Color, bg: Color): Double {
+        val l1 = ColorUtils.calculateLuminance(fg.toArgb())
+        val l2 = ColorUtils.calculateLuminance(bg.toArgb())
+        val lighter = maxOf(l1, l2)
+        val darker = minOf(l1, l2)
+        return (lighter + 0.05) / (darker + 0.05)
+    }
+
     private fun onColorFor(background: Color): Color {
-        return if (ColorUtils.calculateLuminance(background.toArgb()) > 0.6) {
-            Color(0xFF0B0F0D)
-        } else {
-            Color(0xFFF5F7F6)
+        val darkText = Color(0xFF0B0F0D)
+        val lightText = Color(0xFFF5F7F6)
+        val darkRatio = contrastRatio(darkText, background)
+        val lightRatio = contrastRatio(lightText, background)
+        return when {
+            darkRatio >= 4.5 -> darkText
+            lightRatio >= 4.5 -> lightText
+            darkRatio >= lightRatio -> darkText
+            else -> lightText
         }
     }
 
