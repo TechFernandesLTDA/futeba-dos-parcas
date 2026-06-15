@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -77,6 +78,34 @@ fun ThemeSettingsScreen(
                         viewModel.setContrastLevel(if (enabled) ContrastLevel.HIGH else ContrastLevel.NORMAL)
                     }
                 )
+            }
+        }
+
+        // Dynamic Color Toggle (Material You) — #2684
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Card {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.theme_dynamic_color), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            stringResource(R.string.theme_dynamic_color_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = config.useDynamicColor,
+                        onCheckedChange = { enabled ->
+                            viewModel.setUseDynamicColor(enabled)
+                        }
+                    )
+                }
             }
         }
 

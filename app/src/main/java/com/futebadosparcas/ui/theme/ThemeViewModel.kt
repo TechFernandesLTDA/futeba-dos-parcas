@@ -63,4 +63,12 @@ class ThemeViewModel(
             themeRepository.setContrastLevel(level)
         }
     }
+
+    fun setUseDynamicColor(enabled: Boolean) {
+        viewModelScope.launch {
+            themeConfig.value.let { config ->
+                themeRepository.updateThemeConfig(config.copy(useDynamicColor = enabled))
+            }
+        }
+    }
 }

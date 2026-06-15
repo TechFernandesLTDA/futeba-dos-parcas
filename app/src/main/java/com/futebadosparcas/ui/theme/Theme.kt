@@ -4,6 +4,8 @@ import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
@@ -52,7 +54,11 @@ fun FutebaTheme(
 
     val context = LocalContext.current
     val reducedMotion = remember { readSystemReduceMotion(context) }
-    val colorScheme = DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
+    val colorScheme = if (finalConfig.useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
