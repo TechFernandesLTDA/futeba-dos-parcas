@@ -71,18 +71,18 @@ import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { useSeasons } from '../../hooks/useSeasons';
 import { DIVISION_CONFIG, LeagueDivision, getDivisionColor } from '../../types/gamification';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 type SortField = 'points' | 'goals' | 'wins' | 'gamesPlayed' | 'assists' | 'mvpCount' | 'winRate' | 'losses' | 'name';
 
-const SORT_OPTIONS: { value: SortField; label: string }[] = [
-  { value: 'points', label: 'Pontos' },
-  { value: 'goals', label: 'Gols' },
-  { value: 'wins', label: 'Vitórias' },
-  { value: 'gamesPlayed', label: 'Jogos' },
-  { value: 'assists', label: 'Assist.' },
-  { value: 'mvpCount', label: 'MVPs' },
+const SORT_OPTIONS: { value: SortField; labelKey: string }[] = [
+  { value: 'points', labelKey: 'league.sortPoints' },
+  { value: 'goals', labelKey: 'league.sortGoals' },
+  { value: 'wins', labelKey: 'league.sortWins' },
+  { value: 'gamesPlayed', labelKey: 'league.sortGames' },
+  { value: 'assists', labelKey: 'league.sortAssists' },
+  { value: 'mvpCount', labelKey: 'league.sortMvps' },
 ];
 
 const PROMO_TOP = 3;
@@ -474,7 +474,7 @@ export const LeagueScreen: React.FC = () => {
             >
               {SORT_OPTIONS.map(opt => (
                 <ToggleButton key={opt.value} value={opt.value} sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
@@ -621,11 +621,11 @@ export const LeagueScreen: React.FC = () => {
         ) : filteredAndSorted.length === 0 && search.trim() ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <SearchIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">Nenhum jogador encontrado</Typography>
+            <Typography variant="h6" color="text.secondary">{t('league.emptyTitle')}</Typography>
             <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
-              Tente outro nome na busca
+              {t('league.emptyMessage')}
             </Typography>
-            <Button variant="outlined" onClick={() => setSearch('')}>Limpar busca</Button>
+            <Button variant="outlined" onClick={() => setSearch('')}>{t('league.clearSearch')}</Button>
           </Box>
         ) : filteredAndSorted.length === 0 ? (
           <EmptyState
@@ -636,7 +636,7 @@ export const LeagueScreen: React.FC = () => {
             description={selectedDivision
               ? t('league.emptyDivisionDesc')
               : t('league.seasonNotStartedDesc')}
-            actionLabel="Criar jogo"
+            actionLabel={t('league.createGame')}
             actionIcon={<SoccerIcon />}
             onAction={() => navigate('/game/create')}
           />
@@ -645,34 +645,38 @@ export const LeagueScreen: React.FC = () => {
           <Box>
             {pointsToNext && currentUserPlayer && (
               <Alert severity="info" sx={{ mb: 2 }} icon={<ArrowUpIcon />}>
-                Faltam <strong>{pointsToNext.diff} pts</strong> para ultrapassar <strong>{pointsToNext.name}</strong> ({pointsToNext.position}º)
+                <Trans
+                  i18nKey="league.pointsToNext"
+                  values={{ diff: pointsToNext.diff, name: pointsToNext.name, position: pointsToNext.position }}
+                  components={{ 1: <strong />, 3: <strong /> }}
+                />
               </Alert>
             )}
 
             {allPlayers.length > 0 && (
               <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Chip
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <TrophyIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
-                      Top {PROMO_TOP}: Promoção
-                    </Box>
-                  }
-                  size="small"
-                  sx={{ bgcolor: alpha(theme.palette.success.main, 0.08), color: 'text.primary' }}
-                />
-                {allPlayers.length > RELEG_BOTTOM * 2 && (
                   <Chip
                     label={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <ArrowDownIcon sx={{ fontSize: 16, color: theme.palette.error.main }} />
-                        Últimos {RELEG_BOTTOM}: Rebaixamento
+                        <TrophyIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
+                        <Trans i18nKey="league.topPromoLabel" values={{ count: PROMO_TOP }} components={{ 0: <span /> }} />
                       </Box>
                     }
                     size="small"
-                    sx={{ bgcolor: alpha(theme.palette.error.main, 0.08), color: 'text.primary' }}
+                    sx={{ bgcolor: alpha(theme.palette.success.main, 0.08), color: 'text.primary' }}
                   />
-                )}
+                  {allPlayers.length > RELEG_BOTTOM * 2 && (
+                    <Chip
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <ArrowDownIcon sx={{ fontSize: 16, color: theme.palette.error.main }} />
+                          <Trans i18nKey="league.bottomRelegLabel" values={{ count: RELEG_BOTTOM }} components={{ 0: <span /> }} />
+                        </Box>
+                      }
+                      size="small"
+                      sx={{ bgcolor: alpha(theme.palette.error.main, 0.08), color: 'text.primary' }}
+                    />
+                  )}
               </Box>
             )}
 
@@ -716,7 +720,7 @@ export const LeagueScreen: React.FC = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
                   <FormControlLabel
                     control={<Switch checked={dense} onChange={(e) => setDense(e.target.checked)} size="small" />}
-                    label="Compacto"
+                     label={t('league.compact')}
                   />
                 </Box>
                 <TableContainer>
@@ -726,17 +730,17 @@ export const LeagueScreen: React.FC = () => {
                         <TableCell padding="checkbox" sx={{ fontWeight: 700 }}>#</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>
                           <TableSortLabel active={sortField === 'name'} direction={sortField === 'name' ? sortDirection : 'desc'} onClick={() => handleTableSort('name')}>
-                            Jogador
+                            {t('commandPalette.player')}
                           </TableSortLabel>
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700 }}>
                           <TableSortLabel active={sortField === 'points'} direction={sortField === 'points' ? sortDirection : 'desc'} onClick={() => handleTableSort('points')}>
-                            Pontos
+                            {t('league.sortPoints')}
                           </TableSortLabel>
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700 }}>
                           <TableSortLabel active={sortField === 'gamesPlayed'} direction={sortField === 'gamesPlayed' ? sortDirection : 'desc'} onClick={() => handleTableSort('gamesPlayed')}>
-                            Jogos
+                            {t('league.sortGames')}
                           </TableSortLabel>
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700 }}>
@@ -1055,12 +1059,12 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
         <Collapse in={isExpanded}>
           <Divider sx={{ my: 1.5 }} />
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, textAlign: 'center' }}>
-            <StatBox label="Vitórias" value={player.wins} color={theme.palette.success.main} />
-            <StatBox label="Derrotas" value={Math.max(0, player.gamesPlayed - player.wins)} color={theme.palette.error.main} />
+            <StatBox label={t('league.victories')} value={player.wins} color={theme.palette.success.main} />
+            <StatBox label={t('statistics.losses')} value={Math.max(0, player.gamesPlayed - player.wins)} color={theme.palette.error.main} />
             <StatBox label="Win Rate" value={`${winRate}%`} color={theme.palette.primary.main} />
-            <StatBox label="Gols" value={player.goals} color={theme.palette.warning.main} />
-            <StatBox label="Assistências" value={player.assists || 0} color={theme.palette.info.main} />
-            <StatBox label="MVPs" value={player.mvpCount || 0} color={theme.palette.secondary.main} />
+            <StatBox label={t('league.goals')} value={player.goals} color={theme.palette.warning.main} />
+            <StatBox label={t('league.assists')} value={player.assists || 0} color={theme.palette.info.main} />
+            <StatBox label={t('league.mvpCount')} value={player.mvpCount || 0} color={theme.palette.secondary.main} />
           </Box>
           {player.isCurrentUser && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>

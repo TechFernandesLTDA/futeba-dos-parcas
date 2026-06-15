@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.theme
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.AppThemeConfig
+import com.futebadosparcas.domain.model.ContrastLevel
 import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.util.PreferencesManager
@@ -54,6 +55,12 @@ class ThemeViewModel(
             themeRepository.resetThemeConfig()
             com.futebadosparcas.util.ThemeHelper.applyTheme("light")
             preferencesManager.setThemePreference("light")
+        }
+    }
+
+    fun setContrastLevel(level: ContrastLevel) {
+        viewModelScope.launch {
+            themeRepository.setContrastLevel(level)
         }
     }
 }

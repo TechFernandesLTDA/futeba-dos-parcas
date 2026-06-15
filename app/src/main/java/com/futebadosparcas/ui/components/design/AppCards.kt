@@ -32,7 +32,7 @@ fun AppCard(
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     shape: Shape = MaterialTheme.shapes.large,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     border: BorderStroke? = null,
     elevation: Dp = AppDimensions.elevation_small,
     content: @Composable ColumnScope.() -> Unit
@@ -247,7 +247,7 @@ fun ClickableSurface(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     shape: Shape = MaterialTheme.shapes.medium,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     content: @Composable () -> Unit
 ) {
     Surface(

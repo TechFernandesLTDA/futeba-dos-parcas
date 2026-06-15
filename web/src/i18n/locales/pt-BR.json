@@ -1308,7 +1308,23 @@
     "title": "Liga",
     "togglePlayerAria": "Expandir detalhes de {{name}}",
     "victories": "Vitórias",
-    "viewPreviousSeason": "Ver temporada anterior"
+    "viewPreviousSeason": "Ver temporada anterior",
+    "emptyTitle": "Nenhum jogador encontrado",
+    "emptyMessage": "Tente outro nome na busca",
+    "clearSearch": "Limpar busca",
+    "createGame": "Criar jogo",
+    "topPromo": "Promoção",
+    "bottomReleg": "Rebaixamento",
+    "compact": "Compacto",
+    "sortPoints": "Pontos",
+    "sortGoals": "Gols",
+    "sortWins": "Vitórias",
+    "sortGames": "Jogos",
+    "sortAssists": "Assist.",
+    "sortMvps": "MVPs",
+    "pointsToNext": "Faltam <1>{{diff}} pts</1> para ultrapassar <3>{{name}}</3> ({{position}}º)",
+    "topPromoLabel": "<0>Top {{count}}</0>: Promoção",
+    "bottomRelegLabel": "<0>Últimos {{count}}</0>: Rebaixamento"
   },
   "level": {
     "currentBadge": "ATUAL",
@@ -2074,6 +2090,33 @@
     "title": "Dashboard do Proprietário",
     "upcomingGames": "Próximos Jogos",
     "viewSchedule": "Ver Agenda"
+  },
+  "adaptiveFormSheet": {
+    "discardTitle": "Descartar mudanças?",
+    "discardMessage": "Você tem alterações não salvas. Se sair agora, elas serão perdidas.",
+    "keepEditing": "Continuar editando",
+    "discard": "Descartar"
+  },
+  "commandPalette": {
+    "globalSearch": "Busca global",
+    "esc": "Esc",
+    "navigate": "navegar",
+    "select": "selecionar",
+    "close": "fechar",
+    "recentSearches": "Buscas recentes",
+    "noResults": "Nenhum resultado encontrado",
+    "tryOtherTerms": "Tente outros termos",
+    "player": "Jogador",
+    "group": "Grupo",
+    "game": "Jogo",
+    "location": "Local",
+    "action": "Ação",
+    "recent": "Recente",
+    "all": "Todos",
+    "players": "Jogadores",
+    "groups": "Grupos",
+    "games": "Jogos",
+    "searchPlaceholder": "Buscar jogadores, grupos, jogos..."
   },
   "sw": {
     "updateAvailable": "Nova versão disponível",

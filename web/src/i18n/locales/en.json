@@ -1308,7 +1308,23 @@
     "title": "League",
     "togglePlayerAria": "Expand details for {{name}}",
     "victories": "Wins",
-    "viewPreviousSeason": "View previous season"
+    "viewPreviousSeason": "View previous season",
+    "emptyTitle": "No players found",
+    "emptyMessage": "Try another search name",
+    "clearSearch": "Clear search",
+    "createGame": "Create game",
+    "topPromo": "Promotion",
+    "bottomReleg": "Relegation",
+    "compact": "Compact",
+    "sortPoints": "Points",
+    "sortGoals": "Goals",
+    "sortWins": "Wins",
+    "sortGames": "Games",
+    "sortAssists": "Assists",
+    "sortMvps": "MVPs",
+    "pointsToNext": "Need <1>{{diff}} pts</1> to overtake <3>{{name}}</3> ({{position}}º)",
+    "topPromoLabel": "<0>Top {{count}}</0>: Promotion",
+    "bottomRelegLabel": "<0>Bottom {{count}}</0>: Relegation"
   },
   "level": {
     "currentBadge": "CURRENT",
@@ -2074,6 +2090,33 @@
     "title": "Owner Dashboard",
     "upcomingGames": "Upcoming Games",
     "viewSchedule": "View Schedule"
+  },
+  "adaptiveFormSheet": {
+    "discardTitle": "Discard changes?",
+    "discardMessage": "You have unsaved changes. If you leave now, they will be lost.",
+    "keepEditing": "Keep editing",
+    "discard": "Discard"
+  },
+  "commandPalette": {
+    "globalSearch": "Global search",
+    "esc": "Esc",
+    "navigate": "navigate",
+    "select": "select",
+    "close": "close",
+    "recentSearches": "Recent searches",
+    "noResults": "No results found",
+    "tryOtherTerms": "Try other terms",
+    "player": "Player",
+    "group": "Group",
+    "game": "Game",
+    "location": "Location",
+    "action": "Action",
+    "recent": "Recent",
+    "all": "All",
+    "players": "Players",
+    "groups": "Groups",
+    "games": "Games",
+    "searchPlaceholder": "Search players, groups, games..."
   },
   "sw": {
     "updateAvailable": "New version available",

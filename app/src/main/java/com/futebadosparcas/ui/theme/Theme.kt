@@ -5,7 +5,9 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -54,6 +56,7 @@ fun FutebaTheme(
     }
 
     val context = LocalContext.current
+    val reducedMotion = remember { readSystemReduceMotion(context) }
     val colorScheme = DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
 
     val view = LocalView.current
@@ -76,11 +79,13 @@ fun FutebaTheme(
     // Envolve MaterialTheme com ResponsiveTypographyProvider para disponibilizar
     // LocalResponsiveTextDimens em toda a árvore de composição (#2209).
     ResponsiveTypographyProvider {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = FutebaTypography,
-            shapes = FutebaShapes,
-            content = content
-        )
+        CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
+            MaterialTheme(
+                colorScheme = colorScheme,
+                typography = FutebaTypography,
+                shapes = FutebaShapes,
+                content = content
+            )
+        }
     }
 }

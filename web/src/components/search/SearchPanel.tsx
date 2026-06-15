@@ -92,12 +92,12 @@ export interface SearchResult {
   photoUrl?: string;
 }
 
-const QUICK_COMMANDS: Omit<SearchResult, 'id'>[] = [
-  { type: 'quick', name: 'Criar jogo', subtitle: 'Organizar nova pelada' },
-  { type: 'quick', name: 'Criar grupo', subtitle: 'Novo grupo de pelada' },
-  { type: 'quick', name: 'Configurações', subtitle: 'Ajustes da sua conta' },
-  { type: 'quick', name: 'Perfil', subtitle: 'Ver meu perfil' },
-  { type: 'quick', name: 'Notificações', subtitle: 'Central de notificações' },
+const QUICK_COMMANDS: (Omit<SearchResult, 'id'> & { labelKey: string })[] = [
+  { type: 'quick', name: 'Criar jogo', subtitle: 'Organizar nova pelada', labelKey: 'games.createGame' },
+  { type: 'quick', name: 'Criar grupo', subtitle: 'Novo grupo de pelada', labelKey: 'groups.createGroup' },
+  { type: 'quick', name: 'Configurações', subtitle: 'Ajustes da sua conta', labelKey: 'nav.settings' },
+  { type: 'quick', name: 'Perfil', subtitle: 'Ver meu perfil', labelKey: 'nav.profile' },
+  { type: 'quick', name: 'Notificações', subtitle: 'Central de notificações', labelKey: 'nav.notifications' },
 ];
 
 const QUICK_ROUTES: Record<string, string> = {
@@ -129,7 +129,7 @@ interface SearchPanelProps {
  */
 export const SearchPanel: React.FC<SearchPanelProps> = ({
   onClose,
-  placeholder = 'Buscar jogadores, grupos, jogos...',
+  placeholder,
   autoFocus = true,
 }) => {
   const { t } = useTranslation();
@@ -285,8 +285,8 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     return map[t] ?? <PersonIcon fontSize="small" />;
   };
 
-  const typeLabel = (t: string): string =>
-    ({ user: 'Jogador', group: 'Grupo', game: 'Jogo', location: 'Local', quick: 'Ação', history: 'Recente' }[t] ?? '');
+  const typeLabel = (type: string): string =>
+    ({ user: t('commandPalette.player'), group: t('commandPalette.group'), game: t('commandPalette.game'), location: t('commandPalette.location'), quick: t('commandPalette.action'), history: t('commandPalette.recent') }[type] ?? '');
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!navigableItems.length) return;
@@ -313,7 +313,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
         <TextField
           fullWidth
           size="small"
-          placeholder={placeholder}
+          placeholder={placeholder || t('commandPalette.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -343,10 +343,10 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           aria-label={t('a11y.filterResultsByType')}
           sx={{ borderBottom: `1px solid ${theme.palette.divider}`, flexShrink: 0 }}
         >
-          <Tab label="Todos" />
-          <Tab label="Jogadores" />
-          <Tab label="Grupos" />
-          <Tab label="Jogos" />
+          <Tab label={t('commandPalette.all')} />
+          <Tab label={t('commandPalette.players')} />
+          <Tab label={t('commandPalette.groups')} />
+          <Tab label={t('commandPalette.games')} />
         </Tabs>
       )}
 
@@ -361,7 +361,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pt: 1.5, pb: 0.5 }}>
                   <Typography variant="overline" color="text.secondary">
-                    Buscas recentes
+                    {t('commandPalette.recentSearches')}
                   </Typography>
                   <IconButton size="small" onClick={handleClearHistory} aria-label={t('a11y.clearSearchHistory')}>
                     <ClearIcon fontSize="small" />
@@ -401,7 +401,9 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               role="listbox"
               id="search-commands-list"
             >
-              {QUICK_COMMANDS.map((cmd, idx) => (
+              {QUICK_COMMANDS.map((cmd, idx) => {
+                const displayName = t(cmd.labelKey);
+                return (
                 <Box key={cmd.name}>
                   {idx > 0 && <Divider component="li" />}
                   <ListItemButton
@@ -419,7 +421,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={cmd.name}
+                      primary={displayName}
                       secondary={cmd.subtitle}
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
                       secondaryTypographyProps={{ variant: 'caption' }}
@@ -447,14 +449,15 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                     ) : null}
                   </ListItemButton>
                 </Box>
-              ))}
+              );
+            })}
             </List>
           </Box>
         ) : results.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 6 }}>
             <SearchIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 1.5 }} />
-            <Typography variant="body2" color="text.secondary">Nenhum resultado encontrado</Typography>
-            <Typography variant="caption" color="text.disabled" display="block">Tente outros termos</Typography>
+            <Typography variant="body2" color="text.secondary">{t('commandPalette.noResults')}</Typography>
+            <Typography variant="caption" color="text.disabled" display="block">{t('commandPalette.tryOtherTerms')}</Typography>
           </Box>
         ) : (
           <List
@@ -508,7 +511,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
         sx={{ display: 'flex', gap: 2, px: 2, py: 1, borderTop: `1px solid ${theme.palette.divider}`, bgcolor: 'background.default', flexShrink: 0 }}
         aria-hidden="true"
       >
-        {[['↑↓', 'navegar'], ['↵', 'selecionar'], ['Esc', 'fechar']].map(([k, label]) => (
+        {[['↑↓', t('commandPalette.navigate')], ['↵', t('commandPalette.select')], ['Esc', t('commandPalette.close')]].map(([k, label]) => (
           <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Box
               component="kbd"

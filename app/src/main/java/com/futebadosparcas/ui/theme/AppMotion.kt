@@ -1,16 +1,43 @@
 package com.futebadosparcas.ui.theme
 
+import android.content.Context
+import android.provider.Settings
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 
 /**
- * Tokens de animação centralizados — Futeba dos Parças (#2195)
- *
- * Alinhados ao Material Design 3 Motion:
- * https://m3.material.io/styles/motion/overview
- *
- * Equivalentes Web: motion.ts (web/src/theme/motion.ts)
+ * CompositionLocal indicando se o usuário solicitou redução de animações.
+ * Lê Settings.Global.ANIMATOR_DURATION_SCALE — 0 significa reduzido.
  */
+val LocalReducedMotion = compositionLocalOf { false }
+
+/**
+ * Helper que lê o estado de reduced-motion do sistema via CompositionLocal.
+ */
+@Composable
+@ReadOnlyComposable
+fun rememberReduceMotion(): Boolean = LocalReducedMotion.current
+
+/**
+ * Obtém o estado de reduced-motion diretamente do sistema (sem CompositionLocal).
+ * Usado para inicializar o LocalReducedMotion.
+ */
+fun readSystemReduceMotion(context: Context): Boolean {
+    return try {
+        Settings.Global.getFloat(
+            context.contentResolver,
+            Settings.Global.ANIMATOR_DURATION_SCALE
+        ) == 0f
+    } catch (e: Exception) {
+        false
+    }
+}
 
 // ==========================================
 // DURAÇÕES (em milissegundos)
@@ -24,6 +51,16 @@ object MotionDuration {
 
     /** Animações elaboradas: onboarding, celebração de XP */
     const val Long = 500
+
+    /** Versão reduzida das durações para acessibilidade */
+    const val ShortReduced = 0
+    const val MediumReduced = 0
+    const val LongReduced = 0
+
+    /** Retorna a duração ajustada para reduced-motion */
+    fun getShort(reduced: Boolean) = if (reduced) ShortReduced else Short
+    fun getMedium(reduced: Boolean) = if (reduced) MediumReduced else Medium
+    fun getLong(reduced: Boolean) = if (reduced) LongReduced else Long
 }
 
 // ==========================================

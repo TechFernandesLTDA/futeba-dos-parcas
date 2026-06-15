@@ -2,7 +2,11 @@ package com.futebadosparcas.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,15 +18,17 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun HomeScreen(
     onOpenWhatsNew: () -> Unit = {},
+    onNavigateToGames: () -> Unit = {},
+    onNavigateToGroups: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Futeba dos Parças - ${getPlatformName()}") },
+                title = { Text("Futeba dos Parças") },
                 actions = {
-                    // Entrada para a tela "Novidades" (spec feat-2026-05-22, Fase G).
                     IconButton(onClick = onOpenWhatsNew) {
                         Icon(
                             imageVector = Icons.Default.NewReleases,
@@ -39,28 +45,28 @@ fun HomeScreen(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    icon = { Text("🏠") },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Início") },
                     label = { Text("Início") },
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 }
                 )
                 NavigationBarItem(
-                    icon = { Text("⚽") },
+                    icon = { Icon(Icons.Default.SportsSoccer, contentDescription = "Jogos") },
                     label = { Text("Jogos") },
                     selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 }
+                    onClick = { selectedTab = 1; onNavigateToGames() }
                 )
                 NavigationBarItem(
-                    icon = { Text("👥") },
+                    icon = { Icon(Icons.Default.Group, contentDescription = "Grupos") },
                     label = { Text("Grupos") },
                     selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 }
+                    onClick = { selectedTab = 2; onNavigateToGroups() }
                 )
                 NavigationBarItem(
-                    icon = { Text("👤") },
+                    icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
                     label = { Text("Perfil") },
                     selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 }
+                    onClick = { selectedTab = 3; onNavigateToProfile() }
                 )
             }
         }
@@ -88,9 +94,11 @@ private fun HomeTab() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top)
     ) {
-        Text(
-            text = "⚽",
-            style = MaterialTheme.typography.displayLarge
+        Icon(
+            imageVector = Icons.Default.SportsSoccer,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.primary
         )
         Text(
             text = "Bem-vindo!",
@@ -98,29 +106,28 @@ private fun HomeTab() {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Versão Web - ${getPlatformName()} Edition",
+            text = "Organize partidas, acompanhe estatísticas e suba de nível!",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(24.dp))
         Card(
-            modifier = Modifier.fillMaxWidth(0.8f)
+            modifier = Modifier.fillMaxWidth(0.85f)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "🎯 Funcionalidades",
+                    text = "Funcionalidades",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Text("✅ Navegação funcional")
-                Text("✅ UI Responsiva")
-                Text("✅ Material Design 3")
-                Text("✅ Login com autenticação")
-                Text("✅ Listagem de dados")
-                Text("🔄 Firebase real (próximo passo)")
+                Text("Navegação funcional")
+                Text("UI Responsiva")
+                Text("Material Design 3")
+                Text("Autenticação integrada")
+                Text("Jogos e grupos")
             }
         }
     }
@@ -133,9 +140,17 @@ private fun PlaceholderTab(tabName: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "🚧",
-            style = MaterialTheme.typography.displayLarge
+        val icon = when (tabName) {
+            "Jogos" -> Icons.Default.SportsSoccer
+            "Grupos" -> Icons.Default.Group
+            "Perfil" -> Icons.Default.Person
+            else -> Icons.Default.Home
+        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -144,7 +159,7 @@ private fun PlaceholderTab(tabName: String) {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Em construção...",
+            text = "Redirecionando...",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
