@@ -1,5 +1,10 @@
 package com.futebadosparcas.compose
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -56,7 +61,23 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        enterTransition = {
+            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+        },
+        exitTransition = {
+            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End)
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End)
+        }
     ) {
         // Welcome / Onboarding
         composable(AppRoutes.WELCOME) {
