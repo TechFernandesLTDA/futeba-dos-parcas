@@ -65,6 +65,11 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Sports
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Sports
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -576,7 +581,7 @@ private fun FutebaBottomBar(
                         }
                     }) {
                         Icon(
-                            imageVector = item.icon,
+                            imageVector = if (selected) (item.selectedIcon ?: item.icon) else item.icon,
                             contentDescription = item.label
                         )
                     }
@@ -629,7 +634,7 @@ private fun FutebaNavigationRail(
                         }
                     }) {
                         Icon(
-                            imageVector = item.icon,
+                            imageVector = if (selected) (item.selectedIcon ?: item.icon) else item.icon,
                             contentDescription = if (!showLabels) item.label else null
                         )
                     }
@@ -649,6 +654,7 @@ private fun FutebaNavigationRail(
 data class BottomNavItem(
     val route: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val selectedIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     val label: String,
     val screen: Screen
 )
@@ -666,31 +672,36 @@ private fun rememberBottomNavItems(): List<BottomNavItem> {
         listOf(
             BottomNavItem(
                 route = Screen.Home.route,
-                icon = Icons.Filled.Home,
+                icon = Icons.Outlined.Home,
+                selectedIcon = Icons.Filled.Home,
                 label = homeLabel,
                 screen = Screen.Home
             ),
             BottomNavItem(
                 route = Screen.Games.route,
-                icon = Icons.Filled.Sports,
+                icon = Icons.Outlined.Sports,
+                selectedIcon = Icons.Filled.Sports,
                 label = gamesLabel,
                 screen = Screen.Games
             ),
             BottomNavItem(
                 route = Screen.Groups.route,
-                icon = Icons.Filled.Groups,
+                icon = Icons.Outlined.Groups,
+                selectedIcon = Icons.Filled.Groups,
                 label = groupsLabel,
                 screen = Screen.Groups
             ),
             BottomNavItem(
                 route = Screen.Ranking.route,
-                icon = Icons.Filled.EmojiEvents,
+                icon = Icons.Outlined.EmojiEvents,
+                selectedIcon = Icons.Filled.EmojiEvents,
                 label = rankingLabel,
                 screen = Screen.Ranking
             ),
             BottomNavItem(
                 route = Screen.Profile.route,
-                icon = Icons.Filled.Person,
+                icon = Icons.Outlined.Person,
+                selectedIcon = Icons.Filled.Person,
                 label = profileLabel,
                 screen = Screen.Profile
             )

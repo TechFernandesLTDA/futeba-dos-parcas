@@ -21,11 +21,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import androidx.compose.ui.platform.LocalInspectionMode
 
-// DEPRECATED: Usar FutebaLightColorScheme e FutebaDarkColorScheme de Color.kt
-// Mantido temporariamente para compatibilidade
-private val LightColorScheme = FutebaLightColorScheme
-private val DarkColorScheme = FutebaDarkColorScheme
-
 
 
 // Mantendo compatibilidade com previews existentes

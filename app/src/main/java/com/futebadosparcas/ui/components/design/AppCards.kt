@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.ui.components.animation.pressScale
 
 /**
  * Card padrão do aplicativo.
@@ -40,7 +41,7 @@ fun AppCard(
     if (onClick != null) {
         Card(
             onClick = onClick,
-            modifier = modifier,
+            modifier = modifier.pressScale(),
             enabled = enabled,
             shape = shape,
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -164,7 +165,7 @@ fun HorizontalAppCard(
     if (onClick != null) {
         Card(
             onClick = onClick,
-            modifier = modifier,
+            modifier = modifier.pressScale(),
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = surfaceColor),
             elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_small)
@@ -207,7 +208,7 @@ fun CompactCard(
     if (onClick != null) {
         Card(
             onClick = onClick,
-            modifier = modifier,
+            modifier = modifier.pressScale(),
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)
