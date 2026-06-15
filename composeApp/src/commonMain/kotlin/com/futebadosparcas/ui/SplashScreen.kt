@@ -2,6 +2,9 @@ package com.futebadosparcas.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -11,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Expect/actual para detectar plataforma
 expect fun getPlatformName(): String
 
 @Composable
@@ -26,9 +28,11 @@ fun SplashScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "⚽",
-                fontSize = 72.sp
+            Icon(
+                imageVector = Icons.Default.SportsSoccer,
+                contentDescription = "Futeba dos Parças",
+                modifier = Modifier.size(72.dp),
+                tint = MaterialTheme.colorScheme.onPrimary
             )
             Text(
                 text = "Futeba dos Parças",

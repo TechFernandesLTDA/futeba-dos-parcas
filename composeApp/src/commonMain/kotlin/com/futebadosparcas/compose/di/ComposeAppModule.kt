@@ -23,10 +23,20 @@ import org.koin.dsl.module
  */
 val composeAppModule = module {
 
-    // ViewModels serão registrados aqui conforme a frota de telas for portada.
-    // Exemplo:
-    //   viewModel { HomeViewModel(get()) }
-    //   viewModel { GamesViewModel(get()) }
+    // Bucket Core ViewModels
+    // viewModel { LoginViewModel(get()) }  // requer AuthRepository (plataforma)
+    // viewModel { GamesViewModel(get()) }  // requer GameRepository (plataforma)
+    // viewModel { ProfileSetupViewModel(get()) }
+
+    // Bucket Gamification
+    // viewModel { RankingViewModel(get()) }
+    // viewModel { BadgesViewModel(get()) }
+
+    // Bucket Discovery
+    // viewModel { LocationsViewModel(get()) }
+
+    // Bucket Power
+    // viewModel { CashboxViewModel(get()) }
 }
 
 /**

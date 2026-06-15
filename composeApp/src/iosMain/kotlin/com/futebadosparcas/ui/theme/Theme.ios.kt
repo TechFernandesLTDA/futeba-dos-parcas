@@ -8,6 +8,7 @@ internal actual fun PlatformThemeSetup(
     colorScheme: ColorScheme,
     isDark: Boolean
 ) {
-    // iOS-specific theme setup (status bar, etc) can be added here
-    // For now, no platform-specific setup needed
+    // Status bar styling é gerenciado pela camada SwiftUI (ContentView.swift)
+    // via .preferredColorScheme(). O Compose Multiplatform no iOS delega a
+    // aparência da status bar ao UIViewController host.
 }

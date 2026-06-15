@@ -30,12 +30,12 @@ data class SeedColors(
  * Configuracao de tema do aplicativo.
  *
  * Valores padrao:
- * - Primary: #58CC02 (Futeba Green)
+ * - Primary: #00852A (Futeba Green, WCAG AA)
  * - Secondary: #FF9600 (Badge Orange)
  */
 data class AppThemeConfig(
     val seedColors: SeedColors = SeedColors(
-        primary = 0xFF58CC02.toInt(), // Verde Futeba (ARGB: FF 58 CC 02)
+        primary = 0xFF00852A.toInt(), // Verde Futeba AA (ARGB: FF 00 85 2A)
         secondary = 0xFFFF9600.toInt() // Laranja Badge (ARGB: FF FF 96 00)
     ),
     val mode: ThemeMode = ThemeMode.LIGHT,

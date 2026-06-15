@@ -2632,6 +2632,8 @@ subir no ranking!</string>
     <string name="theme_settings_primary_color">Cor Principal</string>
     <string name="theme_settings_accent_color">Cor de Destaque</string>
     <string name="theme_settings_preview_label">Preview: Primary Container</string>
+    <string name="theme_high_contrast">Alto Contraste</string>
+    <string name="theme_high_contrast_desc">Aumenta o contraste de texto e elementos visuais (WCAG AAA)</string>
 
     <!-- About Screen Strings -->
     <string name="about_rate_app">Avaliar o App</string>

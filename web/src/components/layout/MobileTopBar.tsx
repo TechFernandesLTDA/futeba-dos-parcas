@@ -61,6 +61,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
         color: 'text.primary',
         borderBottom: 1,
         borderColor: 'divider',
+        boxShadow: (theme) => theme.shadowsCustom?.nav ?? '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
         pt: 'env(safe-area-inset-top, 0px)',
         pl: 'env(safe-area-inset-left, 0px)',
         pr: 'env(safe-area-inset-right, 0px)',

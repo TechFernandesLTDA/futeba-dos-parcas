@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 import com.futebadosparcas.domain.model.AppThemeConfig
+import com.futebadosparcas.domain.model.ContrastLevel
 
 object DynamicThemeEngine {
 
@@ -26,6 +27,10 @@ object DynamicThemeEngine {
         config: AppThemeConfig,
         isDark: Boolean
     ): ColorScheme {
+        if (config.contrastLevel == ContrastLevel.HIGH) {
+            return if (isDark) HighContrastDarkColorScheme else HighContrastLightColorScheme
+        }
+
         val primaryInt = config.seedColors.primary
         val secondaryInt = config.seedColors.secondary
         val tertiaryInt = config.seedColors.tertiary ?: secondaryInt

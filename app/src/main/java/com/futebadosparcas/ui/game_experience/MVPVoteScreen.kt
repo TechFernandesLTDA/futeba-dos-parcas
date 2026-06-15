@@ -27,6 +27,7 @@ import coil3.request.error
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.VoteCategory
+import com.futebadosparcas.ui.components.animation.SuccessAnimationOverlay
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
@@ -344,15 +345,15 @@ private fun FinishedContent(
         verticalArrangement = Arrangement.Center
     ) {
         if (showAnimation) {
-            // Ícone de sucesso com animação
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = stringResource(R.string.cd_success_check),
-                modifier = Modifier.size(120.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Box(contentAlignment = Alignment.Center) {
+                SuccessAnimationOverlay(
+                    visible = true,
+                    onDismiss = {},
+                    modifier = Modifier.size(160.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = stringResource(R.string.mvp_vote_registered),

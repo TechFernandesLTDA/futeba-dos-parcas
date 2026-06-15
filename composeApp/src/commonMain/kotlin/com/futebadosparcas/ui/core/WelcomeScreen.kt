@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.core
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -77,19 +80,19 @@ fun WelcomeScreen(
 
             // Features
             WelcomeFeatureItem(
-                emoji = "\u26BD",
+                icon = Icons.Filled.SportsSoccer,
                 text = "Jogos"
             )
             WelcomeFeatureItem(
-                emoji = "\uD83C\uDFC6",
+                icon = Icons.Filled.Star,
                 text = "Ranking"
             )
             WelcomeFeatureItem(
-                emoji = "\uD83D\uDCCA",
+                icon = Icons.Filled.Star,
                 text = "Estatísticas"
             )
             WelcomeFeatureItem(
-                emoji = "\uD83E\uDD1D",
+                icon = Icons.Filled.FavoriteBorder,
                 text = "Equilíbrio"
             )
 
@@ -116,15 +119,26 @@ fun WelcomeScreen(
 
 @Composable
 private fun WelcomeFeatureItem(
-    emoji: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String
 ) {
-    Text(
-        text = "$emoji  $text",
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurface,
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-    )
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
 }

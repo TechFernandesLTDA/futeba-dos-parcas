@@ -38,7 +38,7 @@ const secondary = {
   contrastText: '#FFFFFF',
 };
 
-const appFontFamily = 'Inter, "Plus Jakarta Sans", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+const appFontFamily = 'Poppins, "Plus Jakarta Sans", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 // Badge rarity colors — suporta nomes PT-BR (canônico do BadgeRarity) e EN (legacy).
 // BADGE_DEFINITIONS usa COMUM/RARO/EPICO/LENDARIO; aliases EN ficam por compat.

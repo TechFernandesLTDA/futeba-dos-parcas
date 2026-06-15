@@ -87,6 +87,9 @@ class MainActivityCompose : AppCompatActivity() {
     // Guardado no nível da Activity para sobreviver à recomposição e ao onNewIntent.
     private val deepLinkTarget = mutableStateOf<String?>(null)
 
+    // Post-game summary state — bridge entre observePostGameEvents (lifecycle) e Compose.
+    private val pendingPostGameSummary = mutableStateOf<com.futebadosparcas.ui.statistics.PostGameSummary?>(null)
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // Atualiza o Intent da Activity para que getIntent() reflita o novo Intent.
@@ -157,6 +160,14 @@ class MainActivityCompose : AppCompatActivity() {
                     deepLinkTarget = deepLinkTarget.value,
                     onDeepLinkConsumed = { deepLinkTarget.value = null },
                 )
+
+                // Post-game dialog — exibe resumo de XP/level-up apos finalizacao de jogo (#2724)
+                pendingPostGameSummary.value?.let { summary ->
+                    com.futebadosparcas.ui.statistics.PostGameDialog(
+                        summary = summary,
+                        onDismiss = { pendingPostGameSummary.value = null }
+                    )
+                }
             }
         }
 
@@ -172,8 +183,8 @@ class MainActivityCompose : AppCompatActivity() {
     private fun observePostGameEvents() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                postGameEventEmitter.postGameEvents.collect {
-                    // Post game dialog handled by individual screens
+                postGameEventEmitter.postGameEvents.collect { summary ->
+                    pendingPostGameSummary.value = summary
                 }
             }
         }
@@ -437,7 +448,9 @@ fun MainScreen(
 
     // Exibe snackbar ao desbloquear badge
     LaunchedEffect(Unit) {
+        val vibrationHelper = com.futebadosparcas.util.VibrationHelper(context)
         badgeAwarder.newBadges.collectLatest { badge ->
+            vibrationHelper.vibrateBadgeUnlocked()
             snackbarHostState.showSnackbar(
                 message = context.getString(R.string.badge_unlocked_toast, badge.badgeId),
                 duration = SnackbarDuration.Short

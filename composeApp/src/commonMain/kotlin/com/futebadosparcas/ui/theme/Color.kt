@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 // ==========================================
 // LIGHT THEME COLORS
 // ==========================================
-private val md3_light_primary = Color(0xFF00C853) // Vibrant Green
+private val md3_light_primary = Color(0xFF00852A) // Futeba Green (WCAG AA)
 private val md3_light_onPrimary = Color(0xFFFFFFFF)
 private val md3_light_primaryContainer = Color(0xFFB7F7D2) // Light mint
 private val md3_light_onPrimaryContainer = Color(0xFF002910)
@@ -103,7 +103,7 @@ private val md3_dark_outlineVariant = Color(0xFF30373C)
 
 private val md3_dark_inverseSurface = Color(0xFFE6E6E6)
 private val md3_dark_inverseOnSurface = Color(0xFF1C1B1F)
-private val md3_dark_inversePrimary = Color(0xFF00C853)
+private val md3_dark_inversePrimary = Color(0xFF00852A)
 
 // Surface Containers Dark (M3 1.2+) - OLED optimized
 private val md3_dark_surfaceDim = Color(0xFF0F1114)
@@ -244,7 +244,7 @@ object GamificationColors {
     val Purple = Color(0xFF6200EA)
     val PurpleLight = Color(0xFFB388FF)
 
-    val XpGreen = Color(0xFF00C853)
+    val XpGreen = Color(0xFF00852A)  // WCAG AA
     val XpLightGreen = Color(0xFF64DD17)
     val LevelUpGold = Color(0xFFFFAB00)
 

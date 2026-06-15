@@ -1,0 +1,189 @@
+{
+  "$schema": "https://tr.designtokens.org/format/",
+  "description": "Design tokens compartilhados — Futeba dos Parças. Source única de verdade para cores, tipografia, espaçamento, elevação e motion. Consumido por web (import JSON), Android (KMP DesignTokens em commonMain), e iOS (via composeApp). Atualizado 2026-06-14 (issue #2746).",
+  "version": "1.0.0",
+
+  "brand": {
+    "primary": {
+      "hex": "#00852A",
+      "oklch": "oklch(0.55 0.18 142)",
+      "wcag": "AA (4.76:1 vs #FFFFFF)",
+      "description": "Verde de marca canônico WCAG AA (#2745)"
+    },
+    "secondary": {
+      "hex": "#005FCC",
+      "description": "Azul de destaque"
+    },
+    "tertiary": {
+      "hex": "#FF6D00",
+      "description": "Laranja complementar"
+    }
+  },
+
+  "palette": {
+    "primary": { "main": "#00852A", "light": "#4ADE80", "dark": "#005A1C", "contrastText": "#FFFFFF" },
+    "secondary": { "main": "#005FCC", "light": "#5CC8FF", "dark": "#004399", "contrastText": "#FFFFFF" },
+    "error": { "main": "#D32F2F", "light": "#EF5350", "dark": "#B71C1C" },
+    "warning": { "main": "#B45309", "light": "#FF9E40", "dark": "#8A3A00" },
+    "success": { "main": "#00852A", "light": "#4ADE80", "dark": "#005A1C" },
+    "info": { "main": "#005FCC", "light": "#5CC8FF", "dark": "#004399" }
+  },
+
+  "darkPalette": {
+    "primary": { "main": "#4ADE80", "light": "#86EFAC", "dark": "#2E7D32" },
+    "secondary": { "main": "#5CC8FF", "light": "#90CAF9", "dark": "#004399" },
+    "error": { "main": "#FFB4AB", "light": "#FFCDD2", "dark": "#B71C1C" },
+    "warning": { "main": "#FF9E40", "light": "#FFCC80", "dark": "#8A3A00" },
+    "success": { "main": "#66BB6A", "light": "#81C784", "dark": "#2E7D32" },
+    "info": { "main": "#5CC8FF", "light": "#90CAF9", "dark": "#004399" }
+  },
+
+  "gamification": {
+    "gold": "#FFD700",
+    "silver": "#E0E0E0",
+    "bronze": "#CD7F32",
+    "diamond": "#B9F2FF",
+    "platinum": "#00E676",
+    "champion": "#E91E63",
+    "xp": "#9C27B0",
+    "level": "#00BCD4",
+    "mvp": "#FFD700",
+    "streak": "#FF5722"
+  },
+
+  "gamificationDark": {
+    "bronze": "#E8924A",
+    "xp": "#CE93D8",
+    "level": "#4DD0E1",
+    "streak": "#FF7043"
+  },
+
+  "rarity": {
+    "comum": "#9E9E9E",
+    "incomum": "#388E3C",
+    "raro": "#2196F3",
+    "epico": "#9C27B0",
+    "lendario": "#FF9800"
+  },
+
+  "rarityDark": {
+    "comum": "#BDBDBD",
+    "incomum": "#66BB6A",
+    "raro": "#42A5F5",
+    "epico": "#CE93D8",
+    "lendario": "#FFB74D"
+  },
+
+  "fieldType": {
+    "society": "#2E7D32",
+    "futsal": "#1565C0",
+    "campo": "#558B2F",
+    "areia": "#F9A825",
+    "synthetic": "#4CAF50",
+    "grass": "#388E3C"
+  },
+
+  "gameStatus": {
+    "scheduled": "#388E3C",
+    "inProgress": "#1976D2",
+    "finished": "#616161",
+    "cancelled": "#D32F2F",
+    "full": "#FF6F00",
+    "warning": "#E6A300"
+  },
+
+  "typography": {
+    "fontFamily": "Poppins, 'Plus Jakarta Sans', 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    "weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "semiBold": 600,
+      "bold": 700
+    },
+    "scale": {
+      "displayLarge": { "size": 57, "lineHeight": 64, "weight": "normal", "letterSpacing": -0.25 },
+      "displayMedium": { "size": 45, "lineHeight": 52, "weight": "normal", "letterSpacing": 0 },
+      "displaySmall": { "size": 36, "lineHeight": 44, "weight": "normal", "letterSpacing": 0 },
+      "headlineLarge": { "size": 32, "lineHeight": 40, "weight": "semiBold", "letterSpacing": 0 },
+      "headlineMedium": { "size": 28, "lineHeight": 36, "weight": "semiBold", "letterSpacing": 0 },
+      "headlineSmall": { "size": 24, "lineHeight": 32, "weight": "semiBold", "letterSpacing": 0 },
+      "titleLarge": { "size": 22, "lineHeight": 28, "weight": "semiBold", "letterSpacing": 0 },
+      "titleMedium": { "size": 16, "lineHeight": 24, "weight": "medium", "letterSpacing": 0.15 },
+      "titleSmall": { "size": 14, "lineHeight": 20, "weight": "medium", "letterSpacing": 0.1 },
+      "bodyLarge": { "size": 16, "lineHeight": 24, "weight": "regular", "letterSpacing": 0.5 },
+      "bodyMedium": { "size": 14, "lineHeight": 20, "weight": "regular", "letterSpacing": 0.25 },
+      "bodySmall": { "size": 12, "lineHeight": 16, "weight": "regular", "letterSpacing": 0.4 },
+      "labelLarge": { "size": 14, "lineHeight": 20, "weight": "medium", "letterSpacing": 0.1 },
+      "labelMedium": { "size": 12, "lineHeight": 16, "weight": "medium", "letterSpacing": 0.5 },
+      "labelSmall": { "size": 11, "lineHeight": 16, "weight": "medium", "letterSpacing": 0.5 }
+    }
+  },
+
+  "spacing": {
+    "unit": 8,
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48
+  },
+
+  "radius": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "full": 999
+  },
+
+  "motion": {
+    "duration": {
+      "short": 150,
+      "medium": 300,
+      "long": 500,
+      "shortReduced": 0,
+      "mediumReduced": 0,
+      "longReduced": 0
+    },
+    "easing": {
+      "standard": [0.2, 0, 0, 1],
+      "emphasized": [0.2, 0, 0, 1],
+      "decelerate": [0, 0, 0, 1],
+      "accelerate": [0.3, 0, 1, 1]
+    }
+  },
+
+  "elevation": {
+    "card": "0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)",
+    "cardHover": "0 2px 4px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06)",
+    "nav": "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+    "dropdown": "0 4px 6px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.08)",
+    "overlay": "0 8px 16px rgba(0,0,0,0.08), 0 24px 48px rgba(0,0,0,0.12)",
+    "modal": "0 16px 32px rgba(0,0,0,0.12), 0 48px 64px rgba(0,0,0,0.16)",
+    "cardPremium": "0 0 0 1px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)"
+  },
+
+  "surface": {
+    "light": {
+      "dim": "#DDD8DD",
+      "bright": "#FDF8FD",
+      "containerLowest": "#FFFFFF",
+      "containerLow": "#F7F2F7",
+      "container": "#F1ECF1",
+      "containerHigh": "#EBE6EB",
+      "containerHighest": "#E5E1E6"
+    },
+    "dark": {
+      "dim": "#0F1114",
+      "bright": "#36393E",
+      "containerLowest": "#0A0C0E",
+      "containerLow": "#15191C",
+      "container": "#1A1D21",
+      "containerHigh": "#24282C",
+      "containerHighest": "#2F3337"
+    }
+  }
+}

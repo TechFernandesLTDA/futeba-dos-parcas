@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Base Colors -->
-    <color name="primary">#58CC02</color>
+    <color name="primary">#00852A</color>
     <color name="on_primary">#FFFFFF</color>
     <color name="primary_container">#D6F5C6</color>
     <color name="on_primary_container">#113800</color>
@@ -65,7 +65,7 @@
     <!-- Group Role Chips -->
     <color name="chip_owner">#FF9600</color>
     <color name="chip_admin">#4B9CE2</color>
-    <color name="chip_member">#58CC02</color>
+    <color name="chip_member">#00852A</color>
     <color name="chip_text_light">#FFFFFF</color>
 
     <!-- Notification Colors -->
@@ -128,7 +128,7 @@
     <color name="outlineVariant">#CAC4D0</color>
 
     <!-- XP Badge -->
-    <color name="xp_badge_background">#1A58CC02</color>
+    <color name="xp_badge_background">#1A00852A</color>
 
     <!-- Badge Rarity Colors -->
     <color name="rarity_comum">#9E9E9E</color>
@@ -140,7 +140,7 @@
     <color name="widget_background">#FFFFFF</color>
     <color name="widget_text_primary">#1D1B20</color>
     <color name="widget_text_secondary">#49454F</color>
-    <color name="widget_accent">#58CC02</color>
+    <color name="widget_accent">#00852A</color>
     <color name="widget_divider">#E7E0EC</color>
 
     <!-- Tactical Board (#1403): light theme defaults; values-night override em dark mode -->

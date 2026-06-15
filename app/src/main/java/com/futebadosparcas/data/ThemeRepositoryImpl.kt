@@ -45,7 +45,7 @@ class ThemeRepositoryImpl constructor(
             }
 
             // Usa Compose Color (não android.graphics.Color) para cores semente padrão.
-            val primary = preferences[Keys.PRIMARY_COLOR] ?: Color(0xFF58CC02).toArgb()
+            val primary = preferences[Keys.PRIMARY_COLOR] ?: Color(0xFF00852A).toArgb()
             val secondary = preferences[Keys.SECONDARY_COLOR] ?: Color(0xFFFF9600).toArgb()
 
             AppThemeConfig(

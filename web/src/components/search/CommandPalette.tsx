@@ -111,7 +111,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           color="text.secondary"
           sx={{ flex: 1, textTransform: 'uppercase', letterSpacing: 1 }}
         >
-          Busca global
+          {t('commandPalette.globalSearch')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Box

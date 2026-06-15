@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDirtyGuard } from '../../hooks/useDirtyGuard';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 
@@ -62,6 +63,7 @@ export function AdaptiveFormSheet({
   closeDestination,
   isDirty = false,
 }: AdaptiveFormSheetProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const goBack = useNavigateBack(closeDestination);
@@ -120,18 +122,18 @@ export function AdaptiveFormSheet({
         aria-describedby="adaptive-sheet-dirty-description"
         maxWidth="xs"
       >
-        <DialogTitle id="adaptive-sheet-dirty-title">Descartar mudanças?</DialogTitle>
+        <DialogTitle id="adaptive-sheet-dirty-title">{t('adaptiveFormSheet.discardTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText id="adaptive-sheet-dirty-description">
-            Você tem alterações não salvas. Se sair agora, elas serão perdidas.
+            {t('adaptiveFormSheet.discardMessage')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={cancel} autoFocus>
-            Continuar editando
+            {t('adaptiveFormSheet.keepEditing')}
           </Button>
           <Button onClick={proceed} color="error">
-            Descartar
+            {t('adaptiveFormSheet.discard')}
           </Button>
         </DialogActions>
       </Dialog>

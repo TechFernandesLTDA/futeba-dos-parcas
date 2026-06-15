@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.domain.model.ThemeMode
+import com.futebadosparcas.domain.model.ContrastLevel
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -50,6 +51,32 @@ fun ThemeSettingsScreen(
                         )
                     }
                 }
+            }
+        }
+
+        // High Contrast Toggle
+        Card {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.theme_high_contrast), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.theme_high_contrast_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = config.contrastLevel == ContrastLevel.HIGH,
+                    onCheckedChange = { enabled ->
+                        viewModel.setContrastLevel(if (enabled) ContrastLevel.HIGH else ContrastLevel.NORMAL)
+                    }
+                )
             }
         }
 
