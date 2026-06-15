@@ -228,7 +228,7 @@ private fun GamesSuccessContent(
         } else {
             // Medium/Expanded: grid de 2 colunas
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Adaptive(minSize = 160.dp),
                 // SECFIX #489: adaptiveContentWidth() limita 840/1040dp + centraliza
                 modifier = Modifier
                     .fillMaxSize()

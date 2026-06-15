@@ -189,7 +189,9 @@ export const futebaTheme = createTheme({
     caption: { fontSize: '0.75rem', lineHeight: 1.5 },
     overline: { fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const },
   },
-  // #2705: premium multi-layer shadow ramp — semantic tokens at key elevations
+  // #2751: MD3 type scale — mapeamento canônico MUI h1-h6 ↔ MD3 display/headline/title
+  // MUI não aceita displayLarge etc. em TypographyOptions. Use theme.typography.h1 etc.
+  // Export separado: import { md3TypeScale } para nomenclatura MD3.
   shadows: [
     'none',                                                                                          // 0
     shadowTokens.nav,                                                                                // 1 — nav/subtle
