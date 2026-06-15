@@ -19,10 +19,26 @@ object DynamicThemeEngine {
     }
 
     private fun onColorFor(background: Color): Color {
-        return if (calculateLuminance(background) > 0.6f) {
-            Color(0xFF0B0F0D)
-        } else {
-            Color(0xFFF5F7F6)
+        // #2677: WCAG AA contrast-aware. Tenta texto escuro e claro; fallback ao maior contraste.
+        val darkText = Color(0xFF0B0F0D)
+        val lightText = Color(0xFFF5F7F6)
+        val bgLuminance = calculateLuminance(background).toDouble()
+        val darkL = calculateLuminance(darkText).toDouble()
+        val lightL = calculateLuminance(lightText).toDouble()
+
+        fun ratio(l1: Double, l2: Double): Double {
+            val lighter = maxOf(l1, l2)
+            val darker = minOf(l1, l2)
+            return (lighter + 0.05) / (darker + 0.05)
+        }
+
+        val darkRatio = ratio(darkL, bgLuminance)
+        val lightRatio = ratio(lightL, bgLuminance)
+        return when {
+            darkRatio >= 4.5 -> darkText
+            lightRatio >= 4.5 -> lightText
+            darkRatio >= lightRatio -> darkText
+            else -> lightText
         }
     }
 
