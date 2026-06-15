@@ -2,6 +2,7 @@ package com.futebadosparcas.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ fun SplashScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .systemBarsPadding()
             .background(MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.Center
     ) {
