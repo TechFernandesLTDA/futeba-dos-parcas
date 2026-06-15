@@ -39,5 +39,6 @@ data class AppThemeConfig(
         secondary = 0xFFFF9600.toInt() // Laranja Badge (ARGB: FF FF 96 00)
     ),
     val mode: ThemeMode = ThemeMode.SYSTEM,
-    val contrastLevel: ContrastLevel = ContrastLevel.NORMAL
+    val contrastLevel: ContrastLevel = ContrastLevel.NORMAL,
+    val useDynamicColor: Boolean = false    // #2684: Material You dynamic color (Android 12+)
 )
