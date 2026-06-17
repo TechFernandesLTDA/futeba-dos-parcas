@@ -32,12 +32,12 @@ fun SplashScreen() {
         ) {
             Icon(
                 imageVector = Icons.Default.SportsSoccer,
-                contentDescription = "Futeba dos Parças",
+                contentDescription = UiStrings.SPLASH_CD_LOGO,
                 modifier = Modifier.size(72.dp),
                 tint = MaterialTheme.colorScheme.onPrimary
             )
             Text(
-                text = "Futeba dos Parças",
+                text = UiStrings.SPLASH_APP_NAME,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary

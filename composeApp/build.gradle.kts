@@ -182,6 +182,14 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        // #2769: KotlinUastLanguagePlugin.isJvmOrCommonElement NPE em AGP9 + KMP ao
+        // analisar common sources. O lint do :app continua cobrindo o código Android
+        // principal; aqui apenas evitamos que o crash derrube o CI.
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
 }
 
 compose {

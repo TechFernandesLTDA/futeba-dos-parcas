@@ -27,12 +27,12 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Futeba dos Parças") },
+                title = { Text(UiStrings.APP_NAME) },
                 actions = {
                     IconButton(onClick = onOpenWhatsNew) {
                         Icon(
                             imageVector = Icons.Default.NewReleases,
-                            contentDescription = "Novidades",
+                            contentDescription = UiStrings.CD_WHATS_NEW,
                         )
                     }
                 },
@@ -45,26 +45,26 @@ fun HomeScreen(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Início") },
-                    label = { Text("Início") },
+                    icon = { Icon(Icons.Default.Home, contentDescription = UiStrings.NAV_HOME) },
+                    label = { Text(UiStrings.NAV_HOME) },
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.SportsSoccer, contentDescription = "Jogos") },
-                    label = { Text("Jogos") },
+                    icon = { Icon(Icons.Default.SportsSoccer, contentDescription = UiStrings.NAV_GAMES) },
+                    label = { Text(UiStrings.NAV_GAMES) },
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1; onNavigateToGames() }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Group, contentDescription = "Grupos") },
-                    label = { Text("Grupos") },
+                    icon = { Icon(Icons.Default.Group, contentDescription = UiStrings.NAV_GROUPS) },
+                    label = { Text(UiStrings.NAV_GROUPS) },
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2; onNavigateToGroups() }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-                    label = { Text("Perfil") },
+                    icon = { Icon(Icons.Default.Person, contentDescription = UiStrings.NAV_PROFILE) },
+                    label = { Text(UiStrings.NAV_PROFILE) },
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3; onNavigateToProfile() }
                 )
@@ -101,7 +101,7 @@ private fun HomeTab() {
             tint = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "Bem-vindo!",
+            text = UiStrings.HOME_WELCOME,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
