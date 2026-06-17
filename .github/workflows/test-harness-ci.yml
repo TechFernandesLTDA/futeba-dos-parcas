@@ -1,21 +1,27 @@
 name: Test Harness CI (#2533)
 
-# CI Job que executa a suite completa de testes de integração/E2E
-# contra emuladores Firebase (firestore + auth + functions).
+# CI Job que executa a suite de testes de INTEGRAÇÃO Jest (functions)
+# contra emuladores Firebase (auth + firestore + functions).
 #
 # Valida:
 #   - Domínio Grupos: discover, preview público, invite-join (#2530)
 #   - Functions integration: onInviteRedeemed + member-counter (#2531)
-#   - Web E2E: discover, preview, invite-join via Playwright (#2532)
 #
-# Disparo: manual (workflow_dispatch) — não roda em PRs automaticamente
-# por ser mais pesado e exigir emuladores completos.
+# NOTA (#2782): os emuladores são iniciados via `firebase emulators:exec`,
+# que sobe/derruba auth+firestore+functions automaticamente e roda o seed
+# + Jest no MESMO processo. Antes, os steps de seed/jest eram separados e
+# NENHUM step iniciava os emuladores → o seed batia em 127.0.0.1:9099 sem
+# nada escutando (ECONNREFUSED) e o workflow nunca passava.
+# Os testes E2E de Playwright vivem no workflow dedicado web-e2e-ci.yml —
+# não duplicar aqui (evita rodar 2x e reduz pressão de memória no runner).
+#
+# Disparo: manual (workflow_dispatch) + schedule diário.
 
 on:
   workflow_dispatch:
     inputs:
       test_filter:
-        description: 'Filtro opcional de testes (--grep para Playwright, --testPathPattern para Jest)'
+        description: 'Filtro opcional de testes (--testPathPatterns para Jest)'
         required: false
         default: ''
   schedule:
@@ -24,7 +30,7 @@ on:
 
 jobs:
   test-harness:
-    name: Test Harness — Emulador Full-Stack
+    name: Test Harness — Functions Integration (Emulador)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
@@ -51,9 +57,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: |
-            functions/package-lock.json
-            web/package-lock.json
+          cache-dependency-path: functions/package-lock.json
 
       - name: Configurar Java 21 (requerido pelo emulador Firestore)
         uses: actions/setup-java@v4
@@ -61,109 +65,43 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Instalar Firebase CLI
-        run: npm install -g firebase-tools
-
-      # ------------------------------------------
-      # INSTALAÇÃO DE DEPENDÊNCIAS
-      # ------------------------------------------
+      - name: Instalar Firebase CLI + tsx
+        run: npm install -g firebase-tools tsx
 
       - name: Instalar dependências — functions
         working-directory: functions
         run: npm ci
 
-      - name: Instalar dependências — web
-        working-directory: web
-        run: npm ci
-
-      - name: Instalar browsers Playwright
-        working-directory: web
-        run: npx playwright install --with-deps chromium
-
-      # ------------------------------------------
-      # BUILD (para E2E web)
-      # ------------------------------------------
-
       - name: Build functions
         working-directory: functions
         run: npm run build
 
-      - name: Build web app
-        working-directory: web
-        run: npm run build
-        env:
-          VITE_USE_EMULATOR: 'true'
-          VITE_FIREBASE_API_KEY: fake-api-key
-          VITE_FIREBASE_AUTH_DOMAIN: 127.0.0.1:9099
-          VITE_FIREBASE_PROJECT_ID: futebadosparcas
-          VITE_FIREBASE_STORAGE_BUCKET: futebadosparcas.appspot.com
-          VITE_FIREBASE_MESSAGING_SENDER_ID: '000000000000'
-          VITE_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000'
-
       # ------------------------------------------
-      # SEED DE DADOS E2E
+      # SEED + FUNCTIONS INTEGRATION (com emulador ativo)
       # ------------------------------------------
 
-      - name: Seed — usuários E2E
-        run: npx tsx scripts/seed-e2e-users.ts
-        env:
-          NODE_PATH: functions/node_modules
-          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-
-      - name: Seed — grupos E2E
-        run: npx tsx scripts/seed-e2e-groups.ts
-        env:
-          NODE_PATH: functions/node_modules
-          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-
-      # ------------------------------------------
-      # FUNCTIONS INTEGRATION TESTS
-      # ------------------------------------------
-
-      - name: Testes — Functions Integration
-        working-directory: functions
+      - name: Seed + Functions Integration (emulador)
+        # emulators:exec sobe/derruba auth+firestore+functions automaticamente.
+        # Seed e Jest rodam no MESMO processo, com os emuladores ATIVOS — sem
+        # isso o seed falhava com ECONNREFUSED (#2782).
         run: |
-          npx jest --config jest.integration.config.js --no-coverage --verbose
+          firebase emulators:exec \
+            --only auth,firestore,functions \
+            --project futebadosparcas \
+            'bash -c "
+              set -e
+              echo \"[harness] Emuladores prontos — seed...\"
+              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
+              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
+              echo \"[harness] Seed OK — Jest integration...\"
+              cd functions && npx jest --config jest.integration.config.js --no-coverage --verbose
+            "'
         env:
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-
-      # ------------------------------------------
-      # WEB E2E TESTS
-      # ------------------------------------------
-
-      - name: Iniciar servidor web (background)
-        working-directory: web
-        run: |
-          npx vite preview --port 4173 --host 127.0.0.1 &
-          echo "PID=$!" >> $GITHUB_ENV
-          # Aguarda o servidor estar pronto
-          for i in $(seq 1 30); do
-            curl -s http://127.0.0.1:4173 > /dev/null && break
-            sleep 2
-          done
-
-      - name: Testes — Web E2E (Playwright)
-        working-directory: web
-        run: |
-          npx playwright test --project=chromium --reporter=html
-        env:
-          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
-          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
+          CI: 'true'
 
       # ------------------------------------------
       # RESULTADOS
       # ------------------------------------------
-
-      - name: Upload — Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: web/playwright-report/
-          retention-days: 7
 
       - name: Upload — Jest results (JSON)
         if: always()
