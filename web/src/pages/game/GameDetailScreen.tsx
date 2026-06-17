@@ -5,7 +5,6 @@ import { useNavigateBack } from '../../hooks/useNavigateBack';
 import QRCode from 'qrcode';
 import {
   Box,
-  Container,
   Typography,
   Button,
   IconButton,
@@ -597,7 +596,7 @@ export const GameDetailScreen: React.FC = () => {
       {/* ====== Bottom Action Bar (#2178: FixedBottomBar) ====== */}
 
       <FixedBottomBar>
-        <Container maxWidth="sm">
+        <Box sx={{ width: '100%' }}>
           {game.status === 'SCHEDULED' || game.status === 'CONFIRMED' ? (
             <Box sx={{ display: 'flex', gap: 1 }}>
               {canManage && game.status === 'CONFIRMED' && (
@@ -691,7 +690,7 @@ export const GameDetailScreen: React.FC = () => {
               {t('games.detail.voteMvp')}
             </Button>
           ) : null}
-        </Container>
+        </Box>
       </FixedBottomBar>
 
       {/* ====== Dialogs ====== */}

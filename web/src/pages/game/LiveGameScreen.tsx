@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -724,7 +723,7 @@ export const LiveGameScreen: React.FC = () => {
           centraliza no viewport — sem offset de sidebar. */}
       {canManage && (
         <FixedBottomBar inLayout={false}>
-          <Container maxWidth={isDesktop ? 'md' : 'sm'}>
+          <Box sx={{ width: '100%' }}>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {isRunning ? (
                 <>
@@ -755,7 +754,7 @@ export const LiveGameScreen: React.FC = () => {
                 </Button>
               )}
             </Box>
-          </Container>
+          </Box>
         </FixedBottomBar>
       )}
 

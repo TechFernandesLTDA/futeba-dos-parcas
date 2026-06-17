@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -466,7 +465,7 @@ export const MVPVoteScreen: React.FC = () => {
       {/* #2178: FixedBottomBar. #2164: tela full-screen (rota fora do AppLayout),
           centraliza no viewport — sem offset de sidebar. */}
       <FixedBottomBar inLayout={false}>
-        <Container maxWidth="sm">
+        <Box sx={{ width: '100%' }}>
           <Button
             variant="contained"
             fullWidth
@@ -477,7 +476,7 @@ export const MVPVoteScreen: React.FC = () => {
           >
             {submitting ? t('feedback.sending') : t('mvp.submitVote')}
           </Button>
-        </Container>
+        </Box>
       </FixedBottomBar>
     </Box>
   );
