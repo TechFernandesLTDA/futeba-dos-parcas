@@ -37,57 +37,63 @@ class MVPVoteViewModel(
     fun loadCandidates(gameId: String) {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            // Keep loading but maybe we don't know owner yet. Default false.
-            _uiState.value = MVPVoteUiState.Loading(isOwner = false)
-            
-            // 1. Check Owner
-            val currentUser = userRepository.getCurrentUserId()
-            var isOwner = false
-            var isFinished = false
-            if (currentUser != null) {
-                val gameResult = gameRepository.getGameDetails(gameId)
-                gameResult.onSuccess { game ->
-                    isOwner = (game.ownerId == currentUser)
-                    isFinished = (game.status == com.futebadosparcas.data.model.GameStatus.FINISHED.name)
+            // Envolvido em try/catch para evitar loading infinito em caso de
+            // exceção em getCurrentUserId() ou getGameDetails() — fix #2774
+            try {
+                // Keep loading but maybe we don't know owner yet. Default false.
+                _uiState.value = MVPVoteUiState.Loading(isOwner = false)
+
+                // 1. Check Owner
+                val currentUser = userRepository.getCurrentUserId()
+                var isOwner = false
+                var isFinished = false
+                if (currentUser != null) {
+                    val gameResult = gameRepository.getGameDetails(gameId)
+                    gameResult.onSuccess { game ->
+                        isOwner = (game.ownerId == currentUser)
+                        isFinished = (game.status == com.futebadosparcas.data.model.GameStatus.FINISHED.name)
+                    }
                 }
-            }
 
-            if (isFinished) {
-                _uiState.value = MVPVoteUiState.Finished(isOwner)
-                return@launch
-            }
-
-            // 2. Check if voted
-            if (currentUser != null) {
-                val hasVotedResult = gameExperienceRepository.hasUserVoted(gameId, currentUser)
-                if (hasVotedResult.getOrNull() == true) {
-                    _uiState.value = MVPVoteUiState.AlreadyVoted(isOwner)
+                if (isFinished) {
+                    _uiState.value = MVPVoteUiState.Finished(isOwner)
                     return@launch
                 }
-            }
 
-            gameRepository.getGameConfirmations(gameId).fold(
-                onSuccess = { confirmations ->
-                    allConfirmations = confirmations.filter { it.status == "CONFIRMED" }
-                    
-                    if (allConfirmations.isEmpty()) {
-                        _uiState.value = MVPVoteUiState.Error("Nenhum jogador confirmado para votar.", isOwner, R.string.mvp_vote_error_no_players)
-                    } else {
-                        // Initial Category: MVP
-                        val category = VoteCategory.MVP
-                        val filteredCandidates = getCandidatesForCategory(category)
-                        
-                        _uiState.value = MVPVoteUiState.Voting(
-                            candidates = filteredCandidates,
-                            currentCategory = category,
-                            isOwner = isOwner
-                        )
+                // 2. Check if voted
+                if (currentUser != null) {
+                    val hasVotedResult = gameExperienceRepository.hasUserVoted(gameId, currentUser)
+                    if (hasVotedResult.getOrNull() == true) {
+                        _uiState.value = MVPVoteUiState.AlreadyVoted(isOwner)
+                        return@launch
                     }
-                },
-                onFailure = {
-                    _uiState.value = MVPVoteUiState.Error(it.message ?: "Erro ao carregar candidatos", isOwner)
                 }
-            )
+
+                gameRepository.getGameConfirmations(gameId).fold(
+                    onSuccess = { confirmations ->
+                        allConfirmations = confirmations.filter { it.status == "CONFIRMED" }
+
+                        if (allConfirmations.isEmpty()) {
+                            _uiState.value = MVPVoteUiState.Error("Nenhum jogador confirmado para votar.", isOwner, R.string.mvp_vote_error_no_players)
+                        } else {
+                            // Initial Category: MVP
+                            val category = VoteCategory.MVP
+                            val filteredCandidates = getCandidatesForCategory(category)
+
+                            _uiState.value = MVPVoteUiState.Voting(
+                                candidates = filteredCandidates,
+                                currentCategory = category,
+                                isOwner = isOwner
+                            )
+                        }
+                    },
+                    onFailure = {
+                        _uiState.value = MVPVoteUiState.Error(it.message ?: "Erro ao carregar candidatos", isOwner)
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = MVPVoteUiState.Error(e.message ?: "Erro ao carregar candidatos", isOwner = false)
+            }
         }
     }
 

@@ -3691,6 +3691,9 @@ subir no ranking!</string>
 
     <!-- Theme Settings -->
     <string name="theme_mode">Modo</string>
+    <string name="theme_mode_light">Claro</string>
+    <string name="theme_mode_dark">Escuro</string>
+    <string name="theme_mode_system">Sistema</string>
 
     <!-- Shared/Continue -->
     <string name="action_continue">Continuar</string>
