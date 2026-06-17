@@ -90,10 +90,31 @@ export const onUserCreatedGenerateInviteCode = onDocumentCreated(
     const inviteCode = await generateUniqueCode();
     const userRef = db().collection("users").doc(userId);
 
-    await userRef.update({
-      invite_code: inviteCode,
-      invite_count: 0,
-    });
+    try {
+      await userRef.update({
+        invite_code: inviteCode,
+        invite_count: 0,
+      });
+    } catch (e: unknown) {
+      // #2782: o doc users/{uid} pode ter sido deletado entre o evento
+      // CREATE e a execução (assíncrona) deste trigger — comum no test
+      // harness do emulador, onde o cleanup deleta os users de teste antes
+      // dos triggers drenarem. update() lança 5 NOT_FOUND → função morta →
+      // "socket hang up". No emulador tratamos como no-op (retry é inútil:
+      // o doc não vai voltar). Produção mantém o re-throw original.
+      if (
+        process.env.FUNCTIONS_EMULATOR === "true" &&
+        (e as {code?: number} | null)?.code === 5
+      ) {
+        logger.warn(
+          "onUserCreatedGenerateInviteCode: user doc removido antes do " +
+          "update no emulador; ignorando",
+          {userId}
+        );
+        return;
+      }
+      throw e;
+    }
 
     logger.info("Generated invite code for user", {userId});
   }

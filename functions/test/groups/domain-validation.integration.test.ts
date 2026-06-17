@@ -95,13 +95,16 @@ async function cleanup(): Promise<void> {
     .where('name', '>=', 'Grupo de teste:')
     .where('name', '<=', 'Grupo de teste:\uf8ff')
     .get();
-  groups.docs.forEach((d) => {
+  // #2782: aguardar a listagem de cada subcoleção ANTES do commit.
+  // O forEach com .then() não-aguardado adicionava os deletes ao batch
+  // DEPOIS de batch.commit() → "Cannot modify a WriteBatch that has been
+  // committed". for...of + await garante que tudo entra antes do commit.
+  for (const d of groups.docs) {
     batch.delete(d.ref);
     // Subcoleção members
-    d.ref.collection('members').listDocuments().then((refs) =>
-      refs.forEach((r) => batch.delete(r))
-    );
-  });
+    const memberRefs = await d.ref.collection('members').listDocuments();
+    memberRefs.forEach((r) => batch.delete(r));
+  }
   // Users de teste
   for (const uid of [USER_OWNER, USER_MEMBER, USER_OUTSIDER]) {
     batch.delete(db.collection('users').doc(uid));

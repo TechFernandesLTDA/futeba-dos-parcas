@@ -277,6 +277,24 @@ export const onNewUserCreated = onDocumentCreated(
         `set role=${role} for ${userId}`
       );
     } catch (error) {
+      // #2782: No emulador (test harness / E2E) é comum criar docs
+      // users/{uid} direto no Firestore sem o Auth user correspondente.
+      // getUser/setCustomUserClaims lançam auth/user-not-found e o
+      // re-throw (#1030) gera retry storm → socket hang up → fatal no
+      // emulador. Retry NÃO resolve user ausente (não é transiente),
+      // então logamos e retornamos SEM relançar — apenas no emulador.
+      // Produção mantém o comportamento original (#1030).
+      const code = (error as {code?: string} | null)?.code;
+      if (
+        process.env.FUNCTIONS_EMULATOR === "true" &&
+        code === "auth/user-not-found"
+      ) {
+        logger.warn(
+          "[CUSTOM_CLAIMS] Auth user ausente no emulador; " +
+          `pulando claims para ${userId} (seed sem Auth user)`
+        );
+        return;
+      }
       logger.error(
         "[CUSTOM_CLAIMS] Error setting " +
         `claims for ${userId}:`,
