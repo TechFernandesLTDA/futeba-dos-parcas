@@ -101,6 +101,20 @@ jest.mock("../src/middleware/rate-limiter", () => ({
     remaining: 10,
     resetAt: new Date(Date.now() + 60000),
   }),
+  checkRateLimitByIp: jest.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 10,
+    resetAt: new Date(Date.now() + 60000),
+  }),
+}));
+
+// FIX #2768: mock anti-abuse para evitar que canSendSmsOtp e
+// logVerificationFailure consumam os slots do mock de onCall antes
+// de setUserRole e migrateAllUsersToCustomClaims serem registrados.
+jest.mock("../src/auth/anti-abuse", () => ({
+  clientIp: jest.fn().mockReturnValue("127.0.0.1"),
+  canSendSmsOtp: jest.fn(),
+  logVerificationFailure: jest.fn(),
 }));
 
 describe("Custom Claims - setUserRole", () => {
@@ -134,9 +148,11 @@ describe("Custom Claims - setUserRole", () => {
       data: { uid: "user1", role: "ADMIN" },
     };
 
-    await expect(setUserRoleHandler!(request)).rejects.toThrow(
-      "authentication required"
-    );
+    // FIX #2768: assertar pelo code do HttpsError em vez de substring
+    // de mensagem, para não quebrar com mudanças de i18n.
+    await expect(setUserRoleHandler!(request)).rejects.toMatchObject({
+      code: "unauthenticated",
+    });
   });
 
   test("deve rejeitar quando caller não é ADMIN (sem claim e sem Firestore role)", async () => {
@@ -396,9 +412,11 @@ describe("Custom Claims - migrateAllUsersToCustomClaims", () => {
       auth: null,
     };
 
-    await expect(migrateHandler!(request)).rejects.toThrow(
-      "authentication required"
-    );
+    // FIX #2768: assertar pelo code do HttpsError em vez de substring
+    // de mensagem, para não quebrar com mudanças de i18n.
+    await expect(migrateHandler!(request)).rejects.toMatchObject({
+      code: "unauthenticated",
+    });
   });
 
   test("deve rejeitar quando caller não é ADMIN", async () => {

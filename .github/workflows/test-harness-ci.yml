@@ -84,6 +84,10 @@ jobs:
       # BUILD (para E2E web)
       # ------------------------------------------
 
+      - name: Build functions
+        working-directory: functions
+        run: npm run build
+
       - name: Build web app
         working-directory: web
         run: npm run build
