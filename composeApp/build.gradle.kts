@@ -199,6 +199,17 @@ compose {
     }
 }
 
+// #2769 (follow-up do #2780): `abortOnError = false` NÃO impede um CRASH do detector de
+// lint (NullPointerException em KotlinUastLanguagePlugin.isJvmOrCommonElement — bug do
+// AGP 9 ao analisar common sources KMP). Como o CI roda `./gradlew lint` (global), o crash
+// de :composeApp:lintAnalyzeDebug ainda derrubava o Android CI. Desabilitamos as tasks de
+// lint deste módulo de UI multiplataforma; o lint do :app cobre o código Android real.
+afterEvaluate {
+    tasks.matching { it.name.startsWith("lint") }.configureEach {
+        enabled = false
+    }
+}
+
 // Issue #181: Task para análise de bundle size
 tasks.register("analyzeBundleSize") {
     group = "verification"
