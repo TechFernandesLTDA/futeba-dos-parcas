@@ -26,7 +26,7 @@
 import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import "../types/firestore-count";
 
 const getDb = () => admin.firestore();
@@ -152,7 +152,7 @@ export const systemHealthCheck =
         .where(
           "xp_processing_at",
           "<",
-          admin.firestore.Timestamp
+          Timestamp
             .fromDate(oneHourAgo)
         )
         .limit(10)
@@ -313,7 +313,7 @@ export const systemHealthCheck =
         .where(
           "timestamp",
           ">=",
-          admin.firestore.Timestamp
+          Timestamp
             .fromDate(oneHourAgoDate)
         )
         .count()
@@ -357,7 +357,7 @@ export const systemHealthCheck =
     try {
       // FIX #993: adicionar filtro temporal — antes pegava TODOS os
       // jogos com erro historicamente (alertas perpétuos de erros antigos).
-      const dayAgo = admin.firestore.Timestamp.fromMillis(
+      const dayAgo = Timestamp.fromMillis(
         Date.now() - 24 * 60 * 60 * 1000
       );
       const errorGamesSnap = await db
@@ -600,7 +600,7 @@ export const cleanupDeadLetterQueue =
       thirtyDaysAgo.getDate() - 30
     );
     const cutoff =
-      admin.firestore.Timestamp.fromDate(
+      Timestamp.fromDate(
         thirtyDaysAgo
       );
 
@@ -732,7 +732,7 @@ export const cleanupExpiredRateLimits =
     );
 
     const now =
-      admin.firestore.Timestamp.now();
+      Timestamp.now();
     let totalDeleted = 0;
 
     try {
@@ -816,7 +816,7 @@ export const cleanupOldAlerts =
       thirtyDaysAgo.getDate() - 30
     );
     const cutoff =
-      admin.firestore.Timestamp.fromDate(
+      Timestamp.fromDate(
         thirtyDaysAgo
       );
 

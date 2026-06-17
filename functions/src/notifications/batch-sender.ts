@@ -26,7 +26,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {FieldValue, FieldPath} from "firebase-admin/firestore";
+import {FieldValue, FieldPath, Timestamp} from "firebase-admin/firestore";
 import {
   onSchedule,
 } from "firebase-functions/v2/scheduler";
@@ -1195,7 +1195,7 @@ export const cleanupNotificationQueue =
         oneDayAgo.getDate() - 1
       );
       const cutoffDate =
-        admin.firestore.Timestamp
+        Timestamp
           .fromDate(oneDayAgo);
 
       const sevenDaysAgo = new Date();
@@ -1203,7 +1203,7 @@ export const cleanupNotificationQueue =
         sevenDaysAgo.getDate() - 7
       );
       const staleCutoffDate =
-        admin.firestore.Timestamp
+        Timestamp
           .fromDate(sevenDaysAgo);
 
       let totalDeleted = 0;
@@ -1276,7 +1276,7 @@ export const cleanupNotificationQueue =
           tenMinAgo.getMinutes() - 10
         );
         const staleDate =
-          admin.firestore.Timestamp
+          Timestamp
             .fromDate(tenMinAgo);
 
         const staleSnap = await db

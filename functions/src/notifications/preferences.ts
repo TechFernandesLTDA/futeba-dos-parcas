@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {Timestamp} from "firebase-admin/firestore";
 
 const getDb = () => admin.firestore();
 
@@ -71,7 +72,7 @@ export async function getNotificationSettings(
     rawMute &&
     typeof (rawMute as {toDate?: unknown}).toDate === "function"
   ) {
-    muteUntil = (rawMute as admin.firestore.Timestamp).toDate();
+    muteUntil = (rawMute as Timestamp).toDate();
   } else if (typeof rawMute === "string" || typeof rawMute === "number") {
     const parsed = new Date(rawMute);
     if (!isNaN(parsed.getTime())) muteUntil = parsed;

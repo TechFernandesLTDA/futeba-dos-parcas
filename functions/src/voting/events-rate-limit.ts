@@ -11,7 +11,7 @@
  */
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
-import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {db} from "../_db";
 import {FUNCTION_REGION} from "../constants";
 
@@ -79,8 +79,7 @@ export const onGameEventCreated = onDocumentCreated(
           event_count: count,
           limit,
           deleted_event_id: event.params.eventId,
-          timestamp: admin.firestore
-            .FieldValue.serverTimestamp(),
+          timestamp: FieldValue.serverTimestamp(),
         }
       );
     });

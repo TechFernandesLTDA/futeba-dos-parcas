@@ -532,26 +532,18 @@ export function updateRankingDeltas(
   const cappedSaves = clampStat(conf.saves, MAX_SAVES_PER_GAME);
 
   const fields = {
-    goals_added: admin.firestore
-      .FieldValue.increment(cappedGoals),
-    assists_added: admin.firestore
-      .FieldValue.increment(cappedAssists),
-    saves_added: admin.firestore
-      .FieldValue.increment(cappedSaves),
-    xp_added: admin.firestore
-      .FieldValue.increment(xp),
-    games_added: admin.firestore
-      .FieldValue.increment(1),
-    wins_added: admin.firestore
-      .FieldValue.increment(
-        result === "WIN" ? 1 : 0
-      ),
-    mvp_added: admin.firestore
-      .FieldValue.increment(
-        isMvp ? 1 : 0
-      ),
-    updated_at: admin.firestore
-      .FieldValue.serverTimestamp(),
+    goals_added: FieldValue.increment(cappedGoals),
+    assists_added: FieldValue.increment(cappedAssists),
+    saves_added: FieldValue.increment(cappedSaves),
+    xp_added: FieldValue.increment(xp),
+    games_added: FieldValue.increment(1),
+    wins_added: FieldValue.increment(
+      result === "WIN" ? 1 : 0
+    ),
+    mvp_added: FieldValue.increment(
+      isMvp ? 1 : 0
+    ),
+    updated_at: FieldValue.serverTimestamp(),
   };
 
   const weekId =
@@ -669,13 +661,11 @@ export function updateSeasonParticipation(
     by_gender: {
       [gender]: buildStats(),
     },
-    last_calculated_at: admin.firestore
-      .FieldValue.serverTimestamp(),
+    last_calculated_at: FieldValue.serverTimestamp(),
     // FIX #2648: não incluir created_at — a cada jogo o merge
     // sobrescrevia o timestamp de criação original. A criação
     // inicial é feita por applyVotingXpDelta.
-    updated_at: admin.firestore
-      .FieldValue.serverTimestamp(),
+    updated_at: FieldValue.serverTimestamp(),
   };
 
   if (groupId) {

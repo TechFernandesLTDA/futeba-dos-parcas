@@ -1,7 +1,7 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUsers, NotificationType} from "../notifications/helpers";
 
@@ -236,8 +236,8 @@ export const processWeeklyRanking = onSchedule(
     const rankingDoc = db().collection("weekly-rankings").doc(weekKey);
     await rankingDoc.set({
       week_key: weekKey,
-      start_date: admin.firestore.Timestamp.fromDate(start),
-      end_date: admin.firestore.Timestamp.fromDate(end),
+      start_date: Timestamp.fromDate(start),
+      end_date: Timestamp.fromDate(end),
       rankings: topRankings,
       total_players: rankings.length,
       total_games: gamesSnap.size,
@@ -346,7 +346,7 @@ export const processWeeklyRanking = onSchedule(
           icon: "👑",
           type: "MITO_RODADA",
           earned_at: FieldValue.serverTimestamp(),
-          expires_at: admin.firestore.Timestamp.fromDate(
+          expires_at: Timestamp.fromDate(
             new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           ),
           earned: true,

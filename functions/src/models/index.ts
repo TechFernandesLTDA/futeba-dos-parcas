@@ -5,8 +5,7 @@
  * módulos das Cloud Functions.
  */
 
-import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 
 // ==========================================
 // MODELS & INTERFACES
@@ -16,7 +15,7 @@ export interface Game {
     id: string;
     xp_processed?: boolean;
     xp_processing?: boolean;
-    xp_processing_at?: admin.firestore.Timestamp;
+    xp_processing_at?: Timestamp;
     xp_processing_error?: string;
     status: string; // "FINISHED"
     mvp_id?: string;
@@ -28,7 +27,7 @@ export interface Game {
     owner_id: string;
     group_id?: string;
     date?: string;
-    dateTime?: admin.firestore.Timestamp;
+    dateTime?: Timestamp;
     // Fase 4 (gênero): categoria do jogo MALE/FEMALE/MIXED.
     // Ausente em jogos legados → tratado como MIXED na leitura.
     gender?: string;

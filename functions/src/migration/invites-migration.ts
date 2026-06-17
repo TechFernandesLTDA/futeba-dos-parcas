@@ -18,7 +18,7 @@
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
 import {HttpsError} from "firebase-functions/v2/https";
-import {FieldValue, FieldPath} from "firebase-admin/firestore";
+import {FieldValue, FieldPath, Timestamp} from "firebase-admin/firestore";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
 import {ERROR_MSGS} from "../error-messages";
 import {db} from "../_db";
@@ -185,7 +185,7 @@ export const migrateGroupsInviteCodeToInvites =
 
               // Cria doc em invites/ com TTL longo
               // (legacy codes sao sticky -> 365 dias)
-              const expiresAt = admin.firestore.Timestamp
+              const expiresAt = Timestamp
                 .fromMillis(
                   Date.now() + 365 * 24 * 60 * 60 * 1000
                 );

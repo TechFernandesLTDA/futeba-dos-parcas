@@ -28,7 +28,7 @@
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {isRecord} from "../validation/guards";
 
@@ -39,7 +39,7 @@ interface InviteData {
   group_name?: string;
   used: boolean;
   used_by?: string;
-  expires_at?: admin.firestore.Timestamp | null;
+  expires_at?: Timestamp | null;
 }
 
 /**

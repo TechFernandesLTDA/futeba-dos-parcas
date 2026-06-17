@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import {
@@ -150,7 +150,7 @@ export const checkSeasonEnd = onSchedule(
         .where("season_id", "==", seasonId)
         .get();
       const existingFrozenAt =
-        new Map<string, admin.firestore.Timestamp>();
+        new Map<string, Timestamp>();
       for (const d of existingStandingsSnap.docs || []) {
         const fa = d.data().frozen_at;
         if (fa) existingFrozenAt.set(d.id, fa);

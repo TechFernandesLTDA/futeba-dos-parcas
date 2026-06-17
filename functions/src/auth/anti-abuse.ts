@@ -10,8 +10,7 @@
  */
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
-import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {createHash} from "crypto";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
@@ -275,7 +274,7 @@ export const logVerificationFailure = onCall(
 
       // Verifica se user tem muitas falhas recentes (>= threshold)
       // e loga alert pra investigacao
-      const oneHourAgo = admin.firestore.Timestamp.fromMillis(
+      const oneHourAgo = Timestamp.fromMillis(
         Date.now() - 60 * 60 * 1000,
       );
       const recentFails = await db()

@@ -1,5 +1,4 @@
-import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import {db} from "../_db";
@@ -68,7 +67,7 @@ export const onCashboxEntryWritten = onDocumentWritten(
 
           const createdAt = data.created_at;
           let createdMillis = 0;
-          if (createdAt instanceof admin.firestore.Timestamp) {
+          if (createdAt instanceof Timestamp) {
             createdMillis = createdAt.toMillis();
           } else if (typeof createdAt === "number") {
             createdMillis = createdAt;
@@ -92,7 +91,7 @@ export const onCashboxEntryWritten = onDocumentWritten(
             total_expense: totalExpense,
             entry_count: entryCount,
             last_entry_at: lastEntryMillis > 0 ?
-              admin.firestore.Timestamp.fromMillis(lastEntryMillis) :
+              Timestamp.fromMillis(lastEntryMillis) :
               null,
             recomputed_at: FieldValue.serverTimestamp(),
           },

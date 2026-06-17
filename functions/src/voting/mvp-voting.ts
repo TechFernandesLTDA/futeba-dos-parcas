@@ -625,8 +625,7 @@ export const concludeMvpVoting =
                     voting_status:
                       "CONCLUDED",
                     voting_concluded_at:
-                      admin.firestore
-                        .FieldValue
+                      FieldValue
                         .serverTimestamp(),
                     voting_concluded_by:
                       userId,
@@ -702,8 +701,7 @@ export const concludeMvpVoting =
                       worstPlayerId ===
                       confUserId,
                     voting_concluded_at:
-                      admin.firestore
-                        .FieldValue
+                      FieldValue
                         .serverTimestamp(),
                   }
                 );
@@ -715,8 +713,7 @@ export const concludeMvpVoting =
                 Record<string, unknown> = {
                   voting_status: "CONCLUDED",
                   voting_concluded_at:
-                    admin.firestore
-                      .FieldValue
+                    FieldValue
                       .serverTimestamp(),
                   voting_concluded_by:
                     userId,

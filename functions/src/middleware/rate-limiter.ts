@@ -11,8 +11,7 @@
  * - Cleanup automático de registros expirados
  */
 
-import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {
   HttpsError,
@@ -163,7 +162,7 @@ export async function checkRateLimit(
               FieldValue
                 .serverTimestamp(),
             expires_at:
-              admin.firestore.Timestamp
+              Timestamp
                 .fromDate(resetAt),
           },
           {merge: true}
@@ -301,7 +300,7 @@ export async function cleanupExpiredRateLimits(
     "de rate limits expirados..."
   );
 
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
 
   try {
     // Buscar buckets expirados
@@ -413,7 +412,7 @@ export async function checkRateLimitByIp(
               FieldValue
                 .serverTimestamp(),
             expires_at:
-              admin.firestore.Timestamp
+              Timestamp
                 .fromDate(resetAt),
           },
           {merge: true}
