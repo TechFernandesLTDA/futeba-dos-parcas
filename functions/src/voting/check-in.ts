@@ -15,8 +15,7 @@
  */
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
-import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 // FIX #2199: crypto.randomUUID() era usado sem import (undefined em runtime).
 import crypto from "crypto";
 import {db} from "../_db";
@@ -178,7 +177,7 @@ export const checkInToGame = onCall(
     // muito), mas SEM limite depois (jogo LIVE = qualquer horário válido).
     // Status CONFIRMED ou LIVE já é validado acima — gate semântico real.
     const gameDateTime = game.dateTime as
-      | admin.firestore.Timestamp
+      | Timestamp
       | undefined;
     if (
       gameDateTime &&
@@ -205,7 +204,7 @@ export const checkInToGame = onCall(
       if (typeof storedToken === "string" && storedToken === qrToken) {
         // FIX #2051: QR token expiration check (24h)
         const expiresAt = game.checkin_qr_token_expires_at as
-          admin.firestore.Timestamp | undefined;
+          Timestamp | undefined;
         if (
           expiresAt &&
           typeof expiresAt.toDate === "function" &&
@@ -321,8 +320,7 @@ export const checkInToGame = onCall(
         confRef,
         {
           checked_in: true,
-          checked_in_at: admin.firestore
-            .FieldValue.serverTimestamp(),
+          checked_in_at: FieldValue.serverTimestamp(),
           check_in_lat_approx:
             typeof lat === "number" ?
               Math.round(lat * 1000) / 1000 :
@@ -407,7 +405,7 @@ export const generateCheckinToken = onCall(
     // FIX #2051: Reuse existing valid token to prevent spamming
     const existingToken = game.checkin_qr_token as string | undefined;
     const existingExpiresAt = game.checkin_qr_token_expires_at as
-      admin.firestore.Timestamp | undefined;
+      Timestamp | undefined;
     if (
       typeof existingToken === "string" &&
       existingExpiresAt &&
@@ -422,7 +420,7 @@ export const generateCheckinToken = onCall(
 
     await db().doc(`games/${gameId}`).update({
       checkin_qr_token: token,
-      checkin_qr_token_expires_at: admin.firestore.Timestamp.fromMillis(
+      checkin_qr_token_expires_at: Timestamp.fromMillis(
         Date.now() + 24 * 60 * 60 * 1000
       ),
       checkin_qr_token_created_at: FieldValue.serverTimestamp(),

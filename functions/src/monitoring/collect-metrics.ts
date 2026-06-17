@@ -1,7 +1,7 @@
 import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 
 import "../types/firestore-count";
 import {db} from "../_db";
@@ -141,7 +141,7 @@ export const collectHourlyMetrics =
             .where(
               "created_at",
               ">=",
-              admin.firestore.Timestamp.fromDate(oneDayAgo)
+              Timestamp.fromDate(oneDayAgo)
             )
         ),
         countWindow(
@@ -152,7 +152,7 @@ export const collectHourlyMetrics =
             .where(
               "xp_processed_at",
               ">=",
-              admin.firestore.Timestamp.fromDate(oneDayAgo)
+              Timestamp.fromDate(oneDayAgo)
             )
         ),
         countWindow(
@@ -162,7 +162,7 @@ export const collectHourlyMetrics =
             .where(
               "updated_at",
               ">=",
-              admin.firestore.Timestamp.fromDate(sevenDaysAgo)
+              Timestamp.fromDate(sevenDaysAgo)
             )
         ),
         countWindow(
@@ -172,7 +172,7 @@ export const collectHourlyMetrics =
             .where(
               "created_at",
               ">=",
-              admin.firestore.Timestamp.fromDate(oneDayAgo)
+              Timestamp.fromDate(oneDayAgo)
             )
         ),
       ]);
@@ -188,7 +188,7 @@ export const collectHourlyMetrics =
           .where(
             "created_at",
             ">=",
-            admin.firestore.Timestamp.fromDate(oneDayAgo)
+            Timestamp.fromDate(oneDayAgo)
           )
           .limit(1000)
           .get();
@@ -326,10 +326,10 @@ export const collectDailyMetrics =
     tomorrowBrt.setUTCDate(tomorrowBrt.getUTCDate() + 1);
 
     const todayTs =
-      admin.firestore.Timestamp
+      Timestamp
         .fromDate(todayBrt);
     const tomorrowTs =
-      admin.firestore.Timestamp
+      Timestamp
         .fromDate(tomorrowBrt);
 
     try {
@@ -461,7 +461,7 @@ export const cleanupOldMetrics =
       ninetyDaysAgo.getDate() - 90
     );
     const cutoffDate =
-      admin.firestore.Timestamp
+      Timestamp
         .fromDate(ninetyDaysAgo);
 
     let totalDeleted = 0;

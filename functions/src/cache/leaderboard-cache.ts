@@ -28,7 +28,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {FieldPath} from "firebase-admin/firestore";
+import {FieldPath, Timestamp} from "firebase-admin/firestore";
 import {
   onCall,
   HttpsError,
@@ -79,9 +79,9 @@ interface CachedLeaderboard {
   /** Rankings cacheados */
   rankings: LeaderboardEntry[];
   /** Timestamp de criação do cache */
-  cached_at: admin.firestore.Timestamp;
+  cached_at: Timestamp;
   /** Timestamp de expiração */
-  expires_at: admin.firestore.Timestamp;
+  expires_at: Timestamp;
   /** Número de entradas */
   count: number;
 }
@@ -366,9 +366,9 @@ export const getLeaderboardCached =
       // 4. SALVAR NO CACHE
       // ==========================================
       const now =
-        admin.firestore.Timestamp.now();
+        Timestamp.now();
       const expiresAt =
-        admin.firestore.Timestamp.fromMillis(
+        Timestamp.fromMillis(
           now.toMillis() + CACHE_TTL_MS
         );
 

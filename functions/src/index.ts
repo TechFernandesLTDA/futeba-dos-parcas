@@ -343,8 +343,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
           tx.update(gameRef, {
             xp_processing: true,
-            xp_processing_at: admin.firestore
-              .FieldValue.serverTimestamp(),
+            xp_processing_at: FieldValue.serverTimestamp(),
           });
           return {
             shouldProcess: true,
@@ -560,8 +559,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           await event.data.after.ref.update({
             xp_processed: true,
             xp_processing: false,
-            xp_processed_at: admin.firestore
-              .FieldValue.serverTimestamp(),
+            xp_processed_at: FieldValue.serverTimestamp(),
           });
           return;
         }
@@ -629,8 +627,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         const batchCommits: Promise<
           admin.firestore.WriteResult[]
         >[] = [];
-        const now = admin.firestore
-          .FieldValue.serverTimestamp();
+        const now = FieldValue.serverTimestamp();
 
         // Helper: Verifica se precisa criar novo
         // batch antes de adicionar ops
@@ -971,15 +968,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
           const userUpdate: Record<
             string, unknown
           > = {
-            experience_points: admin.firestore
-              .FieldValue.increment(xp),
+            experience_points: FieldValue.increment(xp),
             level: newLevel,
             updated_at: now,
           };
           if (newMilestones.length > 0) {
             userUpdate.milestones_achieved =
-              admin.firestore
-                .FieldValue
+              FieldValue
                 .arrayUnion(...newMilestones);
           }
           currentBatch.update(
@@ -1163,11 +1158,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
             currentBatch.set(badgeRef, {
               user_id: uid,
               badge_id: badge,
-              last_earned_at: admin.firestore
-                .FieldValue
+              last_earned_at: FieldValue
                 .serverTimestamp(),
-              count: admin.firestore
-                .FieldValue.increment(1),
+              count: FieldValue.increment(1),
             }, {merge: true});
             currentBatchOps++;
           }
@@ -1957,8 +1950,7 @@ export const onGroupDeleted = onDocumentDeleted(
             group_id: null,
             group_deleted: true,
             group_deleted_at:
-              admin.firestore
-                .FieldValue
+              FieldValue
                 .serverTimestamp(),
           },
         })
@@ -2121,8 +2113,7 @@ export const onConfirmationWrite =
         const updateFields: Record<string, unknown> = {
           players_count:
             FieldValue.increment(delta),
-          updated_at: admin.firestore
-            .FieldValue.serverTimestamp(),
+          updated_at: FieldValue.serverTimestamp(),
         };
         if (gkDelta !== 0) {
           updateFields.goalkeepers_count =

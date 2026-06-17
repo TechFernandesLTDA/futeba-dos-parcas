@@ -40,7 +40,7 @@ async function generateUniqueCode(): Promise<string> {
       const code = generateInviteCode(length);
       try {
         await inviteCodesRef.doc(code).create({
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
         });
         return code;
       } catch (e: unknown) {
@@ -54,7 +54,7 @@ async function generateUniqueCode(): Promise<string> {
     const code = generateInviteCode(10);
     try {
       await inviteCodesRef.doc(code).create({
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
       });
       return code;
     } catch (e: unknown) {

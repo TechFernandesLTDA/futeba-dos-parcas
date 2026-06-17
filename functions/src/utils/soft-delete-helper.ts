@@ -26,7 +26,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {FieldValue, FieldPath} from "firebase-admin/firestore";
+import {FieldValue, FieldPath, Timestamp} from "firebase-admin/firestore";
 
 const getDb = () => admin.firestore();
 
@@ -391,7 +391,7 @@ export async function cleanupSoftDeleted(
     cutoffDate.getDate() - retentionDays
   );
   const cutoffTimestamp =
-    admin.firestore.Timestamp.fromDate(cutoffDate);
+    Timestamp.fromDate(cutoffDate);
 
   let totalDeleted = 0;
   let batchCount = 0;

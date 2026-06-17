@@ -15,8 +15,7 @@
 
 import {logger} from "firebase-functions";
 import {onSchedule} from "firebase-functions/v2/scheduler";
-import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {
   FUNCTION_REGION,
 } from "./constants";
@@ -78,7 +77,7 @@ export const REMINDER_SKIP_STATUSES = [
 
 export interface GameForReminder {
   id: string;
-  dateTime: admin.firestore.Timestamp | null;
+  dateTime: Timestamp | null;
   date: string | null;
   time: string | null;
   status: string;
@@ -229,11 +228,11 @@ async function fetchGamesInReminderWindow(
   // Nota: Firestore nao suporta NOT IN,
   // entao filtramos depois
   const startTs =
-    admin.firestore.Timestamp.fromDate(
+    Timestamp.fromDate(
       windowStart
     );
   const endTs =
-    admin.firestore.Timestamp.fromDate(
+    Timestamp.fromDate(
       windowEnd
     );
   const gamesSnap = await db()
@@ -1045,9 +1044,9 @@ export const autoCancelLowQuorum = onSchedule(
       );
 
       const nowTs =
-        admin.firestore.Timestamp.fromDate(now);
+        Timestamp.fromDate(now);
       const endTs =
-        admin.firestore.Timestamp.fromDate(
+        Timestamp.fromDate(
           windowEnd
         );
 
@@ -1240,7 +1239,7 @@ export const processExpiredWaitlistEntries =
         // com status NOTIFIED onde
         // response_deadline ja passou
         const nowTs =
-          admin.firestore.Timestamp.fromDate(
+          Timestamp.fromDate(
             now
           );
         const waitlistQuery = await db()
@@ -1311,7 +1310,7 @@ export const processExpiredWaitlistEntries =
                 const now = new Date();
                 const deadlineMs = now.getTime() + 30 * 60 * 1000;
                 const newDeadline = new Date(deadlineMs);
-                const deadlineTs = admin.firestore.Timestamp.fromDate(newDeadline);
+                const deadlineTs = Timestamp.fromDate(newDeadline);
                 const notifTs = FieldValue.serverTimestamp();
 
                 // 4. Update status to NOTIFIED

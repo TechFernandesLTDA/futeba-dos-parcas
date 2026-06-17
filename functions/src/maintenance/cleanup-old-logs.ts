@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions/v2";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {Timestamp} from "firebase-admin/firestore";
 import {
   FIRESTORE_PAGINATION_LIMIT,
 } from "../constants";
@@ -64,13 +65,13 @@ export const cleanupOldXpLogs =
       "[CLEANUP] Starting xp_logs cleanup (TTL: 1 year)"
     );
 
-    const now = admin.firestore.Timestamp.now();
+    const now = Timestamp.now();
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(
       oneYearAgo.getFullYear() - 1
     );
     const cutoffDate =
-      admin.firestore.Timestamp.fromDate(oneYearAgo);
+      Timestamp.fromDate(oneYearAgo);
 
     logger.info(
       "[CLEANUP] Cutoff date: " +
@@ -209,13 +210,13 @@ export const cleanupOldActivities =
       "(TTL: 90 days)"
     );
 
-    const now = admin.firestore.Timestamp.now();
+    const now = Timestamp.now();
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(
       ninetyDaysAgo.getDate() - 90
     );
     const cutoffDate =
-      admin.firestore.Timestamp.fromDate(
+      Timestamp.fromDate(
         ninetyDaysAgo
       );
 
@@ -336,13 +337,13 @@ export const cleanupOldNotifications =
       "(TTL: 30 days, read only)"
     );
 
-    const now = admin.firestore.Timestamp.now();
+    const now = Timestamp.now();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(
       thirtyDaysAgo.getDate() - 30
     );
     const cutoffDate =
-      admin.firestore.Timestamp.fromDate(
+      Timestamp.fromDate(
         thirtyDaysAgo
       );
 
