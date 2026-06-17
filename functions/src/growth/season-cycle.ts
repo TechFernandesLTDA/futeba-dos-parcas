@@ -103,10 +103,15 @@ export const archiveSeason = onSchedule(
         if (!seasonDoc.exists) continue;
         if (!seasonDoc.data()?.is_active) continue;
 
+        // FIX #2770: filtrar por season_id antes de ordenar,
+        // pois league_standings acumula histórico de todas as temporadas
+        // (doc id = `${seasonId}_${userId}`, campo season_id).
+        // Sem o filtro, MVP/lanterninha misturavam temporadas anteriores.
         const standingsSnap = await db()
           .collection("groups")
           .doc(groupId)
           .collection("league_standings")
+          .where("season_id", "==", monthKey)
           .orderBy("points", "desc")
           .get();
 
