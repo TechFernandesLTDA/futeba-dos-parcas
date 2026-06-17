@@ -7,7 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +37,7 @@ fun ThemeSettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -45,10 +48,15 @@ fun ThemeSettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemeMode.values().forEach { mode ->
+                        val modeLabel = when (mode) {
+                            ThemeMode.LIGHT -> stringResource(R.string.theme_mode_light)
+                            ThemeMode.DARK -> stringResource(R.string.theme_mode_dark)
+                            ThemeMode.SYSTEM -> stringResource(R.string.theme_mode_system)
+                        }
                         FilterChip(
                             selected = config.mode == mode,
                             onClick = { viewModel.setThemeMode(mode) },
-                            label = { Text(mode.name) }
+                            label = { Text(modeLabel) }
                         )
                     }
                 }

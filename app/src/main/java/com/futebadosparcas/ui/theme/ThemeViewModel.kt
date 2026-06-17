@@ -53,8 +53,15 @@ class ThemeViewModel(
     fun resetTheme() {
         viewModelScope.launch {
             themeRepository.resetThemeConfig()
-            com.futebadosparcas.util.ThemeHelper.applyTheme("light")
-            preferencesManager.setThemePreference("light")
+            // Aplica o modo padrão real (SYSTEM), não "light" hardcoded — fix #2771
+            val defaultMode = AppThemeConfig().mode
+            val themeString = when (defaultMode) {
+                ThemeMode.LIGHT -> "light"
+                ThemeMode.DARK -> "dark"
+                ThemeMode.SYSTEM -> "system"
+            }
+            com.futebadosparcas.util.ThemeHelper.applyTheme(themeString)
+            preferencesManager.setThemePreference(themeString)
         }
     }
 

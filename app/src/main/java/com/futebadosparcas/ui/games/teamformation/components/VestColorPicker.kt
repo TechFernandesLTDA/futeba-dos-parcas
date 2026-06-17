@@ -302,10 +302,13 @@ fun VestColorPickerDialog(
             )
         },
         text = {
+            // heightIn obrigatório: LazyVerticalGrid no slot text do AlertDialog
+            // recebe constraints infinitas e causa crash sem altura explícita — fix #2773
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 56.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.heightIn(max = 240.dp)
             ) {
                 items(TeamColor.entries.toList()) { color ->
                     val isSelected = color == currentColor
