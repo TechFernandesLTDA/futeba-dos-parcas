@@ -73,9 +73,7 @@ class ThemeViewModel(
 
     fun setUseDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
-            themeConfig.value.let { config ->
-                themeRepository.updateThemeConfig(config.copy(useDynamicColor = enabled))
-            }
+            themeRepository.setUseDynamicColor(enabled)
         }
     }
 }
