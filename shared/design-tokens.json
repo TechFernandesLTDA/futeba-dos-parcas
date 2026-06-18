@@ -131,11 +131,12 @@
   },
 
   "radius": {
+    "_note": "xl=28 alinhado ao código vivo (M3 extraLarge=28dp em Shape.kt Android+composeApp) — issue #2753",
     "xs": 4,
     "sm": 8,
     "md": 12,
     "lg": 16,
-    "xl": 24,
+    "xl": 28,
     "full": 999
   },
 

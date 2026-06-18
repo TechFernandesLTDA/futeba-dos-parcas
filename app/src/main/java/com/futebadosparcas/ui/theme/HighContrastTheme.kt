@@ -45,6 +45,12 @@ object HighContrastLightColors {
     val SecondaryContainer = Color(0xFF00695C)
     val OnSecondaryContainer = Color(0xFFFFFFFF)
 
+    // Tertiary - Laranja/marrom escuro (família terciária da marca), distinto do Secondary teal e AA vs branco (#2749)
+    val Tertiary = Color(0xFF8A3A00)
+    val OnTertiary = Color(0xFFFFFFFF)
+    val TertiaryContainer = Color(0xFFB45309)
+    val OnTertiaryContainer = Color(0xFFFFFFFF)
+
     // Error - Vermelho escuro
     val Error = Color(0xFFB71C1C)
     val OnError = Color(0xFFFFFFFF)
@@ -82,6 +88,12 @@ object HighContrastDarkColors {
     val SecondaryContainer = Color(0xFF4DB6AC)
     val OnSecondaryContainer = Color(0xFF000000)
 
+    // Tertiary - Âmbar claro (família terciária da marca), distinto do Secondary teal e AA vs preto (#2749)
+    val Tertiary = Color(0xFFFFB74D)
+    val OnTertiary = Color(0xFF000000)
+    val TertiaryContainer = Color(0xFFFF9E40)
+    val OnTertiaryContainer = Color(0xFF000000)
+
     // Error
     val Error = Color(0xFFFF8A80)
     val OnError = Color(0xFF000000)
@@ -109,8 +121,10 @@ val HighContrastLightColorScheme = lightColorScheme(
     secondaryContainer = HighContrastLightColors.SecondaryContainer,
     onSecondaryContainer = HighContrastLightColors.OnSecondaryContainer,
 
-    tertiary = HighContrastLightColors.Secondary,
-    onTertiary = HighContrastLightColors.OnSecondary,
+    tertiary = HighContrastLightColors.Tertiary,
+    onTertiary = HighContrastLightColors.OnTertiary,
+    tertiaryContainer = HighContrastLightColors.TertiaryContainer,
+    onTertiaryContainer = HighContrastLightColors.OnTertiaryContainer,
 
     error = HighContrastLightColors.Error,
     onError = HighContrastLightColors.OnError,
@@ -148,8 +162,10 @@ val HighContrastDarkColorScheme = darkColorScheme(
     secondaryContainer = HighContrastDarkColors.SecondaryContainer,
     onSecondaryContainer = HighContrastDarkColors.OnSecondaryContainer,
 
-    tertiary = HighContrastDarkColors.Secondary,
-    onTertiary = HighContrastDarkColors.OnSecondary,
+    tertiary = HighContrastDarkColors.Tertiary,
+    onTertiary = HighContrastDarkColors.OnTertiary,
+    tertiaryContainer = HighContrastDarkColors.TertiaryContainer,
+    onTertiaryContainer = HighContrastDarkColors.OnTertiaryContainer,
 
     error = HighContrastDarkColors.Error,
     onError = HighContrastDarkColors.OnError,
