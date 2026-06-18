@@ -242,6 +242,8 @@ object GamificationColors {
     val Silver = Color(0xFFE0E0E0)
     val Bronze = Color(0xFFCD7F32)
     val Diamond = Color(0xFFB9F2FF)
+    val Platinum = Color(0xFF00E676)   // Divisão Platina (paridade tokens #2752)
+    val Champion = Color(0xFFE91E63)   // Divisão Campeão (paridade tokens #2752)
 
     // Cor semântica do cartão amarelo de futebol (fixa, independente do tema).
     val CardYellow = Color(0xFFFDD835)

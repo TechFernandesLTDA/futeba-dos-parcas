@@ -71,6 +71,9 @@ jobs:
           # Verifica se o PR tem uma spec linkada (opcional - apenas warning)
           echo "Reminder: PRs should reference a spec file in /specs/"
 
+      - name: Design tokens parity (web/Android/composeApp vs shared/design-tokens.json)
+        run: node scripts/check-design-tokens-parity.js
+
       - name: Build Check
         run: ./gradlew compileDebugKotlin
 
