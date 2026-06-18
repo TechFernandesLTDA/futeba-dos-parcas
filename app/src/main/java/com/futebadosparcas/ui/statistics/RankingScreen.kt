@@ -42,7 +42,7 @@ import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
-import com.futebadosparcas.ui.theme.Spacing
+import com.futebadosparcas.ui.theme.AppDimensions
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -629,7 +629,7 @@ private fun PlayerAvatar(
 private fun LevelBadge(level: Int, size: String = "normal") {
     val padding = if (size == "small") 2.dp else 4.dp
     val fontSize = if (size == "small") MaterialTheme.typography.labelSmall.fontSize else MaterialTheme.typography.bodySmall.fontSize
-    val iconSize = if (size == "small") Spacing.sm else 12.dp
+    val iconSize = if (size == "small") AppDimensions.spacing_small else 12.dp
 
     Surface(
         color = MaterialTheme.colorScheme.tertiaryContainer,

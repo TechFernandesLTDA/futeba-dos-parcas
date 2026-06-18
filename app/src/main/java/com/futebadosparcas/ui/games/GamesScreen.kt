@@ -42,7 +42,6 @@ import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
 import com.futebadosparcas.ui.theme.GamificationColors
-import com.futebadosparcas.ui.theme.Spacing
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
@@ -424,7 +423,7 @@ private fun GameCard(
 
                 // Badge de tipo de campo
                 Surface(
-                    shape = RoundedCornerShape(Spacing.sm),
+                    shape = RoundedCornerShape(AppDimensions.spacing_small),
                     color = getFieldTypeColor(game.game.gameType),
                     modifier = Modifier.padding(start = AppDimensions.spacing_small)
                 ) {
@@ -498,7 +497,7 @@ private fun GameCard(
                             text = getStatusText(game.game.status),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = 2.dp)
                         )
                     }
                 }
@@ -528,7 +527,7 @@ private fun GenderBadge(
     }
 
     Surface(
-        shape = RoundedCornerShape(Spacing.sm),
+        shape = RoundedCornerShape(AppDimensions.spacing_small),
         color = MaterialTheme.colorScheme.tertiaryContainer,
         modifier = modifier.semantics {
             contentDescription = label
@@ -611,7 +610,7 @@ private fun GamesEmptyState(
                 .fillMaxWidth(0.6f)
                 .height(AppDimensions.height_button_large)
         ) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(Spacing.md))
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(AppDimensions.spacing_medium))
             Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
             Text(stringResource(R.string.empty_state_no_games_action))
         }
@@ -667,12 +666,12 @@ private fun GamesErrorState(
         ) {
             if (isRetrying) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(Spacing.md),
+                    modifier = Modifier.size(AppDimensions.spacing_medium),
                     strokeWidth = 2.dp,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
-                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(Spacing.md))
+                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(AppDimensions.spacing_medium))
                 Spacer(modifier = Modifier.width(AppDimensions.spacing_small))
                 Text(stringResource(R.string.retry))
             }

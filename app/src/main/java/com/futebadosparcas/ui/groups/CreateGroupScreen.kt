@@ -40,7 +40,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.FutebaTheme
-import com.futebadosparcas.ui.theme.Spacing
+import com.futebadosparcas.ui.theme.AppDimensions
 import java.io.File
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.GameGender
@@ -458,7 +458,7 @@ private fun GroupPhotoSection(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
-                modifier = Modifier.size(Spacing.md)
+                modifier = Modifier.size(AppDimensions.spacing_medium)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
