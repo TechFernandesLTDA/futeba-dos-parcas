@@ -47,6 +47,12 @@ interface ThemeRepository {
     suspend fun setContrastLevel(level: ContrastLevel)
 
     /**
+     * Habilita/desabilita as cores dinamicas do Material You (Android 12+).
+     * Opt-in: por padrao usa a identidade verde da marca (#2684).
+     */
+    suspend fun setUseDynamicColor(enabled: Boolean)
+
+    /**
      * Reseta a configuracao do tema para os valores padrao.
      */
     suspend fun resetThemeConfig()
