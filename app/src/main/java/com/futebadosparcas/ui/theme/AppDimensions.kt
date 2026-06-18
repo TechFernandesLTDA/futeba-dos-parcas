@@ -13,18 +13,24 @@ import androidx.compose.ui.unit.dp
 object AppDimensions {
 
     // ==========================================
-    // SPACING - Sistema de espaçamento MD3
+    // SPACING - Sistema de espaçamento MD3 (escala 8dp)
     // ==========================================
+    // #2750: fonte canônica ÚNICA de espaçamento. O antigo objeto `Spacing`
+    // (xs=4, sm=8, md=16, lg=24, xl=32) foi colapsado aqui — usar AppDimensions.
     val spacing_none = 0.dp
     val spacing_extraSmall = 4.dp
     val spacing_small = 8.dp
-    val spacing_medium = 16.dp     // #2750: alinhado com Spacing.md (16dp)
+    val spacing_medium = 16.dp
+    // NOTA (#2750): spacing_large = 16dp DUPLICA spacing_medium. Mantido nesse
+    // valor de propósito — `padding_screen`/`padding_card` dependem dele esperando
+    // 16dp e alterá-lo para 24dp mudaria o padding de várias telas. Para 24dp,
+    // usar spacing_extraLarge (ou o alias spacing_lg).
     val spacing_large = 16.dp
     val spacing_extraLarge = 24.dp
     val spacing_huge = 32.dp
     val spacing_massive = 48.dp
 
-    // Aliases para compatibilidade (#2750: alinhados com Spacing/AdaptiveSpacing)
+    // Aliases para compatibilidade (#2750: alinhados com AdaptiveSpacing)
     val spacing_md = spacing_medium       // 16dp
     val spacing_lg = spacing_extraLarge   // 24dp
     val spacing_xl = spacing_huge         // 32dp
@@ -135,6 +141,6 @@ object AppDimensions {
 }
 
 // NOTA (#2143): os aliases de extensão Dp.md/Dp.lg foram removidos por estarem
-// sem uso e por conflitarem com a convenção do projeto (md=16dp, lg=24dp em
-// Spacing/AdaptiveSpacing). Eles definiam md=12dp/lg=16dp, criando ambiguidade.
+// sem uso e por conflitarem com a convenção do projeto (md=16dp, lg=24dp).
+// Eles definiam md=12dp/lg=16dp, criando ambiguidade.
 // Use AppDimensions.spacing_* ou AdaptiveSpacing para espaçamento.
