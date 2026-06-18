@@ -26,9 +26,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    // No CI usamos o app pré-buildado servido por `vite preview` (estático,
+    // baixa memória) em vez de `vite dev` (compila on-the-fly, alta memória).
+    // O dev server somado a Java emulators + functions + chromium estourava o
+    // runner self-hosted (OOM, exit 137). #2784
+    command: process.env.CI ? 'npm run preview -- --port 5173 --strictPort' : 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
-    timeout: 30000,
+    timeout: process.env.CI ? 60000 : 30000,
   },
 });

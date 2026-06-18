@@ -28,6 +28,16 @@ jobs:
       VITE_TEST_ADMIN_EMAIL: test.admin@futeba.test
       VITE_TEST_ADMIN_PASSWORD: Test123!@#
       VITE_USE_EMULATOR: "true"
+      # Config Firebase dummy para satisfazer verify-env.mjs no build E2E.
+      # Em modo emulador (VITE_USE_EMULATOR=true) o SDK conecta nos emuladores,
+      # então os valores reais são irrelevantes; só o projectId casa com o
+      # GCLOUD_PROJECT do emulador Firestore. #2784
+      VITE_FIREBASE_API_KEY: "demo-api-key"
+      VITE_FIREBASE_AUTH_DOMAIN: "futebadosparcas.firebaseapp.com"
+      VITE_FIREBASE_PROJECT_ID: "futebadosparcas"
+      VITE_FIREBASE_STORAGE_BUCKET: "futebadosparcas.appspot.com"
+      VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
 
     steps:
       - name: Checkout
@@ -63,13 +73,21 @@ jobs:
         working-directory: web
         run: npm ci
 
+      - name: Build web (modo emulador)
+        # Pré-builda o app para ser servido por `vite preview` (estático, baixa
+        # memória) durante os testes — evita o `vite dev` que estourava o runner
+        # por OOM. O build roda ANTES dos emuladores (menor pico de memória) e
+        # herda as VITE_* do job env (incluindo VITE_USE_EMULATOR=true). #2784
+        working-directory: web
+        run: npm run build
+
       - name: Instalar browsers Playwright
         working-directory: web
         run: npx playwright install --with-deps chromium
 
       - name: E2E (emulador + seed + Playwright)
         # emulators:exec sobe/derruba emuladores automaticamente.
-        # O script inline faz seed e roda Playwright (webServer = vite dev).
+        # O script inline faz seed e roda Playwright (webServer = vite preview no CI).
         run: |
           firebase emulators:exec \
             --only auth,firestore,functions \
@@ -79,7 +97,7 @@ jobs:
               echo \"[e2e] Emuladores prontos — seed...\"
               NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
               NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
-              echo \"[e2e] Seed OK — Playwright (vite dev via webServer config)...\"
+              echo \"[e2e] Seed OK — Playwright (vite preview via webServer config)...\"
               cd web && npx playwright test --project=chromium
             "'
         env:
