@@ -84,7 +84,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         if (!response.ok) throw new Error('CEP not found');
         const data = await response.json();
         if (data.erro) {
-          setErrors((prev) => ({ ...prev, cep: 'CEP nao encontrado' }));
+          setErrors((prev) => ({ ...prev, cep: t('locations.quickCreate.cepNotFound') }));
           return;
         }
         const street = [data.logradouro, data.complemento].filter(Boolean).join(', ');
@@ -96,7 +96,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         }
       } catch (err: unknown) {
         if ((err as Error)?.name === 'AbortError') return;
-        setErrors((prev) => ({ ...prev, cep: 'Erro ao buscar CEP' }));
+        setErrors((prev) => ({ ...prev, cep: t('locations.quickCreate.cepError') }));
       } finally {
         setCepLoading(false);
       }
@@ -186,12 +186,12 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>Criar Local</DialogTitle>
+      <DialogTitle>{t('locations.quickCreate.title')}</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
             autoFocus
-            label="Nome do Local"
+            label={t('locations.quickCreate.locationName')}
             value={name}
             onChange={(e) => { setName(e.target.value); setErrors((prev) => ({ ...prev, name: '' })); }}
             error={!!errors.name}
@@ -207,7 +207,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
             fullWidth
             placeholder="00000000"
             error={!!errors.cep}
-            helperText={errors.cep || (cepLoading ? 'Buscando endereco...' : 'Digite o CEP para preencher automaticamente')}
+            helperText={errors.cep || (cepLoading ? t('locations.quickCreate.cepSearching') : t('locations.quickCreate.cepHint'))}
             InputProps={{
               endAdornment: cepLoading ? (
                 <InputAdornment position="end">
@@ -218,7 +218,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
             inputMode="numeric"
           />
           <TextField
-            label="Endereco Completo"
+            label={t('locations.quickCreate.address')}
             value={address}
             onChange={(e) => { setAddress(e.target.value); setErrors((prev) => ({ ...prev, address: '' })); }}
             error={!!errors.address}
@@ -231,7 +231,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
           />
           <TextField
             select
-            label="Tipo de Campo"
+            label={t('locations.quickCreate.fieldType')}
             value={type}
             onChange={(e) => setType(e.target.value as FieldType)}
             fullWidth
@@ -244,7 +244,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
           </TextField>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              label="Capacidade (jogadores)"
+              label={t('locations.quickCreate.capacity')}
               type="number"
               value={capacity}
               onChange={(e) => { const v = parseInt(e.target.value); setCapacity(isNaN(v) ? 14 : v); setErrors((prev) => ({ ...prev, capacity: '' })); }}
@@ -254,12 +254,12 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
               inputProps={{ min: GAME_VALIDATION.MIN_PLAYERS, max: GAME_VALIDATION.MAX_PLAYERS }}
             />
             <TextField
-              label="Preço/hora (R$)"
+              label={t('locations.quickCreate.pricePerHour')}
               type="number"
               value={defaultPrice}
               onChange={(e) => { const v = parseFloat(e.target.value); setDefaultPrice(isNaN(v) ? 0 : v); setErrors((prev) => ({ ...prev, defaultPrice: '' })); }}
               error={!!errors.defaultPrice}
-              helperText={errors.defaultPrice || 'Opcional'}
+              helperText={errors.defaultPrice || t('locations.quickCreate.optional')}
               fullWidth
               InputProps={{
                 startAdornment: <InputAdornment position="start">R$</InputAdornment>,
@@ -271,7 +271,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} disabled={loading}>
-          Cancelar
+          {t('locations.quickCreate.cancel')}
         </Button>
         <Button
           onClick={handleSave}
@@ -279,7 +279,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
         >
-          {loading ? 'Salvando...' : 'Criar'}
+          {loading ? t('locations.quickCreate.saving') : t('locations.quickCreate.create')}
         </Button>
       </DialogActions>
     </Dialog>

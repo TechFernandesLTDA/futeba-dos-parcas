@@ -140,7 +140,7 @@
     "sharePosition": "Compartilhar posição",
     "showPassword": "Mostrar senha",
     "skipNav": "Pular navegação",
-    "skipToContent": "Pular para conteúdo",
+    "skipToContent": "Pular para o conteúdo",
     "skipOnboarding": "Pular onboarding",
     "slideNav": "Navegação de slides",
     "sort": "Ordenar",
@@ -1070,7 +1070,12 @@
     "upcoming": "Próximos Jogos",
     "viewGames": "Ver jogos",
     "waitlistPosition": "Na lista de espera (posição {{position}})",
-    "watchLive": "Ver ao vivo"
+    "watchLive": "Ver ao vivo",
+    "quickCreate": {
+      "title": "Criar Jogo Rápido",
+      "customize": "Personalizar"
+    },
+    "conflictChip": "Conflito"
   },
   "group": {
     "awaitingApproval": "Aguardando aprovação do organizador",
@@ -1406,7 +1411,25 @@
     "localsCount": "{{count}} locais",
     "noLocationsFound": "Nenhum local encontrado",
     "searchingFor": "para \"{{query}}\"",
-    "tryDifferentSearch": "Tente alterar os termos da busca"
+    "tryDifferentSearch": "Tente alterar os termos da busca",
+    "quickCreate": {
+      "title": "Criar Local",
+      "locationName": "Nome do Local",
+      "address": "Endereço Completo",
+      "fieldType": "Tipo de Campo",
+      "capacity": "Capacidade (jogadores)",
+      "pricePerHour": "Preço/hora (R$)",
+      "cepHint": "Digite o CEP para preencher automaticamente",
+      "cepSearching": "Buscando endereço...",
+      "cepNotFound": "CEP não encontrado",
+      "cepError": "Erro ao buscar CEP",
+      "createSuccess": "Local \"{{name}}\" criado com sucesso!",
+      "createError": "Erro ao criar local",
+      "cancel": "Cancelar",
+      "saving": "Salvando...",
+      "create": "Criar",
+      "optional": "Opcional"
+    }
   },
   "mvp": {
     "bestGoalkeeper": "Melhor Goleiro",
@@ -2121,5 +2144,21 @@
   "sw": {
     "updateAvailable": "Nova versão disponível",
     "updateAction": "Atualizar"
+  },
+  "player": {
+    "stats": {
+      "games": "Jogos",
+      "goals": "Gols",
+      "assists": "Assists",
+      "mvps": "MVPs",
+      "streak": "Sequência",
+      "winRate": "Vitórias%"
+    }
+  },
+  "components": {
+    "donutChart": {
+      "totalLabel": "jogos",
+      "noData": "Sem dados"
+    }
   }
 }

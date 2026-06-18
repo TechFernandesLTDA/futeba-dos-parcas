@@ -1070,7 +1070,12 @@
     "upcoming": "Upcoming Games",
     "viewGames": "View games",
     "waitlistPosition": "On the waitlist (position {{position}})",
-    "watchLive": "Watch live"
+    "watchLive": "Watch live",
+    "quickCreate": {
+      "title": "Quick Create Game",
+      "customize": "Customize"
+    },
+    "conflictChip": "Conflict"
   },
   "group": {
     "awaitingApproval": "Awaiting organizer approval",
@@ -1406,7 +1411,25 @@
     "localsCount": "{{count}} locations",
     "noLocationsFound": "No locations found",
     "searchingFor": "for \"{{query}}\"",
-    "tryDifferentSearch": "Try changing your search terms"
+    "tryDifferentSearch": "Try changing your search terms",
+    "quickCreate": {
+      "title": "Create Location",
+      "locationName": "Location Name",
+      "address": "Full Address",
+      "fieldType": "Field Type",
+      "capacity": "Capacity (players)",
+      "pricePerHour": "Price/hour (R$)",
+      "cepHint": "Enter ZIP code to fill in automatically",
+      "cepSearching": "Searching address...",
+      "cepNotFound": "ZIP code not found",
+      "cepError": "Error fetching ZIP code",
+      "createSuccess": "Location \"{{name}}\" created successfully!",
+      "createError": "Error creating location",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "create": "Create",
+      "optional": "Optional"
+    }
   },
   "mvp": {
     "bestGoalkeeper": "Best Goalkeeper",
@@ -2121,5 +2144,21 @@
   "sw": {
     "updateAvailable": "New version available",
     "updateAction": "Update"
+  },
+  "player": {
+    "stats": {
+      "games": "Games",
+      "goals": "Goals",
+      "assists": "Assists",
+      "mvps": "MVPs",
+      "streak": "Streak",
+      "winRate": "Win%"
+    }
+  },
+  "components": {
+    "donutChart": {
+      "totalLabel": "games",
+      "noData": "No data"
+    }
   }
 }

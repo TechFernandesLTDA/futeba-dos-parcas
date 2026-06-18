@@ -1070,7 +1070,12 @@
     "upcoming": "Próximos Juegos",
     "viewGames": "Ver partidos",
     "waitlistPosition": "En la lista de espera (posición {{position}})",
-    "watchLive": "Ver en vivo"
+    "watchLive": "Ver en vivo",
+    "quickCreate": {
+      "title": "Crear Juego Rápido",
+      "customize": "Personalizar"
+    },
+    "conflictChip": "Conflicto"
   },
   "group": {
     "awaitingApproval": "Esperando aprobación del organizador",
@@ -1406,7 +1411,25 @@
     "localsCount": "{{count}} lugares",
     "noLocationsFound": "No se encontraron lugares",
     "searchingFor": "para \"{{query}}\"",
-    "tryDifferentSearch": "Intenta cambiar los términos de búsqueda"
+    "tryDifferentSearch": "Intenta cambiar los términos de búsqueda",
+    "quickCreate": {
+      "title": "Crear Local",
+      "locationName": "Nombre del Local",
+      "address": "Dirección Completa",
+      "fieldType": "Tipo de Campo",
+      "capacity": "Capacidad (jugadores)",
+      "pricePerHour": "Precio/hora (R$)",
+      "cepHint": "Ingresa el código postal para completar automáticamente",
+      "cepSearching": "Buscando dirección...",
+      "cepNotFound": "Código postal no encontrado",
+      "cepError": "Error al buscar el código postal",
+      "createSuccess": "Local \"{{name}}\" creado exitosamente!",
+      "createError": "Error al crear el local",
+      "cancel": "Cancelar",
+      "saving": "Guardando...",
+      "create": "Crear",
+      "optional": "Opcional"
+    }
   },
   "mvp": {
     "bestGoalkeeper": "Mejor Portero",
@@ -2121,5 +2144,21 @@
   "sw": {
     "updateAvailable": "Nueva versión disponible",
     "updateAction": "Actualizar"
+  },
+  "player": {
+    "stats": {
+      "games": "Juegos",
+      "goals": "Goles",
+      "assists": "Asistencias",
+      "mvps": "MVPs",
+      "streak": "Racha",
+      "winRate": "Victorias%"
+    }
+  },
+  "components": {
+    "donutChart": {
+      "totalLabel": "juegos",
+      "noData": "Sin datos"
+    }
   }
 }

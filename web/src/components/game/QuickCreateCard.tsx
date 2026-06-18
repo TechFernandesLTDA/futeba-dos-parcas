@@ -22,10 +22,12 @@ import {
 } from '@mui/icons-material';
 import { useGameTemplates } from '../../hooks/useGameTemplates';
 import { iconSizes } from '../../theme/iconSizes';
+import { useTranslation } from 'react-i18next';
 
 export const QuickCreateCard: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t } = useTranslation();
   const { templates, loading, error } = useGameTemplates();
 
   const topTemplates = templates.slice(0, 3);
@@ -74,7 +76,7 @@ export const QuickCreateCard: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
           <QuickIcon sx={{ fontSize: iconSizes.md, color: theme.palette.primary.main }} />
           <Typography variant="subtitle2" fontWeight={700}>
-            Criar Jogo Rápido
+            {t('games.quickCreate.title')}
           </Typography>
           <Chip
             label={`${topTemplates.length}`}
@@ -157,7 +159,7 @@ export const QuickCreateCard: React.FC = () => {
                   flexShrink: 0,
                 }}
               >
-                Personalizar
+                {t('games.quickCreate.customize')}
               </Button>
             </Box>
           ))}

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface DonutChartProps {
   wins: number;
@@ -19,10 +20,14 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   total,
   size = 120,
   strokeWidth = 18,
-  noDataLabel = 'Sem dados',
-  totalLabel = 'jogos',
+  noDataLabel,
+  totalLabel,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
+  // Usa chave i18n como fallback quando caller não passa o prop
+  const resolvedNoDataLabel = noDataLabel ?? t('components.donutChart.noData');
+  const resolvedTotalLabel = totalLabel ?? t('components.donutChart.totalLabel');
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
@@ -39,7 +44,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   if (total === 0) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1 }}>
-        <svg width={size} height={size} aria-label={noDataLabel}>
+        <svg width={size} height={size} aria-label={resolvedNoDataLabel}>
           <circle
             cx={center}
             cy={center}
@@ -55,7 +60,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
             fontSize="11"
             fill={theme.palette.text.disabled}
           >
-            {noDataLabel}
+            {resolvedNoDataLabel}
           </text>
         </svg>
       </Box>
@@ -109,7 +114,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
           fontSize="10"
           fill={theme.palette.text.secondary}
         >
-          {totalLabel}
+          {resolvedTotalLabel}
         </text>
       </svg>
       <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>

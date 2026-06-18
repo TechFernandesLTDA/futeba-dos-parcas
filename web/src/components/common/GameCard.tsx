@@ -222,7 +222,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   <Tooltip title={t('tooltip.conflictingTime')} arrow>
                     <Chip
                       icon={<ConflictIcon sx={{ fontSize: iconSizes.xs }} />}
-                      label="Conflito"
+                      label={t('games.conflictChip')}
                       size="small"
                       sx={{
                         backgroundColor: alpha(theme.palette.warning.main, 0.12),
