@@ -537,36 +537,36 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 >
                   <StatItem
                     icon={<SoccerIcon fontSize="small" />}
-                    label="Jogos"
+                    label={t('player.stats.games')}
                     value={player.totalGames}
                   />
                   <StatItem
                     icon={<SoccerIcon fontSize="small" />}
-                    label="Gols"
+                    label={t('player.stats.goals')}
                     value={player.totalGoals}
                     color={theme.palette.primary.light}
                   />
                   <StatItem
                     icon={<StarIcon fontSize="small" />}
-                    label="Assists"
+                    label={t('player.stats.assists')}
                     value={player.totalAssists}
                     color={theme.palette.info.light}
                   />
                   <StatItem
                     icon={<TrophyIcon fontSize="small" />}
-                    label="MVPs"
+                    label={t('player.stats.mvps')}
                     value={player.mvpCount}
                     color={gColors.gold}
                   />
                   <StatItem
                     icon={<FireIcon fontSize="small" />}
-                    label="Sequência"
+                    label={t('player.stats.streak')}
                     value={player.currentStreak}
                     color={theme.palette.warning.light}
                   />
                   <StatItem
                     icon={<TrophyIcon fontSize="small" />}
-                    label="Vitórias%"
+                    label={t('player.stats.winRate')}
                     value={`${winRate}%`}
                     color={theme.palette.secondary.light}
                   />

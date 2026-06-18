@@ -160,7 +160,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, game })
             />
             {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
               <Chip
-                label="Compartilhar"
+                label={t('common.share')}
                 onClick={handleNativeShare}
                 clickable
                 variant="outlined"

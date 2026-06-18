@@ -71,11 +71,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!feedbackType) newErrors.type = 'Selecione o tipo de feedback';
-    if (!title.trim()) newErrors.title = 'Título é obrigatório';
-    if (title.trim().length > 80) newErrors.title = 'Título deve ter no máximo 80 caracteres';
-    if (!description.trim()) newErrors.description = 'Descrição é obrigatória';
-    if (description.trim().length > 2000) newErrors.description = 'Descrição deve ter no máximo 2000 caracteres';
+    if (!feedbackType) newErrors.type = t('feedback.validationType');
+    if (!title.trim()) newErrors.title = t('feedback.validationTitleRequired');
+    if (title.trim().length > 80) newErrors.title = t('feedback.validationTitleMax');
+    if (!description.trim()) newErrors.description = t('feedback.validationDescriptionRequired');
+    if (description.trim().length > 2000) newErrors.description = t('feedback.validationDescriptionMax');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -111,7 +111,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
     >
       <DialogTitle id="feedback-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
         <Typography variant="h5" fontWeight={700}>
-          {submitted ? 'Feedback Enviado' : 'Enviar Feedback'}
+          {submitted ? t('feedback.dialogTitleSubmitted') : t('feedback.dialogTitle')}
         </Typography>
         <IconButton onClick={handleClose} disabled={loading} aria-label={t('a11y.close')} size="small">
           <CloseIcon aria-hidden="true" />
@@ -123,27 +123,27 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <SuccessIcon sx={{ fontSize: iconSizes.hero, color: theme.palette.success.main, mb: 2 }} aria-hidden="true" />
             <Typography variant="h6" gutterBottom>
-              Feedback enviado!
+              {t('feedback.submittedMessage')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Agradecemos sua contribuição. Nossa equipe analisará seu feedback.
+              {t('feedback.submittedThankYou')}
             </Typography>
             <Chip
-              label='Acompanhe em "Configurações > Meus feedbacks"'
+              label={t('feedback.trackHint')}
               variant="outlined"
               color="primary"
               sx={{ fontWeight: 500 }}
             />
             <Box sx={{ mt: 3 }}>
               <Button variant="contained" onClick={handleClose}>
-                Fechar
+                {t('common.close')}
               </Button>
             </Box>
           </Box>
         ) : (
           <Box component="form" noValidate>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mt: 0.5 }}>
-              Tipo de feedback
+              {t('feedback.typeLabel')}
             </Typography>
             <ToggleButtonGroup
               value={feedbackType}
@@ -197,7 +197,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
             )}
 
             <TextField
-              label="Título"
+              label={t('feedback.titleField')}
               placeholder={t('placeholder.feedbackSummary')}
               value={title}
               onChange={(e) => {
@@ -213,7 +213,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
             />
 
             <TextField
-              label="Descrição"
+              label={t('feedback.descriptionLabel')}
               placeholder={t('placeholder.feedbackDescription')}
               value={description}
               onChange={(e) => {
@@ -231,7 +231,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose })
             />
 
             <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
-              Severidade
+              {t('feedback.severityLabel')}
             </Typography>
             <ToggleButtonGroup
               value={severity}
