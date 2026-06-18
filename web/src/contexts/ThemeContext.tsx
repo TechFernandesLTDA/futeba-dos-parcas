@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
-import { responsiveFontSizes } from '@mui/material/styles';
 import { futebaTheme, futebaDarkTheme, futebaDarkOledTheme } from '../theme';
 
 export type ThemeMode = 'light' | 'dark' | 'oled' | 'system';
@@ -77,9 +76,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     mode, toggleTheme, setMode,
   }), [mode, toggleTheme]);
 
+  // A typography MD3 já usa clamp() responsivo (#2751), tornando
+  // responsiveFontSizes() redundante e conflitante (ele exige line-heights
+  // unitless e não suporta fontSize com clamp). clamp() é a única estratégia
+  // responsiva agora.
   const theme = useMemo(() => {
-    const base = mode === 'oled' ? futebaDarkOledTheme : isDark ? futebaDarkTheme : futebaTheme;
-    return responsiveFontSizes(base);
+    return mode === 'oled' ? futebaDarkOledTheme : isDark ? futebaDarkTheme : futebaTheme;
   }, [isDark, mode]);
 
   return (

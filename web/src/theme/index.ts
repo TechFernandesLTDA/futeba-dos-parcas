@@ -1,7 +1,7 @@
 import { createTheme, alpha } from '@mui/material/styles';
 import { motionDuration, motionEasing } from './motion';
 
-// Augment MUI palette with custom surface tokens
+// Augmenta a paleta MUI com todos os 7 surface containers do MD3
 declare module '@mui/material/styles' {
   interface Theme {
     shadowsCustom: Record<string, string>;
@@ -12,12 +12,22 @@ declare module '@mui/material/styles' {
     radii?: typeof radii;
   }
   interface Palette {
+    surfaceDim: string;
+    surfaceBright: string;
+    surfaceContainerLowest: string;
+    surfaceContainerLow: string;
     surfaceContainer: string;
     surfaceContainerHigh: string;
+    surfaceContainerHighest: string;
   }
   interface PaletteOptions {
+    surfaceDim?: string;
+    surfaceBright?: string;
+    surfaceContainerLowest?: string;
+    surfaceContainerLow?: string;
     surfaceContainer?: string;
     surfaceContainerHigh?: string;
+    surfaceContainerHighest?: string;
   }
 }
 
@@ -39,6 +49,123 @@ const secondary = {
 };
 
 const appFontFamily = 'Poppins, "Plus Jakarta Sans", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+// =============================================================================
+// #2751 — Escala tipográfica MD3 como fonte única de verdade
+//
+// Tiers GRANDES (display*, headline*) usam clamp() responsivo:
+//   clamp(mínimo, valor-fluido, máximo)
+//   Base de cálculo: viewport 360px (mobile pequeno) → 1200px (desktop)
+//   Slope em vw calculado como (max_rem - min_rem) / (1200 - 360) * 100
+//
+// Tiers title/body/label mantêm px fixos: são usados em contextos de
+// leitura onde variação de tamanho prejudica escaneabilidade.
+//
+// Os valores alimentam a `typography` do MUI abaixo — sem duplicação de números.
+// =============================================================================
+export const md3TypeScale = {
+  // display* — títulos hero, splash screens
+  // displayLarge: 57px max → 40px min (slope ≈ 2.02vw)
+  displayLarge: {
+    fontSize: 'clamp(2.5rem, 1.688rem + 2.024vw, 3.5625rem)',
+    lineHeight: '4rem',       // 64px — MD3 canônico
+    letterSpacing: '-0.015625rem', // -0.25px
+    fontWeight: 400,
+  },
+  // displayMedium: 45px max → 36px min (slope ≈ 1.07vw)
+  displayMedium: {
+    fontSize: 'clamp(2.25rem, 1.893rem + 0.893vw, 2.8125rem)',
+    lineHeight: '3.25rem',    // 52px
+    letterSpacing: '0rem',
+    fontWeight: 400,
+  },
+  // displaySmall: 36px max → 30px min (slope ≈ 0.71vw)
+  displaySmall: {
+    fontSize: 'clamp(1.875rem, 1.607rem + 0.714vw, 2.25rem)',
+    lineHeight: '2.75rem',    // 44px
+    letterSpacing: '0rem',
+    fontWeight: 400,
+  },
+  // headline* — títulos de seção e telas
+  // headlineLarge: 32px max → 28px min (slope ≈ 0.48vw)
+  headlineLarge: {
+    fontSize: 'clamp(1.75rem, 1.554rem + 0.476vw, 2rem)',
+    lineHeight: '2.5rem',     // 40px
+    letterSpacing: '0rem',
+    fontWeight: 600,
+  },
+  // headlineMedium: 28px max → 24px min (slope ≈ 0.48vw)
+  headlineMedium: {
+    fontSize: 'clamp(1.5rem, 1.304rem + 0.476vw, 1.75rem)',
+    lineHeight: '2.25rem',    // 36px
+    letterSpacing: '0rem',
+    fontWeight: 600,
+  },
+  // headlineSmall: 24px max → 22px min (slope ≈ 0.24vw)
+  headlineSmall: {
+    fontSize: 'clamp(1.375rem, 1.277rem + 0.238vw, 1.5rem)',
+    lineHeight: '2rem',       // 32px
+    letterSpacing: '0rem',
+    fontWeight: 600,
+  },
+  // title* — títulos de componentes (fixos para legibilidade)
+  titleLarge: {
+    fontSize: '1.375rem',     // 22px
+    lineHeight: '1.75rem',    // 28px
+    letterSpacing: '0rem',
+    fontWeight: 600,
+  },
+  titleMedium: {
+    fontSize: '1rem',         // 16px
+    lineHeight: '1.5rem',     // 24px
+    letterSpacing: '0.009375rem', // 0.15px
+    fontWeight: 600,
+  },
+  titleSmall: {
+    fontSize: '0.875rem',     // 14px
+    lineHeight: '1.25rem',    // 20px
+    letterSpacing: '0.00625rem',  // 0.1px
+    fontWeight: 700,
+  },
+  // body* — conteúdo principal (fixos para legibilidade)
+  bodyLarge: {
+    fontSize: '1rem',         // 16px
+    lineHeight: '1.5rem',     // 24px
+    letterSpacing: '0.009375rem', // 0.15px
+    fontWeight: 400,
+  },
+  bodyMedium: {
+    fontSize: '0.875rem',     // 14px
+    lineHeight: '1.25rem',    // 20px
+    letterSpacing: '0.015625rem', // 0.25px
+    fontWeight: 400,
+  },
+  bodySmall: {
+    fontSize: '0.75rem',      // 12px
+    lineHeight: '1rem',       // 16px
+    letterSpacing: '0.025rem',    // 0.4px
+    fontWeight: 400,
+  },
+  // label* — botões, chips, rótulos (fixos)
+  labelLarge: {
+    fontSize: '0.875rem',     // 14px
+    lineHeight: '1.25rem',    // 20px
+    letterSpacing: '0.00625rem',  // 0.1px
+    fontWeight: 600,
+  },
+  labelMedium: {
+    fontSize: '0.75rem',      // 12px
+    lineHeight: '1rem',       // 16px
+    letterSpacing: '0.03125rem',  // 0.5px
+    fontWeight: 600,
+  },
+  labelSmall: {
+    fontSize: '0.6875rem',    // 11px
+    lineHeight: '1rem',       // 16px
+    letterSpacing: '0.03125rem',  // 0.5px
+    fontWeight: 600,
+  },
+} as const;
 
 // Badge rarity colors — suporta nomes PT-BR (canônico do BadgeRarity) e EN (legacy).
 // BADGE_DEFINITIONS usa COMUM/RARO/EPICO/LENDARIO; aliases EN ficam por compat.
@@ -170,28 +297,39 @@ export const futebaTheme = createTheme({
       secondary: '#444746',
     },
     divider: '#E5E3E6',
-    surfaceContainer: '#F0F0F3',
-    surfaceContainerHigh: '#ECECEF',
+    // #2754: 7 níveis de surface container — valores canônicos de shared/design-tokens.json
+    surfaceDim: '#DDD8DD',
+    surfaceBright: '#FDF8FD',
+    surfaceContainerLowest: '#FFFFFF',
+    surfaceContainerLow: '#F7F2F7',
+    surfaceContainer: '#F1ECF1',
+    surfaceContainerHigh: '#EBE6EB',
+    surfaceContainerHighest: '#E5E1E6',
   },
+  // #2751: typography derivada de md3TypeScale (fonte única — sem duplicação de números)
+  // Mapeamento MUI ↔ MD3: h1=displayLarge, h2=displayMedium, h3=displaySmall,
+  // h4=headlineLarge, h5=headlineMedium, h6=headlineSmall,
+  // subtitle1=titleLarge, subtitle2=titleMedium, body1=bodyLarge, body2=bodyMedium,
+  // caption=labelSmall, overline=labelSmall (upper)
   typography: {
     fontFamily: appFontFamily,
-    h1: { fontSize: 'clamp(2rem, 1.4rem + 2vw, 2.75rem)', fontWeight: 700, lineHeight: 1.2 },
-    h2: { fontSize: 'clamp(1.5rem, 1rem + 1.5vw, 2rem)', fontWeight: 700, lineHeight: 1.25 },
-    h3: { fontSize: 'clamp(1.25rem, 0.9rem + 1vw, 1.5rem)', fontWeight: 600, lineHeight: 1.3 },
-    h4: { fontSize: 'clamp(1.1rem, 0.85rem + 0.75vw, 1.25rem)', fontWeight: 600, lineHeight: 1.35 },
-    h5: { fontSize: 'clamp(1rem, 0.8rem + 0.5vw, 1.1rem)', fontWeight: 600, lineHeight: 1.4 },
-    h6: { fontSize: 'clamp(0.875rem, 0.75rem + 0.3vw, 1rem)', fontWeight: 600, lineHeight: 1.4 },
-    subtitle1: { fontSize: '1rem', fontWeight: 500, lineHeight: 1.5 },
-    subtitle2: { fontSize: '0.875rem', fontWeight: 500, lineHeight: 1.5 },
-    body1: { fontSize: '1rem', lineHeight: 1.6, fontVariantNumeric: 'tabular-nums' },
-    body2: { fontSize: '0.875rem', lineHeight: 1.6, fontVariantNumeric: 'tabular-nums' },
+    // display* — mapeados em h1-h3 com clamp() responsivo
+    h1: { fontSize: md3TypeScale.displayLarge.fontSize, fontWeight: md3TypeScale.displayLarge.fontWeight, lineHeight: md3TypeScale.displayLarge.lineHeight, letterSpacing: md3TypeScale.displayLarge.letterSpacing },
+    h2: { fontSize: md3TypeScale.displayMedium.fontSize, fontWeight: md3TypeScale.displayMedium.fontWeight, lineHeight: md3TypeScale.displayMedium.lineHeight, letterSpacing: md3TypeScale.displayMedium.letterSpacing },
+    h3: { fontSize: md3TypeScale.displaySmall.fontSize, fontWeight: md3TypeScale.displaySmall.fontWeight, lineHeight: md3TypeScale.displaySmall.lineHeight, letterSpacing: md3TypeScale.displaySmall.letterSpacing },
+    // headline* — mapeados em h4-h6 com clamp() responsivo
+    h4: { fontSize: md3TypeScale.headlineLarge.fontSize, fontWeight: md3TypeScale.headlineLarge.fontWeight, lineHeight: md3TypeScale.headlineLarge.lineHeight, letterSpacing: md3TypeScale.headlineLarge.letterSpacing },
+    h5: { fontSize: md3TypeScale.headlineMedium.fontSize, fontWeight: md3TypeScale.headlineMedium.fontWeight, lineHeight: md3TypeScale.headlineMedium.lineHeight, letterSpacing: md3TypeScale.headlineMedium.letterSpacing },
+    h6: { fontSize: md3TypeScale.headlineSmall.fontSize, fontWeight: md3TypeScale.headlineSmall.fontWeight, lineHeight: md3TypeScale.headlineSmall.lineHeight, letterSpacing: md3TypeScale.headlineSmall.letterSpacing },
+    // title* / body* — fixos para legibilidade
+    subtitle1: { fontSize: md3TypeScale.titleLarge.fontSize, fontWeight: md3TypeScale.titleLarge.fontWeight, lineHeight: md3TypeScale.titleLarge.lineHeight, letterSpacing: md3TypeScale.titleLarge.letterSpacing },
+    subtitle2: { fontSize: md3TypeScale.titleMedium.fontSize, fontWeight: md3TypeScale.titleMedium.fontWeight, lineHeight: md3TypeScale.titleMedium.lineHeight, letterSpacing: md3TypeScale.titleMedium.letterSpacing },
+    body1: { fontSize: md3TypeScale.bodyLarge.fontSize, lineHeight: md3TypeScale.bodyLarge.lineHeight, letterSpacing: md3TypeScale.bodyLarge.letterSpacing, fontVariantNumeric: 'tabular-nums' },
+    body2: { fontSize: md3TypeScale.bodyMedium.fontSize, lineHeight: md3TypeScale.bodyMedium.lineHeight, letterSpacing: md3TypeScale.bodyMedium.letterSpacing, fontVariantNumeric: 'tabular-nums' },
     button: { fontWeight: 600, textTransform: 'none' as const },
-    caption: { fontSize: '0.75rem', lineHeight: 1.5 },
-    overline: { fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const },
+    caption: { fontSize: md3TypeScale.labelSmall.fontSize, lineHeight: md3TypeScale.labelSmall.lineHeight, letterSpacing: md3TypeScale.labelSmall.letterSpacing },
+    overline: { fontSize: md3TypeScale.labelSmall.fontSize, fontWeight: md3TypeScale.labelSmall.fontWeight, letterSpacing: '0.1em', textTransform: 'uppercase' as const },
   },
-  // #2751: MD3 type scale — mapeamento canônico MUI h1-h6 ↔ MD3 display/headline/title
-  // MUI não aceita displayLarge etc. em TypographyOptions. Use theme.typography.h1 etc.
-  // Export separado: import { md3TypeScale } para nomenclatura MD3.
   shadows: [
     'none',                                                                                          // 0
     shadowTokens.nav,                                                                                // 1 — nav/subtle
@@ -518,8 +656,14 @@ export const futebaDarkTheme = createTheme({
     success: { main: '#66BB6A', light: '#81C784', dark: '#2E7D32' },
     info: { main: '#42A5F5', light: '#64B5F6', dark: '#1565C0' },
     divider: '#334155',
-    surfaceContainer: '#273248',
-    surfaceContainerHigh: '#2D3A52',
+    // #2754: 7 níveis de surface container dark — valores canônicos de shared/design-tokens.json
+    surfaceDim: '#0F1114',
+    surfaceBright: '#36393E',
+    surfaceContainerLowest: '#0A0C0E',
+    surfaceContainerLow: '#15191C',
+    surfaceContainer: '#1A1D21',
+    surfaceContainerHigh: '#24282C',
+    surfaceContainerHighest: '#2F3337',
   },
   components: {
     ...futebaTheme.components,
@@ -637,8 +781,15 @@ export const futebaDarkOledTheme = createTheme({
       paper: '#0A0A0A',
     },
     divider: '#1F2937',
+    // #2754: OLED — superfícies ultra-escuras (desviadas dos tokens canônicos
+    // para evitar luz em display OLED; os tokens dark são usados no dark theme)
+    surfaceDim: '#000000',
+    surfaceBright: '#1A1A1A',
+    surfaceContainerLowest: '#000000',
+    surfaceContainerLow: '#0A0A0A',
     surfaceContainer: '#101010',
     surfaceContainerHigh: '#171717',
+    surfaceContainerHighest: '#1F1F1F',
   },
   // #2705: OLED shadows use tint-based elevation (subtle light) to work on near-black
   components: {
