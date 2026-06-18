@@ -58,6 +58,27 @@ function GlobalWrapper({ children }: { children: React.ReactNode }) {
 // Deixamos para consistência com render (afeta testes de componente).
 configure({ wrapper: GlobalWrapper });
 
+// Polyfill de window.matchMedia para jsdom — não implementado nativamente.
+// useReducedMotion e media queries de tema (prefers-reduced-motion,
+// prefers-color-scheme) dependem dele. O #2758 introduziu useReducedMotion
+// no AppSidebar e outras telas, quebrando ~10 testes com
+// "window.matchMedia is not a function" no CI. Retorna matches=false
+// (sem reduced-motion, light scheme) de forma determinística. #2744
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+  const mockMatchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  window.matchMedia = mockMatchMedia as any;
+}
+
 // Polyfill de crypto.subtle para jsdom — Web Crypto API não está disponível em
 // jsdom por padrão. useOfflineQueue usa AES-GCM para criptografar a fila no
 // localStorage. O mock abaixo simula encrypt/decrypt/importKey/exportKey/generateKey
