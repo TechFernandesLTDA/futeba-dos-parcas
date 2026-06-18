@@ -7,7 +7,11 @@ import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ThemeMode
 
 /**
- * Platform-specific theming setup (status bar, dynamic colors, etc)
+ * Setup de tema específico de plataforma (status bar, dynamic colors, safe-area, etc).
+ *
+ * - Android: configura cor de status/navigation bar e aparência clara/escura.
+ * - iOS: status bar é controlada pelo host SwiftUI; insets de safe-area são tratados
+ *   pelo `ComposeUIViewController` + `WindowInsets.safeDrawing` no scaffold raiz.
  */
 @Composable
 internal expect fun PlatformThemeSetup(
@@ -38,12 +42,13 @@ fun FutebaTheme(
 
     val colorScheme = DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
 
-    // Platform-specific setup (status bar, etc)
+    // Setup específico de plataforma (status bar, etc)
     PlatformThemeSetup(colorScheme, isDark)
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = FutebaTypography,
+        // #2675 — Poppins via composeResources (função @Composable, não mais val top-level)
+        typography = rememberFutebaTypography(),
         shapes = FutebaShapes,
         content = content
     )

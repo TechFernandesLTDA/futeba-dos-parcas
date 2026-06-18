@@ -6,8 +6,13 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -43,8 +48,23 @@ fun App() {
 @Composable
 private fun AppContent() {
     FutebaTheme {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            Box {
+        // #2673/#2691 — Surface de fundo desenha edge-to-edge (cor cobre toda a tela,
+        // inclusive sob status bar / notch / home indicator), enquanto o conteúdo
+        // interno respeita a safe-area via `WindowInsets.safeDrawing`.
+        //
+        // `safeDrawing` combina system bars + display cutout (notch/Dynamic Island), então
+        // este único padding no scaffold raiz garante que nenhuma tela full-bleed coloque
+        // conteúdo interativo/texto sob recortes da tela. As telas filhas herdam essa área
+        // segura; backgrounds que devem sangrar até a borda usam a `Surface` externa.
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+            ) {
                 AppNavigation()
                 WhatsNewPopupHost()
             }
