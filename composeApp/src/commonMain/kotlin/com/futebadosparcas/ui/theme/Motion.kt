@@ -2,9 +2,12 @@ package com.futebadosparcas.ui.theme
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.compositionLocalOf
 
 /**
- * Tokens de motion compartilhados (composeApp / iOS) — Futeba dos Parças (#2755)
+ * Tokens de motion compartilhados (composeApp / iOS) — Futeba dos Parças (#2755, #2735)
  *
  * Fonte canônica: shared/design-tokens.json#motion (durations + easings).
  * Mantém paridade cross-platform com:
@@ -19,6 +22,29 @@ import androidx.compose.animation.core.Easing
  * O valor canônico vive no design-tokens.json; o check de paridade
  * (scripts/check-design-tokens-parity.js) garante que não há drift.
  */
+
+/**
+ * Lê o estado de reduced-motion diretamente do sistema dentro de um contexto @Composable.
+ * - Android: verifica Settings.Global.ANIMATOR_DURATION_SCALE == 0 via LocalContext
+ * - iOS: verifica UIAccessibility.isReduceMotionEnabled via interop
+ * Usado pelo FutebaTheme para inicializar o LocalReducedMotion.
+ */
+@Composable
+internal expect fun readSystemReduceMotion(): Boolean
+
+/**
+ * CompositionLocal que indica se o usuário solicitou redução de animações.
+ * Provido pelo FutebaTheme; consumir via rememberReduceMotion().
+ */
+val LocalReducedMotion = compositionLocalOf { false }
+
+/**
+ * Helper que lê o estado de reduced-motion via CompositionLocal.
+ * Deve ser chamado dentro da árvore do FutebaTheme.
+ */
+@Composable
+@ReadOnlyComposable
+fun rememberReduceMotion(): Boolean = LocalReducedMotion.current
 
 // ==========================================
 // DURAÇÕES (em milissegundos)

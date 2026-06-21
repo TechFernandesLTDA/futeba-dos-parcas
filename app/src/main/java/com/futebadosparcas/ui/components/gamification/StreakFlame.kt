@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -88,25 +89,30 @@ fun StreakFlame(
         return
     }
 
+    // Reduced-motion: renderiza chama estática sem animação infinita (#2735).
+    // rememberInfiniteTransition é sempre chamado (regra dos composables), mas as
+    // durações são zeradas quando reduced=true, resultando em valores fixos.
+    val reducedMotion = rememberReduceMotion()
+
     val infiniteTransition = rememberInfiniteTransition(label = "flame")
 
-    // Animação de oscilação
+    // Animação de oscilação — duração 0 quando reduzida (valor permanece fixo)
     val flicker by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
+        initialValue = 0.5f,
+        targetValue = if (reducedMotion) 0.5f else 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(300, easing = LinearEasing),
+            animation = tween(if (reducedMotion) 1 else 300, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "flicker"
     )
 
-    // Animação de escala do core
+    // Animação de escala do core — duração 0 quando reduzida (valor permanece fixo)
     val coreScale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.0f,
+        initialValue = 0.9f,
+        targetValue = if (reducedMotion) 0.9f else 1.0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = FastOutSlowInEasing),
+            animation = tween(if (reducedMotion) 1 else 500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "coreScale"
