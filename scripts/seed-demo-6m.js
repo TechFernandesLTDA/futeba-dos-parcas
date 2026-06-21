@@ -11,6 +11,7 @@
  * - 52 finished games over the last 6 months
  * - 8 upcoming games
  * - confirmations, teams, live scores, game events, xp logs and statistics
+ * - global league participation, ranking deltas and group league standings
  *
  * Safe by default:
  *   node scripts/seed-demo-6m.js --dry-run
@@ -25,6 +26,8 @@ const FINISHED_GAMES = 52;
 const UPCOMING_GAMES = 8;
 const DEFAULT_PROJECT = "futebadosparcas";
 const BATCH_LIMIT = 450;
+const MOCK_ACTIVE_SEASON_ID = `${SEED_ID}_active_season`;
+const GROUP_LEAGUE_SEASON_ID = `${SEED_ID}_group_season`;
 
 const args = new Set(process.argv.slice(2));
 const getArg = (name, fallback) => {
@@ -99,6 +102,11 @@ const GROUPS = [
   },
 ];
 
+const FAVORITE_TEAMS = [
+  "Corinthians", "Palmeiras", "Sao Paulo", "Santos", "Flamengo",
+  "Vasco", "Gremio", "Internacional", "Cruzeiro", "Atletico-MG",
+];
+
 function hashNumber(input) {
   let hash = 2166136261;
   for (let i = 0; i < input.length; i++) {
@@ -143,6 +151,91 @@ function levelForXp(xp) {
   return 1;
 }
 
+function divisionForPoints(points) {
+  if (points >= 2000) return "CHAMPION";
+  if (points >= 1000) return "DIAMOND";
+  if (points >= 600) return "PLATINUM";
+  if (points >= 300) return "GOLD";
+  if (points >= 100) return "SILVER";
+  return "BRONZE";
+}
+
+function leagueRatingForPoints(points) {
+  return Math.max(0, Math.min(100, Math.round((points / 22) * 10) / 10));
+}
+
+function createEmptyStats() {
+  return {
+    totalGames: 0,
+    totalGoals: 0,
+    totalAssists: 0,
+    totalSaves: 0,
+    totalYellowCards: 0,
+    totalRedCards: 0,
+    gamesWon: 0,
+    gamesLost: 0,
+    gamesDraw: 0,
+    bestPlayerCount: 0,
+    worstPlayerCount: 0,
+    experiencePoints: 0,
+    currentStreak: 0,
+    goalsConceded: 0,
+    byGender: {
+      MALE: createEmptyGenderStats(),
+      FEMALE: createEmptyGenderStats(),
+      MIXED: createEmptyGenderStats(),
+    },
+  };
+}
+
+function createEmptyGenderStats() {
+  return {
+    points: 0,
+    gamesPlayed: 0,
+    wins: 0,
+    goalsScored: 0,
+    assists: 0,
+    mvpCount: 0,
+  };
+}
+
+function createEmptyGroupStats() {
+  return {
+    points: 0,
+    gamesPlayed: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    goalsScored: 0,
+    goalsConceded: 0,
+    mvpCount: 0,
+  };
+}
+
+function calculateLeaguePoints(stats) {
+  return stats.gamesWon * 30 +
+    stats.gamesDraw * 12 +
+    stats.totalGoals * 4 +
+    stats.totalAssists * 3 +
+    stats.bestPlayerCount * 25 +
+    stats.totalGames * 5;
+}
+
+function calculateGroupPoints(stats) {
+  return stats.wins * 3 + stats.draws;
+}
+
+async function getActiveSeasonIds(db) {
+  const ids = new Set([MOCK_ACTIVE_SEASON_ID]);
+  const [camelSnap, snakeSnap] = await Promise.all([
+    db.collection("seasons").where("isActive", "==", true).limit(10).get(),
+    db.collection("seasons").where("is_active", "==", true).limit(10).get(),
+  ]);
+  camelSnap.docs.forEach((doc) => ids.add(doc.id));
+  snakeSnap.docs.forEach((doc) => ids.add(doc.id));
+  return [...ids];
+}
+
 function buildPlayers(now) {
   return Array.from({length: PLAYER_COUNT}, (_, i) => {
     const n = i + 1;
@@ -153,7 +246,9 @@ function buildPlayers(now) {
       name,
       email: `mock6m.player${pad2(n)}@futeba.demo`,
       photo_url: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name)}`,
+      favorite_team: pick(FAVORITE_TEAMS, i),
       role: "PLAYER",
+      is_searchable: true,
       is_mock: true,
       seed_id: SEED_ID,
       created_at: admin.firestore.Timestamp.fromDate(addDays(now, -190 + i)),
@@ -334,7 +429,10 @@ async function seed() {
   ];
 
   const writer = new BatchWriter(db, !APPLY);
+  const activeSeasonIds = await getActiveSeasonIds(db);
   const userStats = new Map();
+  const groupStats = new Map();
+  const groupMatches = new Map();
   const touchedCollections = new Map();
 
   const touch = (collection) => {
@@ -348,22 +446,34 @@ async function seed() {
   };
 
   for (const player of players) {
-    userStats.set(player.id, {
-      totalGames: 0,
-      totalGoals: 0,
-      totalAssists: 0,
-      totalSaves: 0,
-      totalYellowCards: 0,
-      totalRedCards: 0,
-      gamesWon: 0,
-      gamesLost: 0,
-      gamesDraw: 0,
-      bestPlayerCount: 0,
-      worstPlayerCount: 0,
-      experiencePoints: 0,
-      currentStreak: 0,
-    });
+    userStats.set(player.id, createEmptyStats());
     await setDoc("users", player.id, player);
+  }
+
+  for (const group of GROUPS) {
+    const playerMap = new Map();
+    for (const player of players) {
+      playerMap.set(player.id, createEmptyGroupStats());
+    }
+    groupStats.set(group.id, playerMap);
+    groupMatches.set(group.id, []);
+  }
+
+  for (const seasonId of activeSeasonIds) {
+    await setDoc("seasons", seasonId, {
+      name: seasonId === MOCK_ACTIVE_SEASON_ID ?
+        "Temporada Mock 6M" :
+        `Temporada ativa (${seasonId})`,
+      start_date: formatDate(addDays(now, -182)),
+      end_date: formatDate(addDays(now, 30)),
+      isActive: true,
+      is_active: true,
+      status: "ACTIVE",
+      is_mock: seasonId === MOCK_ACTIVE_SEASON_ID,
+      seed_id: SEED_ID,
+      created_at: admin.firestore.Timestamp.fromDate(addDays(now, -182)),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
   }
 
   for (const location of LOCATIONS) {
@@ -499,6 +609,8 @@ async function seed() {
       const isMvp = mvp?.id === player.id;
       const won = winner !== "DRAW" && winner === teamId;
       const draw = winner === "DRAW";
+      const myScore = teamId === team1Id ? game.team1Score : game.team2Score;
+      const opponentScore = teamId === team1Id ? game.team2Score : game.team1Score;
       const xp = game.upcoming ? 0 : calculateXp(stats, won, draw, isMvp);
       const confirmationId = `${game.id}_${player.id}`;
 
@@ -529,6 +641,9 @@ async function seed() {
 
       if (!game.upcoming) {
         const agg = userStats.get(player.id);
+        const gender = game.data.gender || "MIXED";
+        const genderAgg = agg.byGender[gender] || agg.byGender.MIXED;
+        const groupAgg = groupStats.get(game.group.id).get(player.id);
         agg.totalGames += 1;
         agg.totalGoals += stats.goals;
         agg.totalAssists += stats.assists;
@@ -541,6 +656,23 @@ async function seed() {
         agg.bestPlayerCount += isMvp ? 1 : 0;
         agg.experiencePoints += xp;
         agg.currentStreak += 1;
+        agg.goalsConceded += opponentScore;
+
+        genderAgg.gamesPlayed += 1;
+        genderAgg.wins += won ? 1 : 0;
+        genderAgg.goalsScored += stats.goals;
+        genderAgg.assists += stats.assists;
+        genderAgg.mvpCount += isMvp ? 1 : 0;
+        genderAgg.points += xp;
+
+        groupAgg.gamesPlayed += 1;
+        groupAgg.wins += won ? 1 : 0;
+        groupAgg.draws += draw ? 1 : 0;
+        groupAgg.losses += !won && !draw ? 1 : 0;
+        groupAgg.goalsScored += stats.goals;
+        groupAgg.goalsConceded += opponentScore;
+        groupAgg.mvpCount += isMvp ? 1 : 0;
+        groupAgg.points += won ? 3 : draw ? 1 : 0;
 
         await setDoc("xp_logs", `game_${game.id}_user_${player.id}`, {
           user_id: player.id,
@@ -548,12 +680,58 @@ async function seed() {
           action: "GAME_FINISHED",
           xp_earned: xp,
           game_status: "FINISHED",
+          game_result: won ? "WIN" : draw ? "DRAW" : "LOSS",
+          my_team_score: myScore,
+          opponent_score: opponentScore,
+          was_mvp: isMvp,
           description: `XP mock - ${game.data.date}`,
           is_mock: true,
           seed_id: SEED_ID,
           created_at: admin.firestore.Timestamp.fromDate(addDays(game.data.dateTime.toDate(), 1)),
         });
       }
+    }
+
+    if (!game.upcoming) {
+      const playerResults = game.confirmed.map((player, i) => {
+        const teamId = game.team1.some((p) => p.id === player.id) ? team1Id : team2Id;
+        const stats = confirmationStats(game, player, i, teamId);
+        const won = winner !== "DRAW" && winner === teamId;
+        return {
+          user_id: player.id,
+          userId: player.id,
+          user_name: player.name,
+          userName: player.name,
+          team_id: teamId,
+          teamId,
+          goals: stats.goals,
+          assists: stats.assists,
+          is_mvp: mvp?.id === player.id,
+          isMvp: mvp?.id === player.id,
+          result: winner === "DRAW" ? "DRAW" : won ? "WIN" : "LOSS",
+        };
+      });
+      groupMatches.get(game.group.id).push({
+        id: game.id,
+        game_id: game.id,
+        gameId: game.id,
+        season_id: GROUP_LEAGUE_SEASON_ID,
+        seasonId: GROUP_LEAGUE_SEASON_ID,
+        team1_name: "Azul",
+        team1Name: "Azul",
+        team2_name: "Laranja",
+        team2Name: "Laranja",
+        team1_score: game.team1Score,
+        team1Score: game.team1Score,
+        team2_score: game.team2Score,
+        team2Score: game.team2Score,
+        date: game.data.date,
+        player_results: playerResults,
+        playerResults,
+        is_mock: true,
+        seed_id: SEED_ID,
+        created_at: game.data.dateTime,
+      });
     }
 
     if (!game.upcoming) {
@@ -578,6 +756,22 @@ async function seed() {
   for (const player of players) {
     const stats = userStats.get(player.id);
     const level = levelForXp(stats.experiencePoints);
+    const leaguePoints = calculateLeaguePoints(stats);
+    const division = divisionForPoints(leaguePoints);
+    const leagueRating = leagueRatingForPoints(leaguePoints);
+    const byGender = Object.fromEntries(
+      Object.entries(stats.byGender).map(([gender, genderStats]) => [
+        gender,
+        {
+          points: genderStats.points,
+          games_played: genderStats.gamesPlayed,
+          wins: genderStats.wins,
+          goals_scored: genderStats.goalsScored,
+          assists: genderStats.assists,
+          mvp_count: genderStats.mvpCount,
+        },
+      ])
+    );
     await setDoc("statistics", player.id, {
       userId: player.id,
       user_id: player.id,
@@ -601,11 +795,157 @@ async function seed() {
     writer.set(db.collection("users").doc(player.id), {
       experience_points: stats.experiencePoints,
       level,
+      league_rating: leagueRating,
+      division,
       current_streak: Math.min(stats.currentStreak, 18),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
     }, {merge: true});
     touch("users");
     await writer.flushIfNeeded();
+
+    for (const seasonId of activeSeasonIds) {
+      await setDoc("season_participation", `${seasonId}_${player.id}`, {
+        user_id: player.id,
+        userId: player.id,
+        season_id: seasonId,
+        seasonId,
+        level,
+        points: leaguePoints,
+        games_played: stats.totalGames,
+        gamesPlayed: stats.totalGames,
+        wins: stats.gamesWon,
+        draws: stats.gamesDraw,
+        losses: stats.gamesLost,
+        goals: stats.totalGoals,
+        assists: stats.totalAssists,
+        saves: stats.totalSaves,
+        mvp_count: stats.bestPlayerCount,
+        mvpCount: stats.bestPlayerCount,
+        division,
+        league_rating: leagueRating,
+        promotion_progress: leagueRating >= 70 ? 2 : leagueRating >= 50 ? 1 : 0,
+        relegation_progress: 0,
+        protection_games: Math.max(0, 3 - (hashNumber(player.id) % 4)),
+        by_gender: byGender,
+        is_mock: true,
+        seed_id: SEED_ID,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await setDoc("ranking_deltas", `${seasonId}_${player.id}_${SEED_ID}`, {
+        user_id: player.id,
+        season_id: seasonId,
+        period: "season",
+        period_key: seasonId,
+        games_added: stats.totalGames,
+        xp_added: stats.experiencePoints,
+        points_added: leaguePoints,
+        wins_added: stats.gamesWon,
+        goals_added: stats.totalGoals,
+        assists_added: stats.totalAssists,
+        is_mock: true,
+        seed_id: SEED_ID,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      for (const group of GROUPS) {
+        const groupPlayerStats = groupStats.get(group.id).get(player.id);
+        const groupPoints = groupPlayerStats.points * 30 +
+          groupPlayerStats.goalsScored * 4 +
+          groupPlayerStats.mvpCount * 25 +
+          groupPlayerStats.gamesPlayed * 5;
+        await setDoc("season_participation", `${seasonId}_${group.id}_${player.id}`, {
+          user_id: player.id,
+          userId: player.id,
+          season_id: seasonId,
+          seasonId,
+          group_id: group.id,
+          groupId: group.id,
+          level,
+          points: groupPoints,
+          games_played: groupPlayerStats.gamesPlayed,
+          gamesPlayed: groupPlayerStats.gamesPlayed,
+          wins: groupPlayerStats.wins,
+          draws: groupPlayerStats.draws,
+          losses: groupPlayerStats.losses,
+          goals: groupPlayerStats.goalsScored,
+          assists: Math.round(groupPlayerStats.goalsScored / 3),
+          mvp_count: groupPlayerStats.mvpCount,
+          mvpCount: groupPlayerStats.mvpCount,
+          division: divisionForPoints(groupPoints),
+          league_rating: leagueRatingForPoints(groupPoints),
+          by_gender: byGender,
+          is_mock: true,
+          seed_id: SEED_ID,
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    }
+  }
+
+  for (const group of GROUPS) {
+    await setDoc(`groups/${group.id}/league_seasons`, GROUP_LEAGUE_SEASON_ID, {
+      group_id: group.id,
+      groupId: group.id,
+      name: "Liga Mock 6M",
+      is_active: true,
+      isActive: true,
+      start_date: formatDate(addDays(now, -182)),
+      end_date: formatDate(addDays(now, 30)),
+      is_mock: true,
+      seed_id: SEED_ID,
+      created_at: admin.firestore.Timestamp.fromDate(addDays(now, -182)),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const standings = [...groupStats.get(group.id).entries()]
+      .map(([userId, stats]) => {
+        const player = players.find((p) => p.id === userId);
+        return {
+          userId,
+          player,
+          stats,
+          points: calculateGroupPoints(stats),
+        };
+      })
+      .sort((a, b) =>
+        b.points - a.points ||
+        (b.stats.goalsScored - b.stats.goalsConceded) -
+          (a.stats.goalsScored - a.stats.goalsConceded) ||
+        b.stats.goalsScored - a.stats.goalsScored
+      );
+
+    for (const standing of standings) {
+      const {stats} = standing;
+      await setDoc(`groups/${group.id}/league_standings`, `${GROUP_LEAGUE_SEASON_ID}_${standing.userId}`, {
+        user_id: standing.userId,
+        userId: standing.userId,
+        season_id: GROUP_LEAGUE_SEASON_ID,
+        seasonId: GROUP_LEAGUE_SEASON_ID,
+        points: standing.points,
+        games_played: stats.gamesPlayed,
+        gamesPlayed: stats.gamesPlayed,
+        wins: stats.wins,
+        draws: stats.draws,
+        losses: stats.losses,
+        goals_scored: stats.goalsScored,
+        goalsScored: stats.goalsScored,
+        goals_conceded: stats.goalsConceded,
+        goalsConceded: stats.goalsConceded,
+        goal_difference: stats.goalsScored - stats.goalsConceded,
+        goalDifference: stats.goalsScored - stats.goalsConceded,
+        mvp_count: stats.mvpCount,
+        mvpCount: stats.mvpCount,
+        level: levelForXp(userStats.get(standing.userId).experiencePoints),
+        is_mock: true,
+        seed_id: SEED_ID,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    for (const match of groupMatches.get(group.id)) {
+      await setDoc(`groups/${group.id}/league_matches`, match.id, match);
+    }
   }
 
   await setDoc("seed_runs", SEED_ID, {
@@ -614,6 +954,8 @@ async function seed() {
     player_count: PLAYER_COUNT,
     finished_games: FINISHED_GAMES,
     upcoming_games: UPCOMING_GAMES,
+    active_season_ids: activeSeasonIds,
+    group_league_season_id: GROUP_LEAGUE_SEASON_ID,
     collections: Object.fromEntries(touchedCollections.entries()),
     applied: APPLY,
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
