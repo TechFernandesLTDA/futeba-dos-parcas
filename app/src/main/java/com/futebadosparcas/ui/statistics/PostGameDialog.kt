@@ -19,7 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.futebadosparcas.ui.components.animation.LevelUpConfetti
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -36,10 +38,18 @@ fun PostGameDialog(
     val staticXp = summary.xpEarned
     val staticProgress = summary.progressToNextLevel
 
+    // #2724: motion de celebração de level-up. Respeita reduced-motion do sistema.
+    val reduceMotion = rememberReduceMotion()
+    var showConfetti by remember { mutableStateOf(false) }
+    LaunchedEffect(summary.leveledUp, reduceMotion) {
+        showConfetti = summary.leveledUp && !reduceMotion
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        Box(contentAlignment = Alignment.Center) {
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
@@ -149,6 +159,13 @@ fun PostGameDialog(
                     )
                 }
             }
+        }
+
+            // Overlay de confete sobre o dialog quando o jogador sobe de nível.
+            LevelUpConfetti(
+                visible = showConfetti,
+                onAnimationEnd = { showConfetti = false }
+            )
         }
     }
 }

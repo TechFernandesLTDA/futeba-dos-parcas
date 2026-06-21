@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useTranslation } from 'react-i18next';
+import confetti from 'canvas-confetti';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import {
   Box,
   Typography,
@@ -289,6 +291,22 @@ function BadgeDetailDialog({
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const reduceMotion = useReducedMotion();
+
+  // #2724: motion de celebração ao desbloquear/abrir detalhe de badge conquistada.
+  // Respeita prefers-reduced-motion. Hooks declarados antes de qualquer early return.
+  useEffect(() => {
+    if (!badge || !isUnlocked || reduceMotion) return;
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.4 },
+      disableForReducedMotion: true,
+    });
+    // Keyamos por badge?.id (não o objeto inteiro) para disparar só ao trocar de badge,
+    // evitando re-disparo a cada re-render do pai que recria a referência do objeto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [badge?.id, isUnlocked, reduceMotion]);
 
   if (!badge) return null;
 

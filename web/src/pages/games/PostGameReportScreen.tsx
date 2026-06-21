@@ -38,6 +38,8 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp, getLevelEntry, getXpProgress } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
+import confetti from 'canvas-confetti';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 const logger = createLogger('PostGameReportScreen');
 
@@ -119,6 +121,7 @@ export const PostGameReportScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
+  const reduceMotion = useReducedMotion();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const navigateRef = useRef(navigate);
@@ -257,6 +260,17 @@ export const PostGameReportScreen: React.FC = () => {
     fetchReport();
     return () => { cancelled = true; };
   }, [gameId, user?.id, retryCount, t]);
+
+  // #2724: motion de celebração ao subir de nível. Respeita prefers-reduced-motion.
+  useEffect(() => {
+    if (reduceMotion || !levelData?.leveledUp) return;
+    confetti({
+      particleCount: 120,
+      spread: 70,
+      origin: { y: 0.6 },
+      disableForReducedMotion: true,
+    });
+  }, [reduceMotion, levelData?.leveledUp]);
 
   const handleShare = async () => {
     if (!stats) return;

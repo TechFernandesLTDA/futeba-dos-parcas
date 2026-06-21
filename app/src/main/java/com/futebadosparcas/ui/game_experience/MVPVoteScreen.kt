@@ -27,11 +27,13 @@ import coil3.request.error
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.VoteCategory
+import com.futebadosparcas.ui.components.animation.MvpConfetti
 import com.futebadosparcas.ui.components.animation.SuccessAnimationOverlay
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.components.team.TeamBadgeById
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
@@ -337,6 +339,15 @@ private fun FinishedContent(
     onFinishClick: () -> Unit,
     onCloseClick: () -> Unit
 ) {
+    // #2724: motion de celebração no reveal de votação finalizada.
+    // Respeita reduced-motion do sistema.
+    val reduceMotion = rememberReduceMotion()
+    var showConfetti by remember { mutableStateOf(false) }
+    LaunchedEffect(showAnimation, reduceMotion) {
+        showConfetti = showAnimation && !reduceMotion
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -416,6 +427,13 @@ private fun FinishedContent(
         ) {
             Text(stringResource(R.string.close))
         }
+    }
+
+        // Overlay de confete sobre a tela de votação finalizada.
+        MvpConfetti(
+            visible = showConfetti,
+            onAnimationEnd = { showConfetti = false }
+        )
     }
 }
 
