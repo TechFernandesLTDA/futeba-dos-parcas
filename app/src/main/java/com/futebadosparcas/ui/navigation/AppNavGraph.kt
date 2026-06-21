@@ -3,8 +3,6 @@ package com.futebadosparcas.ui.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -36,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionSpring
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -218,10 +217,10 @@ fun AppNavHost(
                 if (fadeDuration == 0) EnterTransition.None
                 else fadeIn(animationSpec = tween(fadeDuration))
             } else {
-                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                fadeIn(animationSpec = MotionSpring.spatial(reducedMotion)) +
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = MotionSpring.spatial(reducedMotion)
                 )
             }
         },
@@ -230,10 +229,10 @@ fun AppNavHost(
                 if (fadeDuration == 0) ExitTransition.None
                 else fadeOut(animationSpec = tween(fadeDuration))
             } else {
-                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                fadeOut(animationSpec = MotionSpring.spatial(reducedMotion)) +
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = MotionSpring.spatial(reducedMotion)
                 )
             }
         },
@@ -242,10 +241,10 @@ fun AppNavHost(
                 if (fadeDuration == 0) EnterTransition.None
                 else fadeIn(animationSpec = tween(fadeDuration))
             } else {
-                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                fadeIn(animationSpec = MotionSpring.spatial(reducedMotion)) +
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = MotionSpring.spatial(reducedMotion)
                 )
             }
         },
@@ -254,10 +253,10 @@ fun AppNavHost(
                 if (fadeDuration == 0) ExitTransition.None
                 else fadeOut(animationSpec = tween(fadeDuration))
             } else {
-                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                fadeOut(animationSpec = MotionSpring.spatial(reducedMotion)) +
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = MotionSpring.spatial(reducedMotion)
                 )
             }
         }
@@ -315,6 +314,15 @@ fun AppNavHost(
                 },
                 onCreateGameClick = {
                     navController.navigate(Screen.CreateGame.route)
+                },
+                onEditGameClick = {
+                    navController.navigate(Screen.CreateGame.route)
+                },
+                onMvpVoteClick = { gameId ->
+                    navController.navigate(Screen.MVPVote.createRoute(gameId))
+                },
+                onTacticalBoardClick = {
+                    navController.navigate(Screen.TacticalBoard.route)
                 },
                 onNotificationsClick = {
                     navController.navigate(Screen.Notifications.route)
@@ -615,6 +623,15 @@ fun AppNavHost(
                 },
                 onDiscoverGroupsClick = {
                     navController.navigate(Screen.DiscoverGroups.route)
+                },
+                onInvitePlayersClick = { groupId ->
+                    navController.navigate(Screen.InvitePlayers.createRoute(groupId))
+                },
+                onCashboxClick = { groupId ->
+                    navController.navigate(Screen.Cashbox.createRoute(groupId))
+                },
+                onCreateGameInGroupClick = {
+                    navController.navigate(Screen.CreateGame.route)
                 },
                 onBackClick = { navController.popBackStack() }
             )

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,7 +38,9 @@ import com.futebadosparcas.ui.components.LocationListSkeleton
 import com.futebadosparcas.ui.locations.components.WelcomeLocationEmptyState
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.ExpandedListDetailPane
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * ManageLocationsScreen - Gerencia locais (campos de futebol)
@@ -327,19 +330,72 @@ private fun ManageLocationsContent(
     onDeleteLocation: (LocationWithFieldsData) -> Unit,
     onDeleteField: (com.futebadosparcas.domain.model.Field) -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(locations, key = { it.location.id }) { locationWithFields ->
-            LocationCard(
-                locationWithFields = locationWithFields,
-                onLocationClick = { onLocationClick(locationWithFields.location.id) },
-                onDeleteLocation = { onDeleteLocation(locationWithFields) },
-                onDeleteField = onDeleteField
-            )
+    var selectedLocationId by rememberSaveable { mutableStateOf<String?>(null) }
+    val locationsKey = remember(locations) { locations.joinToString(",") { it.location.id } }
+
+    LaunchedEffect(locationsKey) {
+        if (locations.none { it.location.id == selectedLocationId }) {
+            selectedLocationId = locations.firstOrNull()?.location?.id
         }
+    }
+
+    val listContent: @Composable ((String) -> Unit) -> Unit = { onLocationSelected ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(locations, key = { it.location.id }) { locationWithFields ->
+                LocationCard(
+                    locationWithFields = locationWithFields,
+                    onLocationClick = { onLocationSelected(locationWithFields.location.id) },
+                    onDeleteLocation = { onDeleteLocation(locationWithFields) },
+                    onDeleteField = onDeleteField
+                )
+            }
+        }
+    }
+
+    ExpandedListDetailPane(
+        selectedId = selectedLocationId,
+        onSelectId = { selectedLocationId = it },
+        compactContent = {
+            listContent(onLocationClick)
+        },
+        listPane = { onLocationSelected ->
+            listContent(onLocationSelected)
+        },
+        detailPane = { locationId ->
+            if (locationId == null) {
+                ManageLocationsDetailPlaceholder()
+            } else {
+                key(locationId) {
+                    val detailViewModel: LocationDetailViewModel = koinViewModel()
+                    LaunchedEffect(locationId) {
+                        detailViewModel.loadLocation(locationId)
+                    }
+                    LocationDetailScreen(
+                        viewModel = detailViewModel,
+                        onNavigateBack = { selectedLocationId = null }
+                    )
+                }
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@Composable
+private fun ManageLocationsDetailPlaceholder() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.location_detail),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

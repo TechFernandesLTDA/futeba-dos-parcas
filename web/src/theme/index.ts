@@ -32,7 +32,7 @@ declare module '@mui/material/styles' {
 }
 
 // Cores do Futeba — primary.main ajustada para WCAG AA (4.76:1 sobre branco)
-// Brand original #00C853 (2.24:1, falha WCAG) preservado em gamificationColors.brand
+// Verde canônico vem de shared/design-tokens.json.
 const primary = {
   main: '#00852A',      // ratio 4.76:1 vs #FFFFFF (passa WCAG AA)
   light: '#4ADE80',
@@ -635,13 +635,13 @@ export const futebaDarkTheme = createTheme({
     primary: {
       main: '#4ADE80',
       light: '#86EFAC',
-      dark: '#22C55E',
+      dark: '#2E7D32',
       contrastText: '#000000',
     },
     secondary: {
       main: '#5CC8FF',
-      light: '#8DD8FF',
-      dark: '#29B6F6',
+      light: '#90CAF9',
+      dark: '#004399',
       contrastText: '#000000',
     },
     background: {
@@ -652,10 +652,10 @@ export const futebaDarkTheme = createTheme({
       primary: '#F1F5F9',
       secondary: '#B0BEC5',
     },
-    error: { main: '#EF5350', light: '#FF8A80', dark: '#C62828' },
-    warning: { main: '#FFA726', light: '#FFB74D', dark: '#E65100' },
+    error: { main: '#FFB4AB', light: '#FFCDD2', dark: '#B71C1C' },
+    warning: { main: '#FF9E40', light: '#FFCC80', dark: '#8A3A00' },
     success: { main: '#66BB6A', light: '#81C784', dark: '#2E7D32' },
-    info: { main: '#42A5F5', light: '#64B5F6', dark: '#1565C0' },
+    info: { main: '#5CC8FF', light: '#90CAF9', dark: '#004399' },
     divider: '#334155',
     // #2754: 7 níveis de surface container dark — valores canônicos de shared/design-tokens.json
     surfaceDim: '#0F1114',
