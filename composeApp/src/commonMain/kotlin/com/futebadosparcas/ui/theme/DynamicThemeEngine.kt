@@ -5,12 +5,152 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import com.futebadosparcas.domain.model.AppThemeConfig
+import com.futebadosparcas.domain.model.ContrastLevel
 
 /**
  * Helpers para manipulação de cores multiplatform
  */
 internal expect fun blendColors(base: Color, target: Color, ratio: Float): Color
 internal expect fun calculateLuminance(color: Color): Float
+
+/**
+ * #2677: Verifica se o sistema operacional sinalizou contraste aumentado.
+ *
+ * - Android: [android.view.accessibility.AccessibilityManager] (acessibilidade ativa)
+ * - iOS: UIAccessibility.isDarkerSystemColorsEnabled (Configurações → Acessibilidade → Aumentar contraste)
+ *
+ * Quando true, [FutebaTheme] eleva automaticamente [ContrastLevel] para HIGH,
+ * independente da preferência salva pelo usuário.
+ */
+internal expect fun isSystemIncreasedContrast(): Boolean
+
+// ==================== Esquemas de Alto Contraste (CMP/iOS) ====================
+// #2677: Espelha HighContrastTheme.kt do :app, garantindo paridade cross-platform.
+// Todos os pares on-X/X validados em WCAG AAA (>=7:1) para texto normal.
+
+/** Cores de alto contraste — modo claro (CMP). */
+private object HcLightColors {
+    val Background          = Color(0xFFFFFFFF)
+    val OnBackground        = Color(0xFF000000)
+    val Surface             = Color(0xFFFFFFFF)
+    val OnSurface           = Color(0xFF000000)
+    val SurfaceVariant      = Color(0xFFF5F5F5)
+    val OnSurfaceVariant    = Color(0xFF1A1A1A)
+    val Primary             = Color(0xFF0D47A1)
+    val OnPrimary           = Color(0xFFFFFFFF)
+    val PrimaryContainer    = Color(0xFF1565C0)
+    val OnPrimaryContainer  = Color(0xFFFFFFFF)
+    val Secondary           = Color(0xFF004D40)
+    val OnSecondary         = Color(0xFFFFFFFF)
+    val SecondaryContainer  = Color(0xFF00695C)
+    val OnSecondaryContainer = Color(0xFFFFFFFF)
+    // Terciário: laranja/marrom escuro — distinto do teal secundário, AA vs branco (#2749)
+    val Tertiary            = Color(0xFF8A3A00)
+    val OnTertiary          = Color(0xFFFFFFFF)
+    val TertiaryContainer   = Color(0xFFB45309)
+    val OnTertiaryContainer = Color(0xFFFFFFFF)
+    val Error               = Color(0xFFB71C1C)
+    val OnError             = Color(0xFFFFFFFF)
+    val ErrorContainer      = Color(0xFFC62828)
+    val OnErrorContainer    = Color(0xFFFFFFFF)
+    val Outline             = Color(0xFF000000)
+    val OutlineVariant      = Color(0xFF424242)
+}
+
+/** Cores de alto contraste — modo escuro (CMP). */
+private object HcDarkColors {
+    val Background          = Color(0xFF000000)
+    val OnBackground        = Color(0xFFFFFFFF)
+    val Surface             = Color(0xFF000000)
+    val OnSurface           = Color(0xFFFFFFFF)
+    val SurfaceVariant      = Color(0xFF121212)
+    val OnSurfaceVariant    = Color(0xFFE0E0E0)
+    val Primary             = Color(0xFF82B1FF)
+    val OnPrimary           = Color(0xFF000000)
+    val PrimaryContainer    = Color(0xFF448AFF)
+    val OnPrimaryContainer  = Color(0xFF000000)
+    val Secondary           = Color(0xFF80CBC4)
+    val OnSecondary         = Color(0xFF000000)
+    val SecondaryContainer  = Color(0xFF4DB6AC)
+    val OnSecondaryContainer = Color(0xFF000000)
+    // Terciário: âmbar claro — distinto do teal secundário, AA vs preto (#2749)
+    val Tertiary            = Color(0xFFFFB74D)
+    val OnTertiary          = Color(0xFF000000)
+    val TertiaryContainer   = Color(0xFFFF9E40)
+    val OnTertiaryContainer = Color(0xFF000000)
+    val Error               = Color(0xFFFF8A80)
+    val OnError             = Color(0xFF000000)
+    val ErrorContainer      = Color(0xFFFF5252)
+    val OnErrorContainer    = Color(0xFF000000)
+    val Outline             = Color(0xFFFFFFFF)
+    val OutlineVariant      = Color(0xFFBDBDBD)
+}
+
+/** ColorScheme de alto contraste — modo claro (CMP/iOS). */
+internal val HighContrastLightColorSchemeCmp = lightColorScheme(
+    primary = HcLightColors.Primary,
+    onPrimary = HcLightColors.OnPrimary,
+    primaryContainer = HcLightColors.PrimaryContainer,
+    onPrimaryContainer = HcLightColors.OnPrimaryContainer,
+    secondary = HcLightColors.Secondary,
+    onSecondary = HcLightColors.OnSecondary,
+    secondaryContainer = HcLightColors.SecondaryContainer,
+    onSecondaryContainer = HcLightColors.OnSecondaryContainer,
+    tertiary = HcLightColors.Tertiary,
+    onTertiary = HcLightColors.OnTertiary,
+    tertiaryContainer = HcLightColors.TertiaryContainer,
+    onTertiaryContainer = HcLightColors.OnTertiaryContainer,
+    error = HcLightColors.Error,
+    onError = HcLightColors.OnError,
+    errorContainer = HcLightColors.ErrorContainer,
+    onErrorContainer = HcLightColors.OnErrorContainer,
+    background = HcLightColors.Background,
+    onBackground = HcLightColors.OnBackground,
+    surface = HcLightColors.Surface,
+    onSurface = HcLightColors.OnSurface,
+    surfaceVariant = HcLightColors.SurfaceVariant,
+    onSurfaceVariant = HcLightColors.OnSurfaceVariant,
+    outline = HcLightColors.Outline,
+    outlineVariant = HcLightColors.OutlineVariant,
+    surfaceContainerLowest = HcLightColors.Background,
+    surfaceContainerLow = HcLightColors.Background,
+    surfaceContainer = HcLightColors.SurfaceVariant,
+    surfaceContainerHigh = HcLightColors.SurfaceVariant,
+    surfaceContainerHighest = HcLightColors.SurfaceVariant
+)
+
+/** ColorScheme de alto contraste — modo escuro (CMP/iOS). */
+internal val HighContrastDarkColorSchemeCmp = darkColorScheme(
+    primary = HcDarkColors.Primary,
+    onPrimary = HcDarkColors.OnPrimary,
+    primaryContainer = HcDarkColors.PrimaryContainer,
+    onPrimaryContainer = HcDarkColors.OnPrimaryContainer,
+    secondary = HcDarkColors.Secondary,
+    onSecondary = HcDarkColors.OnSecondary,
+    secondaryContainer = HcDarkColors.SecondaryContainer,
+    onSecondaryContainer = HcDarkColors.OnSecondaryContainer,
+    tertiary = HcDarkColors.Tertiary,
+    onTertiary = HcDarkColors.OnTertiary,
+    tertiaryContainer = HcDarkColors.TertiaryContainer,
+    onTertiaryContainer = HcDarkColors.OnTertiaryContainer,
+    error = HcDarkColors.Error,
+    onError = HcDarkColors.OnError,
+    errorContainer = HcDarkColors.ErrorContainer,
+    onErrorContainer = HcDarkColors.OnErrorContainer,
+    background = HcDarkColors.Background,
+    onBackground = HcDarkColors.OnBackground,
+    surface = HcDarkColors.Surface,
+    onSurface = HcDarkColors.OnSurface,
+    surfaceVariant = HcDarkColors.SurfaceVariant,
+    onSurfaceVariant = HcDarkColors.OnSurfaceVariant,
+    outline = HcDarkColors.Outline,
+    outlineVariant = HcDarkColors.OutlineVariant,
+    surfaceContainerLowest = HcDarkColors.Background,
+    surfaceContainerLow = HcDarkColors.Background,
+    surfaceContainer = HcDarkColors.SurfaceVariant,
+    surfaceContainerHigh = HcDarkColors.SurfaceVariant,
+    surfaceContainerHighest = HcDarkColors.SurfaceVariant
+)
 
 object DynamicThemeEngine {
 
@@ -42,10 +182,23 @@ object DynamicThemeEngine {
         }
     }
 
+    /**
+     * Gera o [ColorScheme] adequado para a [config] e modo claro/escuro.
+     *
+     * #2677: Quando [config.contrastLevel] == HIGH (seja por toggle do usuário ou por
+     * auto-detecção do sistema iOS via [isSystemIncreasedContrast]), retorna o esquema
+     * de alto contraste com pares WCAG AAA (>=7:1).
+     */
     fun generateColorScheme(
         config: AppThemeConfig,
         isDark: Boolean
     ): ColorScheme {
+        // #2677: Ramifica para esquema de alto contraste quando solicitado pelo
+        // usuário ou pelo sistema operacional.
+        if (config.contrastLevel == ContrastLevel.HIGH) {
+            return if (isDark) HighContrastDarkColorSchemeCmp else HighContrastLightColorSchemeCmp
+        }
+
         val primaryInt = config.seedColors.primary
         val secondaryInt = config.seedColors.secondary
         val tertiaryInt = config.seedColors.tertiary ?: secondaryInt
