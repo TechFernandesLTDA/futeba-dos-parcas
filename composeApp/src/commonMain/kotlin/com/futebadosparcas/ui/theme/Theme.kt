@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import com.futebadosparcas.domain.model.AppThemeConfig
+import com.futebadosparcas.domain.model.ContrastLevel
 import com.futebadosparcas.domain.model.ThemeMode
 
 /**
@@ -40,9 +41,19 @@ fun FutebaTheme(
         ThemeMode.SYSTEM -> darkTheme
     }
 
-    val colorScheme = DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
+    // #2677: Auto-eleva contrastLevel para HIGH quando o SO sinalizou contraste aumentado
+    // (iOS: UIAccessibility.isDarkerSystemColorsEnabled; Android: fallback false, usa toggle).
+    val effectiveConfig = if (
+        finalConfig.contrastLevel == ContrastLevel.NORMAL && isSystemIncreasedContrast()
+    ) {
+        finalConfig.copy(contrastLevel = ContrastLevel.HIGH)
+    } else {
+        finalConfig
+    }
 
-    // Setup específico de plataforma (status bar, etc)
+    val colorScheme = DynamicThemeEngine.generateColorScheme(effectiveConfig, isDark)
+
+    // Setup específico de plataforma (status bar, etc.)
     PlatformThemeSetup(colorScheme, isDark)
 
     MaterialTheme(
