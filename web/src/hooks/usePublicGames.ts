@@ -12,6 +12,7 @@ import {
   arrayUnion,
   increment,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Game } from '../types/game';
@@ -38,7 +39,7 @@ function parsePublicGame(id: string, raw: Record<string, unknown>): Game {
  * - 'open': jogos abertos para entrar (discover) — is_public + visibility=PUBLIC_OPEN
  *   + status=SCHEDULED + a partir de hoje. Usado por PublicGamesScreen (lista).
  * - 'map': jogos públicos para exibir no mapa — is_public + status in
- *   [SCHEDULED, CONFIRMED], sem filtro de data. Usado por PublicGamesMapScreen.
+ *   [SCHEDULED, CONFIRMED], a partir de agora. Usado por PublicGamesMapScreen.
  *
  * As duas semânticas são preservadas; consumidores escolhem via parâmetro.
  */
@@ -52,7 +53,8 @@ async function fetchPublicGames(variant: PublicGamesVariant): Promise<Game[]> {
       gamesRef,
       where('is_public', '==', true),
       where('status', 'in', ['SCHEDULED', 'CONFIRMED']),
-      orderBy('date', 'asc'),
+      where('dateTime', '>=', Timestamp.fromDate(new Date())),
+      orderBy('dateTime', 'asc'),
       fsLimit(50),
     );
     const snapshot = await getDocs(q);

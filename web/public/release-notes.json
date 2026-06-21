@@ -1,7 +1,45 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-21T15:42:25.041Z",
+  "generatedAt": "2026-06-21T19:17:08.665Z",
   "notes": [
+    {
+      "version": "1.26.2",
+      "buildNumber": null,
+      "releaseDate": "2026-06-21",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Jogos antigos deixam de aparecer como próximos",
+      "highlights": [
+        {
+          "icon": "calendar",
+          "title": "Próximo jogo mais confiável",
+          "description": "Jogos ativos que já passaram não ocupam mais o topo da experiência."
+        },
+        {
+          "icon": "checklist",
+          "title": "Fechamento automático",
+          "description": "O servidor passa a encerrar ou cancelar partidas antigas depois da tolerância configurada."
+        },
+        {
+          "icon": "devices",
+          "title": "Listas mais limpas",
+          "description": "A web filtra jogos vencidos enquanto a limpeza definitiva do backend roda."
+        }
+      ],
+      "added": [
+        "Nova rotina automática para fechar jogos antigos no servidor."
+      ],
+      "improved": [
+        "A busca de próximo jogo passa a considerar apenas partidas futuras.",
+        "Jogos públicos no mapa deixam de incluir partidas vencidas.",
+        "A aba de jogos ignora partidas ativas antigas no filtro principal."
+      ],
+      "fixed": [
+        "Corrigidos casos em que jogos antigos ainda apareciam como abertos, confirmados ou próximos."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.26.1",
       "buildNumber": null,

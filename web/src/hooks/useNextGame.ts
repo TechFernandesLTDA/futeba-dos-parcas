@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -20,6 +20,7 @@ export function useNextGame() {
       const q = query(
         gamesRef,
         where('status', 'in', ['SCHEDULED', 'CONFIRMED', 'LIVE']),
+        where('dateTime', '>=', Timestamp.fromDate(new Date())),
         orderBy('dateTime', 'asc'),
         limit(1)
       );

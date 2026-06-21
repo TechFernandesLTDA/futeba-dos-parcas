@@ -53,6 +53,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.26.2] - 2026-06-21
+
+#### Adicionado
+- `autoClosePastGames` roda de hora em hora e fecha jogos ativos com mais de 2 dias de atraso.
+- Jogos antigos com quórum confirmado, ou em status `LIVE`, viram `FINISHED`; sem quórum viram `CANCELLED`.
+
+#### Mudado
+- `useNextGame`, `usePrefetchHome` e `usePublicGames('map')` filtram `dateTime >= agora`.
+- A aba `GamesTab` aplica uma tolerância visual curta para esconder ativos vencidos antes do cron.
+
+#### Corrigido
+- Listas e cards de próximo jogo não priorizam mais partidas antigas que ficaram com status ativo no Firestore.
+
+_PRs: #2810_
+
 ### [1.26.1] - 2026-06-21
 
 #### Mudado
