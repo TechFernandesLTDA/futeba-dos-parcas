@@ -60,6 +60,102 @@ function fileContainsHex(haystackLower, canonicalHex6) {
   return re.test(haystackLower);
 }
 
+// ==========================================
+// Paridade de MOTION (durations + easings) — issue #2755
+// ==========================================
+
+/**
+ * Arquivos de motion por plataforma. Cada plataforma declara durations/easings
+ * derivados de shared/design-tokens.json#motion; este check pega DRIFT de valor.
+ */
+const MOTION_FILES = [
+  {
+    name: 'web motion.ts',
+    file: path.join(ROOT, 'web', 'src', 'theme', 'motion.ts'),
+  },
+  {
+    name: 'android :app AppMotion.kt',
+    file: path.join(
+      ROOT,
+      'app', 'src', 'main', 'java', 'com', 'futebadosparcas', 'ui', 'theme', 'AppMotion.kt'
+    ),
+  },
+  {
+    name: 'composeApp Motion.kt',
+    file: path.join(
+      ROOT,
+      'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'futebadosparcas', 'ui', 'theme', 'Motion.kt'
+    ),
+  },
+];
+
+/** Verifica se o número aparece como token isolado (não como substring). */
+function fileContainsNumber(content, n) {
+  const re = new RegExp('(?<![\\d.])' + n + '(?![\\d.])');
+  return re.test(content);
+}
+
+/**
+ * Constrói os padrões de easing aceitos a partir de [x1, y1, x2, y2].
+ * Aceita o formato CSS `cubic-bezier(0.2, 0, 0, 1)` (web) e o Kotlin
+ * `CubicBezierEasing(0.2f, 0f, 0f, 1f)` (Android/composeApp).
+ */
+function easingPatterns(curve) {
+  const cssNums = curve.map((v) => String(v));
+  const kotlinNums = curve.map((v) => `${v}f`);
+  const css = new RegExp(
+    'cubic-bezier\\(\\s*' + cssNums.map((n) => n.replace('.', '\\.')).join('\\s*,\\s*') + '\\s*\\)'
+  );
+  const kotlin = new RegExp(
+    'cubicbeziereasing\\(\\s*' + kotlinNums.map((n) => n.replace('.', '\\.')).join('\\s*,\\s*') + '\\s*\\)'
+  );
+  return { css, kotlin };
+}
+
+/** Valida durations e easings do bloco `motion` em todas as plataformas. */
+function checkMotionParity(tokens, errors) {
+  const motion = tokens.motion;
+  if (!motion || !motion.duration || !motion.easing) {
+    errors.push('[motion] bloco `motion` ausente ou incompleto em shared/design-tokens.json');
+    return;
+  }
+
+  // Durations canônicas a validar (ignora as *Reduced=0, que são triviais).
+  const durations = {
+    short: motion.duration.short,
+    medium: motion.duration.medium,
+    long: motion.duration.long,
+  };
+
+  // Easings canônicas (cada curva é um array [x1,y1,x2,y2]).
+  const easings = motion.easing;
+
+  for (const platform of MOTION_FILES) {
+    if (!fs.existsSync(platform.file)) {
+      errors.push(`[${platform.name}] arquivo de motion ausente: ${path.relative(ROOT, platform.file)}`);
+      continue;
+    }
+    const content = fs.readFileSync(platform.file, 'utf8').toLowerCase();
+
+    for (const [name, value] of Object.entries(durations)) {
+      if (!fileContainsNumber(content, value)) {
+        errors.push(
+          `[${platform.name}] duration ausente: motion.duration.${name} (${value}ms) — esperado em ${path.relative(ROOT, platform.file)}`
+        );
+      }
+    }
+
+    for (const [name, curve] of Object.entries(easings)) {
+      const { css, kotlin } = easingPatterns(curve);
+      if (!css.test(content) && !kotlin.test(content)) {
+        errors.push(
+          `[${platform.name}] easing ausente: motion.easing.${name} ([${curve.join(', ')}]) — esperado em ${path.relative(ROOT, platform.file)}`
+        );
+      }
+    }
+  }
+}
+
 function main() {
   if (!fs.existsSync(TOKENS_PATH)) {
     console.error(`[parity] design-tokens.json não encontrado em ${TOKENS_PATH}`);
@@ -101,6 +197,9 @@ function main() {
     }
   }
 
+  // Paridade de motion (durations + easings) — issue #2755.
+  checkMotionParity(tokens, errors);
+
   if (errors.length > 0) {
     console.error('✗ DRIFT de design tokens detectado:');
     for (const e of errors) console.error('  - ' + e);
@@ -108,7 +207,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('✓ design tokens em paridade');
+  console.log('✓ design tokens em paridade (cores + motion)');
   process.exit(0);
 }
 

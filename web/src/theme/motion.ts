@@ -1,10 +1,17 @@
 /**
- * Tokens de animação centralizados — Futeba dos Parças (#2195)
+ * Tokens de animação centralizados — Futeba dos Parças (#2195, #2755)
+ *
+ * Fonte canônica: shared/design-tokens.json#motion (durations + easings).
+ * Mantém paridade cross-platform com:
+ *  - Android :app     — app/src/main/java/com/futebadosparcas/ui/theme/AppMotion.kt
+ *  - composeApp / iOS — composeApp/src/commonMain/kotlin/com/futebadosparcas/ui/theme/Motion.kt
  *
  * Alinhados ao Material Design 3 Motion:
  * https://m3.material.io/styles/motion/overview
  *
- * Equivalentes Android: AppMotion.kt (app/src/main/java/com/futebadosparcas/ui/theme/)
+ * Vocabulário único de motion da web: o tema MUI deriva transitions.duration /
+ * transitions.easing destes tokens (ver web/src/theme/index.ts). O check de
+ * paridade (scripts/check-design-tokens-parity.js) garante que não há drift.
  */
 
 // ==========================================
