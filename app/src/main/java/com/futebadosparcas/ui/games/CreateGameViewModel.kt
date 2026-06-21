@@ -562,7 +562,7 @@ class CreateGameViewModel(
         viewModelScope.launch {
             gameRepository.getAllGames().onSuccess { games ->
                 _recentGames.value = games
-                    .filter { it.status != "CANCELLED" }
+                    .filter { it.status !in setOf("CANCELLED", "FINISHED", "EXPIRED") }
                     .sortedByDescending { it.createdAt }
                     .take(RECENT_GAMES_LIMIT)
             }

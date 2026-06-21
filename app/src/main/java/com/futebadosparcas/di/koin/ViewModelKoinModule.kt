@@ -360,6 +360,7 @@ val viewModelKoinModule = module {
     viewModel {
         PhoneVerificationViewModel(
             auth = get(),
+            functions = get(),
             resourceManager = get(),
         )
     }
@@ -462,7 +463,9 @@ val viewModelKoinModule = module {
 
     viewModel {
         com.futebadosparcas.ui.publicgames.PublicGamesViewModel(
-            firestore = get()
+            firestore = get(),
+            auth = get(),
+            functions = get()
         )
     }
 }

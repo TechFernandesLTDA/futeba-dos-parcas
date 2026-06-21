@@ -14,6 +14,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.futebadosparcas.R
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.FirebaseRegions
 import com.futebadosparcas.util.ResourceManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit
  */
 class PhoneVerificationViewModel(
     private val auth: FirebaseAuth,
-    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRegions.FUNCTIONS),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val resourceManager: ResourceManager,
 ) : ViewModel() {

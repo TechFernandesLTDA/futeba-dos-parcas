@@ -2383,3 +2383,4 @@ export {onCashboxEntryWritten} from "./cashbox/summary-recompute";
 // ==========================================
 export {onGameFinishedCreateRecurrence} from "./games/recurrence-engine";
 export {autoClosePastGames} from "./games/auto-close-past-games";
+export {joinPublicGame} from "./games/join-public-game";

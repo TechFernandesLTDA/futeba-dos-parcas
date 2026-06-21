@@ -4,6 +4,7 @@ import { Alert, Button, Box, Slide } from '@mui/material';
 import { ShieldOutlined as ShieldIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useVerifiedClaim } from '../../hooks/useVerifiedClaim';
+import { getNextVerificationPath } from '../../utils/onboardingSecurity';
 
 const GRACE_END = new Date('2026-08-03T00:00:00Z');
 
@@ -47,7 +48,7 @@ export const VerificationBanner: React.FC = () => {
               color="inherit"
               size="small"
               variant="outlined"
-              onClick={() => navigate('/onboarding/phone')}
+              onClick={() => navigate(getNextVerificationPath(firebaseUser))}
               sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
             >
               Verificar

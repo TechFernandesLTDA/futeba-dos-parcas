@@ -81,6 +81,7 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import { isSchedulingBlockingStatus } from '../../utils/gameLifecycle';
 import { GAME_VALIDATION } from '../../utils/validationConstants';
 import { getNextRecurrenceDates, formatRecurrencePreview } from '../../utils/recurrencePreview';
 
@@ -769,7 +770,7 @@ export const CreateGameScreen: React.FC = () => {
           const newEnd = formData.endTime ? parseTime(formData.endTime) : newStart + DEFAULT_GAME_DURATION_MINUTES;
           const conflicting = existingGames.docs.find((d) => {
             const g = d.data();
-            if (g.status === 'CANCELLED') return false;
+            if (!isSchedulingBlockingStatus(g.status)) return false;
             const gStart = g.time ? parseTime(g.time) : 0;
             const gEnd = g.end_time ? parseTime(g.end_time) : gStart + DEFAULT_GAME_DURATION_MINUTES;
             return gStart < newEnd && gEnd > newStart;
@@ -790,7 +791,7 @@ export const CreateGameScreen: React.FC = () => {
               if (e > dayEnd) break;
               const conflicts = existingGames.docs.some((d) => {
                 const gd = d.data();
-                if (gd.status === 'CANCELLED') return false;
+                if (!isSchedulingBlockingStatus(gd.status)) return false;
                 const gs = gd.time ? parseTime(gd.time) : 0;
                 const ge = gd.end_time ? parseTime(gd.end_time) : gs + DEFAULT_GAME_DURATION_MINUTES;
                 return gs < e && ge > s;

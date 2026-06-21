@@ -3,8 +3,10 @@
  *
  * Garante que jogos ativos vencidos deixem de aparecer como próximos jogos
  * para todos os clientes. Depois do período de tolerância:
- * - jogos LIVE, ou com quórum confirmado, viram FINISHED;
- * - jogos sem quórum viram CANCELLED.
+ * - jogos SCHEDULED/CONFIRMED/LIVE vencidos expiram como CANCELLED.
+ *
+ * Importante: não inferimos FINISHED automaticamente. Finalizar jogo dispara
+ * XP, liga, badges e estatísticas, então só deve acontecer por fluxo explícito.
  */
 
 import {onSchedule} from "firebase-functions/v2/scheduler";
@@ -28,11 +30,11 @@ const ACTIVE_GAME_STATUSES = [
 ] as const;
 
 type ActiveGameStatus = typeof ACTIVE_GAME_STATUSES[number];
-type ClosedGameStatus = "FINISHED" | "CANCELLED";
+type ClosedGameStatus = "CANCELLED";
 
 interface PastGameDecision {
   status: ClosedGameStatus;
-  reason: "played_or_live" | "low_quorum";
+  reason: "auto_expired";
 }
 
 interface ClosePastGamesResult {
@@ -68,16 +70,12 @@ export function decidePastGameClosure(
   confirmedCount: number,
   minPlayers = PAST_GAME_MIN_PLAYERS
 ): PastGameDecision {
-  if (status === "LIVE" || confirmedCount >= minPlayers) {
-    return {
-      status: "FINISHED",
-      reason: "played_or_live",
-    };
-  }
-
+  void status;
+  void confirmedCount;
+  void minPlayers;
   return {
     status: "CANCELLED",
-    reason: "low_quorum",
+    reason: "auto_expired",
   };
 }
 
@@ -123,7 +121,7 @@ export async function closePastGames(
     `${gamesSnap.size} jogo(s) ativo(s) até ${cutoff.toISOString()}`
   );
 
-  let finished = 0;
+  const finished = 0;
   let cancelled = 0;
   let ops = 0;
   let batch = db().batch();
@@ -159,26 +157,16 @@ export async function closePastGames(
       updated_at: serverTs,
     };
 
-    if (decision.status === "FINISHED") {
-      batch.update(gameDoc.ref, {
-        ...commonUpdate,
-        status: "FINISHED",
-        auto_finished: true,
-        finished_by: "system",
-        finished_reason: "past_game_grace_period",
-      });
-      finished++;
-    } else {
-      batch.update(gameDoc.ref, {
-        ...commonUpdate,
-        status: "CANCELLED",
-        auto_cancelled: true,
-        cancel_reason: "Jogo expirado sem quórum",
-        cancelled_by: "system",
-        cancelled_at: serverTs,
-      });
-      cancelled++;
-    }
+    batch.update(gameDoc.ref, {
+      ...commonUpdate,
+      status: decision.status,
+      auto_cancelled: true,
+      status_change_reason: decision.reason,
+      cancel_reason: "Jogo expirado automaticamente",
+      cancelled_by: "system",
+      cancelled_at: serverTs,
+    });
+    cancelled++;
 
     ops++;
     if (ops >= FIRESTORE_BATCH_SAFE_LIMIT) {

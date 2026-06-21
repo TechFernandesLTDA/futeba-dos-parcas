@@ -4,6 +4,7 @@ import { format, addDays } from 'date-fns';
 import { db } from '../services/firebase';
 import { createLogger } from '../utils/logger';
 import { useTranslation } from 'react-i18next';
+import { isSchedulingBlockingStatus } from '../utils/gameLifecycle';
 
 const logger = createLogger('useFieldGames');
 
@@ -31,7 +32,7 @@ const processSnapshot = (docs: Array<{ data: () => Record<string, unknown> }>): 
 
   docs.forEach((d) => {
     const g = d.data();
-    if (g.status === 'CANCELLED') return;
+    if (!isSchedulingBlockingStatus(g.status)) return;
     const gDate = g.date as string;
     const gStart = g.time ? parseTime(g.time as string) : 0;
     const gEnd = g.end_time ? parseTime(g.end_time as string) : gStart + DEFAULT_GAME_DURATION_MINUTES;

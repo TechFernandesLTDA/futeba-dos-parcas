@@ -4,6 +4,7 @@ import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.FirebaseRegions
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
@@ -31,7 +32,7 @@ import kotlinx.coroutines.tasks.await
  */
 class UpdateProfileUseCase constructor(
     private val firestore: FirebaseFirestore,
-    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance()
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRegions.FUNCTIONS)
 ) : SuspendUseCase<UpdateProfileParams, User>() {
 
     companion object {

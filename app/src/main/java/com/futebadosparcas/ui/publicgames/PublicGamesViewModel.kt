@@ -2,15 +2,16 @@ package com.futebadosparcas.ui.publicgames
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.toObjects
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import com.google.firebase.firestore.FieldValue
 
 data class PublicGame(
     val id: String = "",
@@ -38,7 +39,9 @@ sealed class JoinGameState {
 }
 
 class PublicGamesViewModel(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth,
+    private val functions: FirebaseFunctions
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PublicGamesUiState>(PublicGamesUiState.Loading)
@@ -64,14 +67,16 @@ class PublicGamesViewModel(
                     .whereEqualTo("is_public", true)
                     .whereEqualTo("visibility", "PUBLIC_OPEN")
                     .whereEqualTo("status", "SCHEDULED")
-                    .whereGreaterThanOrEqualTo("date", today)
-                    .orderBy("date")
+                    .whereGreaterThanOrEqualTo("dateTime", Timestamp.now())
+                    .orderBy("dateTime")
                     .limit(50)
                     .get()
                     .await()
 
                 val result = games.documents.mapNotNull { doc ->
                     val data = doc.data ?: return@mapNotNull null
+                    val date = data["date"] as? String ?: ""
+                    if (date < today) return@mapNotNull null
                     PublicGame(
                         id = doc.id,
                         locationName = data["location_name"] as? String ?: "",
@@ -99,10 +104,18 @@ class PublicGamesViewModel(
         joinJob?.cancel()
         joinJob = viewModelScope.launch {
             try {
-                firestore.collection("games").document(gameId)
-                    .update(
-                        "players", FieldValue.arrayUnion(userId),
-                        "players_count", FieldValue.increment(1)
+                if (userId.isBlank() || auth.currentUser?.uid.isNullOrBlank()) {
+                    error("Usuário não autenticado")
+                }
+
+                functions
+                    .getHttpsCallable("joinPublicGame")
+                    .call(
+                        mapOf(
+                            "gameId" to gameId,
+                            "position" to "FIELD",
+                            "isCasualPlayer" to false
+                        )
                     )
                     .await()
                 _joinState.value = JoinGameState.Success

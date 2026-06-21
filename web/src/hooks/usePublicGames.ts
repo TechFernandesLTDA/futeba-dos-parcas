@@ -7,11 +7,6 @@ import {
   orderBy,
   getDocs,
   limit as fsLimit,
-  doc,
-  updateDoc,
-  arrayUnion,
-  increment,
-  serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -21,6 +16,8 @@ import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import { joinPublicGame } from '../services/cloudFunctions';
+import { isFutureGame } from '../utils/gameLifecycle';
 
 function parsePublicGame(id: string, raw: Record<string, unknown>): Game {
   const converted = snakeToCamel(raw);
@@ -47,35 +44,37 @@ export type PublicGamesVariant = 'open' | 'map';
 
 async function fetchPublicGames(variant: PublicGamesVariant): Promise<Game[]> {
   const gamesRef = collection(db, 'games');
+  const now = new Date();
 
   if (variant === 'map') {
     const q = query(
       gamesRef,
       where('is_public', '==', true),
       where('status', 'in', ['SCHEDULED', 'CONFIRMED']),
-      where('dateTime', '>=', Timestamp.fromDate(new Date())),
+      where('dateTime', '>=', Timestamp.fromDate(now)),
       orderBy('dateTime', 'asc'),
       fsLimit(50),
     );
     const snapshot = await getDocs(q);
     return snapshot.docs
       .map((d) => parsePublicGame(d.id, d.data()))
-      .filter((g) => !g.deletedAt);
+      .filter((g) => !g.deletedAt && isFutureGame(g, now));
   }
 
   // variant === 'open'
-  const now = new Date().toISOString();
   const q = query(
     gamesRef,
     where('is_public', '==', true),
     where('visibility', '==', 'PUBLIC_OPEN'),
     where('status', '==', 'SCHEDULED'),
-    where('date', '>=', now.split('T')[0]),
-    orderBy('date', 'asc'),
+    where('dateTime', '>=', Timestamp.fromDate(now)),
+    orderBy('dateTime', 'asc'),
     fsLimit(50),
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => parsePublicGame(d.id, d.data()));
+  return snapshot.docs
+    .map((d) => parsePublicGame(d.id, d.data()))
+    .filter((g) => !g.deletedAt && isFutureGame(g, now));
 }
 
 /**
@@ -105,26 +104,26 @@ export function useJoinPublicGame() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const uid = user?.id ?? '';
-  const userName = user?.name ?? '';
 
   return useMutation({
     mutationFn: async (game: Game) => {
-      if (!uid || !userName) throw new Error(t('feedback.publicGames.loginRequired'));
+      if (!uid) throw new Error(t('feedback.publicGames.loginRequired'));
+      if (game.maxPlayers > 0 && game.playersCount >= game.maxPlayers) {
+        throw new Error(t('feedback.publicGames.full'));
+      }
 
-      const gameId = game.id;
-      const gameRef = doc(db, 'games', gameId);
-
-      // #2166: sem showError aqui — o onError abaixo já exibe o toast.
-      // Antes o usuário via dois toasts idênticos para o mesmo erro.
-      await updateDoc(gameRef, {
-        players: arrayUnion(uid),
-        players_count: increment(1),
-        updated_at: serverTimestamp(),
+      await joinPublicGame({
+        gameId: game.id,
+        position: 'FIELD',
+        isCasualPlayer: false,
       });
     },
     onSuccess: (_, game) => {
       showSuccess(t('feedback.publicGames.joinSuccess', { location: game.locationName }));
       queryClient.invalidateQueries({ queryKey: ['public-games'] });
+      queryClient.invalidateQueries({ queryKey: ['games'] });
+      queryClient.invalidateQueries({ queryKey: ['nextGame'] });
+      queryClient.invalidateQueries({ queryKey: ['confirmation'] });
     },
     onError: (err) => {
       showError(getFirestoreErrorMessage(err));

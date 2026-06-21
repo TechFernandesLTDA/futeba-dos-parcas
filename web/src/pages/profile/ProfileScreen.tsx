@@ -152,12 +152,22 @@ export const ProfileScreen: React.FC = () => {
                     size={80}
                     level={profile.level}
                   />
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="h5" fontWeight={700}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="h5"
+                        fontWeight={700}
+                        sx={{
+                          minWidth: 0,
+                          overflowWrap: 'anywhere',
+                          wordBreak: 'break-word',
+                        }}
+                      >
                         {profile.name}
                       </Typography>
-                      <TeamBadge teamId={profile.favoriteTeam} size={24} />
+                      <Box sx={{ flexShrink: 0 }}>
+                        <TeamBadge teamId={profile.favoriteTeam} size={24} />
+                      </Box>
                     </Box>
                     {/* Chip da divisão: identidade via border + bg sutil, texto sempre legível (#1380)
                         Antes usava color: divisionConfig.color como foreground, mas SILVER (#C0C0C0)

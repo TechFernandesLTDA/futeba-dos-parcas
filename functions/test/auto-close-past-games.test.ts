@@ -29,24 +29,24 @@ describe("auto-close past games helpers", () => {
     expect(cutoff.toISOString()).toBe("2026-06-19T12:00:00.000Z");
   });
 
-  it("finaliza jogo LIVE mesmo sem quórum", () => {
+  it("expira jogo LIVE sem marcar como realizado", () => {
     expect(decidePastGameClosure("LIVE", 0)).toEqual({
-      status: "FINISHED",
-      reason: "played_or_live",
+      status: "CANCELLED",
+      reason: "auto_expired",
     });
   });
 
-  it("finaliza jogo com quórum confirmado", () => {
+  it("expira jogo com quórum sem contaminar estatísticas", () => {
     expect(decidePastGameClosure("CONFIRMED", 6)).toEqual({
-      status: "FINISHED",
-      reason: "played_or_live",
+      status: "CANCELLED",
+      reason: "auto_expired",
     });
   });
 
   it("cancela jogo antigo sem quórum", () => {
     expect(decidePastGameClosure("SCHEDULED", 3)).toEqual({
       status: "CANCELLED",
-      reason: "low_quorum",
+      reason: "auto_expired",
     });
   });
 });

@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import { isValidCpf, formatCpf, stripCpf } from '../../utils/cpfValidator';
 import { verifyCpf, setUserVerified, recomputeMyProfileClaim, logVerificationFailure } from '../../services/cloudFunctions';
+import { mapCpfVerificationFailureReason } from '../../utils/onboardingSecurity';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -236,7 +237,7 @@ export const CpfVerificationScreen: React.FC = () => {
 
       // Anti-abuse: log failure for audit (fire-and-forget)
       // #2290: registra falha do log de auditoria em vez de engolir silenciosamente.
-      logVerificationFailure({ reason: code || 'unknown', stage: 'cpf' }).catch((e) => {
+      logVerificationFailure({ reason: mapCpfVerificationFailureReason(code), stage: 'cpf' }).catch((e) => {
         logger.error('Falha ao registrar tentativa de verificação:', e);
       });
     } finally {

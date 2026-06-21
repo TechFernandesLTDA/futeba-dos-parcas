@@ -538,7 +538,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           transition: dragProgress === 0 ? 'transform 0.2s ease, opacity 0.2s ease' : 'none',
         }}
       >
-        {user && (
+        {user && !isSecondary && (
           <MobileTopBar
             unreadCount={unreadCount}
             showBack={isSecondary}
@@ -699,7 +699,7 @@ function App() {
                 <MobileShell>
                   <VerificationBanner />
                   <RouteAnnouncer />
-                  <Box component="main" id="main-content" tabIndex={-1}>
+                  <Box>
                     <SafeScreen />
                   </Box>
                   <ConnectionStatusWrapper />

@@ -26,9 +26,7 @@ import {
   RecaptchaVerifier,
   PhoneAuthProvider,
   linkWithCredential,
-  ConfirmationResult,
 } from 'firebase/auth';
-import { signInWithPhoneNumber } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -58,6 +56,16 @@ function phoneAuthSendErrorMessage(err: unknown): string {
   return 'Erro ao enviar SMS. Verifique o número e tente novamente.';
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(Object.assign(new Error(code), { code })), ms);
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => window.clearTimeout(timer));
+  });
+}
+
 /**
  * Etapa 1/2 do onboarding obrigatorio: verificacao de telefone via SMS OTP.
  * Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md (R2, polish 2026-05-05)
@@ -75,7 +83,7 @@ export const PhoneVerificationScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
+  const verificationIdRef = useRef<string | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
@@ -140,7 +148,11 @@ export const PhoneVerificationScreen: React.FC = () => {
             },
           },
         );
-        await verifierRef.current.render();
+        await withTimeout(
+          verifierRef.current.render(),
+          12000,
+          'recaptcha-timeout',
+        );
       }
 
       try {
@@ -155,19 +167,23 @@ export const PhoneVerificationScreen: React.FC = () => {
         logger.error('SMS preflight failed; continuing with Firebase Phone Auth:', preflightErr);
       }
 
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        `+${normalized}`,
-        verifierRef.current,
+      const provider = new PhoneAuthProvider(auth);
+      verificationIdRef.current = await withTimeout(
+        provider.verifyPhoneNumber(`+${normalized}`, verifierRef.current),
+        30000,
+        'sms-send-timeout',
       );
-      confirmationRef.current = confirmation;
       setStep('otp');
       setResendCooldown(60);
       showSuccess(t('feedback.phoneVerification.codeSent'));
     } catch (err) {
       logger.error('SMS send failed:', err);
       const code = (err as { code?: string }).code;
-      const msg = phoneAuthSendErrorMessage(err);
+      const msg = code === 'recaptcha-timeout'
+        ? 'A verificação anti-robô demorou demais. Atualize a página e tente novamente.'
+        : code === 'sms-send-timeout'
+        ? 'O envio do SMS demorou demais. Verifique sua conexão e tente novamente.'
+        : phoneAuthSendErrorMessage(err);
       if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
         setResendCooldown(300); // 5 minutos
       }
@@ -185,7 +201,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       setError(t('feedback.phoneVerification.code6Digits'));
       return;
     }
-    if (!confirmationRef.current || !firebaseUser) {
+    if (!verificationIdRef.current || !firebaseUser) {
       setError(t('feedback.phoneVerification.sessionExpiredRestart'));
       setStep('phone');
       return;
@@ -193,7 +209,7 @@ export const PhoneVerificationScreen: React.FC = () => {
     setLoading(true);
     try {
       const credential = PhoneAuthProvider.credential(
-        confirmationRef.current.verificationId,
+        verificationIdRef.current,
         otp,
       );
       await linkWithCredential(firebaseUser, credential);
@@ -223,11 +239,16 @@ export const PhoneVerificationScreen: React.FC = () => {
       if (code === 'auth/provider-already-linked') {
         // Tentar persistir phone mesmo no caso already-linked (idempotente)
         if (firebaseUser?.phoneNumber) {
-          updateDoc(doc(db, 'users', firebaseUser.uid), {
-            phone: firebaseUser.phoneNumber,
-            phone_verified: true,
-            updated_at: serverTimestamp(),
-          }).catch((e) => logger.error('Failed to persist phone (already-linked path):', e));
+          try {
+            await updateDoc(doc(db, 'users', firebaseUser.uid), {
+              phone: firebaseUser.phoneNumber,
+              phone_verified: true,
+              updated_at: serverTimestamp(),
+            });
+          } catch (e) {
+            logger.error('Failed to persist phone (already-linked path):', e);
+            showError(t('feedback.phoneVerification.verifiedSaveError'));
+          }
         }
         navigate('/onboarding/cpf', { replace: true });
         return;
@@ -409,6 +430,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                         <Button
                           startIcon={<BackIcon />}
                           onClick={() => {
+                            verificationIdRef.current = null;
                             setStep('phone');
                             setOtp('');
                             setError(null);

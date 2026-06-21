@@ -59,6 +59,7 @@ class FieldAvailabilityService constructor(
             val endTime = LocalTime.parse(end, DateTimeFormatter.ofPattern("HH:mm"))
 
             val conflictingGame = games.find { game ->
+                if (game.status !in setOf("SCHEDULED", "CONFIRMED", "LIVE")) return@find false
                 hasTimeOverlap(game.time, game.endTime, start, end)
             }
 
