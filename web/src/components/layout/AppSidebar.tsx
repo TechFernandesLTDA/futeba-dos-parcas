@@ -216,7 +216,7 @@ export function AppSidebar() {
       >
         <Box
           sx={{
-            p: 2,
+            p: 1.5,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -238,7 +238,7 @@ export function AppSidebar() {
             {t('common.appName')}
           </Typography>
         </Box>
-        <Box sx={{ px: 2, pb: 1 }}>
+        <Box sx={{ px: 1.5, pb: 0.75 }}>
           <Button
             variant="contained"
             fullWidth
@@ -249,8 +249,8 @@ export function AppSidebar() {
             {t('games.createGame')}
           </Button>
         </Box>
-        <Divider sx={{ mx: 2, mb: 1 }} />
-        <Box sx={{ px: 2, pb: 1 }}>
+        <Divider sx={{ mx: 1.5, mb: 0.75 }} />
+        <Box sx={{ px: 1.5, pb: 0.75 }}>
           <Button
             variant="outlined"
             fullWidth
@@ -271,8 +271,8 @@ export function AppSidebar() {
             <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem', ml: 1 }} />
           </Button>
         </Box>
-        <List>
-          <ListSubheader sx={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: 2 }}>
+        <List sx={{ py: 0.5 }}>
+          <ListSubheader sx={{ fontSize: '0.7rem', fontWeight: 600, lineHeight: 1.75 }}>
             {t('nav.sectionPrimary')}
           </ListSubheader>
           {NAV_ITEMS.slice(0, 5).map((item, idx) => {
@@ -284,8 +284,9 @@ export function AppSidebar() {
                   onClick={() => navigate(item.path)}
                   sx={{
                     borderRadius: 2,
-                    mx: 1,
-                    my: 0.5,
+                    mx: 0.75,
+                    my: 0.25,
+                    py: 0.75,
                     '&.Mui-selected': {
                       bgcolor: 'action.selected',
                       '& .MuiListItemIcon-root': { color: 'primary.main' },
@@ -304,7 +305,7 @@ export function AppSidebar() {
               </Tooltip>
             );
           })}
-          <ListSubheader sx={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: 2 }}>
+          <ListSubheader sx={{ fontSize: '0.7rem', fontWeight: 600, lineHeight: 1.75 }}>
             {t('nav.sectionMore')}
           </ListSubheader>
           {[
@@ -319,8 +320,9 @@ export function AppSidebar() {
                 onClick={() => navigate(item.path)}
                 sx={{
                   borderRadius: 2,
-                  mx: 1,
-                  my: 0.5,
+                  mx: 0.75,
+                  my: 0.25,
+                  py: 0.75,
                   '&.Mui-selected': {
                     bgcolor: 'action.selected',
                     '& .MuiListItemIcon-root': { color: 'primary.main' },
@@ -341,10 +343,10 @@ export function AppSidebar() {
         </List>
         {/* #2192: entrada descobrível para os atalhos de teclado. Antes só
             acessíveis pressionando "?", sem nenhuma pista visual. */}
-        <Box sx={{ mt: 'auto', px: 1, pb: 0.5 }}>
+        <Box sx={{ mt: 'auto', px: 0.75, pb: 0.25 }}>
           <ListItemButton
             onClick={() => window.dispatchEvent(new Event('open-shortcuts'))}
-            sx={{ borderRadius: 2, mx: 1 }}
+            sx={{ borderRadius: 2, mx: 0.75, py: 0.75 }}
             aria-label={t('shortcuts.openLabel')}
           >
             <ListItemIcon sx={{ color: 'text.secondary' }}>
@@ -357,7 +359,7 @@ export function AppSidebar() {
             <Chip label="?" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
           </ListItemButton>
         </Box>
-        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Box sx={{ p: 1.5, borderTop: 1, borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Avatar src={user?.photoUrl} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main' }}>
               {userInitial}
