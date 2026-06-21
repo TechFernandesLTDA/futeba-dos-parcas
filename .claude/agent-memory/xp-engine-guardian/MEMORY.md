@@ -1,5 +1,0 @@
-- [Anti-cheat caps missing from stat sinks](project_anticheat_caps_stat_sinks.md) — caps só no XP, não em statistics/ranking/season/xp_log metadata; fix: mutate conf na validation loop (#2525)
-- [XP values divergence — JSON vs docs](project_xp_values_divergence.md) — xp-constants.json (GOAL=10,MVP=30) diverge de CLAUDE.md (GOAL=5,MVP=50) — issue #439
-- [Confirmations update — game owner unrestricted](project_confirmations_owner_unrestricted.md) — Dono do jogo pode setar qualquer campo em confirmations sem onlyAllowedFields — issue #434
-- [Bola Murcha bypass via direct Firestore write](project_bola_murcha_bypass.md) — conf.is_worst_player lido diretamente sem validar contra game.worst_player_id — issue #436
-- [Batch XP idempotency race condition](project_batch_idempotency_race.md) — processXpBatch whereIn fora de transaction; trigger lock mitiga mas não cobre todos os caminhos — issue #441
