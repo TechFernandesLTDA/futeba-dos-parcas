@@ -208,20 +208,32 @@ fun AppNavHost(
     val reducedMotion = rememberReduceMotion()
     val fadeDuration = MotionDuration.getMedium(reducedMotion)
 
+    // Springs assimétricos inspirados no MotionScheme expressive do M3 (#2728):
+    // Enter: DampingRatioLow + StiffnessLow → decelera suavemente ao pousar (slow spatial)
+    // Exit:  NoBouncy + StiffnessMedium    → acelera e sai rapidamente (fast spatial)
+    // Esse timing assimétrico segue o princípio M3 Expressive de "entradas lentas e
+    // dramáticas, saídas rápidas e discretas", tornando a navegação mais expressiva.
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
         enterTransition = {
             if (reducedMotion) {
-                // Reduced-motion: fade simples sem slide
+                // Reduced-motion: fade simples sem slide (#2735)
                 if (fadeDuration == 0) EnterTransition.None
                 else fadeIn(animationSpec = tween(fadeDuration))
             } else {
-                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                // Enter desacelerado: tela nova pousa com calma (slow spatial — mais damping)
+                fadeIn(animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                )) +
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
                 )
             }
         },
@@ -230,10 +242,17 @@ fun AppNavHost(
                 if (fadeDuration == 0) ExitTransition.None
                 else fadeOut(animationSpec = tween(fadeDuration))
             } else {
-                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                // Exit acelerado: tela anterior sai rapidamente (fast spatial — sem bounce)
+                fadeOut(animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )) +
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
                 )
             }
         },
@@ -242,10 +261,17 @@ fun AppNavHost(
                 if (fadeDuration == 0) EnterTransition.None
                 else fadeIn(animationSpec = tween(fadeDuration))
             } else {
-                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                // Pop-enter desacelerado: tela anterior retorna com calma
+                fadeIn(animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                )) +
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
                 )
             }
         },
@@ -254,10 +280,17 @@ fun AppNavHost(
                 if (fadeDuration == 0) ExitTransition.None
                 else fadeOut(animationSpec = tween(fadeDuration))
             } else {
-                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                // Pop-exit acelerado: tela atual sai rapidamente ao voltar
+                fadeOut(animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )) +
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
                 )
             }
         }
