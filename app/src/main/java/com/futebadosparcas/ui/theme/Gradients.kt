@@ -14,15 +14,7 @@ import androidx.compose.material3.MaterialTheme
 // ==================== Gradient Colors ====================
 
 object GradientColors {
-    // Gradientes primários
-    val PrimaryStart = Color(0xFF1E88E5)
-    val PrimaryEnd = Color(0xFF1565C0)
-
-    // Gradientes secundários
-    val SecondaryStart = Color(0xFF26A69A)
-    val SecondaryEnd = Color(0xFF00897B)
-
-    // Gradientes de gamificação
+    // Gradientes de gamificação (tokens de marca fixos — independentes do tema)
     val GoldStart = Color(0xFFFFD700)
     val GoldMid = Color(0xFFFFA500)
     val GoldEnd = Color(0xFFFF8C00)
@@ -39,7 +31,7 @@ object GradientColors {
     val DiamondMid = Color(0xFFB2EBF2)
     val DiamondEnd = Color(0xFF80DEEA)
 
-    // Gradientes de status
+    // Gradientes de status (brand tokens fixos para semântica de sucesso/erro/alerta)
     val SuccessStart = Color(0xFF81C784)
     val SuccessEnd = Color(0xFF4CAF50)
 
@@ -49,18 +41,15 @@ object GradientColors {
     val ErrorStart = Color(0xFFE57373)
     val ErrorEnd = Color(0xFFF44336)
 
-    // Gradientes para XP/Level
+    // Gradientes para XP/Level (brand tokens fixos de gamificação)
     val XpStart = Color(0xFF7C4DFF)
     val XpMid = Color(0xFF651FFF)
     val XpEnd = Color(0xFF6200EA)
 
-    // Gradientes de fundo sutis
-    val SurfaceLight = Color(0xFFFAFAFA)
-    val SurfaceMedium = Color(0xFFF5F5F5)
-
-    // Dark mode gradients
-    val DarkSurfaceStart = Color(0xFF1A1A2E)
-    val DarkSurfaceEnd = Color(0xFF16213E)
+    // REMOVIDOS (#2690): PrimaryStart/End, SecondaryStart/End, SurfaceLight/Medium,
+    // DarkSurfaceStart/End eram hardcoded e divergiam do seed do tema atual.
+    // Usar primaryGradient() e surfaceGradient() (helpers @Composable abaixo)
+    // que derivam do colorScheme ativo e se adaptam ao tema dinâmico.
 }
 
 /**
@@ -80,30 +69,11 @@ fun surfaceGradient(): Brush = Brush.linearGradient(
 object AppGradients {
 
     // ==================== Linear Gradients ====================
-
-    /**
-     * Gradiente primário horizontal.
-     */
-    val primaryHorizontal: Brush
-        get() = Brush.horizontalGradient(
-            colors = listOf(GradientColors.PrimaryStart, GradientColors.PrimaryEnd)
-        )
-
-    /**
-     * Gradiente primário vertical.
-     */
-    val primaryVertical: Brush
-        get() = Brush.verticalGradient(
-            colors = listOf(GradientColors.PrimaryStart, GradientColors.PrimaryEnd)
-        )
-
-    /**
-     * Gradiente secundário.
-     */
-    val secondaryGradient: Brush
-        get() = Brush.linearGradient(
-            colors = listOf(GradientColors.SecondaryStart, GradientColors.SecondaryEnd)
-        )
+    // NOTA (#2690): gradientes primário/superfície foram migrados para os helpers
+    // @Composable primaryGradient() e surfaceGradient(), que derivam do colorScheme
+    // ativo e respeitam o tema dinâmico (Material You) e o modo escuro.
+    // Os helpers primaryHorizontal/primaryVertical/secondaryGradient/surfaceGradientLight/
+    // surfaceGradientDark foram removidos por usarem hex hardcoded divergentes do seed.
 
     /**
      * Gradiente de XP/Level.
@@ -176,30 +146,6 @@ object AppGradients {
                 GradientColors.DiamondStart,
                 GradientColors.DiamondMid,
                 GradientColors.DiamondEnd
-            )
-        )
-
-    // ==================== Surface Gradients ====================
-
-    /**
-     * Gradiente sutil para fundos (light mode).
-     */
-    val surfaceGradientLight: Brush
-        get() = Brush.verticalGradient(
-            colors = listOf(
-                GradientColors.SurfaceLight,
-                GradientColors.SurfaceMedium
-            )
-        )
-
-    /**
-     * Gradiente sutil para fundos (dark mode).
-     */
-    val surfaceGradientDark: Brush
-        get() = Brush.verticalGradient(
-            colors = listOf(
-                GradientColors.DarkSurfaceStart,
-                GradientColors.DarkSurfaceEnd
             )
         )
 
@@ -296,18 +242,6 @@ fun getLeagueDivisionGradient(division: String): Brush {
         "silver", "prata" -> AppGradients.silverGradient
         "bronze" -> AppGradients.bronzeGradient
         else -> Brush.linearGradient(listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.surfaceVariant))
-    }
-}
-
-/**
- * Retorna gradiente de surface baseado no tema.
- */
-@Composable
-fun getSurfaceGradient(isDarkTheme: Boolean): Brush {
-    return if (isDarkTheme) {
-        AppGradients.surfaceGradientDark
-    } else {
-        AppGradients.surfaceGradientLight
     }
 }
 

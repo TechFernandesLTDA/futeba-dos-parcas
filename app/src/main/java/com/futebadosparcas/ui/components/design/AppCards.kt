@@ -16,15 +16,19 @@ import com.futebadosparcas.ui.components.animation.pressScale
 /**
  * Card padrão do aplicativo.
  *
- * Usa as dimensões e cores do tema Material 3.
+ * Usa elevação TONAL (cor via surfaceContainer*) em vez de shadowElevation,
+ * garantindo profundidade visível tanto no modo claro quanto no escuro
+ * (no dark mode sombras desaparecem; tonal elevation funciona em ambos).
+ * Uma borda hairline opcional de outlineVariant melhora legibilidade no dark.
  *
  * @param modifier Modificador opcional
  * @param onClick Callback ao clicar (se não nulo, card se torna clicável)
  * @param enabled Se o card está habilitado (para cards clicáveis)
  * @param shape Forma do card
- * @param backgroundColor Cor de fundo
- * @param borderColor Cor da borda (se não nula)
- * @param elevation Elevação do card
+ * @param backgroundColor Cor de fundo (padrão: surfaceContainerLow = nível 1 da hierarquia tonal)
+ * @param border Borda opcional (padrão: hairline outlineVariant para legibilidade no dark)
+ * @param elevation Elevação de sombra — reservada para chrome flutuante (FAB/modal/menu).
+ *                  Para cards de conteúdo prefira o tier tonal via [backgroundColor].
  * @param content Conteúdo do card
  */
 @Composable
@@ -33,9 +37,12 @@ fun AppCard(
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     shape: Shape = MaterialTheme.shapes.large,
-    backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainer,
-    border: BorderStroke? = null,
-    elevation: Dp = AppDimensions.elevation_small,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    border: BorderStroke? = BorderStroke(
+        width = AppDimensions.divider_thickness,
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+    ),
+    elevation: Dp = AppDimensions.elevation_none,
     content: @Composable ColumnScope.() -> Unit
 ) {
     if (onClick != null) {
@@ -148,6 +155,9 @@ fun OutlinedAppCard(
 /**
  * Card horizontal para listas.
  *
+ * Usa elevação tonal (surfaceContainerLow) sem shadowElevation,
+ * garantindo distinção visual em light e dark mode.
+ *
  * @param modifier Modificador opcional
  * @param onClick Callback ao clicar (opcional)
  * @param verticalAlignment Alinhamento vertical do conteúdo
@@ -160,15 +170,16 @@ fun HorizontalAppCard(
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     content: @Composable RowScope.() -> Unit
 ) {
-    val surfaceColor = MaterialTheme.colorScheme.surface
+    // Elevação tonal: surfaceContainerLow (nível 1) em vez de surface + shadow
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerLow
 
     if (onClick != null) {
         Card(
             onClick = onClick,
             modifier = modifier.pressScale(),
             shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(containerColor = surfaceColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_small)
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)
         ) {
             Row(
                 modifier = Modifier.padding(AppDimensions.padding_medium),
@@ -180,8 +191,8 @@ fun HorizontalAppCard(
         Card(
             modifier = modifier,
             shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(containerColor = surfaceColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_small)
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)
         ) {
             Row(
                 modifier = Modifier.padding(AppDimensions.padding_medium),
@@ -195,6 +206,9 @@ fun HorizontalAppCard(
 /**
  * Card compacto para informações rápidas.
  *
+ * Usa surfaceContainerLowest (nível 0 da hierarquia tonal) — o mais sutil,
+ * ideal para elementos secundários que precisam de separação mínima do fundo.
+ *
  * @param modifier Modificador opcional
  * @param onClick Callback ao clicar (opcional)
  * @param content Conteúdo do card
@@ -205,12 +219,15 @@ fun CompactCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    // surfaceContainerLowest = nível 0 da hierarquia tonal (mais sutil que surfaceVariant)
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+
     if (onClick != null) {
         Card(
             onClick = onClick,
             modifier = modifier.pressScale(),
             shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)
         ) {
             Column(
@@ -222,7 +239,7 @@ fun CompactCard(
         Card(
             modifier = modifier,
             shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = CardDefaults.cardElevation(defaultElevation = AppDimensions.elevation_none)
         ) {
             Column(

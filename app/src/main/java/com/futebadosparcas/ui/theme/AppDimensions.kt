@@ -79,12 +79,27 @@ object AppDimensions {
     val avatar_extraLarge = 96.dp
 
     // ==========================================
-    // ELEVATION - Sombras
+    // ELEVATION - Sombras (chrome flutuante)
     // ==========================================
+    // NOTA (#2689): Para cards de CONTEÚDO, prefira elevação TONAL via surfaceContainer*
+    // (ver AppCards.kt). ShadowElevation fica reservado para chrome FLUTUANTE:
+    //
+    //   elevation_none  → cards de conteúdo (tonal: surfaceContainerLowest/Low/Container)
+    //   elevation_small → nav bar / top bar (sombra sutil de separação)
+    //   elevation_medium → dropdown sutil / chip selecionado
+    //   elevation_large  → menu dropdown / popover
+    //   elevation_modal  → dialog / bottom sheet / modal
+    //
+    // Mapeamento tonal recomendado para cards (#2689):
+    //   surfaceContainerLowest (nível 0) → CompactCard (info secundária)
+    //   surfaceContainerLow    (nível 1) → AppCard / HorizontalAppCard (padrão)
+    //   surfaceContainer       (nível 2) → cards de destaque neutro
+    //   surfaceContainerHigh   (nível 3) → cards de ação primária
+    //   surfaceContainerHighest (nível 4) → cards de máximo destaque
     val elevation_none = 0.dp
-    val elevation_small = 1.dp    // nav / subtle chrome
-    val elevation_medium = 4.dp   // card / surface
-    val elevation_large = 8.dp    // dropdown / popover
+    val elevation_small = 1.dp    // nav / chrome sutil
+    val elevation_medium = 4.dp   // dropdown sutil
+    val elevation_large = 8.dp    // menu / popover
     val elevation_modal = 16.dp   // dialog / modal
 
     // Aliases semânticos (#2754)

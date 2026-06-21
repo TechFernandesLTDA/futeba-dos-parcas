@@ -27,6 +27,7 @@ import com.futebadosparcas.ui.league.RankingItem
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
+import com.futebadosparcas.ui.components.animation.pressScale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -207,6 +208,7 @@ fun RankingItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
+            .pressScale()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(

@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameGender
 import com.futebadosparcas.domain.model.GameStatus
+import com.futebadosparcas.ui.components.animation.pressScale
 import java.util.*
 
 /**
@@ -144,6 +145,7 @@ fun GameCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
+            .pressScale()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

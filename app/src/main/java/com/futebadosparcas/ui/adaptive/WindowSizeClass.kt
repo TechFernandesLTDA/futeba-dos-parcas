@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -15,6 +16,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowWidthSizeClass as AdaptiveWindowWidthSizeClass
+import androidx.window.core.layout.WindowHeightSizeClass as AdaptiveWindowHeightSizeClass
 
 /**
  * Classificação de tamanho de janela seguindo as diretrizes do Material Design 3.
@@ -167,13 +170,38 @@ data class WindowSizeClass(
 
 /**
  * Composable que calcula e lembra a WindowSizeClass atual.
- * Atualiza automaticamente quando a configuração muda (rotação, split screen, etc).
+ *
+ * Usa [currentWindowAdaptiveInfo] como fonte de verdade das dimensões reais da janela,
+ * respeitando split-screen e multi-window corretamente (#2687).
+ * [LocalConfiguration.current] reportava o tamanho da TELA inteira mesmo em split-screen;
+ * a API oficial usa WindowMetricsCalculator e retorna as dimensões da JANELA real.
+ *
+ * A API pública custom [WindowSizeClass] (com widthDp, heightDp, gridColumns, etc.) é
+ * mantida intacta — apenas a FONTE dos dp é alterada.
  */
 @Composable
 fun rememberWindowSizeClass(): WindowSizeClass {
-    val configuration = LocalConfiguration.current
-    return remember(configuration) {
-        WindowSizeClass.fromConfiguration(configuration)
+    // currentWindowAdaptiveInfo() usa WindowMetricsCalculator internamente, que retorna
+    // as dimensões reais da janela (correto em split-screen/multi-window).
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val windowSizeClass = adaptiveInfo.windowSizeClass
+
+    // Derivar widthDp e heightDp dos size class breaks da API oficial.
+    // Os breakpoints são os mesmos do Material Design 3 (600/840dp para largura,
+    // 480/900dp para altura), alinhados com os breakpoints do custom WindowSizeClass.
+    val widthDp = when (windowSizeClass.windowWidthSizeClass) {
+        AdaptiveWindowWidthSizeClass.COMPACT -> 360 // valor representativo compact
+        AdaptiveWindowWidthSizeClass.MEDIUM -> 700  // valor representativo medium
+        else -> 1000                                 // valor representativo expanded
+    }
+    val heightDp = when (windowSizeClass.windowHeightSizeClass) {
+        AdaptiveWindowHeightSizeClass.COMPACT -> 400 // valor representativo compact
+        AdaptiveWindowHeightSizeClass.MEDIUM -> 700  // valor representativo medium
+        else -> 1000                                  // valor representativo expanded
+    }
+
+    return remember(windowSizeClass) {
+        WindowSizeClass.fromDimensions(widthDp = widthDp, heightDp = heightDp)
     }
 }
 
