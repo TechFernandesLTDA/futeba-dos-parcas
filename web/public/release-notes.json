@@ -1,7 +1,46 @@
 {
   "platform": "web",
-  "generatedAt": "2026-05-22T14:03:58.704Z",
+  "generatedAt": "2026-06-21T15:42:25.041Z",
   "notes": [
+    {
+      "version": "1.26.1",
+      "buildNumber": null,
+      "releaseDate": "2026-06-21",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Navegação mais confortável e changelog em dia",
+      "highlights": [
+        {
+          "icon": "checklist",
+          "title": "Páginas começam no topo",
+          "description": "Ao trocar de tela, o conteúdo inicial aparece alinhado sem precisar rolar um pouquinho."
+        },
+        {
+          "icon": "devices",
+          "title": "Mobile e desktop mais estáveis",
+          "description": "Ajustes de layout reduzem quebras de texto e scroll lateral em resoluções pequenas e grandes."
+        },
+        {
+          "icon": "stars",
+          "title": "Novidades atualizadas",
+          "description": "A tela de changelog agora reflete as melhorias recentes publicadas na web."
+        }
+      ],
+      "added": [
+        "Nova entrada de changelog para a versão web mais recente."
+      ],
+      "improved": [
+        "Navegação entre abas e páginas agora usa a rota completa, incluindo `?tab=`, para não reutilizar scroll de outra tela.",
+        "Foco de acessibilidade na troca de página não desloca mais o conteúdo para baixo da topbar.",
+        "Login, cadastro e recuperação de senha ganharam ajustes finos para telas estreitas."
+      ],
+      "fixed": [
+        "Corrigido o comportamento em que algumas páginas abriam levemente roladas para baixo.",
+        "Corrigidos casos em que botões e links podiam quebrar de forma apertada no menor breakpoint mobile."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.26.0",
       "buildNumber": null,

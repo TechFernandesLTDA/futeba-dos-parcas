@@ -53,6 +53,19 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.26.1] - 2026-06-21
+
+#### Mudado
+- `useScrollRestoration` agora chaveia por `pathname + search`, rola para o topo em navegações novas e restaura posição apenas em navegação `POP`.
+- `useFocusOnNavigate` usa `focus({ preventScroll: true })` para preservar o alinhamento visual após troca de rota.
+- Componentes de auth, containers e topbar mobile receberam proteções de layout responsivo.
+
+#### Corrigido
+- Scroll inicial de páginas e abas web ajustado para não ficar escondido sob a topbar.
+- Bundle de release notes web atualizado para refletir as mudanças recentes.
+
+_PRs: #2810_
+
 ### [1.26.0] - 2026-05-22
 
 #### Adicionado
