@@ -45,6 +45,10 @@ export interface GameConfirmation {
     game_id: string;
     // "Bola Murcha" - penalidade de -10 XP
     is_worst_player?: boolean;
+    // SECFIX #430 / FIX #2797: flag de overlap temporal detectado pelo
+    // trigger onConfirmationCreated (temporal-overlap.ts). Quando true,
+    // o jogador não recebe XP, estatísticas ou participação na season.
+    suspiciousOverlap?: boolean;
 }
 
 export interface Team {

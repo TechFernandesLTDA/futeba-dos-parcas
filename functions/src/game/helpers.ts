@@ -62,6 +62,8 @@ export function toGameConfirmation(
       raw.is_worst_player ??
       raw.isWorstPlayer ??
       false,
+    // SECFIX #430 / FIX #2797: lê flag de overlap temporal do Firestore.
+    suspiciousOverlap: raw.suspicious_overlap === true,
   };
 }
 

@@ -53,7 +53,7 @@ function hasTimeRemaining(
  */
 export const cleanupOldXpLogs =
   functions.scheduler.onSchedule({
-    schedule: "0 3 * * 0", // Domingo às 03:00 UTC
+    schedule: "0 3 * * *", // Diariamente às 03:00 UTC (#2799: era semanal, backlog não drenava)
     timeZone: "America/Sao_Paulo",
     region: "southamerica-east1",
     memory: "512MiB",
@@ -134,19 +134,13 @@ export const cleanupOldXpLogs =
           `${batchCount} (${snapshot.size} docs)`
         );
 
-        // If we got less than 500, we're done
-        if (snapshot.size < 500) {
+        // Se recebeu menos que o limite, não há mais páginas
+        if (snapshot.size < FIRESTORE_PAGINATION_LIMIT) {
           hasMore = false;
         }
-
-        // Safety: stop after 100 batches (50k docs)
-        if (batchCount >= 100) {
-          logger.warn(
-            "[CLEANUP] Reached 100 batches limit, " +
-            "stopping. Schedule will retry next week."
-          );
-          hasMore = false;
-        }
+        // #2799: remoção do cap de 100 batches — o guard de timeout
+        // (hasTimeRemaining) já limita o tempo total (8min). Com inflow
+        // > 50k/semana o cap impedía o backlog de ser drenado.
       }
 
       // Log metrics for monitoring
@@ -197,7 +191,7 @@ export const cleanupOldXpLogs =
  */
 export const cleanupOldActivities =
   functions.scheduler.onSchedule({
-    schedule: "0 4 * * 0", // Domingo às 04:00 UTC
+    schedule: "0 4 * * *", // Diariamente às 04:00 UTC (#2799: era semanal, backlog não drenava)
     timeZone: "America/Sao_Paulo",
     region: "southamerica-east1",
     memory: "512MiB",
@@ -273,17 +267,11 @@ export const cleanupOldActivities =
           `(${snapshot.size} activities)`
         );
 
-        if (snapshot.size < 500) {
+        // Se recebeu menos que o limite, não há mais páginas
+        if (snapshot.size < FIRESTORE_PAGINATION_LIMIT) {
           hasMore = false;
         }
-
-        if (batchCount >= 100) {
-          logger.warn(
-            "[CLEANUP] Reached batch limit, " +
-            "stopping."
-          );
-          hasMore = false;
-        }
+        // #2799: remoção do cap de 100 batches — guard de timeout cobre o limite.
       }
 
       await db().collection("metrics").add({
@@ -324,7 +312,7 @@ export const cleanupOldActivities =
  */
 export const cleanupOldNotifications =
   functions.scheduler.onSchedule({
-    schedule: "0 5 * * 0", // Domingo às 05:00 UTC
+    schedule: "0 5 * * *", // Diariamente às 05:00 UTC (#2799: era semanal, backlog não drenava)
     timeZone: "America/Sao_Paulo",
     region: "southamerica-east1",
     memory: "512MiB",
@@ -402,17 +390,11 @@ export const cleanupOldNotifications =
           `(${snapshot.size} notifications)`
         );
 
-        if (snapshot.size < 500) {
+        // Se recebeu menos que o limite, não há mais páginas
+        if (snapshot.size < FIRESTORE_PAGINATION_LIMIT) {
           hasMore = false;
         }
-
-        if (batchCount >= 100) {
-          logger.warn(
-            "[CLEANUP] Reached batch limit, " +
-            "stopping."
-          );
-          hasMore = false;
-        }
+        // #2799: remoção do cap de 100 batches — guard de timeout cobre o limite.
       }
 
       await db().collection("metrics").add({

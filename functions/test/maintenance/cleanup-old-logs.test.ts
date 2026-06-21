@@ -5,11 +5,14 @@ const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
+const mockStartAfter = jest.fn().mockReturnThis();
 
-const queryChain: any = { where: mockWhere, orderBy: mockOrderBy, limit: mockLimit, get: mockCollectionGet };
+// FIX #2799: startAfter necessário para paginação cursor nas iterações > 1
+const queryChain: any = { where: mockWhere, orderBy: mockOrderBy, limit: mockLimit, startAfter: mockStartAfter, get: mockCollectionGet };
 mockWhere.mockReturnValue(queryChain);
 mockLimit.mockReturnValue(queryChain);
 mockOrderBy.mockReturnValue(queryChain);
+mockStartAfter.mockReturnValue(queryChain);
 
 const mockBatchFn = jest.fn(() => ({ delete: mockBatchDelete, commit: mockBatchCommit }));
 
@@ -79,6 +82,7 @@ beforeEach(() => {
   mockWhere.mockReturnValue(queryChain);
   mockLimit.mockReturnValue(queryChain);
   mockOrderBy.mockReturnValue(queryChain);
+  mockStartAfter.mockReturnValue(queryChain);
   mockCollectionGet.mockResolvedValue({ empty: true, size: 0, docs: [] });
 });
 
@@ -91,6 +95,26 @@ describe("Cleanup Old Logs", () => {
 
       expect(mockBatchDelete).toHaveBeenCalledTimes(3);
       expect(mockBatchCommit).toHaveBeenCalled();
+    });
+
+    it("FIX #2799: nao para em 100 batches — continua ate esvaziar", async () => {
+      // Simula 101 páginas com 1 doc cada (leve no mock) seguidas de página vazia.
+      // Antes do fix, o loop parava em batchCount=100; agora deve ir até 101.
+      const singleDocPage = {
+        empty: false,
+        size: 500, // size >= FIRESTORE_PAGINATION_LIMIT → loop continua
+        docs: [{ ref: { id: "log0" } }],
+      };
+      for (let i = 0; i < 101; i++) {
+        mockCollectionGet.mockResolvedValueOnce(singleDocPage);
+      }
+      // Página vazia encerra o loop naturalmente
+      mockCollectionGet.mockResolvedValueOnce({ empty: true, size: 0, docs: [] });
+
+      await cleanupOldXpLogs();
+
+      // Sem cap de 100 batches, deve ter comitado 101 vezes
+      expect(mockBatchCommit).toHaveBeenCalledTimes(101);
     });
 
     it("para quando collection vazia", async () => {

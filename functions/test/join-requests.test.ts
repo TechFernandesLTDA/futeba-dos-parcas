@@ -114,6 +114,9 @@ describe("onJoinRequestApproved", () => {
         name: "Pelada Vila",
         photo_url: "https://example.com/g.jpg",
         member_count: 5,
+        // FIX #2798: owner_id necessário para validação de aprovador.
+        // Nos testes existentes responded_by = "owner-uid" = owner_id → passa.
+        owner_id: "owner-uid",
       }),
     });
     // Resetar runTransaction para comportamento padrão
@@ -268,5 +271,156 @@ describe("onJoinRequestApproved", () => {
     ).resolves.not.toThrow();
 
     expect(mockRunTransaction).toHaveBeenCalled();
+  });
+
+  // ==========================================
+  // FIX #2798 — authz server-side do aprovador
+  // ==========================================
+
+  it("FIX #2798: aprovador que e owner do grupo passa a validacao", async () => {
+    // Group meta retorna owner_id === responded_by
+    mockGroupGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        name: "Pelada Vila",
+        photo_url: null,
+        member_count: 3,
+        owner_id: "owner-uid", // mesmo que responded_by abaixo
+      }),
+    });
+
+    const event = makeEvent(
+      {user_id: "u1", status: "PENDING"},
+      {
+        user_id: "u1",
+        user_name: "User One",
+        status: "APPROVED",
+        responded_by: "owner-uid",
+      }
+    );
+
+    await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
+
+    // Deve ter criado o membro normalmente
+    expect(mockRunTransaction).toHaveBeenCalled();
+  });
+
+  it("FIX #2798: aprovador com role ADMIN (nao owner) passa a validacao", async () => {
+    // Group meta: owner_id diferente do aprovador
+    mockGroupGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        name: "Pelada Vila",
+        photo_url: null,
+        member_count: 3,
+        owner_id: "different-owner",
+      }),
+    });
+
+    // Primeiro memberGet = early-exit check (user nao eh membro ainda)
+    // Segundo memberGet = approver member check → retorna role ADMIN
+    mockMemberGet
+      .mockResolvedValueOnce({exists: false}) // target user nao eh membro
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => ({role: "ADMIN"}),
+      }); // approver eh ADMIN
+
+    const event = makeEvent(
+      {user_id: "u1", status: "PENDING"},
+      {
+        user_id: "u1",
+        user_name: "User One",
+        status: "APPROVED",
+        responded_by: "admin-uid",
+      }
+    );
+
+    await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
+
+    // Admin autorizado — deve processar normalmente
+    expect(mockRunTransaction).toHaveBeenCalled();
+  });
+
+  it("FIX #2798: aprovador sem role owner/admin e bloqueado — nao cria membro", async () => {
+    const {logger} = require("firebase-functions/v2");
+
+    // Group meta: owner_id diferente do aprovador
+    mockGroupGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        name: "Pelada Vila",
+        photo_url: null,
+        member_count: 3,
+        owner_id: "real-owner",
+      }),
+    });
+
+    // Primeiro memberGet = target user nao eh membro
+    // Segundo memberGet = approver role = MEMBER (nao autorizado)
+    mockMemberGet
+      .mockResolvedValueOnce({exists: false})
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => ({role: "MEMBER"}),
+      });
+
+    const event = makeEvent(
+      {user_id: "u1", status: "PENDING"},
+      {
+        user_id: "u1",
+        user_name: "User One",
+        status: "APPROVED",
+        responded_by: "random-member-uid",
+      }
+    );
+
+    await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
+
+    // NÃO deve criar membro
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+    // Deve logar o erro de segurança
+    expect(logger.error).toHaveBeenCalledWith(
+      "join_request aprovado por não-owner/admin — bloqueado",
+      expect.objectContaining({approverId: "random-member-uid"})
+    );
+  });
+
+  it("FIX #2798: aprovador nao encontrado nos membros e bloqueado", async () => {
+    const {logger} = require("firebase-functions/v2");
+
+    mockGroupGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        name: "Grupo X",
+        photo_url: null,
+        member_count: 2,
+        owner_id: "real-owner",
+      }),
+    });
+
+    // Primeiro memberGet = target user não eh membro
+    // Segundo memberGet = aprovador não encontrado em /members/
+    mockMemberGet
+      .mockResolvedValueOnce({exists: false})
+      .mockResolvedValueOnce({exists: false}); // aprovador não existe como membro
+
+    const event = makeEvent(
+      {user_id: "u1", status: "PENDING"},
+      {
+        user_id: "u1",
+        user_name: "User One",
+        status: "APPROVED",
+        responded_by: "outsider-uid",
+      }
+    );
+
+    await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
+
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      "join_request aprovado por não-owner/admin — bloqueado",
+      expect.objectContaining({approverId: "outsider-uid"})
+    );
   });
 });
