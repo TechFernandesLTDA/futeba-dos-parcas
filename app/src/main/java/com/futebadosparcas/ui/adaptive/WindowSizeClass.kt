@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass as AdaptiveWindowWidthSizeClass
@@ -186,7 +185,6 @@ fun rememberWindowSizeClass(): WindowSizeClass {
     // as dimensões reais da janela (correto em split-screen/multi-window).
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val windowSizeClass = adaptiveInfo.windowSizeClass
-    val density = LocalDensity.current
 
     // Derivar widthDp e heightDp dos size class breaks da API oficial.
     // Os breakpoints são os mesmos do Material Design 3 (600/840dp para largura,
