@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -503,12 +502,14 @@ fun MainScreen(
         )
 
     // Converte navItems para NavDestination do componente canônico (#2190).
+    // contentDescription null: o label visível já é lido pelo TalkBack — evita anúncio duplo (#2736/#2693).
     val navDestinations = navItems.map { item ->
         NavDestination(
             route = item.route,
             label = item.label,
             icon = item.icon,
-            contentDescription = item.label
+            selectedIcon = item.selectedIcon,
+            contentDescription = null
         )
     }
 
@@ -551,102 +552,8 @@ fun MainScreen(
     }
 }
 
-/**
- * NavigationBar para telas compactas (telefone portrait).
- */
-@Composable
-private fun FutebaBottomBar(
-    items: List<BottomNavItem>,
-    currentRoute: String?,
-    notificationCount: Int,
-    onNavigate: (String) -> Unit
-) {
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 0.dp
-    ) {
-        items.forEach { item ->
-            val selected = currentRoute == item.route
-            val badge = if (item.route == Screen.Profile.route && notificationCount > 0) {
-                notificationCount
-            } else {
-                null
-            }
-
-            NavigationBarItem(
-                icon = {
-                    BadgedBox(badge = {
-                        if (badge != null) {
-                            Badge { Text(text = badge.toString()) }
-                        }
-                    }) {
-                        Icon(
-                            imageVector = if (selected) (item.selectedIcon ?: item.icon) else item.icon,
-                            contentDescription = item.label
-                        )
-                    }
-                },
-                label = { Text(item.label) },
-                selected = selected,
-                onClick = { onNavigate(item.route) },
-                alwaysShowLabel = true
-            )
-        }
-    }
-}
-
-/**
- * NavigationRail para telas médias e expandidas (tablet, landscape).
- *
- * Em Medium: ícones sem labels.
- * Em Expanded: ícones com labels.
- */
-@Composable
-private fun FutebaNavigationRail(
-    items: List<BottomNavItem>,
-    currentRoute: String?,
-    notificationCount: Int,
-    showLabels: Boolean,
-    onNavigate: (String) -> Unit
-) {
-    NavigationRail(
-        modifier = Modifier.fillMaxHeight(),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
-
-        items.forEach { item ->
-            val selected = currentRoute == item.route
-            val badge = if (item.route == Screen.Profile.route && notificationCount > 0) {
-                notificationCount
-            } else {
-                null
-            }
-
-            NavigationRailItem(
-                selected = selected,
-                onClick = { onNavigate(item.route) },
-                icon = {
-                    BadgedBox(badge = {
-                        if (badge != null) {
-                            Badge { Text(text = badge.toString()) }
-                        }
-                    }) {
-                        Icon(
-                            imageVector = if (selected) (item.selectedIcon ?: item.icon) else item.icon,
-                            contentDescription = if (!showLabels) item.label else null
-                        )
-                    }
-                },
-                label = if (showLabels) {
-                    { Text(item.label) }
-                } else null,
-                alwaysShowLabel = showLabels
-            )
-        }
-    }
-}
+// FutebaBottomBar e FutebaNavigationRail removidos (#2693):
+// dead code substituído pelo AdaptiveNavigationScaffold canônico (#2190).
 
 /**
  * Dados dos itens do Bottom Navigation.

@@ -209,25 +209,6 @@ fun PopIn(
     }
 }
 
-/**
- * Animação staggered para listas.
- * Cada item aparece com um delay incremental.
- */
-@Composable
-fun StaggeredItem(
-    index: Int,
-    modifier: Modifier = Modifier,
-    baseDelayMillis: Int = 50,
-    content: @Composable () -> Unit
-) {
-    FadeSlideIn(
-        visible = true,
-        modifier = modifier,
-        delayMillis = index * baseDelayMillis,
-        content = content
-    )
-}
-
 // ==================== Number Animations ====================
 
 /**
