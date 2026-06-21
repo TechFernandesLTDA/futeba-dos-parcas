@@ -10,12 +10,12 @@ Documentação organizada do projeto Futeba dos Parças.
 |---------|-----------|
 | [README.md](../README.md) | Visão geral do projeto, setup rápido |
 | [CLAUDE.md](../CLAUDE.md) | Instruções para Claude Code (tech stack, patterns) |
-| [ARCHITECTURE.md](../ARCHITECTURE.md) | Arquitetura geral do sistema |
-| [API_REFERENCE.md](../API_REFERENCE.md) | Referência de APIs |
-| [DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md) | Schema do banco de dados |
+| [PROJECT_MAP.md](PROJECT_MAP.md) | Mapa operacional de pastas, fronteiras e comandos |
+| [.claude/ARCHITECTURE.md](../.claude/ARCHITECTURE.md) | Arquitetura geral do sistema |
+| [TECH_STACK_AND_CONTEXT.md](TECH_STACK_AND_CONTEXT.md) | Stack, bibliotecas e contexto técnico |
 | [CHANGELOG.md](../CHANGELOG.md) | Histórico de versões |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Guia para contribuidores |
-| [MIGRATION_REMAINING_TASKS.md](../MIGRATION_REMAINING_TASKS.md) | Tarefas pendentes de modernização |
+| [specs/DECISIONS.md](../specs/DECISIONS.md) | Decisões técnicas registradas |
 
 ---
 
@@ -23,6 +23,8 @@ Documentação organizada do projeto Futeba dos Parças.
 
 | Arquivo | Descrição |
 |---------|-----------|
+| [AGENT_OPERATING_MODEL.md](AGENT_OPERATING_MODEL.md) | Como usar Rawls, James, Hypatia e Plato no projeto |
+| [QA_SMOKE_MATRIX.md](QA_SMOKE_MATRIX.md) | Matriz de smoke/regressão para web, Android, Functions e Firebase |
 | [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) | Padrões Kotlin, Git workflow, testing |
 | [SETUP_GUIDE.md](SETUP_GUIDE.md) | Setup de Android, Backend, Firebase |
 | [UI_MODERNIZATION_GUIDE.md](UI_MODERNIZATION_GUIDE.md) | Material Design 3, WindowInsets |
@@ -57,7 +59,7 @@ Documentação organizada do projeto Futeba dos Parças.
 | [iOS_SETUP.md](iOS_SETUP.md) | Setup Xcode, CocoaPods, Firebase iOS |
 | [KMP_QUICK_START.md](KMP_QUICK_START.md) | Guia rápido de uso do módulo `shared` |
 | [KMP_SETUP_SUMMARY.md](KMP_SETUP_SUMMARY.md) | Resumo da configuração KMP |
-| [KOTLIN_MULTIPLATFORM_PLAN.md](../KOTLIN_MULTIPLATFORM_PLAN.md) | Plano de migração KMP |
+| [CMP_MULTIPLATFORM_MIGRATION.md](../specs/CMP_MULTIPLATFORM_MIGRATION.md) | Plano/spec de migração Compose Multiplatform |
 
 ---
 
@@ -131,5 +133,5 @@ Regras específicas para Claude Code em [../.claude/rules/](../.claude/rules/)
 
 ---
 
-**Última Atualização:** 2026-06-08
+**Última Atualização:** 2026-06-21
 **Status:** ✅ Documentação organizada e atualizada
