@@ -48,7 +48,9 @@ import com.futebadosparcas.data.model.BadgeRarity
 import com.futebadosparcas.data.model.BadgeType
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.animation.BadgeConfetti
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import java.text.SimpleDateFormat
 import java.util.*
 import com.futebadosparcas.R
@@ -517,7 +519,16 @@ private fun BadgeDetailDialog(
     val userBadge = badgeWithData.userBadge
     val rarityColor = getRarityColor(badge.rarity)
 
+    // #2724: motion de celebração no desbloqueio de badge.
+    // Respeita reduced-motion do sistema.
+    val reduceMotion = rememberReduceMotion()
+    var showConfetti by remember { mutableStateOf(false) }
+    LaunchedEffect(reduceMotion) {
+        showConfetti = !reduceMotion
+    }
+
     Dialog(onDismissRequest = onDismiss) {
+        Box(contentAlignment = Alignment.Center) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.extraLarge,
@@ -647,6 +658,13 @@ private fun BadgeDetailDialog(
                     Text(stringResource(R.string.badges_continue))
                 }
             }
+        }
+
+            // Overlay de confete sobre o dialog de desbloqueio de badge.
+            BadgeConfetti(
+                visible = showConfetti,
+                onAnimationEnd = { showConfetti = false }
+            )
         }
     }
 }
