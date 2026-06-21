@@ -31,4 +31,15 @@ internal object UiStrings {
     // ---- SplashScreen ----
     const val SPLASH_APP_NAME = "Futeba dos Parças"
     const val SPLASH_CD_LOGO = "Futeba dos Parças"
+
+    // ---- Detalhe do jogo / Hub do organizador (#2671) ----
+    // Ponto de entrada que cabea as telas reais de ui/core/ no NavHost,
+    // tornando-as alcançáveis pela navegação (sem telas órfãs).
+    const val GAME_DETAIL_TITLE = "Detalhes do Jogo"
+    const val GAME_DETAIL_ORGANIZER_TOOLS = "Ferramentas do organizador"
+    const val GAME_DETAIL_POST_GAME_REPORT = "Relatório pós-jogo"
+    const val GAME_DETAIL_OWNER_STATS = "Estatísticas do organizador"
+    const val GAME_DETAIL_INVITE_PLAYERS = "Convidar jogadores"
+    const val GAME_DETAIL_BLOCKED_PLAYERS = "Jogadores bloqueados"
+    const val CD_BACK = "Voltar"
 }

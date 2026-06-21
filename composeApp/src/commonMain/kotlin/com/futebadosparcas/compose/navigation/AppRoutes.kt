@@ -18,6 +18,9 @@ object AppRoutes {
 
     // ─── Bucket Core ──────────────────────────────────────────────────────────
     const val WELCOME = "welcome"
+
+    /** Onboarding de permissões (notificações, localização, câmera, microfone). #2671 */
+    const val PERMISSION_ONBOARDING = "permission_onboarding"
     const val LOGIN = "login"
     const val GAMES = "games"
     const val GAME_DETAIL = "game/{gameId}"
@@ -25,6 +28,21 @@ object AppRoutes {
     const val GROUP_DETAIL = "group/{groupId}"
     const val PROFILE = "profile"
     const val PROFILE_SETUP = "profile_setup"
+
+    // ─── Bucket Core — ferramentas do organizador / pós-jogo (#2671) ──────────
+    // Telas reais já existentes em ui/core/ cabeadas a partir do detalhe do jogo
+    // (hub do organizador). Eliminam telas órfãs no NavHost (AC#4 da #2671).
+    /** Relatório pós-jogo (presentes, pagamentos, placar, MVP). */
+    const val POST_GAME_REPORT = "post_game_report"
+
+    /** Estatísticas do organizador (jogos organizados, presença média, receita). */
+    const val OWNER_STATS = "owner_stats"
+
+    /** Convidar jogadores para um grupo (requer groupId). */
+    const val INVITE_PLAYERS = "invite_players/{groupId}"
+
+    /** Jogadores bloqueados de um grupo/jogo. */
+    const val BLOCKED_PLAYERS = "blocked_players"
 
     // ─── Bucket Gamification ─────────────────────────────────────────────────
     const val RANKING = "ranking"
