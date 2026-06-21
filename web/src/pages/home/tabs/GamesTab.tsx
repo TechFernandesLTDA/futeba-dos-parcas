@@ -59,11 +59,30 @@ const livePulseKeyframes = {
 type FilterStatus = 'all' | GameStatus;
 type SortBy = 'date' | 'spots' | 'nearest';
 
+const ACTIVE_STATUSES: GameStatus[] = ['SCHEDULED', 'CONFIRMED', 'LIVE'];
+const ACTIVE_GAME_DISPLAY_GRACE_MS = 4 * 60 * 60 * 1000;
+
 const SORT_OPTIONS: { value: SortBy; labelKey: string; icon: React.ReactNode }[] = [
   { value: 'date', labelKey: 'games.sort.date', icon: <CalendarMonth fontSize="small" /> },
   { value: 'spots', labelKey: 'games.sort.spots', icon: <EventAvailable fontSize="small" /> },
   { value: 'nearest', labelKey: 'games.sort.nearest', icon: <AccessTime fontSize="small" /> },
 ];
+
+function getGameStartTime(game: { dateTime?: Date; date: string; time?: string }): number | null {
+  if (game.dateTime instanceof Date && !Number.isNaN(game.dateTime.getTime())) {
+    return game.dateTime.getTime();
+  }
+
+  const parsed = new Date(`${game.date}T${game.time || '00:00'}:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+}
+
+function isExpiredActiveGame(game: { status: GameStatus; dateTime?: Date; date: string; time?: string }): boolean {
+  if (!ACTIVE_STATUSES.includes(game.status)) return false;
+  const startTime = getGameStartTime(game);
+  if (startTime === null) return false;
+  return startTime + ACTIVE_GAME_DISPLAY_GRACE_MS < Date.now();
+}
 
 export function GamesTab() {
   const navigate = useNavigate();
@@ -91,7 +110,10 @@ export function GamesTab() {
   }, []);
 
   const filteredGames = useMemo(() => {
-    let result = [...games];
+    let result = games.filter((game) => {
+      if (statusFilter !== 'all') return true;
+      return !isExpiredActiveGame(game);
+    });
 
     if (statusFilter !== 'all') {
       result = result.filter(game => game.status === statusFilter);
@@ -128,7 +150,7 @@ export function GamesTab() {
   }, [navigate]);
 
   return (
-    <Box sx={{ pb: 10, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
+    <Box sx={{ pb: { xs: 10, md: 3 }, maxWidth: { xs: '100%', md: 1100, lg: 1320, xl: 1560 }, mx: 'auto', width: '100%' }}>
       {/* Sticky search + filters bar */}
       <Box
         sx={{
@@ -136,7 +158,8 @@ export function GamesTab() {
           top: 0,
           zIndex: 5,
           bgcolor: 'background.paper', // #2273: token canônico de sticky header
-          p: 2,
+          px: pageSpacing.pagePadding,
+          pt: { xs: 1.5, md: 1 },
           pb: 0,
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
@@ -147,7 +170,7 @@ export function GamesTab() {
             display: { xs: 'none', md: 'flex' },
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 1.5,
+            mb: 1,
           }}
         >
           <Typography variant="h6" fontWeight={600}>
@@ -183,7 +206,7 @@ export function GamesTab() {
               </InputAdornment>
             ) : null,
           }}
-          sx={{ mb: 1 }}
+          sx={{ mb: { xs: 1, md: 0.75 } }}
         />
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -209,7 +232,7 @@ export function GamesTab() {
         </Box>
 
         {/* #2024 - Sort options */}
-        <Box sx={{ display: 'flex', alignItems: 'center', pt: 1, pb: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', pt: { xs: 1, md: 0.5 }, pb: 0.5 }}>
           <SortByAlpha fontSize="small" color="action" sx={{ mr: 1, flexShrink: 0 }} />
           <ToggleButtonGroup
             value={sortBy}
@@ -236,7 +259,7 @@ export function GamesTab() {
         </Box>
 
         {/* Filtro de gênero */}
-        <Box sx={{ display: 'flex', alignItems: 'center', pt: 0.5, pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', pt: 0.25, pb: { xs: 1, md: 0.75 } }}>
           <GenderIcon fontSize="small" color="action" sx={{ mr: 1, flexShrink: 0 }} />
           <ToggleButtonGroup
             value={genderFilter}
@@ -262,7 +285,7 @@ export function GamesTab() {
         </Box>
       </Box>
 
-      <Box sx={{ px: pageSpacing.pagePadding, pt: 2 }}>
+      <Box sx={{ px: pageSpacing.pagePadding, pt: { xs: 2, md: 1.25 } }}>
         {error ? (
           <ErrorState
             message={error}
@@ -312,19 +335,19 @@ export function GamesTab() {
             onAction={hasActiveFilters ? clearFilters : () => navigate(hasGroups ? '/game/create' : '/groups/discover')}
           />
         ) : (
-          <Box sx={{ px: isLg ? 2 : 0 }}>
-            <Grid container spacing={2}>
+          <Box sx={{ px: isLg ? 1 : 0 }}>
+            <Grid container spacing={{ xs: 2, md: 1.5, xl: 2 }}>
           {filteredGames.map((game) => {
             const progress = game.maxPlayers > 0 ? Math.min((game.playersCount / game.maxPlayers) * 100, 100) : 0;
             const isFull = game.maxPlayers > 0 && game.playersCount >= game.maxPlayers;
             const isLive = game.status === 'LIVE';
 
             return (
-              <Grid item xs={12} lg={6} xl={4} key={game.id}>
-              <Card sx={{ mb: 2, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
+              <Grid item xs={12} md={6} xl={4} key={game.id}>
+              <Card sx={{ mb: { xs: 2, md: 0 }, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                  <CardContent sx={{ p: { xs: 2, md: 1.5 }, '&:last-child': { pb: { xs: 2, md: 1.5 } } }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 1, md: 0.75 } }}>
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5, alignItems: 'center' }}>
                           {(() => {
@@ -410,7 +433,7 @@ export function GamesTab() {
                       )}
                     </Box>
 
-                    <Box sx={{ mt: 2 }}>
+                    <Box sx={{ mt: { xs: 2, md: 1.25 } }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <People fontSize="small" color={isFull ? 'error' : 'primary'} />

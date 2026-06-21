@@ -419,9 +419,21 @@ export const EditProfileScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer maxWidth="form" sx={{ textAlign: 'center' }}>
-        <CircularProgress />
-      </PageContainer>
+      <AdaptiveFormSheet closeDestination="/?tab=4" isDirty={false}>
+        <FormScaffold
+          title={t('profile.editProfile')}
+          closeDestination="/?tab=4"
+          closeVariant="X"
+          loading
+        >
+          <PageContainer maxWidth="form" sx={{ textAlign: 'center', py: 6 }}>
+            <CircularProgress aria-label={t('a11y.loadingEditProfile')} />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              {t('a11y.loadingEditProfile')}
+            </Typography>
+          </PageContainer>
+        </FormScaffold>
+      </AdaptiveFormSheet>
     );
   }
 

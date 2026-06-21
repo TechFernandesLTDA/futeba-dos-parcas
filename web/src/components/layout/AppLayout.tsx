@@ -43,7 +43,8 @@ export function AppLayout() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'auto',
-          minHeight: '100dvh',
+          minHeight: { xs: '100dvh', md: 0 },
+          height: { md: '100dvh' },
         }}
       >
         <ConnectionStatus isOnline={isOnline} />

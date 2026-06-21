@@ -11,3 +11,8 @@ val FutebaShapes = Shapes(
     large = RoundedCornerShape(16.dp),
     extraLarge = RoundedCornerShape(28.dp)
 )
+
+object ExpressiveShapeTokens {
+    val ChipUnselected = 8.dp
+    val ChipSelected = 20.dp
+}

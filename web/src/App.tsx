@@ -353,7 +353,7 @@ function useFocusOnNavigate() {
     const el = document.querySelector('#main-content') as HTMLElement;
     if (el) {
       el.setAttribute('tabIndex', '-1');
-      el.focus();
+      el.focus({ preventScroll: true });
     }
     // Registra breadcrumb de navegação para contexto em erros futuros
     addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {
@@ -538,7 +538,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           transition: dragProgress === 0 ? 'transform 0.2s ease, opacity 0.2s ease' : 'none',
         }}
       >
-        {user && (
+        {user && !isSecondary && (
           <MobileTopBar
             unreadCount={unreadCount}
             showBack={isSecondary}
@@ -699,7 +699,7 @@ function App() {
                 <MobileShell>
                   <VerificationBanner />
                   <RouteAnnouncer />
-                  <Box component="main" id="main-content" tabIndex={-1}>
+                  <Box>
                     <SafeScreen />
                   </Box>
                   <ConnectionStatusWrapper />

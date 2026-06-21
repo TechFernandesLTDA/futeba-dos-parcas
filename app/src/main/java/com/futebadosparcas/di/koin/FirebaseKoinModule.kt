@@ -2,6 +2,7 @@ package com.futebadosparcas.di.koin
 
 import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.futebadosparcas.util.AnalyticsHelper
+import com.futebadosparcas.util.FirebaseRegions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MemoryCacheSettings
@@ -64,7 +65,7 @@ val firebaseKoinModule = module {
     // Firebase Functions (callables: verifyCpf, setUserVerified, etc)
     // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
     single<FirebaseFunctions> {
-        FirebaseFunctions.getInstance("us-central1")
+        FirebaseFunctions.getInstance(FirebaseRegions.FUNCTIONS)
     }
 
     single<FirebaseStorage> {

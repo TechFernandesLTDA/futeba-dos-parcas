@@ -53,6 +53,11 @@ export const logVerificationFailure = httpsCallable<
   { logged: boolean }
 >(functions, 'logVerificationFailure');
 
+export const joinPublicGame = httpsCallable<
+  { gameId: string; position?: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
+  { success: boolean; alreadyConfirmed: boolean; confirmationId: string }
+>(functions, 'joinPublicGame');
+
 // Exclusão de conta — LGPD art. 18 (direito ao esquecimento)
 export const deleteAccount = httpsCallable<void, { success: boolean }>(functions, 'deleteAccount');
 

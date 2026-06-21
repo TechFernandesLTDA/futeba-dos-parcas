@@ -171,6 +171,9 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class")
     // Versão gerida pelo Compose BOM (2025.09.01 → 1.4.0). Sem pin manual para evitar divergência. #2681
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite")
+    implementation("androidx.compose.material3.adaptive:adaptive")
+    implementation("androidx.compose.material3.adaptive:adaptive-layout")
+    implementation("androidx.compose.material3.adaptive:adaptive-navigation")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.12.3")

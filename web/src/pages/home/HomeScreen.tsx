@@ -37,7 +37,7 @@ function TabSkeleton() {
   return (
     <Box sx={{ p: pageSpacing.pagePadding }}>
       {[...Array(4)].map((_, i) => (
-        <Skeleton key={i} variant="rounded" height={80} sx={{ mb: 1.5 }} />
+        <Skeleton key={i} variant="rounded" sx={{ height: { xs: 80, md: 64 }, mb: { xs: 1.5, md: 1 } }} />
       ))}
     </Box>
   );
@@ -75,7 +75,7 @@ export function HomeScreen() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {tabValue === 0 && (
-        <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pt: 1, pb: towExpanded ? 0 : 0.5 }}>
+        <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pt: { xs: 1, md: 0.75 }, pb: towExpanded ? 0 : { xs: 0.5, md: 0 } }}>
           <Box
             onClick={() => setTowExpanded(!towExpanded)}
             role="button"
@@ -93,9 +93,9 @@ export function HomeScreen() {
               alignItems: 'center',
               justifyContent: 'space-between',
               cursor: 'pointer',
-              py: 0.75,
-              px: 1.5,
-              borderRadius: 2,
+              py: { xs: 0.75, md: 0.5 },
+              px: { xs: 1.5, md: 1.25 },
+              borderRadius: 1.5,
               mb: towExpanded ? 1 : 0,
               bgcolor: alpha(theme.palette.primary.main, 0.04),
               border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,

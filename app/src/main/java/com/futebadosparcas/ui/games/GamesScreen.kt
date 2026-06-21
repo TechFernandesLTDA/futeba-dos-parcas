@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -42,12 +43,14 @@ import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.adaptive.ExpandedListDetailPane
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * GamesScreen - Tela de listagem de jogos em Jetpack Compose
@@ -65,6 +68,9 @@ fun GamesScreen(
     viewModel: GamesViewModel,
     onGameClick: (gameId: String) -> Unit = {},
     onCreateGameClick: () -> Unit = {},
+    onEditGameClick: (String) -> Unit = {},
+    onMvpVoteClick: (String) -> Unit = {},
+    onTacticalBoardClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onGroupsClick: () -> Unit = {},
     onMapClick: () -> Unit = {}
@@ -119,6 +125,9 @@ fun GamesScreen(
                         GamesSuccessContent(
                             games = currentState.games,
                             onGameClick = onGameClick,
+                            onEditGameClick = onEditGameClick,
+                            onMvpVoteClick = onMvpVoteClick,
+                            onTacticalBoardClick = onTacticalBoardClick,
                             viewModel = viewModel,
                             onFilterChange = { filterType ->
                                 viewModel.loadGames(filterType)
@@ -154,12 +163,16 @@ fun GamesScreen(
 private fun GamesSuccessContent(
     games: List<GameWithConfirmations>,
     onGameClick: (gameId: String) -> Unit,
+    onEditGameClick: (gameId: String) -> Unit,
+    onMvpVoteClick: (gameId: String) -> Unit,
+    onTacticalBoardClick: () -> Unit,
     onFilterChange: (GameFilterType) -> Unit,
     viewModel: GamesViewModel
 ) {
     var selectedFilter by remember { mutableStateOf(GameFilterType.ALL) }
     // Filtro de genero client-side (FASE 3). null = "Todos" (sem filtro).
     var selectedGender by remember { mutableStateOf<GameGender?>(null) }
+    var selectedGameId by rememberSaveable { mutableStateOf<String?>(null) }
     val windowSizeClass = rememberWindowSizeClass()
 
     // Lista filtrada por genero. GameGender.fromString trata jogos legados
@@ -181,73 +194,138 @@ private fun GamesSuccessContent(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Filtros de status (Todos/Abertos/Meus Jogos)
-        GamesFilters(
-            selectedFilter = selectedFilter,
-            onFilterChange = { newFilter ->
-                selectedFilter = newFilter
-                onFilterChange(newFilter)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = windowSizeClass.horizontalPadding, vertical = AppDimensions.spacing_medium)
-        )
+    LaunchedEffect(windowSizeClass.isExpanded, gamesKey) {
+        if (windowSizeClass.isExpanded && filteredGames.none { it.game.id == selectedGameId }) {
+            selectedGameId = filteredGames.firstOrNull()?.game?.id
+        }
+    }
 
-        // Filtro de genero (Todos/Masculino/Feminino/Misto) — client-side
-        GenderFilters(
-            selectedGender = selectedGender,
-            onGenderChange = { selectedGender = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = windowSizeClass.horizontalPadding)
-        )
-
-        if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
-            // Compact: lista vertical simples
-            LazyColumn(
-                // SECFIX #489: adaptiveContentWidth() centraliza em tablets/desktop
+    val listContent: @Composable ((String) -> Unit) -> Unit = { onGameSelected ->
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Filtros de status (Todos/Abertos/Meus Jogos)
+            GamesFilters(
+                selectedFilter = selectedFilter,
+                onFilterChange = { newFilter ->
+                    selectedFilter = newFilter
+                    onFilterChange(newFilter)
+                },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .adaptiveContentWidth(),
-                contentPadding = PaddingValues(
-                    horizontal = windowSizeClass.horizontalPadding,
-                    vertical = AppDimensions.spacing_small
-                ),
-                verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
-            ) {
-                items(filteredGames, key = { it.game.id }) { game ->
-                    GameCard(
-                        game = game,
-                        onClick = { onGameClick(game.game.id) },
-                        modifier = Modifier.fillMaxWidth()
+                    .fillMaxWidth()
+                    .padding(horizontal = windowSizeClass.horizontalPadding, vertical = AppDimensions.spacing_medium)
+            )
+
+            // Filtro de genero (Todos/Masculino/Feminino/Misto) — client-side
+            GenderFilters(
+                selectedGender = selectedGender,
+                onGenderChange = { selectedGender = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = windowSizeClass.horizontalPadding)
+            )
+
+            GamesListContent(
+                games = filteredGames,
+                onGameClick = onGameSelected,
+                windowSizeClass = windowSizeClass
+            )
+        }
+    }
+
+    ExpandedListDetailPane(
+        selectedId = selectedGameId,
+        onSelectId = { selectedGameId = it },
+        compactContent = {
+            listContent(onGameClick)
+        },
+        listPane = { onGameSelected ->
+            listContent(onGameSelected)
+        },
+        detailPane = { gameId ->
+            if (gameId == null) {
+                GamesDetailPlaceholder()
+            } else {
+                key(gameId) {
+                    val detailViewModel: GameDetailViewModel = koinViewModel()
+                    GameDetailScreen(
+                        viewModel = detailViewModel,
+                        gameId = gameId,
+                        onNavigateBack = { selectedGameId = null },
+                        onNavigateToCreateGame = onEditGameClick,
+                        onNavigateToMvpVote = onMvpVoteClick,
+                        onNavigateToTacticalBoard = onTacticalBoardClick
                     )
                 }
             }
-        } else {
-            // Medium/Expanded: grid de 2 colunas
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 160.dp),
-                // SECFIX #489: adaptiveContentWidth() limita 840/1040dp + centraliza
-                modifier = Modifier
-                    .fillMaxSize()
-                    .adaptiveContentWidth(),
-                contentPadding = PaddingValues(
-                    horizontal = windowSizeClass.horizontalPadding,
-                    vertical = AppDimensions.spacing_small
-                ),
-                horizontalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing),
-                verticalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing)
-            ) {
-                items(filteredGames, key = { it.game.id }) { game ->
-                    GameCard(
-                        game = game,
-                        onClick = { onGameClick(game.game.id) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+        },
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@Composable
+private fun GamesListContent(
+    games: List<GameWithConfirmations>,
+    onGameClick: (gameId: String) -> Unit,
+    windowSizeClass: com.futebadosparcas.ui.adaptive.WindowSizeClass
+) {
+    if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
+        // Compact: lista vertical simples
+        LazyColumn(
+            // SECFIX #489: adaptiveContentWidth() centraliza em tablets/desktop
+            modifier = Modifier
+                .fillMaxSize()
+                .adaptiveContentWidth(),
+            contentPadding = PaddingValues(
+                horizontal = windowSizeClass.horizontalPadding,
+                vertical = AppDimensions.spacing_small
+            ),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
+        ) {
+            items(games, key = { it.game.id }) { game ->
+                GameCard(
+                    game = game,
+                    onClick = { onGameClick(game.game.id) },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
+    } else {
+        // Medium/Expanded: grid de 2 colunas
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 160.dp),
+            // SECFIX #489: adaptiveContentWidth() limita 840/1040dp + centraliza
+            modifier = Modifier
+                .fillMaxSize()
+                .adaptiveContentWidth(),
+            contentPadding = PaddingValues(
+                horizontal = windowSizeClass.horizontalPadding,
+                vertical = AppDimensions.spacing_small
+            ),
+            horizontalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing),
+            verticalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing)
+        ) {
+            items(games, key = { it.game.id }) { game ->
+                GameCard(
+                    game = game,
+                    onClick = { onGameClick(game.game.id) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GamesDetailPlaceholder() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.game_details),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

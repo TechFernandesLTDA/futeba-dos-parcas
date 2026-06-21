@@ -1,8 +1,10 @@
 import { PageContainer } from '../../components/common/PageContainer';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
+  Button,
   Typography,
   Card,
   CardContent,
@@ -27,20 +29,27 @@ import {
   Storage as DataIcon,
   DeleteForever as DeleteIcon,
   SportsSoccer as SoccerIcon,
+  NewReleases as NewReleasesIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { useTranslation } from 'react-i18next';
+import { useReleaseNotes } from '../../hooks/useReleaseNotes';
+import { ReleaseTypeBadge } from '../../components/whatsnew/ReleaseNoteContent';
+import { formatReleaseDate } from '../../utils/releaseNotesFormat';
 
 export const AboutScreen: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useDocumentTitle(t('page.title.about'));
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const navigate = useNavigate();
   const goBack = useNavigateBack();
   const theme = useTheme();
   const { user } = useAuth();
+  const { notes } = useReleaseNotes();
+  const latestNote = notes[0];
 
   // Versão e build lidos em build time via Vite define (package.json + CI run number).
   const appVersion = import.meta.env.VITE_APP_VERSION ?? 'dev';
@@ -77,6 +86,50 @@ export const AboutScreen: React.FC = () => {
             </Typography>
             <Box sx={{ mt: 2 }}>
               <Chip label={`v${appVersion} (${buildNumber})`} size="small" />
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+              <Avatar
+                aria-hidden="true"
+                sx={{
+                  bgcolor: theme.palette.info.main,
+                  color: theme.palette.info.contrastText,
+                  width: 44,
+                  height: 44,
+                }}
+              >
+                <NewReleasesIcon />
+              </Avatar>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    {t('about.latestRelease')}
+                  </Typography>
+                  {latestNote && <ReleaseTypeBadge type={latestNote.type} />}
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {latestNote?.headline || t('about.noReleaseNotes')}
+                </Typography>
+                {latestNote && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                    v{latestNote.version}
+                    {formatReleaseDate(latestNote.releaseDate, i18n.resolvedLanguage || i18n.language)
+                      ? ` · ${formatReleaseDate(latestNote.releaseDate, i18n.resolvedLanguage || i18n.language)}`
+                      : ''}
+                  </Typography>
+                )}
+                <Button
+                  size="small"
+                  sx={{ mt: 1 }}
+                  onClick={() => navigate('/whats-new')}
+                >
+                  {t('about.openChangelog')}
+                </Button>
+              </Box>
             </Box>
           </CardContent>
         </Card>

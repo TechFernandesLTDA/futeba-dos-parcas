@@ -60,6 +60,173 @@ function fileContainsHex(haystackLower, canonicalHex6) {
   return re.test(haystackLower);
 }
 
+function relative(file) {
+  return path.relative(ROOT, file);
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function tokenHex(raw) {
+  return `#${normalizeHex(raw).toUpperCase()}`;
+}
+
+function kotlinHex(raw) {
+  return `0xFF${normalizeHex(raw).toUpperCase()}`;
+}
+
+function readRequiredFile(file, label, errors) {
+  if (!fs.existsSync(file)) {
+    errors.push(`[${label}] arquivo ausente: ${relative(file)}`);
+    return null;
+  }
+  return fs.readFileSync(file, 'utf8');
+}
+
+function sliceBetween(content, startMarker, endMarker) {
+  const start = content.indexOf(startMarker);
+  if (start === -1) return null;
+  const end = endMarker ? content.indexOf(endMarker, start + startMarker.length) : -1;
+  return end === -1 ? content.slice(start) : content.slice(start, end);
+}
+
+function extractTsObject(content, objectName) {
+  const assignment = new RegExp(`\\b(?:const\\s+)?${escapeRegExp(objectName)}\\s*(?::[^=]+)?=\\s*\\{`, 'm');
+  const property = new RegExp(`\\b${escapeRegExp(objectName)}\\s*:\\s*\\{`, 'm');
+  const match = assignment.exec(content) || property.exec(content);
+  if (!match) return null;
+
+  const open = content.indexOf('{', match.index);
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+
+  for (let i = open; i < content.length; i++) {
+    const ch = content[i];
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (ch === '\'' || ch === '"' || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '{') depth += 1;
+    if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) return content.slice(open, i + 1);
+    }
+  }
+  return null;
+}
+
+function checkTsObjectHexes(content, objectName, expected, label, sourceFile, errors) {
+  const object = extractTsObject(content, objectName);
+  if (!object) {
+    errors.push(`[${label}] objeto ausente: ${objectName} em ${relative(sourceFile)}`);
+    return;
+  }
+
+  for (const [prop, rawHex] of Object.entries(expected)) {
+    const expectedHex = tokenHex(rawHex);
+    const re = new RegExp(`\\b${escapeRegExp(prop)}\\s*:\\s*['"]${escapeRegExp(expectedHex)}['"]`, 'i');
+    if (!re.test(object)) {
+      errors.push(`[${label}] ${objectName}.${prop} diverge — esperado ${expectedHex} em ${relative(sourceFile)}`);
+    }
+  }
+}
+
+function checkKotlinValHexes(content, expected, label, sourceFile, errors) {
+  for (const [name, rawHex] of Object.entries(expected)) {
+    const expectedHex = kotlinHex(rawHex);
+    const re = new RegExp(`\\bval\\s+${escapeRegExp(name)}\\s*=\\s*Color\\(\\s*${expectedHex}\\s*\\)`, 'i');
+    if (!re.test(content)) {
+      errors.push(`[${label}] ${name} diverge — esperado Color(${expectedHex}) em ${relative(sourceFile)}`);
+    }
+  }
+}
+
+function themeColorTags(html) {
+  return [...html.matchAll(/<meta\b[^>]*\bname=["']theme-color["'][^>]*>/gi)].map((match) => {
+    const tag = match[0];
+    const attrs = {};
+    for (const attr of tag.matchAll(/\b([a-zA-Z:-]+)=["']([^"']*)["']/g)) {
+      attrs[attr[1].toLowerCase()] = attr[2];
+    }
+    return attrs;
+  });
+}
+
+function checkWebThemeColor(tokens, errors) {
+  const file = path.join(ROOT, 'web', 'index.html');
+  const html = readRequiredFile(file, 'web theme-color', errors);
+  if (!html) return;
+
+  const tags = themeColorTags(html);
+  const defaultTag = tags.find((tag) => !tag.media);
+  const darkTag = tags.find((tag) => tag.media === '(prefers-color-scheme: dark)');
+  const expectedDefault = tokenHex(tokens.brand.primary.hex);
+  const expectedDark = tokenHex(tokens.darkPalette.primary.main);
+
+  if (!defaultTag || defaultTag.content.toUpperCase() !== expectedDefault) {
+    errors.push(`[web theme-color] default diverge — esperado ${expectedDefault} em ${relative(file)}`);
+  }
+  if (!darkTag || darkTag.content.toUpperCase() !== expectedDark) {
+    errors.push(`[web theme-color] dark diverge — esperado ${expectedDark} em ${relative(file)}`);
+  }
+}
+
+function checkWebSemanticPalette(tokens, errors) {
+  const file = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const content = readRequiredFile(file, 'web semantic palette', errors);
+  if (!content) return;
+
+  checkTsObjectHexes(content, 'primary', tokens.palette.primary, 'web primary token', file, errors);
+  checkTsObjectHexes(content, 'secondary', tokens.palette.secondary, 'web secondary token', file, errors);
+
+  const lightTheme = sliceBetween(content, 'export const futebaTheme = createTheme({', '// Dark theme');
+  const darkTheme = sliceBetween(content, 'export const futebaDarkTheme = createTheme({', 'export const futebaDarkOledTheme');
+  if (!lightTheme) {
+    errors.push(`[web semantic palette] futebaTheme ausente em ${relative(file)}`);
+  } else {
+    checkTsObjectHexes(lightTheme, 'error', tokens.palette.error, 'web light error token', file, errors);
+    checkTsObjectHexes(lightTheme, 'warning', tokens.palette.warning, 'web light warning token', file, errors);
+    checkTsObjectHexes(lightTheme, 'success', tokens.palette.success, 'web light success token', file, errors);
+    checkTsObjectHexes(lightTheme, 'info', tokens.palette.info, 'web light info token', file, errors);
+  }
+
+  if (!darkTheme) {
+    errors.push(`[web semantic palette] futebaDarkTheme ausente em ${relative(file)}`);
+  } else {
+    for (const [role, expected] of Object.entries(tokens.darkPalette)) {
+      checkTsObjectHexes(darkTheme, role, expected, `web dark ${role} token`, file, errors);
+    }
+  }
+}
+
+function checkKotlinSemanticGreen(tokens, errors) {
+  const expected = {
+    md3_light_primary: tokens.palette.primary.main,
+    md3_light_inversePrimary: tokens.darkPalette.primary.main,
+    md3_dark_primary: tokens.darkPalette.primary.main,
+    md3_dark_inversePrimary: tokens.palette.primary.main,
+  };
+
+  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
+    const content = readRequiredFile(platform.file, platform.name, errors);
+    if (!content) continue;
+    checkKotlinValHexes(content, expected, `${platform.name} semantic green`, platform.file, errors);
+  }
+}
+
 // ==========================================
 // Paridade de MOTION (durations + easings) — issue #2755
 // ==========================================
@@ -196,6 +363,12 @@ function main() {
       }
     }
   }
+
+  // Checks semânticos focados: os valores precisam estar nos roles certos, não
+  // apenas aparecer em algum lugar do arquivo.
+  checkWebThemeColor(tokens, errors);
+  checkWebSemanticPalette(tokens, errors);
+  checkKotlinSemanticGreen(tokens, errors);
 
   // Paridade de motion (durations + easings) — issue #2755.
   checkMotionParity(tokens, errors);

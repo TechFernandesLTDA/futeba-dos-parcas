@@ -40,6 +40,7 @@ actual class FirebaseDataSource actual constructor() {
     private val storage = Firebase.storage
 
     companion object {
+        private const val FUNCTIONS_REGION = "southamerica-east1"
         private const val COLLECTION_GAMES = "games"
         private const val COLLECTION_CONFIRMATIONS = "confirmations"
         private const val COLLECTION_TEAMS = "teams"
@@ -759,7 +760,7 @@ actual class FirebaseDataSource actual constructor() {
      */
     actual suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit> {
         return try {
-            val functions = Firebase.functions("us-central1")
+            val functions = Firebase.functions(FUNCTIONS_REGION)
             functions.httpsCallable("updateUserPii")
                 .invoke(updates)
             Result.success(Unit)

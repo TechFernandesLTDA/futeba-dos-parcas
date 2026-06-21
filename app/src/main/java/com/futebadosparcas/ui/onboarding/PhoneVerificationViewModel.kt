@@ -14,6 +14,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.futebadosparcas.R
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.FirebaseRegions
 import com.futebadosparcas.util.ResourceManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit
  */
 class PhoneVerificationViewModel(
     private val auth: FirebaseAuth,
-    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRegions.FUNCTIONS),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val resourceManager: ResourceManager,
 ) : ViewModel() {
@@ -102,7 +103,9 @@ class PhoneVerificationViewModel(
         pendingJob?.cancel()
         pendingJob = viewModelScope.launch {
             try {
-                // Verificar rate limit OTP via Cloud Function antes de disparar SMS
+                // Verificar rate limit OTP via Cloud Function antes de disparar SMS.
+                // Se a callable falhar por rede/App Check, seguimos para o Phone Auth:
+                // o preflight é consultivo e não pode travar cadastro legítimo.
                 val canSendResult = functions
                     .getHttpsCallable("canSendSmsOtp")
                     .call(mapOf("phone" to normalized))
@@ -122,8 +125,15 @@ class PhoneVerificationViewModel(
                     _uiState.value = PhoneVerificationUiState.Error(msg)
                     return@launch
                 }
+            } catch (e: Exception) {
+                AppLogger.e(
+                    "PhoneVerification",
+                    "Erro no preflight OTP; continuando com Firebase Phone Auth",
+                    e,
+                )
+            }
 
-                // Rate limit OK — iniciar verificação de telefone
+            try {
                 val options = PhoneAuthOptions.newBuilder(auth)
                     .setPhoneNumber(normalized)
                     .setTimeout(60L, TimeUnit.SECONDS)
@@ -134,12 +144,16 @@ class PhoneVerificationViewModel(
 
                 PhoneAuthProvider.verifyPhoneNumber(options)
             } catch (e: Exception) {
-                AppLogger.e("PhoneVerification", "Erro ao verificar rate limit OTP", e)
+                AppLogger.e("PhoneVerification", "Erro ao iniciar Phone Auth", e)
                 _uiState.value = PhoneVerificationUiState.Error(
                     resourceManager.getString(R.string.phone_error_connection)
                 )
             }
         }
+    }
+
+    fun reportRecoverableError(message: String) {
+        _uiState.value = PhoneVerificationUiState.Error(message)
     }
 
     /**

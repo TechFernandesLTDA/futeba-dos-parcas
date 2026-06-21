@@ -53,6 +53,46 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.26.3] - 2026-06-21
+
+#### Mudado
+- `canSendSmsOtp` mantém App Check obrigatório, mas não consome o token antes do Firebase Phone Auth.
+- O web renderiza explicitamente o reCAPTCHA invisível e continua o Phone Auth quando o preflight consultivo falha.
+- O Android resolve a `Activity` a partir de `ContextWrapper` antes de iniciar `PhoneAuthProvider.verifyPhoneNumber`.
+
+#### Corrigido
+- Fluxo de verificação por SMS deixa de bloquear cadastro legítimo em falhas transitórias do preflight.
+
+_PRs: #2810_
+
+### [1.26.2] - 2026-06-21
+
+#### Adicionado
+- `autoClosePastGames` roda de hora em hora e fecha jogos ativos com mais de 2 dias de atraso.
+- Jogos antigos com quórum confirmado, ou em status `LIVE`, viram `FINISHED`; sem quórum viram `CANCELLED`.
+
+#### Mudado
+- `useNextGame`, `usePrefetchHome` e `usePublicGames('map')` filtram `dateTime >= agora`.
+- A aba `GamesTab` aplica uma tolerância visual curta para esconder ativos vencidos antes do cron.
+
+#### Corrigido
+- Listas e cards de próximo jogo não priorizam mais partidas antigas que ficaram com status ativo no Firestore.
+
+_PRs: #2810_
+
+### [1.26.1] - 2026-06-21
+
+#### Mudado
+- `useScrollRestoration` agora chaveia por `pathname + search`, rola para o topo em navegações novas e restaura posição apenas em navegação `POP`.
+- `useFocusOnNavigate` usa `focus({ preventScroll: true })` para preservar o alinhamento visual após troca de rota.
+- Componentes de auth, containers e topbar mobile receberam proteções de layout responsivo.
+
+#### Corrigido
+- Scroll inicial de páginas e abas web ajustado para não ficar escondido sob a topbar.
+- Bundle de release notes web atualizado para refletir as mudanças recentes.
+
+_PRs: #2810_
+
 ### [1.26.0] - 2026-05-22
 
 #### Adicionado

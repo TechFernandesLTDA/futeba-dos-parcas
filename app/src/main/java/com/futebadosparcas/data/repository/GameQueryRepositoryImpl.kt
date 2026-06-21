@@ -1537,7 +1537,13 @@ class GameQueryRepositoryImpl constructor(
 
             val existingGames = (gamesResult.getOrNull() ?: emptyList())
                 .filter { it.id != excludeGameId }
-                .filter { it.status != GameStatus.CANCELLED.name }
+                .filter {
+                    it.status in setOf(
+                        GameStatus.SCHEDULED.name,
+                        GameStatus.CONFIRMED.name,
+                        GameStatus.LIVE.name
+                    )
+                }
 
             val conflicts = mutableListOf<TimeConflict>()
 

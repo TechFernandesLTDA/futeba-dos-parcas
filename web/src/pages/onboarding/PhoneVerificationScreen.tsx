@@ -26,9 +26,7 @@ import {
   RecaptchaVerifier,
   PhoneAuthProvider,
   linkWithCredential,
-  ConfirmationResult,
 } from 'firebase/auth';
-import { signInWithPhoneNumber } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -39,6 +37,34 @@ import { createLogger } from '../../utils/logger';
 import { canSendSmsOtp } from '../../services/cloudFunctions';
 
 const logger = createLogger('PhoneVerification');
+
+function phoneAuthSendErrorMessage(err: unknown): string {
+  const code = (err as { code?: string }).code;
+  if (code === 'auth/invalid-phone-number') return 'Número inválido. Confira DDD e número.';
+  if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
+    return 'Muitas tentativas em sequência. Aguarde alguns minutos.';
+  }
+  if (code === 'auth/captcha-check-failed' || code === 'auth/missing-app-credential') {
+    return 'Não foi possível validar a proteção anti-robô. Atualize a página e tente novamente.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Falha de conexão ao enviar SMS. Verifique sua internet e tente novamente.';
+  }
+  if (code === 'auth/app-not-authorized') {
+    return 'Este domínio não está autorizado para envio de SMS. Contate o suporte.';
+  }
+  return 'Erro ao enviar SMS. Verifique o número e tente novamente.';
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(Object.assign(new Error(code), { code })), ms);
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => window.clearTimeout(timer));
+  });
+}
 
 /**
  * Etapa 1/2 do onboarding obrigatorio: verificacao de telefone via SMS OTP.
@@ -57,7 +83,7 @@ export const PhoneVerificationScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
+  const verificationIdRef = useRef<string | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
@@ -104,37 +130,61 @@ export const PhoneVerificationScreen: React.FC = () => {
     }
     setLoading(true);
     try {
-      if (!verifierRef.current) {
-        verifierRef.current = new RecaptchaVerifier(
-          auth,
-          recaptchaContainerRef.current!,
-          { size: 'invisible' },
-        );
-      }
-
-      const rateCheck = await canSendSmsOtp({ phone: `+${normalized}` });
-      if (!rateCheck.data.allowed) {
-        const retryAfter = rateCheck.data.retryAfterSec || 60;
-        setError(`Muitas tentativas. Aguarde ${Math.ceil(retryAfter / 60)} minuto(s).`);
-        setResendCooldown(retryAfter);
+      if (!recaptchaContainerRef.current) {
+        setError('A verificação anti-robô ainda está carregando. Tente novamente em instantes.');
         return;
       }
 
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        `+${normalized}`,
-        verifierRef.current,
+      if (!verifierRef.current) {
+        verifierRef.current = new RecaptchaVerifier(
+          auth,
+          recaptchaContainerRef.current,
+          {
+            size: 'invisible',
+            'expired-callback': () => {
+              verifierRef.current?.clear();
+              verifierRef.current = null;
+              setError('A verificação anti-robô expirou. Tente enviar o SMS novamente.');
+            },
+          },
+        );
+        await withTimeout(
+          verifierRef.current.render(),
+          12000,
+          'recaptcha-timeout',
+        );
+      }
+
+      try {
+        const rateCheck = await canSendSmsOtp({ phone: `+${normalized}` });
+        if (!rateCheck.data.allowed) {
+          const retryAfter = rateCheck.data.retryAfterSec || 60;
+          setError(`Muitas tentativas. Aguarde ${Math.ceil(retryAfter / 60)} minuto(s).`);
+          setResendCooldown(retryAfter);
+          return;
+        }
+      } catch (preflightErr) {
+        logger.error('SMS preflight failed; continuing with Firebase Phone Auth:', preflightErr);
+      }
+
+      const provider = new PhoneAuthProvider(auth);
+      verificationIdRef.current = await withTimeout(
+        provider.verifyPhoneNumber(`+${normalized}`, verifierRef.current),
+        30000,
+        'sms-send-timeout',
       );
-      confirmationRef.current = confirmation;
       setStep('otp');
       setResendCooldown(60);
       showSuccess(t('feedback.phoneVerification.codeSent'));
     } catch (err) {
+      logger.error('SMS send failed:', err);
       const code = (err as { code?: string }).code;
-      let msg = 'Erro ao enviar SMS. Verifique o número e tente novamente.';
-      if (code === 'auth/invalid-phone-number') msg = 'Número inválido. Confira DDD e número.';
-      else if (code === 'auth/too-many-requests') {
-        msg = 'Muitas tentativas em sequência. Aguarde 5 minutos.';
+      const msg = code === 'recaptcha-timeout'
+        ? 'A verificação anti-robô demorou demais. Atualize a página e tente novamente.'
+        : code === 'sms-send-timeout'
+        ? 'O envio do SMS demorou demais. Verifique sua conexão e tente novamente.'
+        : phoneAuthSendErrorMessage(err);
+      if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
         setResendCooldown(300); // 5 minutos
       }
       setError(msg);
@@ -151,7 +201,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       setError(t('feedback.phoneVerification.code6Digits'));
       return;
     }
-    if (!confirmationRef.current || !firebaseUser) {
+    if (!verificationIdRef.current || !firebaseUser) {
       setError(t('feedback.phoneVerification.sessionExpiredRestart'));
       setStep('phone');
       return;
@@ -159,7 +209,7 @@ export const PhoneVerificationScreen: React.FC = () => {
     setLoading(true);
     try {
       const credential = PhoneAuthProvider.credential(
-        confirmationRef.current.verificationId,
+        verificationIdRef.current,
         otp,
       );
       await linkWithCredential(firebaseUser, credential);
@@ -189,11 +239,16 @@ export const PhoneVerificationScreen: React.FC = () => {
       if (code === 'auth/provider-already-linked') {
         // Tentar persistir phone mesmo no caso already-linked (idempotente)
         if (firebaseUser?.phoneNumber) {
-          updateDoc(doc(db, 'users', firebaseUser.uid), {
-            phone: firebaseUser.phoneNumber,
-            phone_verified: true,
-            updated_at: serverTimestamp(),
-          }).catch((e) => logger.error('Failed to persist phone (already-linked path):', e));
+          try {
+            await updateDoc(doc(db, 'users', firebaseUser.uid), {
+              phone: firebaseUser.phoneNumber,
+              phone_verified: true,
+              updated_at: serverTimestamp(),
+            });
+          } catch (e) {
+            logger.error('Failed to persist phone (already-linked path):', e);
+            showError(t('feedback.phoneVerification.verifiedSaveError'));
+          }
         }
         navigate('/onboarding/cpf', { replace: true });
         return;
@@ -375,6 +430,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                         <Button
                           startIcon={<BackIcon />}
                           onClick={() => {
+                            verificationIdRef.current = null;
                             setStep('phone');
                             setOtp('');
                             setError(null);

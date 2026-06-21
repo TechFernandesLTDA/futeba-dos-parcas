@@ -8,6 +8,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { getIsPublicFromVisibility } from '../utils/gameLifecycle';
 
 const logger = createLogger('useDuplicateGameCopy');
 
@@ -91,6 +92,7 @@ export function useDuplicateGameCopy() {
           pix_beneficiary_name: source.pixBeneficiaryName || '',
           rules: source.rules || '',
           visibility: source.visibility,
+          is_public: getIsPublicFromVisibility(source.visibility),
           recurrence: source.recurrence || 'none',
           group_id: source.groupId || null,
           group_name: source.groupName || null,
@@ -125,6 +127,7 @@ export function useDuplicateGameCopy() {
 
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['nextGame'] });
 
         showSuccess(t('feedback.duplicateGame.success'));
         setLoading(false);

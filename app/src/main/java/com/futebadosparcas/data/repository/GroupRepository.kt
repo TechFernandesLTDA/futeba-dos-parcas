@@ -768,7 +768,7 @@ class GroupRepository constructor(
 
             // Chamar Cloud Function para cascade soft delete
             // A CF faz: verificação de permissão, rate limiting, marcação do grupo + jogos
-            val functions = FirebaseFunctions.getInstance("southamerica-east1")
+            val functions = FirebaseFunctions.getInstance(com.futebadosparcas.util.FirebaseRegions.FUNCTIONS)
             functions
                 .getHttpsCallable("softDeleteGroup")
                 .call(mapOf("groupId" to groupId))

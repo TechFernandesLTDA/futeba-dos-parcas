@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.adaptive.ExpandedListDetailPane
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,6 +61,9 @@ fun GroupsScreen(
     onGroupClick: (String) -> Unit,
     onCreateGroupClick: () -> Unit,
     onDiscoverGroupsClick: () -> Unit = {},
+    onInvitePlayersClick: (String) -> Unit = {},
+    onCashboxClick: (String) -> Unit = {},
+    onCreateGameInGroupClick: (String) -> Unit = {},
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -126,7 +131,10 @@ fun GroupsScreen(
                             groups = state.groups,
                             searchQuery = searchQuery,
                             onSearchQueryChange = { viewModel.searchGroups(it) },
-                            onGroupClick = onGroupClick
+                            onGroupClick = onGroupClick,
+                            onInvitePlayersClick = onInvitePlayersClick,
+                            onCashboxClick = onCashboxClick,
+                            onCreateGameInGroupClick = onCreateGameInGroupClick
                         )
                     }
                 }
@@ -218,42 +226,98 @@ private fun GroupsSuccessContent(
     groups: List<UserGroup>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onGroupClick: (String) -> Unit
+    onGroupClick: (String) -> Unit,
+    onInvitePlayersClick: (String) -> Unit,
+    onCashboxClick: (String) -> Unit,
+    onCreateGameInGroupClick: (String) -> Unit
 ) {
     // Mostra busca apenas se houver 3+ grupos
     val showSearch = groups.size >= 3
+    var selectedGroupId by rememberSaveable { mutableStateOf<String?>(null) }
 
-    LazyColumn(
-        // SECFIX #489: adaptiveContentWidth limita largura em tablets
-        modifier = Modifier
-            .fillMaxSize()
-            .adaptiveContentWidth(),
-        contentPadding = PaddingValues(vertical = 8.dp) // Padding mínimo, FAB já é posicionado pelo Scaffold
-    ) {
-        // Campo de busca
-        if (showSearch) {
-            item {
-                SearchBar(
-                    query = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    val groupsKey = remember(groups) { groups.joinToString(",") { it.groupId } }
+    LaunchedEffect(groupsKey) {
+        if (groups.none { it.groupId == selectedGroupId }) {
+            selectedGroupId = groups.firstOrNull()?.groupId
+        }
+    }
+
+    val listContent: @Composable ((String) -> Unit) -> Unit = { onGroupSelected ->
+        LazyColumn(
+            // SECFIX #489: adaptiveContentWidth limita largura em tablets
+            modifier = Modifier
+                .fillMaxSize()
+                .adaptiveContentWidth(),
+            contentPadding = PaddingValues(vertical = 8.dp) // Padding mínimo, FAB já é posicionado pelo Scaffold
+        ) {
+            // Campo de busca
+            if (showSearch) {
+                item {
+                    SearchBar(
+                        query = searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
+
+            // Lista de grupos
+            items(
+                items = groups,
+                key = { it.groupId }
+            ) { group ->
+                GroupCard(
+                    group = group,
+                    onClick = { onGroupSelected(group.groupId) },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .animateItem()
                 )
             }
         }
+    }
 
-        // Lista de grupos
-        items(
-            items = groups,
-            key = { it.groupId }
-        ) { group ->
-            GroupCard(
-                group = group,
-                onClick = { onGroupClick(group.groupId) },
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .animateItem()
-            )
-        }
+    ExpandedListDetailPane(
+        selectedId = selectedGroupId,
+        onSelectId = { selectedGroupId = it },
+        compactContent = {
+            listContent(onGroupClick)
+        },
+        listPane = { onGroupSelected ->
+            listContent(onGroupSelected)
+        },
+        detailPane = { groupId ->
+            if (groupId == null) {
+                GroupsDetailPlaceholder()
+            } else {
+                key(groupId) {
+                    val detailViewModel: GroupDetailViewModel = koinViewModel()
+                    GroupDetailScreen(
+                        viewModel = detailViewModel,
+                        groupId = groupId,
+                        onNavigateBack = { selectedGroupId = null },
+                        onNavigateToInvite = { onInvitePlayersClick(groupId) },
+                        onNavigateToCashbox = { onCashboxClick(groupId) },
+                        onNavigateToCreateGame = { onCreateGameInGroupClick(groupId) }
+                    )
+                }
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@Composable
+private fun GroupsDetailPlaceholder() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.group_detail),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

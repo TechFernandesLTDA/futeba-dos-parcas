@@ -10,6 +10,7 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.futebadosparcas.domain.util.CpfValidator
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.FirebaseRegions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,7 +116,7 @@ class CpfVerificationViewModel(
                 // Spec: feat-2026-05-21-profile-complete-gate.md (#1485)
                 runCatching {
                     com.google.firebase.functions.FirebaseFunctions
-                        .getInstance("southamerica-east1")
+                        .getInstance(FirebaseRegions.FUNCTIONS)
                         .getHttpsCallable("recomputeMyProfileClaim")
                         .call(emptyMap<String, Any?>())
                         .await()

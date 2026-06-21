@@ -19,14 +19,15 @@ interface AppBreadcrumbsProps {
  */
 export function AppBreadcrumbs({ items }: AppBreadcrumbsProps) {
   const { t } = useTranslation();
-  if (items.length === 0) return null;
+  if (items.length <= 1) return null;
 
   return (
     <Box
       sx={{
         display: { xs: 'none', md: 'block' },
-        px: { md: 3 },
-        py: 1,
+        px: { md: 2, lg: 2.5 },
+        py: 0.5,
+        flexShrink: 0,
       }}
     >
       <Breadcrumbs
@@ -40,7 +41,7 @@ export function AppBreadcrumbs({ items }: AppBreadcrumbsProps) {
               <Typography
                 key={`${item.label}-${idx}`}
                 color={isLast ? 'text.primary' : 'text.secondary'}
-                sx={{ fontSize: '0.875rem' }}
+                sx={{ fontSize: '0.8125rem' }}
               >
                 {item.label}
               </Typography>
@@ -53,7 +54,7 @@ export function AppBreadcrumbs({ items }: AppBreadcrumbsProps) {
                 to={item.to}
                 underline="hover"
                 color="inherit"
-                sx={{ fontSize: '0.875rem' }}
+                sx={{ fontSize: '0.8125rem' }}
               >
                 {item.label}
               </Link>

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigationType } from 'react-router-dom';
 
 const STORAGE_KEY = 'scroll-positions';
 
@@ -13,57 +13,97 @@ function getScrollPositions(): Record<string, number> {
   }
 }
 
-function saveScrollPosition(pathname: string, top: number) {
+function saveScrollPosition(key: string, top: number) {
   try {
     const positions = getScrollPositions();
-    positions[pathname] = top;
+    positions[key] = top;
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
   } catch (error) {
     console.warn('Failed to save scroll position to sessionStorage:', error);
   }
 }
 
-function getScrollPosition(pathname: string): number | null {
+function getScrollPosition(key: string): number | null {
   const positions = getScrollPositions();
-  return positions[pathname] ?? null;
+  return positions[key] ?? null;
+}
+
+function getScrollKey(pathname: string, search: string) {
+  return `${pathname}${search}`;
+}
+
+type ScrollContainer = HTMLElement | Window;
+
+function isWindow(container: ScrollContainer): container is Window {
+  return container === window;
+}
+
+function getScrollContainer(scrollContainerId?: string): ScrollContainer {
+  if (scrollContainerId) {
+    return document.getElementById(scrollContainerId) ?? window;
+  }
+
+  const main = document.getElementById('main-content');
+  if (main instanceof HTMLElement) {
+    const overflowY = window.getComputedStyle(main).overflowY;
+    if (overflowY === 'auto' || overflowY === 'scroll') {
+      return main;
+    }
+  }
+
+  return window;
+}
+
+function readScrollTop(container: ScrollContainer): number {
+  return isWindow(container) ? window.scrollY : container.scrollTop;
+}
+
+function writeScrollTop(container: ScrollContainer, top: number) {
+  if (isWindow(container)) {
+    window.scrollTo(0, top);
+  } else {
+    container.scrollTop = top;
+  }
 }
 
 export function useScrollRestoration(scrollContainerId?: string) {
   const location = useLocation();
+  const navigationType = useNavigationType();
   const restored = useRef(false);
 
   useEffect(() => {
-    const container = scrollContainerId
-      ? document.getElementById(scrollContainerId)
-      : window;
+    if (!('scrollRestoration' in window.history)) return undefined;
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, []);
+
+  useEffect(() => {
+    const scrollKey = getScrollKey(location.pathname, location.search);
+    const container = getScrollContainer(scrollContainerId);
 
     if (!restored.current) {
-      const saved = getScrollPosition(location.pathname);
-      if (saved !== null) {
-        requestAnimationFrame(() => {
-          if (container === window) {
-            window.scrollTo(0, saved);
-          } else if (container instanceof HTMLElement) {
-            container.scrollTop = saved;
-          }
-        });
-      }
+      const saved = navigationType === 'POP' ? getScrollPosition(scrollKey) : null;
+      const top = saved ?? 0;
+      requestAnimationFrame(() => {
+        writeScrollTop(container, top);
+        requestAnimationFrame(() => writeScrollTop(container, top));
+      });
       restored.current = true;
     }
 
     const handleScroll = () => {
-      const top = container === window
-        ? window.scrollY
-        : (container instanceof HTMLElement ? container.scrollTop : 0);
-      saveScrollPosition(location.pathname, top);
+      saveScrollPosition(scrollKey, readScrollTop(container));
     };
 
-    const target: EventTarget = (container === window ? document : container) ?? document;
+    const target: EventTarget = isWindow(container) ? window : container;
     target.addEventListener('scroll', handleScroll, { passive: true });
     return () => target.removeEventListener('scroll', handleScroll);
-  }, [location.pathname, scrollContainerId]);
+  }, [location.pathname, location.search, navigationType, scrollContainerId]);
 
   useEffect(() => {
     restored.current = false;
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 }

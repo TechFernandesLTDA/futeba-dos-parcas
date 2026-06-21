@@ -27,6 +27,7 @@ import { camelToSnake } from '../utils/camelToSnake';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import { getIsPublicFromVisibility } from '../utils/gameLifecycle';
 
 const logger = createLogger('useGames');
 
@@ -316,6 +317,7 @@ export function useCreateGame() {
           ...cleanData,
           // Garante valor padrão mesmo em fluxos sem seletor (quick-create, duplicate)
           gender: (cleanData.gender as string) ?? 'MIXED',
+          is_public: getIsPublicFromVisibility(cleanData.visibility as string | undefined),
           owner_id: uid,
           owner_name: displayName,
           status: 'SCHEDULED' as GameStatus,
@@ -336,6 +338,7 @@ export function useCreateGame() {
         const docRef = await addDoc(gamesRef, newGame);
         // Invalidar cache de jogos após criar
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['nextGame'] });
         // #2254: public-games agora usa key própria (não está mais sob ['games']),
         // então invalida explicitamente para o mapa/lista refletirem o novo jogo.
         queryClient.invalidateQueries({ queryKey: ['public-games'], exact: false });

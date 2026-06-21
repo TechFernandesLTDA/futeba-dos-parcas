@@ -14,6 +14,7 @@ import com.futebadosparcas.data.repository.WaitlistRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.FirebaseRegions
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
@@ -36,7 +37,7 @@ class ConfirmationUseCase constructor(
     private val notificationRepository: NotificationRepository,
     private val userRepository: UserRepository,
     private val firestore: FirebaseFirestore,
-    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance("southamerica-east1")
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRegions.FUNCTIONS)
 ) {
 
     companion object {

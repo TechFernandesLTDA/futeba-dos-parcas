@@ -26,6 +26,10 @@ export const PageContainer = React.memo(function PageContainer({
   return (
     <Box
       sx={[
+        {
+          width: '100%',
+          minWidth: 0,
+        },
         disablePadding ? {} : {
           px: pageSpacing.pagePadding,
           pb: pageSpacing.pagePaddingBottom,
@@ -36,7 +40,15 @@ export const PageContainer = React.memo(function PageContainer({
       <Container
         maxWidth={resolvedMaxWidth}
         disableGutters
-        sx={{ display: 'flex', flexDirection: 'column' }}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          maxWidth: {
+            lg: maxWidth === 'focused' ? undefined : 'min(100%, 1320px)',
+            xl: maxWidth === 'focused' ? undefined : 'min(100%, 1500px)',
+          },
+        }}
       >
         {children}
       </Container>

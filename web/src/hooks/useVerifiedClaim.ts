@@ -15,29 +15,37 @@ const logger = createLogger('useVerifiedClaim');
  * - `true`/`false` quando resolvido.
  */
 export function useVerifiedClaim(firebaseUser: FirebaseUser | null | undefined): boolean | null {
-  const [verified, setVerified] = useState<boolean | null>(null);
+  const [claimState, setClaimState] = useState<{ uid: string | null; verified: boolean | null }>({
+    uid: null,
+    verified: null,
+  });
 
   useEffect(() => {
     if (!firebaseUser) {
-      setVerified(null);
+      setClaimState({ uid: null, verified: null });
       return;
     }
+
+    const uid = firebaseUser.uid;
+    setClaimState((current) => (current.uid === uid ? current : { uid, verified: null }));
+
     let cancelled = false;
     firebaseUser
       .getIdTokenResult()
       .then((result) => {
-        if (!cancelled) setVerified(result.claims.verified === true);
+        if (!cancelled) setClaimState({ uid, verified: result.claims.verified === true });
       })
       .catch((err) => {
         // #2290: não engolir o erro silenciosamente — registra para debug.
         // Trata como não-verificado (fail-closed) para manter o gate seguro.
         logger.error('Falha ao resolver custom claim verified:', err);
-        if (!cancelled) setVerified(false);
+        if (!cancelled) setClaimState({ uid, verified: false });
       });
     return () => {
       cancelled = true;
     };
   }, [firebaseUser]);
 
-  return verified;
+  if (!firebaseUser) return null;
+  return claimState.uid === firebaseUser.uid ? claimState.verified : null;
 }

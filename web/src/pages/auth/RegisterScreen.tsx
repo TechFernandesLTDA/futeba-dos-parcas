@@ -190,7 +190,7 @@ export function RegisterScreen() {
           display: 'flex',
           alignItems: { xs: 'flex-start', md: 'center' },
           justifyContent: 'center',
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           ...(isMd
             ? { bgcolor: 'background.paper' }
             : {
@@ -205,11 +205,12 @@ export function RegisterScreen() {
           width: '100%',
           borderRadius: 4,
           boxShadow: isMd ? undefined : (t) => t.shadows[16],
+          position: 'relative',
         }}
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           {!isMd && (
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 2.5, sm: 3 } }}>
             <IconButton
               onClick={() => navigate('/login')}
               sx={{ position: 'absolute', left: 16, top: 16 }}
@@ -376,8 +377,11 @@ export function RegisterScreen() {
             disabled={loading}
             sx={{
               py: 1.5,
+              px: { xs: 1.25, sm: 2 },
+              whiteSpace: 'nowrap',
               borderColor: theme.palette.info.main,
               color: theme.palette.info.main,
+              '& .MuiButton-startIcon': { mr: { xs: 1, sm: 1.25 } },
               '&:hover': {
                 borderColor: theme.palette.info.dark,
                 backgroundColor: alpha(theme.palette.info.main, 0.04),
@@ -390,7 +394,7 @@ export function RegisterScreen() {
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               {t('auth.alreadyHaveAccount')}{' '}
-              <Link component={RouterLink} to="/login" underline="hover">
+              <Link component={RouterLink} to="/login" underline="hover" sx={{ whiteSpace: 'nowrap' }}>
                 {t('auth.login')}
               </Link>
             </Typography>

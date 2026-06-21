@@ -4,21 +4,23 @@ export const pageSpacing = {
   containerMaxWidth: {
     focused: 'xs' as const,     // fluxos centrados (auth/onboarding/welcome) — NAO alargar
     form: 'md' as const,        // formularios
-    list: 'lg' as const,        // listas
-    detail: 'lg' as const,      // telas de detalhe
+    list: 'xl' as const,        // listas devem aproveitar desktop sem virar "mobile esticado"
+    detail: 'xl' as const,      // telas de detalhe tambem ganham respiro horizontal no desktop
     dashboard: 'xl' as const,   // dashboards
   },
   pagePadding: {
-    xs: 2,
-    sm: 3,
-    md: 4,
+    xs: 1.5,
+    sm: 2,
+    md: 2.5,
+    lg: 3,
   } satisfies Partial<Record<Breakpoint, number>>,
   pagePaddingBottom: {
     xs: 8,
-    sm: 6,
+    sm: 5,
+    md: 3,
   } satisfies Partial<Record<Breakpoint, number>>,
-  sectionSpacing: 3,
-  sectionSpacingLarge: 5,
+  sectionSpacing: 2,
+  sectionSpacingLarge: 3,
   headerHeight: 56,
   bottomBarHeight: 64,
   contentMaxWidth: {
