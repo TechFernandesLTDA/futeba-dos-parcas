@@ -31,6 +31,7 @@ import com.futebadosparcas.domain.model.PaymentStatus
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.ui.games.presence.GuestBadge
 import com.futebadosparcas.ui.games.presence.ReliabilityBadge
+import com.futebadosparcas.ui.components.animation.pressScale
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
@@ -238,6 +239,7 @@ private fun PlayerCardContent(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .pressScale()
             .animateContentSize()
             .clickable(
                 onClick = onCardClick,
