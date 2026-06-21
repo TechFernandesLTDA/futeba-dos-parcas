@@ -371,6 +371,7 @@ export const futebaTheme = createTheme({
       short: motionDuration.long,
       standard: motionDuration.medium,
       complex: motionDuration.long,
+      // #2755: defaults herdados do MUI (fora do vocabulário de motion do design system)
       enteringScreen: 225,
       leavingScreen: 195,
     },

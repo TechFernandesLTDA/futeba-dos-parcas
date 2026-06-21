@@ -12,6 +12,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 /**
+ * Tokens de motion centralizados — Futeba dos Parças (#2195, #2755)
+ *
+ * Fonte canônica: shared/design-tokens.json#motion (durations + easings).
+ * Mantém paridade cross-platform com:
+ *  - composeApp / iOS — composeApp/src/commonMain/kotlin/com/futebadosparcas/ui/theme/Motion.kt
+ *  - Web              — web/src/theme/motion.ts
+ *
+ * Alinhado ao Material Design 3 Motion:
+ * https://m3.material.io/styles/motion/overview
+ *
+ * O check de paridade (scripts/check-design-tokens-parity.js) garante que
+ * durations/easings não divergem entre as plataformas.
+ */
+
+/**
  * CompositionLocal indicando se o usuário solicitou redução de animações.
  * Lê Settings.Global.ANIMATOR_DURATION_SCALE — 0 significa reduzido.
  */
