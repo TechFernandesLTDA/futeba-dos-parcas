@@ -59,11 +59,30 @@ const livePulseKeyframes = {
 type FilterStatus = 'all' | GameStatus;
 type SortBy = 'date' | 'spots' | 'nearest';
 
+const ACTIVE_STATUSES: GameStatus[] = ['SCHEDULED', 'CONFIRMED', 'LIVE'];
+const ACTIVE_GAME_DISPLAY_GRACE_MS = 4 * 60 * 60 * 1000;
+
 const SORT_OPTIONS: { value: SortBy; labelKey: string; icon: React.ReactNode }[] = [
   { value: 'date', labelKey: 'games.sort.date', icon: <CalendarMonth fontSize="small" /> },
   { value: 'spots', labelKey: 'games.sort.spots', icon: <EventAvailable fontSize="small" /> },
   { value: 'nearest', labelKey: 'games.sort.nearest', icon: <AccessTime fontSize="small" /> },
 ];
+
+function getGameStartTime(game: { dateTime?: Date; date: string; time?: string }): number | null {
+  if (game.dateTime instanceof Date && !Number.isNaN(game.dateTime.getTime())) {
+    return game.dateTime.getTime();
+  }
+
+  const parsed = new Date(`${game.date}T${game.time || '00:00'}:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+}
+
+function isExpiredActiveGame(game: { status: GameStatus; dateTime?: Date; date: string; time?: string }): boolean {
+  if (!ACTIVE_STATUSES.includes(game.status)) return false;
+  const startTime = getGameStartTime(game);
+  if (startTime === null) return false;
+  return startTime + ACTIVE_GAME_DISPLAY_GRACE_MS < Date.now();
+}
 
 export function GamesTab() {
   const navigate = useNavigate();
@@ -91,7 +110,10 @@ export function GamesTab() {
   }, []);
 
   const filteredGames = useMemo(() => {
-    let result = [...games];
+    let result = games.filter((game) => {
+      if (statusFilter !== 'all') return true;
+      return !isExpiredActiveGame(game);
+    });
 
     if (statusFilter !== 'all') {
       result = result.filter(game => game.status === statusFilter);

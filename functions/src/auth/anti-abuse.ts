@@ -113,7 +113,10 @@ export const canSendSmsOtp = onCall(
     region: FUNCTION_REGION,
     // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: true,
+    // Esta callable é um preflight consultivo antes do Firebase Phone Auth.
+    // Não consome token para não invalidar/reusar o App Check imediatamente
+    // antes do envio do SMS em Safari/Android.
+    consumeAppCheckToken: false,
   },
   async (request) => {
     try {

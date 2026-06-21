@@ -4,37 +4,13 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.core.graphics.ColorUtils
 import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ContrastLevel
+import com.google.android.material.color.utilities.TonalPalette
 
 object DynamicThemeEngine {
 
-    private fun blend(base: Color, target: Color, ratio: Float): Color {
-        return Color(ColorUtils.blendARGB(base.toArgb(), target.toArgb(), ratio))
-    }
-
-    private fun contrastRatio(fg: Color, bg: Color): Double {
-        val l1 = ColorUtils.calculateLuminance(fg.toArgb())
-        val l2 = ColorUtils.calculateLuminance(bg.toArgb())
-        val lighter = maxOf(l1, l2)
-        val darker = minOf(l1, l2)
-        return (lighter + 0.05) / (darker + 0.05)
-    }
-
-    private fun onColorFor(background: Color): Color {
-        val darkText = Color(0xFF0B0F0D)
-        val lightText = Color(0xFFF5F7F6)
-        val darkRatio = contrastRatio(darkText, background)
-        val lightRatio = contrastRatio(lightText, background)
-        return when {
-            darkRatio >= 4.5 -> darkText
-            lightRatio >= 4.5 -> lightText
-            darkRatio >= lightRatio -> darkText
-            else -> lightText
-        }
-    }
+    private fun TonalPalette.toneColor(toneValue: Int): Color = Color(tone(toneValue))
 
     fun generateColorScheme(
         config: AppThemeConfig,
@@ -44,127 +20,104 @@ object DynamicThemeEngine {
             return if (isDark) HighContrastDarkColorScheme else HighContrastLightColorScheme
         }
 
-        val primaryInt = config.seedColors.primary
-        val secondaryInt = config.seedColors.secondary
-        val tertiaryInt = config.seedColors.tertiary ?: secondaryInt
-
-        val primarySeed = Color(primaryInt)
-        val secondarySeed = Color(secondaryInt)
-        val tertiarySeed = Color(tertiaryInt)
-
-        // Semantic Colors (Fixed) - Usando cores hexadecimais para consistência
-        val errorColor = if(isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A)
-        val onErrorColor = if(isDark) Color(0xFF690005) else Color(0xFFFFFFFF)  // Branco em hex para consistência
-        val errorContainerColor = if(isDark) Color(0xFF93000A) else Color(0xFFFFDAD6)
-        val onErrorContainerColor = if(isDark) Color(0xFFFFDAD6) else Color(0xFF410002)
+        val primaryPalette = TonalPalette.fromInt(config.seedColors.primary)
+        val secondaryPalette = TonalPalette.fromInt(config.seedColors.secondary)
+        val tertiaryPalette = TonalPalette.fromInt(config.seedColors.tertiary ?: config.seedColors.secondary)
+        val neutralPalette = TonalPalette.fromHueAndChroma(primaryPalette.hue, 6.0)
+        val neutralVariantPalette = TonalPalette.fromHueAndChroma(primaryPalette.hue, 8.0)
+        val errorPalette = TonalPalette.fromHueAndChroma(25.0, 84.0)
 
         return if (isDark) {
-            val background = Color(0xFF0F1114)
-            val surface = Color(0xFF15191C)
-            val surfaceVariant = Color(0xFF20252A)
-            val primary = primarySeed
-            val primaryContainer = blend(primarySeed, Color.Black, 0.7f)
-            val secondary = secondarySeed
-            val secondaryContainer = blend(secondarySeed, Color.Black, 0.7f)
-            val tertiary = tertiarySeed
-            val tertiaryContainer = blend(tertiarySeed, Color.Black, 0.7f)
-
             darkColorScheme(
-                primary = primary,
-                onPrimary = onColorFor(primary),
-                primaryContainer = primaryContainer,
-                onPrimaryContainer = onColorFor(primaryContainer),
+                primary = primaryPalette.toneColor(80),
+                onPrimary = primaryPalette.toneColor(20),
+                primaryContainer = primaryPalette.toneColor(30),
+                onPrimaryContainer = primaryPalette.toneColor(90),
 
-                secondary = secondary,
-                onSecondary = onColorFor(secondary),
-                secondaryContainer = secondaryContainer,
-                onSecondaryContainer = onColorFor(secondaryContainer),
+                secondary = secondaryPalette.toneColor(80),
+                onSecondary = secondaryPalette.toneColor(20),
+                secondaryContainer = secondaryPalette.toneColor(30),
+                onSecondaryContainer = secondaryPalette.toneColor(90),
 
-                tertiary = tertiary,
-                onTertiary = onColorFor(tertiary),
-                tertiaryContainer = tertiaryContainer,
-                onTertiaryContainer = onColorFor(tertiaryContainer),
+                tertiary = tertiaryPalette.toneColor(80),
+                onTertiary = tertiaryPalette.toneColor(20),
+                tertiaryContainer = tertiaryPalette.toneColor(30),
+                onTertiaryContainer = tertiaryPalette.toneColor(90),
 
-                background = background,
-                onBackground = Color(0xFFE8ECEF),
+                background = neutralPalette.toneColor(6),
+                onBackground = neutralPalette.toneColor(90),
 
-                surface = surface,
-                onSurface = Color(0xFFE8ECEF),
-                surfaceVariant = surfaceVariant,
-                onSurfaceVariant = Color(0xFFC7CDD1),
+                surface = neutralPalette.toneColor(6),
+                onSurface = neutralPalette.toneColor(90),
+                surfaceVariant = neutralVariantPalette.toneColor(30),
+                onSurfaceVariant = neutralVariantPalette.toneColor(80),
 
-                outline = Color(0xFF445058),
-                outlineVariant = Color(0xFF30373C),
+                outline = neutralVariantPalette.toneColor(60),
+                outlineVariant = neutralVariantPalette.toneColor(30),
 
-                inverseSurface = Color(0xFFE6E6E6),
-                inverseOnSurface = Color(0xFF1C1B1F),
-                inversePrimary = blend(primarySeed, Color.Black, 0.2f),
-                surfaceTint = primary,
+                inverseSurface = neutralPalette.toneColor(90),
+                inverseOnSurface = neutralPalette.toneColor(20),
+                inversePrimary = primaryPalette.toneColor(40),
+                surfaceTint = primaryPalette.toneColor(80),
 
-                error = errorColor,
-                onError = onErrorColor,
-                errorContainer = errorContainerColor,
-                onErrorContainer = onErrorContainerColor,
+                error = errorPalette.toneColor(80),
+                onError = errorPalette.toneColor(20),
+                errorContainer = errorPalette.toneColor(30),
+                onErrorContainer = errorPalette.toneColor(90),
 
-                // Surface Containers (M3 1.2+) - OLED optimized
-                surfaceDim = Color(0xFF0F1114),
-                surfaceBright = Color(0xFF36393E),
-                surfaceContainerLowest = Color(0xFF0A0C0E),
-                surfaceContainerLow = Color(0xFF15191C),
-                surfaceContainer = Color(0xFF1A1D21),
-                surfaceContainerHigh = Color(0xFF24282C),
-                surfaceContainerHighest = Color(0xFF2F3337)
+                surfaceDim = neutralPalette.toneColor(6),
+                surfaceBright = neutralPalette.toneColor(24),
+                surfaceContainerLowest = neutralPalette.toneColor(4),
+                surfaceContainerLow = neutralPalette.toneColor(10),
+                surfaceContainer = neutralPalette.toneColor(12),
+                surfaceContainerHigh = neutralPalette.toneColor(17),
+                surfaceContainerHighest = neutralPalette.toneColor(22)
             )
         } else {
-            val primary = primarySeed
-            val secondary = secondarySeed
-            val tertiary = tertiarySeed
-
             lightColorScheme(
-                primary = primary,
-                onPrimary = onColorFor(primary),
-                primaryContainer = blend(primary, Color.White, 0.82f),
-                onPrimaryContainer = onColorFor(blend(primary, Color.White, 0.82f)),
+                primary = primaryPalette.toneColor(40),
+                onPrimary = primaryPalette.toneColor(100),
+                primaryContainer = primaryPalette.toneColor(90),
+                onPrimaryContainer = primaryPalette.toneColor(10),
 
-                secondary = secondary,
-                onSecondary = onColorFor(secondary),
-                secondaryContainer = blend(secondary, Color.White, 0.82f),
-                onSecondaryContainer = onColorFor(blend(secondary, Color.White, 0.82f)),
+                secondary = secondaryPalette.toneColor(40),
+                onSecondary = secondaryPalette.toneColor(100),
+                secondaryContainer = secondaryPalette.toneColor(90),
+                onSecondaryContainer = secondaryPalette.toneColor(10),
 
-                tertiary = tertiary,
-                onTertiary = onColorFor(tertiary),
-                tertiaryContainer = blend(tertiary, Color.White, 0.82f),
-                onTertiaryContainer = onColorFor(blend(tertiary, Color.White, 0.82f)),
+                tertiary = tertiaryPalette.toneColor(40),
+                onTertiary = tertiaryPalette.toneColor(100),
+                tertiaryContainer = tertiaryPalette.toneColor(90),
+                onTertiaryContainer = tertiaryPalette.toneColor(10),
 
-                background = Color(0xFFFFFFFF),
-                onBackground = Color(0xFF1D1B20),
+                background = neutralPalette.toneColor(99),
+                onBackground = neutralPalette.toneColor(10),
 
-                surface = Color(0xFFFFFFFF),
-                onSurface = Color(0xFF1D1B20),
-                surfaceVariant = Color(0xFFF0F2F5),
-                onSurfaceVariant = Color(0xFF444746),
+                surface = neutralPalette.toneColor(99),
+                onSurface = neutralPalette.toneColor(10),
+                surfaceVariant = neutralVariantPalette.toneColor(90),
+                onSurfaceVariant = neutralVariantPalette.toneColor(30),
 
-                outline = Color(0xFF79747E),
-                outlineVariant = Color(0xFFCAC4D0),
+                outline = neutralVariantPalette.toneColor(50),
+                outlineVariant = neutralVariantPalette.toneColor(80),
 
-                inverseSurface = Color(0xFF2C3133),
-                inverseOnSurface = Color(0xFFF1F4F5),
-                inversePrimary = blend(primary, Color.White, 0.2f),
-                surfaceTint = primary,
+                inverseSurface = neutralPalette.toneColor(20),
+                inverseOnSurface = neutralPalette.toneColor(95),
+                inversePrimary = primaryPalette.toneColor(80),
+                surfaceTint = primaryPalette.toneColor(40),
 
-                error = errorColor,
-                onError = onErrorColor,
-                errorContainer = errorContainerColor,
-                onErrorContainer = onErrorContainerColor,
+                error = errorPalette.toneColor(40),
+                onError = errorPalette.toneColor(100),
+                errorContainer = errorPalette.toneColor(90),
+                onErrorContainer = errorPalette.toneColor(10),
 
-                // Surface Containers (M3 1.2+) - Clean light hierarchy
-                surfaceDim = Color(0xFFDDD9DE),
-                surfaceBright = Color(0xFFFDF8FD),
-                surfaceContainerLowest = Color(0xFFFFFFFF),
-                surfaceContainerLow = Color(0xFFF7F2F7),
-                surfaceContainer = Color(0xFFF1ECF1),
-                surfaceContainerHigh = Color(0xFFEBE6EB),
-                surfaceContainerHighest = Color(0xFFE5E1E6)
+                surfaceDim = neutralPalette.toneColor(87),
+                surfaceBright = neutralPalette.toneColor(98),
+                surfaceContainerLowest = neutralPalette.toneColor(100),
+                surfaceContainerLow = neutralPalette.toneColor(96),
+                surfaceContainer = neutralPalette.toneColor(94),
+                surfaceContainerHigh = neutralPalette.toneColor(92),
+                surfaceContainerHighest = neutralPalette.toneColor(90)
             )
         }
     }

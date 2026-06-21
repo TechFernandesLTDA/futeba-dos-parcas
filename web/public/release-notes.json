@@ -1,7 +1,122 @@
 {
   "platform": "web",
-  "generatedAt": "2026-05-22T14:03:58.704Z",
+  "generatedAt": "2026-06-21T20:35:06.504Z",
   "notes": [
+    {
+      "version": "1.26.3",
+      "buildNumber": null,
+      "releaseDate": "2026-06-21",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Cadastro por SMS mais confiável",
+      "highlights": [
+        {
+          "icon": "shield",
+          "title": "SMS sem travar",
+          "description": "A etapa de telefone deixa de ficar presa quando a checagem anti-abuso oscila."
+        },
+        {
+          "icon": "devices",
+          "title": "Melhor no iPhone e Android",
+          "description": "O fluxo de código por SMS passa a exibir erro claro em vez de tela branca ou clique silencioso."
+        },
+        {
+          "icon": "checklist",
+          "title": "Continuação do cadastro",
+          "description": "Depois do SMS, o app segue corretamente para a próxima etapa de verificação."
+        }
+      ],
+      "added": [
+        "Hotfix focado no onboarding obrigatório de telefone e CPF."
+      ],
+      "improved": [
+        "A validação anti-robô do SMS agora falha de forma recuperável quando há instabilidade de rede ou App Check.",
+        "Mensagens de erro de SMS, CAPTCHA e conexão ficaram mais claras."
+      ],
+      "fixed": [
+        "Corrigido caso em que a etapa de SMS podia não abrir corretamente no web mobile.",
+        "Corrigido caso em que o botão de enviar SMS no Android podia não disparar se a tela recebesse um contexto embrulhado."
+      ],
+      "issueRefs": []
+    },
+    {
+      "version": "1.26.2",
+      "buildNumber": null,
+      "releaseDate": "2026-06-21",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Jogos antigos deixam de aparecer como próximos",
+      "highlights": [
+        {
+          "icon": "calendar",
+          "title": "Próximo jogo mais confiável",
+          "description": "Jogos ativos que já passaram não ocupam mais o topo da experiência."
+        },
+        {
+          "icon": "checklist",
+          "title": "Fechamento automático",
+          "description": "O servidor passa a encerrar ou cancelar partidas antigas depois da tolerância configurada."
+        },
+        {
+          "icon": "devices",
+          "title": "Listas mais limpas",
+          "description": "A web filtra jogos vencidos enquanto a limpeza definitiva do backend roda."
+        }
+      ],
+      "added": [
+        "Nova rotina automática para fechar jogos antigos no servidor."
+      ],
+      "improved": [
+        "A busca de próximo jogo passa a considerar apenas partidas futuras.",
+        "Jogos públicos no mapa deixam de incluir partidas vencidas.",
+        "A aba de jogos ignora partidas ativas antigas no filtro principal."
+      ],
+      "fixed": [
+        "Corrigidos casos em que jogos antigos ainda apareciam como abertos, confirmados ou próximos."
+      ],
+      "issueRefs": []
+    },
+    {
+      "version": "1.26.1",
+      "buildNumber": null,
+      "releaseDate": "2026-06-21",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Navegação mais confortável e changelog em dia",
+      "highlights": [
+        {
+          "icon": "checklist",
+          "title": "Páginas começam no topo",
+          "description": "Ao trocar de tela, o conteúdo inicial aparece alinhado sem precisar rolar um pouquinho."
+        },
+        {
+          "icon": "devices",
+          "title": "Mobile e desktop mais estáveis",
+          "description": "Ajustes de layout reduzem quebras de texto e scroll lateral em resoluções pequenas e grandes."
+        },
+        {
+          "icon": "stars",
+          "title": "Novidades atualizadas",
+          "description": "A tela de changelog agora reflete as melhorias recentes publicadas na web."
+        }
+      ],
+      "added": [
+        "Nova entrada de changelog para a versão web mais recente."
+      ],
+      "improved": [
+        "Navegação entre abas e páginas agora usa a rota completa, incluindo `?tab=`, para não reutilizar scroll de outra tela.",
+        "Foco de acessibilidade na troca de página não desloca mais o conteúdo para baixo da topbar.",
+        "Login, cadastro e recuperação de senha ganharam ajustes finos para telas estreitas."
+      ],
+      "fixed": [
+        "Corrigido o comportamento em que algumas páginas abriam levemente roladas para baixo.",
+        "Corrigidos casos em que botões e links podiam quebrar de forma apertada no menor breakpoint mobile."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.26.0",
       "buildNumber": null,

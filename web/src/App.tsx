@@ -353,7 +353,7 @@ function useFocusOnNavigate() {
     const el = document.querySelector('#main-content') as HTMLElement;
     if (el) {
       el.setAttribute('tabIndex', '-1');
-      el.focus();
+      el.focus({ preventScroll: true });
     }
     // Registra breadcrumb de navegação para contexto em erros futuros
     addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {

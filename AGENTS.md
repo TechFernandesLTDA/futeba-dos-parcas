@@ -135,6 +135,9 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 
 | Purpose | Path |
 |---------|------|
+| Project map | `docs/PROJECT_MAP.md` |
+| Agent usage | `docs/AGENT_OPERATING_MODEL.md` |
+| QA smoke matrix | `docs/QA_SMOKE_MATRIX.md` |
 | Android entry | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
 | Web entry | `web/src/main.tsx` |
 | Web routes | `web/src/App.tsx` (55+ lazy routes) |

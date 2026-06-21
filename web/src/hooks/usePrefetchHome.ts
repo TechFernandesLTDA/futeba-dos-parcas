@@ -1,7 +1,17 @@
 import { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { queryClient } from '../services/queryClient';
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  doc,
+  getDoc,
+  Timestamp,
+} from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { createLogger } from '../utils/logger';
 
@@ -34,6 +44,7 @@ export function usePrefetchHome() {
         const q = query(
           gamesRef,
           where('status', 'in', ['SCHEDULED', 'CONFIRMED', 'LIVE']),
+          where('dateTime', '>=', Timestamp.fromDate(new Date())),
           orderBy('dateTime', 'asc'),
           limit(1)
         );

@@ -32,7 +32,7 @@ declare module '@mui/material/styles' {
 }
 
 // Cores do Futeba — primary.main ajustada para WCAG AA (4.76:1 sobre branco)
-// Brand original #00C853 (2.24:1, falha WCAG) preservado em gamificationColors.brand
+// Verde canônico vem de shared/design-tokens.json.
 const primary = {
   main: '#00852A',      // ratio 4.76:1 vs #FFFFFF (passa WCAG AA)
   light: '#4ADE80',
@@ -520,6 +520,35 @@ export const futebaTheme = createTheme({
     },
     MuiCssBaseline: {
       styleOverrides: {
+        '*, *::before, *::after': {
+          boxSizing: 'border-box',
+        },
+        'html, body, #root': {
+          width: '100%',
+          minWidth: 0,
+          minHeight: '100%',
+          overflowX: 'clip',
+        },
+        '@supports not (overflow: clip)': {
+          'html, body, #root': {
+            overflowX: 'hidden',
+          },
+        },
+        'img, video, canvas, svg': {
+          maxWidth: '100%',
+        },
+        '.MuiBox-root, .MuiStack-root, .MuiGrid-root, .MuiCard-root, .MuiPaper-root, .MuiContainer-root': {
+          minWidth: 0,
+        },
+        '.MuiButton-root, .MuiChip-root': {
+          maxWidth: '100%',
+        },
+        '.MuiButton-startIcon, .MuiButton-endIcon': {
+          flexShrink: 0,
+        },
+        '.MuiTypography-root, .MuiListItemText-primary, .MuiListItemText-secondary, .MuiChip-label': {
+          overflowWrap: 'anywhere',
+        },
         // #2208: transição suave ao alternar tema (light/dark/OLED). Limitada a
         // propriedades de cor para evitar footgun de perf de `transition: all`.
         // Composição com prefers-reduced-motion abaixo desativa a animação.
@@ -550,18 +579,18 @@ export const futebaTheme = createTheme({
           opacity: 0,
           animation: 'fadeInUp 0.35s ease-out forwards',
         },
-        '.stagger-fade-in > *:nth-child(1)': { animationDelay: '0ms' },
-        '.stagger-fade-in > *:nth-child(2)': { animationDelay: '40ms' },
-        '.stagger-fade-in > *:nth-child(3)': { animationDelay: '80ms' },
-        '.stagger-fade-in > *:nth-child(4)': { animationDelay: '120ms' },
-        '.stagger-fade-in > *:nth-child(5)': { animationDelay: '160ms' },
-        '.stagger-fade-in > *:nth-child(6)': { animationDelay: '200ms' },
-        '.stagger-fade-in > *:nth-child(7)': { animationDelay: '240ms' },
-        '.stagger-fade-in > *:nth-child(8)': { animationDelay: '280ms' },
-        '.stagger-fade-in > *:nth-child(9)': { animationDelay: '320ms' },
-        '.stagger-fade-in > *:nth-child(10)': { animationDelay: '360ms' },
-        '.stagger-fade-in > *:nth-child(11)': { animationDelay: '400ms' },
-        '.stagger-fade-in > *:nth-child(12)': { animationDelay: '400ms' },
+        '.stagger-fade-in > *:nth-of-type(1)': { animationDelay: '0ms' },
+        '.stagger-fade-in > *:nth-of-type(2)': { animationDelay: '40ms' },
+        '.stagger-fade-in > *:nth-of-type(3)': { animationDelay: '80ms' },
+        '.stagger-fade-in > *:nth-of-type(4)': { animationDelay: '120ms' },
+        '.stagger-fade-in > *:nth-of-type(5)': { animationDelay: '160ms' },
+        '.stagger-fade-in > *:nth-of-type(6)': { animationDelay: '200ms' },
+        '.stagger-fade-in > *:nth-of-type(7)': { animationDelay: '240ms' },
+        '.stagger-fade-in > *:nth-of-type(8)': { animationDelay: '280ms' },
+        '.stagger-fade-in > *:nth-of-type(9)': { animationDelay: '320ms' },
+        '.stagger-fade-in > *:nth-of-type(10)': { animationDelay: '360ms' },
+        '.stagger-fade-in > *:nth-of-type(11)': { animationDelay: '400ms' },
+        '.stagger-fade-in > *:nth-of-type(12)': { animationDelay: '400ms' },
         '.MuiCard-root': {
           contentVisibility: 'auto',
           containIntrinsicSize: 'auto 200px',
@@ -635,13 +664,13 @@ export const futebaDarkTheme = createTheme({
     primary: {
       main: '#4ADE80',
       light: '#86EFAC',
-      dark: '#22C55E',
+      dark: '#2E7D32',
       contrastText: '#000000',
     },
     secondary: {
       main: '#5CC8FF',
-      light: '#8DD8FF',
-      dark: '#29B6F6',
+      light: '#90CAF9',
+      dark: '#004399',
       contrastText: '#000000',
     },
     background: {
@@ -652,10 +681,10 @@ export const futebaDarkTheme = createTheme({
       primary: '#F1F5F9',
       secondary: '#B0BEC5',
     },
-    error: { main: '#EF5350', light: '#FF8A80', dark: '#C62828' },
-    warning: { main: '#FFA726', light: '#FFB74D', dark: '#E65100' },
+    error: { main: '#FFB4AB', light: '#FFCDD2', dark: '#B71C1C' },
+    warning: { main: '#FF9E40', light: '#FFCC80', dark: '#8A3A00' },
     success: { main: '#66BB6A', light: '#81C784', dark: '#2E7D32' },
-    info: { main: '#42A5F5', light: '#64B5F6', dark: '#1565C0' },
+    info: { main: '#5CC8FF', light: '#90CAF9', dark: '#004399' },
     divider: '#334155',
     // #2754: 7 níveis de surface container dark — valores canônicos de shared/design-tokens.json
     surfaceDim: '#0F1114',

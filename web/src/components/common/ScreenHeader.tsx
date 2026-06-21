@@ -43,6 +43,7 @@ export const ScreenHeader = React.memo(function ScreenHeader({
         alignItems: 'center',
         height: '100%',
         p: 1,
+        minWidth: 0,
         ...headerSx,
       }}
     >
@@ -54,11 +55,12 @@ export const ScreenHeader = React.memo(function ScreenHeader({
       <Typography
         variant="h6"
         component={component}
-        sx={{ ml: onBack ? 1 : 0, flex: 1 }}
+        noWrap
+        sx={{ ml: onBack ? 1 : 0, flex: 1, minWidth: 0 }}
       >
         {title}
       </Typography>
-      {actions}
+      {actions && <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 1 }}>{actions}</Box>}
     </Box>
   );
 

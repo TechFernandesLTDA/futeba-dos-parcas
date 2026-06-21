@@ -165,7 +165,7 @@ export function LoginScreen() {
           display: 'flex',
           alignItems: { xs: 'flex-start', md: 'center' },
           justifyContent: 'center',
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           ...(isMd
             ? { bgcolor: 'background.paper' }
             : {
@@ -182,9 +182,9 @@ export function LoginScreen() {
           boxShadow: isMd ? undefined : (t) => t.shadows[16],
         }}
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           {!isMd && (
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 3, sm: 4 } }}>
             <AppLogo
               size="large"
               shape="circle"
@@ -195,7 +195,13 @@ export function LoginScreen() {
                 boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
               }}
             />
-              <Typography component="h1" variant="h4" fontWeight="bold" color="primary">
+              <Typography
+                component="h1"
+                variant="h4"
+                fontWeight="bold"
+                color="primary"
+                sx={{ fontSize: { xs: '1.8rem', sm: '2.125rem' } }}
+              >
                 {t('common.appName')}
               </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -304,8 +310,11 @@ export function LoginScreen() {
             disabled={loading}
             sx={{
               py: 1.5,
+              px: { xs: 1.25, sm: 2 },
+              whiteSpace: 'nowrap',
               borderColor: theme.palette.info.main,
               color: theme.palette.info.main,
+              '& .MuiButton-startIcon': { mr: { xs: 1, sm: 1.25 } },
               '&:hover': {
                 borderColor: theme.palette.info.dark,
                 backgroundColor: alpha(theme.palette.info.main, 0.04),
@@ -318,7 +327,7 @@ export function LoginScreen() {
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               {t('auth.noAccount')}{' '}
-              <Link component={RouterLink} to="/register" underline="hover">
+              <Link component={RouterLink} to="/register" underline="hover" sx={{ whiteSpace: 'nowrap' }}>
                 {t('auth.createAccount')}
               </Link>
             </Typography>

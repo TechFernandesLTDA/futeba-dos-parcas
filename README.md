@@ -171,6 +171,9 @@ futeba-dos-parcas/
 - **[.claude/PROJECT_CONTEXT.md](.claude/PROJECT_CONTEXT.md)** — Contexto consolidado para LLMs
 
 ### 📚 Para Desenvolvedores
+- **[Project Map](docs/PROJECT_MAP.md)** — mapa operacional de pastas, fronteiras e comandos
+- **[Agent Operating Model](docs/AGENT_OPERATING_MODEL.md)** — papéis e uso dos agentes Rawls, James, Hypatia e Plato
+- **[QA Smoke Matrix](docs/QA_SMOKE_MATRIX.md)** — matriz prática de regressão web/mobile/Android/Functions
 - **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)** — Arquitetura, bibliotecas e navegação
 - **[Business Rules](docs/BUSINESS_RULES.md)** — Sistema de XP, ciclo de vida de partidas e ranking
 - **[Setup Guide](docs/SETUP_GUIDE.md)** — Configuração completa do ambiente
