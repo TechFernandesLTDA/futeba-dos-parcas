@@ -109,7 +109,7 @@ export function ForgotPasswordScreen() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           ...(isMd
             ? { bgcolor: 'background.paper' }
             : {
@@ -126,7 +126,7 @@ export function ForgotPasswordScreen() {
           boxShadow: isMd ? undefined : (t) => t.shadows[16],
         }}
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           {!isMd && (
           <>
           <Box sx={{ mb: 2 }}>
@@ -216,7 +216,7 @@ export function ForgotPasswordScreen() {
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               {t('auth.forgotPasswordRememberPassword')}{' '}
-              <Link component={RouterLink} to="/login" underline="hover">
+              <Link component={RouterLink} to="/login" underline="hover" sx={{ whiteSpace: 'nowrap' }}>
                 {t('auth.forgotPasswordSignIn')}
               </Link>
             </Typography>

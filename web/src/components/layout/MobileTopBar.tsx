@@ -75,7 +75,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
         },
       }}
     >
-      <Toolbar variant="dense">
+      <Toolbar variant="dense" sx={{ minWidth: 0 }}>
         {showBack ? (
           <IconButton
             edge="start"
@@ -94,7 +94,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
           fontWeight={700}
           color="primary.main"
           noWrap
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, minWidth: 0 }}
         >
           {screenTitle ?? t('common.appName')}
         </Typography>
@@ -134,7 +134,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
           {breadcrumbs!.map((item, idx) => {
             const isLast = idx === breadcrumbs!.length - 1;
             return (
-              <Box key={`${item.label}-${idx}`} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+              <Box key={`${item.label}-${idx}`} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
                 {idx > 0 && (
                   <NavigateNext fontSize="small" sx={{ color: 'text.disabled', flexShrink: 0 }} />
                 )}
@@ -142,7 +142,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
                   <Typography
                     variant="caption"
                     color={isLast ? 'text.primary' : 'text.secondary'}
-                    sx={{ fontWeight: isLast ? 600 : 400 }}
+                    sx={{ fontWeight: isLast ? 600 : 400, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
                     {item.label}
                   </Typography>
@@ -152,7 +152,13 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
                     to={item.to}
                     variant="caption"
                     color="text.secondary"
-                    sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                    sx={{
+                      maxWidth: 140,
+                      overflow: 'hidden',
+                      textDecoration: 'none',
+                      textOverflow: 'ellipsis',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
                   >
                     {item.label}
                   </Typography>

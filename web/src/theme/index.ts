@@ -520,6 +520,35 @@ export const futebaTheme = createTheme({
     },
     MuiCssBaseline: {
       styleOverrides: {
+        '*, *::before, *::after': {
+          boxSizing: 'border-box',
+        },
+        'html, body, #root': {
+          width: '100%',
+          minWidth: 0,
+          minHeight: '100%',
+          overflowX: 'clip',
+        },
+        '@supports not (overflow: clip)': {
+          'html, body, #root': {
+            overflowX: 'hidden',
+          },
+        },
+        'img, video, canvas, svg': {
+          maxWidth: '100%',
+        },
+        '.MuiBox-root, .MuiStack-root, .MuiGrid-root, .MuiCard-root, .MuiPaper-root, .MuiContainer-root': {
+          minWidth: 0,
+        },
+        '.MuiButton-root, .MuiChip-root': {
+          maxWidth: '100%',
+        },
+        '.MuiButton-startIcon, .MuiButton-endIcon': {
+          flexShrink: 0,
+        },
+        '.MuiTypography-root, .MuiListItemText-primary, .MuiListItemText-secondary, .MuiChip-label': {
+          overflowWrap: 'anywhere',
+        },
         // #2208: transição suave ao alternar tema (light/dark/OLED). Limitada a
         // propriedades de cor para evitar footgun de perf de `transition: all`.
         // Composição com prefers-reduced-motion abaixo desativa a animação.
