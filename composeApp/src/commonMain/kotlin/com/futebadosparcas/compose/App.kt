@@ -57,6 +57,7 @@ import com.futebadosparcas.ui.core.PostGameReportScreen
 import com.futebadosparcas.ui.core.ProfileSetupScreen
 import com.futebadosparcas.ui.core.WelcomeScreen
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.ui.whatsnew.WhatsNewPopupHost
 import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
 import org.koin.compose.KoinApplication
@@ -106,24 +107,46 @@ fun AppNavigation(
     val authRepository: AuthRepository? = runCatching { koinInject<AuthRepository>() }.getOrNull()
     val startDestination = if (authRepository?.isLoggedIn() == true) AppRoutes.HOME else AppRoutes.WELCOME
 
+    // #2731 — Respeita o reduced-motion do sistema (Android: ANIMATOR_DURATION_SCALE == 0;
+    // iOS: UIAccessibility.isReduceMotionEnabled). Quando o usuário pede menos animação,
+    // trocamos o slide+fade com spring por um fade simples (sem deslize), evitando movimento
+    // que possa causar desconforto a quem tem sensibilidade vestibular.
+    val reduceMotion = rememberReduceMotion()
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
         enterTransition = {
-            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            if (reduceMotion) {
+                fadeIn()
+            } else {
+                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            }
         },
         exitTransition = {
-            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            if (reduceMotion) {
+                fadeOut()
+            } else {
+                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            }
         },
         popEnterTransition = {
-            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            if (reduceMotion) {
+                fadeIn()
+            } else {
+                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            }
         },
         popExitTransition = {
-            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            if (reduceMotion) {
+                fadeOut()
+            } else {
+                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            }
         }
     ) {
         // Welcome / Onboarding
