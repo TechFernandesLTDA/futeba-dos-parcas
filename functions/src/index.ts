@@ -484,6 +484,32 @@ export const onGameStatusUpdate = onDocumentUpdated(
               c.userId.trim() !== ""
           );
 
+        // SECFIX #430 / FIX #2797: excluir jogadores com overlap temporal.
+        // O trigger onConfirmationCreated (temporal-overlap.ts) marca
+        // suspicious_overlap=true quando o jogador tem outra confirmação no
+        // mesmo horário. Esses jogadores NÃO recebem XP, estatísticas nem
+        // participação na season. Não contam para MIN_PLAYERS (FIX #1572).
+        const overlapExcluded = validConfirmations.filter(
+          (c) => c.suspiciousOverlap === true
+        );
+        if (overlapExcluded.length > 0) {
+          for (const c of overlapExcluded) {
+            logger.warn(
+              "[ANTI-CHEAT][OVERLAP] Jogador excluído do processamento " +
+              `de XP por suspicious_overlap: userId=${c.userId}, ` +
+              `gameId=${gameId}`
+            );
+          }
+          // Remover os flagados da lista de processamento
+          validConfirmations.splice(
+            0,
+            validConfirmations.length,
+            ...validConfirmations.filter(
+              (c) => c.suspiciousOverlap !== true
+            )
+          );
+        }
+
         // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE) — clamp and warn, don't throw
         // FIX #2525: mutamos conf.goals/assists/saves aqui (piso 0 + teto MAX)
         // para que TODOS os sinks downstream (statistics, xp_logs, ranking_deltas,

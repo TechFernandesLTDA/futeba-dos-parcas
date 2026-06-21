@@ -1,5 +1,5 @@
 /**
- * SECFIX #430: Detector de overlap temporal de confirmacoes.
+ * SECFIX #430 / FIX #2797: Detector de overlap temporal de confirmacoes.
  *
  * Trigger onDocumentCreated em confirmations/{confId} que valida
  * se o usuario tem confirmacao em outro jogo no mesmo horario.
@@ -9,7 +9,9 @@
  * - Marca confirmation como suspicious_overlap=true
  * - Loga audit_logs OVERLAP_DETECTED
  * - NAO deleta automaticamente (evita break de edge cases)
- * - Cloud Function de XP processing checa flag e nega XP
+ * - onGameFinished (index.ts) lê a flag e NEGA XP, estatísticas e
+ *   participação na season ao jogador flagado. O jogador não conta
+ *   para MIN_PLAYERS. Veja FIX #2797 em index.ts.
  */
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";

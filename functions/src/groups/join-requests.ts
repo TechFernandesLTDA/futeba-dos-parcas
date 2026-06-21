@@ -121,6 +121,30 @@ export const onJoinRequestApproved = onDocumentUpdated(
     const groupName = (groupMeta.name as string) ?? "";
     const groupPhoto = (groupMeta.photo_url as string | null) ?? null;
 
+    // FIX #2798: defesa em profundidade — re-valida que o aprovador é
+    // owner ou admin do grupo. As rules já bloqueiam no cliente, mas esta
+    // verificação server-side impede que race conditions ou bypass de rules
+    // resultem em membros criados por não-autorizados.
+    const approverId = after.responded_by;
+    const isOwner = groupMeta.owner_id === approverId;
+    if (!isOwner) {
+      const approverMemberSnap = await db()
+        .doc(`groups/${groupId}/members/${approverId}`)
+        .get();
+      const approverRole = approverMemberSnap.exists ?
+        (approverMemberSnap.data() as Record<string, unknown>).role :
+        null;
+      const isAdmin =
+        approverRole === "ADMIN" || approverRole === "OWNER";
+      if (!isAdmin) {
+        logger.error(
+          "join_request aprovado por não-owner/admin — bloqueado",
+          {groupId, userId, approverId, approverRole}
+        );
+        return;
+      }
+    }
+
     await db().runTransaction(async (tx) => {
       // FIX #1399: checar existência do member DENTRO da transação para
       // garantir idempotência sob entrega duplicada (Firestore triggers são
