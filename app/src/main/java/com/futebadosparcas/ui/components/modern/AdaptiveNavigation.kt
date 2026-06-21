@@ -17,14 +17,23 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+
 /**
- * Destino de navegação
+ * Destino de navegação com suporte a par de ícones (outline/filled).
+ *
+ * @param route Rota de navegação
+ * @param label Rótulo visível ao usuário
+ * @param icon Ícone padrão (outline, para estado não-selecionado)
+ * @param selectedIcon Ícone para estado selecionado (filled). Se null, usa [icon].
+ * @param contentDescription Descrição de acessibilidade para o ícone. Deve ser null
+ *   quando há um [label] visível — o leitor de tela anuncia o label sem repetição.
  */
 data class NavDestination(
     val route: String,
     val label: String,
     val icon: ImageVector,
-    val contentDescription: String
+    val selectedIcon: ImageVector? = null,
+    val contentDescription: String? = null
 )
 
 /**
@@ -53,13 +62,21 @@ fun AdaptiveNavigationScaffold(
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             destinations.forEach { destination ->
+                val isSelected = selectedDestination == destination.route
                 item(
-                    selected = selectedDestination == destination.route,
+                    selected = isSelected,
                     onClick = { onNavigate(destination.route) },
                     icon = {
+                        // Alterna entre ícone filled (selecionado) e outline (não-selecionado)
+                        // conforme recomendação Material 3. contentDescription é null pois
+                        // o label visível já é lido pelo TalkBack — evita anúncio duplo (#2736).
                         Icon(
-                            imageVector = destination.icon,
-                            contentDescription = destination.contentDescription
+                            imageVector = if (isSelected) {
+                                destination.selectedIcon ?: destination.icon
+                            } else {
+                                destination.icon
+                            },
+                            contentDescription = null
                         )
                     },
                     label = { Text(destination.label) }
@@ -118,13 +135,19 @@ fun ManualAdaptiveNavigation(
         NavigationSuiteType.NavigationBar -> {
             NavigationBar(modifier = modifier) {
                 destinations.forEach { destination ->
+                    val isSelected = selectedDestination == destination.route
                     NavigationBarItem(
-                        selected = selectedDestination == destination.route,
+                        selected = isSelected,
                         onClick = { onNavigate(destination.route) },
                         icon = {
+                            // contentDescription null: label visível evita anúncio duplo (#2736)
                             Icon(
-                                imageVector = destination.icon,
-                                contentDescription = destination.contentDescription
+                                imageVector = if (isSelected) {
+                                    destination.selectedIcon ?: destination.icon
+                                } else {
+                                    destination.icon
+                                },
+                                contentDescription = null
                             )
                         },
                         label = { Text(destination.label) }
@@ -136,13 +159,19 @@ fun ManualAdaptiveNavigation(
         NavigationSuiteType.NavigationRail -> {
             NavigationRail(modifier = modifier) {
                 destinations.forEach { destination ->
+                    val isSelected = selectedDestination == destination.route
                     NavigationRailItem(
-                        selected = selectedDestination == destination.route,
+                        selected = isSelected,
                         onClick = { onNavigate(destination.route) },
                         icon = {
+                            // contentDescription null: label visível evita anúncio duplo (#2736)
                             Icon(
-                                imageVector = destination.icon,
-                                contentDescription = destination.contentDescription
+                                imageVector = if (isSelected) {
+                                    destination.selectedIcon ?: destination.icon
+                                } else {
+                                    destination.icon
+                                },
+                                contentDescription = null
                             )
                         },
                         label = { Text(destination.label) }
@@ -157,13 +186,19 @@ fun ManualAdaptiveNavigation(
                     PermanentDrawerSheet(modifier = modifier) {
                         Spacer(modifier = Modifier.height(12.dp))
                         destinations.forEach { destination ->
+                            val isSelected = selectedDestination == destination.route
                             NavigationDrawerItem(
-                                selected = selectedDestination == destination.route,
+                                selected = isSelected,
                                 onClick = { onNavigate(destination.route) },
                                 icon = {
+                                    // contentDescription null: label visível evita anúncio duplo (#2736)
                                     Icon(
-                                        imageVector = destination.icon,
-                                        contentDescription = destination.contentDescription
+                                        imageVector = if (isSelected) {
+                                            destination.selectedIcon ?: destination.icon
+                                        } else {
+                                            destination.icon
+                                        },
+                                        contentDescription = null
                                     )
                                 },
                                 label = { Text(destination.label) }
@@ -179,13 +214,19 @@ fun ManualAdaptiveNavigation(
             // Fallback para bottom navigation
             NavigationBar(modifier = modifier) {
                 destinations.forEach { destination ->
+                    val isSelected = selectedDestination == destination.route
                     NavigationBarItem(
-                        selected = selectedDestination == destination.route,
+                        selected = isSelected,
                         onClick = { onNavigate(destination.route) },
                         icon = {
+                            // contentDescription null: label visível evita anúncio duplo (#2736)
                             Icon(
-                                imageVector = destination.icon,
-                                contentDescription = destination.contentDescription
+                                imageVector = if (isSelected) {
+                                    destination.selectedIcon ?: destination.icon
+                                } else {
+                                    destination.icon
+                                },
+                                contentDescription = null
                             )
                         },
                         label = { Text(destination.label) }

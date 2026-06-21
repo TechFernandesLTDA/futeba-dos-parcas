@@ -5,6 +5,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.components.lists.ShimmerCircle
@@ -40,11 +44,17 @@ fun LoadingState(
     shimmerCount: Int = 5,
     itemType: LoadingItemType = LoadingItemType.CARD
 ) {
+    val loadingDesc = stringResource(R.string.state_loading)
     Column(
         modifier = modifier
             .fillMaxSize()
             .systemBarsPadding()
-            .padding(16.dp),
+            .padding(16.dp)
+            // Live region Polite: TalkBack anuncia o estado de loading sem interromper o usuário (#2736)
+            .semantics {
+                liveRegion = LiveRegionMode.Polite
+                contentDescription = loadingDesc
+            },
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         repeat(shimmerCount) { index ->
@@ -273,7 +283,12 @@ fun LoadingStateCompact(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(24.dp),
+            .padding(24.dp)
+            // Live region Polite: TalkBack anuncia o loading sem interromper o usuário (#2736)
+            .semantics {
+                liveRegion = LiveRegionMode.Polite
+                contentDescription = message
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
