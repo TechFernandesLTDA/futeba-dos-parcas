@@ -8,12 +8,14 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Componente genérico de shimmer para listas
@@ -33,13 +35,19 @@ fun ShimmerListContent(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
+    // Reduced-motion: usa placeholder estático em vez do gradiente animado (#2735).
+    // rememberInfiniteTransition é sempre chamado (regra dos composables); quando
+    // reduced=true, initialValue==targetValue => valor fixo, sem animação visível.
+    val reducedMotion = rememberReduceMotion()
+    val staticColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+
     val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
+    val translateAnim by transition.animateFloat(
+        initialValue = if (reducedMotion) 500f else 0f,
+        targetValue = if (reducedMotion) 500f else 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 1200,
+                durationMillis = if (reducedMotion) 1 else 1200,
                 easing = LinearEasing
             ),
             repeatMode = RepeatMode.Restart
@@ -47,11 +55,15 @@ fun ShimmerListContent(
         label = "shimmer_translate"
     )
 
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset(translateAnim.value - 1000f, translateAnim.value - 1000f),
-        end = Offset(translateAnim.value, translateAnim.value)
-    )
+    val brush = if (reducedMotion) {
+        Brush.linearGradient(colors = listOf(staticColor, staticColor))
+    } else {
+        Brush.linearGradient(
+            colors = shimmerColors,
+            start = Offset(translateAnim - 1000f, translateAnim - 1000f),
+            end = Offset(translateAnim, translateAnim)
+        )
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -80,7 +92,8 @@ fun LazyListScope.shimmerItems(
 }
 
 /**
- * Componente auxiliar que fornece o brush animado
+ * Componente auxiliar que fornece o brush animado.
+ * Quando reduced-motion está ativo, fornece brush estático (#2735).
  */
 @Composable
 private fun ShimmerBox(
@@ -92,13 +105,18 @@ private fun ShimmerBox(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
+    // Reduced-motion: usa placeholder estático em vez do gradiente animado (#2735).
+    // rememberInfiniteTransition sempre chamado; initialValue==targetValue trava animação.
+    val reducedMotion = rememberReduceMotion()
+    val staticColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+
     val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
+    val translateAnim by transition.animateFloat(
+        initialValue = if (reducedMotion) 500f else 0f,
+        targetValue = if (reducedMotion) 500f else 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 1200,
+                durationMillis = if (reducedMotion) 1 else 1200,
                 easing = LinearEasing
             ),
             repeatMode = RepeatMode.Restart
@@ -106,17 +124,22 @@ private fun ShimmerBox(
         label = "shimmer_translate"
     )
 
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset(translateAnim.value - 1000f, translateAnim.value - 1000f),
-        end = Offset(translateAnim.value, translateAnim.value)
-    )
+    val brush = if (reducedMotion) {
+        Brush.linearGradient(colors = listOf(staticColor, staticColor))
+    } else {
+        Brush.linearGradient(
+            colors = shimmerColors,
+            start = Offset(translateAnim - 1000f, translateAnim - 1000f),
+            end = Offset(translateAnim, translateAnim)
+        )
+    }
 
     content(brush)
 }
 
 /**
- * Componente básico de shimmer box para uso genérico
+ * Componente básico de shimmer box para uso genérico.
+ * Quando reduced-motion está ativo, renderiza placeholder sólido sem animação (#2735).
  */
 @Composable
 fun ShimmerBox(
@@ -129,13 +152,18 @@ fun ShimmerBox(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
+    // Reduced-motion: usa placeholder estático em vez do gradiente animado (#2735).
+    // rememberInfiniteTransition sempre chamado; initialValue==targetValue trava animação.
+    val reducedMotion = rememberReduceMotion()
+    val staticColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+
     val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
+    val translateAnim by transition.animateFloat(
+        initialValue = if (reducedMotion) 500f else 0f,
+        targetValue = if (reducedMotion) 500f else 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 1200,
+                durationMillis = if (reducedMotion) 1 else 1200,
                 easing = LinearEasing
             ),
             repeatMode = RepeatMode.Restart
@@ -143,11 +171,15 @@ fun ShimmerBox(
         label = "shimmer_translate"
     )
 
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset(translateAnim.value - 1000f, translateAnim.value - 1000f),
-        end = Offset(translateAnim.value, translateAnim.value)
-    )
+    val brush = if (reducedMotion) {
+        Brush.linearGradient(colors = listOf(staticColor, staticColor))
+    } else {
+        Brush.linearGradient(
+            colors = shimmerColors,
+            start = Offset(translateAnim - 1000f, translateAnim - 1000f),
+            end = Offset(translateAnim, translateAnim)
+        )
+    }
 
     Box(
         modifier = modifier

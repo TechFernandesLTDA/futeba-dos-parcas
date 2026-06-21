@@ -1,8 +1,11 @@
 package com.futebadosparcas.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
@@ -32,6 +35,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -198,37 +203,63 @@ fun AppNavHost(
     val hapticManager = remember { HapticManager(context) }
     val preferencesManager = remember { PreferencesManager(context) }
 
+    // Lê preferência de reduced-motion do sistema via CompositionLocal provido pelo FutebaTheme.
+    // Quando ativo, substitui slides com spring por fades simples (#2735).
+    val reducedMotion = rememberReduceMotion()
+    val fadeDuration = MotionDuration.getMedium(reducedMotion)
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
         enterTransition = {
-            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-            )
+            if (reducedMotion) {
+                // Reduced-motion: fade simples sem slide
+                if (fadeDuration == 0) EnterTransition.None
+                else fadeIn(animationSpec = tween(fadeDuration))
+            } else {
+                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                )
+            }
         },
         exitTransition = {
-            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-            )
+            if (reducedMotion) {
+                if (fadeDuration == 0) ExitTransition.None
+                else fadeOut(animationSpec = tween(fadeDuration))
+            } else {
+                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                )
+            }
         },
         popEnterTransition = {
-            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-            )
+            if (reducedMotion) {
+                if (fadeDuration == 0) EnterTransition.None
+                else fadeIn(animationSpec = tween(fadeDuration))
+            } else {
+                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                )
+            }
         },
         popExitTransition = {
-            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-            )
+            if (reducedMotion) {
+                if (fadeDuration == 0) ExitTransition.None
+                else fadeOut(animationSpec = tween(fadeDuration))
+            } else {
+                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                )
+            }
         }
     ) {
         // ==================== ROOT DESTINATIONS (Bottom Nav) ====================
