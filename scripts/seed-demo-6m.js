@@ -8,7 +8,7 @@
  * - 40 players
  * - 2 public groups
  * - 3 locations/fields
- * - 52 finished games over the last 6 months
+ * - 180 finished games over the last 6 months, one realized game per day
  * - 8 upcoming games
  * - confirmations, teams, live scores, game events, xp logs and statistics
  * - global league participation, ranking deltas and group league standings
@@ -22,7 +22,7 @@ const admin = require("firebase-admin");
 
 const SEED_ID = "mock6m_20260621";
 const PLAYER_COUNT = 40;
-const FINISHED_GAMES = 52;
+const FINISHED_GAMES = 180;
 const UPCOMING_GAMES = 8;
 const DEFAULT_PROJECT = "futebadosparcas";
 const BATCH_LIMIT = 450;
@@ -281,7 +281,7 @@ function createGameSeed(players, now, index, upcoming = false) {
   const group = pick(GROUPS, index);
   const dateBase = upcoming ?
     addDays(now, 3 + index * 7) :
-    addDays(now, -182 + index * 3);
+    addDays(now, -FINISHED_GAMES + index);
   const hour = [19, 20, 21][index % 3];
   const minute = index % 2 === 0 ? 0 : 30;
   const dateTime = atLocalTime(dateBase, hour, minute);
@@ -357,6 +357,9 @@ function createGameSeed(players, now, index, upcoming = false) {
       checkin_radius_meters: 100,
       xp_processed: !upcoming,
       xp_processed_at: upcoming ? null : admin.firestore.Timestamp.fromDate(addDays(dateTime, 1)),
+      finished_at: upcoming ? null : admin.firestore.Timestamp.fromDate(addDays(dateTime, 1)),
+      finishedAt: upcoming ? null : admin.firestore.Timestamp.fromDate(addDays(dateTime, 1)),
+      finished_by: upcoming ? null : "mock-seed",
       voting_concluded: !upcoming,
       post_game_report_generated: !upcoming,
       auto_closed: false,
@@ -595,6 +598,8 @@ async function seed() {
         team1_score: game.team1Score,
         team2_score: game.team2Score,
         status: "FINISHED",
+        finished_at: admin.firestore.Timestamp.fromDate(addDays(game.data.dateTime.toDate(), 1)),
+        finishedAt: admin.firestore.Timestamp.fromDate(addDays(game.data.dateTime.toDate(), 1)),
         is_mock: true,
         seed_id: SEED_ID,
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
