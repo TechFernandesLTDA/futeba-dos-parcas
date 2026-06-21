@@ -1,7 +1,45 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-21T19:17:08.665Z",
+  "generatedAt": "2026-06-21T20:35:06.504Z",
   "notes": [
+    {
+      "version": "1.26.3",
+      "buildNumber": null,
+      "releaseDate": "2026-06-21",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Cadastro por SMS mais confiável",
+      "highlights": [
+        {
+          "icon": "shield",
+          "title": "SMS sem travar",
+          "description": "A etapa de telefone deixa de ficar presa quando a checagem anti-abuso oscila."
+        },
+        {
+          "icon": "devices",
+          "title": "Melhor no iPhone e Android",
+          "description": "O fluxo de código por SMS passa a exibir erro claro em vez de tela branca ou clique silencioso."
+        },
+        {
+          "icon": "checklist",
+          "title": "Continuação do cadastro",
+          "description": "Depois do SMS, o app segue corretamente para a próxima etapa de verificação."
+        }
+      ],
+      "added": [
+        "Hotfix focado no onboarding obrigatório de telefone e CPF."
+      ],
+      "improved": [
+        "A validação anti-robô do SMS agora falha de forma recuperável quando há instabilidade de rede ou App Check.",
+        "Mensagens de erro de SMS, CAPTCHA e conexão ficaram mais claras."
+      ],
+      "fixed": [
+        "Corrigido caso em que a etapa de SMS podia não abrir corretamente no web mobile.",
+        "Corrigido caso em que o botão de enviar SMS no Android podia não disparar se a tela recebesse um contexto embrulhado."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.26.2",
       "buildNumber": null,

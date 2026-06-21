@@ -53,6 +53,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.26.3] - 2026-06-21
+
+#### Mudado
+- `canSendSmsOtp` mantém App Check obrigatório, mas não consome o token antes do Firebase Phone Auth.
+- O web renderiza explicitamente o reCAPTCHA invisível e continua o Phone Auth quando o preflight consultivo falha.
+- O Android resolve a `Activity` a partir de `ContextWrapper` antes de iniciar `PhoneAuthProvider.verifyPhoneNumber`.
+
+#### Corrigido
+- Fluxo de verificação por SMS deixa de bloquear cadastro legítimo em falhas transitórias do preflight.
+
+_PRs: #2810_
+
 ### [1.26.2] - 2026-06-21
 
 #### Adicionado

@@ -1,5 +1,8 @@
 package com.futebadosparcas.ui.onboarding
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,7 +42,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.activity.ComponentActivity
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.theme.AppDimensions
@@ -154,8 +156,13 @@ fun PhoneVerificationScreen(
                         Spacer(Modifier.height(AppDimensions.spacing_large))
                         Button(
                             onClick = {
-                                val activity = context as? ComponentActivity
-                                    ?: return@Button
+                                val activity = context.findActivity()
+                                if (activity == null) {
+                                    viewModel.reportRecoverableError(
+                                        context.getString(R.string.phone_error_connection),
+                                    )
+                                    return@Button
+                                }
                                 viewModel.sendVerificationCode(activity, phone)
                             },
                             enabled = !loading,
@@ -231,4 +238,10 @@ fun PhoneVerificationScreen(
             }
         }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
