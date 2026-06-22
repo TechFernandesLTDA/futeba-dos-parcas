@@ -64,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.ui.UiStrings
 
 // ---------- Componentes auxiliares (para evitar dependências do módulo :app) ----------
 
@@ -278,7 +279,7 @@ private fun InvitePlayersTopBar(onNavigateBack: () -> Unit) {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Voltar"
+                    contentDescription = UiStrings.CD_BACK
                 )
             }
         },
@@ -300,12 +301,12 @@ private fun SearchField(
         modifier = modifier,
         placeholder = { Text("Buscar jogadores por nome ou email") },
         leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = "Ícone de busca")
+            Icon(Icons.Default.Search, contentDescription = null)
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = "Limpar busca")
+                    Icon(Icons.Default.Close, contentDescription = UiStrings.CD_CLEAR_SEARCH)
                 }
             }
         },

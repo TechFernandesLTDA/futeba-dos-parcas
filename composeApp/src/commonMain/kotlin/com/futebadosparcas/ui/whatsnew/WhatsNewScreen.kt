@@ -43,10 +43,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.ReleaseNote
+import com.futebadosparcas.ui.UiStrings
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -75,12 +81,17 @@ fun WhatsNewScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Novidades") },
+                title = {
+                    Text(
+                        text = "Novidades",
+                        modifier = Modifier.semantics { heading() },
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar",
+                            contentDescription = UiStrings.CD_BACK,
                         )
                     }
                 },
@@ -134,6 +145,22 @@ private fun VersionCard(
     initiallyExpanded: Boolean,
 ) {
     var expanded by remember(note.buildNumber) { mutableStateOf(initiallyExpanded) }
+    val releaseDate = formatReleaseDate(note.releaseDate)
+    val expansionAction = if (expanded) {
+        UiStrings.CD_COLLAPSE_RELEASE_VERSION
+    } else {
+        UiStrings.CD_EXPAND_RELEASE_VERSION
+    }
+    val accessibilitySummary = buildString {
+        append("Versão ")
+        append(note.version)
+        if (releaseDate.isNotBlank()) {
+            append(". ")
+            append(releaseDate)
+        }
+        append(". ")
+        append(expansionAction)
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -151,6 +178,10 @@ private fun VersionCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { expanded = !expanded }
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = accessibilitySummary
+                        role = Role.Button
+                    }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -164,10 +195,9 @@ private fun VersionCard(
                         Spacer(Modifier.width(8.dp))
                         ReleaseTypeBadge(note.type)
                     }
-                    val date = formatReleaseDate(note.releaseDate)
-                    if (date.isNotBlank()) {
+                    if (releaseDate.isNotBlank()) {
                         Text(
-                            text = date,
+                            text = releaseDate,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -175,7 +205,7 @@ private fun VersionCard(
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Recolher versão" else "Expandir versão",
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
