@@ -65,6 +65,32 @@ describe("game_summons — create", () => {
     );
   });
 
+  it("Player NAO pode summon para jogo que nao possui", async () => {
+    const db = asPlayerB(testEnv);
+    await assertFails(
+      db.doc(`game_summons/gs-non-owner`).set({
+        game_id: GAME_ID,
+        user_id: UID_PLAYER_C,
+        summoned_by: UID_PLAYER_B,
+        status: "PENDING",
+        created_at: new Date(),
+      })
+    );
+  });
+
+  it("Admin pode summon para jogo existente", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.doc(`game_summons/gs-create-admin`).set({
+        game_id: GAME_ID,
+        user_id: UID_PLAYER_C,
+        summoned_by: UID_ADMIN,
+        status: "PENDING",
+        created_at: new Date(),
+      })
+    );
+  });
+
   it("Player NAO pode summon com summoned_by de outro usuario", async () => {
     const db = asPlayerB(testEnv);
     await assertFails(
