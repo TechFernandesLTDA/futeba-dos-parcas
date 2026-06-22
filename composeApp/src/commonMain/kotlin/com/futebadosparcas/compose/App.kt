@@ -10,16 +10,24 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,8 +39,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -323,11 +335,27 @@ fun AppNavigation(
             FeatureHubScreen(
                 title = UiStrings.GROUPS_HUB_TITLE,
                 body = UiStrings.GROUPS_HUB_BODY,
-                primaryActionLabel = UiStrings.GROUPS_HUB_PRIMARY,
-                secondaryActionLabel = UiStrings.GROUPS_HUB_SECONDARY,
                 onNavigateBack = { navController.popBackStack() },
-                onPrimaryAction = { navController.navigate(AppRoutes.GAMES) },
-                onSecondaryAction = { navController.navigate(AppRoutes.WHATS_NEW) }
+                actions = listOf(
+                    FeatureHubAction(
+                        label = UiStrings.GROUPS_HUB_ACTION_GAMES,
+                        description = UiStrings.GROUPS_HUB_ACTION_GAMES_BODY,
+                        icon = Icons.Filled.SportsSoccer,
+                        onClick = { navController.navigate(AppRoutes.GAMES) }
+                    ),
+                    FeatureHubAction(
+                        label = UiStrings.GROUPS_HUB_ACTION_BLOCKED,
+                        description = UiStrings.GROUPS_HUB_ACTION_BLOCKED_BODY,
+                        icon = Icons.Filled.Block,
+                        onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
+                    ),
+                    FeatureHubAction(
+                        label = UiStrings.GROUPS_HUB_ACTION_WHATS_NEW,
+                        description = UiStrings.GROUPS_HUB_ACTION_WHATS_NEW_BODY,
+                        icon = Icons.Filled.NewReleases,
+                        onClick = { navController.navigate(AppRoutes.WHATS_NEW) }
+                    )
+                )
             )
         }
 
@@ -341,11 +369,27 @@ fun AppNavigation(
             FeatureHubScreen(
                 title = UiStrings.PROFILE_HUB_TITLE,
                 body = UiStrings.PROFILE_HUB_BODY,
-                primaryActionLabel = UiStrings.PROFILE_HUB_PRIMARY,
-                secondaryActionLabel = UiStrings.PROFILE_HUB_SECONDARY,
                 onNavigateBack = { navController.popBackStack() },
-                onPrimaryAction = { navController.navigate(AppRoutes.PROFILE_SETUP) },
-                onSecondaryAction = { navController.navigate(AppRoutes.OWNER_STATS) }
+                actions = listOf(
+                    FeatureHubAction(
+                        label = UiStrings.PROFILE_HUB_ACTION_SETUP,
+                        description = UiStrings.PROFILE_HUB_ACTION_SETUP_BODY,
+                        icon = Icons.Filled.Person,
+                        onClick = { navController.navigate(AppRoutes.PROFILE_SETUP) }
+                    ),
+                    FeatureHubAction(
+                        label = UiStrings.PROFILE_HUB_ACTION_STATS,
+                        description = UiStrings.PROFILE_HUB_ACTION_STATS_BODY,
+                        icon = Icons.Filled.QueryStats,
+                        onClick = { navController.navigate(AppRoutes.OWNER_STATS) }
+                    ),
+                    FeatureHubAction(
+                        label = UiStrings.PROFILE_HUB_ACTION_BLOCKED,
+                        description = UiStrings.PROFILE_HUB_ACTION_BLOCKED_BODY,
+                        icon = Icons.Filled.Block,
+                        onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
+                    )
+                )
             )
         }
 
@@ -459,16 +503,20 @@ private fun GameDetailHub(
     }
 }
 
+private data class FeatureHubAction(
+    val label: String,
+    val description: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeatureHubScreen(
     title: String,
     body: String,
-    primaryActionLabel: String,
-    secondaryActionLabel: String,
     onNavigateBack: () -> Unit,
-    onPrimaryAction: () -> Unit,
-    onSecondaryAction: () -> Unit
+    actions: List<FeatureHubAction>
 ) {
     Scaffold(
         topBar = {
@@ -489,6 +537,7 @@ private fun FeatureHubScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -502,17 +551,56 @@ private fun FeatureHubScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            OutlinedButton(
-                onClick = onPrimaryAction,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(primaryActionLabel)
+
+            Text(
+                text = UiStrings.FEATURE_HUB_ACTIONS,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() }
+            )
+
+            actions.forEach { action ->
+                FeatureHubActionButton(action)
             }
-            OutlinedButton(
-                onClick = onSecondaryAction,
-                modifier = Modifier.fillMaxWidth()
+        }
+    }
+}
+
+@Composable
+private fun FeatureHubActionButton(action: FeatureHubAction) {
+    OutlinedButton(
+        onClick = action.onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = "${action.label}. ${action.description}"
+            }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = action.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Text(secondaryActionLabel)
+                Text(
+                    text = action.label,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = action.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
