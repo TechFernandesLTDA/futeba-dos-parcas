@@ -399,7 +399,16 @@ function validatePiiField(field: string, value: unknown): boolean {
   case "gender":
     return (
       typeof value === "string" &&
-        ["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY", "M", "F", "O"]
+        [
+          "MALE",
+          "FEMALE",
+          "OTHER",
+          "NOT_INFORMED",
+          "PREFER_NOT_TO_SAY",
+          "M",
+          "F",
+          "O",
+        ]
           .includes(value)
     );
   default:

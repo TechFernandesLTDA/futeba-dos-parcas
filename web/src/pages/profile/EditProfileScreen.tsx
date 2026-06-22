@@ -25,9 +25,10 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { doc, updateDoc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../services/firebase';
+import { updateUserPii } from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PreferredPosition, UserGender } from '../../types/user';
@@ -382,19 +383,16 @@ export const EditProfileScreen: React.FC = () => {
         updated_at: serverTimestamp(),
       });
 
-      // Persiste gênero em users_private/{uid} (PII — merge para não sobrescrever outros campos)
-      if (gender) {
+      // Persiste gênero via callable, porque users_private é read-only para
+      // clientes nas regras Firestore. Valor vazio limpa o campo no doc privado.
+      if (gender !== initialGender) {
         try {
-          await setDoc(
-            doc(db, 'users_private', currentUser.uid),
-            { gender, updated_at: serverTimestamp() },
-            { merge: true }
-          );
+          await updateUserPii({ gender: gender || null });
         } catch (privateErr) {
-          logger.error('Falha ao salvar gênero em users_private:', privateErr);
-          // Não bloqueia o fluxo principal — o restante do perfil foi salvo;
-          // só o gênero (users_private) falhou. Feedback não-fatal (#601 Pattern 2).
+          logger.error('Falha ao salvar gênero via updateUserPii:', privateErr);
+          setError(t('profile.genderSaveError'));
           showError(t('profile.genderSaveError'));
+          return;
         }
       }
 
