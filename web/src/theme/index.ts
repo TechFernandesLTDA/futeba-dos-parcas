@@ -258,7 +258,7 @@ export const radii = {
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 24,
+  xl: 28,
   full: 999,
 } as const;
 
@@ -359,6 +359,8 @@ export const futebaTheme = createTheme({
   ] as const,
   shadowsCustom: shadowTokens,
   radii,
+  // #2744: spacing unit explicito para paridade com shared/design-tokens.json.
+  spacing: 8,
   shape: {
     borderRadius: radii.md,
   },
@@ -575,22 +577,24 @@ export const futebaTheme = createTheme({
           from: { opacity: 0, transform: 'translateY(12px)' },
           to: { opacity: 1, transform: 'translateY(0)' },
         },
-        '.stagger-fade-in > *': {
-          opacity: 0,
-          animation: 'fadeInUp 0.35s ease-out forwards',
+        '@media (prefers-reduced-motion: no-preference)': {
+          '.stagger-fade-in > *': {
+            opacity: 0,
+            animation: `fadeInUp ${motionDuration.medium}ms ${motionEasing.decelerate} forwards`,
+          },
+          '.stagger-fade-in > *:nth-of-type(1)': { animationDelay: '0ms' },
+          '.stagger-fade-in > *:nth-of-type(2)': { animationDelay: '40ms' },
+          '.stagger-fade-in > *:nth-of-type(3)': { animationDelay: '80ms' },
+          '.stagger-fade-in > *:nth-of-type(4)': { animationDelay: '120ms' },
+          '.stagger-fade-in > *:nth-of-type(5)': { animationDelay: '160ms' },
+          '.stagger-fade-in > *:nth-of-type(6)': { animationDelay: '200ms' },
+          '.stagger-fade-in > *:nth-of-type(7)': { animationDelay: '240ms' },
+          '.stagger-fade-in > *:nth-of-type(8)': { animationDelay: '280ms' },
+          '.stagger-fade-in > *:nth-of-type(9)': { animationDelay: '320ms' },
+          '.stagger-fade-in > *:nth-of-type(10)': { animationDelay: '360ms' },
+          '.stagger-fade-in > *:nth-of-type(11)': { animationDelay: '400ms' },
+          '.stagger-fade-in > *:nth-of-type(12)': { animationDelay: '400ms' },
         },
-        '.stagger-fade-in > *:nth-of-type(1)': { animationDelay: '0ms' },
-        '.stagger-fade-in > *:nth-of-type(2)': { animationDelay: '40ms' },
-        '.stagger-fade-in > *:nth-of-type(3)': { animationDelay: '80ms' },
-        '.stagger-fade-in > *:nth-of-type(4)': { animationDelay: '120ms' },
-        '.stagger-fade-in > *:nth-of-type(5)': { animationDelay: '160ms' },
-        '.stagger-fade-in > *:nth-of-type(6)': { animationDelay: '200ms' },
-        '.stagger-fade-in > *:nth-of-type(7)': { animationDelay: '240ms' },
-        '.stagger-fade-in > *:nth-of-type(8)': { animationDelay: '280ms' },
-        '.stagger-fade-in > *:nth-of-type(9)': { animationDelay: '320ms' },
-        '.stagger-fade-in > *:nth-of-type(10)': { animationDelay: '360ms' },
-        '.stagger-fade-in > *:nth-of-type(11)': { animationDelay: '400ms' },
-        '.stagger-fade-in > *:nth-of-type(12)': { animationDelay: '400ms' },
         '.MuiCard-root': {
           contentVisibility: 'auto',
           containIntrinsicSize: 'auto 200px',

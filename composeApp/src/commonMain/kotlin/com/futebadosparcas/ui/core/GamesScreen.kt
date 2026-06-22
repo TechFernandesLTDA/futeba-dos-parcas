@@ -15,6 +15,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,7 +47,12 @@ fun GamesScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Jogos") },
+                title = {
+                    Text(
+                        text = "Jogos",
+                        modifier = Modifier.semantics { heading() }
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -128,9 +138,36 @@ private fun GameCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scheduleDescription = buildString {
+        append(game.game.date)
+        if (game.game.time.isNotEmpty()) {
+            append(" às ")
+            append(game.game.time)
+        } else {
+            append(", horário não definido")
+        }
+    }
+    val statusDescription = if (game.game.status.isNotEmpty()) {
+        ", status ${gameStatusText(game.game.status)}"
+    } else {
+        ""
+    }
+    val locationDescription = buildString {
+        append(game.game.locationName)
+        if (game.game.locationAddress.isNotEmpty()) {
+            append(", ")
+            append(game.game.locationAddress)
+        }
+    }
+
     Card(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 120.dp),
+        modifier = modifier
+            .heightIn(min = 120.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$locationDescription. $scheduleDescription. ${game.game.playersCount} confirmados$statusDescription."
+                role = Role.Button
+            },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -273,7 +310,8 @@ private fun GamesEmptyState(
             text = "Nenhum jogo encontrado",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() }
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
@@ -291,7 +329,7 @@ private fun GamesEmptyState(
                 .fillMaxWidth(0.6f)
                 .height(48.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Criar jogo", modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text("Criar novo jogo")
         }
@@ -323,7 +361,8 @@ private fun GamesErrorState(
         Text(
             text = "Erro",
             style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.error
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { heading() }
         )
         Text(
             text = message,

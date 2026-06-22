@@ -213,7 +213,7 @@ export function GroupsTab() {
             />
           )
         ) : (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} className="stagger-fade-in">
           {filteredGroups.map((group) => {
             const isOwner = group.role === 'OWNER';
 

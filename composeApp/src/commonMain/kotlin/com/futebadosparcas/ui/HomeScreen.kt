@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -198,7 +199,8 @@ private fun HomeHeroCard(
             Text(
                 text = UiStrings.HOME_WELCOME,
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() }
             )
             Text(
                 text = UiStrings.HOME_SUBTITLE,
@@ -286,7 +288,8 @@ private fun HomeQuickActionsRow(
         Text(
             text = UiStrings.HOME_SECTION_QUICK_ACTIONS,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.semantics { heading() }
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -323,7 +326,7 @@ private fun QuickActionCard(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = modifier.semantics {
+        modifier = modifier.semantics(mergeDescendants = true) {
             contentDescription = label
             role = Role.Button
         }
@@ -356,9 +359,14 @@ private fun HomeInsightCard() {
         Text(
             text = UiStrings.HOME_SECTION_MATCHDAY,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.semantics { heading() }
         )
-        ElevatedCard {
+        ElevatedCard(
+            modifier = Modifier.semantics(mergeDescendants = true) {
+                contentDescription = "${UiStrings.HOME_MATCHDAY_TITLE}. ${UiStrings.HOME_MATCHDAY_BODY}. ${UiStrings.HOME_STATUS_UPDATED}. ${UiStrings.HOME_STATUS_PERSONAL}."
+            }
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -435,7 +443,8 @@ private fun HomeToolsSection(
         Text(
             text = UiStrings.HOME_SECTION_TOOLS,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.semantics { heading() }
         )
         ToolSummaryCard(
             icon = Icons.Filled.FilledSportsSoccer,
@@ -467,7 +476,7 @@ private fun ToolSummaryCard(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = Modifier.semantics {
+        modifier = Modifier.semantics(mergeDescendants = true) {
             contentDescription = "$title. $body"
             role = Role.Button
         }

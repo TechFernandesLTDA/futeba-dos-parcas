@@ -1,10 +1,11 @@
 import React, { useCallback } from 'react';
 import { Card, CardActionArea, CardProps, SxProps, Theme } from '@mui/material';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { motionDuration, motionEasing } from '../../theme/motion';
 
 // Hover apenas para dispositivos com ponteiro real (mouse), nao touch
 const HOVER_SX: SxProps<Theme> = {
-  '@media (hover: hover) and (pointer: fine)': {
+  '@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)': {
     '&:hover': {
       boxShadow: (theme: Theme) => theme.shadows[8],
       transform: 'translateY(-2px)',
@@ -13,7 +14,7 @@ const HOVER_SX: SxProps<Theme> = {
 };
 
 const BASE_TRANSITION_SX: SxProps<Theme> = {
-  transition: (theme: Theme) => theme.transitions.create(['box-shadow', 'transform'], { duration: theme.transitions.duration.shortest }),
+  transition: `box-shadow ${motionDuration.short}ms ${motionEasing.standard}, transform ${motionDuration.short}ms ${motionEasing.standard}`,
 };
 
 export interface InteractiveCardProps extends Omit<CardProps, 'onClick'> {

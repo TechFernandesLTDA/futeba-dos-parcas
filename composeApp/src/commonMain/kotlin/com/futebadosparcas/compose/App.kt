@@ -1,6 +1,8 @@
 package com.futebadosparcas.compose
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -29,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,6 +61,7 @@ import com.futebadosparcas.ui.core.PostGameReportScreen
 import com.futebadosparcas.ui.core.ProfileSetupScreen
 import com.futebadosparcas.ui.core.WelcomeScreen
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.ui.whatsnew.WhatsNewPopupHost
 import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
 import org.koin.compose.KoinApplication
@@ -105,25 +110,42 @@ fun AppNavigation(
 ) {
     val authRepository: AuthRepository? = runCatching { koinInject<AuthRepository>() }.getOrNull()
     val startDestination = if (authRepository?.isLoggedIn() == true) AppRoutes.HOME else AppRoutes.WELCOME
+    val reduceMotion = rememberReduceMotion()
 
     NavHost(
         navController = navController,
         startDestination = startDestination,
         enterTransition = {
-            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            if (reduceMotion) {
+                EnterTransition.None
+            } else {
+                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            }
         },
         exitTransition = {
-            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            if (reduceMotion) {
+                ExitTransition.None
+            } else {
+                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+            }
         },
         popEnterTransition = {
-            fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            if (reduceMotion) {
+                EnterTransition.None
+            } else {
+                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            }
         },
         popExitTransition = {
-            fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            if (reduceMotion) {
+                ExitTransition.None
+            } else {
+                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End)
+            }
         }
     ) {
         // Welcome / Onboarding
@@ -397,7 +419,8 @@ private fun GameDetailHub(
             Text(
                 text = UiStrings.GAME_DETAIL_ORGANIZER_TOOLS,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() }
             )
 
             OutlinedButton(
@@ -466,7 +489,8 @@ private fun FeatureHubScreen(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.semantics { heading() }
             )
             Text(
                 text = body,

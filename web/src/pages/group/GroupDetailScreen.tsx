@@ -431,7 +431,7 @@ export const GroupDetailScreen: React.FC = () => {
                   onAction={() => navigate(`/game/create?groupId=${groupId}`)}
                 />
               ) : (
-                <Box sx={{ p: 2 }}>
+                <Box className="stagger-fade-in" sx={{ p: 2 }}>
                   {games.map((game) => (
                     <GameCard
                       key={game.id}
