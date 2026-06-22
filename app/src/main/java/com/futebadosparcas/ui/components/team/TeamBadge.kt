@@ -3,7 +3,6 @@ package com.futebadosparcas.ui.components.team
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.FavoriteTeam
 import com.futebadosparcas.domain.repository.TeamsRepository
+import com.futebadosparcas.ui.theme.ExpressiveShapeTokens
 import org.koin.compose.koinInject
 
 @Composable
@@ -39,14 +39,14 @@ fun TeamBadge(
             contentDescription = "Torcedor do ${team.name}",
             modifier = modifier
                 .size(iconSize.dp)
-                .clip(RoundedCornerShape(4.dp)),
+                .clip(ExpressiveShapeTokens.TeamBadge),
             contentScale = ContentScale.Fit
         )
     } else {
         Box(
             modifier = modifier
                 .size(iconSize.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(ExpressiveShapeTokens.TeamBadge)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {

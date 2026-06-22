@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -46,6 +45,7 @@ import com.futebadosparcas.util.LevelHelper
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import com.futebadosparcas.ui.theme.ExpressiveShapeTokens
 
 /**
  * Tela Rumo ao Estrelato - Jornada de Níveis
@@ -287,7 +287,7 @@ private fun CurrentLevelCard(
                                     Color.Transparent
                                 )
                             ),
-                            shape = CircleShape
+                            shape = ExpressiveShapeTokens.LevelHalo
                         )
                 )
 
@@ -609,7 +609,7 @@ private fun LevelJourneyItemContent(
                     modifier = Modifier
                         .size(20.dp)
                         .align(Alignment.TopEnd)
-                        .clip(CircleShape)
+                        .clip(ExpressiveShapeTokens.BadgeCounter)
                         .background(GamificationColors.XpGreen),
                     contentAlignment = Alignment.Center
                 ) {
@@ -895,7 +895,7 @@ private fun LevelBadgeDialog(
                                         Color.Transparent
                                     )
                                 ),
-                                shape = CircleShape
+                                shape = ExpressiveShapeTokens.LevelHalo
                             )
                     )
 

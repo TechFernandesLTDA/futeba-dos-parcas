@@ -39,6 +39,7 @@ import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.components.team.TeamBadgeById
+import com.futebadosparcas.ui.theme.ExpressiveShapeTokens
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
@@ -951,7 +952,7 @@ private fun BadgeItem(badge: UserBadge) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(60.dp)
-                .clip(CircleShape)
+                .clip(ExpressiveShapeTokens.BadgeContainer)
                 .background(
                     when (badgeType) {
                         BadgeType.HAT_TRICK, BadgeType.PAREDAO -> GamificationColors.Gold
@@ -978,7 +979,7 @@ private fun BadgeItem(badge: UserBadge) {
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .size(20.dp)
-                        .clip(CircleShape)
+                        .clip(ExpressiveShapeTokens.BadgeCounter)
                         .background(MaterialTheme.colorScheme.error),
                     contentAlignment = Alignment.Center
                 ) {
