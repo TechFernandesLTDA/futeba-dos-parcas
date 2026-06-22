@@ -4,18 +4,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Group as FilledGroup
+import androidx.compose.material.icons.filled.Home as FilledHome
 import androidx.compose.material.icons.filled.NewReleases
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Person as FilledPerson
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.material.icons.filled.SportsSoccer as FilledSportsSoccer
+import androidx.compose.material.icons.outlined.Group as OutlinedGroup
+import androidx.compose.material.icons.outlined.Home as OutlinedHome
+import androidx.compose.material.icons.outlined.Person as OutlinedPerson
+import androidx.compose.material.icons.outlined.SportsSoccer as OutlinedSportsSoccer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.adaptive.AdaptiveNavItem
+import com.futebadosparcas.ui.adaptive.AdaptiveTabBar
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,8 +35,8 @@ fun HomeScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(UiStrings.APP_NAME) },
+            AdaptiveTopBar(
+                title = UiStrings.APP_NAME,
                 actions = {
                     IconButton(onClick = onOpenWhatsNew) {
                         Icon(
@@ -38,39 +45,47 @@ fun HomeScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
         },
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = UiStrings.NAV_HOME) },
-                    label = { Text(UiStrings.NAV_HOME) },
-                    selected = true,
-                    onClick = {}
+            AdaptiveTabBar(
+                items = listOf(
+                    AdaptiveNavItem(
+                        label = UiStrings.NAV_HOME,
+                        selectedIcon = Icons.Filled.FilledHome,
+                        unselectedIcon = Icons.Outlined.OutlinedHome,
+                        contentDescription = UiStrings.NAV_HOME,
+                        selected = true,
+                        onClick = {}
+                    ),
+                    AdaptiveNavItem(
+                        label = UiStrings.NAV_GAMES,
+                        selectedIcon = Icons.Filled.FilledSportsSoccer,
+                        unselectedIcon = Icons.Outlined.OutlinedSportsSoccer,
+                        contentDescription = UiStrings.NAV_GAMES,
+                        selected = false,
+                        onClick = onNavigateToGames
+                    ),
+                    AdaptiveNavItem(
+                        label = UiStrings.NAV_GROUPS,
+                        selectedIcon = Icons.Filled.FilledGroup,
+                        unselectedIcon = Icons.Outlined.OutlinedGroup,
+                        contentDescription = UiStrings.NAV_GROUPS,
+                        selected = false,
+                        onClick = onNavigateToGroups
+                    ),
+                    AdaptiveNavItem(
+                        label = UiStrings.NAV_PROFILE,
+                        selectedIcon = Icons.Filled.FilledPerson,
+                        unselectedIcon = Icons.Outlined.OutlinedPerson,
+                        contentDescription = UiStrings.NAV_PROFILE,
+                        selected = false,
+                        onClick = onNavigateToProfile
+                    )
                 )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.SportsSoccer, contentDescription = UiStrings.NAV_GAMES) },
-                    label = { Text(UiStrings.NAV_GAMES) },
-                    selected = false,
-                    onClick = onNavigateToGames
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Group, contentDescription = UiStrings.NAV_GROUPS) },
-                    label = { Text(UiStrings.NAV_GROUPS) },
-                    selected = false,
-                    onClick = onNavigateToGroups
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = UiStrings.NAV_PROFILE) },
-                    label = { Text(UiStrings.NAV_PROFILE) },
-                    selected = false,
-                    onClick = onNavigateToProfile
-                )
-            }
+            )
         }
     ) { paddingValues ->
         Column(
@@ -142,7 +157,7 @@ private fun HomeHeroCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.SportsSoccer,
+                        imageVector = Icons.Filled.FilledSportsSoccer,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -184,19 +199,19 @@ private fun HomeQuickActionsRow(
         ) {
             QuickActionCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.SportsSoccer,
+                icon = Icons.Filled.FilledSportsSoccer,
                 label = UiStrings.HOME_ACTION_GAMES,
                 onClick = onNavigateToGames
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.Group,
+                icon = Icons.Filled.FilledGroup,
                 label = UiStrings.HOME_ACTION_GROUPS,
                 onClick = onNavigateToGroups
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.Person,
+                icon = Icons.Filled.FilledPerson,
                 label = UiStrings.HOME_ACTION_PROFILE,
                 onClick = onOpenProfileSetup
             )
@@ -325,19 +340,19 @@ private fun HomeToolsSection(
             fontWeight = FontWeight.SemiBold
         )
         ToolSummaryCard(
-            icon = Icons.Default.SportsSoccer,
+            icon = Icons.Filled.FilledSportsSoccer,
             title = UiStrings.HOME_TOOLS_GAMES_TITLE,
             body = UiStrings.HOME_TOOLS_GAMES_BODY,
             onClick = onNavigateToGames
         )
         ToolSummaryCard(
-            icon = Icons.Default.Group,
+            icon = Icons.Filled.FilledGroup,
             title = UiStrings.HOME_TOOLS_GROUPS_TITLE,
             body = UiStrings.HOME_TOOLS_GROUPS_BODY,
             onClick = onNavigateToGroups
         )
         ToolSummaryCard(
-            icon = Icons.Default.Person,
+            icon = Icons.Filled.FilledPerson,
             title = UiStrings.HOME_TOOLS_PROFILE_TITLE,
             body = UiStrings.HOME_TOOLS_PROFILE_BODY,
             onClick = onNavigateToProfile
