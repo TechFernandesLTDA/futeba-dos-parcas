@@ -348,28 +348,28 @@ describe("confirmations — update (game owner stats)", () => {
   });
 });
 
-describe("confirmations — update (voto MVP flags)", () => {
-  it("Confirmed player pode votar MVP (is_mvp)", async () => {
+describe("confirmations — update (MVP flags bloqueadas)", () => {
+  it("Confirmed player NAO pode votar MVP via confirmations (usar mvp_votes)", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`confirmations/${GAME_FINISHED}_${UID_PLAYER_B}`).update({
         is_mvp: true,
       })
     );
   });
 
-  it("Confirmed player pode votar best GK (is_best_gk)", async () => {
+  it("Confirmed player NAO pode votar best GK via confirmations (usar mvp_votes)", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`confirmations/${GAME_FINISHED}_${UID_PLAYER_B}`).update({
         is_best_gk: true,
       })
     );
   });
 
-  it("Confirmed player pode votar worst player (is_worst_player)", async () => {
+  it("Confirmed player NAO pode votar worst player via confirmations (usar mvp_votes)", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`confirmations/${GAME_FINISHED}_${UID_PLAYER_B}`).update({
         is_worst_player: true,
       })

@@ -139,6 +139,7 @@ describe("notifications — criação", () => {
         user_id: UID_PLAYER_B, // destinatário diferente
         type: "GAME_INVITE",
         title: "Venha jogar!",
+        body: "Convite para a proxima partida.",
       })
     );
   });

@@ -218,7 +218,7 @@ describe("live_games/events — leitura e escrita", () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(
       db.doc(`live_games/${LIVE_GAME_ID}/events/event-owner-create`).set({
-        type: "ASSIST",
+        type: "assist",
         player_id: UID_PLAYER_B,
         created_by: UID_PLAYER_A,
         created_at: new Date(),
@@ -231,7 +231,7 @@ describe("live_games/events — leitura e escrita", () => {
     const db = asPlayerB(testEnv);
     await assertSucceeds(
       db.doc(`live_games/${LIVE_GAME_ID}/events/event-confirmed-create`).set({
-        type: "GOAL",
+        type: "goal",
         player_id: UID_PLAYER_B,
         created_by: UID_PLAYER_B,
         created_at: new Date(),
