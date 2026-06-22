@@ -53,4 +53,29 @@ object AppRoutes {
 
     // ─── Bucket Power ────────────────────────────────────────────────────────
     const val CASHBOX = "cashbox"
+
+    /**
+     * Rota concreta para o hub de detalhe de jogo.
+     *
+     * Mantém a montagem de path em um único ponto enquanto a navegação
+     * commonMain migra para argumentos tipados completos.
+     */
+    fun gameDetail(gameId: String): String =
+        "game/${requireRouteId(gameId, "gameId")}"
+
+    /**
+     * Rota concreta para a tela de convite de jogadores.
+     *
+     * O ID ainda chega do contexto do jogo/hub até a tela completa de grupo ser
+     * portada para o composeApp, mas já não usamos placeholders fixos.
+     */
+    fun invitePlayers(groupId: String): String =
+        "invite_players/${requireRouteId(groupId, "groupId")}"
+
+    private fun requireRouteId(value: String, name: String): String {
+        val trimmed = value.trim()
+        require(trimmed.isNotEmpty()) { "$name must not be blank" }
+        require('/' !in trimmed) { "$name must not contain '/'" }
+        return trimmed
+    }
 }
