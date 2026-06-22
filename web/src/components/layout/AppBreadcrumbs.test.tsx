@@ -82,12 +82,12 @@ describe('AppBreadcrumbs', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('lida com item único', () => {
-    renderWithTheme(
+  it('não renderiza breadcrumb redundante para item único', () => {
+    const { container } = renderWithTheme(
       <AppBreadcrumbs items={[{ label: 'Única Página' }]} />
     );
 
-    expect(screen.getByText('Única Página')).toBeInTheDocument();
+    expect(container.innerHTML).toBe('');
   });
 
   it('renderiza separador navigateNext', () => {

@@ -15,6 +15,10 @@ vi.mock('../../components/feedback/FeedbackDialog', () => ({
   FeedbackDialog: () => null,
 }));
 
+vi.mock('../../hooks/useReleaseNotes', () => ({
+  useReleaseNotes: () => ({ notes: [] }),
+}));
+
 import { AboutScreen } from './AboutScreen';
 
 const theme = createTheme();
