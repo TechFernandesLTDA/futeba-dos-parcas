@@ -18,7 +18,14 @@ vi.mock('./firebase', () => ({
 }));
 
 // Importar após os mocks
-import { setUserRole, softDeleteGame, softDeleteGroup, restoreDeletedGame, restoreDeletedGroup } from './cloudFunctions';
+import {
+  setUserRole,
+  softDeleteGame,
+  softDeleteGroup,
+  restoreDeletedGame,
+  restoreDeletedGroup,
+  updateUserPii,
+} from './cloudFunctions';
 
 describe('cloudFunctions', () => {
   beforeEach(() => {
@@ -63,6 +70,22 @@ describe('cloudFunctions', () => {
     await restoreDeletedGroup({ groupId: 'group-789' });
 
     expect(mockCallable).toHaveBeenCalledWith('restoreDeletedGroup', { groupId: 'group-789' });
+  });
+
+  it('updateUserPii salva gênero pelo callable seguro', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, updated: ['gender'] } });
+
+    await updateUserPii({ gender: 'NOT_INFORMED' });
+
+    expect(mockCallable).toHaveBeenCalledWith('updateUserPii', { gender: 'NOT_INFORMED' });
+  });
+
+  it('updateUserPii permite limpar gênero com null', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, updated: ['gender'] } });
+
+    await updateUserPii({ gender: null });
+
+    expect(mockCallable).toHaveBeenCalledWith('updateUserPii', { gender: null });
   });
 
   it('propaga erros de função', async () => {

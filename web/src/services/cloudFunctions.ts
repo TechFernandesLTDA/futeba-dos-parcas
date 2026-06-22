@@ -1,5 +1,6 @@
 import { httpsCallable, HttpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
+import type { UserGender } from '../types/user';
 
 export function getCallable<T = unknown, R = unknown>(name: string): HttpsCallable<T, R> {
   return httpsCallable<T, R>(functions, name);
@@ -43,6 +44,11 @@ export const setUserVerified = httpsCallable<
   { uid?: string },
   { success: boolean; uid: string }
 >(functions, 'setUserVerified');
+
+export const updateUserPii = httpsCallable<
+  { gender?: UserGender | null },
+  { success: boolean; updated: string[] }
+>(functions, 'updateUserPii', { timeout: 30000 });
 
 // Recomputa custom claim profileComplete (defense-in-depth: gates #1483/1484/1485)
 export const recomputeMyProfileClaim = httpsCallable<void, { success: boolean; profileComplete: boolean }>(functions, 'recomputeMyProfileClaim');

@@ -6,6 +6,9 @@ import { MemoryRouter } from 'react-router-dom';
 const mockUpdateUserProfile = vi.fn();
 const mockShowSuccess = vi.fn();
 const mockShowError = vi.fn();
+const mockUpdateUserPii = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve({ data: { success: true, updated: ['gender'] } }))
+);
 
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn(() => 'mock-doc'),
@@ -25,6 +28,10 @@ vi.mock('firebase/storage', () => ({
 vi.mock('../../services/firebase', () => ({
   db: {},
   storage: {},
+}));
+
+vi.mock('../../services/cloudFunctions', () => ({
+  updateUserPii: mockUpdateUserPii,
 }));
 
 vi.mock('../../utils/logger', () => ({
