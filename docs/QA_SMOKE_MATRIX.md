@@ -133,6 +133,14 @@ Real SMS should be a controlled manual smoke or staging-only run. Do not consume
 | Games/lists | adaptive layouts do not crash on narrow/wide screens | JVM + macrobenchmark when touched |
 | Performance | startup/list navigation not materially worse after large UI changes | baseline profile / macrobenchmark |
 
+## iOS Accessibility
+
+| Flow | Minimum Checks | Automation Target |
+| --- | --- | --- |
+| VoiceOver pass | interactive icons named, decorative icons skipped, focus order follows visual order | Manual device/simulator using `docs/IOS_ACCESSIBILITY_QA.md` |
+| Dynamic Type | key screens remain usable at Larger Text >= 200%, with no clipped primary controls | Manual device/simulator |
+| Contrast | text reaches 4.5:1 and non-text controls/indicators reach 3:1 in light and dark mode | Manual audit |
+
 ## Release Gate
 
 Before production deploy or PR ready-for-review:

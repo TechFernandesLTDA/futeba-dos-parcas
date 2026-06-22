@@ -63,6 +63,9 @@ internal object UiStrings {
     const val GAME_DETAIL_INVITE_PLAYERS = "Convidar jogadores"
     const val GAME_DETAIL_BLOCKED_PLAYERS = "Jogadores bloqueados"
     const val CD_BACK = "Voltar"
+    const val CD_CLEAR_SEARCH = "Limpar busca"
+    const val CD_EXPAND_RELEASE_VERSION = "Expandir versão"
+    const val CD_COLLAPSE_RELEASE_VERSION = "Recolher versão"
 
     // ---- Hubs de navegação composeApp ----
     const val GROUPS_HUB_TITLE = "Grupos"
