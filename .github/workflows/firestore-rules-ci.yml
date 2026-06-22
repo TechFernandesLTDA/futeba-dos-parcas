@@ -41,9 +41,6 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      - name: Instalar Firebase CLI
-        run: npm install -g firebase-tools
-
       - name: Instalar dependências dos testes
         run: cd firestore-rules-tests && npm ci
 
@@ -51,7 +48,7 @@ jobs:
         # O emulators:exec sobe o emulador, roda os testes e derruba automaticamente
         run: |
           cd firestore-rules-tests
-          firebase emulators:exec \
+          npx firebase-tools emulators:exec \
             --only firestore \
             --project futebadosparcas \
             'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --reporter=verbose'

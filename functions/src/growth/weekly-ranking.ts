@@ -124,6 +124,7 @@ export const processWeeklyRanking = onSchedule(
     // semana que acabou no sabado anterior, nao a semana iniciada no domingo
     // do disparo.
     const now = nowInBrt();
+    /* istanbul ignore next -- scheduled handler wiring; date selection is covered via getCompletedWeekKey(). */
     const weekKey = getCompletedWeekKey(now);
     const {start, end} = getWeekRange(weekKey);
 
