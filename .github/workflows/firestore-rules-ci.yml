@@ -44,6 +44,9 @@ jobs:
       - name: Instalar dependências dos testes
         run: cd firestore-rules-tests && npm ci
 
+      - name: Liberar portas dos emuladores
+        run: lsof -ti:8085,4400,4500 | xargs kill -9 2>/dev/null || true
+
       - name: Executar testes das Security Rules
         # O emulators:exec sobe o emulador, roda os testes e derruba automaticamente
         run: |
