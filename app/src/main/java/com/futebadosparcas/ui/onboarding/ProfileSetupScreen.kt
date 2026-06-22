@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.components.ExpressiveFilterChip
 import com.futebadosparcas.ui.theme.AppDimensions
 /**
  * Tela de configuração inicial do perfil.
@@ -134,7 +134,7 @@ fun ProfileSetupScreen(
                 horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 positions.take(2).forEach { (label, value) ->
-                    FilterChip(
+                    ExpressiveFilterChip(
                         selected = selectedPosition == value,
                         onClick = { selectedPosition = if (selectedPosition == value) null else value },
                         label = { Text(label) },
@@ -150,7 +150,7 @@ fun ProfileSetupScreen(
                 horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
                 positions.drop(2).forEach { (label, value) ->
-                    FilterChip(
+                    ExpressiveFilterChip(
                         selected = selectedPosition == value,
                         onClick = { selectedPosition = if (selectedPosition == value) null else value },
                         label = { Text(label) },
@@ -175,19 +175,19 @@ fun ProfileSetupScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
             ) {
-                FilterChip(
+                ExpressiveFilterChip(
                     selected = societySelected,
                     onClick = { societySelected = !societySelected },
                     label = { Text(stringResource(R.string.field_type_society)) },
                     modifier = Modifier.weight(1f)
                 )
-                FilterChip(
+                ExpressiveFilterChip(
                     selected = futsalSelected,
                     onClick = { futsalSelected = !futsalSelected },
                     label = { Text(stringResource(R.string.field_type_futsal)) },
                     modifier = Modifier.weight(1f)
                 )
-                FilterChip(
+                ExpressiveFilterChip(
                     selected = campoSelected,
                     onClick = { campoSelected = !campoSelected },
                     label = { Text(stringResource(R.string.field_type_campo)) },
