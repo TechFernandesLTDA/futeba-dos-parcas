@@ -7,7 +7,7 @@
 //     -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None
 //
 // Para compilar sem executar (verificação CI):
-//   ./gradlew :macrobenchmark:compileBenchmarkAndroidTestKotlin
+//   ./gradlew :macrobenchmark:compileBenchmarkKotlin
 
 plugins {
     id("com.android.test")
@@ -23,9 +23,13 @@ android {
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Desabilita profiling por padrão para runs de CI/emulador
+        // Desabilita profiling por padrão para runs de CI/emulador.
+        // NOT-SELF-INSTRUMENTING aparece nos runners self-hosted quando o
+        // macrobenchmark não consegue confirmar isolamento completo do alvo,
+        // mesmo usando o build type benchmark não-debuggable.
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "None"
-        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR,DEBUGGABLE"
+        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] =
+            "EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING"
     }
 
     compileOptions {
