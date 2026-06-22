@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -25,6 +24,7 @@ import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.ui.league.RankingItem
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.theme.ExpressiveShapeTokens
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.ui.components.animation.pressScale
@@ -344,7 +344,7 @@ private fun RankBadge(
         Box(
             modifier = modifier
                 .size(40.dp)
-                .clip(CircleShape)
+                .clip(ExpressiveShapeTokens.MedalContainer)
                 .background(gradient),
             contentAlignment = Alignment.Center
         ) {
@@ -359,7 +359,7 @@ private fun RankBadge(
         // Badge simples para outras posições
         Surface(
             modifier = modifier.size(40.dp),
-            shape = CircleShape,
+            shape = ExpressiveShapeTokens.MedalContainer,
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
             Box(contentAlignment = Alignment.Center) {
