@@ -67,11 +67,20 @@ fun AdaptiveTopBar(
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
+    val effectiveContainerColor = when (platformChromeKind) {
+        PlatformChromeKind.Material -> containerColor
+        PlatformChromeKind.Cupertino -> MaterialTheme.colorScheme.surface.copy(alpha = CupertinoChromeAlpha.TopBar)
+    }
+    val effectiveContentColor = when (platformChromeKind) {
+        PlatformChromeKind.Material -> contentColor
+        PlatformChromeKind.Cupertino -> MaterialTheme.colorScheme.onSurface
+    }
     val colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = containerColor,
-        titleContentColor = contentColor,
-        actionIconContentColor = contentColor,
-        navigationIconContentColor = contentColor
+        containerColor = effectiveContainerColor,
+        scrolledContainerColor = effectiveContainerColor,
+        titleContentColor = effectiveContentColor,
+        actionIconContentColor = effectiveContentColor,
+        navigationIconContentColor = effectiveContentColor
     )
 
     when (platformChromeKind) {
@@ -139,11 +148,12 @@ fun AdaptiveTabBar(
         PlatformChromeKind.Cupertino -> {
             Surface(
                 modifier = modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-                tonalElevation = 3.dp
+                color = MaterialTheme.colorScheme.surface.copy(alpha = CupertinoChromeAlpha.TabBar),
+                tonalElevation = 6.dp,
+                shadowElevation = 0.dp
             ) {
                 Column {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.28f))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -173,10 +183,24 @@ fun AdaptiveModalBottomSheet(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val isCupertino = platformChromeKind == PlatformChromeKind.Cupertino
+
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         modifier = modifier,
+        containerColor = if (isCupertino) {
+            MaterialTheme.colorScheme.surface.copy(alpha = CupertinoChromeAlpha.Sheet)
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = if (isCupertino) 6.dp else 1.dp,
+        shape = if (isCupertino) {
+            RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        } else {
+            BottomSheetDefaults.ExpandedShape
+        },
         dragHandle = {
             when (platformChromeKind) {
                 PlatformChromeKind.Material -> BottomSheetDefaults.DragHandle()
@@ -237,3 +261,9 @@ private fun CupertinoSheetGrabber() {
 }
 
 private val EmptyNavigationIcon: @Composable () -> Unit = {}
+
+private object CupertinoChromeAlpha {
+    const val TopBar = 0.86f
+    const val TabBar = 0.88f
+    const val Sheet = 0.94f
+}
