@@ -80,7 +80,7 @@ jobs:
           GSEOF
 
       - name: Build APK de benchmark do :app
-        run: ./gradlew :app:assembleBenchmark
+        run: ./gradlew --max-workers=6 --no-daemon :app:assembleBenchmark
 
       - name: Executar Macrobenchmarks no emulador
         uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a  # v2
@@ -90,7 +90,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
-          script: ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
+          script: ./gradlew --max-workers=6 --no-daemon :macrobenchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
 
       - name: Upload resultados dos benchmarks
         if: always()
@@ -106,8 +106,10 @@ jobs:
       - name: Resumo no GitHub Step Summary
         if: always()
         run: |
-          echo "## Macrobenchmark Results" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Commit:** $COMMIT_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Emulator API:** $EMULATOR_API" >> "$GITHUB_STEP_SUMMARY"
-          echo "Os resultados completos estão disponíveis no artifact macrobenchmark-results." >> "$GITHUB_STEP_SUMMARY"
-          echo "Para interpretar: abra os arquivos JSON no Android Studio via Run > Open Profiler Results." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Macrobenchmark Results"
+            echo "**Commit:** $COMMIT_SHA"
+            echo "**Emulator API:** $EMULATOR_API"
+            echo "Os resultados completos estão disponíveis no artifact macrobenchmark-results."
+            echo "Para interpretar: abra os arquivos JSON no Android Studio via Run > Open Profiler Results."
+          } >> "$GITHUB_STEP_SUMMARY"
