@@ -91,6 +91,21 @@ export function nowInBrt(): Date {
   ));
 }
 
+/**
+ * Retorna a chave da semana que ja terminou no momento de referencia.
+ *
+ * O cron roda domingo a noite em BRT, mas a semana do produto comeca no
+ * domingo. Sem esse deslocamento, ele processa a semana que acabou de comecar
+ * e deixa jogos de segunda a sabado fora do ranking.
+ *
+ * @param {Date} referenceDate - Data/hora de referencia em horario-parede BRT
+ * @return {string} Chave da semana encerrada
+ */
+export function getCompletedWeekKey(referenceDate: Date): string {
+  const previousDay = new Date(referenceDate.getTime() - 24 * 60 * 60 * 1000);
+  return getWeekKey(previousDay);
+}
+
 export const processWeeklyRanking = onSchedule(
   {
     schedule: "every sunday 23:57",
@@ -100,13 +115,17 @@ export const processWeeklyRanking = onSchedule(
     memory: "512MiB",
   },
   async () => {
-    // FIX #2497: o cron dispara domingo 23:59 BRT == segunda 02:59 UTC. Com
+    // FIX #2497: o cron dispara domingo 23:57 BRT == segunda 02:57 UTC. Com
     // `new Date()` cru (UTC), getWeekKey/getWeekRange caíam na semana SEGUINTE
     // → a semana recém-encerrada nunca recebia ranking (off-by-one de TZ).
     // nowInBrt() retorna um Date com campos UTC = horário-parede BRT, base
     // correta para a aritmética de semana (agora também em UTC, determinística).
+    // FIX #2842: como a semana comeca no domingo, o cron precisa rankear a
+    // semana que acabou no sabado anterior, nao a semana iniciada no domingo
+    // do disparo.
     const now = nowInBrt();
-    const weekKey = getWeekKey(now);
+    /* istanbul ignore next -- scheduled handler wiring; date selection is covered via getCompletedWeekKey(). */
+    const weekKey = getCompletedWeekKey(now);
     const {start, end} = getWeekRange(weekKey);
 
     logger.info("Processing weekly ranking", {weekKey, start: start.toISOString(), end: end.toISOString()});

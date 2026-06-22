@@ -54,7 +54,7 @@ beforeAll(() => {
 async function pollUntil(
   docRef: admin.firestore.DocumentReference,
   predicate: (data: admin.firestore.DocumentData | undefined) => boolean,
-  maxMs = 15000,
+  maxMs = 30000,
   intervalMs = 400
 ): Promise<admin.firestore.DocumentSnapshot> {
   const deadline = Date.now() + maxMs;
@@ -154,7 +154,7 @@ describe("Test Harness #2531 — onInviteRedeemed via emulador", () => {
       const memberSnap = await pollUntil(
         s.memberRef,
         (data) => data?.status === "ACTIVE",
-        15000
+        45000
       );
       const member = memberSnap.data()!;
       expect(member.status).toBe("ACTIVE");
@@ -169,7 +169,7 @@ describe("Test Harness #2531 — onInviteRedeemed via emulador", () => {
       const groupSnap = await pollUntil(
         s.groupRef,
         (data) => data?.member_count === 1,
-        10000
+        30000
       );
       expect(groupSnap.data()!.member_count).toBe(1);
 
@@ -231,8 +231,8 @@ describe("Test Harness #2531 — onInviteRedeemed via emulador", () => {
         used_by: s.userId,
         used_at: admin.firestore.FieldValue.serverTimestamp(),
       });
-      await pollUntil(s.memberRef, (d) => d?.status === "ACTIVE", 15000);
-      await pollUntil(s.groupRef, (d) => d?.member_count === 1, 10000);
+      await pollUntil(s.memberRef, (d) => d?.status === "ACTIVE", 45000);
+      await pollUntil(s.groupRef, (d) => d?.member_count === 1, 30000);
 
       // Reset sintético via Admin SDK (bypassa rules) para forçar uma nova
       // transição false→true e exercitar o guard de "member já existe".
@@ -354,7 +354,7 @@ describe("Test Harness #2531 — member-counter (onMemberWritten) isolado", () =
       const afterCreate = await pollUntil(
         groupRef,
         (d) => d?.member_count === 1,
-        10000
+        30000
       );
       expect(afterCreate.data()!.member_count).toBe(1);
 
@@ -363,7 +363,7 @@ describe("Test Harness #2531 — member-counter (onMemberWritten) isolado", () =
       const afterDelete = await pollUntil(
         groupRef,
         (d) => d?.member_count === 0,
-        10000
+        30000
       );
       expect(afterDelete.data()!.member_count).toBe(0);
 

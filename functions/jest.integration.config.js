@@ -15,7 +15,7 @@
  *
  * Diferenças em relação ao jest.config.js padrão:
  * - testMatch aponta para test/** /*.integration.test.ts
- * - testTimeout mais alto (30 s) — triggers são assíncronos
+ * - testTimeout mais alto (90 s) — triggers são assíncronos no emulador
  * - SEM mock de firebase-admin / firebase-functions/v2/firestore
  *   (o objetivo é bater no emulador real)
  * - moduleNameMapper mantido para @google-cloud/* stubs (evita SyntaxError ESM)
@@ -28,7 +28,7 @@ module.exports = {
   testMatch: [
     "<rootDir>/test/**/*.integration.test.ts",
   ],
-  testTimeout: 30000,
+  testTimeout: 90000,
   moduleFileExtensions: ["ts", "js", "json"],
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {

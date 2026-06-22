@@ -5,7 +5,11 @@
  * Helpers agora usam métodos UTC → determinísticos em qualquer TZ de runner
  * (inclusive BRT self-hosted). Não dependem de process.env.TZ.
  */
-import {getWeekKey, getWeekRange} from "../src/growth/weekly-ranking";
+import {
+  getCompletedWeekKey,
+  getWeekKey,
+  getWeekRange,
+} from "../src/growth/weekly-ranking";
 
 const iso = (d: Date) => d.toISOString().split("T")[0];
 
@@ -21,14 +25,15 @@ describe("weekly-ranking timezone + consistência (#2497)", () => {
     }
   });
 
-  it("FIX: trigger domingo 23:59 BRT rankeia a semana que contém esse domingo", () => {
+  it("FIX #2842: trigger domingo 23:57 BRT rankeia a semana encerrada", () => {
     // nowInBrt() produz Date com campos UTC = horário-parede BRT:
-    // domingo 2026-06-07 23:59 (o cron dispara aqui; antes caía na semana
-    // seguinte por usar UTC cru = segunda 02:59).
-    const brtNow = new Date(Date.UTC(2026, 5, 7, 23, 59, 0));
-    const {start, end} = getWeekRange(getWeekKey(brtNow));
-    const sunday = "2026-06-07";
-    expect(iso(start) <= sunday && sunday <= iso(end)).toBe(true);
+    // domingo 2026-06-14 23:57. A semana encerrada deve ser 2026-06-07
+    // a 2026-06-13, incluindo jogos de segunda a sabado.
+    const brtNow = new Date(Date.UTC(2026, 5, 14, 23, 57, 0));
+    const {start, end} = getWeekRange(getCompletedWeekKey(brtNow));
+    expect(iso(start)).toBe("2026-06-07");
+    expect(iso(end)).toBe("2026-06-13");
+    expect(iso(start) <= "2026-06-13" && "2026-06-13" <= iso(end)).toBe(true);
   });
 
   it("semana é estável dentro do mesmo intervalo de 7 dias", () => {
