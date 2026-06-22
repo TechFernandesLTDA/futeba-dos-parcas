@@ -56,9 +56,6 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      - name: Instalar Firebase CLI
-        run: npm install -g firebase-tools
-
       - name: Instalar dependências
         working-directory: functions
         run: npm ci
@@ -73,7 +70,7 @@ jobs:
         # do build em lib/ pelo emulador de functions.
         working-directory: functions
         run: |
-          firebase emulators:exec \
+          npx firebase-tools emulators:exec \
             --only firestore,functions \
             --project futebadosparcas \
             'npx jest -c jest.integration.config.js test/integration --no-coverage --ci'
