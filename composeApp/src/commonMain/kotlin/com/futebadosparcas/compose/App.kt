@@ -111,6 +111,8 @@ fun AppNavigation(
     val authRepository: AuthRepository? = runCatching { koinInject<AuthRepository>() }.getOrNull()
     val startDestination = if (authRepository?.isLoggedIn() == true) AppRoutes.HOME else AppRoutes.WELCOME
     val reduceMotion = rememberReduceMotion()
+    var selectedGameId by remember { mutableStateOf<String?>(null) }
+    var selectedInviteGroupId by remember { mutableStateOf<String?>(null) }
 
     NavHost(
         navController = navController,
@@ -228,7 +230,10 @@ fun AppNavigation(
         // Games
         composable(AppRoutes.GAMES) {
             GamesScreen(
-                onGameClick = { gameId -> navController.navigate("game/$gameId") },
+                onGameClick = { gameId ->
+                    selectedGameId = gameId
+                    navController.navigate(AppRoutes.gameDetail(gameId))
+                },
                 onCreateGameClick = { /* TODO: rota create_game */ }
             )
         }
@@ -237,21 +242,20 @@ fun AppNavigation(
         // Enquanto a GameDetailScreen completa não é portada (épico #2670), esta rota
         // serve de ponto de entrada navegável para as telas reais já existentes em
         // ui/core/ (relatório pós-jogo, estatísticas, convite, bloqueados), eliminando
-        // telas órfãs. Acessível via GamesScreen.onGameClick -> "game/{gameId}".
-        composable(AppRoutes.GAME_DETAIL) { backStackEntry ->
-            // `arguments?.getString()` é Android-only e quebra o target iOS do
-            // composeApp. Enquanto o detalhe completo do jogo não é portado, este
-            // hub não precisa do ID real para renderizar; mantemos um fallback
-            // estável para a navegação das ferramentas auxiliares.
-            val gameId = "compose-game"
+        // telas órfãs. Acessível via GamesScreen.onGameClick -> AppRoutes.gameDetail(id).
+        composable(AppRoutes.GAME_DETAIL) {
+            val gameId = selectedGameId
             GameDetailHub(
                 onNavigateBack = { navController.popBackStack() },
                 onOpenPostGameReport = { navController.navigate(AppRoutes.POST_GAME_REPORT) },
                 onOpenOwnerStats = { navController.navigate(AppRoutes.OWNER_STATS) },
                 onOpenInvitePlayers = {
-                    // groupId real virá do jogo quando GameDetailScreen for portada;
-                    // por ora usa o gameId como contexto de navegação.
-                    navController.navigate("invite_players/$gameId")
+                    if (gameId != null) {
+                        // groupId real virá do jogo quando GameDetailScreen for portada;
+                        // por ora usa o gameId selecionado como contexto de navegação.
+                        selectedInviteGroupId = gameId
+                        navController.navigate(AppRoutes.invitePlayers(gameId))
+                    }
                 },
                 onOpenBlockedPlayers = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
             )
@@ -277,21 +281,22 @@ fun AppNavigation(
                 stats = OwnerStats(),
                 isLoading = false,
                 onNavigateBack = { navController.popBackStack() },
-                onGameClick = { gameId -> navController.navigate("game/$gameId") }
+                onGameClick = { gameId ->
+                    selectedGameId = gameId
+                    navController.navigate(AppRoutes.gameDetail(gameId))
+                }
             )
         }
 
         // Convidar jogadores (tela real ui/core/InvitePlayersScreen)
-        composable(AppRoutes.INVITE_PLAYERS) { backStackEntry ->
-            // Mesmo racional do hub de jogo acima: evita API Android-only enquanto
-            // a navegação commonMain ainda está em transição para uma camada tipada.
-            val groupId = "compose-group"
+        composable(AppRoutes.INVITE_PLAYERS) {
+            val groupId = selectedInviteGroupId
             // InviteViewModel ainda não está registrado no Koin do composeApp
             // (depende de repositórios providos por plataforma). Renderiza a tela
             // apenas quando o VM estiver disponível; caso contrário, volta atrás
             // de forma graciosa (sem crash).
             val inviteVm: InviteViewModel? = runCatching { koinViewModel<InviteViewModel>() }.getOrNull()
-            if (inviteVm != null) {
+            if (inviteVm != null && groupId != null) {
                 InvitePlayersScreen(
                     viewModel = inviteVm,
                     groupId = groupId,
