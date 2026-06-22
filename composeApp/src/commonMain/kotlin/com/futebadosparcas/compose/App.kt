@@ -199,6 +199,7 @@ fun AppNavigation(
                 onNavigateToGames = { navController.navigate(AppRoutes.GAMES) },
                 onNavigateToGroups = { navController.navigate(AppRoutes.GROUPS) },
                 onNavigateToProfile = { navController.navigate(AppRoutes.PROFILE) },
+                onOpenProfileSetup = { navController.navigate(AppRoutes.PROFILE_SETUP) }
             )
         }
 
@@ -216,7 +217,11 @@ fun AppNavigation(
         // ui/core/ (relatório pós-jogo, estatísticas, convite, bloqueados), eliminando
         // telas órfãs. Acessível via GamesScreen.onGameClick -> "game/{gameId}".
         composable(AppRoutes.GAME_DETAIL) { backStackEntry ->
-            val gameId = backStackEntry.arguments?.getString("gameId").orEmpty()
+            // `arguments?.getString()` é Android-only e quebra o target iOS do
+            // composeApp. Enquanto o detalhe completo do jogo não é portado, este
+            // hub não precisa do ID real para renderizar; mantemos um fallback
+            // estável para a navegação das ferramentas auxiliares.
+            val gameId = "compose-game"
             GameDetailHub(
                 onNavigateBack = { navController.popBackStack() },
                 onOpenPostGameReport = { navController.navigate(AppRoutes.POST_GAME_REPORT) },
@@ -256,7 +261,9 @@ fun AppNavigation(
 
         // Convidar jogadores (tela real ui/core/InvitePlayersScreen)
         composable(AppRoutes.INVITE_PLAYERS) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
+            // Mesmo racional do hub de jogo acima: evita API Android-only enquanto
+            // a navegação commonMain ainda está em transição para uma camada tipada.
+            val groupId = "compose-group"
             // InviteViewModel ainda não está registrado no Koin do composeApp
             // (depende de repositórios providos por plataforma). Renderiza a tela
             // apenas quando o VM estiver disponível; caso contrário, volta atrás
@@ -286,7 +293,15 @@ fun AppNavigation(
 
         // Groups
         composable(AppRoutes.GROUPS) {
-            // TODO: GroupsScreen(navController)
+            FeatureHubScreen(
+                title = UiStrings.GROUPS_HUB_TITLE,
+                body = UiStrings.GROUPS_HUB_BODY,
+                primaryActionLabel = UiStrings.GROUPS_HUB_PRIMARY,
+                secondaryActionLabel = UiStrings.GROUPS_HUB_SECONDARY,
+                onNavigateBack = { navController.popBackStack() },
+                onPrimaryAction = { navController.navigate(AppRoutes.GAMES) },
+                onSecondaryAction = { navController.navigate(AppRoutes.WHATS_NEW) }
+            )
         }
 
         // Group detail
@@ -296,7 +311,15 @@ fun AppNavigation(
 
         // Profile
         composable(AppRoutes.PROFILE) {
-            // TODO: ProfileScreen(navController)
+            FeatureHubScreen(
+                title = UiStrings.PROFILE_HUB_TITLE,
+                body = UiStrings.PROFILE_HUB_BODY,
+                primaryActionLabel = UiStrings.PROFILE_HUB_PRIMARY,
+                secondaryActionLabel = UiStrings.PROFILE_HUB_SECONDARY,
+                onNavigateBack = { navController.popBackStack() },
+                onPrimaryAction = { navController.navigate(AppRoutes.PROFILE_SETUP) },
+                onSecondaryAction = { navController.navigate(AppRoutes.OWNER_STATS) }
+            )
         }
 
         // Ranking
@@ -403,6 +426,64 @@ private fun GameDetailHub(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(UiStrings.GAME_DETAIL_BLOCKED_PLAYERS)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FeatureHubScreen(
+    title: String,
+    body: String,
+    primaryActionLabel: String,
+    secondaryActionLabel: String,
+    onNavigateBack: () -> Unit,
+    onPrimaryAction: () -> Unit,
+    onSecondaryAction: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = UiStrings.CD_BACK
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedButton(
+                onClick = onPrimaryAction,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(primaryActionLabel)
+            }
+            OutlinedButton(
+                onClick = onSecondaryAction,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(secondaryActionLabel)
             }
         }
     }

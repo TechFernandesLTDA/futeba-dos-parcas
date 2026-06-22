@@ -10,7 +10,7 @@ package com.futebadosparcas.compose.navigation
  */
 object AppRoutes {
 
-    /** Tela inicial — placeholder até o Bucket Core portar HomeScreen real */
+    /** Tela inicial do shell compartilhado (dashboard + atalhos principais). */
     const val HOME = "home"
 
     /** Tela "Novidades" — histórico de release notes (spec feat-2026-05-22, Fase G) */

@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.SportsSoccer
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -45,21 +47,22 @@ fun WelcomeScreen(
                 .systemBarsPadding()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterVertically)
         ) {
-            Spacer(modifier = Modifier.weight(0.5f))
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.SportsSoccer,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .size(72.dp)
+                )
+            }
 
-            // Logo do app (substituído por ícone esportivo)
-            Icon(
-                imageVector = Icons.Filled.SportsSoccer,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(150.dp)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Título
             Text(
                 text = "Futeba dos Parcas",
                 style = MaterialTheme.typography.headlineLarge,
@@ -67,40 +70,37 @@ fun WelcomeScreen(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Subtítulo
             Text(
-                text = "Organize partidas, acompanhe estatísticas e muito mais!",
+                text = "Entre com tudo na organização da rodada, no acompanhamento das partidas e no histórico do jogador.",
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Features
-            WelcomeFeatureItem(
-                icon = Icons.Filled.SportsSoccer,
-                text = "Jogos"
-            )
-            WelcomeFeatureItem(
-                icon = Icons.Filled.Star,
-                text = "Ranking"
-            )
-            WelcomeFeatureItem(
-                icon = Icons.Filled.Star,
-                text = "Estatísticas"
-            )
-            WelcomeFeatureItem(
-                icon = Icons.Filled.FavoriteBorder,
-                text = "Equilíbrio"
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Botão Começar
+            ElevatedCard {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    WelcomeFeatureItem(
+                        icon = Icons.Filled.SportsSoccer,
+                        text = "Jogos com presença, campo e status na mesma visão"
+                    )
+                    WelcomeFeatureItem(
+                        icon = Icons.Filled.Groups,
+                        text = "Grupos e convites mais alinhados com a resenha"
+                    )
+                    WelcomeFeatureItem(
+                        icon = Icons.Filled.QueryStats,
+                        text = "Estatísticas para acompanhar a evolução da liga"
+                    )
+                    WelcomeFeatureItem(
+                        icon = Icons.Filled.FavoriteBorder,
+                        text = "Preferências e identidade do jogador bem cuidadas"
+                    )
+                }
+            }
             Button(
                 onClick = onContinue,
                 modifier = Modifier
@@ -113,8 +113,6 @@ fun WelcomeScreen(
                     style = MaterialTheme.typography.titleMedium
                 )
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

@@ -46,6 +46,7 @@ import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.ExpressiveFilterChip
 import com.futebadosparcas.ui.components.PlayerCardShareHelper
 import com.futebadosparcas.ui.components.ShimmerPlayerCard
 import com.futebadosparcas.ui.components.design.AppTopBar
@@ -421,7 +422,7 @@ private fun PlayersSearchAndFilters(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
-            FilterChip(
+            ExpressiveFilterChip(
                 selected = selectedFieldType == null,
                 onClick = { onFieldTypeChange(null) },
                 label = { Text(stringResource(R.string.players_filter_all)) },
@@ -430,7 +431,7 @@ private fun PlayersSearchAndFilters(
                 } else null
             )
 
-            FilterChip(
+            ExpressiveFilterChip(
                 selected = selectedFieldType == FieldType.SOCIETY,
                 onClick = { onFieldTypeChange(FieldType.SOCIETY) },
                 label = { Text(stringResource(R.string.players_filter_society)) },
@@ -443,7 +444,7 @@ private fun PlayersSearchAndFilters(
                 }
             )
 
-            FilterChip(
+            ExpressiveFilterChip(
                 selected = selectedFieldType == FieldType.FUTSAL,
                 onClick = { onFieldTypeChange(FieldType.FUTSAL) },
                 label = { Text(stringResource(R.string.players_filter_futsal)) },
@@ -456,7 +457,7 @@ private fun PlayersSearchAndFilters(
                 }
             )
 
-            FilterChip(
+            ExpressiveFilterChip(
                 selected = selectedFieldType == FieldType.CAMPO,
                 onClick = { onFieldTypeChange(FieldType.CAMPO) },
                 label = { Text(stringResource(R.string.players_filter_campo)) },
@@ -475,7 +476,7 @@ private fun PlayersSearchAndFilters(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
         ) {
-            FilterChip(
+            ExpressiveFilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.NAME,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.NAME) },
                 label = { Text(stringResource(R.string.players_sort_name)) },
@@ -488,7 +489,7 @@ private fun PlayersSearchAndFilters(
                 }
             )
 
-            FilterChip(
+            ExpressiveFilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_STRIKER) },
                 label = { Text(stringResource(R.string.players_sort_striker)) },
@@ -501,7 +502,7 @@ private fun PlayersSearchAndFilters(
                 }
             )
 
-            FilterChip(
+            ExpressiveFilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_GK,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_GK) },
                 label = { Text(stringResource(R.string.players_sort_gk)) },
