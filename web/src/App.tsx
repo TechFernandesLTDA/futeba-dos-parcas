@@ -27,6 +27,7 @@ import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
+import { PageTransition } from './components/common/PageTransition';
 import {
 
   HomeScreenSkeleton,
@@ -364,13 +365,15 @@ function useFocusOnNavigate() {
 }
 
 function AppRoutes() {
+  const location = useLocation();
   useFocusOnNavigate();
   useScrollRestoration();
   useResourcePreloading();
 
   return (
     <ProfileGate>
-    <Routes>
+    <PageTransition key={location.pathname}>
+    <Routes location={location}>
       {/* Splash & Onboarding */}
       {/* FIX #1024: /splash restrito a não-logados; usuário logado é redirecionado pelo PublicRoute */}
       <Route path="/splash" element={<PublicRoute><Suspense fallback={<RouteFallback />}><SplashScreen /></Suspense></PublicRoute>} />
@@ -491,6 +494,7 @@ function AppRoutes() {
       {/* Fallback */}
       <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundScreen /></Suspense>} />
     </Routes>
+    </PageTransition>
     </ProfileGate>
   );
 }

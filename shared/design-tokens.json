@@ -1,6 +1,6 @@
 {
   "$schema": "https://tr.designtokens.org/format/",
-  "description": "Design tokens compartilhados — Futeba dos Parças. Source única de verdade para cores, tipografia, espaçamento, elevação e motion. Consumido por web (import JSON), Android (KMP DesignTokens em commonMain), e iOS (via composeApp). Atualizado 2026-06-14 (issue #2746).",
+  "description": "Design tokens compartilhados — Futeba dos Parças. Source única de verdade para cores, tipografia, espaçamento, radius, elevação e motion. Consumido por web (import JSON), Android (KMP DesignTokens em commonMain), e iOS (via composeApp). Atualizado 2026-06-22 (issue #2744).",
   "version": "1.0.0",
 
   "brand": {

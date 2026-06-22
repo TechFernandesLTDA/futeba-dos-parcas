@@ -52,7 +52,7 @@ object AppDimensions {
     val radius_small = 8.dp
     val radius_medium = 12.dp
     val radius_large = 16.dp
-    val radius_extraLarge = 24.dp
+    val radius_extraLarge = 28.dp
     val radius_full = 999.dp
 
     // Aliases alinhados com web (radii) e composeApp (Shape)
@@ -60,7 +60,7 @@ object AppDimensions {
     val radius_sm = radius_small         // 8dp
     val radius_md = radius_medium        // 12dp
     val radius_lg = radius_large         // 16dp
-    val radius_xl = radius_extraLarge    // 24dp
+    val radius_xl = radius_extraLarge    // 28dp
 
     // ==========================================
     // ICONS - Tamanhos de ícones

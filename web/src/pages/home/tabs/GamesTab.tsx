@@ -336,7 +336,7 @@ export function GamesTab() {
           />
         ) : (
           <Box sx={{ px: isLg ? 1 : 0 }}>
-            <Grid container spacing={{ xs: 2, md: 1.5, xl: 2 }}>
+            <Grid container spacing={{ xs: 2, md: 1.5, xl: 2 }} className="stagger-fade-in">
           {filteredGames.map((game) => {
             const progress = game.maxPlayers > 0 ? Math.min((game.playersCount / game.maxPlayers) * 100, 100) : 0;
             const isFull = game.maxPlayers > 0 && game.playersCount >= game.maxPlayers;

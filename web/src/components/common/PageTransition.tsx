@@ -1,5 +1,7 @@
 import React from 'react';
 import { Box, type SxProps, type Theme } from '@mui/material';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { motionDuration, motionEasing } from '../../theme/motion';
 
 interface PageTransitionProps {
   children: React.ReactNode;
@@ -26,15 +28,17 @@ export const PageTransition = React.memo(function PageTransition({
   variant = 'fade',
   sx,
 }: PageTransitionProps) {
+  const reducedMotion = useReducedMotion();
   const animationName = variant === 'slideUp' ? 'pageSlideUp' : 'pageFadeIn';
   const keyframes = variant === 'slideUp' ? slideUpKeyframes : fadeInKeyframes;
+  const duration = variant === 'slideUp' ? motionDuration.medium : motionDuration.short;
 
   return (
     <Box
       sx={[
         {
-          animation: `${animationName} 0.2s ease-out`,
-          ...keyframes,
+          animation: reducedMotion ? 'none' : `${animationName} ${duration}ms ${motionEasing.decelerate}`,
+          ...(reducedMotion ? {} : keyframes),
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}

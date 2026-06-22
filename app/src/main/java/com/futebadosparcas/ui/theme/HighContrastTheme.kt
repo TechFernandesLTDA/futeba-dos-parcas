@@ -1,7 +1,6 @@
 package com.futebadosparcas.ui.theme
 
 import android.content.Context
-import android.os.Build
 import android.view.accessibility.AccessibilityManager
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -237,11 +236,14 @@ fun isSystemHighContrast(): Boolean {
  * Nota: API de alto contraste de texto não está disponível em todos os níveis de API.
  */
 fun isHighContrastEnabled(context: Context): Boolean {
-    // A API isHighTextContrastEnabled só está disponível em APIs específicas
-    // e pode não estar disponível em todas as ROMs. Usando fallback seguro.
     val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
-    return accessibilityManager?.isEnabled == true
+    return accessibilityManager?.runCatchingBoolean("isHighTextContrastEnabled") == true
 }
+
+private fun AccessibilityManager.runCatchingBoolean(methodName: String): Boolean =
+    runCatching {
+        javaClass.getMethod(methodName).invoke(this) as? Boolean == true
+    }.getOrDefault(false)
 
 /**
  * Verifica se recursos de acessibilidade estão habilitados.

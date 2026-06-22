@@ -2,14 +2,15 @@
 /**
  * check-design-tokens-parity.js (issue #2746)
  *
- * Valida que os hex canônicos do shared/design-tokens.json aparecem em todas
- * as plataformas (web, Android :app, composeApp). Objetivo: pegar DRIFT, não
- * estilo. Sem dependências externas — só fs/path nativos.
+ * Valida que os tokens canônicos do shared/design-tokens.json aparecem em
+ * todas as plataformas (web, Android :app, composeApp). Objetivo: pegar DRIFT,
+ * não estilo. Sem dependências externas — só fs/path nativos.
  *
  * Tolerâncias:
  *  - Hex comparado case-insensitive.
  *  - Kotlin usa 0xFFRRGGBB; o prefixo de alpha 0xFF é ignorado (casa RRGGBB).
  *  - Web/TS usa #RRGGBB.
+ *  - Radius/spacing comparam valores numéricos px/dp equivalentes.
  *
  * Saída: lista erros e exit(1) se houver drift; senão exit(0).
  */
@@ -92,7 +93,7 @@ function sliceBetween(content, startMarker, endMarker) {
 }
 
 function extractTsObject(content, objectName) {
-  const assignment = new RegExp(`\\b(?:const\\s+)?${escapeRegExp(objectName)}\\s*(?::[^=]+)?=\\s*\\{`, 'm');
+  const assignment = new RegExp(`\\b(?:export\\s+)?const\\s+${escapeRegExp(objectName)}\\s*(?::[^=\\n]+)?=\\s*\\{`, 'm');
   const property = new RegExp(`\\b${escapeRegExp(objectName)}\\s*:\\s*\\{`, 'm');
   const match = assignment.exec(content) || property.exec(content);
   if (!match) return null;
@@ -144,12 +145,121 @@ function checkTsObjectHexes(content, objectName, expected, label, sourceFile, er
   }
 }
 
+function checkTsObjectNumbers(content, objectName, expected, label, sourceFile, errors) {
+  const object = extractTsObject(content, objectName);
+  if (!object) {
+    errors.push(`[${label}] objeto ausente: ${objectName} em ${relative(sourceFile)}`);
+    return;
+  }
+
+  for (const [prop, expectedValue] of Object.entries(expected)) {
+    if (typeof expectedValue !== 'number') continue;
+    const re = new RegExp(`\\b${escapeRegExp(prop)}\\s*:\\s*${expectedValue}\\b`);
+    if (!re.test(object)) {
+      errors.push(`[${label}] ${objectName}.${prop} diverge — esperado ${expectedValue} em ${relative(sourceFile)}`);
+    }
+  }
+}
+
 function checkKotlinValHexes(content, expected, label, sourceFile, errors) {
   for (const [name, rawHex] of Object.entries(expected)) {
     const expectedHex = kotlinHex(rawHex);
     const re = new RegExp(`\\bval\\s+${escapeRegExp(name)}\\s*=\\s*Color\\(\\s*${expectedHex}\\s*\\)`, 'i');
     if (!re.test(content)) {
       errors.push(`[${label}] ${name} diverge — esperado Color(${expectedHex}) em ${relative(sourceFile)}`);
+    }
+  }
+}
+
+function checkKotlinDpVals(content, expected, label, sourceFile, errors) {
+  for (const [name, expectedValue] of Object.entries(expected)) {
+    if (typeof expectedValue !== 'number') continue;
+    const re = new RegExp(`\\bval\\s+${escapeRegExp(name)}\\s*=\\s*${expectedValue}\\.dp\\b`);
+    if (!re.test(content)) {
+      errors.push(`[${label}] ${name} diverge — esperado ${expectedValue}.dp em ${relative(sourceFile)}`);
+    }
+  }
+}
+
+function checkKotlinRoundedCornerShapes(content, expected, label, sourceFile, errors) {
+  for (const [name, expectedValue] of Object.entries(expected)) {
+    if (typeof expectedValue !== 'number') continue;
+    const re = new RegExp(`\\b${escapeRegExp(name)}\\s*=\\s*RoundedCornerShape\\(\\s*${expectedValue}\\.dp\\s*\\)`);
+    if (!re.test(content)) {
+      errors.push(`[${label}] ${name} diverge — esperado RoundedCornerShape(${expectedValue}.dp) em ${relative(sourceFile)}`);
+    }
+  }
+}
+
+function checkWebRadiusAndSpacing(tokens, errors) {
+  const file = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const content = readRequiredFile(file, 'web radius/spacing', errors);
+  if (!content) return;
+
+  checkTsObjectNumbers(content, 'radii', tokens.radius, 'web radius token', file, errors);
+
+  const lightTheme = sliceBetween(content, 'export const futebaTheme = createTheme({', '// Dark theme');
+  if (!lightTheme) {
+    errors.push(`[web spacing token] futebaTheme ausente em ${relative(file)}`);
+    return;
+  }
+
+  const spacingUnit = tokens.spacing && tokens.spacing.unit;
+  if (typeof spacingUnit !== 'number') {
+    errors.push('[spacing] token spacing.unit ausente ou inválido em shared/design-tokens.json');
+    return;
+  }
+
+  const re = new RegExp(`\\bspacing\\s*:\\s*${spacingUnit}\\b`);
+  if (!re.test(lightTheme)) {
+    errors.push(`[web spacing token] spacing diverge — esperado spacing: ${spacingUnit} em ${relative(file)}`);
+  }
+}
+
+function checkKotlinRadiusAndSpacing(tokens, errors) {
+  const radius = tokens.radius;
+  const spacing = tokens.spacing;
+  if (!radius || !spacing) {
+    errors.push('[radius/spacing] blocos `radius` ou `spacing` ausentes em shared/design-tokens.json');
+    return;
+  }
+
+  const appDimensions = path.join(
+    ROOT, 'app', 'src', 'main', 'java', 'com', 'futebadosparcas', 'ui', 'theme', 'AppDimensions.kt'
+  );
+  const appDimensionsContent = readRequiredFile(appDimensions, 'android :app dimensions', errors);
+  if (appDimensionsContent) {
+    checkKotlinDpVals(appDimensionsContent, {
+      spacing_extraSmall: spacing.xs,
+      spacing_small: spacing.sm,
+      spacing_medium: spacing.md,
+      spacing_extraLarge: spacing.lg,
+      spacing_huge: spacing.xl,
+      spacing_massive: spacing.xxl,
+    }, 'android :app spacing token', appDimensions, errors);
+
+    checkKotlinDpVals(appDimensionsContent, {
+      radius_small: radius.sm,
+      radius_medium: radius.md,
+      radius_large: radius.lg,
+      radius_extraLarge: radius.xl,
+      radius_full: radius.full,
+    }, 'android :app radius token', appDimensions, errors);
+  }
+
+  const shapeExpected = {
+    extraSmall: radius.xs,
+    small: radius.sm,
+    medium: radius.md,
+    large: radius.lg,
+    extraLarge: radius.xl,
+  };
+
+  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
+    const shapeFile = platform.file.replace(/Color\.kt$/, 'Shape.kt');
+    const content = readRequiredFile(shapeFile, `${platform.name} shape`, errors);
+    if (content) {
+      checkKotlinRoundedCornerShapes(content, shapeExpected, `${platform.name} shape token`, shapeFile, errors);
     }
   }
 }
@@ -370,6 +480,10 @@ function main() {
   checkWebSemanticPalette(tokens, errors);
   checkKotlinSemanticGreen(tokens, errors);
 
+  // Paridade de radius + spacing — issue #2744.
+  checkWebRadiusAndSpacing(tokens, errors);
+  checkKotlinRadiusAndSpacing(tokens, errors);
+
   // Paridade de motion (durations + easings) — issue #2755.
   checkMotionParity(tokens, errors);
 
@@ -380,7 +494,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('✓ design tokens em paridade (cores + motion)');
+  console.log('✓ design tokens em paridade (cores + radius + spacing + motion)');
   process.exit(0);
 }
 

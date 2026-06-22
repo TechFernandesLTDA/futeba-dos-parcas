@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.futebadosparcas.domain.model.AppThemeConfig
+import com.futebadosparcas.domain.model.ContrastLevel
 import com.futebadosparcas.domain.model.ThemeMode
 import androidx.compose.runtime.getValue
 import org.koin.compose.viewmodel.koinViewModel
@@ -54,11 +55,17 @@ fun FutebaTheme(
 
     val context = LocalContext.current
     val reducedMotion = remember { readSystemReduceMotion(context) }
-    val colorScheme = if (finalConfig.useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    val baseColorScheme = if (finalConfig.useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else {
         DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
     }
+    val colorScheme = getAccessibleColorScheme(
+        isDarkTheme = isDark,
+        preferHighContrast = finalConfig.contrastLevel == ContrastLevel.HIGH,
+        defaultLightScheme = baseColorScheme,
+        defaultDarkScheme = baseColorScheme
+    )
 
     val view = LocalView.current
     if (!view.isInEditMode) {
