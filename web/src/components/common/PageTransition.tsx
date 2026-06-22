@@ -1,11 +1,11 @@
 import React from 'react';
 import { Box, type SxProps, type Theme } from '@mui/material';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { motionDuration, motionEasing } from '../../theme/motion';
+import { getPageTransitionAnimation, type PageTransitionVariant } from './PageTransition.utils';
 
 interface PageTransitionProps {
   children: React.ReactNode;
-  variant?: 'fade' | 'slideUp';
+  variant?: PageTransitionVariant;
   sx?: SxProps<Theme>;
 }
 
@@ -29,15 +29,13 @@ export const PageTransition = React.memo(function PageTransition({
   sx,
 }: PageTransitionProps) {
   const reducedMotion = useReducedMotion();
-  const animationName = variant === 'slideUp' ? 'pageSlideUp' : 'pageFadeIn';
   const keyframes = variant === 'slideUp' ? slideUpKeyframes : fadeInKeyframes;
-  const duration = variant === 'slideUp' ? motionDuration.medium : motionDuration.short;
 
   return (
     <Box
       sx={[
         {
-          animation: reducedMotion ? 'none' : `${animationName} ${duration}ms ${motionEasing.decelerate}`,
+          animation: getPageTransitionAnimation(variant, reducedMotion),
           ...(reducedMotion ? {} : keyframes),
         },
         ...(Array.isArray(sx) ? sx : [sx]),

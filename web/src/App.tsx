@@ -369,10 +369,12 @@ function AppRoutes() {
   useFocusOnNavigate();
   useScrollRestoration();
   useResourcePreloading();
+  const routeTransitionKey = `${location.pathname}${location.search}`;
+  const routeTransitionVariant = location.pathname === '/' ? 'fade' : 'slideUp';
 
   return (
     <ProfileGate>
-    <PageTransition key={location.pathname}>
+    <PageTransition key={routeTransitionKey} variant={routeTransitionVariant}>
     <Routes location={location}>
       {/* Splash & Onboarding */}
       {/* FIX #1024: /splash restrito a não-logados; usuário logado é redirecionado pelo PublicRoute */}
