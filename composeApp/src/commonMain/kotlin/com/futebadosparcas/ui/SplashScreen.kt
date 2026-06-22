@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,12 +31,19 @@ fun SplashScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.SportsSoccer,
-                contentDescription = UiStrings.SPLASH_CD_LOGO,
-                modifier = Modifier.size(72.dp),
-                tint = MaterialTheme.colorScheme.onPrimary
-            )
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SportsSoccer,
+                    contentDescription = UiStrings.SPLASH_CD_LOGO,
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .size(56.dp),
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
             Text(
                 text = UiStrings.SPLASH_APP_NAME,
                 fontSize = 32.sp,
@@ -43,9 +51,14 @@ fun SplashScreen() {
                 color = MaterialTheme.colorScheme.onPrimary
             )
             Text(
-                text = "${getPlatformName()} Edition",
+                text = UiStrings.SPLASH_TAGLINE,
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+            )
+            Text(
+                text = "${UiStrings.SPLASH_PLATFORM_PREFIX} ${getPlatformName()}",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.68f)
             )
         }
     }

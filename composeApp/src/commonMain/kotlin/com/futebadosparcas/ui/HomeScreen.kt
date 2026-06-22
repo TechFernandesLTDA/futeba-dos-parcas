@@ -1,11 +1,14 @@
 package com.futebadosparcas.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,9 +24,8 @@ fun HomeScreen(
     onNavigateToGames: () -> Unit = {},
     onNavigateToGroups: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
+    onOpenProfileSetup: () -> Unit = {},
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -47,121 +49,343 @@ fun HomeScreen(
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Home, contentDescription = UiStrings.NAV_HOME) },
                     label = { Text(UiStrings.NAV_HOME) },
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 }
+                    selected = true,
+                    onClick = {}
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.SportsSoccer, contentDescription = UiStrings.NAV_GAMES) },
                     label = { Text(UiStrings.NAV_GAMES) },
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1; onNavigateToGames() }
+                    selected = false,
+                    onClick = onNavigateToGames
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Group, contentDescription = UiStrings.NAV_GROUPS) },
                     label = { Text(UiStrings.NAV_GROUPS) },
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2; onNavigateToGroups() }
+                    selected = false,
+                    onClick = onNavigateToGroups
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Person, contentDescription = UiStrings.NAV_PROFILE) },
                     label = { Text(UiStrings.NAV_PROFILE) },
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3; onNavigateToProfile() }
+                    selected = false,
+                    onClick = onNavigateToProfile
                 )
             }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            when (selectedTab) {
-                0 -> HomeTab()
-                1 -> PlaceholderTab("Jogos")
-                2 -> PlaceholderTab("Grupos")
-                3 -> PlaceholderTab("Perfil")
-            }
+            HomeHeroCard(
+                onNavigateToGames = onNavigateToGames,
+                onOpenWhatsNew = onOpenWhatsNew
+            )
+            HomeQuickActionsRow(
+                onNavigateToGames = onNavigateToGames,
+                onNavigateToGroups = onNavigateToGroups,
+                onOpenProfileSetup = onOpenProfileSetup
+            )
+            HomeInsightCard()
+            HomeToolsSection(
+                onNavigateToGames = onNavigateToGames,
+                onNavigateToGroups = onNavigateToGroups,
+                onNavigateToProfile = onNavigateToProfile
+            )
         }
     }
 }
 
 @Composable
-private fun HomeTab() {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top)
-    ) {
-        Icon(
-            imageVector = Icons.Default.SportsSoccer,
-            contentDescription = null,
-            modifier = Modifier.size(72.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = UiStrings.HOME_WELCOME,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Organize partidas, acompanhe estatísticas e suba de nível!",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Card(
-            modifier = Modifier.fillMaxWidth(0.85f)
+private fun HomeHeroCard(
+    onNavigateToGames: () -> Unit,
+    onOpenWhatsNew: () -> Unit
+) {
+    ElevatedCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "Funcionalidades",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    text = UiStrings.HOME_STATUS_LIVE,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
-                Text("Navegação funcional")
-                Text("UI Responsiva")
-                Text("Material Design 3")
-                Text("Autenticação integrada")
-                Text("Jogos e grupos")
+            }
+            Text(
+                text = UiStrings.HOME_WELCOME,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = UiStrings.HOME_SUBTITLE,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onNavigateToGames,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SportsSoccer,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(UiStrings.HOME_ACTION_GAMES)
+                }
+                OutlinedButton(
+                    onClick = onOpenWhatsNew,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.NewReleases,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(UiStrings.HOME_ACTION_WHATS_NEW)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun PlaceholderTab(tabName: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        val icon = when (tabName) {
-            "Jogos" -> Icons.Default.SportsSoccer
-            "Grupos" -> Icons.Default.Group
-            "Perfil" -> Icons.Default.Person
-            else -> Icons.Default.Home
+private fun HomeQuickActionsRow(
+    onNavigateToGames: () -> Unit,
+    onNavigateToGroups: () -> Unit,
+    onOpenProfileSetup: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = UiStrings.HOME_SECTION_QUICK_ACTIONS,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            QuickActionCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.SportsSoccer,
+                label = UiStrings.HOME_ACTION_GAMES,
+                onClick = onNavigateToGames
+            )
+            QuickActionCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Group,
+                label = UiStrings.HOME_ACTION_GROUPS,
+                onClick = onNavigateToGroups
+            )
+            QuickActionCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Person,
+                label = UiStrings.HOME_ACTION_PROFILE,
+                onClick = onOpenProfileSetup
+            )
         }
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeInsightCard() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Text(
-            text = "Tela $tabName",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            text = UiStrings.HOME_SECTION_MATCHDAY,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
         )
+        ElevatedCard {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = UiStrings.HOME_MATCHDAY_TITLE,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Text(
+                    text = UiStrings.HOME_MATCHDAY_BODY,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatusPill(
+                        label = UiStrings.HOME_STATUS_UPDATED,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    StatusPill(
+                        label = UiStrings.HOME_STATUS_PERSONAL,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusPill(
+    label: String,
+    containerColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color
+) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = containerColor
+    ) {
         Text(
-            text = "Redirecionando...",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = contentColor,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
         )
+    }
+}
+
+@Composable
+private fun HomeToolsSection(
+    onNavigateToGames: () -> Unit,
+    onNavigateToGroups: () -> Unit,
+    onNavigateToProfile: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = UiStrings.HOME_SECTION_TOOLS,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        ToolSummaryCard(
+            icon = Icons.Default.SportsSoccer,
+            title = UiStrings.HOME_TOOLS_GAMES_TITLE,
+            body = UiStrings.HOME_TOOLS_GAMES_BODY,
+            onClick = onNavigateToGames
+        )
+        ToolSummaryCard(
+            icon = Icons.Default.Group,
+            title = UiStrings.HOME_TOOLS_GROUPS_TITLE,
+            body = UiStrings.HOME_TOOLS_GROUPS_BODY,
+            onClick = onNavigateToGroups
+        )
+        ToolSummaryCard(
+            icon = Icons.Default.Person,
+            title = UiStrings.HOME_TOOLS_PROFILE_TITLE,
+            body = UiStrings.HOME_TOOLS_PROFILE_BODY,
+            onClick = onNavigateToProfile
+        )
+    }
+}
+
+@Composable
+private fun ToolSummaryCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    body: String,
+    onClick: () -> Unit
+) {
+    ElevatedCard(onClick = onClick) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = body,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
