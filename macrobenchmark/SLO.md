@@ -45,7 +45,7 @@ O baseline de referência está em `baseline.json` e é capturado do `master` no
 git checkout master
 ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None \
-  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING
+  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
 # Extrair métricas do resultado → macrobenchmark/baseline.json
 ```
 

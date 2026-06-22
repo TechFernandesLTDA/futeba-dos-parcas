@@ -39,7 +39,7 @@ Usa a [Android Macrobenchmark Library](https://developer.android.com/topic/perfo
 ```bash
 ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None \
-  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING
+  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
 ```
 
 ### 3. Executar um benchmark específico
@@ -49,7 +49,7 @@ Usa a [Android Macrobenchmark Library](https://developer.android.com/topic/perfo
 ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.futebadosparcas.macrobenchmark.StartupBenchmark \
   -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None \
-  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING
+  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
 ```
 
 ### 4. Verificar compilação sem executar (CI/rápido)
@@ -98,6 +98,11 @@ O workflow `.github/workflows/android-macrobenchmark.yml` executa automaticament
 - Merges para `master` que tocam `app/`, `shared/`, `composeApp/`, ou `macrobenchmark/`
 - Disparos manuais via GitHub Actions
 
+O módulo `:macrobenchmark` usa `android.experimental.self-instrumenting=true`
+para que o runner execute fora do processo do app alvo. Não suprima
+`NOT-SELF-INSTRUMENTING`: esse erro indica que o Macrobenchmark pode matar o
+próprio runner ao reiniciar o app medido.
+
 Os resultados são publicados como artifact `macrobenchmark-results-<sha>` com retenção de 30 dias.
 
 **SLOs e gates de regressão** (Issue #1092): O workflow agora:
@@ -116,7 +121,7 @@ Ao rodar em emulador, o benchmark exibe mensagens como:
 EMULATOR: Results are not reliable. Running on Emulator.
 ```
 
-Isso é esperado. Use `suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING` para não falhar o build em runners self-hosted/emulador.
+Isso é esperado. Use `suppressErrors=EMULATOR,DEBUGGABLE` para não falhar o build em runners self-hosted/emulador.
 Os números em emulador servem para **detectar regressões relativas**, não valores absolutos.
 Para métricas absolutas de produção, use um Pixel físico em modo Release.
 

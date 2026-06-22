@@ -24,12 +24,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Desabilita profiling por padrão para runs de CI/emulador.
-        // NOT-SELF-INSTRUMENTING aparece nos runners self-hosted quando o
-        // macrobenchmark não consegue confirmar isolamento completo do alvo,
-        // mesmo usando o build type benchmark não-debuggable.
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "None"
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] =
-            "EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING"
+            "EMULATOR,DEBUGGABLE"
     }
 
     compileOptions {
@@ -43,6 +40,10 @@ android {
 
     // Aponta para o módulo :app como alvo dos benchmarks
     targetProjectPath = ":app"
+
+    // Mantém o runner do benchmark fora do processo do app alvo. Sem isso,
+    // o Macrobenchmark mata o próprio processo ao force-stop do app medido.
+    experimentalProperties["android.experimental.self-instrumenting"] = true
 
     // Build type que espelha o "benchmark" configurado no :app
     buildTypes {
