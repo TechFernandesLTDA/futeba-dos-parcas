@@ -81,13 +81,13 @@ jobs:
                 "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
                 "android_client_info": { "package_name": "com.futebadosparcas" }
               },
-              "api_key": [{ "current_key": "placeholder" }]
+              "api_key": [{ "current_key": "AIzaSyA00000000000000000000000000000000" }]
             }]
           }
           GSEOF
 
       - name: Run Lint
-        run: ./gradlew lint
+        run: ./gradlew --max-workers=6 --no-daemon lint
 
       - name: Upload Lint Report
         if: always()
@@ -139,14 +139,14 @@ jobs:
                 "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
                 "android_client_info": { "package_name": "com.futebadosparcas" }
               },
-              "api_key": [{ "current_key": "placeholder" }]
+              "api_key": [{ "current_key": "AIzaSyA00000000000000000000000000000000" }]
             }]
           }
           GSEOF
 
       # Detekt usa baseline (detekt-baseline.xml) para ignorar violacoes pre-existentes
       - name: Run Detekt
-        run: ./gradlew detekt
+        run: ./gradlew --max-workers=6 --no-daemon detekt
 
       - name: Upload Detekt SARIF to GitHub Security
         if: always()
@@ -205,13 +205,13 @@ jobs:
                 "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
                 "android_client_info": { "package_name": "com.futebadosparcas" }
               },
-              "api_key": [{ "current_key": "placeholder" }]
+              "api_key": [{ "current_key": "AIzaSyA00000000000000000000000000000000" }]
             }]
           }
           GSEOF
 
       - name: Run Unit Tests
-        run: ./gradlew :app:testDebugUnitTest
+        run: ./gradlew --max-workers=6 --no-daemon :app:testDebugUnitTest
 
       - name: Upload Test Results
         if: always()
@@ -273,13 +273,13 @@ jobs:
                 "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
                 "android_client_info": { "package_name": "com.futebadosparcas" }
               },
-              "api_key": [{ "current_key": "placeholder" }]
+              "api_key": [{ "current_key": "AIzaSyA00000000000000000000000000000000" }]
             }]
           }
           GSEOF
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew --max-workers=6 --no-daemon assembleDebug
 
       # APK so e util para review em PR; em master apenas valida o build (sem upload — evitava ~24GB de quota)
       - name: Upload Debug APK
@@ -296,4 +296,4 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           APK_SIZE=$(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)
-          echo "### APK Size: $APK_SIZE" >> $GITHUB_STEP_SUMMARY
+          echo "### APK Size: $APK_SIZE" >> "$GITHUB_STEP_SUMMARY"
