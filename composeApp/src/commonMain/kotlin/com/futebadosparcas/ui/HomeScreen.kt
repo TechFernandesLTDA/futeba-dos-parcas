@@ -18,6 +18,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.adaptive.AdaptiveNavItem
@@ -88,35 +92,88 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            HomeHeroCard(
-                onNavigateToGames = onNavigateToGames,
-                onOpenWhatsNew = onOpenWhatsNew
-            )
-            HomeQuickActionsRow(
-                onNavigateToGames = onNavigateToGames,
-                onNavigateToGroups = onNavigateToGroups,
-                onOpenProfileSetup = onOpenProfileSetup
-            )
-            HomeInsightCard()
-            HomeToolsSection(
-                onNavigateToGames = onNavigateToGames,
-                onNavigateToGroups = onNavigateToGroups,
-                onNavigateToProfile = onNavigateToProfile
-            )
+            val expandedLayout = maxWidth >= 840.dp
+            val compactButtons = maxWidth < 460.dp
+            val contentMaxWidth = if (expandedLayout) 1120.dp else 680.dp
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = if (expandedLayout) 28.dp else 20.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (expandedLayout) {
+                    Row(
+                        modifier = Modifier.widthIn(max = contentMaxWidth),
+                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1.12f),
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            HomeHeroCard(
+                                stackActions = false,
+                                onNavigateToGames = onNavigateToGames,
+                                onOpenWhatsNew = onOpenWhatsNew
+                            )
+                            HomeQuickActionsRow(
+                                onNavigateToGames = onNavigateToGames,
+                                onNavigateToGroups = onNavigateToGroups,
+                                onOpenProfileSetup = onOpenProfileSetup
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(0.88f),
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            HomeInsightCard()
+                            HomeToolsSection(
+                                onNavigateToGames = onNavigateToGames,
+                                onNavigateToGroups = onNavigateToGroups,
+                                onNavigateToProfile = onNavigateToProfile
+                            )
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = contentMaxWidth),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        HomeHeroCard(
+                            stackActions = compactButtons,
+                            onNavigateToGames = onNavigateToGames,
+                            onOpenWhatsNew = onOpenWhatsNew
+                        )
+                        HomeQuickActionsRow(
+                            onNavigateToGames = onNavigateToGames,
+                            onNavigateToGroups = onNavigateToGroups,
+                            onOpenProfileSetup = onOpenProfileSetup
+                        )
+                        HomeInsightCard()
+                        HomeToolsSection(
+                            onNavigateToGames = onNavigateToGames,
+                            onNavigateToGroups = onNavigateToGroups,
+                            onNavigateToProfile = onNavigateToProfile
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun HomeHeroCard(
+    stackActions: Boolean,
     onNavigateToGames: () -> Unit,
     onOpenWhatsNew: () -> Unit
 ) {
@@ -148,36 +205,74 @@ private fun HomeHeroCard(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Button(
-                    onClick = onNavigateToGames,
-                    modifier = Modifier.weight(1f)
+            if (stackActions) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.FilledSportsSoccer,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                    HomePrimaryActionButton(
+                        onClick = onNavigateToGames,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(UiStrings.HOME_ACTION_GAMES)
+                    HomeWhatsNewButton(
+                        onClick = onOpenWhatsNew,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-                OutlinedButton(
-                    onClick = onOpenWhatsNew,
-                    modifier = Modifier.weight(1f)
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.NewReleases,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                    HomePrimaryActionButton(
+                        onClick = onNavigateToGames,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(UiStrings.HOME_ACTION_WHATS_NEW)
+                    HomeWhatsNewButton(
+                        onClick = onOpenWhatsNew,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HomePrimaryActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = Icons.Filled.FilledSportsSoccer,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(UiStrings.HOME_ACTION_GAMES)
+    }
+}
+
+@Composable
+private fun HomeWhatsNewButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = Icons.Default.NewReleases,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(UiStrings.HOME_ACTION_WHATS_NEW)
     }
 }
 
@@ -228,7 +323,10 @@ private fun QuickActionCard(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = modifier
+        modifier = modifier.semantics {
+            contentDescription = label
+            role = Role.Button
+        }
     ) {
         Column(
             modifier = Modifier
@@ -367,7 +465,13 @@ private fun ToolSummaryCard(
     body: String,
     onClick: () -> Unit
 ) {
-    ElevatedCard(onClick = onClick) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = Modifier.semantics {
+            contentDescription = "$title. $body"
+            role = Role.Button
+        }
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
