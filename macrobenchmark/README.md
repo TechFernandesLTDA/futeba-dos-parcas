@@ -39,7 +39,7 @@ Usa a [Android Macrobenchmark Library](https://developer.android.com/topic/perfo
 ```bash
 ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None \
-  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
+  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING
 ```
 
 ### 3. Executar um benchmark específico
@@ -49,14 +49,14 @@ Usa a [Android Macrobenchmark Library](https://developer.android.com/topic/perfo
 ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.futebadosparcas.macrobenchmark.StartupBenchmark \
   -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None \
-  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
+  -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING
 ```
 
 ### 4. Verificar compilação sem executar (CI/rápido)
 
 ```bash
 # Verifica que o código Kotlin compila sem rodar os benchmarks
-./gradlew :macrobenchmark:compileBenchmarkAndroidTestKotlin
+./gradlew :macrobenchmark:compileBenchmarkKotlin
 
 # Verifica que o :app compila o build type benchmark
 ./gradlew :app:assembleBenchmark
@@ -116,7 +116,7 @@ Ao rodar em emulador, o benchmark exibe mensagens como:
 EMULATOR: Results are not reliable. Running on Emulator.
 ```
 
-Isso é esperado. Use `suppressErrors=EMULATOR,DEBUGGABLE` para não falhar o build.
+Isso é esperado. Use `suppressErrors=EMULATOR,DEBUGGABLE,NOT-SELF-INSTRUMENTING` para não falhar o build em runners self-hosted/emulador.
 Os números em emulador servem para **detectar regressões relativas**, não valores absolutos.
 Para métricas absolutas de produção, use um Pixel físico em modo Release.
 
