@@ -98,7 +98,7 @@ export const useNotifications = (userId?: string) => {
       });
       await batch.commit();
 
-      showSuccess(`${unread.length} notificações marcadas como lidas.`);
+      showSuccess(t('feedback.notifications.markAllReadSuccess', { count: unread.length }));
     } catch (err) {
       logger.error('Error marking all notifications as read:', err);
       showError(t('feedback.notifications.markAllReadError'));
@@ -182,7 +182,7 @@ export const useNotifications = (userId?: string) => {
       toDelete.forEach((d) => batch.delete(doc(db, 'notifications', d.id)));
       await batch.commit();
 
-      showSuccess(`${toDelete.length} notificações antigas removidas.`);
+      showSuccess(t('feedback.notifications.cleanupSuccess', { count: toDelete.length }));
     } catch (err) {
       logger.error('Error deleting old notifications:', err);
       showError(t('feedback.notifications.cleanupError'));
