@@ -18,6 +18,7 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDirtyGuard } from '../../hooks/useDirtyGuard';
 import { useKeyboardInset } from '../../hooks/useKeyboardInset';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
@@ -60,6 +61,7 @@ export function FormScaffold({
   loading = false,
 }: FormScaffoldProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const { isBlocked, attemptClose, proceed, cancel } = useDirtyGuard(isDirty);
   const kbdInset = useKeyboardInset();
@@ -92,7 +94,7 @@ export function FormScaffold({
             edge="start"
             onClick={handleClose}
             disabled={loading}
-            aria-label={closeVariant === 'X' ? 'Fechar' : 'Voltar'}
+            aria-label={closeVariant === 'X' ? t('common.close') : t('common.back')}
             sx={{ mr: 1 }}
           >
             <CloseIconComponent aria-hidden="true" />
@@ -153,18 +155,18 @@ export function FormScaffold({
         fullWidth={!isDesktop}
         maxWidth="xs"
       >
-        <DialogTitle id="dirty-guard-title">Descartar mudanças?</DialogTitle>
+        <DialogTitle id="dirty-guard-title">{t('adaptiveFormSheet.discardTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText id="dirty-guard-description">
-            Você tem alterações não salvas. Se sair agora, elas serão perdidas.
+            {t('adaptiveFormSheet.discardMessage')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={cancel} autoFocus>
-            Continuar editando
+            {t('adaptiveFormSheet.keepEditing')}
           </Button>
           <Button onClick={proceed} color="error">
-            Descartar
+            {t('adaptiveFormSheet.discard')}
           </Button>
         </DialogActions>
       </Dialog>
