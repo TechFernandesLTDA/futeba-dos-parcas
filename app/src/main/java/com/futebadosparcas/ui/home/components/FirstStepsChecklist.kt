@@ -1,7 +1,6 @@
 package com.futebadosparcas.ui.home.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,10 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.onboarding.OnboardingStep
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Card de Primeiros Passos exibido na HomeScreen.
@@ -57,10 +59,14 @@ fun FirstStepsChecklist(
     onStepClick: (OnboardingStep) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val reducedMotion = rememberReduceMotion()
+    val checklistTransition = MotionSpring.spatial<IntSize>(reducedMotion)
+    val alphaTransition = MotionSpring.effects<Float>(reducedMotion)
+
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(300)) + expandVertically(tween(300)),
-        exit = fadeOut(tween(300)) + shrinkVertically(tween(300)),
+        enter = fadeIn(alphaTransition) + expandVertically(checklistTransition),
+        exit = fadeOut(alphaTransition) + shrinkVertically(checklistTransition),
         modifier = modifier
     ) {
         Card(
@@ -105,6 +111,11 @@ fun FirstStepsChecklist(
                 // Barra de progresso
                 val completedCount = steps.values.count { it }
                 val progress = if (steps.isEmpty()) 0f else completedCount.toFloat() / steps.size
+                val progressDescription = stringResource(
+                    R.string.onboarding_checklist_progress_desc,
+                    completedCount,
+                    steps.size
+                )
 
                 LinearProgressIndicator(
                     progress = { progress },
@@ -112,7 +123,7 @@ fun FirstStepsChecklist(
                         .fillMaxWidth()
                         .height(AppDimensions.spacing_extraSmall)
                         .semantics {
-                            contentDescription = "$completedCount de ${steps.size} passos concluídos"
+                            contentDescription = progressDescription
                         },
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
@@ -151,7 +162,13 @@ private fun ChecklistStepItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Ícone de status
-        val iconDescription = if (isCompleted) "Concluído" else "Pendente"
+        val iconDescription = stringResource(
+            if (isCompleted) {
+                R.string.onboarding_step_status_completed
+            } else {
+                R.string.onboarding_step_status_pending
+            }
+        )
         Icon(
             imageVector = if (isCompleted) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
             contentDescription = iconDescription,
