@@ -184,6 +184,7 @@ export function useDiscoverPublicGroups() {
 export function useGroups() {
   const { user, firebaseUser } = useAuth();
   const { showError } = useToast();
+  const { t } = useTranslation();
   const uid = firebaseUser?.uid || user?.id;
   const queryClient = useQueryClient();
 
@@ -203,6 +204,8 @@ export function useGroups() {
   // a identidade da função de contexto muda entre renders.
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   useEffect(() => {
     if (!uid) return;
@@ -220,7 +223,7 @@ export function useGroups() {
     }, (err) => {
       logger.error('Error in groups listener:', err);
       setListenerError(err.message);
-      showErrorRef.current('Erro ao sincronizar grupos.');
+      showErrorRef.current(tRef.current('feedback.groups.syncError'));
     });
 
     return () => unsubscribe();
@@ -403,7 +406,7 @@ export function useCreateGroup() {
         logger.error('Error creating group:', err);
         setError((err as Error).message);
         setLoading(false);
-        showError((err as Error).message || 'Erro ao criar grupo.');
+        showError((err as Error).message || t('feedback.groups.createError'));
         throw err;
       }
     },
@@ -514,7 +517,7 @@ export function useInvitePlayers() {
         logger.error('Error generating invite:', err);
         setError((err as Error).message);
         setLoading(false);
-        showError((err as Error).message || 'Erro ao gerar código de convite.');
+        showError((err as Error).message || t('feedback.groups.inviteCodeError'));
         throw err;
       }
     },
@@ -534,14 +537,14 @@ export function useInvitePlayers() {
         const inviteSnap = await getDoc(inviteRef);
 
         if (!inviteSnap.exists() || inviteSnap.data()?.used === true) {
-          throw new Error('Invalid or expired invite code');
+          throw new Error(t('feedback.groups.invalidInviteCode'));
         }
 
         const inviteData = inviteSnap.data();
 
         // #1541: verificar se o convite expirou
         if (inviteData.expires_at && (inviteData.expires_at as Timestamp).toMillis() < Date.now()) {
-          throw new Error('Convite expirado');
+          throw new Error(t('feedback.groups.expiredInviteCode'));
         }
 
         const groupId = inviteData.group_id || inviteData.groupId;
@@ -609,7 +612,7 @@ export function useInvitePlayers() {
         logger.error('Error joining group:', err);
         setError((err as Error).message);
         setLoading(false);
-        showError((err as Error).message || 'Erro ao entrar no grupo.');
+        showError((err as Error).message || t('feedback.groups.joinError'));
         throw err;
       }
     },
