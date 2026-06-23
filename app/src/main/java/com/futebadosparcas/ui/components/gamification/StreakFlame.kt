@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.components.gamification
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -35,13 +33,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.sin
-import com.futebadosparcas.ui.theme.GamificationColors
-import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
+import kotlin.math.sin
 
 /**
  * Componentes visuais para exibir sequências (streaks) de jogos.
@@ -91,28 +91,37 @@ fun StreakFlame(
 
     // Reduced-motion: renderiza chama estática sem animação infinita (#2735).
     // rememberInfiniteTransition é sempre chamado (regra dos composables), mas as
-    // durações são zeradas quando reduced=true, resultando em valores fixos.
+    // targets ficam fixos quando reduced=true; a duração é tokenizada e mantida
+    // em pelo menos 1ms para estabilidade do infiniteRepeatable.
     val reducedMotion = rememberReduceMotion()
+    val flickerDuration = MotionDuration.getMedium(reducedMotion).coerceAtLeast(1)
+    val coreDuration = MotionDuration.getLong(reducedMotion).coerceAtLeast(1)
 
     val infiniteTransition = rememberInfiniteTransition(label = "flame")
 
-    // Animação de oscilação — duração 0 quando reduzida (valor permanece fixo)
+    // Animação de oscilação — valor permanece fixo quando reduzida.
     val flicker by infiniteTransition.animateFloat(
         initialValue = 0.5f,
         targetValue = if (reducedMotion) 0.5f else 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(if (reducedMotion) 1 else 300, easing = LinearEasing),
+            animation = tween(
+                durationMillis = flickerDuration,
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "flicker"
     )
 
-    // Animação de escala do core — duração 0 quando reduzida (valor permanece fixo)
+    // Animação de escala do core — valor permanece fixo quando reduzida.
     val coreScale by infiniteTransition.animateFloat(
         initialValue = 0.9f,
         targetValue = if (reducedMotion) 0.9f else 1.0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(if (reducedMotion) 1 else 500, easing = FastOutSlowInEasing),
+            animation = tween(
+                durationMillis = coreDuration,
+                easing = MotionEasing.Emphasized
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "coreScale"
@@ -491,15 +500,22 @@ fun StreakLevelUpAnimation(
     modifier: Modifier = Modifier
 ) {
     val scale = remember { Animatable(0f) }
+    val reducedMotion = rememberReduceMotion()
 
     LaunchedEffect(newLevel) {
         scale.animateTo(
             targetValue = 1.2f,
-            animationSpec = tween(300, easing = FastOutSlowInEasing)
+            animationSpec = tween(
+                durationMillis = MotionDuration.getMedium(reducedMotion),
+                easing = MotionEasing.Emphasized
+            )
         )
         scale.animateTo(
             targetValue = 1f,
-            animationSpec = tween(200)
+            animationSpec = tween(
+                durationMillis = MotionDuration.getShort(reducedMotion),
+                easing = MotionEasing.Standard
+            )
         )
         onAnimationComplete()
     }
