@@ -8,13 +8,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 // =============================================================================
 // SKELETON LOADING - COMPONENTES DE LOADING COM EFEITO WAVE STAGGERED
@@ -47,9 +49,6 @@ import androidx.compose.ui.unit.dp
  * O efeito wave move da esquerda para direita com stagger entre itens.
  */
 private object SkeletonDefaults {
-    /** Duracao base da animacao em milissegundos */
-    const val ANIMATION_DURATION_MS = 1200
-
     /** Distancia percorrida pelo gradiente */
     const val TRANSLATE_DISTANCE = 1000f
 
@@ -76,32 +75,37 @@ private object SkeletonDefaults {
  */
 @Composable
 private fun rememberStaggeredShimmerBrush(animationDelay: Int = 0): Brush {
+    val reducedMotion = rememberReduceMotion()
     val shimmerColors = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
-    val transition = rememberInfiniteTransition(label = "skeleton_wave_$animationDelay")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = SkeletonDefaults.TRANSLATE_DISTANCE,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = SkeletonDefaults.ANIMATION_DURATION_MS,
-                delayMillis = animationDelay,
-                easing = LinearEasing
+    val translate = if (reducedMotion) {
+        SkeletonDefaults.TRANSLATE_DISTANCE / 2
+    } else {
+        val transition = rememberInfiniteTransition(label = "skeleton_wave_$animationDelay")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = SkeletonDefaults.TRANSLATE_DISTANCE,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    delayMillis = animationDelay,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Restart
             ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "skeleton_translate_$animationDelay"
-    )
+            label = "skeleton_translate_$animationDelay"
+        ).value
+    }
 
     // Wave effect: gradiente horizontal movendo da esquerda para direita
     return Brush.linearGradient(
         colors = shimmerColors,
-        start = Offset(translateAnim - SkeletonDefaults.TRANSLATE_DISTANCE, 0f),
-        end = Offset(translateAnim, 0f)
+        start = Offset(translate - SkeletonDefaults.TRANSLATE_DISTANCE, 0f),
+        end = Offset(translate, 0f)
     )
 }
 
