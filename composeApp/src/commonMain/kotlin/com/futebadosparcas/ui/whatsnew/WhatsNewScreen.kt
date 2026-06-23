@@ -51,8 +51,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.cd_back
+import com.futebadosparcas.compose.resources.cd_collapse_release_version
+import com.futebadosparcas.compose.resources.cd_expand_release_version
 import com.futebadosparcas.domain.model.ReleaseNote
-import com.futebadosparcas.ui.UiStrings
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -91,7 +95,7 @@ fun WhatsNewScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = UiStrings.CD_BACK,
+                            contentDescription = stringResource(Res.string.cd_back),
                         )
                     }
                 },
@@ -147,9 +151,9 @@ private fun VersionCard(
     var expanded by remember(note.buildNumber) { mutableStateOf(initiallyExpanded) }
     val releaseDate = formatReleaseDate(note.releaseDate)
     val expansionAction = if (expanded) {
-        UiStrings.CD_COLLAPSE_RELEASE_VERSION
+        stringResource(Res.string.cd_collapse_release_version)
     } else {
-        UiStrings.CD_EXPAND_RELEASE_VERSION
+        stringResource(Res.string.cd_expand_release_version)
     }
     val accessibilitySummary = buildString {
         append("Versão ")

@@ -63,8 +63,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.cd_back
+import com.futebadosparcas.compose.resources.cd_clear_search
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.ui.UiStrings
+import org.jetbrains.compose.resources.stringResource
 
 // ---------- Componentes auxiliares (para evitar dependências do módulo :app) ----------
 
@@ -279,7 +282,7 @@ private fun InvitePlayersTopBar(onNavigateBack: () -> Unit) {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = UiStrings.CD_BACK
+                    contentDescription = stringResource(Res.string.cd_back)
                 )
             }
         },
@@ -306,7 +309,7 @@ private fun SearchField(
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = UiStrings.CD_CLEAR_SEARCH)
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cd_clear_search))
                 }
             }
         },

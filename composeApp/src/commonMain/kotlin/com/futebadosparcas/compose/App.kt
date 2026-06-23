@@ -55,6 +55,7 @@ import androidx.navigation.compose.rememberNavController
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
+import com.futebadosparcas.compose.resources.cd_back
 import com.futebadosparcas.compose.resources.feature_hub_actions
 import com.futebadosparcas.compose.resources.game_detail_blocked_players
 import com.futebadosparcas.compose.resources.game_detail_hub_title
@@ -81,7 +82,6 @@ import com.futebadosparcas.compose.resources.profile_hub_title
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.ui.HomeScreen
-import com.futebadosparcas.ui.UiStrings
 import com.futebadosparcas.ui.core.BlockedPlayersScreen
 import com.futebadosparcas.ui.core.GamesScreen
 import com.futebadosparcas.ui.core.InvitePlayersScreen
@@ -472,7 +472,7 @@ private fun GameDetailHub(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = UiStrings.CD_BACK
+                            contentDescription = stringResource(Res.string.cd_back)
                         )
                     }
                 },
@@ -551,7 +551,7 @@ private fun FeatureHubScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = UiStrings.CD_BACK
+                            contentDescription = stringResource(Res.string.cd_back)
                         )
                     }
                 }
