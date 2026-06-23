@@ -241,4 +241,10 @@
     <string name="error_cpf_invalid">CPF inválido</string>
     <string name="error_cpf_contact_support">CPF ya registrado. Ponte en contacto con soporte.</string>
     <string name="error_login_expired">El inicio de sesión expiró. Inicia sesión nuevamente.</string>
+    <string name="groups_member_count_one">%1$d miembro</string>
+    <string name="groups_member_count_many">%1$d miembros</string>
+    <plurals name="groups_member_count">
+        <item quantity="one">%1$d miembro</item>
+        <item quantity="other">%1$d miembros</item>
+    </plurals>
 </resources>

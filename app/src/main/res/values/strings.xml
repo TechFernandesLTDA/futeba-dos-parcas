@@ -2115,6 +2115,10 @@ subir no ranking!</string>
     <!-- Groups additional -->
     <string name="groups_member_count_one">%1$d membro</string>
     <string name="groups_member_count_many">%1$d membros</string>
+    <plurals name="groups_member_count">
+        <item quantity="one">%1$d membro</item>
+        <item quantity="other">%1$d membros</item>
+    </plurals>
     <string name="groups_role_owner">Dono</string>
     <string name="groups_role_admin">Admin</string>
 
