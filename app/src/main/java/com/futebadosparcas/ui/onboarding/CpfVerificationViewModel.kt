@@ -131,16 +131,23 @@ class CpfVerificationViewModel(
                 return@launch
             }
 
-            // Post-verify: force token refresh with 3x retry + 500ms backoff and
-            // check verified claim. Only set Success if token actually has verified=true.
-            // Fix: prevents showing success when revokeRefreshTokens caused refresh to
-            // fail, leaving the claim stale and causing redirect loops.
-            var tokenVerified = false
-            repeat(3) { attempt ->
+            // Server-side success is authoritative here: verifyCpf saved CPF,
+            // setUserVerified set the custom claim, and AntiBotGate will perform
+            // the final forced recheck after the success screen. This local
+            // refresh is telemetry/warm-up only; making it fatal traps users in
+            // onboarding when Firebase Auth propagation lags after revokeTokens.
+            _uiState.value = CpfVerificationUiState.Success
+
+            for (attempt in 0 until 3) {
                 try {
                     val tokenResult = user.getIdToken(true).await()
-                    tokenVerified = tokenResult.claims["verified"] as? Boolean ?: false
-                    return@repeat
+                    val tokenVerified = tokenResult.claims["verified"] as? Boolean ?: false
+                    if (!tokenVerified) {
+                        AppLogger.w("CpfVerification") {
+                            "Post-verify token still missing verified=true on attempt $attempt"
+                        }
+                    }
+                    break
                 } catch (e: Exception) {
                     AppLogger.w("CpfVerification") {
                         "Post-verify refresh attempt $attempt failed: ${e.message}"
@@ -149,14 +156,6 @@ class CpfVerificationViewModel(
                 }
             }
 
-            if (tokenVerified) {
-                _uiState.value = CpfVerificationUiState.Success
-            } else {
-                _uiState.value = CpfVerificationUiState.Error(
-                    "Verificado! Aguarde alguns segundos e tente novamente.",
-                    R.string.error_cpf_verified_wait,
-                )
-            }
         }
     }
 
