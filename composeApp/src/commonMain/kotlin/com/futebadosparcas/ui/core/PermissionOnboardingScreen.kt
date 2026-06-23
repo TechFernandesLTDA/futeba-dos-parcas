@@ -44,6 +44,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.permission_allow
+import com.futebadosparcas.compose.resources.permission_camera_description
+import com.futebadosparcas.compose.resources.permission_camera_title
+import com.futebadosparcas.compose.resources.permission_location_description
+import com.futebadosparcas.compose.resources.permission_location_title
+import com.futebadosparcas.compose.resources.permission_microphone_description
+import com.futebadosparcas.compose.resources.permission_microphone_title
+import com.futebadosparcas.compose.resources.permission_notifications_description
+import com.futebadosparcas.compose.resources.permission_notifications_title
+import com.futebadosparcas.compose.resources.permission_onboarding_continue
+import com.futebadosparcas.compose.resources.permission_onboarding_skip_info
+import com.futebadosparcas.compose.resources.permission_onboarding_subtitle
+import com.futebadosparcas.compose.resources.permission_onboarding_title
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Tela de onboarding para solicitar permissões do sistema.
@@ -83,7 +98,7 @@ fun PermissionOnboardingScreen(
 
             // Título
             Text(
-                text = "Permissões necessárias",
+                text = stringResource(Res.string.permission_onboarding_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -93,7 +108,7 @@ fun PermissionOnboardingScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Para uma experiência completa, conceda as permissões abaixo",
+                text = stringResource(Res.string.permission_onboarding_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -104,8 +119,8 @@ fun PermissionOnboardingScreen(
             // Card de Notificações
             PermissionCard(
                 icon = Icons.Default.Notifications,
-                title = "Notificações",
-                description = "Receba alertas de jogos, convites e atualizações",
+                title = stringResource(Res.string.permission_notifications_title),
+                description = stringResource(Res.string.permission_notifications_description),
                 isGranted = notificationGranted,
                 onRequest = { notificationGranted = true }
             )
@@ -115,8 +130,8 @@ fun PermissionOnboardingScreen(
             // Card de Localização
             PermissionCard(
                 icon = Icons.Default.LocationOn,
-                title = "Localização",
-                description = "Encontre campos e jogos próximos a você",
+                title = stringResource(Res.string.permission_location_title),
+                description = stringResource(Res.string.permission_location_description),
                 isGranted = locationGranted,
                 onRequest = { locationGranted = true }
             )
@@ -126,8 +141,8 @@ fun PermissionOnboardingScreen(
             // Card de Câmera
             PermissionCard(
                 icon = Icons.Default.Camera,
-                title = "Câmera",
-                description = "Tire fotos para seu perfil e compartilhe momentos",
+                title = stringResource(Res.string.permission_camera_title),
+                description = stringResource(Res.string.permission_camera_description),
                 isGranted = cameraGranted,
                 onRequest = { cameraGranted = true }
             )
@@ -137,8 +152,8 @@ fun PermissionOnboardingScreen(
             // Card de Microfone
             PermissionCard(
                 icon = Icons.Default.Mic,
-                title = "Microfone",
-                description = "Envie mensagens de voz para seus amigos",
+                title = stringResource(Res.string.permission_microphone_title),
+                description = stringResource(Res.string.permission_microphone_description),
                 isGranted = microphoneGranted,
                 onRequest = { microphoneGranted = true }
             )
@@ -154,7 +169,7 @@ fun PermissionOnboardingScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "Continuar",
+                    text = stringResource(Res.string.permission_onboarding_continue),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -163,7 +178,7 @@ fun PermissionOnboardingScreen(
 
             // Texto informativo
             Text(
-                text = "Você pode ajustar as permissões depois nas configurações do sistema",
+                text = stringResource(Res.string.permission_onboarding_skip_info),
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -254,7 +269,7 @@ private fun PermissionCard(
                     onClick = onRequest,
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Permitir")
+                    Text(stringResource(Res.string.permission_allow))
                 }
             }
         }
