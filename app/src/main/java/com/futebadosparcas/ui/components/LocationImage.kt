@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -46,7 +47,10 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.size.Size
 import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
+
 /**
  * Estado de carregamento progressivo de imagens.
  *
@@ -242,6 +246,11 @@ private fun ProgressiveImage(
     maxRetries: Int
 ) {
     val context = LocalContext.current
+    val reducedMotion = rememberReduceMotion()
+    val crossfadeSpec = tween<Float>(
+        durationMillis = MotionDuration.getMedium(reducedMotion),
+        easing = MotionEasing.Standard
+    )
 
     // Estado de carregamento
     var loadState by remember(imageUrl) { mutableStateOf(ImageLoadState.PLACEHOLDER) }
@@ -306,8 +315,8 @@ private fun ProgressiveImage(
                 visible = loadState == ImageLoadState.THUMBNAIL_LOADED ||
                         loadState == ImageLoadState.FULL_LOADING ||
                         loadState == ImageLoadState.FULL_LOADED,
-                enter = fadeIn(animationSpec = tween(300)),
-                exit = fadeOut(animationSpec = tween(300))
+                enter = fadeIn(animationSpec = crossfadeSpec),
+                exit = fadeOut(animationSpec = crossfadeSpec)
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(context)
