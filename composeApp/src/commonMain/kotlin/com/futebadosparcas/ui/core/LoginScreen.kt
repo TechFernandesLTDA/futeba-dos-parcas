@@ -54,6 +54,26 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.auth_authenticating
+import com.futebadosparcas.compose.resources.auth_back_to_google
+import com.futebadosparcas.compose.resources.auth_developed_by
+import com.futebadosparcas.compose.resources.auth_developer_team
+import com.futebadosparcas.compose.resources.auth_forgot_password
+import com.futebadosparcas.compose.resources.auth_hide_password
+import com.futebadosparcas.compose.resources.auth_login_tagline
+import com.futebadosparcas.compose.resources.auth_logo_description
+import com.futebadosparcas.compose.resources.auth_no_account_register
+import com.futebadosparcas.compose.resources.auth_show_password
+import com.futebadosparcas.compose.resources.auth_sign_in_description
+import com.futebadosparcas.compose.resources.auth_sign_in_email
+import com.futebadosparcas.compose.resources.auth_sign_in_google
+import com.futebadosparcas.compose.resources.auth_sign_in_title
+import com.futebadosparcas.compose.resources.auth_title
+import com.futebadosparcas.compose.resources.auth_version_lower
+import com.futebadosparcas.compose.resources.email
+import com.futebadosparcas.compose.resources.password
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Tela de Login portada para KMP.
@@ -124,7 +144,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Text(
-                        text = "Futeba dos Parças",
+                        text = stringResource(Res.string.auth_title),
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -135,7 +155,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Organize partidas, faça amigos, jogue futebol",
+                        text = stringResource(Res.string.auth_login_tagline),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -181,7 +201,7 @@ private fun AppLogo() {
         ) {
             Icon(
                 imageVector = Icons.Filled.SportsSoccer,
-                contentDescription = "Logo do Futeba dos Parças",
+                contentDescription = stringResource(Res.string.auth_logo_description),
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -218,7 +238,7 @@ private fun LoginCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Entrar",
+                text = stringResource(Res.string.auth_sign_in_title),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -227,7 +247,7 @@ private fun LoginCard(
             )
 
             Text(
-                text = "Faça login para continuar",
+                text = stringResource(Res.string.auth_sign_in_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -245,14 +265,14 @@ private fun LoginCard(
                 }
 
                 TextButton(onClick = { showEmailForm = true }) {
-                    Text("Entrar com email")
+                    Text(stringResource(Res.string.auth_sign_in_email))
                 }
             } else {
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Email") },
+                    label = { Text(stringResource(Res.string.email)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -266,13 +286,17 @@ private fun LoginCard(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Senha") },
+                    label = { Text(stringResource(Res.string.password)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (passwordVisible) "Ocultar senha" else "Mostrar senha"
+                                contentDescription = if (passwordVisible) {
+                                    stringResource(Res.string.auth_hide_password)
+                                } else {
+                                    stringResource(Res.string.auth_show_password)
+                                }
                             )
                         }
                     },
@@ -291,7 +315,7 @@ private fun LoginCard(
                     shape = RoundedCornerShape(12.dp),
                     enabled = email.isNotBlank() && password.isNotBlank() && uiState !is LoginState.Loading
                 ) {
-                    Text("Entrar")
+                    Text(stringResource(Res.string.auth_sign_in_title))
                 }
 
                 TextButton(
@@ -300,16 +324,16 @@ private fun LoginCard(
                     },
                     enabled = email.isNotBlank()
                 ) {
-                    Text("Esqueceu sua senha?")
+                    Text(stringResource(Res.string.auth_forgot_password))
                 }
 
                 TextButton(onClick = { showEmailForm = false }) {
-                    Text("Voltar para login com Google")
+                    Text(stringResource(Res.string.auth_back_to_google))
                 }
             }
 
             TextButton(onClick = onNavigateToRegister) {
-                Text("Não tem uma conta? Cadastre-se")
+                Text(stringResource(Res.string.auth_no_account_register))
             }
 
             AnimatedVisibility(
@@ -327,7 +351,7 @@ private fun LoginCard(
                         strokeWidth = 4.dp
                     )
                     Text(
-                        text = "Autenticando...",
+                        text = stringResource(Res.string.auth_authenticating),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -385,7 +409,7 @@ private fun GoogleSignInButton(onClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.size(12.dp))
         Text(
-            text = "Entrar com Google",
+            text = stringResource(Res.string.auth_sign_in_google),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold
             )
@@ -401,14 +425,14 @@ private fun LoginFooter(versionName: String) {
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
-            text = "Desenvolvido por",
+            text = stringResource(Res.string.auth_developed_by),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
 
         Text(
-            text = "Equipe Futeba dos Parças",
+            text = stringResource(Res.string.auth_developer_team),
             style = MaterialTheme.typography.titleSmall.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -419,7 +443,7 @@ private fun LoginFooter(versionName: String) {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "versão $versionName",
+            text = stringResource(Res.string.auth_version_lower, versionName),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             textAlign = TextAlign.Center

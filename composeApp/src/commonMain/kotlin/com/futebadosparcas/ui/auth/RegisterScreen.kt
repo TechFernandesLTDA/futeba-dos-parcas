@@ -54,6 +54,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.auth_already_have_account_sign_in
+import com.futebadosparcas.compose.resources.auth_create_account
+import com.futebadosparcas.compose.resources.auth_hide_password
+import com.futebadosparcas.compose.resources.auth_register_description
+import com.futebadosparcas.compose.resources.auth_show_password
+import com.futebadosparcas.compose.resources.email
+import com.futebadosparcas.compose.resources.name
+import com.futebadosparcas.compose.resources.password
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RegisterScreen(
@@ -95,7 +105,7 @@ fun RegisterScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Criar Conta",
+                    text = stringResource(Res.string.auth_create_account),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -105,7 +115,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Preencha os dados para se cadastrar.",
+                    text = stringResource(Res.string.auth_register_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -121,7 +131,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 TextButton(onClick = onNavigateToLogin) {
-                    Text("Já tem uma conta? Entrar")
+                    Text(stringResource(Res.string.auth_already_have_account_sign_in))
                 }
             }
         }
@@ -157,7 +167,7 @@ private fun RegisterForm(
                 value = name,
                 onValueChange = { name = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Nome") },
+                label = { Text(stringResource(Res.string.name)) },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
@@ -171,7 +181,7 @@ private fun RegisterForm(
                 value = email,
                 onValueChange = { email = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("E-mail") },
+                label = { Text(stringResource(Res.string.email)) },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
@@ -185,13 +195,17 @@ private fun RegisterForm(
                 value = password,
                 onValueChange = { password = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Senha") },
+                label = { Text(stringResource(Res.string.password)) },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (passwordVisible) "Ocultar senha" else "Mostrar senha"
+                            contentDescription = if (passwordVisible) {
+                                stringResource(Res.string.auth_hide_password)
+                            } else {
+                                stringResource(Res.string.auth_show_password)
+                            }
                         )
                     }
                 },
@@ -210,7 +224,7 @@ private fun RegisterForm(
                 shape = RoundedCornerShape(12.dp),
                 enabled = email.isNotBlank() && password.isNotBlank() && name.isNotBlank() && uiState !is RegisterState.Loading
             ) {
-                Text("Criar Conta")
+                Text(stringResource(Res.string.auth_create_account))
             }
 
             AnimatedVisibility(

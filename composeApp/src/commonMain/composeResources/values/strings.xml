@@ -1927,14 +1927,24 @@ subir no ranking!</string>
     <!-- Auth (migrated from moko-resources) -->
     <string name="auth_title">Futeba dos Parças</string>
     <string name="auth_slogan">Organize suas peladas com estilo!</string>
+    <string name="auth_login_tagline">Organize partidas, faça amigos, jogue futebol</string>
     <string name="auth_logo_description">Logo do Futeba dos Parças</string>
     <string name="auth_sign_in_title">Entrar</string>
     <string name="auth_sign_in_description">Faça login para continuar</string>
+    <string name="auth_sign_in_email">Entrar com email</string>
     <string name="auth_authenticating">Autenticando…</string>
     <string name="auth_sign_in_google">Entrar com Google</string>
+    <string name="auth_forgot_password">Esqueceu sua senha?</string>
+    <string name="auth_back_to_google">Voltar para login com Google</string>
+    <string name="auth_no_account_register">Não tem uma conta? Cadastre-se</string>
+    <string name="auth_already_have_account_sign_in">Já tem uma conta? Entrar</string>
+    <string name="auth_show_password">Mostrar senha</string>
+    <string name="auth_hide_password">Ocultar senha</string>
     <string name="auth_developed_by">Desenvolvido por</string>
     <string name="auth_developer_name">Futeba dos Parças</string>
+    <string name="auth_developer_team">Equipe Futeba dos Parças</string>
     <string name="auth_version">Versão %s</string>
+    <string name="auth_version_lower">versão %s</string>
 
     <!-- Common (migrated from moko-resources) -->
     <string name="common_yes">Sim</string>
@@ -1954,6 +1964,8 @@ subir no ranking!</string>
     <string name="auth_register_title">Registro</string>
     <string name="auth_register_message">O registro agora e feito via Google Sign-In</string>
     <string name="auth_register_redirect">Você será redirecionado para a tela de login</string>
+    <string name="auth_create_account">Criar Conta</string>
+    <string name="auth_register_description">Preencha os dados para se cadastrar.</string>
 
     <!-- Developer (migrated from moko-resources) -->
     <string name="developer_data_generation">Geração de Dados</string>
