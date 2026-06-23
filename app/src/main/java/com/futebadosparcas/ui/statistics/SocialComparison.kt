@@ -44,6 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -187,15 +190,22 @@ fun PlayerVsPlayerCard(
     val value1 = selectedCategory.getValue(player1.stats).toFloat()
     val value2 = selectedCategory.getValue(player2.stats).toFloat()
     val maxValue = maxOf(value1, value2, 0.01f)
+    val reducedMotion = rememberReduceMotion()
 
     val progress1 by animateFloatAsState(
         targetValue = value1 / maxValue,
-        animationSpec = tween(500),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getLong(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "progress1"
     )
     val progress2 by animateFloatAsState(
         targetValue = value2 / maxValue,
-        animationSpec = tween(500),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getLong(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "progress2"
     )
 
@@ -730,5 +740,4 @@ private fun ComparisonRow(
         )
     }
 }
-
 
