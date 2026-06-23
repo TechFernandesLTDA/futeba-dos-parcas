@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.components.animation
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,25 +17,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import kotlinx.coroutines.delay
 
 /**
  * Duração da exibição do overlay de sucesso (ms).
  */
 private const val SUCCESS_DISPLAY_DURATION_MS = 1200L
-
-/**
- * Duração da animação de entrada/saída (ms).
- */
-private const val SUCCESS_ANIMATION_DURATION_MS = 300
 
 /**
  * Overlay que exibe uma breve animação de sucesso (checkmark).
@@ -78,6 +70,9 @@ fun SuccessAnimationOverlay(
     modifier: Modifier = Modifier,
     displayDurationMs: Long = SUCCESS_DISPLAY_DURATION_MS
 ) {
+    val reducedMotion = rememberReduceMotion()
+    val animationDuration = MotionDuration.getMedium(reducedMotion)
+
     // Auto-dismiss após o tempo configurado
     if (visible) {
         LaunchedEffect(Unit) {
@@ -89,16 +84,28 @@ fun SuccessAnimationOverlay(
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(
-            animationSpec = tween(SUCCESS_ANIMATION_DURATION_MS, easing = FastOutSlowInEasing)
+            animationSpec = tween(
+                durationMillis = animationDuration,
+                easing = MotionEasing.Emphasized
+            )
         ) + scaleIn(
             initialScale = 0.5f,
-            animationSpec = tween(SUCCESS_ANIMATION_DURATION_MS, easing = FastOutSlowInEasing)
+            animationSpec = tween(
+                durationMillis = animationDuration,
+                easing = MotionEasing.Emphasized
+            )
         ),
         exit = fadeOut(
-            animationSpec = tween(SUCCESS_ANIMATION_DURATION_MS, easing = FastOutSlowInEasing)
+            animationSpec = tween(
+                durationMillis = animationDuration,
+                easing = MotionEasing.Standard
+            )
         ) + scaleOut(
             targetScale = 0.5f,
-            animationSpec = tween(SUCCESS_ANIMATION_DURATION_MS, easing = FastOutSlowInEasing)
+            animationSpec = tween(
+                durationMillis = animationDuration,
+                easing = MotionEasing.Standard
+            )
         ),
         modifier = modifier.fillMaxSize()
     ) {
