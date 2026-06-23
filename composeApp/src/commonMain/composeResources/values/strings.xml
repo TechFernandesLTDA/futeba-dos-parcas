@@ -3996,5 +3996,8 @@ subir no ranking!</string>
     <string name="home_status_updated">Atualizado</string>
     <string name="home_status_personal">Pessoal</string>
     <string name="home_matchday_content_description">%1$s. %2$s. %3$s. %4$s.</string>
+    <string name="cd_clear_search">Limpar busca</string>
+    <string name="cd_expand_release_version">Expandir versão</string>
+    <string name="cd_collapse_release_version">Recolher versão</string>
 
 </resources>
