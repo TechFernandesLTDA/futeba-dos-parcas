@@ -25,9 +25,38 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.app_name
+import com.futebadosparcas.compose.resources.cd_whats_new
+import com.futebadosparcas.compose.resources.home_action_games
+import com.futebadosparcas.compose.resources.home_action_groups
+import com.futebadosparcas.compose.resources.home_action_profile
+import com.futebadosparcas.compose.resources.home_action_whats_new
+import com.futebadosparcas.compose.resources.home_matchday_body
+import com.futebadosparcas.compose.resources.home_matchday_content_description
+import com.futebadosparcas.compose.resources.home_matchday_title
+import com.futebadosparcas.compose.resources.home_section_matchday
+import com.futebadosparcas.compose.resources.home_section_quick_actions
+import com.futebadosparcas.compose.resources.home_section_tools
+import com.futebadosparcas.compose.resources.home_status_live
+import com.futebadosparcas.compose.resources.home_status_personal
+import com.futebadosparcas.compose.resources.home_status_updated
+import com.futebadosparcas.compose.resources.home_subtitle
+import com.futebadosparcas.compose.resources.home_tools_games_body
+import com.futebadosparcas.compose.resources.home_tools_games_title
+import com.futebadosparcas.compose.resources.home_tools_groups_body
+import com.futebadosparcas.compose.resources.home_tools_groups_title
+import com.futebadosparcas.compose.resources.home_tools_profile_body
+import com.futebadosparcas.compose.resources.home_tools_profile_title
+import com.futebadosparcas.compose.resources.home_welcome
+import com.futebadosparcas.compose.resources.home_nav_games
+import com.futebadosparcas.compose.resources.home_nav_groups
+import com.futebadosparcas.compose.resources.home_nav_home
+import com.futebadosparcas.compose.resources.home_nav_profile
 import com.futebadosparcas.ui.adaptive.AdaptiveNavItem
 import com.futebadosparcas.ui.adaptive.AdaptiveTabBar
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,15 +67,22 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit = {},
     onOpenProfileSetup: () -> Unit = {},
 ) {
+    val appName = stringResource(Res.string.app_name)
+    val whatsNewContentDescription = stringResource(Res.string.cd_whats_new)
+    val navHome = stringResource(Res.string.home_nav_home)
+    val navGames = stringResource(Res.string.home_nav_games)
+    val navGroups = stringResource(Res.string.home_nav_groups)
+    val navProfile = stringResource(Res.string.home_nav_profile)
+
     Scaffold(
         topBar = {
             AdaptiveTopBar(
-                title = UiStrings.APP_NAME,
+                title = appName,
                 actions = {
                     IconButton(onClick = onOpenWhatsNew) {
                         Icon(
                             imageVector = Icons.Default.NewReleases,
-                            contentDescription = UiStrings.CD_WHATS_NEW,
+                            contentDescription = whatsNewContentDescription,
                         )
                     }
                 },
@@ -58,34 +94,34 @@ fun HomeScreen(
             AdaptiveTabBar(
                 items = listOf(
                     AdaptiveNavItem(
-                        label = UiStrings.NAV_HOME,
+                        label = navHome,
                         selectedIcon = Icons.Filled.FilledHome,
                         unselectedIcon = Icons.Outlined.OutlinedHome,
-                        contentDescription = UiStrings.NAV_HOME,
+                        contentDescription = navHome,
                         selected = true,
                         onClick = {}
                     ),
                     AdaptiveNavItem(
-                        label = UiStrings.NAV_GAMES,
+                        label = navGames,
                         selectedIcon = Icons.Filled.FilledSportsSoccer,
                         unselectedIcon = Icons.Outlined.OutlinedSportsSoccer,
-                        contentDescription = UiStrings.NAV_GAMES,
+                        contentDescription = navGames,
                         selected = false,
                         onClick = onNavigateToGames
                     ),
                     AdaptiveNavItem(
-                        label = UiStrings.NAV_GROUPS,
+                        label = navGroups,
                         selectedIcon = Icons.Filled.FilledGroup,
                         unselectedIcon = Icons.Outlined.OutlinedGroup,
-                        contentDescription = UiStrings.NAV_GROUPS,
+                        contentDescription = navGroups,
                         selected = false,
                         onClick = onNavigateToGroups
                     ),
                     AdaptiveNavItem(
-                        label = UiStrings.NAV_PROFILE,
+                        label = navProfile,
                         selectedIcon = Icons.Filled.FilledPerson,
                         unselectedIcon = Icons.Outlined.OutlinedPerson,
-                        contentDescription = UiStrings.NAV_PROFILE,
+                        contentDescription = navProfile,
                         selected = false,
                         onClick = onNavigateToProfile
                     )
@@ -190,20 +226,20 @@ private fun HomeHeroCard(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = UiStrings.HOME_STATUS_LIVE,
+                    text = stringResource(Res.string.home_status_live),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
             Text(
-                text = UiStrings.HOME_WELCOME,
+                text = stringResource(Res.string.home_welcome),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.semantics { heading() }
             )
             Text(
-                text = UiStrings.HOME_SUBTITLE,
+                text = stringResource(Res.string.home_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -255,7 +291,7 @@ private fun HomePrimaryActionButton(
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(UiStrings.HOME_ACTION_GAMES)
+        Text(stringResource(Res.string.home_action_games))
     }
 }
 
@@ -274,7 +310,7 @@ private fun HomeWhatsNewButton(
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(UiStrings.HOME_ACTION_WHATS_NEW)
+        Text(stringResource(Res.string.home_action_whats_new))
     }
 }
 
@@ -286,7 +322,7 @@ private fun HomeQuickActionsRow(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = UiStrings.HOME_SECTION_QUICK_ACTIONS,
+            text = stringResource(Res.string.home_section_quick_actions),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.semantics { heading() }
@@ -298,19 +334,19 @@ private fun HomeQuickActionsRow(
             QuickActionCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Filled.FilledSportsSoccer,
-                label = UiStrings.HOME_ACTION_GAMES,
+                label = stringResource(Res.string.home_action_games),
                 onClick = onNavigateToGames
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Filled.FilledGroup,
-                label = UiStrings.HOME_ACTION_GROUPS,
+                label = stringResource(Res.string.home_action_groups),
                 onClick = onNavigateToGroups
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Filled.FilledPerson,
-                label = UiStrings.HOME_ACTION_PROFILE,
+                label = stringResource(Res.string.home_action_profile),
                 onClick = onOpenProfileSetup
             )
         }
@@ -353,18 +389,30 @@ private fun QuickActionCard(
 
 @Composable
 private fun HomeInsightCard() {
+    val matchdayTitle = stringResource(Res.string.home_matchday_title)
+    val matchdayBody = stringResource(Res.string.home_matchday_body)
+    val updatedLabel = stringResource(Res.string.home_status_updated)
+    val personalLabel = stringResource(Res.string.home_status_personal)
+    val matchdayContentDescription = stringResource(
+        Res.string.home_matchday_content_description,
+        matchdayTitle,
+        matchdayBody,
+        updatedLabel,
+        personalLabel
+    )
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = UiStrings.HOME_SECTION_MATCHDAY,
+            text = stringResource(Res.string.home_section_matchday),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.semantics { heading() }
         )
         ElevatedCard(
             modifier = Modifier.semantics(mergeDescendants = true) {
-                contentDescription = "${UiStrings.HOME_MATCHDAY_TITLE}. ${UiStrings.HOME_MATCHDAY_BODY}. ${UiStrings.HOME_STATUS_UPDATED}. ${UiStrings.HOME_STATUS_PERSONAL}."
+                contentDescription = matchdayContentDescription
             }
         ) {
             Column(
@@ -383,13 +431,13 @@ private fun HomeInsightCard() {
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = UiStrings.HOME_MATCHDAY_TITLE,
+                        text = matchdayTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
                 Text(
-                    text = UiStrings.HOME_MATCHDAY_BODY,
+                    text = matchdayBody,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -397,12 +445,12 @@ private fun HomeInsightCard() {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StatusPill(
-                        label = UiStrings.HOME_STATUS_UPDATED,
+                        label = updatedLabel,
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     StatusPill(
-                        label = UiStrings.HOME_STATUS_PERSONAL,
+                        label = personalLabel,
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     )
@@ -441,27 +489,27 @@ private fun HomeToolsSection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = UiStrings.HOME_SECTION_TOOLS,
+            text = stringResource(Res.string.home_section_tools),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.semantics { heading() }
         )
         ToolSummaryCard(
             icon = Icons.Filled.FilledSportsSoccer,
-            title = UiStrings.HOME_TOOLS_GAMES_TITLE,
-            body = UiStrings.HOME_TOOLS_GAMES_BODY,
+            title = stringResource(Res.string.home_tools_games_title),
+            body = stringResource(Res.string.home_tools_games_body),
             onClick = onNavigateToGames
         )
         ToolSummaryCard(
             icon = Icons.Filled.FilledGroup,
-            title = UiStrings.HOME_TOOLS_GROUPS_TITLE,
-            body = UiStrings.HOME_TOOLS_GROUPS_BODY,
+            title = stringResource(Res.string.home_tools_groups_title),
+            body = stringResource(Res.string.home_tools_groups_body),
             onClick = onNavigateToGroups
         )
         ToolSummaryCard(
             icon = Icons.Filled.FilledPerson,
-            title = UiStrings.HOME_TOOLS_PROFILE_TITLE,
-            body = UiStrings.HOME_TOOLS_PROFILE_BODY,
+            title = stringResource(Res.string.home_tools_profile_title),
+            body = stringResource(Res.string.home_tools_profile_body),
             onClick = onNavigateToProfile
         )
     }

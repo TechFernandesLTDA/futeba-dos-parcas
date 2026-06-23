@@ -3970,5 +3970,31 @@ subir no ranking!</string>
     <string name="splash_logo_content_description">Futeba dos Parças</string>
     <string name="splash_tagline">Organização da pelada com ritmo e clareza</string>
     <string name="splash_platform_ready">Pronto para %1$s</string>
+    <string name="home_nav_home">Início</string>
+    <string name="home_nav_games">Jogos</string>
+    <string name="home_nav_groups">Grupos</string>
+    <string name="home_nav_profile">Perfil</string>
+    <string name="cd_whats_new">Novidades</string>
+    <string name="home_welcome">Sua rodada começa aqui</string>
+    <string name="home_subtitle">Jogos, grupos e perfil organizados de um jeito leve para acompanhar a próxima pelada.</string>
+    <string name="home_section_quick_actions">Acessos rápidos</string>
+    <string name="home_section_matchday">Ritmo da semana</string>
+    <string name="home_section_tools">Ferramentas principais</string>
+    <string name="home_action_games">Ver jogos</string>
+    <string name="home_action_groups">Abrir grupos</string>
+    <string name="home_action_profile">Ajustar perfil</string>
+    <string name="home_action_whats_new">Novidades</string>
+    <string name="home_matchday_title">Próximas decisões</string>
+    <string name="home_matchday_body">Confirme presença, acompanhe quem já fechou o elenco e mantenha a rodada redonda.</string>
+    <string name="home_tools_games_title">Jogos</string>
+    <string name="home_tools_games_body">Consulte partidas abertas, detalhes do campo e status das confirmações.</string>
+    <string name="home_tools_groups_title">Grupos</string>
+    <string name="home_tools_groups_body">Centralize convites, combine a resenha e organize o núcleo da galera.</string>
+    <string name="home_tools_profile_title">Perfil</string>
+    <string name="home_tools_profile_body">Deixe cadastro, preferências e identidade do jogador em ordem.</string>
+    <string name="home_status_live">Ao vivo</string>
+    <string name="home_status_updated">Atualizado</string>
+    <string name="home_status_personal">Pessoal</string>
+    <string name="home_matchday_content_description">%1$s. %2$s. %3$s. %4$s.</string>
 
 </resources>
