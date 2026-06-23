@@ -15,6 +15,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
@@ -47,8 +49,8 @@ fun ShimmerListContent(
         targetValue = if (reducedMotion) 500f else 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = if (reducedMotion) 1 else 1200,
-                easing = LinearEasing
+                durationMillis = MotionDuration.getLong(reducedMotion).coerceAtLeast(1),
+                easing = MotionEasing.Standard
             ),
             repeatMode = RepeatMode.Restart
         ),
@@ -116,8 +118,8 @@ private fun ShimmerBox(
         targetValue = if (reducedMotion) 500f else 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = if (reducedMotion) 1 else 1200,
-                easing = LinearEasing
+                durationMillis = MotionDuration.getLong(reducedMotion).coerceAtLeast(1),
+                easing = MotionEasing.Standard
             ),
             repeatMode = RepeatMode.Restart
         ),
@@ -163,8 +165,8 @@ fun ShimmerBox(
         targetValue = if (reducedMotion) 500f else 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = if (reducedMotion) 1 else 1200,
-                easing = LinearEasing
+                durationMillis = MotionDuration.getLong(reducedMotion).coerceAtLeast(1),
+                easing = MotionEasing.Standard
             ),
             repeatMode = RepeatMode.Restart
         ),
