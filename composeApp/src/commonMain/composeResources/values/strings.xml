@@ -3165,15 +3165,18 @@ subir no ranking!</string>
     <string name="owner_blocked_players_subtitle">Impede confirmação em futuros jogos</string>
     <string name="owner_block_player">Bloquear Jogador</string>
     <string name="owner_block_player_desc">Jogadores bloqueados não podem ver nem confirmar jogos deste grupo.</string>
+    <string name="owner_block_player_dialog_desc">Selecione um jogador para bloquear e informe o motivo.</string>
     <string name="owner_no_blocked_players">Nenhum jogador bloqueado</string>
     <string name="owner_no_blocked_players_desc">Jogadores que causarem problemas podem ser bloqueados aqui.</string>
     <string name="owner_no_players_to_block">Nenhum jogador disponível para bloquear</string>
     <string name="owner_select_player">Selecione o jogador:</string>
     <string name="owner_block_reason_label">Motivo (opcional)</string>
+    <string name="owner_block_reason_dialog_label">Motivo do bloqueio</string>
     <string name="owner_block_reason">Motivo: %1$s</string>
     <string name="owner_blocked_since">Bloqueado em: %1$s</string>
     <string name="owner_block">Bloquear</string>
     <string name="owner_unblock">Desbloquear</string>
+    <string name="owner_unblock_player_cd">Desbloquear %1$s</string>
 
     <!-- Issue #65: Automatic Closing -->
     <string name="owner_auto_close_title">Fechamento Automático</string>
