@@ -2,7 +2,6 @@ package com.futebadosparcas.ui.components.avatar
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -67,6 +66,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 /**
  * Sistema de customização de avatar para o perfil do jogador.
  * Permite personalizar rosto, cabelo, acessórios, camisa e badges.
@@ -272,17 +274,23 @@ private fun AvatarFrameRing(
     frame: AvatarFrame,
     size: Dp
 ) {
+    val reducedMotion = rememberReduceMotion()
     val rotation = remember { Animatable(0f) }
 
-    LaunchedEffect(frame) {
-        if (frame == AvatarFrame.RAINBOW || frame == AvatarFrame.FIRE) {
+    LaunchedEffect(frame, reducedMotion) {
+        if (!reducedMotion && (frame == AvatarFrame.RAINBOW || frame == AvatarFrame.FIRE)) {
             while (true) {
                 rotation.animateTo(
                     targetValue = 360f,
-                    animationSpec = tween(3000, easing = FastOutSlowInEasing)
+                    animationSpec = tween(
+                        durationMillis = MotionDuration.Long * 6,
+                        easing = MotionEasing.Standard
+                    )
                 )
                 rotation.snapTo(0f)
             }
+        } else {
+            rotation.snapTo(0f)
         }
     }
 
