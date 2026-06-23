@@ -3,10 +3,7 @@ package com.futebadosparcas.ui.components.animation
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -35,8 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import kotlinx.coroutines.delay
 
 /**
@@ -58,15 +58,13 @@ fun PressableScale(
     scaleOnPress: Float = 0.96f,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val scale by animateFloatAsState(
         targetValue = if (isPressed && enabled) scaleOnPress else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
+        animationSpec = MotionSpring.effects(reduceMotion),
         label = "pressScale"
     )
 
@@ -96,15 +94,13 @@ fun BouncyPress(
     enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val scale by animateFloatAsState(
         targetValue = if (isPressed && enabled) 0.92f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = MotionSpring.effects(reduceMotion),
         label = "bounceScale"
     )
 
@@ -137,6 +133,9 @@ fun FadeSlideIn(
     durationMillis: Int = 300,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
+    val enterDuration = if (reduceMotion) MotionDuration.MediumReduced else durationMillis
+    val exitDuration = if (reduceMotion) MotionDuration.ShortReduced else durationMillis / 2
     var showContent by remember { mutableStateOf(false) }
 
     LaunchedEffect(visible) {
@@ -152,16 +151,16 @@ fun FadeSlideIn(
         visible = showContent,
         modifier = modifier,
         enter = fadeIn(
-            animationSpec = tween(durationMillis, easing = FastOutSlowInEasing)
+            animationSpec = tween(enterDuration, easing = MotionEasing.Decelerate)
         ) + slideInVertically(
             initialOffsetY = { it / 4 },
-            animationSpec = tween(durationMillis, easing = FastOutSlowInEasing)
+            animationSpec = tween(enterDuration, easing = MotionEasing.Decelerate)
         ),
         exit = fadeOut(
-            animationSpec = tween(durationMillis / 2)
+            animationSpec = tween(exitDuration, easing = MotionEasing.Accelerate)
         ) + slideOutVertically(
             targetOffsetY = { -it / 4 },
-            animationSpec = tween(durationMillis / 2)
+            animationSpec = tween(exitDuration, easing = MotionEasing.Accelerate)
         )
     ) {
         content()
@@ -179,6 +178,7 @@ fun PopIn(
     delayMillis: Int = 0,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     var showContent by remember { mutableStateOf(false) }
 
     LaunchedEffect(visible) {
@@ -195,14 +195,14 @@ fun PopIn(
         modifier = modifier,
         enter = scaleIn(
             initialScale = 0.5f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
-            )
+            animationSpec = MotionSpring.effects(reduceMotion)
         ) + fadeIn(),
         exit = scaleOut(
             targetScale = 0.8f,
-            animationSpec = tween(150)
+            animationSpec = tween(
+                durationMillis = MotionDuration.getShort(reduceMotion),
+                easing = MotionEasing.Standard
+            )
         ) + fadeOut()
     ) {
         content()
@@ -222,12 +222,14 @@ fun AnimatedCounter(
     durationMillis: Int = 1000,
     content: @Composable (Int) -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
+    val animationDuration = if (reduceMotion) MotionDuration.MediumReduced else durationMillis
     val animatedValue = remember { Animatable(0f) }
 
     LaunchedEffect(targetValue) {
         animatedValue.animateTo(
             targetValue = targetValue.toFloat(),
-            animationSpec = tween(durationMillis, easing = FastOutSlowInEasing)
+            animationSpec = tween(animationDuration, easing = MotionEasing.Standard)
         )
     }
 
@@ -245,12 +247,15 @@ fun <T> CrossfadeContent(
     modifier: Modifier = Modifier,
     content: @Composable (T) -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
+    val crossfadeDuration = MotionDuration.getMedium(reduceMotion)
+
     AnimatedContent(
         targetState = targetState,
         modifier = modifier,
         transitionSpec = {
-            fadeIn(animationSpec = tween(300)) togetherWith
-                fadeOut(animationSpec = tween(300))
+            fadeIn(animationSpec = tween(crossfadeDuration, easing = MotionEasing.Standard)) togetherWith
+                fadeOut(animationSpec = tween(crossfadeDuration, easing = MotionEasing.Standard))
         },
         label = "crossfade"
     ) { state ->
@@ -271,18 +276,24 @@ fun PulseAnimation(
     durationMillis: Int = 1000,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
+    val pulseDuration = if (reduceMotion) MotionDuration.MediumReduced else durationMillis / 2
     val infiniteScale = remember { Animatable(1f) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            infiniteScale.animateTo(
-                targetValue = pulseFraction,
-                animationSpec = tween(durationMillis / 2)
-            )
-            infiniteScale.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis / 2)
-            )
+    LaunchedEffect(reduceMotion) {
+        if (!reduceMotion) {
+            while (true) {
+                infiniteScale.animateTo(
+                    targetValue = pulseFraction,
+                    animationSpec = tween(pulseDuration, easing = MotionEasing.Standard)
+                )
+                infiniteScale.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(pulseDuration, easing = MotionEasing.Standard)
+                )
+            }
+        } else {
+            infiniteScale.snapTo(1f)
         }
     }
 
@@ -302,12 +313,18 @@ fun LiveIndicator(
     color: Color = MaterialTheme.colorScheme.error,
     size: Dp = 8.dp
 ) {
+    val reduceMotion = rememberReduceMotion()
     val alpha = remember { Animatable(1f) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            alpha.animateTo(0.3f, animationSpec = tween(800))
-            alpha.animateTo(1f, animationSpec = tween(800))
+    LaunchedEffect(reduceMotion) {
+        if (!reduceMotion) {
+            val pulseDuration = MotionDuration.Long + MotionDuration.Medium
+            while (true) {
+                alpha.animateTo(0.3f, animationSpec = tween(pulseDuration, easing = MotionEasing.Standard))
+                alpha.animateTo(1f, animationSpec = tween(pulseDuration, easing = MotionEasing.Standard))
+            }
+        } else {
+            alpha.snapTo(1f)
         }
     }
 
@@ -333,15 +350,19 @@ fun ShakeOnError(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     val offsetX = remember { Animatable(0f) }
 
-    LaunchedEffect(trigger) {
-        if (trigger) {
+    LaunchedEffect(trigger, reduceMotion) {
+        if (trigger && !reduceMotion) {
+            val shakeDuration = MotionDuration.Short / 3
             repeat(3) {
-                offsetX.animateTo(10f, animationSpec = tween(50))
-                offsetX.animateTo(-10f, animationSpec = tween(50))
+                offsetX.animateTo(10f, animationSpec = tween(shakeDuration, easing = MotionEasing.Standard))
+                offsetX.animateTo(-10f, animationSpec = tween(shakeDuration, easing = MotionEasing.Standard))
             }
-            offsetX.animateTo(0f, animationSpec = tween(50))
+            offsetX.animateTo(0f, animationSpec = tween(shakeDuration, easing = MotionEasing.Standard))
+        } else if (reduceMotion) {
+            offsetX.snapTo(0f)
         }
     }
 
@@ -365,14 +386,19 @@ fun SpinAnimation(
     durationMillis: Int = 1000,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     val rotation = remember { Animatable(0f) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            rotation.animateTo(
-                targetValue = 360f,
-                animationSpec = tween(durationMillis, easing = androidx.compose.animation.core.LinearEasing)
-            )
+    LaunchedEffect(reduceMotion) {
+        if (!reduceMotion) {
+            while (true) {
+                rotation.animateTo(
+                    targetValue = 360f,
+                    animationSpec = tween(durationMillis, easing = MotionEasing.Standard)
+                )
+                rotation.snapTo(0f)
+            }
+        } else {
             rotation.snapTo(0f)
         }
     }
@@ -399,24 +425,20 @@ fun SuccessAnimation(
     onAnimationEnd: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     val scale = remember { Animatable(0f) }
 
-    LaunchedEffect(visible) {
+    LaunchedEffect(visible, reduceMotion) {
         if (visible) {
             scale.animateTo(
-                targetValue = 1.2f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
+                targetValue = if (reduceMotion) 1f else 1.2f,
+                animationSpec = MotionSpring.effects(reduceMotion)
             )
             scale.animateTo(
                 targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy
-                )
+                animationSpec = MotionSpring.effects(reduceMotion)
             )
-            delay(500)
+            delay(MotionDuration.getLong(reduceMotion).toLong())
             onAnimationEnd()
         } else {
             scale.snapTo(0f)
@@ -445,20 +467,25 @@ fun SwipeHintAnimation(
     direction: SwipeDirection = SwipeDirection.LEFT,
     content: @Composable () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     val offsetX = remember { Animatable(0f) }
     val targetOffset = when (direction) {
         SwipeDirection.LEFT -> -30f
         SwipeDirection.RIGHT -> 30f
     }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(2000)
-            offsetX.animateTo(targetOffset, animationSpec = tween(300))
-            offsetX.animateTo(0f, animationSpec = tween(300))
-            delay(500)
-            offsetX.animateTo(targetOffset, animationSpec = tween(300))
-            offsetX.animateTo(0f, animationSpec = tween(300))
+    LaunchedEffect(reduceMotion) {
+        if (!reduceMotion) {
+            while (true) {
+                delay((MotionDuration.Long * 4).toLong())
+                offsetX.animateTo(targetOffset, animationSpec = tween(MotionDuration.getMedium(false), easing = MotionEasing.Standard))
+                offsetX.animateTo(0f, animationSpec = tween(MotionDuration.getMedium(false), easing = MotionEasing.Standard))
+                delay(MotionDuration.getLong(false).toLong())
+                offsetX.animateTo(targetOffset, animationSpec = tween(MotionDuration.getMedium(false), easing = MotionEasing.Standard))
+                offsetX.animateTo(0f, animationSpec = tween(MotionDuration.getMedium(false), easing = MotionEasing.Standard))
+            }
+        } else {
+            offsetX.snapTo(0f)
         }
     }
 
