@@ -6,6 +6,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { Location } from '../types/location';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useLocations');
 
@@ -40,6 +41,7 @@ async function fetchLocationById(locationId: string): Promise<Location | null> {
 
 export const useLocations = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: locations = [], isLoading: loading, error: queryError } = useQuery({
     queryKey: ['locations'],
@@ -56,6 +58,8 @@ export const useLocations = () => {
   // a identidade da função de contexto muda entre renders.
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   // Listener real-time para invalidar cache quando localizações mudam
   // FIX #1129: limit(200) server-side, alinhado com fetchLocations.
@@ -78,7 +82,7 @@ export const useLocations = () => {
       (err) => {
         logger.error('Error in locations listener:', err);
         setListenerError(err.message);
-        showErrorRef.current('Erro ao carregar localizações em tempo real');
+        showErrorRef.current(tRef.current('feedback.location.realtimeLoadError'));
       }
     );
 
