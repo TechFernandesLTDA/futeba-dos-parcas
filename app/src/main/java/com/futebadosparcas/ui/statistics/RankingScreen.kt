@@ -43,6 +43,9 @@ import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,6 +59,7 @@ fun RankingScreen(
     onPlayerClick: (String) -> Unit = {}
 ) {
     val state by viewModel.rankingState.collectAsStateWithLifecycle()
+    val reduceMotion = rememberReduceMotion()
 
     Column(
         modifier = Modifier
@@ -101,7 +105,17 @@ fun RankingScreen(
                     AnimatedContent(
                         targetState = state.rankings,
                         transitionSpec = {
-                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(150))
+                            fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = MotionDuration.getMedium(reduceMotion),
+                                    easing = MotionEasing.Decelerate
+                                )
+                            ) togetherWith fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = MotionDuration.getShort(reduceMotion),
+                                    easing = MotionEasing.Accelerate
+                                )
+                            )
                         },
                         label = "rankingContent"
                     ) { currentRankings ->
