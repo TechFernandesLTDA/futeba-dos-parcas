@@ -18,6 +18,10 @@ import {
   MAX_SAVES_PER_GAME,
 } from "../constants";
 import {db} from "../_db";
+import {
+  getLevelForXp,
+  MILESTONES,
+} from "./pipeline";
 
 
 // ==========================================
@@ -462,6 +466,97 @@ function buildXpLogData(
   };
 }
 
+/**
+ * Soma a recompensa configurada para os milestones informados.
+ * @param {string[]} milestoneNames Nomes dos milestones.
+ * @return {number} XP total dos milestones.
+ */
+function getMilestoneXp(
+  milestoneNames: string[]
+): number {
+  return milestoneNames.reduce((sum, name) => {
+    const def = MILESTONES.find((m) =>
+      m.name === name
+    );
+    return sum + (def?.xpReward || 0);
+  }, 0);
+}
+
+/**
+ * Recalcula XP/level/log contra o snapshot fresco do usuário.
+ * @param {XpTransactionData} data Transação validada pelo chamador.
+ * @param {FirebaseFirestore.DocumentData | undefined} userData
+ *   Dados do usuário lidos dentro da transação.
+ * @return {XpTransactionData} Transação ajustada ao estado fresco.
+ */
+function withFreshUserProgress(
+  data: XpTransactionData,
+  userData: FirebaseFirestore.DocumentData | undefined
+): XpTransactionData {
+  const currentXp =
+    (userData?.experience_points as number) || 0;
+  const achieved = Array.isArray(
+    userData?.milestones_achieved
+  ) ?
+    userData?.milestones_achieved as string[] :
+    [];
+  const milestonesUnlocked =
+    data.metadata.milestonesUnlocked.filter(
+      (name) => !achieved.includes(name)
+    );
+  const skippedMilestones =
+    data.metadata.milestonesUnlocked.filter(
+      (name) => achieved.includes(name)
+    );
+  const skippedMilestoneXp =
+    getMilestoneXp(skippedMilestones);
+  const rawBreakdownXp = Object.values(
+    data.breakdown
+  ).reduce((sum, value) => sum + value, 0);
+  const rawXp = rawBreakdownXp !== 0 ?
+    rawBreakdownXp :
+    data.xpEarned;
+  const xpEarned = Math.max(
+    MIN_XP_PER_GAME,
+    Math.min(
+      MAX_XP_PER_GAME,
+      rawXp - skippedMilestoneXp
+    )
+  );
+  const xpAfter = currentXp + xpEarned;
+  const levelBefore = getLevelForXp(currentXp);
+  const levelAfter = getLevelForXp(xpAfter);
+
+  if (skippedMilestones.length > 0) {
+    logger.info(
+      "[XP_IDEMPOTENCY] Ignorando milestone(s) " +
+      `já conquistados para ${data.userId}: ` +
+      skippedMilestones.join(", ")
+    );
+  }
+
+  return {
+    ...data,
+    xpEarned,
+    xpBefore: currentXp,
+    xpAfter,
+    levelBefore,
+    levelAfter,
+    breakdown: {
+      ...data.breakdown,
+      milestones: Math.max(
+        0,
+        data.breakdown.milestones -
+          skippedMilestoneXp
+      ),
+    },
+    metadata: {
+      ...data.metadata,
+      milestonesUnlocked,
+    },
+  };
+}
+
 // ==========================================
 // GERAÇÃO DE TRANSACTION ID
 // ==========================================
@@ -627,6 +722,11 @@ export async function processXpIdempotent(
             `${data.userId} não encontrado`
           );
         }
+
+        data = withFreshUserProgress(
+          data,
+          userDoc.data()
+        );
 
         transaction.update(userRef, {
           experience_points: FieldValue.increment(data.xpEarned),
@@ -821,17 +921,26 @@ export async function processXpBatch(
                   data.userId
                 )
               ),
+            userRef: db()
+              .collection("users")
+              .doc(data.userId),
           }));
 
-          const snaps = await Promise.all(
+          const logSnaps = await Promise.all(
             refs.map((r) => tx.get(r.logRef))
+          );
+          const userSnaps = await Promise.all(
+            refs.map((r) => tx.get(r.userRef))
           );
 
           // FASE B: escrever apenas os não-processados
           for (let j = 0; j < refs.length; j++) {
-            const {data, transactionId, logRef} =
+            let {data} =
               refs[j];
-            const snap = snaps[j];
+            const {transactionId, logRef, userRef} =
+              refs[j];
+            const snap = logSnaps[j];
+            const userSnap = userSnaps[j];
 
             if (snap.exists) {
               partial.push({
@@ -842,9 +951,17 @@ export async function processXpBatch(
               continue;
             }
 
-            const userRef = db()
-              .collection("users")
-              .doc(data.userId);
+            if (!userSnap.exists) {
+              throw new Error(
+                "Usuário " +
+                `${data.userId} não encontrado`
+              );
+            }
+
+            data = withFreshUserProgress(
+              data,
+              userSnap.data()
+            );
 
             tx.update(userRef, {
               experience_points:

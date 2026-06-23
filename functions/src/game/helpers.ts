@@ -503,10 +503,17 @@ export async function fetchAllStreaks(
 // RANKING & SEASON HELPERS
 // ==========================================
 
+type FirestoreSetWriter = {
+  set: (
+    documentRef: admin.firestore.DocumentReference,
+    data: admin.firestore.DocumentData,
+    options?: admin.firestore.SetOptions
+  ) => unknown;
+};
+
 /**
  * Atualiza deltas de ranking semanal e mensal.
- * @param {admin.firestore.WriteBatch} batch
- *   Batch de escrita.
+ * @param {FirestoreSetWriter} batch Batch ou transação de escrita.
  * @param {string} uid ID do usuário.
  * @param {GameConfirmation} conf Confirmação.
  * @param {string} result Resultado do jogo.
@@ -516,7 +523,7 @@ export async function fetchAllStreaks(
  * @param {string} monthKey Chave do mês.
  */
 export function updateRankingDeltas(
-  batch: admin.firestore.WriteBatch,
+  batch: FirestoreSetWriter,
   uid: string,
   conf: GameConfirmation,
   result: string,
@@ -604,8 +611,7 @@ export function normalizeGameGender(raw: unknown): string {
  * sem migração nem double-count). Adiciona em paralelo o mapa
  * aninhado `by_gender.{MALE|FEMALE|MIXED}` com os mesmos campos,
  * permitindo rankings segmentados por categoria do JOGO.
- * @param {admin.firestore.WriteBatch} batch
- *   Batch de escrita.
+ * @param {FirestoreSetWriter} batch Batch ou transação de escrita.
  * @param {string} uid ID do usuário.
  * @param {string} seasonId ID da temporada.
  * @param {string} result Resultado do jogo.
@@ -617,7 +623,7 @@ export function normalizeGameGender(raw: unknown): string {
  *   (MALE/FEMALE/MIXED). Default MIXED para jogos legados.
  */
 export function updateSeasonParticipation(
-  batch: admin.firestore.WriteBatch,
+  batch: FirestoreSetWriter,
   uid: string,
   seasonId: string,
   result: string,

@@ -421,9 +421,16 @@ describe("XP Processing - Batch Operations", () => {
      *
      * Helper: cria mock de tx.get retornando exists conforme map.
      */
-    const mockTxnExistsMap = (existsMap: Record<string, boolean>) => {
+    const mockTxnExistsMap = (
+      existsMap: Record<string, boolean>,
+      userDataMap: Record<string, Record<string, unknown>> = {}
+    ) => {
       mockDb.collection.mockImplementation((coll: string) => ({
-        doc: jest.fn((id?: string) => ({_path: `${coll}/${id ?? "auto"}`, _id: id})),
+        doc: jest.fn((id?: string) => ({
+          _path: `${coll}/${id ?? "auto"}`,
+          _id: id,
+          _collection: coll,
+        })),
         where: jest.fn().mockReturnValue({
           get: jest.fn().mockResolvedValue({empty: true, docs: []}),
         }),
@@ -433,8 +440,18 @@ describe("XP Processing - Batch Operations", () => {
         async (callback: (tx: any) => Promise<any>) => {
           const tx = {
             get: jest.fn(async (ref: any) => {
-              // ref tem formato {_path: "xp_logs/<txId>", _id}
+              // ref tem formato {_path, _id, _collection}
               const txId = ref._id;
+              if (ref._collection === "users") {
+                return {
+                  exists: true,
+                  data: () => userDataMap[txId] || {
+                    experience_points: 500,
+                    level: 5,
+                    milestones_achieved: [],
+                  },
+                };
+              }
               return {
                 exists: existsMap[txId] === true,
                 data: () => ({transaction_id: txId}),
@@ -528,6 +545,123 @@ describe("XP Processing - Batch Operations", () => {
       expect(user2?.success).toBe(true);
     });
 
+    test("usa user snapshot fresco para level e não duplica XP de milestone", async () => {
+      const setCalls: Array<{ref: any; data: Record<string, unknown>}> = [];
+
+      mockDb.collection.mockImplementation((coll: string) => ({
+        doc: jest.fn((id?: string) => ({
+          _path: `${coll}/${id ?? "auto"}`,
+          _id: id,
+          _collection: coll,
+        })),
+        where: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({empty: true, docs: []}),
+        }),
+      }));
+
+      mockDb.runTransaction.mockImplementation(
+        async (callback: (tx: any) => Promise<any>) => {
+          const tx = {
+            get: jest.fn(async (ref: any) => {
+              if (ref._collection === "users") {
+                return {
+                  exists: true,
+                  data: () => ({
+                    experience_points: 340,
+                    level: 1,
+                    milestones_achieved: ["WINS_10"],
+                  }),
+                };
+              }
+              return {exists: false, data: () => ({})};
+            }),
+            update: jest.fn(),
+            set: jest.fn((ref: any, data: Record<string, unknown>) => {
+              setCalls.push({ref, data});
+            }),
+          };
+          return callback(tx);
+        }
+      );
+
+      const results = await processXpBatch([
+        sampleTxn("game1", "user1", 100, ["WINS_10"]),
+      ]);
+
+      const logSet = setCalls.find((call) =>
+        call.ref._collection === "xp_logs"
+      );
+
+      expect(results[0].success).toBe(true);
+      expect(logSet?.data.xp_earned).toBe(25);
+      expect(logSet?.data.xp_before).toBe(340);
+      expect(logSet?.data.xp_after).toBe(365);
+      expect(logSet?.data.level_before).toBe(1);
+      expect(logSet?.data.level_after).toBe(2);
+      expect(logSet?.data.xp_milestones).toBe(0);
+      expect(logSet?.data.milestones_unlocked).toEqual([]);
+    });
+
+    test("remove milestone duplicado antes de aplicar teto de XP", async () => {
+      const setCalls: Array<{ref: any; data: Record<string, unknown>}> = [];
+
+      mockDb.collection.mockImplementation((coll: string) => ({
+        doc: jest.fn((id?: string) => ({
+          _path: `${coll}/${id ?? "auto"}`,
+          _id: id,
+          _collection: coll,
+        })),
+        where: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({empty: true, docs: []}),
+        }),
+      }));
+
+      mockDb.runTransaction.mockImplementation(
+        async (callback: (tx: any) => Promise<any>) => {
+          const tx = {
+            get: jest.fn(async (ref: any) => {
+              if (ref._collection === "users") {
+                return {
+                  exists: true,
+                  data: () => ({
+                    experience_points: 1000,
+                    level: 3,
+                    milestones_achieved: ["WINS_10"],
+                  }),
+                };
+              }
+              return {exists: false, data: () => ({})};
+            }),
+            update: jest.fn(),
+            set: jest.fn((ref: any, data: Record<string, unknown>) => {
+              setCalls.push({ref, data});
+            }),
+          };
+          return callback(tx);
+        }
+      );
+
+      const cappedTxn = sampleTxn("game1", "user1", 500, ["WINS_10"]);
+      cappedTxn.breakdown = {
+        ...cappedTxn.breakdown,
+        participation: 480,
+        goals: 0,
+        assists: 0,
+        result: 0,
+        milestones: 75,
+      };
+
+      await processXpBatch([cappedTxn]);
+
+      const logSet = setCalls.find((call) =>
+        call.ref._collection === "xp_logs"
+      );
+
+      expect(logSet?.data.xp_earned).toBe(480);
+      expect(logSet?.data.xp_after).toBe(1480);
+      expect(logSet?.data.xp_milestones).toBe(0);
+    });
+
     test("deve lidar com erro de commit na transaction", async () => {
       const mockTransactions = [sampleTxn("game1", "user1")];
 
@@ -565,6 +699,7 @@ describe("XP Processing - Batch Operations", () => {
         doc: jest.fn((id?: string) => ({
           _path: `${coll}/${id ?? "auto"}`,
           _id: id,
+          _collection: coll,
         })),
         where: jest.fn().mockReturnValue({
           get: jest.fn().mockResolvedValue({empty: true, docs: []}),
@@ -576,7 +711,17 @@ describe("XP Processing - Batch Operations", () => {
           const tx = {
             get: jest.fn(async (ref: any) => {
               callOrder.push(`tx.get(${ref._id})`);
-              return {exists: false};
+              if (ref._collection === "users") {
+                return {
+                  exists: true,
+                  data: () => ({
+                    experience_points: 500,
+                    level: 5,
+                    milestones_achieved: [],
+                  }),
+                };
+              }
+              return {exists: false, data: () => ({})};
             }),
             update: jest.fn((ref: any) => {
               callOrder.push(`tx.update(${ref._path})`);
