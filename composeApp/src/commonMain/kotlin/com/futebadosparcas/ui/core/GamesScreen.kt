@@ -24,8 +24,30 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.compose.viewmodel.koinViewModel
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.games_card_cd_no_status
+import com.futebadosparcas.compose.resources.games_card_cd_with_status
+import com.futebadosparcas.compose.resources.games_confirmed_count
+import com.futebadosparcas.compose.resources.games_create_game_cd
+import com.futebadosparcas.compose.resources.games_create_new_game
+import com.futebadosparcas.compose.resources.games_empty_description
+import com.futebadosparcas.compose.resources.games_empty_title
+import com.futebadosparcas.compose.resources.games_error_title
+import com.futebadosparcas.compose.resources.games_schedule_at
+import com.futebadosparcas.compose.resources.games_schedule_time_not_defined
+import com.futebadosparcas.compose.resources.games_status_cancelled_label
+import com.futebadosparcas.compose.resources.games_status_confirmed_label
+import com.futebadosparcas.compose.resources.games_status_finished_label
+import com.futebadosparcas.compose.resources.games_status_live_label
+import com.futebadosparcas.compose.resources.games_status_open_label
+import com.futebadosparcas.compose.resources.games_status_scheduled_label
+import com.futebadosparcas.compose.resources.games_time_inline
+import com.futebadosparcas.compose.resources.games_time_missing
+import com.futebadosparcas.compose.resources.games_title
 import com.futebadosparcas.domain.model.GameWithConfirmations
+import com.futebadosparcas.compose.resources.retry
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * GamesScreen – Tela principal de listagem de jogos do Futeba dos Parças.
@@ -49,7 +71,7 @@ fun GamesScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Jogos",
+                        text = stringResource(Res.string.games_title),
                         modifier = Modifier.semantics { heading() }
                     )
                 },
@@ -63,7 +85,10 @@ fun GamesScreen(
                 onClick = onCreateGameClick,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Criar jogo")
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(Res.string.games_create_game_cd)
+                )
             }
         }
     ) { paddingValues ->
@@ -138,19 +163,15 @@ private fun GameCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scheduleDescription = buildString {
-        append(game.game.date)
-        if (game.game.time.isNotEmpty()) {
-            append(" às ")
-            append(game.game.time)
-        } else {
-            append(", horário não definido")
-        }
-    }
-    val statusDescription = if (game.game.status.isNotEmpty()) {
-        ", status ${gameStatusText(game.game.status)}"
+    val scheduleDescription = if (game.game.time.isNotEmpty()) {
+        stringResource(Res.string.games_schedule_at, game.game.date, game.game.time)
     } else {
-        ""
+        stringResource(Res.string.games_schedule_time_not_defined, game.game.date)
+    }
+    val statusText = if (game.game.status.isNotEmpty()) {
+        gameStatusText(game.game.status)
+    } else {
+        null
     }
     val locationDescription = buildString {
         append(game.game.locationName)
@@ -159,13 +180,29 @@ private fun GameCard(
             append(game.game.locationAddress)
         }
     }
+    val cardContentDescription = if (statusText != null) {
+        stringResource(
+            Res.string.games_card_cd_with_status,
+            locationDescription,
+            scheduleDescription,
+            game.game.playersCount,
+            statusText
+        )
+    } else {
+        stringResource(
+            Res.string.games_card_cd_no_status,
+            locationDescription,
+            scheduleDescription,
+            game.game.playersCount
+        )
+    }
 
     Card(
         onClick = onClick,
         modifier = modifier
             .heightIn(min = 120.dp)
             .semantics(mergeDescendants = true) {
-                contentDescription = "$locationDescription. $scheduleDescription. ${game.game.playersCount} confirmados$statusDescription."
+                contentDescription = cardContentDescription
                 role = Role.Button
             },
         shape = RoundedCornerShape(12.dp),
@@ -230,13 +267,10 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = buildString {
-                        append(game.game.date)
-                        if (game.game.time.isNotEmpty()) {
-                            append(" ${game.game.time}")
-                        } else {
-                            append(" (--:--)")
-                        }
+                    text = if (game.game.time.isNotEmpty()) {
+                        stringResource(Res.string.games_time_inline, game.game.date, game.game.time)
+                    } else {
+                        stringResource(Res.string.games_time_missing, game.game.date)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (game.game.time.isEmpty()) {
@@ -260,7 +294,7 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${game.game.playersCount} confirmados",
+                    text = stringResource(Res.string.games_confirmed_count, game.game.playersCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -307,7 +341,7 @@ private fun GamesEmptyState(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Nenhum jogo encontrado",
+            text = stringResource(Res.string.games_empty_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
@@ -315,7 +349,7 @@ private fun GamesEmptyState(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Você ainda não tem jogos agendados. Crie um novo jogo!",
+            text = stringResource(Res.string.games_empty_description),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -331,7 +365,7 @@ private fun GamesEmptyState(
         ) {
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Criar novo jogo")
+            Text(stringResource(Res.string.games_create_new_game))
         }
     }
 }
@@ -359,7 +393,7 @@ private fun GamesErrorState(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Erro",
+            text = stringResource(Res.string.games_error_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.semantics { heading() }
@@ -372,7 +406,7 @@ private fun GamesErrorState(
             textAlign = TextAlign.Center
         )
         Button(onClick = onRetry) {
-            Text("Tentar novamente")
+            Text(stringResource(Res.string.retry))
         }
     }
 }
@@ -413,11 +447,11 @@ private fun gameStatusColor(status: String) = when (status.uppercase()) {
  */
 @Composable
 private fun gameStatusText(status: String): String = when (status.uppercase()) {
-    "OPEN"      -> "Aberto"
-    "CONFIRMED" -> "Confirmado"
-    "SCHEDULED" -> "Agendado"
-    "LIVE"      -> "Ao vivo"
-    "FINISHED"  -> "Finalizado"
-    "CANCELLED" -> "Cancelado"
+    "OPEN"      -> stringResource(Res.string.games_status_open_label)
+    "CONFIRMED" -> stringResource(Res.string.games_status_confirmed_label)
+    "SCHEDULED" -> stringResource(Res.string.games_status_scheduled_label)
+    "LIVE"      -> stringResource(Res.string.games_status_live_label)
+    "FINISHED"  -> stringResource(Res.string.games_status_finished_label)
+    "CANCELLED" -> stringResource(Res.string.games_status_cancelled_label)
     else        -> status
 }
