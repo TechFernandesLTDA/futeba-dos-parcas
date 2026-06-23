@@ -531,11 +531,11 @@ service cloud.firestore {
            fieldUnchanged('updated_at') &&
            // Validacao de dados no update
            isValidName(request.resource.data.name) &&
-           isValidEmail(request.resource.data.email) &&
-           isValidRating(request.resource.data.striker_rating) &&
-           isValidRating(request.resource.data.mid_rating) &&
-           isValidRating(request.resource.data.defender_rating) &&
-           isValidRating(request.resource.data.gk_rating));
+            isValidEmail(request.resource.data.get('email', null)) &&
+            isValidRating(request.resource.data.get('striker_rating', null)) &&
+            isValidRating(request.resource.data.get('mid_rating', null)) &&
+            isValidRating(request.resource.data.get('defender_rating', null)) &&
+            isValidRating(request.resource.data.get('gk_rating', null)));
 
       allow delete: if false;
 

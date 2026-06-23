@@ -25,7 +25,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
@@ -381,7 +381,6 @@ export const EditProfileScreen: React.FC = () => {
         mid_rating_set: true,
         defender_rating_set: true,
         gk_rating_set: true,
-        updated_at: serverTimestamp(),
       });
 
       // Persiste gênero via callable, porque users_private é read-only para
