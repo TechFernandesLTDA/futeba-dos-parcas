@@ -18,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.domain.model.TeamStrength
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.util.ContrastHelper
 import kotlin.math.abs
 import com.futebadosparcas.R
@@ -113,9 +116,13 @@ private fun StrengthBar(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    val reducedMotion = rememberReduceMotion()
     val animatedProgress by animateFloatAsState(
         targetValue = (value / maxValue).coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getLong(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "strengthProgress"
     )
 
