@@ -1960,6 +1960,27 @@ subir no ranking!</string>
     <string name="game_live">Ao Vivo</string>
     <string name="locations_title">Locais</string>
 
+    <!-- Compose Games Screen -->
+    <string name="games_title">Jogos</string>
+    <string name="games_create_game_cd">Criar jogo</string>
+    <string name="games_create_new_game">Criar novo jogo</string>
+    <string name="games_schedule_at">%1$s às %2$s</string>
+    <string name="games_schedule_time_not_defined">%1$s, horário não definido</string>
+    <string name="games_time_inline">%1$s %2$s</string>
+    <string name="games_time_missing">%1$s (--:--)</string>
+    <string name="games_confirmed_count">%1$d confirmados</string>
+    <string name="games_card_cd_no_status">%1$s. %2$s. %3$d confirmados.</string>
+    <string name="games_card_cd_with_status">%1$s. %2$s. %3$d confirmados, status %4$s.</string>
+    <string name="games_empty_title">Nenhum jogo encontrado</string>
+    <string name="games_empty_description">Você ainda não tem jogos agendados. Crie um novo jogo!</string>
+    <string name="games_error_title">Erro</string>
+    <string name="games_status_open_label">Aberto</string>
+    <string name="games_status_confirmed_label">Confirmado</string>
+    <string name="games_status_scheduled_label">Agendado</string>
+    <string name="games_status_live_label">Ao vivo</string>
+    <string name="games_status_finished_label">Finalizado</string>
+    <string name="games_status_cancelled_label">Cancelado</string>
+
     <!-- Auth Register (migrated from moko-resources) -->
     <string name="auth_register_title">Registro</string>
     <string name="auth_register_message">O registro agora e feito via Google Sign-In</string>
