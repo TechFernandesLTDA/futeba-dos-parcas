@@ -68,21 +68,5 @@ internal object UiStrings {
     const val CD_COLLAPSE_RELEASE_VERSION = "Recolher versão"
 
     // ---- Hubs de navegação composeApp ----
-    const val GROUPS_HUB_TITLE = "Grupos"
-    const val GROUPS_HUB_BODY = "Reúna a galera, oriente convites e mantenha a organização da rodada num só lugar."
-    const val GROUPS_HUB_ACTION_GAMES = "Jogos da rodada"
-    const val GROUPS_HUB_ACTION_GAMES_BODY = "Abra partidas, confirmações e detalhes do próximo encontro."
-    const val GROUPS_HUB_ACTION_BLOCKED = "Jogadores bloqueados"
-    const val GROUPS_HUB_ACTION_BLOCKED_BODY = "Revise restrições antes de chamar a galera para uma rodada."
-    const val GROUPS_HUB_ACTION_WHATS_NEW = "Novidades"
-    const val GROUPS_HUB_ACTION_WHATS_NEW_BODY = "Veja melhorias recentes que afetam grupos e convites."
-    const val PROFILE_HUB_TITLE = "Perfil"
-    const val PROFILE_HUB_BODY = "Ajuste seus dados e deixe sua presença pronta para entrar em campo."
-    const val PROFILE_HUB_ACTION_SETUP = "Completar perfil"
-    const val PROFILE_HUB_ACTION_SETUP_BODY = "Atualize nome, apelido e preferências básicas."
-    const val PROFILE_HUB_ACTION_STATS = "Estatísticas"
-    const val PROFILE_HUB_ACTION_STATS_BODY = "Acompanhe sua visão de organizador e jogos recentes."
-    const val PROFILE_HUB_ACTION_BLOCKED = "Jogadores bloqueados"
-    const val PROFILE_HUB_ACTION_BLOCKED_BODY = "Gerencie restrições ligadas à sua organização."
-    const val FEATURE_HUB_ACTIONS = "Ações disponíveis"
+    // Migrados para composeResources/values/strings.xml como primeiro lote i18n (#2744).
 }

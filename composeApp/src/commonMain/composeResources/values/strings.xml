@@ -3942,4 +3942,23 @@ subir no ranking!</string>
     <!-- VoiceMessageRecorder -->
     <string name="voice_tap_to_record">Toque para gravar</string>
 
+    <!-- composeApp feature hubs -->
+    <string name="groups_hub_title">Grupos</string>
+    <string name="groups_hub_body">Reúna a galera, oriente convites e mantenha a organização da rodada num só lugar.</string>
+    <string name="groups_hub_action_games">Jogos da rodada</string>
+    <string name="groups_hub_action_games_body">Abra partidas, confirmações e detalhes do próximo encontro.</string>
+    <string name="groups_hub_action_blocked">Jogadores bloqueados</string>
+    <string name="groups_hub_action_blocked_body">Revise restrições antes de chamar a galera para uma rodada.</string>
+    <string name="groups_hub_action_whats_new">Novidades</string>
+    <string name="groups_hub_action_whats_new_body">Veja melhorias recentes que afetam grupos e convites.</string>
+    <string name="profile_hub_title">Perfil</string>
+    <string name="profile_hub_body">Ajuste seus dados e deixe sua presença pronta para entrar em campo.</string>
+    <string name="profile_hub_action_setup">Completar perfil</string>
+    <string name="profile_hub_action_setup_body">Atualize nome, apelido e preferências básicas.</string>
+    <string name="profile_hub_action_stats">Estatísticas</string>
+    <string name="profile_hub_action_stats_body">Acompanhe sua visão de organizador e jogos recentes.</string>
+    <string name="profile_hub_action_blocked">Jogadores bloqueados</string>
+    <string name="profile_hub_action_blocked_body">Gerencie restrições ligadas à sua organização.</string>
+    <string name="feature_hub_actions">Ações disponíveis</string>
+
 </resources>

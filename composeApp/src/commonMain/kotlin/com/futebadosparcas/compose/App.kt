@@ -52,8 +52,26 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
+import com.futebadosparcas.compose.resources.feature_hub_actions
+import com.futebadosparcas.compose.resources.groups_hub_action_blocked
+import com.futebadosparcas.compose.resources.groups_hub_action_blocked_body
+import com.futebadosparcas.compose.resources.groups_hub_action_games
+import com.futebadosparcas.compose.resources.groups_hub_action_games_body
+import com.futebadosparcas.compose.resources.groups_hub_action_whats_new
+import com.futebadosparcas.compose.resources.groups_hub_action_whats_new_body
+import com.futebadosparcas.compose.resources.groups_hub_body
+import com.futebadosparcas.compose.resources.groups_hub_title
+import com.futebadosparcas.compose.resources.profile_hub_action_blocked
+import com.futebadosparcas.compose.resources.profile_hub_action_blocked_body
+import com.futebadosparcas.compose.resources.profile_hub_action_setup
+import com.futebadosparcas.compose.resources.profile_hub_action_setup_body
+import com.futebadosparcas.compose.resources.profile_hub_action_stats
+import com.futebadosparcas.compose.resources.profile_hub_action_stats_body
+import com.futebadosparcas.compose.resources.profile_hub_body
+import com.futebadosparcas.compose.resources.profile_hub_title
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.ui.HomeScreen
@@ -79,6 +97,7 @@ import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun App() {
@@ -333,25 +352,25 @@ fun AppNavigation(
         // Groups
         composable(AppRoutes.GROUPS) {
             FeatureHubScreen(
-                title = UiStrings.GROUPS_HUB_TITLE,
-                body = UiStrings.GROUPS_HUB_BODY,
+                title = stringResource(Res.string.groups_hub_title),
+                body = stringResource(Res.string.groups_hub_body),
                 onNavigateBack = { navController.popBackStack() },
                 actions = listOf(
                     FeatureHubAction(
-                        label = UiStrings.GROUPS_HUB_ACTION_GAMES,
-                        description = UiStrings.GROUPS_HUB_ACTION_GAMES_BODY,
+                        label = stringResource(Res.string.groups_hub_action_games),
+                        description = stringResource(Res.string.groups_hub_action_games_body),
                         icon = Icons.Filled.SportsSoccer,
                         onClick = { navController.navigate(AppRoutes.GAMES) }
                     ),
                     FeatureHubAction(
-                        label = UiStrings.GROUPS_HUB_ACTION_BLOCKED,
-                        description = UiStrings.GROUPS_HUB_ACTION_BLOCKED_BODY,
+                        label = stringResource(Res.string.groups_hub_action_blocked),
+                        description = stringResource(Res.string.groups_hub_action_blocked_body),
                         icon = Icons.Filled.Block,
                         onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
                     ),
                     FeatureHubAction(
-                        label = UiStrings.GROUPS_HUB_ACTION_WHATS_NEW,
-                        description = UiStrings.GROUPS_HUB_ACTION_WHATS_NEW_BODY,
+                        label = stringResource(Res.string.groups_hub_action_whats_new),
+                        description = stringResource(Res.string.groups_hub_action_whats_new_body),
                         icon = Icons.Filled.NewReleases,
                         onClick = { navController.navigate(AppRoutes.WHATS_NEW) }
                     )
@@ -367,25 +386,25 @@ fun AppNavigation(
         // Profile
         composable(AppRoutes.PROFILE) {
             FeatureHubScreen(
-                title = UiStrings.PROFILE_HUB_TITLE,
-                body = UiStrings.PROFILE_HUB_BODY,
+                title = stringResource(Res.string.profile_hub_title),
+                body = stringResource(Res.string.profile_hub_body),
                 onNavigateBack = { navController.popBackStack() },
                 actions = listOf(
                     FeatureHubAction(
-                        label = UiStrings.PROFILE_HUB_ACTION_SETUP,
-                        description = UiStrings.PROFILE_HUB_ACTION_SETUP_BODY,
+                        label = stringResource(Res.string.profile_hub_action_setup),
+                        description = stringResource(Res.string.profile_hub_action_setup_body),
                         icon = Icons.Filled.Person,
                         onClick = { navController.navigate(AppRoutes.PROFILE_SETUP) }
                     ),
                     FeatureHubAction(
-                        label = UiStrings.PROFILE_HUB_ACTION_STATS,
-                        description = UiStrings.PROFILE_HUB_ACTION_STATS_BODY,
+                        label = stringResource(Res.string.profile_hub_action_stats),
+                        description = stringResource(Res.string.profile_hub_action_stats_body),
                         icon = Icons.Filled.QueryStats,
                         onClick = { navController.navigate(AppRoutes.OWNER_STATS) }
                     ),
                     FeatureHubAction(
-                        label = UiStrings.PROFILE_HUB_ACTION_BLOCKED,
-                        description = UiStrings.PROFILE_HUB_ACTION_BLOCKED_BODY,
+                        label = stringResource(Res.string.profile_hub_action_blocked),
+                        description = stringResource(Res.string.profile_hub_action_blocked_body),
                         icon = Icons.Filled.Block,
                         onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
                     )
@@ -553,7 +572,7 @@ private fun FeatureHubScreen(
             )
 
             Text(
-                text = UiStrings.FEATURE_HUB_ACTIONS,
+                text = stringResource(Res.string.feature_hub_actions),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.semantics { heading() }
