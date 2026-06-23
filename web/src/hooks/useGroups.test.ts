@@ -384,6 +384,6 @@ describe('useInvitePlayers', () => {
     mockGetDoc.mockResolvedValue({ exists: () => false, data: () => null });
     const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
     await expect(act(async () => { await result.current.joinByInviteCode('INVALID'); }))
-      .rejects.toThrow('Invalid or expired invite code');
+      .rejects.toThrow('Código de convite inválido ou expirado');
   });
 });

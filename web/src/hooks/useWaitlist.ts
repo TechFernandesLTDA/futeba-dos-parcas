@@ -170,9 +170,7 @@ export function useWaitlist(gameId: string | null) {
         return true;
       } catch (err) {
         logger.error('Erro ao entrar na lista de espera:', err);
-        showError(
-          'Não foi possível entrar na lista de espera. Tente novamente.'
-        );
+        showError(t('feedback.waitlist.joinError'));
         return false;
       } finally {
         setActing(false);

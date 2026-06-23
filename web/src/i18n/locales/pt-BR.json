@@ -586,12 +586,17 @@
     },
     "groups": {
       "autoInviteError": "Erro ao convidar membros do grupo automaticamente.",
+      "createError": "Erro ao criar grupo.",
       "createSuccess": "Grupo criado!",
       "deleteSuccess": "Grupo excluído com sucesso.",
       "demoteError": "Erro ao rebaixar membro. Tente novamente.",
       "demoteSuccess": "Membro rebaixado a Membro.",
+      "expiredInviteCode": "Convite expirado",
+      "invalidInviteCode": "Código de convite inválido ou expirado",
       "inviteCodeGenerated": "Código de convite gerado!",
+      "inviteCodeError": "Erro ao gerar código de convite.",
       "inviteError": "Erro ao enviar convite. Tente novamente.",
+      "joinError": "Erro ao entrar no grupo.",
       "joinSuccess": "Você entrou no grupo!",
       "leaveError": "Erro ao sair do grupo. Tente novamente.",
       "leaveSuccess": "Você saiu do grupo.",
@@ -603,6 +608,7 @@
       "promoteSuccess": "Membro promovido a Admin.",
       "removeMemberError": "Erro ao remover membro.",
       "removeMemberError2": "Erro ao remover membro. Tente novamente.",
+      "syncError": "Erro ao sincronizar grupos.",
       "transferOwnershipError": "Erro ao transferir propriedade. Tente novamente.",
       "updateError": "Erro ao atualizar grupo. Tente novamente.",
       "updateSuccess": "Grupo atualizado com sucesso!"
@@ -767,6 +773,7 @@
     "validationType": "Selecione o tipo de feedback",
     "waitlist": {
       "alreadyIn": "Você já está na lista de espera deste jogo",
+      "joinError": "Não foi possível entrar na lista de espera. Tente novamente.",
       "joinSuccess": "Você entrou na lista de espera!",
       "leaveError": "Não foi possível sair da lista de espera. Tente novamente.",
       "leaveSuccess": "Você saiu da lista de espera",

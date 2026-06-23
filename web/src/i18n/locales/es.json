@@ -586,12 +586,17 @@
     },
     "groups": {
       "autoInviteError": "Error al invitar automáticamente miembros del grupo.",
+      "createError": "Error al crear el grupo.",
       "createSuccess": "Grupo creado!",
       "deleteSuccess": "Grupo eliminado con éxito.",
       "demoteError": "Error al degradar miembro. Inténtalo de nuevo.",
       "demoteSuccess": "Miembro degradado a Miembro.",
+      "expiredInviteCode": "Invitación expirada",
+      "invalidInviteCode": "Código de invitación inválido o expirado",
       "inviteCodeGenerated": "Código de invitación generado!",
+      "inviteCodeError": "Error al generar el código de invitación.",
       "inviteError": "Error al enviar invitación. Inténtalo de nuevo.",
+      "joinError": "Error al entrar en el grupo.",
       "joinSuccess": "Te uniste al grupo!",
       "leaveError": "Error al salir del grupo. Inténtalo de nuevo.",
       "leaveSuccess": "Saliste del grupo.",
@@ -603,6 +608,7 @@
       "promoteSuccess": "Miembro promovido a Admin.",
       "removeMemberError": "Error al eliminar miembro.",
       "removeMemberError2": "Error al eliminar miembro. Inténtalo de nuevo.",
+      "syncError": "Error al sincronizar grupos.",
       "transferOwnershipError": "Error al transferir la propiedad. Inténtalo de nuevo.",
       "updateError": "Error al actualizar el grupo. Inténtalo de nuevo.",
       "updateSuccess": "Grupo actualizado con éxito!"
@@ -767,6 +773,7 @@
     "validationType": "Selecciona el tipo de comentario",
     "waitlist": {
       "alreadyIn": "Ya estás en la lista de espera de este partido",
+      "joinError": "No se pudo entrar en la lista de espera. Inténtalo de nuevo.",
       "joinSuccess": "Te uniste a la lista de espera!",
       "leaveError": "No se pudo salir de la lista de espera. Inténtalo de nuevo.",
       "leaveSuccess": "Saliste de la lista de espera",

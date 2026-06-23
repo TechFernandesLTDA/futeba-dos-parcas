@@ -586,12 +586,17 @@
     },
     "groups": {
       "autoInviteError": "Error auto-inviting group members.",
+      "createError": "Error creating group.",
       "createSuccess": "Group created!",
       "deleteSuccess": "Group deleted successfully.",
       "demoteError": "Error demoting member. Please try again.",
       "demoteSuccess": "Member demoted to Member.",
+      "expiredInviteCode": "Invite expired",
+      "invalidInviteCode": "Invalid or expired invite code",
       "inviteCodeGenerated": "Invite code generated!",
+      "inviteCodeError": "Error generating invite code.",
       "inviteError": "Error sending invite. Please try again.",
+      "joinError": "Error joining group.",
       "joinSuccess": "You joined the group!",
       "leaveError": "Error leaving the group. Please try again.",
       "leaveSuccess": "You left the group.",
@@ -603,6 +608,7 @@
       "promoteSuccess": "Member promoted to Admin.",
       "removeMemberError": "Error removing member.",
       "removeMemberError2": "Error removing member. Please try again.",
+      "syncError": "Error syncing groups.",
       "transferOwnershipError": "Error transferring ownership. Please try again.",
       "updateError": "Error updating group. Please try again.",
       "updateSuccess": "Group updated successfully!"
@@ -767,6 +773,7 @@
     "validationType": "Select feedback type",
     "waitlist": {
       "alreadyIn": "You are already on the waitlist for this game",
+      "joinError": "Could not join the waitlist. Please try again.",
       "joinSuccess": "You joined the waitlist!",
       "leaveError": "Could not leave the waitlist. Please try again.",
       "leaveSuccess": "You left the waitlist",
