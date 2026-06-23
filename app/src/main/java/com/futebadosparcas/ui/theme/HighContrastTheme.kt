@@ -265,16 +265,28 @@ fun getAccessibleColorScheme(
     defaultLightScheme: ColorScheme = lightColorScheme(),
     defaultDarkScheme: ColorScheme = darkColorScheme()
 ): ColorScheme {
-    val isSystemHighContrast = isSystemHighContrast()
+    return selectAccessibleColorScheme(
+        isDarkTheme = isDarkTheme,
+        preferHighContrast = preferHighContrast,
+        systemHighContrast = isSystemHighContrast(),
+        defaultLightScheme = defaultLightScheme,
+        defaultDarkScheme = defaultDarkScheme
+    )
+}
 
-    return when {
-        preferHighContrast || isSystemHighContrast -> {
-            if (isDarkTheme) HighContrastDarkColorScheme
-            else HighContrastLightColorScheme
-        }
-        isDarkTheme -> defaultDarkScheme
-        else -> defaultLightScheme
+internal fun selectAccessibleColorScheme(
+    isDarkTheme: Boolean,
+    preferHighContrast: Boolean,
+    systemHighContrast: Boolean,
+    defaultLightScheme: ColorScheme = lightColorScheme(),
+    defaultDarkScheme: ColorScheme = darkColorScheme()
+): ColorScheme = when {
+    preferHighContrast || systemHighContrast -> {
+        if (isDarkTheme) HighContrastDarkColorScheme
+        else HighContrastLightColorScheme
     }
+    isDarkTheme -> defaultDarkScheme
+    else -> defaultLightScheme
 }
 
 // ==================== Contrast Utilities ====================
