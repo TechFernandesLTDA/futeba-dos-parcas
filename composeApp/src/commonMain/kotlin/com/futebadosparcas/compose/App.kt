@@ -56,6 +56,12 @@ import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
 import com.futebadosparcas.compose.resources.feature_hub_actions
+import com.futebadosparcas.compose.resources.game_detail_blocked_players
+import com.futebadosparcas.compose.resources.game_detail_hub_title
+import com.futebadosparcas.compose.resources.game_detail_invite_players
+import com.futebadosparcas.compose.resources.game_detail_organizer_tools
+import com.futebadosparcas.compose.resources.game_detail_owner_stats
+import com.futebadosparcas.compose.resources.game_detail_post_game_report
 import com.futebadosparcas.compose.resources.groups_hub_action_blocked
 import com.futebadosparcas.compose.resources.groups_hub_action_blocked_body
 import com.futebadosparcas.compose.resources.groups_hub_action_games
@@ -461,7 +467,7 @@ private fun GameDetailHub(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(UiStrings.GAME_DETAIL_TITLE) },
+                title = { Text(stringResource(Res.string.game_detail_hub_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -485,7 +491,7 @@ private fun GameDetailHub(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = UiStrings.GAME_DETAIL_ORGANIZER_TOOLS,
+                text = stringResource(Res.string.game_detail_organizer_tools),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.semantics { heading() }
@@ -495,28 +501,28 @@ private fun GameDetailHub(
                 onClick = onOpenPostGameReport,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(UiStrings.GAME_DETAIL_POST_GAME_REPORT)
+                Text(stringResource(Res.string.game_detail_post_game_report))
             }
 
             OutlinedButton(
                 onClick = onOpenOwnerStats,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(UiStrings.GAME_DETAIL_OWNER_STATS)
+                Text(stringResource(Res.string.game_detail_owner_stats))
             }
 
             OutlinedButton(
                 onClick = onOpenInvitePlayers,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(UiStrings.GAME_DETAIL_INVITE_PLAYERS)
+                Text(stringResource(Res.string.game_detail_invite_players))
             }
 
             OutlinedButton(
                 onClick = onOpenBlockedPlayers,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(UiStrings.GAME_DETAIL_BLOCKED_PLAYERS)
+                Text(stringResource(Res.string.game_detail_blocked_players))
             }
         }
     }
