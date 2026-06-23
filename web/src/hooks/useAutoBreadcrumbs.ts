@@ -1,69 +1,71 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import type { BreadcrumbItem } from '../components/layout/AppBreadcrumbs';
 
-const ROUTE_LABELS: Record<string, string> = {
-  '/': 'Início',
-  '/games': 'Jogos',
-  '/groups': 'Grupos',
-  '/league': 'Liga',
-  '/badges': 'Badges',
-  '/profile': 'Perfil',
-  '/settings': 'Configurações',
-  '/statistics': 'Estatísticas',
-  '/notifications': 'Notificações',
-  '/search': 'Busca',
-  '/about': 'Sobre',
-  '/whats-new': 'Novidades',
-  '/locations': 'Locais',
-  '/map': 'Mapa',
-  '/public-games': 'Jogos Públicos',
-  '/invite-friend': 'Convidar Amigo',
-  '/dream-team': 'Seleção dos Sonhos',
-  '/weekly-ranking': 'Ranking Semanal',
-  '/weekly-recap': 'Resumo Semanal',
-  '/evolution': 'Evolução',
-  '/head-to-head': 'Confronto Direto',
+const ROUTE_LABEL_KEYS: Record<string, string> = {
+  '/': 'nav.home',
+  '/games': 'nav.games',
+  '/groups': 'nav.groups',
+  '/league': 'nav.league',
+  '/badges': 'breadcrumbs.badges',
+  '/profile': 'nav.profile',
+  '/settings': 'nav.settings',
+  '/statistics': 'nav.statistics',
+  '/notifications': 'nav.notifications',
+  '/search': 'nav.search',
+  '/about': 'breadcrumbs.about',
+  '/whats-new': 'breadcrumbs.whatsNew',
+  '/locations': 'nav.locations',
+  '/map': 'nav.map',
+  '/public-games': 'breadcrumbs.publicGames',
+  '/invite-friend': 'breadcrumbs.inviteFriend',
+  '/dream-team': 'breadcrumbs.dreamTeam',
+  '/weekly-ranking': 'breadcrumbs.weeklyRanking',
+  '/weekly-recap': 'breadcrumbs.weeklyRecap',
+  '/evolution': 'breadcrumbs.evolution',
+  '/head-to-head': 'breadcrumbs.headToHead',
 };
 
-const DYNAMIC_LABELS: Record<string, string> = {
-  'game': 'Jogo',
-  'group': 'Grupo',
-  'location': 'Local',
-  'player': 'Jogador',
-  'user': 'Usuário',
-  'profile': 'Perfil',
+const DYNAMIC_LABEL_KEYS: Record<string, string> = {
+  'game': 'breadcrumbs.game',
+  'group': 'breadcrumbs.group',
+  'location': 'breadcrumbs.location',
+  'player': 'breadcrumbs.player',
+  'user': 'breadcrumbs.user',
+  'profile': 'nav.profile',
 };
 
-const SUB_ROUTE_LABELS: Record<string, string> = {
-  'edit': 'Editar',
-  'create': 'Criar',
-  'settings': 'Configurações',
-  'cashbox': 'Caixinha',
-  'players': 'Jogadores',
-  'schedules': 'Horários',
-  'invite': 'Convidar',
-  'league': 'Liga',
-  'challenges': 'Desafios',
-  'live': 'Ao Vivo',
-  'vote': 'Votação MVP',
-  'results': 'Resultados',
-  'teams': 'Formação de Times',
-  'report': 'Relatório',
-  'blocked': 'Bloqueados',
-  'stats': 'Estatísticas',
-  'events': 'Eventos',
-  'theme': 'Tema',
-  'notifications': 'Notificações',
-  'gamification': 'Gamificação',
-  'feedbacks': 'Feedbacks',
-  'verify': 'Verificar',
-  'owner': 'Proprietário',
-  'discover': 'Descobrir',
-  'map': 'Mapa',
+const SUB_ROUTE_LABEL_KEYS: Record<string, string> = {
+  'edit': 'breadcrumbs.edit',
+  'create': 'breadcrumbs.create',
+  'settings': 'nav.settings',
+  'cashbox': 'breadcrumbs.cashbox',
+  'players': 'nav.players',
+  'schedules': 'nav.schedules',
+  'invite': 'breadcrumbs.invite',
+  'league': 'nav.league',
+  'challenges': 'breadcrumbs.challenges',
+  'live': 'breadcrumbs.live',
+  'vote': 'breadcrumbs.vote',
+  'results': 'breadcrumbs.results',
+  'teams': 'breadcrumbs.teams',
+  'report': 'breadcrumbs.report',
+  'blocked': 'breadcrumbs.blocked',
+  'stats': 'nav.statistics',
+  'events': 'breadcrumbs.events',
+  'theme': 'breadcrumbs.theme',
+  'notifications': 'nav.notifications',
+  'gamification': 'breadcrumbs.gamification',
+  'feedbacks': 'breadcrumbs.feedbacks',
+  'verify': 'breadcrumbs.verify',
+  'owner': 'breadcrumbs.owner',
+  'discover': 'breadcrumbs.discover',
+  'map': 'nav.map',
 };
 
 export function useAutoBreadcrumbs(): BreadcrumbItem[] {
+  const { t } = useTranslation();
   const location = useLocation();
 
   return useMemo(() => {
@@ -84,29 +86,30 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
       if (isId && i > 0) {
         // Use the previous segment's label + the ID as a shortened display
         const parentSegment = segments[i - 1];
-        const parentLabel = DYNAMIC_LABELS[parentSegment] || parentSegment;
+        const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
+        const parentLabel = parentLabelKey ? t(parentLabelKey) : parentSegment;
         items.push({
           label: `${parentLabel}`,
           to: accumulatedPath,
         });
-      } else if (SUB_ROUTE_LABELS[segment]) {
+      } else if (SUB_ROUTE_LABEL_KEYS[segment]) {
         items.push({
-          label: SUB_ROUTE_LABELS[segment],
+          label: t(SUB_ROUTE_LABEL_KEYS[segment]),
           to: accumulatedPath,
         });
-      } else if (ROUTE_LABELS[accumulatedPath]) {
+      } else if (ROUTE_LABEL_KEYS[accumulatedPath]) {
         items.push({
-          label: ROUTE_LABELS[accumulatedPath],
+          label: t(ROUTE_LABEL_KEYS[accumulatedPath]),
           to: accumulatedPath,
         });
-      } else if (DYNAMIC_LABELS[segment]) {
+      } else if (DYNAMIC_LABEL_KEYS[segment]) {
         items.push({
-          label: DYNAMIC_LABELS[segment],
+          label: t(DYNAMIC_LABEL_KEYS[segment]),
           to: accumulatedPath,
         });
       }
     }
 
     return items;
-  }, [location.pathname]);
+  }, [location.pathname, t]);
 }

@@ -271,7 +271,10 @@
     "xpReward": "Recompensa"
   },
   "breadcrumbs": {
+    "about": "Sobre",
+    "badges": "Badges",
     "blocked": "Bloqueados",
+    "cashbox": "Caixinha",
     "challenges": "Desafios",
     "create": "Criar",
     "discover": "Descobrir",
@@ -298,7 +301,8 @@
     "verify": "Verificar",
     "vote": "Votação MVP",
     "weeklyRanking": "Ranking Semanal",
-    "weeklyRecap": "Resumo Semanal"
+    "weeklyRecap": "Resumo Semanal",
+    "whatsNew": "Novidades"
   },
   "cashbox": {
     "addError": "Erro ao adicionar transação",
