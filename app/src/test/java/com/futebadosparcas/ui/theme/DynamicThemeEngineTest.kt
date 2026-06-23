@@ -1,11 +1,16 @@
 package com.futebadosparcas.ui.theme
 
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ContrastLevel
 import com.futebadosparcas.domain.model.SeedColors
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import com.futebadosparcas.domain.model.ThemeMode
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 /**
  * Testes unitários para o [DynamicThemeEngine] do :app (Android).
@@ -28,6 +33,15 @@ class DynamicThemeEngineTest {
 
     private val configHigh = configNormal.copy(contrastLevel = ContrastLevel.HIGH)
 
+    @Test
+    fun configuracaoPadrao_usaSistemaEMaterialYouOptInDesligado() {
+        val config = AppThemeConfig()
+
+        assertEquals(ThemeMode.SYSTEM, config.mode)
+        assertEquals(ContrastLevel.NORMAL, config.contrastLevel)
+        assertFalse(config.useDynamicColor)
+    }
+
     // ==================== Testes de alto contraste ====================
 
     @Test
@@ -36,9 +50,9 @@ class DynamicThemeEngineTest {
 
         val ratio = calculateContrastRatio(scheme.onSurface, scheme.surface)
         assertTrue(
+            meetsWcagAAA(scheme.onSurface, scheme.surface),
             "onSurface vs surface deve ter contraste >= 7:1 (WCAG AAA) no modo claro. " +
-                "Obtido: $ratio",
-            meetsWcagAAA(scheme.onSurface, scheme.surface)
+                "Obtido: $ratio"
         )
     }
 
@@ -48,9 +62,9 @@ class DynamicThemeEngineTest {
 
         val ratio = calculateContrastRatio(scheme.onSurface, scheme.surface)
         assertTrue(
+            meetsWcagAAA(scheme.onSurface, scheme.surface),
             "onSurface vs surface deve ter contraste >= 7:1 (WCAG AAA) no modo escuro. " +
-                "Obtido: $ratio",
-            meetsWcagAAA(scheme.onSurface, scheme.surface)
+                "Obtido: $ratio"
         )
     }
 
@@ -59,8 +73,8 @@ class DynamicThemeEngineTest {
         val scheme = DynamicThemeEngine.generateColorScheme(configHigh, isDark = false)
 
         assertTrue(
-            "onBackground vs background deve ter contraste >= 7:1 (WCAG AAA) no modo claro.",
-            meetsWcagAAA(scheme.onBackground, scheme.background)
+            meetsWcagAAA(scheme.onBackground, scheme.background),
+            "onBackground vs background deve ter contraste >= 7:1 (WCAG AAA) no modo claro."
         )
     }
 
@@ -69,8 +83,8 @@ class DynamicThemeEngineTest {
         val scheme = DynamicThemeEngine.generateColorScheme(configHigh, isDark = true)
 
         assertTrue(
-            "onBackground vs background deve ter contraste >= 7:1 (WCAG AAA) no modo escuro.",
-            meetsWcagAAA(scheme.onBackground, scheme.background)
+            meetsWcagAAA(scheme.onBackground, scheme.background),
+            "onBackground vs background deve ter contraste >= 7:1 (WCAG AAA) no modo escuro."
         )
     }
 
@@ -79,8 +93,8 @@ class DynamicThemeEngineTest {
         val scheme = DynamicThemeEngine.generateColorScheme(configHigh, isDark = false)
 
         assertTrue(
-            "onPrimary vs primary deve ter contraste >= 4.5:1 (WCAG AA) no modo claro.",
-            meetsWcagAA(scheme.onPrimary, scheme.primary)
+            meetsWcagAA(scheme.onPrimary, scheme.primary),
+            "onPrimary vs primary deve ter contraste >= 4.5:1 (WCAG AA) no modo claro."
         )
     }
 
@@ -89,8 +103,8 @@ class DynamicThemeEngineTest {
         val scheme = DynamicThemeEngine.generateColorScheme(configHigh, isDark = true)
 
         assertTrue(
-            "onPrimary vs primary deve ter contraste >= 4.5:1 (WCAG AA) no modo escuro.",
-            meetsWcagAA(scheme.onPrimary, scheme.primary)
+            meetsWcagAA(scheme.onPrimary, scheme.primary),
+            "onPrimary vs primary deve ter contraste >= 4.5:1 (WCAG AA) no modo escuro."
         )
     }
 
@@ -101,8 +115,8 @@ class DynamicThemeEngineTest {
         val scheme = DynamicThemeEngine.generateColorScheme(configNormal, isDark = false)
 
         assertTrue(
-            "onSurface vs surface deve ter contraste >= 4.5:1 (WCAG AA) no modo claro normal.",
-            meetsWcagAA(scheme.onSurface, scheme.surface)
+            meetsWcagAA(scheme.onSurface, scheme.surface),
+            "onSurface vs surface deve ter contraste >= 4.5:1 (WCAG AA) no modo claro normal."
         )
     }
 
@@ -111,8 +125,8 @@ class DynamicThemeEngineTest {
         val scheme = DynamicThemeEngine.generateColorScheme(configNormal, isDark = true)
 
         assertTrue(
-            "onSurface vs surface deve ter contraste >= 4.5:1 (WCAG AA) no modo escuro normal.",
-            meetsWcagAA(scheme.onSurface, scheme.surface)
+            meetsWcagAA(scheme.onSurface, scheme.surface),
+            "onSurface vs surface deve ter contraste >= 4.5:1 (WCAG AA) no modo escuro normal."
         )
     }
 
@@ -127,9 +141,9 @@ class DynamicThemeEngineTest {
         val schemeOnSurface = scheme.onSurface
         val expectedOnSurface = expected.onSurface
         assertTrue(
+            schemeOnSurface == expectedOnSurface,
             "Esquema claro high-contrast deve usar HighContrastLightColorScheme. " +
-                "onSurface esperado: $expectedOnSurface, obtido: $schemeOnSurface",
-            schemeOnSurface == expectedOnSurface
+                "onSurface esperado: $expectedOnSurface, obtido: $schemeOnSurface"
         )
     }
 
@@ -141,10 +155,93 @@ class DynamicThemeEngineTest {
         val schemeOnSurface = scheme.onSurface
         val expectedOnSurface = expected.onSurface
         assertTrue(
+            schemeOnSurface == expectedOnSurface,
             "Esquema escuro high-contrast deve usar HighContrastDarkColorScheme. " +
-                "onSurface esperado: $expectedOnSurface, obtido: $schemeOnSurface",
-            schemeOnSurface == expectedOnSurface
+                "onSurface esperado: $expectedOnSurface, obtido: $schemeOnSurface"
         )
+    }
+
+    @Test
+    fun selecionarEsquema_preferenciaContrasteAlto_sobrescreveEsquemaDinamicoClaro() {
+        val materialYouLikeScheme = lightColorScheme(
+            primary = Color(0xFF7B1FA2),
+            surface = Color(0xFFFFF7FF),
+            onSurface = Color(0xFF1D1B20)
+        )
+
+        val selected = selectAccessibleColorScheme(
+            isDarkTheme = false,
+            preferHighContrast = true,
+            systemHighContrast = false,
+            defaultLightScheme = materialYouLikeScheme,
+            defaultDarkScheme = darkColorScheme()
+        )
+
+        assertEquals(HighContrastLightColorScheme.primary, selected.primary)
+        assertEquals(HighContrastLightColorScheme.surface, selected.surface)
+        assertTrue(meetsWcagAAA(selected.onSurface, selected.surface))
+    }
+
+    @Test
+    fun selecionarEsquema_contrasteDoSistema_sobrescreveEsquemaDinamicoEscuro() {
+        val materialYouLikeScheme = darkColorScheme(
+            primary = Color(0xFFD0BCFF),
+            surface = Color(0xFF211F26),
+            onSurface = Color(0xFFE6E1E5)
+        )
+
+        val selected = selectAccessibleColorScheme(
+            isDarkTheme = true,
+            preferHighContrast = false,
+            systemHighContrast = true,
+            defaultLightScheme = lightColorScheme(),
+            defaultDarkScheme = materialYouLikeScheme
+        )
+
+        assertEquals(HighContrastDarkColorScheme.primary, selected.primary)
+        assertEquals(HighContrastDarkColorScheme.surface, selected.surface)
+        assertTrue(meetsWcagAAA(selected.onSurface, selected.surface))
+    }
+
+    @Test
+    fun selecionarEsquema_ambosContrastesAtivos_sobrescreveEsquemaDinamico() {
+        val materialYouLikeScheme = lightColorScheme(primary = Color(0xFF6750A4))
+
+        val selected = selectAccessibleColorScheme(
+            isDarkTheme = false,
+            preferHighContrast = true,
+            systemHighContrast = true,
+            defaultLightScheme = materialYouLikeScheme,
+            defaultDarkScheme = darkColorScheme()
+        )
+
+        assertEquals(HighContrastLightColorScheme.primary, selected.primary)
+        assertEquals(HighContrastLightColorScheme.surface, selected.surface)
+        assertTrue(meetsWcagAAA(selected.onSurface, selected.surface))
+    }
+
+    @Test
+    fun selecionarEsquema_semContraste_preservaEsquemaDinamicoBase() {
+        val lightMaterialYouLikeScheme = lightColorScheme(primary = Color(0xFF6750A4))
+        val darkMaterialYouLikeScheme = darkColorScheme(primary = Color(0xFFD0BCFF))
+
+        val lightSelected = selectAccessibleColorScheme(
+            isDarkTheme = false,
+            preferHighContrast = false,
+            systemHighContrast = false,
+            defaultLightScheme = lightMaterialYouLikeScheme,
+            defaultDarkScheme = darkMaterialYouLikeScheme
+        )
+        val darkSelected = selectAccessibleColorScheme(
+            isDarkTheme = true,
+            preferHighContrast = false,
+            systemHighContrast = false,
+            defaultLightScheme = lightMaterialYouLikeScheme,
+            defaultDarkScheme = darkMaterialYouLikeScheme
+        )
+
+        assertEquals(lightMaterialYouLikeScheme.primary, lightSelected.primary)
+        assertEquals(darkMaterialYouLikeScheme.primary, darkSelected.primary)
     }
 
     // ==================== Helper para testes de pares de cor ====================
@@ -157,8 +254,8 @@ class DynamicThemeEngineTest {
         val scheme = DynamicThemeEngine.generateColorScheme(configHigh, isDark = false)
 
         assertTrue(
-            "onError vs error deve ter contraste >= 4.5:1 (WCAG AA) no modo claro.",
-            meetsWcagAA(scheme.onError, scheme.error)
+            meetsWcagAA(scheme.onError, scheme.error),
+            "onError vs error deve ter contraste >= 4.5:1 (WCAG AA) no modo claro."
         )
     }
 
