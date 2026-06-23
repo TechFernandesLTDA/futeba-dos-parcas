@@ -81,6 +81,9 @@ import com.futebadosparcas.compose.resources.invite_players_search_hint
 import com.futebadosparcas.compose.resources.invite_players_title
 import com.futebadosparcas.compose.resources.invite_players_try_again
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import org.jetbrains.compose.resources.stringResource
 
 // ---------- Componentes auxiliares (para evitar dependências do módulo :app) ----------
@@ -90,15 +93,24 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 private fun ShimmerBox(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 800)
-        ),
-        label = "alpha"
-    )
+    val reduceMotion = rememberReduceMotion()
+    val alpha = if (reduceMotion) {
+        0.5f
+    } else {
+        val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+        val animatedAlpha by infiniteTransition.animateFloat(
+            initialValue = 0.3f,
+            targetValue = 0.7f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    easing = MotionEasing.Standard
+                )
+            ),
+            label = "alpha"
+        )
+        animatedAlpha
+    }
     Box(
         modifier = modifier
             .graphicsLayer(alpha = alpha)
