@@ -19,6 +19,7 @@ import { useAutoBreadcrumbs } from './hooks/useAutoBreadcrumbs';
 import { useNavigateBack } from './hooks/useNavigateBack';
 import { useSwipeBack } from './hooks/useSwipeBack';
 import { useNotifications } from './hooks/useNotifications';
+import { useReducedMotion } from './hooks/useReducedMotion';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
 import { AppLayout } from './components/layout';
 import { CommandPalette } from './components/search/CommandPalette';
@@ -28,6 +29,7 @@ import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
 import { PageTransition } from './components/common/PageTransition';
+import { motion } from './theme/motion';
 import {
 
   HomeScreenSkeleton,
@@ -515,6 +517,10 @@ function MobileShell({ children }: { children: React.ReactNode }) {
   // #2194: swipe-back só em rotas secundárias (na raiz não há para onde voltar).
   // #2722: expõe dragProgress para visual feedback durante o arraste.
   const { dragProgress } = useSwipeBack({ disabled: !isSecondary });
+  const reducedMotion = useReducedMotion();
+  const shellSettleTransition = reducedMotion
+    ? 'none'
+    : `${motion('transform', 'short', 'standard')}, ${motion('opacity', 'short', 'standard')}`;
 
   return (
     <Box
@@ -541,7 +547,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
             ? `translateX(${dragProgress * 80}px)`
             : { xs: 'none', sm: 'translateZ(0)' },
           opacity: dragProgress > 0 ? 1 - dragProgress * 0.15 : 1,
-          transition: dragProgress === 0 ? 'transform 0.2s ease, opacity 0.2s ease' : 'none',
+          transition: dragProgress === 0 ? shellSettleTransition : 'none',
         }}
       >
         {user && !isSecondary && (
