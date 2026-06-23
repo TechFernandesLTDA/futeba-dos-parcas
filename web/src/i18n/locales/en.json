@@ -2174,6 +2174,7 @@
     "players": "Players",
     "groups": "Groups",
     "games": "Games",
+    "openError": "Could not open search. Please try again.",
     "searchPlaceholder": "Search players, groups, games..."
   },
   "sw": {

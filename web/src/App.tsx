@@ -181,7 +181,8 @@ function RouteFallback() {
 }
 
 function AppLoadingFallback() {
-  return <LoadingScreen variant="cards" message="Carregando..." />;
+  const { t } = useTranslation();
+  return <LoadingScreen variant="cards" message={t('common.loading')} />;
 }
 
 // #2188: carregamento inicial (auth resolvendo) usa a splash com identidade
@@ -565,15 +566,17 @@ function MobileShell({ children }: { children: React.ReactNode }) {
 }
 
 function AppCrashFallback() {
+  const { t } = useTranslation();
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', p: 4, textAlign: 'center' }}>
       <ErrorOutline sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
-      <Typography variant="h5" gutterBottom>Algo deu errado</Typography>
+      <Typography variant="h5" gutterBottom>{t('errorBoundary.title')}</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Ocorreu um erro inesperado. Tente recarregar a página.
+        {t('errorBoundary.description')}
       </Typography>
       <Button variant="contained" onClick={() => window.location.reload()}>
-        Recarregar
+        {t('errorBoundary.reload')}
       </Button>
     </Box>
   );
@@ -590,6 +593,15 @@ function SilentToastBoundary({ children, message }: { children: React.ReactNode;
     <ErrorBoundary fallback={<></>} onError={() => showError(message)}>
       {children}
     </ErrorBoundary>
+  );
+}
+
+function CommandPaletteBoundary({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
+  return (
+    <SilentToastBoundary message={t('commandPalette.openError')}>
+      {children}
+    </SilentToastBoundary>
   );
 }
 
@@ -692,13 +704,13 @@ function App() {
                   der throw síncrono (ex: Firestore query inválida), não derruba
                   a árvore inteira (já que está fora de SafeScreen).
                   FIX #601 LOW backlog. */}
-              <SilentToastBoundary message="Não foi possível abrir a busca. Tente novamente.">
+              <CommandPaletteBoundary>
                 <CommandPalette
                   open={paletteOpen}
                   onOpen={openPalette}
                   onClose={closePalette}
                 />
-              </SilentToastBoundary>
+              </CommandPaletteBoundary>
               <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
               {isDesktop ? (
                 <>
