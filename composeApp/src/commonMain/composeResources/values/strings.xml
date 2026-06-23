@@ -3226,16 +3226,26 @@ subir no ranking!</string>
     <string name="owner_post_game_report">Relatório Pós-Jogo</string>
     <string name="owner_report_short">Relatório</string>
     <string name="owner_mvp_title">MVP da Partida</string>
+    <string name="owner_mvp_short">MVP</string>
     <string name="owner_match_stats">Estatísticas da Partida</string>
     <string name="owner_present">Presentes</string>
     <string name="owner_absent">Ausentes</string>
+    <string name="owner_goals">Gols</string>
     <string name="owner_yellow">Amarelos</string>
     <string name="owner_red">Vermelhos</string>
     <string name="owner_top_scorers">Artilheiros</string>
+    <string name="owner_top_assists_compact">Assistências</string>
     <string name="owner_top_assists">Garçons</string>
     <string name="owner_present_players">Presentes (%1$d)</string>
     <string name="owner_absent_players">Ausentes (%1$d)</string>
     <string name="owner_unpaid_players">Devendo (%1$d)</string>
+    <string name="owner_team_default_1">Time 1</string>
+    <string name="owner_team_default_2">Time 2</string>
+    <string name="owner_score_separator"> x </string>
+    <string name="owner_financial_total_cost">Custo total</string>
+    <string name="owner_paid_count_parenthesized">Pagos (%1$d)</string>
+    <string name="owner_unpaid_count_parenthesized">Devendo (%1$d)</string>
+    <string name="owner_share_whatsapp_cd">Compartilhar WhatsApp</string>
 
     <!-- Issue #67: Organization History -->
     <string name="owner_stats_title">Meu Histórico de Organizador</string>
