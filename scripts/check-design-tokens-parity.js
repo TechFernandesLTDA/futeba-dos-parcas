@@ -161,6 +161,22 @@ function checkTsObjectNumbers(content, objectName, expected, label, sourceFile, 
   }
 }
 
+function checkTsObjectStrings(content, objectName, expected, label, sourceFile, errors) {
+  const object = extractTsObject(content, objectName);
+  if (!object) {
+    errors.push(`[${label}] objeto ausente: ${objectName} em ${relative(sourceFile)}`);
+    return;
+  }
+
+  for (const [prop, expectedValue] of Object.entries(expected)) {
+    if (typeof expectedValue !== 'string') continue;
+    const re = new RegExp(`\\b${escapeRegExp(prop)}\\s*:\\s*['"]${escapeRegExp(expectedValue)}['"]`);
+    if (!re.test(object)) {
+      errors.push(`[${label}] ${objectName}.${prop} diverge — esperado "${expectedValue}" em ${relative(sourceFile)}`);
+    }
+  }
+}
+
 function checkKotlinValHexes(content, expected, label, sourceFile, errors) {
   for (const [name, rawHex] of Object.entries(expected)) {
     const expectedHex = kotlinHex(rawHex);
@@ -245,6 +261,26 @@ function checkKotlinRoundedCornerShapes(content, expected, label, sourceFile, er
       errors.push(`[${label}] ${name} diverge — esperado RoundedCornerShape(${expectedValue}.dp) em ${relative(sourceFile)}`);
     }
   }
+}
+
+function checkWebElevationParity(tokens, errors) {
+  if (!tokens.elevation) {
+    errors.push('[elevation] bloco `elevation` ausente em shared/design-tokens.json');
+    return;
+  }
+
+  const file = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const content = readRequiredFile(file, 'web elevation tokens', errors);
+  if (!content) return;
+
+  checkTsObjectStrings(
+    content,
+    'shadowTokens',
+    tokens.elevation,
+    'web elevation token',
+    file,
+    errors
+  );
 }
 
 function checkWebRadiusAndSpacing(tokens, errors) {
@@ -540,6 +576,7 @@ function main() {
   // Paridade de radius + spacing — issue #2744.
   checkWebRadiusAndSpacing(tokens, errors);
   checkKotlinRadiusAndSpacing(tokens, errors);
+  checkWebElevationParity(tokens, errors);
 
   // Paridade de motion (durations + easings) — issue #2755.
   checkMotionParity(tokens, errors);
@@ -551,7 +588,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + motion)');
+  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + elevation + motion)');
   process.exit(0);
 }
 
