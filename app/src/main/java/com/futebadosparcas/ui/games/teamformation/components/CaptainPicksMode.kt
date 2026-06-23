@@ -32,6 +32,9 @@ import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.data.model.DraftState
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -123,13 +126,17 @@ private fun CaptainPickHeader(
 ) {
     val colorValue = Color(teamColor.hexValue)
     val isLowTime = draftState.timerSeconds <= 10
+    val reducedMotion = rememberReduceMotion()
 
     // Animacao de pulso quando tempo baixo
     val pulseScale by rememberInfiniteTransition(label = "pulse").animateFloat(
         initialValue = 1f,
-        targetValue = if (isLowTime) 1.15f else 1f,
+        targetValue = if (isLowTime && !reducedMotion) 1.15f else 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(500),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion),
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "timerPulse"
