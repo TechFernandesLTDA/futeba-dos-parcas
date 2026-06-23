@@ -57,6 +57,9 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -1165,6 +1168,7 @@ private fun SavedFormationCard(
 
 @Composable
 private fun DraftRevealOverlay(reveal: DraftRevealAnimation) {
+    val reducedMotion = rememberReduceMotion()
     // Animação real: começa em 0 e anima até 1 ao entrar na composição
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -1180,7 +1184,10 @@ private fun DraftRevealOverlay(reveal: DraftRevealAnimation) {
 
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 300),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getMedium(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "alpha"
     )
 
