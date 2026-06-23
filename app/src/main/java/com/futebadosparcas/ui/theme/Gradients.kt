@@ -66,6 +66,11 @@ fun primaryGradient(): Brush = Brush.linearGradient(
 fun surfaceGradient(): Brush = Brush.linearGradient(
     listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceContainer)
 )
+
+@Composable
+fun brandAccentGradient(): Brush = Brush.linearGradient(
+    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+)
 object AppGradients {
 
     // ==================== Linear Gradients ====================

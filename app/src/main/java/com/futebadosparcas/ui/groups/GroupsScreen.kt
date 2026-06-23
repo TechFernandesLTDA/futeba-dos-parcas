@@ -40,6 +40,7 @@ import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.theme.brandAccentGradient
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -475,14 +476,7 @@ private fun GroupPhoto(
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.tertiary
-                    )
-                )
-            ),
+            .background(brush = brandAccentGradient()),
         contentAlignment = Alignment.Center
     ) {
         CachedProfileImage(
