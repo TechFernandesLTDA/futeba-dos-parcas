@@ -42,7 +42,10 @@ import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
 import com.futebadosparcas.ui.theme.brandAccentGradient
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -604,33 +607,38 @@ private fun GroupsLoadingContent() {
  */
 @Composable
 private fun ShimmerGroupCard() {
+    val reducedMotion = rememberReduceMotion()
     val shimmerColors = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1200,
-                easing = LinearEasing
+    val translate = if (reducedMotion) {
+        500f
+    } else {
+        val transition = rememberInfiniteTransition(label = "shimmer")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1000f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Restart
             ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate"
-    )
+            label = "shimmer_translate"
+        ).value
+    }
 
     val brush = Brush.linearGradient(
         colors = shimmerColors,
         start = androidx.compose.ui.geometry.Offset(
-            translateAnim.value - 1000f,
-            translateAnim.value - 1000f
+            translate - 1000f,
+            translate - 1000f
         ),
-        end = androidx.compose.ui.geometry.Offset(translateAnim.value, translateAnim.value)
+        end = androidx.compose.ui.geometry.Offset(translate, translate)
     )
 
     Card(

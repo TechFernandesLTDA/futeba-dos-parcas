@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -50,6 +49,8 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.animation.BadgeConfetti
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 import java.text.SimpleDateFormat
 import java.util.*
@@ -697,27 +698,35 @@ private fun BadgesLoadingState() {
  */
 @Composable
 private fun BadgeProgressHeaderShimmer() {
+    val reducedMotion = rememberReduceMotion()
     val shimmerColors = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate"
-    )
+    val translate = if (reducedMotion) {
+        500f
+    } else {
+        val transition = rememberInfiniteTransition(label = "shimmer")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1000f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "shimmer_translate"
+        ).value
+    }
 
     val brush = Brush.linearGradient(
         colors = shimmerColors,
-        start = Offset(translateAnim.value - 1000f, translateAnim.value - 1000f),
-        end = Offset(translateAnim.value, translateAnim.value)
+        start = Offset(translate - 1000f, translate - 1000f),
+        end = Offset(translate, translate)
     )
 
     Card(
@@ -740,27 +749,35 @@ private fun BadgeProgressHeaderShimmer() {
  */
 @Composable
 private fun BadgeCardShimmer() {
+    val reducedMotion = rememberReduceMotion()
     val shimmerColors = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate"
-    )
+    val translate = if (reducedMotion) {
+        500f
+    } else {
+        val transition = rememberInfiniteTransition(label = "shimmer")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1000f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "shimmer_translate"
+        ).value
+    }
 
     val brush = Brush.linearGradient(
         colors = shimmerColors,
-        start = Offset(translateAnim.value - 1000f, translateAnim.value - 1000f),
-        end = Offset(translateAnim.value, translateAnim.value)
+        start = Offset(translate - 1000f, translate - 1000f),
+        end = Offset(translate, translate)
     )
 
     Card(
