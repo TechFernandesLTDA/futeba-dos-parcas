@@ -3,7 +3,6 @@ package com.futebadosparcas.ui.statistics
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -33,6 +32,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -477,12 +479,16 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
 private fun PerformanceSlide(data: WeeklyRecapData) {
     // Cor via tema — fix #778: AccentGreen era 0xFF00C853 (WCAG-failing ratio 2.24:1)
     val accentGreen = MaterialTheme.colorScheme.primary
+    val reducedMotion = rememberReduceMotion()
     val animatedProgress = remember { Animatable(0f) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(data.winRate, reducedMotion) {
         animatedProgress.animateTo(
             targetValue = data.winRate,
-            animationSpec = tween(1500, easing = FastOutSlowInEasing)
+            animationSpec = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion),
+                easing = MotionEasing.Emphasized
+            )
         )
     }
 
