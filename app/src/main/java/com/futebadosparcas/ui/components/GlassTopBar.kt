@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -35,6 +37,11 @@ import androidx.compose.ui.res.stringResource
  * TopBar com efeito Glassmorphism (vidro fosco).
  * Cria um efeito visual moderno com transparência e blur.
  */
+
+@Composable
+private fun glassTopBarInsets(): WindowInsets {
+    return WindowInsets.statusBars.union(WindowInsets.displayCutout)
+}
 
 // ==================== Configuration ====================
 
@@ -114,7 +121,7 @@ fun GlassTopBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
+            .windowInsetsPadding(glassTopBarInsets())
     ) {
         // Camada de background com blur (simulado)
         Box(
@@ -243,7 +250,7 @@ fun CollapsingGlassTopBar(
         modifier = modifier
             .fillMaxWidth()
             .height(currentHeight)
-            .windowInsetsPadding(WindowInsets.statusBars)
+            .windowInsetsPadding(glassTopBarInsets())
     ) {
         // Background glass
         Box(
