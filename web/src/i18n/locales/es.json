@@ -653,11 +653,13 @@
     "myFeedbacksEmptyDesc": "Tus comentarios aparecerán aquí con estado de seguimiento",
     "notifications": {
       "cleanupError": "Error al eliminar notificaciones antiguas.",
+      "cleanupSuccess": "Notificaciones antiguas eliminadas: {{count}}.",
       "clearError": "Error al limpiar notificaciones.",
       "declineError": "Error al rechazar.",
       "deleteError": "Error al eliminar notificación.",
       "inviteDeclined": "Invitación rechazada.",
       "markAllReadError": "Error al marcar todas como leídas.",
+      "markAllReadSuccess": "Notificaciones marcadas como leídas: {{count}}.",
       "markReadError": "Error al marcar notificación como leída.",
       "navigatingToGroup": "Navegando al grupo!",
       "restoreError": "Error al restaurar notificación.",

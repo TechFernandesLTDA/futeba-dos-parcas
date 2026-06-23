@@ -653,11 +653,13 @@
     "myFeedbacksEmptyDesc": "Your feedback will appear here with tracking status",
     "notifications": {
       "cleanupError": "Error removing old notifications.",
+      "cleanupSuccess": "Old notifications removed: {{count}}.",
       "clearError": "Error clearing notifications.",
       "declineError": "Error declining.",
       "deleteError": "Error deleting notification.",
       "inviteDeclined": "Invite declined.",
       "markAllReadError": "Error marking all notifications as read.",
+      "markAllReadSuccess": "Notifications marked as read: {{count}}.",
       "markReadError": "Error marking notification as read.",
       "navigatingToGroup": "Navigating to group!",
       "restoreError": "Error restoring notification.",

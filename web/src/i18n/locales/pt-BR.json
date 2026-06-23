@@ -653,11 +653,13 @@
     "myFeedbacksEmptyDesc": "Seus feedbacks aparecerão aqui com status de acompanhamento",
     "notifications": {
       "cleanupError": "Erro ao remover notificações antigas.",
+      "cleanupSuccess": "Notificações antigas removidas: {{count}}.",
       "clearError": "Erro ao limpar notificações.",
       "declineError": "Erro ao recusar.",
       "deleteError": "Erro ao excluir notificação.",
       "inviteDeclined": "Convite recusado.",
       "markAllReadError": "Erro ao marcar todas as notificações como lidas.",
+      "markAllReadSuccess": "Notificações marcadas como lidas: {{count}}.",
       "markReadError": "Erro ao marcar notificação como lida.",
       "navigatingToGroup": "Navegando para o grupo!",
       "restoreError": "Erro ao restaurar notificação.",
