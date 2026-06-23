@@ -2,7 +2,6 @@ package com.futebadosparcas.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +10,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Tipo de estado da UI para determinar a direção da animação.
@@ -28,11 +31,6 @@ enum class StateType {
     /** Estado vazio sem dados */
     EMPTY
 }
-
-/**
- * Duração padrão das animações de transição de estado (ms).
- */
-private const val TRANSITION_DURATION_MS = 300
 
 /**
  * Container que aplica AnimatedContent com transições contextuais
@@ -79,10 +77,12 @@ fun AnimatedStateContainer(
     label: String = "stateTransition",
     content: @Composable (StateType) -> Unit
 ) {
+    val reducedMotion = rememberReduceMotion()
+
     AnimatedContent(
         targetState = targetState,
         modifier = modifier,
-        transitionSpec = { createStateTransition(initialState, targetState) },
+        transitionSpec = { createStateTransition(initialState, targetState, reducedMotion) },
         label = label
     ) { currentState ->
         content(currentState)
@@ -123,13 +123,15 @@ fun <T> AnimatedStateContainer(
     label: String = "stateTransition",
     content: @Composable (T) -> Unit
 ) {
+    val reducedMotion = rememberReduceMotion()
+
     AnimatedContent(
         targetState = targetState,
         modifier = modifier,
         transitionSpec = {
             val fromType = stateMapper(initialState)
             val toType = stateMapper(targetState)
-            createStateTransition(fromType, toType)
+            createStateTransition(fromType, toType, reducedMotion)
         },
         label = label
     ) { currentState ->
@@ -146,34 +148,42 @@ fun <T> AnimatedStateContainer(
  */
 private fun createStateTransition(
     fromState: StateType,
-    toState: StateType
+    toState: StateType,
+    reducedMotion: Boolean
 ): ContentTransform {
+    val enterDuration = MotionDuration.getMedium(reducedMotion)
+    val exitDuration = MotionDuration.getShort(reducedMotion)
+    val enterSpec = tween<IntOffset>(durationMillis = enterDuration, easing = MotionEasing.Decelerate)
+    val exitSpec = tween<IntOffset>(durationMillis = exitDuration, easing = MotionEasing.Accelerate)
+    val enterFadeSpec = tween<Float>(durationMillis = enterDuration, easing = MotionEasing.Standard)
+    val exitFadeSpec = tween<Float>(durationMillis = exitDuration, easing = MotionEasing.Standard)
+
     val slideUp = slideInVertically(
         initialOffsetY = { fullHeight -> fullHeight / 4 },
-        animationSpec = tween(TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)
+        animationSpec = enterSpec
     ) + fadeIn(
-        animationSpec = tween(TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)
+        animationSpec = enterFadeSpec
     )
 
     val slideDown = slideInVertically(
         initialOffsetY = { fullHeight -> -fullHeight / 4 },
-        animationSpec = tween(TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)
+        animationSpec = enterSpec
     ) + fadeIn(
-        animationSpec = tween(TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)
+        animationSpec = enterFadeSpec
     )
 
     val exitFade = fadeOut(
-        animationSpec = tween(TRANSITION_DURATION_MS / 2, easing = FastOutSlowInEasing)
+        animationSpec = exitFadeSpec
     )
 
     val exitSlideUp = slideOutVertically(
         targetOffsetY = { fullHeight -> -fullHeight / 4 },
-        animationSpec = tween(TRANSITION_DURATION_MS / 2)
+        animationSpec = exitSpec
     ) + exitFade
 
     val exitSlideDown = slideOutVertically(
         targetOffsetY = { fullHeight -> fullHeight / 4 },
-        animationSpec = tween(TRANSITION_DURATION_MS / 2)
+        animationSpec = exitSpec
     ) + exitFade
 
     return when {
@@ -189,9 +199,9 @@ private fun createStateTransition(
 
         // Transições neutras: apenas fade
         else -> fadeIn(
-            animationSpec = tween(TRANSITION_DURATION_MS, easing = FastOutSlowInEasing)
+            animationSpec = enterFadeSpec
         ) togetherWith fadeOut(
-            animationSpec = tween(TRANSITION_DURATION_MS / 2, easing = FastOutSlowInEasing)
+            animationSpec = exitFadeSpec
         )
     }
 }
