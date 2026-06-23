@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { useTranslation } from 'react-i18next';
 
 function parseOfficialGroup(id: string, raw: Record<string, unknown>): OfficialGroup {
   const converted = snakeToCamel(raw);
@@ -79,13 +80,14 @@ export function useIsInOfficialGroup(groupId?: string) {
 export function useJoinOfficialGroup() {
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const uid = user?.id ?? '';
   const userName = user?.name ?? '';
 
   return useMutation({
     mutationFn: async (officialGroup: OfficialGroup) => {
-      if (!uid || !userName) throw new Error('Você precisa estar logado.');
+      if (!uid || !userName) throw new Error(t('feedback.officialGroups.loginRequired'));
 
       const groupRef = doc(db, 'groups', officialGroup.id);
       const memberRef = doc(db, 'groups', officialGroup.id, 'members', uid);
@@ -136,7 +138,7 @@ export function useJoinOfficialGroup() {
       await batch.commit();
     },
     onSuccess: (_, officialGroup) => {
-      showSuccess(`Você entrou em "${officialGroup.name}"!`);
+      showSuccess(t('feedback.officialGroups.joinSuccess', { name: officialGroup.name }));
       queryClient.invalidateQueries({ queryKey: ['official-groups'] });
       queryClient.invalidateQueries({ queryKey: ['groups', uid] });
       queryClient.invalidateQueries({ queryKey: ['official-group-member', uid, officialGroup.id] });

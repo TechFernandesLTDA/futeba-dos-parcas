@@ -617,6 +617,10 @@
       "updateError": "Error al actualizar el grupo. Inténtalo de nuevo.",
       "updateSuccess": "Grupo actualizado con éxito!"
     },
+    "officialGroups": {
+      "joinSuccess": "Te uniste a \"{{name}}\"!",
+      "loginRequired": "Necesitas iniciar sesión."
+    },
     "invite": {
       "alreadyUsed": "Esta invitación ya fue utilizada. Pide una nueva al organizador.",
       "codeNotInformed": "Código de invitación no informado",
