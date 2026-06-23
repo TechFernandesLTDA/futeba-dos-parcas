@@ -96,7 +96,7 @@ fun PrimaryCard(
         onClick = onClick,
         backgroundColor = MaterialTheme.colorScheme.primaryContainer,
         shape = MaterialTheme.shapes.large,
-        elevation = AppDimensions.elevation_medium,
+        elevation = AppDimensions.elevation_none,
         content = content
     )
 }
@@ -121,7 +121,7 @@ fun SecondaryCard(
         onClick = onClick,
         backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
         shape = MaterialTheme.shapes.large,
-        elevation = AppDimensions.elevation_small,
+        elevation = AppDimensions.elevation_none,
         content = content
     )
 }
