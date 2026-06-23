@@ -1588,7 +1588,54 @@
   },
   "notifications": {
     "acceptError": "Failed to accept. Try again.",
-    "bannerMessage": "Enable notifications to receive game alerts!"
+    "bannerMessage": "Enable notifications to receive game alerts!",
+    "screen": {
+      "accept": "Accept",
+      "acceptAria": "Accept {{title}}",
+      "actionType": "Action: {{action}}",
+      "clearDialog": {
+        "clearing": "Clearing...",
+        "confirm": "Clear all",
+        "description": "This action will remove all your notifications. This action cannot be undone.",
+        "title": "Clear all notifications?"
+      },
+      "dateGroups": {
+        "older": "Older",
+        "thisWeek": "This week",
+        "today": "Today",
+        "yesterday": "Yesterday"
+      },
+      "decline": "Decline",
+      "declineAria": "Decline {{title}}",
+      "deleteUndoMessage": "Notification removed.",
+      "filterAria": "Filter by {{label}}",
+      "filters": {
+        "ACHIEVEMENT": "Achievements",
+        "ALL": "All",
+        "BADGE_UNLOCKED": "Badges",
+        "GAME_CANCELLED": "Canceled",
+        "GAME_CONFIRMED": "Confirmed",
+        "GAME_INVITE": "Games",
+        "GAME_REMINDER": "Reminders",
+        "GAME_SUMMON": "Summons",
+        "GAME_UPDATED": "Updated",
+        "GAME_VACANCY": "Open spots",
+        "GROUP_INVITE": "Groups",
+        "LEVEL_UP": "Level",
+        "MVP_RECEIVED": "MVP",
+        "MVP_VOTE": "Votes",
+        "STREAK_BROKEN": "Streak",
+        "SYSTEM": "System"
+      },
+      "groupListAria": "Notifications - {{group}}",
+      "time": {
+        "days": "{{count}}d",
+        "hours": "{{count}}h",
+        "minutes": "{{count}}min",
+        "now": "Now"
+      },
+      "undo": "Undo"
+    }
   },
   "onboarding": {
     "accountVerified": "Your account is verified.",

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
@@ -55,35 +55,38 @@ import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
 import type { NotificationType } from '../../types';
 
-const ALL_FILTERS: Array<{ type: NotificationType | 'ALL'; label: string }> = [
-  { type: 'ALL', label: 'Todas' },
-  { type: 'GAME_INVITE', label: 'Jogos' },
-  { type: 'GAME_SUMMON', label: 'Convocações' },
-  { type: 'GAME_CONFIRMED', label: 'Confirmados' },
-  { type: 'GAME_REMINDER', label: 'Lembretes' },
-  { type: 'GAME_CANCELLED', label: 'Cancelados' },
-  { type: 'GAME_UPDATED', label: 'Atualizados' },
-  { type: 'GAME_VACANCY', label: 'Vagas' },
-  { type: 'GROUP_INVITE', label: 'Grupos' },
-  { type: 'ACHIEVEMENT', label: 'Conquistas' },
-  { type: 'BADGE_UNLOCKED', label: 'Badges' },
-  { type: 'LEVEL_UP', label: 'Nível' },
-  { type: 'MVP_RECEIVED', label: 'MVP' },
-  { type: 'MVP_VOTE', label: 'Votações' },
-  { type: 'STREAK_BROKEN', label: 'Streak' },
-  { type: 'SYSTEM', label: 'Sistema' },
+const NOTIFICATION_FILTER_TYPES: Array<NotificationType | 'ALL'> = [
+  'ALL',
+  'GAME_INVITE',
+  'GAME_SUMMON',
+  'GAME_CONFIRMED',
+  'GAME_REMINDER',
+  'GAME_CANCELLED',
+  'GAME_UPDATED',
+  'GAME_VACANCY',
+  'GROUP_INVITE',
+  'ACHIEVEMENT',
+  'BADGE_UNLOCKED',
+  'LEVEL_UP',
+  'MVP_RECEIVED',
+  'MVP_VOTE',
+  'STREAK_BROKEN',
+  'SYSTEM',
 ];
 
-function getDateGroup(date: Date): string {
+const DATE_GROUP_ORDER = ['today', 'yesterday', 'thisWeek', 'older'] as const;
+type DateGroupKey = typeof DATE_GROUP_ORDER[number];
+
+function getDateGroup(date: Date): DateGroupKey {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const diffDays = Math.floor((today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Hoje';
-  if (diffDays === 1) return 'Ontem';
-  if (diffDays < 7) return 'Esta semana';
-  return 'Mais antigos';
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return 'thisWeek';
+  return 'older';
 }
 
 function getTypeIcon(type: string, gColors: ReturnType<typeof useGamificationColors>): React.ReactNode {
@@ -131,17 +134,17 @@ function getTypeIcon(type: string, gColors: ReturnType<typeof useGamificationCol
   }
 }
 
-function getTimeAgo(date: Date): string {
+function getTimeAgo(date: Date, t: ReturnType<typeof useTranslation>['t']): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'Agora';
-  if (diffMins < 60) return `${diffMins}min`;
+  if (diffMins < 1) return t('notifications.screen.time.now');
+  if (diffMins < 60) return t('notifications.screen.time.minutes', { count: diffMins });
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h`;
+  if (diffHours < 24) return t('notifications.screen.time.hours', { count: diffHours });
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d`;
+  return t('notifications.screen.time.days', { count: diffDays });
 }
 
 export const NotificationsScreen: React.FC = () => {
@@ -172,6 +175,10 @@ export const NotificationsScreen: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const notificationFilters = useMemo(() => NOTIFICATION_FILTER_TYPES.map((type) => ({
+    type,
+    label: t(`notifications.screen.filters.${type}`),
+  })), [t]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -183,14 +190,12 @@ export const NotificationsScreen: React.FC = () => {
     .filter((n) => !dismissedIds.has(n.id))
     .filter((n) => activeFilter === 'ALL' || n.type === activeFilter);
 
-  const groupedNotifications = filteredNotifications.reduce<Record<string, typeof notifications>>((acc, n) => {
+  const groupedNotifications = filteredNotifications.reduce<Partial<Record<DateGroupKey, typeof notifications>>>((acc, n) => {
     const group = getDateGroup(n.createdAt);
     if (!acc[group]) acc[group] = [];
     acc[group].push(n);
     return acc;
   }, {});
-
-  const dateGroupOrder = ['Hoje', 'Ontem', 'Esta semana', 'Mais antigos'];
 
   const handleAccept = useCallback(async (notification: typeof notifications[0]) => {
     try {
@@ -220,8 +225,8 @@ export const NotificationsScreen: React.FC = () => {
     const deletedNotif = notification;
     try {
       await deleteNotification(notification.id);
-      showWithAction('Notificação removida.', {
-        label: 'Desfazer',
+      showWithAction(t('notifications.screen.deleteUndoMessage'), {
+        label: t('notifications.screen.undo'),
         onClick: () => {
           restoreNotification(deletedNotif);
         },
@@ -251,9 +256,9 @@ export const NotificationsScreen: React.FC = () => {
     <Box>
       {/* Cabeçalho padronizado — badge de não-lidas + ações de gestão via `actions` */}
       <ScreenHeader
-        title="Notificações"
+        title={t('page.title.notifications')}
         onBack={goBack}
-        backAriaLabel="Voltar"
+        backAriaLabel={t('a11y.back')}
         actions={
           <>
             {unreadCount > 0 && (
@@ -300,7 +305,7 @@ export const NotificationsScreen: React.FC = () => {
           '&::-webkit-scrollbar': { display: 'none' },
         }}
       >
-        {ALL_FILTERS.map((filter) => (
+        {notificationFilters.map((filter) => (
           <Chip
             key={filter.type}
             label={filter.label}
@@ -309,7 +314,7 @@ export const NotificationsScreen: React.FC = () => {
             variant={activeFilter === filter.type ? 'filled' : 'outlined'}
             onClick={() => setActiveFilter(filter.type)}
             icon={activeFilter === filter.type ? <FilterIcon fontSize="small" /> : undefined}
-            aria-label={`Filtrar por ${filter.label}`}
+            aria-label={t('notifications.screen.filterAria', { label: filter.label })}
           />
         ))}
       </Box>
@@ -339,12 +344,13 @@ export const NotificationsScreen: React.FC = () => {
           />
         ) : (
           <Box>
-            {dateGroupOrder.map((groupLabel) => {
-              const groupItems = groupedNotifications[groupLabel];
+            {DATE_GROUP_ORDER.map((groupKey) => {
+              const groupItems = groupedNotifications[groupKey];
               if (!groupItems || groupItems.length === 0) return null;
+              const groupLabel = t(`notifications.screen.dateGroups.${groupKey}`);
 
               return (
-                <Box key={groupLabel} sx={{ mb: 2 }}>
+                <Box key={groupKey} sx={{ mb: 2 }}>
                   <Typography
                     variant="overline"
                     color="text.secondary"
@@ -352,7 +358,7 @@ export const NotificationsScreen: React.FC = () => {
                   >
                     {groupLabel}
                   </Typography>
-                  <List disablePadding aria-label={`Notificações - ${groupLabel}`}>
+                  <List disablePadding aria-label={t('notifications.screen.groupListAria', { group: groupLabel })}>
                     {groupItems.map((notification) => (
                       <Slide direction="left" in key={notification.id}>
                         <Card
@@ -378,11 +384,11 @@ export const NotificationsScreen: React.FC = () => {
                                 </Typography>
                                 {notification.actionType && (
                                   <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
-                                    Ação: {notification.actionType}
+                                    {t('notifications.screen.actionType', { action: notification.actionType })}
                                   </Typography>
                                 )}
                                 <Typography variant="caption" color="text.disabled">
-                                  {getTimeAgo(notification.createdAt)}
+                                  {getTimeAgo(notification.createdAt, t)}
                                 </Typography>
 
                                 {isActionable(notification.type) && !notification.read && (
@@ -393,9 +399,9 @@ export const NotificationsScreen: React.FC = () => {
                                       color="primary"
                                       onClick={() => handleAccept(notification)}
                                       startIcon={<CheckIcon />}
-                                      aria-label={`Aceitar ${notification.title}`}
+                                      aria-label={t('notifications.screen.acceptAria', { title: notification.title })}
                                     >
-                                      Aceitar
+                                      {t('notifications.screen.accept')}
                                     </Button>
                                     <Button
                                       size="small"
@@ -403,9 +409,9 @@ export const NotificationsScreen: React.FC = () => {
                                       color="inherit"
                                       onClick={() => handleDecline(notification)}
                                       startIcon={<CloseIcon />}
-                                      aria-label={`Recusar ${notification.title}`}
+                                      aria-label={t('notifications.screen.declineAria', { title: notification.title })}
                                     >
-                                      Recusar
+                                      {t('notifications.screen.decline')}
                                     </Button>
                                   </Box>
                                 )}
@@ -463,14 +469,14 @@ export const NotificationsScreen: React.FC = () => {
         aria-labelledby="clear-notif-title"
         aria-describedby="clear-notif-desc"
       >
-        <DialogTitle id="clear-notif-title">Limpar todas as notificações?</DialogTitle>
+        <DialogTitle id="clear-notif-title">{t('notifications.screen.clearDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText id="clear-notif-desc">
-            Esta ação removerá todas as suas notificações. Esta ação não pode ser desfeita.
+            {t('notifications.screen.clearDialog.description')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button
             onClick={handleClearAll}
             color="error"
@@ -478,7 +484,7 @@ export const NotificationsScreen: React.FC = () => {
             disabled={deleting}
             startIcon={<DeleteIcon />}
           >
-            {deleting ? 'Limpando...' : 'Limpar tudo'}
+            {deleting ? t('notifications.screen.clearDialog.clearing') : t('notifications.screen.clearDialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
