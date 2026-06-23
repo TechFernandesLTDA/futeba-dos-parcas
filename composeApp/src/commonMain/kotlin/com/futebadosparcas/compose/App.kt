@@ -57,6 +57,7 @@ import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
 import com.futebadosparcas.compose.resources.cd_back
 import com.futebadosparcas.compose.resources.feature_hub_actions
+import com.futebadosparcas.compose.resources.feature_hub_action_content_description
 import com.futebadosparcas.compose.resources.game_detail_blocked_players
 import com.futebadosparcas.compose.resources.game_detail_hub_title
 import com.futebadosparcas.compose.resources.game_detail_invite_players
@@ -593,12 +594,17 @@ private fun FeatureHubScreen(
 
 @Composable
 private fun FeatureHubActionButton(action: FeatureHubAction) {
+    val actionContentDescription = stringResource(
+        Res.string.feature_hub_action_content_description,
+        action.label,
+        action.description
+    )
     OutlinedButton(
         onClick = action.onClick,
         modifier = Modifier
             .fillMaxWidth()
             .semantics {
-                contentDescription = "${action.label}. ${action.description}"
+                contentDescription = actionContentDescription
             }
     ) {
         Row(

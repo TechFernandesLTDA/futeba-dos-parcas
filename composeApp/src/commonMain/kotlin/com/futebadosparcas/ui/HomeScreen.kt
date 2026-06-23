@@ -48,6 +48,7 @@ import com.futebadosparcas.compose.resources.home_tools_groups_body
 import com.futebadosparcas.compose.resources.home_tools_groups_title
 import com.futebadosparcas.compose.resources.home_tools_profile_body
 import com.futebadosparcas.compose.resources.home_tools_profile_title
+import com.futebadosparcas.compose.resources.home_tool_summary_content_description
 import com.futebadosparcas.compose.resources.home_welcome
 import com.futebadosparcas.compose.resources.home_nav_games
 import com.futebadosparcas.compose.resources.home_nav_groups
@@ -522,10 +523,15 @@ private fun ToolSummaryCard(
     body: String,
     onClick: () -> Unit
 ) {
+    val summaryContentDescription = stringResource(
+        Res.string.home_tool_summary_content_description,
+        title,
+        body
+    )
     ElevatedCard(
         onClick = onClick,
         modifier = Modifier.semantics(mergeDescendants = true) {
-            contentDescription = "$title. $body"
+            contentDescription = summaryContentDescription
             role = Role.Button
         }
     ) {
