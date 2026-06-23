@@ -44,12 +44,17 @@ import com.futebadosparcas.domain.model.WeeklyChallenge
 import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
+import com.futebadosparcas.ui.components.animation.ConfettiAnimation
+import com.futebadosparcas.ui.components.animation.ConfettiColors
+import com.futebadosparcas.ui.components.animation.ConfettiType
+import com.futebadosparcas.ui.components.animation.SuccessAnimationOverlay
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -287,6 +292,36 @@ private fun HomeSuccessContent(
     val showCelebration by (onboardingViewModel?.showCelebration
         ?: kotlinx.coroutines.flow.MutableStateFlow(false))
         .collectAsStateWithLifecycle()
+    val reduceMotion = rememberReduceMotion()
+    val latestActivity = remember(activities) {
+        activities.maxWithOrNull(
+            compareBy<Activity> { it.createdAt ?: Long.MIN_VALUE }
+                .thenBy { it.id }
+        )
+    }
+    val latestActivityId = latestActivity?.id
+    val latestRewardKind = latestActivity?.rewardCelebrationKind()
+    var rewardBaselineCaptured by remember { mutableStateOf(false) }
+    var lastSeenRewardActivityId by remember { mutableStateOf<String?>(null) }
+    var rewardCelebrationKind by remember { mutableStateOf<RewardActivityCelebrationKind?>(null) }
+
+    LaunchedEffect(latestActivityId, latestRewardKind, reduceMotion) {
+        if (latestActivityId == null) {
+            rewardCelebrationKind = null
+            return@LaunchedEffect
+        }
+
+        if (!rewardBaselineCaptured) {
+            rewardBaselineCaptured = true
+            lastSeenRewardActivityId = latestActivityId
+            return@LaunchedEffect
+        }
+
+        if (latestActivityId != lastSeenRewardActivityId) {
+            rewardCelebrationKind = if (!reduceMotion) latestRewardKind else null
+            lastSeenRewardActivityId = latestActivityId
+        }
+    }
 
     // Em tablets, centraliza o conteúdo com largura máxima para leitura confortável
     Box(
@@ -445,8 +480,69 @@ private fun HomeSuccessContent(
             }
         }
     } // fecha LazyColumn
+
+    RewardActivityCelebrationOverlay(
+        kind = rewardCelebrationKind,
+        onDismiss = { rewardCelebrationKind = null },
+        modifier = Modifier.fillMaxSize()
+    )
     } // fecha Box adaptativo
 }
+
+@Composable
+private fun RewardActivityCelebrationOverlay(
+    kind: RewardActivityCelebrationKind?,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (kind == null) return
+
+    val (type, colors, particleCount, durationMillis) = when (kind) {
+        RewardActivityCelebrationKind.LEVEL -> RewardCelebrationSpec(
+            type = ConfettiType.RISING,
+            colors = ConfettiColors.SUCCESS,
+            particleCount = 48,
+            durationMillis = 2200
+        )
+        RewardActivityCelebrationKind.BADGE -> RewardCelebrationSpec(
+            type = ConfettiType.CANNON,
+            colors = ConfettiColors.GOLD,
+            particleCount = 56,
+            durationMillis = 2200
+        )
+        RewardActivityCelebrationKind.MVP -> RewardCelebrationSpec(
+            type = ConfettiType.EXPLOSION,
+            colors = ConfettiColors.MVP,
+            particleCount = 60,
+            durationMillis = 2400
+        )
+    }
+
+    Box(modifier = modifier) {
+        ConfettiAnimation(
+            visible = true,
+            modifier = Modifier.fillMaxSize(),
+            type = type,
+            colors = colors,
+            particleCount = particleCount,
+            durationMillis = durationMillis,
+            onAnimationEnd = onDismiss
+        )
+        SuccessAnimationOverlay(
+            visible = true,
+            onDismiss = onDismiss,
+            modifier = Modifier.fillMaxSize(),
+            displayDurationMs = durationMillis.toLong()
+        )
+    }
+}
+
+private data class RewardCelebrationSpec(
+    val type: ConfettiType,
+    val colors: List<androidx.compose.ui.graphics.Color>,
+    val particleCount: Int,
+    val durationMillis: Int
+)
 
 /**
  * Estado de loading
@@ -530,4 +626,3 @@ private fun HomeErrorState(
         }
     }
 }
-
