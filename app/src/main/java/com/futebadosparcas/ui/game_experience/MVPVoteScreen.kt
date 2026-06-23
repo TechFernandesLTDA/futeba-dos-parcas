@@ -221,14 +221,6 @@ private fun VotingContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Grid adaptativo: 2 colunas em telefone, 3 em tablet, 4 em landscape grande
-        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-        val columns = when {
-            configuration.screenWidthDp >= 840 -> 4
-            configuration.screenWidthDp >= 600 -> 3
-            else -> 2
-        }
-
         // Candidates Grid
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 140.dp),
@@ -458,14 +450,6 @@ private fun MVPVoteLoadingState() {
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        // Grid de shimmers para os cards de candidatos (adaptativo)
-        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-        val shimmerColumns = when {
-            configuration.screenWidthDp >= 840 -> 4
-            configuration.screenWidthDp >= 600 -> 3
-            else -> 2
-        }
 
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 140.dp),
