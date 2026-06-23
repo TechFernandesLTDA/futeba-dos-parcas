@@ -856,7 +856,7 @@ export const LeagueScreen: React.FC = () => {
                   onClick={handleLoadMore}
                   disabled={loading}
                 >
-                  {loading ? 'Carregando...' : 'Carregar mais'}
+                  {loading ? t('common.loading') : t('league.loadMore')}
                 </Button>
               </Box>
             )}

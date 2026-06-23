@@ -34,7 +34,7 @@ export const LoadingScreen = React.memo(function LoadingScreen({
           gap: 3,
         }}
         role="status"
-        aria-label={message || 'Carregando'}
+        aria-label={message || t('common.loading')}
       >
         <AppLogo
           size="xlarge"
@@ -72,7 +72,7 @@ export const LoadingScreen = React.memo(function LoadingScreen({
           gap: 2,
         }}
         role="status"
-        aria-label={message || 'Carregando'}
+        aria-label={message || t('common.loading')}
       >
         <Box
           sx={{
@@ -100,7 +100,7 @@ export const LoadingScreen = React.memo(function LoadingScreen({
 
   // Skeleton card list (padrão para loading de telas)
   return (
-    <Box sx={{ p: 2 }} role="status" aria-label={message || 'Carregando conteúdo'}>
+    <Box sx={{ p: 2 }} role="status" aria-label={message || t('common.loadingContent')}>
       {/* Header skeleton */}
       <Skeleton variant="text" width="40%" height={32} sx={{ mb: 2 }} />
 

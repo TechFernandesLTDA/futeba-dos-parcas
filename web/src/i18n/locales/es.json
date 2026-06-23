@@ -378,6 +378,8 @@
     "language": "Idioma",
     "later": "Después",
     "loading": "Cargando...",
+    "loadingContent": "Cargando contenido",
+    "loadingMore": "Cargando más...",
     "navigationError": "No se pudo navegar. Inténtalo de nuevo.",
     "next": "Siguiente",
     "noData": "Sin datos",
@@ -392,6 +394,7 @@
     "spanish": "Español",
     "success": "Éxito",
     "synchronize": "Sincronizar",
+    "endReached": "¡Has llegado al final!",
     "viewGames": "Ver Partidos",
     "viewGroups": "Ver Grupos",
     "moreOptions": "Más opciones"
@@ -1334,6 +1337,7 @@
     "goals": "Goles",
     "gold": "Oro",
     "loadError": "Error al cargar liga: {{error}}",
+    "loadMore": "Cargar más",
     "mvpCount": "MVPs",
     "points": "Puntos",
     "position": "Posición",
@@ -1444,9 +1448,11 @@
     "localsCount_one": "{{count}} lugar",
     "localsCount_other": "{{count}} lugares",
     "localsCount": "{{count}} lugares",
+    "notFound": "Lugar no encontrado",
     "noLocationsFound": "No se encontraron lugares",
     "searchingFor": "para \"{{query}}\"",
     "tryDifferentSearch": "Intenta cambiar los términos de búsqueda",
+    "viewAll": "Ver todos los lugares",
     "quickCreate": {
       "title": "Crear Local",
       "locationName": "Nombre del Local",
@@ -1983,6 +1989,12 @@
   },
   "splash": {
     "tagline": "Organiza tus partidos"
+  },
+  "teams": {
+    "favorite": "Equipo favorito",
+    "loading": "Cargando equipos...",
+    "noOptions": "No se encontraron equipos",
+    "optionalLabel": "{{label}} (opcional)"
   },
   "statistics": {
     "assists": "Asistencias",

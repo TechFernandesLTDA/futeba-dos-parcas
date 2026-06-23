@@ -378,6 +378,8 @@
     "language": "Language",
     "later": "Later",
     "loading": "Loading...",
+    "loadingContent": "Loading content",
+    "loadingMore": "Loading more...",
     "navigationError": "Could not navigate. Please try again.",
     "next": "Next",
     "noData": "No data",
@@ -392,6 +394,7 @@
     "spanish": "Español",
     "success": "Success",
     "synchronize": "Synchronize",
+    "endReached": "You've reached the end!",
     "viewGames": "View Games",
     "viewGroups": "View Groups",
     "moreOptions": "More options"
@@ -1334,6 +1337,7 @@
     "goals": "Goals",
     "gold": "Gold",
     "loadError": "Error loading league: {{error}}",
+    "loadMore": "Load more",
     "mvpCount": "MVPs",
     "points": "Points",
     "position": "Position",
@@ -1444,9 +1448,11 @@
     "localsCount_one": "{{count}} location",
     "localsCount_other": "{{count}} locations",
     "localsCount": "{{count}} locations",
+    "notFound": "Location not found",
     "noLocationsFound": "No locations found",
     "searchingFor": "for \"{{query}}\"",
     "tryDifferentSearch": "Try changing your search terms",
+    "viewAll": "View all locations",
     "quickCreate": {
       "title": "Create Location",
       "locationName": "Location Name",
@@ -1983,6 +1989,12 @@
   },
   "splash": {
     "tagline": "Organize your games"
+  },
+  "teams": {
+    "favorite": "Favorite Team",
+    "loading": "Loading teams...",
+    "noOptions": "No teams found",
+    "optionalLabel": "{{label}} (optional)"
   },
   "statistics": {
     "assists": "Assists",
