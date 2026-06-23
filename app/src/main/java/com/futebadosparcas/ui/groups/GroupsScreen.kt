@@ -25,24 +25,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.ui.adaptive.ExpandedListDetailPane
-import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
-import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.UserGroup
+import com.futebadosparcas.ui.adaptive.ExpandedListDetailPane
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
-import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.brandAccentGradient
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Tela principal de listagem de grupos em Jetpack Compose
@@ -379,7 +380,11 @@ private fun GroupCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val memberLabel = "${group.memberCount} ${if (group.memberCount == 1) "membro" else "membros"}"
+    val memberLabel = pluralStringResource(
+        R.plurals.groups_member_count,
+        group.memberCount,
+        group.memberCount
+    )
     val roleLabel = group.getRoleEnum().displayName
     val cardCd = stringResource(R.string.cd_group_card, group.groupName, memberLabel, roleLabel)
 
@@ -437,13 +442,13 @@ private fun GroupCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.People,
-                            contentDescription = stringResource(R.string.cd_member_count, group.memberCount, if (group.memberCount == 1) "membro" else "membros"),
+                            contentDescription = memberLabel,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${group.memberCount} ${if (group.memberCount == 1) "membro" else "membros"}",
+                            text = memberLabel,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
