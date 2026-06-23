@@ -55,6 +55,13 @@ import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.resources.cd_back
 import com.futebadosparcas.compose.resources.cd_collapse_release_version
 import com.futebadosparcas.compose.resources.cd_expand_release_version
+import com.futebadosparcas.compose.resources.retry
+import com.futebadosparcas.compose.resources.whats_new_empty_body
+import com.futebadosparcas.compose.resources.whats_new_empty_title
+import com.futebadosparcas.compose.resources.whats_new_error_body
+import com.futebadosparcas.compose.resources.whats_new_title
+import com.futebadosparcas.compose.resources.whats_new_version_a11y_prefix
+import com.futebadosparcas.compose.resources.whats_new_version_title
 import com.futebadosparcas.domain.model.ReleaseNote
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -87,7 +94,7 @@ fun WhatsNewScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Novidades",
+                        text = stringResource(Res.string.whats_new_title),
                         modifier = Modifier.semantics { heading() },
                     )
                 },
@@ -155,8 +162,10 @@ private fun VersionCard(
     } else {
         stringResource(Res.string.cd_expand_release_version)
     }
+    val versionA11yPrefix = stringResource(Res.string.whats_new_version_a11y_prefix)
     val accessibilitySummary = buildString {
-        append("Versão ")
+        append(versionA11yPrefix)
+        append(" ")
         append(note.version)
         if (releaseDate.isNotBlank()) {
             append(". ")
@@ -192,7 +201,7 @@ private fun VersionCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Versão ${note.version}",
+                            text = stringResource(Res.string.whats_new_version_title, note.version),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
@@ -265,14 +274,14 @@ private fun WhatsNewEmptyState(modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Nenhuma novidade por aqui ainda",
+            text = stringResource(Res.string.whats_new_empty_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Quando o app for atualizado, as novidades aparecem aqui.",
+            text = stringResource(Res.string.whats_new_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -300,14 +309,14 @@ private fun WhatsNewErrorState(
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Não foi possível carregar as novidades.",
+            text = stringResource(Res.string.whats_new_error_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(16.dp))
         Button(onClick = onRetry) {
-            Text("Tentar novamente")
+            Text(stringResource(Res.string.retry))
         }
     }
 }

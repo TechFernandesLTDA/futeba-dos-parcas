@@ -36,12 +36,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.release_section_added
+import com.futebadosparcas.compose.resources.release_section_fixed
+import com.futebadosparcas.compose.resources.release_section_improved
+import com.futebadosparcas.compose.resources.release_type_major
+import com.futebadosparcas.compose.resources.release_type_minor
+import com.futebadosparcas.compose.resources.release_type_patch
 import com.futebadosparcas.domain.model.ReleaseHighlight
 import com.futebadosparcas.domain.model.ReleaseNote
 import com.futebadosparcas.domain.model.ReleaseType
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Componentes compartilhados da feature "Novidades" no `composeApp` (iOS via
@@ -49,8 +57,8 @@ import kotlinx.datetime.toLocalDateTime
  * quanto pela Tela "Novidades" ([WhatsNewScreen]).
  *
  * Porta a UI Android (`:app/.../ui/whatsnew/WhatsNewContent.kt`) para commonMain.
- * As strings ficam hardcoded em PT-BR seguindo a convenção vigente do `composeApp`
- * (as telas existentes — HomeScreen, RegisterScreen — também hardcodam).
+ * As strings de UI são resolvidas via Compose resources para manter a paridade
+ * cross-platform e preparar localização futura.
  *
  * Spec: feat-2026-05-22-version-control-release-notes.md — Fase G, task #23.
  */
@@ -92,10 +100,11 @@ internal fun formatReleaseDate(epochMillis: Long): String {
 }
 
 /** Rótulo PT-BR do tipo de release. */
+@Composable
 internal fun releaseTypeLabel(type: ReleaseType): String = when (type) {
-    ReleaseType.MAJOR -> "Grande atualização"
-    ReleaseType.MINOR -> "Atualização"
-    ReleaseType.PATCH -> "Correções"
+    ReleaseType.MAJOR -> stringResource(Res.string.release_type_major)
+    ReleaseType.MINOR -> stringResource(Res.string.release_type_minor)
+    ReleaseType.PATCH -> stringResource(Res.string.release_type_patch)
 }
 
 /**
@@ -251,19 +260,19 @@ internal fun ReleaseNoteBody(
             }
         }
         ReleaseSection(
-            title = "Novidades",
+            title = stringResource(Res.string.release_section_added),
             icon = Icons.Default.AutoAwesome,
             items = note.added,
             accent = MaterialTheme.colorScheme.primary,
         )
         ReleaseSection(
-            title = "Melhorias",
+            title = stringResource(Res.string.release_section_improved),
             icon = Icons.Default.Bolt,
             items = note.improved,
             accent = MaterialTheme.colorScheme.tertiary,
         )
         ReleaseSection(
-            title = "Correções",
+            title = stringResource(Res.string.release_section_fixed),
             icon = Icons.Default.BugReport,
             items = note.fixed,
             accent = MaterialTheme.colorScheme.secondary,
