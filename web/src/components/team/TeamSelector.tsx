@@ -14,7 +14,7 @@ interface TeamSelectorProps {
 export const TeamSelector: React.FC<TeamSelectorProps> = ({
   value,
   onChange,
-  label = 'Time do Coração',
+  label,
   optional = false,
 }) => {
   const { t } = useTranslation();
@@ -30,8 +30,8 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
       }}
       options={teams}
       loading={loading}
-      loadingText="Carregando times..."
-      noOptionsText="Nenhum time encontrado"
+      loadingText={t('teams.loading')}
+      noOptionsText={t('teams.noOptions')}
       getOptionLabel={(option) => option.name}
       isOptionEqualToValue={(option, val) => option.id === val.id}
       renderOption={(props, option) => {
@@ -64,7 +64,11 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
       renderInput={(params) => (
         <TextField
           {...params}
-          label={optional ? `${label} (opcional)` : label}
+          label={
+            optional
+              ? t('teams.optionalLabel', { label: label || t('teams.favorite') })
+              : label || t('teams.favorite')
+          }
           placeholder={t('placeholder.searchTeam')}
         />
       )}

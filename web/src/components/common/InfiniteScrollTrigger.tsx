@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface InfiniteScrollTriggerProps {
   onLoadMore: () => void;
@@ -12,8 +13,9 @@ export const InfiniteScrollTrigger: React.FC<InfiniteScrollTriggerProps> = ({
   onLoadMore,
   hasMore,
   loading,
-  endMessage = 'Você chegou ao fim!',
+  endMessage,
 }) => {
+  const { t } = useTranslation();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,12 +41,12 @@ export const InfiniteScrollTrigger: React.FC<InfiniteScrollTriggerProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
           <CircularProgress size={20} />
           <Typography variant="body2" color="text.secondary">
-            Carregando mais...
+            {t('common.loadingMore')}
           </Typography>
         </Box>
       ) : !hasMore ? (
         <Typography variant="body2" color="text.disabled">
-          {endMessage}
+          {endMessage || t('common.endReached')}
         </Typography>
       ) : null}
     </Box>

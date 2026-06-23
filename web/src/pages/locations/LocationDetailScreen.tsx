@@ -221,7 +221,7 @@ export const LocationDetailScreen: React.FC = () => {
   if (loading) {
     return (
       <>
-        {renderHeader('Carregando...')}
+        {renderHeader(t('common.loading'))}
         <PageContainer maxWidth="detail"><LoadingState shimmerCount={5} itemType="CARD" /></PageContainer>
       </>
     );
@@ -230,13 +230,13 @@ export const LocationDetailScreen: React.FC = () => {
   if (error || !location) {
     return (
       <>
-        {renderHeader('Local')}
+        {renderHeader(t('locations.title'))}
         <PageContainer maxWidth="detail" sx={{ textAlign: 'center' }}>
           <LocationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>{error || 'Local não encontrado'}</Typography>
+          <Typography variant="h6" color="text.secondary" gutterBottom>{error || t('locations.notFound')}</Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mt: 2 }}>
-            <Button variant="outlined" onClick={() => navigate(locationsListPath)}>Ver todos os locais</Button>
-            {error && <Button variant="contained" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</Button>}
+            <Button variant="outlined" onClick={() => navigate(locationsListPath)}>{t('locations.viewAll')}</Button>
+            {error && <Button variant="contained" onClick={() => setReloadKey((k) => k + 1)}>{t('common.retry')}</Button>}
           </Box>
         </PageContainer>
       </>

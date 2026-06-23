@@ -378,6 +378,8 @@
     "language": "Idioma",
     "later": "Depois",
     "loading": "Carregando...",
+    "loadingContent": "Carregando conteúdo",
+    "loadingMore": "Carregando mais...",
     "navigationError": "Não foi possível navegar. Tente novamente.",
     "next": "Próximo",
     "noData": "Sem dados",
@@ -392,6 +394,7 @@
     "spanish": "Español",
     "success": "Sucesso",
     "synchronize": "Sincronizar",
+    "endReached": "Você chegou ao fim!",
     "viewGames": "Ver Jogos",
     "viewGroups": "Ver Grupos",
     "moreOptions": "Mais opções"
@@ -1334,6 +1337,7 @@
     "goals": "Gols",
     "gold": "Ouro",
     "loadError": "Erro ao carregar liga: {{error}}",
+    "loadMore": "Carregar mais",
     "mvpCount": "MVPs",
     "points": "Pontos",
     "position": "Posição",
@@ -1444,9 +1448,11 @@
     "localsCount_one": "{{count}} local",
     "localsCount_other": "{{count}} locais",
     "localsCount": "{{count}} locais",
+    "notFound": "Local não encontrado",
     "noLocationsFound": "Nenhum local encontrado",
     "searchingFor": "para \"{{query}}\"",
     "tryDifferentSearch": "Tente alterar os termos da busca",
+    "viewAll": "Ver todos os locais",
     "quickCreate": {
       "title": "Criar Local",
       "locationName": "Nome do Local",
@@ -1983,6 +1989,12 @@
   },
   "splash": {
     "tagline": "Organize suas peladas"
+  },
+  "teams": {
+    "favorite": "Time do Coração",
+    "loading": "Carregando times...",
+    "noOptions": "Nenhum time encontrado",
+    "optionalLabel": "{{label}} (opcional)"
   },
   "statistics": {
     "assists": "Assistências",
