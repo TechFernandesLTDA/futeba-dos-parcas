@@ -67,8 +67,6 @@ import {
   getWeekKey,
   determineGameResults,
   getOpponentScore,
-  fetchAllUsers,
-  fetchAllStats,
   fetchAllStreaks,
   updateRankingDeltas,
   updateSeasonParticipation,
@@ -627,55 +625,17 @@ export const onGameStatusUpdate = onDocumentUpdated(
           );
         }
 
-        // 3. Pre-fetch ALL player data in parallel
-        // (PERF: reduces 60+ sequential ops to ~3)
+        // 3. Pre-fetch player streaks in parallel.
+        // XP, level, stats and milestones are read again inside
+        // the per-player transaction so concurrent games for the
+        // same user serialize on fresh state (#2905).
         const userIds = validConfirmations
           .map((c) => c.userId);
 
-        // Fetch all data in PARALLEL - key opt!
-        const [
-          usersMap,
-          statsMap,
-          streaksMap,
-        ] = await Promise.all([
-          fetchAllUsers(userIds),
-          fetchAllStats(userIds),
-          fetchAllStreaks(userIds),
-        ]);
+        const streaksMap =
+          await fetchAllStreaks(userIds);
 
-        // 4. Process Each Player
-        // (NO Firestore calls in loop -
-        // data already loaded)
-        const XP_BATCH_LIMIT =
-          FIRESTORE_BATCH_SAFE_LIMIT;
-        let currentBatch = db().batch();
-        let currentBatchOps = 0;
-        const batchCommits: Promise<
-          admin.firestore.WriteResult[]
-        >[] = [];
         const now = FieldValue.serverTimestamp();
-
-        // Helper: Verifica se precisa criar novo
-        // batch antes de adicionar ops
-        const ensureBatchCapacity = (
-          opsNeeded: number
-        ) => {
-          if (
-            currentBatchOps + opsNeeded >
-            XP_BATCH_LIMIT
-          ) {
-            batchCommits.push(
-              currentBatch.commit()
-            );
-            logger.info(
-              "[XP_BATCH] Comitting batch " +
-              `with ${currentBatchOps} ops, ` +
-              "starting new batch"
-            );
-            currentBatch = db().batch();
-            currentBatchOps = 0;
-          }
-        };
 
         // Date keys for Rankings (BRT timezone)
         const d = getGameDate(gameDoc);
@@ -723,32 +683,6 @@ export const onGameStatusUpdate = onDocumentUpdated(
           conf.goals = cappedGoals;
           conf.assists = cappedAssists;
           conf.saves = cappedSaves;
-
-          // Get pre-fetched data
-          // (NO Firestore calls - sync lookup)
-          const userEntry =
-            usersMap.get(uid) || {};
-          const currentXp =
-            userEntry.experience_points || 0;
-          const achievedMilestones = (
-            userEntry.milestones_achieved || []
-          ) as string[];
-
-          const stats = statsMap.get(uid) || {
-            totalGames: 0,
-            totalGoals: 0,
-            totalAssists: 0,
-            totalSaves: 0,
-            totalYellowCards: 0,
-            totalRedCards: 0,
-            gamesWon: 0,
-            gamesLost: 0,
-            gamesDraw: 0,
-            bestPlayerCount: 0,
-            worstPlayerCount: 0,
-            currentMvpStreak: 0,
-            bestMvpStreak: 0,
-          } as UserStatistics;
 
           const streak =
             streaksMap.get(uid) || 0;
@@ -902,336 +836,346 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
           xp += penaltyXp;
 
-          // Update Stats locally for
-          // Milestone Check
-          // MVP Streak: incrementa se MVP,
-          // reseta se nao
-          const newMvpStreak = isMvp ?
-            (stats.currentMvpStreak || 0) + 1 :
-            0;
+          const baseXp = xp;
+          const transactionResult = await db().runTransaction(
+            async (tx) => {
+              const userRef = db()
+                .collection("users")
+                .doc(uid);
+              const statsRef = db()
+                .collection("statistics")
+                .doc(uid);
+              const confirmationRef = db()
+                .collection("confirmations")
+                .doc(`${gameId}_${uid}`);
+              const logRef = db()
+                .collection("xp_logs")
+                .doc(`game_${gameId}_user_${uid}`);
 
-          const newStats: UserStatistics = {
-            ...stats,
-            totalGames:
-              (stats.totalGames || 0) + 1,
-            totalGoals:
-              (stats.totalGoals || 0) +
-              cappedGoals,
-            totalAssists:
-              (stats.totalAssists || 0) +
-              cappedAssists,
-            totalSaves:
-              (stats.totalSaves || 0) +
-              cappedSaves,
-            totalYellowCards:
-              (stats.totalYellowCards || 0) +
-              conf.yellowCards,
-            totalRedCards:
-              (stats.totalRedCards || 0) +
-              conf.redCards,
-            gamesWon:
-              (stats.gamesWon || 0) +
-              (result === "WIN" ? 1 : 0),
-            gamesLost:
-              (stats.gamesLost || 0) +
-              (result === "LOSS" ? 1 : 0),
-            gamesDraw:
-              (stats.gamesDraw || 0) +
-              (result === "DRAW" ? 1 : 0),
-            bestPlayerCount:
-              (stats.bestPlayerCount || 0) +
-              (isMvp ? 1 : 0),
-            worstPlayerCount:
-              (stats.worstPlayerCount || 0) +
-              (isWorstPlayer ? 1 : 0),
-            currentMvpStreak: newMvpStreak,
-          };
+              const [
+                logSnap,
+                userSnap,
+                statsSnap,
+              ] = await Promise.all([
+                tx.get(logRef),
+                tx.get(userRef),
+                tx.get(statsRef),
+              ]);
 
-          // Milestones
-          const {newMilestones, xp: milesXp} =
-            checkMilestones(
-              newStats, achievedMilestones
-            );
-          xp += milesXp;
+              if (logSnap.exists) {
+                return {
+                  alreadyProcessed: true,
+                  xp: 0,
+                };
+              }
 
-          // Aplicar teto máximo + piso mínimo de XP por jogo
-          // (anti-cheat).
-          // FIX #584/H13: era Math.max(0, ...) → clampava Bola Murcha
-          // -10 silenciosamente pra 0, gerando log inconsistente
-          // (xp_penalty: -10 mas xp_earned: 0). Agora usa
-          // MIN_XP_PER_GAME = -100 (de shared/xp-constants.json) →
-          // permite penalidades negativas legítimas.
-          xp = Math.max(
-            MIN_XP_PER_GAME,
-            Math.min(xp, MAX_XP_PER_GAME)
-          );
+              if (!userSnap.exists) {
+                throw new Error(
+                  `Usuário ${uid} não encontrado`
+                );
+              }
 
-          // Final XP & Level
-          const finalXp = currentXp + xp;
-          const currentLevel =
-            getLevelForXp(currentXp);
-          const newLevel =
-            getLevelForXp(finalXp);
+              const userEntry =
+                userSnap.data() || {};
+              const currentXp =
+                (userEntry
+                  .experience_points as number) || 0;
+              const achievedMilestones = Array.isArray(
+                userEntry.milestones_achieved
+              ) ?
+                userEntry
+                  .milestones_achieved as string[] :
+                [];
 
-          // Writes
-          // Estimar operações:
-          // user(1) + stats(1) + confirm(1)
-          // + log(1) + ranking(2) + season(0-1)
-          // + badges(0-N)
-          // Mínimo ~6 ops por jogador,
-          // garantir espaço antes de iniciar
-          // FIX #2625: reserva cobre o pior caso do jogador inteiro
-          // (user + stats + confirmation + xp_log + ranking + season +
-          //  max 6 badges) para evitar split entre batches que perde
-          // dados em retry parcial.
-          // Antes: 10 ops (insuficiente para jogador com 4+ badges).
-          ensureBatchCapacity(20);
+              const stats = {
+                totalGames: 0,
+                totalGoals: 0,
+                totalAssists: 0,
+                totalSaves: 0,
+                totalYellowCards: 0,
+                totalRedCards: 0,
+                gamesWon: 0,
+                gamesLost: 0,
+                gamesDraw: 0,
+                bestPlayerCount: 0,
+                worstPlayerCount: 0,
+                currentMvpStreak: 0,
+                bestMvpStreak: 0,
+                ...(statsSnap.data() || {}),
+              } as UserStatistics;
 
-          // 1. Update User
-          // Usar FieldValue.increment() para evitar lost update
-          // em escritas concorrentes (level usa valor absoluto
-          // pois o lock de xp_processing garante exclusividade)
-          const userUpdate: Record<
-            string, unknown
-          > = {
-            experience_points: FieldValue.increment(xp),
-            level: newLevel,
-            updated_at: now,
-          };
-          if (newMilestones.length > 0) {
-            userUpdate.milestones_achieved =
-              FieldValue
-                .arrayUnion(...newMilestones);
-          }
-          currentBatch.update(
-            db().collection("users").doc(uid),
-            userUpdate
-          );
-          currentBatchOps++;
+              const newMvpStreak = isMvp ?
+                (stats.currentMvpStreak || 0) + 1 :
+                0;
 
-          // 2. Update Stats
-          // Usar FieldValue.increment() para counters cumulativos
-          currentBatch.set(
-            db().collection("statistics")
-              .doc(uid),
-            {
-              totalGames: FieldValue.increment(1),
-              totalGoals: FieldValue.increment(cappedGoals),
-              totalAssists: FieldValue.increment(cappedAssists),
-              totalSaves: FieldValue.increment(cappedSaves),
-              totalYellowCards: FieldValue.increment(conf.yellowCards),
-              totalRedCards: FieldValue.increment(conf.redCards),
-              gamesWon: FieldValue.increment(result === "WIN" ? 1 : 0),
-              gamesLost: FieldValue.increment(result === "LOSS" ? 1 : 0),
-              gamesDraw: FieldValue.increment(result === "DRAW" ? 1 : 0),
-              bestPlayerCount: FieldValue.increment(isMvp ? 1 : 0),
-              worstPlayerCount: FieldValue.increment(isWorstPlayer ? 1 : 0),
-              currentMvpStreak: newMvpStreak,
-              bestMvpStreak: Math.max(stats.bestMvpStreak || 0, newMvpStreak),
-              updated_at: now,
-            },
-            {merge: true}
-          );
-          currentBatchOps++;
-
-          // 3. Update Confirmation
-          currentBatch.update(
-            db().collection("confirmations")
-              .doc(`${gameId}_${uid}`),
-            {xp_earned: xp}
-          );
-          currentBatchOps++;
-
-          // 4. Create Log
-          // FIX #584/M5: era random doc id → CF crash mid-batch + Eventarc
-          // retry = double-credit via increment (mesmo player 2x).
-          // Agora deterministic id: replay safe (set sobreescreve mesmo doc).
-          const logRef =
-            db().collection("xp_logs")
-              .doc(`game_${gameId}_user_${uid}`);
-          const log: XpLog = {
-            user_id: uid,
-            game_id: gameId,
-            xp_earned: xp,
-            xp_before: currentXp,
-            xp_after: finalXp,
-            level_before: currentLevel,
-            level_after: newLevel,
-            xp_participation:
-              settings.xp_presence,
-            xp_goals: cappedGoals * settings.xp_per_goal,
-            xp_assists: cappedAssists * settings.xp_per_assist,
-            xp_saves: cappedSaves * settings.xp_per_save,
-            xp_result: result === "WIN" ?
-              settings.xp_win :
-              (result === "DRAW" ?
-                settings.xp_draw : 0),
-            xp_mvp: isMvp ?
-              settings.xp_mvp : 0,
-            // NOVO: XP clean sheet
-            xp_clean_sheet: cleanSheetXp,
-            xp_milestones: milesXp,
-            xp_streak: streakXp,
-            xp_penalty: penaltyXp,
-            goals: cappedGoals,
-            assists: cappedAssists,
-            saves: cappedSaves,
-            was_mvp: isMvp,
-            // NOVO: Flag clean sheet
-            was_clean_sheet: cleanSheetXp > 0,
-            was_worst_player: isWorstPlayer,
-            game_result: result,
-            // FIX #1576: armazenar placar real do time para goal_diff
-            // FIX #2526: fallback para team.score quando liveScore
-            // não contém o team (N > 2 times). Antes caía em
-            // liveScore.team2Score para times 3+.
-            my_team_score: team ?
-              (liveScore ?
-                (team.id === liveScore.team1Id ?
-                  liveScore.team1Score :
-                  team.id === liveScore.team2Id ?
-                    liveScore.team2Score :
-                    team.score) :
-                team.score) :
-              0,
-            opponent_score: getOpponentScore(
-              team, liveScore, teams
-            ),
-            // Armazenado para permitir filtro defensivo em recalculateLeagueRating (#954)
-            game_status: "FINISHED",
-            milestones_unlocked: newMilestones,
-            created_at: now,
-          };
-          currentBatch.set(logRef, log);
-          currentBatchOps++;
-
-          // 5. Update Ranking Deltas
-          // (2 ops: week + month)
-          ensureBatchCapacity(2);
-          updateRankingDeltas(
-            currentBatch,
-            uid,
-            conf,
-            result,
-            xp,
-            isMvp,
-            weekKey,
-            monthKey
-          );
-          currentBatchOps += 2;
-
-          // 6. Update Season (if active) (1 op)
-          if (activeSeason) {
-            ensureBatchCapacity(1);
-            updateSeasonParticipation(
-              currentBatch,
-              uid,
-              activeSeason,
-              result,
-              conf,
-              isMvp,
-              gameData.group_id,
-              // Fase 4: segmenta ranking por categoria do jogo.
-              gameData.gender
-            );
-            currentBatchOps++;
-          }
-
-          // 7. Award Badges (badge-helper.ts)
-          const opScore = getOpponentScore(
-            team, liveScore, teams
-          );
-          const badgesToAward =
-            getAllBadgesToAward({
-              confirmation: {
-                goals: conf.goals,
-                assists: conf.assists,
-                saves: conf.saves,
-                position: conf.position,
-                isMvp,
-                isWorstPlayer,
-              },
-              newStats: {
+              const newStats: UserStatistics = {
+                ...stats,
                 totalGames:
-                  newStats.totalGames,
+                  (stats.totalGames || 0) + 1,
+                totalGoals:
+                  (stats.totalGoals || 0) +
+                  cappedGoals,
+                totalAssists:
+                  (stats.totalAssists || 0) +
+                  cappedAssists,
+                totalSaves:
+                  (stats.totalSaves || 0) +
+                  cappedSaves,
+                totalYellowCards:
+                  (stats.totalYellowCards || 0) +
+                  conf.yellowCards,
+                totalRedCards:
+                  (stats.totalRedCards || 0) +
+                  conf.redCards,
                 gamesWon:
-                  newStats.gamesWon,
-                currentMvpStreak:
-                  newStats.currentMvpStreak,
-              },
-              streak,
-              newMvpStreak,
-              newLevel,
-              currentLevel,
-              result:
-                result as
-                  "WIN" | "DRAW" | "LOSS",
-              opponentScore:
-                opScore >= 0 ?
-                  opScore : undefined,
-            });
+                  (stats.gamesWon || 0) +
+                  (result === "WIN" ? 1 : 0),
+                gamesLost:
+                  (stats.gamesLost || 0) +
+                  (result === "LOSS" ? 1 : 0),
+                gamesDraw:
+                  (stats.gamesDraw || 0) +
+                  (result === "DRAW" ? 1 : 0),
+                bestPlayerCount:
+                  (stats.bestPlayerCount || 0) +
+                  (isMvp ? 1 : 0),
+                worstPlayerCount:
+                  (stats.worstPlayerCount || 0) +
+                  (isWorstPlayer ? 1 : 0),
+                currentMvpStreak: newMvpStreak,
+                bestMvpStreak: Math.max(
+                  stats.bestMvpStreak || 0,
+                  newMvpStreak
+                ),
+              };
 
-          for (
-            const badge of badgesToAward
-          ) {
-            ensureBatchCapacity(1);
-            const docId =
-              `${uid}_${badge}`;
-            const badgeRef = db()
-              .collection("user_badges")
-              .doc(docId);
+              const {
+                newMilestones,
+                xp: milesXp,
+              } = checkMilestones(
+                newStats,
+                achievedMilestones
+              );
 
-            currentBatch.set(badgeRef, {
-              user_id: uid,
-              badge_id: badge,
-              last_earned_at: FieldValue
-                .serverTimestamp(),
-              count: FieldValue.increment(1),
-            }, {merge: true});
-            currentBatchOps++;
+              const playerXp = Math.max(
+                MIN_XP_PER_GAME,
+                Math.min(
+                  baseXp + milesXp,
+                  MAX_XP_PER_GAME
+                )
+              );
+              const finalXp = currentXp + playerXp;
+              const currentLevel =
+                getLevelForXp(currentXp);
+              const newLevel =
+                getLevelForXp(finalXp);
+
+              const userUpdate: Record<
+                string, unknown
+              > = {
+                experience_points:
+                  FieldValue.increment(playerXp),
+                level: newLevel,
+                updated_at: now,
+              };
+              if (newMilestones.length > 0) {
+                userUpdate.milestones_achieved =
+                  FieldValue.arrayUnion(
+                    ...newMilestones
+                  );
+              }
+              tx.update(userRef, userUpdate);
+
+              tx.set(
+                statsRef,
+                {
+                  totalGames: FieldValue.increment(1),
+                  totalGoals:
+                    FieldValue.increment(cappedGoals),
+                  totalAssists:
+                    FieldValue.increment(cappedAssists),
+                  totalSaves:
+                    FieldValue.increment(cappedSaves),
+                  totalYellowCards:
+                    FieldValue.increment(conf.yellowCards),
+                  totalRedCards:
+                    FieldValue.increment(conf.redCards),
+                  gamesWon:
+                    FieldValue.increment(
+                      result === "WIN" ? 1 : 0
+                    ),
+                  gamesLost:
+                    FieldValue.increment(
+                      result === "LOSS" ? 1 : 0
+                    ),
+                  gamesDraw:
+                    FieldValue.increment(
+                      result === "DRAW" ? 1 : 0
+                    ),
+                  bestPlayerCount:
+                    FieldValue.increment(isMvp ? 1 : 0),
+                  worstPlayerCount:
+                    FieldValue.increment(
+                      isWorstPlayer ? 1 : 0
+                    ),
+                  currentMvpStreak: newMvpStreak,
+                  bestMvpStreak:
+                    newStats.bestMvpStreak,
+                  updated_at: now,
+                },
+                {merge: true}
+              );
+
+              tx.update(
+                confirmationRef,
+                {xp_earned: playerXp}
+              );
+
+              const log: XpLog = {
+                user_id: uid,
+                game_id: gameId,
+                xp_earned: playerXp,
+                xp_before: currentXp,
+                xp_after: finalXp,
+                level_before: currentLevel,
+                level_after: newLevel,
+                xp_participation:
+                  settings.xp_presence,
+                xp_goals:
+                  cappedGoals *
+                  settings.xp_per_goal,
+                xp_assists:
+                  cappedAssists *
+                  settings.xp_per_assist,
+                xp_saves:
+                  cappedSaves *
+                  settings.xp_per_save,
+                xp_result: result === "WIN" ?
+                  settings.xp_win :
+                  (result === "DRAW" ?
+                    settings.xp_draw : 0),
+                xp_mvp: isMvp ?
+                  settings.xp_mvp : 0,
+                xp_clean_sheet: cleanSheetXp,
+                xp_milestones: milesXp,
+                xp_streak: streakXp,
+                xp_penalty: penaltyXp,
+                goals: cappedGoals,
+                assists: cappedAssists,
+                saves: cappedSaves,
+                was_mvp: isMvp,
+                was_clean_sheet: cleanSheetXp > 0,
+                was_worst_player: isWorstPlayer,
+                game_result: result,
+                my_team_score: team ?
+                  (liveScore ?
+                    (team.id === liveScore.team1Id ?
+                      liveScore.team1Score :
+                      team.id === liveScore.team2Id ?
+                        liveScore.team2Score :
+                        team.score) :
+                    team.score) :
+                  0,
+                opponent_score: getOpponentScore(
+                  team, liveScore, teams
+                ),
+                game_status: "FINISHED",
+                milestones_unlocked: newMilestones,
+                created_at: now,
+              };
+              tx.set(logRef, log);
+
+              updateRankingDeltas(
+                tx,
+                uid,
+                conf,
+                result,
+                playerXp,
+                isMvp,
+                weekKey,
+                monthKey
+              );
+
+              if (activeSeason) {
+                updateSeasonParticipation(
+                  tx,
+                  uid,
+                  activeSeason,
+                  result,
+                  conf,
+                  isMvp,
+                  gameData.group_id,
+                  gameData.gender
+                );
+              }
+
+              const opScore = getOpponentScore(
+                team, liveScore, teams
+              );
+              const badgesToAward =
+                getAllBadgesToAward({
+                  confirmation: {
+                    goals: conf.goals,
+                    assists: conf.assists,
+                    saves: conf.saves,
+                    position: conf.position,
+                    isMvp,
+                    isWorstPlayer,
+                  },
+                  newStats: {
+                    totalGames:
+                      newStats.totalGames,
+                    gamesWon:
+                      newStats.gamesWon,
+                    currentMvpStreak:
+                      newStats.currentMvpStreak,
+                  },
+                  streak,
+                  newMvpStreak,
+                  newLevel,
+                  currentLevel,
+                  result:
+                    result as
+                      "WIN" | "DRAW" | "LOSS",
+                  opponentScore:
+                    opScore >= 0 ?
+                      opScore : undefined,
+                });
+
+              for (const badge of badgesToAward) {
+                const docId = `${uid}_${badge}`;
+                const badgeRef = db()
+                  .collection("user_badges")
+                  .doc(docId);
+                tx.set(badgeRef, {
+                  user_id: uid,
+                  badge_id: badge,
+                  last_earned_at: FieldValue
+                    .serverTimestamp(),
+                  count: FieldValue.increment(1),
+                }, {merge: true});
+              }
+
+              return {
+                alreadyProcessed: false,
+                xp: playerXp,
+              };
+            }
+          );
+
+          if (transactionResult.alreadyProcessed) {
+            logger.info(
+              "[XP_IDEMPOTENCY] Player " +
+              `${uid} already processed for ` +
+              `game ${gameId} inside transaction`
+            );
           }
         }
 
-        // Commit último batch pendente (SEM o marcador xp_processed —
-        // FIX #2524: o marcador só é gravado APÓS todos os batches de
-        // dados confirmarem. Antes, estava no mesmo batch do último chunk,
-        // de modo que com Promise.allSettled o batch do marcador podia ter
-        // sucesso enquanto batches anteriores falhavam → jogo marcado como
-        // processado com jogadores perdendo XP permanentemente.)
-        batchCommits.push(
-          currentBatch.commit()
-        );
-
-        // FIX #793: Promise.allSettled preserva chunks bem-sucedidos
-        // mesmo quando 1 chunk falha. Promise.all abortava tudo.
-        const commitResults =
-          await Promise.allSettled(batchCommits);
-        const failedCommits = commitResults.filter(
-          (r) => r.status === "rejected"
-        );
-        if (failedCommits.length > 0) {
-          logger.error(
-            `[XP] ${failedCommits.length}/${batchCommits.length} ` +
-            "batch commits falharam para game " + gameId
-          );
-          // Re-throw ANTES de marcar processado → retry via at-least-once
-          // pode reprocessar. Limitação remanescente: jogadores cujos
-          // batches bem-sucedidos já receberam FieldValue.increment terão
-          // XP duplicado no retry (double-count parcial). Correção total
-          // exige idempotência por-jogador via xp_logs dedup — fora do
-          // escopo deste fix (#2524 cobre apenas bloquear o xp_processed
-          // prematuro).
-          throw new Error(
-            `${failedCommits.length} batch(es) XP falharam: ` +
-            (failedCommits[0] as PromiseRejectedResult).reason
-          );
-        }
-
-        // FIX #2524: Todos os batches de dados confirmaram com sucesso.
-        // Somente agora marcamos o jogo como processado, de forma atômica
-        // e separada. Se esta escrita falhar, o trigger re-executa e
-        // reprocessará — double-count neste caso é improvável mas possível
-        // (ver limitação acima). xp_processing=false encerra o lock.
+        // Todas as transações por jogador confirmaram com sucesso.
+        // Somente agora marcamos o jogo como processado. Se esta escrita
+        // falhar, o trigger re-executa; os jogadores já commitados serão
+        // pulados pelo xp_log determinístico.
         await event.data.after.ref.update({
           xp_processed: true,
           xp_processing: false,
@@ -1241,12 +1185,11 @@ export const onGameStatusUpdate = onDocumentUpdated(
         logger.info(
           `Game ${gameId} processing ` +
           "complete " +
-          `(${batchCommits.length} ` +
-          "batch(es) committed)."
+          "(player transactions committed)."
         );
 
         // Aguardar notificações de streak
-        // APÓS batch commit (evita envio
+        // APÓS persistir XP (evita envio
         // antes do XP persistir)
         if (
           streakNotificationPromises.length > 0
