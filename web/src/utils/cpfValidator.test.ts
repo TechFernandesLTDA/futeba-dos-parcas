@@ -12,6 +12,11 @@ describe('isValidCpf', () => {
     expect(isValidCpf('12345678909')).toBe(true);
   });
 
+  it('aceita CPFs válidos com zero à esquerda', () => {
+    expect(isValidCpf('00000000191')).toBe(true);
+    expect(isValidCpf('000.000.001-91')).toBe(true);
+  });
+
   it('rejeita CPFs com dígito verificador errado', () => {
     expect(isValidCpf('111.444.777-36')).toBe(false);
     expect(isValidCpf('123.456.789-00')).toBe(false);
