@@ -21,6 +21,12 @@ class CpfValidatorTest {
     }
 
     @Test
+    fun `valid CPF with leading zero returns true`() {
+        assertTrue(CpfValidator.isValid("00000000191"))
+        assertTrue(CpfValidator.isValid("000.000.001-91"))
+    }
+
+    @Test
     fun `wrong check digit returns false`() {
         assertFalse(CpfValidator.isValid("111.444.777-36"))
         assertFalse(CpfValidator.isValid("123.456.789-00"))

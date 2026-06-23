@@ -125,22 +125,22 @@ class CpfVerificationViewModelTest {
         }
     }
 
-    // ─── H2: Sucesso server-side + falha pos-verify => UiState.Error ──────────────
+    // ─── H2: Sucesso server-side + falha pos-verify => UiState.Success ────────────
 
     @Test
-    @DisplayName("H2: sucesso server-side + falha refresh pos-verify => UiState.Error")
-    fun verifyCpf_serverSideSuccess_posVerifyRefreshFails_stateIsError() = runTest {
-        // Sem claim verified no token pos-verify, a UI nao deve liberar o usuario
-        // para evitar redirect loop com claim stale.
+    @DisplayName("H2: sucesso server-side + falha refresh pos-verify => UiState.Success")
+    fun verifyCpf_serverSideSuccess_posVerifyRefreshFails_stateIsSuccess() = runTest {
+        // O servidor ja confirmou CPF + custom claim. O refresh pos-verify e
+        // apenas warm-up; o AntiBotGate faz a rechecagem final apos a tela de sucesso.
         setupSuccessFlow(posVerifyRefreshError = RuntimeException("user-token-expired"))
 
         viewModel.verifyCpf(cpfValido)
         advanceUntilIdle()
 
         assertInstanceOf(
-            CpfVerificationUiState.Error::class.java,
+            CpfVerificationUiState.Success::class.java,
             viewModel.uiState.value,
-            "Sem claim verified apos refresh, a UI deve pedir para tentar novamente.",
+            "Sucesso server-side nao deve prender o usuario por atraso de refresh local.",
         )
     }
 
