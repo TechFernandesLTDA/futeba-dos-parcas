@@ -47,12 +47,6 @@ internal object UiStrings {
     const val HOME_STATUS_UPDATED = "Atualizado"
     const val HOME_STATUS_PERSONAL = "Pessoal"
 
-    // ---- SplashScreen ----
-    const val SPLASH_APP_NAME = "Futeba dos Parças"
-    const val SPLASH_CD_LOGO = "Futeba dos Parças"
-    const val SPLASH_TAGLINE = "Organização da pelada com ritmo e clareza"
-    const val SPLASH_PLATFORM_PREFIX = "Pronto para"
-
     // ---- Detalhe do jogo / Hub do organizador (#2671) ----
     // Ponto de entrada que cabea as telas reais de ui/core/ no NavHost,
     // tornando-as alcançáveis pela navegação (sem telas órfãs).

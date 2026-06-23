@@ -15,6 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.splash_app_name
+import com.futebadosparcas.compose.resources.splash_logo_content_description
+import com.futebadosparcas.compose.resources.splash_platform_ready
+import com.futebadosparcas.compose.resources.splash_tagline
+import org.jetbrains.compose.resources.stringResource
 
 expect fun getPlatformName(): String
 
@@ -37,7 +43,7 @@ fun SplashScreen() {
             ) {
                 Icon(
                     imageVector = Icons.Default.SportsSoccer,
-                    contentDescription = UiStrings.SPLASH_CD_LOGO,
+                    contentDescription = stringResource(Res.string.splash_logo_content_description),
                     modifier = Modifier
                         .padding(20.dp)
                         .size(56.dp),
@@ -45,18 +51,18 @@ fun SplashScreen() {
                 )
             }
             Text(
-                text = UiStrings.SPLASH_APP_NAME,
+                text = stringResource(Res.string.splash_app_name),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
             )
             Text(
-                text = UiStrings.SPLASH_TAGLINE,
+                text = stringResource(Res.string.splash_tagline),
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
             )
             Text(
-                text = "${UiStrings.SPLASH_PLATFORM_PREFIX} ${getPlatformName()}",
+                text = stringResource(Res.string.splash_platform_ready, getPlatformName()),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.68f)
             )
