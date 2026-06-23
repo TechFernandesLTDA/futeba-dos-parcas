@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -29,6 +30,15 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { iconSizes } from '../../../theme/iconSizes';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { useTheme } from '@mui/material/styles';
+import {
+  GAMIFICATION_CELEBRATION_DURATION_MS,
+  GamificationCelebration,
+} from '../../../components/gamification/GamificationCelebration';
+import {
+  getRewardActivityKind,
+  type RewardActivityKind,
+} from '../../../components/gamification/GamificationCelebration.utils';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
 export interface Activity {
   id: string;
@@ -99,9 +109,82 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
   const { user } = useAuth();
   const gColors = useGamificationColors();
   const levelColor = getLevelColor(user?.level || 1, theme);
+  const reducedMotion = useReducedMotion();
+  const latestActivity = activities[0] ?? null;
+  const latestActivityActorName = latestActivity?.actorName;
+  const latestActivityId = latestActivity?.id ?? null;
+  const latestActivityMessage = latestActivity?.message;
+  const latestActivityReferenceType = latestActivity?.referenceType;
+  const latestActivityTitle = latestActivity?.title;
+  const latestActivityType = latestActivity?.type;
+  const latestActivityIdRef = useRef<string | null>(null);
+  const celebrationTimerRef = useRef<number | null>(null);
+  const [celebration, setCelebration] = useState<{
+    kind: RewardActivityKind;
+    title: string;
+    message?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!latestActivityId) {
+      latestActivityIdRef.current = null;
+      setCelebration(null);
+      return;
+    }
+
+    const previousActivityId = latestActivityIdRef.current;
+    latestActivityIdRef.current = latestActivityId;
+
+    if (!previousActivityId || previousActivityId === latestActivityId || reducedMotion) {
+      return;
+    }
+
+    const kind = getRewardActivityKind(latestActivityType ?? '', latestActivityReferenceType);
+    if (!kind) return;
+
+    if (celebrationTimerRef.current) {
+      window.clearTimeout(celebrationTimerRef.current);
+    }
+
+    setCelebration({
+      kind,
+      title: latestActivityTitle || t('profile.defaultActivityTitle'),
+      message: latestActivityMessage || latestActivityActorName,
+    });
+
+    celebrationTimerRef.current = window.setTimeout(() => {
+      setCelebration(null);
+      celebrationTimerRef.current = null;
+    }, GAMIFICATION_CELEBRATION_DURATION_MS);
+  }, [
+    latestActivityActorName,
+    latestActivityId,
+    latestActivityMessage,
+    latestActivityReferenceType,
+    latestActivityTitle,
+    latestActivityType,
+    loading,
+    reducedMotion,
+    t,
+  ]);
+
+  useEffect(() => () => {
+    if (celebrationTimerRef.current) {
+      window.clearTimeout(celebrationTimerRef.current);
+    }
+  }, []);
 
   return (
     <>
+      {celebration ? (
+        <GamificationCelebration
+          kind={celebration.kind}
+          title={celebration.title}
+          message={celebration.message}
+        />
+      ) : null}
       <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <Notifications fontSize="small" color="primary" />
         {t('profile.recentActivity')}
