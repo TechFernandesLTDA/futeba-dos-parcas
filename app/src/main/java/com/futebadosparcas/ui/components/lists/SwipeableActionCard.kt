@@ -29,9 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Ação disponível ao fazer swipe em um card.
@@ -112,6 +113,7 @@ fun SwipeableActionCard(
 
     val enableDismissFromStartToEnd = startToEndAction != null
     val enableDismissFromEndToStart = endToStartAction != null
+    val reducedMotion = rememberReduceMotion()
 
     SwipeToDismissBox(
         state = dismissState,
@@ -130,7 +132,10 @@ fun SwipeableActionCard(
                         endToStartAction?.color ?: MaterialTheme.colorScheme.surface
                     else -> MaterialTheme.colorScheme.surface
                 },
-                animationSpec = tween(200),
+                animationSpec = tween(
+                    durationMillis = MotionDuration.getShort(reducedMotion),
+                    easing = MotionEasing.Standard
+                ),
                 label = "swipeBackgroundColor"
             )
 
