@@ -1588,7 +1588,54 @@
   },
   "notifications": {
     "acceptError": "Erro ao aceitar. Tente novamente.",
-    "bannerMessage": "Ative as notificações para receber alertas de jogos!"
+    "bannerMessage": "Ative as notificações para receber alertas de jogos!",
+    "screen": {
+      "accept": "Aceitar",
+      "acceptAria": "Aceitar {{title}}",
+      "actionType": "Ação: {{action}}",
+      "clearDialog": {
+        "clearing": "Limpando...",
+        "confirm": "Limpar tudo",
+        "description": "Esta ação removerá todas as suas notificações. Esta ação não pode ser desfeita.",
+        "title": "Limpar todas as notificações?"
+      },
+      "dateGroups": {
+        "older": "Mais antigos",
+        "thisWeek": "Esta semana",
+        "today": "Hoje",
+        "yesterday": "Ontem"
+      },
+      "decline": "Recusar",
+      "declineAria": "Recusar {{title}}",
+      "deleteUndoMessage": "Notificação removida.",
+      "filterAria": "Filtrar por {{label}}",
+      "filters": {
+        "ACHIEVEMENT": "Conquistas",
+        "ALL": "Todas",
+        "BADGE_UNLOCKED": "Badges",
+        "GAME_CANCELLED": "Cancelados",
+        "GAME_CONFIRMED": "Confirmados",
+        "GAME_INVITE": "Jogos",
+        "GAME_REMINDER": "Lembretes",
+        "GAME_SUMMON": "Convocações",
+        "GAME_UPDATED": "Atualizados",
+        "GAME_VACANCY": "Vagas",
+        "GROUP_INVITE": "Grupos",
+        "LEVEL_UP": "Nível",
+        "MVP_RECEIVED": "MVP",
+        "MVP_VOTE": "Votações",
+        "STREAK_BROKEN": "Streak",
+        "SYSTEM": "Sistema"
+      },
+      "groupListAria": "Notificações - {{group}}",
+      "time": {
+        "days": "{{count}}d",
+        "hours": "{{count}}h",
+        "minutes": "{{count}}min",
+        "now": "Agora"
+      },
+      "undo": "Desfazer"
+    }
   },
   "onboarding": {
     "accountVerified": "Sua conta está verificada.",
