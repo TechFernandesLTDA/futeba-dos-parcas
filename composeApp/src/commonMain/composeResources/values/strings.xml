@@ -1520,16 +1520,21 @@ subir no ranking!</string>
     <string name="invite_players_search_hint">Buscar por nome, email ou nickname</string>
     <string name="invite_players_search_icon">Buscar</string>
     <string name="invite_players_clear">Limpar</string>
+    <string name="invite_players_clear_search_action">Limpar busca</string>
     <string name="invite_players_empty_title">Busque jogadores para convidar</string>
     <string name="invite_players_empty_description">Digite o nome, email ou nickname do jogador</string>
     <string name="invite_players_no_results_title">Nenhum jogador encontrado</string>
     <string name="invite_players_no_results_description">Tente buscar por outro termo</string>
+    <string name="invite_players_no_results_for_query">Nenhum jogador corresponde a "%1$s".</string>
+    <string name="invite_players_no_available">Nenhum jogador disponível para convite.</string>
+    <string name="invite_players_member">Membro</string>
     <string name="invite_players_already_member">Já é membro</string>
     <string name="invite_players_pending">Pendente</string>
     <string name="invite_players_invite_button">Convidar</string>
     <string name="invite_players_error_title">Erro ao carregar jogadores</string>
     <string name="invite_players_try_again">Tentar novamente</string>
     <string name="invite_players_back">Voltar</string>
+    <string name="invite_players_avatar_content_description">Avatar de %1$s</string>
 
     <!-- Edit Profile Screen Strings -->
     <string name="edit_profile_title">Editar Perfil</string>

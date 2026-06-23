@@ -66,6 +66,20 @@ import coil3.compose.AsyncImage
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.resources.cd_back
 import com.futebadosparcas.compose.resources.cd_clear_search
+import com.futebadosparcas.compose.resources.invite_players_avatar_content_description
+import com.futebadosparcas.compose.resources.invite_players_clear_search_action
+import com.futebadosparcas.compose.resources.invite_players_empty_description
+import com.futebadosparcas.compose.resources.invite_players_empty_title
+import com.futebadosparcas.compose.resources.invite_players_error_title
+import com.futebadosparcas.compose.resources.invite_players_invite_button
+import com.futebadosparcas.compose.resources.invite_players_member
+import com.futebadosparcas.compose.resources.invite_players_no_available
+import com.futebadosparcas.compose.resources.invite_players_no_results_for_query
+import com.futebadosparcas.compose.resources.invite_players_no_results_title
+import com.futebadosparcas.compose.resources.invite_players_pending
+import com.futebadosparcas.compose.resources.invite_players_search_hint
+import com.futebadosparcas.compose.resources.invite_players_title
+import com.futebadosparcas.compose.resources.invite_players_try_again
 import com.futebadosparcas.domain.model.User
 import org.jetbrains.compose.resources.stringResource
 
@@ -103,7 +117,10 @@ private fun PlayerAvatar(photoUrl: String?, userName: String, modifier: Modifier
     if (photoUrl != null && photoUrl.isNotBlank()) {
         AsyncImage(
             model = photoUrl,
-            contentDescription = "Avatar de $userName",
+            contentDescription = stringResource(
+                Res.string.invite_players_avatar_content_description,
+                userName
+            ),
             modifier = modifier.clip(CircleShape),
             contentScale = ContentScale.Crop
         )
@@ -277,7 +294,7 @@ fun InvitePlayersScreen(
 @Composable
 private fun InvitePlayersTopBar(onNavigateBack: () -> Unit) {
     TopAppBar(
-        title = { Text("Convidar Jogadores") },
+        title = { Text(stringResource(Res.string.invite_players_title)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
@@ -302,7 +319,7 @@ private fun SearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text("Buscar jogadores por nome ou email") },
+        placeholder = { Text(stringResource(Res.string.invite_players_search_hint)) },
         leadingIcon = {
             Icon(Icons.Default.Search, contentDescription = null)
         },
@@ -332,8 +349,8 @@ private fun InvitePlayersContent(
         is SearchUsersState.Idle -> {
             EmptyState(
                 icon = Icons.Default.PersonSearch,
-                title = "Nenhuma busca realizada",
-                description = "Digite o nome de um jogador para encontrá-lo."
+                title = stringResource(Res.string.invite_players_empty_title),
+                description = stringResource(Res.string.invite_players_empty_description)
             )
         }
         is SearchUsersState.Loading -> {
@@ -342,12 +359,16 @@ private fun InvitePlayersContent(
         is SearchUsersState.Empty -> {
             EmptyState(
                 icon = Icons.Default.SearchOff,
-                title = "Nenhum resultado encontrado",
+                title = stringResource(Res.string.invite_players_no_results_title),
                 description = if (searchQuery.isNotEmpty())
-                    "Nenhum jogador corresponde a '$searchQuery'."
+                    stringResource(Res.string.invite_players_no_results_for_query, searchQuery)
                 else
-                    "Nenhum jogador disponível para convite.",
-                actionLabel = if (searchQuery.isNotEmpty()) "Limpar busca" else null,
+                    stringResource(Res.string.invite_players_no_available),
+                actionLabel = if (searchQuery.isNotEmpty()) {
+                    stringResource(Res.string.invite_players_clear_search_action)
+                } else {
+                    null
+                },
                 onAction = if (searchQuery.isNotEmpty()) onClearSearch else null
             )
         }
@@ -362,9 +383,9 @@ private fun InvitePlayersContent(
         is SearchUsersState.Error -> {
             EmptyState(
                 icon = Icons.Default.Error,
-                title = "Erro ao buscar jogadores",
+                title = stringResource(Res.string.invite_players_error_title),
                 description = state.message,
-                actionLabel = "Tentar novamente",
+                actionLabel = stringResource(Res.string.invite_players_try_again),
                 onAction = onRetrySearch
             )
         }
@@ -527,7 +548,7 @@ private fun InviteButton(
         isMember -> {
             AssistChip(
                 onClick = { },
-                label = { Text("Membro") },
+                label = { Text(stringResource(Res.string.invite_players_member)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
@@ -546,7 +567,7 @@ private fun InviteButton(
         isPending -> {
             AssistChip(
                 onClick = { },
-                label = { Text("Pendente") },
+                label = { Text(stringResource(Res.string.invite_players_pending)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
@@ -573,7 +594,7 @@ private fun InviteButton(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Convidar")
+                Text(stringResource(Res.string.invite_players_invite_button))
             }
         }
     }
