@@ -15,6 +15,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Componente de loading com efeito shimmer para cards de jogadores
@@ -24,30 +27,35 @@ import androidx.compose.ui.unit.dp
 fun ShimmerPlayerCard(
     modifier: Modifier = Modifier
 ) {
+    val reduceMotion = rememberReduceMotion()
     val shimmerColors = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1200,
-                easing = LinearEasing
+    val translate = if (reduceMotion) {
+        500f
+    } else {
+        val transition = rememberInfiniteTransition(label = "shimmer")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1000f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Restart
             ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate"
-    )
+            label = "shimmer_translate"
+        ).value
+    }
 
     val brush = Brush.linearGradient(
         colors = shimmerColors,
-        start = Offset(translateAnim.value - 1000f, translateAnim.value - 1000f),
-        end = Offset(translateAnim.value, translateAnim.value)
+        start = Offset(translate - 1000f, translate - 1000f),
+        end = Offset(translate, translate)
     )
 
     Card(
