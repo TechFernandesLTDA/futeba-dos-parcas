@@ -2277,6 +2277,30 @@
     "updateAction": "Atualizar"
   },
   "player": {
+    "card": {
+      "ariaLabel": "Card do jogador",
+      "ariaLabelWithName": "Card do jogador {{name}}",
+      "brand": "FUTEBA DOS PARÇAS",
+      "downloadImage": "Baixar imagem",
+      "footerUrl": "futebadosparcas.com.br",
+      "loadError": "Erro ao carregar jogador",
+      "maxLevel": "Nível máximo!",
+      "overall": "GERAL",
+      "retry": "Tentar novamente",
+      "shareText": "Olha minha figurinha no Futeba dos Parças! Nível {{level}} • {{xp}} XP",
+      "shareTitle": "{{name}} - Futeba dos Parças",
+      "shareWhatsApp": "Compartilhar no WhatsApp",
+      "sticker": "FIGURINHA",
+      "xpToNextLevel": "{{xp}} para nível {{level}}"
+    },
+    "positions": {
+      "ATACANTE": "Atacante",
+      "GOLEIRO": "Goleiro",
+      "LATERAL": "Lateral",
+      "MEIA": "Meia-campo",
+      "VOLANTE": "Volante",
+      "ZAGUEIRO": "Defensor"
+    },
     "stats": {
       "games": "Jogos",
       "goals": "Gols",

@@ -2277,6 +2277,30 @@
     "updateAction": "Actualizar"
   },
   "player": {
+    "card": {
+      "ariaLabel": "Ficha del jugador",
+      "ariaLabelWithName": "Ficha del jugador {{name}}",
+      "brand": "FUTEBA DOS PARÇAS",
+      "downloadImage": "Descargar imagen",
+      "footerUrl": "futebadosparcas.com.br",
+      "loadError": "Error al cargar el jugador",
+      "maxLevel": "¡Nivel máximo!",
+      "overall": "GENERAL",
+      "retry": "Intentar de nuevo",
+      "shareText": "¡Mira mi ficha en Futeba dos Parças! Nivel {{level}} • {{xp}} XP",
+      "shareTitle": "{{name}} - Futeba dos Parças",
+      "shareWhatsApp": "Compartir en WhatsApp",
+      "sticker": "FICHA",
+      "xpToNextLevel": "{{xp}} para nivel {{level}}"
+    },
+    "positions": {
+      "ATACANTE": "Delantero",
+      "GOLEIRO": "Portero",
+      "LATERAL": "Lateral",
+      "MEIA": "Mediocampista",
+      "VOLANTE": "Mediocentro defensivo",
+      "ZAGUEIRO": "Defensor"
+    },
     "stats": {
       "games": "Juegos",
       "goals": "Goles",

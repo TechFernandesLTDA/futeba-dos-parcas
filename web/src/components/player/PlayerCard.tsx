@@ -39,16 +39,6 @@ import {
 import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 
-// Mapeamento de posição para rótulo PT-BR
-const POSITION_LABELS: Record<string, string> = {
-  GOLEIRO: 'Goleiro',
-  ZAGUEIRO: 'Defensor',
-  LATERAL: 'Lateral',
-  VOLANTE: 'Volante',
-  MEIA: 'Meia-campo',
-  ATACANTE: 'Atacante',
-};
-
 interface StatItemProps {
   icon: React.ReactNode;
   label: string;
@@ -104,7 +94,7 @@ interface PlayerCardProps {
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const gColors = useGamificationColors();
 
@@ -126,6 +116,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const levelEntry = player ? getLevelEntry(player.level) : null;
   const xpProgress = useMemo(() => player ? getXpProgress(player.experiencePoints) : 0, [player]);
   const xpRemaining = player ? getXpRemaining(player.experiencePoints) : 0;
+  const numberLocale = i18n.resolvedLanguage || i18n.language;
 
   // Captura o card como PNG e compartilha ou faz download
   const handleShare = useCallback(async () => {
@@ -156,8 +147,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         if (canShareFiles) {
           try {
             await navigator.share({
-              title: `${player.name} - Futeba dos Parças`,
-              text: `Olha minha figurinha no Futeba dos Parças! Nível ${player.level} • ${player.experiencePoints} XP`,
+              title: t('player.card.shareTitle', { name: player.name }),
+              text: t('player.card.shareText', {
+                level: player.level,
+                xp: player.experiencePoints.toLocaleString(numberLocale),
+              }),
               files: [file],
             });
           } catch {
@@ -179,7 +173,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       showError(t('feedback.player.cardGenerateError2'));
       setSharing(false);
     }
-  }, [player, showError, t]);
+  }, [numberLocale, player, showError, t]);
 
   const winRate = useMemo(() => player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)
@@ -193,7 +187,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       fullWidth
       // #2213: card-style dialog sem DialogTitle textual — nome acessível via
       // aria-label com o nome do jogador.
-      aria-label={player?.name ? `Card do jogador ${player.name}` : 'Card do jogador'}
+      aria-label={player?.name ? t('player.card.ariaLabelWithName', { name: player.name }) : t('player.card.ariaLabel')}
       PaperProps={{
         sx: {
           background: 'transparent',
@@ -227,7 +221,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title={typeof navigator.share === 'function' ? 'Compartilhar no WhatsApp' : 'Baixar imagem'}>
+          <Tooltip title={typeof navigator.share === 'function' ? t('player.card.shareWhatsApp') : t('player.card.downloadImage')}>
             <span role="button" aria-disabled="true" tabIndex={-1}>
               <IconButton
                 onClick={handleShare}
@@ -294,7 +288,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 letterSpacing: '0.15em',
               }}
             >
-              FUTEBA DOS PARÇAS
+              {t('player.card.brand')}
             </Typography>
             <Box
               sx={{
@@ -312,7 +306,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 variant="overline"
                 sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '0.75rem', letterSpacing: '0.1em' }}
               >
-                FIGURINHA
+                {t('player.card.sticker')}
               </Typography>
             </Box>
           </Box>
@@ -336,7 +330,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               </>
             ) : error ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="error" gutterBottom>Erro ao carregar jogador</Typography>
+                <Typography color="error" gutterBottom>{t('player.card.loadError')}</Typography>
                 {/* SECFIX #492: Button (não IconButton) — IconButton é semanticamente
                     pra ícones puros; texto sem ícone usa Button (WCAG 4.1.2). */}
                 <Button
@@ -352,7 +346,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     },
                   }}
                 >
-                  Tentar novamente
+                  {t('player.card.retry')}
                 </Button>
               </Box>
             ) : player ? (
@@ -460,7 +454,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         variant="caption"
                         sx={{ color: alpha(theme.palette.common.white, 0.85), fontWeight: 600, fontSize: '0.75rem' }}
                       >
-                        {POSITION_LABELS[player.preferredPosition] ?? player.preferredPosition}
+                        {t(`player.positions.${player.preferredPosition}`, {
+                          defaultValue: player.preferredPosition,
+                        })}
                       </Typography>
                     </Box>
                   )}
@@ -486,12 +482,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 <Box sx={{ width: '100%', mt: 2, px: 0.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.75rem' }}>
-                      {player.experiencePoints.toLocaleString('pt-BR')} XP
+                      {player.experiencePoints.toLocaleString(numberLocale)} XP
                     </Typography>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.75rem' }}>
                       {player.level < 20
-                        ? `${xpRemaining.toLocaleString('pt-BR')} para nível ${player.level + 1}`
-                        : 'Nível máximo!'}
+                        ? t('player.card.xpToNextLevel', {
+                          xp: xpRemaining.toLocaleString(numberLocale),
+                          level: player.level + 1,
+                        })
+                        : t('player.card.maxLevel')}
                     </Typography>
                   </Box>
                   <Box
@@ -599,7 +598,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   </Typography>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.5), fontSize: '0.75rem' }}>
-                      OVERALL
+                      {t('player.card.overall')}
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -634,7 +633,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               variant="caption"
               sx={{ color: alpha(theme.palette.common.white, 0.3), fontSize: '0.75rem', letterSpacing: '0.1em' }}
             >
-              futebadosparcas.com.br
+              {t('player.card.footerUrl')}
             </Typography>
           </Box>
         </Box>
