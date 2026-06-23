@@ -1,7 +1,8 @@
 package com.futebadosparcas.ui.onboarding
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -42,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import kotlinx.coroutines.launch
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Dados de um slide do carrossel de onboarding.
@@ -108,6 +111,17 @@ fun WelcomeCarousel(
     val pagerState = rememberPagerState(pageCount = { slides.size })
     val scope = rememberCoroutineScope()
     val isLastSlide = pagerState.currentPage == slides.lastIndex
+    val reduceMotion = rememberReduceMotion()
+    val skipButtonEnter = if (reduceMotion) {
+        EnterTransition.None
+    } else {
+        fadeIn(animationSpec = MotionSpring.effects(reduceMotion))
+    }
+    val skipButtonExit = if (reduceMotion) {
+        ExitTransition.None
+    } else {
+        fadeOut(animationSpec = MotionSpring.effects(reduceMotion))
+    }
 
     // Notifica analytics quando o slide muda
     LaunchedEffect(pagerState) {
@@ -127,8 +141,8 @@ fun WelcomeCarousel(
         // Botão "Pular" no canto superior direito
         AnimatedVisibility(
             visible = !isLastSlide,
-            enter = fadeIn(tween(200)),
-            exit = fadeOut(tween(200)),
+            enter = skipButtonEnter,
+            exit = skipButtonExit,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(AppDimensions.spacing_large)
@@ -213,7 +227,15 @@ fun WelcomeCarousel(
                 OutlinedButton(
                     onClick = {
                         scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            val nextPage = pagerState.currentPage + 1
+                            if (reduceMotion) {
+                                pagerState.scrollToPage(nextPage)
+                            } else {
+                                pagerState.animateScrollToPage(
+                                    page = nextPage,
+                                    animationSpec = MotionSpring.spatial(reduceMotion)
+                                )
+                            }
                         }
                     },
                     modifier = Modifier
