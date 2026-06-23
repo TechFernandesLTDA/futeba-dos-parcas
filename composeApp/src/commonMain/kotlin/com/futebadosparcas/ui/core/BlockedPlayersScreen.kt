@@ -3,8 +3,9 @@ package com.futebadosparcas.ui.core
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.RemoveCircleOutline
@@ -13,12 +14,29 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.cancel
+import com.futebadosparcas.compose.resources.cd_back
+import com.futebadosparcas.compose.resources.owner_block
+import com.futebadosparcas.compose.resources.owner_block_player
+import com.futebadosparcas.compose.resources.owner_block_player_dialog_desc
+import com.futebadosparcas.compose.resources.owner_block_reason
+import com.futebadosparcas.compose.resources.owner_block_reason_dialog_label
+import com.futebadosparcas.compose.resources.owner_blocked_players
+import com.futebadosparcas.compose.resources.owner_blocked_since
+import com.futebadosparcas.compose.resources.owner_no_blocked_players
+import com.futebadosparcas.compose.resources.owner_no_blocked_players_desc
+import com.futebadosparcas.compose.resources.owner_no_players_to_block
+import com.futebadosparcas.compose.resources.owner_select_player
+import com.futebadosparcas.compose.resources.owner_unblock_player_cd
 import com.futebadosparcas.domain.model.GameConfirmation
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Issue #64: Tela para gerenciar jogadores bloqueados (porte KMP).
@@ -44,15 +62,21 @@ fun BlockedPlayersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Jogadores Bloqueados") },
+                title = { Text(stringResource(Res.string.owner_blocked_players)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.cd_back)
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { showBlockDialog = true }) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = "Bloquear jogador")
+                        Icon(
+                            Icons.Default.PersonAdd,
+                            contentDescription = stringResource(Res.string.owner_block_player)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -77,13 +101,13 @@ fun BlockedPlayersScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Nenhum jogador bloqueado",
+                        text = stringResource(Res.string.owner_no_blocked_players),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Você pode bloquear jogadores que não cumprem as regras",
+                        text = stringResource(Res.string.owner_no_blocked_players_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -161,7 +185,7 @@ private fun BlockedPlayerCard(
                 }
                 if (player.reason.isNotBlank()) {
                     Text(
-                        text = "Motivo: ${player.reason}",
+                        text = stringResource(Res.string.owner_block_reason, player.reason),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
@@ -172,7 +196,7 @@ private fun BlockedPlayerCard(
                     // Formatação simples do timestamp (dd/MM/yyyy) usando datas básicas
                     val dateText = formatTimestamp(blockedAt)
                     Text(
-                        text = "Bloqueado desde $dateText",
+                        text = stringResource(Res.string.owner_blocked_since, dateText),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -182,7 +206,10 @@ private fun BlockedPlayerCard(
             IconButton(onClick = onUnblock) {
                 Icon(
                     imageVector = Icons.Default.RemoveCircleOutline,
-                    contentDescription = "Desbloquear",
+                    contentDescription = stringResource(
+                        Res.string.owner_unblock_player_cd,
+                        player.userName
+                    ),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -201,11 +228,11 @@ private fun BlockPlayerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Bloquear Jogador") },
+        title = { Text(stringResource(Res.string.owner_block_player)) },
         text = {
             Column {
                 Text(
-                    text = "Selecione um jogador para bloquear e informe o motivo.",
+                    text = stringResource(Res.string.owner_block_player_dialog_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -214,12 +241,12 @@ private fun BlockPlayerDialog(
                 // Player selection
                 if (availablePlayers.isEmpty()) {
                     Text(
-                        text = "Não há jogadores disponíveis para bloquear.",
+                        text = stringResource(Res.string.owner_no_players_to_block),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
                     Text(
-                        text = "Selecione o jogador:",
+                        text = stringResource(Res.string.owner_select_player),
                         style = MaterialTheme.typography.labelLarge
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -228,15 +255,21 @@ private fun BlockPlayerDialog(
                         modifier = Modifier.heightIn(max = 200.dp)
                     ) {
                         items(availablePlayers, key = { it.userId }) { player ->
+                            val isSelected = selectedPlayer?.userId == player.userId
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .selectable(
+                                        selected = isSelected,
+                                        onClick = { selectedPlayer = player },
+                                        role = Role.RadioButton
+                                    )
                                     .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 RadioButton(
-                                    selected = selectedPlayer?.userId == player.userId,
-                                    onClick = { selectedPlayer = player }
+                                    selected = isSelected,
+                                    onClick = null
                                 )
                                 AsyncImage(
                                     model = player.userPhoto,
@@ -267,7 +300,7 @@ private fun BlockPlayerDialog(
                     OutlinedTextField(
                         value = reason,
                         onValueChange = { reason = it },
-                        label = { Text("Motivo do bloqueio") },
+                        label = { Text(stringResource(Res.string.owner_block_reason_dialog_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 2
                     )
@@ -286,12 +319,12 @@ private fun BlockPlayerDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("Bloquear")
+                Text(stringResource(Res.string.owner_block))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
