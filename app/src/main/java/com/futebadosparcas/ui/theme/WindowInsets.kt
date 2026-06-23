@@ -3,11 +3,13 @@ package com.futebadosparcas.ui.theme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
@@ -18,31 +20,50 @@ import androidx.compose.foundation.layout.padding
  * Edge-to-Edge Design:
  * - Permite que o conteúdo se estenda até as bordas da tela
  * - Gerencia padding automaticamente para evitar sobreposição com barras do sistema
- * - Suporta teclado (IME) e barras de navegação/status
+ * - Suporta teclado (IME), barras de navegação/status e display cutout
  */
 
+@Composable
+private fun safeSystemBarsInsets(): WindowInsets {
+    return WindowInsets.systemBars.union(WindowInsets.displayCutout)
+}
+
+@Composable
+private fun safeStatusBarsInsets(): WindowInsets {
+    return WindowInsets.statusBars.union(
+        WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+    )
+}
+
+@Composable
+private fun safeNavigationBarsInsets(): WindowInsets {
+    return WindowInsets.navigationBars.union(
+        WindowInsets.displayCutout.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+    )
+}
+
 /**
- * Adiciona padding para todas as barras do sistema (status + navigation)
+ * Adiciona padding para todas as barras do sistema (status + navigation + cutout)
  */
 @Composable
 fun Modifier.systemBarsPadding(): Modifier {
-    return this.padding(WindowInsets.systemBars.asPaddingValues())
+    return this.padding(safeSystemBarsInsets().asPaddingValues())
 }
 
 /**
- * Adiciona padding apenas para a barra de status (topo)
+ * Adiciona padding para a barra de status e recortes no topo/laterais
  */
 @Composable
 fun Modifier.statusBarsPadding(): Modifier {
-    return this.padding(WindowInsets.statusBars.asPaddingValues())
+    return this.padding(safeStatusBarsInsets().asPaddingValues())
 }
 
 /**
- * Adiciona padding apenas para a barra de navegação (bottom)
+ * Adiciona padding para a barra de navegação e recortes laterais/bottom
  */
 @Composable
 fun Modifier.navigationBarsPadding(): Modifier {
-    return this.padding(WindowInsets.navigationBars.asPaddingValues())
+    return this.padding(safeNavigationBarsInsets().asPaddingValues())
 }
 
 /**
@@ -61,7 +82,7 @@ fun Modifier.imePadding(): Modifier {
 @Composable
 fun Modifier.systemBarsHorizontalPadding(): Modifier {
     return this.padding(
-        WindowInsets.systemBars
+        safeSystemBarsInsets()
             .only(WindowInsetsSides.Horizontal)
             .asPaddingValues()
     )
@@ -74,7 +95,7 @@ fun Modifier.systemBarsHorizontalPadding(): Modifier {
 @Composable
 fun Modifier.systemBarsVerticalPadding(): Modifier {
     return this.padding(
-        WindowInsets.systemBars
+        safeSystemBarsInsets()
             .only(WindowInsetsSides.Vertical)
             .asPaddingValues()
     )
@@ -87,7 +108,7 @@ fun Modifier.systemBarsVerticalPadding(): Modifier {
 @Composable
 fun Modifier.topBarPadding(): Modifier {
     return this.padding(
-        WindowInsets.systemBars
+        safeSystemBarsInsets()
             .only(WindowInsetsSides.Top)
             .asPaddingValues()
     )
@@ -100,22 +121,17 @@ fun Modifier.topBarPadding(): Modifier {
 @Composable
 fun Modifier.bottomBarPadding(): Modifier {
     return this.padding(
-        WindowInsets.systemBars
+        safeSystemBarsInsets()
             .only(WindowInsetsSides.Bottom)
             .asPaddingValues()
     )
 }
 
 /**
- * Adiciona padding para barras do sistema + teclado
- * Combina systemBars e ime para telas com inputs
+ * Adiciona padding para barras do sistema/cutout + teclado
+ * Combina os insets por lado para evitar somar navegação e IME no bottom
  */
 @Composable
 fun Modifier.systemBarsAndImePadding(): Modifier {
-    val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-    val imePadding = WindowInsets.ime.asPaddingValues()
-
-    return this
-        .padding(systemBarsPadding)
-        .padding(imePadding)
+    return this.padding(safeSystemBarsInsets().union(WindowInsets.ime).asPaddingValues())
 }
