@@ -33,27 +33,28 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { createLogger } from '../../utils/logger';
 import { canSendSmsOtp } from '../../services/cloudFunctions';
 
 const logger = createLogger('PhoneVerification');
 
-function phoneAuthSendErrorMessage(err: unknown): string {
+function phoneAuthSendErrorMessage(err: unknown, t: TFunction): string {
   const code = (err as { code?: string }).code;
-  if (code === 'auth/invalid-phone-number') return 'Número inválido. Confira DDD e número.';
+  if (code === 'auth/invalid-phone-number') return t('feedback.phoneVerification.invalidPhoneNumber');
   if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
-    return 'Muitas tentativas em sequência. Aguarde alguns minutos.';
+    return t('feedback.phoneVerification.tooManyRequests');
   }
   if (code === 'auth/captcha-check-failed' || code === 'auth/missing-app-credential') {
-    return 'Não foi possível validar a proteção anti-robô. Atualize a página e tente novamente.';
+    return t('feedback.phoneVerification.captchaFailed');
   }
   if (code === 'auth/network-request-failed') {
-    return 'Falha de conexão ao enviar SMS. Verifique sua internet e tente novamente.';
+    return t('feedback.phoneVerification.networkError');
   }
   if (code === 'auth/app-not-authorized') {
-    return 'Este domínio não está autorizado para envio de SMS. Contate o suporte.';
+    return t('feedback.phoneVerification.appNotAuthorized');
   }
-  return 'Erro ao enviar SMS. Verifique o número e tente novamente.';
+  return t('feedback.phoneVerification.sendError');
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
@@ -131,7 +132,7 @@ export const PhoneVerificationScreen: React.FC = () => {
     setLoading(true);
     try {
       if (!recaptchaContainerRef.current) {
-        setError('A verificação anti-robô ainda está carregando. Tente novamente em instantes.');
+        setError(t('feedback.phoneVerification.captchaLoading'));
         return;
       }
 
@@ -144,7 +145,7 @@ export const PhoneVerificationScreen: React.FC = () => {
             'expired-callback': () => {
               verifierRef.current?.clear();
               verifierRef.current = null;
-              setError('A verificação anti-robô expirou. Tente enviar o SMS novamente.');
+              setError(t('feedback.phoneVerification.captchaExpired'));
             },
           },
         );
@@ -159,7 +160,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         const rateCheck = await canSendSmsOtp({ phone: `+${normalized}` });
         if (!rateCheck.data.allowed) {
           const retryAfter = rateCheck.data.retryAfterSec || 60;
-          setError(`Muitas tentativas. Aguarde ${Math.ceil(retryAfter / 60)} minuto(s).`);
+          setError(t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(retryAfter / 60) }));
           setResendCooldown(retryAfter);
           return;
         }
@@ -180,10 +181,10 @@ export const PhoneVerificationScreen: React.FC = () => {
       logger.error('SMS send failed:', err);
       const code = (err as { code?: string }).code;
       const msg = code === 'recaptcha-timeout'
-        ? 'A verificação anti-robô demorou demais. Atualize a página e tente novamente.'
+        ? t('feedback.phoneVerification.captchaTimeout')
         : code === 'sms-send-timeout'
-        ? 'O envio do SMS demorou demais. Verifique sua conexão e tente novamente.'
-        : phoneAuthSendErrorMessage(err);
+        ? t('feedback.phoneVerification.smsTimeout')
+        : phoneAuthSendErrorMessage(err, t);
       if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
         setResendCooldown(300); // 5 minutos
       }
@@ -253,12 +254,12 @@ export const PhoneVerificationScreen: React.FC = () => {
         navigate('/onboarding/cpf', { replace: true });
         return;
       }
-      let msg = 'Código inválido. Tente novamente.';
-      if (code === 'auth/invalid-verification-code') msg = 'Código incorreto. Verifique o SMS.';
+      let msg = t('feedback.phoneVerification.invalidCode');
+      if (code === 'auth/invalid-verification-code') msg = t('feedback.phoneVerification.incorrectCode');
       else if (code === 'auth/code-expired') {
-        msg = 'Código expirou. Solicite um novo SMS.';
+        msg = t('feedback.phoneVerification.codeExpired');
       } else if (code === 'auth/credential-already-in-use') {
-        msg = 'Este telefone já está vinculado a outra conta.';
+        msg = t('feedback.phoneVerification.phoneAlreadyInUse');
       }
       setError(msg);
     } finally {
@@ -270,10 +271,10 @@ export const PhoneVerificationScreen: React.FC = () => {
     <Box sx={{ mb: 3 }}>
       <Stepper activeStep={0} alternativeLabel sx={{ mb: 1 }}>
         <Step completed={step === 'success'}>
-          <StepLabel>Telefone</StepLabel>
+          <StepLabel>{t('onboarding.stepPhone')}</StepLabel>
         </Step>
         <Step>
-          <StepLabel>CPF</StepLabel>
+          <StepLabel>{t('onboarding.stepCpf')}</StepLabel>
         </Step>
       </Stepper>
     </Box>
@@ -284,10 +285,10 @@ export const PhoneVerificationScreen: React.FC = () => {
       <Box sx={{ textAlign: 'center', py: 6 }}>
         <CheckCircleIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
         <Typography variant="h5" fontWeight={700} gutterBottom>
-          Telefone verificado!
+          {t('onboarding.phoneVerified')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Levando você pra próxima etapa...
+          {t('onboarding.nextStepLoading')}
         </Typography>
         <LinearProgress sx={{ mt: 3, borderRadius: 1 }} />
       </Box>
@@ -330,18 +331,18 @@ export const PhoneVerificationScreen: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography component="h1" variant="h6" fontWeight={700}>
-                      {step === 'phone' ? 'Verificar telefone' : 'Confirmar código'}
+                      {step === 'phone' ? t('onboarding.verifyPhone') : t('onboarding.confirmCode')}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Etapa 1 de 2
+                      {t('onboarding.stepOneOfTwo')}
                     </Typography>
                   </Box>
                 </Box>
 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   {step === 'phone'
-                    ? 'Confirmamos seu número via SMS para evitar contas falsas e robôs.'
-                    : `Digite o código de 6 dígitos enviado para ${phone}`}
+                    ? t('onboarding.phoneVerificationReason')
+                    : t('onboarding.enterSmsCode', { phone })}
                 </Typography>
 
                 <Fade in={!!error} timeout={250} unmountOnExit>
@@ -355,14 +356,14 @@ export const PhoneVerificationScreen: React.FC = () => {
                     <Box>
                       <TextField
                         fullWidth
-                        label="Telefone (com DDD)"
+                        label={t('onboarding.phoneFieldLabel')}
                         placeholder="+55 (11) 99999-8888"
                         value={phone}
                         onChange={(e) => setPhone(formatPhoneDisplay(e.target.value))}
                         disabled={loading}
                         autoFocus
                         sx={{ mb: 2 }}
-                        helperText="Use seu celular verdadeiro — você só usa 1 vez"
+                        helperText={t('onboarding.phoneHelper')}
                         inputProps={{
                           'aria-label': t('onboarding.phoneNumberAria'),
                           autoComplete: 'tel',
@@ -378,7 +379,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                         sx={{ py: 1.5, borderRadius: 2 }}
                         startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                       >
-                        {loading ? 'Enviando...' : 'Enviar código por SMS'}
+                        {loading ? t('onboarding.sendingSms') : t('onboarding.sendSmsCode')}
                       </Button>
 
                       <Box
@@ -393,8 +394,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                       >
                         <ShieldIcon fontSize="small" color="action" />
                         <Typography variant="caption" color="text.secondary">
-                          Seu telefone fica privado. Não compartilhamos com ninguém e não enviamos
-                          mensagens promocionais.
+                          {t('onboarding.phonePrivacy')}
                         </Typography>
                       </Box>
                     </Box>
@@ -404,7 +404,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                     <Box>
                       <TextField
                         fullWidth
-                        label="Código SMS"
+                        label={t('onboarding.smsCodeLabel')}
                         placeholder="123456"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -438,7 +438,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                           disabled={loading}
                           sx={{ borderRadius: 2 }}
                         >
-                          Voltar
+                          {t('common.back')}
                         </Button>
                         <Button
                           fullWidth
@@ -451,7 +451,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                             loading ? <CircularProgress size={20} color="inherit" /> : null
                           }
                         >
-                          {loading ? 'Verificando...' : 'Verificar'}
+                          {loading ? t('onboarding.verifying') : t('onboarding.verify')}
                         </Button>
                       </Box>
 
@@ -463,8 +463,8 @@ export const PhoneVerificationScreen: React.FC = () => {
                           sx={{ textTransform: 'none' }}
                         >
                           {resendCooldown > 0
-                            ? `Reenviar em ${resendCooldown}s`
-                            : 'Não recebi o SMS, reenviar'}
+                            ? t('onboarding.resendSmsCountdown', { seconds: resendCooldown })
+                            : t('onboarding.resendSms')}
                         </Button>
                       </Box>
                     </Box>
