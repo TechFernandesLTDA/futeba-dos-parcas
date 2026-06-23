@@ -3,7 +3,6 @@ package com.futebadosparcas.ui.league
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,6 +52,8 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.compose.ui.res.stringResource
 
 @Composable
@@ -707,10 +708,11 @@ fun RankingListItem(
 ) {
     val isPromotion = position <= 3
     val isRelegation = position > 0 && position <= 3
+    val reducedMotion = rememberReduceMotion()
 
     val scale by animateFloatAsState(
         targetValue = if (isPromotion) 1.02f else 1f,
-        animationSpec = tween(durationMillis = 300),
+        animationSpec = MotionSpring.effects(reducedMotion),
         label = "scale"
     )
     val borderColor by animateColorAsState(
@@ -719,7 +721,7 @@ fun RankingListItem(
             isPromotion -> GamificationColors.Gold.copy(alpha = 0.5f)
             else -> Color.Transparent
         },
-        animationSpec = tween(durationMillis = 400),
+        animationSpec = MotionSpring.effects(reducedMotion),
         label = "borderColor"
     )
 
@@ -883,4 +885,3 @@ fun getRankColor(position: Int): Color {
 }
 
 fun String.capitalize() = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-
