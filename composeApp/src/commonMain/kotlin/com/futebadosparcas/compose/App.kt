@@ -3,8 +3,6 @@ package com.futebadosparcas.compose
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
@@ -98,6 +96,7 @@ import com.futebadosparcas.ui.core.PostGameReportScreen
 import com.futebadosparcas.ui.core.ProfileSetupScreen
 import com.futebadosparcas.ui.core.WelcomeScreen
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.ui.theme.MotionSpring
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.ui.whatsnew.WhatsNewPopupHost
 import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
@@ -159,32 +158,44 @@ fun AppNavigation(
             if (reduceMotion) {
                 EnterTransition.None
             } else {
-                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+                fadeIn(animationSpec = MotionSpring.spatial(reduceMotion)) +
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = MotionSpring.spatial(reduceMotion)
+                )
             }
         },
         exitTransition = {
             if (reduceMotion) {
                 ExitTransition.None
             } else {
-                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start)
+                fadeOut(animationSpec = MotionSpring.spatial(reduceMotion)) +
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = MotionSpring.spatial(reduceMotion)
+                )
             }
         },
         popEnterTransition = {
             if (reduceMotion) {
                 EnterTransition.None
             } else {
-                fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End)
+                fadeIn(animationSpec = MotionSpring.spatial(reduceMotion)) +
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = MotionSpring.spatial(reduceMotion)
+                )
             }
         },
         popExitTransition = {
             if (reduceMotion) {
                 ExitTransition.None
             } else {
-                fadeOut(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) +
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End)
+                fadeOut(animationSpec = MotionSpring.spatial(reduceMotion)) +
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = MotionSpring.spatial(reduceMotion)
+                )
             }
         }
     ) {

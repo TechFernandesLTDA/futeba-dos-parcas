@@ -2,6 +2,10 @@ package com.futebadosparcas.ui.theme
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
@@ -97,4 +101,26 @@ object MotionEasing {
      * Equivalente CSS: cubic-bezier(0.3, 0, 1, 1)
      */
     val Accelerate: Easing = CubicBezierEasing(0.3f, 0f, 1f, 1f)
+}
+
+object MotionSpring {
+    fun <T> spatial(reduced: Boolean): FiniteAnimationSpec<T> =
+        if (reduced) {
+            snap()
+        } else {
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        }
+
+    fun <T> effects(reduced: Boolean): FiniteAnimationSpec<T> =
+        if (reduced) {
+            snap()
+        } else {
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        }
 }
