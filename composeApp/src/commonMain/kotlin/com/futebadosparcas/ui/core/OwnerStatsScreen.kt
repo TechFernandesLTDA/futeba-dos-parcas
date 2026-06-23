@@ -19,7 +19,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.cd_back
+import com.futebadosparcas.compose.resources.owner_attendance_rate
+import com.futebadosparcas.compose.resources.owner_attendance_trend
+import com.futebadosparcas.compose.resources.owner_avg_attendance_compact
+import com.futebadosparcas.compose.resources.owner_best_game_compact
+import com.futebadosparcas.compose.resources.owner_game_date_time
+import com.futebadosparcas.compose.resources.owner_games_organized
+import com.futebadosparcas.compose.resources.owner_last_n_games
+import com.futebadosparcas.compose.resources.owner_players_count
+import com.futebadosparcas.compose.resources.owner_players_hosted_compact
+import com.futebadosparcas.compose.resources.owner_recent_games
+import com.futebadosparcas.compose.resources.owner_stats_overview
+import com.futebadosparcas.compose.resources.owner_stats_screen_title
+import com.futebadosparcas.compose.resources.owner_total_revenue_compact
+import com.futebadosparcas.compose.resources.owner_worst_game_compact
 import com.futebadosparcas.domain.model.Game
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Issue #67: Estatísticas do Organizador
@@ -57,10 +74,13 @@ fun OwnerStatsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Estatísticas do Organizador") },
+                title = { Text(stringResource(Res.string.owner_stats_screen_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.cd_back)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -103,7 +123,7 @@ fun OwnerStatsScreen(
                     ) {
                         stats.bestAttendedGame?.let { game ->
                             HighlightGameCard(
-                                title = "Melhor jogo",
+                                title = stringResource(Res.string.owner_best_game_compact),
                                 game = game,
                                 icon = Icons.Default.ThumbUp,
                                 color = MaterialTheme.colorScheme.primary,
@@ -113,7 +133,7 @@ fun OwnerStatsScreen(
                         }
                         stats.worstAttendedGame?.let { game ->
                             HighlightGameCard(
-                                title = "Pior jogo",
+                                title = stringResource(Res.string.owner_worst_game_compact),
                                 game = game,
                                 icon = Icons.Default.ThumbDown,
                                 color = MaterialTheme.colorScheme.error,
@@ -127,7 +147,7 @@ fun OwnerStatsScreen(
                 // Jogos recentes
                 item {
                     Text(
-                        text = "Jogos recentes",
+                        text = stringResource(Res.string.owner_recent_games),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -156,7 +176,7 @@ private fun OwnerStatsHeader(stats: OwnerStats) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Visão geral",
+                text = stringResource(Res.string.owner_stats_overview),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -170,12 +190,12 @@ private fun OwnerStatsHeader(stats: OwnerStats) {
             ) {
                 StatItem(
                     value = stats.totalGamesOrganized.toString(),
-                    label = "Jogos organizados",
+                    label = stringResource(Res.string.owner_games_organized),
                     icon = Icons.Default.SportsScore
                 )
                 StatItem(
                     value = stats.totalPlayersHosted.toString(),
-                    label = "Jogadores recebidos",
+                    label = stringResource(Res.string.owner_players_hosted_compact),
                     icon = Icons.Default.Groups
                 )
             }
@@ -187,13 +207,16 @@ private fun OwnerStatsHeader(stats: OwnerStats) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatItem(
-                    value = "${(stats.averageAttendance * 100).toInt()}%",
-                    label = "Média de presença",
+                    value = stringResource(
+                        Res.string.owner_attendance_rate,
+                        (stats.averageAttendance * 100).toInt()
+                    ),
+                    label = stringResource(Res.string.owner_avg_attendance_compact),
                     icon = Icons.Default.CheckCircle
                 )
                 StatItem(
                     value = formatCurrency(stats.totalRevenue),
-                    label = "Receita total",
+                    label = stringResource(Res.string.owner_total_revenue_compact),
                     icon = Icons.Default.AttachMoney
                 )
             }
@@ -250,7 +273,7 @@ private fun AttendanceTrendCard(trend: List<Float>) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Tendência de presença",
+                    text = stringResource(Res.string.owner_attendance_trend),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -286,7 +309,7 @@ private fun AttendanceTrendCard(trend: List<Float>) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Últimos ${trend.size.coerceAtMost(10)} jogos",
+                text = stringResource(Res.string.owner_last_n_games, trend.size.coerceAtMost(10)),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -344,7 +367,11 @@ private fun HighlightGameCard(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "${game.playersCount}/${game.maxPlayers} jogadores",
+                text = stringResource(
+                    Res.string.owner_players_count,
+                    game.playersCount,
+                    game.maxPlayers
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -385,7 +412,7 @@ private fun RecentGameCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${game.date} - ${game.time}",
+                    text = stringResource(Res.string.owner_game_date_time, game.date, game.time),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -408,7 +435,7 @@ private fun RecentGameCard(
                     (game.playersCount.toFloat() / game.maxPlayers * 100).toInt()
                 } else 0
                 Text(
-                    text = "$attendanceRate%",
+                    text = stringResource(Res.string.owner_attendance_rate, attendanceRate),
                     style = MaterialTheme.typography.labelSmall,
                     color = when {
                         attendanceRate >= 80 -> MaterialTheme.colorScheme.primary
