@@ -48,6 +48,10 @@ import com.futebadosparcas.ui.components.ShimmerListContent
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.ui.theme.statusBarsPadding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -407,27 +411,25 @@ private fun NotificationsTopBar(
     onDeleteOld: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val reducedMotion = rememberReduceMotion()
 
     // Melhoria 14: Animação quando o badge muda
     var previousCount by remember { mutableIntStateOf(unreadCount) }
     val badgeScale = remember { Animatable(1f) }
 
-    LaunchedEffect(unreadCount) {
-        if (unreadCount != previousCount && unreadCount > 0) {
+    LaunchedEffect(unreadCount, reducedMotion) {
+        if (!reducedMotion && unreadCount != previousCount && unreadCount > 0) {
             // Bounce animation
             badgeScale.animateTo(
                 targetValue = 1.3f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
+                animationSpec = MotionSpring.effects(reducedMotion)
             )
             badgeScale.animateTo(
                 targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy
-                )
+                animationSpec = MotionSpring.effects(reducedMotion)
             )
+        } else if (reducedMotion) {
+            badgeScale.snapTo(1f)
         }
         previousCount = unreadCount
     }
@@ -455,22 +457,42 @@ private fun NotificationsTopBar(
                 // Badge de não lidas com animação
                 AnimatedVisibility(
                     visible = unreadCount > 0,
-                    enter = scaleIn() + fadeIn(),
-                    exit = scaleOut() + fadeOut()
+                    enter = scaleIn(animationSpec = MotionSpring.effects(reducedMotion)) +
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = MotionDuration.getMedium(reducedMotion),
+                                easing = MotionEasing.Standard
+                            )
+                        ),
+                    exit = scaleOut(animationSpec = MotionSpring.effects(reducedMotion)) +
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = MotionDuration.getMedium(reducedMotion),
+                                easing = MotionEasing.Standard
+                            )
+                        )
                 ) {
                     // #2183: pulso contínuo criado AQUI dentro — só existe enquanto
                     // o badge está visível. Ao zerar unreadCount o AnimatedVisibility
                     // remove este conteúdo e a infiniteTransition para (sem drain).
-                    val pulseAnimation = rememberInfiniteTransition(label = "pulse")
-                    val pulseScale by pulseAnimation.animateFloat(
-                        initialValue = 1f,
-                        targetValue = 1.1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "badgePulse"
-                    )
+                    val pulseScale = if (reducedMotion) {
+                        1f
+                    } else {
+                        val pulseAnimation = rememberInfiniteTransition(label = "pulse")
+                        val animatedPulseScale by pulseAnimation.animateFloat(
+                            initialValue = 1f,
+                            targetValue = 1.1f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(
+                                    durationMillis = MotionDuration.Long * 2,
+                                    easing = MotionEasing.Standard
+                                ),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "badgePulse"
+                        )
+                        animatedPulseScale
+                    }
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.error,
@@ -618,9 +640,12 @@ private fun AnimatedNotificationItem(
     onToggleRead: () -> Unit
 ) {
     var visible by remember { mutableStateOf(false) }
+    val reducedMotion = rememberReduceMotion()
 
-    LaunchedEffect(Unit) {
-        delay(index * 50L) // Stagger effect
+    LaunchedEffect(index, reducedMotion) {
+        if (!reducedMotion) {
+            delay(index * 50L) // Stagger effect
+        }
         visible = true
     }
 
@@ -628,11 +653,13 @@ private fun AnimatedNotificationItem(
         visible = visible,
         enter = slideInHorizontally(
             initialOffsetX = { it },
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
+            animationSpec = MotionSpring.spatial(reducedMotion)
+        ) + fadeIn(
+            animationSpec = tween(
+                durationMillis = MotionDuration.getMedium(reducedMotion),
+                easing = MotionEasing.Standard
             )
-        ) + fadeIn(animationSpec = tween(300))
+        )
     ) {
         SwipeableNotificationCard(
             notification = notification,
@@ -991,16 +1018,25 @@ private fun NotificationIcon(
     }
 
     // Melhoria 10: Animação de brilho para conquistas
-    val shimmerAnimation = rememberInfiniteTransition(label = "shimmer")
-    val shimmerAlpha by shimmerAnimation.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "shimmerAlpha"
-    )
+    val reducedMotion = rememberReduceMotion()
+    val shimmerAlpha = if (reducedMotion) {
+        0.45f
+    } else {
+        val shimmerAnimation = rememberInfiniteTransition(label = "shimmer")
+        val animatedShimmerAlpha by shimmerAnimation.animateFloat(
+            initialValue = 0.3f,
+            targetValue = 0.6f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long * 3,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "shimmerAlpha"
+        )
+        animatedShimmerAlpha
+    }
 
     Surface(
         shape = CircleShape,
