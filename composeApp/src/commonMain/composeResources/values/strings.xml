@@ -3960,5 +3960,11 @@ subir no ranking!</string>
     <string name="profile_hub_action_blocked">Jogadores bloqueados</string>
     <string name="profile_hub_action_blocked_body">Gerencie restrições ligadas à sua organização.</string>
     <string name="feature_hub_actions">Ações disponíveis</string>
+    <string name="game_detail_hub_title">Detalhes do Jogo</string>
+    <string name="game_detail_organizer_tools">Ferramentas do organizador</string>
+    <string name="game_detail_post_game_report">Relatório pós-jogo</string>
+    <string name="game_detail_owner_stats">Estatísticas do organizador</string>
+    <string name="game_detail_invite_players">Convidar jogadores</string>
+    <string name="game_detail_blocked_players">Jogadores bloqueados</string>
 
 </resources>
