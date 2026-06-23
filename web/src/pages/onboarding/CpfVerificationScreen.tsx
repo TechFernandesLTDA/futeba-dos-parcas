@@ -58,6 +58,7 @@ export const CpfVerificationScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [successNextPath, setSuccessNextPath] = useState('/');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = stripCpf(e.target.value).slice(0, 11);
@@ -164,11 +165,15 @@ export const CpfVerificationScreen: React.FC = () => {
       await setUserVerified({});
 
       // #1485: recompute profileComplete claim para ProfileGate
+      let profileCompleteAfterRecompute: boolean | null = null;
       try {
-        await recomputeMyProfileClaim();
+        const recomputeResult = await recomputeMyProfileClaim();
+        profileCompleteAfterRecompute = recomputeResult.data.profileComplete;
       } catch (recomputeErr) {
         logger.warn('recomputeMyProfileClaim failed (non-fatal):', recomputeErr);
       }
+      const nextPath = profileCompleteAfterRecompute === false ? '/profile/setup' : '/';
+      setSuccessNextPath(nextPath);
 
       // Retry getIdTokenResult(true) up to 3x with 500ms backoff to confirm
       // the `verified` claim is set before redirecting. This avoids a loop where
@@ -196,7 +201,7 @@ export const CpfVerificationScreen: React.FC = () => {
       showSuccess(t('onboarding.accountVerifiedToast'));
 
       if (claimOk) {
-        navigate('/', { replace: true });
+        navigate(nextPath, { replace: true });
       } else {
         setSuccess(true);
       }
@@ -276,7 +281,7 @@ export const CpfVerificationScreen: React.FC = () => {
           size="large"
           fullWidth
           sx={{ mt: 3, borderRadius: 2 }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate(successNextPath, { replace: true })}
         >
           Continuar
         </Button>
