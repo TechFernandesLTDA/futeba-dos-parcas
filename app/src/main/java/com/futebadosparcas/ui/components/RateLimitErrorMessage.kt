@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.util.LocationRateLimiter
 import kotlinx.coroutines.delay
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -74,9 +77,13 @@ fun RateLimitErrorMessage(
     val progress = (currentRemainingMs.toFloat() / LocationRateLimiter.RATE_LIMIT_WINDOW_MS.toFloat())
         .coerceIn(0f, 1f)
 
+    val reducedMotion = rememberReduceMotion()
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
-        animationSpec = tween(durationMillis = 500),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getLong(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "progress"
     )
 

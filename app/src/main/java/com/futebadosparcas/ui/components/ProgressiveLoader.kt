@@ -34,6 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -167,9 +170,13 @@ fun LoadingProgressBar(
     modifier: Modifier = Modifier,
     showPercentage: Boolean = true
 ) {
+    val reducedMotion = rememberReduceMotion()
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
-        animationSpec = tween(300),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getMedium(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "progress"
     )
 
