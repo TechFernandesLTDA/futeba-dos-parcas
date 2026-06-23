@@ -41,6 +41,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.a11y_state_not_selected
+import com.futebadosparcas.compose.resources.a11y_state_selected
+import org.jetbrains.compose.resources.stringResource
 
 enum class PlatformChromeKind {
     Material,
@@ -222,6 +226,11 @@ private fun CupertinoTabItem(
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
+    val selectedStateDescription = if (item.selected) {
+        stringResource(Res.string.a11y_state_selected)
+    } else {
+        stringResource(Res.string.a11y_state_not_selected)
+    }
 
     Column(
         modifier = modifier
@@ -232,7 +241,7 @@ private fun CupertinoTabItem(
             )
             .semantics {
                 contentDescription = item.contentDescription
-                stateDescription = if (item.selected) "Selecionado" else "Não selecionado"
+                stateDescription = selectedStateDescription
             }
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

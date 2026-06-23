@@ -4085,4 +4085,10 @@ subir no ranking!</string>
     <string name="release_section_improved">Melhorias</string>
     <string name="release_section_fixed">Correções</string>
 
+    <!-- Accessibility descriptions -->
+    <string name="a11y_state_selected">Selecionado</string>
+    <string name="a11y_state_not_selected">Não selecionado</string>
+    <string name="feature_hub_action_content_description">%1$s. %2$s</string>
+    <string name="home_tool_summary_content_description">%1$s. %2$s</string>
+
 </resources>
