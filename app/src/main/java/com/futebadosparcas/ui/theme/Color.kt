@@ -272,6 +272,7 @@ object GamificationColors {
     val Streak = Color(0xFFFF5722)
     val Xp = Color(0xFF9C27B0)
     val Level = Color(0xFF00BCD4)
+    val Mvp = Color(0xFFFFD700)
 
     val FireOrange = Color(0xFFFF6B35)
     val FireYellow = Color(0xFFFFD93D)
