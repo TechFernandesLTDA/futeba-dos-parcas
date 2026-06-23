@@ -4060,4 +4060,13 @@ subir no ranking!</string>
     <string name="cd_expand_release_version">Expandir versão</string>
     <string name="cd_collapse_release_version">Recolher versão</string>
 
+    <!-- WelcomeScreen -->
+    <string name="welcome_onboarding_app_name">Futeba dos Parcas</string>
+    <string name="welcome_onboarding_subtitle">Entre com tudo na organização da rodada, no acompanhamento das partidas e no histórico do jogador.</string>
+    <string name="welcome_onboarding_feature_matches">Jogos com presença, campo e status na mesma visão</string>
+    <string name="welcome_onboarding_feature_groups">Grupos e convites mais alinhados com a resenha</string>
+    <string name="welcome_onboarding_feature_stats">Estatísticas para acompanhar a evolução da liga</string>
+    <string name="welcome_onboarding_feature_identity">Preferências e identidade do jogador bem cuidadas</string>
+    <string name="welcome_onboarding_action_start">Começar</string>
+
 </resources>
