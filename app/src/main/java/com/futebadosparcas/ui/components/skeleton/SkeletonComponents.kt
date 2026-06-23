@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.components.skeleton
 
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -34,6 +33,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Componentes de skeleton loading unificados para o app.
@@ -85,19 +87,24 @@ fun shimmerBrush(
     baseColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     highlightColor: Color = MaterialTheme.colorScheme.surface
 ): Brush {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnimation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1200,
-                easing = FastOutSlowInEasing
+    val reduceMotion = rememberReduceMotion()
+    val translateAnimation = if (reduceMotion) {
+        500f
+    } else {
+        val transition = rememberInfiniteTransition(label = "shimmer")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1000f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Restart
             ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmerTranslate"
-    )
+            label = "shimmerTranslate"
+        ).value
+    }
 
     return Brush.linearGradient(
         colors = listOf(
