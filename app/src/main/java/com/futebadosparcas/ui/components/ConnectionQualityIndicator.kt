@@ -41,10 +41,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import com.futebadosparcas.ui.theme.GamificationColors
-import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
+
 /**
  * Indicador visual de qualidade de conexão.
  * Mostra estado da rede e qualidade do sinal em tempo real.
@@ -98,10 +102,14 @@ fun ConnectionQualityBadge(
 ) {
     val context = LocalContext.current
     val connectionState = rememberConnectionState(context)
+    val reducedMotion = rememberReduceMotion()
 
     val backgroundColor by animateColorAsState(
         targetValue = getQualityColor(connectionState.quality),
-        animationSpec = tween(300),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getMedium(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "bg_color"
     )
 
@@ -142,6 +150,7 @@ fun ConnectionSignalBars(
 ) {
     val context = LocalContext.current
     val connectionState = rememberConnectionState(context)
+    val reducedMotion = rememberReduceMotion()
 
     val barCount = when (connectionState.quality) {
         ConnectionQuality.EXCELLENT -> 4
@@ -164,7 +173,10 @@ fun ConnectionSignalBars(
 
             val animatedAlpha by animateFloatAsState(
                 targetValue = if (isActive) 1f else 0.3f,
-                animationSpec = tween(300),
+                animationSpec = tween(
+                    durationMillis = MotionDuration.getMedium(reducedMotion),
+                    easing = MotionEasing.Standard
+                ),
                 label = "bar_alpha"
             )
 
