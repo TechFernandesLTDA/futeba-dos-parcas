@@ -24,9 +24,14 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.whats_new_acknowledge
+import com.futebadosparcas.compose.resources.whats_new_popup_eyebrow
+import com.futebadosparcas.compose.resources.whats_new_title
 import com.futebadosparcas.domain.model.ReleaseNote
 import com.futebadosparcas.ui.adaptive.AdaptiveModalBottomSheet
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -73,7 +78,7 @@ fun WhatsNewBottomSheet(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Novidades • versão ${note.version}",
+                    text = stringResource(Res.string.whats_new_popup_eyebrow, note.version),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
@@ -84,7 +89,7 @@ fun WhatsNewBottomSheet(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = note.headline.ifBlank { "Novidades" },
+                text = note.headline.ifBlank { stringResource(Res.string.whats_new_title) },
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.semantics { heading() },
@@ -102,7 +107,7 @@ fun WhatsNewBottomSheet(
                     .fillMaxWidth()
                     .heightIn(min = 48.dp),
             ) {
-                Text("Entendi")
+                Text(stringResource(Res.string.whats_new_acknowledge))
             }
         }
     }
