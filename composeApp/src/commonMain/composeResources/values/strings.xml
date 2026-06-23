@@ -3966,5 +3966,9 @@ subir no ranking!</string>
     <string name="game_detail_owner_stats">Estatísticas do organizador</string>
     <string name="game_detail_invite_players">Convidar jogadores</string>
     <string name="game_detail_blocked_players">Jogadores bloqueados</string>
+    <string name="splash_app_name">Futeba dos Parças</string>
+    <string name="splash_logo_content_description">Futeba dos Parças</string>
+    <string name="splash_tagline">Organização da pelada com ritmo e clareza</string>
+    <string name="splash_platform_ready">Pronto para %1$s</string>
 
 </resources>
