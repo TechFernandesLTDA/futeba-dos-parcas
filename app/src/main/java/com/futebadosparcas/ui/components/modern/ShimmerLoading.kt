@@ -23,26 +23,34 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Modificador para aplicar efeito shimmer (skeleton loading)
  * Ref: Material 3 Design System
  */
 fun Modifier.shimmerEffect(shape: Shape = RoundedCornerShape(4.dp)): Modifier = composed {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1200,
-                easing = LinearEasing
+    val reduceMotion = rememberReduceMotion()
+    val translate = if (reduceMotion) {
+        500f
+    } else {
+        val transition = rememberInfiniteTransition(label = "shimmer")
+        val animatedTranslate by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1000f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = MotionDuration.Long,
+                    easing = MotionEasing.Standard
+                ),
+                repeatMode = RepeatMode.Restart
             ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate"
-    )
+            label = "shimmer_translate"
+        )
+        animatedTranslate
+    }
 
     val shimmerColors = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
@@ -53,8 +61,8 @@ fun Modifier.shimmerEffect(shape: Shape = RoundedCornerShape(4.dp)): Modifier = 
     background(
         brush = Brush.linearGradient(
             colors = shimmerColors,
-            start = Offset(translateAnim - 1000f, translateAnim - 1000f),
-            end = Offset(translateAnim, translateAnim)
+            start = Offset(translate - 1000f, translate - 1000f),
+            end = Offset(translate, translate)
         ),
         shape = shape
     )
