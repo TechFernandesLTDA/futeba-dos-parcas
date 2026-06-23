@@ -1843,7 +1843,7 @@
     "gate": {
       "action": "Complete Profile",
       "loadError": "Could not verify your profile. Please try again.",
-      "message": "To create and join games, you need to complete your profile with CPF and phone.",
+      "message": "Account verified. Now complete your player details to create and join games.",
       "title": "Complete your Profile"
     },
     "goToLogin": "Go to login",

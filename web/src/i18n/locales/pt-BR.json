@@ -1843,7 +1843,7 @@
     "gate": {
       "action": "Completar Perfil",
       "loadError": "Não foi possível verificar seu perfil. Tente novamente.",
-      "message": "Para criar e participar de jogos, você precisa completar seu perfil com CPF e telefone.",
+      "message": "Conta verificada. Agora complete seus dados de jogador para criar e participar de jogos.",
       "title": "Complete seu Perfil"
     },
     "goToLogin": "Ir para o login",

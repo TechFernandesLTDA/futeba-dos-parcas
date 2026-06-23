@@ -20,7 +20,8 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
   }, [loading]);
 
   const isOnboardingRoute = location.pathname.startsWith('/onboarding/');
-  if (isOnboardingRoute) {
+  const isProfileSetupRoute = location.pathname === '/profile/setup';
+  if (isOnboardingRoute || isProfileSetupRoute) {
     return <>{children}</>;
   }
 
@@ -65,7 +66,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
         <DialogActions>
           <Button
             variant="contained"
-            onClick={() => navigate(firebaseUser?.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone')}
+            onClick={() => navigate('/profile/setup')}
           >
             {t('profile.gate.action')}
           </Button>
