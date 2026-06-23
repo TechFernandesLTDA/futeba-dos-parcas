@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Box, Slide } from '@mui/material';
 import { ShieldOutlined as ShieldIcon } from '@mui/icons-material';
@@ -19,6 +20,7 @@ const GRACE_END = new Date('2026-08-03T00:00:00Z');
 export const VerificationBanner: React.FC = () => {
   const { firebaseUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const verified = useVerifiedClaim(firebaseUser);
 
   if (!firebaseUser || verified !== false) return null;
@@ -30,12 +32,12 @@ export const VerificationBanner: React.FC = () => {
   const urgent = daysLeft <= 7;
 
   const message = daysLeft === 0
-    ? 'Verificação obrigatória — complete agora pra continuar.'
+    ? t('feedback.verificationBanner.required')
     : daysLeft === 1
-    ? 'Última chance! Verifique sua conta hoje.'
+    ? t('feedback.verificationBanner.lastChance')
     : urgent
-    ? `Só ${daysLeft} dias pra verificar sua conta.`
-    : `Verifique sua conta em até ${daysLeft} dias pra evitar bloqueio.`;
+    ? t('feedback.verificationBanner.daysLeft', { count: daysLeft })
+    : t('feedback.verificationBanner.safeWindow', { count: daysLeft });
 
   return (
     <Slide direction="down" in mountOnEnter unmountOnExit>
@@ -51,7 +53,7 @@ export const VerificationBanner: React.FC = () => {
               onClick={() => navigate(getNextVerificationPath(firebaseUser))}
               sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
             >
-              Verificar
+              {t('feedback.verificationBanner.action')}
             </Button>
           }
           sx={{

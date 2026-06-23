@@ -701,6 +701,15 @@
       "tooManyRequests": "Muitas tentativas em sequência. Aguarde alguns minutos.",
       "verifiedSaveError": "Telefone verificado, mas houve um erro ao salvar. Se o problema persistir, contate o suporte."
     },
+    "verificationBanner": {
+      "action": "Verificar",
+      "daysLeft_one": "Só {{count}} dia pra verificar sua conta.",
+      "daysLeft_other": "Só {{count}} dias pra verificar sua conta.",
+      "lastChance": "Última chance! Verifique sua conta hoje.",
+      "required": "Verificação obrigatória — complete agora pra continuar.",
+      "safeWindow_one": "Verifique sua conta em até {{count}} dia pra evitar bloqueio.",
+      "safeWindow_other": "Verifique sua conta em até {{count}} dias pra evitar bloqueio."
+    },
     "player": {
       "cardGenerateError": "Falha ao gerar imagem. Tente novamente.",
       "cardGenerateError2": "Erro ao gerar imagem do card. Tente novamente."

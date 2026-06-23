@@ -701,6 +701,15 @@
       "tooManyRequests": "Too many attempts in a row. Wait a few minutes.",
       "verifiedSaveError": "Phone verified, but there was an error saving. If the problem persists, contact support."
     },
+    "verificationBanner": {
+      "action": "Verify",
+      "daysLeft_one": "Only {{count}} day left to verify your account.",
+      "daysLeft_other": "Only {{count}} days left to verify your account.",
+      "lastChance": "Last chance! Verify your account today.",
+      "required": "Verification required — complete it now to continue.",
+      "safeWindow_one": "Verify your account within {{count}} day to avoid being blocked.",
+      "safeWindow_other": "Verify your account within {{count}} days to avoid being blocked."
+    },
     "player": {
       "cardGenerateError": "Failed to generate image. Please try again.",
       "cardGenerateError2": "Error generating card image. Please try again."
