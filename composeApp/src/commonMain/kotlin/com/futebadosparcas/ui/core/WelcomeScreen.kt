@@ -30,6 +30,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.welcome_onboarding_action_start
+import com.futebadosparcas.compose.resources.welcome_onboarding_app_name
+import com.futebadosparcas.compose.resources.welcome_onboarding_feature_groups
+import com.futebadosparcas.compose.resources.welcome_onboarding_feature_identity
+import com.futebadosparcas.compose.resources.welcome_onboarding_feature_matches
+import com.futebadosparcas.compose.resources.welcome_onboarding_feature_stats
+import com.futebadosparcas.compose.resources.welcome_onboarding_subtitle
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Tela de boas-vindas do onboarding.
@@ -66,7 +75,7 @@ fun WelcomeScreen(
             }
 
             Text(
-                text = "Futeba dos Parcas",
+                text = stringResource(Res.string.welcome_onboarding_app_name),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -74,7 +83,7 @@ fun WelcomeScreen(
                 modifier = Modifier.semantics { heading() }
             )
             Text(
-                text = "Entre com tudo na organização da rodada, no acompanhamento das partidas e no histórico do jogador.",
+                text = stringResource(Res.string.welcome_onboarding_subtitle),
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -88,19 +97,19 @@ fun WelcomeScreen(
                 ) {
                     WelcomeFeatureItem(
                         icon = Icons.Filled.SportsSoccer,
-                        text = "Jogos com presença, campo e status na mesma visão"
+                        text = stringResource(Res.string.welcome_onboarding_feature_matches)
                     )
                     WelcomeFeatureItem(
                         icon = Icons.Filled.Groups,
-                        text = "Grupos e convites mais alinhados com a resenha"
+                        text = stringResource(Res.string.welcome_onboarding_feature_groups)
                     )
                     WelcomeFeatureItem(
                         icon = Icons.Filled.QueryStats,
-                        text = "Estatísticas para acompanhar a evolução da liga"
+                        text = stringResource(Res.string.welcome_onboarding_feature_stats)
                     )
                     WelcomeFeatureItem(
                         icon = Icons.Filled.FavoriteBorder,
-                        text = "Preferências e identidade do jogador bem cuidadas"
+                        text = stringResource(Res.string.welcome_onboarding_feature_identity)
                     )
                 }
             }
@@ -112,7 +121,7 @@ fun WelcomeScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "Começar",
+                    text = stringResource(Res.string.welcome_onboarding_action_start),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
