@@ -4136,6 +4136,9 @@ subir no ranking!</string>
     <string name="onboarding_checklist_subtitle">Complete os passos para dominar o app</string>
     <string name="onboarding_checklist_dismiss">Fechar</string>
     <string name="onboarding_checklist_completed_label">Concluído!</string>
+    <string name="onboarding_checklist_progress_desc">%1$d de %2$d passos concluídos</string>
+    <string name="onboarding_step_status_completed">Concluído</string>
+    <string name="onboarding_step_status_pending">Pendente</string>
 
     <!-- Passos do checklist (derivados de eventos de domínio — não são checkboxes manuais) -->
     <string name="onboarding_step_complete_profile">Complete seu perfil</string>
