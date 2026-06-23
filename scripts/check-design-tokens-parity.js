@@ -171,6 +171,62 @@ function checkKotlinValHexes(content, expected, label, sourceFile, errors) {
   }
 }
 
+function checkGamificationParity(tokens, errors) {
+  if (!tokens.gamification) {
+    errors.push('[gamification] bloco `gamification` ausente em shared/design-tokens.json');
+    return;
+  }
+
+  const webFile = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const webContent = readRequiredFile(webFile, 'web gamification tokens', errors);
+  if (webContent) {
+    checkTsObjectHexes(
+      webContent,
+      'gamificationColors',
+      tokens.gamification,
+      'web gamification token',
+      webFile,
+      errors
+    );
+
+    if (tokens.gamificationDark) {
+      checkTsObjectHexes(
+        webContent,
+        'gamificationColorsDark',
+        tokens.gamificationDark,
+        'web dark gamification token',
+        webFile,
+        errors
+      );
+    }
+  }
+
+  const kotlinGamification = {
+    Gold: tokens.gamification.gold,
+    Silver: tokens.gamification.silver,
+    Bronze: tokens.gamification.bronze,
+    Diamond: tokens.gamification.diamond,
+    Platinum: tokens.gamification.platinum,
+    Champion: tokens.gamification.champion,
+    Xp: tokens.gamification.xp,
+    Level: tokens.gamification.level,
+    Mvp: tokens.gamification.mvp,
+    Streak: tokens.gamification.streak,
+  };
+
+  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
+    const content = readRequiredFile(platform.file, `${platform.name} gamification tokens`, errors);
+    if (!content) continue;
+    checkKotlinValHexes(
+      content,
+      kotlinGamification,
+      `${platform.name} gamification token`,
+      platform.file,
+      errors
+    );
+  }
+}
+
 function checkKotlinDpVals(content, expected, label, sourceFile, errors) {
   for (const [name, expectedValue] of Object.entries(expected)) {
     if (typeof expectedValue !== 'number') continue;
@@ -479,6 +535,7 @@ function main() {
   checkWebThemeColor(tokens, errors);
   checkWebSemanticPalette(tokens, errors);
   checkKotlinSemanticGreen(tokens, errors);
+  checkGamificationParity(tokens, errors);
 
   // Paridade de radius + spacing — issue #2744.
   checkWebRadiusAndSpacing(tokens, errors);
@@ -494,7 +551,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('✓ design tokens em paridade (cores + radius + spacing + motion)');
+  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + motion)');
   process.exit(0);
 }
 

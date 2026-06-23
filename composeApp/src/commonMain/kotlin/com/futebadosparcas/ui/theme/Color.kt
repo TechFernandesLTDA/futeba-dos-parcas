@@ -248,6 +248,7 @@ object GamificationColors {
     val Xp = Color(0xFF9C27B0)       // Purple XP
     val XpLightGreen = Color(0xFF64DD17)
     val Level = Color(0xFF00BCD4)     // Cyan level
+    val Mvp = Color(0xFFFFD700)       // Gold MVP
     val Streak = Color(0xFFFF5722)    // Orange streak
     val LevelUpGold = Color(0xFFFFAB00)
 
