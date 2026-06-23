@@ -23,7 +23,7 @@ import {
   ArrowForward as ArrowForwardIcon,
   PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -57,25 +57,38 @@ export const ProfileSetupScreen: React.FC = () => {
 
     setLoading(true);
     const originalDisplayName = firebaseUser.displayName;
+    const trimmedName = name.trim();
     try {
-      await updateProfile(firebaseUser, { displayName: name });
+      await updateProfile(firebaseUser, { displayName: trimmedName });
       
       try {
-        await setDoc(doc(db, 'users', firebaseUser.uid), {
-          name,
-          email: firebaseUser.email,
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        const profileData = {
+          name: trimmedName,
           photo_url: firebaseUser.photoURL || '',
           nickname: nickname.trim(),
-          role: 'PLAYER',
-          level: 1,
-          experience_points: 0,
           preferred_position: preferredPosition,
           preferred_field_types: preferredFieldTypes,
           favorite_team: favoriteTeam,
           is_searchable: true,
-          created_at: serverTimestamp(),
-          updated_at: serverTimestamp(),
-        }, { merge: true });
+        };
+
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          await updateDoc(userRef, profileData);
+        } else {
+          await setDoc(userRef, {
+            ...profileData,
+            email: firebaseUser.email || '',
+            role: 'PLAYER',
+            striker_rating: 0,
+            mid_rating: 0,
+            defender_rating: 0,
+            gk_rating: 0,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+          });
+        }
       } catch (firestoreErr) {
         logger.error('Firestore setDoc failed, rolling back Auth:', firestoreErr);
         try {
