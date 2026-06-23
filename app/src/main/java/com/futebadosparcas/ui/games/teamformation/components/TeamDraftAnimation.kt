@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.sp
 import com.futebadosparcas.data.model.DraftRevealAnimation
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.util.ContrastHelper
 import kotlinx.coroutines.delay
 import com.futebadosparcas.R
@@ -41,6 +44,7 @@ fun TeamDraftRevealCard(
     reveal: DraftRevealAnimation,
     onRevealComplete: () -> Unit = {}
 ) {
+    val reducedMotion = rememberReduceMotion()
     // Estados de animacao
     var isFlipped by remember { mutableStateOf(false) }
     var showCelebration by remember { mutableStateOf(false) }
@@ -49,8 +53,8 @@ fun TeamDraftRevealCard(
     val flipRotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
         animationSpec = tween(
-            durationMillis = 600,
-            easing = FastOutSlowInEasing
+            durationMillis = MotionDuration.getLong(reducedMotion),
+            easing = MotionEasing.Standard
         ),
         label = "flip"
     )
@@ -225,14 +229,18 @@ private fun CardFront(
  */
 @Composable
 private fun CelebrationEffect() {
+    val reducedMotion = rememberReduceMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "celebration")
 
     // Rotacao das estrelas
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 360f,
+        targetValue = if (reducedMotion) 0f else 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion) * 6,
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Restart
         ),
         label = "starRotation"
@@ -241,9 +249,12 @@ private fun CelebrationEffect() {
     // Escala pulsante
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.8f,
-        targetValue = 1.2f,
+        targetValue = if (reducedMotion) 0.8f else 1.2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(500),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion),
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse"

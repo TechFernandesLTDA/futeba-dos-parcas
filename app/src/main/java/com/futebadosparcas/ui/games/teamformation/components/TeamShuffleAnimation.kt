@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.sp
 import com.futebadosparcas.domain.model.DraftPlayer
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.util.ContrastHelper
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -112,6 +115,7 @@ private fun ShufflingCards(
     teamAColor: TeamColor,
     teamBColor: TeamColor
 ) {
+    val reducedMotion = rememberReduceMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "shuffle")
 
     Column(
@@ -137,12 +141,13 @@ private fun ShufflingCards(
 
                 val rotation by infiniteTransition.animateFloat(
                     initialValue = -15f,
-                    targetValue = 15f,
+                    targetValue = if (reducedMotion) -15f else 15f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(
-                            durationMillis = 200 + Random.nextInt(100),
+                            durationMillis = MotionDuration.getMedium(reducedMotion) +
+                                if (reducedMotion) 0 else Random.nextInt(100),
                             delayMillis = delay,
-                            easing = FastOutSlowInEasing
+                            easing = MotionEasing.Standard
                         ),
                         repeatMode = RepeatMode.Reverse
                     ),
@@ -151,12 +156,13 @@ private fun ShufflingCards(
 
                 val offsetX by infiniteTransition.animateFloat(
                     initialValue = -30f,
-                    targetValue = 30f,
+                    targetValue = if (reducedMotion) -30f else 30f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(
-                            durationMillis = 150 + Random.nextInt(100),
+                            durationMillis = MotionDuration.getShort(reducedMotion) +
+                                if (reducedMotion) 0 else Random.nextInt(100),
                             delayMillis = delay,
-                            easing = LinearEasing
+                            easing = MotionEasing.Standard
                         ),
                         repeatMode = RepeatMode.Reverse
                     ),
@@ -165,12 +171,13 @@ private fun ShufflingCards(
 
                 val offsetY by infiniteTransition.animateFloat(
                     initialValue = -20f,
-                    targetValue = 20f,
+                    targetValue = if (reducedMotion) -20f else 20f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(
-                            durationMillis = 180 + Random.nextInt(100),
+                            durationMillis = MotionDuration.getShort(reducedMotion) +
+                                if (reducedMotion) 0 else Random.nextInt(100),
                             delayMillis = delay,
-                            easing = LinearEasing
+                            easing = MotionEasing.Standard
                         ),
                         repeatMode = RepeatMode.Reverse
                     ),
@@ -379,13 +386,17 @@ fun ShuffleButton(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
+    val reducedMotion = rememberReduceMotion()
 
     val infiniteTransition = rememberInfiniteTransition(label = "shuffleBtn")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = if (isShuffling) 360f else 0f,
+        targetValue = if (isShuffling && !reducedMotion) 360f else 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion) * 2,
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Restart
         ),
         label = "btnRotation"
@@ -427,6 +438,7 @@ fun PlayerEntryAnimation(
     delayPerPlayer: Long = 300L,
     onComplete: () -> Unit
 ) {
+    val reducedMotion = rememberReduceMotion()
     var visibleCount by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(players) {
@@ -454,7 +466,10 @@ fun PlayerEntryAnimation(
 
             val alpha by animateFloatAsState(
                 targetValue = 1f,
-                animationSpec = tween(300),
+                animationSpec = tween(
+                    durationMillis = MotionDuration.getMedium(reducedMotion),
+                    easing = MotionEasing.Standard
+                ),
                 label = "playerAlpha$index"
             )
 

@@ -137,6 +137,7 @@ fun WeeklyRecapScreen(
     val totalSlides = 7 // Número de slides
     val pagerState = rememberPagerState(pageCount = { totalSlides })
     val scope = rememberCoroutineScope()
+    val reducedMotion = rememberReduceMotion()
 
     // Auto-advance timer
     var autoAdvance by remember { mutableStateOf(true) }
@@ -212,7 +213,10 @@ fun WeeklyRecapScreen(
                             if (autoAdvance) {
                                 val animatedProgress by animateFloatAsState(
                                     targetValue = 1f,
-                                    animationSpec = tween(5000),
+                                    animationSpec = tween(
+                                        durationMillis = MotionDuration.getLong(reducedMotion) * 10,
+                                        easing = MotionEasing.Standard
+                                    ),
                                     label = "slideProgress"
                                 )
                                 animatedProgress

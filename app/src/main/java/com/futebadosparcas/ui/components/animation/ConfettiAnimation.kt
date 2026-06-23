@@ -1,7 +1,6 @@
 package com.futebadosparcas.ui.components.animation
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -17,6 +16,9 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
@@ -134,12 +136,18 @@ fun ConfettiAnimation(
     type: ConfettiType = ConfettiType.EXPLOSION,
     colors: List<Color> = ConfettiColors.DEFAULT,
     particleCount: Int = 100,
-    durationMillis: Int = 3000,
+    durationMillis: Int = MotionDuration.Long * 6,
     onAnimationEnd: () -> Unit = {}
 ) {
     if (!visible) return
 
     val density = LocalDensity.current
+    val reducedMotion = rememberReduceMotion()
+    val effectiveDuration = if (reducedMotion) {
+        MotionDuration.LongReduced
+    } else {
+        durationMillis
+    }
     val progress = remember { Animatable(0f) }
 
     // Gera partículas baseadas no tipo
@@ -152,7 +160,10 @@ fun ConfettiAnimation(
             progress.snapTo(0f)
             progress.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis, easing = LinearEasing)
+                animationSpec = tween(
+                    durationMillis = effectiveDuration,
+                    easing = MotionEasing.Standard
+                )
             )
             delay(200)
             onAnimationEnd()
@@ -349,7 +360,7 @@ fun MvpConfetti(
         type = ConfettiType.EXPLOSION,
         colors = ConfettiColors.MVP,
         particleCount = 150,
-        durationMillis = 3500,
+        durationMillis = MotionDuration.Long * 7,
         onAnimationEnd = onAnimationEnd
     )
 }
@@ -369,7 +380,7 @@ fun LevelUpConfetti(
         type = ConfettiType.RISING,
         colors = ConfettiColors.SUCCESS,
         particleCount = 80,
-        durationMillis = 2500,
+        durationMillis = MotionDuration.Long * 5,
         onAnimationEnd = onAnimationEnd
     )
 }
@@ -389,7 +400,7 @@ fun BadgeConfetti(
         type = ConfettiType.CANNON,
         colors = ConfettiColors.GOLD,
         particleCount = 60,
-        durationMillis = 2000,
+        durationMillis = MotionDuration.Long * 4,
         onAnimationEnd = onAnimationEnd
     )
 }
@@ -409,7 +420,7 @@ fun VictoryConfetti(
         type = ConfettiType.FALLING,
         colors = ConfettiColors.DEFAULT,
         particleCount = 120,
-        durationMillis = 4000,
+        durationMillis = MotionDuration.Long * 8,
         onAnimationEnd = onAnimationEnd
     )
 }

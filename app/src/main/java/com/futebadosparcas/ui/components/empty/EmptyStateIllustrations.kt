@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.components.empty
 
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -33,6 +32,9 @@ import androidx.compose.ui.text.style.TextAlign
 import com.futebadosparcas.R
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -210,12 +212,16 @@ private fun SoccerBallIllustration(
     ballColor: Color,
     lineColor: Color
 ) {
+    val reducedMotion = rememberReduceMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "soccer")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 360f,
+        targetValue = if (reducedMotion) 0f else 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = FastOutSlowInEasing),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion) * 8,
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Restart
         ),
         label = "ballRotation"
@@ -273,12 +279,16 @@ private fun GroupIllustration(
     primaryColor: Color,
     secondaryColor: Color
 ) {
+    val reducedMotion = rememberReduceMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "group")
     val bounce by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 8f,
+        targetValue = if (reducedMotion) 0f else 8f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion) * 2,
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "groupBounce"
@@ -374,12 +384,16 @@ private fun BellIllustration(
     bellColor: Color,
     accentColor: Color
 ) {
+    val reducedMotion = rememberReduceMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "bell")
     val swing by infiniteTransition.animateFloat(
         initialValue = -5f,
-        targetValue = 5f,
+        targetValue = if (reducedMotion) -5f else 5f,
         animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = FastOutSlowInEasing),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion),
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "bellSwing"

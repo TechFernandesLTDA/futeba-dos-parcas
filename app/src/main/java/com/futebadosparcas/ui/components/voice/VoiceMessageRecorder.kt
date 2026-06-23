@@ -8,7 +8,6 @@ import android.media.MediaRecorder
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -79,6 +78,9 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.math.sin
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -367,6 +369,7 @@ fun VoiceRecordButton(
     enabled: Boolean = true
 ) {
     val context = LocalContext.current
+    val reducedMotion = rememberReduceMotion()
     val scope = rememberCoroutineScope()
     val recorder = remember { VoiceRecorderHelper(context) }
 
@@ -384,9 +387,12 @@ fun VoiceRecordButton(
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.2f,
+        targetValue = if (reducedMotion) 1f else 1.2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(500),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion),
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseScale"
@@ -663,13 +669,17 @@ fun RecordingWaveform(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.error
 ) {
+    val reducedMotion = rememberReduceMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "waveform")
 
     val phase by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 360f,
+        targetValue = if (reducedMotion) 0f else 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
+            animation = tween(
+                durationMillis = MotionDuration.getLong(reducedMotion) * 2,
+                easing = MotionEasing.Standard
+            ),
             repeatMode = RepeatMode.Restart
         ),
         label = "phase"
