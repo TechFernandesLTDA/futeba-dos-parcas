@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.components.animation
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -15,11 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-
-/**
- * Duração da animação de escala ao pressionar (ms).
- */
-private const val PRESS_ANIMATION_DURATION_MS = 100
+import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 /**
  * Escala aplicada ao pressionar (0.95 = 5% menor).
@@ -31,7 +26,8 @@ private const val PRESS_SCALE = 0.95f
  *
  * Quando o usuário pressiona o elemento, ele encolhe suavemente para 95%
  * do tamanho e volta ao normal ao soltar. Essa micro-interação melhora
- * a responsividade tátil da interface.
+ * a responsividade tátil da interface, usa springs centralizadas e respeita
+ * reduced-motion.
  *
  * Uso:
  * ```kotlin
@@ -43,18 +39,17 @@ private const val PRESS_SCALE = 0.95f
  * ```
  *
  * @param scale Escala mínima ao pressionar (padrão: 0.95f)
- * @param durationMs Duração da animação em milissegundos (padrão: 100ms)
  */
 fun Modifier.pressScale(
-    scale: Float = PRESS_SCALE,
-    durationMs: Int = PRESS_ANIMATION_DURATION_MS
+    scale: Float = PRESS_SCALE
 ): Modifier = composed {
+    val reduceMotion = rememberReduceMotion()
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val animatedScale by animateFloatAsState(
         targetValue = if (isPressed) scale else 1f,
-        animationSpec = tween(durationMillis = durationMs),
+        animationSpec = MotionSpring.effects(reduceMotion),
         label = "pressScale"
     )
 
@@ -89,11 +84,12 @@ fun Modifier.pressScaleClickable(
     scale: Float = PRESS_SCALE,
     enabled: Boolean = true
 ): Modifier = composed {
+    val reduceMotion = rememberReduceMotion()
     var isPressed by remember { mutableStateOf(false) }
 
     val animatedScale by animateFloatAsState(
         targetValue = if (isPressed) scale else 1f,
-        animationSpec = tween(durationMillis = PRESS_ANIMATION_DURATION_MS),
+        animationSpec = MotionSpring.effects(reduceMotion),
         label = "pressScaleClickable"
     )
 
