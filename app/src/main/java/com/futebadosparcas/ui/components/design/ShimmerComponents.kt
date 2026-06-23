@@ -20,6 +20,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 
 // =============================================================================
 // SHIMMER COMPONENTS - COMPONENTES CONSOLIDADOS DE EFEITO SHIMMER
@@ -47,14 +50,10 @@ import androidx.compose.ui.unit.dp
  * Centralizadas para garantir consistencia em todo o app.
  *
  * Otimizado para performance:
- * - Duracao reduzida para 800ms (era 1200ms)
  * - Distancia reduzida para 600f (era 1000f)
- * - Usa LinearEasing para evitar calculos de easing complexos
+ * - Usa tokens compartilhados de motion para duracao/easing
  */
 private object ShimmerDefaults {
-    /** Duracao da animacao em milissegundos - reduzido para melhor performance */
-    const val ANIMATION_DURATION_MS = 800
-
     /** Distancia percorrida pelo gradiente - reduzido para menos calculos */
     const val TRANSLATE_DISTANCE = 600f
 
@@ -63,6 +62,26 @@ private object ShimmerDefaults {
 
     /** Corner radius para cards */
     val CARD_CORNER_RADIUS = 16.dp
+}
+
+@Composable
+private fun rememberShimmerTranslate(label: String): Float {
+    val reducedMotion = rememberReduceMotion()
+    if (reducedMotion) return ShimmerDefaults.TRANSLATE_DISTANCE / 2
+
+    val transition = rememberInfiniteTransition(label = label)
+    return transition.animateFloat(
+        initialValue = 0f,
+        targetValue = ShimmerDefaults.TRANSLATE_DISTANCE,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = MotionDuration.Long,
+                easing = MotionEasing.Standard
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "${label}_translate"
+    ).value
 }
 
 // =============================================================================
@@ -85,19 +104,7 @@ private object ShimmerDefaults {
  * @return Modifier com efeito shimmer aplicado
  */
 fun Modifier.shimmerEffect(): Modifier = composed {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = ShimmerDefaults.TRANSLATE_DISTANCE,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = ShimmerDefaults.ANIMATION_DURATION_MS,
-                easing = LinearEasing
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate"
-    )
+    val translate = rememberShimmerTranslate(label = "shimmer")
 
     val shimmerColorShades = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
@@ -109,32 +116,19 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         brush = Brush.linearGradient(
             colors = shimmerColorShades,
             start = Offset(
-                translateAnim.value - ShimmerDefaults.TRANSLATE_DISTANCE,
-                translateAnim.value - ShimmerDefaults.TRANSLATE_DISTANCE
+                translate - ShimmerDefaults.TRANSLATE_DISTANCE,
+                translate - ShimmerDefaults.TRANSLATE_DISTANCE
             ),
-            end = Offset(translateAnim.value, translateAnim.value)
+            end = Offset(translate, translate)
         )
     )
 }
 
 /**
- * Variante do shimmer com easing linear (movimento mais uniforme).
- * Util para listas longas onde FastOutSlowInEasing pode parecer irregular.
+ * Variante mantida por compatibilidade; usa os mesmos tokens compartilhados.
  */
 fun Modifier.shimmerEffectLinear(): Modifier = composed {
-    val transition = rememberInfiniteTransition(label = "shimmer_linear")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = ShimmerDefaults.TRANSLATE_DISTANCE,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = ShimmerDefaults.ANIMATION_DURATION_MS,
-                easing = LinearEasing
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate_linear"
-    )
+    val translate = rememberShimmerTranslate(label = "shimmer_linear")
 
     val shimmerColorShades = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
@@ -146,10 +140,10 @@ fun Modifier.shimmerEffectLinear(): Modifier = composed {
         brush = Brush.linearGradient(
             colors = shimmerColorShades,
             start = Offset(
-                translateAnim.value - ShimmerDefaults.TRANSLATE_DISTANCE,
-                translateAnim.value - ShimmerDefaults.TRANSLATE_DISTANCE
+                translate - ShimmerDefaults.TRANSLATE_DISTANCE,
+                translate - ShimmerDefaults.TRANSLATE_DISTANCE
             ),
-            end = Offset(translateAnim.value, translateAnim.value)
+            end = Offset(translate, translate)
         )
     )
 }
@@ -1015,33 +1009,20 @@ fun LazyListScope.shimmerItems(
  */
 @Composable
 fun rememberShimmerBrush(): Brush {
+    val translate = rememberShimmerTranslate(label = "shimmer_brush")
     val shimmerColors = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
     )
 
-    val transition = rememberInfiniteTransition(label = "shimmer_brush")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = ShimmerDefaults.TRANSLATE_DISTANCE,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = ShimmerDefaults.ANIMATION_DURATION_MS,
-                easing = LinearEasing
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_brush_translate"
-    )
-
     return Brush.linearGradient(
         colors = shimmerColors,
         start = Offset(
-            translateAnim.value - ShimmerDefaults.TRANSLATE_DISTANCE,
-            translateAnim.value - ShimmerDefaults.TRANSLATE_DISTANCE
+            translate - ShimmerDefaults.TRANSLATE_DISTANCE,
+            translate - ShimmerDefaults.TRANSLATE_DISTANCE
         ),
-        end = Offset(translateAnim.value, translateAnim.value)
+        end = Offset(translate, translate)
     )
 }
 
