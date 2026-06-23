@@ -27,7 +27,7 @@ import {
   PhoneAuthProvider,
   linkWithCredential,
 } from 'firebase/auth';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -225,7 +225,6 @@ export const PhoneVerificationScreen: React.FC = () => {
         await updateDoc(doc(db, 'users', firebaseUser.uid), {
           phone: phoneNumber,
           phone_verified: true,
-          updated_at: serverTimestamp(),
         });
       } catch (firestoreErr) {
         logger.error('Failed to persist phone to users doc (non-fatal):', firestoreErr);
@@ -244,7 +243,6 @@ export const PhoneVerificationScreen: React.FC = () => {
             await updateDoc(doc(db, 'users', firebaseUser.uid), {
               phone: firebaseUser.phoneNumber,
               phone_verified: true,
-              updated_at: serverTimestamp(),
             });
           } catch (e) {
             logger.error('Failed to persist phone (already-linked path):', e);
