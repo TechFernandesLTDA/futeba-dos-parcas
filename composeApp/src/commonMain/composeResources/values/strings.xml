@@ -3239,18 +3239,27 @@ subir no ranking!</string>
 
     <!-- Issue #67: Organization History -->
     <string name="owner_stats_title">Meu Histórico de Organizador</string>
+    <string name="owner_stats_screen_title">Estatísticas do Organizador</string>
     <string name="owner_my_stats">Minhas Estatísticas</string>
     <string name="owner_my_stats_subtitle">Histórico de jogos organizados</string>
     <string name="owner_stats_overview">Visão Geral</string>
     <string name="owner_games_organized">Jogos Organizados</string>
     <string name="owner_players_hosted">Jogadores Recebidos</string>
+    <string name="owner_players_hosted_compact">Jogadores recebidos</string>
+    <string name="owner_avg_attendance_compact">Média de presença</string>
     <string name="owner_avg_attendance">Taxa Média de Presença</string>
     <string name="owner_total_revenue">Total Arrecadado</string>
+    <string name="owner_total_revenue_compact">Receita total</string>
     <string name="owner_attendance_trend">Tendência de Presença</string>
     <string name="owner_last_n_games">Últimos %1$d jogos</string>
     <string name="owner_best_game">Melhor Jogo</string>
+    <string name="owner_best_game_compact">Melhor jogo</string>
     <string name="owner_worst_game">Pior Jogo</string>
+    <string name="owner_worst_game_compact">Pior jogo</string>
     <string name="owner_recent_games">Jogos Recentes</string>
+    <string name="owner_players_count">%1$d/%2$d jogadores</string>
+    <string name="owner_game_date_time">%1$s - %2$s</string>
+    <string name="owner_attendance_rate">%1$d%%</string>
 
     <!-- Issue #68: Schedule Rules -->
     <string name="owner_rules">Regras do Jogo</string>
