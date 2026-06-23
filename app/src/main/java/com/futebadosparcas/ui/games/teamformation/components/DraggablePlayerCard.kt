@@ -39,6 +39,9 @@ import com.futebadosparcas.domain.model.DraftPlayer
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.theme.MotionDuration
+import com.futebadosparcas.ui.theme.MotionEasing
+import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -55,6 +58,7 @@ fun DraggablePlayerCard(
     pairedPlayerName: String? = null
 ) {
     val haptic = LocalHapticFeedback.current
+    val reducedMotion = rememberReduceMotion()
     var isDragging by remember { mutableStateOf(false) }
 
     // Animacoes
@@ -69,7 +73,10 @@ fun DraggablePlayerCard(
 
     val alpha by animateFloatAsState(
         targetValue = if (isDragging) 0.6f else 1f,
-        animationSpec = tween(durationMillis = 150),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getShort(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "dragAlpha"
     )
 
@@ -245,6 +252,7 @@ fun PlayerDropZone(
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val reducedMotion = rememberReduceMotion()
     var isDragOver by remember { mutableStateOf(false) }
 
     val backgroundColor by animateColorAsState(
@@ -253,7 +261,10 @@ fun PlayerDropZone(
         } else {
             Color.Transparent
         },
-        animationSpec = tween(durationMillis = 150),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getShort(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "dropZoneBg"
     )
 
@@ -263,7 +274,10 @@ fun PlayerDropZone(
         } else {
             Color(teamColor.hexValue).copy(alpha = 0.3f)
         },
-        animationSpec = tween(durationMillis = 150),
+        animationSpec = tween(
+            durationMillis = MotionDuration.getShort(reducedMotion),
+            easing = MotionEasing.Standard
+        ),
         label = "dropZoneBorder"
     )
 
