@@ -91,6 +91,8 @@ export const LocationFormScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const isEdit = !!locationId;
   useDocumentTitle(t(isEdit ? 'page.title.editLocation' : 'page.title.createLocation'));
@@ -112,7 +114,7 @@ export const LocationFormScreen: React.FC = () => {
         const snap = await getDoc(doc(db, 'locations', locationId));
         if (cancelled) return;
         if (!snap.exists()) {
-          setFetchError('Local não encontrado');
+          setFetchError(tRef.current('feedback.location.notFound'));
           setFetchLoading(false);
           return;
         }
@@ -148,8 +150,9 @@ export const LocationFormScreen: React.FC = () => {
       } catch (err) {
         if (!cancelled) {
           logger.error('Erro ao carregar local:', err);
-          showErrorRef.current('Erro ao carregar local. Tente novamente.');
-          setFetchError('Erro ao carregar local. Tente novamente.');
+          const message = tRef.current('feedback.location.loadWithRetryError');
+          showErrorRef.current(message);
+          setFetchError(message);
         }
       } finally {
         if (!cancelled) setFetchLoading(false);
@@ -163,31 +166,31 @@ export const LocationFormScreen: React.FC = () => {
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormState, string>> = {};
-    if (!form.name.trim()) e.name = 'Nome é obrigatório';
-    else if (form.name.length < 3) e.name = 'Mínimo 3 caracteres';
-    if (!form.address.trim()) e.address = 'Endereço é obrigatório';
-    if (!form.city.trim()) e.city = 'Cidade é obrigatória';
+    if (!form.name.trim()) e.name = t('locations.form.validation.nameRequired');
+    else if (form.name.length < 3) e.name = t('locations.form.validation.nameMinLength');
+    if (!form.address.trim()) e.address = t('locations.form.validation.addressRequired');
+    if (!form.city.trim()) e.city = t('locations.form.validation.cityRequired');
     if (!form.state || form.state.trim().length < 2) {
-      e.state = 'Estado é obrigatório.';
+      e.state = t('locations.form.validation.stateRequired');
     }
-    if (form.fieldCount < 1) e.fieldCount = 'Mínimo 1 campo';
+    if (form.fieldCount < 1) e.fieldCount = t('locations.form.validation.fieldCountMin');
     if (form.playersPerTeam < 3 || form.playersPerTeam > 11) {
-      e.playersPerTeam = 'Entre 3 e 11';
+      e.playersPerTeam = t('locations.form.validation.playersPerTeamRange');
     }
     // #1339: telefone é opcional, mas se preenchido deve ter DDD + número
     // (10 dígitos fixo, 11 celular). Não força máscara (mudança de UX maior).
     const phoneDigits = form.phone.replace(/\D/g, '');
     if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      e.phone = 'Telefone inválido (use DDD + número)';
+      e.phone = t('locations.form.validation.phoneInvalid');
     }
     if (form.website && !/^https?:\/\/.+/.test(form.website)) {
-      e.website = 'URL inválida. Deve começar com http:// ou https://';
+      e.website = t('locations.form.validation.websiteInvalid');
     }
     if (form.latitude !== null && (form.latitude < -90 || form.latitude > 90)) {
-      e.latitude = 'Latitude deve estar entre -90 e 90.';
+      e.latitude = t('locations.form.validation.latitudeRange');
     }
     if (form.longitude !== null && (form.longitude < -180 || form.longitude > 180)) {
-      e.longitude = 'Longitude deve estar entre -180 e 180.';
+      e.longitude = t('locations.form.validation.longitudeRange');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -293,7 +296,9 @@ export const LocationFormScreen: React.FC = () => {
         for (let i = 1; i <= form.fieldCount; i++) {
           const fieldRef = doc(collection(db, 'locations', newRef.id, 'fields'));
           batch.set(fieldRef, {
-            name: form.fieldCount === 1 ? 'Quadra Principal' : `Quadra ${i}`,
+            name: form.fieldCount === 1
+              ? t('locations.form.defaultPrimaryFieldName')
+              : t('locations.form.defaultFieldName', { index: i }),
             location_id: newRef.id,
             type: form.fieldType,
             is_active: true,
@@ -331,7 +336,7 @@ export const LocationFormScreen: React.FC = () => {
   if (fetchLoading) {
     return (
       <AdaptiveFormSheet closeDestination={closeDestination}>
-        <FormScaffold title={isEdit ? 'Editar Local' : 'Criar Local'} closeDestination={closeDestination} closeVariant="X">
+        <FormScaffold title={isEdit ? t('locations.form.editTitle') : t('locations.form.createTitle')} closeDestination={closeDestination} closeVariant="X">
           <PageContainer maxWidth="form" sx={{ textAlign: 'center' }}>
             <CircularProgress />
           </PageContainer>
@@ -343,11 +348,11 @@ export const LocationFormScreen: React.FC = () => {
   if (fetchError) {
     return (
       <AdaptiveFormSheet closeDestination={closeDestination}>
-        <FormScaffold title="Editar Local" closeDestination={closeDestination} closeVariant="X">
+        <FormScaffold title={t('locations.form.editTitle')} closeDestination={closeDestination} closeVariant="X">
           <PageContainer maxWidth="form" sx={{}}>
             <Alert severity="error" sx={{ mb: 2 }} role="alert" aria-live="assertive">{fetchError}</Alert>
             <Button variant="outlined" fullWidth onClick={() => navigate('/locations')}>
-              Voltar para Locais
+              {t('locations.form.backToLocations')}
             </Button>
           </PageContainer>
         </FormScaffold>
@@ -358,7 +363,7 @@ export const LocationFormScreen: React.FC = () => {
   return (
     <AdaptiveFormSheet closeDestination={closeDestination} isDirty={isDirty}>
       <FormScaffold
-        title={isEdit ? 'Editar Local' : 'Criar Local'}
+        title={isEdit ? t('locations.form.editTitle') : t('locations.form.createTitle')}
         closeDestination={closeDestination}
         closeVariant="X"
         isDirty={isDirty}
@@ -366,10 +371,10 @@ export const LocationFormScreen: React.FC = () => {
         footer={
           <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
             <Button variant="outlined" onClick={handleCancel} disabled={loading} fullWidth>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button variant="contained" onClick={handleSubmit} disabled={loading} fullWidth startIcon={loading ? <CircularProgress size={20} /> : null}>
-              {isEdit ? 'Salvar' : 'Criar Local'}
+              {isEdit ? t('common.save') : t('locations.form.createTitle')}
             </Button>
           </Box>
         }
@@ -379,11 +384,11 @@ export const LocationFormScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                  Informações básicas
+                  {t('locations.form.basicInfo')}
                 </Typography>
                 <Stack spacing={2}>
                   <TextField
-                    label="Nome do local"
+                    label={t('locations.form.nameLabel')}
                     fullWidth
                     required
                     value={form.name}
@@ -393,7 +398,7 @@ export const LocationFormScreen: React.FC = () => {
                     inputProps={{ maxLength: 100 }}
                   />
                   <TextField
-                    label="Endereço"
+                    label={t('locations.form.addressLabel')}
                     fullWidth
                     required
                     value={form.address}
@@ -404,7 +409,7 @@ export const LocationFormScreen: React.FC = () => {
                   />
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                     <TextField
-                      label="Cidade"
+                      label={t('locations.form.cityLabel')}
                       fullWidth
                       required
                       value={form.city}
@@ -414,7 +419,7 @@ export const LocationFormScreen: React.FC = () => {
                       inputProps={{ maxLength: 100 }}
                     />
                     <TextField
-                      label="Estado"
+                      label={t('locations.form.stateLabel')}
                       sx={{ minWidth: { sm: 120 } }}
                       inputProps={{ maxLength: 2 }}
                       value={form.state}
@@ -424,7 +429,7 @@ export const LocationFormScreen: React.FC = () => {
                     />
                   </Stack>
                   <TextField
-                    label="Bairro"
+                    label={t('locations.form.districtLabel')}
                     fullWidth
                     value={form.district}
                     onChange={(e) => handleChange('district', e.target.value)}
@@ -439,8 +444,11 @@ export const LocationFormScreen: React.FC = () => {
                       fullWidth
                     >
                       {form.latitude && form.longitude
-                        ? `Coordenadas: ${form.latitude.toFixed(6)}, ${form.longitude.toFixed(6)}`
-                        : 'Capturar coordenadas (GPS)'}
+                        ? t('locations.form.coordinatesValue', {
+                            latitude: form.latitude.toFixed(6),
+                            longitude: form.longitude.toFixed(6),
+                          })
+                        : t('locations.form.captureCoordinates')}
                     </Button>
                   </Box>
                   <Box>
@@ -464,7 +472,7 @@ export const LocationFormScreen: React.FC = () => {
                       htmlFor="location-photo-input"
                       fullWidth
                     >
-                      {form.photoPreview ? 'Trocar foto' : 'Adicionar foto'}
+                      {form.photoPreview ? t('locations.form.changePhoto') : t('locations.form.addPhoto')}
                     </Button>
                     {form.photoPreview && (
                       <Box
@@ -482,11 +490,11 @@ export const LocationFormScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                  Quadras
+                  {t('locations.form.fieldsSection')}
                 </Typography>
                 <Stack spacing={2}>
                   <TextField
-                    label="Tipo de quadra"
+                    label={t('locations.form.fieldTypeLabel')}
                     select
                     fullWidth
                     value={form.fieldType}
@@ -500,7 +508,7 @@ export const LocationFormScreen: React.FC = () => {
                   </TextField>
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                     <TextField
-                      label="Jogadores por time"
+                      label={t('locations.form.playersPerTeamLabel')}
                       type="number"
                       fullWidth
                       value={form.playersPerTeam}
@@ -510,7 +518,7 @@ export const LocationFormScreen: React.FC = () => {
                       inputProps={{ min: 3, max: 11 }}
                     />
                     <TextField
-                      label="Quantidade de campos"
+                      label={t('locations.form.fieldCountLabel')}
                       type="number"
                       fullWidth
                       value={form.fieldCount}
@@ -521,13 +529,13 @@ export const LocationFormScreen: React.FC = () => {
                     />
                   </Stack>
                   <TextField
-                    label="Preço por hora (R$)"
+                    label={t('locations.form.hourlyPriceLabel')}
                     type="number"
                     fullWidth
                     value={form.hourlyPrice}
                     onChange={(e) => handleChange('hourlyPrice', parseFloat(e.target.value) || 0)}
                     error={!!errors.hourlyPrice}
-                    helperText={errors.hourlyPrice || 'Opcional — aplicado a todas as quadras ao criar o local. Deixe 0 se não souber.'}
+                    helperText={errors.hourlyPrice || t('locations.form.hourlyPriceHelper')}
                     inputProps={{ min: 0, step: 10 }}
                   />
                 </Stack>
@@ -537,20 +545,20 @@ export const LocationFormScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                  Comodidades
+                  {t('locations.form.amenitiesSection')}
                 </Typography>
                 <Stack>
                   <FormControlLabel
                     control={<Switch checked={form.hasLighting} onChange={(e) => handleChange('hasLighting', e.target.checked)} />}
-                    label="Iluminação"
+                    label={t('locations.form.lightingLabel')}
                   />
                   <FormControlLabel
                     control={<Switch checked={form.hasParking} onChange={(e) => handleChange('hasParking', e.target.checked)} />}
-                    label="Estacionamento"
+                    label={t('locations.form.parkingLabel')}
                   />
                   <FormControlLabel
                     control={<Switch checked={form.hasShowers} onChange={(e) => handleChange('hasShowers', e.target.checked)} />}
-                    label="Vestiários"
+                    label={t('locations.form.showersLabel')}
                   />
                 </Stack>
               </CardContent>
@@ -559,11 +567,11 @@ export const LocationFormScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                  Contato (opcional)
+                  {t('locations.form.contactSection')}
                 </Typography>
                 <Stack spacing={2}>
                   <TextField
-                    label="Telefone"
+                    label={t('locations.form.phoneLabel')}
                     fullWidth
                     value={form.phone}
                     onChange={(e) => handleChange('phone', e.target.value)}
@@ -573,7 +581,7 @@ export const LocationFormScreen: React.FC = () => {
                     inputProps={{ maxLength: 20 }}
                   />
                   <TextField
-                    label="Site"
+                    label={t('locations.form.websiteLabel')}
                     fullWidth
                     value={form.website}
                     onChange={(e) => handleChange('website', e.target.value)}
@@ -584,7 +592,7 @@ export const LocationFormScreen: React.FC = () => {
                     inputProps={{ maxLength: 2048 }}
                   />
                   <TextField
-                    label="Descrição"
+                    label={t('locations.form.descriptionLabel')}
                     fullWidth
                     multiline
                     rows={3}
