@@ -15,7 +15,6 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -54,7 +53,7 @@ class GamesViewModelTest {
         confirmationUseCase = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle()
 
-        every { observeUnreadCountUseCase() } returns flowOf(0)
+        every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
     }
 
     @AfterEach

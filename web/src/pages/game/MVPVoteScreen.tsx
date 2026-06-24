@@ -43,7 +43,6 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
-import confetti from 'canvas-confetti';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 const logger = createLogger('MVPVoteScreen');
@@ -130,11 +129,13 @@ export const MVPVoteScreen: React.FC = () => {
   // #2724: motion de celebração no reveal de voto registrado. Respeita prefers-reduced-motion.
   useEffect(() => {
     if (!hasVoted || reduceMotion) return;
-    confetti({
-      particleCount: 150,
-      spread: 90,
-      origin: { y: 0.5 },
-      disableForReducedMotion: true,
+    import('canvas-confetti').then(({ default: confetti }) => {
+      confetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.5 },
+        disableForReducedMotion: true,
+      });
     });
   }, [hasVoted, reduceMotion]);
 

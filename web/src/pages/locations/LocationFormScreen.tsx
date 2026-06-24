@@ -26,7 +26,8 @@ import {
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FirebaseError } from 'firebase/app';
-import { db, storage } from '../../services/firebase';
+import { db } from '../../services/firebase';
+import { storage } from '../../services/firebaseStorage';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';

@@ -35,6 +35,22 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     chunkSizeWarningLimit: 700,
+    modulePreload: {
+      resolveDependencies(_url, deps, context) {
+        if (context.hostType !== 'html') return deps
+
+        const deferInitialPreload = [
+          'vendor-charts',
+          'vendor-google-maps',
+          'vendor-mui-icons',
+          'i18n-locales',
+        ]
+
+        return deps.filter((dep) =>
+          !deferInitialPreload.some((chunkName) => dep.includes(chunkName)),
+        )
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {

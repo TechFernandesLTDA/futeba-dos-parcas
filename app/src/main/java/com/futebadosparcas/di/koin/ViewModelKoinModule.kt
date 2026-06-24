@@ -57,7 +57,7 @@ val viewModelKoinModule = module {
         HomeViewModel(
             gameRepository = get(),
             userRepository = get(),
-            notificationRepository = get(),
+            observeUnreadCountUseCase = get(),
             gamificationRepository = get(),
             statisticsRepository = get(),
             activityRepository = get(),
@@ -84,7 +84,7 @@ val viewModelKoinModule = module {
             statisticsRepository = get(),
             groupRepository = get(),
             inviteRepository = get(),
-            notificationRepository = get(),
+            observeUnreadCountUseCase = get(),
             savedStateHandle = get()
         )
     }
@@ -94,7 +94,7 @@ val viewModelKoinModule = module {
             gamificationRepository = get(),
             authRepository = get(),
             firestore = get(),
-            notificationRepository = get()
+            observeUnreadCountUseCase = get()
         )
     }
 
@@ -324,6 +324,7 @@ val viewModelKoinModule = module {
     viewModel {
         NotificationsViewModel(
             notificationRepository = get(),
+            observeUnreadCountUseCase = get(),
             inviteRepository = get(),
             gameSummonRepository = get()
         )

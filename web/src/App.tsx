@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
@@ -21,8 +21,6 @@ import { useSwipeBack } from './hooks/useSwipeBack';
 import { useNotifications } from './hooks/useNotifications';
 import { useReducedMotion } from './hooks/useReducedMotion';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
-import { AppLayout } from './components/layout';
-import { CommandPalette } from './components/search/CommandPalette';
 import { ShortcutsDialog } from './components/common/ShortcutsDialog';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
@@ -60,6 +58,8 @@ const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerif
 const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
 const AppGuideScreen = lazy(() => import('./pages/onboarding/AppGuideScreen').then(m => ({ default: m.AppGuideScreen })));
+const CommandPalette = lazy(() => import('./components/search/CommandPalette').then(m => ({ default: m.CommandPalette })));
+const AppLayout = lazy(() => import('./components/layout/AppLayout').then(m => ({ default: m.AppLayout })));
 
 // Auth
 const LoginScreen = lazy(() => import('./pages/auth/LoginScreen').then(m => ({ default: m.LoginScreen })));
@@ -399,7 +399,7 @@ function AppRoutes() {
       {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
-      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+      <Route element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppLayout /></Suspense></ProtectedRoute>}>
         {/* Home */}
         <Route path="/" element={<Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense>} />
         {/* Games */}
@@ -657,6 +657,94 @@ function SWUpdateListener() {
   return null;
 }
 
+function isEditableTarget(target: EventTarget | null) {
+  const element = target as HTMLElement | null;
+  if (!element) return false;
+  return element.tagName === 'INPUT' ||
+    element.tagName === 'TEXTAREA' ||
+    element.isContentEditable;
+}
+
+function GlobalShortcuts({
+  paletteOpen,
+  onOpenPalette,
+  onClosePalette,
+  shortcutsOpen,
+  onOpenShortcuts,
+  onCloseShortcuts,
+}: {
+  paletteOpen: boolean;
+  onOpenPalette: () => void;
+  onClosePalette: () => void;
+  shortcutsOpen: boolean;
+  onOpenShortcuts: () => void;
+  onCloseShortcuts: () => void;
+}) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) return;
+
+      const commandKey = e.metaKey || e.ctrlKey;
+      const key = e.key.toLowerCase();
+
+      if (commandKey && key === 'k') {
+        e.preventDefault();
+        if (paletteOpen) onClosePalette();
+        else onOpenPalette();
+        return;
+      }
+
+      if (commandKey && e.shiftKey && key === 'n') {
+        e.preventDefault();
+        navigate('/group/create');
+        return;
+      }
+
+      if (commandKey && key === 'n') {
+        e.preventDefault();
+        navigate('/game/create');
+        return;
+      }
+
+      if (commandKey && key === ',') {
+        e.preventDefault();
+        navigate('/settings');
+        return;
+      }
+
+      if (e.key === '?' && !e.altKey && !commandKey) {
+        e.preventDefault();
+        onOpenShortcuts();
+        return;
+      }
+
+      if (e.key === 'Escape' && shortcutsOpen) {
+        onCloseShortcuts();
+      }
+    };
+
+    const handleOpenShortcuts = () => onOpenShortcuts();
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-shortcuts', handleOpenShortcuts);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-shortcuts', handleOpenShortcuts);
+    };
+  }, [
+    navigate,
+    onClosePalette,
+    onCloseShortcuts,
+    onOpenPalette,
+    onOpenShortcuts,
+    paletteOpen,
+    shortcutsOpen,
+  ]);
+
+  return null;
+}
+
 function App() {
   const _theme = useTheme();
   const isDesktop = useMediaQuery(_theme.breakpoints.up('md'));
@@ -664,29 +752,8 @@ function App() {
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-        e.preventDefault();
-        setShortcutsOpen(true);
-      }
-      if (e.key === 'Escape' && shortcutsOpen) {
-        setShortcutsOpen(false);
-      }
-    };
-    // #2192: entrada descobrível — sidebar/menu dispara este evento para abrir
-    // o diálogo de atalhos sem precisar conhecer a tecla "?".
-    const handleOpenShortcuts = () => setShortcutsOpen(true);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('open-shortcuts', handleOpenShortcuts);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('open-shortcuts', handleOpenShortcuts);
-    };
-  }, [shortcutsOpen]);
+  const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const closeShortcuts = useCallback(() => setShortcutsOpen(false), []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -697,6 +764,14 @@ function App() {
             <ToastProvider>
             <TeamsProvider>
             <LanguageProvider>
+              <GlobalShortcuts
+                paletteOpen={paletteOpen}
+                onOpenPalette={openPalette}
+                onClosePalette={closePalette}
+                shortcutsOpen={shortcutsOpen}
+                onOpenShortcuts={openShortcuts}
+                onCloseShortcuts={closeShortcuts}
+              />
               <SkipNav />
               <SWUpdateListener />
               {/* CommandPalette montado fora do MobileShell para não sofrer restrição
@@ -704,14 +779,18 @@ function App() {
                   der throw síncrono (ex: Firestore query inválida), não derruba
                   a árvore inteira (já que está fora de SafeScreen).
                   FIX #601 LOW backlog. */}
-              <CommandPaletteBoundary>
-                <CommandPalette
-                  open={paletteOpen}
-                  onOpen={openPalette}
-                  onClose={closePalette}
-                />
-              </CommandPaletteBoundary>
-              <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+              {paletteOpen && (
+                <CommandPaletteBoundary>
+                  <Suspense fallback={null}>
+                    <CommandPalette
+                      open={paletteOpen}
+                      onOpen={openPalette}
+                      onClose={closePalette}
+                    />
+                  </Suspense>
+                </CommandPaletteBoundary>
+              )}
+              <ShortcutsDialog open={shortcutsOpen} onClose={closeShortcuts} />
               {isDesktop ? (
                 <>
                   <VerificationBanner />

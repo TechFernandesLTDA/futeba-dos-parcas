@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Box, type SxProps, type Theme } from '@mui/material';
 import { RAIL_WIDTH, DRAWER_WIDTH } from '../../config/navItems';
-import { componentMaxWidth } from '../../theme/pageTokens';
+import { componentMaxWidth, pageSpacing } from '../../theme/pageTokens';
 
 interface FixedBottomBarProps {
   children: ReactNode;
@@ -52,13 +52,19 @@ export const FixedBottomBar = React.memo(function FixedBottomBar({
         lg: `calc(50% + ${DRAWER_WIDTH / 2}px)`,
       }
     : { xs: 0, sm: '50%' };
+  const bottom = inLayout
+    ? {
+        xs: `calc(${pageSpacing.bottomBarHeight}px + env(safe-area-inset-bottom, 0px))`,
+        md: 0,
+      }
+    : 0;
 
   return (
     <Box
       sx={[
         {
           position: 'fixed',
-          bottom: 0,
+          bottom,
           left,
           right: { xs: 0, sm: 'auto' },
           transform: { sm: 'translateX(-50%)' },

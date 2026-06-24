@@ -1,15 +1,10 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { FavoriteTeam } from '../types/team';
-import { createLogger } from '../utils/logger';
-import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useTranslation } from 'react-i18next';
-
-const logger = createLogger('useTeams');
 
 const COLLECTION = 'favorite_teams';
 
@@ -25,8 +20,6 @@ async function fetchTeams(): Promise<FavoriteTeam[]> {
 }
 
 export function useTeams() {
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
   // favorite_teams exige auth (rule allow read: if isAuthenticated()).
   // O TeamsProvider envolve toda a arvore (inclusive login/register), entao
   // sem este gate a query/listener disparava nao-autenticado -> permission-denied
@@ -45,35 +38,6 @@ export function useTeams() {
     gcTime: 7 * 24 * 60 * 60 * 1000,
   });
 
-  const { showError } = useToast();
-  const [listenerError, setListenerError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const coll = collection(db, COLLECTION);
-    const q = query(coll, orderBy('name', 'asc'));
-    let isFirstSnapshot = true;
-
-    const unsubscribe = onSnapshot(
-      q,
-      () => {
-        if (isFirstSnapshot) {
-          isFirstSnapshot = false;
-          return;
-        }
-        queryClient.invalidateQueries({ queryKey: [COLLECTION] });
-      },
-      (err) => {
-        logger.error('Error in teams listener:', err);
-        setListenerError(err.message);
-        showError(t('feedback.teams.loadError'));
-      }
-    );
-
-    return () => unsubscribe();
-  }, [queryClient, showError, currentUser, t]);
-
   const teamsById = useMemo(() => {
     const map = new Map<string, FavoriteTeam>();
     for (const t of teams) {
@@ -82,7 +46,7 @@ export function useTeams() {
     return map;
   }, [teams]);
 
-  const error = listenerError || (queryError ? (queryError as Error).message : null);
+  const error = queryError ? (queryError as Error).message : null;
 
   return { teams, teamsById, loading, error };
 }

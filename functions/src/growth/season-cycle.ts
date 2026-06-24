@@ -19,6 +19,40 @@ function getMonthName(monthKey: string): string {
   return `${names[m]} de ${year}`;
 }
 
+type SeasonStanding = admin.firestore.DocumentData;
+
+/**
+ * Monta o payload arquivado sem campos undefined. Firestore rejeita undefined,
+ * então temporadas sem standings precisam ser arquiváveis mesmo vazias.
+ *
+ * @param {string} monthKey - Chave YYYY-MM da temporada.
+ * @param {SeasonStanding[]} standings - Ranking final da temporada.
+ * @param {unknown} archivedAt - Timestamp ou sentinel de archive.
+ * @return {Record<string, unknown>} Payload seguro para Firestore.
+ */
+export function buildSeasonArchivePayload(
+  monthKey: string,
+  standings: SeasonStanding[],
+  archivedAt: unknown
+): Record<string, unknown> {
+  const mvp = standings[0] ?? null;
+  const lanterninha = standings.length > 1 ?
+    standings[standings.length - 1] :
+    null;
+
+  return {
+    month_key: monthKey,
+    name: `Temporada ${getMonthName(monthKey)}`,
+    standings,
+    mvp_user_id: mvp?.user_id ?? null,
+    mvp_user_name: mvp?.user_name ?? null,
+    mvp_points: mvp?.points ?? null,
+    lanterninha_user_id: lanterninha?.user_id ?? null,
+    lanterninha_user_name: lanterninha?.user_name ?? null,
+    archived_at: archivedAt,
+  };
+}
+
 export const startNewSeason = onSchedule(
   {
     schedule: "0 1 1 * *",
@@ -116,8 +150,7 @@ export const archiveSeason = onSchedule(
           .get();
 
         const standings = standingsSnap.docs.map((d) => d.data());
-        const mvp = standings[0];
-        const lanterninha = standings[standings.length - 1];
+        const mvp = standings[0] ?? null;
 
         const archiveRef = db()
           .collection("season-archive")
@@ -125,17 +158,11 @@ export const archiveSeason = onSchedule(
           .collection("seasons")
           .doc(monthKey);
 
-        await archiveRef.set({
-          month_key: monthKey,
-          name: `Temporada ${getMonthName(monthKey)}`,
+        await archiveRef.set(buildSeasonArchivePayload(
+          monthKey,
           standings,
-          mvp_user_id: mvp?.user_id,
-          mvp_user_name: mvp?.user_name,
-          mvp_points: mvp?.points,
-          lanterninha_user_id: lanterninha?.user_id,
-          lanterninha_user_name: lanterninha?.user_name,
-          archived_at: FieldValue.serverTimestamp(),
-        });
+          FieldValue.serverTimestamp()
+        ));
 
         await seasonRef.update({
           is_active: false,

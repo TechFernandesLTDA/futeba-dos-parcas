@@ -27,7 +27,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useGamificationColors } from '../hooks/useGamificationColors';
-import { functions } from '../services/firebase';
+import { functions } from '../services/firebaseFunctions';
 import { useTranslation } from 'react-i18next';
 
 const generateMyInviteCode = httpsCallable<object, { inviteCode: string }>(functions, 'generateMyInviteCode');

@@ -15,9 +15,9 @@ import com.futebadosparcas.domain.prefetch.PrefetchService
 import com.futebadosparcas.domain.repository.ActivityRepository
 import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
-import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.util.ConnectivityMonitor
 import com.futebadosparcas.util.MockLogExtension
@@ -28,7 +28,6 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -54,7 +53,7 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var gameRepository: GameRepository
     private lateinit var userRepository: UserRepository
-    private lateinit var notificationRepository: NotificationRepository
+    private lateinit var observeUnreadCountUseCase: ObserveUnreadCountUseCase
     private lateinit var gamificationRepository: GamificationRepository
     private lateinit var statisticsRepository: StatisticsRepository
     private lateinit var activityRepository: ActivityRepository
@@ -81,7 +80,7 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
         coEvery { gameRepository.getPublicGames(any()) } returns Result.success(emptyList())
         every { connectivityMonitor.isConnected } returns MutableStateFlow(true)
-        every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+        every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
     }
 
     @BeforeEach
@@ -89,7 +88,7 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         gameRepository = mockk(relaxed = true)
         userRepository = mockk(relaxed = true)
-        notificationRepository = mockk(relaxed = true)
+        observeUnreadCountUseCase = mockk(relaxed = true)
         gamificationRepository = mockk(relaxed = true)
         statisticsRepository = mockk(relaxed = true)
         activityRepository = mockk(relaxed = true)
@@ -106,7 +105,7 @@ class HomeViewModelTest {
     }
 
     private fun createViewModel() = HomeViewModel(
-        gameRepository, userRepository, notificationRepository,
+        gameRepository, userRepository, observeUnreadCountUseCase,
         gamificationRepository, statisticsRepository, activityRepository,
         gameConfirmationRepository, connectivityMonitor,
         savedStateHandle, sharedCache, prefetchService
@@ -120,7 +119,7 @@ class HomeViewModelTest {
         @DisplayName("Estado inicial deve ser Loading")
         fun `initial state is Loading`() {
             every { connectivityMonitor.isConnected } returns MutableStateFlow(true)
-            every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+            every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
 
             viewModel = createViewModel()
             assertInstanceOf(HomeUiState.Loading::class.java, viewModel.uiState.value)
@@ -130,7 +129,7 @@ class HomeViewModelTest {
         @DisplayName("isOnline inicialmente true")
         fun `initial isOnline is true`() {
             every { connectivityMonitor.isConnected } returns MutableStateFlow(true)
-            every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+            every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
             coEvery { userRepository.getCurrentUser() } returns Result.success(testUser)
             every { gameRepository.getLiveAndUpcomingGamesFlow() } returns MutableStateFlow(Result.success(testGames))
             coEvery { gamificationRepository.getActiveSeason() } returns Result.success(null)
@@ -146,7 +145,7 @@ class HomeViewModelTest {
         fun `initial isGridView is false`() {
             savedStateHandle["is_grid_view"] = false
             every { connectivityMonitor.isConnected } returns MutableStateFlow(true)
-            every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+            every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
 
             viewModel = createViewModel()
             assertFalse(viewModel.isGridView)
@@ -175,7 +174,7 @@ class HomeViewModelTest {
         @DisplayName("Fase 1 com erro no usuario resulta em Error")
         fun `phase1 user error results in Error`() = runTest(testDispatcher) {
             coEvery { userRepository.getCurrentUser() } returns Result.failure(RuntimeException("Erro de rede"))
-            every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+            every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
             every { connectivityMonitor.isConnected } returns MutableStateFlow(true)
 
             viewModel = createViewModel()
@@ -238,7 +237,7 @@ class HomeViewModelTest {
         @DisplayName("retryLoad reinicia carregamento")
         fun `retryLoad restarts loading`() = runTest(testDispatcher) {
             coEvery { userRepository.getCurrentUser() } returns Result.failure(RuntimeException("Falha"))
-            every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+            every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
             every { connectivityMonitor.isConnected } returns MutableStateFlow(true)
 
             viewModel = createViewModel()
@@ -259,7 +258,7 @@ class HomeViewModelTest {
         fun `observeUnreadCount updates counter`() = runTest(testDispatcher) {
             val unreadFlow = MutableStateFlow(5)
             setupMocksForSuccess()
-            every { notificationRepository.getUnreadCountFlow() } returns unreadFlow
+            every { observeUnreadCountUseCase() } returns unreadFlow
 
             viewModel = createViewModel()
             advanceUntilIdle()

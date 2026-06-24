@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.domain.repository.GameSummonRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.util.InstantTaskExecutorExtension
 import com.futebadosparcas.util.MockLogExtension
 import io.mockk.coEvery
@@ -14,6 +15,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.AfterEach
@@ -35,6 +37,7 @@ class NotificationsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var notificationRepository: NotificationRepository
+    private lateinit var observeUnreadCountUseCase: ObserveUnreadCountUseCase
     private lateinit var inviteRepository: InviteRepository
     private lateinit var gameSummonRepository: GameSummonRepository
 
@@ -42,6 +45,7 @@ class NotificationsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         notificationRepository = mockk(relaxed = true)
+        observeUnreadCountUseCase = mockk(relaxed = true)
         inviteRepository = mockk()
         gameSummonRepository = mockk()
     }
@@ -53,11 +57,11 @@ class NotificationsViewModelTest {
 
     private fun setupDefaultFlows() {
         every { notificationRepository.getMyNotificationsFlow(any()) } returns flowOf(emptyList())
-        every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+        every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
     }
 
     private fun createViewModel(): NotificationsViewModel {
-        return NotificationsViewModel(notificationRepository, inviteRepository, gameSummonRepository)
+        return NotificationsViewModel(notificationRepository, observeUnreadCountUseCase, inviteRepository, gameSummonRepository)
     }
 
     // ========== Estado Inicial ==========
@@ -87,7 +91,7 @@ class NotificationsViewModelTest {
     fun observeNotifications_empty_showsEmpty() = runTest {
         // Given
         every { notificationRepository.getMyNotificationsFlow(any()) } returns flowOf(emptyList())
-        every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+        every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
 
         val viewModel = createViewModel()
 

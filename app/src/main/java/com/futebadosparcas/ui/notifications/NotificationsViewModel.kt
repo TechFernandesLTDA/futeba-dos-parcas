@@ -6,6 +6,7 @@ import com.futebadosparcas.domain.model.AppNotification
 import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.util.toKmpLocation
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 
 class NotificationsViewModel(
     private val notificationRepository: NotificationRepository,
+    private val observeUnreadCountUseCase: ObserveUnreadCountUseCase,
     private val inviteRepository: InviteRepository,
     private val gameSummonRepository: com.futebadosparcas.domain.repository.GameSummonRepository
 ) : ViewModel() {
@@ -66,7 +68,7 @@ class NotificationsViewModel(
 
     private fun observeUnreadCount() {
         unreadCountJob?.cancel()
-        unreadCountJob = notificationRepository.getUnreadCountFlow()
+        unreadCountJob = observeUnreadCountUseCase()
             .onEach { count ->
                 _unreadCount.value = count
             }

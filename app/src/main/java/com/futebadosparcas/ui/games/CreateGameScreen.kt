@@ -64,6 +64,7 @@ private const val RECURRENCE_PREVIEW_CAP = 12
 @Composable
 fun CreateGameScreen(
     gameId: String? = null,
+    initialGroupId: String? = null,
     viewModel: CreateGameViewModel = koinViewModel(),
     hapticManager: HapticManager,
     onNavigateBack: () -> Unit,
@@ -109,6 +110,9 @@ fun CreateGameScreen(
     var showRecurrenceEndDatePicker by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val editingGame = (uiState as? CreateGameUiState.Editing)?.game
+    val createdGameId = (uiState as? CreateGameUiState.Success)?.game?.id
+    val hasCreateError = uiState is CreateGameUiState.Error
 
     // Carregar jogo se estiver editando
     LaunchedEffect(gameId) {
@@ -117,10 +121,15 @@ fun CreateGameScreen(
         }
     }
 
+    LaunchedEffect(initialGroupId, isEditing) {
+        if (!isEditing) {
+            viewModel.selectInitialGroup(initialGroupId)
+        }
+    }
+
     // Preencher form quando carregar jogo para edição
-    LaunchedEffect(uiState) {
-        if (uiState is CreateGameUiState.Editing) {
-            val game = (uiState as CreateGameUiState.Editing).game
+    LaunchedEffect(editingGame?.id) {
+        editingGame?.let { game ->
             ownerName = game.ownerName
             price = game.dailyPrice.toString()
             maxPlayers = game.maxPlayers.toString()
@@ -140,17 +149,15 @@ fun CreateGameScreen(
     }
 
     // Handle success/error states
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            is CreateGameUiState.Success -> {
-                val game = (uiState as CreateGameUiState.Success).game
+    LaunchedEffect(createdGameId, hasCreateError) {
+        when {
+            createdGameId != null -> {
                 hapticManager?.tick() // Success feedback
-                onGameCreated(game.id)
+                onGameCreated(createdGameId)
             }
-            is CreateGameUiState.Error -> {
+            hasCreateError -> {
                 hapticManager?.error()
             }
-            else -> Unit
         }
     }
 

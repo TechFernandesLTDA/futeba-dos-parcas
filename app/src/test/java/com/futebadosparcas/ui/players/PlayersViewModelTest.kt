@@ -9,8 +9,8 @@ import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.model.User as SharedUser
 import com.futebadosparcas.domain.model.FieldType
-import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.util.InstantTaskExecutorExtension
 import com.futebadosparcas.util.MockLogExtension
 import io.mockk.coEvery
@@ -19,7 +19,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -46,7 +46,7 @@ class PlayersViewModelTest {
     private lateinit var statisticsRepository: StatisticsRepository
     private lateinit var groupRepository: GroupRepository
     private lateinit var inviteRepository: InviteRepository
-    private lateinit var notificationRepository: NotificationRepository
+    private lateinit var observeUnreadCountUseCase: ObserveUnreadCountUseCase
     private lateinit var savedStateHandle: SavedStateHandle
 
     private lateinit var viewModel: PlayersViewModel
@@ -59,11 +59,11 @@ class PlayersViewModelTest {
         statisticsRepository = mockk()
         groupRepository = mockk()
         inviteRepository = mockk()
-        notificationRepository = mockk()
+        observeUnreadCountUseCase = mockk()
         savedStateHandle = SavedStateHandle()
 
         // Setup default mock behaviors
-        every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
+        every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
         coEvery { userRepository.searchUsers(any(), any()) } returns Result.success(emptyList())
     }
@@ -79,7 +79,7 @@ class PlayersViewModelTest {
             statisticsRepository,
             groupRepository,
             inviteRepository,
-            notificationRepository,
+            observeUnreadCountUseCase,
             savedStateHandle
         )
     }
@@ -296,7 +296,7 @@ class PlayersViewModelTest {
     @DisplayName("Deve observar contador de notificações")
     fun `should observe unread notifications count`() = runTest {
         // Given
-        every { notificationRepository.getUnreadCountFlow() } returns flowOf(5)
+        every { observeUnreadCountUseCase() } returns MutableStateFlow(5)
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
 
         // When

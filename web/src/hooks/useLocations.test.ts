@@ -3,8 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createTestWrapper } from '../test/renderWithProviders';
 
-// useLocations usa useQuery/getDocs para dados + onSnapshot para invalidação (#2351)
-const mockOnSnapshot = vi.fn();
+// useLocations usa useQuery/getDocs; listener redundante removido em #2933.
 const mockGetDoc = vi.fn();
 const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
 const mockCollection = vi.fn();
@@ -19,7 +18,6 @@ vi.mock('firebase/firestore', () => ({
   getDocs: (...args: any[]) => mockGetDocs(...args),
   query: (...args: any[]) => mockQuery(...args),
   orderBy: (...args: any[]) => mockOrderBy(...args),
-  onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
   limit: vi.fn((...args) => args[0]),
   serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
@@ -37,7 +35,6 @@ import { useLocations, useLocationDetail } from './useLocations';
 describe('useLocations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockOnSnapshot.mockReturnValue(vi.fn());
     mockQuery.mockReturnValue('mock-query');
     mockCollection.mockReturnValue('mock-collection');
     mockOrderBy.mockReturnValue('mock-order');
@@ -48,7 +45,7 @@ describe('useLocations', () => {
     expect(result.current.loading).toBe(true);
   });
 
-  it('configura listener na coleção locations', () => {
+  it('consulta a coleção locations', () => {
     renderHook(() => useLocations(), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'locations');
   });
@@ -83,11 +80,8 @@ describe('useLocations', () => {
     expect(result.current.locations[0].id).toBe('loc-1');
   });
 
-  it('trata erros do snapshot', async () => {
-    mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
-      onError(new Error('Location error'));
-      return vi.fn();
-    });
+  it('trata erros da query', async () => {
+    mockGetDocs.mockRejectedValueOnce(new Error('Location error'));
 
     const { result } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });
 
@@ -95,16 +89,6 @@ describe('useLocations', () => {
       expect(result.current.error).toBe('Location error');
       expect(result.current.loading).toBe(false);
     });
-  });
-
-  it('remove listener no unmount', () => {
-    const unsubscribe = vi.fn();
-    mockOnSnapshot.mockReturnValue(unsubscribe);
-
-    const { unmount } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });
-    unmount();
-
-    expect(unsubscribe).toHaveBeenCalled();
   });
 });
 

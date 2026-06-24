@@ -60,10 +60,10 @@ import { HomeScreen } from './HomeScreen';
 const theme = createTheme();
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-function renderWithProviders(ui: React.ReactElement) {
+function renderWithProviders(ui: React.ReactElement, initialEntries = ['/']) {
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <ThemeProvider theme={theme}>{ui}</ThemeProvider>
       </MemoryRouter>
     </QueryClientProvider>
@@ -103,5 +103,17 @@ describe('HomeScreen', () => {
 
   it('não crasha durante renderização', () => {
     expect(() => renderWithProviders(<HomeScreen />)).not.toThrow();
+  });
+
+  it('usa a aba inicial quando ?tab= é inválido', async () => {
+    renderWithProviders(<HomeScreen />, ['/?tab=99']);
+    expect(await screen.findByText('Home Tab')).toBeInTheDocument();
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'tab-0');
+  });
+
+  it('usa a aba inicial quando ?tab= não é número', async () => {
+    renderWithProviders(<HomeScreen />, ['/?tab=liga']);
+    expect(await screen.findByText('Home Tab')).toBeInTheDocument();
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'tab-0');
   });
 });

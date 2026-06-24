@@ -6,11 +6,7 @@ import {
   persistentMultipleTabManager,
   connectFirestoreEmulator,
 } from 'firebase/firestore';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
-import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
-import { getMessaging, isSupported } from 'firebase/messaging';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
-import { getAnalytics, type Analytics } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -73,8 +69,6 @@ export const db = initializeFirestore(app, {
     tabManager: persistentMultipleTabManager(),
   }),
 });
-export const storage = getStorage(app);
-export const functions = getFunctions(app, 'southamerica-east1');
 
 // Wiring de emuladores para Playwright E2E e dev local (follow-up de #1079).
 // Guarda estrutural: `import.meta.env.DEV` é substituído por `false` no build
@@ -90,18 +84,11 @@ if (
   try {
     connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
     connectFirestoreEmulator(db, host, 8085);
-    connectStorageEmulator(storage, host, 9199);
-    connectFunctionsEmulator(functions, host, 5001);
   } catch (err) {
     // Reconexão silenciosa: HMR pode re-importar o módulo
     console.warn('[firebase] emulator wiring skipped:', err);
   }
 }
-
-// Messaging (optional, only in supported browsers)
-export const messagingPromise = isSupported().then(supported => 
-  supported ? getMessaging(app) : null
-);
 
 // Google Provider config
 googleProvider.addScope('email');
@@ -109,13 +96,3 @@ googleProvider.addScope('profile');
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
-
-// Analytics (optional, only in production and supported browsers)
-export let analytics: Analytics | null = null;
-if (typeof window !== 'undefined' && import.meta.env.PROD) {
-  try {
-    analytics = getAnalytics(app);
-  } catch (err) {
-    console.warn('Analytics initialization failed:', err);
-  }
-}

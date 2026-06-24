@@ -38,8 +38,8 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp, getLevelEntry, getXpProgress } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
-import confetti from 'canvas-confetti';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { getUsersByIds } from '../../utils/userBatch';
 
 const logger = createLogger('PostGameReportScreen');
 
@@ -164,20 +164,15 @@ export const PostGameReportScreen: React.FC = () => {
           return;
         }
 
-        let mvpName = '';
-        if (data.mvpId) {
-          const mvpDoc = await getDoc(doc(db, 'users', data.mvpId));
-          if (cancelled) return;
-          if (mvpDoc.exists()) mvpName = snakeToCamel<RawNamedUserDoc>(mvpDoc.data()).name || '';
-        }
+        const awardUsersById = await getUsersByIds(
+          [data.mvpId, data.bolaMurchaId].filter(Boolean) as string[]
+        );
+        if (cancelled) return;
 
-        // Busca o nome do jogador "Bola Murcha" do Firestore, igual ao padrão do MVP
-        let bolaMurchaName = '';
-        if (data.bolaMurchaId) {
-          const bolaMurchaDoc = await getDoc(doc(db, 'users', data.bolaMurchaId));
-          if (cancelled) return;
-          if (bolaMurchaDoc.exists()) bolaMurchaName = snakeToCamel<RawNamedUserDoc>(bolaMurchaDoc.data()).name || '';
-        }
+        const mvpName = data.mvpId ? (awardUsersById.get(data.mvpId)?.name as string | undefined) || '' : '';
+        const bolaMurchaName = data.bolaMurchaId
+          ? (awardUsersById.get(data.bolaMurchaId)?.name as string | undefined) || ''
+          : '';
 
         if (cancelled) return;
 
@@ -264,11 +259,13 @@ export const PostGameReportScreen: React.FC = () => {
   // #2724: motion de celebração ao subir de nível. Respeita prefers-reduced-motion.
   useEffect(() => {
     if (reduceMotion || !levelData?.leveledUp) return;
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.6 },
-      disableForReducedMotion: true,
+    import('canvas-confetti').then(({ default: confetti }) => {
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+        disableForReducedMotion: true,
+      });
     });
   }, [reduceMotion, levelData?.leveledUp]);
 

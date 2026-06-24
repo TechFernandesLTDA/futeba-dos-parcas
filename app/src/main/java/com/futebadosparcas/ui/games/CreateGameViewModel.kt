@@ -139,6 +139,7 @@ class CreateGameViewModel(
 
     private val _selectedGroup = MutableStateFlow<UserGroup?>(null)
     val selectedGroup: StateFlow<UserGroup?> = _selectedGroup
+    private var pendingInitialGroupId: String? = null
 
     // Estado para visibilidade do jogo
     private val _selectedVisibility = MutableStateFlow(GameVisibility.GROUP_ONLY)
@@ -217,9 +218,7 @@ class CreateGameViewModel(
     init {
         loadOwnerName()
         loadGroups()
-        loadTemplates()
         checkForDraft()
-        loadRecentGames()
     }
 
     private fun checkForDraft() {
@@ -375,10 +374,34 @@ class CreateGameViewModel(
             groupRepository.getValidGroupsForGame()
                 .onSuccess { groups ->
                     _availableGroups.value = groups
+                    applyPendingInitialGroup()
                 }
                 .onFailure { error ->
                     AppLogger.w(TAG) { "Falha ao carregar grupos: ${error.message}" }
                 }
+        }
+    }
+
+    fun selectInitialGroup(groupId: String?) {
+        val normalizedGroupId = groupId?.takeIf { it.isNotBlank() } ?: return
+        if (_isEditing.value) return
+
+        pendingInitialGroupId = normalizedGroupId
+        applyPendingInitialGroup()
+    }
+
+    private fun applyPendingInitialGroup() {
+        val groupId = pendingInitialGroupId?.takeIf { it.isNotBlank() } ?: return
+        val current = _selectedGroup.value
+        if (current?.id == groupId || current?.groupId == groupId) {
+            pendingInitialGroupId = null
+            return
+        }
+
+        val group = _availableGroups.value.firstOrNull { it.id == groupId || it.groupId == groupId }
+        if (group != null) {
+            pendingInitialGroupId = null
+            selectGroup(group)
         }
     }
 

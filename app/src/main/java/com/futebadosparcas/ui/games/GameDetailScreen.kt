@@ -94,11 +94,15 @@ fun GameDetailScreen(
         viewModel.loadGameDetails(gameId)
     }
 
+    val successState = uiState as? GameDetailUiState.Success
+    val schedulingEvent = successState?.schedulingEvent
+    val userMessage = successState?.userMessageResId?.let { context.getString(it) } ?: successState?.userMessage
+    val isGameDeleted = uiState is GameDetailUiState.GameDeleted
+
     // Effect for automated scheduling event feedback
-    LaunchedEffect(uiState) {
-        val state = uiState
-        if (state is GameDetailUiState.Success) {
-            state.schedulingEvent?.let { event ->
+    LaunchedEffect(schedulingEvent, userMessage, isGameDeleted) {
+        if (successState != null) {
+            schedulingEvent?.let { event ->
                 val message = when (event) {
                     is SchedulingEvent.Success -> context.getString(R.string.next_game_scheduled, event.nextDate)
                     is SchedulingEvent.Conflict -> context.getString(R.string.scheduling_conflict, event.date)
@@ -107,14 +111,12 @@ fun GameDetailScreen(
                 snackbarHostState.showSnackbar(message)
                 viewModel.clearSchedulingEvent()
             }
-            // Resolve resId quando presente; caso contrário usa a string crua (legado)
-            val userMsg = state.userMessageResId?.let { context.getString(it) } ?: state.userMessage
-            userMsg?.let { message ->
+            userMessage?.let { message ->
                 snackbarHostState.showSnackbar(message)
                 viewModel.clearUserMessage()
             }
         }
-        if (state is GameDetailUiState.GameDeleted) {
+        if (isGameDeleted) {
             snackbarHostState.showSnackbar(context.getString(R.string.game_cancelled_success))
             onNavigateBack()
         }

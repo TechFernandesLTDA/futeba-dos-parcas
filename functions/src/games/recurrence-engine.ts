@@ -24,6 +24,53 @@ import {
   recurrenceStopReason,
 } from "./recurrence-limits";
 
+const ACTIVE_MEMBER_STATUS = "ACTIVE";
+const MAX_CONFIRMATION_WRITES_PER_BATCH = 450;
+
+export interface RecurringMemberInvite {
+  memberId: string;
+  userName: string;
+}
+
+/**
+ * Retorna dados de convite apenas para membros ativos e diferentes do owner.
+ *
+ * @param {string} memberId - ID do documento do membro.
+ * @param {admin.firestore.DocumentData} memberData - Dados do membro.
+ * @param {string} ownerId - ID do organizador do jogo.
+ * @return {RecurringMemberInvite | null} Convite normalizado ou null.
+ */
+export function toActiveRecurringMemberInvite(
+  memberId: string,
+  memberData: admin.firestore.DocumentData,
+  ownerId: string
+): RecurringMemberInvite | null {
+  if (memberId === ownerId) return null;
+  if (memberData.status !== ACTIVE_MEMBER_STATUS) return null;
+
+  return {
+    memberId,
+    userName: memberData.display_name || memberData.name || "Membro",
+  };
+}
+
+/**
+ * Divide listas em blocos para respeitar o limite de writes do Firestore.
+ *
+ * @template T
+ * @param {Array<T>} items - Itens a dividir.
+ * @param {number} size - Tamanho de cada bloco.
+ * @return {Array<Array<T>>} Lista em blocos.
+ */
+export function chunkArray<T>(items: T[], size: number): T[][] {
+  if (size <= 0) return [items];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
 /**
  * Conta quantos jogos já foram criados nesta série recorrente.
  * @param {admin.firestore.Firestore} db - Instância do Firestore
@@ -58,19 +105,12 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
 
     const recurrence = after.recurrence as string | undefined;
     if (!recurrence || recurrence === "none") return;
-
-    const db = admin.firestore();
-    const claimed = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(event.data!.after.ref);
-      if (snap.get("next_game_created") === true) return false;
-      tx.update(event.data!.after.ref, {next_game_created: true});
-      return true;
-    });
-    if (!claimed) {
-      logger.info(`[RECURRENCE] ${gameId} já reivindicado, skip.`);
+    if (after.next_game_created === true) {
+      logger.info(`[RECURRENCE] ${gameId} já possui próximo jogo, skip.`);
       return;
     }
 
+    const db = admin.firestore();
     const parentId = (after.recurrence_parent_id as string) || gameId;
     const childCount = await countRecurringGames(db, parentId);
 
@@ -105,6 +145,11 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
           `[RECURRENCE] Série ${parentId} encerrada (motivo=${stop}) no índice ` +
           `${currentIndex}; próxima data seria ${nextDate}.`
         );
+        await event.data?.after.ref.update({
+          next_game_created: true,
+          recurrence_stop_reason: stop,
+          updated_at: FieldValue.serverTimestamp(),
+        });
         return;
       }
 
@@ -172,15 +217,39 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
         newGame.stream_url = after.stream_url;
       }
 
-      const newGameRef = await db.collection("games").add(newGame);
+      const newGameRef = db
+        .collection("games")
+        .doc(`recurring_${parentId}_${nextIndex}`);
+
+      const createdNewGame = await db.runTransaction(async (tx) => {
+        const currentSnap = await tx.get(event.data!.after.ref);
+        if (currentSnap.get("next_game_created") === true) return false;
+
+        const existingChildSnap = await tx.get(newGameRef);
+        if (!existingChildSnap.exists) {
+          tx.set(newGameRef, newGame);
+        }
+
+        tx.update(event.data!.after.ref, {
+          next_game_created: true,
+          next_game_id: newGameRef.id,
+          updated_at: FieldValue.serverTimestamp(),
+        });
+
+        return !existingChildSnap.exists;
+      });
+
+      if (!createdNewGame) {
+        logger.info(
+          `[RECURRENCE] ${gameId} já criou próximo jogo ${newGameRef.id}, skip.`
+        );
+        return;
+      }
+
       logger.info(
         `[RECURRENCE] Created recurring game ${newGameRef.id} from ${gameId}` +
         ` (${recurrence}, date ${nextDate}, child ${childCount + 1}/52)`
       );
-
-      await event.data?.after.ref.update({
-        next_game_id: newGameRef.id,
-      });
 
       if (after.group_id) {
         try {
@@ -190,49 +259,64 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
             .collection("members")
             .get();
 
-          const batch = db.batch();
           const ownerId = after.owner_id as string;
 
-          batch.set(
-            db.collection("confirmations").doc(`${newGameRef.id}_${ownerId}`),
-            {
-              game_id: newGameRef.id,
-              user_id: ownerId,
-              user_name: after.owner_name || "Organizador",
-              status: "CONFIRMED",
-              position: "FIELD",
-              is_casual_player: false,
-              created_at: FieldValue.serverTimestamp(),
-            }
-          );
+          const invites = membersSnap.docs
+            .map((memberDoc) => toActiveRecurringMemberInvite(
+              memberDoc.id,
+              memberDoc.data(),
+              ownerId
+            ))
+            .filter((invite): invite is RecurringMemberInvite => invite !== null);
 
-          let inviteCount = 0;
-          const memberIds: string[] = [];
-          membersSnap.docs.forEach((memberDoc) => {
-            const memberId = memberDoc.id;
-            if (memberId === ownerId) return;
-            const memberData = memberDoc.data();
+          let batch = db.batch();
+          let batchOps = 0;
+          const commitBatch = async () => {
+            if (batchOps === 0) return;
+            await batch.commit();
+            batch = db.batch();
+            batchOps = 0;
+          };
+          const queueConfirmation = async (
+            userId: string,
+            userName: string,
+            status: "CONFIRMED" | "PENDING"
+          ) => {
             batch.set(
-              db.collection("confirmations").doc(`${newGameRef.id}_${memberId}`),
+              db.collection("confirmations").doc(`${newGameRef.id}_${userId}`),
               {
                 game_id: newGameRef.id,
-                user_id: memberId,
-                user_name: memberData.display_name || memberData.name || "Membro",
-                status: "PENDING",
+                user_id: userId,
+                user_name: userName,
+                status,
                 position: "FIELD",
                 is_casual_player: false,
                 created_at: FieldValue.serverTimestamp(),
               }
             );
-            memberIds.push(memberId);
-            inviteCount++;
-          });
+            batchOps++;
+            if (batchOps >= MAX_CONFIRMATION_WRITES_PER_BATCH) {
+              await commitBatch();
+            }
+          };
 
-          await batch.commit();
-          logger.info(
-            `[RECURRENCE] Auto-invited ${inviteCount + 1} members for recurring game ${newGameRef.id}`
+          await queueConfirmation(
+            ownerId,
+            (after.owner_name as string) || "Organizador",
+            "CONFIRMED"
           );
 
+          for (const invite of invites) {
+            await queueConfirmation(invite.memberId, invite.userName, "PENDING");
+          }
+
+          await commitBatch();
+          logger.info(
+            `[RECURRENCE] Auto-invited ${invites.length + 1} active members ` +
+            `for recurring game ${newGameRef.id}`
+          );
+
+          const memberIds = invites.map((invite) => invite.memberId);
           if (memberIds.length > 0) {
             const locationName = after.location_name || "Local";
             const [y, m, d] = nextDate.split("-");

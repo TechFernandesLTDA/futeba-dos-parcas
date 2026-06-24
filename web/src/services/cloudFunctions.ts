@@ -1,5 +1,5 @@
 import { httpsCallable, HttpsCallable } from 'firebase/functions';
-import { functions } from './firebase';
+import { functions } from './firebaseFunctions';
 import type { UserGender } from '../types/user';
 
 export function getCallable<T = unknown, R = unknown>(name: string): HttpsCallable<T, R> {

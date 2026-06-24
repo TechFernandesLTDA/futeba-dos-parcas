@@ -91,26 +91,28 @@ class UserRepositoryImpl(
          return withContext(Dispatchers.Default) {
             try {
                 if (userIds.isEmpty()) return@withContext Result.success(emptyList())
+                val requestedIds = userIds.distinct()
 
-                // ✅ OTIMIZAÇÃO: Tentar cache local primeiro
-                val cachedUsers = database.futebaDatabaseQueries
-                    .selectAllUsers()
-                    .executeAsList()
-                    .map { it.toUser() }
-                    .filter { it.id in userIds }
-                    .filterNot { isCacheExpired(it.experiencePoints, OTHER_USER_CACHE_TTL_MS) }
+                val cachedUsersById = requestedIds
+                    .chunked(500)
+                    .flatMap { chunk ->
+                        database.futebaDatabaseQueries
+                            .selectUsersByIds(chunk)
+                            .executeAsList()
+                    }
+                    .filterNot { isCacheExpired(it.cachedAt, OTHER_USER_CACHE_TTL_MS) }
+                    .associate { it.id to it.toUser() }
 
                 // Se temos todos no cache, retornar
-                if (cachedUsers.size == userIds.size) {
-                    PlatformLogger.d(TAG, "getUsersByIds: Cache hit! ${userIds.size} users from local cache")
-                    return@withContext Result.success(cachedUsers)
+                if (cachedUsersById.size == requestedIds.size) {
+                    PlatformLogger.d(TAG, "getUsersByIds: Cache hit! ${requestedIds.size} users from local cache")
+                    return@withContext Result.success(requestedIds.mapNotNull { cachedUsersById[it] })
                 }
 
                 // Identificar usuários faltantes
-                val cachedIds = cachedUsers.map { it.id }.toSet()
-                val missingIds = userIds.filter { it !in cachedIds }
+                val missingIds = requestedIds.filter { it !in cachedUsersById }
 
-                PlatformLogger.d(TAG, "getUsersByIds: ${cachedUsers.size}/${userIds.size} cached, fetching ${missingIds.size} from Firebase")
+                PlatformLogger.d(TAG, "getUsersByIds: ${cachedUsersById.size}/${requestedIds.size} cached, fetching ${missingIds.size} from Firebase")
 
                 // Buscar apenas os faltantes do Firebase
                 firebaseDataSource.getUsersByIds(missingIds).onSuccess { newUsers ->
@@ -121,10 +123,11 @@ class UserRepositoryImpl(
                     }
                 }.getOrNull()?.let { newUsers ->
                     // Retornar cache + novos
-                    Result.success(cachedUsers + newUsers)
+                    val usersById = cachedUsersById + newUsers.associateBy { it.id }
+                    Result.success(requestedIds.mapNotNull { usersById[it] })
                 } ?: run {
                     // Se Firebase falhar, retornar o que temos no cache
-                    Result.success(cachedUsers)
+                    Result.success(requestedIds.mapNotNull { cachedUsersById[it] })
                 }
             } catch (e: Exception) {
                 PlatformLogger.e(TAG, "Erro ao buscar users por IDs", e)
