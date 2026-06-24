@@ -39,6 +39,38 @@ import {
 import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 
+function preserveCanvasSpaces(text: string): string {
+  return text.replace(/\s+/g, '\u00A0');
+}
+
+interface CanvasWordsProps {
+  text: string;
+  gapEm?: number;
+}
+
+const CanvasWords: React.FC<CanvasWordsProps> = ({ text, gapEm = 0.24 }) => {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+
+  return (
+    <>
+      {words.map((word, index) => (
+        <React.Fragment key={`${word}-${index}`}>
+          <Box component="span" sx={{ display: 'inline-block' }}>
+            {word}
+          </Box>
+          {index < words.length - 1 && (
+            <Box
+              aria-hidden="true"
+              component="span"
+              sx={{ display: 'inline-block', width: `${gapEm}em` }}
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </>
+  );
+};
+
 interface StatItemProps {
   icon: React.ReactNode;
   label: string;
@@ -300,6 +332,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
     if (!cardRef.current || !player) return;
     setSharing(true);
     try {
+      await document.fonts?.ready;
+
       const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: null,
@@ -594,7 +628,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     display: 'block',
                   }}
                 >
-                  {t('player.card.brand')}
+                  <CanvasWords text={t('player.card.brand')} gapEm={0.28} />
                 </Typography>
                 <Typography
                   variant="caption"
@@ -838,7 +872,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       overflowWrap: 'anywhere',
                     }}
                   >
-                    {getFitPlayerName(player.name)}
+                    <CanvasWords text={getFitPlayerName(player.name)} gapEm={0.26} />
                   </Typography>
                   {player.nickname && (
                     <Typography
@@ -893,14 +927,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.65, gap: 1 }}>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.66), fontSize: '0.72rem', fontWeight: 700 }}>
-                      {player.experiencePoints.toLocaleString(numberLocale)} XP
+                      {preserveCanvasSpaces(`${player.experiencePoints.toLocaleString(numberLocale)} XP`)}
                     </Typography>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.66), fontSize: '0.72rem', fontWeight: 700, textAlign: 'right' }}>
                       {player.level < 20
-                        ? t('player.card.xpToNextLevel', {
+                        ? preserveCanvasSpaces(t('player.card.xpToNextLevel', {
                           xp: xpRemaining.toLocaleString(numberLocale),
                           level: player.level + 1,
-                        })
+                        }))
                         : t('player.card.maxLevel')}
                     </Typography>
                   </Box>
@@ -1021,7 +1055,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   </Typography>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.58), fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.12em' }}>
-                      {t('player.card.ratingBreakdown')}
+                      <CanvasWords text={t('player.card.ratingBreakdown')} gapEm={0.24} />
                     </Typography>
                     <LinearProgress
                       variant="determinate"
