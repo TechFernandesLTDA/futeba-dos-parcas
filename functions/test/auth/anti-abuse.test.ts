@@ -153,6 +153,43 @@ describe("Auth — Anti Abuse", () => {
       expect(checkRateLimit).not.toHaveBeenCalled();
     });
 
+    it("usa limites de SMS que permitem recuperacao de onboarding sem liberar abuso", async () => {
+      (checkRateLimit as jest.Mock)
+        .mockResolvedValueOnce({ allowed: true, remaining: 11, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 5, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 29, resetAt: new Date(Date.now() + 3600000) });
+
+      await canSendSmsOtp(makeRequest());
+
+      expect(checkRateLimit).toHaveBeenNthCalledWith(
+        1,
+        "user1",
+        expect.objectContaining({
+          keyPrefix: "sms_caller",
+          maxRequests: 12,
+          windowMs: 60 * 60 * 1000,
+        }),
+      );
+      expect(checkRateLimit).toHaveBeenNthCalledWith(
+        2,
+        expect.any(String),
+        expect.objectContaining({
+          keyPrefix: "sms_phone",
+          maxRequests: 6,
+          windowMs: 60 * 60 * 1000,
+        }),
+      );
+      expect(checkRateLimit).toHaveBeenNthCalledWith(
+        3,
+        "192.168.1.1",
+        expect.objectContaining({
+          keyPrefix: "sms_ip",
+          maxRequests: 30,
+          windowMs: 60 * 60 * 1000,
+        }),
+      );
+    });
+
     it("bloqueia quando rate limit por phone excedido", async () => {
       (checkRateLimit as jest.Mock)
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })

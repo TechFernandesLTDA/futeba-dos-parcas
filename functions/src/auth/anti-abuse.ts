@@ -27,8 +27,9 @@ function hashPhone(phone: string): string {
   return createHash("sha256").update(phone).digest("hex").substring(0, 32);
 }
 
-const SMS_RATE_LIMIT_PER_PHONE_HOUR = 3;
-const SMS_RATE_LIMIT_PER_IP_HOUR = 10;
+const SMS_RATE_LIMIT_PER_PHONE_HOUR = 6;
+const SMS_RATE_LIMIT_PER_CALLER_HOUR = 12;
+const SMS_RATE_LIMIT_PER_IP_HOUR = 30;
 const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
 // FIX #1310-L8: limite generoso (log legítimo de falha de verificação é
 // esperado), mas barra spam que infla verification_failures/audit_logs.
@@ -188,7 +189,7 @@ export const canSendSmsOtp = onCall(
       const ip = clientIp(request);
 
       const callerCheck = await checkRateLimit(request.auth!.uid, {
-        maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR * 3,
+        maxRequests: SMS_RATE_LIMIT_PER_CALLER_HOUR,
         windowMs: 60 * 60 * 1000,
         keyPrefix: "sms_caller",
       });
