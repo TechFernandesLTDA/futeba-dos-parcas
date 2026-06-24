@@ -27,6 +27,7 @@ import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import { getGroupLogoPreset } from '../constants/groupLogos';
 
 const logger = createLogger('useGroups');
 
@@ -63,6 +64,9 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
       role: data.role as GroupRole,
       fallbackName: (data.group_name as string) || 'Grupo',
       fallbackPhoto: (data.group_photo as string) || null,
+      fallbackLogoPreset: (data.group_logo_preset as string) || null,
+      fallbackLogoEmoji: (data.group_logo_emoji as string) || null,
+      fallbackLogoColor: (data.group_logo_color as string) || null,
       fallbackMemberCount: (data.member_count as number) || 0,
     };
   });
@@ -101,12 +105,22 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
     .map((entry) => {
       const groupDoc = groupsMap.get(entry.groupId);
       if (groupDoc) {
-        return { ...groupDoc, role: entry.role, memberCount: groupDoc.memberCount || entry.fallbackMemberCount };
+        return {
+          ...groupDoc,
+          role: entry.role,
+          memberCount: groupDoc.memberCount || entry.fallbackMemberCount,
+          logoPreset: groupDoc.logoPreset || entry.fallbackLogoPreset || undefined,
+          logoEmoji: groupDoc.logoEmoji || entry.fallbackLogoEmoji || undefined,
+          logoColor: groupDoc.logoColor || entry.fallbackLogoColor || undefined,
+        };
       }
       return {
         id: entry.groupId,
         name: entry.fallbackName,
         photoUrl: entry.fallbackPhoto,
+        logoPreset: entry.fallbackLogoPreset || undefined,
+        logoEmoji: entry.fallbackLogoEmoji || undefined,
+        logoColor: entry.fallbackLogoColor || undefined,
         memberCount: entry.fallbackMemberCount,
         role: entry.role,
       } as unknown as Group;
@@ -330,7 +344,7 @@ export function useCreateGroup() {
 
   const createGroup = useCallback(
     async (
-      groupData: { name: string; description?: string; isPublic?: boolean; defaultGender?: string },
+      groupData: { name: string; description?: string; isPublic?: boolean; defaultGender?: string; logoPreset?: string },
       photoFile?: File | null
     ) => {
       const uid = firebaseUser?.uid || user?.id;
@@ -351,6 +365,7 @@ export function useCreateGroup() {
           await uploadBytes(groupPhotoRef, photoFile, { contentType: photoFile.type });
           photoUrl = await getDownloadURL(groupPhotoRef);
         }
+        const logoPreset = photoUrl ? null : getGroupLogoPreset(groupData.logoPreset);
 
         const newGroup: Record<string, unknown> = {
           name: groupData.name,
@@ -367,6 +382,11 @@ export function useCreateGroup() {
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
         };
+        if (logoPreset) {
+          newGroup.logo_preset = logoPreset.id;
+          newGroup.logo_emoji = logoPreset.emoji;
+          newGroup.logo_color = logoPreset.color;
+        }
         // Persiste categoria padrão dos jogos apenas quando selecionada
         if (groupData.defaultGender) {
           newGroup.default_gender = groupData.defaultGender;
@@ -391,6 +411,9 @@ export function useCreateGroup() {
           group_id: groupRef.id,
           group_name: groupData.name,
           group_photo: photoUrl,
+          group_logo_preset: logoPreset?.id || null,
+          group_logo_emoji: logoPreset?.emoji || null,
+          group_logo_color: logoPreset?.color || null,
           role: 'OWNER',
           member_count: 1,
           joined_at: serverTimestamp(),
@@ -483,7 +506,11 @@ export function useInvitePlayers() {
   const queryClient = useQueryClient();
 
   const generateInviteCode = useCallback(
-    async (groupId: string, groupName: string) => {
+    async (
+      groupId: string,
+      groupName: string,
+      groupLogo?: { logoPreset?: string | null; logoEmoji?: string | null; logoColor?: string | null }
+    ) => {
       const uid = firebaseUser?.uid || user?.id;
       if (!uid) throw new Error('User not authenticated');
       setLoading(true);
@@ -503,6 +530,9 @@ export function useInvitePlayers() {
           code,
           group_id: groupId,
           group_name: groupName,
+          group_logo_preset: groupLogo?.logoPreset || null,
+          group_logo_emoji: groupLogo?.logoEmoji || null,
+          group_logo_color: groupLogo?.logoColor || null,
           inviter_id: uid,
           inviter_name: displayName,
           created_at: serverTimestamp(),

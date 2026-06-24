@@ -132,6 +132,9 @@ export const onInviteRedeemed = onDocumentUpdated(
     const groupName = (groupMeta.name as string) ??
       (after.group_name as string | undefined) ?? "";
     const groupPhoto = (groupMeta.photo_url as string | null) ?? null;
+    const groupLogoPreset = (groupMeta.logo_preset as string | null) ?? null;
+    const groupLogoEmoji = (groupMeta.logo_emoji as string | null) ?? null;
+    const groupLogoColor = (groupMeta.logo_color as string | null) ?? null;
 
     // O convite só guarda o nome do INVITER, não do JOINER. Buscamos o perfil
     // de quem redimiu (used_by) para popular name/photo do member doc.
@@ -186,6 +189,9 @@ export const onInviteRedeemed = onDocumentUpdated(
         group_id: groupId,
         group_name: groupName,
         group_photo: groupPhoto,
+        group_logo_preset: groupLogoPreset,
+        group_logo_emoji: groupLogoEmoji,
+        group_logo_color: groupLogoColor,
         role: "MEMBER",
         joined_at: FieldValue.serverTimestamp(),
       });

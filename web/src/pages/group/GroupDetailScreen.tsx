@@ -8,7 +8,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Avatar,
   Button,
   Chip,
   IconButton,
@@ -63,6 +62,7 @@ import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { iconSizes } from '../../theme/iconSizes';
+import { GroupAvatar } from '../../components/group/GroupAvatar';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -125,7 +125,11 @@ export const GroupDetailScreen: React.FC = () => {
     if (!groupId || !group) return;
 
     try {
-      const code = await generateInviteCode(groupId, group.name);
+      const code = await generateInviteCode(groupId, group.name, {
+        logoPreset: group.logoPreset,
+        logoEmoji: group.logoEmoji,
+        logoColor: group.logoColor,
+      });
       setInviteCode(code);
     } catch (err) {
       showError(getFirestoreErrorMessage(err));
@@ -284,21 +288,20 @@ export const GroupDetailScreen: React.FC = () => {
                 position: 'relative',
               }}
             >
-              <Avatar
-                src={group.photoUrl}
+              <GroupAvatar
+                name={group.name}
+                photoUrl={group.photoUrl}
+                logoPreset={group.logoPreset}
+                logoEmoji={group.logoEmoji}
+                logoColor={group.logoColor}
+                size={72}
                 sx={{
                   position: 'absolute',
                   bottom: -36,
                   left: 20,
-                  width: 72,
-                  height: 72,
-                  bgcolor: 'primary.main',
                   border: `4px solid ${theme.palette.background.paper}`,
-                  fontSize: '2rem',
                 }}
-              >
-                {group.name.charAt(0).toUpperCase()}
-              </Avatar>
+              />
             </Box>
             <CardContent sx={{ pt: 5.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>

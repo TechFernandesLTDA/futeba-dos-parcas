@@ -13,7 +13,6 @@ import {
   Alert,
   CircularProgress,
   IconButton,
-  Avatar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -29,6 +28,9 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { validateGroupForm } from '../../utils/groupValidation';
 import { useTranslation } from 'react-i18next';
+import { GroupAvatar } from '../../components/group/GroupAvatar';
+import { GroupLogoPicker } from '../../components/group/GroupLogoPicker';
+import { DEFAULT_GROUP_LOGO_PRESET_ID, getGroupLogoPreset } from '../../constants/groupLogos';
 
 const logger = createLogger('CreateGroupScreen');
 
@@ -58,8 +60,14 @@ export const CreateGroupScreen: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [logoPresetId, setLogoPresetId] = useState(DEFAULT_GROUP_LOGO_PRESET_ID);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const isDirty = !!formData.name || !!formData.description || formData.isPublic || !!selectedFile;
+  const isDirty =
+    !!formData.name ||
+    !!formData.description ||
+    formData.isPublic ||
+    !!selectedFile ||
+    logoPresetId !== DEFAULT_GROUP_LOGO_PRESET_ID;
 
   const handleInputChange = <K extends keyof typeof formData>(field: K, value: typeof formData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -99,6 +107,18 @@ export const CreateGroupScreen: React.FC = () => {
     setPreviewUrl(objectUrl);
   };
 
+  const handleLogoSelect = (presetId: string) => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setLogoPresetId(presetId);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (previewUrl && previewUrl.startsWith('blob:')) {
@@ -117,13 +137,14 @@ export const CreateGroupScreen: React.FC = () => {
     }
 
     try {
-      const groupId = await createGroup(formData, selectedFile);
+      const groupId = await createGroup({ ...formData, logoPreset: logoPresetId }, selectedFile);
       navigate(`/group/${groupId}`);
     } catch (err) {
       logger.error('Error creating group:', err);
       showError(t('groups.createError'));
     }
   };
+  const selectedLogoPreset = getGroupLogoPreset(logoPresetId);
 
   return (
     <AdaptiveFormSheet closeDestination="/?tab=2" isDirty={isDirty}>
@@ -154,17 +175,14 @@ export const CreateGroupScreen: React.FC = () => {
                     aria-label={t('groups.changePhotoAria')}
                     onChange={handleFileChange}
                   />
-                  <Avatar
-                    src={previewUrl || undefined}
-                    sx={{
-                      width: 100,
-                      height: 100,
-                      bgcolor: 'primary.main',
-                      fontSize: '2.5rem',
-                    }}
-                  >
-                    {formData.name.charAt(0).toUpperCase() || 'G'}
-                  </Avatar>
+                  <GroupAvatar
+                    name={formData.name}
+                    photoUrl={previewUrl}
+                    logoPreset={selectedLogoPreset.id}
+                    logoEmoji={selectedLogoPreset.emoji}
+                    logoColor={selectedLogoPreset.color}
+                    size={100}
+                  />
                   <IconButton
                     sx={{
                       position: 'absolute',
@@ -183,6 +201,12 @@ export const CreateGroupScreen: React.FC = () => {
                   </IconButton>
                 </Box>
               </Box>
+
+              <GroupLogoPicker
+                value={logoPresetId}
+                disabled={loading}
+                onChange={handleLogoSelect}
+              />
 
               <TextField
                 label={t('groups.groupNameRequired')}

@@ -13,7 +13,6 @@ import {
   Alert,
   CircularProgress,
   IconButton,
-  Avatar,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -34,6 +33,9 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ShimmerLoading } from '../../components/common/GameCard';
 import { validateGroupForm } from '../../utils/groupValidation';
 import { useTranslation } from 'react-i18next';
+import { GroupAvatar } from '../../components/group/GroupAvatar';
+import { GroupLogoPicker } from '../../components/group/GroupLogoPicker';
+import { DEFAULT_GROUP_LOGO_PRESET_ID, getGroupLogoPreset } from '../../constants/groupLogos';
 
 const logger = createLogger('GroupEditScreen');
 
@@ -69,6 +71,8 @@ export const GroupEditScreen: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [logoPresetId, setLogoPresetId] = useState(DEFAULT_GROUP_LOGO_PRESET_ID);
+  const [logoSelectionTouched, setLogoSelectionTouched] = useState(false);
 
   // Verificar permissão: apenas owner ou admin pode editar
   const uid = firebaseUser?.uid || user?.id;
@@ -85,6 +89,7 @@ export const GroupEditScreen: React.FC = () => {
         isPublic: group.isPublic || false,
         defaultGender: group.defaultGender,
       });
+      setLogoPresetId(group.logoPreset || DEFAULT_GROUP_LOGO_PRESET_ID);
       setInitialized(true);
     }
   }, [group, initialized]);
@@ -125,6 +130,20 @@ export const GroupEditScreen: React.FC = () => {
     const objectUrl = URL.createObjectURL(file);
     setSelectedFile(file);
     setPreviewUrl(objectUrl);
+    setLogoSelectionTouched(false);
+  };
+
+  const handleLogoSelect = (presetId: string) => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setLogoPresetId(presetId);
+    setLogoSelectionTouched(true);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   useEffect(() => {
@@ -142,7 +161,8 @@ export const GroupEditScreen: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validate() || !groupId || !uid) return;
+    const currentGroup = group;
+    if (!validate() || !groupId || !uid || !currentGroup) return;
 
     setSaving(true);
     try {
@@ -172,6 +192,15 @@ export const GroupEditScreen: React.FC = () => {
       };
       if (photoUrl) {
         updateData.photo_url = photoUrl;
+        updateData.logo_preset = deleteField();
+        updateData.logo_emoji = deleteField();
+        updateData.logo_color = deleteField();
+      } else if (logoSelectionTouched || !currentGroup.photoUrl) {
+        const logoPreset = getGroupLogoPreset(logoPresetId);
+        updateData.photo_url = logoSelectionTouched && currentGroup.photoUrl ? deleteField() : currentGroup.photoUrl || null;
+        updateData.logo_preset = logoPreset.id;
+        updateData.logo_emoji = logoPreset.emoji;
+        updateData.logo_color = logoPreset.color;
       }
       // Persiste ou remove categoria padrão dos jogos
       if (formData.defaultGender) {
@@ -198,6 +227,15 @@ export const GroupEditScreen: React.FC = () => {
             };
             if (photoUrl) {
               memberUpdate.group_photo = photoUrl;
+              memberUpdate.group_logo_preset = deleteField();
+              memberUpdate.group_logo_emoji = deleteField();
+              memberUpdate.group_logo_color = deleteField();
+            } else if (logoSelectionTouched || !currentGroup.photoUrl) {
+              const logoPreset = getGroupLogoPreset(logoPresetId);
+              memberUpdate.group_photo = logoSelectionTouched && currentGroup.photoUrl ? deleteField() : currentGroup.photoUrl || null;
+              memberUpdate.group_logo_preset = logoPreset.id;
+              memberUpdate.group_logo_emoji = logoPreset.emoji;
+              memberUpdate.group_logo_color = logoPreset.color;
             }
             batch.update(memberGroupRef, memberUpdate);
           });
@@ -263,7 +301,14 @@ export const GroupEditScreen: React.FC = () => {
       formData.description !== (group.description || '') ||
       formData.isPublic !== (group.isPublic || false) ||
       formData.defaultGender !== (group.defaultGender) ||
+      logoSelectionTouched ||
       !!selectedFile);
+  const selectedLogoPreset = getGroupLogoPreset(logoPresetId);
+  const avatarPhotoUrl = selectedFile
+    ? previewUrl
+    : logoSelectionTouched
+      ? null
+      : group.photoUrl || null;
 
   return (
     <FormScaffold
@@ -287,17 +332,14 @@ export const GroupEditScreen: React.FC = () => {
                     aria-label={t('groups.changePhotoAria')}
                     onChange={handleFileChange}
                   />
-                  <Avatar
-                    src={previewUrl || group.photoUrl || undefined}
-                    sx={{
-                      width: 100,
-                      height: 100,
-                      bgcolor: 'primary.main',
-                      fontSize: '2.5rem',
-                    }}
-                  >
-                    {formData.name.charAt(0).toUpperCase() || 'G'}
-                  </Avatar>
+                  <GroupAvatar
+                    name={formData.name}
+                    photoUrl={avatarPhotoUrl}
+                    logoPreset={selectedLogoPreset.id}
+                    logoEmoji={selectedLogoPreset.emoji}
+                    logoColor={selectedLogoPreset.color}
+                    size={100}
+                  />
                   <IconButton
                     sx={{
                       position: 'absolute',
@@ -316,6 +358,12 @@ export const GroupEditScreen: React.FC = () => {
                   </IconButton>
                 </Box>
               </Box>
+
+              <GroupLogoPicker
+                value={logoPresetId}
+                disabled={saving || uploadingPhoto}
+                onChange={handleLogoSelect}
+              />
 
               <TextField
                 label={t("groups.groupNameRequired")}

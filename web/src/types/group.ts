@@ -20,6 +20,9 @@ export interface Group {
   name: string;
   description?: string;
   photoUrl?: string;
+  logoPreset?: string;
+  logoEmoji?: string;
+  logoColor?: string;
   
   // Type
   type: GroupType;
@@ -66,6 +69,9 @@ export interface GroupInvite {
   code: string;
   groupId: string;
   groupName: string;
+  groupLogoPreset?: string;
+  groupLogoEmoji?: string;
+  groupLogoColor?: string;
   inviterId: string;
   inviterName: string;
   createdAt: Date;

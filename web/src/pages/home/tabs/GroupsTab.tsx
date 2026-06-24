@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CardActionArea,
-  Avatar,
   TextField,
   InputAdornment,
   Grid,
@@ -42,6 +41,7 @@ import { formatDateShort } from '../../../utils/dateFormatters';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { ScreenFab } from '../../../components/layout';
+import { GroupAvatar } from '../../../components/group/GroupAvatar';
 
 export function GroupsTab() {
   const navigate = useNavigate();
@@ -224,18 +224,14 @@ export function GroupsTab() {
                   <CardContent>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar
-                        src={group.photoUrl || undefined}
-                        alt={group.name}
-                        sx={{
-                          width: 56,
-                          height: 56,
-                          bgcolor: 'primary.main',
-                          fontSize: '1.5rem',
-                        }}
-                      >
-                        {group.name.charAt(0).toUpperCase()}
-                      </Avatar>
+                      <GroupAvatar
+                        name={group.name}
+                        photoUrl={group.photoUrl}
+                        logoPreset={group.logoPreset}
+                        logoEmoji={group.logoEmoji}
+                        logoColor={group.logoColor}
+                        size={56}
+                      />
 
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

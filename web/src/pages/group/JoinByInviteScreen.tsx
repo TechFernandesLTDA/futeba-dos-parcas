@@ -13,7 +13,6 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  Group as GroupIcon,
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
   Login as LoginIcon,
@@ -28,6 +27,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import { GroupAvatar } from '../../components/group/GroupAvatar';
 
 const logger = createLogger('JoinByInviteScreen');
 
@@ -35,6 +35,9 @@ interface InvitePreview {
   type: 'GROUP' | 'GAME';
   groupId: string;
   groupName: string;
+  groupLogoPreset?: string;
+  groupLogoEmoji?: string;
+  groupLogoColor?: string;
   gameId?: string;
   gameName?: string;
   inviterName: string;
@@ -96,6 +99,9 @@ export const JoinByInviteScreen: React.FC = () => {
           type: data.game_id ? 'GAME' : (data.type || 'GROUP'),
           groupId: data.group_id || '',
           groupName: data.group_name || 'Grupo',
+          groupLogoPreset: data.group_logo_preset || undefined,
+          groupLogoEmoji: data.group_logo_emoji || undefined,
+          groupLogoColor: data.group_logo_color || undefined,
           gameId: data.game_id || undefined,
           gameName: data.game_name || undefined,
           inviterName: data.inviter_name || 'Organizador',
@@ -231,9 +237,19 @@ export const JoinByInviteScreen: React.FC = () => {
       <Card>
         <CardContent>
           <Stack alignItems="center" spacing={3}>
-            <Avatar sx={{ bgcolor: isGameInvite ? 'success.main' : 'primary.main', width: 64, height: 64 }}>
-              {isGameInvite ? <GameIcon sx={{ fontSize: 40 }} aria-hidden="true" /> : <GroupIcon sx={{ fontSize: 40 }} aria-hidden="true" />}
-            </Avatar>
+            {isGameInvite ? (
+              <Avatar sx={{ bgcolor: 'success.main', width: 64, height: 64 }}>
+                <GameIcon sx={{ fontSize: 40 }} aria-hidden="true" />
+              </Avatar>
+            ) : (
+              <GroupAvatar
+                name={preview.groupName}
+                logoPreset={preview.groupLogoPreset}
+                logoEmoji={preview.groupLogoEmoji}
+                logoColor={preview.groupLogoColor}
+                size={64}
+              />
+            )}
 
             <Stack alignItems="center" spacing={1}>
               <Typography variant="caption" color="text.secondary">

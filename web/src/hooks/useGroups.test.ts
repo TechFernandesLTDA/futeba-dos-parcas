@@ -265,6 +265,27 @@ describe('useCreateGroup', () => {
     expect(mockDoc).toHaveBeenCalledWith({}, 'users', 'test-user-id', 'groups', 'new-group-id');
   });
 
+  it('grava preset de logo quando grupo é criado sem foto', async () => {
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
+    await act(async () => {
+      await result.current.createGroup({ name: 'Novo Grupo', logoPreset: 'trophy' });
+    });
+
+    const groupPayload = mockBatchSet.mock.calls.find(([, payload]) => payload?.name === 'Novo Grupo')?.[1];
+    expect(groupPayload).toMatchObject({
+      logo_preset: 'trophy',
+      logo_emoji: '\u{1F3C6}',
+      logo_color: 'warning.main',
+    });
+
+    const userGroupPayload = mockBatchSet.mock.calls.find(([, payload]) => payload?.group_id === 'new-group-id')?.[1];
+    expect(userGroupPayload).toMatchObject({
+      group_logo_preset: 'trophy',
+      group_logo_emoji: '\u{1F3C6}',
+      group_logo_color: 'warning.main',
+    });
+  });
+
   it('exige autenticação para criar grupo', async () => {
     mockAuthReturn = { user: null, firebaseUser: null, loading: false, error: null,
       signIn: vi.fn(), signOut: vi.fn(), signUp: vi.fn(), logout: vi.fn(),

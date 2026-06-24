@@ -7,7 +7,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Avatar,
   Button,
   Chip,
   IconButton,
@@ -52,6 +51,7 @@ import { createLogger } from '../../utils/logger';
 import { pluralizeCount } from '../../utils/pluralize';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { GroupAvatar } from '../../components/group/GroupAvatar';
 
 const logger = createLogger('GroupSettingsScreen');
 
@@ -275,17 +275,14 @@ export const GroupSettingsScreen: React.FC = () => {
               )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar
-                src={group.photoUrl}
-                sx={{
-                  width: 56,
-                  height: 56,
-                  bgcolor: 'primary.main',
-                  fontSize: '1.5rem',
-                }}
-              >
-                {group.name?.charAt(0)?.toUpperCase()}
-              </Avatar>
+              <GroupAvatar
+                name={group.name}
+                photoUrl={group.photoUrl}
+                logoPreset={group.logoPreset}
+                logoEmoji={group.logoEmoji}
+                logoColor={group.logoColor}
+                size={56}
+              />
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle1" fontWeight={600}>
                   {group.name}

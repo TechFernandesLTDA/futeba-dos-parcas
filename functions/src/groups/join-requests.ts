@@ -120,6 +120,9 @@ export const onJoinRequestApproved = onDocumentUpdated(
     const groupMeta = groupSnap.data() as Record<string, unknown>;
     const groupName = (groupMeta.name as string) ?? "";
     const groupPhoto = (groupMeta.photo_url as string | null) ?? null;
+    const groupLogoPreset = (groupMeta.logo_preset as string | null) ?? null;
+    const groupLogoEmoji = (groupMeta.logo_emoji as string | null) ?? null;
+    const groupLogoColor = (groupMeta.logo_color as string | null) ?? null;
 
     // FIX #2798: defesa em profundidade — re-valida que o aprovador é
     // owner ou admin do grupo. As rules já bloqueiam no cliente, mas esta
@@ -192,6 +195,9 @@ export const onJoinRequestApproved = onDocumentUpdated(
         group_id: groupId,
         group_name: groupName,
         group_photo: groupPhoto,
+        group_logo_preset: groupLogoPreset,
+        group_logo_emoji: groupLogoEmoji,
+        group_logo_color: groupLogoColor,
         role: "MEMBER",
         // member_count lido na transação + 1 (reflete estado pós-commit)
         member_count: currentMemberCount + 1,
