@@ -170,6 +170,10 @@ export const PhoneVerificationScreen: React.FC = () => {
   const handleSendOtp = async () => {
     setError(null);
     setOtp('');
+    if (resendCooldown > 0) {
+      setError(t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(resendCooldown / 60) }));
+      return;
+    }
     const normalized = phone.replace(/\D/g, '');
     if (!/^\d{12,13}$/.test(normalized)) {
       setError(t('feedback.phoneVerification.incompleteNumber'));
@@ -449,11 +453,15 @@ export const PhoneVerificationScreen: React.FC = () => {
                         variant="contained"
                         size="large"
                         onClick={handleSendOtp}
-                        disabled={loading}
+                        disabled={loading || resendCooldown > 0}
                         sx={{ py: 1.5, borderRadius: 2 }}
                         startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                       >
-                        {loading ? t('onboarding.sendingSms') : t('onboarding.sendSmsCode')}
+                        {loading
+                          ? t('onboarding.sendingSms')
+                          : resendCooldown > 0
+                          ? t('onboarding.resendSmsCountdown', { seconds: resendCooldown })
+                          : t('onboarding.sendSmsCode')}
                       </Button>
 
                       <Box
