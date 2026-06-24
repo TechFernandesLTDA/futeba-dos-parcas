@@ -10,7 +10,8 @@
 // v4 → v5: ignora schemes nao-cacheaveis (ex: chrome-extension://) para
 // evitar erro Cache.put quando extensoes interceptam requests.
 // v5 → v6: invalida assets antigos apos correcoes criticas no fluxo de perfil.
-const CACHE_NAME = 'futeba-v6';
+// v6 → v7: invalida bundle antigo apos correcao critica do OTP no web mobile.
+const CACHE_NAME = 'futeba-v7';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',

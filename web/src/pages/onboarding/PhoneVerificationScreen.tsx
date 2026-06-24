@@ -23,8 +23,10 @@ import {
   ShieldOutlined as ShieldIcon,
 } from '@mui/icons-material';
 import {
+  type ConfirmationResult,
   RecaptchaVerifier,
   PhoneAuthProvider,
+  linkWithPhoneNumber,
   linkWithCredential,
   type User as FirebaseUser,
 } from 'firebase/auth';
@@ -41,10 +43,12 @@ import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
 
 const logger = createLogger('PhoneVerification');
 const PHONE_VERIFICATION_SESSION_KEY = 'futeba.phoneVerification';
+const PHONE_VERIFICATION_TTL_MS = 9 * 60 * 1000;
 
 type PhoneVerificationSession = {
   phone: string;
   verificationId: string;
+  sentAt: number;
 };
 
 function phoneAuthSendErrorMessage(err: unknown, t: TFunction): string {
@@ -115,6 +119,7 @@ export const PhoneVerificationScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const verificationIdRef = useRef<string | null>(null);
+  const confirmationResultRef = useRef<ConfirmationResult | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
@@ -149,6 +154,10 @@ export const PhoneVerificationScreen: React.FC = () => {
       if (!raw) return;
       const saved = JSON.parse(raw) as PhoneVerificationSession;
       if (!saved.verificationId || !saved.phone) return;
+      if (!saved.sentAt || Date.now() - saved.sentAt > PHONE_VERIFICATION_TTL_MS) {
+        clearVerificationSession();
+        return;
+      }
       verificationIdRef.current = saved.verificationId;
       setPhone(saved.phone);
       setStep('otp');
@@ -183,6 +192,7 @@ export const PhoneVerificationScreen: React.FC = () => {
 
   const handleSendOtp = async () => {
     setError(null);
+    setOtp('');
     const normalized = phone.replace(/\D/g, '');
     if (!/^\d{12,13}$/.test(normalized)) {
       setError(t('feedback.phoneVerification.incompleteNumber'));
@@ -242,15 +252,21 @@ export const PhoneVerificationScreen: React.FC = () => {
         logger.error('SMS preflight failed; continuing with Firebase Phone Auth:', preflightErr);
       }
 
-      const provider = new PhoneAuthProvider(auth);
-      verificationIdRef.current = await withTimeout(
-        provider.verifyPhoneNumber(`+${normalized}`, verifierRef.current),
+      clearVerificationSession();
+      verificationIdRef.current = null;
+      confirmationResultRef.current = null;
+
+      const confirmationResult = await withTimeout(
+        linkWithPhoneNumber(currentUser, `+${normalized}`, verifierRef.current),
         30000,
         'sms-send-timeout',
       );
+      confirmationResultRef.current = confirmationResult;
+      verificationIdRef.current = confirmationResult.verificationId;
       persistVerificationSession({
-        phone,
-        verificationId: verificationIdRef.current,
+        phone: formatPhoneDisplay(`+${normalized}`),
+        verificationId: confirmationResult.verificationId,
+        sentAt: Date.now(),
       });
       setStep('otp');
       setResendCooldown(60);
@@ -289,11 +305,12 @@ export const PhoneVerificationScreen: React.FC = () => {
     }
     setLoading(true);
     try {
-      const credential = PhoneAuthProvider.credential(
-        verificationIdRef.current,
-        otp,
-      );
-      const linkedCredential = await linkWithCredential(currentUser, credential);
+      const linkedCredential = confirmationResultRef.current
+        ? await confirmationResultRef.current.confirm(otp)
+        : await linkWithCredential(
+          currentUser,
+          PhoneAuthProvider.credential(verificationIdRef.current, otp),
+        );
       const linkedUser = linkedCredential.user ?? auth.currentUser ?? currentUser;
       await linkedUser.reload();
       // Force token refresh pra Firebase popular phoneNumber no userRecord
@@ -343,6 +360,14 @@ export const PhoneVerificationScreen: React.FC = () => {
         msg = t('feedback.phoneVerification.codeExpired');
       } else if (code === 'auth/credential-already-in-use') {
         msg = t('feedback.phoneVerification.phoneAlreadyInUse');
+      } else if (code === 'auth/invalid-credential') {
+        msg = t('feedback.phoneVerification.codeExpired');
+        verificationIdRef.current = null;
+        confirmationResultRef.current = null;
+        clearVerificationSession();
+        setOtp('');
+        setStep('phone');
+        setResendCooldown(0);
       }
       auditPhoneVerificationFailure(mapPhoneVerificationFailureReason(code));
       setError(msg);
@@ -515,6 +540,8 @@ export const PhoneVerificationScreen: React.FC = () => {
                           startIcon={<BackIcon />}
                           onClick={() => {
                             verificationIdRef.current = null;
+                            confirmationResultRef.current = null;
+                            clearVerificationSession();
                             setStep('phone');
                             setOtp('');
                             setError(null);
