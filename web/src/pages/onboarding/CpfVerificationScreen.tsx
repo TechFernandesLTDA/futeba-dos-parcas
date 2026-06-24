@@ -33,6 +33,17 @@ import { useTranslation } from 'react-i18next';
 import { auth } from '../../services/firebase';
 
 const logger = createLogger('CpfVerification');
+const TOKEN_REFRESH_TIMEOUT_MS = 12000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(code)), ms);
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => window.clearTimeout(timer));
+  });
+}
 
 /**
  * Etapa 2/2 do onboarding obrigatorio: verificacao de CPF.
@@ -96,7 +107,8 @@ export const CpfVerificationScreen: React.FC = () => {
     setError(null);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     setError(null);
 
     if (!isValidCpf(cpf)) {
@@ -138,12 +150,11 @@ export const CpfVerificationScreen: React.FC = () => {
           // getIdToken(true) NUNCA resolve nem rejeita -> spinner infinito
           // (nunca chega ao finally). Promise.race garante rejeicao em <=12s
           // por tentativa -> apos 3 falhas mostra erro acionavel.
-          await Promise.race([
-              activeUser.getIdToken(true),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('token-refresh-timeout')), 12000),
-            ),
-          ]);
+          await withTimeout(
+            activeUser.getIdToken(true),
+            TOKEN_REFRESH_TIMEOUT_MS,
+            'token-refresh-timeout',
+          );
           tokenRefreshed = true;
           break;
         } catch (refreshErr) {
@@ -196,7 +207,11 @@ export const CpfVerificationScreen: React.FC = () => {
       let claimOk = false;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          const tokenResult = await activeUser.getIdTokenResult(true);
+          const tokenResult = await withTimeout(
+            activeUser.getIdTokenResult(true),
+            TOKEN_REFRESH_TIMEOUT_MS,
+            'token-refresh-timeout',
+          );
           if (tokenResult.claims.verified === true) {
             claimOk = true;
             break;
@@ -278,7 +293,11 @@ export const CpfVerificationScreen: React.FC = () => {
     setLoading(true);
     try {
       for (let attempt = 1; attempt <= 3; attempt++) {
-        const tokenResult = await activeUser.getIdTokenResult(true);
+        const tokenResult = await withTimeout(
+          activeUser.getIdTokenResult(true),
+          TOKEN_REFRESH_TIMEOUT_MS,
+          'token-refresh-timeout',
+        );
         if (tokenResult.claims.verified === true) {
           navigate(successNextPath, { replace: true });
           return;
@@ -357,7 +376,7 @@ export const CpfVerificationScreen: React.FC = () => {
             {success ? (
               <SuccessState />
             ) : (
-              <>
+              <Box component="form" onSubmit={handleSubmit}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
                   <Box
                     sx={{
@@ -419,10 +438,10 @@ export const CpfVerificationScreen: React.FC = () => {
                 />
 
                 <Button
+                  type="submit"
                   fullWidth
                   variant="contained"
                   size="large"
-                  onClick={handleSubmit}
                   disabled={loading || !isValidCpf(cpf)}
                   sx={{ py: 1.5, borderRadius: 2 }}
                   startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
@@ -466,7 +485,7 @@ export const CpfVerificationScreen: React.FC = () => {
                   </a>
                   .
                 </Typography>
-              </>
+              </Box>
             )}
           </CardContent>
         </Card>

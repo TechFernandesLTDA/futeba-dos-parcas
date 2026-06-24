@@ -18,6 +18,10 @@ const logger = createLogger('useOnboarding');
 const CURRENT_ONBOARDING_VERSION = 1;
 const LOCALSTORAGE_KEY = 'appGuideShown'; // compatibilidade com flag legado
 
+function localStorageKeyForUid(uid?: string | null): string {
+  return uid ? `${LOCALSTORAGE_KEY}:${uid}` : LOCALSTORAGE_KEY;
+}
+
 export interface OnboardingState {
   carouselCompletedAt: number | null;
   carouselSkipped: boolean;
@@ -64,7 +68,7 @@ export function useOnboarding() {
       // Usuário não autenticado — usa localStorage como fallback
       let shown = false;
       try {
-        shown = localStorage.getItem(LOCALSTORAGE_KEY) === 'true';
+        shown = localStorage.getItem(localStorageKeyForUid()) === 'true';
       } catch (error) {
         console.warn('Failed to read onboarding state from localStorage:', error);
       }
@@ -114,15 +118,16 @@ export function useOnboarding() {
   /** Verifica se o carrossel já foi visto nesta versão. */
   const hasSeenCarousel = useCallback((): boolean => {
     let legacyShown = false;
+    const storageKey = localStorageKeyForUid(firebaseUser?.uid);
     try {
-      legacyShown = localStorage.getItem(LOCALSTORAGE_KEY) === 'true';
+      legacyShown = localStorage.getItem(storageKey) === 'true';
     } catch (error) {
       console.warn('Failed to read onboarding state from localStorage:', error);
     }
     return legacyShown ||
       ((state.carouselCompletedAt !== null || state.carouselSkipped) &&
        state.version >= CURRENT_ONBOARDING_VERSION);
-  }, [state]);
+  }, [firebaseUser?.uid, state]);
 
   // ─── Carrossel ──────────────────────────────────────────────────────────────
 
@@ -138,7 +143,7 @@ export function useOnboarding() {
   const onCarouselSkipped = useCallback(async (atSlideIndex: number) => {
     trackEvent('onboarding_skipped', { at_slide_index: atSlideIndex });
     try {
-      localStorage.setItem(LOCALSTORAGE_KEY, 'true');
+      localStorage.setItem(localStorageKeyForUid(firebaseUser?.uid), 'true');
     } catch (error) {
       console.warn('Failed to save onboarding state to localStorage:', error);
     }
@@ -147,13 +152,13 @@ export function useOnboarding() {
       carousel_skipped: true,
       version: CURRENT_ONBOARDING_VERSION,
     });
-  }, [persistUpdates]);
+  }, [firebaseUser?.uid, persistUpdates]);
 
   const onCarouselCompleted = useCallback(async () => {
     const durationMs = Date.now() - carouselStartRef.current;
     trackEvent('onboarding_carousel_completed', { duration_ms: durationMs });
     try {
-      localStorage.setItem(LOCALSTORAGE_KEY, 'true');
+      localStorage.setItem(localStorageKeyForUid(firebaseUser?.uid), 'true');
     } catch (error) {
       console.warn('Failed to save onboarding state to localStorage:', error);
     }
@@ -164,7 +169,7 @@ export function useOnboarding() {
       carousel_skipped: false,
       version: CURRENT_ONBOARDING_VERSION,
     });
-  }, [persistUpdates]);
+  }, [firebaseUser?.uid, persistUpdates]);
 
   // ─── Checklist ──────────────────────────────────────────────────────────────
 

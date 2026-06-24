@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { onIdTokenChanged, type User as FirebaseUser } from 'firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
+import { auth } from '../services/firebase';
 
 export function useProfileComplete() {
   const { firebaseUser } = useAuth();
@@ -8,7 +10,7 @@ export function useProfileComplete() {
   const mountedRef = useRef(true);
   const lastCheckedUidRef = useRef<string | null>(null);
 
-  const check = useCallback(async (user: typeof firebaseUser, forceRefresh = false) => {
+  const check = useCallback(async (user: FirebaseUser | null, forceRefresh = false) => {
     if (!user) {
       setProfileComplete(null);
       return;
@@ -37,10 +39,16 @@ export function useProfileComplete() {
   }, []);
 
   useEffect(() => {
-    check(firebaseUser);
+    return onIdTokenChanged(auth, (changedUser) => {
+      check(changedUser);
+    });
+  }, [check]);
+
+  useEffect(() => {
+    check(auth.currentUser ?? firebaseUser);
   }, [firebaseUser, check]);
 
-  const refresh = useCallback(() => check(firebaseUser, true), [firebaseUser, check]);
+  const refresh = useCallback(() => check(auth.currentUser ?? firebaseUser, true), [firebaseUser, check]);
 
   return { profileComplete, loading: profileComplete === null, error, refresh };
 }

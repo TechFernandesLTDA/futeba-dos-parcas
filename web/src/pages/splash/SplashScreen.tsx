@@ -6,6 +6,18 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { AppLogo } from '../../components/common/AppLogo';
 
+const PROFILE_SETUP_COMPLETE_KEY = 'profileSetupComplete';
+const APP_GUIDE_SHOWN_KEY = 'appGuideShown';
+
+function readLocalFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === 'true';
+  } catch (error) {
+    console.warn('Failed to read onboarding flags from localStorage:', error);
+    return false;
+  }
+}
+
 export const SplashScreen: React.FC = () => {
   useDocumentTitle();
   const { t } = useTranslation();
@@ -16,21 +28,15 @@ export const SplashScreen: React.FC = () => {
   useEffect(() => {
     if (loading) return;
 
-    if (error) {
+    if (error && !firebaseUser) {
       navigate('/login');
       return;
     }
 
     const timer = setTimeout(() => {
       if (firebaseUser) {
-        let hasCompletedSetup: string | null = null;
-        let hasSeenGuide: string | null = null;
-        try {
-          hasCompletedSetup = localStorage.getItem('profileSetupComplete');
-          hasSeenGuide = localStorage.getItem('appGuideShown');
-        } catch (error) {
-          console.warn('Failed to read onboarding flags from localStorage:', error);
-        }
+        const hasCompletedSetup = readLocalFlag(`${PROFILE_SETUP_COMPLETE_KEY}:${firebaseUser.uid}`);
+        const hasSeenGuide = readLocalFlag(`${APP_GUIDE_SHOWN_KEY}:${firebaseUser.uid}`);
         
         if (!hasCompletedSetup) {
           navigate('/profile/setup');

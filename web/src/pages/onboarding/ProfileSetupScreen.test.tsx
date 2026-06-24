@@ -124,6 +124,7 @@ describe('ProfileSetupScreen', () => {
     expect(payload).not.toHaveProperty('updated_at');
     expect(mockRecomputeMyProfileClaim).toHaveBeenCalledTimes(1);
     expect(mockGetIdToken).toHaveBeenCalledWith(true);
-    expect(localStorage.getItem('profileSetupComplete')).toBe('true');
+    expect(localStorage.getItem('profileSetupComplete:user-1')).toBe('true');
+    expect(localStorage.getItem('profileSetupComplete')).toBeNull();
   });
 });

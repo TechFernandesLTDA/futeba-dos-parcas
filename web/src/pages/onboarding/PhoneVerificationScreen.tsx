@@ -45,6 +45,7 @@ const PHONE_VERIFICATION_SESSION_KEY = 'futeba.phoneVerification';
 const PHONE_VERIFICATION_TTL_MS = 9 * 60 * 1000;
 const PHONE_VERIFICATION_RESEND_COOLDOWN_SEC = 60;
 const MAX_PHONE_VERIFICATION_ATTEMPTS = 5;
+const SMS_SEND_TIMEOUT_MS = 45000;
 
 type PhoneVerificationSession = {
   attempts: PhoneVerificationAttempt[];
@@ -88,6 +89,66 @@ function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<
       .then(resolve)
       .catch(reject)
       .finally(() => window.clearTimeout(timer));
+  });
+}
+
+function withForegroundTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let timer: number | null = null;
+    let remainingMs = ms;
+    let startedAt = Date.now();
+    let settled = false;
+
+    const clearTimer = () => {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const cleanup = () => {
+      clearTimer();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+
+    const fail = () => {
+      settled = true;
+      cleanup();
+      reject(Object.assign(new Error(code), { code }));
+    };
+
+    const schedule = () => {
+      if (settled || document.hidden) return;
+      startedAt = Date.now();
+      timer = window.setTimeout(fail, Math.max(0, remainingMs));
+    };
+
+    function handleVisibilityChange() {
+      if (settled) return;
+      if (document.hidden) {
+        if (timer !== null) {
+          remainingMs -= Date.now() - startedAt;
+          clearTimer();
+        }
+        return;
+      }
+      schedule();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    schedule();
+
+    promise
+      .then((value) => {
+        settled = true;
+        cleanup();
+        resolve(value);
+      })
+      .catch((err) => {
+        settled = true;
+        cleanup();
+        reject(err);
+      });
   });
 }
 
@@ -138,6 +199,8 @@ export const PhoneVerificationScreen: React.FC = () => {
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
+  const resendCooldownEndsAtRef = useRef<number | null>(null);
+  const sendOtpInFlightRef = useRef(false);
 
   const getActiveUser = useCallback(
     (): FirebaseUser | null => auth.currentUser ?? firebaseUser,
@@ -179,11 +242,69 @@ export const PhoneVerificationScreen: React.FC = () => {
     }
   };
 
+  const getRemainingResendCooldown = useCallback((): number => {
+    const endsAt = resendCooldownEndsAtRef.current;
+    if (!endsAt) return 0;
+    const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    if (remaining <= 0) {
+      resendCooldownEndsAtRef.current = null;
+    }
+    return remaining;
+  }, []);
+
+  const syncResendCooldown = useCallback(() => {
+    setResendCooldown(getRemainingResendCooldown());
+  }, [getRemainingResendCooldown]);
+
+  const setResendCooldownSeconds = useCallback((seconds: number) => {
+    const next = Math.max(0, Math.ceil(seconds));
+    resendCooldownEndsAtRef.current = next > 0 ? Date.now() + next * 1000 : null;
+    setResendCooldown(next);
+  }, []);
+
+  const setResendCooldownFromAttempt = useCallback((attempt: Pick<PhoneVerificationAttempt, 'sentAt'>) => {
+    const remaining = resendCooldownFromAttempt(attempt);
+    resendCooldownEndsAtRef.current = remaining > 0
+      ? attempt.sentAt + PHONE_VERIFICATION_RESEND_COOLDOWN_SEC * 1000
+      : null;
+    setResendCooldown(remaining);
+  }, []);
+
+  const clearVerifier = useCallback(() => {
+    verifierRef.current?.clear();
+    verifierRef.current = null;
+  }, []);
+
   useEffect(() => {
     return () => {
-      verifierRef.current?.clear();
+      clearVerifier();
     };
-  }, []);
+  }, [clearVerifier]);
+
+  useEffect(() => {
+    const clearVerifierWhenIdle = () => {
+      if (!sendOtpInFlightRef.current) {
+        clearVerifier();
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearVerifierWhenIdle();
+      }
+      syncResendCooldown();
+    };
+
+    window.addEventListener('pagehide', clearVerifierWhenIdle);
+    window.addEventListener('pageshow', clearVerifierWhenIdle);
+    window.addEventListener('focus', syncResendCooldown);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', clearVerifierWhenIdle);
+      window.removeEventListener('pageshow', clearVerifierWhenIdle);
+      window.removeEventListener('focus', syncResendCooldown);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [clearVerifier, syncResendCooldown]);
 
   useEffect(() => {
     try {
@@ -213,12 +334,12 @@ export const PhoneVerificationScreen: React.FC = () => {
       attemptsRef.current = validAttempts;
       verificationIdRef.current = validAttempts[0].verificationId;
       setPhone(validAttempts[0].phone);
-      setResendCooldown(resendCooldownFromAttempt(validAttempts[0]));
+      setResendCooldownFromAttempt(validAttempts[0]);
       setStep('otp');
     } catch (storageErr) {
       logger.debug('Failed to restore phone verification session:', storageErr);
     }
-  }, [firebaseUser?.uid, getActiveUser]);
+  }, [firebaseUser?.uid, getActiveUser, setResendCooldownFromAttempt]);
 
   // Se phone já estiver vinculado, pula direto pra CPF
   useEffect(() => {
@@ -227,12 +348,13 @@ export const PhoneVerificationScreen: React.FC = () => {
     }
   }, [firebaseUser, navigate]);
 
-  // Cooldown resend (60s)
+  // Cooldown resend (60s), derived from wall-clock time so mobile tab
+  // suspension does not freeze the counter.
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendCooldown]);
+    const t = window.setTimeout(syncResendCooldown, 1000);
+    return () => window.clearTimeout(t);
+  }, [resendCooldown, syncResendCooldown]);
 
   const formatPhoneDisplay = (input: string): string => {
     const digits = input.replace(/\D/g, '');
@@ -244,25 +366,31 @@ export const PhoneVerificationScreen: React.FC = () => {
     return `+${digits.substring(0, 2)} (${digits.substring(2, 4)}) ${digits.substring(4, 9)}-${digits.substring(9, 13)}`;
   };
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    if (sendOtpInFlightRef.current) return;
+    sendOtpInFlightRef.current = true;
     setError(null);
     setOtp('');
-    if (resendCooldown > 0) {
-      setError(t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(resendCooldown / 60) }));
-      return;
-    }
-    const normalized = phone.replace(/\D/g, '');
-    if (!/^\d{12,13}$/.test(normalized)) {
-      setError(t('feedback.phoneVerification.incompleteNumber'));
-      return;
-    }
-    const currentUser = getActiveUser();
-    if (!currentUser) {
-      setError(t('feedback.phoneVerification.sessionExpired'));
-      return;
-    }
-    setLoading(true);
+    let currentUser: FirebaseUser | null = null;
     try {
+      const currentCooldown = getRemainingResendCooldown();
+      setResendCooldown(currentCooldown);
+      if (currentCooldown > 0) {
+        setError(t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(currentCooldown / 60) }));
+        return;
+      }
+      const normalized = phone.replace(/\D/g, '');
+      if (!/^\d{12,13}$/.test(normalized)) {
+        setError(t('feedback.phoneVerification.incompleteNumber'));
+        return;
+      }
+      currentUser = getActiveUser();
+      if (!currentUser) {
+        setError(t('feedback.phoneVerification.sessionExpired'));
+        return;
+      }
+      setLoading(true);
       if (!recaptchaContainerRef.current) {
         setError(t('feedback.phoneVerification.captchaLoading'));
         return;
@@ -293,7 +421,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         if (!rateCheck.data.allowed) {
           const retryAfter = rateCheck.data.retryAfterSec || 60;
           setError(t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(retryAfter / 60) }));
-          setResendCooldown(retryAfter);
+          setResendCooldownSeconds(retryAfter);
           return;
         }
       } catch (preflightErr) {
@@ -304,9 +432,9 @@ export const PhoneVerificationScreen: React.FC = () => {
 
       const phoneE164 = `+${normalized}`;
       const phoneDisplay = formatPhoneDisplay(phoneE164);
-      const confirmationResult = await withTimeout(
+      const confirmationResult = await withForegroundTimeout(
         linkWithPhoneNumber(currentUser, phoneE164, verifierRef.current),
-        45000,
+        SMS_SEND_TIMEOUT_MS,
         'sms-send-timeout',
       );
       const attempt: ActivePhoneVerificationAttempt = {
@@ -327,12 +455,12 @@ export const PhoneVerificationScreen: React.FC = () => {
       persistVerificationAttempts();
       setPhone(phoneDisplay);
       setStep('otp');
-      setResendCooldown(PHONE_VERIFICATION_RESEND_COOLDOWN_SEC);
+      setResendCooldownSeconds(PHONE_VERIFICATION_RESEND_COOLDOWN_SEC);
       showSuccess(t('feedback.phoneVerification.codeSent'));
     } catch (err) {
       logger.error('SMS send failed:', err);
       const code = (err as { code?: string }).code;
-      if (code === 'auth/provider-already-linked') {
+      if (code === 'auth/provider-already-linked' && currentUser) {
         await currentUser.reload();
         await currentUser.getIdToken(true);
         clearVerificationSession();
@@ -346,17 +474,18 @@ export const PhoneVerificationScreen: React.FC = () => {
         ? t('feedback.phoneVerification.smsTimeout')
         : phoneAuthSendErrorMessage(err, t);
       if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
-        setResendCooldown(300); // 5 minutos
+        setResendCooldownSeconds(300); // 5 minutos
       }
       setError(msg);
-      verifierRef.current?.clear();
-      verifierRef.current = null;
+      clearVerifier();
     } finally {
+      sendOtpInFlightRef.current = false;
       setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtp = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     setError(null);
     if (!/^\d{6}$/.test(otp)) {
       setError(t('feedback.phoneVerification.code6Digits'));
@@ -452,7 +581,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         clearVerificationSession();
         setOtp('');
         setStep('phone');
-        setResendCooldown(0);
+        setResendCooldownSeconds(0);
       }
       setError(msg);
     } finally {
@@ -546,7 +675,7 @@ export const PhoneVerificationScreen: React.FC = () => {
 
                 {step === 'phone' ? (
                   <Fade in timeout={300}>
-                    <Box>
+                    <Box component="form" onSubmit={handleSendOtp}>
                       <TextField
                         fullWidth
                         label={t('onboarding.phoneFieldLabel')}
@@ -564,10 +693,10 @@ export const PhoneVerificationScreen: React.FC = () => {
                         }}
                       />
                       <Button
+                        type="submit"
                         fullWidth
                         variant="contained"
                         size="large"
-                        onClick={handleSendOtp}
                         disabled={loading || resendCooldown > 0}
                         sx={{ py: 1.5, borderRadius: 2 }}
                         startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
@@ -598,7 +727,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                   </Fade>
                 ) : (
                   <Fade in timeout={300}>
-                    <Box>
+                    <Box component="form" onSubmit={handleVerifyOtp}>
                       <TextField
                         fullWidth
                         label={t('onboarding.smsCodeLabel')}
@@ -623,8 +752,9 @@ export const PhoneVerificationScreen: React.FC = () => {
                           autoComplete: 'one-time-code',
                         }}
                       />
-                      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, mb: 2 }}>
                         <Button
+                          type="button"
                           startIcon={<BackIcon />}
                           onClick={() => {
                             verificationIdRef.current = null;
@@ -636,17 +766,16 @@ export const PhoneVerificationScreen: React.FC = () => {
                             setError(null);
                           }}
                           disabled={loading}
-                          sx={{ borderRadius: 2 }}
+                          sx={{ borderRadius: 2, width: { xs: '100%', sm: 'auto' } }}
                         >
                           {t('common.back')}
                         </Button>
                         <Button
-                          fullWidth
+                          type="submit"
                           variant="contained"
                           size="large"
-                          onClick={handleVerifyOtp}
                           disabled={loading || otp.length !== 6}
-                          sx={{ py: 1.5, borderRadius: 2 }}
+                          sx={{ py: 1.5, borderRadius: 2, flex: { sm: 1 }, minWidth: 0 }}
                           startIcon={
                             loading ? <CircularProgress size={20} color="inherit" /> : null
                           }
@@ -657,9 +786,12 @@ export const PhoneVerificationScreen: React.FC = () => {
 
                       <Box sx={{ textAlign: 'center' }}>
                         <Button
+                          type="button"
                           size="small"
                           disabled={loading || resendCooldown > 0}
-                          onClick={handleSendOtp}
+                          onClick={() => {
+                            void handleSendOtp();
+                          }}
                           sx={{ textTransform: 'none' }}
                         >
                           {resendCooldown > 0

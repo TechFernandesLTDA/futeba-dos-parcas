@@ -1,5 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -9,6 +9,7 @@ import {
   Button,
   IconButton,
   Avatar,
+  Alert,
   CircularProgress,
   ToggleButton,
   ToggleButtonGroup,
@@ -48,7 +49,6 @@ const POSITION_OPTIONS: Array<{ value: PreferredPosition; label: string; ariaKey
 
 function markProfileSetupComplete(uid: string) {
   try {
-    localStorage.setItem(PROFILE_SETUP_COMPLETE_KEY, 'true');
     localStorage.setItem(`${PROFILE_SETUP_COMPLETE_KEY}:${uid}`, 'true');
   } catch (storageErr) {
     logger.warn('Failed to persist profile setup completion flag:', storageErr);
@@ -70,14 +70,21 @@ export const ProfileSetupScreen: React.FC = () => {
   const [preferredPosition, setPreferredPosition] = useState<PreferredPosition | null>(null);
   const [preferredFieldTypes, setPreferredFieldTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const handleSave = async () => {
+  const handleSave = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    setSaveError(null);
     if (!firebaseUser) {
-      showError(t('feedback.phoneVerification.sessionExpired'));
+      const message = t('feedback.phoneVerification.sessionExpired');
+      setSaveError(message);
+      showError(message);
       return;
     }
     if (!name.trim()) {
-      showError(t('feedback.profile.nameRequired'));
+      const message = t('feedback.profile.nameRequired');
+      setSaveError(message);
+      showError(message);
       return;
     }
 
@@ -117,13 +124,15 @@ export const ProfileSetupScreen: React.FC = () => {
         }
       } catch (firestoreErr) {
         logger.error('Firestore setDoc failed, rolling back Auth:', firestoreErr);
+        let userMessage = t('feedback.profile.saveError');
         try {
           await updateProfile(firebaseUser, { displayName: originalDisplayName ?? undefined });
         } catch (rollbackErr) {
           logger.error('Rollback do Auth falhou:', rollbackErr);
-          showError(t('feedback.auth.profileInconsistent'));
+          userMessage = t('feedback.auth.profileInconsistent');
         }
-        showError(t('feedback.profile.saveError'));
+        setSaveError(userMessage);
+        showError(userMessage);
         return;
       }
 
@@ -141,7 +150,9 @@ export const ProfileSetupScreen: React.FC = () => {
       navigate('/');
     } catch (error) {
       logger.error('Error saving profile:', error);
-      showError(t('feedback.profile.saveError'));
+      const message = t('feedback.profile.saveError');
+      setSaveError(message);
+      showError(message);
     } finally {
       setLoading(false);
     }
@@ -169,6 +180,7 @@ export const ProfileSetupScreen: React.FC = () => {
       </Box>
 
       <PageContainer maxWidth="focused">
+        <Box component="form" onSubmit={handleSave}>
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Box sx={{ position: 'relative', display: 'inline-block' }}>
             <Avatar
@@ -183,6 +195,7 @@ export const ProfileSetupScreen: React.FC = () => {
               {name?.charAt(0)?.toUpperCase() || '?'}
             </Avatar>
             <IconButton
+              type="button"
               sx={{
                 position: 'absolute',
                 bottom: 0,
@@ -249,7 +262,7 @@ export const ProfileSetupScreen: React.FC = () => {
             fullWidth
           >
             {POSITION_OPTIONS.map((option) => (
-              <ToggleButton key={option.value} value={option.value} aria-label={t(option.ariaKey)}>
+              <ToggleButton key={option.value} type="button" value={option.value} aria-label={t(option.ariaKey)}>
                 {option.label}
               </ToggleButton>
             ))}
@@ -260,7 +273,7 @@ export const ProfileSetupScreen: React.FC = () => {
           <FormLabel component="legend" sx={{ mb: 0.5, display: 'block', color: 'text.secondary', fontSize: '0.875rem' }}>
             Tipos de Campo Preferidos
           </FormLabel>
-          <FormGroup row>
+          <FormGroup sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' } }}>
             {[
               { value: 'SOCIETY', label: 'Society' },
               { value: 'FUTSAL', label: 'Futsal' },
@@ -290,16 +303,23 @@ export const ProfileSetupScreen: React.FC = () => {
           Seu nome será exibido para outros jogadores nos jogos e grupos.
         </Typography>
 
+        {saveError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {saveError}
+          </Alert>
+        )}
+
         <Button
+          type="submit"
           fullWidth
           variant="contained"
           size="large"
           disabled={!name.trim() || loading}
-          onClick={handleSave}
           endIcon={loading ? <CircularProgress size={20} /> : <ArrowForwardIcon />}
         >
           {loading ? 'Salvando...' : 'Continuar'}
         </Button>
+        </Box>
       </PageContainer>
     </Box>
   );

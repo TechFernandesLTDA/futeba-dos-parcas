@@ -24,6 +24,15 @@ import { useTranslation } from 'react-i18next';
 import { syncFieldOwnerClaim } from '../services/cloudFunctions';
 
 const logger = createLogger('AuthContext');
+const LEGACY_ONBOARDING_LOCAL_FLAGS = ['profileSetupComplete', 'appGuideShown'];
+
+function clearLegacyOnboardingLocalFlags() {
+  try {
+    LEGACY_ONBOARDING_LOCAL_FLAGS.forEach((key) => localStorage.removeItem(key));
+  } catch (err) {
+    logger.debug('Failed to clear legacy onboarding local flags:', err);
+  }
+}
 
 // FIX #1568: helper que aplica defaults defensivos antes dos casts "as User"
 // para evitar crashes downstream em campos undefined vindos do Firestore
@@ -218,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         if (firebaseUser?.uid !== prevUserRef.current?.uid) {
+          clearLegacyOnboardingLocalFlags();
           setLoading(true);
         }
         prevUserRef.current = firebaseUser;
@@ -360,6 +370,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       addBreadcrumb('auth', 'Logout iniciado', { uid: auth.currentUser?.uid });
       await signOut(auth);
+      clearLegacyOnboardingLocalFlags();
       // Limpar cache do TanStack Query para evitar vazamento de dados entre contas
       queryClient.clear();
       // Limpa breadcrumbs após logout — próxima sessão começa limpa

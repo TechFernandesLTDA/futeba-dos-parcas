@@ -54,7 +54,9 @@ describe('profile save payloads', () => {
     expect(phoneVerification).toContain('linkWithPhoneNumber');
     expect(phoneVerification).toContain('attempt.confirmationResult.confirm(otp)');
     expect(phoneVerification).toContain('PhoneAuthProvider.credential(attempt.verificationId, otp)');
-    expect(phoneVerification).toContain('if (resendCooldown > 0)');
+    expect(phoneVerification).toContain('const currentCooldown = getRemainingResendCooldown()');
+    expect(phoneVerification).toContain('sendOtpInFlightRef.current');
+    expect(phoneVerification).toContain('withForegroundTimeout');
     expect(phoneVerification).toContain('disabled={loading || resendCooldown > 0}');
     expect(phoneVerification).toContain('linkedCredential.user ?? auth.currentUser ?? currentUser');
     expect(phoneVerification).toContain('await linkedUser.reload()');
