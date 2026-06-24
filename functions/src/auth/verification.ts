@@ -12,6 +12,7 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
+import {isValidPhoneBR} from "../validation/phone-br";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 
@@ -117,10 +118,18 @@ export const verifyCpf = onCall(
         throw new HttpsError("invalid-argument", "CPF inválido");
       }
 
+      const uid = auth.uid;
+      const userRecord = await admin.auth().getUser(uid);
+      if (!isValidPhoneBR(userRecord.phoneNumber)) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Verifique seu telefone antes de validar o CPF.",
+        );
+      }
+
       const salt = getCpfSalt();
       const cpfHash = hashCpf(cpfRaw, salt);
       const cpfMasked = maskCpf(cpfRaw);
-      const uid = auth.uid;
 
       const db = admin.firestore();
       const indexRef = db.doc(`cpf_index/${cpfHash}`);
@@ -282,7 +291,7 @@ export const setUserVerified = onCall(
       // (Firebase popula phone_number no UserRecord automaticamente).
       const userRecord = await admin.auth().getUser(targetUid);
 
-      if (!userRecord.phoneNumber) {
+      if (!isValidPhoneBR(userRecord.phoneNumber)) {
         throw new HttpsError(
           "failed-precondition",
           "Verifique seu telefone antes de concluir o cadastro.",

@@ -1,5 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -30,6 +30,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { iconSizes } from '../../theme/iconSizes';
 import { useTranslation } from 'react-i18next';
+import { auth } from '../../services/firebase';
 
 const logger = createLogger('CpfVerification');
 
@@ -60,11 +61,14 @@ export const CpfVerificationScreen: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [successNextPath, setSuccessNextPath] = useState('/profile/setup');
 
+  const getActiveUser = useCallback(() => auth.currentUser ?? firebaseUser, [firebaseUser]);
+
   useEffect(() => {
-    if (firebaseUser && !firebaseUser.phoneNumber) {
+    const activeUser = getActiveUser();
+    if (activeUser && !activeUser.phoneNumber) {
       navigate('/onboarding/phone', { replace: true });
     }
-  }, [firebaseUser, navigate]);
+  }, [getActiveUser, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = stripCpf(e.target.value).slice(0, 11);
@@ -99,7 +103,8 @@ export const CpfVerificationScreen: React.FC = () => {
       setError(t('onboarding.errorInvalidCpf'));
       return;
     }
-    if (!firebaseUser) {
+    const activeUser = getActiveUser();
+    if (!activeUser) {
       setError(t('onboarding.errorSessionExpired'));
       return;
     }
@@ -134,7 +139,7 @@ export const CpfVerificationScreen: React.FC = () => {
           // (nunca chega ao finally). Promise.race garante rejeicao em <=12s
           // por tentativa -> apos 3 falhas mostra erro acionavel.
           await Promise.race([
-            firebaseUser.getIdToken(true),
+              activeUser.getIdToken(true),
             new Promise<never>((_, reject) =>
               setTimeout(() => reject(new Error('token-refresh-timeout')), 12000),
             ),
@@ -163,7 +168,7 @@ export const CpfVerificationScreen: React.FC = () => {
         return;
       }
 
-      logger.info('Calling verifyCpf', { uid: firebaseUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });
+      logger.info('Calling verifyCpf', { uid: activeUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });
       const verifyResult = await verifyCpf({ cpf: stripCpf(cpf) });
       if (!verifyResult.data.success) {
         throw new Error(t('onboarding.verifyFailed'));
@@ -191,7 +196,7 @@ export const CpfVerificationScreen: React.FC = () => {
       let claimOk = false;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          const tokenResult = await firebaseUser.getIdTokenResult(true);
+          const tokenResult = await activeUser.getIdTokenResult(true);
           if (tokenResult.claims.verified === true) {
             claimOk = true;
             break;
@@ -222,7 +227,7 @@ export const CpfVerificationScreen: React.FC = () => {
         code,
         message,
         details: (err as { details?: unknown }).details,
-        uid: firebaseUser?.uid,
+        uid: getActiveUser()?.uid,
       });
 
       let userMsg = t('onboarding.errorGeneric');
@@ -231,6 +236,9 @@ export const CpfVerificationScreen: React.FC = () => {
         userMsg = t('onboarding.errorCpfInUse');
       } else if (code === 'functions/invalid-argument') {
         userMsg = t('onboarding.errorInvalidCpf');
+      } else if (code === 'functions/resource-exhausted') {
+        const retryAfter = Number((err as { details?: { retryAfter?: number } }).details?.retryAfter || 60);
+        userMsg = t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(retryAfter / 60) });
       } else if (code === 'functions/permission-denied') {
         userMsg = t('onboarding.errorCompletePhoneFirst');
       } else if (code === 'functions/unauthenticated') {
@@ -254,6 +262,37 @@ export const CpfVerificationScreen: React.FC = () => {
       logVerificationFailure({ reason: mapCpfVerificationFailureReason(code), stage: 'cpf' }).catch((e) => {
         logger.error('Falha ao registrar tentativa de verificação:', e);
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinueAfterSuccess = async () => {
+    const activeUser = getActiveUser();
+    if (!activeUser) {
+      setError(t('onboarding.errorSessionExpired'));
+      setSuccess(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const tokenResult = await activeUser.getIdTokenResult(true);
+        if (tokenResult.claims.verified === true) {
+          navigate(successNextPath, { replace: true });
+          return;
+        }
+        if (attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+        }
+      }
+      setError(t('onboarding.errorRenewSession'));
+      setSuccess(false);
+    } catch (refreshErr) {
+      logger.warn('Failed to refresh verified claim before continuing:', refreshErr);
+      setError(t('onboarding.errorRenewSession'));
+      setSuccess(false);
     } finally {
       setLoading(false);
     }
@@ -290,7 +329,9 @@ export const CpfVerificationScreen: React.FC = () => {
           size="large"
           fullWidth
           sx={{ mt: 3, borderRadius: 2 }}
-          onClick={() => navigate(successNextPath, { replace: true })}
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+          onClick={handleContinueAfterSuccess}
         >
           Continuar
         </Button>

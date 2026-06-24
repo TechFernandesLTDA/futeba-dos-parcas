@@ -12,6 +12,8 @@ const mockUpdateDoc = vi.hoisted(() => vi.fn());
 const mockUpdateProfile = vi.hoisted(() => vi.fn());
 const mockRefreshUser = vi.hoisted(() => vi.fn());
 const mockShowError = vi.hoisted(() => vi.fn());
+const mockRecomputeMyProfileClaim = vi.hoisted(() => vi.fn());
+const mockGetIdToken = vi.hoisted(() => vi.fn());
 
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((...parts: unknown[]) => parts.join('/')),
@@ -29,6 +31,10 @@ vi.mock('../../services/firebase', () => ({
   db: 'mock-db',
 }));
 
+vi.mock('../../services/cloudFunctions', () => ({
+  recomputeMyProfileClaim: (...args: unknown[]) => mockRecomputeMyProfileClaim(...args),
+}));
+
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     firebaseUser: {
@@ -36,6 +42,7 @@ vi.mock('../../contexts/AuthContext', () => ({
       displayName: 'Caio',
       email: 'caio@example.com',
       photoURL: null,
+      getIdToken: mockGetIdToken,
     },
     refreshUser: mockRefreshUser,
   }),
@@ -83,6 +90,9 @@ describe('ProfileSetupScreen', () => {
     mockUpdateDoc.mockResolvedValue(undefined);
     mockUpdateProfile.mockResolvedValue(undefined);
     mockRefreshUser.mockResolvedValue(undefined);
+    mockRecomputeMyProfileClaim.mockResolvedValue({ data: { success: true, profileComplete: true } });
+    mockGetIdToken.mockResolvedValue('token');
+    localStorage.clear();
   });
 
   it('atualiza perfil existente sem enviar campos protegidos pelas rules', async () => {
@@ -112,5 +122,8 @@ describe('ProfileSetupScreen', () => {
     expect(payload).not.toHaveProperty('experience_points');
     expect(payload).not.toHaveProperty('created_at');
     expect(payload).not.toHaveProperty('updated_at');
+    expect(mockRecomputeMyProfileClaim).toHaveBeenCalledTimes(1);
+    expect(mockGetIdToken).toHaveBeenCalledWith(true);
+    expect(localStorage.getItem('profileSetupComplete')).toBe('true');
   });
 });

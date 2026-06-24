@@ -91,10 +91,12 @@ class UpdateProfileUseCase constructor(
 
         // Non-PII via direct write em users
         if (updates.isNotEmpty()) {
-            updates["updated_at"] = com.google.firebase.firestore.FieldValue.serverTimestamp()
+            val nonNullUpdates = updates.mapNotNull { (key, value) ->
+                value?.let { key to it }
+            }.toMap()
             firestore.collection("users")
                 .document(params.userId)
-                .update(updates.filterValues { it != null } as Map<String, Any>)
+                .update(nonNullUpdates)
                 .await()
         }
 

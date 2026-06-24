@@ -33,8 +33,27 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { avatarSizes } from '../../theme/iconSizes';
 import { useTranslation } from 'react-i18next';
+import type { PreferredPosition } from '../../types/user';
+import { recomputeMyProfileClaim } from '../../services/cloudFunctions';
 
 const logger = createLogger('ProfileSetupScreen');
+const PROFILE_SETUP_COMPLETE_KEY = 'profileSetupComplete';
+
+const POSITION_OPTIONS: Array<{ value: PreferredPosition; label: string; ariaKey: string }> = [
+  { value: 'GOLEIRO', label: 'GK', ariaKey: 'a11y.goalkeeper' },
+  { value: 'ZAGUEIRO', label: 'DEF', ariaKey: 'a11y.defender' },
+  { value: 'MEIA', label: 'MID', ariaKey: 'a11y.midfielder' },
+  { value: 'ATACANTE', label: 'STR', ariaKey: 'a11y.forward' },
+];
+
+function markProfileSetupComplete(uid: string) {
+  try {
+    localStorage.setItem(PROFILE_SETUP_COMPLETE_KEY, 'true');
+    localStorage.setItem(`${PROFILE_SETUP_COMPLETE_KEY}:${uid}`, 'true');
+  } catch (storageErr) {
+    logger.warn('Failed to persist profile setup completion flag:', storageErr);
+  }
+}
 
 export const ProfileSetupScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -48,12 +67,19 @@ export const ProfileSetupScreen: React.FC = () => {
   const [name, setName] = useState(firebaseUser?.displayName || '');
   const [nickname, setNickname] = useState('');
   const [favoriteTeam, setFavoriteTeam] = useState<string | null>(null);
-  const [preferredPosition, setPreferredPosition] = useState<string | null>(null);
+  const [preferredPosition, setPreferredPosition] = useState<PreferredPosition | null>(null);
   const [preferredFieldTypes, setPreferredFieldTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!firebaseUser || !name.trim()) return;
+    if (!firebaseUser) {
+      showError(t('feedback.phoneVerification.sessionExpired'));
+      return;
+    }
+    if (!name.trim()) {
+      showError(t('feedback.profile.nameRequired'));
+      return;
+    }
 
     setLoading(true);
     const originalDisplayName = firebaseUser.displayName;
@@ -99,6 +125,15 @@ export const ProfileSetupScreen: React.FC = () => {
         }
         showError(t('feedback.profile.saveError'));
         return;
+      }
+
+      markProfileSetupComplete(firebaseUser.uid);
+
+      try {
+        await recomputeMyProfileClaim();
+        await firebaseUser.getIdToken(true);
+      } catch (claimErr) {
+        logger.warn('Profile claim refresh after setup failed (non-fatal):', claimErr);
       }
 
       await refreshUser();
@@ -208,15 +243,16 @@ export const ProfileSetupScreen: React.FC = () => {
           <ToggleButtonGroup
             value={preferredPosition}
             exclusive
-            onChange={(_, val) => setPreferredPosition(val)}
+            onChange={(_, val: PreferredPosition | null) => setPreferredPosition(val)}
             aria-label={t('a11y.preferredPosition')}
             size="small"
             fullWidth
           >
-            <ToggleButton value="GK" aria-label={t('a11y.goalkeeper')}>GK</ToggleButton>
-            <ToggleButton value="DEF" aria-label={t('a11y.defender')}>DEF</ToggleButton>
-            <ToggleButton value="MID" aria-label={t('a11y.midfielder')}>MID</ToggleButton>
-            <ToggleButton value="STR" aria-label={t('a11y.forward')}>STR</ToggleButton>
+            {POSITION_OPTIONS.map((option) => (
+              <ToggleButton key={option.value} value={option.value} aria-label={t(option.ariaKey)}>
+                {option.label}
+              </ToggleButton>
+            ))}
           </ToggleButtonGroup>
         </Box>
 

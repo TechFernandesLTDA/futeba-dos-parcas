@@ -361,7 +361,7 @@ export const EditProfileScreen: React.FC = () => {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         name: trimmedName,
         nickname: formData.nickname,
-        preferred_position: formData.preferredPosition,
+        preferred_position: formData.preferredPosition ?? null,
         bio: formData.bio,
         favorite_team: formData.favoriteTeam,
         striker_rating: formData.strikerRating,

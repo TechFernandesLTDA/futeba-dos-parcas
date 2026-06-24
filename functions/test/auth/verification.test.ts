@@ -72,6 +72,11 @@ describe("Auth — Verification", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRunTransaction.mockReset();
+    mockGetUser.mockResolvedValue({
+      uid: "user1",
+      phoneNumber: "+5511999999999",
+      customClaims: {},
+    });
     process.env.CPF_SALT = "abcdef1234567890abcdef1234567890";
   });
 
@@ -107,6 +112,19 @@ describe("Auth — Verification", () => {
       await expect(
         verifyCpf(makeRequest({ data: { cpf: "000.000.000-00" } })),
       ).rejects.toThrow();
+    });
+
+    it("rejeita CPF antes de telefone BR valido", async () => {
+      mockGetUser.mockResolvedValueOnce({
+        uid: "user1",
+        phoneNumber: "+14155550100",
+        customClaims: {},
+      });
+
+      await expect(
+        verifyCpf(makeRequest()),
+      ).rejects.toThrow("Verifique seu telefone");
+      expect(mockRunTransaction).not.toHaveBeenCalled();
     });
 
     it("rejeita CPF ja registrado por outro usuario", async () => {
@@ -205,6 +223,23 @@ describe("Auth — Verification", () => {
       await expect(
         setUserVerified(makeRequest()),
       ).rejects.toThrow();
+    });
+
+    it("rejeita phone number fora do padrao BR", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ cpfVerifiedAt: { _type: "ServerTimestamp" } }),
+      });
+      mockGetUser.mockResolvedValueOnce({
+        uid: "user1",
+        phoneNumber: "+14155550100",
+        customClaims: {},
+      });
+
+      await expect(
+        setUserVerified(makeRequest()),
+      ).rejects.toThrow("Verifique seu telefone");
+      expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
     });
 
     it("rejeita sem cpfVerifiedAt", async () => {

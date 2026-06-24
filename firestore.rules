@@ -443,8 +443,10 @@ service cloud.firestore {
                        request.resource.data.role == 'PLAYER' &&
                        // #1979: previne self-injection de campos gamificados/sensiveis no create
                        !('experience_points' in request.resource.data) &&
+                       !('experiencePoints' in request.resource.data) &&
                        !('level' in request.resource.data) &&
                        !('milestones_achieved' in request.resource.data) &&
+                       !('milestonesAchieved' in request.resource.data) &&
                        !('verified' in request.resource.data) &&
                        !('verifiedAt' in request.resource.data) &&
                        !('cpfVerifiedAt' in request.resource.data) &&
@@ -460,6 +462,13 @@ service cloud.firestore {
                        !('auto_defender_rating' in request.resource.data) &&
                        !('auto_gk_rating' in request.resource.data) &&
                        !('auto_rating_samples' in request.resource.data) &&
+                       !('auto_rating_updated_at' in request.resource.data) &&
+                       !('autoStrikerRating' in request.resource.data) &&
+                       !('autoMidRating' in request.resource.data) &&
+                       !('autoDefenderRating' in request.resource.data) &&
+                       !('autoGkRating' in request.resource.data) &&
+                       !('autoRatingSamples' in request.resource.data) &&
+                       !('autoRatingUpdatedAt' in request.resource.data) &&
                        // Validacao de nome (2-100 chars)
                        isValidName(request.resource.data.name) &&
                        // Validacao de email (formato valido)
@@ -499,8 +508,10 @@ service cloud.firestore {
            // PERF_001 P0 #29: Campos de gamificacao NUNCA podem ser editados por users
            // Garante que XP so é alterado por Cloud Functions (Admin SDK)
            fieldUnchanged('experience_points') &&
+           fieldUnchanged('experiencePoints') &&
            fieldUnchanged('level') &&
            fieldUnchanged('milestones_achieved') &&
+           fieldUnchanged('milestonesAchieved') &&
            // Campos de rating automatico (apenas cloud functions)
            fieldUnchanged('auto_striker_rating') &&
            fieldUnchanged('auto_mid_rating') &&
@@ -508,6 +519,12 @@ service cloud.firestore {
            fieldUnchanged('auto_gk_rating') &&
            fieldUnchanged('auto_rating_samples') &&
            fieldUnchanged('auto_rating_updated_at') &&
+           fieldUnchanged('autoStrikerRating') &&
+           fieldUnchanged('autoMidRating') &&
+           fieldUnchanged('autoDefenderRating') &&
+           fieldUnchanged('autoGkRating') &&
+           fieldUnchanged('autoRatingSamples') &&
+           fieldUnchanged('autoRatingUpdatedAt') &&
            // SECFIX #578 STAGE 2: PII fields (email, fcm_token, birth_date,
            // height_cm, weight_kg, gender) NÃO podem ser escritos client-side em `users`.
            // Devem usar callable Cloud Function `updateUserPii` que escreve em

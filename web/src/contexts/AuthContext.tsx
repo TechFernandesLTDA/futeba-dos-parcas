@@ -431,7 +431,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // FIX #1561: rollback do Auth se Firestore falhar para evitar inconsistência
   const updateUserProfile = useCallback(async (profile: { displayName?: string; photoURL?: string }) => {
     const currentUser = firebaseUserRef.current;
-    if (!currentUser || !user) return;
+    if (!currentUser || !user) {
+      throw new Error('Usuário autenticado não disponível para atualizar perfil.');
+    }
     setError(null);
     setUpdatingProfile(true);
 

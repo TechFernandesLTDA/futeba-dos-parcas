@@ -43,6 +43,8 @@ import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
 const logger = createLogger('PhoneVerification');
 const PHONE_VERIFICATION_SESSION_KEY = 'futeba.phoneVerification';
 const PHONE_VERIFICATION_TTL_MS = 9 * 60 * 1000;
+const PHONE_VERIFICATION_RESEND_COOLDOWN_SEC = 60;
+const MAX_PHONE_VERIFICATION_ATTEMPTS = 5;
 
 type PhoneVerificationSession = {
   attempts: PhoneVerificationAttempt[];
@@ -87,6 +89,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<
       .catch(reject)
       .finally(() => window.clearTimeout(timer));
   });
+}
+
+function resendCooldownFromAttempt(attempt: Pick<PhoneVerificationAttempt, 'sentAt'>): number {
+  const elapsedSec = Math.floor((Date.now() - attempt.sentAt) / 1000);
+  return Math.max(0, PHONE_VERIFICATION_RESEND_COOLDOWN_SEC - elapsedSec);
 }
 
 function mapPhoneOtpFailureReason(code?: string): VerificationFailureReason {
@@ -157,7 +164,7 @@ export const PhoneVerificationScreen: React.FC = () => {
     try {
       const attempts = attemptsRef.current
         .map(({ confirmationResult: _confirmationResult, ...attempt }) => attempt)
-        .slice(0, 3);
+        .slice(0, MAX_PHONE_VERIFICATION_ATTEMPTS);
       sessionStorage.setItem(PHONE_VERIFICATION_SESSION_KEY, JSON.stringify({ attempts }));
     } catch (storageErr) {
       logger.debug('Failed to persist phone verification session:', storageErr);
@@ -196,7 +203,7 @@ export const PhoneVerificationScreen: React.FC = () => {
           Date.now() - attempt.sentAt <= PHONE_VERIFICATION_TTL_MS
         )
         .sort((a, b) => b.sentAt - a.sentAt)
-        .slice(0, 3);
+        .slice(0, MAX_PHONE_VERIFICATION_ATTEMPTS);
 
       if (validAttempts.length === 0) {
         clearVerificationSession();
@@ -206,6 +213,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       attemptsRef.current = validAttempts;
       verificationIdRef.current = validAttempts[0].verificationId;
       setPhone(validAttempts[0].phone);
+      setResendCooldown(resendCooldownFromAttempt(validAttempts[0]));
       setStep('otp');
     } catch (storageErr) {
       logger.debug('Failed to restore phone verification session:', storageErr);
@@ -289,12 +297,18 @@ export const PhoneVerificationScreen: React.FC = () => {
           return;
         }
       } catch (preflightErr) {
-        logger.error('SMS preflight failed; continuing with Firebase Phone Auth:', preflightErr);
+        logger.error('SMS preflight failed; blocking Firebase Phone Auth send:', preflightErr);
+        setError(t('feedback.phoneVerification.networkError'));
+        return;
       }
 
       const phoneE164 = `+${normalized}`;
       const phoneDisplay = formatPhoneDisplay(phoneE164);
-      const confirmationResult = await linkWithPhoneNumber(currentUser, phoneE164, verifierRef.current);
+      const confirmationResult = await withTimeout(
+        linkWithPhoneNumber(currentUser, phoneE164, verifierRef.current),
+        45000,
+        'sms-send-timeout',
+      );
       const attempt: ActivePhoneVerificationAttempt = {
         uid: currentUser.uid,
         phone: phoneDisplay,
@@ -307,17 +321,25 @@ export const PhoneVerificationScreen: React.FC = () => {
       attemptsRef.current = [
         attempt,
         ...activeAttempts(currentUser.uid, phoneE164),
-      ].slice(0, 3);
+      ].slice(0, MAX_PHONE_VERIFICATION_ATTEMPTS);
       confirmationResultRef.current = confirmationResult;
       verificationIdRef.current = confirmationResult.verificationId;
       persistVerificationAttempts();
       setPhone(phoneDisplay);
       setStep('otp');
-      setResendCooldown(60);
+      setResendCooldown(PHONE_VERIFICATION_RESEND_COOLDOWN_SEC);
       showSuccess(t('feedback.phoneVerification.codeSent'));
     } catch (err) {
       logger.error('SMS send failed:', err);
       const code = (err as { code?: string }).code;
+      if (code === 'auth/provider-already-linked') {
+        await currentUser.reload();
+        await currentUser.getIdToken(true);
+        clearVerificationSession();
+        attemptsRef.current = [];
+        navigate('/onboarding/cpf', { replace: true });
+        return;
+      }
       const msg = code === 'recaptcha-timeout'
         ? t('feedback.phoneVerification.captchaTimeout')
         : code === 'sms-send-timeout'
@@ -352,8 +374,9 @@ export const PhoneVerificationScreen: React.FC = () => {
     try {
       let linkedCredential: Awaited<ReturnType<ConfirmationResult['confirm']>> | null = null;
       let lastAttemptError: unknown = null;
+      let preferredAttemptError: unknown = null;
 
-      for (const attempt of attempts) {
+      for (const [index, attempt] of attempts.entries()) {
         try {
           linkedCredential = attempt.confirmationResult
             ? await attempt.confirmationResult.confirm(otp)
@@ -365,6 +388,9 @@ export const PhoneVerificationScreen: React.FC = () => {
         } catch (attemptErr) {
           const attemptCode = (attemptErr as { code?: string }).code;
           lastAttemptError = attemptErr;
+          if (index === 0 && attemptCode === 'auth/invalid-verification-code') {
+            preferredAttemptError = attemptErr;
+          }
           if (
             attemptCode === 'auth/invalid-verification-code' ||
             attemptCode === 'auth/code-expired' ||
@@ -379,7 +405,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         }
       }
 
-      if (!linkedCredential) throw lastAttemptError ?? new Error('otp-confirmation-failed');
+      if (!linkedCredential) throw preferredAttemptError ?? lastAttemptError ?? new Error('otp-confirmation-failed');
       const linkedUser = linkedCredential.user ?? auth.currentUser ?? currentUser;
       await linkedUser.reload();
       // Force token refresh pra Firebase popular phoneNumber no userRecord
@@ -393,6 +419,11 @@ export const PhoneVerificationScreen: React.FC = () => {
       const code = (err as { code?: string }).code;
       // Se telefone já estava linkado a este user, OK — segue pra CPF
       if (code === 'auth/provider-already-linked') {
+        const activeUser = getActiveUser();
+        if (activeUser) {
+          await activeUser.reload();
+          await activeUser.getIdToken(true);
+        }
         clearVerificationSession();
         attemptsRef.current = [];
         navigate('/onboarding/cpf', { replace: true });
