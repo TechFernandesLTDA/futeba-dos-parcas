@@ -39,38 +39,6 @@ import {
 import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 
-function preserveCanvasSpaces(text: string): string {
-  return text.replace(/\s+/g, '\u00A0');
-}
-
-interface CanvasWordsProps {
-  text: string;
-  gapEm?: number;
-}
-
-const CanvasWords: React.FC<CanvasWordsProps> = ({ text, gapEm = 0.24 }) => {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-
-  return (
-    <>
-      {words.map((word, index) => (
-        <React.Fragment key={`${word}-${index}`}>
-          <Box component="span" sx={{ display: 'inline-block' }}>
-            {word}
-          </Box>
-          {index < words.length - 1 && (
-            <Box
-              aria-hidden="true"
-              component="span"
-              sx={{ display: 'inline-block', width: `${gapEm}em` }}
-            />
-          )}
-        </React.Fragment>
-      ))}
-    </>
-  );
-};
-
 interface StatItemProps {
   icon: React.ReactNode;
   label: string;
@@ -299,6 +267,54 @@ function getPositionCode(position?: string | null): string {
   }
 }
 
+async function renderShareCanvas(
+  source: HTMLElement,
+  html2canvas: typeof import('html2canvas').default
+): Promise<HTMLCanvasElement> {
+  await document.fonts?.ready;
+
+  const sourceWidth = Math.ceil(source.getBoundingClientRect().width || source.offsetWidth);
+  const clone = source.cloneNode(true) as HTMLElement;
+  const host = document.createElement('div');
+
+  Object.assign(host.style, {
+    position: 'fixed',
+    left: '-10000px',
+    top: '0',
+    width: `${sourceWidth}px`,
+    pointerEvents: 'none',
+    zIndex: '-1',
+  });
+
+  Object.assign(clone.style, {
+    transform: 'none',
+    transformOrigin: 'top left',
+    width: `${sourceWidth}px`,
+    maxWidth: 'none',
+  });
+
+  host.appendChild(clone);
+  document.body.appendChild(host);
+
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  await document.fonts?.ready;
+
+  try {
+    return await html2canvas(clone, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      foreignObjectRendering: true,
+      windowWidth: Math.ceil(clone.scrollWidth || sourceWidth),
+      windowHeight: Math.ceil(clone.scrollHeight || clone.offsetHeight),
+    });
+  } finally {
+    host.remove();
+  }
+}
+
 interface PlayerCardProps {
   userId: string | null;
   onClose: () => void;
@@ -332,16 +348,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
     if (!cardRef.current || !player) return;
     setSharing(true);
     try {
-      await document.fonts?.ready;
-
       const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
+      const canvas = await renderShareCanvas(cardRef.current, html2canvas);
 
       canvas.toBlob(async (blob) => {
         if (!mountedRef.current) return;
@@ -628,7 +636,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     display: 'block',
                   }}
                 >
-                  <CanvasWords text={t('player.card.brand')} gapEm={0.28} />
+                  {t('player.card.brand')}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -872,7 +880,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       overflowWrap: 'anywhere',
                     }}
                   >
-                    <CanvasWords text={getFitPlayerName(player.name)} gapEm={0.26} />
+                    {getFitPlayerName(player.name)}
                   </Typography>
                   {player.nickname && (
                     <Typography
@@ -927,14 +935,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.65, gap: 1 }}>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.66), fontSize: '0.72rem', fontWeight: 700 }}>
-                      {preserveCanvasSpaces(`${player.experiencePoints.toLocaleString(numberLocale)} XP`)}
+                      {player.experiencePoints.toLocaleString(numberLocale)} XP
                     </Typography>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.66), fontSize: '0.72rem', fontWeight: 700, textAlign: 'right' }}>
                       {player.level < 20
-                        ? preserveCanvasSpaces(t('player.card.xpToNextLevel', {
+                        ? t('player.card.xpToNextLevel', {
                           xp: xpRemaining.toLocaleString(numberLocale),
                           level: player.level + 1,
-                        }))
+                        })
                         : t('player.card.maxLevel')}
                     </Typography>
                   </Box>
@@ -1055,7 +1063,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   </Typography>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.58), fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.12em' }}>
-                      <CanvasWords text={t('player.card.ratingBreakdown')} gapEm={0.24} />
+                      {t('player.card.ratingBreakdown')}
                     </Typography>
                     <LinearProgress
                       variant="determinate"
