@@ -67,7 +67,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
         <Typography
           variant="caption"
           sx={{
-            color: alpha(theme.palette.common.white, 0.58),
+            color: alpha(theme.palette.common.white, 0.68),
             fontSize: '0.68rem',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
@@ -86,6 +86,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
             fontSize: '1.15rem',
             mt: 0.35,
             textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.75)}`,
+            WebkitTextStroke: `0.35px ${alpha(theme.palette.common.black, 0.42)}`,
           }}
         >
           {value}
@@ -121,15 +122,28 @@ const AttributeBar: React.FC<AttributeBarProps> = ({ label, value, color }) => {
   const percent = Math.round((normalized / 5) * 100);
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.45 }}>
+    <Box
+      sx={{
+        minWidth: 0,
+        px: 1,
+        py: 0.85,
+        borderRadius: 1.5,
+        bgcolor: alpha(theme.palette.common.black, 0.24),
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.75, mb: 0.55 }}>
         <Typography
           variant="caption"
           sx={{
-            color: alpha(theme.palette.common.white, 0.7),
+            color: alpha(theme.palette.common.white, 0.76),
             fontWeight: 800,
             fontSize: '0.68rem',
             letterSpacing: '0.08em',
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {label}
@@ -140,7 +154,9 @@ const AttributeBar: React.FC<AttributeBarProps> = ({ label, value, color }) => {
             color: theme.palette.common.white,
             fontWeight: 900,
             fontSize: '0.72rem',
-            textShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.8)}`,
+            flexShrink: 0,
+            textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.9)}`,
+            WebkitTextStroke: `0.25px ${alpha(theme.palette.common.black, 0.45)}`,
           }}
         >
           {normalized > 0 ? normalized.toFixed(1) : '--'}
@@ -230,6 +246,25 @@ function getCardEdition(level: number): string {
 
 function getFitPlayerName(name: string): string {
   return name.trim().slice(0, 28);
+}
+
+function getPositionCode(position?: string | null): string {
+  switch (position) {
+    case 'ATACANTE':
+      return 'ATQ';
+    case 'GOLEIRO':
+      return 'GOL';
+    case 'LATERAL':
+      return 'LAT';
+    case 'MEIA':
+      return 'MEI';
+    case 'VOLANTE':
+      return 'VOL';
+    case 'ZAGUEIRO':
+      return 'ZAG';
+    default:
+      return '--';
+  }
 }
 
 interface PlayerCardProps {
@@ -322,17 +357,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
     : 0, [player]);
   const cardEdition = player ? getCardEdition(player.level) : 'PLAYER';
   const cardGradient = useMemo(() => `
-    radial-gradient(circle at 18% 14%, ${alpha(gColors.gold, 0.2)} 0, transparent 24%),
-    radial-gradient(circle at 88% 20%, ${alpha(levelColor, 0.22)} 0, transparent 28%),
-    linear-gradient(150deg, ${theme.palette.success.dark} 0%, ${theme.palette.background.default} 48%, ${theme.palette.primary.dark} 100%)
-  `, [gColors.gold, levelColor, theme.palette.background.default, theme.palette.primary.dark, theme.palette.success.dark]);
+    radial-gradient(circle at 18% 14%, ${alpha(gColors.gold, 0.18)} 0, transparent 24%),
+    radial-gradient(circle at 88% 20%, ${alpha(levelColor, 0.2)} 0, transparent 28%),
+    linear-gradient(150deg, ${theme.palette.success.dark} 0%, ${alpha(theme.palette.common.black, 0.86)} 52%, ${theme.palette.primary.dark} 100%)
+  `, [gColors.gold, levelColor, theme.palette.common.black, theme.palette.primary.dark, theme.palette.success.dark]);
   const frameGradient = useMemo(
     () => `linear-gradient(135deg, ${gColors.gold}, ${levelColor}, ${theme.palette.info.main})`,
     [gColors.gold, levelColor, theme.palette.info.main]
   );
-  const positionLabel = player?.preferredPosition
-    ? t(`player.positions.${player.preferredPosition}`, { defaultValue: player.preferredPosition })
-    : t('player.card.noPosition');
+  const positionCode = getPositionCode(player?.preferredPosition);
+  const levelTag = player ? t('player.card.levelShort', { level: player.level }) : t('player.card.level');
   const attributeRows = player ? [
     {
       label: t('player.card.attackShort'),
@@ -585,6 +619,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         fontSize: '2.15rem',
                         lineHeight: 0.95,
                         textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.85)}, 0 0 16px ${alpha(gColors.gold, 0.45)}`,
+                        WebkitTextStroke: `0.7px ${alpha(theme.palette.common.black, 0.48)}`,
                       }}
                     >
                       {player.overallRating}
@@ -696,12 +731,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       sx={{
                         color: theme.palette.common.white,
                         fontWeight: 950,
-                        fontSize: '1rem',
-                        lineHeight: 1.05,
-                        wordBreak: 'break-word',
+                        fontSize: '1.55rem',
+                        lineHeight: 0.95,
+                        letterSpacing: '0.06em',
+                        textShadow: `0 2px 5px ${alpha(theme.palette.common.black, 0.72)}`,
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      {positionLabel}
+                      {positionCode}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -712,9 +749,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         fontSize: '0.65rem',
                         display: 'block',
                         mt: 0.4,
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      {levelEntry?.name || t('player.card.level')}
+                      {levelTag}
                     </Typography>
                   </Box>
                 </Box>
@@ -732,24 +770,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     textAlign: 'center',
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75, minWidth: 0 }}>
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        color: theme.palette.common.white,
-                        fontWeight: 950,
-                        textAlign: 'center',
-                        lineHeight: 1.05,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.02em',
-                        textShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.32)}`,
-                        overflowWrap: 'anywhere',
-                      }}
-                    >
-                      {getFitPlayerName(player.name)}
-                    </Typography>
-                    <TeamBadge teamId={player.favoriteTeam} size={22} />
-                  </Box>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      color: theme.palette.common.white,
+                      fontWeight: 950,
+                      textAlign: 'center',
+                      lineHeight: 1.05,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.02em',
+                      fontSize: '1.55rem',
+                      textShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.62)}`,
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
+                    {getFitPlayerName(player.name)}
+                  </Typography>
                   {player.nickname && (
                     <Typography
                       variant="body2"
@@ -762,6 +798,32 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       {player.nickname}
                     </Typography>
                   )}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.65,
+                      mt: 0.7,
+                      minWidth: 0,
+                    }}
+                  >
+                    <TeamBadge teamId={player.favoriteTeam} size={20} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: alpha(theme.palette.common.white, 0.68),
+                        fontWeight: 800,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {levelEntry?.name || t('player.card.level')}
+                    </Typography>
+                  </Box>
                 </Box>
 
                 <Box
@@ -898,6 +960,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       minWidth: 48,
                       textAlign: 'center',
                       textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.85)}, 0 0 12px ${alpha(gColors.gold, 0.5)}`,
+                      WebkitTextStroke: `0.7px ${alpha(theme.palette.common.black, 0.48)}`,
                     }}
                   >
                     {player.overallRating}

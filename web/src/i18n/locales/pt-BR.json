@@ -2369,6 +2369,7 @@
       "footerUrl": "futebadosparcas.com.br",
       "gkShort": "GOL",
       "level": "Nível",
+      "levelShort": "NÍV {{level}}",
       "loadError": "Erro ao carregar jogador",
       "maxLevel": "Nível máximo!",
       "midShort": "MEI",

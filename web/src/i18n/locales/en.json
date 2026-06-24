@@ -2369,6 +2369,7 @@
       "footerUrl": "futebadosparcas.com.br",
       "gkShort": "GK",
       "level": "Level",
+      "levelShort": "LV {{level}}",
       "loadError": "Failed to load player",
       "maxLevel": "Max level!",
       "midShort": "MID",
