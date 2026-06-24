@@ -26,6 +26,7 @@ import {
   RecaptchaVerifier,
   PhoneAuthProvider,
   linkWithCredential,
+  type User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
@@ -39,6 +40,12 @@ import { canSendSmsOtp, logVerificationFailure } from '../../services/cloudFunct
 import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
 
 const logger = createLogger('PhoneVerification');
+const PHONE_VERIFICATION_SESSION_KEY = 'futeba.phoneVerification';
+
+type PhoneVerificationSession = {
+  phone: string;
+  verificationId: string;
+};
 
 function phoneAuthSendErrorMessage(err: unknown, t: TFunction): string {
   const code = (err as { code?: string }).code;
@@ -111,10 +118,43 @@ export const PhoneVerificationScreen: React.FC = () => {
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
+
+  const getActiveUser = (): FirebaseUser | null => auth.currentUser ?? firebaseUser;
+
+  const persistVerificationSession = (session: PhoneVerificationSession) => {
+    try {
+      sessionStorage.setItem(PHONE_VERIFICATION_SESSION_KEY, JSON.stringify(session));
+    } catch (storageErr) {
+      logger.debug('Failed to persist phone verification session:', storageErr);
+    }
+  };
+
+  const clearVerificationSession = () => {
+    try {
+      sessionStorage.removeItem(PHONE_VERIFICATION_SESSION_KEY);
+    } catch (storageErr) {
+      logger.debug('Failed to clear phone verification session:', storageErr);
+    }
+  };
+
   useEffect(() => {
     return () => {
       verifierRef.current?.clear();
     };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(PHONE_VERIFICATION_SESSION_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as PhoneVerificationSession;
+      if (!saved.verificationId || !saved.phone) return;
+      verificationIdRef.current = saved.verificationId;
+      setPhone(saved.phone);
+      setStep('otp');
+    } catch (storageErr) {
+      logger.debug('Failed to restore phone verification session:', storageErr);
+    }
   }, []);
 
   // Se phone já estiver vinculado, pula direto pra CPF
@@ -148,7 +188,8 @@ export const PhoneVerificationScreen: React.FC = () => {
       setError(t('feedback.phoneVerification.incompleteNumber'));
       return;
     }
-    if (!firebaseUser) {
+    const currentUser = getActiveUser();
+    if (!currentUser) {
       setError(t('feedback.phoneVerification.sessionExpired'));
       return;
     }
@@ -207,6 +248,10 @@ export const PhoneVerificationScreen: React.FC = () => {
         30000,
         'sms-send-timeout',
       );
+      persistVerificationSession({
+        phone,
+        verificationId: verificationIdRef.current,
+      });
       setStep('otp');
       setResendCooldown(60);
       showSuccess(t('feedback.phoneVerification.codeSent'));
@@ -236,7 +281,8 @@ export const PhoneVerificationScreen: React.FC = () => {
       setError(t('feedback.phoneVerification.code6Digits'));
       return;
     }
-    if (!verificationIdRef.current || !firebaseUser) {
+    const currentUser = getActiveUser();
+    if (!verificationIdRef.current || !currentUser) {
       setError(t('feedback.phoneVerification.sessionExpiredRestart'));
       setStep('phone');
       return;
@@ -247,16 +293,18 @@ export const PhoneVerificationScreen: React.FC = () => {
         verificationIdRef.current,
         otp,
       );
-      await linkWithCredential(firebaseUser, credential);
+      const linkedCredential = await linkWithCredential(currentUser, credential);
+      const linkedUser = linkedCredential.user ?? auth.currentUser ?? currentUser;
+      await linkedUser.reload();
       // Force token refresh pra Firebase popular phoneNumber no userRecord
-      await firebaseUser.getIdToken(true);
+      await linkedUser.getIdToken(true);
 
       // FIX: persistir phone no Firestore users/{uid} (antes era só linkado no
       // Auth provider, doc Firestore ficava sem phone — quebrava notificações
       // SMS, contato, recovery). Bug reportado 2026-05-11 (user Gustavo).
-      const phoneNumber = firebaseUser.phoneNumber || `+${phone.replace(/\D/g, '')}`;
+      const phoneNumber = linkedUser.phoneNumber || `+${phone.replace(/\D/g, '')}`;
       try {
-        await updateDoc(doc(db, 'users', firebaseUser.uid), {
+        await updateDoc(doc(db, 'users', linkedUser.uid), {
           phone: phoneNumber,
           phone_verified: true,
         });
@@ -265,6 +313,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         showError(t('feedback.phoneVerification.verifiedSaveError'));
       }
 
+      clearVerificationSession();
       navigate('/onboarding/cpf', { replace: true });
     } catch (err) {
       logger.error('Phone verification failed:', err);
@@ -272,10 +321,11 @@ export const PhoneVerificationScreen: React.FC = () => {
       // Se telefone já estava linkado a este user, OK — segue pra CPF
       if (code === 'auth/provider-already-linked') {
         // Tentar persistir phone mesmo no caso already-linked (idempotente)
-        if (firebaseUser?.phoneNumber) {
+        const linkedUser = getActiveUser();
+        if (linkedUser?.phoneNumber) {
           try {
-            await updateDoc(doc(db, 'users', firebaseUser.uid), {
-              phone: firebaseUser.phoneNumber,
+            await updateDoc(doc(db, 'users', linkedUser.uid), {
+              phone: linkedUser.phoneNumber,
               phone_verified: true,
             });
           } catch (e) {
@@ -283,6 +333,7 @@ export const PhoneVerificationScreen: React.FC = () => {
             showError(t('feedback.phoneVerification.verifiedSaveError'));
           }
         }
+        clearVerificationSession();
         navigate('/onboarding/cpf', { replace: true });
         return;
       }

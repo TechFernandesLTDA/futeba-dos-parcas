@@ -45,4 +45,17 @@ describe('profile save payloads', () => {
     expect(createUserDocument).not.toContain('level: 1');
     expect(createUserDocument).not.toContain('experience_points: 0');
   });
+
+  it('mantém o onboarding por telefone resiliente a refresh de auth no web mobile', () => {
+    const phoneVerification = readRepoFile('web/src/pages/onboarding/PhoneVerificationScreen.tsx');
+    expect(phoneVerification).toContain('auth.currentUser ?? firebaseUser');
+    expect(phoneVerification).toContain('PHONE_VERIFICATION_SESSION_KEY');
+    expect(phoneVerification).toContain('linkedCredential.user ?? auth.currentUser ?? currentUser');
+    expect(phoneVerification).toContain('await linkedUser.reload()');
+
+    const app = readRepoFile('web/src/App.tsx');
+    expect(app).toContain('function useLoginRedirectReady');
+    expect(app).toContain('const activeUser = firebaseUser ?? auth.currentUser');
+    expect(app).toContain('if (!loginRedirectReady) return <SplashLoadingFallback />;');
+  });
 });
