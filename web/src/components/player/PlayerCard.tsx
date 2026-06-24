@@ -280,8 +280,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const XP_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${theme.palette.primary.main}, ${gColors.gold})`, [theme.palette.primary.main, gColors.gold]);
   const OVERALL_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${gColors.gold}, ${theme.palette.warning.main})`, [gColors.gold, theme.palette.warning.main]);
   const cardRef = useRef<HTMLDivElement>(null);
+  const previewFrameRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
   const [sharing, setSharing] = useState(false);
+  const [previewScale, setPreviewScale] = useState(1);
+  const [previewHeight, setPreviewHeight] = useState<number | null>(null);
   const { showError } = useToast();
   const { playerCard: player, loading, error, refetch } = usePlayerCard(userId);
 
@@ -351,6 +354,57 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       setSharing(false);
     }
   }, [numberLocale, player, showError, t]);
+  const handlePreviewTouchMove = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+  }, []);
+  const updatePreviewMetrics = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const frame = previewFrameRef.current;
+    const card = cardRef.current;
+    if (!frame || !card) return;
+
+    const isMobilePreview = window.matchMedia('(max-width: 600px)').matches;
+    const cardHeight = card.offsetHeight;
+    const cardWidth = card.offsetWidth;
+    if (!isMobilePreview || cardHeight <= 0 || cardWidth <= 0) {
+      setPreviewScale(1);
+      setPreviewHeight(null);
+      return;
+    }
+
+    const frameTop = frame.getBoundingClientRect().top;
+    const availableHeight = Math.max(320, window.innerHeight - frameTop - 8);
+    const availableWidth = Math.max(260, frame.clientWidth);
+    const rawScale = Math.min(1, availableHeight / cardHeight, availableWidth / cardWidth);
+    const nextScale = Math.max(0.64, Math.min(1, Number(rawScale.toFixed(3))));
+    const nextHeight = Math.ceil(cardHeight * nextScale);
+
+    setPreviewScale((current) => (current === nextScale ? current : nextScale));
+    setPreviewHeight((current) => (current === nextHeight ? current : nextHeight));
+  }, []);
+
+  useEffect(() => {
+    updatePreviewMetrics();
+
+    window.addEventListener('resize', updatePreviewMetrics);
+    window.addEventListener('orientationchange', updatePreviewMetrics);
+
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updatePreviewMetrics)
+      : null;
+    if (observer && cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updatePreviewMetrics);
+      window.removeEventListener('orientationchange', updatePreviewMetrics);
+      observer?.disconnect();
+    };
+  }, [error, loading, player, updatePreviewMetrics]);
 
   const winRate = useMemo(() => player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)
@@ -403,18 +457,39 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         sx: {
           background: 'transparent',
           boxShadow: 'none',
-          overflow: 'visible',
+          overflow: 'hidden',
+          m: { xs: 1, sm: 4 },
+          width: { xs: 'calc(100vw - 16px)', sm: '100%' },
+          maxWidth: { xs: 360, sm: 444 },
+          maxHeight: { xs: 'calc(100dvh - 16px)', sm: 'calc(100vh - 64px)' },
+        },
+      }}
+      sx={{
+        '& .MuiDialog-container': {
+          alignItems: 'center',
+          px: { xs: 0.5, sm: 3 },
+          py: { xs: 1, sm: 4 },
+          touchAction: 'none',
         },
       }}
     >
-      <DialogContent sx={{ p: 0, overflow: 'visible' }}>
+      <DialogContent
+        sx={{
+          p: 0,
+          overflow: 'hidden',
+          maxHeight: { xs: 'calc(100dvh - 16px)', sm: 'calc(100vh - 64px)' },
+          touchAction: 'none',
+          overscrollBehavior: 'contain',
+        }}
+      >
         {/* Botões fora do card (não aparecem na imagem) */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
-            mb: 1,
+            mb: { xs: 0.75, sm: 1 },
             px: 1,
+            flexShrink: 0,
           }}
         >
           <Tooltip title={t('tooltip.close')}>
@@ -451,7 +526,28 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           </Tooltip>
         </Box>
 
-        {/* Card principal — capturado pelo html2canvas */}
+        <Box
+          ref={previewFrameRef}
+          onTouchMove={handlePreviewTouchMove}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            height: { xs: previewHeight ? `${previewHeight}px` : 'auto', sm: 'auto' },
+            maxHeight: { xs: 'calc(100dvh - 64px)', sm: 'none' },
+            overflow: 'hidden',
+            touchAction: 'none',
+            overscrollBehavior: 'contain',
+          }}
+        >
+          <Box
+            sx={{
+              width: '100%',
+              transform: previewScale < 1 ? `scale(${previewScale})` : 'none',
+              transformOrigin: 'top center',
+            }}
+          >
+            {/* Card principal — capturado pelo html2canvas */}
         <Box
           ref={cardRef}
           sx={{
@@ -1007,6 +1103,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             >
               {t('player.card.footerUrl')}
             </Typography>
+          </Box>
+        </Box>
           </Box>
         </Box>
       </DialogContent>
