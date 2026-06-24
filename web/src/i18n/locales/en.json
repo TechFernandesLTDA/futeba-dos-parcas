@@ -696,7 +696,7 @@
       "invalidCode": "Invalid code. Please try again.",
       "invalidPhoneNumber": "Invalid number. Check area code and number.",
       "networkError": "Connection failed while sending SMS. Check your internet and try again.",
-      "phoneAlreadyInUse": "This phone is already linked to another account.",
+      "phoneAlreadyInUse": "This phone is already linked to another account. Trying another code will not work: use another phone or ask support to release this number.",
       "rateLimitedMinutes": "Too many attempts. Wait {{minutes}} minute(s).",
       "sendError": "Error sending SMS. Check the number and try again.",
       "sessionExpired": "Session expired. Please sign in again.",
