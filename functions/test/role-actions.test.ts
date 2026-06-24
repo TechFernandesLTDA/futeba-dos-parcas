@@ -337,7 +337,7 @@ describe("setUserVerified - role gating (ADMIN ou self)", () => {
 
     expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
       FIELD_OWNER_AUTH.uid,
-      {role: "FIELD_OWNER", verified: true}
+      {role: "FIELD_OWNER", verified: true, profileComplete: true}
     );
   });
 });
@@ -562,7 +562,7 @@ describe("setUserVerified - idempotencia (#1308)", () => {
     );
   });
 
-  test("no-op quando usuario JA verified (nao revoga tokens)", async () => {
+  test("repara profileComplete quando usuario JA verified sem claim completa", async () => {
     mockGetUser.mockResolvedValue({
       customClaims: {verified: true, role: "PLAYER"},
       phoneNumber: "+5511999999999",
@@ -576,7 +576,27 @@ describe("setUserVerified - idempotencia (#1308)", () => {
     expect(result).toEqual(
       expect.objectContaining({success: true, alreadyVerified: true})
     );
-    // Idempotente: NÃO revoga tokens nem reescreve claims.
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
+      PLAYER_AUTH.uid,
+      expect.objectContaining({verified: true, profileComplete: true})
+    );
+    expect(mockRevokeRefreshTokens).toHaveBeenCalledWith(PLAYER_AUTH.uid);
+  });
+
+  test("no-op de claims quando usuario JA verified e profileComplete", async () => {
+    mockGetUser.mockResolvedValue({
+      customClaims: {verified: true, profileComplete: true, role: "PLAYER"},
+      phoneNumber: "+5511999999999",
+    });
+
+    const result = await setUserVerifiedHandler({
+      auth: PLAYER_AUTH,
+      data: {uid: PLAYER_AUTH.uid},
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({success: true, alreadyVerified: true})
+    );
     expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
     expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
   });

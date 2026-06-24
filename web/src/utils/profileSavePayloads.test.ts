@@ -52,7 +52,8 @@ describe('profile save payloads', () => {
     expect(phoneVerification).toContain('PHONE_VERIFICATION_SESSION_KEY');
     expect(phoneVerification).toContain('PHONE_VERIFICATION_TTL_MS');
     expect(phoneVerification).toContain('linkWithPhoneNumber');
-    expect(phoneVerification).toContain('confirmationResultRef.current.confirm(otp)');
+    expect(phoneVerification).toContain('attempt.confirmationResult.confirm(otp)');
+    expect(phoneVerification).toContain('PhoneAuthProvider.credential(attempt.verificationId, otp)');
     expect(phoneVerification).toContain('if (resendCooldown > 0)');
     expect(phoneVerification).toContain('disabled={loading || resendCooldown > 0}');
     expect(phoneVerification).toContain('linkedCredential.user ?? auth.currentUser ?? currentUser');

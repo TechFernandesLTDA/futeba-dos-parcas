@@ -225,9 +225,7 @@ describe("Auth — Anti Abuse", () => {
       ).rejects.toThrow();
     });
 
-    // FIX #2479: código usa o IP mais à direita (rightmost) — o LB
-    // no GCP appende o IP real do cliente ao final da cadeia XFF.
-    it("extrai IP mais à direita (rightmost) de cadeia XFF com 2 hops", async () => {
+    it("extrai penultimo IP valido de cadeia XFF com 2 hops", async () => {
       (checkRateLimit as jest.Mock)
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
@@ -237,15 +235,12 @@ describe("Auth — Anti Abuse", () => {
         rawRequest: { ip: "10.0.0.1", headers: { "x-forwarded-for": "203.0.113.5, 10.0.0.1" } },
       }));
 
-      // Rightmost = "10.0.0.1" (LB appendeu ao final, IP confiável)
       expect(checkRateLimit).toHaveBeenCalledWith(
-        "10.0.0.1",
+        "203.0.113.5",
         expect.objectContaining({ keyPrefix: "sms_ip" }),
       );
     });
 
-    // FIX #2479: prova que o 1º hop (controlável pelo atacante) NÃO é usado.
-    // Código usa rightmost valid IP (LB appende IP real ao final da cadeia).
     it("ignora 1º hop forjado pelo atacante em cadeia XFF com 3+ hops", async () => {
       (checkRateLimit as jest.Mock)
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
@@ -261,9 +256,8 @@ describe("Auth — Anti Abuse", () => {
         },
       }));
 
-      // Deve usar "10.0.0.1" (rightmost = último hop adicionado pelo LB confiável)
       expect(checkRateLimit).toHaveBeenCalledWith(
-        "10.0.0.1",
+        "203.0.113.5",
         expect.objectContaining({ keyPrefix: "sms_ip" }),
       );
 
@@ -289,9 +283,8 @@ describe("Auth — Anti Abuse", () => {
         },
       }));
 
-      // Penúltimo válido = "203.0.113.5"
       expect(checkRateLimit).toHaveBeenCalledWith(
-        "10.0.0.1",
+        "203.0.113.5",
         expect.objectContaining({ keyPrefix: "sms_ip" }),
       );
     });

@@ -14,7 +14,6 @@ import {checkRateLimit} from "../middleware/rate-limiter";
 
 interface UserProfileData {
   cpfVerifiedAt?: unknown;
-  phone?: unknown;
 }
 
 interface ProfileClaimResult {
@@ -23,35 +22,38 @@ interface ProfileClaimResult {
 }
 
 /**
- * Computa se o perfil tem CPF verificado e telefone valido.
+ * Computa se o perfil tem CPF verificado e telefone valido no Firebase Auth.
  * Apenas o campo server-side cpfVerifiedAt (gravado por verifyCpf)
  * eh considerado; o campo raw cpf em users/{uid} eh client-writable
  * e nao deve ser usado para autorizacao.
+ * O telefone tambem deve vir do UserRecord do Firebase Auth, nao de
+ * users/{uid}, porque campos publicos do perfil podem ser editaveis/legados.
  *
  * @param {UserProfileData} data Dados publicos do usuario.
+ * @param {string | undefined} authPhoneNumber Telefone do Firebase Auth.
  * @return {boolean} true se cadastro completo.
  */
 export function computeProfileComplete(
-  data: UserProfileData | undefined
+  data: UserProfileData | undefined,
+  authPhoneNumber?: string
 ): boolean {
   if (!data) return false;
 
-  const phone = typeof data.phone === "string" ? data.phone : undefined;
   const hasCpf = data.cpfVerifiedAt != null;
 
-  return hasCpf && isValidPhoneBR(phone);
+  return hasCpf && isValidPhoneBR(authPhoneNumber);
 }
 
 /**
  * Atualiza custom claim profileComplete preservando claims existentes.
  *
  * @param {string} uid ID do usuario.
- * @param {boolean} profileComplete Novo valor da claim.
+ * @param {UserProfileData | undefined} profileData Dados publicos do usuario.
  * @return {Promise<ProfileClaimResult>} Resultado da atualizacao.
  */
 async function setProfileCompleteClaim(
   uid: string,
-  profileComplete: boolean
+  profileData: UserProfileData | undefined
 ): Promise<ProfileClaimResult> {
   const userRecord = await admin.auth().getUser(uid).catch((error) => {
     logger.warn(
@@ -62,9 +64,16 @@ async function setProfileCompleteClaim(
   });
 
   if (!userRecord) {
-    return {profileComplete, updated: false};
+    return {
+      profileComplete: computeProfileComplete(profileData),
+      updated: false,
+    };
   }
 
+  const profileComplete = computeProfileComplete(
+    profileData,
+    userRecord.phoneNumber
+  );
   const currentClaims = userRecord.customClaims ?? {};
   if (currentClaims.profileComplete === profileComplete) {
     return {profileComplete, updated: false};
@@ -103,16 +112,14 @@ export const onUserProfileWritten = onDocumentWritten(
       isRecord(afterRaw) ? afterRaw : undefined;
 
     if (
-      before?.phone === after?.phone &&
       (before?.cpfVerifiedAt != null) === (after?.cpfVerifiedAt != null)
     ) {
       return;
     }
 
     const uid = event.params.uid;
-    const profileComplete = computeProfileComplete(after);
 
-    await setProfileCompleteClaim(uid, profileComplete);
+    await setProfileCompleteClaim(uid, after);
   }
 );
 
@@ -159,13 +166,13 @@ export const recomputeMyProfileClaim = onCall(
         .get();
       // FIX #2284: valida shape antes do cast.
       const userRaw = userSnap.exists ? userSnap.data() : undefined;
-      const profileComplete = computeProfileComplete(
-        isRecord(userRaw) ? (userRaw as UserProfileData) : undefined
-      );
+      const profileData = isRecord(userRaw) ?
+        (userRaw as UserProfileData) :
+        undefined;
 
       return {
         success: true,
-        ...(await setProfileCompleteClaim(uid, profileComplete)),
+        ...(await setProfileCompleteClaim(uid, profileData)),
       };
     } catch (error) {
       if (error instanceof HttpsError) throw error;

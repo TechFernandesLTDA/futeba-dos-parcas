@@ -174,13 +174,14 @@ service cloud.firestore {
     }
 
     // Profile Complete Gate: CPF + telefone obrigatorios para writes de criacao.
-    // Claim e a fonte autoritativa. Fallback em users/{uid} e temporario para
-    // rollout enquanto clientes antigos atualizam o token apos preencher perfil.
+    // Claim e a fonte autoritativa. Fallback em users_private/{uid} e
+    // temporario para rollout enquanto clientes atualizam o token.
     function hasProfileCompleteFallback() {
+      let privateProfile = get(/databases/$(database)/documents/users_private/$(userId()));
       return isAuthenticated() &&
-        exists(/databases/$(database)/documents/users/$(userId())) &&
-        getUser().data.phone != null &&
-        getUser().data.cpfVerifiedAt != null;
+        privateProfile != null &&
+        privateProfile.data.phoneVerifiedAt != null &&
+        privateProfile.data.cpfVerifiedAt != null;
     }
 
     function isProfileComplete() {
@@ -447,6 +448,8 @@ service cloud.firestore {
                        !('verified' in request.resource.data) &&
                        !('verifiedAt' in request.resource.data) &&
                        !('cpfVerifiedAt' in request.resource.data) &&
+                       !('phone' in request.resource.data) &&
+                       !('phone_verified' in request.resource.data) &&
                        // Auditoria 2026-05-30 #5: ratings automaticos sao
                        // server-only (Cloud Functions). O update ja bloqueia
                        // via fieldUnchanged; o create esquecia, permitindo
@@ -527,6 +530,8 @@ service cloud.firestore {
            fieldUnchanged('verified') &&
            fieldUnchanged('verifiedAt') &&
            fieldUnchanged('cpfVerifiedAt') &&
+           fieldUnchanged('phone') &&
+           fieldUnchanged('phone_verified') &&
            // Apenas updated_at e protegido (gerenciado por Cloud Functions)
            fieldUnchanged('updated_at') &&
            // Validacao de dados no update
