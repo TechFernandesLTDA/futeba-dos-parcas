@@ -1,5 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -59,6 +59,26 @@ export const CpfVerificationScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [successNextPath, setSuccessNextPath] = useState('/');
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    let cancelled = false;
+
+    firebaseUser
+      .getIdTokenResult()
+      .then((tokenResult) => {
+        if (cancelled || tokenResult.claims.verified !== true) return;
+        const nextPath = tokenResult.claims.profileComplete === false ? '/profile/setup' : '/';
+        navigate(nextPath, { replace: true });
+      })
+      .catch((err) => {
+        logger.warn('Failed to inspect verified claim on CPF screen:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [firebaseUser, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = stripCpf(e.target.value).slice(0, 11);
