@@ -35,7 +35,8 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { createLogger } from '../../utils/logger';
-import { canSendSmsOtp } from '../../services/cloudFunctions';
+import { canSendSmsOtp, logVerificationFailure } from '../../services/cloudFunctions';
+import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
 
 const logger = createLogger('PhoneVerification');
 
@@ -64,6 +65,28 @@ function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<
       .then(resolve)
       .catch(reject)
       .finally(() => window.clearTimeout(timer));
+  });
+}
+
+function mapPhoneVerificationFailureReason(code?: string): VerificationFailureReason {
+  switch (code) {
+    case 'auth/credential-already-in-use':
+      return 'duplicate_phone';
+    case 'auth/code-expired':
+      return 'code_expired';
+    case 'auth/invalid-verification-code':
+      return 'code_incorrect';
+    case 'auth/too-many-requests':
+    case 'auth/quota-exceeded':
+      return 'rate_limited';
+    default:
+      return 'invalid_format';
+  }
+}
+
+function auditPhoneVerificationFailure(reason: VerificationFailureReason): void {
+  logVerificationFailure({ reason, stage: 'phone' }).catch((auditErr) => {
+    logger.error('Failed to audit phone verification failure:', auditErr);
   });
 }
 
@@ -158,8 +181,18 @@ export const PhoneVerificationScreen: React.FC = () => {
 
       try {
         const rateCheck = await canSendSmsOtp({ phone: `+${normalized}` });
+        if (rateCheck.data.alreadyLinked) {
+          navigate('/onboarding/cpf', { replace: true });
+          return;
+        }
         if (!rateCheck.data.allowed) {
+          if (rateCheck.data.reason === 'duplicate_phone') {
+            auditPhoneVerificationFailure('duplicate_phone');
+            setError(t('feedback.phoneVerification.phoneAlreadyInUse'));
+            return;
+          }
           const retryAfter = rateCheck.data.retryAfterSec || 60;
+          auditPhoneVerificationFailure('rate_limited');
           setError(t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(retryAfter / 60) }));
           setResendCooldown(retryAfter);
           return;
@@ -188,6 +221,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
         setResendCooldown(300); // 5 minutos
       }
+      auditPhoneVerificationFailure(mapPhoneVerificationFailureReason(code));
       setError(msg);
       verifierRef.current?.clear();
       verifierRef.current = null;
@@ -261,6 +295,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       } else if (code === 'auth/credential-already-in-use') {
         msg = t('feedback.phoneVerification.phoneAlreadyInUse');
       }
+      auditPhoneVerificationFailure(mapPhoneVerificationFailureReason(code));
       setError(msg);
     } finally {
       setLoading(false);

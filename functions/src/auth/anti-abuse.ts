@@ -15,6 +15,7 @@ import {createHash} from "crypto";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
+import {getAuth} from "../utils/firebase-lazy";
 
 /**
  * FIX #2650: Hash phone number with SHA-256 for rate_limits doc-ID.
@@ -32,6 +33,10 @@ const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
 // FIX #1310-L8: limite generoso (log legítimo de falha de verificação é
 // esperado), mas barra spam que infla verification_failures/audit_logs.
 const LOG_FAIL_RATE_LIMIT_PER_HOUR = 20;
+
+type AuthUserLookupError = {
+  code?: string;
+};
 
 /**
  * Valida formato de IP (IPv4 ou IPv6). Evita persistir lixo forjado nos
@@ -89,6 +94,24 @@ export function clientIp(request: {rawRequest?: {
 }
 
 /**
+ * Consulta o dono atual do telefone no Firebase Auth.
+ *
+ * @param {string} phone - Telefone em E.164.
+ * @return {Promise<string | null>} UID do dono atual, ou null se livre.
+ */
+async function getExistingPhoneOwnerUid(phone: string): Promise<string | null> {
+  try {
+    const existingUser = await getAuth().getUserByPhoneNumber(phone);
+    return existingUser.uid;
+  } catch (error) {
+    if ((error as AuthUserLookupError)?.code === "auth/user-not-found") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
  * Valida se phone E.164 pode receber SMS OTP agora.
  * Retorna {allowed, retryAfterSec} sem mandar SMS.
  *
@@ -139,6 +162,27 @@ export const canSendSmsOtp = onCall(
           "invalid-argument",
           "Phone E.164 invalido",
         );
+      }
+
+      // Evita enviar SMS para telefone que o Firebase Auth já vinculou a
+      // outra conta. Sem este preflight, o usuário recebe código válido, mas
+      // o linkWithCredential falha depois como credential-already-in-use.
+      const existingPhoneOwnerUid = await getExistingPhoneOwnerUid(phone);
+      if (existingPhoneOwnerUid && existingPhoneOwnerUid !== request.auth.uid) {
+        logger.info("canSendSmsOtp blocked duplicate phone", {
+          uid: request.auth.uid,
+          existingUid: existingPhoneOwnerUid,
+        });
+        return {
+          allowed: false,
+          reason: "duplicate_phone",
+        };
+      }
+      if (existingPhoneOwnerUid === request.auth.uid) {
+        return {
+          allowed: true,
+          alreadyLinked: true,
+        };
       }
 
       const ip = clientIp(request);

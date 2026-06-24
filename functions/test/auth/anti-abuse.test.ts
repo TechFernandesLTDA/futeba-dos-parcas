@@ -4,6 +4,7 @@ const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
 const mockCountGet = jest.fn();
+const mockGetUserByPhoneNumber = jest.fn();
 
 const queryChain: any = { 
   where: mockWhere, 
@@ -69,6 +70,9 @@ jest.mock("firebase-admin", () => ({
   apps: [{ name: "test" }],
   initializeApp: jest.fn(),
   firestore: mockFirestore,
+  auth: jest.fn(() => ({
+    getUserByPhoneNumber: mockGetUserByPhoneNumber,
+  })),
 }));
 
 jest.mock("../../src/_db", () => ({
@@ -92,6 +96,7 @@ beforeEach(() => {
   mockWhere.mockReturnValue(queryChain);
   mockLimit.mockReturnValue(queryChain);
   mockOrderBy.mockReturnValue(queryChain);
+  mockGetUserByPhoneNumber.mockRejectedValue({ code: "auth/user-not-found" });
 });
 
 import { canSendSmsOtp, logVerificationFailure } from "../../src/auth/anti-abuse";
@@ -109,6 +114,7 @@ describe("Auth — Anti Abuse", () => {
     jest.clearAllMocks();
     mockCollectionAdd.mockResolvedValue({ id: "log1" });
     mockCountGet.mockResolvedValue({ data: () => ({ count: 1 }) });
+    mockGetUserByPhoneNumber.mockRejectedValue({ code: "auth/user-not-found" });
   });
 
   describe("canSendSmsOtp", () => {
@@ -121,6 +127,30 @@ describe("Auth — Anti Abuse", () => {
       const result = await canSendSmsOtp(makeRequest());
 
       expect(result.allowed).toBe(true);
+    });
+
+    it("bloqueia telefone ja vinculado a outro usuario antes do rate limit", async () => {
+      mockGetUserByPhoneNumber.mockResolvedValueOnce({ uid: "other-user" });
+
+      const result = await canSendSmsOtp(makeRequest());
+
+      expect(result).toEqual({
+        allowed: false,
+        reason: "duplicate_phone",
+      });
+      expect(checkRateLimit).not.toHaveBeenCalled();
+    });
+
+    it("permite telefone ja vinculado ao mesmo usuario sem reenviar SMS", async () => {
+      mockGetUserByPhoneNumber.mockResolvedValueOnce({ uid: "user1" });
+
+      const result = await canSendSmsOtp(makeRequest());
+
+      expect(result).toEqual({
+        allowed: true,
+        alreadyLinked: true,
+      });
+      expect(checkRateLimit).not.toHaveBeenCalled();
     });
 
     it("bloqueia quando rate limit por phone excedido", async () => {
