@@ -85,6 +85,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
             lineHeight: 1,
             fontSize: '1.15rem',
             mt: 0.35,
+            textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.75)}`,
           }}
         >
           {value}
@@ -139,6 +140,7 @@ const AttributeBar: React.FC<AttributeBarProps> = ({ label, value, color }) => {
             color: theme.palette.common.white,
             fontWeight: 900,
             fontSize: '0.72rem',
+            textShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.8)}`,
           }}
         >
           {normalized > 0 ? normalized.toFixed(1) : '--'}
@@ -582,7 +584,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         fontWeight: 950,
                         fontSize: '2.15rem',
                         lineHeight: 0.95,
-                        textShadow: `0 0 16px ${alpha(gColors.gold, 0.35)}`,
+                        textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.85)}, 0 0 16px ${alpha(gColors.gold, 0.45)}`,
                       }}
                     >
                       {player.overallRating}
@@ -614,19 +616,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     <Box
                       sx={{
                         position: 'absolute',
-                        inset: 0,
-                        clipPath: 'polygon(50% 0%, 94% 18%, 86% 100%, 14% 100%, 6% 18%)',
+                        inset: 4,
+                        borderRadius: '50%',
                         background: frameGradient,
-                        filter: `drop-shadow(0 16px 22px ${alpha(theme.palette.common.black, 0.35)})`,
+                        boxShadow: `0 14px 24px ${alpha(theme.palette.common.black, 0.38)}, inset 0 0 0 1px ${alpha(theme.palette.common.white, 0.26)}`,
                       }}
                     />
                     <Box
                       sx={{
                         position: 'absolute',
-                        inset: 6,
-                        clipPath: 'polygon(50% 0%, 93% 18%, 84% 100%, 16% 100%, 7% 18%)',
+                        inset: 12,
+                        borderRadius: '50%',
                         bgcolor: alpha(theme.palette.common.black, 0.34),
                         backgroundImage: `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.13)}, transparent 58%)`,
+                        boxShadow: `inset 0 0 24px ${alpha(theme.palette.common.black, 0.28)}`,
                       }}
                     />
                     <Avatar
@@ -671,7 +674,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                           fontWeight: 950,
                           fontSize: '0.8rem',
                           lineHeight: 1,
-                          textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.45)}`,
+                          textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.9)}`,
                         }}
                       >
                         {player.level}
@@ -894,7 +897,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       lineHeight: 1,
                       minWidth: 48,
                       textAlign: 'center',
-                      textShadow: `0 0 12px ${alpha(gColors.gold, 0.45)}`,
+                      textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.85)}, 0 0 12px ${alpha(gColors.gold, 0.5)}`,
                     }}
                   >
                     {player.overallRating}
