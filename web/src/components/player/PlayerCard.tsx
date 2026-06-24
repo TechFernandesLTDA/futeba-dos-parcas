@@ -306,7 +306,6 @@ async function renderShareCanvas(
       useCORS: true,
       allowTaint: true,
       logging: false,
-      foreignObjectRendering: true,
       windowWidth: Math.ceil(clone.scrollWidth || sourceWidth),
       windowHeight: Math.ceil(clone.scrollHeight || clone.offsetHeight),
     });
