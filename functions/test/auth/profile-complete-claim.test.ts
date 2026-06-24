@@ -105,7 +105,7 @@ describe("Profile Complete Claim", () => {
     jest.clearAllMocks();
     onUserProfileWrittenHandler = null;
     recomputeMyProfileClaimHandler = null;
-    mockGetUser.mockResolvedValue({customClaims: {}});
+    mockGetUser.mockResolvedValue({customClaims: {}, phoneNumber: validPhone});
     mockDocGet.mockResolvedValue({
       exists: true,
       data: () => ({cpfVerifiedAt: {seconds: 1}, phone: validPhone}),
@@ -113,29 +113,30 @@ describe("Profile Complete Claim", () => {
     loadModule();
   });
 
-  test("computeProfileComplete valida cpfVerifiedAt e telefone BR", () => {
+  test("computeProfileComplete valida cpfVerifiedAt e telefone BR do Auth", () => {
     const {computeProfileComplete} = loadModule();
 
     expect(computeProfileComplete({
       cpfVerifiedAt: {seconds: 1},
-      phone: validPhone,
-    })).toBe(true);
+    }, validPhone)).toBe(true);
     expect(computeProfileComplete({
       cpfVerifiedAt: {seconds: 1},
-      phone: "(41) 99999-9999",
-    })).toBe(true);
+    }, "(41) 99999-9999")).toBe(true);
     expect(computeProfileComplete({
       cpfVerifiedAt: {seconds: 1},
-      phone: "+55 41 88888-8888",
-    })).toBe(false);
+    }, "+55 41 88888-8888")).toBe(false);
     expect(computeProfileComplete({
+    }, validPhone)).toBe(false);
+    expect(computeProfileComplete({
+      cpfVerifiedAt: {seconds: 1},
       phone: validPhone,
-    })).toBe(false);
+    }, undefined)).toBe(false);
   });
 
   test("trigger seta claim true preservando role", async () => {
     mockGetUser.mockResolvedValue({
       customClaims: {role: "ADMIN"},
+      phoneNumber: validPhone,
     });
 
     await onUserProfileWrittenHandler!(userWriteEvent(
@@ -149,17 +150,18 @@ describe("Profile Complete Claim", () => {
     });
   });
 
-  test("trigger unseta claim quando telefone fica invalido", async () => {
+  test("trigger unseta claim quando telefone do Auth fica invalido", async () => {
     mockGetUser.mockResolvedValue({
       customClaims: {
         role: "FIELD_OWNER",
         profileComplete: true,
       },
+      phoneNumber: "+55 41 88888-8888",
     });
 
     await onUserProfileWrittenHandler!(userWriteEvent(
-      {cpfVerifiedAt: {seconds: 1}, phone: ""},
-      {cpfVerifiedAt: {seconds: 1}, phone: validPhone}
+      {cpfVerifiedAt: {seconds: 1}},
+      {}
     ));
 
     expect(mockSetCustomUserClaims).toHaveBeenCalledWith("user1", {
@@ -174,6 +176,7 @@ describe("Profile Complete Claim", () => {
         role: "PLAYER",
         profileComplete: true,
       },
+      phoneNumber: validPhone,
     });
 
     await onUserProfileWrittenHandler!(userWriteEvent(
@@ -200,6 +203,7 @@ describe("Profile Complete Claim", () => {
         role: "PLAYER",
         profileComplete: false,
       },
+      phoneNumber: validPhone,
     });
     mockDocGet.mockResolvedValue({
       exists: true,

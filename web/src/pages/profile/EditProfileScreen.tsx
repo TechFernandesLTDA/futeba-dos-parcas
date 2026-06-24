@@ -25,7 +25,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../services/firebase';
 import { updateUserPii } from '../../services/cloudFunctions';
@@ -273,13 +273,6 @@ export const EditProfileScreen: React.FC = () => {
       errors.nickname = t('profile.errorNicknameMaxLength');
     }
 
-    // #1339: telefone é opcional, mas se preenchido deve ter DDD + número
-    // (10 fixo, 11 celular). Não força máscara (mudança de UX maior).
-    const phoneDigits = formData.phone.replace(/\D/g, '');
-    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      errors.phone = t('profile.errorInvalidPhone');
-    }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -368,7 +361,6 @@ export const EditProfileScreen: React.FC = () => {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         name: trimmedName,
         nickname: formData.nickname,
-        phone: formData.phone,
         preferred_position: formData.preferredPosition,
         bio: formData.bio,
         favorite_team: formData.favoriteTeam,
@@ -380,7 +372,6 @@ export const EditProfileScreen: React.FC = () => {
         mid_rating_set: true,
         defender_rating_set: true,
         gk_rating_set: true,
-        updated_at: serverTimestamp(),
       });
 
       // Persiste gênero via callable, porque users_private é read-only para
@@ -439,7 +430,6 @@ export const EditProfileScreen: React.FC = () => {
     initialData !== null &&
     (formData.name !== initialData.name ||
       formData.nickname !== initialData.nickname ||
-      formData.phone !== initialData.phone ||
       formData.preferredPosition !== initialData.preferredPosition ||
       formData.bio !== initialData.bio ||
       formData.favoriteTeam !== initialData.favoriteTeam ||
@@ -550,9 +540,9 @@ export const EditProfileScreen: React.FC = () => {
               <TextField
                 label={t('profile.phoneLabel')}
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
+                disabled
                 error={!!formErrors.phone}
-                helperText={formErrors.phone}
+                helperText={formErrors.phone || t('onboarding.phonePrivacy')}
                 fullWidth
                 type="tel"
                 autoComplete="tel"
