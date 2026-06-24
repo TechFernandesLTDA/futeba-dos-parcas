@@ -52,41 +52,183 @@ const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
     <Box
       sx={{
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-        gap: 0.25,
-        minWidth: 64,
+        justifyContent: 'space-between',
+        gap: 0.75,
+        px: 1,
+        py: 0.85,
+        minWidth: 0,
+        borderRadius: 1.5,
+        bgcolor: alpha(theme.palette.common.black, 0.22),
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
       }}
     >
-      <Box sx={{ color: color || alpha(theme.palette.common.white, 0.7), display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: alpha(theme.palette.common.white, 0.58),
+            fontSize: '0.68rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            display: 'block',
+            lineHeight: 1.1,
+          }}
+        >
+          {label}
+        </Typography>
+        <Typography
+          variant="h6"
+          sx={{
+            color: theme.palette.common.white,
+            fontWeight: 900,
+            lineHeight: 1,
+            fontSize: '1.15rem',
+            mt: 0.35,
+          }}
+        >
+          {value}
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          bgcolor: alpha(color || theme.palette.common.white, 0.13),
+          color: color || alpha(theme.palette.common.white, 0.78),
+          display: 'grid',
+          placeItems: 'center',
+          flexShrink: 0,
+        }}
+      >
         {icon}
       </Box>
-      <Typography
-        variant="h6"
-        sx={{
-          color: theme.palette.common.white,
-          fontWeight: 700,
-          lineHeight: 1,
-          fontSize: '1.1rem',
-        }}
-      >
-        {value}
-      </Typography>
-      <Typography
-        variant="caption"
-        sx={{
-          color: alpha(theme.palette.common.white, 0.6),
-          fontSize: '0.75rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Typography>
     </Box>
   );
 };
+
+interface AttributeBarProps {
+  label: string;
+  value: number;
+  color: string;
+}
+
+const AttributeBar: React.FC<AttributeBarProps> = ({ label, value, color }) => {
+  const theme = useTheme();
+  const normalized = Math.max(0, Math.min(value, 5));
+  const percent = Math.round((normalized / 5) * 100);
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.45 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: alpha(theme.palette.common.white, 0.7),
+            fontWeight: 800,
+            fontSize: '0.68rem',
+            letterSpacing: '0.08em',
+          }}
+        >
+          {label}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: theme.palette.common.white,
+            fontWeight: 900,
+            fontSize: '0.72rem',
+          }}
+        >
+          {normalized > 0 ? normalized.toFixed(1) : '--'}
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          height: 6,
+          borderRadius: 999,
+          bgcolor: alpha(theme.palette.common.black, 0.32),
+          overflow: 'hidden',
+          border: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
+        }}
+      >
+        <Box
+          sx={{
+            height: '100%',
+            width: `${percent}%`,
+            borderRadius: 999,
+            background: `linear-gradient(90deg, ${color}, ${alpha(theme.palette.common.white, 0.88)})`,
+            boxShadow: normalized > 0 ? `0 0 12px ${alpha(color, 0.45)}` : 'none',
+          }}
+        />
+      </Box>
+    </Box>
+  );
+};
+
+const PlayerCardSkeleton: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', px: 2, py: 4 }}>
+      <Skeleton variant="rounded" width="100%" height={48} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), borderRadius: 2, mb: 2 }} />
+      <Skeleton variant="circular" width={142} height={142} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1) }} />
+      <Skeleton variant="text" width={190} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), mt: 2 }} />
+      <Skeleton variant="rounded" width="100%" height={150} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), borderRadius: 2, mt: 2 }} />
+    </Box>
+  );
+};
+
+interface EmptyStateCardProps {
+  error: string | null;
+  onRetry: () => void;
+}
+
+const EmptyStateCard: React.FC<EmptyStateCardProps> = ({ error, onRetry }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  return (
+    <Box sx={{ textAlign: 'center', px: 3, py: 6 }}>
+      <Typography color={error ? 'error.light' : 'text.secondary'} gutterBottom>
+        {error ? t('player.card.loadError') : t('player.card.ariaLabel')}
+      </Typography>
+      {error && (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onRetry}
+          sx={{
+            color: theme.palette.common.white,
+            borderColor: alpha(theme.palette.common.white, 0.5),
+            '&:hover': {
+              borderColor: theme.palette.common.white,
+              bgcolor: alpha(theme.palette.common.white, 0.08),
+            },
+          }}
+        >
+          {t('player.card.retry')}
+        </Button>
+      )}
+    </Box>
+  );
+};
+
+function getRatingValue(primary: number, fallback: number): number {
+  return primary > 0 ? primary : fallback;
+}
+
+function getCardEdition(level: number): string {
+  if (level >= 20) return 'LEGEND';
+  if (level >= 15) return 'ELITE';
+  if (level >= 10) return 'PRO';
+  if (level >= 5) return 'RISING';
+  return 'ROOKIE';
+}
+
+function getFitPlayerName(name: string): string {
+  return name.trim().slice(0, 28);
+}
 
 interface PlayerCardProps {
   userId: string | null;
@@ -98,8 +240,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const theme = useTheme();
   const gColors = useGamificationColors();
 
-  const CARD_GRADIENT = `linear-gradient(160deg, ${theme.palette.success.dark} 0%, ${alpha(theme.palette.success.main, 0.85)} 35%, ${theme.palette.success.main} 60%, ${theme.palette.success.light} 100%)`;
-  const CARD_BADGE_BORDER = theme.palette.success.dark;
   const XP_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${theme.palette.primary.main}, ${gColors.gold})`, [theme.palette.primary.main, gColors.gold]);
   const OVERALL_BAR_GRADIENT = useMemo(() => `linear-gradient(90deg, ${gColors.gold}, ${theme.palette.warning.main})`, [gColors.gold, theme.palette.warning.main]);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -178,6 +318,41 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const winRate = useMemo(() => player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)
     : 0, [player]);
+  const cardEdition = player ? getCardEdition(player.level) : 'PLAYER';
+  const cardGradient = useMemo(() => `
+    radial-gradient(circle at 18% 14%, ${alpha(gColors.gold, 0.2)} 0, transparent 24%),
+    radial-gradient(circle at 88% 20%, ${alpha(levelColor, 0.22)} 0, transparent 28%),
+    linear-gradient(150deg, ${theme.palette.success.dark} 0%, ${theme.palette.background.default} 48%, ${theme.palette.primary.dark} 100%)
+  `, [gColors.gold, levelColor, theme.palette.background.default, theme.palette.primary.dark, theme.palette.success.dark]);
+  const frameGradient = useMemo(
+    () => `linear-gradient(135deg, ${gColors.gold}, ${levelColor}, ${theme.palette.info.main})`,
+    [gColors.gold, levelColor, theme.palette.info.main]
+  );
+  const positionLabel = player?.preferredPosition
+    ? t(`player.positions.${player.preferredPosition}`, { defaultValue: player.preferredPosition })
+    : t('player.card.noPosition');
+  const attributeRows = player ? [
+    {
+      label: t('player.card.attackShort'),
+      value: getRatingValue(player.strikerRating, player.autoStrikerRating),
+      color: theme.palette.error.light,
+    },
+    {
+      label: t('player.card.midShort'),
+      value: getRatingValue(player.midRating, player.autoMidRating),
+      color: theme.palette.info.light,
+    },
+    {
+      label: t('player.card.defenseShort'),
+      value: getRatingValue(player.defenderRating, player.autoDefenderRating),
+      color: theme.palette.success.light,
+    },
+    {
+      label: t('player.card.gkShort'),
+      value: getRatingValue(player.gkRating, player.autoGkRating),
+      color: theme.palette.warning.light,
+    },
+  ] : [];
 
   return (
     <Dialog
@@ -244,247 +419,364 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         <Box
           ref={cardRef}
           sx={{
-            borderRadius: `${theme.shape.borderRadius}px`,
+            borderRadius: 3,
             overflow: 'hidden',
-            background: CARD_GRADIENT,
-            boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.5)}, 0 0 0 1px ${alpha(theme.palette.common.white, 0.1)}`,
+            background: cardGradient,
+            boxShadow: `0 24px 70px ${alpha(theme.palette.common.black, 0.58)}, 0 0 0 1px ${alpha(theme.palette.common.white, 0.12)}`,
             position: 'relative',
+            isolation: 'isolate',
+            border: `1px solid ${alpha(gColors.gold, 0.28)}`,
           }}
         >
-          {/* Textura de campo de futebol */}
+          {/* Textura de figurinha/campo */}
           <Box
             sx={{
               position: 'absolute',
               inset: 0,
               backgroundImage: `
+                linear-gradient(115deg, transparent 0%, ${alpha(theme.palette.common.white, 0.08)} 38%, transparent 54%),
                 repeating-linear-gradient(
-                  0deg,
+                  90deg,
                   transparent,
-                  transparent 28px,
-                  ${alpha(theme.palette.common.white, 0.03)} 28px,
-                  ${alpha(theme.palette.common.white, 0.03)} 56px
+                  transparent 18px,
+                  ${alpha(theme.palette.common.white, 0.035)} 18px,
+                  ${alpha(theme.palette.common.white, 0.035)} 19px
                 )
               `,
               pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 10,
+              borderRadius: 2.25,
+              border: `1px solid ${alpha(theme.palette.common.white, 0.14)}`,
+              boxShadow: `inset 0 0 0 1px ${alpha(theme.palette.common.black, 0.22)}`,
+              pointerEvents: 'none',
+              zIndex: 0,
             }}
           />
 
-          {/* Cabeçalho com logo */}
+          {/* Cabeçalho de figurinha */}
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              px: 2,
-              pt: 1.5,
-              pb: 0.5,
+              px: 2.25,
+              pt: 2,
+              pb: 1,
+              position: 'relative',
+              zIndex: 1,
             }}
           >
-            <Typography
-              variant="overline"
-              sx={{
-                color: alpha(theme.palette.common.white, 0.5),
-                fontSize: '0.75rem',
-                letterSpacing: '0.15em',
-              }}
-            >
-              {t('player.card.brand')}
-            </Typography>
             <Box
               sx={{
-                bgcolor: alpha(theme.palette.common.white, 0.1),
-                borderRadius: `${theme.shape.borderRadius / 2}px`,
-                px: 0.75,
-                py: 0.25,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                minWidth: 0,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '50%',
+                  background: frameGradient,
+                  display: 'grid',
+                  placeItems: 'center',
+                  boxShadow: `0 0 18px ${alpha(gColors.gold, 0.35)}`,
+                }}
+              >
+                <SoccerIcon sx={{ color: theme.palette.common.white, fontSize: iconSizes.sm }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: alpha(theme.palette.common.white, 0.62),
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.16em',
+                    lineHeight: 1,
+                    display: 'block',
+                  }}
+                >
+                  {t('player.card.brand')}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: theme.palette.common.white,
+                    fontWeight: 800,
+                    fontSize: '0.72rem',
+                    letterSpacing: '0.12em',
+                    lineHeight: 1,
+                  }}
+                >
+                  {cardEdition}
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: alpha(theme.palette.common.black, 0.26),
+                borderRadius: 999,
+                px: 1,
+                py: 0.45,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
+                border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
               }}
             >
-              <SoccerIcon sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: iconSizes.xs }} />
+              <TrophyIcon sx={{ color: gColors.gold, fontSize: iconSizes.xs }} />
               <Typography
                 variant="overline"
-                sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '0.75rem', letterSpacing: '0.1em' }}
+                sx={{ color: alpha(theme.palette.common.white, 0.78), fontSize: '0.68rem', letterSpacing: '0.1em', lineHeight: 1.2 }}
               >
                 {t('player.card.sticker')}
               </Typography>
             </Box>
           </Box>
 
-          {/* Foto + nome */}
+          {/* Miolo da figurinha */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              px: 2,
-              pt: 1,
+              position: 'relative',
+              zIndex: 1,
+              px: 2.25,
               pb: 2,
             }}
           >
             {loading ? (
-              <>
-                <Skeleton variant="circular" width={120} height={120} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1) }} />
-                <Skeleton variant="text" width={160} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), mt: 1.5 }} />
-                <Skeleton variant="text" width={100} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), mt: 0.5 }} />
-              </>
+              <PlayerCardSkeleton />
             ) : error ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="error" gutterBottom>{t('player.card.loadError')}</Typography>
-                {/* SECFIX #492: Button (não IconButton) — IconButton é semanticamente
-                    pra ícones puros; texto sem ícone usa Button (WCAG 4.1.2). */}
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => refetch()}
-                  sx={{
-                    color: theme.palette.common.white,
-                    borderColor: alpha(theme.palette.common.white, 0.5),
-                    '&:hover': {
-                      borderColor: theme.palette.common.white,
-                      bgcolor: alpha(theme.palette.common.white, 0.08),
-                    },
-                  }}
-                >
-                  {t('player.card.retry')}
-                </Button>
-              </Box>
+              <EmptyStateCard error={error} onRetry={() => refetch()} />
             ) : player ? (
               <>
-                {/* Avatar com borda dourada + badge de nível */}
-                <Box sx={{ position: 'relative', mb: 1.5 }}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '74px 1fr 74px',
+                    alignItems: 'start',
+                    gap: 1.25,
+                    pt: 0.5,
+                  }}
+                >
                   <Box
                     sx={{
-                      borderRadius: '50%',
-                      p: '3px',
-                       background: `linear-gradient(135deg, ${gColors.gold}, ${gColors.gold}, ${gColors.gold})`,
-                      boxShadow: `0 0 20px ${alpha(gColors.gold, 0.4)}`,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.common.black, 0.36),
+                      border: `1px solid ${alpha(gColors.gold, 0.24)}`,
+                      p: 1,
+                      textAlign: 'center',
+                      minHeight: 82,
                     }}
                   >
+                    <Typography
+                      sx={{
+                        color: gColors.gold,
+                        fontWeight: 950,
+                        fontSize: '2.15rem',
+                        lineHeight: 0.95,
+                        textShadow: `0 0 16px ${alpha(gColors.gold, 0.35)}`,
+                      }}
+                    >
+                      {player.overallRating}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: theme.palette.common.white,
+                        fontWeight: 800,
+                        letterSpacing: '0.12em',
+                        fontSize: '0.65rem',
+                      }}
+                    >
+                      {t('player.card.overall')}
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      justifySelf: 'center',
+                      position: 'relative',
+                      width: 150,
+                      height: 166,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        clipPath: 'polygon(50% 0%, 94% 18%, 86% 100%, 14% 100%, 6% 18%)',
+                        background: frameGradient,
+                        filter: `drop-shadow(0 16px 22px ${alpha(theme.palette.common.black, 0.35)})`,
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 6,
+                        clipPath: 'polygon(50% 0%, 93% 18%, 84% 100%, 16% 100%, 7% 18%)',
+                        bgcolor: alpha(theme.palette.common.black, 0.34),
+                        backgroundImage: `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.13)}, transparent 58%)`,
+                      }}
+                    />
                     <Avatar
                       src={player.photoUrl}
                       alt={player.name}
                       slotProps={{ img: { loading: 'lazy' } }}
                       sx={{
-                        width: 120,
-                        height: 120,
+                        width: 124,
+                        height: 124,
                         bgcolor: alpha(levelColor, 0.3),
-                        fontSize: '2.5rem',
-                        fontWeight: 700,
+                        fontSize: '2.7rem',
+                        fontWeight: 900,
                         color: theme.palette.common.white,
+                        border: `3px solid ${alpha(theme.palette.common.white, 0.72)}`,
+                        boxShadow: `0 10px 26px ${alpha(theme.palette.common.black, 0.35)}`,
+                        zIndex: 1,
                       }}
                     >
                       {player.name.charAt(0).toUpperCase()}
                     </Avatar>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 6,
+                        right: 14,
+                        minWidth: 38,
+                        height: 30,
+                        px: 0.75,
+                        borderRadius: 999,
+                        bgcolor: levelColor,
+                        border: `2px solid ${alpha(theme.palette.common.white, 0.76)}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 2,
+                        boxShadow: `0 8px 16px ${alpha(theme.palette.common.black, 0.35)}`,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          color: theme.palette.common.white,
+                          fontWeight: 950,
+                          fontSize: '0.8rem',
+                          lineHeight: 1,
+                          textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.45)}`,
+                        }}
+                      >
+                        {player.level}
+                      </Typography>
+                    </Box>
                   </Box>
 
-                  {/* Badge de nível */}
                   <Box
                     sx={{
-                      position: 'absolute',
-                      bottom: 2,
-                      right: 2,
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      bgcolor: levelColor,
-                      border: `2px solid ${CARD_BADGE_BORDER}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.4)}`,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.common.black, 0.36),
+                      border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
+                      p: 1,
+                      textAlign: 'center',
+                      minHeight: 82,
                     }}
                   >
                     <Typography
                       sx={{
                         color: theme.palette.common.white,
-                        fontWeight: 900,
-                        fontSize: '0.75rem',
-                        lineHeight: 1,
-                        textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.5)}`,
+                        fontWeight: 950,
+                        fontSize: '1rem',
+                        lineHeight: 1.05,
+                        wordBreak: 'break-word',
                       }}
                     >
-                      {player.level}
+                      {positionLabel}
                     </Typography>
-                  </Box>
-                </Box>
-
-                {/* Nome e apelido */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      color: theme.palette.common.white,
-                      fontWeight: 800,
-                      textAlign: 'center',
-                      lineHeight: 1.1,
-                      textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.3)}`,
-                    }}
-                  >
-                    {player.name}
-                  </Typography>
-                  <TeamBadge teamId={player.favoriteTeam} size={20} />
-                </Box>
-
-                {player.nickname && (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: alpha(theme.palette.common.white, 0.65),
-                      fontStyle: 'italic',
-                      mt: 0.25,
-                    }}
-                  >
-                    "{player.nickname}"
-                  </Typography>
-                )}
-
-                {/* Posição e título de nível */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.75 }}>
-                  {player.preferredPosition && (
-                    <Box
-                      sx={{
-                        bgcolor: alpha(theme.palette.common.white, 0.15),
-                        borderRadius: `${theme.shape.borderRadius * 2}px`,
-                        px: 1.25,
-                        py: 0.25,
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{ color: alpha(theme.palette.common.white, 0.85), fontWeight: 600, fontSize: '0.75rem' }}
-                      >
-                        {t(`player.positions.${player.preferredPosition}`, {
-                          defaultValue: player.preferredPosition,
-                        })}
-                      </Typography>
-                    </Box>
-                  )}
-                  <Box
-                    sx={{
-                      bgcolor: alpha(levelColor, 0.3),
-                      border: `1px solid ${alpha(levelColor, 0.6)}`,
-                      borderRadius: `${theme.shape.borderRadius * 2}px`,
-                      px: 1.25,
-                      py: 0.25,
-                    }}
-                  >
                     <Typography
                       variant="caption"
-                      sx={{ color: levelColor, fontWeight: 700, fontSize: '0.75rem' }}
+                      sx={{
+                        color: alpha(theme.palette.common.white, 0.62),
+                        fontWeight: 800,
+                        letterSpacing: '0.12em',
+                        fontSize: '0.65rem',
+                        display: 'block',
+                        mt: 0.4,
+                      }}
                     >
-                      {levelEntry?.name}
+                      {levelEntry?.name || t('player.card.level')}
                     </Typography>
                   </Box>
                 </Box>
 
-                {/* Barra de XP */}
-                <Box sx={{ width: '100%', mt: 2, px: 0.5 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.75rem' }}>
+                <Box
+                  sx={{
+                    mt: 1.5,
+                    mb: 1.25,
+                    mx: 0.25,
+                    px: 1.5,
+                    py: 1.25,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.common.black, 0.28),
+                    border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75, minWidth: 0 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        color: theme.palette.common.white,
+                        fontWeight: 950,
+                        textAlign: 'center',
+                        lineHeight: 1.05,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em',
+                        textShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.32)}`,
+                        overflowWrap: 'anywhere',
+                      }}
+                    >
+                      {getFitPlayerName(player.name)}
+                    </Typography>
+                    <TeamBadge teamId={player.favoriteTeam} size={22} />
+                  </Box>
+                  {player.nickname && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: alpha(theme.palette.common.white, 0.68),
+                        fontWeight: 600,
+                        mt: 0.35,
+                      }}
+                    >
+                      {player.nickname}
+                    </Typography>
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    width: '100%',
+                    px: 1.25,
+                    py: 1,
+                    mb: 1.25,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.common.black, 0.24),
+                    border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.65, gap: 1 }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.66), fontSize: '0.72rem', fontWeight: 700 }}>
                       {player.experiencePoints.toLocaleString(numberLocale)} XP
                     </Typography>
-                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.75rem' }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.66), fontSize: '0.72rem', fontWeight: 700, textAlign: 'right' }}>
                       {player.level < 20
                         ? t('player.card.xpToNextLevel', {
                           xp: xpRemaining.toLocaleString(numberLocale),
@@ -495,10 +787,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   </Box>
                   <Box
                     sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: alpha(theme.palette.common.black, 0.3),
+                      height: 8,
+                      borderRadius: 999,
+                      bgcolor: alpha(theme.palette.common.black, 0.36),
                       overflow: 'hidden',
+                      border: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
                     }}
                   >
                     <Box
@@ -506,38 +799,46 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         height: '100%',
                         width: `${xpProgress * 100}%`,
                         background: XP_BAR_GRADIENT,
-                        borderRadius: 3,
-                        transition: (t) => t.transitions.create('width', { duration: 800 }),
-                        boxShadow: `0 0 6px ${alpha(theme.palette.primary.main, 0.6)}`,
+                        borderRadius: 999,
+                        transition: (transitionTheme) => transitionTheme.transitions.create('width', { duration: 800 }),
+                        boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.55)}`,
                       }}
                     />
                   </Box>
                 </Box>
 
-                {/* Divisor decorativo */}
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '1px',
-                    background: `linear-gradient(90deg, transparent, ${alpha(theme.palette.common.white, 0.2)}, transparent)`,
-                    my: 2,
-                  }}
-                />
-
-                {/* Stats — grid 3x2 */}
                 <Box
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 1.5,
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: 0.9,
                     width: '100%',
-                    px: 0.5,
+                    mb: 1.25,
+                  }}
+                >
+                  {attributeRows.map((item) => (
+                    <AttributeBar
+                      key={item.label}
+                      label={item.label}
+                      value={item.value}
+                      color={item.color}
+                    />
+                  ))}
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: 0.85,
+                    width: '100%',
                   }}
                 >
                   <StatItem
                     icon={<SoccerIcon fontSize="small" />}
                     label={t('player.stats.games')}
                     value={player.totalGames}
+                    color={theme.palette.success.light}
                   />
                   <StatItem
                     icon={<SoccerIcon fontSize="small" />}
@@ -571,45 +872,48 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   />
                 </Box>
 
-                {/* Rating overall */}
                 <Box
                   sx={{
-                    mt: 2,
-                    px: 2,
+                    mt: 1.25,
+                    px: 1.25,
                     py: 1,
-                    bgcolor: alpha(theme.palette.common.black, 0.25),
-                    borderRadius: `${theme.shape.borderRadius}px`,
+                    bgcolor: alpha(theme.palette.common.black, 0.26),
+                    borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1.5,
+                    gap: 1.25,
                     width: '100%',
+                    border: `1px solid ${alpha(gColors.gold, 0.18)}`,
                   }}
                 >
                   <Typography
                     sx={{
                       color: gColors.gold,
-                      fontWeight: 900,
+                      fontWeight: 950,
                       fontSize: '2rem',
                       lineHeight: 1,
-                      textShadow: `0 0 12px ${alpha(gColors.gold, 0.5)}`,
+                      minWidth: 48,
+                      textAlign: 'center',
+                      textShadow: `0 0 12px ${alpha(gColors.gold, 0.45)}`,
                     }}
                   >
                     {player.overallRating}
                   </Typography>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.5), fontSize: '0.75rem' }}>
-                      {t('player.card.overall')}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.58), fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.12em' }}>
+                      {t('player.card.ratingBreakdown')}
                     </Typography>
                     <LinearProgress
                       variant="determinate"
                       value={player.overallRating}
                       sx={{
-                        height: 6,
-                        borderRadius: 3,
-                        bgcolor: alpha(theme.palette.common.black, 0.3),
+                        height: 8,
+                        borderRadius: 999,
+                        bgcolor: alpha(theme.palette.common.black, 0.34),
+                        mt: 0.45,
                         '& .MuiLinearProgress-bar': {
                           background: OVERALL_BAR_GRADIENT,
-                          borderRadius: 3,
+                          borderRadius: 999,
                         },
                       }}
                     />
@@ -627,6 +931,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               py: 1,
               display: 'flex',
               justifyContent: 'center',
+              position: 'relative',
+              zIndex: 1,
             }}
           >
             <Typography
