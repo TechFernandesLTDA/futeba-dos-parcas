@@ -296,7 +296,7 @@ class PreferencesManager constructor(
     companion object {
         private const val PREFS_NAME = "futeba_prefs"
         private const val ENCRYPTED_PREFS_NAME = "futeba_secure_prefs"
-        private const val DEFAULT_THEME = "system"
+        private const val DEFAULT_THEME = "light"
         private const val DEFAULT_TIME_FORMAT = "auto"
 
         // Chaves para SharedPreferences padrão (dados não-sensíveis)

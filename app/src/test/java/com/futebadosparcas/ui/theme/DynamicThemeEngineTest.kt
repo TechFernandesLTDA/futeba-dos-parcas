@@ -34,10 +34,10 @@ class DynamicThemeEngineTest {
     private val configHigh = configNormal.copy(contrastLevel = ContrastLevel.HIGH)
 
     @Test
-    fun configuracaoPadrao_usaSistemaEMaterialYouOptInDesligado() {
+    fun configuracaoPadrao_usaLightEMaterialYouOptInDesligado() {
         val config = AppThemeConfig()
 
-        assertEquals(ThemeMode.SYSTEM, config.mode)
+        assertEquals(ThemeMode.LIGHT, config.mode)
         assertEquals(ContrastLevel.NORMAL, config.contrastLevel)
         assertFalse(config.useDynamicColor)
     }
