@@ -38,7 +38,8 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { createLogger } from '../../utils/logger';
-import { canSendSmsOtp } from '../../services/cloudFunctions';
+import { canSendSmsOtp, logVerificationFailure } from '../../services/cloudFunctions';
+import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
 
 const logger = createLogger('PhoneVerification');
 const PHONE_VERIFICATION_SESSION_KEY = 'futeba.phoneVerification';
@@ -76,6 +77,25 @@ function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<
       .catch(reject)
       .finally(() => window.clearTimeout(timer));
   });
+}
+
+function mapPhoneOtpFailureReason(code?: string): VerificationFailureReason {
+  switch (code) {
+    case 'auth/code-expired':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-verification-id':
+    case 'auth/missing-verification-id':
+    case 'auth/session-expired':
+      return 'code_expired';
+    case 'auth/credential-already-in-use':
+      return 'duplicate_phone';
+    case 'auth/too-many-requests':
+    case 'auth/quota-exceeded':
+      return 'rate_limited';
+    case 'auth/invalid-verification-code':
+    default:
+      return 'code_incorrect';
+  }
 }
 
 /**
@@ -324,9 +344,18 @@ export const PhoneVerificationScreen: React.FC = () => {
         navigate('/onboarding/cpf', { replace: true });
         return;
       }
+      logVerificationFailure({ reason: mapPhoneOtpFailureReason(code), stage: 'phone' }).catch((e) => {
+        logger.error('Falha ao registrar tentativa de verificação de telefone:', e);
+      });
+
       let msg = t('feedback.phoneVerification.invalidCode');
       if (code === 'auth/invalid-verification-code') msg = t('feedback.phoneVerification.incorrectCode');
-      else if (code === 'auth/code-expired') {
+      else if (
+        code === 'auth/code-expired' ||
+        code === 'auth/invalid-verification-id' ||
+        code === 'auth/missing-verification-id' ||
+        code === 'auth/session-expired'
+      ) {
         msg = t('feedback.phoneVerification.codeExpired');
       } else if (code === 'auth/credential-already-in-use') {
         msg = t('feedback.phoneVerification.phoneAlreadyInUse');
