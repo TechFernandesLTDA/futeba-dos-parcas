@@ -84,6 +84,10 @@ function mapPhoneVerificationFailureReason(code?: string): VerificationFailureRe
     case 'auth/credential-already-in-use':
       return 'duplicate_phone';
     case 'auth/code-expired':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-verification-id':
+    case 'auth/missing-verification-id':
+    case 'auth/session-expired':
       return 'code_expired';
     case 'auth/invalid-verification-code':
       return 'code_incorrect';
@@ -99,6 +103,25 @@ function auditPhoneVerificationFailure(reason: VerificationFailureReason): void 
   logVerificationFailure({ reason, stage: 'phone' }).catch((auditErr) => {
     logger.error('Failed to audit phone verification failure:', auditErr);
   });
+}
+
+function mapPhoneOtpFailureReason(code?: string): VerificationFailureReason {
+  switch (code) {
+    case 'auth/code-expired':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-verification-id':
+    case 'auth/missing-verification-id':
+    case 'auth/session-expired':
+      return 'code_expired';
+    case 'auth/credential-already-in-use':
+      return 'duplicate_phone';
+    case 'auth/too-many-requests':
+    case 'auth/quota-exceeded':
+      return 'rate_limited';
+    case 'auth/invalid-verification-code':
+    default:
+      return 'code_incorrect';
+  }
 }
 
 /**
@@ -360,7 +383,12 @@ export const PhoneVerificationScreen: React.FC = () => {
       }
       let msg = t('feedback.phoneVerification.invalidCode');
       if (code === 'auth/invalid-verification-code') msg = t('feedback.phoneVerification.incorrectCode');
-      else if (code === 'auth/code-expired') {
+      else if (
+        code === 'auth/code-expired' ||
+        code === 'auth/invalid-verification-id' ||
+        code === 'auth/missing-verification-id' ||
+        code === 'auth/session-expired'
+      ) {
         msg = t('feedback.phoneVerification.codeExpired');
       } else if (code === 'auth/credential-already-in-use') {
         msg = t('feedback.phoneVerification.phoneAlreadyInUse');
@@ -373,7 +401,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         setStep('phone');
         setResendCooldown(0);
       }
-      auditPhoneVerificationFailure(mapPhoneVerificationFailureReason(code));
+      auditPhoneVerificationFailure(mapPhoneOtpFailureReason(code));
       setError(msg);
     } finally {
       setLoading(false);
