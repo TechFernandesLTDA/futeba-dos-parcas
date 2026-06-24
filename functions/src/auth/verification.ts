@@ -282,21 +282,6 @@ export const setUserVerified = onCall(
       // (Firebase popula phone_number no UserRecord automaticamente).
       const userRecord = await admin.auth().getUser(targetUid);
 
-      // FIX #1308: idempotência. Se o usuário JÁ está verified=true, retornar
-      // cedo SEM revogar refresh tokens nem reescrever claims/mirrors. Revogar
-      // tokens forçava reauth no cliente → nova chamada de setUserVerified →
-      // loop self-perpetuating cross-platform (web + Android #1313).
-      if (userRecord.customClaims?.verified === true) {
-        logger.info("[SET_VERIFIED] No-op: usuário já verificado", {
-          uid: targetUid,
-        });
-        return {
-          success: true,
-          uid: targetUid,
-          alreadyVerified: true,
-        };
-      }
-
       if (!userRecord.phoneNumber) {
         throw new HttpsError(
           "failed-precondition",
@@ -314,17 +299,25 @@ export const setUserVerified = onCall(
       );
 
       const currentClaims = userRecord.customClaims ?? {};
-
-      await admin.auth().setCustomUserClaims(targetUid, {
+      const nextClaims = {
         ...currentClaims,
         verified: true,
-      });
+        profileComplete: true,
+      };
+      const claimsAlreadyCurrent =
+        currentClaims.verified === true &&
+        currentClaims.profileComplete === true;
 
-      await admin.auth().revokeRefreshTokens(targetUid);
+      if (!claimsAlreadyCurrent) {
+        await admin.auth().setCustomUserClaims(targetUid, nextClaims);
+        await admin.auth().revokeRefreshTokens(targetUid);
+      }
 
       // Mirror em users/{uid} para listeners cliente (refletir verifiedAt)
       await db.doc(`users/${targetUid}`).set(
         {
+          phone: userRecord.phoneNumber,
+          phone_verified: true,
           verifiedAt: FieldValue.serverTimestamp(),
         },
         {merge: true},
@@ -333,6 +326,7 @@ export const setUserVerified = onCall(
       return {
         success: true,
         uid: targetUid,
+        alreadyVerified: currentClaims.verified === true,
       };
     } catch (error) {
       if (error instanceof HttpsError) throw error;

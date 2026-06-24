@@ -167,7 +167,7 @@ describe("Auth — Verification", () => {
       expect(result.success).toBe(true);
       expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
         "user1",
-        expect.objectContaining({ verified: true }),
+        expect.objectContaining({ verified: true, profileComplete: true }),
       );
     });
 
@@ -185,7 +185,10 @@ describe("Auth — Verification", () => {
       const result = await setUserVerified(makeRequest());
 
       expect(result.alreadyVerified).toBe(true);
-      expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
+        "user1",
+        expect.objectContaining({verified: true, profileComplete: true}),
+      );
     });
 
     it("rejeita sem phone number", async () => {
