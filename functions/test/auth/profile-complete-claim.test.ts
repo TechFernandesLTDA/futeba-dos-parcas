@@ -147,6 +147,7 @@ describe("Profile Complete Claim", () => {
       role: "ADMIN",
       profileComplete: true,
     });
+    expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
   });
 
   test("trigger unseta claim quando telefone fica invalido", async () => {
@@ -166,6 +167,7 @@ describe("Profile Complete Claim", () => {
       role: "FIELD_OWNER",
       profileComplete: false,
     });
+    expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
   });
 
   test("trigger eh idempotente quando valor nao muda", async () => {
@@ -219,6 +221,7 @@ describe("Profile Complete Claim", () => {
       role: "PLAYER",
       profileComplete: true,
     });
+    expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
   });
 
   test("callable rejeita usuario nao autenticado", async () => {

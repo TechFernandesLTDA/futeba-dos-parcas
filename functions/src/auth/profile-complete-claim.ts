@@ -75,10 +75,8 @@ async function setProfileCompleteClaim(
     profileComplete,
   });
 
-  await admin.auth().revokeRefreshTokens(uid);
-
   logger.info(
-    "[PROFILE_COMPLETE] Updated profileComplete claim (refresh tokens revoked)",
+    "[PROFILE_COMPLETE] Updated profileComplete claim",
     {uid, profileComplete}
   );
 

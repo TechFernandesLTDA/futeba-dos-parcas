@@ -4237,6 +4237,16 @@ subir no ranking!</string>
     <string name="phone_error_code_expired">Código expirou. Solicite novo SMS.</string>
     <string name="phone_error_credential_in_use">Este telefone já está vinculado a outra conta</string>
     <string name="phone_error_invalid_code_retry">Código inválido. Tente novamente.</string>
+    <string name="phone_account_claim_title">Este número já tem uma conta</string>
+    <string name="phone_account_claim_description">O código SMS confirmou que este telefone é seu. Você pode entrar na conta já vinculada ao número ou pedir revisão para unificar com sua conta atual.</string>
+    <string name="phone_account_claim_privacy">Por segurança, não mostramos dados da outra conta aqui. Unificação de histórico sempre passa por validação e auditoria.</string>
+    <string name="phone_claim_existing_account">Entrar na conta deste número</string>
+    <string name="phone_claim_existing_loading">Entrando...</string>
+    <string name="phone_request_merge">Entrar e solicitar unificação</string>
+    <string name="phone_request_merge_loading">Solicitando unificação...</string>
+    <string name="phone_use_another_number">Usar outro telefone</string>
+    <string name="phone_claim_error">Não foi possível entrar na conta deste telefone. Reenvie o SMS e tente novamente.</string>
+    <string name="phone_merge_request_error">Você entrou na conta deste telefone, mas não foi possível criar o pedido de unificação.</string>
 
     <!-- ==================== TEAM FORMATION ==================== -->
     <string name="team_formation_error_invalid_game_id">ID do jogo inválido</string>

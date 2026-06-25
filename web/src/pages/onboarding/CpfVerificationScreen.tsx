@@ -198,7 +198,7 @@ export const CpfVerificationScreen: React.FC = () => {
       // Retry getIdTokenResult(true) up to 3x with 500ms backoff to confirm
       // the `verified` claim is set before redirecting. This avoids a loop where
       // ProfileGate sends the user back to the CPF screen because the token
-      // hasn't refreshed yet after revokeRefreshTokens().
+      // hasn't refreshed yet after setCustomUserClaims().
       let claimOk = false;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {

@@ -156,6 +156,10 @@ class PhoneVerificationViewModel(
         _uiState.value = PhoneVerificationUiState.Error(message)
     }
 
+    fun clearCollision() {
+        _uiState.value = PhoneVerificationUiState.Idle
+    }
+
     /**
      * Verifica codigo OTP digitado e vincula a conta atual.
      */
@@ -218,16 +222,85 @@ class PhoneVerificationViewModel(
                 _uiState.value = PhoneVerificationUiState.Success
             } catch (e: Exception) {
                 AppLogger.e("PhoneVerification", "linkWithCredential failed", e)
+                if (e.message?.contains("credential-already-in-use") == true) {
+                    _uiState.value = PhoneVerificationUiState.AccountCollision(credential)
+                    return@launch
+                }
                 val msg = when {
                     e.message?.contains("invalid-verification-code") == true ->
                         resourceManager.getString(R.string.phone_error_invalid_code)
                     e.message?.contains("code-expired") == true ->
                         resourceManager.getString(R.string.phone_error_code_expired)
-                    e.message?.contains("credential-already-in-use") == true ->
-                        resourceManager.getString(R.string.phone_error_credential_in_use)
                     else -> resourceManager.getString(R.string.phone_error_invalid_code_retry)
                 }
                 _uiState.value = PhoneVerificationUiState.Error(msg)
+            }
+        }
+    }
+
+    fun claimExistingAccount(requestMerge: Boolean) {
+        val collision = _uiState.value as? PhoneVerificationUiState.AccountCollision
+        if (collision == null) {
+            _uiState.value = PhoneVerificationUiState.Error(
+                resourceManager.getString(R.string.phone_error_session_expired),
+            )
+            return
+        }
+
+        pendingJob?.cancel()
+        pendingJob = viewModelScope.launch {
+            _uiState.value = if (requestMerge) {
+                PhoneVerificationUiState.RequestingMerge(collision.credential)
+            } else {
+                PhoneVerificationUiState.ClaimingAccount(collision.credential)
+            }
+
+            try {
+                val currentUser = auth.currentUser
+                val sourceIdToken = if (requestMerge) {
+                    currentUser
+                        ?.getIdToken(true)
+                        ?.await()
+                        ?.token
+                } else {
+                    null
+                }
+
+                if (requestMerge && sourceIdToken.isNullOrBlank()) {
+                    _uiState.value = PhoneVerificationUiState.Error(
+                        resourceManager.getString(R.string.phone_error_login_expired),
+                    )
+                    return@launch
+                }
+
+                val result = auth.signInWithCredential(collision.credential).await()
+                result.user?.getIdToken(true)?.await()
+
+                if (requestMerge && !sourceIdToken.isNullOrBlank()) {
+                    try {
+                        functions
+                            .getHttpsCallable("requestAccountMerge")
+                            .call(mapOf("sourceIdToken" to sourceIdToken))
+                            .await()
+                    } catch (mergeErr: Exception) {
+                        AppLogger.e(
+                            "PhoneVerification",
+                            "requestAccountMerge failed after account claim",
+                            mergeErr,
+                        )
+                        _uiState.value = PhoneVerificationUiState.Error(
+                            resourceManager.getString(R.string.phone_merge_request_error),
+                        )
+                        return@launch
+                    }
+                }
+
+                _uiState.value = PhoneVerificationUiState.Success
+            } catch (e: Exception) {
+                AppLogger.e("PhoneVerification", "claimExistingAccount failed", e)
+                _uiState.value = PhoneVerificationUiState.Error(
+                    resourceManager.getString(R.string.phone_claim_error),
+                )
             }
         }
     }
@@ -244,5 +317,8 @@ sealed class PhoneVerificationUiState {
     object CodeSent : PhoneVerificationUiState()
     object Verifying : PhoneVerificationUiState()
     object Success : PhoneVerificationUiState()
+    data class AccountCollision(val credential: PhoneAuthCredential) : PhoneVerificationUiState()
+    data class ClaimingAccount(val credential: PhoneAuthCredential) : PhoneVerificationUiState()
+    data class RequestingMerge(val credential: PhoneAuthCredential) : PhoneVerificationUiState()
     data class Error(val message: String) : PhoneVerificationUiState()
 }
