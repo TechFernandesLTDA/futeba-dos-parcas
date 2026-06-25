@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -90,7 +91,12 @@ fun AdaptiveTopBar(
 
     when (platformChromeKind) {
         PlatformChromeKind.Material -> TopAppBar(
-            title = { Text(title) },
+            title = {
+                Text(
+                    text = title,
+                    modifier = Modifier.semantics { heading() }
+                )
+            },
             modifier = modifier,
             navigationIcon = navigationIcon,
             actions = actions,
@@ -102,7 +108,8 @@ fun AdaptiveTopBar(
                     title = {
                         Text(
                             text = title,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.semantics { heading() }
                         )
                     },
                     modifier = modifier,
@@ -114,7 +121,8 @@ fun AdaptiveTopBar(
                     title = {
                         Text(
                             text = title,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.semantics { heading() }
                         )
                     },
                     modifier = modifier,
