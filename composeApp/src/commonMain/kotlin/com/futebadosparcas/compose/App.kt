@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -34,8 +36,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -80,26 +80,35 @@ import com.futebadosparcas.compose.resources.profile_hub_body
 import com.futebadosparcas.compose.resources.profile_hub_title
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.repository.AuthRepository
+import com.futebadosparcas.platform.PlatformShareFactory
+import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.ui.HomeScreen
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
+import com.futebadosparcas.ui.core.BlockedPlayerData
 import com.futebadosparcas.ui.core.BlockedPlayersScreen
 import com.futebadosparcas.ui.core.GamesScreen
 import com.futebadosparcas.ui.core.InvitePlayersScreen
 import com.futebadosparcas.ui.core.InviteViewModel
+import com.futebadosparcas.ui.core.BadgesRouteScreen
+import com.futebadosparcas.ui.core.CashboxRouteScreen
 import com.futebadosparcas.ui.core.LoginScreen
 import com.futebadosparcas.ui.core.LoginState
 import com.futebadosparcas.ui.core.LoginViewModel
+import com.futebadosparcas.ui.core.LocationsRouteScreen
 import com.futebadosparcas.ui.core.OwnerStats
 import com.futebadosparcas.ui.core.OwnerStatsScreen
 import com.futebadosparcas.ui.core.PermissionOnboardingScreen
 import com.futebadosparcas.ui.core.PostGameReport
 import com.futebadosparcas.ui.core.PostGameReportScreen
 import com.futebadosparcas.ui.core.ProfileSetupScreen
+import com.futebadosparcas.ui.core.RankingRouteScreen
 import com.futebadosparcas.ui.core.WelcomeScreen
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.ui.theme.MotionSpring
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.ui.whatsnew.WhatsNewPopupHost
 import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
+import kotlinx.coroutines.launch
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -146,10 +155,19 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
     val authRepository: AuthRepository? = runCatching { koinInject<AuthRepository>() }.getOrNull()
+    val preferencesService: PreferencesService? = runCatching { koinInject<PreferencesService>() }.getOrNull()
+    val platformShare = remember { runCatching { PlatformShareFactory.create() }.getOrNull() }
     val startDestination = if (authRepository?.isLoggedIn() == true) AppRoutes.HOME else AppRoutes.WELCOME
     val reduceMotion = rememberReduceMotion()
+    val shareScope = rememberCoroutineScope()
     var selectedGameId by remember { mutableStateOf<String?>(null) }
     var selectedInviteGroupId by remember { mutableStateOf<String?>(null) }
+    var selectedGroupId by remember { mutableStateOf<String?>(null) }
+    var blockedPlayers by remember { mutableStateOf(emptyList<BlockedPlayerData>()) }
+
+    LaunchedEffect(preferencesService) {
+        blockedPlayers = loadBlockedPlayers(preferencesService)
+    }
 
     NavHost(
         navController = navController,
@@ -283,7 +301,7 @@ fun AppNavigation(
                     selectedGameId = gameId
                     navController.navigate(AppRoutes.gameDetail(gameId))
                 },
-                onCreateGameClick = { /* TODO: rota create_game */ }
+                onCreateGameClick = { navController.navigate(AppRoutes.GROUPS) }
             )
         }
 
@@ -319,8 +337,22 @@ fun AppNavigation(
                     teams = emptyList()
                 ),
                 onNavigateBack = { navController.popBackStack() },
-                onShare = { /* TODO: compartilhar via plataforma (expect/actual) */ },
-                onShareWhatsApp = { /* TODO: compartilhar via WhatsApp (expect/actual) */ }
+                onShare = {
+                    shareScope.launch {
+                        platformShare?.share(
+                            text = buildPostGameShareText(selectedGameId),
+                            title = "Relatório pós-jogo"
+                        )
+                    }
+                },
+                onShareWhatsApp = {
+                    shareScope.launch {
+                        platformShare?.share(
+                            text = buildPostGameShareText(selectedGameId),
+                            title = "Compartilhar resultado"
+                        )
+                    }
+                }
             )
         }
 
@@ -359,10 +391,23 @@ fun AppNavigation(
         // Jogadores bloqueados (tela real ui/core/BlockedPlayersScreen)
         composable(AppRoutes.BLOCKED_PLAYERS) {
             BlockedPlayersScreen(
-                blockedPlayers = emptyList(),
+                blockedPlayers = blockedPlayers,
                 availablePlayers = emptyList(),
-                onBlockPlayer = { _, _, _ -> /* TODO: persistir bloqueio via repositório */ },
-                onUnblockPlayer = { /* TODO: persistir desbloqueio via repositório */ },
+                onBlockPlayer = { userId, userName, reason ->
+                    val updated = blockedPlayers + BlockedPlayerData(
+                        userId = userId,
+                        userName = userName,
+                        reason = reason,
+                        blockedAt = null
+                    )
+                    blockedPlayers = updated
+                    persistBlockedPlayers(preferencesService, updated)
+                },
+                onUnblockPlayer = { userId ->
+                    val updated = blockedPlayers.filterNot { it.userId == userId }
+                    blockedPlayers = updated
+                    persistBlockedPlayers(preferencesService, updated)
+                },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -398,7 +443,40 @@ fun AppNavigation(
 
         // Group detail
         composable(AppRoutes.GROUP_DETAIL) {
-            // TODO: extrair groupId dos argumentos e renderizar GroupDetailScreen
+            FeatureHubScreen(
+                title = "Grupo",
+                body = "Atalhos para jogos, caixa e ferramentas do grupo no composeApp.",
+                onNavigateBack = { navController.popBackStack() },
+                actions = listOf(
+                    FeatureHubAction(
+                        label = stringResource(Res.string.groups_hub_action_games),
+                        description = stringResource(Res.string.groups_hub_action_games_body),
+                        icon = Icons.Filled.SportsSoccer,
+                        onClick = { navController.navigate(AppRoutes.GAMES) }
+                    ),
+                    FeatureHubAction(
+                        label = stringResource(Res.string.groups_hub_action_blocked),
+                        description = stringResource(Res.string.groups_hub_action_blocked_body),
+                        icon = Icons.Filled.Block,
+                        onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
+                    ),
+                    FeatureHubAction(
+                        label = "Caixa",
+                        description = "Resumo financeiro e histórico das movimentações.",
+                        icon = Icons.Filled.QueryStats,
+                        onClick = {
+                            selectedGroupId = selectedGroupId ?: selectedGameId
+                            navController.navigate(AppRoutes.CASHBOX)
+                        }
+                    ),
+                    FeatureHubAction(
+                        label = stringResource(Res.string.groups_hub_action_whats_new),
+                        description = stringResource(Res.string.groups_hub_action_whats_new_body),
+                        icon = Icons.Filled.NewReleases,
+                        onClick = { navController.navigate(AppRoutes.WHATS_NEW) }
+                    )
+                )
+            )
         }
 
         // Profile
@@ -432,22 +510,25 @@ fun AppNavigation(
 
         // Ranking
         composable(AppRoutes.RANKING) {
-            // TODO: RankingScreen(navController)
+            RankingRouteScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         // Badges
         composable(AppRoutes.BADGES) {
-            // TODO: BadgesScreen(navController)
+            BadgesRouteScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         // Locations
         composable(AppRoutes.LOCATIONS) {
-            // TODO: LocationsScreen(navController)
+            LocationsRouteScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         // Cashbox
         composable(AppRoutes.CASHBOX) {
-            // TODO: CashboxScreen(navController)
+            CashboxRouteScreen(
+                groupId = selectedGroupId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         // Novidades
@@ -478,8 +559,8 @@ private fun GameDetailHub(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.game_detail_hub_title)) },
+            AdaptiveTopBar(
+                title = stringResource(Res.string.game_detail_hub_title),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -487,21 +568,29 @@ private fun GameDetailHub(
                             contentDescription = stringResource(Res.string.cd_back)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp)
         ) {
+            val expandedLayout = maxWidth >= 840.dp
+            val organizerActions = listOf(
+                stringResource(Res.string.game_detail_post_game_report) to onOpenPostGameReport,
+                stringResource(Res.string.game_detail_owner_stats) to onOpenOwnerStats,
+                stringResource(Res.string.game_detail_invite_players) to onOpenInvitePlayers,
+                stringResource(Res.string.game_detail_blocked_players) to onOpenBlockedPlayers
+            )
+
+            Column(
+                modifier = Modifier.widthIn(max = 960.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             Text(
                 text = stringResource(Res.string.game_detail_organizer_tools),
                 style = MaterialTheme.typography.titleMedium,
@@ -509,32 +598,35 @@ private fun GameDetailHub(
                 modifier = Modifier.semantics { heading() }
             )
 
-            OutlinedButton(
-                onClick = onOpenPostGameReport,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(Res.string.game_detail_post_game_report))
-            }
-
-            OutlinedButton(
-                onClick = onOpenOwnerStats,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(Res.string.game_detail_owner_stats))
-            }
-
-            OutlinedButton(
-                onClick = onOpenInvitePlayers,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(Res.string.game_detail_invite_players))
-            }
-
-            OutlinedButton(
-                onClick = onOpenBlockedPlayers,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(Res.string.game_detail_blocked_players))
+                if (expandedLayout) {
+                    organizerActions.chunked(2).forEach { rowActions ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            rowActions.forEach { (label, onClick) ->
+                                OutlinedButton(
+                                    onClick = onClick,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(label)
+                                }
+                            }
+                            if (rowActions.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                } else {
+                    organizerActions.forEach { (label, onClick) ->
+                        OutlinedButton(
+                            onClick = onClick,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(label)
+                        }
+                    }
+                }
             }
         }
     }
@@ -557,8 +649,8 @@ private fun FeatureHubScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(title) },
+            AdaptiveTopBar(
+                title = title,
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -570,14 +662,18 @@ private fun FeatureHubScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(20.dp)
         ) {
+            val expandedLayout = maxWidth >= 840.dp
+            Column(
+                modifier = Modifier.widthIn(max = 960.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
@@ -596,15 +692,38 @@ private fun FeatureHubScreen(
                 modifier = Modifier.semantics { heading() }
             )
 
-            actions.forEach { action ->
-                FeatureHubActionButton(action)
+                if (expandedLayout) {
+                    actions.chunked(2).forEach { rowActions ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            rowActions.forEach { action ->
+                                FeatureHubActionButton(
+                                    action = action,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (rowActions.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                } else {
+                    actions.forEach { action ->
+                        FeatureHubActionButton(action = action)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun FeatureHubActionButton(action: FeatureHubAction) {
+private fun FeatureHubActionButton(
+    action: FeatureHubAction,
+    modifier: Modifier = Modifier
+) {
     val actionContentDescription = stringResource(
         Res.string.feature_hub_action_content_description,
         action.label,
@@ -612,7 +731,7 @@ private fun FeatureHubActionButton(action: FeatureHubAction) {
     )
     OutlinedButton(
         onClick = action.onClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .semantics {
                 contentDescription = actionContentDescription
@@ -646,4 +765,62 @@ private fun FeatureHubActionButton(action: FeatureHubAction) {
             }
         }
     }
+}
+
+private const val BLOCKED_PLAYERS_PREF_KEY = "compose_blocked_players"
+private const val BLOCKED_PLAYER_ENTRY_SEPARATOR = "\u001E"
+private const val BLOCKED_PLAYER_FIELD_SEPARATOR = "\u001F"
+
+private fun buildPostGameShareText(gameId: String?): String {
+    return buildString {
+        append("Relatório pós-jogo")
+        gameId?.takeIf { it.isNotBlank() }?.let {
+            append(" • jogo ")
+            append(it)
+        }
+        append("\nResumo compartilhado pelo composeApp do Futeba dos Parças.")
+    }
+}
+
+private fun loadBlockedPlayers(preferencesService: PreferencesService?): List<BlockedPlayerData> {
+    val raw = preferencesService?.getString(BLOCKED_PLAYERS_PREF_KEY, null).orEmpty()
+    if (raw.isBlank()) return emptyList()
+
+    return raw.split(BLOCKED_PLAYER_ENTRY_SEPARATOR)
+        .mapNotNull { entry ->
+            val fields = entry.split(BLOCKED_PLAYER_FIELD_SEPARATOR)
+            if (fields.size < 3) return@mapNotNull null
+            BlockedPlayerData(
+                userId = fields[0],
+                userName = fields[1],
+                reason = fields[2],
+                blockedAt = fields.getOrNull(3)?.toLongOrNull()
+            )
+        }
+}
+
+private fun persistBlockedPlayers(
+    preferencesService: PreferencesService?,
+    blockedPlayers: List<BlockedPlayerData>
+) {
+    if (preferencesService == null) return
+    if (blockedPlayers.isEmpty()) {
+        preferencesService.remove(BLOCKED_PLAYERS_PREF_KEY)
+        return
+    }
+
+    val encoded = blockedPlayers.joinToString(BLOCKED_PLAYER_ENTRY_SEPARATOR) { player ->
+        listOf(
+            player.userId,
+            player.userName,
+            player.reason,
+            player.blockedAt?.toString().orEmpty()
+        ).joinToString(BLOCKED_PLAYER_FIELD_SEPARATOR) { value ->
+            value
+                .replace(BLOCKED_PLAYER_ENTRY_SEPARATOR, " ")
+                .replace(BLOCKED_PLAYER_FIELD_SEPARATOR, " ")
+                .replace("\n", " ")
+        }
+    }
+    preferencesService.putString(BLOCKED_PLAYERS_PREF_KEY, encoded)
 }

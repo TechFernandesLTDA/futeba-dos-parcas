@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,8 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Email
@@ -121,65 +125,67 @@ fun LoginScreen(
                     )
                 )
         ) {
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top Section: Logo e Título
+                val compactWidth = maxWidth < 420.dp
+                val horizontalPadding = if (compactWidth) 16.dp else 24.dp
+                val titlePadding = if (compactWidth) 16.dp else 32.dp
+                val contentSpacing = if (compactWidth) 20.dp else 24.dp
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = horizontalPadding, vertical = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.spacedBy(contentSpacing)
                 ) {
-                    Spacer(modifier = Modifier.height(48.dp))
+                    Spacer(modifier = Modifier.height(if (compactWidth) 8.dp else 24.dp))
 
-                    AppLogo()
+                    Column(
+                        modifier = Modifier.widthIn(max = 560.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        AppLogo()
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(if (compactWidth) 24.dp else 32.dp))
 
-                    Text(
-                        text = stringResource(Res.string.auth_title),
-                        style = MaterialTheme.typography.displaySmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
+                        Text(
+                            text = stringResource(Res.string.auth_title),
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = stringResource(Res.string.auth_login_tagline),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = titlePadding)
+                        )
+                    }
+
+                    LoginCard(
+                        uiState = uiState,
+                        contentPadding = if (compactWidth) 20.dp else 32.dp,
+                        onGoogleSignInClick = onGoogleSignInClick,
+                        onEmailPasswordSignIn = onEmailPasswordSignIn,
+                        onForgotPassword = onForgotPassword,
+                        onNavigateToRegister = onNavigateToRegister
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    LoginFooter(versionName = versionName)
 
-                    Text(
-                        text = stringResource(Res.string.auth_login_tagline),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-
-                // Middle Section: Cartão de Login
-                LoginCard(
-                    uiState = uiState,
-                    onGoogleSignInClick = onGoogleSignInClick,
-                    onEmailPasswordSignIn = onEmailPasswordSignIn,
-                    onForgotPassword = onForgotPassword,
-                    onNavigateToRegister = onNavigateToRegister
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Bottom Section: Rodapé
-                LoginFooter(versionName = versionName)
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -212,6 +218,7 @@ private fun AppLogo() {
 @Composable
 private fun LoginCard(
     uiState: LoginState,
+    contentPadding: androidx.compose.ui.unit.Dp,
     onGoogleSignInClick: () -> Unit,
     onEmailPasswordSignIn: (email: String, password: String) -> Unit,
     onForgotPassword: (email: String) -> Unit,
@@ -223,7 +230,9 @@ private fun LoginCard(
     var passwordVisible by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 560.dp),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
@@ -233,7 +242,7 @@ private fun LoginCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

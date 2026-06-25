@@ -104,7 +104,7 @@ fun ProfileSetupScreen(
                 shape = RoundedCornerShape(AppDimensions.radius_medium)
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             // Campo Apelido
             OutlinedTextField(
@@ -236,7 +236,7 @@ fun ProfileSetupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
         }
     }
 }

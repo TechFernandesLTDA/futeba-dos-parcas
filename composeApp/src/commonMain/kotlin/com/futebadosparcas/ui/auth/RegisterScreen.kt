@@ -8,6 +8,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +19,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -96,42 +100,58 @@ fun RegisterScreen(
                     )
                 )
         ) {
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = stringResource(Res.string.auth_create_account),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center
-                )
+                val compactWidth = maxWidth < 420.dp
+                val horizontalPadding = if (compactWidth) 16.dp else 24.dp
+                val contentSpacing = if (compactWidth) 20.dp else 24.dp
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = horizontalPadding, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(contentSpacing)
+                ) {
+                    Spacer(modifier = Modifier.height(if (compactWidth) 8.dp else 24.dp))
 
-                Text(
-                    text = stringResource(Res.string.auth_register_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
+                    Column(
+                        modifier = Modifier.widthIn(max = 560.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.auth_create_account),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                RegisterForm(
-                    uiState = uiState,
-                    onRegisterWithEmail = onRegisterWithEmail
-                )
+                        Text(
+                            text = stringResource(Res.string.auth_register_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    RegisterForm(
+                        uiState = uiState,
+                        contentPadding = if (compactWidth) 20.dp else 32.dp,
+                        onRegisterWithEmail = onRegisterWithEmail
+                    )
 
-                TextButton(onClick = onNavigateToLogin) {
-                    Text(stringResource(Res.string.auth_already_have_account_sign_in))
+                    TextButton(onClick = onNavigateToLogin) {
+                        Text(stringResource(Res.string.auth_already_have_account_sign_in))
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -141,6 +161,7 @@ fun RegisterScreen(
 @Composable
 private fun RegisterForm(
     uiState: RegisterState,
+    contentPadding: androidx.compose.ui.unit.Dp,
     onRegisterWithEmail: (email: String, password: String, name: String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
@@ -149,7 +170,9 @@ private fun RegisterForm(
     var passwordVisible by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 560.dp),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
@@ -159,7 +182,7 @@ private fun RegisterForm(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
