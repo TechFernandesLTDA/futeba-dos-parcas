@@ -27,6 +27,7 @@ import {
   Stack,
   Tab,
   Tabs,
+  LinearProgress,
   useTheme,
   useMediaQuery,
   alpha,
@@ -44,10 +45,12 @@ import {
   Share as ShareIcon,
   Delete as DeleteIcon,
   EmojiEvents as TrophyIcon,
+  Poll as PollIcon,
 } from '@mui/icons-material';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
+import { GroupPoll, useCreateGroupPoll, useGroupPolls, useVoteGroupPoll } from '../../hooks/useGroupPolls';
 import { useMyJoinRequest } from '../../hooks/useJoinRequests';
 import { useGames } from '../../hooks/useGames';
 import { softDeleteGroup } from '../../services/cloudFunctions';
@@ -75,6 +78,85 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
     {value === index && children}
   </Box>
 );
+
+const PollsPanel: React.FC<{ groupId: string; canCreate: boolean }> = ({ groupId, canCreate }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const { polls, loading, error, refetch } = useGroupPolls(groupId);
+  const createPoll = useCreateGroupPoll(groupId);
+  const votePoll = useVoteGroupPoll(groupId);
+  const [question, setQuestion] = useState('');
+  const [optionsText, setOptionsText] = useState('Domingo de manhã\nQuarta à noite');
+
+  return (
+    <CardContent>
+      <Stack spacing={2}>
+        {canCreate && (
+          <Card variant="outlined" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight={700} gutterBottom>{t('groupPolls.createTitle')}</Typography>
+              <TextField label={t('groupPolls.question')} value={question} onChange={(event) => setQuestion(event.target.value)} fullWidth size="small" inputProps={{ maxLength: 120 }} sx={{ mb: 1.5 }} />
+              <TextField label={t('groupPolls.options')} value={optionsText} onChange={(event) => setOptionsText(event.target.value)} fullWidth multiline minRows={3} helperText={t('groupPolls.optionsHelp')} />
+              <Button
+                variant="contained"
+                startIcon={createPoll.isPending ? <CircularProgress size={16} color="inherit" /> : <PollIcon />}
+                onClick={() => createPoll.mutate({ question, options: optionsText.split('\n') }, {
+                  onSuccess: () => {
+                    setQuestion('');
+                    setOptionsText('Domingo de manhã\nQuarta à noite');
+                  },
+                })}
+                disabled={createPoll.isPending}
+                sx={{ mt: 2 }}
+              >
+                {createPoll.isPending ? t('common.saving') : t('groupPolls.create')}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        {loading && <ShimmerLoading count={2} type="card" />}
+        {error && <Alert severity="error" action={<Button onClick={() => refetch()}>{t('common.retry')}</Button>}>{error}</Alert>}
+        {!loading && !error && polls.length === 0 && (
+          <EmptyState icon={<PollIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />} title={t('groupPolls.emptyTitle')} description={t('groupPolls.emptyDesc')} />
+        )}
+        {!loading && !error && polls.map((poll) => (
+          <PollCard key={poll.id} poll={poll} voting={votePoll.isPending} onVote={(optionId) => votePoll.mutate({ pollId: poll.id, optionId })} />
+        ))}
+      </Stack>
+    </CardContent>
+  );
+};
+
+const PollCard: React.FC<{ poll: GroupPoll; voting: boolean; onVote: (optionId: string) => void }> = ({ poll, voting, onVote }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  return (
+    <Card variant="outlined">
+      <CardContent>
+        <Typography variant="subtitle1" fontWeight={700}>{poll.question}</Typography>
+        <Typography variant="caption" color="text.secondary">{t('groupPolls.by', { name: poll.createdByName })}</Typography>
+        <Stack spacing={1.25} sx={{ mt: 2 }}>
+          {poll.options.map((option) => {
+            const count = poll.voteCounts[option.id] ?? 0;
+            const percent = poll.totalVotes > 0 ? Math.round((count / poll.totalVotes) * 100) : 0;
+            const selected = poll.myVote === option.id;
+            return (
+              <Box key={option.id}>
+                <Button variant={selected ? 'contained' : 'outlined'} fullWidth onClick={() => onVote(option.id)} disabled={voting || poll.status !== 'ACTIVE'} sx={{ justifyContent: 'space-between', textTransform: 'none' }}>
+                  <span>{option.text}</span>
+                  <span>{percent}%</span>
+                </Button>
+                <LinearProgress variant="determinate" value={percent} sx={{ mt: 0.5, height: 6, borderRadius: 99, bgcolor: alpha(theme.palette.primary.main, 0.08) }} />
+              </Box>
+            );
+          })}
+        </Stack>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>{t('groupPolls.totalVotes', { count: poll.totalVotes })}</Typography>
+      </CardContent>
+    </Card>
+  );
+};
 
 // Fix #414: ROLE_CONFIG extraído para constants/group.ts (single source of truth)
 import { ROLE_CONFIG, getRoleColor } from '../../constants/group';
@@ -373,6 +455,7 @@ export const GroupDetailScreen: React.FC = () => {
               <Tab label={t('group.tabGames')} />
               <Tab label={t('group.tabCashbox')} />
               <Tab label={t('nav.league')} icon={<TrophyIcon />} iconPosition="start" />
+              <Tab label={t('groupPolls.tab')} icon={<PollIcon />} iconPosition="start" />
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
@@ -485,6 +568,10 @@ export const GroupDetailScreen: React.FC = () => {
                   {t('groupDetail.viewStandings')}
                 </Button>
               </CardContent>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={4}>
+              <PollsPanel groupId={groupId!} canCreate={isAdmin} />
             </TabPanel>
           </Card>
         );
