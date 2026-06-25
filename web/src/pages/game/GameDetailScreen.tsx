@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
-import QRCode from 'qrcode';
 import {
   Box,
   Typography,
@@ -356,8 +355,11 @@ export const GameDetailScreen: React.FC = () => {
 
   useEffect(() => {
     if (qrCheckInUrl) {
-      QRCode.toDataURL(qrCheckInUrl, { width: 250, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
-        .then((url) => {
+      import('qrcode')
+        .then(({ default: QRCode }) =>
+          QRCode.toDataURL(qrCheckInUrl, { width: 250, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+        )
+        .then((url: string) => {
           setQrDataUrl(url);
           setQrGenerateError(null);
         })

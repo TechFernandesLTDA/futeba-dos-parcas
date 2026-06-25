@@ -27,20 +27,20 @@ import {
   DragIndicator as DragIcon,
   AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, runTransaction, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { ErrorState } from '../../components/common/ErrorState';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { getLevelForXp } from '../../types/gamification';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PageContainer } from '../../components/common/PageContainer';
 import { createLogger } from '../../utils/logger';
 import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { balancedDraw, PlayerForDraw } from '../../utils/balancedDraw';
+import { getUsersByIds } from '../../utils/userBatch';
 
 const logger = createLogger('TeamFormationScreen');
 
@@ -128,23 +128,20 @@ export const TeamFormationScreen: React.FC = () => {
           .filter((d) => d.data().status === 'CONFIRMED')
           .map((d) => d.data() as ConfirmationData);
 
-        const players: TeamPlayer[] = await Promise.all(
-          confirmedDocs.map(async (conf: ConfirmationData) => {
-            const uid = conf.user_id;
-            const userDoc = await getDoc(doc(db, 'users', uid));
-            if (userDoc.exists()) {
-              const userData = snakeToCamel(userDoc.data()) as Record<string, unknown>;
-              return {
-                id: uid,
-                name: (userData.name as string | undefined) || conf.user_name || 'Jogador',
-                photoUrl: (userData.photoUrl as string | undefined) || conf.user_photo,
-                level: getLevelForXp((userData.experiencePoints as number | undefined) ?? 0),
-                position: conf.position || 'FIELD',
-              };
-            }
-            return { id: uid, name: conf.user_name || 'Jogador', level: 1, position: conf.position || 'FIELD' };
-          })
-        );
+        const usersById = await getUsersByIds(confirmedDocs.map((conf) => conf.user_id));
+        if (cancelled) return;
+
+        const players: TeamPlayer[] = confirmedDocs.map((conf: ConfirmationData) => {
+          const uid = conf.user_id;
+          const userData = usersById.get(uid);
+          return {
+            id: uid,
+            name: (userData?.name as string | undefined) || conf.user_name || 'Jogador',
+            photoUrl: (userData?.photoUrl as string | undefined) || conf.user_photo,
+            level: getLevelForXp((userData?.experiencePoints as number | undefined) ?? 0),
+            position: conf.position || 'FIELD',
+          };
+        });
 
         if (players.length > 0 && !cancelled) {
           const drawPlayers: PlayerForDraw[] = players.map((p) => ({

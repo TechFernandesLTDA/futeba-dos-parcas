@@ -49,16 +49,16 @@ describe('ThemeContext', () => {
     }));
   });
 
-  it('fornece modo padrão "system" quando nada está salvo', () => {
+  it('fornece modo padrão "light" quando nada está salvo', () => {
     render(
       <ThemeProvider>
         <ThemeConsumer />
       </ThemeProvider>
     );
-    expect(screen.getByTestId('mode').textContent).toBe('system');
+    expect(screen.getByTestId('mode').textContent).toBe('light');
   });
 
-  it('toggleTheme alterna de system para light', async () => {
+  it('toggleTheme alterna de light para dark', async () => {
     const user = userEvent.setup();
     render(
       <ThemeProvider>
@@ -66,23 +66,18 @@ describe('ThemeContext', () => {
       </ThemeProvider>
     );
 
-    // system -> light (system é o padrão, toggle: system -> light)
+    // light -> dark (light é o padrão)
     await user.click(screen.getByText('toggle'));
-    expect(screen.getByTestId('mode').textContent).toBe('light');
+    expect(screen.getByTestId('mode').textContent).toBe('dark');
   });
 
   it('toggleTheme cicla entre light -> dark -> oled -> system', async () => {
-    // Ciclo real: system → light → dark → oled → system (ThemeContext.tsx linha 67-72)
     const user = userEvent.setup();
     render(
       <ThemeProvider>
         <ThemeConsumer />
       </ThemeProvider>
     );
-
-    // system -> light
-    await user.click(screen.getByText('toggle'));
-    expect(screen.getByTestId('mode').textContent).toBe('light');
 
     // light -> dark
     await user.click(screen.getByText('toggle'));
@@ -148,7 +143,7 @@ describe('ThemeContext', () => {
     expect(screen.getByText('toggle')).toBeInTheDocument();
   });
 
-  it('trata valores inválidos do localStorage como system', () => {
+  it('trata valores inválidos do localStorage como light', () => {
     localStorage.setItem('themeMode', 'invalid-value');
 
     render(
@@ -157,9 +152,7 @@ describe('ThemeContext', () => {
       </ThemeProvider>
     );
 
-    // Valor inválido é carregado como string, mas o componente funciona
-    // O cast (saved as ThemeMode) aceita qualquer string
-    expect(screen.getByTestId('mode')).toBeInTheDocument();
+    expect(screen.getByTestId('mode').textContent).toBe('light');
   });
 
   it('useTheme lança erro quando usado fora do ThemeProvider', () => {

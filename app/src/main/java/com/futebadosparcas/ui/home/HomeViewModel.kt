@@ -18,6 +18,7 @@ import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.ConnectivityMonitor
 import com.futebadosparcas.domain.cache.SharedCacheService
 import com.futebadosparcas.domain.prefetch.PrefetchService
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -32,7 +33,7 @@ import kotlin.math.pow
 class HomeViewModel(
     private val gameRepository: GameRepository,
     private val userRepository: UserRepository,
-    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+    private val observeUnreadCountUseCase: ObserveUnreadCountUseCase,
     private val gamificationRepository: GamificationRepository,
     private val statisticsRepository: com.futebadosparcas.domain.repository.StatisticsRepository,
     private val activityRepository: com.futebadosparcas.domain.repository.ActivityRepository,
@@ -85,7 +86,7 @@ class HomeViewModel(
 
     private fun observeUnreadCount() {
         launch(key = JOB_UNREAD_COUNT) {
-            notificationRepository.getUnreadCountFlow()
+            observeUnreadCountUseCase()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
                     AppLogger.e(TAG, "Erro ao observar notificacoes", e)

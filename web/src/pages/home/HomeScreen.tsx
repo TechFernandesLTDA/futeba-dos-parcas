@@ -27,11 +27,14 @@ const GroupsTab = lazy(() => import('./tabs/GroupsTab').then(m => ({ default: m.
 const RankingsTab = lazy(() => import('./tabs/RankingsTab').then(m => ({ default: m.RankingsTab })));
 const ProfileTab = lazy(() => import('./tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
 
+const HOME_TAB_COUNT = 5;
+
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { WhatsNewPopupHost } from '../../components/whatsnew/WhatsNewPopupHost';
-import { TeamOfTheWeek } from '../../components/game/TeamOfTheWeek';
 import { QuickActions } from '../../components/home/QuickActions';
 import { pageSpacing } from '../../theme/pageTokens';
+
+const TeamOfTheWeek = lazy(() => import('../../components/game/TeamOfTheWeek').then(m => ({ default: m.TeamOfTheWeek })));
 
 function TabSkeleton() {
   return (
@@ -43,9 +46,14 @@ function TabSkeleton() {
   );
 }
 
+function getSafeHomeTabValue(value: string | null): number {
+  const parsed = Number(value ?? 0);
+  return Number.isInteger(parsed) && parsed >= 0 && parsed < HOME_TAB_COUNT ? parsed : 0;
+}
+
 export function HomeScreen() {
   const [searchParams] = useSearchParams();
-  const tabValue = parseInt(searchParams.get('tab') || '0');
+  const tabValue = getSafeHomeTabValue(searchParams.get('tab'));
   const { permission, requestPermission } = useNotificationPermission();
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const [mountedTabs, setMountedTabs] = useState<Set<number>>(() => new Set([tabValue]));

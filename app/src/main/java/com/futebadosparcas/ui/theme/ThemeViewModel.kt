@@ -53,7 +53,7 @@ class ThemeViewModel(
     fun resetTheme() {
         viewModelScope.launch {
             themeRepository.resetThemeConfig()
-            // Aplica o modo padrão real (SYSTEM), não "light" hardcoded — fix #2771
+            // Aplica o modo padrao real do modelo.
             val defaultMode = AppThemeConfig().mode
             val themeString = when (defaultMode) {
                 ThemeMode.LIGHT -> "light"

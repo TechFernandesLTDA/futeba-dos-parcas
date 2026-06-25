@@ -3,6 +3,12 @@ import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { futebaTheme, futebaDarkTheme, futebaDarkOledTheme } from '../theme';
 
 export type ThemeMode = 'light' | 'dark' | 'oled' | 'system';
+const DEFAULT_THEME_MODE: ThemeMode = 'light';
+const THEME_MODES: ThemeMode[] = ['light', 'dark', 'oled', 'system'];
+
+function parseThemeMode(value: string | null): ThemeMode {
+  return THEME_MODES.includes(value as ThemeMode) ? (value as ThemeMode) : DEFAULT_THEME_MODE;
+}
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -15,11 +21,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<ThemeMode>(() => {
     try {
-      const saved = localStorage.getItem('themeMode');
-      return (saved as ThemeMode) || 'system';
+      return parseThemeMode(localStorage.getItem('themeMode'));
     } catch (error) {
       console.warn('Failed to read themeMode from localStorage:', error);
-      return 'system';
+      return DEFAULT_THEME_MODE;
     }
   });
 
@@ -28,14 +33,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // salvo, pois o useEffect só roda após a montagem do componente.
   const [isDark, setIsDark] = useState<boolean>(() => {
     try {
-      const saved = localStorage.getItem('themeMode') as ThemeMode | null;
+      const saved = parseThemeMode(localStorage.getItem('themeMode'));
       if (saved === 'dark' || saved === 'oled') return true;
       if (saved === 'light') return false;
+      // Modo 'system' explicitamente salvo: respeita prefers-color-scheme.
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
     } catch (error) {
       console.warn('Failed to read themeMode from localStorage:', error);
     }
-    // Modo 'system' (ou nenhuma preferência salva): respeita prefers-color-scheme
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false;
   });
 
   useEffect(() => {

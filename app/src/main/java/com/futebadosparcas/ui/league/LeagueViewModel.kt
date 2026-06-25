@@ -11,6 +11,7 @@ import com.futebadosparcas.util.toAndroidSeason
 import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Job
@@ -29,7 +30,7 @@ class LeagueViewModel(
     private val gamificationRepository: GamificationRepository,
     private val authRepository: AuthRepository,
     private val firestore: FirebaseFirestore,
-    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository
+    private val observeUnreadCountUseCase: ObserveUnreadCountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LeagueUiState>(LeagueUiState.Loading)
@@ -57,7 +58,7 @@ class LeagueViewModel(
     private fun observeUnreadCount() {
         unreadCountJob?.cancel()
         unreadCountJob = viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow()
+            observeUnreadCountUseCase()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
                     AppLogger.e(TAG, "Erro ao observar notificacoes", e)

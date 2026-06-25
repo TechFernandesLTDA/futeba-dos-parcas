@@ -1,17 +1,12 @@
 package com.futebadosparcas
 
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import androidx.work.Configuration
-import coil3.SingletonImageLoader
-import coil3.ImageLoader
-import coil3.disk.DiskCache
-import coil3.memory.MemoryCache
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import okhttp3.OkHttpClient
-import okio.Path.Companion.toOkioPath
-import java.util.concurrent.TimeUnit
 import com.futebadosparcas.data.local.CacheCleanupWorker
 import com.futebadosparcas.di.koin.allKoinModules
+import com.futebadosparcas.ui.theme.CoilConfig
 import com.futebadosparcas.util.PreferencesManager
 import com.futebadosparcas.util.ThemeHelper
 import com.google.firebase.FirebaseApp
@@ -65,39 +60,16 @@ class FutebaApplication : Application(), Configuration.Provider {
             )
         }
 
-        // Configurar Coil 3 (KMP) para carregamento de imagens otimizado
-        // OkHttp client configurado
-        val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
-
-        val imageLoader = ImageLoader.Builder(this)
-            .memoryCache {
-                MemoryCache.Builder()
-                    .maxSizePercent(percent = 0.25, context = this)
-                    .build()
-            }
-            .diskCache {
-                DiskCache.Builder()
-                    .directory(cacheDir.resolve("image_cache").toOkioPath())
-                    .maxSizeBytes(100 * 1024 * 1024) // 100MB
-                    .build()
-            }
-            // Coil 3 requires explicit network fetcher
-            .components {
-                add(OkHttpNetworkFetcherFactory(callFactory = okHttpClient))
-            }
-            .build()
-
-        SingletonImageLoader.setSafe { imageLoader }
+        // Configurar Coil 3 (KMP) para carregamento de imagens otimizado.
+        CoilConfig.setupCoil(this)
 
         // Aplicar preferência de tema salva (padrão: claro)
         val preferencesManager: PreferencesManager by inject()
         val theme = preferencesManager.getThemePreference()
         ThemeHelper.applyTheme(theme)
 
-        // Agendar worker de limpeza de cache (a cada 12 horas)
-        CacheCleanupWorker.schedule(this)
+        Handler(Looper.getMainLooper()).post {
+            CacheCleanupWorker.schedule(applicationContext)
+        }
     }
 }

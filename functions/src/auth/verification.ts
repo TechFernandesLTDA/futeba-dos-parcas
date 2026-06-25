@@ -283,9 +283,7 @@ export const setUserVerified = onCall(
       const userRecord = await admin.auth().getUser(targetUid);
 
       // FIX #1308: idempotência. Se o usuário JÁ está verified=true, retornar
-      // cedo SEM revogar refresh tokens nem reescrever claims/mirrors. Revogar
-      // tokens forçava reauth no cliente → nova chamada de setUserVerified →
-      // loop self-perpetuating cross-platform (web + Android #1313).
+      // cedo SEM reescrever claims/mirrors.
       if (userRecord.customClaims?.verified === true) {
         logger.info("[SET_VERIFIED] No-op: usuário já verificado", {
           uid: targetUid,
@@ -320,11 +318,15 @@ export const setUserVerified = onCall(
         verified: true,
       });
 
-      await admin.auth().revokeRefreshTokens(targetUid);
+      // Não revogar refresh tokens aqui. O cliente força getIdTokenResult(true)
+      // após a callable para buscar o claim novo; revogar no mesmo fluxo invalida
+      // a sessão recém-verificada e, em web mobile, pode derrubar para /login.
 
       // Mirror em users/{uid} para listeners cliente (refletir verifiedAt)
       await db.doc(`users/${targetUid}`).set(
         {
+          phone: userRecord.phoneNumber,
+          phone_verified: true,
           verifiedAt: FieldValue.serverTimestamp(),
         },
         {merge: true},

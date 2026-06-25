@@ -32,13 +32,13 @@ class ThemeRepositoryImpl constructor(
         val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
     }
 
-    // Default real do app, vindo do modelo (SYSTEM). Usado quando nada foi persistido
-    // pelo usuario — corrige #2688 (default era LIGHT efetivo no leitor).
+    // Default real do app, vindo do modelo (LIGHT). Usado quando nada foi persistido
+    // pelo usuario, preservando qualquer preferencia que ele ja tenha escolhido.
     private val defaultConfig = AppThemeConfig()
 
     override val themeConfig: Flow<AppThemeConfig> = dataStore.data
         .map { preferences ->
-            // #2688: quando nada foi persistido, segue o sistema (default do modelo),
+            // Quando nada foi persistido, usa Light como padrao global do app,
             // respeitando qualquer preferencia que o usuario ja tenha escolhido.
             val mode = try {
                 ThemeMode.valueOf(preferences[Keys.THEME_MODE] ?: defaultConfig.mode.name)

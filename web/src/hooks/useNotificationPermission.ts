@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
 import { doc, runTransaction, arrayUnion } from 'firebase/firestore';
-import { db, messagingPromise } from '../services/firebase';
+import { db } from '../services/firebase';
+import { messagingPromise } from '../services/firebaseMessaging';
 import { useAuth } from '../contexts/AuthContext';
 import { createLogger } from '../utils/logger';
 

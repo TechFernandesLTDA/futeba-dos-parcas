@@ -32,6 +32,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
+import { getUsersByIds } from '../../utils/userBatch';
 
 const logger = createLogger('VoteResultScreen');
 
@@ -149,41 +150,34 @@ export const VoteResultScreen: React.FC = () => {
             winner: data.winnerTeam || 'DRAW',
           });
 
-          const mvpId = data.mvpId;
-          if (mvpId) {
-            const userDoc = await getDoc(doc(db, 'users', mvpId));
-            if (userDoc.exists()) {
-              const userRaw = userDoc.data();
-              const userData = snakeToCamel<RawVoteUserDoc>(userRaw);
-              setVoteResult((prev) => ({
-                ...prev,
-                mvp: {
-                  userId: mvpId,
-                  userName: userData.name || t('players.defaultName'),
-                  userPhoto: userData.photoUrl,
-                  votes: data.mvpVotes || 0,
-                },
-              }) as VoteResult);
-            }
-          }
+          const awardUsersById = await getUsersByIds(
+            [data.mvpId, data.bolaMurchaId].filter(Boolean) as string[]
+          );
+          if (cancelled) return;
 
+          const mvpId = data.mvpId;
           const bolaMurchaId = data.bolaMurchaId;
-          if (bolaMurchaId) {
-            const userDoc = await getDoc(doc(db, 'users', bolaMurchaId));
-            if (userDoc.exists()) {
-              const userRaw = userDoc.data();
-              const userData = snakeToCamel<RawVoteUserDoc>(userRaw);
-              setVoteResult((prev) => ({
-                ...prev,
-                bolaMurcha: {
-                  userId: bolaMurchaId,
-                  userName: userData.name || t('players.defaultName'),
-                  userPhoto: userData.photoUrl,
-                  votes: data.bolaMurchaVotes || 0,
-                },
-              }) as VoteResult);
-            }
-          }
+          const mvpUser = mvpId ? (awardUsersById.get(mvpId) as RawVoteUserDoc | undefined) : undefined;
+          const bolaMurchaUser = bolaMurchaId
+            ? (awardUsersById.get(bolaMurchaId) as RawVoteUserDoc | undefined)
+            : undefined;
+
+          setVoteResult({
+            mvp: mvpId && mvpUser ? {
+              userId: mvpId,
+              userName: mvpUser.name || t('players.defaultName'),
+              userPhoto: mvpUser.photoUrl,
+              votes: data.mvpVotes || 0,
+            } : null,
+            bolaMurcha: bolaMurchaId && bolaMurchaUser ? {
+              userId: bolaMurchaId,
+              userName: bolaMurchaUser.name || t('players.defaultName'),
+              userPhoto: bolaMurchaUser.photoUrl,
+              votes: data.bolaMurchaVotes || 0,
+            } : null,
+            topScorer: null,
+            topAssistant: null,
+          });
         }
       } catch (error) {
         logger.error('Error fetching vote results:', error);

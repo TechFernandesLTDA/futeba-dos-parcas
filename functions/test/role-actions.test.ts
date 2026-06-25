@@ -23,11 +23,9 @@ const mockGetUser = jest.fn().mockResolvedValue({
   customClaims: {},
   phoneNumber: "+5511999999999",
 });
-// FIX #1280-tests: revokeRefreshTokens foi adicionado em setUserVerified
-// (PR #1064) para invalidar tokens após claim verified=true, mas o mock
-// de firebase-admin não incluía o método → 4 testes falhavam com
-// "TypeError: admin.auth(...).revokeRefreshTokens is not a function".
-// O source está correto — o mock é que estava incompleto.
+// Mantém revokeRefreshTokens no mock porque outras callables administrativas
+// ainda o usam, mas setUserVerified não deve revogar a sessão do próprio
+// usuário durante o onboarding.
 const mockRevokeRefreshTokens = jest.fn().mockResolvedValue(undefined);
 
 const mockDocGet = jest.fn();
@@ -583,7 +581,7 @@ describe("setUserVerified - idempotencia (#1308)", () => {
     expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
   });
 
-  test("primeira verificacao (verified ausente) revoga tokens normalmente", async () => {
+  test("primeira verificacao (verified ausente) preserva sessao", async () => {
     mockGetUser.mockResolvedValue({
       customClaims: {role: "PLAYER"},
       phoneNumber: "+5511999999999",
@@ -598,7 +596,7 @@ describe("setUserVerified - idempotencia (#1308)", () => {
       PLAYER_AUTH.uid,
       expect.objectContaining({verified: true})
     );
-    expect(mockRevokeRefreshTokens).toHaveBeenCalledWith(PLAYER_AUTH.uid);
+    expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
   });
 });
 

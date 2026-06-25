@@ -56,6 +56,10 @@ vi.mock('../services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
 }));
 
+vi.mock('../services/firebaseStorage', () => ({
+  storage: {},
+}));
+
 vi.mock('firebase/storage', () => ({
   ref: vi.fn(),
   uploadBytes: vi.fn(),

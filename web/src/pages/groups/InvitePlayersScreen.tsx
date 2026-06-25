@@ -32,6 +32,7 @@ import { LoadingState, PlayerAvatar, EmptyState } from '../../components/common/
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { getUsersByIds } from '../../utils/userBatch';
 
 const logger = createLogger('InvitePlayersScreen');
 
@@ -94,26 +95,27 @@ export const InvitePlayersScreen: React.FC = () => {
           if (cancelled) return;
 
           const memberDocs = membersSnap.docs;
-          const membersData = await Promise.all(
-            memberDocs.map(async (memberDoc) => {
+          const usersById = await getUsersByIds(memberDocs.map((memberDoc) => memberDoc.id));
+          if (cancelled) return;
+
+          const membersData = memberDocs
+            .map((memberDoc) => {
               const uid = memberDoc.id;
               const memberRole = (memberDoc.data().role as string) || 'MEMBER';
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists()) {
-                const d = snakeToCamel(userDoc.data()) as Record<string, unknown>;
-                return {
-                  id: uid,
-                  name: (d.name as string) || 'Jogador',
-                  email: (d.email as string) || '',
-                  photoUrl: d.photoUrl as string | undefined,
-                  role: memberRole,
-                };
-              }
-              return null;
-            })
-          );
+              const d = usersById.get(uid);
+              if (!d) return null;
 
-          if (!cancelled) setMembers(membersData.filter(Boolean) as GroupMember[]);
+              return {
+                id: uid,
+                name: (d.name as string) || 'Jogador',
+                email: (d.email as string) || '',
+                photoUrl: d.photoUrl as string | undefined,
+                role: memberRole,
+              };
+            })
+            .filter(Boolean) as GroupMember[];
+
+          if (!cancelled) setMembers(membersData);
         }
       } catch (error) {
         if (!cancelled) {

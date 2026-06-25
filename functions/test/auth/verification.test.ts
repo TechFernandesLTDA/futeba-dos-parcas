@@ -160,7 +160,6 @@ describe("Auth — Verification", () => {
         customClaims: {},
       });
       mockSetCustomUserClaims.mockResolvedValueOnce(undefined);
-      mockRevokeRefreshTokens.mockResolvedValueOnce(undefined);
 
       const result = await setUserVerified(makeRequest());
 
@@ -168,6 +167,15 @@ describe("Auth — Verification", () => {
       expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
         "user1",
         expect.objectContaining({ verified: true }),
+      );
+      expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phone: "+5511999999999",
+          phone_verified: true,
+          verifiedAt: expect.anything(),
+        }),
+        { merge: true },
       );
     });
 
@@ -232,7 +240,6 @@ describe("Auth — Verification", () => {
         customClaims: {},
       });
       mockSetCustomUserClaims.mockResolvedValueOnce(undefined);
-      mockRevokeRefreshTokens.mockResolvedValueOnce(undefined);
 
       const result = await setUserVerified(makeRequest({
         auth: { uid: "admin1", token: { role: "ADMIN" } },

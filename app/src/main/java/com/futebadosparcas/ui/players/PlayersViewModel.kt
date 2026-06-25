@@ -7,6 +7,7 @@ import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -27,7 +28,7 @@ class PlayersViewModel(
     private val statisticsRepository: com.futebadosparcas.domain.repository.StatisticsRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
     private val inviteRepository: com.futebadosparcas.domain.repository.InviteRepository,
-    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+    private val observeUnreadCountUseCase: ObserveUnreadCountUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -90,7 +91,7 @@ class PlayersViewModel(
     private fun observeUnreadCount() {
         unreadCountJob?.cancel()
         unreadCountJob = viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow()
+            observeUnreadCountUseCase()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
                     AppLogger.e(TAG, "Erro ao observar notificações", e)

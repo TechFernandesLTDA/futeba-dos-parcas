@@ -40,13 +40,12 @@ import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.data.model.UserBadge
 import com.futebadosparcas.domain.gamification.BadgeAwarder
 import com.futebadosparcas.domain.ranking.PostGameEventEmitter
-import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import kotlinx.coroutines.flow.collectLatest
 import com.futebadosparcas.ui.components.modern.AdaptiveNavigationScaffold
 import com.futebadosparcas.ui.components.modern.NavDestination
 import com.futebadosparcas.ui.navigation.AppNavHost
 import com.futebadosparcas.ui.navigation.Screen
-import com.futebadosparcas.ui.theme.CoilConfig
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.ui.onboarding.OnboardingFlow
 import com.futebadosparcas.ui.onboarding.PhoneVerificationScreen
@@ -82,7 +81,7 @@ class MainActivityCompose : AppCompatActivity() {
     private val firestore: FirebaseFirestore by inject()
     private val postGameEventEmitter: PostGameEventEmitter by inject()
     private val themeRepository: ThemeRepository by inject()
-    private val notificationRepository: NotificationRepository by inject()
+    private val observeUnreadCountUseCase: ObserveUnreadCountUseCase by inject()
     private val preferencesManager: PreferencesManager by inject()
     private val authRepository: com.futebadosparcas.data.repository.AuthRepository by inject()
     private val updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase by inject()
@@ -128,9 +127,6 @@ class MainActivityCompose : AppCompatActivity() {
         if (savedInstanceState == null) {
             handleIntentExtras(intent)
         }
-
-        // Configurar cache de imagens
-        CoilConfig.setupCoil(this)
 
         setContent {
             val themeConfig by themeRepository.themeConfig.collectAsStateWithLifecycle(
@@ -255,7 +251,7 @@ private fun AntiBotGate(
     authRepository: com.futebadosparcas.data.repository.AuthRepository = org.koin.compose.koinInject(),
     updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase = org.koin.compose.koinInject(),
     badgeAwarder: BadgeAwarder = org.koin.compose.koinInject(),
-    notificationRepository: NotificationRepository = org.koin.compose.koinInject(),
+    observeUnreadCountUseCase: ObserveUnreadCountUseCase = org.koin.compose.koinInject(),
 ) {
     val gateState by verificationGateViewModel.state.collectAsStateWithLifecycle()
 
@@ -386,7 +382,7 @@ private fun AntiBotGate(
                         themeConfig = themeConfig,
                         onThemeChange = onThemeChange,
                         badgeAwarder = badgeAwarder,
-                        notificationRepository = notificationRepository,
+                        observeUnreadCountUseCase = observeUnreadCountUseCase,
                         deepLinkTarget = deepLinkTarget,
                         onDeepLinkConsumed = onDeepLinkConsumed,
                     )
@@ -408,7 +404,7 @@ fun MainScreen(
     themeConfig: com.futebadosparcas.domain.model.AppThemeConfig,
     onThemeChange: () -> Unit,
     badgeAwarder: BadgeAwarder,
-    notificationRepository: NotificationRepository,
+    observeUnreadCountUseCase: ObserveUnreadCountUseCase,
     deepLinkTarget: String? = null,
     onDeepLinkConsumed: () -> Unit = {}
 ) {
@@ -426,7 +422,7 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Contagem de notificações não lidas
-    val notificationCount by notificationRepository.getUnreadCountFlow()
+    val notificationCount by observeUnreadCountUseCase()
         .collectAsStateWithLifecycle(initialValue = 0)
 
     // Pop-up "Novidades" pós-atualização (spec feat-2026-05-22 — Fase E).

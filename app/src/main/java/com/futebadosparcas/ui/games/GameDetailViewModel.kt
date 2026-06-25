@@ -65,6 +65,12 @@ class GameDetailViewModel(
             _uiState.value = GameDetailUiState.Loading
 
             try {
+                val currentUserResult = authRepository.getCurrentUser()
+                val currentUserObj = currentUserResult.getOrNull()
+                val currentUserId = currentUserObj?.id ?: authRepository.getCurrentUserId()
+                val isAdmin = permissionManager.isAdmin()
+                var cachedVoteStatus: Boolean? = null
+
                 combine(
                     gameRepository.getGameDetailsFlow(id),
                     gameRepository.getGameConfirmationsFlow(id),
@@ -114,12 +120,7 @@ class GameDetailViewModel(
                         WaitlistState.Loaded(waitlistEntries)
                     }
 
-                    val currentUserResult = authRepository.getCurrentUser()
-                    val currentUserObj = currentUserResult.getOrNull()
-                    val currentUserId = currentUserObj?.id ?: authRepository.getCurrentUserId()
-
                     // Permissões centralizadas via PermissionManager
-                    val isAdmin = permissionManager.isAdmin()
                     val canManageGame = permissionManager.canEditGame(game.ownerId, game.coOrganizers)
 
                     val isConfirmed = confirmations.find { it.userId == currentUserId }
@@ -131,21 +132,30 @@ class GameDetailViewModel(
 
                     val currentMessage = (_uiState.value as? GameDetailUiState.Success)?.userMessage
 
+                    val eventsByPlayerId = events.groupBy { it.playerId }
+                    val assistsByPlayerId = events.groupingBy { it.assistedById }.eachCount()
+
                     val confirmedWithStats = confirmations.map { conf ->
-                        val playerEvents = events.filter { it.playerId == conf.userId }
+                        val playerEvents = eventsByPlayerId[conf.userId].orEmpty()
                         conf.copy(
                             goals = playerEvents.count { it.eventType == GameEventType.GOAL.name },
                             yellowCards = playerEvents.count { it.eventType == GameEventType.YELLOW_CARD.name },
                             redCards = playerEvents.count { it.eventType == GameEventType.RED_CARD.name },
-                            assists = events.count { it.assistedById == conf.userId }
+                            assists = assistsByPlayerId[conf.userId] ?: 0
                         )
                     }
 
                     // Check vote status if game is finished
-                    var hasVoted: Boolean? = (_uiState.value as? GameDetailUiState.Success)?.hasVoted
+                    var hasVoted: Boolean? = cachedVoteStatus ?: (_uiState.value as? GameDetailUiState.Success)?.hasVoted
                     if (gameWithLiveScore.status == GameStatus.FINISHED.name && currentUserId != null) {
-                        val voteResult = gameExperienceRepository.hasUserVoted(gameWithLiveScore.id, currentUserId)
-                        hasVoted = voteResult.getOrNull() ?: false
+                        if (hasVoted == null) {
+                            val voteResult = gameExperienceRepository.hasUserVoted(gameWithLiveScore.id, currentUserId)
+                            hasVoted = voteResult.getOrNull() ?: false
+                            cachedVoteStatus = hasVoted
+                        }
+                    } else {
+                        cachedVoteStatus = null
+                        hasVoted = null
                     }
 
                     // Ordenar por ordem de confirmacao (Issue #40) - usar confirmedAt

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { SearchPanel } from './SearchPanel';
-import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
 import { useTranslation } from 'react-i18next';
 
 interface CommandPaletteProps {
@@ -32,37 +30,11 @@ interface CommandPaletteProps {
  */
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
   open,
-  onOpen,
   onClose,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const navigate = useNavigate();
-
-  // Registra Cmd+K / Ctrl+K globalmente — toggle abre/fecha
-  const handleShortcut = useCallback(() => {
-    if (open) {
-      onClose();
-    } else {
-      onOpen();
-    }
-  }, [open, onOpen, onClose]);
-
-  useKeyboardShortcut({ key: 'k', modifiers: ['cmd'] }, handleShortcut);
-
-  // Atalhos de ações rápidas
-  const handleCreateGame = useCallback(() => { onClose(); navigate('/game/create'); }, [onClose, navigate]);
-  useKeyboardShortcut({ key: 'n', modifiers: ['cmd'] }, handleCreateGame);
-
-  const handleCreateGroup = useCallback(() => { onClose(); navigate('/group/create'); }, [onClose, navigate]);
-  useKeyboardShortcut({ key: 'n', modifiers: ['cmd', 'shift'] }, handleCreateGroup);
-
-  const handleSettings = useCallback(() => { onClose(); navigate('/settings'); }, [onClose, navigate]);
-  useKeyboardShortcut({ key: ',', modifiers: ['cmd'] }, handleSettings);
-
-  // #2165: o atalho "?" e o ShortcutsDialog são donos exclusivos do App.tsx.
-  // Antes, este componente também os registrava, abrindo dois modais empilhados.
 
   return (
     <Dialog

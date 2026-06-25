@@ -38,7 +38,7 @@ data class AppThemeConfig(
         primary = 0xFF00852A.toInt(), // Verde Futeba AA (ARGB: FF 00 85 2A)
         secondary = 0xFFFF9600.toInt() // Laranja Badge (ARGB: FF FF 96 00)
     ),
-    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val mode: ThemeMode = ThemeMode.LIGHT,
     val contrastLevel: ContrastLevel = ContrastLevel.NORMAL,
     val useDynamicColor: Boolean = false    // #2684: Material You dynamic color (Android 12+)
 )

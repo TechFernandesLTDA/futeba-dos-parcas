@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createTestWrapper } from '../test/renderWithProviders';
 
-// Mocks — useBadges usa useQuery/getDocs para dados + onSnapshot para invalidação (#2351)
-const mockOnSnapshot = vi.fn();
+// Mocks — useBadges usa useQuery/getDocs; listener redundante removido em #2933.
 const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
 const mockCollection = vi.fn();
 const mockQuery = vi.fn();
@@ -18,8 +17,6 @@ vi.mock('firebase/firestore', () => ({
   where: (...args: any[]) => mockWhere(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDocs: (...args: any[]) => mockGetDocs(...args),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
   limit: vi.fn((...args) => args[0]),
   serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
@@ -38,7 +35,6 @@ import { BADGE_DEFINITIONS } from '../types/gamification';
 describe('useBadges', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockOnSnapshot.mockReturnValue(vi.fn());
     mockQuery.mockReturnValue('mock-query');
     mockCollection.mockReturnValue('mock-collection');
     mockWhere.mockReturnValue('mock-where');
@@ -101,11 +97,7 @@ describe('useBadges', () => {
   });
 
   it('trata badges vazias corretamente', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
-      onNext({ docs: [] });
-      return vi.fn();
-    });
+    mockGetDocs.mockResolvedValueOnce({ docs: [] });
 
     const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });
 
@@ -117,12 +109,8 @@ describe('useBadges', () => {
     expect(result.current.unlockedIds.size).toBe(0);
   });
 
-  it('trata erros do snapshot', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
-      onError(new Error('Badge error'));
-      return vi.fn();
-    });
+  it('trata erros da query', async () => {
+    mockGetDocs.mockRejectedValueOnce(new Error('Badge error'));
 
     const { result } = renderHook(() => useBadges('user-1'), { wrapper: createTestWrapper() });
 

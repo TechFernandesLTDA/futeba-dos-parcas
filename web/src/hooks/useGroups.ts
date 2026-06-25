@@ -19,7 +19,8 @@ import {
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { db, storage } from '../services/firebase';
+import { db } from '../services/firebase';
+import { storage } from '../services/firebaseStorage';
 import { Group, GroupMember, GroupRole, CashboxTransaction } from '../types/group';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';

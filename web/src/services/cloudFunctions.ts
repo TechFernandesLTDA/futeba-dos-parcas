@@ -1,5 +1,5 @@
 import { httpsCallable, HttpsCallable } from 'firebase/functions';
-import { functions } from './firebase';
+import { functions } from './firebaseFunctions';
 import type { UserGender } from '../types/user';
 
 export function getCallable<T = unknown, R = unknown>(name: string): HttpsCallable<T, R> {
@@ -30,7 +30,12 @@ export const recalculateAllAutoRatings = httpsCallable<
 // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
 export const canSendSmsOtp = httpsCallable<
   { phone: string },
-  { allowed: boolean; reason?: string; retryAfterSec?: number }
+  {
+    allowed: boolean;
+    reason?: 'caller_rate_limit' | 'phone_rate_limit' | 'ip_rate_limit' | 'duplicate_phone';
+    retryAfterSec?: number;
+    alreadyLinked?: boolean;
+  }
 >(functions, 'canSendSmsOtp');
 
 // 2026-05-31: timeout explicito de 30s (default do SDK e 70s). Evita que um

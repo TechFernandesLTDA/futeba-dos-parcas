@@ -13,6 +13,26 @@ const routePrefetchers: Record<string, () => Promise<unknown>> = {
   '/statistics': () => import('../pages/statistics/StatisticsScreen'),
 };
 
+function canPrefetchOnCurrentNetwork(): boolean {
+  const connection = (navigator as Navigator & {
+    connection?: { saveData?: boolean; effectiveType?: string };
+  }).connection;
+
+  if (!connection) return true;
+  if (connection.saveData) return false;
+  return !['slow-2g', '2g'].includes(connection.effectiveType ?? '');
+}
+
+function scheduleIdle(callback: () => void): () => void {
+  if ('requestIdleCallback' in window) {
+    const id = window.requestIdleCallback(callback, { timeout: 3000 });
+    return () => window.cancelIdleCallback(id);
+  }
+
+  const id = globalThis.setTimeout(callback, 1200);
+  return () => globalThis.clearTimeout(id);
+}
+
 function preloadRouteModule(route: string): Promise<void> {
   if (routeModuleCache.has(route)) {
     return Promise.resolve();
@@ -64,23 +84,26 @@ export function useResourcePreloading() {
   useEffect(() => {
     // Prefetch likely next routes based on current route
     const prefetchMap: Record<string, string[]> = {
-      '/': ['/game/create', '/profile/edit'],
-      '/group/create': ['/game/create'],
+      '/': ['/league'],
       '/profile/edit': ['/level-journey'],
       '/league': ['/statistics'],
       '/statistics': ['/league'],
     };
 
+    if (!canPrefetchOnCurrentNetwork()) return;
+
     const currentPath = location.pathname;
     const routesToPrefetch = prefetchMap[currentPath] || [];
 
-    routesToPrefetch.forEach((route) => {
-      if (!prefetchedRoutes.current.has(route) && !routeModuleCache.has(route)) {
-        preloadRouteModule(route)
-          .finally(() => {
-            prefetchedRoutes.current.add(route);
-          });
-      }
+    return scheduleIdle(() => {
+      routesToPrefetch.forEach((route) => {
+        if (!prefetchedRoutes.current.has(route) && !routeModuleCache.has(route)) {
+          preloadRouteModule(route)
+            .finally(() => {
+              prefetchedRoutes.current.add(route);
+            });
+        }
+      });
     });
   }, [location.pathname]);
 }

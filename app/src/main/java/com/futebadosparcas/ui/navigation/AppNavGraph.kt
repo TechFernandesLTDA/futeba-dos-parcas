@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.navigation
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -125,7 +126,22 @@ sealed class Screen(
     data object GameDetail : Screen("game_detail/{gameId}", titleResId = R.string.game_detail) {
         fun createRoute(gameId: String) = "game_detail/$gameId"
     }
-    data object CreateGame : Screen("create_game", titleResId = R.string.create_game)
+    data object CreateGame : Screen(
+        "create_game?gameId={gameId}&groupId={groupId}",
+        titleResId = R.string.create_game
+    ) {
+        fun createRoute(gameId: String? = null, groupId: String? = null): String {
+            val params = buildList {
+                gameId?.takeIf { it.isNotBlank() }?.let {
+                    add("gameId=${Uri.encode(it)}")
+                }
+                groupId?.takeIf { it.isNotBlank() }?.let {
+                    add("groupId=${Uri.encode(it)}")
+                }
+            }
+            return if (params.isEmpty()) "create_game" else "create_game?${params.joinToString("&")}"
+        }
+    }
     data object LiveGame : Screen("live_game/{gameId}", titleResId = R.string.live_game) {
         fun createRoute(gameId: String) = "live_game/$gameId"
     }
@@ -294,7 +310,7 @@ fun AppNavHost(
                     navController.navigate(Screen.LevelJourney.route)
                 },
                 onCreateGameClick = {
-                    navController.navigate(Screen.CreateGame.route)
+                    navController.navigate(Screen.CreateGame.createRoute())
                 },
                 onJoinGroupClick = {
                     navController.navigate(Screen.Groups.route)
@@ -313,10 +329,10 @@ fun AppNavHost(
                     navController.navigate(Screen.GameDetail.createRoute(gameId))
                 },
                 onCreateGameClick = {
-                    navController.navigate(Screen.CreateGame.route)
+                    navController.navigate(Screen.CreateGame.createRoute())
                 },
-                onEditGameClick = {
-                    navController.navigate(Screen.CreateGame.route)
+                onEditGameClick = { gameId ->
+                    navController.navigate(Screen.CreateGame.createRoute(gameId = gameId))
                 },
                 onMvpVoteClick = { gameId ->
                     navController.navigate(Screen.MVPVote.createRoute(gameId))
@@ -535,7 +551,7 @@ fun AppNavHost(
                 gameId = gameId,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToCreateGame = { editGameId ->
-                    navController.navigate(Screen.CreateGame.route)
+                    navController.navigate(Screen.CreateGame.createRoute(gameId = editGameId))
                 },
                 onNavigateToMvpVote = {
                     navController.navigate(Screen.MVPVote.createRoute(gameId))
@@ -546,14 +562,31 @@ fun AppNavHost(
             )
         }
 
-        composable(Screen.CreateGame.route) {
+        composable(
+            route = Screen.CreateGame.route,
+            arguments = listOf(
+                navArgument("gameId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("groupId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("gameId")
+            val groupId = backStackEntry.arguments?.getString("groupId")
             val viewModel: com.futebadosparcas.ui.games.CreateGameViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.CreateGame.titleResId,
                 onNavigateBack = { navController.popBackStack() }
             ) {
                 CreateGameScreen(
-                    gameId = null,
+                    gameId = gameId,
+                    initialGroupId = groupId,
                     viewModel = viewModel,
                     hapticManager = hapticManager,
                     onNavigateBack = { navController.popBackStack() },
@@ -631,7 +664,7 @@ fun AppNavHost(
                     navController.navigate(Screen.Cashbox.createRoute(groupId))
                 },
                 onCreateGameInGroupClick = {
-                    navController.navigate(Screen.CreateGame.route)
+                    navController.navigate(Screen.CreateGame.createRoute(groupId = it))
                 },
                 onBackClick = { navController.popBackStack() }
             )
@@ -666,7 +699,7 @@ fun AppNavHost(
                     navController.navigate(Screen.Cashbox.createRoute(groupId))
                 },
                 onNavigateToCreateGame = {
-                    navController.navigate(Screen.CreateGame.route)
+                    navController.navigate(Screen.CreateGame.createRoute(groupId = groupId))
                 }
             )
         }
