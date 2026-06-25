@@ -284,19 +284,20 @@ function checkWebElevationParity(tokens, errors) {
 }
 
 function checkWebRadiusAndSpacing(tokens, errors) {
-  const file = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
-  const content = readRequiredFile(file, 'web radius/spacing', errors);
+  const themeFile = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const content = readRequiredFile(themeFile, 'web radius/spacing', errors);
   if (!content) return;
 
-  checkTsObjectNumbers(content, 'radii', tokens.radius, 'web radius token', file, errors);
+  checkTsObjectNumbers(content, 'radii', tokens.radius, 'web radius token', themeFile, errors);
 
   const lightTheme = sliceBetween(content, 'export const futebaTheme = createTheme({', '// Dark theme');
   if (!lightTheme) {
-    errors.push(`[web spacing token] futebaTheme ausente em ${relative(file)}`);
+    errors.push(`[web spacing token] futebaTheme ausente em ${relative(themeFile)}`);
     return;
   }
 
-  const spacingUnit = tokens.spacing && tokens.spacing.unit;
+  const spacing = tokens.spacing;
+  const spacingUnit = spacing && spacing.unit;
   if (typeof spacingUnit !== 'number') {
     errors.push('[spacing] token spacing.unit ausente ou inválido em shared/design-tokens.json');
     return;
@@ -304,7 +305,16 @@ function checkWebRadiusAndSpacing(tokens, errors) {
 
   const re = new RegExp(`\\bspacing\\s*:\\s*${spacingUnit}\\b`);
   if (!re.test(lightTheme)) {
-    errors.push(`[web spacing token] spacing diverge — esperado spacing: ${spacingUnit} em ${relative(file)}`);
+    errors.push(`[web spacing token] spacing diverge — esperado spacing: ${spacingUnit} em ${relative(themeFile)}`);
+  }
+
+  const pageTokensFile = path.join(ROOT, 'web', 'src', 'theme', 'pageTokens.ts');
+  const pageTokensContent = readRequiredFile(pageTokensFile, 'web page spacing tokens', errors);
+  if (pageTokensContent) {
+    checkTsObjectNumbers(pageTokensContent, 'pageSpacing', {
+      sectionSpacing: spacing.md / spacingUnit,
+      sectionSpacingLarge: spacing.lg / spacingUnit,
+    }, 'web page spacing token', pageTokensFile, errors);
   }
 }
 
@@ -353,6 +363,69 @@ function checkKotlinRadiusAndSpacing(tokens, errors) {
     if (content) {
       checkKotlinRoundedCornerShapes(content, shapeExpected, `${platform.name} shape token`, shapeFile, errors);
     }
+  }
+}
+
+function surfacePaletteTokens(surface, mode) {
+  const source = surface && surface[mode];
+  if (!source) return null;
+  return {
+    surfaceDim: source.dim,
+    surfaceBright: source.bright,
+    surfaceContainerLowest: source.containerLowest,
+    surfaceContainerLow: source.containerLow,
+    surfaceContainer: source.container,
+    surfaceContainerHigh: source.containerHigh,
+    surfaceContainerHighest: source.containerHighest,
+  };
+}
+
+function surfaceKotlinTokens(surface, mode) {
+  const source = surface && surface[mode];
+  if (!source) return null;
+  const prefix = mode === 'dark' ? 'md3_dark' : 'md3_light';
+  return {
+    [`${prefix}_surfaceDim`]: source.dim,
+    [`${prefix}_surfaceBright`]: source.bright,
+    [`${prefix}_surfaceContainerLowest`]: source.containerLowest,
+    [`${prefix}_surfaceContainerLow`]: source.containerLow,
+    [`${prefix}_surfaceContainer`]: source.container,
+    [`${prefix}_surfaceContainerHigh`]: source.containerHigh,
+    [`${prefix}_surfaceContainerHighest`]: source.containerHighest,
+  };
+}
+
+function checkSurfaceParity(tokens, errors) {
+  if (!tokens.surface || !tokens.surface.light || !tokens.surface.dark) {
+    errors.push('[surface] bloco `surface.light/dark` ausente em shared/design-tokens.json');
+    return;
+  }
+
+  const webFile = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const webContent = readRequiredFile(webFile, 'web surface tokens', errors);
+  if (webContent) {
+    const lightTheme = sliceBetween(webContent, 'export const futebaTheme = createTheme({', '// Dark theme');
+    const darkTheme = sliceBetween(webContent, 'export const futebaDarkTheme = createTheme({', 'export const futebaDarkOledTheme');
+    if (!lightTheme) {
+      errors.push(`[web surface token] futebaTheme ausente em ${relative(webFile)}`);
+    } else {
+      checkTsObjectHexes(lightTheme, 'palette', surfacePaletteTokens(tokens.surface, 'light'), 'web light surface token', webFile, errors);
+    }
+    if (!darkTheme) {
+      errors.push(`[web surface token] futebaDarkTheme ausente em ${relative(webFile)}`);
+    } else {
+      checkTsObjectHexes(darkTheme, 'palette', surfacePaletteTokens(tokens.surface, 'dark'), 'web dark surface token', webFile, errors);
+    }
+  }
+
+  const kotlinSurface = {
+    ...surfaceKotlinTokens(tokens.surface, 'light'),
+    ...surfaceKotlinTokens(tokens.surface, 'dark'),
+  };
+  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
+    const content = readRequiredFile(platform.file, `${platform.name} surface tokens`, errors);
+    if (!content) continue;
+    checkKotlinValHexes(content, kotlinSurface, `${platform.name} surface token`, platform.file, errors);
   }
 }
 
@@ -576,6 +649,7 @@ function main() {
   // Paridade de radius + spacing — issue #2744.
   checkWebRadiusAndSpacing(tokens, errors);
   checkKotlinRadiusAndSpacing(tokens, errors);
+  checkSurfaceParity(tokens, errors);
   checkWebElevationParity(tokens, errors);
 
   // Paridade de motion (durations + easings) — issue #2755.
@@ -588,7 +662,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + elevation + motion)');
+  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + surface + elevation + motion)');
   process.exit(0);
 }
 
