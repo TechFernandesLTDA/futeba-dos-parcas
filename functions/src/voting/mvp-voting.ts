@@ -1048,10 +1048,15 @@ async function applyVotingXpDelta(
           .doc(`game_${gameId}_user_${userId}`);
         const mainXpLog = await txn.get(mainXpLogRef);
         const mainData = mainXpLog.data();
+        const mainXpPenalty =
+          mainData?.xp_penalty as number | undefined;
+        const mainWasWorstPlayer =
+          mainData?.was_worst_player === true;
         if (
           mainXpLog.exists &&
-          ((mainData?.xp_penalty as number) < 0 ||
-            mainData?.was_worst_player === true)
+          ((typeof mainXpPenalty === "number" &&
+            mainXpPenalty < 0) ||
+            mainWasWorstPlayer)
         ) {
           logger.info(
             `[VOTING_XP] Skipping BOLA_MURCHA XP for ${userId} in ` +

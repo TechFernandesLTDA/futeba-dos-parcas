@@ -705,6 +705,73 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(xpTx.update).not.toHaveBeenCalled();
   });
 
+  test("não duplica Bola Murcha quando o log principal marca was_worst_player", async () => {
+    const votingTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    let votingCallIndex = 0;
+    const votingResponses = [
+      {
+        docs: [{data: () => ({category: "WORST", voted_player_id: "playerY"})}],
+        empty: false,
+      },
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "OPEN",
+          owner_id: "owner1",
+        }),
+      },
+      {docs: [], empty: true},
+    ];
+    votingTx.get.mockImplementation(() => {
+      const snap = votingResponses[votingCallIndex++] || {exists: false, data: () => ({})};
+      return Promise.resolve(snap);
+    });
+
+    const xpTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    let xpCallIndex = 0;
+    const xpResponses = [
+      {exists: false, data: () => null},
+      {
+        exists: true,
+        data: () => ({
+          xp_penalty: 0,
+          was_worst_player: true,
+        }),
+      },
+    ];
+    xpTx.get.mockImplementation(() => {
+      const snap = xpResponses[xpCallIndex++] || {exists: false, data: () => ({})};
+      return Promise.resolve(snap);
+    });
+
+    mockRunTransaction
+      .mockImplementationOnce(async (callback: any) => callback(votingTx))
+      .mockImplementationOnce(async (callback: any) => callback(xpTx));
+
+    const request = {
+      auth: {uid: "owner1", token: {profileComplete: true}},
+      data: {gameId: "game1"},
+    };
+
+    const result = await concludeMvpVotingHandler!(request);
+
+    expect(result.success).toBe(true);
+    expect(result.results.worstPlayerId).toBe("playerY");
+    expect(result.xpApplied.worst).toBe(true);
+    expect(xpTx.get).toHaveBeenCalledTimes(2);
+    expect(xpTx.set).not.toHaveBeenCalled();
+    expect(xpTx.update).not.toHaveBeenCalled();
+  });
+
   test("deve rejeitar quando caller não é dono nem admin", async () => {
     mockRunTransaction.mockImplementation(async (callback: any) => {
       let callIndex = 0;

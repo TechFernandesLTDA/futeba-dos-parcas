@@ -30,7 +30,7 @@ const MAX_GROUP_VACANCY_NOTIFICATIONS = 20;
  * @param {string} gameId
  * @return {Promise<string[]>}
  */
-async function fetchConfirmedUserIdsForGame(
+export async function fetchConfirmedUserIdsForGame(
   gameId: string
 ): Promise<string[]> {
   const userIds: string[] = [];
@@ -89,7 +89,7 @@ async function fetchConfirmedUserIdsForGame(
  * @param {string} gameId
  * @return {Promise<number>}
  */
-async function countConfirmedPlayersForGame(
+export async function countConfirmedPlayersForGame(
   gameId: string
 ): Promise<number> {
   const countSnap = await db()
@@ -109,7 +109,7 @@ async function countConfirmedPlayersForGame(
  * @param {number} limit
  * @return {Promise<string[]>}
  */
-async function fetchEligibleGroupMemberIdsForVacancy(
+export async function fetchEligibleGroupMemberIdsForVacancy(
   groupId: string,
   excludedUserIds: Set<string>,
   limit: number

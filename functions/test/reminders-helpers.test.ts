@@ -8,9 +8,24 @@
  */
 
 // Mock firebase-admin antes de importar
+const mockCollectionGet = jest.fn();
+const mockWhere = jest.fn();
+const mockLimit = jest.fn();
+const mockStartAfter = jest.fn();
+
+const queryChain: any = {
+  where: mockWhere,
+  limit: mockLimit,
+  startAfter: mockStartAfter,
+  get: mockCollectionGet,
+};
+mockWhere.mockReturnValue(queryChain);
+mockLimit.mockReturnValue(queryChain);
+mockStartAfter.mockReturnValue(queryChain);
+
 jest.mock("firebase-admin", () => {
   const mockFirestore = {
-    collection: jest.fn(),
+    collection: jest.fn(() => queryChain),
   };
 
   const mockTimestamp = {
@@ -58,12 +73,20 @@ jest.mock("../src/notifications", () => ({
 import {
   getGameDateTime,
   formatGameDateTime,
+  fetchPendingConfirmations,
   GameForReminder,
   EXCLUDED_GAME_STATUSES,
   CONFIRMED_STATUSES,
   REMINDER_PENDING_STATUSES,
   WINDOW_TOLERANCE_MS,
 } from "../src/reminders";
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockWhere.mockReturnValue(queryChain);
+  mockLimit.mockReturnValue(queryChain);
+  mockStartAfter.mockReturnValue(queryChain);
+});
 
 describe("Reminders - Constantes", () => {
   test("EXCLUDED_GAME_STATUSES deve incluir CANCELLED, FINISHED, LIVE", () => {
@@ -243,5 +266,76 @@ describe("Reminders - formatGameDateTime", () => {
       expect(typeof result).toBe("string");
       expect(result.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("Reminders - fetchPendingConfirmations", () => {
+  test("deve retornar vazio quando nao ha confirmacoes pendentes", async () => {
+    mockCollectionGet.mockResolvedValueOnce({
+      empty: true,
+      size: 0,
+      docs: [],
+    });
+
+    await expect(fetchPendingConfirmations("game-empty", "24h")).resolves.toEqual([]);
+    expect(mockStartAfter).not.toHaveBeenCalled();
+  });
+
+  test("deve paginar e ignorar confirmacoes que ja receberam o lembrete", async () => {
+    const page1Docs = Array.from({ length: 100 }, (_, index) => ({
+      id: `conf-${index}`,
+      data: () => ({
+        user_id: index === 0 ? "skip-user" : `user-${index}`,
+        status: index === 1 ? "WAITLIST" : "PENDING",
+        reminder_24h_sent: index === 0,
+        reminder_2h_sent: false,
+      }),
+    }));
+    const page2Docs = [
+      {
+        id: "conf-100",
+        data: () => ({
+          userId: "user-100",
+          status: "CHECKED_IN",
+        }),
+      },
+    ];
+
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        empty: false,
+        size: page1Docs.length,
+        docs: page1Docs,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        size: page2Docs.length,
+        docs: page2Docs,
+      });
+
+    const result = await fetchPendingConfirmations("game-1", "24h");
+
+    expect(result).toHaveLength(100);
+    expect(result.some((confirmation) => confirmation.user_id === "skip-user")).toBe(false);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "conf-1",
+          user_id: "user-1",
+          game_id: "game-1",
+          status: "WAITLIST",
+          reminder_24h_sent: false,
+          reminder_2h_sent: false,
+          reminder_1h_sent: false,
+        }),
+        expect.objectContaining({
+          id: "conf-100",
+          user_id: "user-100",
+          status: "CHECKED_IN",
+        }),
+      ]),
+    );
+    expect(mockStartAfter).toHaveBeenCalledTimes(1);
+    expect(mockStartAfter).toHaveBeenCalledWith(page1Docs[page1Docs.length - 1]);
   });
 });

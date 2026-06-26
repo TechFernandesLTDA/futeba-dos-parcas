@@ -372,7 +372,7 @@ async function fetchGamesInReminderWindow(
  * @return {Promise<ConfirmationForReminder[]>}
  *   Confirmacoes pendentes.
  */
-async function fetchPendingConfirmations(
+export async function fetchPendingConfirmations(
   gameId: string,
   reminderType: "24h" | "2h" | "1h"
 ): Promise<ConfirmationForReminder[]> {
