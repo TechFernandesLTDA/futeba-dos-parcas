@@ -1037,6 +1037,30 @@ async function applyVotingXpDelta(
         }
       }
 
+      // #2992: guard simetrico ao de MVP. O trigger principal
+      // (onGameStatusUpdate) ja aplica a penalidade de Bola Murcha quando
+      // is_worst_player esta setado no instante da transicao para FINISHED,
+      // gravando xp_penalty < 0 / was_worst_player no log principal. Sem
+      // esta verificacao, o caminho de votacao pagaria -10 de novo (-20 total).
+      if (reason === "BOLA_MURCHA") {
+        const mainXpLogRef = db
+          .collection("xp_logs")
+          .doc(`game_${gameId}_user_${userId}`);
+        const mainXpLog = await txn.get(mainXpLogRef);
+        const mainData = mainXpLog.data();
+        if (
+          mainXpLog.exists &&
+          ((mainData?.xp_penalty as number) < 0 ||
+            mainData?.was_worst_player === true)
+        ) {
+          logger.info(
+            `[VOTING_XP] Skipping BOLA_MURCHA XP for ${userId} in ` +
+            `${gameId} - main trigger already applied penalty (dedup)`
+          );
+          return;
+        }
+      }
+
       let weekKey: string | null = null;
       let monthKey: string | null = null;
 

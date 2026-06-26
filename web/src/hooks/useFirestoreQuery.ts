@@ -52,10 +52,17 @@ export function useFirestoreQuery<T>({
 
   useEffect(() => {
     if (!firestoreQuery || !enabled) {
+      // Evita exibir resultados de uma query antiga quando o caller desabilita
+      // o hook ou remove a query atual (troca de rota, logout, dependências).
+      setData([]);
+      setError(null);
       setLoading(false);
       return;
     }
 
+    // Quando a referência da query muda, começamos um novo ciclo de loading sem
+    // manter dados potencialmente pertencentes ao contexto anterior.
+    setData([]);
     setLoading(true);
     setError(null);
 

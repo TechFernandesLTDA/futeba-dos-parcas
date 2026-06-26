@@ -224,7 +224,7 @@ val FutebaDarkColorScheme = darkColorScheme(
 // ==========================================
 
 object ThemePresets {
-    val Green = Color(0xFF58CC02)
+    val Green = Color(0xFF00852A)
     val Blue = Color(0xFF1CB0F6)
     val Orange = Color(0xFFFF9600)
     val Purple = Color(0xFFCE82FF)

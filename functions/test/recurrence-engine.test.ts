@@ -22,6 +22,7 @@ jest.mock("../src/notifications/helpers", () => ({
 
 import {
   chunkArray,
+  fetchActiveRecurringMemberInvites,
   toActiveRecurringMemberInvite,
 } from "../src/games/recurrence-engine";
 
@@ -74,5 +75,74 @@ describe("chunkArray", () => {
 
   it("mantem lista vazia como lista de blocos vazia", () => {
     expect(chunkArray([], 2)).toEqual([]);
+  });
+});
+
+describe("fetchActiveRecurringMemberInvites", () => {
+  it("pagina membros e retorna apenas convites ativos elegíveis", async () => {
+    const page1Docs = Array.from(
+      {length: 100},
+      (_, index) => ({
+        id: index === 0 ? "owner1" : `member-page1-${index}`,
+        data: () => ({
+          status: index === 1 ? "ACTIVE" : "INACTIVE",
+          display_name: index === 0 ? "Owner" : `Membro ${index}`,
+        }),
+      })
+    );
+    const page2Docs = [
+      {
+        id: "member2",
+        data: () => ({status: "INACTIVE", display_name: "Bia"}),
+      },
+      {
+        id: "member3",
+        data: () => ({status: "ACTIVE", name: "Duda"}),
+      },
+    ];
+
+    const get = jest.fn()
+      .mockResolvedValueOnce({
+        empty: false,
+        size: page1Docs.length,
+        docs: page1Docs,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        size: page2Docs.length,
+        docs: page2Docs,
+      })
+      .mockResolvedValueOnce({
+        empty: true,
+        size: 0,
+        docs: [],
+      });
+
+    const query: any = {
+      limit: jest.fn(() => query),
+      startAfter: jest.fn(() => query),
+      get,
+    };
+    const fakeDb: any = {
+      collection: jest.fn(() => ({
+        doc: jest.fn(() => ({
+          collection: jest.fn(() => query),
+        })),
+      })),
+    };
+
+    const invites = await fetchActiveRecurringMemberInvites(
+      fakeDb,
+      "group1",
+      "owner1"
+    );
+
+    expect(invites).toEqual([
+      {memberId: "member-page1-1", userName: "Membro 1"},
+      {memberId: "member3", userName: "Duda"},
+    ]);
+    expect(query.limit).toHaveBeenCalledTimes(2);
+    expect(query.startAfter).toHaveBeenCalledTimes(1);
+    expect(query.startAfter).toHaveBeenCalledWith(page1Docs[page1Docs.length - 1]);
   });
 });
