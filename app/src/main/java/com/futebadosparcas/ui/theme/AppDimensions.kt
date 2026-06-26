@@ -21,26 +21,25 @@ object AppDimensions {
     val spacing_extraSmall = 4.dp
     val spacing_small = 8.dp
     val spacing_medium = 16.dp
-    // NOTA (#2750): spacing_large = 16dp DUPLICA spacing_medium. Mantido nesse
-    // valor de propósito — `padding_screen`/`padding_card` dependem dele esperando
-    // 16dp e alterá-lo para 24dp mudaria o padding de várias telas. Para 24dp,
-    // usar spacing_extraLarge (ou o alias spacing_lg).
-    val spacing_large = 16.dp
+    // #2956: spacing_large volta ao valor canônico da escala 8dp (24dp).
+    // spacing_extraLarge fica como alias legado para o mesmo passo para evitar
+    // churn excessivo em call-sites já ajustados antes da unificação.
+    val spacing_large = 24.dp
     val spacing_extraLarge = 24.dp
     val spacing_huge = 32.dp
     val spacing_massive = 48.dp
 
     // Aliases para compatibilidade (#2750: alinhados com AdaptiveSpacing)
     val spacing_md = spacing_medium       // 16dp
-    val spacing_lg = spacing_extraLarge   // 24dp
+    val spacing_lg = spacing_large        // 24dp
     val spacing_xl = spacing_huge         // 32dp
     val spacing_xxl = spacing_massive     // 48dp
 
     // ==========================================
     // PADDING - Padding interno de containers
     // ==========================================
-    val padding_screen = spacing_large
-    val padding_card = spacing_large
+    val padding_screen = spacing_medium
+    val padding_card = spacing_medium
     val padding_button = 16.dp
     val padding_chip = 8.dp
     val padding_dialog = 24.dp

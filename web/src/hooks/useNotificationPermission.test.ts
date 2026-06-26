@@ -14,6 +14,10 @@ vi.mock('firebase/messaging', () => ({
   onMessage: (...args: unknown[]) => mockOnMessage(...args),
 }));
 
+vi.mock('../services/firebaseMessaging', () => ({
+  messagingPromise: Promise.resolve({}),
+}));
+
 vi.mock('firebase/firestore', () => ({
   doc: (...args: unknown[]) => mockDoc(...args),
   updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
@@ -28,7 +32,6 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('../services/firebase', () => ({
   db: {},
-  messagingPromise: Promise.resolve({}),
 }));
 
 vi.mock('../utils/logger', () => ({

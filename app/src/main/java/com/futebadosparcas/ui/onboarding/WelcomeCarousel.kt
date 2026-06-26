@@ -15,10 +15,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -44,7 +42,9 @@ import com.futebadosparcas.R
 import kotlinx.coroutines.launch
 import com.futebadosparcas.ui.theme.AppDimensions
 import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.navigationBarsPadding
 import com.futebadosparcas.ui.theme.rememberReduceMotion
+import com.futebadosparcas.ui.theme.statusBarsPadding
 
 /**
  * Dados de um slide do carrossel de onboarding.

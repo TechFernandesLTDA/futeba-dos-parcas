@@ -58,7 +58,7 @@
     <color name="colorOnSurface">#1D1B20</color> <!-- Alias for compatibility -->
 
     <!-- Semantics -->
-    <color name="success">#58CC02</color>
+    <color name="success">#00852A</color>
     <color name="warning">#FFCA28</color>
     <color name="error">#B3261E</color>
 

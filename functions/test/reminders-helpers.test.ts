@@ -61,6 +61,8 @@ import {
   GameForReminder,
   EXCLUDED_GAME_STATUSES,
   CONFIRMED_STATUSES,
+  REMINDER_PENDING_STATUSES,
+  WINDOW_TOLERANCE_MS,
 } from "../src/reminders";
 
 describe("Reminders - Constantes", () => {
@@ -77,6 +79,20 @@ describe("Reminders - Constantes", () => {
 
   test("CONFIRMED_STATUSES deve incluir apenas CONFIRMED", () => {
     expect(CONFIRMED_STATUSES).toEqual(["CONFIRMED"]);
+  });
+
+  test("REMINDER_PENDING_STATUSES deve conter apenas status elegíveis para lembrete", () => {
+    expect(REMINDER_PENDING_STATUSES).toEqual([
+      "PENDING",
+      "WAITLIST",
+      "ON_THE_WAY",
+      "CHECKED_IN",
+    ]);
+  });
+
+  test("WINDOW_TOLERANCE_MS deve manter overlap defensivo entre execuções horárias", () => {
+    expect(WINDOW_TOLERANCE_MS).toBe(40 * 60 * 1000);
+    expect(WINDOW_TOLERANCE_MS).toBeGreaterThan(30 * 60 * 1000);
   });
 });
 
