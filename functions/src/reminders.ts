@@ -46,10 +46,16 @@ const REMINDER_24H_MS = 24 * 60 * 60 * 1000;
 const REMINDER_2H_MS = 2 * 60 * 60 * 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
-// Tolerancia para a janela de busca (min)
-// Rodando a cada hora, precisamos de uma
-// janela de 30 min antes/depois
-const WINDOW_TOLERANCE_MS = 30 * 60 * 1000;
+// Tolerancia para a janela de busca.
+// #2993: o cron roda a cada 60 min mas o Cloud Scheduler nao garante
+// espacamento perfeito (cold start, retry, jitter). Com tolerancia de
+// 30 min a janela tem exatamente 60 min e execucoes consecutivas ficam
+// adjacentes sem overlap -> um jogo na "costura" entre duas janelas nunca
+// e encontrado e o lembrete e perdido. Usamos 40 min (janela de 80 min)
+// para garantir overlap suficiente (>= periodo/2 + buffer de jitter).
+// A dedup at-most-once (reminder_*_sent, FIX #2501/#2638) torna a
+// sobre-cobertura inofensiva: cada lembrete e enviado uma unica vez.
+const WINDOW_TOLERANCE_MS = 40 * 60 * 1000;
 
 // Status de jogos que NAO devem receber
 // lembretes
