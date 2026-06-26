@@ -253,6 +253,19 @@ function checkKotlinDpVals(content, expected, label, sourceFile, errors) {
   }
 }
 
+function checkKotlinAliasAssignments(content, expected, label, sourceFile, errors) {
+  for (const [name, rawTargets] of Object.entries(expected)) {
+    const targets = Array.isArray(rawTargets) ? rawTargets : [rawTargets];
+    const matched = targets.some((target) => {
+      const re = new RegExp(`\\bval\\s+${escapeRegExp(name)}\\s*=\\s*${escapeRegExp(target)}\\b`);
+      return re.test(content);
+    });
+    if (!matched) {
+      errors.push(`[${label}] ${name} diverge — esperado alias para ${targets.join(' ou ')} em ${relative(sourceFile)}`);
+    }
+  }
+}
+
 function checkKotlinRoundedCornerShapes(content, expected, label, sourceFile, errors) {
   for (const [name, expectedValue] of Object.entries(expected)) {
     if (typeof expectedValue !== 'number') continue;
@@ -287,6 +300,7 @@ function checkWebRadiusAndSpacing(tokens, errors) {
   const file = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
   const content = readRequiredFile(file, 'web radius/spacing', errors);
   if (!content) return;
+  const spacing = tokens.spacing;
 
   checkTsObjectNumbers(content, 'radii', tokens.radius, 'web radius token', file, errors);
 
@@ -296,7 +310,7 @@ function checkWebRadiusAndSpacing(tokens, errors) {
     return;
   }
 
-  const spacingUnit = tokens.spacing && tokens.spacing.unit;
+  const spacingUnit = spacing && spacing.unit;
   if (typeof spacingUnit !== 'number') {
     errors.push('[spacing] token spacing.unit ausente ou inválido em shared/design-tokens.json');
     return;
@@ -305,6 +319,23 @@ function checkWebRadiusAndSpacing(tokens, errors) {
   const re = new RegExp(`\\bspacing\\s*:\\s*${spacingUnit}\\b`);
   if (!re.test(lightTheme)) {
     errors.push(`[web spacing token] spacing diverge — esperado spacing: ${spacingUnit} em ${relative(file)}`);
+  }
+
+  const pageTokensFile = path.join(ROOT, 'web', 'src', 'theme', 'pageTokens.ts');
+  const pageTokensContent = readRequiredFile(pageTokensFile, 'web page tokens', errors);
+  if (pageTokensContent) {
+    const pageSpacingExpected = {
+      sectionSpacing: spacing.md / spacingUnit,
+      sectionSpacingLarge: spacing.lg / spacingUnit,
+    };
+    checkTsObjectNumbers(
+      pageTokensContent,
+      'pageSpacing',
+      pageSpacingExpected,
+      'web page spacing token',
+      pageTokensFile,
+      errors
+    );
   }
 }
 
@@ -325,6 +356,7 @@ function checkKotlinRadiusAndSpacing(tokens, errors) {
       spacing_extraSmall: spacing.xs,
       spacing_small: spacing.sm,
       spacing_medium: spacing.md,
+      spacing_large: spacing.lg,
       spacing_extraLarge: spacing.lg,
       spacing_huge: spacing.xl,
       spacing_massive: spacing.xxl,
@@ -337,6 +369,18 @@ function checkKotlinRadiusAndSpacing(tokens, errors) {
       radius_extraLarge: radius.xl,
       radius_full: radius.full,
     }, 'android :app radius token', appDimensions, errors);
+
+    checkKotlinAliasAssignments(appDimensionsContent, {
+      spacing_md: 'spacing_medium',
+      spacing_lg: ['spacing_large', 'spacing_extraLarge'],
+      spacing_xl: 'spacing_huge',
+      spacing_xxl: 'spacing_massive',
+      radius_xs: 'spacing_extraSmall',
+      radius_sm: 'radius_small',
+      radius_md: 'radius_medium',
+      radius_lg: 'radius_large',
+      radius_xl: 'radius_extraLarge',
+    }, 'android :app spacing/radius alias token', appDimensions, errors);
   }
 
   const shapeExpected = {

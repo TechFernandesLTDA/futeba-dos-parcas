@@ -82,8 +82,8 @@ describe('usePaginatedQuery', () => {
       usePaginatedQuery({ collectionName: 'games', pageSize: 20 })
     , { wrapper: createTestWrapper() });
 
-    await act(async () => {
-      await result.current.fetchData();
+    act(() => {
+      void result.current.fetchData();
     });
 
     await waitFor(() => {
@@ -107,8 +107,8 @@ describe('usePaginatedQuery', () => {
       usePaginatedQuery({ collectionName: 'games', pageSize: 5 })
     , { wrapper: createTestWrapper() });
 
-    await act(async () => {
-      await result.current.fetchData();
+    act(() => {
+      void result.current.fetchData();
     });
 
     await waitFor(() => {
@@ -226,5 +226,82 @@ describe('usePaginatedQuery', () => {
     expect(result.current.data).toEqual([]);
     expect(result.current.hasMore).toBe(true);
     expect(result.current.error).toBeNull();
+  });
+
+  it('limpa dados quando o contexto da query muda', async () => {
+    mockGetDocs.mockResolvedValue({
+      docs: [{ id: 'doc-1', data: () => ({ name: 'Item 1' }) }],
+    });
+
+    const { result, rerender } = renderHook(({ collectionName }) =>
+      usePaginatedQuery({ collectionName })
+    , {
+      initialProps: { collectionName: 'games' },
+      wrapper: createTestWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.fetchData();
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toHaveLength(1);
+    });
+
+    rerender({ collectionName: 'users' });
+
+    expect(result.current.data).toEqual([]);
+    expect(result.current.hasMore).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('ignora resposta atrasada da query antiga após troca de contexto', async () => {
+    let resolveFirst: ((value: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void) | undefined;
+    let resolveSecond: ((value: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void) | undefined;
+
+    mockGetDocs
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveSecond = resolve; }));
+
+    const { result, rerender } = renderHook(({ collectionName }) =>
+      usePaginatedQuery({ collectionName })
+    , {
+      initialProps: { collectionName: 'games' },
+      wrapper: createTestWrapper(),
+    });
+
+    await act(async () => {
+      void result.current.fetchData();
+    });
+
+    rerender({ collectionName: 'users' });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.data).toEqual([]);
+    });
+
+    act(() => {
+      void result.current.fetchData();
+    });
+
+    await act(async () => {
+      resolveSecond?.({
+        docs: [{ id: 'user-1', data: () => ({ name: 'User 1' }) }],
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toEqual([{ id: 'user-1', name: 'User 1' }]);
+    });
+
+    await act(async () => {
+      resolveFirst?.({
+        docs: [{ id: 'game-1', data: () => ({ name: 'Game 1' }) }],
+      });
+    });
+
+    expect(result.current.data).toEqual([{ id: 'user-1', name: 'User 1' }]);
   });
 });

@@ -34,18 +34,24 @@ export const onCashboxEntryWritten = onDocumentWritten(
     const groupId = event.params.groupId;
     try {
       await db().runTransaction(async (tx) => {
+        // #2991: orderBy created_at desc garante que, quando o livro
+        // ultrapassa MAX_ENTRIES, a janela somada seja deterministica e
+        // composta pelas entradas MAIS RECENTES (e nao por __name__ /
+        // subconjunto arbitrario). Sem isto o balance divergia do ledger.
         const snap = await tx.get(
           db()
             .collection("groups")
             .doc(groupId)
             .collection("cashbox")
+            .orderBy("created_at", "desc")
             .limit(MAX_ENTRIES + 1)
         );
 
-        if (snap.size > MAX_ENTRIES) {
+        const truncated = snap.size > MAX_ENTRIES;
+        if (truncated) {
           logger.warn(
             `[CASHBOX] grupo ${groupId} tem >${MAX_ENTRIES} entradas; ` +
-            "summary truncado (paridade com client)."
+            "summary truncado para as mais recentes (saldo parcial)."
           );
         }
 
@@ -93,6 +99,9 @@ export const onCashboxEntryWritten = onDocumentWritten(
             last_entry_at: lastEntryMillis > 0 ?
               Timestamp.fromMillis(lastEntryMillis) :
               null,
+            // #2991: sinaliza para a UI que o saldo e parcial (livro
+            // excede MAX_ENTRIES e so as entradas mais recentes foram somadas).
+            truncated,
             recomputed_at: FieldValue.serverTimestamp(),
           },
           {merge: true}

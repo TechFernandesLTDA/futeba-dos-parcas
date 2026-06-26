@@ -30,6 +30,10 @@ vi.mock('../../services/firebase', () => ({
   storage: {},
 }));
 
+vi.mock('../../services/firebaseStorage', () => ({
+  storage: {},
+}));
+
 vi.mock('../../services/cloudFunctions', () => ({
   updateUserPii: mockUpdateUserPii,
 }));
