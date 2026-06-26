@@ -45,6 +45,7 @@ import {db} from "./_db";
 const REMINDER_24H_MS = 24 * 60 * 60 * 1000;
 const REMINDER_2H_MS = 2 * 60 * 60 * 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
+const REMINDER_CONFIRMATIONS_PAGE_SIZE = 100;
 
 // Tolerancia para a janela de busca.
 // #2993: o cron roda a cada 60 min mas o Cloud Scheduler nao garante
@@ -55,7 +56,7 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
 // para garantir overlap suficiente (>= periodo/2 + buffer de jitter).
 // A dedup at-most-once (reminder_*_sent, FIX #2501/#2638) torna a
 // sobre-cobertura inofensiva: cada lembrete e enviado uma unica vez.
-const WINDOW_TOLERANCE_MS = 40 * 60 * 1000;
+export const WINDOW_TOLERANCE_MS = 40 * 60 * 1000;
 
 // Status de jogos que NAO devem receber
 // lembretes
@@ -75,6 +76,13 @@ export const REMINDER_SKIP_STATUSES = [
   "CONFIRMED",
   "DECLINED",
   "CANCELLED",
+] as const;
+
+export const REMINDER_PENDING_STATUSES = [
+  "PENDING",
+  "WAITLIST",
+  "ON_THE_WAY",
+  "CHECKED_IN",
 ] as const;
 
 // ==========================================
@@ -375,43 +383,74 @@ async function fetchPendingConfirmations(
         "reminder_2h_sent" :
         "reminder_1h_sent";
 
-  // Buscar todas as confirmacoes do jogo
-  const confirmationsSnap = await db()
-    .collection("confirmations")
-    .where("game_id", "==", gameId)
-    .get();
-
   const pending: ConfirmationForReminder[] = [];
+  let lastDoc:
+    FirebaseFirestore.QueryDocumentSnapshot |
+    undefined;
 
-  for (const doc of confirmationsSnap.docs) {
-    const data = doc.data();
-    const userId = data.user_id || data.userId;
-    const status = data.status || "PENDING";
+  while (true) {
+    // #2994: filtra no servidor apenas os status
+    // que ainda podem receber lembrete e pagina
+    // por __name__ implícito para evitar .get()
+    // irrestrito sobre todas as confirmações do jogo.
+    let query: FirebaseFirestore.Query = db()
+      .collection("confirmations")
+      .where("game_id", "==", gameId)
+      .where(
+        "status",
+        "in",
+        [...REMINDER_PENDING_STATUSES]
+      )
+      .limit(REMINDER_CONFIRMATIONS_PAGE_SIZE);
 
-    // Pular se ja confirmou, recusou ou cancelou
-    if (REMINDER_SKIP_STATUSES.includes(status)) {
-      continue;
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
     }
 
-    // Pular se lembrete ja foi enviado
-    if (data[reminderField] === true) {
-      logger.info(
-        `  - User ${userId} ja recebeu` +
-        ` lembrete ${reminderType}`
-      );
-      continue;
+    const confirmationsSnap = await query.get();
+    if (confirmationsSnap.empty) {
+      break;
     }
 
-    pending.push({
-      id: doc.id,
-      user_id: userId,
-      game_id: gameId,
-      status: status,
-      reminder_24h_sent:
-        data.reminder_24h_sent || false,
-      reminder_2h_sent:
-        data.reminder_2h_sent || false,
-    });
+    for (const doc of confirmationsSnap.docs) {
+      const data = doc.data();
+      const userId = data.user_id || data.userId;
+      const status = data.status || "PENDING";
+
+      // Pular se lembrete ja foi enviado
+      if (data[reminderField] === true) {
+        logger.info(
+          `  - User ${userId} ja recebeu` +
+          ` lembrete ${reminderType}`
+        );
+        continue;
+      }
+
+      pending.push({
+        id: doc.id,
+        user_id: userId,
+        game_id: gameId,
+        status: status,
+        reminder_24h_sent:
+          data.reminder_24h_sent || false,
+        reminder_2h_sent:
+          data.reminder_2h_sent || false,
+        reminder_1h_sent:
+          data.reminder_1h_sent || false,
+      });
+    }
+
+    if (
+      confirmationsSnap.size <
+      REMINDER_CONFIRMATIONS_PAGE_SIZE
+    ) {
+      break;
+    }
+
+    lastDoc =
+      confirmationsSnap.docs[
+        confirmationsSnap.docs.length - 1
+      ];
   }
 
   return pending;

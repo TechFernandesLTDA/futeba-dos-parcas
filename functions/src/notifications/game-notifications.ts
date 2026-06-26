@@ -21,6 +21,132 @@ import {
 import {GAME_NOTIFICATIONS} from "./notification-messages";
 import {db} from "../_db";
 
+const CONFIRMATION_PAGE_SIZE = 100;
+const GROUP_MEMBER_PAGE_SIZE = 50;
+const MAX_GROUP_VACANCY_NOTIFICATIONS = 20;
+
+async function fetchConfirmedUserIdsForGame(
+  gameId: string
+): Promise<string[]> {
+  const userIds: string[] = [];
+  let lastDoc:
+    FirebaseFirestore.QueryDocumentSnapshot |
+    undefined;
+
+  while (true) {
+    // #2994: pagina por __name__ implícito para
+    // evitar leituras irrestritas da coleção raiz
+    // de confirmations em handlers event-driven.
+    let query: FirebaseFirestore.Query = db()
+      .collection("confirmations")
+      .where("game_id", "==", gameId)
+      .where("status", "==", "CONFIRMED")
+      .limit(CONFIRMATION_PAGE_SIZE);
+
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const confirmationsSnap = await query.get();
+    if (confirmationsSnap.empty) {
+      break;
+    }
+
+    type DocSnap =
+      admin.firestore.QueryDocumentSnapshot;
+    userIds.push(
+      ...confirmationsSnap.docs.map(
+        (doc: DocSnap) => {
+          const data = doc.data();
+          return data.user_id || data.userId;
+        }
+      )
+    );
+
+    if (
+      confirmationsSnap.size <
+      CONFIRMATION_PAGE_SIZE
+    ) {
+      break;
+    }
+
+    lastDoc =
+      confirmationsSnap.docs[
+        confirmationsSnap.docs.length - 1
+      ];
+  }
+
+  return userIds;
+}
+
+async function countConfirmedPlayersForGame(
+  gameId: string
+): Promise<number> {
+  const countSnap = await db()
+    .collection("confirmations")
+    .where("game_id", "==", gameId)
+    .where("status", "==", "CONFIRMED")
+    .count()
+    .get();
+
+  return countSnap.data().count;
+}
+
+async function fetchEligibleGroupMemberIdsForVacancy(
+  groupId: string,
+  excludedUserIds: Set<string>,
+  limit: number
+): Promise<string[]> {
+  const memberIds: string[] = [];
+  let lastDoc:
+    FirebaseFirestore.QueryDocumentSnapshot |
+    undefined;
+
+  while (memberIds.length < limit) {
+    // #2994: pagina por __name__ implícito e
+    // para assim que juntamos membros elegíveis
+    // suficientes para a notificação de vaga.
+    let query: FirebaseFirestore.Query = db()
+      .collection("groups")
+      .doc(groupId)
+      .collection("members")
+      .limit(GROUP_MEMBER_PAGE_SIZE);
+
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const membersSnap = await query.get();
+    if (membersSnap.empty) {
+      break;
+    }
+
+    type DocSnap =
+      admin.firestore.QueryDocumentSnapshot;
+    for (const doc of membersSnap.docs as DocSnap[]) {
+      if (excludedUserIds.has(doc.id)) {
+        continue;
+      }
+
+      memberIds.push(doc.id);
+      if (memberIds.length >= limit) {
+        break;
+      }
+    }
+
+    if (membersSnap.size < GROUP_MEMBER_PAGE_SIZE) {
+      break;
+    }
+
+    lastDoc =
+      membersSnap.docs[
+        membersSnap.docs.length - 1
+      ];
+  }
+
+  return memberIds;
+}
+
 // ==========================================
 // GAME CREATED
 // ==========================================
@@ -135,27 +261,21 @@ export const onGameUpdatedNotification =
       if (!before || !after) return;
 
       const gameId = event.params.gameId;
+      let confirmedUserIds:
+        string[] |
+        null = null;
 
       if (
         before.status !== "CANCELLED" &&
         after.status === "CANCELLED"
       ) {
         try {
-          const confirmationsSnap = await db()
-            .collection("confirmations")
-            .where("game_id", "==", gameId)
-            .where("status", "==", "CONFIRMED")
-            .get();
-
-          type DocSnap =
-            admin.firestore.QueryDocumentSnapshot;
           const userIds =
-            confirmationsSnap.docs.map(
-              (doc: DocSnap) => {
-                const d = doc.data();
-                return d.user_id || d.userId;
-              }
+            confirmedUserIds ??
+            await fetchConfirmedUserIdsForGame(
+              gameId
             );
+          confirmedUserIds = userIds;
 
           if (userIds.length > 0) {
             await sendNotificationToUsers(
@@ -184,21 +304,12 @@ export const onGameUpdatedNotification =
         before.location_id !== after.location_id
       ) {
         try {
-          const confirmationsSnap = await db()
-            .collection("confirmations")
-            .where("game_id", "==", gameId)
-            .where("status", "==", "CONFIRMED")
-            .get();
-
-          type DocSnap =
-            admin.firestore.QueryDocumentSnapshot;
           const userIds =
-            confirmationsSnap.docs.map(
-              (doc: DocSnap) => {
-                const d = doc.data();
-                return d.user_id || d.userId;
-              }
+            confirmedUserIds ??
+            await fetchConfirmedUserIdsForGame(
+              gameId
             );
+          confirmedUserIds = userIds;
 
           if (userIds.length > 0) {
             await sendNotificationToUsers(
@@ -326,14 +437,10 @@ export const onGameVacancy = onDocumentUpdated(
       const gameDate = game.date || "";
 
       // Contar confirmações atuais
-      const confirmationsSnap = await db()
-        .collection("confirmations")
-        .where("game_id", "==", gameId)
-        .where("status", "==", "CONFIRMED")
-        .get();
-
       const currentPlayers =
-        confirmationsSnap.size;
+        await countConfirmedPlayersForGame(
+          gameId
+        );
 
       // Só notifica se há vaga real após cancelamento
       // FIX #1582: condição era currentPlayers >= maxPlayers - 1,
@@ -394,32 +501,21 @@ export const onGameVacancy = onDocumentUpdated(
           groupId &&
           waitlistUserIds.length < 3
         ) {
-          const membersSnap = await db()
-            .collection("groups")
-            .doc(groupId)
-            .collection("members")
-            .get();
-
           const confirmedUserIds =
-            confirmationsSnap.docs.map(
-              (doc: DocSnap) => {
-                const data = doc.data();
-                return (
-                  data.user_id || data.userId
-                );
-              }
+            await fetchConfirmedUserIdsForGame(
+              gameId
             );
-
-          const memberIds = membersSnap.docs
-            .map((doc: DocSnap) => doc.id)
-            .filter(
-              (id: string) =>
-                !confirmedUserIds
-                  .includes(id) &&
-                !waitlistUserIds
-                  .includes(id)
-            )
-            .slice(0, 20);
+          const excludedUserIds =
+            new Set<string>([
+              ...confirmedUserIds,
+              ...waitlistUserIds,
+            ]);
+          const memberIds =
+            await fetchEligibleGroupMemberIdsForVacancy(
+              groupId,
+              excludedUserIds,
+              MAX_GROUP_VACANCY_NOTIFICATIONS
+            );
 
           if (memberIds.length > 0) {
             await sendNotificationToUsers(

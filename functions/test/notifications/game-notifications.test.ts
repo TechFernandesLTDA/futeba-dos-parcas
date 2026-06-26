@@ -7,11 +7,22 @@ const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
+const mockStartAfter = jest.fn().mockReturnThis();
+const mockCountGet = jest.fn();
+const mockCount = jest.fn(() => ({ get: mockCountGet }));
 
-const queryChain: any = { where: mockWhere, orderBy: mockOrderBy, limit: mockLimit, get: mockCollectionGet };
+const queryChain: any = {
+  where: mockWhere,
+  orderBy: mockOrderBy,
+  limit: mockLimit,
+  startAfter: mockStartAfter,
+  count: mockCount,
+  get: mockCollectionGet,
+};
 mockWhere.mockReturnValue(queryChain);
 mockLimit.mockReturnValue(queryChain);
 mockOrderBy.mockReturnValue(queryChain);
+mockStartAfter.mockReturnValue(queryChain);
 
 const mockDoc = jest.fn((id: string) => ({
   id,
@@ -22,6 +33,8 @@ const mockDoc = jest.fn((id: string) => ({
     where: mockWhere,
     orderBy: mockOrderBy,
     limit: mockLimit,
+    startAfter: mockStartAfter,
+    count: mockCount,
     get: mockCollectionGet,
   })),
 }));
@@ -31,6 +44,8 @@ const mockCollection = jest.fn(() => ({
   where: mockWhere,
   orderBy: mockOrderBy,
   limit: mockLimit,
+  startAfter: mockStartAfter,
+  count: mockCount,
   get: mockCollectionGet,
 }));
 
@@ -85,6 +100,9 @@ import { onGameCreated, onGameUpdatedNotification, onGameVacancy } from "../../s
 describe("Game Notifications", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCountGet.mockResolvedValue({
+      data: () => ({ count: 0 }),
+    });
   });
 
   describe("onGameCreated", () => {
@@ -385,9 +403,8 @@ describe("Game Notifications", () => {
         exists: true,
         data: () => ({ status: "SCHEDULED", max_players: 14, location_name: "Campo" }),
       });
-      mockCollectionGet.mockResolvedValueOnce({
-        docs: Array.from({ length: 14 }, (_, i) => ({ id: `p${i}`, data: () => ({ user_id: `u${i}` }) })),
-        size: 14,
+      mockCountGet.mockResolvedValueOnce({
+        data: () => ({ count: 14 }),
       });
 
       await onGameVacancy({
