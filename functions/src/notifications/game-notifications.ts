@@ -25,6 +25,11 @@ const CONFIRMATION_PAGE_SIZE = 100;
 const GROUP_MEMBER_PAGE_SIZE = 50;
 const MAX_GROUP_VACANCY_NOTIFICATIONS = 20;
 
+/**
+ * Busca IDs de usuários confirmados para um jogo de forma paginada.
+ * @param {string} gameId
+ * @return {Promise<string[]>}
+ */
 async function fetchConfirmedUserIdsForGame(
   gameId: string
 ): Promise<string[]> {
@@ -79,6 +84,11 @@ async function fetchConfirmedUserIdsForGame(
   return userIds;
 }
 
+/**
+ * Conta confirmações ativas usando agregação em vez de full scan.
+ * @param {string} gameId
+ * @return {Promise<number>}
+ */
 async function countConfirmedPlayersForGame(
   gameId: string
 ): Promise<number> {
@@ -92,6 +102,13 @@ async function countConfirmedPlayersForGame(
   return countSnap.data().count;
 }
 
+/**
+ * Coleta membros elegíveis do grupo até o limite de notificações de vaga.
+ * @param {string} groupId
+ * @param {Set<string>} excludedUserIds
+ * @param {number} limit
+ * @return {Promise<string[]>}
+ */
 async function fetchEligibleGroupMemberIdsForVacancy(
   groupId: string,
   excludedUserIds: Set<string>,
