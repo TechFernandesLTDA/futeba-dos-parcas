@@ -23,6 +23,10 @@ import {checkRateLimit} from "../middleware/rate-limiter";
 import {requireProfileComplete} from "../middleware/require-profile-complete";
 import {FUNCTION_REGION} from "../constants";
 import {ERROR_MSGS} from "../error-messages";
+import {
+  NotificationType,
+  saveNotificationToFirestore,
+} from "../notifications/helpers";
 
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
@@ -35,6 +39,11 @@ interface CheckInRequest {
   lng?: number;
   accuracy?: number;
   qrToken?: string;
+}
+
+interface CheckInTransactionResult {
+  already: boolean;
+  playerName: string;
 }
 
 /**
@@ -284,67 +293,76 @@ export const checkInToGame = onCall(
     const confId = `${gameId}_${uid}`;
     const confRef = db().doc(`confirmations/${confId}`);
 
-    await db().runTransaction(async (tx) => {
-      const confSnap = await tx.get(confRef);
-      if (!confSnap.exists) {
-        throw new HttpsError(
-          "permission-denied",
-          "Você não está confirmado neste jogo",
-        );
-      }
-      const conf =
-        confSnap.data() as Record<string, unknown>;
-      if (conf.status !== "CONFIRMED") {
-        throw new HttpsError(
-          "failed-precondition",
-          "Confirmacao precisa estar em status CONFIRMED",
-        );
-      }
+    const checkInResult = await db().runTransaction(
+      async (tx): Promise<CheckInTransactionResult> => {
+        const confSnap = await tx.get(confRef);
+        if (!confSnap.exists) {
+          throw new HttpsError(
+            "permission-denied",
+            "Você não está confirmado neste jogo",
+          );
+        }
+        const conf = confSnap.data() as Record<string, unknown>;
+        if (conf.status !== "CONFIRMED") {
+          throw new HttpsError(
+            "failed-precondition",
+            "Confirmacao precisa estar em status CONFIRMED",
+          );
+        }
 
-      // Anti-replay: idempotencia
-      if (conf.checked_in === true) {
-        return {
-          success: true,
-          already: true,
-        };
-      }
+        // Anti-replay: idempotencia
+        if (conf.checked_in === true) {
+          return {
+            already: true,
+            playerName: String(conf.user_name || "Jogador"),
+          };
+        }
 
-      // FIX #2498: NÃO invalidar o token de QR após o check-in. O token é
-      // único por jogo e projetado para reuso por 24h (FIX #2051) —
-      // vários jogadores escaneiam o MESMO QR exibido no campo. Deletá-lo no
-      // 1º uso travava todos os demais com "QR token inválido ou expirado".
-      // O anti-replay por jogador já é garantido por `conf.checked_in === true`
-      // acima; o GPS é sempre validado (FIX #2478).
+        // FIX #2498: NÃO invalidar o token de QR após o check-in. O token é
+        // único por jogo e projetado para reuso por 24h (FIX #2051) —
+        // vários jogadores escaneiam o MESMO QR exibido no campo. Deletá-lo no
+        // 1º uso travava todos os demais com "QR token inválido ou expirado".
+        // O anti-replay por jogador já é garantido por `conf.checked_in === true`
+        // acima; o GPS é sempre validado (FIX #2478).
 
-      tx.set(
-        confRef,
-        {
-          checked_in: true,
-          checked_in_at: FieldValue.serverTimestamp(),
-          check_in_lat_approx:
+        tx.set(
+          confRef,
+          {
+            checked_in: true,
+            checked_in_at: FieldValue.serverTimestamp(),
+            check_in_lat_approx:
             typeof lat === "number" ?
               Math.round(lat * 1000) / 1000 :
               null,
-          check_in_lng_approx:
+            check_in_lng_approx:
             typeof lng === "number" ?
               Math.round(lng * 1000) / 1000 :
               null,
-          check_in_accuracy_m:
+            check_in_accuracy_m:
             typeof accuracy === "number" ?
               Math.round(accuracy) :
               null,
-          check_in_distance_m: hasGps ? Math.round(dist) : null,
-          check_in_method: qrValid ? "qr" : "gps",
-          was_present: true,
-        },
-        {merge: true},
-      );
+            check_in_distance_m: hasGps ? Math.round(dist) : null,
+            check_in_method: qrValid ? "qr" : "gps",
+            was_present: true,
+          },
+          {merge: true},
+        );
 
-      return {
-        success: true,
-        distance_m: hasGps ? Math.round(dist) : null,
-      };
-    });
+        return {
+          already: false,
+          playerName: String(conf.user_name || "Jogador"),
+        };
+      });
+
+    if (!checkInResult.already) {
+      await notifyConfirmedPlayersAboutCheckIn(
+        gameId,
+        uid,
+        checkInResult.playerName,
+        game.location_name as string | undefined,
+      );
+    }
 
     return {
       success: true,
@@ -353,6 +371,60 @@ export const checkInToGame = onCall(
     };
   },
 );
+
+/**
+ * Salva notificações internas para os outros jogadores confirmados.
+ *
+ * @param {string} gameId ID do jogo
+ * @param {string} checkedInUserId UID do jogador que chegou
+ * @param {string} checkedInPlayerName Nome exibido do jogador
+ * @param {string} locationName Nome opcional do local
+ */
+async function notifyConfirmedPlayersAboutCheckIn(
+  gameId: string,
+  checkedInUserId: string,
+  checkedInPlayerName: string,
+  locationName?: string,
+): Promise<void> {
+  try {
+    const confirmationsSnap = await db()
+      .collection("confirmations")
+      .where("game_id", "==", gameId)
+      .where("status", "==", "CONFIRMED")
+      .limit(50)
+      .get();
+
+    const recipients = confirmationsSnap.docs
+      .map((doc) => doc.data())
+      .map((confirmation) => String(confirmation.user_id || ""))
+      .filter((userId) => userId && userId !== checkedInUserId);
+
+    await Promise.all(recipients.map((userId) =>
+      saveNotificationToFirestore(
+        userId,
+        {
+          userId,
+          title: `${checkedInPlayerName} chegou no jogo`,
+          body: locationName ?
+            `Check-in confirmado em ${locationName}.` :
+            "Check-in confirmado no local do jogo.",
+          type: NotificationType.CHECKIN,
+          gameId,
+          senderId: checkedInUserId,
+          senderName: checkedInPlayerName,
+          action: `/game/${gameId}`,
+        },
+        `checkin_${gameId}_${checkedInUserId}_${userId}`,
+      )
+    ));
+  } catch (err) {
+    logger.warn("check-in social notification failed", {
+      gameId,
+      checkedInUserId,
+      err,
+    });
+  }
+}
 
 export const generateCheckinToken = onCall(
   {

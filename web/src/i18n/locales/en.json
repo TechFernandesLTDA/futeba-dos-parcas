@@ -381,6 +381,19 @@
     "validationError": "Error validating check-in",
     "viewGameDetails": "View game details"
   },
+  "checkinSocial": {
+    "arrived": "Arrived at the venue",
+    "arrivedAt": "Arrived at {{time}}",
+    "checkInNow": "Check in now",
+    "count": "{{count}} present",
+    "count_one": "{{count}} present",
+    "count_other": "{{count}} present",
+    "description": "See who has already arrived at the game venue in real time.",
+    "emptyDesc": "When players check in at the venue, they will appear here.",
+    "emptyTitle": "No one has arrived yet",
+    "present": "At venue",
+    "title": "Present at venue"
+  },
   "common": {
     "activate": "Activate",
     "appName": "Futeba dos Parças",

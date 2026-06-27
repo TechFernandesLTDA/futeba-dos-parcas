@@ -25,6 +25,7 @@ import {
   CardContent,
   Alert,
   Avatar,
+  Chip,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
@@ -42,6 +43,8 @@ import {
   CalendarMonth as CalendarIcon,
   MoreVert as MoreVertIcon,
   ChatBubbleOutline as MessageIcon,
+  CheckCircle as CheckCircleIcon,
+  Place as PlaceIcon,
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
@@ -66,6 +69,7 @@ import { GamePlayersSection } from './GamePlayersSection';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
 import { GamePhotosTab } from './GamePhotosTab';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
+import type { GameConfirmation } from '../../types/game';
 
 const PostGameMessagesPanel: React.FC<{ gameId: string; canWrite: boolean }> = ({ gameId, canWrite }) => {
   const { t } = useTranslation();
@@ -120,6 +124,68 @@ const PostGameMessageItem: React.FC<{ message: PostGameMessage }> = ({ message }
   </Stack>
 );
 
+const CheckInSocialPanel: React.FC<{
+  checkedInPlayers: GameConfirmation[];
+  canCheckIn: boolean;
+  loading: boolean;
+  onCheckIn: () => void;
+}> = ({ checkedInPlayers, canCheckIn, loading, onCheckIn }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Card sx={{ mt: 2 }}>
+      <CardContent>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+          <PlaceIcon color="primary" />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="subtitle1" fontWeight={700}>{t('checkinSocial.title')}</Typography>
+            <Typography variant="body2" color="text.secondary">{t('checkinSocial.description')}</Typography>
+          </Box>
+          <Chip icon={<CheckCircleIcon />} label={t('checkinSocial.count', { count: checkedInPlayers.length })} color={checkedInPlayers.length > 0 ? 'success' : 'default'} variant="outlined" />
+        </Stack>
+
+        {canCheckIn && (
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
+            onClick={onCheckIn}
+            disabled={loading}
+            sx={{ mb: 2 }}
+          >
+            {loading ? t('checkin.checkingIn') : t('checkinSocial.checkInNow')}
+          </Button>
+        )}
+
+        {checkedInPlayers.length === 0 ? (
+          <EmptyState
+            icon={<PlaceIcon sx={{ fontSize: 48 }} />}
+            title={t('checkinSocial.emptyTitle')}
+            description={t('checkinSocial.emptyDesc')}
+          />
+        ) : (
+          <Stack spacing={1.5}>
+            {checkedInPlayers.map((player) => (
+              <Stack key={player.id} direction="row" spacing={1.5} alignItems="center">
+                <Avatar src={player.userPhoto}>{player.userName.charAt(0).toUpperCase()}</Avatar>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography variant="body2" fontWeight={700}>{player.userName}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {player.checkedInAt
+                      ? t('checkinSocial.arrivedAt', { time: player.checkedInAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })
+                      : t('checkinSocial.arrived')}
+                  </Typography>
+                </Box>
+                <Chip size="small" color="success" label={t('checkinSocial.present')} />
+              </Stack>
+            ))}
+          </Stack>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export const GameDetailScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('games.gameDetails'));
@@ -168,6 +234,13 @@ export const GameDetailScreen: React.FC = () => {
   const showPostGameMessages = game?.status === 'FINISHED';
   const canWritePostGameMessage = showPostGameMessages && (isConfirmed || !!canManage);
   const canManagePostGameContent = !!canManage;
+  const checkedInPlayers = useMemo(
+    () => confirmations.filter((confirmation) => confirmation.checkedIn),
+    [confirmations],
+  );
+  const myCheckedIn = !!myConfirmation?.checkedIn;
+  const showCheckInSocial = game?.status === 'LIVE' || game?.status === 'FINISHED';
+  const canCheckInNow = game?.status === 'LIVE' && isConfirmed && !myCheckedIn;
 
   // #2272: arrays derivados memoizados — antes os 3 .filter() rodavam a cada render.
   const confirmedPlayers = useMemo(
@@ -628,13 +701,10 @@ export const GameDetailScreen: React.FC = () => {
             <Grid xs={12} lg={8}>
               <GamePlayersSection
                 game={game}
-                gameId={gameId!}
                 confirmedPlayers={confirmedPlayers}
                 goalkeepers={goalkeepers}
                 waitlist={waitlist}
                 confirmations={confirmations}
-                myConfirmation={myConfirmation}
-                isOwner={isOwner}
                 tabValue={tabValue}
                 onTabChange={setTabValue}
               />
@@ -643,6 +713,14 @@ export const GameDetailScreen: React.FC = () => {
                 confirmations={confirmations}
                 canManage={isOwner || isCurrentUserAdmin}
               />
+              {showCheckInSocial && (
+                <CheckInSocialPanel
+                  checkedInPlayers={checkedInPlayers}
+                  canCheckIn={!!canCheckInNow}
+                  loading={checkInLoading}
+                  onCheckIn={handleCheckIn}
+                />
+              )}
               {showPostGameMessages && (
                 <GamePhotosTab
                   gameId={gameId!}
@@ -661,13 +739,10 @@ export const GameDetailScreen: React.FC = () => {
           <GameInfoPanel game={game} />
           <GamePlayersSection
             game={game}
-            gameId={gameId!}
             confirmedPlayers={confirmedPlayers}
             goalkeepers={goalkeepers}
             waitlist={waitlist}
             confirmations={confirmations}
-            myConfirmation={myConfirmation}
-            isOwner={isOwner}
             tabValue={tabValue}
             onTabChange={setTabValue}
           />
@@ -676,6 +751,14 @@ export const GameDetailScreen: React.FC = () => {
             confirmations={confirmations}
             canManage={isOwner || isCurrentUserAdmin}
           />
+          {showCheckInSocial && (
+            <CheckInSocialPanel
+              checkedInPlayers={checkedInPlayers}
+              canCheckIn={!!canCheckInNow}
+              loading={checkInLoading}
+              onCheckIn={handleCheckIn}
+            />
+          )}
           {showPostGameMessages && (
             <GamePhotosTab
               gameId={gameId!}
@@ -744,7 +827,7 @@ export const GameDetailScreen: React.FC = () => {
             </Box>
           ) : game.status === 'LIVE' ? (
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {isConfirmed && myConfirmation?.status !== 'CHECKED_IN' && (
+              {isConfirmed && !myCheckedIn && (
                 <Button
                   variant="contained"
                   color="success"

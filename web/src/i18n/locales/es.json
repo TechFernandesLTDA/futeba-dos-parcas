@@ -381,6 +381,19 @@
     "validationError": "Error al validar check-in",
     "viewGameDetails": "Ver detalles del partido"
   },
+  "checkinSocial": {
+    "arrived": "Llegó al lugar",
+    "arrivedAt": "Llegó a las {{time}}",
+    "checkInNow": "Hacer check-in ahora",
+    "count": "{{count}} presente",
+    "count_one": "{{count}} presente",
+    "count_other": "{{count}} presentes",
+    "description": "Ve quién ya llegó al lugar del partido en tiempo real.",
+    "emptyDesc": "Cuando los jugadores hagan check-in en el lugar, aparecerán aquí.",
+    "emptyTitle": "Nadie llegó todavía",
+    "present": "En el lugar",
+    "title": "Presentes en el lugar"
+  },
   "common": {
     "activate": "Activar",
     "appName": "Futeba dos Parças",

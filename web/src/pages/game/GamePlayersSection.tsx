@@ -17,14 +17,12 @@ import { useTheme } from '@mui/material/styles';
 import {
   People as PeopleIcon,
   SportsSoccer as SoccerIcon,
-  PhotoLibrary as PhotoIcon,
 } from '@mui/icons-material';
 import { PlayerAvatar, StatusChip } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { PAYMENT_STATUS_CONFIG } from '../../types/game';
 import type { Game, GameConfirmation } from '../../types/game';
-import { GamePhotosTab } from './GamePhotosTab';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -40,26 +38,20 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 
 interface GamePlayersSectionProps {
   game: Game;
-  gameId: string;
   confirmedPlayers: GameConfirmation[];
   goalkeepers: GameConfirmation[];
   waitlist: GameConfirmation[];
   confirmations: GameConfirmation[];
-  myConfirmation: GameConfirmation | undefined;
-  isOwner: boolean;
   tabValue: number;
   onTabChange: (value: number) => void;
 }
 
 export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
   game,
-  gameId,
   confirmedPlayers,
   goalkeepers,
   waitlist,
   confirmations,
-  myConfirmation,
-  isOwner,
   tabValue,
   onTabChange,
 }) => {
@@ -81,7 +73,6 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           <Tab label={`Confirmados (${confirmedPlayers.length})`} />
           <Tab label={`Goleiros (${goalkeepers.length})`} />
           <Tab label={`Espera (${waitlist.length})`} />
-          {game.status === 'FINISHED' && <Tab icon={<PhotoIcon />} iconPosition="start" label="Fotos" />}
         </Tabs>
 
         <TabPanel value={tabValue} index={0}>
@@ -182,16 +173,6 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
           )}
         </TabPanel>
 
-        {game.status === 'FINISHED' && (
-          <TabPanel value={tabValue} index={3}>
-            <GamePhotosTab
-              gameId={gameId}
-              isFinished={game.status === 'FINISHED'}
-              isConfirmedPlayer={!!myConfirmation && myConfirmation.status === 'CONFIRMED'}
-              isOwner={isOwner}
-            />
-          </TabPanel>
-        )}
       </Card>
 
       {game.rules && (
