@@ -101,9 +101,9 @@ describe('DiscoverGroupsScreen', () => {
     expect(screen.getByText('Arena sport')).toBeInTheDocument();
   });
 
-  it('renderiza botão Entrar nos grupos', () => {
+  it('renderiza botão de entrada guiada nos grupos', () => {
     renderWithProviders(<DiscoverGroupsScreen />);
-    const joinButtons = screen.getAllByText('Entrar');
+    const joinButtons = screen.getAllByText('groups.matchmaking.joinGuided');
     expect(joinButtons.length).toBe(2);
   });
 });

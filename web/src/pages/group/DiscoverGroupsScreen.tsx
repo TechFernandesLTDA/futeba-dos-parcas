@@ -12,6 +12,7 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
+  LinearProgress,
   Skeleton,
   Stack,
   Tab,
@@ -37,6 +38,11 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { OfficialGroup, OfficialGroupCategory, OFFICIAL_GROUP_CATEGORY_LABELS } from '../../types/group';
 import { useTranslation } from 'react-i18next';
+import {
+  rankOfficialGroupsForMatchmaking,
+  type GroupMatchSuggestion,
+  type GroupMatchmakingLabels,
+} from '../../utils/groupMatchmaking';
 
 const CATEGORY_ICONS: Record<OfficialGroupCategory, React.ReactElement> = {
   REGIAO: <LocationIcon />,
@@ -59,6 +65,8 @@ export const DiscoverGroupsScreen: React.FC = () => {
   const joinOfficial = useJoinOfficialGroup();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [regionQuery, setRegionQuery] = useState('');
+  const [scheduleQuery, setScheduleQuery] = useState('');
   const [tab, setTab] = useState(0);
   const [joiningId, setJoiningId] = useState<string | null>(null);
 
@@ -72,12 +80,32 @@ export const DiscoverGroupsScreen: React.FC = () => {
     );
   }, [officialGroups, searchQuery]);
 
+  const suggestions = useMemo(
+    () => {
+      const labels: GroupMatchmakingLabels = {
+        officialSuggestion: t('groups.matchmaking.officialSuggestion'),
+        regionMatch: t('groups.matchmaking.regionMatch'),
+        scheduleMatch: t('groups.matchmaking.scheduleMatch'),
+        regionCategory: t('groups.matchmaking.regionCategory'),
+        scheduleCategory: t('groups.matchmaking.scheduleCategory'),
+        activeCommunity: t('groups.matchmaking.activeCommunity'),
+      };
+
+      return rankOfficialGroupsForMatchmaking(
+        filtered,
+        { region: regionQuery, schedule: scheduleQuery },
+        labels
+      );
+    },
+    [filtered, regionQuery, scheduleQuery, t]
+  );
+
   const filteredByTab = useMemo(() => {
-    if (tab === 0) return filtered;
+    if (tab === 0) return suggestions;
     const catKeys: OfficialGroupCategory[] = ['REGIAO', 'DIA_SEMANA', 'TIPO_CAMPO', 'FAIXA_ETARIA', 'GENERO'];
     const selectedCategory = catKeys[tab - 1];
-    return filtered.filter((g: OfficialGroup) => g.category === selectedCategory);
-  }, [filtered, tab]);
+    return suggestions.filter((suggestion) => suggestion.group.category === selectedCategory);
+  }, [suggestions, tab]);
 
   const handleJoin = async (group: OfficialGroup) => {
     setJoiningId(group.id);
@@ -103,7 +131,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
       </Stack>
 
       <Alert severity="info" icon={<PublicIcon />} sx={{ mb: 2 }}>
-        Grupos oficiais abertos! Entre com 1 clique e já comece a competir com a galera.
+        {t('groups.matchmaking.hero')}
       </Alert>
 
       <TextField
@@ -121,6 +149,41 @@ export const DiscoverGroupsScreen: React.FC = () => {
           ),
         }}
       />
+
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          <Stack spacing={1.5}>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700}>
+                {t('groups.matchmaking.title')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('groups.matchmaking.subtitle')}
+              </Typography>
+            </Box>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('groups.matchmaking.regionLabel')}
+                placeholder={t('groups.matchmaking.regionPlaceholder')}
+                value={regionQuery}
+                onChange={(e) => setRegionQuery(e.target.value)}
+                inputProps={{ maxLength: 120 }}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label={t('groups.matchmaking.scheduleLabel')}
+                placeholder={t('groups.matchmaking.schedulePlaceholder')}
+                value={scheduleQuery}
+                onChange={(e) => setScheduleQuery(e.target.value)}
+                inputProps={{ maxLength: 120 }}
+              />
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
 
       <Tabs
         value={tab}
@@ -173,10 +236,10 @@ export const DiscoverGroupsScreen: React.FC = () => {
 
       {!officialLoading && !officialError && filteredByTab.length > 0 && (
         <Stack spacing={2}>
-          {filteredByTab.map((group: OfficialGroup) => (
+          {filteredByTab.map((suggestion) => (
             <OfficialGroupCard
-              key={group.id}
-              group={group}
+              key={suggestion.group.id}
+              suggestion={suggestion}
               onJoin={handleJoin}
               joiningId={joiningId}
             />
@@ -188,15 +251,17 @@ export const DiscoverGroupsScreen: React.FC = () => {
 };
 
 function OfficialGroupCard({
-  group,
+  suggestion,
   onJoin,
   joiningId,
 }: {
-  group: OfficialGroup;
+  suggestion: GroupMatchSuggestion;
   onJoin: (g: OfficialGroup) => void;
   joiningId: string | null;
 }) {
+  const group = suggestion.group;
   const { data: isMember, isLoading: memberLoading } = useIsInOfficialGroup(group.id);
+  const { t } = useTranslation();
   const isJoining = joiningId === group.id;
   const loading = memberLoading || isJoining;
 
@@ -227,6 +292,11 @@ function OfficialGroupCard({
             )}
             <Stack direction="row" spacing={1} mt={1} alignItems="center">
               <Chip
+                label={t('groups.matchmaking.score', { score: suggestion.score })}
+                size="small"
+                color={suggestion.score >= 75 ? 'success' : 'default'}
+              />
+              <Chip
                 label={OFFICIAL_GROUP_CATEGORY_LABELS[group.category]}
                 size="small"
                 color="primary"
@@ -238,10 +308,23 @@ function OfficialGroupCard({
                 variant="outlined"
               />
             </Stack>
+            <LinearProgress
+              variant="determinate"
+              value={suggestion.score}
+              color={suggestion.score >= 75 ? 'success' : 'primary'}
+              sx={{ mt: 1, maxWidth: 280, borderRadius: 999 }}
+            />
+            {suggestion.reasons.length > 0 && (
+              <Stack direction="row" spacing={0.75} mt={1} flexWrap="wrap" useFlexGap>
+                {suggestion.reasons.map((reason) => (
+                  <Chip key={reason} label={reason} size="small" variant="outlined" />
+                ))}
+              </Stack>
+            )}
           </Box>
           <Stack direction="column" spacing={1} alignItems="center">
             {isMember ? (
-              <Chip label="Membro" color="success" size="small" />
+              <Chip label={t('groups.matchmaking.member')} color="success" size="small" />
             ) : (
               <Button
                 variant="contained"
@@ -250,7 +333,7 @@ function OfficialGroupCard({
                 onClick={() => onJoin(group)}
                 sx={{ minWidth: 80 }}
               >
-                {loading ? <CircularProgress size={20} color="inherit" /> : 'Entrar'}
+                {loading ? <CircularProgress size={20} color="inherit" /> : t('groups.matchmaking.joinGuided')}
               </Button>
             )}
           </Stack>

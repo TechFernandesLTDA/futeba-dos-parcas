@@ -1,7 +1,46 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T20:15:14.002Z",
+  "generatedAt": "2026-06-27T20:37:46.629Z",
   "notes": [
+    {
+      "version": "1.41.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Matchmaking entre jogadores e grupos",
+      "highlights": [
+        {
+          "icon": "groups",
+          "title": "Grupo ideal",
+          "description": "A descoberta de grupos agora sugere turmas com pontuação de compatibilidade."
+        },
+        {
+          "icon": "location_on",
+          "title": "Região e horário",
+          "description": "Informe bairro/cidade e dia/horário preferido para priorizar grupos mais próximos do seu perfil."
+        },
+        {
+          "icon": "login",
+          "title": "Entrada guiada",
+          "description": "O card mostra motivos do match e mantém o botão de entrada guiada para entrar sem fricção."
+        }
+      ],
+      "added": [
+        "Card de matchmaking na tela de descoberta de grupos.",
+        "Ranking de sugestões por região, horário, categoria e comunidade ativa.",
+        "Motivos visíveis para cada sugestão: região compatível, horário compatível, grupo por região/horário e comunidade ativa."
+      ],
+      "improved": [
+        "A lista de grupos oficiais agora ordena melhores matches primeiro.",
+        "Testes unitários cobrem a pontuação de matchmaking e a tela de descoberta."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        2975
+      ]
+    },
     {
       "version": "1.40.0",
       "buildNumber": null,
