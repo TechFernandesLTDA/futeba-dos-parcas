@@ -1385,6 +1385,15 @@
     "inviteFriends": "Invite Friends",
     "publicGames": "Open Games",
     "quickActions": "Quick Actions",
+    "reconnect": {
+      "action": "Create group game",
+      "loadError": "We could not load reconnection suggestions right now.",
+      "members": "{{count}} members",
+      "noScheduleMessage": "{{group}} has played together before, but has no next game. How about setting up the comeback?",
+      "staleMessage": "{{group}} has gone {{days}} days without a scheduled game. Time to bring everyone back?",
+      "title": "Bring the crew back",
+      "window": "{{days}}+ days without a game"
+    },
     "round": "Round {{week}}",
     "teamOfTheWeek": "Team of the Week",
     "viewFullRanking": "View full ranking",

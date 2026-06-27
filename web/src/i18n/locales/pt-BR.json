@@ -1385,6 +1385,15 @@
     "inviteFriends": "Convidar Amigos",
     "publicGames": "Peladas Abertas",
     "quickActions": "Ações Rápidas",
+    "reconnect": {
+      "action": "Criar jogo do grupo",
+      "loadError": "Não foi possível carregar sugestões de reconexão agora.",
+      "members": "{{count}} membros",
+      "noScheduleMessage": "O grupo {{group}} já jogou junto, mas está sem próximo jogo. Que tal marcar o reencontro?",
+      "staleMessage": "O grupo {{group}} está há {{days}} dias sem um jogo marcado. Bora reunir de novo?",
+      "title": "Chame a galera de volta",
+      "window": "{{days}}+ dias sem jogo"
+    },
     "round": "Rodada {{week}}",
     "teamOfTheWeek": "Time da Semana",
     "viewFullRanking": "Ver ranking completo",
