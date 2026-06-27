@@ -2039,6 +2039,45 @@ service cloud.firestore {
     }
 
     // ============================================
+    // SUB-COLECAO: users/{userId}/favorite_squads
+    // ============================================
+    // Duplas/times favoritos do proprio usuario para sugestoes de formacao.
+    // Owner-only: evita expor relacoes sociais e impede escrita cruzada.
+    match /users/{userId}/favorite_squads/{squadId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.owner_id == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.type in ['PAIR', 'TEAM']
+        && request.resource.data.player_ids is list
+        && request.resource.data.player_ids.size() >= 2
+        && request.resource.data.player_ids.size() <= 8
+        && request.resource.data.player_names is list
+        && request.resource.data.player_names.size() == request.resource.data.player_ids.size()
+        && request.resource.data.keys().hasOnly(['owner_id', 'name', 'type', 'player_ids', 'player_names', 'created_at', 'updated_at']);
+      allow update: if isAuthenticated()
+        && request.auth.uid == userId
+        && resource.data.owner_id == userId
+        && request.resource.data.owner_id == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.type in ['PAIR', 'TEAM']
+        && request.resource.data.player_ids is list
+        && request.resource.data.player_ids.size() >= 2
+        && request.resource.data.player_ids.size() <= 8
+        && request.resource.data.player_names is list
+        && request.resource.data.player_names.size() == request.resource.data.player_ids.size()
+        && request.resource.data.keys().hasOnly(['owner_id', 'name', 'type', 'player_ids', 'player_names', 'created_at', 'updated_at']);
+      allow delete: if isAuthenticated()
+        && request.auth.uid == userId
+        && resource.data.owner_id == userId;
+    }
+
+    // ============================================
     // COLECAO: game_events (eventos de jogos ao vivo)
     // ============================================
     // SECURITY: Validacao de tipo de evento e campos obrigatorios

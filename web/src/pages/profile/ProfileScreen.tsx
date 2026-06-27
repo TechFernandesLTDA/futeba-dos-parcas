@@ -12,13 +12,16 @@ import {
   Chip,
   Divider,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Button,
+  Alert,
   alpha,
   Paper,
   LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -35,6 +38,8 @@ import {
   DirectionsRun as RunnerIcon,
   SportsHandball as MidIcon,
   Sports as DefIcon,
+  Groups as GroupsIcon,
+  DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQueryClient } from '@tanstack/react-query';
@@ -52,6 +57,7 @@ import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 import { getEffectiveRating, type User } from '../../types/user';
 import { isLookingForGameToday } from '../../utils/lookingForGameToday';
+import { useFavoriteSquads } from '../../hooks/useFavoriteSquads';
 
 function useCountUp(target: number, duration = 800) {
   const [value, setValue] = useState(0);
@@ -87,6 +93,13 @@ export const ProfileScreen: React.FC = () => {
   const targetUserId = userId || currentUser?.id;
 
   const { player: profile, loading, error } = usePlayerDetail(targetUserId);
+  const {
+    squads: favoriteSquads,
+    loading: favoriteSquadsLoading,
+    error: favoriteSquadsError,
+    deletingId: deletingFavoriteSquadId,
+    deleteFavoriteSquad,
+  } = useFavoriteSquads();
   const animatedLevel = useCountUp(profile?.level ?? 0);
   const animatedXp = useCountUp(profile?.xp ?? 0);
   const animatedMvps = useCountUp(profile?.mvpCount ?? 0);
@@ -367,6 +380,76 @@ export const ProfileScreen: React.FC = () => {
                     <ListItemText primary={t('nav.settings')} />
                   </ListItemButton>
                 </List>
+              </Card>
+
+              <Card sx={{ mt: 2 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <GroupsIcon color="primary" />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {t('profile.favoriteSquads.title')}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {t('profile.favoriteSquads.description')}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {favoriteSquadsLoading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+                      <CircularProgress size={18} />
+                      <Typography variant="body2" color="text.secondary">
+                        {t('profile.favoriteSquads.loading')}
+                      </Typography>
+                    </Box>
+                  ) : favoriteSquadsError ? (
+                    <Alert severity="warning">{t('profile.favoriteSquads.loadError')}</Alert>
+                  ) : favoriteSquads.length === 0 ? (
+                    <Box sx={{ py: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('profile.favoriteSquads.empty')}
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled">
+                        {t('profile.favoriteSquads.emptyHint')}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <List disablePadding aria-label={t('profile.favoriteSquads.title')}>
+                      {favoriteSquads.map((squad) => (
+                        <ListItem
+                          key={squad.id}
+                          disablePadding
+                          secondaryAction={
+                            <IconButton
+                              edge="end"
+                              aria-label={t('profile.favoriteSquads.deleteAria', { name: squad.name })}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteFavoriteSquad(squad.id);
+                              }}
+                              disabled={deletingFavoriteSquadId === squad.id}
+                            >
+                              {deletingFavoriteSquadId === squad.id ? <CircularProgress size={18} /> : <DeleteIcon />}
+                            </IconButton>
+                          }
+                        >
+                          <ListItemButton sx={{ borderRadius: 2, px: 1, pr: 6 }}>
+                            <ListItemIcon sx={{ color: 'primary.main', minWidth: 36 }}>
+                              <GroupsIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={squad.name}
+                              secondary={squad.playerNames.join(' · ')}
+                              primaryTypographyProps={{ fontWeight: 600 }}
+                              secondaryTypographyProps={{ noWrap: true }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  )}
+                </CardContent>
               </Card>
             </Grid>
           )}

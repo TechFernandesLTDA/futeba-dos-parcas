@@ -1168,8 +1168,12 @@
       "balance": "Equilibrio",
       "balanced": "Equilibrado",
       "balancedDraw": "Sorteo Balanceado",
+      "favoriteName": "Equipo {{team}} favorito",
+      "favoriteSuggestions": "Sugerencias de favoritos",
       "greedy": "Voraz",
+      "noFavoriteSuggestions": "Ninguna pareja o equipo favorito está confirmado en este partido.",
       "saveError": "Error al guardar los equipos. Recarga la página e inténtalo de nuevo.",
+      "saveFavorite": "Favorito",
       "snakeDraft": "Snake Draft",
       "title": "Equipos",
       "unbalanced": "Desequilibrado"
@@ -1943,6 +1947,25 @@
     "level": "Nivel",
     "levelHistoryLoadError": "Error al cargar el historial de nivel.",
     "levelJourney": "Progreso de Nivel",
+    "favoriteSquads": {
+      "deleteAria": "Eliminar favorito {{name}}",
+      "deleteError": "No se pudo eliminar el favorito. Inténtalo de nuevo.",
+      "deleteSuccess": "Favorito eliminado.",
+      "description": "Parejas y equipos guardados para convocatorias más rápidas.",
+      "empty": "Aún no hay pareja o equipo favorito.",
+      "emptyHint": "Guarda un equipo desde la pantalla de formación después de confirmar jugadores.",
+      "loadError": "No se pudieron cargar tus favoritos.",
+      "loading": "Cargando favoritos...",
+      "saveError": "No se pudo guardar el favorito. Inténtalo de nuevo.",
+      "saveSuccess": "Favorito guardado.",
+      "title": "Parejas y equipos favoritos",
+      "validation": {
+        "maxPlayers": "Un favorito puede tener como máximo 8 jugadores.",
+        "minPlayers": "Elige al menos 2 jugadores para guardar un favorito.",
+        "name": "Dale un nombre al favorito.",
+        "playerNames": "Revisa los jugadores del favorito."
+      }
+    },
     "levelLabel": "Nivel {{level}}",
     "levelMax": "MÁX",
     "levelProgressAria": "Progreso de nivel",
