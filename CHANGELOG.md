@@ -53,6 +53,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.41.0] - 2026-06-27
+
+#### Adicionado
+- Utilitário `groupMatchmaking` para pontuar e ordenar grupos oficiais.
+- Testes para match por região, categoria de horário e ordenação por compatibilidade.
+
+#### Mudado
+- `DiscoverGroupsScreen` ganhou filtros de matchmaking, score visual, motivos do match e CTA de entrada guiada.
+
+_Issues: #2975_
+
 ### [1.40.0] - 2026-06-27
 
 #### Adicionado
