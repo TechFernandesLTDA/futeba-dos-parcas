@@ -53,6 +53,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.35.0] - 2026-06-27
+
+#### Adicionado
+- Hook `useGameRides` com listener em tempo real para `game_rides`.
+- Painel web `GameRidesPanel` integrado ao `GameDetailScreen`.
+- Notificações internas `GAME_RIDE` criadas junto da publicação via `writeBatch()`.
+
+#### Segurança
+- Firestore Rules para `game_rides` validam schema, autoria, documento `{gameId}_{uid}`, origem/destino aproximados, limite de vagas e atualização apenas pelo dono da carona.
+
+_Issues: #2980_
+
 ### [1.34.0] - 2026-06-27
 
 #### Adicionado
