@@ -53,6 +53,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.28.0] - 2026-06-27
+
+#### Adicionado
+- Campo `lastGameDate` no parse web de usuários para consumir `last_game_date` do Firestore.
+- Filtro `recentPresenceOnly` em `usePositionReinforcements`.
+- Testes unitários para presença recente, janela de 30 dias e filtro de candidatos.
+
+#### Corrigido
+- Sem correções nesta versão.
+
+#### Segurança
+- Sem mudanças de segurança nesta versão.
+
+_Issues: #2972_
+
 ### [1.27.0] - 2026-06-27
 
 #### Adicionado

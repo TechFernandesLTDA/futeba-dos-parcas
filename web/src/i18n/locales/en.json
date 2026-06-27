@@ -1009,6 +1009,8 @@
         },
         "positionMatch": "Ideal position",
         "rating": "Rating {{rating}}",
+        "recentPresence": "Recent attendance",
+        "recentPresenceOnly": "Show only players active recently",
         "send": "Summon",
         "sending": "Sending...",
         "sentSuccess": "{{name}} was summoned to reinforce the game.",

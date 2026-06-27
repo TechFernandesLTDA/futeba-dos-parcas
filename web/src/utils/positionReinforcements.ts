@@ -8,8 +8,14 @@ export interface ReinforcementCandidate {
   need: ReinforcementNeed;
   isPreferredPositionMatch: boolean;
   isLookingToday: boolean;
+  hasRecentPresence: boolean;
   rating: number;
   score: number;
+}
+
+export interface ReinforcementCandidateOptions {
+  recentPresenceOnly?: boolean;
+  now?: Date;
 }
 
 const NEED_TO_POSITIONS: Record<ReinforcementNeed, PreferredPosition[]> = {
@@ -28,6 +34,8 @@ const NEED_TO_RATING_ROLE: Record<ReinforcementNeed, Parameters<typeof getEffect
   ANY_FIELD: 'MID',
 };
 
+const RECENT_PRESENCE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
 export function getConfirmationPositionForNeed(need: ReinforcementNeed): 'GOALKEEPER' | 'FIELD' {
   return need === 'GOALKEEPER' ? 'GOALKEEPER' : 'FIELD';
 }
@@ -36,11 +44,21 @@ export function getPreferredPositionsForNeed(need: ReinforcementNeed): Preferred
   return NEED_TO_POSITIONS[need];
 }
 
+export function hasRecentPresence(user: User, now = new Date()): boolean {
+  if (!user.lastGameDate) return false;
+  const lastGameAt = user.lastGameDate.getTime();
+  if (Number.isNaN(lastGameAt)) return false;
+  const ageMs = now.getTime() - lastGameAt;
+  return ageMs >= 0 && ageMs <= RECENT_PRESENCE_WINDOW_MS;
+}
+
 export function buildReinforcementCandidates(
   users: User[],
   need: ReinforcementNeed,
   excludedUserIds: Set<string>,
+  options: ReinforcementCandidateOptions = {},
 ): ReinforcementCandidate[] {
+  const now = options.now ?? new Date();
   return users
     .filter((candidate) => candidate.id && candidate.isSearchable && !excludedUserIds.has(candidate.id))
     .map((candidate) => {
@@ -48,18 +66,21 @@ export function buildReinforcementCandidates(
         ? NEED_TO_POSITIONS[need].includes(candidate.preferredPosition)
         : false;
       const isLookingToday = isLookingForGameToday(candidate);
+      const recentPresence = hasRecentPresence(candidate, now);
       const rating = getEffectiveRating(candidate, NEED_TO_RATING_ROLE[need]);
-      const score = (isLookingToday ? 100 : 0) + (isPreferredPositionMatch ? 40 : 0) + rating;
+      const score = (isLookingToday ? 100 : 0) + (recentPresence ? 25 : 0) + (isPreferredPositionMatch ? 40 : 0) + rating;
 
       return {
         user: candidate,
         need,
         isPreferredPositionMatch,
         isLookingToday,
+        hasRecentPresence: recentPresence,
         rating,
         score,
       };
     })
+    .filter((candidate) => !options.recentPresenceOnly || candidate.hasRecentPresence)
     .filter((candidate) => candidate.isPreferredPositionMatch || candidate.rating >= 2.5 || candidate.isLookingToday)
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;

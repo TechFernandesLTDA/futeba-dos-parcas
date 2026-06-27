@@ -1,7 +1,47 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T13:42:11.769Z",
+  "generatedAt": "2026-06-27T14:04:35.148Z",
   "notes": [
+    {
+      "version": "1.28.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Sugestões de jogadores mais certeiras para completar o jogo",
+      "highlights": [
+        {
+          "icon": "person_search",
+          "title": "Sugestão automática",
+          "description": "O painel de reforços agora ranqueia candidatos por posição, disponibilidade, presença recente e nota."
+        },
+        {
+          "icon": "event_available",
+          "title": "Presença recente",
+          "description": "Organizadores podem priorizar quem jogou nos últimos 30 dias."
+        },
+        {
+          "icon": "bolt",
+          "title": "Convite rápido",
+          "description": "O envio continua direto do detalhe do jogo, sem sair do fluxo da partida."
+        }
+      ],
+      "added": [
+        "Filtro para mostrar apenas jogadores com presença recente.",
+        "Badge visual de presença recente na lista de candidatos."
+      ],
+      "improved": [
+        "Ranking de reforços agora soma presença recente ao score de sugestão.",
+        "Candidatos continuam filtrados por posição necessária, disponibilidade do dia e histórico de nota."
+      ],
+      "fixed": [
+        "Sem correções nesta versão."
+      ],
+      "issueRefs": [
+        2972
+      ]
+    },
     {
       "version": "1.27.0",
       "buildNumber": null,
