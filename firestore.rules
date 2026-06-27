@@ -2732,28 +2732,64 @@ service cloud.firestore {
     // ============================================
     // COLECAO: game_photos (álbum de fotos pós-jogo)
     // ============================================
-    // Issue #1784: Jogadores confirmados e owner do jogo podem
-    // subir fotos. Todos autenticados podem ver.
-    // Apenas uploader ou admin podem deletar.
+    // Issue #2982: Jogadores confirmados e organizadores podem
+    // subir fotos em jogos finalizados. Todos autenticados podem ver.
+    // Apenas uploader, organizador do jogo ou admin podem deletar.
     match /game_photos/{photoId} {
       allow read: if isAuthenticated();
 
       allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'game_id',
+          'url',
+          'storage_path',
+          'uploaded_by',
+          'uploaded_by_name',
+          'uploaded_by_photo',
+          'content_type',
+          'size',
+          'caption',
+          'status',
+          'created_at',
+          'updated_at'
+        ]) &&
         request.resource.data.game_id is string &&
+        request.resource.data.url is string &&
+        request.resource.data.url.size() > 0 &&
+        request.resource.data.url.size() <= 2048 &&
+        request.resource.data.storage_path is string &&
+        request.resource.data.storage_path.matches('^games/[^/]+/photos/' + userId() + '/[^/]+$') &&
         request.resource.data.uploaded_by == userId() &&
+        request.resource.data.uploaded_by_name is string &&
+        request.resource.data.uploaded_by_name.size() > 0 &&
+        request.resource.data.uploaded_by_name.size() <= 120 &&
+        request.resource.data.uploaded_by_photo is string &&
+        request.resource.data.uploaded_by_photo.size() <= 2048 &&
+        request.resource.data.content_type in ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] &&
+        request.resource.data.size is int &&
+        request.resource.data.size > 0 &&
+        request.resource.data.size < 10 * 1024 * 1024 &&
+        request.resource.data.caption is string &&
+        request.resource.data.caption.size() <= 160 &&
+        request.resource.data.status == 'ACTIVE' &&
         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
         ((get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) != null &&
           get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())).data.status == 'CONFIRMED') ||
-         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.owner_id == userId());
+         canManageGame(get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data) ||
+         isAdmin());
 
       allow update: if false;
 
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.uploaded_by == userId() ||
-        isGameOwner(resource.data.game_id)
-      );
+      allow delete: if isAuthenticated() &&
+        resource.data.game_id is string &&
+        exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
+        (
+          isAdmin() ||
+          resource.data.uploaded_by == userId() ||
+          get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.owner_id == userId() ||
+          userId() in get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('co_organizers', [])
+        );
     }
 
     // ============================================
