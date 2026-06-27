@@ -53,19 +53,25 @@ export const GroupLeagueScreen: React.FC = () => {
   const { user } = useAuth();
 
   const { isMember, loading: memberLoading } = useIsGroupMember(groupId);
-  const { standings, seasons, activeSeason, loading, error, refetch } = useGroupLeague(
-    groupId,
-    user?.id
-  );
-
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
+  const { standings, seasons, activeSeason, selectedSeason, loading, error, refetch } = useGroupLeague(
+    groupId,
+    user?.id,
+    selectedSeasonId,
+  );
 
   useEffect(() => {
-    if (!selectedSeasonId && activeSeason) {
-      setSelectedSeasonId(activeSeason.id);
+    const defaultSeason = activeSeason || seasons[0];
+    if (!selectedSeasonId && defaultSeason) {
+      setSelectedSeasonId(defaultSeason.id);
+      return;
     }
-  }, [activeSeason, selectedSeasonId]);
+
+    if (selectedSeasonId && seasons.length > 0 && !seasons.some((season) => season.id === selectedSeasonId)) {
+      setSelectedSeasonId(defaultSeason?.id ?? null);
+    }
+  }, [activeSeason, seasons, selectedSeasonId]);
 
   const handleToggleExpand = useCallback((id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -133,15 +139,15 @@ export const GroupLeagueScreen: React.FC = () => {
           </IconButton>
         }
       />
-      {seasons.length > 1 && (
+      {seasons.length > 0 && (
         <Box sx={{ px: 2, pb: 1 }}>
-          <FormControl size="small" fullWidth>
+          <FormControl size="small" fullWidth disabled={loading}>
             {/* #2213: InputLabel fornece label acessível ao Select de temporada */}
             <InputLabel id="group-league-season-label">{t('league.season')}</InputLabel>
             <Select
               labelId="group-league-season-label"
               label={t('league.season')}
-              value={selectedSeasonId || ''}
+              value={selectedSeason?.id || selectedSeasonId || ''}
               onChange={(e) => setSelectedSeasonId(e.target.value)}
               variant="outlined"
               sx={{ fontSize: '0.875rem' }}
@@ -154,6 +160,12 @@ export const GroupLeagueScreen: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          <Chip
+            size="small"
+            variant="outlined"
+            label={t('league.presenceTieBreaker')}
+            sx={{ mt: 1 }}
+          />
         </Box>
       )}
 

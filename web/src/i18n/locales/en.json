@@ -1599,6 +1599,7 @@
     "points": "Points",
     "position": "Position",
     "positionCopied": "Position copied!",
+    "presenceTieBreaker": "Rule: points + presence",
     "saldo": "Balance",
     "season": "Season",
     "seasonNotStartedDesc": "Join games to enter the league and earn points.",

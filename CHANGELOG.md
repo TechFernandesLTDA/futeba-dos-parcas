@@ -53,6 +53,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.38.0] - 2026-06-27
+
+#### Adicionado
+- Utilitário `compareGroupLeagueStandings` com desempate por presença e critérios esportivos.
+- Testes unitários para ordenação por pontos, presença, vitórias, saldo, gols e nome.
+
+#### Corrigido
+- `useGroupLeague` agora usa a temporada selecionada no query key, fetch e listener em tempo real.
+
+_Issues: #2978_
+
 ### [1.37.0] - 2026-06-27
 
 #### Adicionado
