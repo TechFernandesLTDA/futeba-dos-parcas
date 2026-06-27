@@ -1259,6 +1259,29 @@
     "shareText": "Come play with us in the {{name}} group!",
     "shareTitle": "Invite: {{name}}"
   },
+  "groupPolls": {
+    "by": "Created by {{name}}",
+    "create": "Create poll",
+    "createTitle": "Quick poll",
+    "emptyDesc": "Use polls to choose time, place, or post-game plans without cluttering the group.",
+    "emptyTitle": "No polls yet",
+    "options": "Options",
+    "optionsHelp": "One option per line. Minimum 2, maximum 5.",
+    "question": "Question",
+    "tab": "Polls",
+    "totalVotes": "{{count}} vote",
+    "totalVotes_one": "{{count}} vote",
+    "totalVotes_other": "{{count}} votes"
+  },
+  "postGameMessages": {
+    "description": "Leave a short note for the post-game recap.",
+    "emptyDesc": "When someone leaves a note, participants will see it here.",
+    "emptyTitle": "No notes yet",
+    "inputLabel": "Your note",
+    "placeholder": "Example: intense match, huge defensive game today.",
+    "save": "Save note",
+    "title": "Post-game note"
+  },
   "groups": {
     "archiveGroup": "Archive Group",
     "cashbox": "Cashbox",

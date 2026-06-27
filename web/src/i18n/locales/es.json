@@ -1259,6 +1259,29 @@
     "shareText": "¡Ven a jugar con nosotros en el grupo {{name}}!",
     "shareTitle": "Invitación: {{name}}"
   },
+  "groupPolls": {
+    "by": "Creada por {{name}}",
+    "create": "Crear encuesta",
+    "createTitle": "Encuesta rápida",
+    "emptyDesc": "Usa encuestas para elegir horario, lugar o planes sin llenar el grupo de mensajes.",
+    "emptyTitle": "Aún no hay encuestas",
+    "options": "Opciones",
+    "optionsHelp": "Una opción por línea. Mínimo 2, máximo 5.",
+    "question": "Pregunta",
+    "tab": "Encuestas",
+    "totalVotes": "{{count}} voto",
+    "totalVotes_one": "{{count}} voto",
+    "totalVotes_other": "{{count}} votos"
+  },
+  "postGameMessages": {
+    "description": "Deja un mensaje corto para la charla después del partido.",
+    "emptyDesc": "Cuando alguien deje un mensaje, los participantes lo verán aquí.",
+    "emptyTitle": "Aún no hay mensajes",
+    "inputLabel": "Tu mensaje",
+    "placeholder": "Ej: partido intenso, defensa enorme hoy.",
+    "save": "Guardar mensaje",
+    "title": "Mensaje post-partido"
+  },
   "groups": {
     "archiveGroup": "Archivar Grupo",
     "cashbox": "Caja",

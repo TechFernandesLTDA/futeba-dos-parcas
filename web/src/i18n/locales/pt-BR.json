@@ -1259,6 +1259,29 @@
     "shareText": "Venha jogar com a gente no grupo {{name}}!",
     "shareTitle": "Convite: {{name}}"
   },
+  "groupPolls": {
+    "by": "Criada por {{name}}",
+    "create": "Criar enquete",
+    "createTitle": "Enquete rápida",
+    "emptyDesc": "Use enquetes para decidir horário, local ou resenha sem bagunçar o grupo.",
+    "emptyTitle": "Nenhuma enquete ainda",
+    "options": "Opções",
+    "optionsHelp": "Uma opção por linha. Mínimo 2, máximo 5.",
+    "question": "Pergunta",
+    "tab": "Enquetes",
+    "totalVotes": "{{count}} voto",
+    "totalVotes_one": "{{count}} voto",
+    "totalVotes_other": "{{count}} votos"
+  },
+  "postGameMessages": {
+    "description": "Deixe uma mensagem curta para a resenha do jogo.",
+    "emptyDesc": "Quando alguém deixar um recado, ele aparece aqui para os participantes.",
+    "emptyTitle": "Nenhum recado ainda",
+    "inputLabel": "Seu recado",
+    "placeholder": "Ex: jogo pegado, defesa monstra hoje.",
+    "save": "Salvar recado",
+    "title": "Recado pós-jogo"
+  },
   "groups": {
     "archiveGroup": "Arquivar Grupo",
     "cashbox": "Caixinha",

@@ -21,6 +21,10 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Card,
+  CardContent,
+  Alert,
+  Avatar,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
@@ -37,6 +41,7 @@ import {
   ContentCopy as DuplicateIcon,
   CalendarMonth as CalendarIcon,
   MoreVert as MoreVertIcon,
+  ChatBubbleOutline as MessageIcon,
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
@@ -58,6 +63,60 @@ import { formatGameDateLong } from '../../utils/dateFormatters';
 import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl } from '../../utils/calendarLinks';
 import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
+import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
+
+const PostGameMessagesPanel: React.FC<{ gameId: string; canWrite: boolean }> = ({ gameId, canWrite }) => {
+  const { t } = useTranslation();
+  const { currentUser } = useAuth();
+  const { messages, loading, error, refetch } = usePostGameMessages(gameId);
+  const saveMessage = useSavePostGameMessage(gameId);
+  const existingMessage = messages.find((message) => message.userId === currentUser?.uid);
+  const [draft, setDraft] = useState('');
+
+  useEffect(() => {
+    setDraft(existingMessage?.message ?? '');
+  }, [existingMessage?.message]);
+
+  return (
+    <Card sx={{ mt: 2 }}>
+      <CardContent>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <MessageIcon color="primary" />
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700}>{t('postGameMessages.title')}</Typography>
+            <Typography variant="body2" color="text.secondary">{t('postGameMessages.description')}</Typography>
+          </Box>
+        </Stack>
+        {canWrite && (
+          <Box sx={{ mt: 2 }}>
+            <TextField value={draft} onChange={(event) => setDraft(event.target.value)} label={t('postGameMessages.inputLabel')} placeholder={t('postGameMessages.placeholder')} fullWidth multiline minRows={2} inputProps={{ maxLength: 240 }} helperText={t('common.charCount', { current: draft.length, max: 240 })} />
+            <Button variant="contained" startIcon={saveMessage.isPending ? <CircularProgress size={16} color="inherit" /> : <MessageIcon />} onClick={() => saveMessage.mutate(draft)} disabled={saveMessage.isPending || draft.trim().length < 2} sx={{ mt: 1.5 }}>
+              {saveMessage.isPending ? t('common.saving') : t('postGameMessages.save')}
+            </Button>
+          </Box>
+        )}
+        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}><CircularProgress /></Box>}
+        {error && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={() => refetch()}>{t('common.retry')}</Button>}>{error}</Alert>}
+        {!loading && !error && messages.length === 0 && <EmptyState icon={<MessageIcon sx={{ fontSize: 48 }} />} title={t('postGameMessages.emptyTitle')} description={t('postGameMessages.emptyDesc')} />}
+        {!loading && !error && messages.length > 0 && (
+          <Stack spacing={1.5} sx={{ mt: 2 }}>
+            {messages.map((message) => <PostGameMessageItem key={message.id} message={message} />)}
+          </Stack>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const PostGameMessageItem: React.FC<{ message: PostGameMessage }> = ({ message }) => (
+  <Stack direction="row" spacing={1.5} alignItems="flex-start">
+    <Avatar sx={{ width: 34, height: 34 }}>{message.userName.charAt(0).toUpperCase()}</Avatar>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography variant="body2" fontWeight={700}>{message.userName}</Typography>
+      <Typography variant="body2" color="text.secondary">{message.message}</Typography>
+    </Box>
+  </Stack>
+);
 
 export const GameDetailScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -104,6 +163,8 @@ export const GameDetailScreen: React.FC = () => {
   const isOwner = game?.ownerId === currentUser?.uid;
   const isCurrentUserAdmin = user?.role === 'ADMIN';
   const canManage = game && (isOwner || isCurrentUserAdmin || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
+  const showPostGameMessages = game?.status === 'FINISHED';
+  const canWritePostGameMessage = showPostGameMessages && (isConfirmed || !!canManage);
 
   // #2272: arrays derivados memoizados — antes os 3 .filter() rodavam a cada render.
   const confirmedPlayers = useMemo(
@@ -574,6 +635,7 @@ export const GameDetailScreen: React.FC = () => {
                 tabValue={tabValue}
                 onTabChange={setTabValue}
               />
+              {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
             </Grid>
           </Grid>
         </PageContainer>
@@ -592,6 +654,7 @@ export const GameDetailScreen: React.FC = () => {
             tabValue={tabValue}
             onTabChange={setTabValue}
           />
+          {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
         </PageContainer>
       )}
 

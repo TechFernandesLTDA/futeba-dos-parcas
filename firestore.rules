@@ -1888,6 +1888,66 @@ service cloud.firestore {
         && prefId in ['notifications', 'theme', 'gamification', 'language'];
     }
 
+    match /group_polls/{pollId} {
+      allow read: if isAuthenticated() && (isAdmin() || isGroupMember(resource.data.group_id));
+      allow create: if isAuthenticated()
+        && request.resource.data.created_by == userId()
+        && isGroupMember(request.resource.data.group_id)
+        && request.resource.data.status == 'ACTIVE'
+        && request.resource.data.question is string
+        && request.resource.data.question.size() >= 3
+        && request.resource.data.question.size() <= 120
+        && request.resource.data.options is list
+        && request.resource.data.options.size() >= 2
+        && request.resource.data.options.size() <= 5
+        && request.resource.data.keys().hasOnly(['group_id', 'question', 'options', 'created_by', 'created_by_name', 'status', 'created_at', 'updated_at']);
+      allow update: if isAuthenticated()
+        && resource.data.created_by == userId()
+        && isGroupMember(resource.data.group_id)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at'])
+        && request.resource.data.status in ['ACTIVE', 'CLOSED'];
+      allow delete: if isAuthenticated() && (isAdmin() || (resource.data.created_by == userId() && isGroupAdmin(resource.data.group_id)));
+    }
+
+    match /group_poll_votes/{voteId} {
+      allow read: if isAuthenticated() && (isAdmin() || isGroupMember(resource.data.group_id));
+      allow create, update: if isAuthenticated()
+        && voteId == (request.resource.data.poll_id + '_' + userId())
+        && request.resource.data.user_id == userId()
+        && request.resource.data.option_id is string
+        && request.resource.data.group_id is string
+        && exists(/databases/$(database)/documents/group_polls/$(request.resource.data.poll_id))
+        && get(/databases/$(database)/documents/group_polls/$(request.resource.data.poll_id)).data.status == 'ACTIVE'
+        && get(/databases/$(database)/documents/group_polls/$(request.resource.data.poll_id)).data.group_id == request.resource.data.group_id
+        && isGroupMember(request.resource.data.group_id)
+        && request.resource.data.keys().hasOnly(['poll_id', 'group_id', 'option_id', 'user_id', 'updated_at']);
+      allow delete: if false;
+    }
+
+    match /post_game_messages/{messageId} {
+      allow read: if isAuthenticated() && (isAdmin() || isGameOwner(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id));
+      allow create: if isAuthenticated()
+        && messageId == (request.resource.data.game_id + '_' + userId())
+        && request.resource.data.user_id == userId()
+        && (isAdmin() || isGameOwner(request.resource.data.game_id) || isConfirmedPlayer(request.resource.data.game_id))
+        && get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED'
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 2
+        && request.resource.data.message.size() <= 240
+        && request.resource.data.keys().hasOnly(['game_id', 'user_id', 'user_name', 'message', 'created_at', 'updated_at']);
+      allow update: if isAuthenticated()
+        && resource.data.user_id == userId()
+        && fieldUnchanged('game_id')
+        && fieldUnchanged('user_id')
+        && (isAdmin() || isGameOwner(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id))
+        && get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.status == 'FINISHED'
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 2
+        && request.resource.data.message.size() <= 240
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['user_name', 'message', 'created_at', 'updated_at']);
+      allow delete: if false;
+    }
+
     // ============================================
     // COLECAO: notification_settings
     // #2157: Colecao usada por Web, Android e Cloud Functions
