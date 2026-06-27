@@ -26,6 +26,7 @@ import {
 
 const ACTIVE_MEMBER_STATUS = "ACTIVE";
 const MAX_CONFIRMATION_WRITES_PER_BATCH = 450;
+const RECURRING_MEMBERS_PAGE_SIZE = 100;
 
 export interface RecurringMemberInvite {
   memberId: string;
@@ -69,6 +70,68 @@ export function chunkArray<T>(items: T[], size: number): T[][] {
     chunks.push(items.slice(i, i + size));
   }
   return chunks;
+}
+
+/**
+ * Busca membros ativos de um grupo em páginas para
+ * evitar carregar a subcoleção inteira em uma única
+ * leitura quando a série recorrente gera convites.
+ *
+ * @param {admin.firestore.Firestore} db - Instância do Firestore.
+ * @param {string} groupId - Grupo dono da série.
+ * @param {string} ownerId - Organizador atual do jogo.
+ * @return {Promise<RecurringMemberInvite[]>} Convites elegíveis.
+ */
+export async function fetchActiveRecurringMemberInvites(
+  db: admin.firestore.Firestore,
+  groupId: string,
+  ownerId: string
+): Promise<RecurringMemberInvite[]> {
+  const invites: RecurringMemberInvite[] = [];
+  let lastDoc:
+    admin.firestore.QueryDocumentSnapshot |
+    undefined;
+
+  while (true) {
+    // #2994: pagina por __name__ implícito para
+    // evitar .get() irrestrito sobre members.
+    let query: admin.firestore.Query = db
+      .collection("groups")
+      .doc(groupId)
+      .collection("members")
+      .limit(RECURRING_MEMBERS_PAGE_SIZE);
+
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const membersSnap = await query.get();
+    if (membersSnap.empty) {
+      break;
+    }
+
+    invites.push(
+      ...membersSnap.docs
+        .map((memberDoc) => toActiveRecurringMemberInvite(
+          memberDoc.id,
+          memberDoc.data(),
+          ownerId
+        ))
+        .filter((invite): invite is RecurringMemberInvite => invite !== null)
+    );
+
+    if (
+      membersSnap.size <
+      RECURRING_MEMBERS_PAGE_SIZE
+    ) {
+      break;
+    }
+
+    lastDoc =
+      membersSnap.docs[membersSnap.docs.length - 1];
+  }
+
+  return invites;
 }
 
 /**
@@ -253,21 +316,13 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
 
       if (after.group_id) {
         try {
-          const membersSnap = await db
-            .collection("groups")
-            .doc(after.group_id as string)
-            .collection("members")
-            .get();
-
           const ownerId = after.owner_id as string;
-
-          const invites = membersSnap.docs
-            .map((memberDoc) => toActiveRecurringMemberInvite(
-              memberDoc.id,
-              memberDoc.data(),
+          const invites =
+            await fetchActiveRecurringMemberInvites(
+              db,
+              after.group_id as string,
               ownerId
-            ))
-            .filter((invite): invite is RecurringMemberInvite => invite !== null);
+            );
 
           let batch = db.batch();
           let batchOps = 0;

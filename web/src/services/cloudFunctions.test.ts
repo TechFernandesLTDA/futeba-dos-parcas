@@ -15,8 +15,7 @@ vi.mock('firebase/functions', () => ({
   }),
 }));
 
-vi.mock('./firebase', () => ({
-  app: {},
+vi.mock('./firebaseFunctions', () => ({
   functions: {},
 }));
 

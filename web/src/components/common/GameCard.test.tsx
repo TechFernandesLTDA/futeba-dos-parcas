@@ -10,6 +10,15 @@ vi.mock('../../services/firebase', () => ({
   messagingPromise: Promise.resolve(null),
 }));
 
+vi.mock('../../contexts/TeamsContext', () => ({
+  useTeams: () => ({
+    teams: [],
+    teamsById: new Map(),
+    loading: false,
+    error: null,
+  }),
+}));
+
 vi.mock('firebase/functions', () => ({
   getFunctions: vi.fn(() => ({})),
   connectFunctionsEmulator: vi.fn(),
