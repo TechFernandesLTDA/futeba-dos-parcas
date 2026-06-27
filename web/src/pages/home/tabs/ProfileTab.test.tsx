@@ -81,6 +81,14 @@ vi.mock('../../../hooks/useGamificationColors', () => ({
   }),
 }));
 
+vi.mock('../../../hooks/useLookingForGameToday', () => ({
+  useLookingForGameToday: () => ({
+    setLookingForGameToday: vi.fn().mockResolvedValue(undefined),
+    loading: false,
+    error: null,
+  }),
+}));
+
 vi.mock('../../../utils/logger', () => ({
   createLogger: () => ({
     debug: vi.fn(),
