@@ -1,7 +1,47 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T14:38:01.969Z",
+  "generatedAt": "2026-06-27T15:04:44.096Z",
   "notes": [
+    {
+      "version": "1.30.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Sugestões de reconexão para reunir grupos parados",
+      "highlights": [
+        {
+          "icon": "groups",
+          "title": "Galera de volta",
+          "description": "A Home agora identifica grupos que já jogaram juntos e estão sem jogo marcado há um tempo."
+        },
+        {
+          "icon": "replay",
+          "title": "Reencontro sugerido",
+          "description": "O cartão explica há quantos dias o grupo está sem partida ou quando não há próximo jogo agendado."
+        },
+        {
+          "icon": "sports_soccer",
+          "title": "Ação rápida",
+          "description": "Um toque abre a criação de jogo do grupo com convite aos membros já preparado."
+        }
+      ],
+      "added": [
+        "Cartão de reconexão na Home para grupos com histórico e sem agenda recente.",
+        "Regra inicial de 21 dias sem jogo marcado para sugerir reencontros."
+      ],
+      "improved": [
+        "Estados de carregamento e erro para a sugestão de reconexão quando os grupos ainda estão sincronizando.",
+        "Textos localizados em português, inglês e espanhol."
+      ],
+      "fixed": [
+        "Sem correções nesta versão."
+      ],
+      "issueRefs": [
+        2986
+      ]
+    },
     {
       "version": "1.29.0",
       "buildNumber": null,

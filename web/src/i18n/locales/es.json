@@ -1385,6 +1385,15 @@
     "inviteFriends": "Invitar Amigos",
     "publicGames": "Partidos Abiertos",
     "quickActions": "Acciones Rápidas",
+    "reconnect": {
+      "action": "Crear partido del grupo",
+      "loadError": "No pudimos cargar sugerencias de reconexión ahora.",
+      "members": "{{count}} miembros",
+      "noScheduleMessage": "{{group}} ya jugó junto, pero no tiene próximo partido. ¿Marcamos el reencuentro?",
+      "staleMessage": "{{group}} lleva {{days}} días sin un partido programado. ¿Reunimos a todos de nuevo?",
+      "title": "Trae al grupo de vuelta",
+      "window": "{{days}}+ días sin partido"
+    },
     "round": "Jornada {{week}}",
     "teamOfTheWeek": "Equipo de la Semana",
     "viewFullRanking": "Ver ranking completo",

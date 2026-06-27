@@ -26,6 +26,7 @@ import {
   Skeleton,
   LinearProgress,
   Link,
+  Alert,
   Button,
   ButtonBase,
   CircularProgress,
@@ -43,6 +44,8 @@ import {
   CheckCircle,
   LiveTv,
   Add as AddIcon,
+  Groups as GroupsIcon,
+  Replay as ReplayIcon,
 } from '@mui/icons-material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
@@ -67,6 +70,12 @@ import { StreakWidget } from './StreakWidget';
 import { RecentActivityFeed } from './RecentActivityFeed';
 import type { Activity } from './RecentActivityFeed';
 import { QuickCreateCard } from '../../../components/game/QuickCreateCard';
+import {
+  getReconnectSuggestions,
+  RECONNECT_WINDOW_DAYS,
+  type ReconnectSuggestion,
+} from '../../../utils/reconnectSuggestions';
+import type { Group } from '../../../types/group';
 
 const logger = createLogger('HomeTab');
 
@@ -635,6 +644,116 @@ function MiniRankingWidget() {
   );
 }
 
+function ReconnectSuggestionWidget({
+  groups,
+  loading,
+  error,
+}: {
+  groups: Group[];
+  loading: boolean;
+  error: string | null;
+}) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const theme = useTheme();
+
+  const suggestions = useMemo(
+    () => getReconnectSuggestions(groups).slice(0, 1),
+    [groups],
+  );
+  const suggestion: ReconnectSuggestion | undefined = suggestions[0];
+
+  const handleCreateGame = useCallback(() => {
+    if (!suggestion) return;
+    navigate(`/game/create?groupId=${encodeURIComponent(suggestion.groupId)}&source=reconnect`);
+  }, [navigate, suggestion]);
+
+  if (loading) {
+    return (
+      <Card sx={{ mb: pageSpacing.sectionSpacing }}>
+        <CardContent sx={{ py: 2 }}>
+          <Skeleton variant="text" width="45%" height={24} />
+          <Skeleton variant="text" width="75%" />
+          <Skeleton variant="rounded" height={36} sx={{ mt: 1.5 }} />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card sx={{ mb: pageSpacing.sectionSpacing }}>
+        <CardContent sx={{ py: 2 }}>
+          <Alert severity="warning">{t('home.reconnect.loadError')}</Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!suggestion) return null;
+
+  return (
+    <Card
+      sx={{
+        mb: pageSpacing.sectionSpacing,
+        border: `1px solid ${alpha(theme.palette.warning.main, 0.24)}`,
+        bgcolor: alpha(theme.palette.warning.main, 0.06),
+      }}
+    >
+      <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+          <Avatar
+            aria-hidden="true"
+            sx={{
+              bgcolor: alpha(theme.palette.warning.main, 0.16),
+              color: theme.palette.warning.dark,
+              width: 44,
+              height: 44,
+            }}
+          >
+            <ReplayIcon />
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle2" fontWeight={700}>
+              {t('home.reconnect.title')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {suggestion.daysWithoutGame === null
+                ? t('home.reconnect.noScheduleMessage', { group: suggestion.groupName })
+                : t('home.reconnect.staleMessage', {
+                  group: suggestion.groupName,
+                  days: suggestion.daysWithoutGame,
+                })}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.25 }}>
+              <Chip
+                size="small"
+                icon={<GroupsIcon fontSize="small" />}
+                label={t('home.reconnect.members', { count: suggestion.memberCount })}
+                sx={sxPresets.softStatusChip(theme.palette.warning.main)}
+              />
+              <Chip
+                size="small"
+                label={t('home.reconnect.window', { days: RECONNECT_WINDOW_DAYS })}
+                variant="outlined"
+              />
+            </Box>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<SportsSoccer />}
+              onClick={handleCreateGame}
+              sx={{ mt: 1.5, fontWeight: 700 }}
+            >
+              {t('home.reconnect.action')}
+            </Button>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── HomeTab ─────────────────────────────────────────────────────────────────
 
 export function HomeTab() {
@@ -667,7 +786,7 @@ export function HomeTab() {
     loading: onboardingLoading,
     onChecklistDismissed,
   } = useOnboarding();
-  const { groups } = useGroups();
+  const { groups, loading: groupsLoading, error: groupsError } = useGroups();
 
   // Deriva passos de dados de domínio existentes — não são checkboxes manuais
   const checklistSteps: ChecklistStep[] = useMemo(() => [
@@ -986,6 +1105,12 @@ export function HomeTab() {
 
             <QuickCreateCard />
 
+            <ReconnectSuggestionWidget
+              groups={groups}
+              loading={groupsLoading}
+              error={groupsError}
+            />
+
             <NextGameWidget />
 
             <MiniRankingWidget />
@@ -1014,6 +1139,12 @@ export function HomeTab() {
           />
 
           <QuickCreateCard />
+
+          <ReconnectSuggestionWidget
+            groups={groups}
+            loading={groupsLoading}
+            error={groupsError}
+          />
 
           <NextGameWidget />
 

@@ -53,6 +53,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.30.0] - 2026-06-27
+
+#### Adicionado
+- Utilitário testável `getReconnectSuggestions` para priorizar grupos que merecem reencontro.
+- Widget `ReconnectSuggestionWidget` no dashboard web, reaproveitando `useGroups()` sem novas consultas Firestore.
+- Testes unitários para janela de reconexão, grupos com jogo futuro e ordenação por distância sem jogo.
+
+#### Corrigido
+- Sem correções nesta versão.
+
+#### Segurança
+- Sem novas permissões ou regras nesta versão; a sugestão usa apenas dados de grupos já carregados para o usuário.
+
+_Issues: #2986_
+
 ### [1.29.0] - 2026-06-27
 
 #### Adicionado
