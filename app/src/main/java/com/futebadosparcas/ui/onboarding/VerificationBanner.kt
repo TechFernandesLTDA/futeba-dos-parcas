@@ -66,7 +66,7 @@ fun VerificationBanner(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.tertiaryContainer)
-            .padding(horizontal = AppDimensions.spacing_large, vertical = AppDimensions.spacing_small),
+            .padding(horizontal = AppDimensions.spacing_medium, vertical = AppDimensions.spacing_small),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

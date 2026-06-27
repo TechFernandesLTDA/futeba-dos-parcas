@@ -97,7 +97,7 @@ fun CpfVerificationScreen(
                             modifier = Modifier.size(72.dp),
                             tint = MaterialTheme.colorScheme.primary,
                         )
-                        Spacer(Modifier.height(AppDimensions.spacing_large))
+                        Spacer(Modifier.height(AppDimensions.spacing_medium))
                         Text(
                             text = stringResource(R.string.cpf_success_message),
                             style = MaterialTheme.typography.headlineSmall,
@@ -128,7 +128,7 @@ fun CpfVerificationScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(AppDimensions.spacing_large))
+                    Spacer(Modifier.height(AppDimensions.spacing_medium))
 
                     val errorState = state as? CpfVerificationUiState.Error
                     // Prefere resId i18n; cai para a string crua (legado)
@@ -162,7 +162,7 @@ fun CpfVerificationScreen(
                         ),
                         supportingText = { Text(stringResource(R.string.cpf_supporting_text)) },
                     )
-                    Spacer(Modifier.height(AppDimensions.spacing_large))
+                    Spacer(Modifier.height(AppDimensions.spacing_medium))
                     Button(
                         onClick = { viewModel.verifyCpf(cpf) },
                         enabled = !loading && CpfValidator.isValid(cpf),
@@ -179,7 +179,7 @@ fun CpfVerificationScreen(
                             Text(stringResource(R.string.cpf_finish))
                         }
                     }
-                    Spacer(Modifier.height(AppDimensions.spacing_large))
+                    Spacer(Modifier.height(AppDimensions.spacing_medium))
                     Text(
                         text = stringResource(R.string.cpf_privacy_terms),
                         style = MaterialTheme.typography.bodySmall,

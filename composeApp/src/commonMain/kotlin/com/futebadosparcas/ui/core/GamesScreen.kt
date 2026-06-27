@@ -44,8 +44,9 @@ import com.futebadosparcas.compose.resources.games_status_scheduled_label
 import com.futebadosparcas.compose.resources.games_time_inline
 import com.futebadosparcas.compose.resources.games_time_missing
 import com.futebadosparcas.compose.resources.games_title
-import com.futebadosparcas.domain.model.GameWithConfirmations
 import com.futebadosparcas.compose.resources.retry
+import com.futebadosparcas.domain.model.GameWithConfirmations
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -59,25 +60,22 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GamesScreen(
-    viewModel: GamesViewModel = koinViewModel(),
+    viewModel: GamesViewModel? = runCatching { koinViewModel<GamesViewModel>() }.getOrNull(),
     onGameClick: (String) -> Unit = {},
     onCreateGameClick: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val fallbackState = remember {
+        mutableStateOf<GamesUiState>(GamesUiState.Error("Dados de jogos indisponíveis neste ambiente."))
+    }
+    val uiState by (viewModel?.uiState?.collectAsStateWithLifecycle() ?: fallbackState)
+    val title = stringResource(Res.string.games_title)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.games_title),
-                        modifier = Modifier.semantics { heading() }
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+            AdaptiveTopBar(
+                title = title,
+                containerColor = MaterialTheme.colorScheme.surface
             )
         },
         floatingActionButton = {
@@ -92,16 +90,17 @@ fun GamesScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            val contentMaxWidth = if (maxWidth >= 840.dp) 920.dp else 720.dp
             when (val state = uiState) {
                 is GamesUiState.Loading -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().widthIn(max = contentMaxWidth),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
@@ -110,16 +109,21 @@ fun GamesScreen(
                 is GamesUiState.Success -> {
                     GamesList(
                         games = state.games,
-                        onGameClick = onGameClick
+                        onGameClick = onGameClick,
+                        maxWidth = contentMaxWidth
                     )
                 }
                 is GamesUiState.Empty -> {
-                    GamesEmptyState(onCreateGameClick = onCreateGameClick)
+                    GamesEmptyState(
+                        onCreateGameClick = onCreateGameClick,
+                        maxWidth = contentMaxWidth
+                    )
                 }
                 is GamesUiState.Error -> {
                     GamesErrorState(
                         message = state.message,
-                        onRetry = { viewModel.loadGames() }
+                        onRetry = { viewModel?.loadGames() },
+                        maxWidth = contentMaxWidth
                     )
                 }
             }
@@ -137,10 +141,11 @@ fun GamesScreen(
 @Composable
 private fun GamesList(
     games: List<GameWithConfirmations>,
-    onGameClick: (String) -> Unit
+    onGameClick: (String) -> Unit,
+    maxWidth: androidx.compose.ui.unit.Dp
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().widthIn(max = maxWidth),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -324,11 +329,13 @@ private fun GameCard(
  */
 @Composable
 private fun GamesEmptyState(
-    onCreateGameClick: () -> Unit
+    onCreateGameClick: () -> Unit,
+    maxWidth: androidx.compose.ui.unit.Dp
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .widthIn(max = maxWidth)
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -376,11 +383,13 @@ private fun GamesEmptyState(
 @Composable
 private fun GamesErrorState(
     message: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    maxWidth: androidx.compose.ui.unit.Dp
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .widthIn(max = maxWidth)
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally

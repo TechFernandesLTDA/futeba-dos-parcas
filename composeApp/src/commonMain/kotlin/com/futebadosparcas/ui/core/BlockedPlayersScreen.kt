@@ -36,6 +36,7 @@ import com.futebadosparcas.compose.resources.owner_no_players_to_block
 import com.futebadosparcas.compose.resources.owner_select_player
 import com.futebadosparcas.compose.resources.owner_unblock_player_cd
 import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -61,8 +62,8 @@ fun BlockedPlayersScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.owner_blocked_players)) },
+            AdaptiveTopBar(
+                title = stringResource(Res.string.owner_blocked_players),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -78,10 +79,7 @@ fun BlockedPlayersScreen(
                             contentDescription = stringResource(Res.string.owner_block_player)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->
@@ -117,7 +115,8 @@ fun BlockedPlayersScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .widthIn(max = 920.dp),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
