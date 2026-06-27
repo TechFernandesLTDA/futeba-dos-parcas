@@ -580,7 +580,7 @@ describe("setUserVerified - idempotencia (#1308)", () => {
       PLAYER_AUTH.uid,
       expect.objectContaining({verified: true, profileComplete: true})
     );
-    expect(mockRevokeRefreshTokens).toHaveBeenCalledWith(PLAYER_AUTH.uid);
+    expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
   });
 
   test("no-op de claims quando usuario JA verified e profileComplete", async () => {

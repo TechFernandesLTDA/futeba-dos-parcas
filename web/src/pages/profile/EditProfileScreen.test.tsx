@@ -22,12 +22,14 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 vi.mock('firebase/storage', () => ({
+  getStorage: vi.fn(() => ({})),
   ref: vi.fn(),
   uploadBytes: vi.fn(() => Promise.resolve()),
   getDownloadURL: vi.fn(() => Promise.resolve('https://example.com/photo.jpg')),
 }));
 
 vi.mock('../../services/firebase', () => ({
+  app: {},
   db: {},
   storage: {},
 }));
