@@ -53,6 +53,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.27.0] - 2026-06-27
+
+#### Adicionado
+- `useLookingForGameToday` e badge de disponibilidade nas telas de perfil/busca.
+- Ranking de candidatos de reforço por posição com testes unitários.
+- Painel `PositionReinforcementsPanel` no detalhe do jogo para owners/admins.
+
+#### Corrigido
+- Fluxo de convocação de reforço usa `writeBatch()` para manter confirmação pendente, summon e notificação consistentes.
+
+#### Segurança
+- `game_summons` passou a exigir whitelist de campos, `status=PENDING` na criação e enum fechado de posição.
+
+_Issues: #2974, #2973 · PRs: #3002, #3003_
+
 ### [1.26.3] - 2026-06-21
 
 #### Mudado

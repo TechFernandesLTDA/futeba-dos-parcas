@@ -1,170 +1,46 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-21T20:35:06.504Z",
+  "generatedAt": "2026-06-27T13:42:11.769Z",
   "notes": [
     {
-      "version": "1.26.4",
+      "version": "1.27.0",
       "buildNumber": null,
-      "releaseDate": "2026-06-21",
-      "type": "patch",
+      "releaseDate": "2026-06-27",
+      "type": "minor",
       "showPopup": true,
       "published": true,
-      "headline": "Jogos, cadastro e navegação mais confiáveis",
+      "headline": "Mais formas de encontrar jogo e completar a lista",
       "highlights": [
         {
-          "icon": "shield",
-          "title": "Cadastro mais estável",
-          "description": "A etapa de SMS ficou mais robusta no iPhone, Android e web."
+          "icon": "sports_soccer",
+          "title": "Procurando jogo hoje",
+          "description": "Marque no perfil que está livre hoje e apareça com destaque nas buscas."
         },
         {
-          "icon": "calendar",
-          "title": "Jogos antigos fora da lista",
-          "description": "Partidas vencidas deixam de aparecer como próximas ou públicas."
+          "icon": "group_add",
+          "title": "Reforço por posição",
+          "description": "Organizadores podem pedir goleiro, defesa, meio ou ataque direto na tela do jogo."
         },
         {
-          "icon": "devices",
-          "title": "Navegação alinhada no topo",
-          "description": "Páginas novas abrem no início correto, sem precisar ajustar o scroll."
+          "icon": "bolt",
+          "title": "Convite rápido",
+          "description": "O reforço recebe notificação e já entra no fluxo de confirmação do jogo."
         }
       ],
       "added": [
-        "Entrada pública canônica em jogos abertos via confirmação segura.",
-        "Card de última versão na tela Sobre."
+        "Status público de disponibilidade para quem está procurando jogo no mesmo dia.",
+        "Painel no detalhe do jogo para sugerir e convocar reforços por posição."
       ],
       "improved": [
-        "Onboarding de telefone e CPF com região correta das Cloud Functions.",
-        "Changelog respeitando o idioma ativo.",
-        "Layout mobile sem dupla topbar em rotas internas."
+        "Sugestões de reforço priorizam posição preferida, nota da função e disponibilidade do dia.",
+        "Convocações de reforço agora criam confirmação pendente, registro de convocação e notificação em uma operação atômica."
       ],
       "fixed": [
-        "Corrigidos jogos vencidos em listas, mapa, próximo jogo e conflitos de horário.",
-        "Corrigido cadastro por SMS que podia travar em tela branca.",
-        "Corrigidos overflow de nome no perfil e estado de loading da edição."
+        "Regras do Firestore para convocações de jogo agora bloqueiam campos arbitrários, status inicial inválido e posições fora do catálogo."
       ],
-      "content": {
-        "pt-BR": {
-          "headline": "Jogos, cadastro e navegação mais confiáveis",
-          "highlights": [
-            {
-              "icon": "shield",
-              "title": "Cadastro mais estável",
-              "description": "A etapa de SMS ficou mais robusta no iPhone, Android e web."
-            },
-            {
-              "icon": "calendar",
-              "title": "Jogos antigos fora da lista",
-              "description": "Partidas vencidas deixam de aparecer como próximas ou públicas."
-            },
-            {
-              "icon": "devices",
-              "title": "Navegação alinhada no topo",
-              "description": "Páginas novas abrem no início correto, sem precisar ajustar o scroll."
-            }
-          ],
-          "added": [
-            "Entrada pública canônica em jogos abertos via confirmação segura.",
-            "Card de última versão na tela Sobre."
-          ],
-          "improved": [
-            "Onboarding de telefone e CPF com região correta das Cloud Functions.",
-            "Changelog respeitando o idioma ativo.",
-            "Layout mobile sem dupla topbar em rotas internas."
-          ],
-          "fixed": [
-            "Corrigidos jogos vencidos em listas, mapa, próximo jogo e conflitos de horário.",
-            "Corrigido cadastro por SMS que podia travar em tela branca.",
-            "Corrigidos overflow de nome no perfil e estado de loading da edição."
-          ]
-        },
-        "en": {
-          "headline": "More reliable games, signup, and navigation",
-          "highlights": [
-            {
-              "icon": "shield",
-              "title": "More stable signup",
-              "description": "The SMS step is more resilient on iPhone, Android, and web."
-            },
-            {
-              "icon": "calendar",
-              "title": "Old games stay out",
-              "description": "Expired matches no longer appear as upcoming or public games."
-            },
-            {
-              "icon": "devices",
-              "title": "Pages start at the top",
-              "description": "New pages open at the correct starting point without manual scrolling."
-            }
-          ],
-          "added": [
-            "Canonical public-game joining through secure confirmations.",
-            "Latest release card on the About screen."
-          ],
-          "improved": [
-            "Phone and CPF onboarding now use the correct Cloud Functions region.",
-            "Release notes now follow the active language.",
-            "Mobile layout no longer shows a double top bar on inner routes."
-          ],
-          "fixed": [
-            "Fixed expired games in lists, map, next game, and time-conflict checks.",
-            "Fixed SMS signup cases that could get stuck on a blank screen.",
-            "Fixed profile-name overflow and edit-profile loading state."
-          ]
-        },
-        "es": {
-          "headline": "Partidos, registro y navegación más confiables",
-          "highlights": [
-            {
-              "icon": "shield",
-              "title": "Registro más estable",
-              "description": "El paso de SMS es más resistente en iPhone, Android y web."
-            },
-            {
-              "icon": "calendar",
-              "title": "Partidos antiguos fuera",
-              "description": "Los partidos vencidos ya no aparecen como próximos o públicos."
-            },
-            {
-              "icon": "devices",
-              "title": "Páginas alineadas arriba",
-              "description": "Las páginas nuevas abren en el inicio correcto sin ajustar el scroll."
-            }
-          ],
-          "added": [
-            "Entrada canónica a partidos públicos mediante confirmaciones seguras.",
-            "Tarjeta de última versión en la pantalla Acerca de."
-          ],
-          "improved": [
-            "El onboarding de teléfono y CPF usa la región correcta de Cloud Functions.",
-            "El changelog respeta el idioma activo.",
-            "El layout mobile ya no muestra doble barra superior en rutas internas."
-          ],
-          "fixed": [
-            "Corregidos partidos vencidos en listas, mapa, próximo partido y conflictos de horario.",
-            "Corregido el registro por SMS que podía quedarse en pantalla blanca.",
-            "Corregidos el overflow del nombre en el perfil y el estado de carga de edición."
-          ]
-        }
-      },
       "issueRefs": [
-        2811,
-        2812,
-        2813,
-        2814,
-        2815,
-        2816,
-        2817,
-        2818,
-        2819,
-        2820,
-        2821,
-        2822,
-        2823,
-        2824,
-        2825,
-        2826,
-        2827,
-        2828,
-        2829
+        2974,
+        2973
       ]
     },
     {
