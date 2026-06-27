@@ -14,6 +14,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 import { useEffect, useState, useRef } from 'react';
+import { compareGroupLeagueStandings } from '../utils/groupLeagueStandings';
 
 const logger = createLogger('useGroupLeague');
 
@@ -142,7 +143,7 @@ async function fetchGroupLeagueStandings(
       level: userData.level,
       isCurrentUser: s.userId === currentUserId,
     };
-  });
+  }).sort(compareGroupLeagueStandings);
 }
 
 async function fetchGroupLeagueSeasons(groupId: string): Promise<GroupLeagueSeason[]> {
@@ -168,7 +169,7 @@ async function fetchGroupLeagueSeasons(groupId: string): Promise<GroupLeagueSeas
   });
 }
 
-export function useGroupLeague(groupId?: string, currentUserId?: string) {
+export function useGroupLeague(groupId?: string, currentUserId?: string, selectedSeasonId?: string | null) {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
@@ -186,6 +187,10 @@ export function useGroupLeague(groupId?: string, currentUserId?: string) {
   });
 
   const activeSeason = seasons.find((s) => s.isActive) || null;
+  const selectedSeason = (selectedSeasonId ? seasons.find((s) => s.id === selectedSeasonId) : null)
+    || activeSeason
+    || seasons[0]
+    || null;
 
   const {
     data: standings = [],
@@ -193,19 +198,19 @@ export function useGroupLeague(groupId?: string, currentUserId?: string) {
     error: standingsError,
     refetch,
   } = useQuery({
-    queryKey: ['groupLeagueStandings', groupId, activeSeason?.id],
-    queryFn: () => fetchGroupLeagueStandings(groupId!, activeSeason!.id, currentUserId),
-    enabled: !!groupId && !!activeSeason,
+    queryKey: ['groupLeagueStandings', groupId, selectedSeason?.id],
+    queryFn: () => fetchGroupLeagueStandings(groupId!, selectedSeason!.id, currentUserId),
+    enabled: !!groupId && !!selectedSeason,
     staleTime: 3 * 60 * 1000,
   });
 
   useEffect(() => {
-    if (!groupId || !activeSeason) return;
+    if (!groupId || !selectedSeason) return;
 
     const standingsRef = collection(db, 'groups', groupId, 'league_standings');
     const q = query(
       standingsRef,
-      where('season_id', '==', activeSeason.id),
+      where('season_id', '==', selectedSeason.id),
       orderBy('points', 'desc'),
       limit(200)
     );
@@ -220,7 +225,7 @@ export function useGroupLeague(groupId?: string, currentUserId?: string) {
           return;
         }
         queryClient.invalidateQueries({
-          queryKey: ['groupLeagueStandings', groupId, activeSeason.id],
+          queryKey: ['groupLeagueStandings', groupId, selectedSeason.id],
         });
       },
       (err) => {
@@ -231,10 +236,10 @@ export function useGroupLeague(groupId?: string, currentUserId?: string) {
     );
 
     return () => unsubscribe();
-  }, [groupId, activeSeason, queryClient]);
+  }, [groupId, selectedSeason, queryClient]);
 
   const error = listenerError || (standingsError ? (standingsError as Error).message : null);
   const loading = seasonsLoading || standingsLoading;
 
-  return { standings, seasons, activeSeason, loading, error, refetch };
+  return { standings, seasons, activeSeason, selectedSeason, loading, error, refetch };
 }
