@@ -12,6 +12,7 @@
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bump PRs get closed — deps handled in batch via `npm audit fix`.
 - **Node 22** required (see `.nvmrc`). Use `nvm use` before working in `web/` or `functions/`.
 - **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`).
+- **Release discipline is mandatory**: any user-visible deploy must keep platform versioning, About/Sobre metadata, release notes, `CHANGELOG.md`, GitHub tag/release, and relevant README/docs in sync.
 
 ---
 
@@ -51,6 +52,17 @@ gh pr list --repo TechFernandesLTDA/futeba-dos-parcas
 gh pr close <N> --repo TechFernandesLTDA/futeba-dos-parcas -c "reason"
 gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 ```
+
+---
+
+## Release/versioning checklist (mandatory)
+
+- **Before deploying anything user-visible**, decide whether this is a release. If yes, update versioning for every affected platform (`web`, `android`, `ios`, `functions`) via `versions.json` and the platform-native file using `scripts/bump-version.js` where applicable.
+- **Web is especially important**: keep `versions.json`, `web/package.json`, release notes, About/Sobre UI metadata, `CHANGELOG.md`, and deployed Hosting bundle aligned.
+- **Release notes are source of truth**: add/update `release-notes/<platform>/<version>.md`, then run `node scripts/release-notes.js validate`, `changelog`, and `bundle` before the release PR.
+- **GitHub hygiene is required**: every release must have a clean PR, Conventional Commit title, linked issue(s), green CI, squash merge, version tag (`vX.Y.Z` or the repo convention), and GitHub Release notes.
+- **Docs must not drift**: update `README.md`, platform README, `docs/RELEASE_PROCESS.md`, or user-facing docs whenever behavior, setup, deployment, or release process changes.
+- **Do not deploy silently**: after deploy, report the exact platform(s), version(s), tag/release status, changelog/release-notes status, URL(s), and remaining follow-ups.
 
 ---
 
