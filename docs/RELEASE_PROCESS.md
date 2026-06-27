@@ -10,6 +10,27 @@ Referências:
 [`CHANGELOG.md`](../CHANGELOG.md) ·
 spec [`feat-2026-05-22-version-control-release-notes.md`](../specs/feat-2026-05-22-version-control-release-notes.md)
 
+## Politica obrigatoria de versao e GitHub
+
+Toda alteracao publicada para usuarios precisa sair com rastreabilidade completa:
+
+- Versao atualizada para cada plataforma afetada (`web`, `android`, `ios`,
+  `functions`) em `versions.json` e no arquivo nativo correspondente.
+- Web deve atualizar tambem `web/package.json`, metadados exibidos em
+  Sobre/About, release notes, `CHANGELOG.md` e o bundle publicado no Hosting.
+- `release-notes/<plataforma>/<versao>.md` deve existir antes da tag/release,
+  exceto quando a mudanca for explicitamente interna e sem impacto em usuarios.
+- `README.md`, README da plataforma e docs relevantes devem ser atualizados
+  quando a mudanca altera comportamento, setup, deploy, seguranca ou processo.
+- GitHub deve ter PR limpo, Conventional Commit, issue/epic vinculado, CI verde,
+  squash merge, tag de versao e GitHub Release com notas claras.
+- A comunicacao final do deploy deve informar plataforma(s), versao(oes),
+  tag/release, changelog/release notes, URLs publicadas e pendencias.
+
+Se uma correcao emergencial precisar ir ao ar antes de uma tag formal, abra uma
+issue/PR de follow-up no mesmo dia para completar versionamento, changelog, tag e
+GitHub Release. Nao deixe deploy user-visible sem fechamento de release.
+
 ## Peças do sistema
 
 | Peça | Papel |
