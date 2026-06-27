@@ -21,8 +21,8 @@ const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
-  await seedDoc(testEnv, `users/${UID_FALLBACK}`, {
-    phone: "+5541999999999",
+  await seedDoc(testEnv, `users_private/${UID_FALLBACK}`, {
+    phoneVerifiedAt: new Date(),
     cpfVerifiedAt: new Date(),
   });
 });
@@ -81,7 +81,7 @@ describe("profileComplete — games create", () => {
     );
   });
 
-  it("fallback users/{uid} com phone + cpfVerifiedAt permite criar jogo", async () => {
+  it("fallback users_private/{uid} com phoneVerifiedAt + cpfVerifiedAt permite criar jogo", async () => {
     const db = asUser(testEnv, UID_FALLBACK, completeClaims(false));
     await assertSucceeds(
       db.doc("games/profile-complete-fallback").set(validGame(UID_FALLBACK))
@@ -111,7 +111,7 @@ describe("profileComplete — groups create", () => {
     );
   });
 
-  it("fallback users/{uid} com phone + cpfVerifiedAt permite criar grupo", async () => {
+  it("fallback users_private/{uid} com phoneVerifiedAt + cpfVerifiedAt permite criar grupo", async () => {
     const db = asUser(testEnv, UID_FALLBACK, completeClaims(false));
     await assertSucceeds(
       db.doc("groups/profile-complete-fallback").set(validGroup(UID_FALLBACK))
