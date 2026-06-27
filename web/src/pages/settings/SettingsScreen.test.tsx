@@ -41,7 +41,14 @@ vi.mock('firebase/auth', () => ({
   signOut: (...args: any[]) => mockSignOut(...args),
 }));
 
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  connectFunctionsEmulator: vi.fn(),
+  httpsCallable: vi.fn(() => vi.fn()),
+}));
+
 vi.mock('../../services/firebase', () => ({
+  app: {},
   db: {},
   auth: {},
   functions: {},
