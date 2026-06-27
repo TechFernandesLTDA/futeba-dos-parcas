@@ -53,6 +53,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.40.0] - 2026-06-27
+
+#### Adicionado
+- Utilitário `friendlyComparison` para montar resumo, headline e texto compartilhável.
+- Testes unitários para vitórias, desempate por gols e cenário equilibrado.
+
+#### Mudado
+- `HeadToHeadScreen` passa a exibir um card de rivalidade amistosa quando há jogos em comum.
+
+_Issues: #2976_
+
 ### [1.39.0] - 2026-06-27
 
 #### Adicionado

@@ -25,6 +25,7 @@ import {
   useTheme,
   alpha,
   CircularProgress,
+  Stack,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -34,6 +35,7 @@ import {
   SportsSoccer as SoccerIcon,
   TrendingUp as TrendingIcon,
   EmojiEvents as TrophyIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -47,6 +49,8 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
+import { buildFriendlyComparisonSummary, type FriendlyComparisonLabels } from '../../utils/friendlyComparison';
 
 const logger = createLogger('HeadToHeadScreen');
 
@@ -89,6 +93,7 @@ async function searchPlayers(term: string): Promise<PlayerSearchResult[]> {
 
 export const HeadToHeadScreen: React.FC = () => {
   const { t } = useTranslation();
+  const { showSuccess, showError } = useToast();
   useDocumentTitle(t('page.title.headToHead'));
   const goBack = useNavigateBack();
   const theme = useTheme();
@@ -129,6 +134,51 @@ export const HeadToHeadScreen: React.FC = () => {
   );
 
   const canCompare = !!player1 && !!player2 && player1.id !== player2.id;
+  const friendlyLabels: FriendlyComparisonLabels = {
+    title: t('headToHead.friendly.title'),
+    games: t('headToHead.games'),
+    opponents: t('headToHead.opponents'),
+    sameTeam: t('headToHead.sameTeam'),
+    goals: t('headToHead.goals'),
+    assists: t('headToHead.assists'),
+    mvp: 'MVP',
+    directWins: t('headToHead.friendly.directWins'),
+    draws: t('headToHead.friendly.draws'),
+    together: t('headToHead.friendly.together'),
+    balancedHeadline: t('headToHead.friendly.balancedHeadline'),
+    winsHeadline: (playerName) => t('headToHead.friendly.winsHeadline', { player: playerName }),
+    goalsHeadline: (playerName) => t('headToHead.friendly.goalsHeadline', { player: playerName }),
+  };
+  const friendlyComparison =
+    player1 && player2 && stats
+      ? buildFriendlyComparisonSummary(player1.name, player2.name, stats, friendlyLabels)
+      : null;
+
+  const handleShareFriendlyComparison = useCallback(async () => {
+    if (!friendlyComparison) return;
+
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: t('headToHead.friendly.shareTitle'),
+          text: friendlyComparison.shareText,
+          url: window.location.href,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(friendlyComparison.shareText);
+      showSuccess(t('headToHead.friendly.copySuccess'));
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      try {
+        await navigator.clipboard.writeText(friendlyComparison.shareText);
+        showSuccess(t('headToHead.friendly.copySuccess'));
+      } catch {
+        showError(t('headToHead.friendly.shareError'));
+      }
+    }
+  }, [friendlyComparison, showError, showSuccess, t]);
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -307,6 +357,84 @@ export const HeadToHeadScreen: React.FC = () => {
 
         {canCompare && stats && stats.totalGames > 0 && player1 && player2 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {friendlyComparison && (
+              <Card
+                sx={{
+                  overflow: 'hidden',
+                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, ${alpha(theme.palette.success.main, 0.1)})`,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+                }}
+              >
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+                      <Box>
+                        <Typography variant="overline" color="primary.main" fontWeight={700}>
+                          {t('headToHead.friendly.eyebrow')}
+                        </Typography>
+                        <Typography variant="h6" fontWeight={800}>
+                          {friendlyComparison.headline}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {t('headToHead.friendly.subtitle')}
+                        </Typography>
+                      </Box>
+                      <Button
+                        variant="contained"
+                        startIcon={<ShareIcon />}
+                        onClick={handleShareFriendlyComparison}
+                        sx={{ flexShrink: 0, textTransform: 'none' }}
+                      >
+                        {t('headToHead.friendly.share')}
+                      </Button>
+                    </Box>
+
+                    <Grid container spacing={2} alignItems="stretch">
+                      <Grid xs={12} md={5}>
+                        <FriendlyPlayerPanel
+                          name={friendlyComparison.playerOne.name}
+                          wins={friendlyComparison.playerOne.wins}
+                          goals={friendlyComparison.playerOne.goals}
+                          assists={friendlyComparison.playerOne.assists}
+                          mvp={friendlyComparison.playerOne.mvp}
+                        />
+                      </Grid>
+                      <Grid xs={12} md={2}>
+                        <Box
+                          sx={{
+                            height: '100%',
+                            minHeight: 72,
+                            borderRadius: 2,
+                            bgcolor: alpha(theme.palette.background.paper, 0.7),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexDirection: 'column',
+                          }}
+                        >
+                          <Typography variant="h6" fontWeight={800}>
+                            {stats.p1WinsAgainst} x {stats.p2WinsAgainst}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {t('headToHead.friendly.directWins')}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid xs={12} md={5}>
+                        <FriendlyPlayerPanel
+                          name={friendlyComparison.playerTwo.name}
+                          wins={friendlyComparison.playerTwo.wins}
+                          goals={friendlyComparison.playerTwo.goals}
+                          assists={friendlyComparison.playerTwo.assists}
+                          mvp={friendlyComparison.playerTwo.mvp}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight={600} gutterBottom>
@@ -558,6 +686,60 @@ const StatCompareRow: React.FC<{
     </Grid>
   );
 };
+
+const FriendlyPlayerPanel: React.FC<{
+  name: string;
+  wins: number;
+  goals: number;
+  assists: number;
+  mvp: number;
+}> = ({ name, wins, goals, assists, mvp }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        height: '100%',
+        borderRadius: 2,
+        bgcolor: alpha(theme.palette.background.paper, 0.72),
+        p: 2,
+      }}
+    >
+      <Typography variant="subtitle2" fontWeight={800} noWrap>
+        {name}
+      </Typography>
+      <Grid container spacing={1} sx={{ mt: 1 }}>
+        <Grid xs={6}>
+          <FriendlyMetric label={t('headToHead.friendly.directWins')} value={wins} />
+        </Grid>
+        <Grid xs={6}>
+          <FriendlyMetric label={t('headToHead.goals')} value={goals} />
+        </Grid>
+        <Grid xs={6}>
+          <FriendlyMetric label={t('headToHead.assists')} value={assists} />
+        </Grid>
+        <Grid xs={6}>
+          <FriendlyMetric label="MVP" value={mvp} />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+const FriendlyMetric: React.FC<{
+  label: string;
+  value: number;
+}> = ({ label, value }) => (
+  <Box>
+    <Typography variant="h6" fontWeight={800} color="primary.main" lineHeight={1}>
+      {value}
+    </Typography>
+    <Typography variant="caption" color="text.secondary">
+      {label}
+    </Typography>
+  </Box>
+);
 
 const MatchTimelineItem: React.FC<{
   match: HeadToHeadMatch;
