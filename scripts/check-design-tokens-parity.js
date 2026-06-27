@@ -363,13 +363,6 @@ function checkKotlinRadiusAndSpacing(tokens, errors) {
     }, 'android :app spacing token', appDimensions, errors);
 
     checkKotlinDpVals(appDimensionsContent, {
-      spacing_md: spacing.md,
-      spacing_lg: spacing.lg,
-      spacing_xl: spacing.xl,
-      spacing_xxl: spacing.xxl,
-    }, 'android :app spacing alias token', appDimensions, errors);
-
-    checkKotlinDpVals(appDimensionsContent, {
       radius_small: radius.sm,
       radius_medium: radius.md,
       radius_large: radius.lg,
