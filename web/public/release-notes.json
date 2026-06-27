@@ -1,7 +1,46 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T19:58:11.951Z",
+  "generatedAt": "2026-06-27T20:15:14.002Z",
   "notes": [
+    {
+      "version": "1.40.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Comparação amistosa entre jogadores",
+      "highlights": [
+        {
+          "icon": "compare_arrows",
+          "title": "Duelo leve",
+          "description": "Veja um resumo amigável entre dois jogadores com jogos, vitórias, gols, assistências e MVPs."
+        },
+        {
+          "icon": "share",
+          "title": "Compartilhamento fácil",
+          "description": "Compartilhe o comparativo pelo recurso nativo do dispositivo ou copie o texto automaticamente."
+        },
+        {
+          "icon": "sports_soccer",
+          "title": "Rivalidade saudável",
+          "description": "A tela destaca quem lidera em vitórias ou gols sem perder o tom de brincadeira."
+        }
+      ],
+      "added": [
+        "Card de comparação amistosa na tela de confronto direto.",
+        "Texto compartilhável com placar de vitórias diretas, empates, jogos juntos e principais estatísticas.",
+        "Textos principais internacionalizados em PT-BR, EN e ES."
+      ],
+      "improved": [
+        "A comparação reaproveita os estados de loading, vazio e erro já existentes no confronto direto.",
+        "Testes unitários cobrem a regra do destaque amistoso e o texto de compartilhamento."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        2976
+      ]
+    },
     {
       "version": "1.39.0",
       "buildNumber": null,
