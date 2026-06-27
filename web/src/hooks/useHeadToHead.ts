@@ -11,6 +11,7 @@ import {
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { isGameWithinHeadToHeadPeriod, type HeadToHeadPeriod } from '../utils/headToHeadPeriod';
 
 const logger = createLogger('useHeadToHead');
 
@@ -95,7 +96,8 @@ export interface HeadToHeadStats {
 
 async function fetchHeadToHead(
   player1Id: string,
-  player2Id: string
+  player2Id: string,
+  period: HeadToHeadPeriod
 ): Promise<HeadToHeadStats> {
   const emptyStats: HeadToHeadStats = {
     totalGames: 0,
@@ -177,12 +179,13 @@ async function fetchHeadToHead(
         team2Score: (data.team2Score as number) ?? (raw.team2_score as number) ?? 0,
         groupId: (data.groupId as string) || (raw.group_id as string) || undefined,
         groupName: (data.groupName as string) || (raw.group_name as string) || undefined,
+        dateTime: data.dateTime as GameDoc['dateTime'],
       });
     }
   }
 
   const finishedGameIds = [...gameDocsMap.entries()]
-    .filter(([, g]) => g.status === 'FINISHED')
+    .filter(([, g]) => g.status === 'FINISHED' && isGameWithinHeadToHeadPeriod(g, period))
     .map(([id]) => id);
 
   if (finishedGameIds.length === 0) return emptyStats;
@@ -366,12 +369,12 @@ async function fetchHeadToHead(
   return stats;
 }
 
-export function useHeadToHead(player1Id?: string, player2Id?: string) {
+export function useHeadToHead(player1Id?: string, player2Id?: string, period: HeadToHeadPeriod = 'all') {
   const enabled = !!player1Id && !!player2Id && player1Id !== player2Id;
 
   const { data, isLoading, error, refetch } = useQuery<HeadToHeadStats, Error>({
-    queryKey: ['headToHead', player1Id, player2Id],
-    queryFn: () => fetchHeadToHead(player1Id!, player2Id!),
+    queryKey: ['headToHead', player1Id, player2Id, period],
+    queryFn: () => fetchHeadToHead(player1Id!, player2Id!, period),
     enabled,
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,

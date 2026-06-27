@@ -53,6 +53,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.39.0] - 2026-06-27
+
+#### Adicionado
+- Utilitário `headToHeadPeriod` com tipo `HeadToHeadPeriod` e função `isGameWithinHeadToHeadPeriod`.
+- Testes unitários para os períodos `30d`, `90d`, `365d` e `all`.
+
+#### Mudado
+- `useHeadToHead` agora inclui o período no `queryKey` e filtra partidas finalizadas antes de calcular estatísticas.
+
+_Issues: #2977_
+
 ### [1.38.0] - 2026-06-27
 
 #### Adicionado

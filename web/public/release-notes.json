@@ -1,7 +1,46 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T19:33:38.891Z",
+  "generatedAt": "2026-06-27T19:58:11.951Z",
   "notes": [
+    {
+      "version": "1.39.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Histórico de confrontos com filtro por período",
+      "highlights": [
+        {
+          "icon": "sports_soccer",
+          "title": "Confronto direto",
+          "description": "Compare dois jogadores e veja jogos, vitórias, empates e estatísticas compartilhadas."
+        },
+        {
+          "icon": "date_range",
+          "title": "Filtro por período",
+          "description": "Alterne entre todo o histórico, últimos 30 dias, 90 dias ou 12 meses."
+        },
+        {
+          "icon": "leaderboard",
+          "title": "Resumo claro",
+          "description": "A tela destaca jogos como adversários, jogos no mesmo time, gols, assistências e MVPs."
+        }
+      ],
+      "added": [
+        "Filtro de período na tela de confronto direto.",
+        "Textos principais internacionalizados em PT-BR, EN e ES.",
+        "Testes cobrindo a regra de corte por data do histórico."
+      ],
+      "improved": [
+        "O cálculo do confronto usa o período selecionado no cache e na busca dos dados.",
+        "Partidas sem data válida ficam fora dos filtros limitados, mas continuam disponíveis em \"todo o histórico\"."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        2977
+      ]
+    },
     {
       "version": "1.38.0",
       "buildNumber": null,

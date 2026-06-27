@@ -1460,6 +1460,37 @@
     "uploadSuccess": "Photo added to the album.",
     "uploading": "Uploading..."
   },
+  "headToHead": {
+    "assistAbbr": "A",
+    "assists": "Assists",
+    "avgAssistsPerGame": "Avg. assists/game",
+    "avgGoalsPerGame": "Avg. goals/game",
+    "directMatches": "Head-to-head matches",
+    "draw": "Draw",
+    "games": "Games",
+    "goalAbbr": "G",
+    "goals": "Goals",
+    "matchHistory": "Match history",
+    "noPlayersFound": "No players found",
+    "opponents": "Opponents",
+    "period": {
+      "all": "All history",
+      "label": "Period",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "last365Days": "Last 12 months"
+    },
+    "playerOne": "Player 1",
+    "playerTwo": "Player 2",
+    "playerWon": "{{player}} won",
+    "sameTeam": "Same team",
+    "searchPlayer": "Search Player {{number}}",
+    "selectDifferentPlayers": "Select different players to compare.",
+    "selectPlayers": "Select players",
+    "statistics": "Statistics",
+    "summary": "Summary",
+    "title": "Head to Head"
+  },
   "groups": {
     "archiveGroup": "Archive Group",
     "cashbox": "Cashbox",

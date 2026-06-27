@@ -1460,6 +1460,37 @@
     "uploadSuccess": "Foto agregada al álbum.",
     "uploading": "Subiendo..."
   },
+  "headToHead": {
+    "assistAbbr": "A",
+    "assists": "Asistencias",
+    "avgAssistsPerGame": "Prom. asist./partido",
+    "avgGoalsPerGame": "Prom. goles/partido",
+    "directMatches": "Duelos directos",
+    "draw": "Empate",
+    "games": "Partidos",
+    "goalAbbr": "G",
+    "goals": "Goles",
+    "matchHistory": "Historial de partidos",
+    "noPlayersFound": "No se encontraron jugadores",
+    "opponents": "Rivales",
+    "period": {
+      "all": "Todo el historial",
+      "label": "Periodo",
+      "last30Days": "Últimos 30 días",
+      "last90Days": "Últimos 90 días",
+      "last365Days": "Últimos 12 meses"
+    },
+    "playerOne": "Jugador 1",
+    "playerTwo": "Jugador 2",
+    "playerWon": "{{player}} ganó",
+    "sameTeam": "Mismo equipo",
+    "searchPlayer": "Buscar Jugador {{number}}",
+    "selectDifferentPlayers": "Selecciona jugadores diferentes para comparar.",
+    "selectPlayers": "Seleccionar jugadores",
+    "statistics": "Estadísticas",
+    "summary": "Resumen general",
+    "title": "Duelo Directo"
+  },
   "groups": {
     "archiveGroup": "Archivar Grupo",
     "cashbox": "Caja",
