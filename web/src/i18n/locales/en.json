@@ -1673,6 +1673,14 @@
         "today": "Today",
         "yesterday": "Yesterday"
       },
+      "actionProgress": "Updating notification",
+      "contextGroups": {
+        "achievement": "Achievements and reputation",
+        "game": "Game context",
+        "group": "Group context",
+        "system": "App notices"
+      },
+      "contextSummary": "{{count}} notifications in this context, {{unread}} unread",
       "decline": "Decline",
       "declineAria": "Decline {{title}}",
       "deleteUndoMessage": "Notification removed.",
@@ -1702,6 +1710,8 @@
         "minutes": "{{count}}min",
         "now": "Now"
       },
+      "timeWithGroup": "{{time}} · {{group}}",
+      "unreadCount": "{{count}} unread",
       "undo": "Undo"
     }
   },

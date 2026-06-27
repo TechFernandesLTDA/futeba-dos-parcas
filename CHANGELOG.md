@@ -53,6 +53,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.29.0] - 2026-06-27
+
+#### Adicionado
+- Utilitário testável `groupNotificationsByContext` para organizar notificações por contexto.
+- Mutação `declineGameInvite` com `writeBatch()` e fallback para resolver convites mesmo quando não há confirmação pendente apagável.
+- Testes unitários para agrupamento contextual e recusa rápida de convites.
+
+#### Corrigido
+- Sem correções nesta versão.
+
+#### Segurança
+- Sem mudanças de regras nesta versão; a recusa usa permissões existentes de deleção da própria confirmação.
+
+_Issues: #2987_
+
 ### [1.28.0] - 2026-06-27
 
 #### Adicionado

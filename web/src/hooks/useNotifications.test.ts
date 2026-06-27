@@ -13,10 +13,11 @@ const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
 const mockBatchUpdate = vi.fn();
+const mockBatchDelete = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 const mockWriteBatch = vi.fn(() => ({
   update: mockBatchUpdate,
-  delete: vi.fn(),
+  delete: mockBatchDelete,
   set: vi.fn(),
   commit: mockBatchCommit,
 }));
@@ -241,6 +242,43 @@ describe('useNotifications', () => {
     });
 
     expect(mockDeleteDoc).toHaveBeenCalledWith('mock-doc-ref');
+  });
+
+  it('declineGameInvite remove confirmação e marca notificação como lida em batch', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.declineGameInvite('notif-1', 'game-1');
+    });
+
+    expect(mockDoc).toHaveBeenCalledWith({}, 'confirmations', 'game-1_user-1');
+    expect(mockDoc).toHaveBeenCalledWith({}, 'notifications', 'notif-1');
+    expect(mockBatchDelete).toHaveBeenCalledWith('mock-doc-ref');
+    expect(mockBatchUpdate).toHaveBeenCalledWith('mock-doc-ref', expect.objectContaining({ read: true }));
+    expect(mockBatchCommit).toHaveBeenCalled();
+  });
+
+  it('declineGameInvite marca notificação como lida se não conseguir apagar confirmação', async () => {
+    mockBatchCommit.mockRejectedValueOnce(new Error('permission denied'));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useNotifications('user-1'), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.declineGameInvite('notif-1', 'game-1');
+    });
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith('mock-doc-ref', expect.objectContaining({ read: true }));
   });
 
   it('trata erros do snapshot', async () => {
