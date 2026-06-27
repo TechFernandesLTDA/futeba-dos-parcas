@@ -169,7 +169,7 @@ fun PermissionOnboardingScreen(
                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 )
-                Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
             }
 
             // Card de Localização
@@ -188,7 +188,7 @@ fun PermissionOnboardingScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             // Card de Câmera
             PermissionCard(
@@ -201,7 +201,7 @@ fun PermissionOnboardingScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             // Card de Microfone (Mensagens de Voz)
             PermissionCard(
@@ -267,7 +267,7 @@ private fun PermissionCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppDimensions.spacing_large),
+                .padding(AppDimensions.spacing_medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Ícone
@@ -296,7 +296,7 @@ private fun PermissionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
             // Textos
             Column(modifier = Modifier.weight(1f)) {

@@ -281,10 +281,18 @@ export const setUserVerified = onCall(
       // Phone verificado via Firebase Auth linkWithCredential
       // (Firebase popula phone_number no UserRecord automaticamente).
       const userRecord = await admin.auth().getUser(targetUid);
+      const currentClaims = userRecord.customClaims ?? {};
+      const nextClaims = {
+        ...currentClaims,
+        verified: true,
+        profileComplete: true,
+      };
+      const claimsAlreadyCurrent =
+        currentClaims.verified === true &&
+        currentClaims.profileComplete === true;
 
-      // FIX #1308: idempotência. Se o usuário JÁ está verified=true, retornar
-      // cedo SEM reescrever claims/mirrors.
-      if (userRecord.customClaims?.verified === true) {
+      // Idempotencia: se os claims ja estao atuais, nao reescreve claims/mirrors.
+      if (claimsAlreadyCurrent) {
         logger.info("[SET_VERIFIED] No-op: usuário já verificado", {
           uid: targetUid,
         });
@@ -311,12 +319,7 @@ export const setUserVerified = onCall(
         {merge: true},
       );
 
-      const currentClaims = userRecord.customClaims ?? {};
-
-      await admin.auth().setCustomUserClaims(targetUid, {
-        ...currentClaims,
-        verified: true,
-      });
+      await admin.auth().setCustomUserClaims(targetUid, nextClaims);
 
       // Não revogar refresh tokens aqui. O cliente força getIdTokenResult(true)
       // após a callable para buscar o claim novo; revogar no mesmo fluxo invalida
@@ -335,6 +338,7 @@ export const setUserVerified = onCall(
       return {
         success: true,
         uid: targetUid,
+        alreadyVerified: currentClaims.verified === true,
       };
     } catch (error) {
       if (error instanceof HttpsError) throw error;

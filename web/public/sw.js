@@ -9,7 +9,9 @@
 // corrigido, #2356) na proxima ativacao. Bump invalida o cache antigo.
 // v4 → v5: ignora schemes nao-cacheaveis (ex: chrome-extension://) para
 // evitar erro Cache.put quando extensoes interceptam requests.
-const CACHE_NAME = 'futeba-v5';
+// v5 → v6: invalida assets antigos apos correcoes criticas no fluxo de perfil.
+// v6 → v7: invalida bundle antigo apos correcao critica do OTP no web mobile.
+const CACHE_NAME = 'futeba-v7';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',

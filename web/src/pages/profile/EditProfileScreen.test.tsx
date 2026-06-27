@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
@@ -6,26 +6,31 @@ import { MemoryRouter } from 'react-router-dom';
 const mockUpdateUserProfile = vi.fn();
 const mockShowSuccess = vi.fn();
 const mockShowError = vi.fn();
+const mockGetDoc = vi.hoisted(() => vi.fn());
+const mockUpdateDoc = vi.hoisted(() => vi.fn());
 const mockUpdateUserPii = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ data: { success: true, updated: ['gender'] } }))
 );
 
 vi.mock('firebase/firestore', () => ({
-  doc: vi.fn(() => 'mock-doc'),
-  updateDoc: vi.fn(() => Promise.resolve()),
-  getDoc: vi.fn(() => Promise.resolve({ exists: () => false })),
+  doc: vi.fn((...parts: unknown[]) => parts.join('/')),
+  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
+  getDoc: (...args: unknown[]) => mockGetDoc(...args),
   serverTimestamp: vi.fn(() => new Date()),
   writeBatch: vi.fn(() => ({ commit: vi.fn() })),
   limit: vi.fn((...args) => args[0]),
 }));
 
 vi.mock('firebase/storage', () => ({
+  getStorage: vi.fn(() => ({})),
+  connectStorageEmulator: vi.fn(),
   ref: vi.fn(),
   uploadBytes: vi.fn(() => Promise.resolve()),
   getDownloadURL: vi.fn(() => Promise.resolve('https://example.com/photo.jpg')),
 }));
 
 vi.mock('../../services/firebase', () => ({
+  app: {},
   db: {},
   storage: {},
 }));
@@ -94,6 +99,18 @@ vi.mock('../../components/team/TeamSelector', () => ({
 import { EditProfileScreen } from './EditProfileScreen';
 
 const theme = createTheme();
+const publicProfileDoc = {
+  name: 'João',
+  nickname: '',
+  phone: '',
+  preferred_position: null,
+  bio: '',
+  favorite_team: null,
+  striker_rating: 0,
+  mid_rating: 0,
+  defender_rating: 0,
+  gk_rating: 0,
+};
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(
@@ -104,6 +121,17 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 describe('EditProfileScreen', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdateDoc.mockResolvedValue(undefined);
+    mockUpdateUserPii.mockResolvedValue({ data: { success: true, updated: ['gender'] } });
+    mockGetDoc.mockImplementation((path: string) => Promise.resolve(
+      path.includes('users_private')
+        ? { exists: () => false }
+        : { exists: () => true, data: () => publicProfileDoc }
+    ));
+  });
+
   it('não crasha durante renderização', () => {
     expect(() => renderWithProviders(<EditProfileScreen />)).not.toThrow();
   });
@@ -139,4 +167,5 @@ describe('EditProfileScreen', () => {
       expect(screen.getByText('Editar Perfil')).toBeInTheDocument();
     }, { timeout: 10000 });
   });
+
 });

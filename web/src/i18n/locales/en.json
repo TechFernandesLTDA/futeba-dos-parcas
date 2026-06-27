@@ -2344,16 +2344,16 @@
   },
   "player": {
     "card": {
-      "attackShort": "ATT",
       "ariaLabel": "Player card",
       "ariaLabelWithName": "Player card for {{name}}",
+      "attackShort": "ATK",
       "brand": "FUTEBA DOS PARÇAS",
       "defenseShort": "DEF",
       "downloadImage": "Download image",
       "footerUrl": "futebadosparcas.com.br",
       "gkShort": "GK",
       "level": "Level",
-      "levelShort": "Lvl. {{level}}",
+      "levelShort": "Lv. {{level}}",
       "loadError": "Failed to load player",
       "maxLevel": "Max level!",
       "midShort": "MID",

@@ -21,19 +21,17 @@ object AppDimensions {
     val spacing_extraSmall = 4.dp
     val spacing_small = 8.dp
     val spacing_medium = 16.dp
-    // #2956: spacing_large volta ao valor canônico da escala 8dp (24dp).
-    // spacing_extraLarge fica como alias legado para o mesmo passo para evitar
-    // churn excessivo em call-sites já ajustados antes da unificação.
     val spacing_large = 24.dp
+    // Alias legacy mantido para compatibilidade com call-sites antigos.
     val spacing_extraLarge = 24.dp
     val spacing_huge = 32.dp
     val spacing_massive = 48.dp
 
     // Aliases para compatibilidade (#2750: alinhados com AdaptiveSpacing)
-    val spacing_md = spacing_medium       // 16dp
-    val spacing_lg = spacing_large        // 24dp
-    val spacing_xl = spacing_huge         // 32dp
-    val spacing_xxl = spacing_massive     // 48dp
+    val spacing_md = 16.dp       // 16dp
+    val spacing_lg = 24.dp       // 24dp
+    val spacing_xl = 32.dp       // 32dp
+    val spacing_xxl = 48.dp      // 48dp
 
     // ==========================================
     // PADDING - Padding interno de containers

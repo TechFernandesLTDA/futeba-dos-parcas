@@ -363,6 +363,13 @@ function checkKotlinRadiusAndSpacing(tokens, errors) {
     }, 'android :app spacing token', appDimensions, errors);
 
     checkKotlinDpVals(appDimensionsContent, {
+      spacing_md: spacing.md,
+      spacing_lg: spacing.lg,
+      spacing_xl: spacing.xl,
+      spacing_xxl: spacing.xxl,
+    }, 'android :app spacing alias token', appDimensions, errors);
+
+    checkKotlinDpVals(appDimensionsContent, {
       radius_small: radius.sm,
       radius_medium: radius.md,
       radius_large: radius.lg,
@@ -396,6 +403,27 @@ function checkKotlinRadiusAndSpacing(tokens, errors) {
     const content = readRequiredFile(shapeFile, `${platform.name} shape`, errors);
     if (content) {
       checkKotlinRoundedCornerShapes(content, shapeExpected, `${platform.name} shape token`, shapeFile, errors);
+    }
+  }
+
+  const xmlDimens = path.join(ROOT, 'app', 'src', 'main', 'res', 'values', 'dimens.xml');
+  const xmlContent = readRequiredFile(xmlDimens, 'android :app dimens.xml', errors);
+  if (xmlContent) {
+    const expectedDimens = {
+      spacing_xs: spacing.xs,
+      spacing_sm: spacing.sm,
+      spacing_md: spacing.md,
+      spacing_large: spacing.lg,
+      spacing_lg: spacing.lg,
+      spacing_xl: spacing.xl,
+      spacing_xxl: spacing.xxl,
+    };
+
+    for (const [name, expectedValue] of Object.entries(expectedDimens)) {
+      const re = new RegExp(`<dimen\\s+name=["']${escapeRegExp(name)}["']>\\s*${expectedValue}dp\\s*<\\/dimen>`);
+      if (!re.test(xmlContent)) {
+        errors.push(`[android :app dimens token] ${name} diverge — esperado ${expectedValue}dp em ${relative(xmlDimens)}`);
+      }
     }
   }
 }
@@ -470,6 +498,67 @@ function checkKotlinSemanticGreen(tokens, errors) {
     const content = readRequiredFile(platform.file, platform.name, errors);
     if (!content) continue;
     checkKotlinValHexes(content, expected, `${platform.name} semantic green`, platform.file, errors);
+  }
+}
+
+function checkSurfaceParity(tokens, errors) {
+  const file = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const content = readRequiredFile(file, 'web surface tokens', errors);
+  if (content) {
+    const lightTheme = sliceBetween(content, 'export const futebaTheme = createTheme({', '// Dark theme');
+    const darkTheme = sliceBetween(content, 'export const futebaDarkTheme = createTheme({', 'export const futebaDarkOledTheme');
+    const webLightExpected = {
+      surfaceDim: tokens.surface.light.dim,
+      surfaceBright: tokens.surface.light.bright,
+      surfaceContainerLowest: tokens.surface.light.containerLowest,
+      surfaceContainerLow: tokens.surface.light.containerLow,
+      surfaceContainer: tokens.surface.light.container,
+      surfaceContainerHigh: tokens.surface.light.containerHigh,
+      surfaceContainerHighest: tokens.surface.light.containerHighest,
+    };
+    const webDarkExpected = {
+      surfaceDim: tokens.surface.dark.dim,
+      surfaceBright: tokens.surface.dark.bright,
+      surfaceContainerLowest: tokens.surface.dark.containerLowest,
+      surfaceContainerLow: tokens.surface.dark.containerLow,
+      surfaceContainer: tokens.surface.dark.container,
+      surfaceContainerHigh: tokens.surface.dark.containerHigh,
+      surfaceContainerHighest: tokens.surface.dark.containerHighest,
+    };
+
+    if (!lightTheme || !darkTheme) {
+      errors.push(`[surface] temas web ausentes em ${relative(file)}`);
+    } else {
+      checkTsObjectHexes(lightTheme, 'palette', webLightExpected, 'web light surface token', file, errors);
+      checkTsObjectHexes(darkTheme, 'palette', webDarkExpected, 'web dark surface token', file, errors);
+    }
+  }
+
+  const lightExpected = {
+    md3_light_surfaceDim: tokens.surface.light.dim,
+    md3_light_surfaceBright: tokens.surface.light.bright,
+    md3_light_surfaceContainerLowest: tokens.surface.light.containerLowest,
+    md3_light_surfaceContainerLow: tokens.surface.light.containerLow,
+    md3_light_surfaceContainer: tokens.surface.light.container,
+    md3_light_surfaceContainerHigh: tokens.surface.light.containerHigh,
+    md3_light_surfaceContainerHighest: tokens.surface.light.containerHighest,
+  };
+
+  const darkExpected = {
+    md3_dark_surfaceDim: tokens.surface.dark.dim,
+    md3_dark_surfaceBright: tokens.surface.dark.bright,
+    md3_dark_surfaceContainerLowest: tokens.surface.dark.containerLowest,
+    md3_dark_surfaceContainerLow: tokens.surface.dark.containerLow,
+    md3_dark_surfaceContainer: tokens.surface.dark.container,
+    md3_dark_surfaceContainerHigh: tokens.surface.dark.containerHigh,
+    md3_dark_surfaceContainerHighest: tokens.surface.dark.containerHighest,
+  };
+
+  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
+    const content = readRequiredFile(platform.file, `${platform.name} surface tokens`, errors);
+    if (!content) continue;
+    checkKotlinValHexes(content, lightExpected, `${platform.name} light surface token`, platform.file, errors);
+    checkKotlinValHexes(content, darkExpected, `${platform.name} dark surface token`, platform.file, errors);
   }
 }
 
@@ -616,6 +705,7 @@ function main() {
   checkWebSemanticPalette(tokens, errors);
   checkKotlinSemanticGreen(tokens, errors);
   checkGamificationParity(tokens, errors);
+  checkSurfaceParity(tokens, errors);
 
   // Paridade de radius + spacing — issue #2744.
   checkWebRadiusAndSpacing(tokens, errors);
@@ -632,7 +722,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + elevation + motion)');
+  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + surface + elevation + motion)');
   process.exit(0);
 }
 

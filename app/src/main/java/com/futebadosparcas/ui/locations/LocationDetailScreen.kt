@@ -44,6 +44,7 @@ import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.navigation.components.SecondaryTopBar
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.statusBarsPadding
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -172,6 +173,7 @@ fun LocationDetailScreen(
         topBar = {
             // CMD-16: TopBar padronizada usando AppTopBar
             AppTopBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = { Text(stringResource(R.string.location_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

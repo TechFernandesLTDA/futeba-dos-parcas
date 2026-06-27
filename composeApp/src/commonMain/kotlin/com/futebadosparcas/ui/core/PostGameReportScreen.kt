@@ -49,6 +49,7 @@ import com.futebadosparcas.compose.resources.owner_yellow
 import com.futebadosparcas.compose.resources.report_player_goals
 import com.futebadosparcas.compose.resources.share
 import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import org.jetbrains.compose.resources.stringResource
 
 // Log: removeu imports java.*, resources android, etc.
@@ -144,8 +145,8 @@ fun PostGameReportScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.owner_post_game_report)) },
+            AdaptiveTopBar(
+                title = stringResource(Res.string.owner_post_game_report),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -168,10 +169,7 @@ fun PostGameReportScreen(
                             contentDescription = stringResource(Res.string.share)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->
@@ -182,7 +180,8 @@ fun PostGameReportScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .widthIn(max = 920.dp),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

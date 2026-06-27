@@ -145,7 +145,7 @@ fun WelcomeCarousel(
             exit = skipButtonExit,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(AppDimensions.spacing_large)
+                .padding(AppDimensions.spacing_medium)
         ) {
             TextButton(
                 onClick = {
@@ -189,7 +189,7 @@ fun WelcomeCarousel(
             Row(
                 modifier = Modifier
                     .semantics { contentDescription = dotsDescription }
-                    .padding(horizontal = AppDimensions.spacing_large),
+                    .padding(horizontal = AppDimensions.spacing_medium),
                 horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -282,7 +282,7 @@ private fun CarouselSlideContent(slide: CarouselSlide) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+        Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
         Text(
             text = stringResource(slide.subtitleRes),

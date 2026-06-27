@@ -2344,9 +2344,9 @@
   },
   "player": {
     "card": {
-      "attackShort": "DEL",
       "ariaLabel": "Ficha del jugador",
       "ariaLabelWithName": "Ficha del jugador {{name}}",
+      "attackShort": "ATA",
       "brand": "FUTEBA DOS PARÇAS",
       "defenseShort": "DEF",
       "downloadImage": "Descargar imagen",
@@ -2358,7 +2358,7 @@
       "maxLevel": "¡Nivel máximo!",
       "midShort": "MED",
       "overall": "GENERAL",
-      "ratingBreakdown": "Desglose de atributos",
+      "ratingBreakdown": "Desglose de valoración",
       "retry": "Intentar de nuevo",
       "shareText": "¡Mira mi ficha en Futeba dos Parças! Nivel {{level}} • {{xp}} XP",
       "shareTitle": "{{name}} - Futeba dos Parças",

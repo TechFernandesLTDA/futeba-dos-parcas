@@ -19,6 +19,12 @@ vi.mock('../../contexts/TeamsContext', () => ({
   }),
 }));
 
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  connectFunctionsEmulator: vi.fn(),
+  httpsCallable: vi.fn(() => vi.fn()),
+}));
+
 vi.mock('../../utils/dateFormatters', () => ({
   formatGameDate: (date: string) => date === '15/03/2026' ? 'Hoje' : date,
 }));

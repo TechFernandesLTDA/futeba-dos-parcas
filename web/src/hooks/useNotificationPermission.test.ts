@@ -10,6 +10,8 @@ const mockArrayUnion = vi.fn();
 const mockArrayRemove = vi.fn();
 
 vi.mock('firebase/messaging', () => ({
+  getMessaging: vi.fn(() => ({})),
+  isSupported: vi.fn(() => Promise.resolve(true)),
   getToken: (...args: unknown[]) => mockGetToken(...args),
   onMessage: (...args: unknown[]) => mockOnMessage(...args),
 }));
@@ -31,6 +33,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 vi.mock('../services/firebase', () => ({
+  app: {},
   db: {},
 }));
 

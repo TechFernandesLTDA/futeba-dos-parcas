@@ -45,10 +45,16 @@ vi.mock('../../services/cloudFunctions', () => ({
   deleteAccount: vi.fn(),
 }));
 
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  connectFunctionsEmulator: vi.fn(),
+  httpsCallable: vi.fn(() => vi.fn()),
+}));
+
 vi.mock('../../services/firebase', () => ({
+  app: {},
   db: {},
   auth: {},
-  app: {},
 }));
 
 vi.mock('../../utils/firestoreHelpers', () => ({
