@@ -89,7 +89,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_home_desc)
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             GuideFeatureCard(
                 icon = Icons.Default.Sports,
@@ -97,7 +97,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_games_desc)
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             GuideFeatureCard(
                 icon = Icons.Default.People,
@@ -105,7 +105,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_players_desc)
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             GuideFeatureCard(
                 icon = Icons.Default.EmojiEvents,
@@ -113,7 +113,7 @@ fun AppGuideScreen(
                 description = stringResource(R.string.app_guide_league_desc)
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             GuideFeatureCard(
                 icon = Icons.Default.Groups,
@@ -132,7 +132,7 @@ fun AppGuideScreen(
                 shape = RoundedCornerShape(AppDimensions.radius_large)
             ) {
                 Column(
-                    modifier = Modifier.padding(AppDimensions.spacing_large),
+                    modifier = Modifier.padding(AppDimensions.spacing_medium),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -187,7 +187,7 @@ private fun GuideFeatureCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppDimensions.spacing_large),
+                .padding(AppDimensions.spacing_medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -207,7 +207,7 @@ private fun GuideFeatureCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(

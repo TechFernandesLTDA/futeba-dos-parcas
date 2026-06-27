@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -81,6 +82,7 @@ import com.futebadosparcas.compose.resources.invite_players_search_hint
 import com.futebadosparcas.compose.resources.invite_players_title
 import com.futebadosparcas.compose.resources.invite_players_try_again
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import com.futebadosparcas.ui.theme.MotionDuration
 import com.futebadosparcas.ui.theme.MotionEasing
 import com.futebadosparcas.ui.theme.rememberReduceMotion
@@ -268,6 +270,7 @@ fun InvitePlayersScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .widthIn(max = 920.dp)
         ) {
             // Campo de busca
             SearchField(
@@ -305,8 +308,8 @@ fun InvitePlayersScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InvitePlayersTopBar(onNavigateBack: () -> Unit) {
-    TopAppBar(
-        title = { Text(stringResource(Res.string.invite_players_title)) },
+    AdaptiveTopBar(
+        title = stringResource(Res.string.invite_players_title),
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
@@ -314,10 +317,7 @@ private fun InvitePlayersTopBar(onNavigateBack: () -> Unit) {
                     contentDescription = stringResource(Res.string.cd_back)
                 )
             }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        }
     )
 }
 

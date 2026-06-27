@@ -65,7 +65,7 @@ object PlayerCardShareHelper {
 
     // Cores fixas (usadas em ambos temas)
     private val GOLD_COLOR = AndroidColor.parseColor("#FFD700")
-    private val GREEN_COLOR = AndroidColor.parseColor("#58CC02")
+    private val GREEN_COLOR = AndroidColor.parseColor("#00852A")
     private val ATTACK_COLOR = AndroidColor.parseColor("#FF6B6B")
     private val MID_COLOR = AndroidColor.parseColor("#4ECDC4")
     private val DEFENSE_COLOR = AndroidColor.parseColor("#45B7D1")

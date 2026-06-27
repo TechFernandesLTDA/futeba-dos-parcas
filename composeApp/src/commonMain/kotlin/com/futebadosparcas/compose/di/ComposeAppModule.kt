@@ -1,6 +1,9 @@
 package com.futebadosparcas.compose.di
 
+import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.whatsnew.releaseNotesModule
+import org.koin.core.module.Module
+import org.koin.compose.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -24,7 +27,7 @@ import org.koin.dsl.module
 val composeAppModule = module {
 
     // Bucket Core ViewModels
-    // viewModel { LoginViewModel(get()) }  // requer AuthRepository (plataforma)
+    viewModel { LoginViewModel(get()) }
     // viewModel { GamesViewModel(get()) }  // requer GameRepository (plataforma)
     // viewModel { ProfileSetupViewModel(get()) }
 
@@ -39,10 +42,12 @@ val composeAppModule = module {
     // viewModel { CashboxViewModel(get()) }
 }
 
+internal expect fun platformComposeAppModules(): List<Module>
+
 /**
  * Lista de módulos Koin do composeApp para uso em startKoin / KoinApplication.
  *
  * Inclui [releaseNotesModule] — fiação `expect/actual` por plataforma da feature
  * "Novidades" (iOS real; Android/wasmJs stub). Spec feat-2026-05-22, Fase G.
  */
-val composeAppKoinModules = listOf(composeAppModule, releaseNotesModule())
+val composeAppKoinModules = listOf(composeAppModule, releaseNotesModule()) + platformComposeAppModules()

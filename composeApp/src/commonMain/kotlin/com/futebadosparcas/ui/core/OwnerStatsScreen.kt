@@ -36,6 +36,7 @@ import com.futebadosparcas.compose.resources.owner_stats_screen_title
 import com.futebadosparcas.compose.resources.owner_total_revenue_compact
 import com.futebadosparcas.compose.resources.owner_worst_game_compact
 import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -73,8 +74,8 @@ fun OwnerStatsScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.owner_stats_screen_title)) },
+            AdaptiveTopBar(
+                title = stringResource(Res.string.owner_stats_screen_title),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -82,10 +83,7 @@ fun OwnerStatsScreen(
                             contentDescription = stringResource(Res.string.cd_back)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->
@@ -101,7 +99,8 @@ fun OwnerStatsScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .widthIn(max = 920.dp),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
