@@ -9,8 +9,6 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.futebadosparcas.R
 import com.futebadosparcas.util.AppLogger
@@ -38,7 +36,6 @@ import java.util.concurrent.TimeUnit
 class PhoneVerificationViewModel(
     private val auth: FirebaseAuth,
     private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRegions.FUNCTIONS),
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val resourceManager: ResourceManager,
 ) : ViewModel() {
 
@@ -191,33 +188,11 @@ class PhoneVerificationViewModel(
                     )
                     return@launch
                 }
-                currentUser.linkWithCredential(credential).await()
-
-                // FIX 2026-05-11 (Gustavo bug): persistir phone no Firestore
-                // users/{uid} apos linkWithCredential. Antes ficava so no Auth
-                // provider, quebrando SMS notifications e recovery.
-                val phoneNumber = currentUser.phoneNumber
-                if (phoneNumber != null) {
-                    try {
-                        firestore.collection("users")
-                            .document(currentUser.uid)
-                            .update(
-                                mapOf(
-                                    "phone" to phoneNumber,
-                                    "phone_verified" to true,
-                                    "updated_at" to FieldValue.serverTimestamp(),
-                                ),
-                            )
-                            .await()
-                    } catch (firestoreErr: Exception) {
-                        // Non-fatal: phone esta no Auth, app continua funcionando
-                        AppLogger.e(
-                            "PhoneVerification",
-                            "Failed to persist phone to users doc (non-fatal)",
-                            firestoreErr,
-                        )
-                    }
-                }
+                val linkedUser = currentUser.linkWithCredential(credential).await().user
+                    ?: auth.currentUser
+                    ?: currentUser
+                linkedUser.reload().await()
+                linkedUser.getIdToken(true).await()
 
                 _uiState.value = PhoneVerificationUiState.Success
             } catch (e: Exception) {

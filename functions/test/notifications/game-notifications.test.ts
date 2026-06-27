@@ -7,11 +7,22 @@ const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
+const mockStartAfter = jest.fn().mockReturnThis();
+const mockCountGet = jest.fn();
+const mockCount = jest.fn(() => ({ get: mockCountGet }));
 
-const queryChain: any = { where: mockWhere, orderBy: mockOrderBy, limit: mockLimit, get: mockCollectionGet };
+const queryChain: any = {
+  where: mockWhere,
+  orderBy: mockOrderBy,
+  limit: mockLimit,
+  startAfter: mockStartAfter,
+  count: mockCount,
+  get: mockCollectionGet,
+};
 mockWhere.mockReturnValue(queryChain);
 mockLimit.mockReturnValue(queryChain);
 mockOrderBy.mockReturnValue(queryChain);
+mockStartAfter.mockReturnValue(queryChain);
 
 const mockDoc = jest.fn((id: string) => ({
   id,
@@ -22,6 +33,8 @@ const mockDoc = jest.fn((id: string) => ({
     where: mockWhere,
     orderBy: mockOrderBy,
     limit: mockLimit,
+    startAfter: mockStartAfter,
+    count: mockCount,
     get: mockCollectionGet,
   })),
 }));
@@ -31,6 +44,8 @@ const mockCollection = jest.fn(() => ({
   where: mockWhere,
   orderBy: mockOrderBy,
   limit: mockLimit,
+  startAfter: mockStartAfter,
+  count: mockCount,
   get: mockCollectionGet,
 }));
 
@@ -80,11 +95,128 @@ jest.mock("../../src/notifications/helpers", () => ({
   sendNotificationToUser: jest.fn().mockResolvedValue(true),
 }));
 
-import { onGameCreated, onGameUpdatedNotification, onGameVacancy } from "../../src/notifications/game-notifications";
+import {
+  countConfirmedPlayersForGame,
+  fetchConfirmedUserIdsForGame,
+  fetchEligibleGroupMemberIdsForVacancy,
+  onGameCreated,
+  onGameUpdatedNotification,
+  onGameVacancy,
+} from "../../src/notifications/game-notifications";
 
 describe("Game Notifications", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCountGet.mockResolvedValue({
+      data: () => ({ count: 0 }),
+    });
+  });
+
+  describe("helper queries", () => {
+    it("pagina confirmacoes ate encontrar uma pagina parcial", async () => {
+      const page1Docs = Array.from({ length: 100 }, (_, index) => ({
+        id: `conf-${index}`,
+        data: () => ({ user_id: `user-${index}` }),
+      }));
+      const page2Docs = [
+        {
+          id: "conf-100",
+          data: () => ({ userId: "user-100" }),
+        },
+      ];
+
+      mockCollectionGet
+        .mockResolvedValueOnce({
+          empty: false,
+          size: page1Docs.length,
+          docs: page1Docs,
+        })
+        .mockResolvedValueOnce({
+          empty: false,
+          size: page2Docs.length,
+          docs: page2Docs,
+        });
+
+      await expect(fetchConfirmedUserIdsForGame("game-1")).resolves.toEqual([
+        ...page1Docs.map((doc) => doc.data().user_id),
+        "user-100",
+      ]);
+      expect(mockStartAfter).toHaveBeenCalledTimes(1);
+      expect(mockStartAfter).toHaveBeenCalledWith(page1Docs[page1Docs.length - 1]);
+    });
+
+    it("retorna vazio quando nao ha confirmacoes confirmadas", async () => {
+      mockCollectionGet.mockResolvedValueOnce({
+        empty: true,
+        size: 0,
+        docs: [],
+      });
+
+      await expect(fetchConfirmedUserIdsForGame("game-empty")).resolves.toEqual([]);
+      expect(mockStartAfter).not.toHaveBeenCalled();
+    });
+
+    it("conta confirmados via agregacao", async () => {
+      mockCountGet.mockResolvedValueOnce({
+        data: () => ({ count: 9 }),
+      });
+
+      await expect(countConfirmedPlayersForGame("game-count")).resolves.toBe(9);
+      expect(mockCount).toHaveBeenCalled();
+    });
+
+    it("pagina membros do grupo e para quando nao encontra elegiveis", async () => {
+      const page1Docs = Array.from({ length: 50 }, (_, index) => ({
+        id: `member-${index}`,
+        data: () => ({ status: "ACTIVE" }),
+      }));
+
+      mockCollectionGet
+        .mockResolvedValueOnce({
+          empty: false,
+          size: page1Docs.length,
+          docs: page1Docs,
+        })
+        .mockResolvedValueOnce({
+          empty: true,
+          size: 0,
+          docs: [],
+        });
+
+      await expect(
+        fetchEligibleGroupMemberIdsForVacancy(
+          "group-1",
+          new Set(page1Docs.map((doc) => doc.id)),
+          3,
+        ),
+      ).resolves.toEqual([]);
+
+      expect(mockStartAfter).toHaveBeenCalledTimes(1);
+      expect(mockStartAfter).toHaveBeenCalledWith(page1Docs[page1Docs.length - 1]);
+    });
+
+    it("exclui confirmados/waitlist e respeita o limite de membros a notificar", async () => {
+      const docs = [
+        { id: "confirmed-user", data: () => ({ status: "ACTIVE" }) },
+        { id: "member-1", data: () => ({ status: "ACTIVE" }) },
+        { id: "member-2", data: () => ({ status: "ACTIVE" }) },
+        { id: "member-3", data: () => ({ status: "ACTIVE" }) },
+      ];
+
+      mockCollectionGet.mockResolvedValueOnce({
+        empty: false,
+        size: docs.length,
+        docs,
+      });
+
+      await expect(
+        fetchEligibleGroupMemberIdsForVacancy(
+          "group-2",
+          new Set(["confirmed-user"]),
+          2,
+        ),
+      ).resolves.toEqual(["member-1", "member-2"]);
+    });
   });
 
   describe("onGameCreated", () => {
@@ -385,9 +517,8 @@ describe("Game Notifications", () => {
         exists: true,
         data: () => ({ status: "SCHEDULED", max_players: 14, location_name: "Campo" }),
       });
-      mockCollectionGet.mockResolvedValueOnce({
-        docs: Array.from({ length: 14 }, (_, i) => ({ id: `p${i}`, data: () => ({ user_id: `u${i}` }) })),
-        size: 14,
+      mockCountGet.mockResolvedValueOnce({
+        data: () => ({ count: 14 }),
       });
 
       await onGameVacancy({
@@ -399,6 +530,56 @@ describe("Game Notifications", () => {
       });
 
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
+
+    it("notifica membros elegiveis do grupo quando a waitlist e pequena", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "SCHEDULED",
+          max_players: 14,
+          group_id: "group-1",
+          location_name: "Arena",
+          date: "2026-06-26",
+        }),
+      });
+      mockCountGet.mockResolvedValueOnce({
+        data: () => ({ count: 10 }),
+      });
+      mockCollectionGet
+        .mockResolvedValueOnce({
+          empty: true,
+          size: 0,
+          docs: [],
+        })
+        .mockResolvedValueOnce({
+          empty: false,
+          size: 1,
+          docs: [
+            { data: () => ({ user_id: "confirmed-user" }) },
+          ],
+        })
+        .mockResolvedValueOnce({
+          empty: false,
+          size: 2,
+          docs: [
+            { id: "member-1", data: () => ({ status: "ACTIVE" }) },
+            { id: "member-2", data: () => ({ status: "ACTIVE" }) },
+          ],
+        });
+
+      await onGameVacancy({
+        data: {
+          before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
+          after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
+        },
+        params: { confirmationId: "conf1" },
+      });
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["member-1", "member-2"],
+        expect.objectContaining({ title: "Vaga disponível!" }),
+      );
     });
   });
 });

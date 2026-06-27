@@ -45,15 +45,31 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
   const [hasMore, setHasMore] = useState(true);
   const lastDocRef = useRef<DocumentSnapshot | null>(null);
   const loadingRef = useRef(false);
+  const requestVersionRef = useRef(0);
+  const whereClausesKey = JSON.stringify(whereClauses);
 
   // FIX #1595: useRef para whereClauses evita recriar fetchData quando o caller
   // passa um array inline (nova referência a cada render)
   const whereClausesRef = useRef(whereClauses);
-  useEffect(() => { whereClausesRef.current = whereClauses; }, [whereClauses]);
+  whereClausesRef.current = whereClauses;
+
+  useEffect(() => {
+    // Quando o contexto da lista muda (coleção/filtros/ordem), invalidamos
+    // respostas em voo e limpamos o estado para não exibir dados stale da
+    // consulta anterior.
+    requestVersionRef.current += 1;
+    loadingRef.current = false;
+    lastDocRef.current = null;
+    setData([]);
+    setHasMore(true);
+    setError(null);
+    setLoading(false);
+  }, [collectionName, pageSize, orderByField, orderDirection, whereClausesKey]);
 
   const fetchData = useCallback(async (reset = false) => {
     if (loadingRef.current) return;
-    
+
+    const requestVersion = requestVersionRef.current;
     loadingRef.current = true;
     setLoading(true);
     setError(null);
@@ -96,6 +112,9 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
 
       const q = query(collection(db, collectionName), ...constraints);
       const snapshot = await getDocs(q);
+      if (requestVersion !== requestVersionRef.current) {
+        return;
+      }
       const docs = snapshot.docs;
 
       const hasMoreItems = docs.length > pageSize;
@@ -114,12 +133,17 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
         setData((prev) => [...prev, ...items]);
       }
     } catch (err) {
+      if (requestVersion !== requestVersionRef.current) {
+        return;
+      }
       logger.error(`Error fetching ${collectionName}:`, err);
       setError(err as Error);
       showError(t('feedback.generic.loadDataError'));
     } finally {
-      loadingRef.current = false;
-      setLoading(false);
+      if (requestVersion === requestVersionRef.current) {
+        loadingRef.current = false;
+        setLoading(false);
+      }
     }
   }, [collectionName, pageSize, orderByField, orderDirection, showError, t]);
 

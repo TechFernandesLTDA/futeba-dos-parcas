@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.statusBarsPadding
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -110,6 +111,7 @@ fun PublicGamesMapScreen(
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = { Text(stringResource(R.string.public_games_map)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

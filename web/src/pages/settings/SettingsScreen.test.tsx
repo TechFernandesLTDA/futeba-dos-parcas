@@ -41,11 +41,20 @@ vi.mock('firebase/auth', () => ({
   signOut: (...args: any[]) => mockSignOut(...args),
 }));
 
+vi.mock('../../services/cloudFunctions', () => ({
+  deleteAccount: vi.fn(),
+}));
+
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  connectFunctionsEmulator: vi.fn(),
+  httpsCallable: vi.fn(() => vi.fn()),
+}));
+
 vi.mock('../../services/firebase', () => ({
+  app: {},
   db: {},
   auth: {},
-  functions: {},
-  messagingPromise: Promise.resolve(null),
 }));
 
 vi.mock('../../utils/firestoreHelpers', () => ({

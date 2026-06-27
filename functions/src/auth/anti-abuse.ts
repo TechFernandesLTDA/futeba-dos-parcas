@@ -27,8 +27,9 @@ function hashPhone(phone: string): string {
   return createHash("sha256").update(phone).digest("hex").substring(0, 32);
 }
 
-const SMS_RATE_LIMIT_PER_PHONE_HOUR = 3;
-const SMS_RATE_LIMIT_PER_IP_HOUR = 10;
+const SMS_RATE_LIMIT_PER_PHONE_HOUR = 6;
+const SMS_RATE_LIMIT_PER_CALLER_HOUR = 12;
+const SMS_RATE_LIMIT_PER_IP_HOUR = 30;
 const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
 // FIX #1310-L8: limite generoso (log legítimo de falha de verificação é
 // esperado), mas barra spam que infla verification_failures/audit_logs.
@@ -57,11 +58,10 @@ function isValidIp(value: string): boolean {
  * Número de hops de proxy confiáveis que a infra GCP/GFE acrescenta ao
  * X-Forwarded-For APÓS o IP real do cliente.
  *
- * FIX #2479: usar o IP MAIS À DIREITA (rightmost) da cadeia X-Forwarded-For.
- * Em deployments GCP padrão (Firebase Hosting → LB → Cloud Functions), o LB
- * APPENDA o IP real do cliente à direita da cadeia. O 1º hop (leftmost) é
- * controlável pelo cliente (pode injetar XFF no request original → bypass de
- * rate-limit por IP). Usar o rightmost fecha esse vetor.
+ * Em deployments GCP padrão (Firebase Hosting → LB → Cloud Functions), a
+ * cadeia normalmente chega como "<forjado opcional>, <cliente>, <lb>".
+ * O 1º hop pode ser controlado pelo cliente e o último tende a ser o LB; por
+ * isso usamos o penúltimo IP válido quando a cadeia tem 2+ hops válidos.
  *
  * Fallback: se nenhum IP válido na cadeia, usa rawRequest.ip (IP da conexão
  * direta, normalmente o LB — não ideal para rate-limit mas não-spoofable).
@@ -80,12 +80,13 @@ export function clientIp(request: {rawRequest?: {
     .map((h) => h.trim())
     .filter((h) => h.length > 0);
 
-  // FIX #2479: rightmost valid IP é o mais confiável em GCP
-  // (LB append). Leftmost era controlável pelo cliente.
-  for (let i = hops.length - 1; i >= 0; i--) {
-    if (isValidIp(hops[i])) return hops[i];
+  const validHops = hops.filter(isValidIp);
+  if (validHops.length >= 2) {
+    return validHops[validHops.length - 2];
   }
-
+  if (validHops.length === 1) {
+    return validHops[0];
+  }
 
   const fallback = request.rawRequest?.ip;
   if (fallback && isValidIp(fallback)) return fallback;
@@ -180,7 +181,7 @@ export const canSendSmsOtp = onCall(
       const ip = clientIp(request);
 
       const callerCheck = await checkRateLimit(request.auth!.uid, {
-        maxRequests: SMS_RATE_LIMIT_PER_PHONE_HOUR * 3,
+        maxRequests: SMS_RATE_LIMIT_PER_CALLER_HOUR,
         windowMs: 60 * 60 * 1000,
         keyPrefix: "sms_caller",
       });

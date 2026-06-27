@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -61,6 +60,7 @@ import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.ui.theme.systemBarsPadding
 import com.futebadosparcas.ui.theme.surfaceGradient
 @Composable
 fun LoginScreen(
@@ -152,7 +152,7 @@ fun LoginScreen(
                 // Bottom Section: Footer
                 LoginFooter(versionName = versionName)
 
-                Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+                Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
             }
         }
     }
@@ -210,7 +210,7 @@ private fun LoginCard(
                 .fillMaxWidth()
                 .padding(AppDimensions.spacing_huge),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
         ) {
             Text(
                 text = stringResource(R.string.auth_sign_in_title),
@@ -314,7 +314,7 @@ private fun LoginCard(
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_large)
+                    verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_medium)
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(AppDimensions.icon_extraLarge),
@@ -346,7 +346,7 @@ private fun LoginCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(AppDimensions.spacing_large)
+                        modifier = Modifier.padding(AppDimensions.spacing_medium)
                     )
                 }
             }

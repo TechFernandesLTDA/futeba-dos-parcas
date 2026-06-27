@@ -4,6 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockCallable = vi.fn();
 
 vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  connectFunctionsEmulator: vi.fn(),
   httpsCallable: vi.fn((_functions: unknown, name: string) => {
     // Retorna uma função callable mockada que registra o nome
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,7 +15,7 @@ vi.mock('firebase/functions', () => ({
   }),
 }));
 
-vi.mock('./firebase', () => ({
+vi.mock('./firebaseFunctions', () => ({
   functions: {},
 }));
 

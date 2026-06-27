@@ -28,6 +28,49 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-06-25] iOS Liquid Glass: manter chrome translúcida no ComposeApp e adiar bridge SwiftUI nativa
+
+**Contexto:** A auditoria do épico iOS (#2670) mostrou que a chrome atual do
+`composeApp` usa aproximação por transparência em
+`composeApp/src/commonMain/kotlin/com/futebadosparcas/ui/adaptive/PlatformChrome.kt`
+(`surface.copy(alpha=0.86–0.94)` + `tonalElevation`) e não implementa blur real.
+O código iOS/Compose não contém `UIBlurEffect`, `.ultraThinMaterial`,
+`glassEffect` ou equivalente. A issue #2951 pediu uma decisão explícita entre
+construir uma bridge SwiftUI nativa para Liquid Glass real ou assumir a
+aproximação atual e ajustar o critério do épico.
+
+**Alternativas consideradas:**
+1. **Bridge SwiftUI nativa para chrome Liquid Glass real.** Prós: fidelidade mais
+   alta ao HIG 2026, blur real do conteúdo por trás da tab/nav bar. Contras:
+   aumenta bastante a complexidade arquitetural, divide a ownership da chrome
+   entre SwiftUI/UIKit e Compose, exige spec SDD própria e amplia o risco em
+   navegação, safe area, theming e manutenção.
+2. **Manter a chrome translúcida em Compose e redefinir o critério como
+   aproximação intencional.** Prós: preserva a arquitetura KMP atual, fecha a
+   decisão imediatamente, mantém foco no backlog com maior impacto
+   (acessibilidade, rotas, size class, Dynamic Type). Contras: não entrega o
+   efeito visual exato de Liquid Glass.
+
+**Decisão:** **Opção 2.** O app iOS seguirá, por ora, com chrome translúcida
+adaptativa implementada em Compose. O critério do épico deixa de exigir "Liquid
+Glass real" e passa a exigir chrome iOS translúcida/coesa com safe area,
+contraste e comportamento adaptativo corretos.
+
+**Justificativa:** O custo de uma bridge SwiftUI nativa é desproporcional ao
+ganho imediato para o estado atual do produto. Há itens ainda abertos no épico
+iOS com impacto funcional e de acessibilidade mais alto do que trocar toda a
+camada de chrome por uma solução híbrida. A aproximação atual já entrega
+consistência visual suficiente para avançar, desde que o requisito seja descrito
+com precisão e sem prometer blur real inexistente.
+
+**Consequências:** O backlog iOS não cria uma nova frente arquitetural neste
+momento. O efeito "Liquid Glass" fica explicitamente fora do escopo atual do
+ComposeApp; se a necessidade de blur nativo voltar no futuro, ela deve abrir uma
+nova spec/issue dedicada para bridge SwiftUI. O épico #2670 deve ser lido e
+atualizado com esse critério revisado.
+
+**Relacionado:** issues #2951, #2670, #2679.
+
 ### [2026-06-04] Read-rule de `groups`: ramo público satisfazível por list query (#2522)
 
 **Contexto:** A tela "Descobrir Grupos" (web, `useGroups.ts` → `fetchPublicGroups`)

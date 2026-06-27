@@ -126,7 +126,7 @@ fun PhoneVerificationScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(AppDimensions.spacing_large))
+                    Spacer(Modifier.height(AppDimensions.spacing_medium))
 
                     val errorMsg = (state as? PhoneVerificationUiState.Error)?.message
                     if (errorMsg != null) {
@@ -163,7 +163,7 @@ fun PhoneVerificationScreen(
                                 Text(stringResource(R.string.phone_verification_supporting_text))
                             },
                         )
-                        Spacer(Modifier.height(AppDimensions.spacing_large))
+                        Spacer(Modifier.height(AppDimensions.spacing_medium))
                         Button(
                             onClick = {
                                 val activity = context.findActivity()
@@ -257,7 +257,7 @@ fun PhoneVerificationScreen(
                             text = stringResource(R.string.phone_verification_enter_code, phone),
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        Spacer(Modifier.height(AppDimensions.spacing_large))
+                        Spacer(Modifier.height(AppDimensions.spacing_medium))
                         OutlinedTextField(
                             value = otp,
                             onValueChange = {
@@ -274,7 +274,7 @@ fun PhoneVerificationScreen(
                                 keyboardType = KeyboardType.NumberPassword,
                             ),
                         )
-                        Spacer(Modifier.height(AppDimensions.spacing_large))
+                        Spacer(Modifier.height(AppDimensions.spacing_medium))
                         Box(modifier = Modifier.fillMaxWidth()) {
                             Column {
                                 Button(
