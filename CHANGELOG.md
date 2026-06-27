@@ -53,6 +53,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.37.0] - 2026-06-27
+
+#### Adicionado
+- Utilitário `buildPostGameHighlights` com heurística testável para MVP, melhor dupla e lance marcante.
+- Componente `PostGameHighlightsPanel` integrado ao `GameDetailScreen`.
+- Testes unitários para cálculo e texto compartilhável dos destaques pós-jogo.
+
+_Issues: #2969_
+
 ### [1.36.0] - 2026-06-27
 
 #### Adicionado
