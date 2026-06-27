@@ -2204,6 +2204,9 @@ export {onGameEventCreated} from "./voting/events-rate-limit";
 // SECFIX #426: server-side check-in com validacao GPS + distancia
 export {checkInToGame, generateCheckinToken} from "./voting/check-in";
 
+// Issue #2968: reputacao leve pos-jogo com agregacao server-side
+export {submitPostGameReputation} from "./reputation/post-game-reputation";
+
 // ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
 // ==========================================

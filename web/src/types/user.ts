@@ -36,6 +36,14 @@ export interface User {
   autoRatingSamples: number;
   autoRatingUpdatedAt?: Date;
 
+  // Reputacao leve pos-jogo calculada server-side (1.0 - 5.0)
+  reputationOverallAvg?: number;
+  reputationPunctualityAvg?: number;
+  reputationRespectAvg?: number;
+  reputationCommitmentAvg?: number;
+  reputationReviewsCount?: number;
+  reputationUpdatedAt?: Date;
+
   // Preferences
   preferredPosition?: PreferredPosition;
   preferredFieldTypes: FieldType[];

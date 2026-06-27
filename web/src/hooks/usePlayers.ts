@@ -30,6 +30,11 @@ export interface Player {
   autoDefenderRating: number;
   autoGkRating: number;
   autoRatingSamples: number;
+  reputationOverallAvg: number;
+  reputationPunctualityAvg: number;
+  reputationRespectAvg: number;
+  reputationCommitmentAvg: number;
+  reputationReviewsCount: number;
   lookingForGameToday?: boolean;
   lookingForGameTodayUntil?: Date | { toDate: () => Date };
   createdAt?: Date;
@@ -112,6 +117,11 @@ export const usePlayers = (groupId?: string) => {
             autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
             autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
             autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
+            reputationOverallAvg: (data.reputationOverallAvg as number) ?? (raw.reputation_overall_avg as number) ?? 0,
+            reputationPunctualityAvg: (data.reputationPunctualityAvg as number) ?? (raw.reputation_punctuality_avg as number) ?? 0,
+            reputationRespectAvg: (data.reputationRespectAvg as number) ?? (raw.reputation_respect_avg as number) ?? 0,
+            reputationCommitmentAvg: (data.reputationCommitmentAvg as number) ?? (raw.reputation_commitment_avg as number) ?? 0,
+            reputationReviewsCount: (data.reputationReviewsCount as number) ?? (raw.reputation_reviews_count as number) ?? 0,
             lookingForGameToday: data.lookingForGameToday === true,
             lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
             createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
@@ -184,6 +194,11 @@ export const usePlayerDetail = (userId?: string) => {
               autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
               autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
               autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
+              reputationOverallAvg: (data.reputationOverallAvg as number) ?? (raw.reputation_overall_avg as number) ?? 0,
+              reputationPunctualityAvg: (data.reputationPunctualityAvg as number) ?? (raw.reputation_punctuality_avg as number) ?? 0,
+              reputationRespectAvg: (data.reputationRespectAvg as number) ?? (raw.reputation_respect_avg as number) ?? 0,
+              reputationCommitmentAvg: (data.reputationCommitmentAvg as number) ?? (raw.reputation_commitment_avg as number) ?? 0,
+              reputationReviewsCount: (data.reputationReviewsCount as number) ?? (raw.reputation_reviews_count as number) ?? 0,
               lookingForGameToday: data.lookingForGameToday === true,
               lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
               createdAt: raw.created_at?.toDate?.() || (data.createdAt as Date | undefined),

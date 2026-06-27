@@ -1380,6 +1380,31 @@
     "save": "Save note",
     "title": "Post-game note"
   },
+  "postGameReputation": {
+    "alreadyReviewed": "You already reviewed this player for this game. You can update it if needed.",
+    "commentLabel": "Optional comment",
+    "commentPlaceholder": "Example: arrived on time and kept it respectful.",
+    "criteria": {
+      "commitment": "Commitment",
+      "punctuality": "Punctuality",
+      "respect": "Respect"
+    },
+    "description": "Rate punctuality, respect, and commitment for players who joined the match.",
+    "emptyDescription": "When there are other confirmed players, you will be able to register post-game reputation.",
+    "emptyTitle": "No players to review",
+    "playerLabel": "Player",
+    "reviewHint": "This review impacts the reputation shown on the profile.",
+    "save": "Save reputation",
+    "saveSuccess": "Reputation registered.",
+    "sent": "Sent",
+    "sentCount": "{{count}} review",
+    "sentCount_one": "{{count}} review",
+    "sentCount_other": "{{count}} reviews",
+    "sentListAria": "Sent reputation reviews",
+    "sentSummary": "Sent average: {{score}}",
+    "title": "Post-game reputation",
+    "update": "Update reputation"
+  },
   "gamePhotos": {
     "addPhoto": "Add photo",
     "captionLabel": "Optional caption",
@@ -2094,6 +2119,18 @@
     "positionNone": "None",
     "positionStriker": "Striker",
     "preferences": "Preferences",
+    "reputation": {
+      "commitment": "Commitment",
+      "count": "{{count}} review",
+      "count_one": "{{count}} review",
+      "count_other": "{{count}} reviews",
+      "description": "Average punctuality, respect, and commitment rated after games.",
+      "empty": "Reputation appears after other players review completed matches.",
+      "overall": "Overall reputation",
+      "punctuality": "Punctuality",
+      "respect": "Respect",
+      "title": "Player reputation"
+    },
     "preferredPosition": "Preferred Position",
     "recentActivity": "Recent Activity",
     "saveChanges": "Save Changes",

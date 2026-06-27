@@ -1,7 +1,43 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T18:01:03.911Z",
+  "generatedAt": "2026-06-27T18:20:29.475Z",
   "notes": [
+    {
+      "version": "1.36.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Reputação pós-jogo no perfil dos parças",
+      "highlights": [
+        {
+          "icon": "handshake",
+          "title": "Avaliação leve pós-jogo",
+          "description": "Após partidas finalizadas, jogadores confirmados podem avaliar pontualidade, respeito e compromisso."
+        },
+        {
+          "icon": "shield",
+          "title": "Perfil com reputação",
+          "description": "O perfil agora mostra média geral, critérios e quantidade de avaliações recebidas."
+        },
+        {
+          "icon": "task_alt",
+          "title": "Atualização transparente",
+          "description": "Cada jogador pode revisar uma avaliação enviada para o mesmo parça naquele jogo."
+        }
+      ],
+      "added": [
+        "Novo painel \"Reputação pós-jogo\" no detalhe de partidas finalizadas.",
+        "Novo card \"Reputação dos parças\" no perfil do jogador.",
+        "Estados de carregamento, erro e vazio para o fluxo de reputação."
+      ],
+      "improved": [],
+      "fixed": [],
+      "issueRefs": [
+        2968
+      ]
+    },
     {
       "version": "1.35.0",
       "buildNumber": null,
