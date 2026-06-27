@@ -1,7 +1,47 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T15:31:08.441Z",
+  "generatedAt": "2026-06-27T16:03:50.950Z",
   "notes": [
+    {
+      "version": "1.32.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Desafios amistosos com meta, prazo e progresso visível",
+      "highlights": [
+        {
+          "icon": "emoji_events",
+          "title": "Meta clara",
+          "description": "Desafios entre grupos agora registram objetivo, alvo numérico e prazo."
+        },
+        {
+          "icon": "timeline",
+          "title": "Progresso visível",
+          "description": "A tela de desafios mostra enviados e recebidos com barra de progresso."
+        },
+        {
+          "icon": "notifications",
+          "title": "Conclusão avisada",
+          "description": "Ao concluir um desafio, o outro participante recebe uma notificação interna quando aplicável."
+        }
+      ],
+      "added": [
+        "Criação de desafios com meta, alvo, prazo e data proposta opcional.",
+        "Atualização de progresso direto na tela de desafios aceitos."
+      ],
+      "improved": [
+        "Desafios enviados e recebidos aparecem juntos na lista do grupo.",
+        "Validações client-side reduzem envios incompletos."
+      ],
+      "fixed": [
+        "Corrigido o envio de desafios que não gravava `created_by`, causando bloqueio pelas Firestore Rules."
+      ],
+      "issueRefs": [
+        2984
+      ]
+    },
     {
       "version": "1.31.0",
       "buildNumber": null,

@@ -11,6 +11,7 @@ import {
   Chip,
   CircularProgress,
   IconButton,
+  LinearProgress,
   Skeleton,
   Stack,
   TextField,
@@ -28,8 +29,9 @@ import {
   Send as SendIcon,
   Check as AcceptIcon,
   Close as DeclineIcon,
+  EmojiEvents as GoalIcon,
 } from "@mui/icons-material";
-import { useGroupChallenges, useChallengeGroup, useRespondChallenge, GroupChallenge } from "../hooks/useGroupChallenges";
+import { useGroupChallenges, useChallengeGroup, useRespondChallenge, useUpdateChallengeProgress, GroupChallenge } from "../hooks/useGroupChallenges";
 import { useOfficialGroups } from "../hooks/useOfficialGroups";
 import { EmptyState } from "../components/common/EmptyState";
 import { ErrorState } from "../components/common/ErrorState";
@@ -47,18 +49,25 @@ export const GroupChallengesScreen: React.FC = () => {
   const { data: officialGroups = [] } = useOfficialGroups();
   const challengeGroup = useChallengeGroup();
   const respond = useRespondChallenge();
+  const updateProgress = useUpdateChallengeProgress();
 
   const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [proposedDate, setProposedDate] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [goal, setGoal] = useState("");
+  const [targetCount, setTargetCount] = useState(3);
   const [groupTouched, setGroupTouched] = useState(false); // #2231
   const [dateTouched, setDateTouched] = useState(false); // #2231
+  const [goalTouched, setGoalTouched] = useState(false);
+  const [targetTouched, setTargetTouched] = useState(false);
   const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const currentGroup = officialGroups.find((g) => g.id === groupId);
 
   const handleSendChallenge = async () => {
-    if (!currentGroup || !selectedGroupId || !proposedDate) return;
+    if (!currentGroup || !selectedGroupId || !goal.trim() || targetCount < 1 || !deadline) return;
     const target = officialGroups.find((g) => g.id === selectedGroupId);
     if (!target) return;
 
@@ -69,10 +78,20 @@ export const GroupChallengesScreen: React.FC = () => {
         challengedGroupId: target.id,
         challengedGroupName: target.name,
         proposedDate,
+        goal,
+        targetCount,
+        deadline,
       });
       setChallengeDialogOpen(false);
       setSelectedGroupId("");
       setProposedDate("");
+      setDeadline("");
+      setGoal("");
+      setTargetCount(3);
+      setGroupTouched(false);
+      setDateTouched(false);
+      setGoalTouched(false);
+      setTargetTouched(false);
       refetch();
     } catch {
       /* error handled by mutation onError */
@@ -86,6 +105,23 @@ export const GroupChallengesScreen: React.FC = () => {
     } finally {
       setRespondingId(null);
     }
+  };
+
+  const handleProgress = async (challenge: GroupChallenge, progress: number) => {
+    setUpdatingId(challenge.id);
+    try {
+      await updateProgress.mutateAsync({ challenge, progress });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const resetDialog = () => {
+    setChallengeDialogOpen(false);
+    setGroupTouched(false);
+    setDateTouched(false);
+    setGoalTouched(false);
+    setTargetTouched(false);
   };
 
   return (
@@ -133,41 +169,71 @@ export const GroupChallengesScreen: React.FC = () => {
           {challenges.map((challenge: GroupChallenge) => (
             <Card key={challenge.id} variant="outlined">
               <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "stretch", sm: "center" }}>
                   <Avatar sx={{ bgcolor: "secondary.main" }}>
-                    {challenge.challengerGroupName?.charAt(0)}
+                    <GoalIcon />
                   </Avatar>
                   <Box flex={1}>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                      <Chip
+                        label={challenge.challengerGroupId === groupId ? t("challenges.sent") : t("challenges.received")}
+                        size="small"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={
+                          challenge.status === "PENDING"
+                            ? t("challenges.statusPending")
+                            : challenge.status === "ACCEPTED"
+                            ? t("challenges.statusAccepted")
+                            : challenge.status === "DECLINED"
+                            ? t("challenges.statusDeclined")
+                            : t("challenges.statusFinished")
+                        }
+                        size="small"
+                        color={
+                          challenge.status === "ACCEPTED"
+                            ? "success"
+                            : challenge.status === "DECLINED"
+                            ? "error"
+                            : challenge.status === "FINISHED"
+                            ? "info"
+                            : "warning"
+                        }
+                      />
+                    </Stack>
                     <Typography variant="subtitle1" fontWeight="bold">
-                      {challenge.challengerGroupName}
+                      {t("challenges.matchup", {
+                        challenger: challenge.challengerGroupName,
+                        challenged: challenge.challengedGroupName,
+                      })}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
+                      {challenge.goal}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {t("challenges.deadline", { date: challenge.deadline })}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
                       {challenge.proposedDate
                         ? t("challenges.proposedDate", { date: challenge.proposedDate })
                         : t("challenges.dateToArrange")}
                     </Typography>
-                    <Chip
-                      label={
-                        challenge.status === "PENDING"
-                          ? t("challenges.statusPending")
-                          : challenge.status === "ACCEPTED"
-                          ? t("challenges.statusAccepted")
-                          : challenge.status === "DECLINED"
-                          ? t("challenges.statusDeclined")
-                          : t("challenges.statusFinished")
-                      }
-                      size="small"
-                      color={
-                        challenge.status === "ACCEPTED"
-                          ? "success"
-                          : challenge.status === "DECLINED"
-                          ? "error"
-                          : challenge.status === "FINISHED"
-                          ? "info"
-                          : "warning"
-                      }
-                      sx={{ mt: 0.5 }}
-                    />
+                    <Box mt={1}>
+                      <Stack direction="row" justifyContent="space-between" spacing={2}>
+                        <Typography variant="caption" color="text.secondary">
+                          {t("challenges.progress")}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {challenge.currentProgress}/{challenge.targetCount}
+                        </Typography>
+                      </Stack>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min(100, (challenge.currentProgress / challenge.targetCount) * 100)}
+                        sx={{ mt: 0.5, height: 8, borderRadius: 999 }}
+                      />
+                    </Box>
                   </Box>
                   {challenge.status === "PENDING" && (
                     <Stack direction="row" spacing={1}>
@@ -197,6 +263,26 @@ export const GroupChallengesScreen: React.FC = () => {
                       </IconButton>
                     </Stack>
                   )}
+                  {challenge.status === "ACCEPTED" && (
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={updatingId === challenge.id}
+                        onClick={() => handleProgress(challenge, challenge.currentProgress + 1)}
+                      >
+                        {updatingId === challenge.id ? <CircularProgress size={16} /> : t("challenges.addProgress")}
+                      </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled={updatingId === challenge.id}
+                        onClick={() => handleProgress(challenge, challenge.targetCount)}
+                      >
+                        {t("challenges.finish")}
+                      </Button>
+                    </Stack>
+                  )}
                 </Stack>
               </CardContent>
             </Card>
@@ -204,7 +290,7 @@ export const GroupChallengesScreen: React.FC = () => {
         </Stack>
       )}
 
-      <Dialog open={challengeDialogOpen} onClose={() => { setChallengeDialogOpen(false); setGroupTouched(false); setDateTouched(false); }} maxWidth="sm" fullWidth fullScreen={isMobile} aria-labelledby="challenge-dialog-title">
+      <Dialog open={challengeDialogOpen} onClose={resetDialog} maxWidth="sm" fullWidth fullScreen={isMobile} aria-labelledby="challenge-dialog-title">
         <DialogTitle id="challenge-dialog-title">{t("challenges.challengeGroup")}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
@@ -230,23 +316,53 @@ export const GroupChallengesScreen: React.FC = () => {
             </TextField>
             <TextField
               fullWidth
+              label={t("challenges.goalLabel")}
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              onBlur={() => setGoalTouched(true)}
+              error={goalTouched && !goal.trim()}
+              helperText={goalTouched && !goal.trim() ? t("challenges.validationGoal") : t("challenges.goalHelper")}
+              inputProps={{ maxLength: 120 }}
+            />
+            <TextField
+              fullWidth
+              label={t("challenges.targetLabel")}
+              type="number"
+              value={targetCount}
+              onChange={(e) => setTargetCount(Number(e.target.value))}
+              onBlur={() => setTargetTouched(true)}
+              error={targetTouched && targetCount < 1}
+              helperText={targetTouched && targetCount < 1 ? t("challenges.validationTarget") : t("challenges.targetHelper")}
+              inputProps={{ min: 1, max: 999 }}
+            />
+            <TextField
+              fullWidth
+              label={t("challenges.deadlineLabel")}
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              onBlur={() => setDateTouched(true)}
+              error={dateTouched && !deadline}
+              helperText={dateTouched && !deadline ? t("challenges.validationDeadline") : " "}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
               label={t("challenges.proposedDateLabel")}
               type="date"
               value={proposedDate}
               onChange={(e) => setProposedDate(e.target.value)}
-              onBlur={() => setDateTouched(true)}
-              error={dateTouched && !proposedDate}
-              helperText={dateTouched && !proposedDate ? t("validation.dateRequired") : " "}
+              helperText={t("challenges.proposedDateHelper")}
               InputLabelProps={{ shrink: true }}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setChallengeDialogOpen(false); setGroupTouched(false); setDateTouched(false); }}>{t("common.cancel")}</Button>
+          <Button onClick={resetDialog}>{t("common.cancel")}</Button>
           <Button
             variant="contained"
             onClick={handleSendChallenge}
-            disabled={challengeGroup.isPending || !selectedGroupId || !proposedDate}
+            disabled={challengeGroup.isPending || !selectedGroupId || !goal.trim() || targetCount < 1 || !deadline}
           >
             {challengeGroup.isPending ? <CircularProgress size={20} color="inherit" /> : t("challenges.sendChallenge")}
           </Button>
