@@ -116,6 +116,10 @@ import { getNotificationSettings } from "../src/notifications/preferences";
 // ==========================================
 
 describe("NotificationType enum", () => {
+  test("deve ter tipo CHECKIN compativel com regras do Firestore", () => {
+    expect(NotificationType.CHECKIN).toBe("checkin");
+  });
+
   test("deve ter tipo GAME_INVITE", () => {
     expect(NotificationType.GAME_INVITE).toBe("GAME_INVITE");
   });
@@ -192,8 +196,12 @@ describe("NotificationType enum", () => {
     for (const [key, value] of Object.entries(NotificationType)) {
       expect(typeof value).toBe("string");
       expect(value.length).toBeGreaterThan(0);
-      // Valor deve ser igual ao nome da chave
-      expect(value).toBe(key);
+      if (key === "CHECKIN") {
+        expect(value).toBe("checkin");
+      } else {
+        // Tipos historicos sao serializados com o mesmo valor da chave.
+        expect(value).toBe(key);
+      }
     }
   });
 });

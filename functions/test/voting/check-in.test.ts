@@ -1,5 +1,7 @@
 let mockDbDocGet = jest.fn();
 let mockDbRunTransaction = jest.fn();
+let mockDbCollection = jest.fn();
+let mockSaveNotificationToFirestore = jest.fn();
 
 jest.mock("../../src/middleware/rate-limiter", () => ({
   checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 9, resetAt: new Date(Date.now() + 60000) }),
@@ -12,13 +14,18 @@ jest.mock("../../src/middleware/require-profile-complete", () => ({
 jest.mock("../../src/_db", () => {
   const docFn = jest.fn((path: string) => ({ get: mockDbDocGet }));
   const dbFn = jest.fn(() => ({
-    collection: jest.fn(() => ({ doc: docFn })),
+    collection: mockDbCollection,
     doc: docFn,
     runTransaction: mockDbRunTransaction,
     batch: jest.fn(() => ({ update: jest.fn(), set: jest.fn(), commit: jest.fn().mockResolvedValue([]) })),
   }));
   return { db: dbFn };
 });
+
+jest.mock("../../src/notifications/helpers", () => ({
+  NotificationType: { CHECKIN: "checkin" },
+  saveNotificationToFirestore: mockSaveNotificationToFirestore,
+}));
 
 class MockHttpsError extends Error {
   code: string;
@@ -63,6 +70,7 @@ jest.mock("firebase-admin", () => ({
 
 import { checkInToGame } from "../../src/voting/check-in";
 import { checkRateLimit } from "../../src/middleware/rate-limiter";
+import { logger } from "firebase-functions/v2";
 
 describe("checkInToGame", () => {
   const makeRequest = (overrides: any = {}) => ({
@@ -96,6 +104,12 @@ describe("checkInToGame", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDbCollection.mockReturnValue({
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      get: jest.fn().mockResolvedValue({ docs: [] }),
+    });
+    mockSaveNotificationToFirestore.mockResolvedValue(undefined);
   });
 
   it("rejeita sem autenticacao", async () => {
@@ -172,6 +186,16 @@ describe("checkInToGame", () => {
     await expect(checkInToGame(makeRequest())).rejects.toThrow();
   });
 
+  it("rejeita quando confirmacao nao esta em status CONFIRMED", async () => {
+    mockDbDocGet.mockResolvedValueOnce(makeGameSnap());
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap({ status: "WAITLISTED" })), set: jest.fn() };
+      return cb(tx);
+    });
+
+    await expect(checkInToGame(makeRequest())).rejects.toThrow("Confirmacao precisa estar em status CONFIRMED");
+  });
+
   it("retorna sucesso quando ja fez check-in", async () => {
     mockDbDocGet.mockResolvedValueOnce(makeGameSnap());
     mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
@@ -194,6 +218,79 @@ describe("checkInToGame", () => {
     const result = await checkInToGame(makeRequest());
     expect(result.success).toBe(true);
     expect(result.distance_m).toBeDefined();
+  });
+
+  it("notifica outros jogadores confirmados apos check-in bem sucedido", async () => {
+    const confirmationsQuery = {
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      get: jest.fn().mockResolvedValue({
+        docs: [
+          { data: () => ({ user_id: "user1" }) },
+          { data: () => ({ user_id: "user2" }) },
+          { data: () => ({ user_id: "" }) },
+          { data: () => ({ user_id: "user3" }) },
+        ],
+      }),
+    };
+    mockDbCollection.mockReturnValueOnce(confirmationsQuery);
+    mockDbDocGet.mockResolvedValueOnce(makeGameSnap({ location_name: "Arena Teste" }));
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap({ user_name: "Renan" })), set: jest.fn() };
+      return cb(tx);
+    });
+
+    const result = await checkInToGame(makeRequest());
+
+    expect(result.success).toBe(true);
+    expect(confirmationsQuery.where).toHaveBeenCalledWith("game_id", "==", "game1");
+    expect(confirmationsQuery.where).toHaveBeenCalledWith("status", "==", "CONFIRMED");
+    expect(confirmationsQuery.limit).toHaveBeenCalledWith(50);
+    expect(mockSaveNotificationToFirestore).toHaveBeenCalledTimes(2);
+    expect(mockSaveNotificationToFirestore).toHaveBeenCalledWith(
+      "user2",
+      expect.objectContaining({
+        userId: "user2",
+        title: "Renan chegou no jogo",
+        body: "Check-in confirmado em Arena Teste.",
+        type: "checkin",
+        gameId: "game1",
+        senderId: "user1",
+        senderName: "Renan",
+        action: "/game/game1",
+      }),
+      "checkin_game1_user1_user2",
+    );
+    expect(mockSaveNotificationToFirestore).toHaveBeenCalledWith(
+      "user3",
+      expect.objectContaining({ userId: "user3" }),
+      "checkin_game1_user1_user3",
+    );
+  });
+
+  it("nao bloqueia check-in quando notificacao social falha", async () => {
+    const confirmationsQuery = {
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      get: jest.fn().mockRejectedValue(new Error("Firestore unavailable")),
+    };
+    mockDbCollection.mockReturnValueOnce(confirmationsQuery);
+    mockDbDocGet.mockResolvedValueOnce(makeGameSnap({ location_name: undefined }));
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap({ user_name: undefined })), set: jest.fn() };
+      return cb(tx);
+    });
+
+    const result = await checkInToGame(makeRequest());
+
+    expect(result.success).toBe(true);
+    expect(logger.warn).toHaveBeenCalledWith(
+      "check-in social notification failed",
+      expect.objectContaining({
+        gameId: "game1",
+        checkedInUserId: "user1",
+      }),
+    );
   });
 
   it("rejeita coordenadas proximas de null island (0,0)", async () => {

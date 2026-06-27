@@ -1,7 +1,45 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T16:36:34.584Z",
+  "generatedAt": "2026-06-27T17:07:57.954Z",
   "notes": [
+    {
+      "version": "1.34.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Check-in social com lista de quem já chegou",
+      "highlights": [
+        {
+          "icon": "place",
+          "title": "Presentes no local",
+          "description": "Jogos ao vivo e finalizados agora mostram quem já fez check-in no campo."
+        },
+        {
+          "icon": "how_to_reg",
+          "title": "Check-in mais claro",
+          "description": "Jogador confirmado vê o botão de check-in no painel social enquanto ainda não chegou."
+        },
+        {
+          "icon": "photo_library",
+          "title": "Álbum sem duplicidade",
+          "description": "A galeria de fotos do jogo fica em um único painel no detalhe."
+        }
+      ],
+      "added": [
+        "Novo painel \"Presentes no local\" no detalhe do jogo.",
+        "Lista em tempo real com horário de chegada quando disponível."
+      ],
+      "improved": [],
+      "fixed": [
+        "O botão de check-in deixa de aparecer depois que o jogador já fez check-in.",
+        "Removida a aba antiga de fotos que duplicava o álbum em partidas finalizadas."
+      ],
+      "issueRefs": [
+        2981
+      ]
+    },
     {
       "version": "1.33.0",
       "buildNumber": null,

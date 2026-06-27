@@ -36,6 +36,7 @@ const INITIAL_BACKOFF_MS = 1000;
  * Enum de tipos de notificação suportados.
  */
 export enum NotificationType {
+  CHECKIN = "checkin",
   GAME_INVITE = "GAME_INVITE",
   GAME_CONFIRMED = "GAME_CONFIRMED",
   GAME_CANCELLED = "GAME_CANCELLED",

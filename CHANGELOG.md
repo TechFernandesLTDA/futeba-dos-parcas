@@ -53,6 +53,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.34.0] - 2026-06-27
+
+#### Adicionado
+- Componente social de check-in usando `checked_in`/`checked_in_at` das confirmações.
+
+#### Corrigido
+- Condição web agora usa `checkedIn` em vez de depender do status `CHECKED_IN`, que a Cloud Function não grava.
+
+_Issues: #2981_
+
 ### [1.33.0] - 2026-06-27
 
 #### Adicionado
@@ -227,6 +237,17 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.1.0] - 2026-06-27
+
+#### Adicionado
+- `checkInToGame` salva notificações `checkin` para outros confirmados após check-in novo.
+- Tipo `NotificationType.CHECKIN` para padronizar o payload salvo em `notifications`.
+
+#### Segurança
+- Notificação roda server-side e best-effort, sem permitir escrita direta de presença pelo cliente.
+
+_Issues: #2981_
 
 ### [1.0.0] - 2026-05-22
 
