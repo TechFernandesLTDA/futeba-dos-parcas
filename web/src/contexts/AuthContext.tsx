@@ -53,6 +53,9 @@ function normalizeUserData(converted: Record<string, unknown>, id: string, raw: 
     autoDefenderRating: typeof converted.autoDefenderRating === 'number' ? converted.autoDefenderRating : 0,
     autoGkRating: typeof converted.autoGkRating === 'number' ? converted.autoGkRating : 0,
     autoRatingSamples: typeof converted.autoRatingSamples === 'number' ? converted.autoRatingSamples : 0,
+    lookingForGameToday: converted.lookingForGameToday === true,
+    lookingForGameTodayUntil: toDate(raw.looking_for_game_today_until) ?? toDate(raw.lookingForGameTodayUntil),
+    lookingForGameTodayUpdatedAt: toDate(raw.looking_for_game_today_updated_at) ?? toDate(raw.lookingForGameTodayUpdatedAt),
     createdAt: toDate(raw.created_at) ?? toDate(raw.createdAt),
     updatedAt: toDate(raw.updated_at) ?? toDate(raw.updatedAt),
   } as User;

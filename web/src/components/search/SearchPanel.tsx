@@ -44,6 +44,7 @@ import { getLevelForXp } from '../../types/gamification';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { useToast } from '../../contexts';
 import { useTranslation } from 'react-i18next';
+import { isLookingForGameToday } from '../../utils/lookingForGameToday';
 
 const logger = createLogger('SearchPanel');
 
@@ -90,6 +91,7 @@ export interface SearchResult {
   name: string;
   subtitle: string;
   photoUrl?: string;
+  lookingForGameToday?: boolean;
 }
 
 const QUICK_COMMANDS: (Omit<SearchResult, 'id'> & { labelKey: string })[] = [
@@ -189,6 +191,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             name: (data.name as string) || 'Jogador',
             subtitle: `Nível ${getLevelForXp((data.experiencePoints as number) ?? 0)}`,
             photoUrl: data.photoUrl as string | undefined,
+            lookingForGameToday: isLookingForGameToday(data),
           });
         });
       }
@@ -494,11 +497,20 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                     primaryTypographyProps={{ variant: 'body2' }}
                     secondaryTypographyProps={{ variant: 'caption' }}
                   />
-                  <Chip
-                    label={typeLabel(result.type)}
-                    size="small"
-                    sx={{ bgcolor: alpha(typeColor(result.type), 0.1), color: typeColor(result.type), ml: 1, flexShrink: 0 }}
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, ml: 1, flexShrink: 0 }}>
+                    {result.lookingForGameToday && (
+                      <Chip
+                        label={t('commandPalette.lookingForGameToday')}
+                        size="small"
+                        color="success"
+                      />
+                    )}
+                    <Chip
+                      label={typeLabel(result.type)}
+                      size="small"
+                      sx={{ bgcolor: alpha(typeColor(result.type), 0.1), color: typeColor(result.type) }}
+                    />
+                  </Box>
                 </ListItemButton>
               </Box>
             ))}

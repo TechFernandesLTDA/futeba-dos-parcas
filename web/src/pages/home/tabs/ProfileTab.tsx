@@ -24,6 +24,8 @@ import {
   alpha,
   Skeleton,
   Alert,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
 import {
   EmojiEvents,
@@ -57,6 +59,8 @@ import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { TeamBadge } from '../../../components/team/TeamBadge';
+import { useLookingForGameToday } from '../../../hooks/useLookingForGameToday';
+import { isLookingForGameToday } from '../../../utils/lookingForGameToday';
 
 const logger = createLogger('ProfileTab');
 
@@ -78,8 +82,10 @@ export function ProfileTab() {
   const theme = useTheme();
   const gColors = useGamificationColors();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const { setLookingForGameToday, loading: lookingForGameLoading } = useLookingForGameToday(firebaseUser?.uid);
+  const lookingForGameToday = isLookingForGameToday(user);
 
   // Calcular progresso usando LevelTable (fonte única de verdade)
   const currentXp = user?.experiencePoints || 0;
@@ -122,6 +128,18 @@ export function ProfileTab() {
     } catch (error) {
       logger.error('Erro ao sair:', error);
       showError(t('profile.signOutError'));
+    }
+  };
+
+  const handleLookingForGameToggle = async () => {
+    const nextValue = !lookingForGameToday;
+    try {
+      await setLookingForGameToday(nextValue);
+      await refreshUser();
+      showSuccess(t(nextValue ? 'profile.lookingForGameEnabled' : 'profile.lookingForGameDisabled'));
+    } catch (error) {
+      logger.error('Erro ao atualizar disponibilidade de jogo:', error);
+      showError(t('profile.lookingForGameError'));
     }
   };
 
@@ -412,6 +430,38 @@ export function ProfileTab() {
             </CardContent>
           </Card>
         </Box>
+      </Box>
+
+      <Box sx={{ mt: 2 }}>
+        <Card>
+          <CardContent sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
+                <Typography variant="subtitle2" fontWeight={700}>
+                  {t('profile.lookingForGameTitle')}
+                </Typography>
+                <Chip
+                  size="small"
+                  color={lookingForGameToday ? 'success' : 'default'}
+                  label={t(lookingForGameToday ? 'profile.lookingForGameActive' : 'profile.lookingForGameInactive')}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                {t(lookingForGameToday ? 'profile.lookingForGameActiveDescription' : 'profile.lookingForGameDescription')}
+              </Typography>
+            </Box>
+            <Button
+              variant={lookingForGameToday ? 'outlined' : 'contained'}
+              color={lookingForGameToday ? 'inherit' : 'success'}
+              disabled={lookingForGameLoading}
+              onClick={handleLookingForGameToggle}
+              startIcon={lookingForGameLoading ? <CircularProgress size={18} color="inherit" /> : <SportsSoccer />}
+              sx={{ borderRadius: 3, flexShrink: 0 }}
+            >
+              {t(lookingForGameToday ? 'profile.lookingForGameDisable' : 'profile.lookingForGameEnable')}
+            </Button>
+          </CardContent>
+        </Card>
       </Box>
 
       {/* Streak Card */}

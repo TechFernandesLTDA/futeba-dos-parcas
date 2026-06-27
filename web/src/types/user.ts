@@ -55,6 +55,9 @@ export interface User {
   
   isSearchable: boolean;
   isVerified: boolean;
+  lookingForGameToday?: boolean;
+  lookingForGameTodayUntil?: Date;
+  lookingForGameTodayUpdatedAt?: Date;
 
   // Invite
   inviteCode?: string;

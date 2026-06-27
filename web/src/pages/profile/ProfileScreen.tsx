@@ -51,6 +51,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 import { getEffectiveRating, type User } from '../../types/user';
+import { isLookingForGameToday } from '../../utils/lookingForGameToday';
 
 function useCountUp(target: number, duration = 800) {
   const [value, setValue] = useState(0);
@@ -89,6 +90,7 @@ export const ProfileScreen: React.FC = () => {
   const animatedLevel = useCountUp(profile?.level ?? 0);
   const animatedXp = useCountUp(profile?.xp ?? 0);
   const animatedMvps = useCountUp(profile?.mvpCount ?? 0);
+  const lookingForGameToday = isLookingForGameToday(profile);
 
   if (loading) {
     return <LoadingScreen variant="cards" />;
@@ -184,6 +186,14 @@ export const ProfileScreen: React.FC = () => {
                         mt: 0.5,
                       }}
                     />
+                    {lookingForGameToday && (
+                      <Chip
+                        label={t('profile.lookingForGameActive')}
+                        size="small"
+                        color="success"
+                        sx={{ mt: 0.5, ml: 0.75 }}
+                      />
+                    )}
                   </Box>
                 </Box>
 
