@@ -60,6 +60,8 @@ describe("game_summons — create", () => {
         user_id: UID_PLAYER_C,
         summoned_by: UID_PLAYER_A,
         status: "PENDING",
+        position: "DEFENDER",
+        confirmation_position: "FIELD",
         created_at: new Date(),
       })
     );
@@ -73,6 +75,7 @@ describe("game_summons — create", () => {
         user_id: UID_PLAYER_C,
         summoned_by: UID_PLAYER_B,
         status: "PENDING",
+        position: "DEFENDER",
         created_at: new Date(),
       })
     );
@@ -86,6 +89,8 @@ describe("game_summons — create", () => {
         user_id: UID_PLAYER_C,
         summoned_by: UID_ADMIN,
         status: "PENDING",
+        position: "GOALKEEPER",
+        confirmation_position: "GOALKEEPER",
         created_at: new Date(),
       })
     );
@@ -99,6 +104,7 @@ describe("game_summons — create", () => {
         user_id: UID_PLAYER_C,
         summoned_by: UID_PLAYER_A,
         status: "PENDING",
+        position: "DEFENDER",
         created_at: new Date(),
       })
     );
@@ -112,6 +118,7 @@ describe("game_summons — create", () => {
         user_id: UID_PLAYER_A,
         summoned_by: UID_PLAYER_A,
         status: "PENDING",
+        position: "DEFENDER",
         created_at: new Date(),
       })
     );
@@ -125,6 +132,50 @@ describe("game_summons — create", () => {
         user_id: UID_PLAYER_C,
         summoned_by: UID_PLAYER_A,
         status: "PENDING",
+        position: "DEFENDER",
+        created_at: new Date(),
+      })
+    );
+  });
+
+  it("Player NAO pode criar summon com campo extra arbitrario", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`game_summons/gs-extra-field`).set({
+        game_id: GAME_ID,
+        user_id: UID_PLAYER_C,
+        summoned_by: UID_PLAYER_A,
+        status: "PENDING",
+        position: "DEFENDER",
+        created_at: new Date(),
+        admin_note: "payload indevido",
+      })
+    );
+  });
+
+  it("Player NAO pode criar summon ja aceito", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`game_summons/gs-create-accepted`).set({
+        game_id: GAME_ID,
+        user_id: UID_PLAYER_C,
+        summoned_by: UID_PLAYER_A,
+        status: "ACCEPTED",
+        position: "DEFENDER",
+        created_at: new Date(),
+      })
+    );
+  });
+
+  it("Player NAO pode criar summon com position invalida", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`game_summons/gs-invalid-position`).set({
+        game_id: GAME_ID,
+        user_id: UID_PLAYER_C,
+        summoned_by: UID_PLAYER_A,
+        status: "PENDING",
+        position: "ADMIN",
         created_at: new Date(),
       })
     );
@@ -138,6 +189,7 @@ describe("game_summons — create", () => {
         user_id: "anon",
         summoned_by: "anon",
         status: "PENDING",
+        position: "DEFENDER",
         created_at: new Date(),
       })
     );

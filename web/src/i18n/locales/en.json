@@ -992,6 +992,28 @@
       "updateSuccess": "Game updated",
       "voteMvp": "Vote MVP",
       "watchLive": "Watch Live Game",
+      "reinforcements": {
+        "candidatesList": "Reinforcement candidates list",
+        "description": "Find compatible players and send a direct summon.",
+        "emptyDescription": "Try another position or refresh when more players become searchable.",
+        "emptyTitle": "No compatible reinforcement right now",
+        "lookingToday": "Free today",
+        "matchHint": "Looking for: {{positions}}",
+        "needLabel": "Needed position",
+        "needs": {
+          "ANY_FIELD": "Any outfield",
+          "DEFENDER": "Defense",
+          "GOALKEEPER": "Goalkeeper",
+          "MIDFIELDER": "Midfield",
+          "STRIKER": "Attack"
+        },
+        "positionMatch": "Ideal position",
+        "rating": "Rating {{rating}}",
+        "send": "Summon",
+        "sending": "Sending...",
+        "sentSuccess": "{{name}} was summoned to reinforce the game.",
+        "title": "Request reinforcement by position"
+      },
       "yesCancel": "Yes, cancel"
     },
     "empty": {

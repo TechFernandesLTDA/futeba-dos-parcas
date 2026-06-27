@@ -992,6 +992,28 @@
       "updateSuccess": "Jogo atualizado",
       "voteMvp": "Votar MVP",
       "watchLive": "Ver Jogo ao Vivo",
+      "reinforcements": {
+        "candidatesList": "Lista de candidatos a reforço",
+        "description": "Encontre jogadores compatíveis e envie uma convocação direta.",
+        "emptyDescription": "Tente outra posição ou atualize a busca quando mais jogadores ficarem pesquisáveis.",
+        "emptyTitle": "Nenhum reforço compatível agora",
+        "lookingToday": "Livre hoje",
+        "matchHint": "Buscando por: {{positions}}",
+        "needLabel": "Posição necessária",
+        "needs": {
+          "ANY_FIELD": "Qualquer linha",
+          "DEFENDER": "Defesa",
+          "GOALKEEPER": "Goleiro",
+          "MIDFIELDER": "Meio-campo",
+          "STRIKER": "Ataque"
+        },
+        "positionMatch": "Posição ideal",
+        "rating": "Nota {{rating}}",
+        "send": "Convocar",
+        "sending": "Enviando...",
+        "sentSuccess": "{{name}} foi convocado para reforçar o jogo.",
+        "title": "Pedir reforço por posição"
+      },
       "yesCancel": "Sim, cancelar"
     },
     "empty": {
