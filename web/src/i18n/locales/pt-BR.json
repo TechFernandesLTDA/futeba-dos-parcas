@@ -1673,6 +1673,14 @@
         "today": "Hoje",
         "yesterday": "Ontem"
       },
+      "actionProgress": "Atualizando notificação",
+      "contextGroups": {
+        "achievement": "Conquistas e reputação",
+        "game": "Contexto do jogo",
+        "group": "Contexto do grupo",
+        "system": "Avisos do app"
+      },
+      "contextSummary": "{{count}} notificações neste contexto, {{unread}} não lidas",
       "decline": "Recusar",
       "declineAria": "Recusar {{title}}",
       "deleteUndoMessage": "Notificação removida.",
@@ -1702,6 +1710,8 @@
         "minutes": "{{count}}min",
         "now": "Agora"
       },
+      "timeWithGroup": "{{time}} · {{group}}",
+      "unreadCount": "{{count}} não lidas",
       "undo": "Desfazer"
     }
   },

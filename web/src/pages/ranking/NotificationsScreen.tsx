@@ -23,6 +23,7 @@ import {
   DialogActions,
   Slide,
   Alert,
+  LinearProgress,
 } from '@mui/material';
 import {
   Notifications as NotificationIcon,
@@ -54,6 +55,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
 import type { NotificationType } from '../../types';
+import { groupNotificationsByContext } from '../../utils/notificationGrouping';
 
 const NOTIFICATION_FILTER_TYPES: Array<NotificationType | 'ALL'> = [
   'ALL',
@@ -74,8 +76,7 @@ const NOTIFICATION_FILTER_TYPES: Array<NotificationType | 'ALL'> = [
   'SYSTEM',
 ];
 
-const DATE_GROUP_ORDER = ['today', 'yesterday', 'thisWeek', 'older'] as const;
-type DateGroupKey = typeof DATE_GROUP_ORDER[number];
+type DateGroupKey = 'today' | 'yesterday' | 'thisWeek' | 'older';
 
 function getDateGroup(date: Date): DateGroupKey {
   const now = new Date();
@@ -165,8 +166,10 @@ export const NotificationsScreen: React.FC = () => {
     markAllAsRead,
     deleteNotification,
     toggleRead,
+    declineGameInvite,
     restoreNotification,
     deleteOldNotifications,
+    acting,
   } = useNotifications(user?.id);
 
   const { confirmPresence } = useConfirmPresence();
@@ -174,6 +177,7 @@ export const NotificationsScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<NotificationType | 'ALL'>('ALL');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const notificationFilters = useMemo(() => NOTIFICATION_FILTER_TYPES.map((type) => ({
     type,
@@ -190,14 +194,10 @@ export const NotificationsScreen: React.FC = () => {
     .filter((n) => !dismissedIds.has(n.id))
     .filter((n) => activeFilter === 'ALL' || n.type === activeFilter);
 
-  const groupedNotifications = filteredNotifications.reduce<Partial<Record<DateGroupKey, typeof notifications>>>((acc, n) => {
-    const group = getDateGroup(n.createdAt);
-    if (!acc[group]) acc[group] = [];
-    acc[group].push(n);
-    return acc;
-  }, {});
+  const groupedNotifications = groupNotificationsByContext(filteredNotifications);
 
   const handleAccept = useCallback(async (notification: typeof notifications[0]) => {
+    setActiveActionId(notification.id);
     try {
       if (notification.type === 'GROUP_INVITE' && notification.referenceId) {
         await markAsRead(notification.id);
@@ -209,17 +209,26 @@ export const NotificationsScreen: React.FC = () => {
       }
     } catch {
       showError(t('notifications.acceptError'));
+    } finally {
+      setActiveActionId(null);
     }
   }, [confirmPresence, markAsRead, showSuccess, showError, navigate, t]);
 
   const handleDecline = useCallback(async (notification: typeof notifications[0]) => {
+    setActiveActionId(notification.id);
     try {
-      await markAsRead(notification.id);
-      showSuccess(t('feedback.notifications.inviteDeclined'));
+      if ((notification.type === 'GAME_INVITE' || notification.type === 'GAME_SUMMON') && notification.referenceId) {
+        await declineGameInvite(notification.id, notification.referenceId);
+      } else {
+        await markAsRead(notification.id);
+        showSuccess(t('feedback.notifications.inviteDeclined'));
+      }
     } catch {
       showError(t('feedback.notifications.declineError'));
+    } finally {
+      setActiveActionId(null);
     }
-  }, [markAsRead, showSuccess, showError, t]);
+  }, [declineGameInvite, markAsRead, showSuccess, showError, t]);
 
   const handleDeleteWithUndo = useCallback(async (notification: typeof notifications[0]) => {
     const deletedNotif = notification;
@@ -344,26 +353,53 @@ export const NotificationsScreen: React.FC = () => {
           />
         ) : (
           <Box>
-            {DATE_GROUP_ORDER.map((groupKey) => {
-              const groupItems = groupedNotifications[groupKey];
-              if (!groupItems || groupItems.length === 0) return null;
-              const groupLabel = t(`notifications.screen.dateGroups.${groupKey}`);
+            {groupedNotifications.map((group) => {
+              const groupLabel = t(group.labelKey);
+              const groupDescription = group.notifications.length === 1
+                ? group.fallbackLabel
+                : t('notifications.screen.contextSummary', {
+                  count: group.notifications.length,
+                  unread: group.unreadCount,
+                });
 
               return (
-                <Box key={groupKey} sx={{ mb: 2 }}>
-                  <Typography
-                    variant="overline"
-                    color="text.secondary"
-                    sx={{ px: 1, fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.08em' }}
-                  >
-                    {groupLabel}
-                  </Typography>
+                <Card key={group.key} sx={{ mb: 2, overflow: 'hidden' }}>
+                  {acting && group.notifications.some((notification) => notification.id === activeActionId) && (
+                    <LinearProgress aria-label={t('notifications.screen.actionProgress')} />
+                  )}
+                  <Box sx={{ px: 2, pt: 1.5, pb: 1, bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'space-between' }}>
+                      <Typography
+                        variant="overline"
+                        color="text.secondary"
+                        sx={{ fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.08em' }}
+                      >
+                        {groupLabel}
+                      </Typography>
+                      {group.unreadCount > 0 && (
+                        <Chip
+                          size="small"
+                          color="primary"
+                          label={t('notifications.screen.unreadCount', { count: group.unreadCount })}
+                        />
+                      )}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {groupDescription}
+                    </Typography>
+                  </Box>
                   <List disablePadding aria-label={t('notifications.screen.groupListAria', { group: groupLabel })}>
-                    {groupItems.map((notification) => (
+                    {group.notifications.map((notification) => {
+                      const dateLabel = t(`notifications.screen.dateGroups.${getDateGroup(notification.createdAt)}`);
+                      const actionBusy = activeActionId === notification.id;
+
+                      return (
                       <Slide direction="left" in key={notification.id}>
                         <Card
                           sx={{
-                            mb: 1,
+                            borderRadius: 0,
+                            borderTop: `1px solid ${theme.palette.divider}`,
+                            boxShadow: 'none',
                             bgcolor: notification.read
                               ? 'background.paper'
                               : alpha(theme.palette.primary.main, 0.05),
@@ -388,7 +424,10 @@ export const NotificationsScreen: React.FC = () => {
                                   </Typography>
                                 )}
                                 <Typography variant="caption" color="text.disabled">
-                                  {getTimeAgo(notification.createdAt, t)}
+                                  {t('notifications.screen.timeWithGroup', {
+                                    time: getTimeAgo(notification.createdAt, t),
+                                    group: dateLabel,
+                                  })}
                                 </Typography>
 
                                 {isActionable(notification.type) && !notification.read && (
@@ -399,6 +438,7 @@ export const NotificationsScreen: React.FC = () => {
                                       color="primary"
                                       onClick={() => handleAccept(notification)}
                                       startIcon={<CheckIcon />}
+                                      disabled={actionBusy}
                                       aria-label={t('notifications.screen.acceptAria', { title: notification.title })}
                                     >
                                       {t('notifications.screen.accept')}
@@ -409,6 +449,7 @@ export const NotificationsScreen: React.FC = () => {
                                       color="inherit"
                                       onClick={() => handleDecline(notification)}
                                       startIcon={<CloseIcon />}
+                                      disabled={actionBusy}
                                       aria-label={t('notifications.screen.declineAria', { title: notification.title })}
                                     >
                                       {t('notifications.screen.decline')}
@@ -453,9 +494,10 @@ export const NotificationsScreen: React.FC = () => {
                           </CardContent>
                         </Card>
                       </Slide>
-                    ))}
+                      );
+                    })}
                   </List>
-                </Box>
+                </Card>
               );
             })}
           </Box>

@@ -1,7 +1,47 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T14:04:35.148Z",
+  "generatedAt": "2026-06-27T14:38:01.969Z",
   "notes": [
+    {
+      "version": "1.29.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Notificações mais organizadas e respostas rápidas mais confiáveis",
+      "highlights": [
+        {
+          "icon": "notifications_active",
+          "title": "Contexto primeiro",
+          "description": "A central agora agrupa notificações por jogo, grupo, conquistas ou avisos do app."
+        },
+        {
+          "icon": "bolt",
+          "title": "Ações rápidas",
+          "description": "Convites e convocações continuam com aceitar/recusar direto na lista, com indicador de progresso."
+        },
+        {
+          "icon": "playlist_add_check",
+          "title": "Recusa consistente",
+          "description": "Recusar convite de jogo tenta remover a confirmação pendente e sempre resolve a notificação quando permitido."
+        }
+      ],
+      "added": [
+        "Agrupamento inteligente por contexto para reduzir ruído em listas longas.",
+        "Contador de não lidas por contexto."
+      ],
+      "improved": [
+        "Notificações de um mesmo jogo ou grupo aparecem juntas, priorizando contextos com pendências não lidas.",
+        "A tela preserva filtros por tipo e estados de carregamento, erro e vazio."
+      ],
+      "fixed": [
+        "Sem correções nesta versão."
+      ],
+      "issueRefs": [
+        2987
+      ]
+    },
     {
       "version": "1.28.0",
       "buildNumber": null,

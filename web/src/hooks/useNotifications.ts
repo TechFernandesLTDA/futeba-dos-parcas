@@ -128,6 +128,36 @@ export const useNotifications = (userId?: string) => {
     }
   }, [showError, t]);
 
+  const declineGameInvite = useCallback(async (notificationId: string, gameId: string) => {
+    if (!userId) return;
+    setActing(true);
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'confirmations', `${gameId}_${userId}`));
+      batch.update(doc(db, 'notifications', notificationId), {
+        read: true,
+        read_at: serverTimestamp(),
+      });
+      await batch.commit();
+      showSuccess(t('feedback.notifications.inviteDeclined'));
+    } catch (err) {
+      logger.error('Error declining game invite:', err);
+      try {
+        await updateDoc(doc(db, 'notifications', notificationId), {
+          read: true,
+          read_at: serverTimestamp(),
+        });
+        showSuccess(t('feedback.notifications.inviteDeclined'));
+      } catch (fallbackErr) {
+        logger.error('Error marking declined invite as read:', fallbackErr);
+        showError(t('feedback.notifications.declineError'));
+        throw fallbackErr;
+      }
+    } finally {
+      setActing(false);
+    }
+  }, [userId, showSuccess, showError, t]);
+
   const restoreNotification = useCallback(async (notification: Notification) => {
     try {
       const { addDoc } = await import('firebase/firestore');
@@ -199,6 +229,7 @@ export const useNotifications = (userId?: string) => {
     markAllAsRead,
     deleteNotification,
     toggleRead,
+    declineGameInvite,
     restoreNotification,
     deleteOldNotifications,
   };
