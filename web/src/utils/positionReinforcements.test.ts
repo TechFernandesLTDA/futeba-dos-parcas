@@ -3,6 +3,7 @@ import type { User } from '../types/user';
 import {
   buildReinforcementCandidates,
   getConfirmationPositionForNeed,
+  hasRecentPresence,
 } from './positionReinforcements';
 
 function makeUser(overrides: Partial<User>): User {
@@ -72,6 +73,35 @@ describe('positionReinforcements', () => {
 
     expect(candidates).toHaveLength(1);
     expect(candidates[0].user.id).toBe('candidate');
+  });
+
+  it('prioriza e filtra jogadores com presenca recente', () => {
+    const now = new Date('2026-06-27T12:00:00Z');
+    const recent = makeUser({ id: 'recent', preferredPosition: 'MEIA', midRating: 3, lastGameDate: new Date('2026-06-20T12:00:00Z') });
+    const old = makeUser({ id: 'old', preferredPosition: 'MEIA', midRating: 5, lastGameDate: new Date('2026-04-01T12:00:00Z') });
+
+    const candidates = buildReinforcementCandidates(
+      [old, recent],
+      'MIDFIELDER',
+      new Set(),
+      { now },
+    );
+    expect(candidates.map((candidate) => candidate.user.id)).toEqual(['recent', 'old']);
+    expect(candidates[0].hasRecentPresence).toBe(true);
+
+    const recentOnly = buildReinforcementCandidates(
+      [old, recent],
+      'MIDFIELDER',
+      new Set(),
+      { now, recentPresenceOnly: true },
+    );
+    expect(recentOnly.map((candidate) => candidate.user.id)).toEqual(['recent']);
+  });
+
+  it('considera presenca recente apenas dentro da janela de 30 dias', () => {
+    const now = new Date('2026-06-27T12:00:00Z');
+    expect(hasRecentPresence(makeUser({ lastGameDate: new Date('2026-06-01T12:00:00Z') }), now)).toBe(true);
+    expect(hasRecentPresence(makeUser({ lastGameDate: new Date('2026-05-01T12:00:00Z') }), now)).toBe(false);
   });
 
   it('mapeia necessidade para posicao de confirmacao existente', () => {

@@ -1009,6 +1009,8 @@
         },
         "positionMatch": "Posición ideal",
         "rating": "Nota {{rating}}",
+        "recentPresence": "Presencia reciente",
+        "recentPresenceOnly": "Mostrar solo jugadores activos recientemente",
         "send": "Convocar",
         "sending": "Enviando...",
         "sentSuccess": "{{name}} fue convocado para reforzar el partido.",

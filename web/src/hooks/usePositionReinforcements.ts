@@ -40,6 +40,7 @@ function parseUserDoc(id: string, raw: Record<string, unknown>): User {
   return {
     ...converted,
     id,
+    lastGameDate: toDate((raw.last_game_date ?? raw.lastGameDate) as Parameters<typeof toDate>[0]),
     lookingForGameTodayUntil: toDate((raw.looking_for_game_today_until ?? raw.lookingForGameTodayUntil) as Parameters<typeof toDate>[0]),
     lookingForGameTodayUpdatedAt: toDate((raw.looking_for_game_today_updated_at ?? raw.lookingForGameTodayUpdatedAt) as Parameters<typeof toDate>[0]),
   } as User;
@@ -49,6 +50,7 @@ export function usePositionReinforcements(
   game: Game | null,
   confirmations: GameConfirmation[],
   need: ReinforcementNeed,
+  recentPresenceOnly = false,
 ) {
   const { user, firebaseUser } = useAuth();
   const queryClient = useQueryClient();
@@ -66,8 +68,8 @@ export function usePositionReinforcements(
   );
 
   const candidates = useMemo(
-    () => buildReinforcementCandidates(users, need, excludedUserIds),
-    [excludedUserIds, need, users],
+    () => buildReinforcementCandidates(users, need, excludedUserIds, { recentPresenceOnly }),
+    [excludedUserIds, need, recentPresenceOnly, users],
   );
 
   const refetch = useCallback(() => {

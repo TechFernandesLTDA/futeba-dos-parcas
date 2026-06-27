@@ -58,6 +58,7 @@ export interface User {
   lookingForGameToday?: boolean;
   lookingForGameTodayUntil?: Date;
   lookingForGameTodayUpdatedAt?: Date;
+  lastGameDate?: Date;
 
   // Invite
   inviteCode?: string;

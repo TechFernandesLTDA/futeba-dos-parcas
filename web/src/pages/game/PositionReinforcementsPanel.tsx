@@ -9,6 +9,7 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  FormControlLabel,
   FormControl,
   InputLabel,
   List,
@@ -18,6 +19,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  Switch,
   Typography,
 } from '@mui/material';
 import {
@@ -52,6 +54,7 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [need, setNeed] = useState<ReinforcementNeed>('GOALKEEPER');
+  const [recentPresenceOnly, setRecentPresenceOnly] = useState(false);
   const {
     candidates,
     loading,
@@ -59,7 +62,7 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
     refetch,
     sendReinforcement,
     sendingUserId,
-  } = usePositionReinforcements(canManage ? game : null, confirmations, need);
+  } = usePositionReinforcements(canManage ? game : null, confirmations, need, recentPresenceOnly);
 
   if (!canManage || !['SCHEDULED', 'CONFIRMED'].includes(game.status)) return null;
 
@@ -116,6 +119,17 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
             {loading ? t('common.loading') : t('common.refresh')}
           </Button>
         </Stack>
+        <FormControlLabel
+          sx={{ mb: 1 }}
+          control={(
+            <Switch
+              checked={recentPresenceOnly}
+              onChange={(event) => setRecentPresenceOnly(event.target.checked)}
+              disabled={loading || !!sendingUserId}
+            />
+          )}
+          label={t('games.detail.reinforcements.recentPresenceOnly')}
+        />
 
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
           {t('games.detail.reinforcements.matchHint', { positions: preferredPositions })}
@@ -179,6 +193,9 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
                         )}
                         {candidate.isPreferredPositionMatch && (
                           <Chip size="small" color="primary" label={t('games.detail.reinforcements.positionMatch')} />
+                        )}
+                        {candidate.hasRecentPresence && (
+                          <Chip size="small" color="info" label={t('games.detail.reinforcements.recentPresence')} />
                         )}
                         {candidate.rating > 0 && (
                           <Chip size="small" label={t('games.detail.reinforcements.rating', { rating: candidate.rating.toFixed(1) })} />
