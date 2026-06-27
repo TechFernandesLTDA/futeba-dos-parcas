@@ -16,10 +16,14 @@ export function useRealtimeDocument<T = unknown>(
 
   useEffect(() => {
     if (!documentId) {
+      setData(null);
+      setError(null);
       setLoading(false);
       return;
     }
 
+    setData(null);
+    setError(null);
     setLoading(true);
     const docRef = doc(db, collectionName, documentId);
 
@@ -60,6 +64,8 @@ export function useRealtimeCollection<T = unknown>(
   queryFnRef.current = queryFn;
 
   useEffect(() => {
+    setData([]);
+    setError(null);
     setLoading(true);
 
     const collectionRef = collection(db, collectionName);

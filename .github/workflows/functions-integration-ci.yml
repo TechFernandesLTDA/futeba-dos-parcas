@@ -43,10 +43,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js 20
+      - name: Configurar Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: functions/package-lock.json
 
@@ -76,6 +76,7 @@ jobs:
           npx firebase-tools emulators:exec \
             --only firestore,functions \
             --project futebadosparcas \
-            'npx jest -c jest.integration.config.js test/integration --no-coverage --ci'
+            'npx jest -c jest.integration.config.js test/integration --no-coverage --ci --runInBand'
         env:
           CI: "true"
+          NODE_OPTIONS: "--max-old-space-size=4096"

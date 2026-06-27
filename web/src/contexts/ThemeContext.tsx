@@ -69,6 +69,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [mode]);
 
+  useEffect(() => {
+    const resolvedMode = mode === 'oled' ? 'dark' : isDark ? 'dark' : 'light';
+    document.documentElement.dataset.theme = mode;
+    document.documentElement.dataset.resolvedTheme = resolvedMode;
+    document.documentElement.style.colorScheme = resolvedMode;
+
+    return () => {
+      delete document.documentElement.dataset.theme;
+      delete document.documentElement.dataset.resolvedTheme;
+      document.documentElement.style.removeProperty('color-scheme');
+    };
+  }, [isDark, mode]);
+
   const toggleTheme = useCallback(() => {
     setMode(current => {
       if (current === 'light') return 'dark';

@@ -65,7 +65,7 @@ object ShareMVPCardHelper {
     private val GOLD_COLOR = "#FFD700".toColorInt()
     private val SILVER_COLOR = "#E0E0E0".toColorInt()
     private val BRONZE_COLOR = "#CD7F32".toColorInt()
-    private val GREEN_COLOR = "#58CC02".toColorInt()
+    private val GREEN_COLOR = "#00852A".toColorInt()
     private val MVP_COLOR = "#FFD700".toColorInt()
     private val GK_COLOR = "#4CAF50".toColorInt()
     private val WORST_COLOR = "#FF5722".toColorInt()

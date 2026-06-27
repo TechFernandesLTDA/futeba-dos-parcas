@@ -135,7 +135,7 @@ class VerificationGateViewModel(
     /**
      * Revalida o claim `verified` apos o usuario concluir o fluxo CPF.
      * Usa [refreshTokenWithRetry] (ate 3 tentativas com backoff) para cobrir a janela
-     * transiente pos-revokeRefreshTokens. Single-shot era regressao do fix #1303:
+     * transiente apos setCustomUserClaims. Single-shot era regressao do fix #1303:
      * o budget de retry do CpfVerificationViewModel ja estava esgotado nessa camada.
      *
      * Chamado exatamente UMA vez pelo callback onSuccess da [CpfVerificationScreen].
@@ -156,7 +156,7 @@ class VerificationGateViewModel(
                 return@launch
             }
             try {
-                // Usa retry/backoff para cobrir janela transiente pos-revokeRefreshTokens.
+                // Usa retry/backoff para cobrir janela transiente apos setCustomUserClaims.
                 // Fix spec §3.2 passo 4 / §3.3 "Gate do claim le token stale" (#1302)
                 refreshTokenWithRetry(user)
                 val result = user.getIdToken(false).await()

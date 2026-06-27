@@ -66,7 +66,7 @@ fun WelcomeScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(AppDimensions.spacing_large))
+            Spacer(modifier = Modifier.height(AppDimensions.spacing_medium))
 
             // Subtítulo
             Text(
@@ -128,6 +128,6 @@ private fun WelcomeFeatureItem(
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = AppDimensions.spacing_small, horizontal = AppDimensions.spacing_large)
+            .padding(vertical = AppDimensions.spacing_small, horizontal = AppDimensions.spacing_medium)
     )
 }

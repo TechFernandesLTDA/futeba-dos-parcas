@@ -4,6 +4,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ContrastLevel
 import com.futebadosparcas.domain.model.ThemeMode
@@ -56,11 +58,16 @@ fun FutebaTheme(
 
     // #2735: lê reduced-motion do sistema via função expect (Android/iOS cada uma com sua impl)
     val reducedMotion = readSystemReduceMotion()
+    val density = LocalDensity.current
+    val fontScale = platformFontScale(density.fontScale).coerceAtLeast(1f)
 
     // Setup específico de plataforma (status bar, etc.)
     PlatformThemeSetup(colorScheme, isDark)
 
-    CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
+    CompositionLocalProvider(
+        LocalReducedMotion provides reducedMotion,
+        LocalDensity provides Density(density = density.density, fontScale = fontScale)
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             // #2675 — Poppins via composeResources (função @Composable, não mais val top-level)

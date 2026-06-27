@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import com.futebadosparcas.ui.theme.statusBarsPadding
 
 /**
  * LiveGameScreen - Tela principal de jogo ao vivo em Jetpack Compose
@@ -227,6 +228,7 @@ private fun LiveGameTopBar(
     onNavigateBack: () -> Unit
 ) {
     TopAppBar(
+        modifier = Modifier.statusBarsPadding(),
         title = {
             if (uiState is LiveGameUiState.Success) {
                 Column {

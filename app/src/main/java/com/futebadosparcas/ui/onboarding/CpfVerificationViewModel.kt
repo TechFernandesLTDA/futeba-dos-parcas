@@ -135,7 +135,7 @@ class CpfVerificationViewModel(
             // setUserVerified set the custom claim, and AntiBotGate will perform
             // the final forced recheck after the success screen. This local
             // refresh is telemetry/warm-up only; making it fatal traps users in
-            // onboarding when Firebase Auth propagation lags after revokeTokens.
+            // onboarding when Firebase Auth propagation lags after claim update.
             _uiState.value = CpfVerificationUiState.Success
 
             for (attempt in 0 until 3) {

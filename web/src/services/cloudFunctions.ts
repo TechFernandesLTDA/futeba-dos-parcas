@@ -64,6 +64,11 @@ export const logVerificationFailure = httpsCallable<
   { logged: boolean }
 >(functions, 'logVerificationFailure');
 
+export const requestAccountMerge = httpsCallable<
+  { sourceIdToken: string },
+  { success: boolean; requestId: string; status: 'pending_review' }
+>(functions, 'requestAccountMerge', { timeout: 30000 });
+
 export const joinPublicGame = httpsCallable<
   { gameId: string; position?: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
   { success: boolean; alreadyConfirmed: boolean; confirmationId: string }

@@ -58,7 +58,13 @@ export const CpfVerificationScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [successNextPath, setSuccessNextPath] = useState('/');
+  const [successNextPath, setSuccessNextPath] = useState('/profile/setup');
+
+  useEffect(() => {
+    if (firebaseUser && !firebaseUser.phoneNumber) {
+      navigate('/onboarding/phone', { replace: true });
+    }
+  }, [firebaseUser, navigate]);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -192,13 +198,16 @@ export const CpfVerificationScreen: React.FC = () => {
       } catch (recomputeErr) {
         logger.warn('recomputeMyProfileClaim failed (non-fatal):', recomputeErr);
       }
-      const nextPath = profileCompleteAfterRecompute === false ? '/profile/setup' : '/';
+      const nextPath = '/profile/setup';
+      if (profileCompleteAfterRecompute === false) {
+        logger.info('Profile setup still pending after CPF verification');
+      }
       setSuccessNextPath(nextPath);
 
       // Retry getIdTokenResult(true) up to 3x with 500ms backoff to confirm
       // the `verified` claim is set before redirecting. This avoids a loop where
       // ProfileGate sends the user back to the CPF screen because the token
-      // hasn't refreshed yet after revokeRefreshTokens().
+      // hasn't refreshed yet after setCustomUserClaims().
       let claimOk = false;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {

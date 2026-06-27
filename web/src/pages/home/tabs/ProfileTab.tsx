@@ -90,6 +90,22 @@ export function ProfileTab() {
   const xpInLevel = currentXp - currentEntry.xpRequired;
   const xpNeededForNext = nextEntry ? nextEntry.xpRequired - currentEntry.xpRequired : 0;
   const levelColor = getLevelColor(currentLevel, theme);
+  const isDarkTheme = theme.palette.mode === 'dark';
+  const profileHeaderBackground = isDarkTheme
+    ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+    : `linear-gradient(135deg, ${theme.palette.surfaceBright} 0%, ${alpha(theme.palette.primary.light, 0.2)} 55%, ${alpha(theme.palette.primary.main, 0.12)} 100%)`;
+  const profileHeaderTextColor = isDarkTheme
+    ? theme.palette.primary.contrastText
+    : theme.palette.text.primary;
+  const profileHeaderMutedColor = isDarkTheme
+    ? alpha(theme.palette.primary.contrastText, 0.85)
+    : theme.palette.text.secondary;
+  const profileLevelCardBg = isDarkTheme
+    ? alpha(theme.palette.common.white, 0.15)
+    : alpha(theme.palette.background.paper, 0.82);
+  const profileLevelCardBorder = isDarkTheme
+    ? alpha(theme.palette.common.white, 0.25)
+    : alpha(theme.palette.primary.main, 0.16);
 
   const [animatedProgress, setAnimatedProgress] = useState(0);
   useEffect(() => {
@@ -171,7 +187,7 @@ export function ProfileTab() {
       <Box sx={{ pb: pageSpacing.pagePaddingBottom }}>
         <Box
           sx={{
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            background: profileHeaderBackground,
             pt: 2,
             pb: 6,
             px: 2,
@@ -238,7 +254,7 @@ export function ProfileTab() {
       {/* Profile Header */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          background: profileHeaderBackground,
           pt: 2,
           pb: 6,
           px: 2,
@@ -288,19 +304,19 @@ export function ProfileTab() {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: 'primary.contrastText' }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: profileHeaderTextColor }}>
             {user?.name || 'Jogador'}
           </Typography>
           <TeamBadge teamId={user?.favoriteTeam} size={28} />
         </Box>
 
         {user?.nickname && (
-          <Typography variant="body2" sx={{ color: 'primary.contrastText', opacity: 0.9 }}>
+          <Typography variant="body2" sx={{ color: profileHeaderMutedColor }}>
             "{user.nickname}"
           </Typography>
         )}
 
-        <Typography variant="body2" sx={{ color: 'primary.contrastText', opacity: 0.8, mt: 0.5 }}>
+        <Typography variant="body2" sx={{ color: profileHeaderMutedColor, mt: 0.5 }}>
           {user?.email}
         </Typography>
 
@@ -312,21 +328,21 @@ export function ProfileTab() {
             maxWidth: 300,
             borderRadius: 3,
             cursor: 'pointer',
-            bgcolor: (theme) => alpha(theme.palette.common.white, 0.15),
+            bgcolor: profileLevelCardBg,
             border: '1px solid',
-            borderColor: (theme) => alpha(theme.palette.common.white, 0.25),
+            borderColor: profileLevelCardBorder,
             backdropFilter: 'blur(8px)',
             boxShadow: 'none',
-            color: 'primary.contrastText',
+            color: profileHeaderTextColor,
           }}
           onClick={() => navigate('/level-journey')}
         >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ color: 'primary.contrastText', opacity: 0.9 }}>
+              <Typography variant="subtitle2" sx={{ color: profileHeaderTextColor }}>
                 Nível {currentLevel}
               </Typography>
-              <Typography variant="caption" fontWeight={600} sx={{ color: 'primary.contrastText' }}>
+              <Typography variant="caption" fontWeight={600} sx={{ color: profileHeaderMutedColor }}>
                 {currentEntry.name}
               </Typography>
             </Box>
@@ -337,7 +353,7 @@ export function ProfileTab() {
               sx={{
                 height: 8,
                 borderRadius: 4,
-                bgcolor: (theme) => alpha(theme.palette.common.white, 0.2),
+                bgcolor: alpha(profileHeaderTextColor, 0.14),
                 '& .MuiLinearProgress-bar': {
                   borderRadius: 4,
                   background: `linear-gradient(90deg, ${levelColor}, ${alpha(levelColor, 0.7)})`,
@@ -348,7 +364,7 @@ export function ProfileTab() {
 
             <Typography
               variant="caption"
-              sx={{ display: 'block', mt: 1, color: 'primary.contrastText', opacity: 0.85 }}
+              sx={{ display: 'block', mt: 1, color: profileHeaderMutedColor }}
             >
               {Math.max(0, xpInLevel)} / {xpNeededForNext} XP
             </Typography>

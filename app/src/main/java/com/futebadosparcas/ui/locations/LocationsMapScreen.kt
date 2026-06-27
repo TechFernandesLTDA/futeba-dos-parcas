@@ -18,6 +18,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.theme.statusBarsPadding
 
 /**
  * LocationsMapScreen - Mapa com locais de pelada
@@ -40,6 +41,7 @@ fun LocationsMapScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = { Text(stringResource(R.string.locations_map_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
