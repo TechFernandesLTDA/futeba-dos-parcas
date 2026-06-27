@@ -9,12 +9,14 @@ import {
   TextField,
   Typography,
   Alert,
+  AlertTitle,
   CircularProgress,
   Stepper,
   Step,
   StepLabel,
   Fade,
   LinearProgress,
+  Stack,
 } from '@mui/material';
 import {
   Phone as PhoneIcon,
@@ -28,6 +30,8 @@ import {
   PhoneAuthProvider,
   linkWithPhoneNumber,
   linkWithCredential,
+  signInWithCredential,
+  type AuthCredential,
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { auth } from '../../services/firebase';
@@ -37,7 +41,11 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { createLogger } from '../../utils/logger';
-import { canSendSmsOtp, logVerificationFailure } from '../../services/cloudFunctions';
+import {
+  canSendSmsOtp,
+  logVerificationFailure,
+  requestAccountMerge,
+} from '../../services/cloudFunctions';
 import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
 
 const logger = createLogger('PhoneVerification');
@@ -143,18 +151,23 @@ export const PhoneVerificationScreen: React.FC = () => {
   useDocumentTitle(t('onboarding.verifyPhone'));
   const navigate = useNavigate();
   const { firebaseUser } = useAuth();
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const [phone, setPhone] = useState('+55');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
   const [loading, setLoading] = useState(false);
+  const [claimLoading, setClaimLoading] = useState<'signin' | 'merge' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [accountCollisionCredential, setAccountCollisionCredential] =
+    useState<AuthCredential | null>(null);
   const verificationIdRef = useRef<string | null>(null);
   const confirmationResultRef = useRef<ConfirmationResult | null>(null);
   const attemptsRef = useRef<ActivePhoneVerificationAttempt[]>([]);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+  const claimInProgressRef = useRef(false);
+  const isAccountCollision = !!accountCollisionCredential;
 
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
 
@@ -240,7 +253,7 @@ export const PhoneVerificationScreen: React.FC = () => {
 
   // Se phone já estiver vinculado, pula direto pra CPF
   useEffect(() => {
-    if (firebaseUser?.phoneNumber) {
+    if (firebaseUser?.phoneNumber && !claimInProgressRef.current) {
       navigate('/onboarding/cpf', { replace: true });
     }
   }, [firebaseUser, navigate]);
@@ -264,6 +277,8 @@ export const PhoneVerificationScreen: React.FC = () => {
 
   const handleSendOtp = async () => {
     setError(null);
+    setAccountCollisionCredential(null);
+    setClaimLoading(null);
     setOtp('');
     if (resendCooldown > 0) {
       setError(t('feedback.phoneVerification.rateLimitedMinutes', { minutes: Math.ceil(resendCooldown / 60) }));
@@ -349,6 +364,7 @@ export const PhoneVerificationScreen: React.FC = () => {
       persistVerificationAttempts();
       setPhone(phoneDisplay);
       setStep('otp');
+      setOtp('');
       setResendCooldown(60);
       showSuccess(t('feedback.phoneVerification.codeSent'));
     } catch (err) {
@@ -386,18 +402,17 @@ export const PhoneVerificationScreen: React.FC = () => {
       return;
     }
     setLoading(true);
+    let credential: AuthCredential | null = null;
     try {
       let linkedCredential: Awaited<ReturnType<ConfirmationResult['confirm']>> | null = null;
       let lastAttemptError: unknown = null;
 
       for (const attempt of attempts) {
         try {
+          credential = PhoneAuthProvider.credential(attempt.verificationId, otp);
           linkedCredential = attempt.confirmationResult
             ? await attempt.confirmationResult.confirm(otp)
-            : await linkWithCredential(
-              currentUser,
-              PhoneAuthProvider.credential(attempt.verificationId, otp),
-            );
+            : await linkWithCredential(currentUser, credential);
           break;
         } catch (attemptErr) {
           const attemptCode = (attemptErr as { code?: string }).code;
@@ -445,7 +460,10 @@ export const PhoneVerificationScreen: React.FC = () => {
       ) {
         msg = t('feedback.phoneVerification.codeExpired');
       } else if (code === 'auth/credential-already-in-use') {
-        msg = t('feedback.phoneVerification.phoneAlreadyInUse');
+        auditPhoneVerificationFailure('duplicate_phone');
+        setAccountCollisionCredential(credential);
+        setError(null);
+        return;
       } else if (code === 'auth/invalid-credential') {
         msg = t('feedback.phoneVerification.codeExpired');
         verificationIdRef.current = null;
@@ -463,6 +481,57 @@ export const PhoneVerificationScreen: React.FC = () => {
     }
   };
 
+  const resetPhoneFlow = () => {
+    verificationIdRef.current = null;
+    confirmationResultRef.current = null;
+    attemptsRef.current = [];
+    clearVerificationSession();
+    setAccountCollisionCredential(null);
+    setClaimLoading(null);
+    setStep('phone');
+    setOtp('');
+    setError(null);
+  };
+
+  const handleClaimExistingAccount = async (requestMerge: boolean) => {
+    if (!accountCollisionCredential || !firebaseUser) {
+      setError(t('feedback.phoneVerification.sessionExpiredRestart'));
+      return;
+    }
+
+    const mode = requestMerge ? 'merge' : 'signin';
+    setError(null);
+    setClaimLoading(mode);
+    claimInProgressRef.current = true;
+
+    try {
+      const sourceIdToken = requestMerge ? await firebaseUser.getIdToken(true) : null;
+      const result = await signInWithCredential(auth, accountCollisionCredential);
+      await result.user.getIdToken(true);
+
+      if (requestMerge && sourceIdToken) {
+        try {
+          await requestAccountMerge({ sourceIdToken });
+          showSuccess(t('feedback.phoneVerification.mergeRequestCreated'));
+        } catch (mergeErr) {
+          logger.error('Account merge request failed:', mergeErr);
+          showError(t('feedback.phoneVerification.mergeRequestError'));
+        }
+      } else {
+        showSuccess(t('feedback.phoneVerification.accountClaimed'));
+      }
+
+      navigate('/onboarding/cpf', { replace: true });
+    } catch (claimErr) {
+      logger.error('Account claim failed:', claimErr);
+      setError(t('feedback.phoneVerification.claimError'));
+      showError(t('feedback.phoneVerification.claimError'));
+    } finally {
+      claimInProgressRef.current = false;
+      setClaimLoading(null);
+    }
+  };
+
   const ProgressHeader = () => (
     <Box sx={{ mb: 3 }}>
       <Stepper activeStep={0} alternativeLabel sx={{ mb: 1 }}>
@@ -474,6 +543,77 @@ export const PhoneVerificationScreen: React.FC = () => {
         </Step>
       </Stepper>
     </Box>
+  );
+
+  const AccountCollisionState = () => (
+    <Fade in timeout={300}>
+      <Box>
+        <Alert severity="info" icon={<ShieldIcon />} sx={{ mb: 2 }}>
+          <AlertTitle>{t('onboarding.accountClaimTitle')}</AlertTitle>
+          {t('onboarding.accountClaimDescription')}
+        </Alert>
+
+        <Box
+          sx={{
+            mb: 2,
+            p: 2,
+            bgcolor: 'action.hover',
+            borderRadius: 2,
+            display: 'flex',
+            gap: 1.5,
+          }}
+        >
+          <ShieldIcon fontSize="small" color="action" />
+          <Typography variant="caption" color="text.secondary">
+            {t('onboarding.accountClaimPrivacy')}
+          </Typography>
+        </Box>
+
+        <Stack spacing={1}>
+          <Button
+            fullWidth
+            variant="contained"
+            size="large"
+            onClick={() => handleClaimExistingAccount(false)}
+            disabled={!!claimLoading}
+            sx={{ py: 1.5, borderRadius: 2 }}
+            startIcon={
+              claimLoading === 'signin' ?
+                <CircularProgress size={20} color="inherit" /> :
+                null
+            }
+          >
+            {claimLoading === 'signin'
+              ? t('onboarding.claimExistingAccountLoading')
+              : t('onboarding.claimExistingAccount')}
+          </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            size="large"
+            onClick={() => handleClaimExistingAccount(true)}
+            disabled={!!claimLoading}
+            sx={{ py: 1.5, borderRadius: 2 }}
+            startIcon={
+              claimLoading === 'merge' ?
+                <CircularProgress size={20} color="inherit" /> :
+                null
+            }
+          >
+            {claimLoading === 'merge'
+              ? t('onboarding.requestAccountMergeLoading')
+              : t('onboarding.requestAccountMerge')}
+          </Button>
+          <Button
+            onClick={resetPhoneFlow}
+            disabled={!!claimLoading}
+            sx={{ borderRadius: 2 }}
+          >
+            {t('onboarding.useAnotherPhone')}
+          </Button>
+        </Stack>
+      </Box>
+    </Fade>
   );
 
   const SuccessState = () => (
@@ -490,6 +630,20 @@ export const PhoneVerificationScreen: React.FC = () => {
       </Box>
     </Fade>
   );
+
+  const screenTitle = (() => {
+    if (step === 'phone') return t('onboarding.verifyPhone');
+    if (isAccountCollision) return t('onboarding.accountClaimTitle');
+    return t('onboarding.confirmCode');
+  })();
+
+  const screenDescription = (() => {
+    if (step === 'phone') return t('onboarding.phoneVerificationReason');
+    if (isAccountCollision) {
+      return t('onboarding.accountClaimOtpReason', { phone });
+    }
+    return t('onboarding.enterSmsCode', { phone });
+  })();
 
   return (
     <Box
@@ -527,7 +681,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography component="h1" variant="h6" fontWeight={700}>
-                      {step === 'phone' ? t('onboarding.verifyPhone') : t('onboarding.confirmCode')}
+                      {screenTitle}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {t('onboarding.stepOneOfTwo')}
@@ -536,9 +690,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                 </Box>
 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  {step === 'phone'
-                    ? t('onboarding.phoneVerificationReason')
-                    : t('onboarding.enterSmsCode', { phone })}
+                  {screenDescription}
                 </Typography>
 
                 <Fade in={!!error} timeout={250} unmountOnExit>
@@ -599,6 +751,8 @@ export const PhoneVerificationScreen: React.FC = () => {
                       </Box>
                     </Box>
                   </Fade>
+                ) : isAccountCollision ? (
+                  <AccountCollisionState />
                 ) : (
                   <Fade in timeout={300}>
                     <Box>
@@ -630,13 +784,7 @@ export const PhoneVerificationScreen: React.FC = () => {
                         <Button
                           startIcon={<BackIcon />}
                           onClick={() => {
-                            verificationIdRef.current = null;
-                            confirmationResultRef.current = null;
-                            attemptsRef.current = [];
-                            clearVerificationSession();
-                            setStep('phone');
-                            setOtp('');
-                            setError(null);
+                            resetPhoneFlow();
                           }}
                           disabled={loading}
                           sx={{ borderRadius: 2 }}

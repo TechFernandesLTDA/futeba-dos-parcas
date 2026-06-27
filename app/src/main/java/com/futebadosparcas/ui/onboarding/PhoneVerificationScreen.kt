@@ -67,6 +67,9 @@ fun PhoneVerificationScreen(
     LaunchedEffect(state) {
         when (state) {
             PhoneVerificationUiState.CodeSent -> step = "otp"
+            is PhoneVerificationUiState.AccountCollision -> step = "otp"
+            is PhoneVerificationUiState.ClaimingAccount -> step = "otp"
+            is PhoneVerificationUiState.RequestingMerge -> step = "otp"
             PhoneVerificationUiState.Success -> onSuccess()
             else -> {}
         }
@@ -74,6 +77,7 @@ fun PhoneVerificationScreen(
 
     // Volta pra step phone se erro durante OTP
     BackHandler(enabled = step == "otp") {
+        viewModel.clearCollision()
         step = "phone"
         otp = ""
     }
@@ -135,7 +139,13 @@ fun PhoneVerificationScreen(
                     }
 
                     val loading = state is PhoneVerificationUiState.SendingCode ||
-                        state is PhoneVerificationUiState.Verifying
+                        state is PhoneVerificationUiState.Verifying ||
+                        state is PhoneVerificationUiState.ClaimingAccount ||
+                        state is PhoneVerificationUiState.RequestingMerge
+                    val accountCollisionActive =
+                        state is PhoneVerificationUiState.AccountCollision ||
+                            state is PhoneVerificationUiState.ClaimingAccount ||
+                            state is PhoneVerificationUiState.RequestingMerge
 
                     if (step == "phone") {
                         OutlinedTextField(
@@ -178,6 +188,69 @@ fun PhoneVerificationScreen(
                             } else {
                                 Text(stringResource(R.string.phone_verification_send_code))
                             }
+                        }
+                    } else if (accountCollisionActive) {
+                        Text(
+                            text = stringResource(R.string.phone_account_claim_title),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Spacer(Modifier.height(AppDimensions.spacing_small))
+                        Text(
+                            text = stringResource(R.string.phone_account_claim_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(AppDimensions.spacing_small))
+                        Text(
+                            text = stringResource(R.string.phone_account_claim_privacy),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(AppDimensions.spacing_large))
+                        Button(
+                            onClick = { viewModel.claimExistingAccount(false) },
+                            enabled = !loading,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (state is PhoneVerificationUiState.ClaimingAccount) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                                Spacer(Modifier.size(AppDimensions.spacing_small))
+                                Text(stringResource(R.string.phone_claim_existing_loading))
+                            } else {
+                                Text(stringResource(R.string.phone_claim_existing_account))
+                            }
+                        }
+                        Spacer(Modifier.height(AppDimensions.spacing_small))
+                        OutlinedButton(
+                            onClick = { viewModel.claimExistingAccount(true) },
+                            enabled = !loading,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (state is PhoneVerificationUiState.RequestingMerge) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                                Spacer(Modifier.size(AppDimensions.spacing_small))
+                                Text(stringResource(R.string.phone_request_merge_loading))
+                            } else {
+                                Text(stringResource(R.string.phone_request_merge))
+                            }
+                        }
+                        Spacer(Modifier.height(AppDimensions.spacing_small))
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.clearCollision()
+                                step = "phone"
+                                otp = ""
+                            },
+                            enabled = !loading,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.phone_use_another_number))
                         }
                     } else {
                         Text(

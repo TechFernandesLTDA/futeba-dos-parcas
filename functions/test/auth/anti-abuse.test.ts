@@ -129,16 +129,17 @@ describe("Auth — Anti Abuse", () => {
       expect(result.allowed).toBe(true);
     });
 
-    it("bloqueia telefone ja vinculado a outro usuario antes do rate limit", async () => {
+    it("nao revela telefone vinculado a outro usuario antes do OTP", async () => {
       mockGetUserByPhoneNumber.mockResolvedValueOnce({ uid: "other-user" });
+      (checkRateLimit as jest.Mock)
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
+        .mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date(Date.now() + 3600000) });
 
       const result = await canSendSmsOtp(makeRequest());
 
-      expect(result).toEqual({
-        allowed: false,
-        reason: "duplicate_phone",
-      });
-      expect(checkRateLimit).not.toHaveBeenCalled();
+      expect(result).toEqual({ allowed: true });
+      expect(checkRateLimit).toHaveBeenCalledTimes(3);
     });
 
     it("permite telefone ja vinculado ao mesmo usuario sem reenviar SMS", async () => {

@@ -2477,6 +2477,17 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: account_merge_requests
+    // ============================================
+    // SECURITY: pedidos de unificação são criados apenas por Cloud Functions.
+    // Usuários comuns não podem listar/ler porque isso revelaria vínculos
+    // entre contas. Admins leem para revisão e reconciliação.
+    match /account_merge_requests/{requestId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ============================================
     // USER FEEDBACK
     // ============================================
     match /user_feedback/{feedbackId} {

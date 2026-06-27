@@ -165,26 +165,18 @@ export const canSendSmsOtp = onCall(
         );
       }
 
-      // Evita enviar SMS para telefone que o Firebase Auth já vinculou a
-      // outra conta. Sem este preflight, o usuário recebe código válido, mas
-      // o linkWithCredential falha depois como credential-already-in-use.
+      // Se o telefone já pertence ao próprio usuário, o onboarding pode seguir.
       const existingPhoneOwnerUid = await getExistingPhoneOwnerUid(phone);
-      if (existingPhoneOwnerUid && existingPhoneOwnerUid !== request.auth.uid) {
-        logger.info("canSendSmsOtp blocked duplicate phone", {
-          uid: request.auth.uid,
-          existingUid: existingPhoneOwnerUid,
-        });
-        return {
-          allowed: false,
-          reason: "duplicate_phone",
-        };
-      }
       if (existingPhoneOwnerUid === request.auth.uid) {
         return {
           allowed: true,
           alreadyLinked: true,
         };
       }
+
+      // Se pertence a outra conta, NÃO revelamos isso antes do OTP. O usuário
+      // que realmente controla o número vai receber o SMS; só depois do código
+      // o cliente consegue oferecer reivindicação/unificação com segurança.
 
       const ip = clientIp(request);
 

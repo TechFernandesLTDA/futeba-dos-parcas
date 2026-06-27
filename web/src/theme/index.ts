@@ -530,6 +530,14 @@ export const futebaTheme = createTheme({
           minWidth: 0,
           minHeight: '100%',
           overflowX: 'clip',
+          colorScheme: 'light',
+        },
+        'html[data-resolved-theme="light"]': {
+          colorScheme: 'light',
+          backgroundColor: '#FCFCFC',
+        },
+        'html[data-resolved-theme="dark"]': {
+          colorScheme: 'dark',
         },
         '@supports not (overflow: clip)': {
           'html, body, #root': {
