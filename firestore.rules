@@ -1858,6 +1858,130 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: game_rides (caronas para jogos)
+    // ============================================
+    // Issue #2980: jogadores confirmados podem oferecer ou pedir carona
+    // para um jogo. Somente origem/destino aproximados sao permitidos
+    // (sem coordenadas ou endereco sensivel) e cada usuario mantem um
+    // documento por jogo: {gameId}_{userId}.
+    match /game_rides/{rideId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(resource.data.game_id) ||
+        isConfirmedPlayer(resource.data.game_id)
+      );
+
+      allow create: if isAuthenticated() &&
+        rideId == (request.resource.data.game_id + '_' + userId()) &&
+        request.resource.data.keys().hasOnly([
+          'game_id',
+          'group_id',
+          'user_id',
+          'user_name',
+          'user_photo',
+          'type',
+          'origin_label',
+          'destination_label',
+          'seats',
+          'note',
+          'status',
+          'created_at',
+          'updated_at'
+        ]) &&
+        request.resource.data.keys().hasAll([
+          'game_id',
+          'group_id',
+          'user_id',
+          'user_name',
+          'user_photo',
+          'type',
+          'origin_label',
+          'destination_label',
+          'seats',
+          'note',
+          'status',
+          'created_at',
+          'updated_at'
+        ]) &&
+        request.resource.data.game_id is string &&
+        (request.resource.data.group_id == null || request.resource.data.group_id is string) &&
+        request.resource.data.user_id == userId() &&
+        request.resource.data.user_name is string &&
+        request.resource.data.user_name.size() > 0 &&
+        request.resource.data.user_name.size() <= 120 &&
+        request.resource.data.user_photo is string &&
+        request.resource.data.user_photo.size() <= 2048 &&
+        request.resource.data.type in ['OFFER', 'REQUEST'] &&
+        request.resource.data.origin_label is string &&
+        request.resource.data.origin_label.size() >= 2 &&
+        request.resource.data.origin_label.size() <= 120 &&
+        request.resource.data.destination_label is string &&
+        request.resource.data.destination_label.size() >= 2 &&
+        request.resource.data.destination_label.size() <= 120 &&
+        (
+          (request.resource.data.type == 'OFFER' &&
+           request.resource.data.seats is int &&
+           request.resource.data.seats >= 1 &&
+           request.resource.data.seats <= 8) ||
+          (request.resource.data.type == 'REQUEST' &&
+           request.resource.data.seats == null)
+        ) &&
+        request.resource.data.note is string &&
+        request.resource.data.note.size() <= 180 &&
+        request.resource.data.status == 'ACTIVE' &&
+        request.resource.data.created_at == request.time &&
+        request.resource.data.updated_at == request.time &&
+        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
+        (isAdmin() || isGameOwner(request.resource.data.game_id) || isConfirmedPlayer(request.resource.data.game_id));
+
+      allow update: if isAuthenticated() &&
+        resource.data.user_id == userId() &&
+        rideId == (resource.data.game_id + '_' + userId()) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'user_name',
+          'user_photo',
+          'type',
+          'origin_label',
+          'destination_label',
+          'seats',
+          'note',
+          'status',
+          'updated_at'
+        ]) &&
+        request.resource.data.game_id == resource.data.game_id &&
+        request.resource.data.group_id == resource.data.group_id &&
+        request.resource.data.user_id == resource.data.user_id &&
+        request.resource.data.created_at == resource.data.created_at &&
+        request.resource.data.user_name is string &&
+        request.resource.data.user_name.size() > 0 &&
+        request.resource.data.user_name.size() <= 120 &&
+        request.resource.data.user_photo is string &&
+        request.resource.data.user_photo.size() <= 2048 &&
+        request.resource.data.type in ['OFFER', 'REQUEST'] &&
+        request.resource.data.origin_label is string &&
+        request.resource.data.origin_label.size() >= 2 &&
+        request.resource.data.origin_label.size() <= 120 &&
+        request.resource.data.destination_label is string &&
+        request.resource.data.destination_label.size() >= 2 &&
+        request.resource.data.destination_label.size() <= 120 &&
+        (
+          (request.resource.data.type == 'OFFER' &&
+           request.resource.data.seats is int &&
+           request.resource.data.seats >= 1 &&
+           request.resource.data.seats <= 8) ||
+          (request.resource.data.type == 'REQUEST' &&
+           request.resource.data.seats == null)
+        ) &&
+        request.resource.data.note is string &&
+        request.resource.data.note.size() <= 180 &&
+        request.resource.data.status in ['ACTIVE', 'CANCELLED'] &&
+        request.resource.data.updated_at == request.time &&
+        (isAdmin() || isGameOwner(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id));
+
+      allow delete: if false;
+    }
+
+    // ============================================
     // COLECAO: notifications
     // ============================================
     match /notifications/{notificationId} {
@@ -1876,7 +2000,7 @@ service cloud.firestore {
            'game_invite', 'group_invite', 'achievement', 'reminder',
            'checkin', 'system', 'league', 'cashbox', 'admin',
            'GAME_INVITE', 'GAME_SUMMON', 'GAME_CONFIRMED', 'GAME_REMINDER',
-           'GAME_CANCELLED', 'GAME_UPDATED', 'GAME_VACANCY',
+           'GAME_CANCELLED', 'GAME_UPDATED', 'GAME_VACANCY', 'GAME_RIDE',
            'GROUP_INVITE', 'GROUP_INVITE_ACCEPTED', 'GROUP_INVITE_DECLINED',
            'MEMBER_JOINED', 'MEMBER_LEFT', 'ACHIEVEMENT', 'BADGE_UNLOCKED',
            'LEVEL_UP', 'MVP_RECEIVED', 'MVP_VOTE', 'STREAK_BROKEN', 'SYSTEM'

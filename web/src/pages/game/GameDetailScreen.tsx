@@ -67,6 +67,7 @@ import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl 
 import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
+import { GameRidesPanel } from './GameRidesPanel';
 import { GamePhotosTab } from './GamePhotosTab';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
 import type { GameConfirmation } from '../../types/game';
@@ -713,6 +714,10 @@ export const GameDetailScreen: React.FC = () => {
                 confirmations={confirmations}
                 canManage={isOwner || isCurrentUserAdmin}
               />
+              <GameRidesPanel
+                game={game}
+                canUse={!!(isConfirmed || canManage)}
+              />
               {showCheckInSocial && (
                 <CheckInSocialPanel
                   checkedInPlayers={checkedInPlayers}
@@ -750,6 +755,10 @@ export const GameDetailScreen: React.FC = () => {
             game={game}
             confirmations={confirmations}
             canManage={isOwner || isCurrentUserAdmin}
+          />
+          <GameRidesPanel
+            game={game}
+            canUse={!!(isConfirmed || canManage)}
           />
           {showCheckInSocial && (
             <CheckInSocialPanel
