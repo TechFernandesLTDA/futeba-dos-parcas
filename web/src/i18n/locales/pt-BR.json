@@ -1168,8 +1168,12 @@
       "balance": "Equilíbrio",
       "balanced": "Equilibrado",
       "balancedDraw": "Sorteio Balanceado",
+      "favoriteName": "Time {{team}} favorito",
+      "favoriteSuggestions": "Sugestões dos favoritos",
       "greedy": "Guloso",
+      "noFavoriteSuggestions": "Nenhuma dupla ou time favorito confirmado neste jogo.",
       "saveError": "Erro ao salvar os times. Recarregue a página e tente novamente.",
+      "saveFavorite": "Favoritar",
       "snakeDraft": "Snake Draft",
       "title": "Times",
       "unbalanced": "Desequilibrado"
@@ -1943,6 +1947,25 @@
     "level": "Nível",
     "levelHistoryLoadError": "Erro ao carregar histórico de nível.",
     "levelJourney": "Jornada de Nível",
+    "favoriteSquads": {
+      "deleteAria": "Excluir favorito {{name}}",
+      "deleteError": "Não foi possível excluir o favorito. Tente novamente.",
+      "deleteSuccess": "Favorito removido.",
+      "description": "Duplas e times salvos para formar convocações mais rápidas.",
+      "empty": "Nenhuma dupla ou time favorito ainda.",
+      "emptyHint": "Salve um time pela tela de formação depois de confirmar jogadores.",
+      "loadError": "Não foi possível carregar seus favoritos.",
+      "loading": "Carregando favoritos...",
+      "saveError": "Não foi possível salvar o favorito. Tente novamente.",
+      "saveSuccess": "Favorito salvo.",
+      "title": "Duplas e times favoritos",
+      "validation": {
+        "maxPlayers": "Um favorito pode ter no máximo 8 jogadores.",
+        "minPlayers": "Escolha pelo menos 2 jogadores para salvar um favorito.",
+        "name": "Dê um nome para o favorito.",
+        "playerNames": "Revise os jogadores do favorito."
+      }
+    },
     "levelLabel": "Nível {{level}}",
     "levelMax": "MAX",
     "levelProgressAria": "Progresso de nível",

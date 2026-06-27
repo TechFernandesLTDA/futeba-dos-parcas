@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -15,6 +15,7 @@ import {
   Chip,
   LinearProgress,
   Tooltip,
+  Alert,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
@@ -26,6 +27,7 @@ import {
   Balance as BalanceIcon,
   DragIndicator as DragIcon,
   AutoAwesome as AutoAwesomeIcon,
+  Groups as GroupsIcon,
 } from '@mui/icons-material';
 import { collection, doc, getDoc, getDocs, query, runTransaction, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -41,6 +43,9 @@ import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { balancedDraw, PlayerForDraw } from '../../utils/balancedDraw';
 import { getUsersByIds } from '../../utils/userBatch';
+import { useFavoriteSquads } from '../../hooks/useFavoriteSquads';
+import { applyFavoriteSquadToTeams, getApplicableFavoriteSquads } from '../../utils/favoriteSquads';
+import type { FavoriteSquad } from '../../types/favoriteSquad';
 
 const logger = createLogger('TeamFormationScreen');
 
@@ -91,6 +96,13 @@ export const TeamFormationScreen: React.FC = () => {
   const [draggedPlayer, setDraggedPlayer] = useState<TeamPlayer | null>(null);
   const [dragFromTeam, setDragFromTeam] = useState<'A' | 'B' | null>(null);
   const [dropTarget, setDropTarget] = useState<'A' | 'B' | null>(null);
+  const {
+    squads: favoriteSquads,
+    loading: favoriteSquadsLoading,
+    error: favoriteSquadsError,
+    saving: favoriteSquadSaving,
+    addFavoriteSquad,
+  } = useFavoriteSquads();
   const touchStartRef = useRef<{ x: number; y: number; player: TeamPlayer; team: 'A' | 'B' } | null>(null);
   const touchCloneRef = useRef<HTMLDivElement | null>(null);
 
@@ -198,6 +210,30 @@ export const TeamFormationScreen: React.FC = () => {
     setTeamA(allPlayers.filter((p) => result.teams[0].players.some((dp) => dp.id === p.id)));
     setTeamB(allPlayers.filter((p) => result.teams[1].players.some((dp) => dp.id === p.id)));
   };
+
+  const handleSaveFavoriteSquad = useCallback(async (players: TeamPlayer[], fallbackName: string) => {
+    if (players.length < 2) {
+      showError(t('profile.favoriteSquads.validation.minPlayers'));
+      return;
+    }
+
+    await addFavoriteSquad({
+      name: fallbackName,
+      playerIds: players.map((player) => player.id),
+      playerNames: players.map((player) => player.name),
+    });
+  }, [addFavoriteSquad, showError, t]);
+
+  const applicableFavoriteSquads = useMemo(
+    () => getApplicableFavoriteSquads(favoriteSquads, [...teamA, ...teamB]).slice(0, 4),
+    [favoriteSquads, teamA, teamB],
+  );
+
+  const handleApplyFavoriteSquad = useCallback((squad: FavoriteSquad) => {
+    const result = applyFavoriteSquadToTeams(squad, teamA, teamB);
+    setTeamA(result.teamA);
+    setTeamB(result.teamB);
+  }, [teamA, teamB]);
 
   const movePlayer = useCallback((player: TeamPlayer, fromTeam: 'A' | 'B') => {
     if (fromTeam === 'A') {
@@ -400,6 +436,15 @@ export const TeamFormationScreen: React.FC = () => {
                   <Typography variant="subtitle1" fontWeight={600}>
                     Time A ({teamA.length})
                   </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<GroupsIcon />}
+                    onClick={() => handleSaveFavoriteSquad(teamA, t('games.teams.favoriteName', { team: 'A' }))}
+                    disabled={favoriteSquadSaving || teamA.length < 2}
+                    sx={{ ml: 'auto' }}
+                  >
+                    {t('games.teams.saveFavorite')}
+                  </Button>
                 </Box>
                 {teamA.map((player) => (
                   <Box
@@ -459,6 +504,15 @@ export const TeamFormationScreen: React.FC = () => {
                   <Typography variant="subtitle1" fontWeight={600}>
                     Time B ({teamB.length})
                   </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<GroupsIcon />}
+                    onClick={() => handleSaveFavoriteSquad(teamB, t('games.teams.favoriteName', { team: 'B' }))}
+                    disabled={favoriteSquadSaving || teamB.length < 2}
+                    sx={{ ml: 'auto' }}
+                  >
+                    {t('games.teams.saveFavorite')}
+                  </Button>
                 </Box>
                 {teamB.map((player) => (
                   <Box
@@ -501,6 +555,44 @@ export const TeamFormationScreen: React.FC = () => {
             </Card>
           </Grid>
         </Grid>
+
+        <Card sx={{ mt: 2 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <GroupsIcon color="primary" />
+              <Typography variant="subtitle2" fontWeight={600}>
+                {t('games.teams.favoriteSuggestions')}
+              </Typography>
+            </Box>
+            {favoriteSquadsLoading ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={18} />
+                <Typography variant="body2" color="text.secondary">
+                  {t('profile.favoriteSquads.loading')}
+                </Typography>
+              </Box>
+            ) : favoriteSquadsError ? (
+              <Alert severity="warning">{t('profile.favoriteSquads.loadError')}</Alert>
+            ) : applicableFavoriteSquads.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                {t('games.teams.noFavoriteSuggestions')}
+              </Typography>
+            ) : (
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {applicableFavoriteSquads.map((squad) => (
+                  <Chip
+                    key={squad.id}
+                    icon={<GroupsIcon />}
+                    label={`${squad.name} · ${squad.playerNames.join(' + ')}`}
+                    onClick={() => handleApplyFavoriteSquad(squad)}
+                    color={squad.type === 'PAIR' ? 'primary' : 'secondary'}
+                    variant="outlined"
+                  />
+                ))}
+              </Box>
+            )}
+          </CardContent>
+        </Card>
 
         <Card sx={{ mt: 2, mb: 2 }}>
           <CardContent>

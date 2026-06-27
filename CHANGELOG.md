@@ -53,6 +53,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.31.0] - 2026-06-27
+
+#### Adicionado
+- Hook `useFavoriteSquads` com listener, toasts e validação client-side.
+- Utilitário testável para normalizar, validar, filtrar e aplicar favoritos na formação.
+- Rules owner-only para `users/{uid}/favorite_squads`.
+
+#### Corrigido
+- Sem correções nesta versão.
+
+#### Segurança
+- Favoritos são privados ao dono do perfil e limitados por schema nas Firestore Rules.
+
+_Issues: #2985_
+
 ### [1.30.0] - 2026-06-27
 
 #### Adicionado

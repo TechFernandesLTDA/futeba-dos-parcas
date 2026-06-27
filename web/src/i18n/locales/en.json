@@ -1168,8 +1168,12 @@
       "balance": "Balance",
       "balanced": "Balanced",
       "balancedDraw": "Balanced Draw",
+      "favoriteName": "Favorite Team {{team}}",
+      "favoriteSuggestions": "Favorite suggestions",
       "greedy": "Greedy",
+      "noFavoriteSuggestions": "No favorite pair or team is confirmed in this game.",
       "saveError": "Error saving teams. Reload the page and try again.",
+      "saveFavorite": "Favorite",
       "snakeDraft": "Snake Draft",
       "title": "Teams",
       "unbalanced": "Unbalanced"
@@ -1943,6 +1947,25 @@
     "level": "Level",
     "levelHistoryLoadError": "Error loading level history.",
     "levelJourney": "Level Journey",
+    "favoriteSquads": {
+      "deleteAria": "Delete favorite {{name}}",
+      "deleteError": "Could not delete the favorite. Please try again.",
+      "deleteSuccess": "Favorite removed.",
+      "description": "Saved pairs and teams for faster call-ups.",
+      "empty": "No favorite pair or team yet.",
+      "emptyHint": "Save a team from the formation screen after players confirm.",
+      "loadError": "Could not load your favorites.",
+      "loading": "Loading favorites...",
+      "saveError": "Could not save the favorite. Please try again.",
+      "saveSuccess": "Favorite saved.",
+      "title": "Favorite pairs and teams",
+      "validation": {
+        "maxPlayers": "A favorite can have at most 8 players.",
+        "minPlayers": "Choose at least 2 players to save a favorite.",
+        "name": "Give this favorite a name.",
+        "playerNames": "Review the favorite players."
+      }
+    },
     "levelLabel": "Level {{level}}",
     "levelMax": "MAX",
     "levelProgressAria": "Level progress",

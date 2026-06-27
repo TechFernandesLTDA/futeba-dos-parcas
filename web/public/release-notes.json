@@ -1,7 +1,47 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T15:04:44.096Z",
+  "generatedAt": "2026-06-27T15:31:08.441Z",
   "notes": [
+    {
+      "version": "1.31.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Duplas e times favoritos para formar convocações mais rápido",
+      "highlights": [
+        {
+          "icon": "groups",
+          "title": "Favoritos no perfil",
+          "description": "O perfil agora lista duplas e times salvos para reutilizar nas próximas formações."
+        },
+        {
+          "icon": "playlist_add",
+          "title": "Salvar da formação",
+          "description": "Na tela de formação, o organizador pode favoritar o Time A ou Time B quando houver pelo menos dois jogadores."
+        },
+        {
+          "icon": "auto_awesome",
+          "title": "Sugestões no sorteio",
+          "description": "Favoritos confirmados no jogo aparecem como chips para manter a dupla ou time junto."
+        }
+      ],
+      "added": [
+        "Nova subcoleção segura `users/{uid}/favorite_squads` para favoritos próprios.",
+        "Sugestões de favoritos dentro da formação de times."
+      ],
+      "improved": [
+        "Estados de carregamento, erro e vazio na listagem de favoritos no perfil.",
+        "Textos localizados em português, inglês e espanhol."
+      ],
+      "fixed": [
+        "Sem correções nesta versão."
+      ],
+      "issueRefs": [
+        2985
+      ]
+    },
     {
       "version": "1.30.0",
       "buildNumber": null,
