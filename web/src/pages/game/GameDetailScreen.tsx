@@ -63,6 +63,7 @@ import { formatGameDateLong } from '../../utils/dateFormatters';
 import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl } from '../../utils/calendarLinks';
 import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
+import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
 
 const PostGameMessagesPanel: React.FC<{ gameId: string; canWrite: boolean }> = ({ gameId, canWrite }) => {
@@ -635,6 +636,11 @@ export const GameDetailScreen: React.FC = () => {
                 tabValue={tabValue}
                 onTabChange={setTabValue}
               />
+              <PositionReinforcementsPanel
+                game={game}
+                confirmations={confirmations}
+                canManage={isOwner || isCurrentUserAdmin}
+              />
               {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
             </Grid>
           </Grid>
@@ -653,6 +659,11 @@ export const GameDetailScreen: React.FC = () => {
             isOwner={isOwner}
             tabValue={tabValue}
             onTabChange={setTabValue}
+          />
+          <PositionReinforcementsPanel
+            game={game}
+            confirmations={confirmations}
+            canManage={isOwner || isCurrentUserAdmin}
           />
           {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
         </PageContainer>
