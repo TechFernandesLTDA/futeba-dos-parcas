@@ -12,6 +12,7 @@
 import { describe, it, beforeAll, afterAll } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { serverTimestamp } from "firebase/firestore";
 import {
   initTestEnv,
   asAdmin,
@@ -229,6 +230,27 @@ describe("users — campos imutáveis (atualização)", () => {
         mid_rating: 2.5,
         defender_rating: 2.0,
         gk_rating: 1.5,
+      })
+    );
+  });
+
+  it("Player pode atualizar status publico de procurando jogo hoje", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`users/${UID_PLAYER_A}`).update({
+        looking_for_game_today: true,
+        looking_for_game_today_until: new Date("2026-06-27T23:59:59.999-03:00"),
+        looking_for_game_today_updated_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("Player NÃO pode gravar status procurando jogo hoje com tipos inválidos", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`users/${UID_PLAYER_A}`).update({
+        looking_for_game_today: "sim",
+        looking_for_game_today_until: "fim do dia",
       })
     );
   });

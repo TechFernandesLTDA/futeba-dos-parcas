@@ -272,6 +272,21 @@ service cloud.firestore {
       return rating == null || (rating >= 0.0 && rating <= 5.0);
     }
 
+    // Status publico e efemero: jogador quer ser chamado para jogo hoje.
+    function isValidLookingForGameToday(data) {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return (!('looking_for_game_today' in data) || data.looking_for_game_today is bool) &&
+             (!('looking_for_game_today_until' in data) ||
+              data.looking_for_game_today_until == null ||
+              data.looking_for_game_today_until is timestamp) &&
+             (!('looking_for_game_today_updated_at' in data) ||
+              data.looking_for_game_today_updated_at is timestamp) &&
+             (!changed.hasAny(['looking_for_game_today', 'looking_for_game_today_until']) ||
+              changed.hasAny(['looking_for_game_today_updated_at'])) &&
+             (!changed.hasAny(['looking_for_game_today_updated_at']) ||
+              data.looking_for_game_today_updated_at == request.time);
+    }
+
     // Valida league rating no range 0.0 - 100.0
     function isValidLeagueRating(rating) {
       return rating == null || (rating >= 0.0 && rating <= 100.0);
@@ -483,6 +498,8 @@ service cloud.firestore {
       // - birth_date, gender, height_cm, weight_kg (dados pessoais)
       // - dominant_foot, primary_position, secondary_position, play_style, experience_years
       // - favorite_team (time do coracao — opcional)
+      // - looking_for_game_today, looking_for_game_today_until, looking_for_game_today_updated_at
+      //   (status publico/efemero de disponibilidade)
       //
       // Campos protegidos (apenas admin/cloud functions):
       // - id, created_at, role (identidade e permissões)
@@ -540,7 +557,8 @@ service cloud.firestore {
             isValidRating(request.resource.data.get('striker_rating', null)) &&
             isValidRating(request.resource.data.get('mid_rating', null)) &&
             isValidRating(request.resource.data.get('defender_rating', null)) &&
-            isValidRating(request.resource.data.get('gk_rating', null)));
+            isValidRating(request.resource.data.get('gk_rating', null)) &&
+            isValidLookingForGameToday(request.resource.data));
 
       allow delete: if false;
 

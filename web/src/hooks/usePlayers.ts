@@ -30,6 +30,8 @@ export interface Player {
   autoDefenderRating: number;
   autoGkRating: number;
   autoRatingSamples: number;
+  lookingForGameToday?: boolean;
+  lookingForGameTodayUntil?: Date | { toDate: () => Date };
   createdAt?: Date;
 }
 
@@ -110,6 +112,8 @@ export const usePlayers = (groupId?: string) => {
             autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
             autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
             autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
+            lookingForGameToday: data.lookingForGameToday === true,
+            lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
             createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
           } as Player;
           });
@@ -180,6 +184,8 @@ export const usePlayerDetail = (userId?: string) => {
               autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
               autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
               autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
+              lookingForGameToday: data.lookingForGameToday === true,
+              lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
               createdAt: raw.created_at?.toDate?.() || (data.createdAt as Date | undefined),
             });
           }
