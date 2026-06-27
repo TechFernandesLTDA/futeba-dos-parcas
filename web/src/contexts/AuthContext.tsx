@@ -152,8 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             nickname: '',
             photo_url: photoURL || '',
             role: 'PLAYER',
-            level: 1,
-            experience_points: 0,
             striker_rating: 0,
             mid_rating: 0,
             defender_rating: 0,
@@ -451,7 +449,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateDoc(userRef, {
           name: profile.displayName || user.name,
           photo_url: profile.photoURL || user.photoUrl,
-          updated_at: serverTimestamp(),
         });
       } catch (firestoreErr) {
         // Firestore falhou — tenta reverter Auth para consistência

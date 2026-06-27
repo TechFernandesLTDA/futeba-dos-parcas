@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams, useNavi
 import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
+import { auth } from './services/firebase';
 import { AuthProvider, ThemeProvider, LanguageProvider, useAuth, TeamsProvider } from './contexts';
 import { Box, Typography, Button, useTheme, useMediaQuery } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -53,6 +54,7 @@ const SplashScreen = lazy(() => import('./pages/splash/SplashScreen').then(m => 
 const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
 import { VerificationBanner } from './components/auth/VerificationBanner';
 import { useTranslation } from 'react-i18next';
+import type { User as FirebaseUser } from 'firebase/auth';
 const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
 
 const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
@@ -191,10 +193,28 @@ function SplashLoadingFallback() {
   return <LoadingScreen variant="splash" />;
 }
 
+function useLoginRedirectReady(firebaseUser: FirebaseUser | null, loading: boolean) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (loading || firebaseUser) {
+      setReady(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setReady(true), 1200);
+    return () => window.clearTimeout(timer);
+  }, [firebaseUser, loading]);
+
+  return ready;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
   const location = useLocation();
-  const verified = useVerifiedClaim(firebaseUser);
+  const activeUser = firebaseUser ?? auth.currentUser;
+  const loginRedirectReady = useLoginRedirectReady(activeUser, loading);
+  const verified = useVerifiedClaim(activeUser);
 
   if (loading) {
     return <SplashLoadingFallback />;
@@ -202,7 +222,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   // FIX #574 (C3): preserva location pra que LoginScreen redirecione user
   // de volta pro deep link após login. Antes: hardcoded `/`, perdendo destino.
-  if (!firebaseUser) {
+  if (!activeUser) {
+    if (!loginRedirectReady) return <SplashLoadingFallback />;
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -216,7 +237,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (verified === false && !isOnboardingRoute) {
     // FIX #1024: se já tem telefone verificado, vai direto pro CPF; caso contrário,
     // começa pelo telefone. Evita regredir o usuário que já completou essa etapa.
-    const nextStep = firebaseUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
+    const nextStep = activeUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
     return <Navigate to={nextStep} replace />;
   }
 
@@ -230,18 +251,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function VerifiedRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
   const location = useLocation();
-  const verified = useVerifiedClaim(firebaseUser);
+  const activeUser = firebaseUser ?? auth.currentUser;
+  const loginRedirectReady = useLoginRedirectReady(activeUser, loading);
+  const verified = useVerifiedClaim(activeUser);
 
   if (loading) return <SplashLoadingFallback />;
 
-  if (!firebaseUser) {
+  if (!activeUser) {
+    if (!loginRedirectReady) return <SplashLoadingFallback />;
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (verified === null) return <AppLoadingFallback />;
 
   if (verified === false) {
-    const nextStep = firebaseUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
+    const nextStep = activeUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
     return <Navigate to={nextStep} replace />;
   }
 
@@ -326,13 +350,14 @@ function GroupMemberRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
-  const verified = useVerifiedClaim(firebaseUser);
+  const activeUser = firebaseUser ?? auth.currentUser;
+  const verified = useVerifiedClaim(activeUser);
 
   if (loading) {
     return <SplashLoadingFallback />;
   }
 
-  if (firebaseUser) {
+  if (activeUser) {
     // Aguarda resolução do claim antes de decidir destino — evita piscar
     if (verified === null) return <AppLoadingFallback />;
 
@@ -340,7 +365,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     // ProtectedRoute → /onboarding/phone → PublicRoute → / → ProtectedRoute...).
     // Redireciona diretamente pro próximo passo do onboarding.
     if (verified === false) {
-      const nextStep = firebaseUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
+      const nextStep = activeUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
       return <Navigate to={nextStep} replace />;
     }
 
