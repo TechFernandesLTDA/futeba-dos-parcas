@@ -178,6 +178,7 @@ export const NotificationsScreen: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [actionPending, setActionPending] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const notificationFilters = useMemo(() => NOTIFICATION_FILTER_TYPES.map((type) => ({
     type,
@@ -198,6 +199,7 @@ export const NotificationsScreen: React.FC = () => {
 
   const handleAccept = useCallback(async (notification: typeof notifications[0]) => {
     setActiveActionId(notification.id);
+    setActionPending(true);
     try {
       if (notification.type === 'GROUP_INVITE' && notification.referenceId) {
         await markAsRead(notification.id);
@@ -211,11 +213,13 @@ export const NotificationsScreen: React.FC = () => {
       showError(t('notifications.acceptError'));
     } finally {
       setActiveActionId(null);
+      setActionPending(false);
     }
   }, [confirmPresence, markAsRead, showSuccess, showError, navigate, t]);
 
   const handleDecline = useCallback(async (notification: typeof notifications[0]) => {
     setActiveActionId(notification.id);
+    setActionPending(true);
     try {
       if ((notification.type === 'GAME_INVITE' || notification.type === 'GAME_SUMMON') && notification.referenceId) {
         await declineGameInvite(notification.id, notification.referenceId);
@@ -227,6 +231,7 @@ export const NotificationsScreen: React.FC = () => {
       showError(t('feedback.notifications.declineError'));
     } finally {
       setActiveActionId(null);
+      setActionPending(false);
     }
   }, [declineGameInvite, markAsRead, showSuccess, showError, t]);
 
@@ -364,7 +369,7 @@ export const NotificationsScreen: React.FC = () => {
 
               return (
                 <Card key={group.key} sx={{ mb: 2, overflow: 'hidden' }}>
-                  {acting && group.notifications.some((notification) => notification.id === activeActionId) && (
+                  {(acting || actionPending) && group.notifications.some((notification) => notification.id === activeActionId) && (
                     <LinearProgress aria-label={t('notifications.screen.actionProgress')} />
                   )}
                   <Box sx={{ px: 2, pt: 1.5, pb: 1, bgcolor: alpha(theme.palette.primary.main, 0.04) }}>

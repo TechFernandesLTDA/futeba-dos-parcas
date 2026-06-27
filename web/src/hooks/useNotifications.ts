@@ -151,7 +151,6 @@ export const useNotifications = (userId?: string) => {
       } catch (fallbackErr) {
         logger.error('Error marking declined invite as read:', fallbackErr);
         showError(t('feedback.notifications.declineError'));
-        throw fallbackErr;
       }
     } finally {
       setActing(false);
