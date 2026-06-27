@@ -53,6 +53,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.32.0] - 2026-06-27
+
+#### Adicionado
+- Hook `useUpdateChallengeProgress` para progresso/finalização com toast e notificação interna.
+- Testes de Firestore Rules para criação, update permitido e bloqueios de abuso em `group-challenges`.
+
+#### Corrigido
+- Criação web de desafios passa a gravar `created_by`, `updated_at`, meta, alvo e prazo.
+
+#### Segurança
+- Rules de `group-challenges` agora validam schema, autor autenticado, associação ao grupo, progresso máximo e imutabilidade de autor/grupos/meta/alvo/prazo.
+
+_Issues: #2984_
+
 ### [1.31.0] - 2026-06-27
 
 #### Adicionado

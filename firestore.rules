@@ -2505,17 +2505,66 @@ service cloud.firestore {
     // COLECAO: group-challenges (desafios inter-grupos)
     // ============================================
     match /group-challenges/{challengeId} {
+      function isValidGroupChallenge(data) {
+        return data.challenger_group_id is string &&
+          data.challenger_group_id.size() > 0 &&
+          data.challenged_group_id is string &&
+          data.challenged_group_id.size() > 0 &&
+          data.challenger_group_id != data.challenged_group_id &&
+          data.challenger_group_name is string &&
+          data.challenger_group_name.size() > 0 &&
+          data.challenger_group_name.size() <= 80 &&
+          data.challenged_group_name is string &&
+          data.challenged_group_name.size() > 0 &&
+          data.challenged_group_name.size() <= 80 &&
+          data.goal is string &&
+          data.goal.size() > 0 &&
+          data.goal.size() <= 120 &&
+          data.target_count is number &&
+          data.target_count >= 1 &&
+          data.target_count <= 999 &&
+          data.current_progress is number &&
+          data.current_progress >= 0 &&
+          data.current_progress <= data.target_count &&
+          data.deadline is string &&
+          data.deadline.size() > 0 &&
+          data.deadline.size() <= 10 &&
+          data.status in ['PENDING', 'ACCEPTED', 'DECLINED', 'FINISHED'];
+      }
+
+      function canWriteGroupChallenge(data) {
+        return isAdmin() ||
+          data.created_by == userId() ||
+          isGroupMember(data.challenger_group_id) ||
+          isGroupMember(data.challenged_group_id);
+      }
+
       allow read: if isAuthenticated();
-      // #1976: create restrito ao creator, group owner ou admin
       allow create: if isAuthenticated() &&
-        (isAdmin() || request.resource.data.created_by == userId());
-      // #1976: update exige ownership — challenge creator, group owner ou admin.
-      // Antes qualquer auth user podia alterar qualquer challenge.
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.created_by == userId() ||
-        (resource.data.group_id != null && isGroupAdmin(resource.data.group_id))
-      );
+        request.resource.data.created_by == userId() &&
+        isGroupMember(request.resource.data.challenger_group_id) &&
+        request.resource.data.status == 'PENDING' &&
+        request.resource.data.current_progress == 0 &&
+        request.resource.data.keys().hasOnly([
+          'challenger_group_id', 'challenger_group_name',
+          'challenged_group_id', 'challenged_group_name',
+          'created_by', 'status', 'goal', 'target_count', 'current_progress',
+          'deadline', 'proposed_date', 'created_at', 'updated_at'
+        ]) &&
+        request.resource.data.keys().hasAll([
+          'challenger_group_id', 'challenger_group_name',
+          'challenged_group_id', 'challenged_group_name',
+          'created_by', 'status', 'goal', 'target_count', 'current_progress',
+          'deadline', 'created_at', 'updated_at'
+        ]) &&
+        isValidGroupChallenge(request.resource.data);
+      allow update: if isAuthenticated() &&
+        canWriteGroupChallenge(resource.data) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'current_progress', 'responded_at', 'responded_by',
+          'completed_at', 'completed_by', 'updated_at'
+        ]) &&
+        isValidGroupChallenge(request.resource.data);
       allow delete: if isAdmin();
     }
 
