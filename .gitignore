@@ -70,6 +70,9 @@ ui-debug.log
 
 # Node modules
 node_modules/
+.npm-cache/
+web/.npm-cache/
+functions/.npm-cache/
 
 # Node dist output
 dist/
