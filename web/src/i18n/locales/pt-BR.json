@@ -1380,6 +1380,31 @@
     "save": "Salvar recado",
     "title": "Recado pós-jogo"
   },
+  "postGameReputation": {
+    "alreadyReviewed": "Você já avaliou este jogador neste jogo. Pode atualizar se quiser.",
+    "commentLabel": "Comentário opcional",
+    "commentPlaceholder": "Ex.: chegou no horário e jogou na boa.",
+    "criteria": {
+      "commitment": "Compromisso",
+      "punctuality": "Pontualidade",
+      "respect": "Respeito"
+    },
+    "description": "Avalie pontualidade, respeito e compromisso dos parças que jogaram.",
+    "emptyDescription": "Quando houver outros jogadores confirmados, você poderá registrar a reputação pós-jogo.",
+    "emptyTitle": "Sem jogadores para avaliar",
+    "playerLabel": "Jogador",
+    "reviewHint": "A avaliação impacta a reputação visível no perfil.",
+    "save": "Salvar reputação",
+    "saveSuccess": "Reputação registrada.",
+    "sent": "Enviada",
+    "sentCount": "{{count}} avaliação",
+    "sentCount_one": "{{count}} avaliação",
+    "sentCount_other": "{{count}} avaliações",
+    "sentListAria": "Avaliações de reputação enviadas",
+    "sentSummary": "Média enviada: {{score}}",
+    "title": "Reputação pós-jogo",
+    "update": "Atualizar reputação"
+  },
   "gamePhotos": {
     "addPhoto": "Adicionar foto",
     "captionLabel": "Legenda opcional",
@@ -2094,6 +2119,18 @@
     "positionNone": "Nenhuma",
     "positionStriker": "Atacante",
     "preferences": "Preferências",
+    "reputation": {
+      "commitment": "Compromisso",
+      "count": "{{count}} avaliação",
+      "count_one": "{{count}} avaliação",
+      "count_other": "{{count}} avaliações",
+      "description": "Média de pontualidade, respeito e compromisso avaliada após jogos.",
+      "empty": "A reputação aparece depois que outros jogadores avaliarem partidas finalizadas.",
+      "overall": "Reputação geral",
+      "punctuality": "Pontualidade",
+      "respect": "Respeito",
+      "title": "Reputação dos parças"
+    },
     "preferredPosition": "Posição Preferida",
     "recentActivity": "Atividade Recente",
     "saveChanges": "Salvar Alterações",

@@ -53,6 +53,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.36.0] - 2026-06-27
+
+#### Adicionado
+- Hook web `usePostGameReputation` para carregar avaliações enviadas e chamar a Function server-side.
+- Componente `PostGameReputationPanel` integrado ao `GameDetailScreen`.
+- Agregados `reputation_*` exibidos no `ProfileScreen`.
+
+#### Segurança
+- Cliente não escreve agregados de reputação diretamente; a UI chama `submitPostGameReputation`.
+
+_Issues: #2968_
+
 ### [1.35.0] - 2026-06-27
 
 #### Adicionado
@@ -249,6 +261,18 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.0] - 2026-06-27
+
+#### Adicionado
+- Callable `submitPostGameReputation` com App Check, perfil completo e rate limit.
+- Collection `post_game_reputation` com documento `{gameId}_{reviewerId}_{targetUserId}`.
+- Recalculo transacional de `reputation_overall_avg`, critérios e `reputation_reviews_count` em `users/{targetUserId}`.
+
+#### Segurança
+- Firestore Rules bloqueiam escrita direta em `post_game_reputation` e tornam `reputation_*` server-only em `users`.
+
+_Issues: #2968_
 
 ### [1.1.0] - 2026-06-27
 

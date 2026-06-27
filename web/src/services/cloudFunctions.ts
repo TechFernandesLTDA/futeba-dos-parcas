@@ -94,6 +94,24 @@ export const generateCheckinToken = httpsCallable<
   { success: boolean; token: string }
 >(functions, 'generateCheckinToken');
 
+// Reputacao pos-jogo
+export const submitPostGameReputation = httpsCallable<
+  {
+    gameId: string;
+    targetUserId: string;
+    punctuality: number;
+    respect: number;
+    commitment: number;
+    comment?: string;
+  },
+  {
+    success: boolean;
+    updated: boolean;
+    reviewsCount: number;
+    overallAvg: number;
+  }
+>(functions, 'submitPostGameReputation');
+
 // #2430: Sincroniza custom claim FIELD_OWNER/ADMIN do Firestore para o Auth
 export const syncFieldOwnerClaim = httpsCallable<
   void,

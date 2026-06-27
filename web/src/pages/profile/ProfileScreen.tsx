@@ -22,6 +22,8 @@ import {
   Paper,
   LinearProgress,
   CircularProgress,
+  Avatar,
+  Stack,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -40,6 +42,9 @@ import {
   Sports as DefIcon,
   Groups as GroupsIcon,
   DeleteOutline as DeleteIcon,
+  Handshake as HandshakeIcon,
+  AccessTime as TimeIcon,
+  TaskAlt as CommitmentIcon,
 } from '@mui/icons-material';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQueryClient } from '@tanstack/react-query';
@@ -296,6 +301,91 @@ export const ProfileScreen: React.FC = () => {
                     </Box>
                   </Grid>
                 </Grid>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ mt: 2 }}>
+              <CardContent>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                  <Avatar sx={{ bgcolor: 'success.main', color: 'success.contrastText' }}>
+                    <HandshakeIcon />
+                  </Avatar>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      {t('profile.reputation.title')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('profile.reputation.description')}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    color={profile.reputationReviewsCount > 0 ? 'success' : 'default'}
+                    label={t('profile.reputation.count', { count: profile.reputationReviewsCount })}
+                  />
+                </Stack>
+
+                {profile.reputationReviewsCount > 0 ? (
+                  <Grid container spacing={2}>
+                    <Grid xs={12} sm={4}>
+                      <Paper variant="outlined" sx={{ p: 1.5, height: '100%' }}>
+                        <Typography variant="caption" color="text.secondary">
+                          {t('profile.reputation.overall')}
+                        </Typography>
+                        <Typography variant="h4" fontWeight={800} color="success.main">
+                          {profile.reputationOverallAvg.toFixed(1)}
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={(profile.reputationOverallAvg / 5) * 100}
+                          color="success"
+                          sx={{ height: 6, borderRadius: 3, mt: 0.5 }}
+                        />
+                      </Paper>
+                    </Grid>
+                    <Grid xs={12} sm={8}>
+                      <Stack spacing={1.25}>
+                        {[
+                          {
+                            icon: <TimeIcon color="info" />,
+                            label: t('profile.reputation.punctuality'),
+                            value: profile.reputationPunctualityAvg,
+                          },
+                          {
+                            icon: <ShieldIcon color="success" />,
+                            label: t('profile.reputation.respect'),
+                            value: profile.reputationRespectAvg,
+                          },
+                          {
+                            icon: <CommitmentIcon color="primary" />,
+                            label: t('profile.reputation.commitment'),
+                            value: profile.reputationCommitmentAvg,
+                          },
+                        ].map((item) => (
+                          <Stack direction="row" spacing={1} alignItems="center" key={item.label}>
+                            {item.icon}
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography variant="body2">{item.label}</Typography>
+                              <LinearProgress
+                                variant="determinate"
+                                value={(item.value / 5) * 100}
+                                sx={{ height: 6, borderRadius: 3, mt: 0.5 }}
+                              />
+                            </Box>
+                            <Typography variant="body2" fontWeight={700}>
+                              {item.value.toFixed(1)}
+                            </Typography>
+                          </Stack>
+                        ))}
+                      </Stack>
+                    </Grid>
+                  </Grid>
+                ) : (
+                  <Alert severity="info">
+                    {t('profile.reputation.empty')}
+                  </Alert>
+                )}
               </CardContent>
             </Card>
 

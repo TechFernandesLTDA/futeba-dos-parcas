@@ -475,6 +475,12 @@ service cloud.firestore {
                        !('auto_defender_rating' in request.resource.data) &&
                        !('auto_gk_rating' in request.resource.data) &&
                        !('auto_rating_samples' in request.resource.data) &&
+                       !('reputation_overall_avg' in request.resource.data) &&
+                       !('reputation_punctuality_avg' in request.resource.data) &&
+                       !('reputation_respect_avg' in request.resource.data) &&
+                       !('reputation_commitment_avg' in request.resource.data) &&
+                       !('reputation_reviews_count' in request.resource.data) &&
+                       !('reputation_updated_at' in request.resource.data) &&
                        // Validacao de nome (2-100 chars)
                        isValidName(request.resource.data.name) &&
                        // Validacao de email (formato valido)
@@ -525,6 +531,13 @@ service cloud.firestore {
            fieldUnchanged('auto_gk_rating') &&
            fieldUnchanged('auto_rating_samples') &&
            fieldUnchanged('auto_rating_updated_at') &&
+           // Reputacao pos-jogo agregada e server-only (#2968).
+           fieldUnchanged('reputation_overall_avg') &&
+           fieldUnchanged('reputation_punctuality_avg') &&
+           fieldUnchanged('reputation_respect_avg') &&
+           fieldUnchanged('reputation_commitment_avg') &&
+           fieldUnchanged('reputation_reviews_count') &&
+           fieldUnchanged('reputation_updated_at') &&
            // SECFIX #578 STAGE 2: PII fields (email, fcm_token, birth_date,
            // height_cm, weight_kg, gender) NÃO podem ser escritos client-side em `users`.
            // Devem usar callable Cloud Function `updateUserPii` que escreve em
@@ -581,6 +594,22 @@ service cloud.firestore {
         allow read: if isAuthenticated() && request.auth.uid == userId;
         allow write: if false;
       }
+    }
+
+    // ============================================
+    // COLECAO: post_game_reputation
+    // ============================================
+    // Issue #2968: avaliacoes leves pos-jogo. Escrita apenas via Cloud Function
+    // submitPostGameReputation, que valida jogo finalizado, participantes e
+    // recalcula agregados server-side em users/{targetUserId}.
+    match /post_game_reputation/{reviewId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.reviewer_id == userId() ||
+        resource.data.target_user_id == userId()
+      );
+
+      allow create, update, delete: if false;
     }
 
     // ============================================

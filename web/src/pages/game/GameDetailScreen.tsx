@@ -69,6 +69,7 @@ import { GamePlayersSection } from './GamePlayersSection';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
 import { GameRidesPanel } from './GameRidesPanel';
 import { GamePhotosTab } from './GamePhotosTab';
+import { PostGameReputationPanel } from './PostGameReputationPanel';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
 import type { GameConfirmation } from '../../types/game';
 
@@ -736,6 +737,14 @@ export const GameDetailScreen: React.FC = () => {
                 />
               )}
               {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
+              {showPostGameMessages && (
+                <PostGameReputationPanel
+                  gameId={gameId!}
+                  confirmations={confirmations}
+                  currentUserId={currentUser?.uid}
+                  canWrite={!!isConfirmed}
+                />
+              )}
             </Grid>
           </Grid>
         </PageContainer>
@@ -778,6 +787,14 @@ export const GameDetailScreen: React.FC = () => {
             />
           )}
           {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
+          {showPostGameMessages && (
+            <PostGameReputationPanel
+              gameId={gameId!}
+              confirmations={confirmations}
+              currentUserId={currentUser?.uid}
+              canWrite={!!isConfirmed}
+            />
+          )}
         </PageContainer>
       )}
 

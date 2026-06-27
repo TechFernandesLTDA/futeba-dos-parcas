@@ -1380,6 +1380,31 @@
     "save": "Guardar mensaje",
     "title": "Mensaje post-partido"
   },
+  "postGameReputation": {
+    "alreadyReviewed": "Ya evaluaste a este jugador en este partido. Puedes actualizarlo si quieres.",
+    "commentLabel": "Comentario opcional",
+    "commentPlaceholder": "Ej.: llegó a tiempo y mantuvo el respeto.",
+    "criteria": {
+      "commitment": "Compromiso",
+      "punctuality": "Puntualidad",
+      "respect": "Respeto"
+    },
+    "description": "Evalúa puntualidad, respeto y compromiso de quienes jugaron.",
+    "emptyDescription": "Cuando haya otros jugadores confirmados, podrás registrar reputación post-partido.",
+    "emptyTitle": "No hay jugadores para evaluar",
+    "playerLabel": "Jugador",
+    "reviewHint": "Esta evaluación impacta la reputación visible en el perfil.",
+    "save": "Guardar reputación",
+    "saveSuccess": "Reputación registrada.",
+    "sent": "Enviada",
+    "sentCount": "{{count}} evaluación",
+    "sentCount_one": "{{count}} evaluación",
+    "sentCount_other": "{{count}} evaluaciones",
+    "sentListAria": "Evaluaciones de reputación enviadas",
+    "sentSummary": "Promedio enviado: {{score}}",
+    "title": "Reputación post-partido",
+    "update": "Actualizar reputación"
+  },
   "gamePhotos": {
     "addPhoto": "Agregar foto",
     "captionLabel": "Leyenda opcional",
@@ -2094,6 +2119,18 @@
     "positionNone": "Ninguna",
     "positionStriker": "Delantero",
     "preferences": "Preferencias",
+    "reputation": {
+      "commitment": "Compromiso",
+      "count": "{{count}} evaluación",
+      "count_one": "{{count}} evaluación",
+      "count_other": "{{count}} evaluaciones",
+      "description": "Promedio de puntualidad, respeto y compromiso evaluado después de partidos.",
+      "empty": "La reputación aparece después de que otros jugadores evalúen partidos finalizados.",
+      "overall": "Reputación general",
+      "punctuality": "Puntualidad",
+      "respect": "Respeto",
+      "title": "Reputación del jugador"
+    },
     "preferredPosition": "Posición Preferida",
     "recentActivity": "Actividad Reciente",
     "saveChanges": "Guardar Cambios",

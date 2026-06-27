@@ -987,6 +987,20 @@
       ]
     },
     {
+      "collectionGroup": "post_game_reputation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "game_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reviewer_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "statistics",
       "queryScope": "COLLECTION",
       "fields": [
