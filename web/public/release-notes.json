@@ -1,7 +1,46 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T16:03:50.950Z",
+  "generatedAt": "2026-06-27T16:36:34.584Z",
   "notes": [
+    {
+      "version": "1.33.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Álbum do jogo para compartilhar fotos da partida",
+      "highlights": [
+        {
+          "icon": "photo_library",
+          "title": "Galeria por partida",
+          "description": "Jogos finalizados agora exibem um álbum com fotos compartilhadas pelos participantes."
+        },
+        {
+          "icon": "add_photo_alternate",
+          "title": "Upload seguro",
+          "description": "Participantes confirmados e organizadores podem enviar fotos JPG, PNG, WebP ou GIF com legenda opcional."
+        },
+        {
+          "icon": "admin_panel_settings",
+          "title": "Moderação básica",
+          "description": "Quem enviou, organizadores e admins podem excluir fotos indevidas."
+        }
+      ],
+      "added": [
+        "Novo painel \"Álbum do jogo\" no detalhe de partidas finalizadas.",
+        "Visualização ampliada da foto com autor e legenda.",
+        "Estados de carregamento, erro e vazio para a galeria."
+      ],
+      "improved": [
+        "Uploads usam caminho por usuário no Storage para permitir exclusão segura pelo uploader.",
+        "Validação de tipo e tamanho de arquivo antes do envio."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        2982
+      ]
+    },
     {
       "version": "1.32.0",
       "buildNumber": null,

@@ -1,39 +1,62 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  IconButton,
-  Dialog,
-  CircularProgress,
-  useTheme,
+  Alert,
   alpha,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
+  AddPhotoAlternate as AddPhotoIcon,
   Close as CloseIcon,
+  Delete as DeleteIcon,
+  PhotoLibrary as PhotoLibraryIcon,
 } from '@mui/icons-material';
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+} from 'firebase/firestore';
+import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { EmptyState } from '../../components/common/EmptyState';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
-import { EmptyState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('GamePhotosTab');
+const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const CAPTION_MAX_LENGTH = 160;
 
 interface GamePhoto {
   id: string;
   gameId: string;
   url: string;
+  storagePath: string;
   uploadedBy: string;
   uploadedByName: string;
+  uploadedByPhoto?: string;
+  caption?: string;
   createdAt?: Date;
 }
 
@@ -42,36 +65,12 @@ interface GamePhotosTabProps {
   isFinished: boolean;
   isConfirmedPlayer: boolean;
   isOwner: boolean;
+  canManage?: boolean;
 }
 
-function compressImage(file: File, maxWidth: number = 1200, quality: number = 0.8): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement('canvas');
-      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height, 1);
-      canvas.width = img.width * ratio;
-      canvas.height = img.height * ratio;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error('Canvas context unavailable'));
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(
-        (blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Compression failed'));
-        },
-        'image/jpeg',
-        quality
-      );
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Image load failed'));
-    };
-    img.src = url;
-  });
+function safeFileName(file: File) {
+  const extension = file.type.split('/')[1] || 'jpg';
+  return `${Date.now()}-${crypto.randomUUID()}.${extension.replace('jpeg', 'jpg')}`;
 }
 
 export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
@@ -79,219 +78,290 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   isFinished,
   isConfirmedPlayer,
   isOwner,
+  canManage = isOwner,
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { currentUser } = useAuth();
-  const { showError } = useToast();
+  const { currentUser, user } = useAuth();
+  const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
-  showErrorRef.current = showError;
-
-  const [photos, setPhotos] = useState<GamePhoto[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<GamePhoto | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const canUpload = isFinished && (isConfirmedPlayer || isOwner);
+  const [photos, setPhotos] = useState<GamePhoto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [caption, setCaption] = useState('');
+  const [selectedPhoto, setSelectedPhoto] = useState<GamePhoto | null>(null);
+
+  showErrorRef.current = showError;
+  const canUpload = isFinished && (isConfirmedPlayer || canManage);
 
   useEffect(() => {
-    const q = query(
+    setLoading(true);
+    setError(null);
+    const photosQuery = query(
       collection(db, 'game_photos'),
       where('game_id', '==', gameId),
-      orderBy('created_at', 'desc')
+      orderBy('created_at', 'desc'),
     );
 
     const unsubscribe = onSnapshot(
-      q,
+      photosQuery,
       (snapshot) => {
-        const photosData = snapshot.docs.map((d) => {
-          const raw = d.data();
+        setPhotos(snapshot.docs.map((photoDoc) => {
+          const raw = photoDoc.data();
           return {
-            id: d.id,
+            id: photoDoc.id,
             gameId: raw.game_id,
             url: raw.url,
+            storagePath: raw.storage_path,
             uploadedBy: raw.uploaded_by,
-            uploadedByName: raw.uploaded_by_name || 'Jogador',
+            uploadedByName: raw.uploaded_by_name || t('common.player'),
+            uploadedByPhoto: raw.uploaded_by_photo || undefined,
+            caption: raw.caption || undefined,
             createdAt: raw.created_at?.toDate?.(),
           };
-        });
-        setPhotos(photosData);
+        }));
+        setLoading(false);
       },
       (err) => {
-        logger.error('Error loading photos:', err);
-        showErrorRef.current('Erro ao carregar fotos');
-      }
+        logger.error('Error loading game photos:', err);
+        const message = getFirestoreErrorMessage(err, t('gamePhotos.loadError'));
+        setError(message);
+        setLoading(false);
+        showErrorRef.current(message);
+      },
     );
 
     return () => unsubscribe();
-  }, [gameId]);
+  }, [gameId, t]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !currentUser) return;
+  const validatePhoto = (file: File) => {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      throw new Error(t('gamePhotos.invalidType'));
+    }
+    if (file.size > MAX_PHOTO_SIZE_BYTES) {
+      throw new Error(t('gamePhotos.sizeLimit'));
+    }
+    const cleanCaption = caption.trim();
+    if (cleanCaption.length > CAPTION_MAX_LENGTH) {
+      throw new Error(t('gamePhotos.captionTooLong', { max: CAPTION_MAX_LENGTH }));
+    }
+    return cleanCaption;
+  };
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentUser?.uid) return;
 
     setUploading(true);
     try {
-      const compressed = await compressImage(file);
-      const photoId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const ref = storageRef(storage, `games/${gameId}/photos/${photoId}.jpg`);
+      const cleanCaption = validatePhoto(file);
+      const path = `games/${gameId}/photos/${currentUser.uid}/${safeFileName(file)}`;
+      const fileRef = storageRef(storage, path);
 
-      await uploadBytes(ref, compressed, { contentType: 'image/jpeg' });
-      const downloadUrl = await getDownloadURL(ref);
+      await uploadBytes(fileRef, file, {
+        contentType: file.type,
+        customMetadata: {
+          gameId,
+          uploadedBy: currentUser.uid,
+        },
+      });
+      const downloadUrl = await getDownloadURL(fileRef);
 
       await addDoc(collection(db, 'game_photos'), {
         game_id: gameId,
         url: downloadUrl,
+        storage_path: path,
         uploaded_by: currentUser.uid,
-        uploaded_by_name: currentUser.displayName || 'Jogador',
-        storage_path: `games/${gameId}/photos/${photoId}.jpg`,
+        uploaded_by_name: user?.name || currentUser.displayName || t('common.player'),
+        uploaded_by_photo: user?.photoUrl || currentUser.photoURL || '',
+        content_type: file.type,
+        size: file.size,
+        caption: cleanCaption,
+        status: 'ACTIVE',
         created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
       });
+
+      setCaption('');
+      showSuccess(t('gamePhotos.uploadSuccess'));
     } catch (err) {
-      logger.error('Error uploading photo:', err);
-      showErrorRef.current(getFirestoreErrorMessage(err, 'Erro ao fazer upload da foto'));
+      logger.error('Error uploading game photo:', err);
+      showError(err instanceof Error && !('code' in err) ? err.message : getFirestoreErrorMessage(err, t('gamePhotos.uploadError')));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
+  const canDelete = (photo: GamePhoto) => {
+    if (!currentUser?.uid) return false;
+    return photo.uploadedBy === currentUser.uid || canManage;
+  };
+
   const handleDelete = async (photo: GamePhoto) => {
-    if (!currentUser) return;
-    const isUploader = photo.uploadedBy === currentUser.uid;
-    if (!isUploader && !isOwner) {
-      showErrorRef.current('Apenas o uploader ou o organizador podem deletar');
+    if (!canDelete(photo)) {
+      showError(t('gamePhotos.deleteForbidden'));
       return;
     }
 
+    setDeletingId(photo.id);
     try {
+      if (photo.storagePath) {
+        try {
+          await deleteObject(storageRef(storage, photo.storagePath));
+        } catch (err) {
+          const code = typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
+          if (code !== 'storage/object-not-found') throw err;
+        }
+      }
       await deleteDoc(doc(db, 'game_photos', photo.id));
+      setSelectedPhoto((current) => (current?.id === photo.id ? null : current));
+      showSuccess(t('gamePhotos.deleteSuccess'));
     } catch (err) {
-      logger.error('Error deleting photo:', err);
-      showErrorRef.current('Erro ao deletar foto');
+      logger.error('Error deleting game photo:', err);
+      showError(getFirestoreErrorMessage(err, t('gamePhotos.deleteError')));
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  const canDelete = (photo: GamePhoto) => {
-    if (!currentUser) return false;
-    return photo.uploadedBy === currentUser.uid || isOwner;
-  };
-
   return (
-    <Box>
-      {canUpload && (
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleUpload}
-          />
-          <Button
-            variant="contained"
-            startIcon={uploading ? <CircularProgress size={20} color="inherit" /> : <AddIcon />}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? 'Enviando...' : 'Adicionar Foto'}
-          </Button>
-        </Box>
-      )}
-
-      {photos.length === 0 ? (
-        <EmptyState
-          icon={<AddIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-          title={t('empty.noPhoto')}
-          description={canUpload ? t('empty.noPhotoDescFirst') : t('empty.noPhotoDescAfter')}
-        />
-      ) : (
-        <Grid container spacing={1}>
-          {photos.map((photo) => (
-            <Grid xs={4} sm={3} md={2} key={photo.id}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  paddingTop: '100%',
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  '&:hover .delete-btn': { opacity: 1 },
-                }}
-                onClick={() => setSelectedPhoto(photo)}
-              >
-                <img
-                  src={photo.url}
-                  alt={`Foto por ${photo.uploadedByName}`}
-                  loading="lazy"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-                {canDelete(photo) && (
-                  <IconButton
-                    className="delete-btn"
-                    size="small"
-                    aria-label={t('a11y.deletePhoto')}
-                    sx={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      bgcolor: alpha(theme.palette.common.black, 0.5),
-                      color: theme.palette.common.white,
-                      opacity: 0,
-                      transition: (t) => t.transitions.create('opacity', { duration: t.transitions.duration.shorter }),
-                      '&:hover': { bgcolor: 'error.main' },
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(photo);
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                )}
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      <Dialog
-        open={!!selectedPhoto}
-        onClose={() => setSelectedPhoto(null)}
-        maxWidth="lg"
-        fullWidth
-      >
-        <Box sx={{ position: 'relative', bgcolor: theme.palette.common.black, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <IconButton
-            sx={{ position: 'absolute', top: 8, right: 8, color: theme.palette.common.white, zIndex: 1, bgcolor: alpha(theme.palette.common.black, 0.5) }}
-            onClick={() => setSelectedPhoto(null)}
-            aria-label={t('a11y.close')}
-          >
-            <CloseIcon />
-          </IconButton>
-          {selectedPhoto && (
-            <img
-              src={selectedPhoto.url}
-              alt={`Foto por ${selectedPhoto.uploadedByName}`}
-              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
-            />
-          )}
-        </Box>
-        {selectedPhoto && (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Foto de {selectedPhoto.uploadedByName}
-            </Typography>
+    <Card sx={{ mt: 2 }}>
+      <CardContent>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+          <PhotoLibraryIcon color="primary" />
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700}>{t('gamePhotos.title')}</Typography>
+            <Typography variant="body2" color="text.secondary">{t('gamePhotos.description')}</Typography>
           </Box>
+        </Stack>
+
+        {canUpload && (
+          <Stack spacing={1.5} sx={{ mb: 2 }}>
+            <TextField
+              value={caption}
+              onChange={(event) => setCaption(event.target.value)}
+              label={t('gamePhotos.captionLabel')}
+              placeholder={t('gamePhotos.captionPlaceholder')}
+              fullWidth
+              inputProps={{ maxLength: CAPTION_MAX_LENGTH }}
+              helperText={t('common.charCount', { current: caption.length, max: CAPTION_MAX_LENGTH })}
+            />
+            <Box>
+              <input ref={fileInputRef} type="file" accept={ALLOWED_IMAGE_TYPES.join(',')} hidden onChange={handleUpload} />
+              <Button
+                variant="contained"
+                startIcon={uploading ? <CircularProgress size={18} color="inherit" /> : <AddPhotoIcon />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? t('gamePhotos.uploading') : t('gamePhotos.addPhoto')}
+              </Button>
+            </Box>
+          </Stack>
+        )}
+
+        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}><CircularProgress /></Box>}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {!loading && !error && photos.length === 0 && (
+          <EmptyState
+            icon={<PhotoLibraryIcon sx={{ fontSize: 48 }} />}
+            title={t('gamePhotos.emptyTitle')}
+            description={canUpload ? t('gamePhotos.emptyUploadDesc') : t('gamePhotos.emptyReadOnlyDesc')}
+          />
+        )}
+
+        {!loading && !error && photos.length > 0 && (
+          <Grid container spacing={1.5}>
+            {photos.map((photo) => (
+              <Grid xs={6} sm={4} md={3} key={photo.id}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    pt: '100%',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    bgcolor: 'action.hover',
+                    '&:hover .photo-delete': { opacity: 1 },
+                  }}
+                  onClick={() => setSelectedPhoto(photo)}
+                >
+                  <Box
+                    component="img"
+                    src={photo.url}
+                    alt={t('gamePhotos.photoAlt', { name: photo.uploadedByName })}
+                    loading="lazy"
+                    sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  {canDelete(photo) && (
+                    <IconButton
+                      className="photo-delete"
+                      size="small"
+                      aria-label={t('gamePhotos.deletePhoto')}
+                      disabled={deletingId === photo.id}
+                      sx={{
+                        position: 'absolute',
+                        top: 6,
+                        right: 6,
+                        bgcolor: alpha(theme.palette.common.black, 0.58),
+                        color: theme.palette.common.white,
+                        opacity: { xs: 1, sm: 0 },
+                        transition: (transitionTheme) => transitionTheme.transitions.create('opacity', { duration: transitionTheme.transitions.duration.shorter }),
+                        '&:hover': { bgcolor: theme.palette.error.main },
+                      }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDelete(photo);
+                      }}
+                    >
+                      {deletingId === photo.id ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon fontSize="small" />}
+                    </IconButton>
+                  )}
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </CardContent>
+
+      <Dialog open={!!selectedPhoto} onClose={() => setSelectedPhoto(null)} maxWidth="md" fullWidth>
+        {selectedPhoto && (
+          <>
+            <Box sx={{ position: 'relative', bgcolor: theme.palette.common.black, display: 'flex', justifyContent: 'center' }}>
+              <IconButton
+                sx={{ position: 'absolute', top: 8, right: 8, color: theme.palette.common.white, bgcolor: alpha(theme.palette.common.black, 0.52), zIndex: 1 }}
+                onClick={() => setSelectedPhoto(null)}
+                aria-label={t('a11y.close')}
+              >
+                <CloseIcon />
+              </IconButton>
+              <Box component="img" src={selectedPhoto.url} alt={t('gamePhotos.photoAlt', { name: selectedPhoto.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
+            </Box>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
+              <Avatar src={selectedPhoto.uploadedByPhoto}>{selectedPhoto.uploadedByName.charAt(0).toUpperCase()}</Avatar>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography variant="body2" fontWeight={700}>{selectedPhoto.uploadedByName}</Typography>
+                {selectedPhoto.caption && <Typography variant="body2" color="text.secondary">{selectedPhoto.caption}</Typography>}
+              </Box>
+              {canDelete(selectedPhoto) && (
+                <Button
+                  color="error"
+                  startIcon={deletingId === selectedPhoto.id ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
+                  disabled={deletingId === selectedPhoto.id}
+                  onClick={() => handleDelete(selectedPhoto)}
+                >
+                  {t('common.delete')}
+                </Button>
+              )}
+            </Stack>
+          </>
         )}
       </Dialog>
-    </Box>
+    </Card>
   );
 };

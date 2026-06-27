@@ -64,6 +64,7 @@ import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl 
 import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
+import { GamePhotosTab } from './GamePhotosTab';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
 
 const PostGameMessagesPanel: React.FC<{ gameId: string; canWrite: boolean }> = ({ gameId, canWrite }) => {
@@ -166,6 +167,7 @@ export const GameDetailScreen: React.FC = () => {
   const canManage = game && (isOwner || isCurrentUserAdmin || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
   const showPostGameMessages = game?.status === 'FINISHED';
   const canWritePostGameMessage = showPostGameMessages && (isConfirmed || !!canManage);
+  const canManagePostGameContent = !!canManage;
 
   // #2272: arrays derivados memoizados — antes os 3 .filter() rodavam a cada render.
   const confirmedPlayers = useMemo(
@@ -641,6 +643,15 @@ export const GameDetailScreen: React.FC = () => {
                 confirmations={confirmations}
                 canManage={isOwner || isCurrentUserAdmin}
               />
+              {showPostGameMessages && (
+                <GamePhotosTab
+                  gameId={gameId!}
+                  isFinished={showPostGameMessages}
+                  isConfirmedPlayer={isConfirmed}
+                  isOwner={isOwner}
+                  canManage={canManagePostGameContent}
+                />
+              )}
               {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
             </Grid>
           </Grid>
@@ -665,6 +676,15 @@ export const GameDetailScreen: React.FC = () => {
             confirmations={confirmations}
             canManage={isOwner || isCurrentUserAdmin}
           />
+          {showPostGameMessages && (
+            <GamePhotosTab
+              gameId={gameId!}
+              isFinished={showPostGameMessages}
+              isConfirmedPlayer={isConfirmed}
+              isOwner={isOwner}
+              canManage={canManagePostGameContent}
+            />
+          )}
           {showPostGameMessages && <PostGameMessagesPanel gameId={gameId!} canWrite={canWritePostGameMessage} />}
         </PageContainer>
       )}

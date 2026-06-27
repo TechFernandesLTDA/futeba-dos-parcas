@@ -11,7 +11,7 @@ rules_version = '2';
 // - locations/{locationId}/photos/{timestamp}.jpg
 // - locations/{locationId}/fields/{timestamp}.jpg
 // - temp_fields/{timestamp}.jpg (temporário, sem locationId)
-// - games/{gameId}/photos/{timestamp}.jpg
+// - games/{gameId}/photos/{userId}/{timestamp}.jpg
 // ============================================
 
 service firebase.storage {
@@ -274,7 +274,7 @@ service firebase.storage {
     }
 
     // ============================================
-    // FOTOS DE JOGOS
+    // FOTOS DE JOGOS (legado)
     // Path: games/{gameId}/photos/{timestamp}.jpg
     // Jogadores confirmados podem postar fotos
     // ============================================
@@ -291,13 +291,45 @@ service firebase.storage {
                        firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) != null &&
                        firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)).data.status == 'CONFIRMED'
                      ) ||
-                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid) &&
+                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                       request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []) ||
+                       isAdmin()) &&
                      isImage() && isUnderSize(10);
 
       // Uploader ou dono do jogo ou admin pode deletar fotos
       allow delete: if isAuthenticated() &&
                       firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
                       (firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                       isAdmin());
+    }
+
+    // ============================================
+    // FOTOS DE JOGOS (álbum web)
+    // Path: games/{gameId}/photos/{userId}/{timestamp}.jpg
+    // Jogadores confirmados/organizador podem postar fotos após o jogo.
+    // O userId no path permite exclusão segura pelo próprio uploader.
+    // ============================================
+    match /games/{gameId}/photos/{userId}/{fileName} {
+      allow read: if isAuthenticated() &&
+                     firestore.exists(/databases/(default)/documents/games/$(gameId));
+
+      allow write: if isOwner(userId) &&
+                     firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                     firestore.get(/databases/(default)/documents/games/$(gameId)).data.status == 'FINISHED' &&
+                     ((
+                       firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) != null &&
+                       firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)).data.status == 'CONFIRMED'
+                     ) ||
+                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                       request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []) ||
+                       isAdmin()) &&
+                     isImage() && isUnderSize(10);
+
+      allow delete: if isAuthenticated() &&
+                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                      (request.auth.uid == userId ||
+                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                       request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []) ||
                        isAdmin());
     }
 

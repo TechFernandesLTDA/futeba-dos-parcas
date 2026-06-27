@@ -53,6 +53,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.33.0] - 2026-06-27
+
+#### Adicionado
+- Componente web `GamePhotosTab` integrado ao `GameDetailScreen`.
+- Testes de Firestore Rules para criação, bloqueios de abuso e exclusão de `game_photos`.
+
+#### Segurança
+- `game_photos` agora valida schema, tipo MIME, tamanho, legenda, status e `storage_path` pertencente ao uploader.
+- Storage Rules adicionam caminho `games/{gameId}/photos/{userId}/{fileName}` com upload apenas pós-jogo e deleção por uploader/organização/admin.
+
+_Issues: #2982_
+
 ### [1.32.0] - 2026-06-27
 
 #### Adicionado
