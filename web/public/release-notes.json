@@ -1,7 +1,46 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T18:20:29.475Z",
+  "generatedAt": "2026-06-27T19:11:10.649Z",
   "notes": [
+    {
+      "version": "1.37.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-27",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Destaques pós-jogo para compartilhar a resenha",
+      "highlights": [
+        {
+          "icon": "auto_awesome",
+          "title": "Card pós-jogo",
+          "description": "Partidas finalizadas agora mostram MVP, melhor dupla e lance marcante em um card compartilhável."
+        },
+        {
+          "icon": "groups",
+          "title": "Melhor dupla",
+          "description": "O app combina gols, assistências e defesas já registradas para sugerir a dupla de maior impacto."
+        },
+        {
+          "icon": "share",
+          "title": "Compartilhe a memória",
+          "description": "O card pode ser compartilhado pela Web Share API ou copiado quando o navegador não suporta compartilhamento nativo."
+        }
+      ],
+      "added": [
+        "Novo painel \"Destaques pós-jogo\" no detalhe de partidas finalizadas.",
+        "Card compartilhável com placar, MVP e melhor dupla do jogo.",
+        "Lance marcante gerado a partir das estatísticas existentes da partida."
+      ],
+      "improved": [
+        "Estados de carregamento, vazio e erro preparados para o fluxo de destaques pós-jogo.",
+        "Fallback para jogos sem estatísticas ao usar jogadores confirmados no resumo."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        2969
+      ]
+    },
     {
       "version": "1.36.0",
       "buildNumber": null,
