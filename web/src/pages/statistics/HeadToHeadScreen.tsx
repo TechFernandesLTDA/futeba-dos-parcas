@@ -18,6 +18,10 @@ import {
   Button,
   Chip,
   Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   useTheme,
   alpha,
   CircularProgress,
@@ -35,6 +39,7 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { db } from '../../services/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { useHeadToHead, HeadToHeadMatch } from '../../hooks/useHeadToHead';
+import type { HeadToHeadPeriod } from '../../utils/headToHeadPeriod';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -91,6 +96,7 @@ export const HeadToHeadScreen: React.FC = () => {
   const [selectingPlayer, setSelectingPlayer] = useState<1 | 2 | null>(null);
   const [player1, setPlayer1] = useState<PlayerSearchResult | null>(null);
   const [player2, setPlayer2] = useState<PlayerSearchResult | null>(null);
+  const [period, setPeriod] = useState<HeadToHeadPeriod>('all');
 
   const { data: searchResults = [], isLoading: searching } = useQuery({
     queryKey: ['playerSearch', searchTerm],
@@ -99,7 +105,7 @@ export const HeadToHeadScreen: React.FC = () => {
     staleTime: 30 * 1000,
   });
 
-  const { stats, loading, error } = useHeadToHead(player1?.id, player2?.id);
+  const { stats, loading, error } = useHeadToHead(player1?.id, player2?.id, period);
 
   const handleSelectPlayer = useCallback(
     (player: PlayerSearchResult) => {
@@ -143,7 +149,7 @@ export const HeadToHeadScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1 }}>
-            Confronto Direto
+            {t('headToHead.title')}
           </Typography>
         </Box>
       </Box>
@@ -152,12 +158,12 @@ export const HeadToHeadScreen: React.FC = () => {
         <Card sx={{ mb: 2 }}>
           <CardContent>
             <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-              Selecionar Jogadores
+              {t('headToHead.selectPlayers')}
             </Typography>
             <Grid container spacing={2} alignItems="center">
               <Grid xs={5}>
                 <PlayerSlot
-                  label="Jogador 1"
+                  label={t('headToHead.playerOne')}
                   player={player1}
                   onSelect={() => setSelectingPlayer(1)}
                   onClear={() => handleClearPlayer(1)}
@@ -171,7 +177,7 @@ export const HeadToHeadScreen: React.FC = () => {
               </Grid>
               <Grid xs={5}>
                 <PlayerSlot
-                  label="Jogador 2"
+                  label={t('headToHead.playerTwo')}
                   player={player2}
                   onSelect={() => setSelectingPlayer(2)}
                   onClear={() => handleClearPlayer(2)}
@@ -180,9 +186,24 @@ export const HeadToHeadScreen: React.FC = () => {
             </Grid>
             {player1 && player2 && player1.id === player2.id && (
               <Alert severity="warning" sx={{ mt: 1 }}>
-                Selecione jogadores diferentes para comparar.
+                {t('headToHead.selectDifferentPlayers')}
               </Alert>
             )}
+            <FormControl size="small" fullWidth sx={{ mt: 2 }}>
+              <InputLabel id="head-to-head-period-label">{t('headToHead.period.label')}</InputLabel>
+              <Select
+                labelId="head-to-head-period-label"
+                label={t('headToHead.period.label')}
+                value={period}
+                onChange={(event) => setPeriod(event.target.value as HeadToHeadPeriod)}
+                disabled={loading}
+              >
+                <MenuItem value="all">{t('headToHead.period.all')}</MenuItem>
+                <MenuItem value="30d">{t('headToHead.period.last30Days')}</MenuItem>
+                <MenuItem value="90d">{t('headToHead.period.last90Days')}</MenuItem>
+                <MenuItem value="365d">{t('headToHead.period.last365Days')}</MenuItem>
+              </Select>
+            </FormControl>
           </CardContent>
         </Card>
 
@@ -190,7 +211,7 @@ export const HeadToHeadScreen: React.FC = () => {
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                Buscar Jogador {selectingPlayer}
+                {t('headToHead.searchPlayer', { number: selectingPlayer })}
               </Typography>
               <TextField
                 aria-label={t('a11y.searchPlayer')}
@@ -251,7 +272,7 @@ export const HeadToHeadScreen: React.FC = () => {
               )}
               {searchTerm.length >= 2 && !searching && searchResults.length === 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
-                  Nenhum jogador encontrado
+                  {t('headToHead.noPlayersFound')}
                 </Typography>
               )}
             </CardContent>
@@ -289,7 +310,7 @@ export const HeadToHeadScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                  Resumo Geral
+                  {t('headToHead.summary')}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid xs={4}>
@@ -298,7 +319,7 @@ export const HeadToHeadScreen: React.FC = () => {
                         {stats.totalGames}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Jogos
+                        {t('headToHead.games')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -308,7 +329,7 @@ export const HeadToHeadScreen: React.FC = () => {
                         {stats.gamesAgainst}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Adversários
+                        {t('headToHead.opponents')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -318,7 +339,7 @@ export const HeadToHeadScreen: React.FC = () => {
                         {stats.gamesTogether}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Mesmo Time
+                        {t('headToHead.sameTeam')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -330,7 +351,7 @@ export const HeadToHeadScreen: React.FC = () => {
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                    Confrontos Diretos
+                    {t('headToHead.directMatches')}
                   </Typography>
                   <Grid container spacing={2} alignItems="center">
                     <Grid xs={5} sx={{ textAlign: 'center' }}>
@@ -390,17 +411,17 @@ export const HeadToHeadScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                  Estatísticas
+                  {t('headToHead.statistics')}
                 </Typography>
                 <Grid container spacing={2}>
                   <StatCompareRow
-                    label="Gols"
+                    label={t('headToHead.goals')}
                     p1Value={stats.p1TotalGoals}
                     p2Value={stats.p2TotalGoals}
                     icon={<SoccerIcon sx={{ color: theme.palette.primary.main }} />}
                   />
                   <StatCompareRow
-                    label="Assistências"
+                    label={t('headToHead.assists')}
                     p1Value={stats.p1TotalAssists}
                     p2Value={stats.p2TotalAssists}
                     icon={<TrendingIcon sx={{ color: theme.palette.secondary.main }} />}
@@ -412,12 +433,12 @@ export const HeadToHeadScreen: React.FC = () => {
                     icon={<TrophyIcon sx={{ color: theme.palette.warning.main }} />}
                   />
                   <StatCompareRow
-                    label="Média Gols/Jogo"
+                    label={t('headToHead.avgGoalsPerGame')}
                     p1Value={stats.totalGames > 0 ? (stats.p1TotalGoals / stats.totalGames).toFixed(1) : '0.0'}
                     p2Value={stats.totalGames > 0 ? (stats.p2TotalGoals / stats.totalGames).toFixed(1) : '0.0'}
                   />
                   <StatCompareRow
-                    label="Média Assist./Jogo"
+                    label={t('headToHead.avgAssistsPerGame')}
                     p1Value={stats.totalGames > 0 ? (stats.p1TotalAssists / stats.totalGames).toFixed(1) : '0.0'}
                     p2Value={stats.totalGames > 0 ? (stats.p2TotalAssists / stats.totalGames).toFixed(1) : '0.0'}
                   />
@@ -428,7 +449,7 @@ export const HeadToHeadScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                  Histórico de Partidas
+                  {t('headToHead.matchHistory')}
                 </Typography>
                 {stats.matches.map((match, idx) => (
                   <React.Fragment key={match.gameId}>
@@ -543,6 +564,7 @@ const MatchTimelineItem: React.FC<{
   player1Name: string;
   player2Name: string;
 }> = ({ match, player1Name, player2Name }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const resultColor = match.draw
     ? theme.palette.warning.main
@@ -552,17 +574,17 @@ const MatchTimelineItem: React.FC<{
     ? theme.palette.error.main
     : theme.palette.text.secondary;
   const resultLabel = match.draw
-    ? 'Empate'
+    ? t('headToHead.draw')
     : match.p1Won
-    ? `${player1Name} venceu`
-    : `${player2Name} venceu`;
+    ? t('headToHead.playerWon', { player: player1Name })
+    : t('headToHead.playerWon', { player: player2Name });
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Chip
-            label={match.sameTeam ? 'Mesmo Time' : 'Adversários'}
+            label={match.sameTeam ? t('headToHead.sameTeam') : t('headToHead.opponents')}
             size="small"
             sx={{
               height: 18,
@@ -589,10 +611,10 @@ const MatchTimelineItem: React.FC<{
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
           <Typography variant="caption" color="text.secondary">
-            {player1Name}: {match.p1Goals}G {match.p1Assists}A
+            {player1Name}: {match.p1Goals}{t('headToHead.goalAbbr')} {match.p1Assists}{t('headToHead.assistAbbr')}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {player2Name}: {match.p2Goals}G {match.p2Assists}A
+            {player2Name}: {match.p2Goals}{t('headToHead.goalAbbr')} {match.p2Assists}{t('headToHead.assistAbbr')}
           </Typography>
         </Box>
       </Box>
