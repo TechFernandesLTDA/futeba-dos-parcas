@@ -69,6 +69,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.8] - 2026-06-28
+
+#### Adicionado
+- Editor reutilizável para CRUD de campos dentro do cadastro de locais.
+- Utilitários testados para normalizar preço por hora, carregar campos persistidos e gerar resumo denormalizado de disponibilidade.
+
+#### Mudado
+- O cadastro de locais passa a gravar campos em `locations/{locationId}/fields` com `writeBatch()`, `serverTimestamp()` e compatibilidade com `photoUrl` legado.
+- O resumo do local passa a manter `field_count`, `primary_field_type` e `has_active_fields` para filtros e ranking comercial.
+
+#### Segurança
+- Edição de cadastro não força mais `is_active: true`, evitando reativação indevida de quadras suspensas e preservando as regras administrativas.
+
+_Issues: #3084, #3085, #3088, #3097, #3098_
+
 ### [1.43.7] - 2026-06-28
 
 #### Adicionado
