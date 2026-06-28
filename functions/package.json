@@ -15,7 +15,9 @@
     "test:coverage": "jest --coverage",
     "test:perf": "jest --config=jest.perf.config.js --no-coverage --runInBand",
     "test:integration": "npm run build && firebase emulators:exec --only firestore,functions 'jest -c jest.integration.config.js test/integration'",
-    "test:mutation": "stryker run"
+    "test:mutation": "stryker run",
+    "backfill:venues": "npx ts-node src/scripts/backfill-venue-commercial-data.ts",
+    "backfill:venues:execute": "npx ts-node src/scripts/backfill-venue-commercial-data.ts --execute"
   },
   "engines": {
     "node": "22"
