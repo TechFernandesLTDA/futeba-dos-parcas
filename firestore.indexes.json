@@ -1015,6 +1015,20 @@
       ]
     },
     {
+      "collectionGroup": "group_polls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "group_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "statistics",
       "queryScope": "COLLECTION",
       "fields": [
