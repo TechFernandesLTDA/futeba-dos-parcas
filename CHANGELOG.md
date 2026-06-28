@@ -13,6 +13,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Unreleased
 
+### Segurança
+- Corrige os 38 alertas abertos do Dependabot em `web`, `scripts`, `firestore-rules-tests`, `archive/backend` e `kotlin-js-store/wasm`, incluindo o alerta crítico de `shell-quote`.
+
 ### Documentação
 - Atualiza README, índice de documentação, mapa do projeto e estratégia de branches com o status GitHub/release verificado em 2026-06-28.
 - Adiciona `docs/GITHUB_STATUS.md` como painel operacional de issues, PRs, proteção de branch e versões correntes.
