@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T22:08:23.420Z",
+  "generatedAt": "2026-06-28T22:44:28.185Z",
   "notes": [
+    {
+      "version": "1.43.9",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Criacao de jogos agora respeita publicacao e mensalidade das quadras",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela Criar Jogo passa a avisar quando nao existe quadra publicada e com mensalidade valida disponivel.",
+        "Locais rapidos cadastrados durante a criacao do jogo entram como rascunho/manual e nao furam o catalogo de quadras aprovadas.",
+        "A selecao de local agora exige uma quadra ativa quando o jogo usa um local do catalogo."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3120,
+        3084,
+        3091
+      ]
+    },
     {
       "version": "1.43.8",
       "buildNumber": null,

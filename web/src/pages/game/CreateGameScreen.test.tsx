@@ -160,4 +160,11 @@ describe('CreateGameScreen', () => {
       screen.getByRole('combobox', { name: /quadra \/ local/i }),
     ).toBeInTheDocument();
   });
+
+  it('avisa quando não há quadras publicadas com mensalidade válida', () => {
+    renderCreateGameScreen();
+    expect(
+      screen.getByText(/nenhuma quadra publicada e com mensalidade válida/i),
+    ).toBeInTheDocument();
+  });
 });

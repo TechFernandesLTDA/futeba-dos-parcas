@@ -110,6 +110,20 @@ describe('useLocations', () => {
             publication_status: 'SUSPENDED',
           }),
         },
+        {
+          id: 'loc-overdue',
+          data: () => activeLocationData({
+            name: 'Arena Vencida',
+            subscription_status: 'OVERDUE',
+          }),
+        },
+        {
+          id: 'loc-no-active-fields',
+          data: () => activeLocationData({
+            name: 'Arena Sem Quadra Ativa',
+            has_active_fields: false,
+          }),
+        },
       ],
     });
 

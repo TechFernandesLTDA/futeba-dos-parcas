@@ -84,7 +84,7 @@ import { useGameDraft } from '../../hooks/useGameDraft';
 import { useRecentLocations, toggleFavoriteLocation } from '../../hooks/useRecentLocations';
 import { FieldType, PixKeyType, GameVisibility, GameTemplate, Game, GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
-import { Field } from '../../types/location';
+import { Field, Location as FutebaLocation } from '../../types/location';
 import { snakeToCamel, normalizeField } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
@@ -423,6 +423,32 @@ export const CreateGameScreen: React.FC = () => {
   const isDirty = userInteracted && JSON.stringify(formData) !== JSON.stringify(defaultFormData);
   const isRestoringRef = useRef(false);
 
+  const getLocationDisplayAddress = useCallback((loc: FutebaLocation) => {
+    const streetPart = [loc.street, loc.number].filter(Boolean).join(', ');
+    const areaPart = [loc.district, loc.city].filter(Boolean).join(', ');
+    const constructedAddress = areaPart ? `${streetPart} - ${areaPart}` : streetPart;
+    return loc.address || constructedAddress;
+  }, []);
+
+  const selectCatalogLocation = useCallback((loc: FutebaLocation) => {
+    setUseCustomLocation(false);
+    setFormData((prev) => ({
+      ...prev,
+      locationId: loc.id,
+      locationName: loc.name,
+      locationAddress: getLocationDisplayAddress(loc),
+      locationLat: loc.latitude,
+      locationLng: loc.longitude,
+      fieldId: '',
+      fieldName: '',
+    }));
+    setFormErrors((prev) => ({
+      ...prev,
+      locationName: '',
+      fieldId: '',
+    }));
+  }, [getLocationDisplayAddress]);
+
   const { popularTimes } = usePopularTimes(formData.fieldId);
   const { habitualTime } = useHabitualTime(formData.locationId);
 
@@ -548,6 +574,30 @@ export const CreateGameScreen: React.FC = () => {
     loadFields();
     return () => { cancelled = true; };
   }, [formData.locationId, useCustomLocation]);
+
+  useEffect(() => {
+    if (useCustomLocation || locationsLoading || !formData.locationId) return;
+    const selectedLocationStillAvailable = locations.some((loc) => loc.id === formData.locationId);
+    if (selectedLocationStillAvailable) return;
+
+    setFields([]);
+    setFormData((prev) => ({
+      ...prev,
+      locationId: '',
+      locationName: '',
+      locationAddress: '',
+      locationLat: undefined,
+      locationLng: undefined,
+      fieldId: '',
+      fieldName: '',
+    }));
+    setFormErrors((prev) => ({
+      ...prev,
+      locationName: tRef.current('games.create.locationUnavailable'),
+      fieldId: '',
+    }));
+    showErrorRef.current(tRef.current('games.create.locationUnavailable'));
+  }, [formData.locationId, locations, locationsLoading, useCustomLocation]);
 
   // Auto-calculate price per player
   useEffect(() => {
@@ -682,8 +732,10 @@ export const CreateGameScreen: React.FC = () => {
       errors.locationName = useCustomLocation ? t('games.create.errorLocationNameRequired') : t('games.create.errorSelectLocation');
     }
     if (useCustomLocation && !formData.locationAddress.trim()) errors.locationAddress = t('games.create.errorAddressRequired');
-    if (!useCustomLocation && formData.locationId && fields.length > 0 && !formData.fieldId) {
-      errors.fieldId = t('games.create.errorSelectField');
+    if (!useCustomLocation && formData.locationId && !formData.fieldId) {
+      errors.fieldId = fields.length > 0
+        ? t('games.create.errorSelectField')
+        : t('games.create.errorActiveFieldRequired');
     }
     if (!formData.date) {
       errors.date = t('games.create.errorDateRequired');
@@ -1251,20 +1303,7 @@ export const CreateGameScreen: React.FC = () => {
                     label={loc.name}
                     color="warning"
                     variant="outlined"
-                    onClick={() => {
-                      const streetPart = [loc.street, loc.number].filter(Boolean).join(', ');
-                      const areaPart = [loc.district, loc.city].filter(Boolean).join(', ');
-                      const constructedAddress = areaPart ? `${streetPart} - ${areaPart}` : streetPart;
-                      setUseCustomLocation(false);
-                      setFormData((prev) => ({
-                        ...prev,
-                        locationId: loc.id,
-                        locationName: loc.name,
-                        locationAddress: loc.address || constructedAddress,
-                        locationLat: loc.latitude,
-                        locationLng: loc.longitude,
-                      }));
-                    }}
+                    onClick={() => selectCatalogLocation(loc)}
                   />
                 );
               })}
@@ -1284,20 +1323,7 @@ export const CreateGameScreen: React.FC = () => {
                       size="small"
                       label={loc.name}
                       variant="outlined"
-                      onClick={() => {
-                        const streetPart = [loc.street, loc.number].filter(Boolean).join(', ');
-                        const areaPart = [loc.district, loc.city].filter(Boolean).join(', ');
-                        const constructedAddress = areaPart ? `${streetPart} - ${areaPart}` : streetPart;
-                        setUseCustomLocation(false);
-                        setFormData((prev) => ({
-                          ...prev,
-                          locationId: loc.id,
-                          locationName: loc.name,
-                          locationAddress: loc.address || constructedAddress,
-                          locationLat: loc.latitude,
-                          locationLng: loc.longitude,
-                        }));
-                      }}
+                      onClick={() => selectCatalogLocation(loc)}
                     />
                   );
                 });
@@ -1317,22 +1343,20 @@ export const CreateGameScreen: React.FC = () => {
             const val = e.target.value;
             if (val === CUSTOM_LOCATION) {
               setUseCustomLocation(true);
-              setFormData((prev) => ({ ...prev, locationId: '', locationName: '', locationAddress: '' }));
+              setFormData((prev) => ({
+                ...prev,
+                locationId: '',
+                locationName: '',
+                locationAddress: '',
+                locationLat: undefined,
+                locationLng: undefined,
+                fieldId: '',
+                fieldName: '',
+              }));
             } else {
-              setUseCustomLocation(false);
               const loc = locations.find((l) => l.id === val);
               if (loc) {
-                const streetPart = [loc.street, loc.number].filter(Boolean).join(', ');
-                const areaPart = [loc.district, loc.city].filter(Boolean).join(', ');
-                const constructedAddress = areaPart ? `${streetPart} - ${areaPart}` : streetPart;
-                setFormData((prev) => ({
-                  ...prev,
-                  locationId: loc.id,
-                  locationName: loc.name,
-                  locationAddress: loc.address || constructedAddress,
-                  locationLat: loc.latitude,
-                  locationLng: loc.longitude,
-                }));
+                selectCatalogLocation(loc);
               }
             }
           }}
@@ -1380,6 +1404,12 @@ export const CreateGameScreen: React.FC = () => {
           </IconButton>
         )}
       </Box>
+
+      {!useCustomLocation && !locationsLoading && !locationsError && locations.length === 0 && (
+        <Alert severity="warning" icon={false}>
+          {t('games.create.noCommercialLocations')}
+        </Alert>
+      )}
 
       {useCustomLocation && (
         <>
@@ -1468,7 +1498,7 @@ export const CreateGameScreen: React.FC = () => {
           </TextField>
         ) : (
           <Alert severity="warning" icon={false}>
-            {t('games.create.noFieldsAtLocation')}
+            {t('games.create.noActiveFieldsAtLocation')}
           </Alert>
         )
       )}
@@ -2075,7 +2105,7 @@ export const CreateGameScreen: React.FC = () => {
   const locationReady = Boolean(formData.locationName.trim()) && (
     useCustomLocation
       ? Boolean(formData.locationAddress.trim())
-      : !formData.locationId || fields.length === 0 || Boolean(formData.fieldId)
+      : Boolean(formData.locationId && formData.fieldId)
   );
   const scheduleReady = Boolean(formData.date && formData.time && !formErrors.date && !formErrors.time && !formErrors.endTime);
   const settingsReady = maxPlayersReadyValue !== null
@@ -2634,16 +2664,20 @@ export const CreateGameScreen: React.FC = () => {
       open={quickLocationOpen}
       onClose={() => setQuickLocationOpen(false)}
       onLocationCreated={(loc) => {
-        setUseCustomLocation(false);
+        setUseCustomLocation(true);
         setFormData((prev) => ({
           ...prev,
-          locationId: loc.id,
+          locationId: '',
+          fieldId: '',
+          fieldName: '',
           locationName: loc.name,
           locationAddress: loc.address,
+          locationLat: undefined,
+          locationLng: undefined,
           maxPlayers: loc.capacity && loc.capacity > 0 ? loc.capacity : prev.maxPlayers,
           totalCost: loc.defaultPrice && loc.defaultPrice > 0 ? loc.defaultPrice : prev.totalCost,
         }));
-        showSuccess(`Local "${loc.name}" selecionado!`);
+        showSuccess(t('games.create.quickLocationDraftSelected', { name: loc.name }));
       }}
     />
   </>);
