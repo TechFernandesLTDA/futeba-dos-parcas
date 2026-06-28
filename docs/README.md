@@ -16,6 +16,7 @@ Documentação organizada do projeto Futeba dos Parças.
 | [TECH_STACK_AND_CONTEXT.md](TECH_STACK_AND_CONTEXT.md) | Stack, bibliotecas e contexto técnico |
 | [GITHUB_STATUS.md](GITHUB_STATUS.md) | Status operacional do GitHub, proteção de branch e releases |
 | [CHANGELOG.md](../CHANGELOG.md) | Histórico de versões |
+| [VENUE_MONETIZATION.md](VENUE_MONETIZATION.md) | Modelo comercial de quadras, mensalidade, publicação e elegibilidade |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Guia para contribuidores |
 | [specs/DECISIONS.md](../specs/DECISIONS.md) | Decisões técnicas registradas |
 
@@ -43,6 +44,7 @@ Documentação organizada do projeto Futeba dos Parças.
 |---------|-----------|
 | [STRINGS_USAGE_GUIDE.md](STRINGS_USAGE_GUIDE.md) | Como usar strings.xml |
 | [STRINGS_QUICK_REFERENCE.md](STRINGS_QUICK_REFERENCE.md) | Índice de 220+ strings |
+| [VENUE_MONETIZATION.md](VENUE_MONETIZATION.md) | Contrato de dados para monetização de quadras |
 
 ---
 

@@ -50,6 +50,7 @@ This is the operational map for the Futeba dos Parcas repository. Use it when yo
   - `versions.json`
   - `release-notes/`
   - app/web public release note files
+- Venue monetization rules, status fields, and eligibility are documented in `docs/VENUE_MONETIZATION.md`.
 
 ## Main Workflows
 

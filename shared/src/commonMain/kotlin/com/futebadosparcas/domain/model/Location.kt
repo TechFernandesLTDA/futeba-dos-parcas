@@ -36,6 +36,20 @@ data class Location(
     val isVerified: Boolean = false,
     val isActive: Boolean = true,
 
+    // Status comercial/publicacao (controlado por admin/backend)
+    @SerialName("publication_status") val publicationStatus: String = "DRAFT",
+    @SerialName("commercial_status") val commercialStatus: String = "TRIAL",
+    @SerialName("subscription_status") val subscriptionStatus: String = "TRIAL",
+    @SerialName("monthly_fee_cents") val monthlyFeeCents: Long? = null,
+    @SerialName("billing_due_day") val billingDueDay: Int? = null,
+    @SerialName("billing_starts_at") val billingStartsAt: Long? = null,
+    @SerialName("billing_expires_at") val billingExpiresAt: Long? = null,
+    @SerialName("published_at") val publishedAt: Long? = null,
+    @SerialName("published_by") val publishedBy: String? = null,
+    @SerialName("unpublished_reason") val unpublishedReason: String? = null,
+    @SerialName("owner_notes") val ownerNotes: String? = null,
+    @SerialName("admin_notes") val adminNotes: String? = null,
+
     // Avaliação
     val rating: Double = 0.0,
     val ratingCount: Int = 0,
@@ -92,6 +106,13 @@ data class Location(
      * Verifica se um usuario tem permissao para gerenciar o local (dono ou gerente)
      */
     fun canManage(userId: String): Boolean = isOwner(userId) || isManager(userId)
+
+    fun isCommerciallyAvailable(): Boolean =
+        isActive &&
+            isVerified &&
+            publicationStatus == "PUBLISHED" &&
+            subscriptionStatus in setOf("TRIAL", "ACTIVE") &&
+            hasActiveFields
 }
 
 /**

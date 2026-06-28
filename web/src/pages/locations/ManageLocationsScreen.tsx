@@ -34,13 +34,25 @@ import {
 } from '@mui/icons-material';
 import { collection, query, orderBy, where, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { deleteLocation } from '../../services/cloudFunctions';
+import {
+  deleteLocation,
+  setLocationPublicationStatus,
+  setLocationSubscription,
+} from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
-import { Location, FIELD_TYPE_CONFIG, canManageLocation } from '../../types/location';
+import {
+  Location,
+  FIELD_TYPE_CONFIG,
+  LOCATION_PUBLICATION_STATUS_LABELS,
+  LOCATION_SUBSCRIPTION_STATUS_LABELS,
+  LocationPublicationStatus,
+  LocationSubscriptionStatus,
+  canManageLocation,
+} from '../../types/location';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -66,6 +78,7 @@ export const ManageLocationsScreen: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Location | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [commercialActionLoading, setCommercialActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -126,6 +139,67 @@ export const ManageLocationsScreen: React.FC = () => {
   };
 
   const handleClearSearch = () => setSearchQuery('');
+
+  const getPublicationStatus = (location: Location): LocationPublicationStatus =>
+    location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
+
+  const getSubscriptionStatus = (location: Location): LocationSubscriptionStatus =>
+    location.subscriptionStatus || 'ACTIVE';
+
+  const formatMonthlyFee = (monthlyFeeCents?: number) => {
+    if (!monthlyFeeCents) return 'Mensalidade não definida';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(monthlyFeeCents / 100);
+  };
+
+  const handlePublicationStatus = async (
+    location: Location,
+    publicationStatus: LocationPublicationStatus,
+  ) => {
+    const actionKey = `${location.id}:publication:${publicationStatus}`;
+    setCommercialActionLoading(actionKey);
+    try {
+      await setLocationPublicationStatus({
+        locationId: location.id,
+        publicationStatus,
+        reason: publicationStatus === 'PUBLISHED' ? undefined : 'Alterado pelo administrador',
+      });
+      showSuccess(
+        `${location.name}: ${LOCATION_PUBLICATION_STATUS_LABELS[publicationStatus].toLowerCase()}.`,
+      );
+    } catch (err) {
+      logger.error('Erro ao alterar publicação da quadra:', err);
+      showError('Não foi possível alterar a publicação da quadra.');
+    } finally {
+      setCommercialActionLoading(null);
+    }
+  };
+
+  const handleSubscriptionStatus = async (
+    location: Location,
+    subscriptionStatus: LocationSubscriptionStatus,
+  ) => {
+    const actionKey = `${location.id}:subscription:${subscriptionStatus}`;
+    setCommercialActionLoading(actionKey);
+    try {
+      await setLocationSubscription({
+        locationId: location.id,
+        subscriptionStatus,
+        monthlyFeeCents: location.monthlyFeeCents ?? null,
+        billingDueDay: location.billingDueDay ?? null,
+      });
+      showSuccess(
+        `${location.name}: mensalidade ${LOCATION_SUBSCRIPTION_STATUS_LABELS[subscriptionStatus].toLowerCase()}.`,
+      );
+    } catch (err) {
+      logger.error('Erro ao alterar mensalidade da quadra:', err);
+      showError('Não foi possível alterar a mensalidade da quadra.');
+    } finally {
+      setCommercialActionLoading(null);
+    }
+  };
 
   return (
     <>
@@ -218,6 +292,9 @@ export const ManageLocationsScreen: React.FC = () => {
                   ? FIELD_TYPE_CONFIG[location.fieldType]?.label || location.fieldType
                   : null;
                 const userCanManage = canManage(location);
+                const publicationStatus = getPublicationStatus(location);
+                const subscriptionStatus = getSubscriptionStatus(location);
+                const isCommercialActionBusy = commercialActionLoading?.startsWith(`${location.id}:`) ?? false;
 
                 return (
                   <Card key={location.id} sx={{ position: 'relative' }}>
@@ -297,11 +374,75 @@ export const ManageLocationsScreen: React.FC = () => {
                                   variant="outlined"
                                 />
                               )}
+                              <Chip
+                                label={LOCATION_PUBLICATION_STATUS_LABELS[publicationStatus]}
+                                size="small"
+                                color={publicationStatus === 'PUBLISHED' ? 'success' : 'warning'}
+                                variant={publicationStatus === 'PUBLISHED' ? 'filled' : 'outlined'}
+                              />
+                              <Chip
+                                label={LOCATION_SUBSCRIPTION_STATUS_LABELS[subscriptionStatus]}
+                                size="small"
+                                color={['TRIAL', 'ACTIVE'].includes(subscriptionStatus) ? 'success' : 'error'}
+                                variant="outlined"
+                              />
+                              {isAdmin && (
+                                <Chip
+                                  label={formatMonthlyFee(location.monthlyFeeCents)}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              )}
                             </Box>
                           </Box>
                         </Box>
                       </CardContent>
                     </CardActionArea>
+                    {isAdmin && (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 2, pb: 2 }}>
+                        {publicationStatus === 'PUBLISHED' ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="warning"
+                            disabled={isCommercialActionBusy}
+                            onClick={() => handlePublicationStatus(location, 'SUSPENDED')}
+                          >
+                            Suspender
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            disabled={isCommercialActionBusy}
+                            onClick={() => handlePublicationStatus(location, 'PUBLISHED')}
+                          >
+                            Publicar
+                          </Button>
+                        )}
+                        {['TRIAL', 'ACTIVE'].includes(subscriptionStatus) ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="warning"
+                            disabled={isCommercialActionBusy}
+                            onClick={() => handleSubscriptionStatus(location, 'OVERDUE')}
+                          >
+                            Marcar vencida
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="success"
+                            disabled={isCommercialActionBusy}
+                            onClick={() => handleSubscriptionStatus(location, 'ACTIVE')}
+                          >
+                            Marcar em dia
+                          </Button>
+                        )}
+                      </Box>
+                    )}
                     {userCanManage && (
                       <Box
                         sx={{

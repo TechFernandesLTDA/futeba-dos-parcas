@@ -1,4 +1,7 @@
 export type FieldType = 'SOCIETY' | 'FUTSAL' | 'CAMPO' | 'AREIA' | 'OUTROS';
+export type LocationPublicationStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'SUSPENDED' | 'REJECTED';
+export type LocationCommercialStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
+export type LocationSubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
 
 export interface Location {
   id: string;
@@ -27,6 +30,20 @@ export interface Location {
   managers: string[];
   isVerified: boolean;
   isActive: boolean;
+
+  // Commercial publishing and billing
+  publicationStatus?: LocationPublicationStatus;
+  commercialStatus?: LocationCommercialStatus;
+  subscriptionStatus?: LocationSubscriptionStatus;
+  monthlyFeeCents?: number;
+  billingDueDay?: number;
+  billingStartsAt?: Date;
+  billingExpiresAt?: Date;
+  publishedAt?: Date;
+  publishedBy?: string;
+  unpublishedReason?: string;
+  ownerNotes?: string;
+  adminNotes?: string;
   
   // Rating
   rating: number;
@@ -120,8 +137,35 @@ export const AMENITY_LABELS: Record<string, string> = {
   scoreboard: 'Placar Eletrônico',
 };
 
+export const LOCATION_PUBLICATION_STATUS_LABELS: Record<LocationPublicationStatus, string> = {
+  DRAFT: 'Rascunho',
+  PENDING_REVIEW: 'Em revisão',
+  PUBLISHED: 'Publicado',
+  SUSPENDED: 'Suspenso',
+  REJECTED: 'Reprovado',
+};
+
+export const LOCATION_SUBSCRIPTION_STATUS_LABELS: Record<LocationSubscriptionStatus, string> = {
+  TRIAL: 'Teste',
+  ACTIVE: 'Em dia',
+  OVERDUE: 'Vencido',
+  SUSPENDED: 'Suspenso',
+  CANCELLED: 'Cancelado',
+};
+
 export function canManageLocation(location: Location, userId: string): boolean {
   return location.ownerId === userId || location.managers.includes(userId);
+}
+
+export function isLocationCommerciallyAvailable(location: Location): boolean {
+  const publicationStatus = location.publicationStatus ||
+    (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
+  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
+  return location.isActive === true &&
+    location.isVerified === true &&
+    publicationStatus === 'PUBLISHED' &&
+    ['TRIAL', 'ACTIVE'].includes(subscriptionStatus) &&
+    location.hasActiveFields !== false;
 }
 
 export function getFullAddress(location: Location): string {
