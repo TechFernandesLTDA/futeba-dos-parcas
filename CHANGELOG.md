@@ -53,6 +53,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.0] - 2026-06-28
+
+#### Adicionado
+- Teste de componente para validar a renderização do novo `PlayerCard` com dados mockados.
+
+#### Mudado
+- Reestrutura `web/src/components/player/PlayerCard.tsx` com layout novo, tiles de estatísticas e barras de atributos redesenhadas.
+
 ### [1.42.1] - 2026-06-28
 
 #### Corrigido

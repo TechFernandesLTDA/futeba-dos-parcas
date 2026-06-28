@@ -1,7 +1,41 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T01:47:49.573Z",
+  "generatedAt": "2026-06-28T03:10:10.416Z",
   "notes": [
+    {
+      "version": "1.43.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Card dos jogadores redesenhado do zero",
+      "highlights": [
+        {
+          "icon": "style",
+          "title": "Nova identidade visual",
+          "description": "O card do jogador ganhou visual de matchday pass, com foto maior, rating em destaque e leitura mais limpa."
+        },
+        {
+          "icon": "sports_soccer",
+          "title": "Dados mais fáceis de ler",
+          "description": "Posição, nível, XP, atributos e estatísticas agora ficam organizados por prioridade."
+        },
+        {
+          "icon": "ios_share",
+          "title": "Compartilhamento preservado",
+          "description": "A geração de imagem continua funcionando para compartilhar ou baixar o card."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Reformula completamente o card dos jogadores na versão web.",
+        "Melhora a hierarquia visual para nome, posição, nota geral, evolução de XP e métricas principais.",
+        "Remove a escala agressiva do modal antigo para deixar o card menos espremido em desktop e mobile."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.42.1",
       "buildNumber": null,
