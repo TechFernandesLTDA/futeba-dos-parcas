@@ -53,6 +53,11 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.42.1] - 2026-06-28
+
+#### Corrigido
+- Remove o wrapper `AdaptiveFormSheet` da `CreateGameScreen` para evitar Drawer lateral no desktop.
+
 ### [1.42.0] - 2026-06-28
 
 #### Adicionado
