@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
   Alert,
   Skeleton,
   Paper,
+  Button,
+  Chip,
+  Collapse,
+  useMediaQuery,
 } from '@mui/material';
 import { format, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -40,6 +44,8 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
 }) => {
   const { data, loading, error } = useFieldGames(fieldId, 7);
   const { byDate } = data;
+  const isMobile = useMediaQuery('(max-width:600px)');
+  const [expanded, setExpanded] = useState(false);
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
   const selectedMinutes = selectedTime ? parseTime(selectedTime) : null;
@@ -55,8 +61,13 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
 
   const slots = Array.from(
     { length: (HOUR_END - HOUR_START) * 2 },
-    (_, i) => HOUR_START * 60 + i * 30
+    (_, i) => HOUR_START * 60 + i * 30,
   );
+  const selectedDay = selectedDate || format(new Date(), 'yyyy-MM-dd');
+  const quickFreeSlots = slots
+    .filter((slotStart) => !isSlotOccupied(selectedDay, slotStart, slotStart + DEFAULT_GAME_DURATION_MINUTES))
+    .slice(0, 6)
+    .map(formatTimeLabel);
 
   if (!fieldId) {
     return null;
@@ -68,7 +79,7 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
         <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block' }}>
           Disponibilidade do campo
         </Typography>
-        <Skeleton variant="rounded" height={180} />
+        <Skeleton variant="rounded" height={isMobile ? 92 : 180} />
       </Box>
     );
   }
@@ -84,11 +95,8 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
     );
   }
 
-  return (
-    <Box>
-      <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block' }}>
-        Disponibilidade do campo (proximos 7 dias)
-      </Typography>
+  const renderTimelineGrid = () => (
+    <>
       <Box sx={{ overflowX: 'auto', pb: 1, WebkitOverflowScrolling: 'touch' }}>
         <Box sx={{ display: 'flex', gap: 1, minWidth: 'min-content' }}>
           {days.map((day) => {
@@ -123,9 +131,7 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
                         sx={{ minHeight: 44, display: 'flex', alignItems: 'center', cursor: occupied ? 'default' : 'pointer' }}
                         onClick={() => {
                           if (!occupied) {
-                            const h = Math.floor(slotStart / 60);
-                            const m = slotStart % 60;
-                            onSlotSelect(dayStr, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+                            onSlotSelect(dayStr, formatTimeLabel(slotStart));
                           }
                         }}
                         title={
@@ -176,6 +182,72 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
           <Typography variant="caption" color="text.secondary">Selecionado</Typography>
         </Box>
       </Box>
+    </>
+  );
+
+  if (isMobile) {
+    const selectedDayLabel = selectedDate
+      ? format(new Date(`${selectedDate}T12:00:00`), 'EEE dd/MM', { locale: ptBR })
+      : 'hoje';
+
+    return (
+      <Paper
+        variant="outlined"
+        sx={(theme) => ({
+          p: 1.25,
+          borderColor: theme.palette.divider,
+          bgcolor: theme.palette.action.hover,
+        })}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }}>
+              Agenda da quadra
+            </Typography>
+            <Typography variant="body2" fontWeight={700}>
+              Livres em {selectedDayLabel}
+            </Typography>
+          </Box>
+          <Button size="small" onClick={() => setExpanded((prev) => !prev)} sx={{ whiteSpace: 'nowrap' }}>
+            {expanded ? 'Ocultar' : '7 dias'}
+          </Button>
+        </Box>
+
+        {quickFreeSlots.length > 0 ? (
+          <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pt: 1, pb: 0.25, WebkitOverflowScrolling: 'touch' }}>
+            {quickFreeSlots.map((time) => (
+              <Chip
+                key={time}
+                size="small"
+                label={time}
+                color={selectedDate === selectedDay && selectedTime === time ? 'primary' : 'success'}
+                variant={selectedDate === selectedDay && selectedTime === time ? 'filled' : 'outlined'}
+                onClick={() => onSlotSelect(selectedDay, time)}
+                sx={{ flex: '0 0 auto', fontWeight: 700 }}
+              />
+            ))}
+          </Box>
+        ) : (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Sem janelas livres rápidas neste dia. Abra o mapa de 7 dias para procurar outro horário.
+          </Typography>
+        )}
+
+        <Collapse in={expanded} unmountOnExit>
+          <Box sx={{ mt: 1.25 }}>
+            {renderTimelineGrid()}
+          </Box>
+        </Collapse>
+      </Paper>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block' }}>
+        Disponibilidade do campo (próximos 7 dias)
+      </Typography>
+      {renderTimelineGrid()}
     </Box>
   );
 };
