@@ -744,11 +744,12 @@ export const concludeMvpVoting =
                 bestGkId,
                 worstPlayerId,
                 totalVotes: votes.length,
-                mvpVotes: mvpCounts.length,
+                mvpVotes:
+                  countTalliedVotes(mvpCounts),
                 bestGkVotes:
-                  bestGkCounts.length,
+                  countTalliedVotes(bestGkCounts),
                 worstVotes:
-                  worstCounts.length,
+                  countTalliedVotes(worstCounts),
               };
             }
           );
@@ -914,6 +915,16 @@ function tallyVotes(
 
   tallies.sort((a, b) => b.count - a.count);
   return tallies;
+}
+
+/**
+ * Soma votos contabilizados em uma categoria.
+ *
+ * @param {VoteTally[]} tallies - Contagem por jogador.
+ * @return {number} Total de votos da categoria.
+ */
+function countTalliedVotes(tallies: VoteTally[]): number {
+  return tallies.reduce((total, tally) => total + tally.count, 0);
 }
 
 /**
