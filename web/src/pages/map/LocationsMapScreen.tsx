@@ -34,7 +34,12 @@ import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
-import { FIELD_TYPE_CONFIG, FieldType, Location } from '../../types/location';
+import {
+  FIELD_TYPE_CONFIG,
+  FieldType,
+  Location,
+  isLocationCommerciallyAvailable,
+} from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../contexts/ToastContext';
@@ -140,10 +145,12 @@ export const LocationsMapScreen: React.FC = () => {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map((d) => ({
-          ...snakeToCamel<Location>(d.data()),
-          id: d.id,
-        }));
+        const data = snapshot.docs
+          .map((d) => ({
+            ...snakeToCamel<Location>(d.data()),
+            id: d.id,
+          }))
+          .filter(isLocationCommerciallyAvailable);
         setLocations(data);
         setErrorState(null);
         setLoading(false);

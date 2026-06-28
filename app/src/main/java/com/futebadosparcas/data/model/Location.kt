@@ -52,6 +52,43 @@ data class Location(
     @get:PropertyName("is_active")
     @set:PropertyName("is_active")
     var isActive: Boolean = true,
+
+    @get:PropertyName("publication_status")
+    @set:PropertyName("publication_status")
+    var publicationStatus: String = "DRAFT",
+    @get:PropertyName("commercial_status")
+    @set:PropertyName("commercial_status")
+    var commercialStatus: String = "TRIAL",
+    @get:PropertyName("subscription_status")
+    @set:PropertyName("subscription_status")
+    var subscriptionStatus: String = "TRIAL",
+    @get:PropertyName("monthly_fee_cents")
+    @set:PropertyName("monthly_fee_cents")
+    var monthlyFeeCents: Long? = null,
+    @get:PropertyName("billing_due_day")
+    @set:PropertyName("billing_due_day")
+    var billingDueDay: Int? = null,
+    @get:PropertyName("billing_starts_at")
+    @set:PropertyName("billing_starts_at")
+    var billingStartsAt: Date? = null,
+    @get:PropertyName("billing_expires_at")
+    @set:PropertyName("billing_expires_at")
+    var billingExpiresAt: Date? = null,
+    @get:PropertyName("published_at")
+    @set:PropertyName("published_at")
+    var publishedAt: Date? = null,
+    @get:PropertyName("published_by")
+    @set:PropertyName("published_by")
+    var publishedBy: String? = null,
+    @get:PropertyName("unpublished_reason")
+    @set:PropertyName("unpublished_reason")
+    var unpublishedReason: String? = null,
+    @get:PropertyName("owner_notes")
+    @set:PropertyName("owner_notes")
+    var ownerNotes: String? = null,
+    @get:PropertyName("admin_notes")
+    @set:PropertyName("admin_notes")
+    var adminNotes: String? = null,
     
     // Avaliação
     val rating: Double = 0.0,
@@ -234,6 +271,14 @@ data class Location(
      */
     @Exclude
     fun canManage(userId: String): Boolean = isOwner(userId) || isManager(userId)
+
+    @Exclude
+    fun isCommerciallyAvailable(): Boolean =
+        isActive &&
+            isVerified &&
+            publicationStatus == "PUBLISHED" &&
+            subscriptionStatus in setOf("TRIAL", "ACTIVE") &&
+            hasActiveFields
 }
 
 /**

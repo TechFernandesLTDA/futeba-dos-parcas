@@ -69,6 +69,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.6] - 2026-06-28
+
+#### Adicionado
+- Contrato web para status de publicação, assinatura e mensalidade de quadras.
+- Documentação `docs/VENUE_MONETIZATION.md` para o modelo de monetização.
+
+#### Mudado
+- `useLocations` e o mapa público filtram quadras comercialmente indisponíveis.
+- Cadastro completo e criação rápida iniciam quadras como `PENDING_REVIEW` e `TRIAL`.
+
+#### Segurança
+- Campos comerciais passam a depender das novas operações administrativas protegidas no backend.
+
+_Issues: #3084, #3092, #3093, #3094, #3095, #3096, #3104_
+
 ### [1.43.5] - 2026-06-28
 
 #### Mudado
@@ -388,6 +403,20 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.2] - 2026-06-28
+
+#### Adicionado
+- Callable `setLocationPublicationStatus` para publicar, suspender ou reprovar quadras.
+- Callable `setLocationSubscription` para controlar mensalidade e status comercial.
+- Callable `registerLocationSubscriptionPayment` para registrar pagamento manual e reativar assinatura.
+- Eventos comerciais gravados em `locations/{locationId}/commercial_events` e `audit_logs`.
+
+#### Segurança
+- Firestore Rules bloqueiam escrita client-side em eventos comerciais e pagamentos.
+- Donos e gerentes de quadra não podem alterar status de publicação, mensalidade ou pagamento diretamente.
+
+_Issues: #3084, #3092, #3093, #3094, #3095, #3096_
 
 ### [1.2.1] - 2026-06-28
 

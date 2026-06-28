@@ -16,6 +16,46 @@ export const deleteLocation = httpsCallable<
   { success: boolean; deletedCount: number }
 >(functions, 'deleteLocation');
 
+export const setLocationPublicationStatus = httpsCallable<
+  {
+    locationId: string;
+    publicationStatus: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'SUSPENDED' | 'REJECTED';
+    reason?: string;
+  },
+  { success: boolean; locationId: string; publicationStatus: string }
+>(functions, 'setLocationPublicationStatus');
+
+export const setLocationSubscription = httpsCallable<
+  {
+    locationId: string;
+    subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
+    monthlyFeeCents?: number | null;
+    billingDueDay?: number | null;
+    billingStartsAtIso?: string | null;
+    billingExpiresAtIso?: string | null;
+    adminNotes?: string | null;
+  },
+  { success: boolean; locationId: string; subscriptionStatus: string }
+>(functions, 'setLocationSubscription');
+
+export const registerLocationSubscriptionPayment = httpsCallable<
+  {
+    locationId: string;
+    amountCents: number;
+    periodKey: string;
+    paidAtIso?: string | null;
+    method?: string | null;
+    receiptUrl?: string | null;
+    notes?: string | null;
+  },
+  {
+    success: boolean;
+    locationId: string;
+    paymentId: string;
+    subscriptionStatus: string;
+  }
+>(functions, 'registerLocationSubscriptionPayment');
+
 export const calculateAutoRatings = httpsCallable<
   { userId: string },
   { success: boolean }

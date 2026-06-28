@@ -32,6 +32,18 @@ vi.mock('../contexts/ToastContext', () => ({
 }));
 import { useLocations, useLocationDetail } from './useLocations';
 
+const activeLocationData = (overrides = {}) => ({
+  name: 'Campo do Zé',
+  address: 'Rua A, 123',
+  rating: 4.5,
+  is_active: true,
+  is_verified: true,
+  publication_status: 'PUBLISHED',
+  subscription_status: 'ACTIVE',
+  has_active_fields: true,
+  ...overrides,
+});
+
 describe('useLocations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,11 +73,15 @@ describe('useLocations', () => {
       docs: [
         {
           id: 'loc-1',
-          data: () => ({ name: 'Campo do Zé', address: 'Rua A, 123', rating: 4.5 }),
+          data: () => activeLocationData(),
         },
         {
           id: 'loc-2',
-          data: () => ({ name: 'Arena Parças', address: 'Av. B, 456', rating: 4.0 }),
+          data: () => activeLocationData({
+            name: 'Arena Parças',
+            address: 'Av. B, 456',
+            rating: 4.0,
+          }),
         },
       ],
     });
@@ -78,6 +94,33 @@ describe('useLocations', () => {
 
     expect(result.current.locations).toHaveLength(2);
     expect(result.current.locations[0].id).toBe('loc-1');
+  });
+
+  it('filtra locais suspensos comercialmente', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        {
+          id: 'loc-active',
+          data: () => activeLocationData({ name: 'Arena Ativa' }),
+        },
+        {
+          id: 'loc-suspended',
+          data: () => activeLocationData({
+            name: 'Arena Suspensa',
+            publication_status: 'SUSPENDED',
+          }),
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useLocations(), { wrapper: createTestWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.locations).toHaveLength(1);
+    expect(result.current.locations[0].id).toBe('loc-active');
   });
 
   it('trata erros da query', async () => {

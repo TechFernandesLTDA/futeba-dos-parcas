@@ -1104,7 +1104,46 @@ service cloud.firestore {
           isValidRating(data.get('rating', null)) &&
           // Validacao de coordenadas (#29)
           isValidLatitude(data.get('latitude', null)) &&
-          isValidLongitude(data.get('longitude', null));
+          isValidLongitude(data.get('longitude', null)) &&
+          data.get('publication_status', 'DRAFT') in [
+            'DRAFT',
+            'PENDING_REVIEW',
+            'PUBLISHED',
+            'SUSPENDED',
+            'REJECTED'
+          ] &&
+          data.get('subscription_status', 'TRIAL') in [
+            'TRIAL',
+            'ACTIVE',
+            'OVERDUE',
+            'SUSPENDED',
+            'CANCELLED'
+          ] &&
+          data.get('commercial_status', 'TRIAL') in [
+            'TRIAL',
+            'ACTIVE',
+            'OVERDUE',
+            'SUSPENDED',
+            'CANCELLED'
+          ];
+      }
+
+      function commercialFieldsUnchanged() {
+        return
+          fieldUnchanged('publication_status') &&
+          fieldUnchanged('commercial_status') &&
+          fieldUnchanged('subscription_status') &&
+          fieldUnchanged('monthly_fee_cents') &&
+          fieldUnchanged('billing_due_day') &&
+          fieldUnchanged('billing_starts_at') &&
+          fieldUnchanged('billing_expires_at') &&
+          fieldUnchanged('published_at') &&
+          fieldUnchanged('published_by') &&
+          fieldUnchanged('unpublished_reason') &&
+          fieldUnchanged('admin_notes') &&
+          fieldUnchanged('last_payment_at') &&
+          fieldUnchanged('last_payment_amount_cents') &&
+          fieldUnchanged('last_payment_period_key');
       }
 
       // ------------------------------------------
@@ -1119,6 +1158,8 @@ service cloud.firestore {
         // Leitura publica: apenas locais ativos E verificados E não deletados
         (resource.data.is_active == true &&
          resource.data.is_verified == true &&
+         resource.data.get('publication_status', 'PUBLISHED') == 'PUBLISHED' &&
+         resource.data.get('subscription_status', 'ACTIVE') in ['TRIAL', 'ACTIVE'] &&
          (!('deleted_at' in resource.data) || resource.data.deleted_at == null)) ||
         // Leitura autenticada: qualquer local não deletado
         (isAuthenticated() && (!('deleted_at' in resource.data) || resource.data.deleted_at == null)) ||
@@ -1147,6 +1188,9 @@ service cloud.firestore {
         // Campos de sistema devem ter valores corretos na criacao
         request.resource.data.get('is_verified', false) == false &&
         request.resource.data.get('is_active', true) == true &&
+        request.resource.data.get('publication_status', 'PENDING_REVIEW') == 'PENDING_REVIEW' &&
+        request.resource.data.get('subscription_status', 'TRIAL') == 'TRIAL' &&
+        request.resource.data.get('commercial_status', 'TRIAL') == 'TRIAL' &&
         // Rate limiting: request.time usado para audit (Cloud Functions aplicam limite real)
         request.time != null;
 
@@ -1169,7 +1213,8 @@ service cloud.firestore {
          fieldUnchanged('owner_id') &&
          fieldUnchanged('created_at') &&
          fieldUnchanged('is_verified') &&
-         fieldUnchanged('is_active')) ||
+         fieldUnchanged('is_active') &&
+         commercialFieldsUnchanged()) ||
         // Manager: mesmas permissoes do owner
         (isLocationManager() &&
          hasValidLocationData() &&
@@ -1177,7 +1222,8 @@ service cloud.firestore {
          fieldUnchanged('created_at') &&
          fieldUnchanged('is_verified') &&
          fieldUnchanged('is_active') &&
-         fieldUnchanged('managers'))  // Manager nao pode alterar lista de managers
+         fieldUnchanged('managers') &&
+         commercialFieldsUnchanged())  // Manager nao pode alterar lista de managers
       );
 
       // ------------------------------------------
@@ -1290,6 +1336,36 @@ service cloud.firestore {
         // Write: BLOQUEADO para clientes
         // Apenas Cloud Functions com Admin SDK podem escrever logs
         // Isso garante integridade e confiabilidade dos logs
+        allow create, update, delete: if false;
+      }
+
+      match /commercial_events/{eventId} {
+
+        function canReadCommercialEvents() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        allow read: if isAuthenticated() && canReadCommercialEvents();
+        allow create, update, delete: if false;
+      }
+
+      match /subscription_payments/{paymentId} {
+
+        function canReadSubscriptionPayments() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        allow read: if isAuthenticated() && canReadSubscriptionPayments();
         allow create, update, delete: if false;
       }
 

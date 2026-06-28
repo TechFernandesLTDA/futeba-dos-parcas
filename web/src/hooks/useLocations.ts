@@ -2,7 +2,7 @@ import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebas
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
-import { Location } from '../types/location';
+import { Location, isLocationCommerciallyAvailable } from '../types/location';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useLocations');
@@ -14,10 +14,12 @@ async function fetchLocations(): Promise<Location[]> {
   const q = query(locRef, orderBy('name', 'asc'), limit(200));
   try {
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({
-      ...snakeToCamel<Location>(d.data()),
-      id: d.id,
-    }));
+    return snapshot.docs
+      .map((d) => ({
+        ...snakeToCamel<Location>(d.data()),
+        id: d.id,
+      }))
+      .filter(isLocationCommerciallyAvailable);
   } catch (error) {
     logger.error('useLocations: failed to fetch locations', error);
     throw error;
