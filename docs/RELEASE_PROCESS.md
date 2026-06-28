@@ -153,10 +153,12 @@ node scripts/release-notes.js publish --platform android --version 1.27.0
   lançado, troque para `published: true` e publique.
 - **`functions` não tem app cliente.** Entra só no `CHANGELOG.md` — sem `bundle`
   nem `publish`.
-- **Tags de release anteriores.** O `master` está em `versionCode 56` /
-  `1.31.0`. `release-notes/android/` documenta os releases mais recentes.
-  O `publish` só deve rodar depois que a tag existir (o gate por push de tag no
-  `release.yml` garante isso).
+- **Versões correntes.** Consulte `versions.json` antes de qualquer release. Em
+  2026-06-28, as versões registradas são: Android `1.32.0` (`buildNumber` 57),
+  Web `1.43.2`, iOS `1.6.0` (`buildNumber` 17) e Functions `1.2.1`.
+  `release-notes/` documenta os releases mais recentes. O `publish` só deve
+  rodar depois que a tag existir (o gate por push de tag no `release.yml`
+  garante isso).
 - **Backfill.** O sistema nasceu em 2026-05-22 com backfill das últimas versões
   reais: Android `1.24.0`–`1.26.0`, Web `1.26.0`, iOS `1.6.0` (pré-lançamento),
   Functions `1.0.0` (linha de base). Versões mais antigas seguem apenas no
