@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T21:51:15.092Z",
+  "generatedAt": "2026-06-28T22:08:23.420Z",
   "notes": [
     {
       "version": "1.43.8",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-06-28",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "Cadastro de quadras agora aceita controle completo por campo",
       "highlights": [],
       "added": [],
