@@ -54,6 +54,7 @@ export interface Location {
   // Description
   description: string;
   photoUrl?: string;
+  photos?: string[];
   
   // Amenities
   amenities: string[];
@@ -63,6 +64,7 @@ export interface Location {
   
   // Contact
   phone?: string;
+  whatsapp?: string;
   website?: string;
   instagram?: string;
   
@@ -98,6 +100,8 @@ export interface Field {
   surface?: string;
   isCovered: boolean;
   dimensions?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface LocationReview {
@@ -135,6 +139,7 @@ export const AMENITY_LABELS: Record<string, string> = {
   wifi: 'Wi-Fi',
   air_conditioning: 'Ar Condicionado',
   bleachers: 'Arquibancada',
+  lighting: 'Iluminação',
   scoreboard: 'Placar Eletrônico',
   covered: 'Cobertura',
   security: 'Segurança',
@@ -151,6 +156,7 @@ export const COMMERCIAL_AMENITIES = [
   'restaurant',
   'wifi',
   'bleachers',
+  'lighting',
   'covered',
 ] as const;
 

@@ -9,9 +9,7 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  FormControlLabel,
-  Switch,
-  MenuItem,
+  Chip,
   Stack,
 } from '@mui/material';
 import PageContainer from '../../components/common/PageContainer';
@@ -19,10 +17,12 @@ import { MyLocation as GeoIcon } from '@mui/icons-material';
 import {
   doc,
   getDoc,
-  updateDoc,
+  getDocs,
   collection,
   serverTimestamp,
   writeBatch,
+  query,
+  orderBy,
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FirebaseError } from 'firebase/app';
@@ -32,7 +32,20 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { Location, FieldType, FIELD_TYPE_CONFIG } from '../../types/location';
+import {
+  Location,
+  Field,
+  COMMERCIAL_AMENITIES,
+  AMENITY_LABELS,
+} from '../../types/location';
+import { LocationFieldsEditor } from '../../components/locations/LocationFieldsEditor';
+import {
+  LocationFieldDraft,
+  createLocationFieldDraft,
+  fieldToDraft,
+  parseHourlyPrice,
+  summarizeLocationFields,
+} from '../../utils/locationFields';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { createLogger } from '../../utils/logger';
 import { syncFieldOwnerClaim } from '../../services/cloudFunctions';
@@ -43,46 +56,58 @@ const logger = createLogger('LocationFormScreen');
 interface FormState {
   name: string;
   address: string;
+  cep: string;
+  street: string;
+  number: string;
+  complement: string;
   city: string;
   state: string;
   district: string;
+  region: string;
   phone: string;
+  whatsapp: string;
+  instagram: string;
   website: string;
-  fieldType: FieldType;
-  playersPerTeam: number;
-  fieldCount: number;
-  hourlyPrice: number;
   description: string;
   hasLighting: boolean;
   hasParking: boolean;
   hasShowers: boolean;
+  amenities: string[];
   latitude: number | null;
   longitude: number | null;
-  photoFile: File | null;
-  photoPreview: string | null;
+  photoFiles: File[];
+  photoPreviews: string[];
+  existingPhotos: string[];
 }
 
 const defaultForm: FormState = {
   name: '',
   address: '',
+  cep: '',
+  street: '',
+  number: '',
+  complement: '',
   city: '',
   state: '',
   district: '',
+  region: '',
   phone: '',
+  whatsapp: '',
+  instagram: '',
   website: '',
-  fieldType: 'SOCIETY',
-  playersPerTeam: 7,
-  fieldCount: 1,
-  hourlyPrice: 0,
   description: '',
   hasLighting: false,
   hasParking: false,
   hasShowers: false,
+  amenities: [],
   latitude: null,
   longitude: null,
-  photoFile: null,
-  photoPreview: null,
+  photoFiles: [],
+  photoPreviews: [],
+  existingPhotos: [],
 };
+
+const defaultFieldDrafts = [createLocationFieldDraft(1)];
 
 export const LocationFormScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -104,6 +129,9 @@ export const LocationFormScreen: React.FC = () => {
   const [fetchLoading, setFetchLoading] = useState(isEdit);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [fields, setFields] = useState<LocationFieldDraft[]>(defaultFieldDrafts);
+  const [initialFields, setInitialFields] = useState<LocationFieldDraft[]>(defaultFieldDrafts);
   const [geoLoading, setGeoLoading] = useState(false);
 
   // Carrega dados existentes quando em modo edição
@@ -120,32 +148,50 @@ export const LocationFormScreen: React.FC = () => {
           return;
         }
         const data = snakeToCamel<Location>(snap.data());
+        const fieldsSnapshot = await getDocs(
+          query(collection(db, 'locations', locationId, 'fields'), orderBy('name', 'asc')),
+        );
+        if (cancelled) return;
+        const loadedFields = fieldsSnapshot.docs.map((fieldDoc) =>
+          fieldToDraft({
+            ...snakeToCamel<Field>(fieldDoc.data()),
+            id: fieldDoc.id,
+          }),
+        );
         if (!cancelled) {
           // #1339: um único literal nomeado alimenta form E baseline, para
           // não divergirem se FormState crescer.
           const loaded: FormState = {
             name: data.name || '',
             address: data.address || '',
+            cep: data.cep || '',
+            street: data.street || '',
+            number: data.number || '',
+            complement: data.complement || '',
             city: data.city || '',
             state: data.state || '',
             district: data.district || '',
+            region: data.region || '',
             phone: data.phone || '',
+            whatsapp: data.whatsapp || '',
+            instagram: data.instagram || '',
             website: data.website || '',
-            fieldType: data.fieldType || 'SOCIETY',
-            playersPerTeam: data.playersPerTeam || 7,
-            fieldCount: data.fieldCount || 1,
-            hourlyPrice: 0,
             description: data.description || '',
             hasLighting: !!data.hasLighting,
             hasParking: !!data.hasParking,
             hasShowers: !!data.hasShowers,
+            amenities: data.amenities || [],
             latitude: data.latitude ?? null,
             longitude: data.longitude ?? null,
-            photoFile: null,
-            photoPreview: data.photoUrl || null,
+            photoFiles: [],
+            photoPreviews: [],
+            existingPhotos: data.photos?.length ? data.photos : (data.photoUrl ? [data.photoUrl] : []),
           };
+          const nextFields = loadedFields.length > 0 ? loadedFields : [createLocationFieldDraft(1)];
           setForm(loaded);
           setInitialForm(loaded);
+          setFields(nextFields);
+          setInitialFields(nextFields);
           setFetchError(null);
         }
       } catch (err) {
@@ -163,7 +209,8 @@ export const LocationFormScreen: React.FC = () => {
     return () => { cancelled = true; };
   }, [isEdit, locationId]);
 
-  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm) ||
+    JSON.stringify(fields) !== JSON.stringify(initialFields);
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormState, string>> = {};
@@ -174,10 +221,22 @@ export const LocationFormScreen: React.FC = () => {
     if (!form.state || form.state.trim().length < 2) {
       e.state = t('locations.form.validation.stateRequired');
     }
-    if (form.fieldCount < 1) e.fieldCount = t('locations.form.validation.fieldCountMin');
-    if (form.playersPerTeam < 3 || form.playersPerTeam > 11) {
-      e.playersPerTeam = t('locations.form.validation.playersPerTeamRange');
+    const nextFieldErrors: Record<string, string> = {};
+    const activeFields = fields.filter((field) => field.isActive);
+    if (fields.length < 1 || activeFields.length < 1) {
+      nextFieldErrors.form = t('locations.form.validation.fieldCountMin');
     }
+    fields.forEach((field) => {
+      if (!field.name.trim()) {
+        nextFieldErrors[`${field.id}.name`] = 'Nome da quadra é obrigatório.';
+      } else if (field.name.trim().length < 2) {
+        nextFieldErrors[`${field.id}.name`] = 'Mínimo 2 caracteres.';
+      }
+      const hourlyPrice = parseHourlyPrice(field.hourlyPrice);
+      if (Number.isNaN(hourlyPrice)) {
+        nextFieldErrors[`${field.id}.hourlyPrice`] = 'Informe um preço válido ou deixe vazio.';
+      }
+    });
     // #1339: telefone é opcional, mas se preenchido deve ter DDD + número
     // (10 dígitos fixo, 11 celular). Não força máscara (mudança de UX maior).
     const phoneDigits = form.phone.replace(/\D/g, '');
@@ -194,7 +253,8 @@ export const LocationFormScreen: React.FC = () => {
       e.longitude = t('locations.form.validation.longitudeRange');
     }
     setErrors(e);
-    return Object.keys(e).length === 0;
+    setFieldErrors(nextFieldErrors);
+    return Object.keys(e).length === 0 && Object.keys(nextFieldErrors).length === 0;
   };
 
   const captureGeolocation = () => {
@@ -227,55 +287,158 @@ export const LocationFormScreen: React.FC = () => {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
+  const handleAmenityToggle = (amenity: string) => {
+    setForm((prev) => {
+      const amenities = prev.amenities.includes(amenity)
+        ? prev.amenities.filter((item) => item !== amenity)
+        : [...prev.amenities, amenity];
+      return {
+        ...prev,
+        amenities,
+        hasParking: amenities.includes('parking'),
+        hasShowers: amenities.includes('shower') || amenities.includes('locker_room'),
+        hasLighting: amenities.includes('lighting'),
+      };
+    });
+  };
+
+  const handleLocationPhotos = (files: FileList | null) => {
+    if (!files?.length) return;
+    const accepted = Array.from(files).filter((file) => {
+      if (!file.type.startsWith('image/')) {
+        showError(t('feedback.location.onlyImages'));
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showError(t('feedback.location.imageTooLarge'));
+        return false;
+      }
+      return true;
+    });
+    if (accepted.length === 0) return;
+    setForm((prev) => ({
+      ...prev,
+      photoFiles: [...prev.photoFiles, ...accepted],
+      photoPreviews: [
+        ...prev.photoPreviews,
+        ...accepted.map((file) => URL.createObjectURL(file)),
+      ],
+    }));
+  };
+
+  const uploadFiles = async (basePath: string, files: File[]) => {
+    const urls: string[] = [];
+    for (const [index, file] of files.entries()) {
+      const ref = storageRef(storage, `${basePath}/${Date.now()}-${index}-${file.name}`);
+      await uploadBytes(ref, file, { contentType: file.type });
+      urls.push(await getDownloadURL(ref));
+    }
+    return urls;
+  };
+
   const handleSubmit = async () => {
     if (!validate() || !user) return;
     setLoading(true);
     try {
-      let photoUrl: string | null = null;
-      if (form.photoFile) {
-        const ref = storageRef(storage, `locations/${isEdit ? locationId : crypto.randomUUID()}/photo.jpg`);
-        await uploadBytes(ref, form.photoFile, { contentType: form.photoFile.type });
-        photoUrl = await getDownloadURL(ref);
-      }
+      const batch = writeBatch(db);
+      const locationRef = isEdit && locationId
+        ? doc(db, 'locations', locationId)
+        : doc(collection(db, 'locations'));
+      const locationDocId = locationRef.id;
+      const uploadedLocationPhotos = await uploadFiles(
+        `locations/${locationDocId}/photos`,
+        form.photoFiles,
+      );
+      const locationPhotos = [...form.existingPhotos, ...uploadedLocationPhotos];
+      const fieldSummary = summarizeLocationFields(fields);
+      const amenities = Array.from(new Set([
+        ...form.amenities,
+        ...(form.hasParking ? ['parking'] : []),
+        ...(form.hasShowers ? ['shower', 'locker_room'] : []),
+        ...(form.hasLighting ? ['lighting'] : []),
+      ]));
+      const composedAddress = form.address.trim() ||
+        [form.street.trim(), form.number.trim()].filter(Boolean).join(', ');
 
       const payload: Record<string, unknown> = {
         name: form.name.trim(),
-        address: form.address.trim(),
+        address: composedAddress,
+        cep: form.cep.replace(/\D/g, ''),
+        street: form.street.trim(),
+        number: form.number.trim(),
+        complement: form.complement.trim(),
         city: form.city.trim(),
         state: form.state.trim(),
         district: form.district.trim(),
+        neighborhood: form.district.trim(),
+        region: form.region.trim() || form.state.trim(),
         phone: form.phone.trim() || null,
+        whatsapp: form.whatsapp.trim() || null,
+        instagram: form.instagram.trim() || null,
         website: form.website.trim() || null,
-        field_type: form.fieldType,
-        primary_field_type: form.fieldType,
-        players_per_team: form.playersPerTeam,
-        field_count: form.fieldCount,
+        field_type: fieldSummary.primaryFieldType,
+        primary_field_type: fieldSummary.primaryFieldType,
+        field_count: fieldSummary.fieldCount,
+        has_active_fields: fieldSummary.hasActiveFields,
         description: form.description.trim(),
         has_lighting: form.hasLighting,
         has_parking: form.hasParking,
         has_showers: form.hasShowers,
+        amenities,
+        photos: locationPhotos,
+        photo_url: locationPhotos[0] || null,
         latitude: form.latitude,
         longitude: form.longitude,
-        is_active: true,
         updated_at: serverTimestamp(),
         updated_by: user.id,
       };
 
-      if (photoUrl) payload.photo_url = photoUrl;
-
       if (isEdit && locationId) {
-        await updateDoc(doc(db, 'locations', locationId), payload);
+        batch.update(locationRef, payload);
+        for (const field of fields) {
+          const fieldRef = field.persistedId
+            ? doc(db, 'locations', locationDocId, 'fields', field.persistedId)
+            : doc(collection(db, 'locations', locationDocId, 'fields'));
+          const uploadedFieldPhotos = await uploadFiles(
+            `locations/${locationDocId}/fields/${fieldRef.id}/photos`,
+            field.photoFiles,
+          );
+          const fieldPhotos = [...field.existingPhotos, ...uploadedFieldPhotos];
+          const fieldPayload = {
+            name: field.name.trim(),
+            location_id: locationDocId,
+            type: field.type,
+            is_active: field.isActive,
+            hourly_price: parseHourlyPrice(field.hourlyPrice),
+            price_per_hour: parseHourlyPrice(field.hourlyPrice),
+            surface: field.surface.trim() || null,
+            dimensions: field.dimensions.trim() || null,
+            is_covered: field.isCovered,
+            amenities: field.isCovered ? ['covered'] : [],
+            photos: fieldPhotos,
+            photo_url: fieldPhotos[0] || null,
+            managers: [user.id],
+            updated_at: serverTimestamp(),
+          };
+          if (field.persistedId) {
+            batch.update(fieldRef, fieldPayload);
+          } else {
+            batch.set(fieldRef, {
+              ...fieldPayload,
+              created_at: serverTimestamp(),
+            });
+          }
+        }
+        await batch.commit();
         showSuccess(t('feedback.location.updateSuccess'));
         navigate(`/location/${locationId}`);
       } else {
-        const batch = writeBatch(db);
-        const newRef = doc(collection(db, 'locations'));
-
-        batch.set(newRef, {
+        batch.set(locationRef, {
           ...payload,
           owner_id: user.id,
           managers: [user.id],
           is_verified: false,
+          is_active: true,
           rating: 0,
           rating_count: 0,
           publication_status: 'PENDING_REVIEW',
@@ -290,42 +453,43 @@ export const LocationFormScreen: React.FC = () => {
           unpublished_reason: null,
           owner_notes: null,
           admin_notes: null,
-          amenities: [],
           operating_days: [1, 2, 3, 4, 5, 6, 7],
           opening_time: '06:00',
           closing_time: '23:00',
           min_game_duration_minutes: 60,
-          has_active_fields: form.fieldCount > 0,
           country: 'BR',
-          neighborhood: form.district.trim(),
-          region: form.state.trim(),
-          cep: '',
-          street: '',
-          number: '',
-          complement: '',
           created_at: serverTimestamp(),
         });
 
-        for (let i = 1; i <= form.fieldCount; i++) {
-          const fieldRef = doc(collection(db, 'locations', newRef.id, 'fields'));
+        for (const field of fields) {
+          const fieldRef = doc(collection(db, 'locations', locationDocId, 'fields'));
+          const uploadedFieldPhotos = await uploadFiles(
+            `locations/${locationDocId}/fields/${fieldRef.id}/photos`,
+            field.photoFiles,
+          );
+          const fieldPhotos = [...field.existingPhotos, ...uploadedFieldPhotos];
           batch.set(fieldRef, {
-            name: form.fieldCount === 1
-              ? t('locations.form.defaultPrimaryFieldName')
-              : t('locations.form.defaultFieldName', { index: i }),
-            location_id: newRef.id,
-            type: form.fieldType,
-            is_active: true,
-            hourly_price: form.hourlyPrice || 0,
-            amenities: [],
-            photos: [],
+            name: field.name.trim(),
+            location_id: locationDocId,
+            type: field.type,
+            is_active: field.isActive,
+            hourly_price: parseHourlyPrice(field.hourlyPrice),
+            price_per_hour: parseHourlyPrice(field.hourlyPrice),
+            surface: field.surface.trim() || null,
+            dimensions: field.dimensions.trim() || null,
+            is_covered: field.isCovered,
+            amenities: field.isCovered ? ['covered'] : [],
+            photos: fieldPhotos,
+            photo_url: fieldPhotos[0] || null,
             managers: [user.id],
             created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
           });
         }
 
         await batch.commit();
         showSuccess(t('feedback.location.createSuccess'));
-        navigate(`/location/${newRef.id}`);
+        navigate(`/location/${locationDocId}`);
       }
     } catch (err) {
       logger.error('Erro ao salvar local:', err);
@@ -422,6 +586,39 @@ export const LocationFormScreen: React.FC = () => {
                   />
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                     <TextField
+                      label="CEP"
+                      value={form.cep}
+                      onChange={(e) => handleChange('cep', e.target.value.replace(/\D/g, '').slice(0, 8))}
+                      fullWidth
+                      placeholder="00000000"
+                      inputProps={{ inputMode: 'numeric', maxLength: 8 }}
+                    />
+                    <TextField
+                      label="Número"
+                      value={form.number}
+                      onChange={(e) => handleChange('number', e.target.value)}
+                      sx={{ minWidth: { sm: 140 } }}
+                      inputProps={{ maxLength: 20 }}
+                    />
+                  </Stack>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                      label="Rua"
+                      fullWidth
+                      value={form.street}
+                      onChange={(e) => handleChange('street', e.target.value)}
+                      inputProps={{ maxLength: 200 }}
+                    />
+                    <TextField
+                      label="Complemento"
+                      fullWidth
+                      value={form.complement}
+                      onChange={(e) => handleChange('complement', e.target.value)}
+                      inputProps={{ maxLength: 100 }}
+                    />
+                  </Stack>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
                       label={t('locations.form.cityLabel')}
                       fullWidth
                       required
@@ -448,6 +645,14 @@ export const LocationFormScreen: React.FC = () => {
                     onChange={(e) => handleChange('district', e.target.value)}
                     inputProps={{ maxLength: 100 }}
                   />
+                  <TextField
+                    label="Região"
+                    fullWidth
+                    value={form.region}
+                    onChange={(e) => handleChange('region', e.target.value)}
+                    helperText="Use para zona, região comercial ou referência local."
+                    inputProps={{ maxLength: 100 }}
+                  />
                   <Box>
                     <Button
                       variant="outlined"
@@ -468,16 +673,10 @@ export const LocationFormScreen: React.FC = () => {
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       hidden
                       id="location-photo-input"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        if (!file.type.startsWith('image/')) { showError(t('feedback.location.onlyImages')); return; }
-                        if (file.size > 5 * 1024 * 1024) { showError(t('feedback.location.imageTooLarge')); return; }
-                        const url = URL.createObjectURL(file);
-                        setForm((prev) => ({ ...prev, photoFile: file, photoPreview: url }));
-                      }}
+                      onChange={(e) => handleLocationPhotos(e.target.files)}
                     />
                     <Button
                       variant="outlined"
@@ -485,15 +684,22 @@ export const LocationFormScreen: React.FC = () => {
                       htmlFor="location-photo-input"
                       fullWidth
                     >
-                      {form.photoPreview ? t('locations.form.changePhoto') : t('locations.form.addPhoto')}
+                      {form.existingPhotos.length || form.photoPreviews.length
+                        ? t('locations.form.changePhoto')
+                        : t('locations.form.addPhoto')}
                     </Button>
-                    {form.photoPreview && (
-                      <Box
-                        component="img"
-                        src={form.photoPreview}
-                        alt={t('alt.preview')}
-                        sx={{ mt: 1, width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }}
-                      />
+                    {(form.existingPhotos.length > 0 || form.photoPreviews.length > 0) && (
+                      <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', mt: 1, pb: 0.5 }}>
+                        {[...form.existingPhotos, ...form.photoPreviews].map((photo, index) => (
+                          <Box
+                            key={`${photo}-${index}`}
+                            component="img"
+                            src={photo}
+                            alt={t('alt.preview')}
+                            sx={{ width: 120, height: 88, objectFit: 'cover', borderRadius: 1, flex: '0 0 auto' }}
+                          />
+                        ))}
+                      </Stack>
                     )}
                   </Box>
                 </Stack>
@@ -505,53 +711,16 @@ export const LocationFormScreen: React.FC = () => {
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                   {t('locations.form.fieldsSection')}
                 </Typography>
-                <Stack spacing={2}>
-                  <TextField
-                    label={t('locations.form.fieldTypeLabel')}
-                    select
-                    fullWidth
-                    value={form.fieldType}
-                    onChange={(e) => handleChange('fieldType', e.target.value as FieldType)}
-                  >
-                    {(Object.keys(FIELD_TYPE_CONFIG) as FieldType[]).map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {FIELD_TYPE_CONFIG[type].label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                    <TextField
-                      label={t('locations.form.playersPerTeamLabel')}
-                      type="number"
-                      fullWidth
-                      value={form.playersPerTeam}
-                      onChange={(e) => handleChange('playersPerTeam', parseInt(e.target.value) || 0)}
-                      error={!!errors.playersPerTeam}
-                      helperText={errors.playersPerTeam}
-                      inputProps={{ min: 3, max: 11 }}
-                    />
-                    <TextField
-                      label={t('locations.form.fieldCountLabel')}
-                      type="number"
-                      fullWidth
-                      value={form.fieldCount}
-                      onChange={(e) => handleChange('fieldCount', parseInt(e.target.value) || 0)}
-                      error={!!errors.fieldCount}
-                      helperText={errors.fieldCount}
-                      inputProps={{ min: 1, max: 20 }}
-                    />
-                  </Stack>
-                  <TextField
-                    label={t('locations.form.hourlyPriceLabel')}
-                    type="number"
-                    fullWidth
-                    value={form.hourlyPrice}
-                    onChange={(e) => handleChange('hourlyPrice', parseFloat(e.target.value) || 0)}
-                    error={!!errors.hourlyPrice}
-                    helperText={errors.hourlyPrice || t('locations.form.hourlyPriceHelper')}
-                    inputProps={{ min: 0, step: 10 }}
-                  />
-                </Stack>
+                {fieldErrors.form && <Alert severity="warning" sx={{ mb: 2 }}>{fieldErrors.form}</Alert>}
+                <LocationFieldsEditor
+                  fields={fields}
+                  onChange={(nextFields) => {
+                    setFields(nextFields);
+                    setFieldErrors({});
+                  }}
+                  disabled={loading}
+                  errors={fieldErrors}
+                />
               </CardContent>
             </Card>
 
@@ -560,19 +729,17 @@ export const LocationFormScreen: React.FC = () => {
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                   {t('locations.form.amenitiesSection')}
                 </Typography>
-                <Stack>
-                  <FormControlLabel
-                    control={<Switch checked={form.hasLighting} onChange={(e) => handleChange('hasLighting', e.target.checked)} />}
-                    label={t('locations.form.lightingLabel')}
-                  />
-                  <FormControlLabel
-                    control={<Switch checked={form.hasParking} onChange={(e) => handleChange('hasParking', e.target.checked)} />}
-                    label={t('locations.form.parkingLabel')}
-                  />
-                  <FormControlLabel
-                    control={<Switch checked={form.hasShowers} onChange={(e) => handleChange('hasShowers', e.target.checked)} />}
-                    label={t('locations.form.showersLabel')}
-                  />
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  {COMMERCIAL_AMENITIES.map((amenity) => (
+                    <Chip
+                      key={amenity}
+                      label={AMENITY_LABELS[amenity] || amenity}
+                      color={form.amenities.includes(amenity) ? 'primary' : 'default'}
+                      variant={form.amenities.includes(amenity) ? 'filled' : 'outlined'}
+                      onClick={() => handleAmenityToggle(amenity)}
+                      sx={{ mb: 1 }}
+                    />
+                  ))}
                 </Stack>
               </CardContent>
             </Card>
@@ -592,6 +759,22 @@ export const LocationFormScreen: React.FC = () => {
                     helperText={errors.phone}
                     placeholder="(00) 00000-0000"
                     inputProps={{ maxLength: 20 }}
+                  />
+                  <TextField
+                    label="WhatsApp"
+                    fullWidth
+                    value={form.whatsapp}
+                    onChange={(e) => handleChange('whatsapp', e.target.value)}
+                    placeholder="(00) 00000-0000"
+                    inputProps={{ maxLength: 20 }}
+                  />
+                  <TextField
+                    label="Instagram"
+                    fullWidth
+                    value={form.instagram}
+                    onChange={(e) => handleChange('instagram', e.target.value)}
+                    placeholder="@arena"
+                    inputProps={{ maxLength: 80 }}
                   />
                   <TextField
                     label={t('locations.form.websiteLabel')}

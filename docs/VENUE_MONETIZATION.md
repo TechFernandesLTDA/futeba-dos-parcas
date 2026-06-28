@@ -54,10 +54,34 @@ Current web P1 surfaces:
 - Public venue discovery filters by search, field type, amenities, and maximum hourly price from active field documents.
 - Field owner dashboard shows publication, billing status, monthly fee, due day, and visibility warnings.
 - Admin user management highlights field owners and summarizes their venue counts, published venues, and commercial pending items.
+- Venue registration/editing captures structured address, phone, WhatsApp, Instagram, website, commercial amenities, multiple venue photos, and coordinates.
+- Venue registration/editing manages individual fields at `locations/{locationId}/fields`, including type, hourly price, surface, dimensions, covered status, active status, and field photos.
+
+## Field Documents
+
+Each playable field should be stored under its parent venue at `locations/{locationId}/fields/{fieldId}`.
+
+- `location_id`: parent location id, immutable after creation.
+- `name`: user-facing field/court name.
+- `type`: `SOCIETY`, `FUTSAL`, `CAMPO`, `AREIA`, or `OUTROS`.
+- `hourly_price` / `price_per_hour`: field price used by filters, rankings, and commercial stats.
+- `surface`: optional surface description such as synthetic grass, court floor, grass, or sand.
+- `dimensions`: optional free-text dimensions.
+- `is_covered`: whether the field is covered.
+- `is_active`: whether the field can count toward venue availability.
+- `photos` / `photo_url`: field photos, with `photo_url` kept for legacy/card compatibility.
+- `created_at` / `updated_at`: server timestamps.
+
+The parent location stores denormalized summary fields for discovery and admin operations:
+
+- `field_count`
+- `primary_field_type`
+- `has_active_fields`
+- `photos` / `photo_url`
 
 ## Follow-Up Scope
 
-- Complete venue registration form with structured address, operating hours, owner notes, and editable field-level details.
-- Add full field CRUD/editing for `locations/{locationId}/fields` in the owner/admin flow.
+- Add the billing ledger and recurring monthly charge workflow tracked by #3114.
+- Add owner publication/change requests with admin approval tracked by #3115.
 - Firestore indexes must be added when server-side filters replace client filtering.
 - Android/KMP UI parity must be handled before a mobile release claiming full support.

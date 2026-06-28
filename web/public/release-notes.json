@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T21:11:23.482Z",
+  "generatedAt": "2026-06-28T21:51:15.092Z",
   "notes": [
+    {
+      "version": "1.43.8",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Cadastro de quadras agora aceita controle completo por campo",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Donos de quadra podem cadastrar endereço mais completo, contatos, comodidades, múltiplas fotos e dados comerciais com mais clareza.",
+        "Cada local agora pode ter várias quadras/campos individuais, com tipo, preço por hora, superfície, dimensões, cobertura, status ativo e fotos próprias.",
+        "O preço por hora não força mais valores automáticos no formulário: campos vazios continuam vazios e valores inválidos recebem validação didática."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3084,
+        3085,
+        3088,
+        3097,
+        3098
+      ]
+    },
     {
       "version": "1.43.7",
       "buildNumber": null,
