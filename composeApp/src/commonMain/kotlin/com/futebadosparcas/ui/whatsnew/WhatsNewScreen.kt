@@ -33,8 +33,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +60,7 @@ import com.futebadosparcas.compose.resources.whats_new_title
 import com.futebadosparcas.compose.resources.whats_new_version_a11y_prefix
 import com.futebadosparcas.compose.resources.whats_new_version_title
 import com.futebadosparcas.domain.model.ReleaseNote
+import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -91,13 +89,8 @@ fun WhatsNewScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.whats_new_title),
-                        modifier = Modifier.semantics { heading() },
-                    )
-                },
+            AdaptiveTopBar(
+                title = stringResource(Res.string.whats_new_title),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -105,12 +98,7 @@ fun WhatsNewScreen(
                             contentDescription = stringResource(Res.string.cd_back),
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                ),
+                }
             )
         },
     ) { innerPadding ->
