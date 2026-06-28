@@ -31,14 +31,26 @@ vi.mock('firebase/auth', () => ({
 }));
 
 const mockGetDoc = vi.fn();
+const mockGetDocs = vi.fn();
 const mockSetDoc = vi.fn();
 const mockDoc = vi.fn();
+const mockCollection = vi.fn();
+const mockQuery = vi.fn();
+const mockWhere = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   doc: (...args: any[]) => mockDoc(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  collection: (...args: any[]) => mockCollection(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query: (...args: any[]) => mockQuery(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  where: (...args: any[]) => mockWhere(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDoc: (...args: any[]) => mockGetDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getDocs: (...args: any[]) => mockGetDocs(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setDoc: (...args: any[]) => mockSetDoc(...args),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
@@ -89,6 +101,11 @@ function AuthConsumer() {
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDoc.mockImplementation((...args) => ({ type: 'doc', args }));
+    mockCollection.mockImplementation((...args) => ({ type: 'collection', args }));
+    mockQuery.mockImplementation((...args) => ({ type: 'query', args }));
+    mockWhere.mockImplementation((...args) => ({ type: 'where', args }));
+    mockGetDocs.mockResolvedValue({ docs: [], empty: true });
     // Padrão: onAuthStateChanged retorna unsubscribe e não dispara
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
