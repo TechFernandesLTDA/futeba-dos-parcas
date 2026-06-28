@@ -130,6 +130,7 @@ Auto-generated version bump PRs are intentionally closed and handled in batches.
 ## Documentation Entry Points
 
 - `AGENTS.md`: short, current assistant rules and gotchas.
+- `docs/LLM_WORKSPACE_GUIDE.md`: shortest current entrypoint for LMs and context-budget strategy.
 - `CLAUDE.md`: deeper coding and architecture instructions.
 - `docs/AGENT_OPERATING_MODEL.md`: how to use Rawls, James, Hypatia and Plato.
 - `docs/QA_SMOKE_MATRIX.md`: repeatable QA and E2E validation matrix.

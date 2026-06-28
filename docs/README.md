@@ -9,6 +9,7 @@ Documentação organizada do projeto Futeba dos Parças.
 | Arquivo | Descrição |
 |---------|-----------|
 | [README.md](../README.md) | Visão geral do projeto, setup rápido |
+| [LLM_WORKSPACE_GUIDE.md](LLM_WORKSPACE_GUIDE.md) | Guia curto para LMs/agentes: ordem de leitura, fontes da verdade e orçamento de contexto |
 | [CLAUDE.md](../CLAUDE.md) | Instruções para Claude Code (tech stack, patterns) |
 | [PROJECT_MAP.md](PROJECT_MAP.md) | Mapa operacional de pastas, fronteiras e comandos |
 | [.claude/ARCHITECTURE.md](../.claude/ARCHITECTURE.md) | Arquitetura geral do sistema |
