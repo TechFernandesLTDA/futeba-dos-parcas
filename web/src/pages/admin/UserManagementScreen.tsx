@@ -53,6 +53,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { LocationPublicationStatus, LocationSubscriptionStatus } from '../../types/location';
 
 const logger = createLogger('UserManagementScreen');
 
@@ -67,6 +68,12 @@ interface UserWithRole {
   level: number;
 }
 
+interface OwnerSummary {
+  totalLocations: number;
+  publishedLocations: number;
+  overdueLocations: number;
+}
+
 // #2276: interface tipada para o doc users (substitui Record<string, any>).
 interface RawAdminUserDoc {
   name?: string;
@@ -76,6 +83,17 @@ interface RawAdminUserDoc {
   createdAt?: { toDate?: () => Date };
   gamesPlayed?: number;
   level?: number;
+}
+
+interface RawLocationOwnerDoc {
+  owner_id?: string;
+  ownerId?: string;
+  publication_status?: LocationPublicationStatus;
+  publicationStatus?: LocationPublicationStatus;
+  subscription_status?: LocationSubscriptionStatus;
+  subscriptionStatus?: LocationSubscriptionStatus;
+  is_verified?: boolean;
+  isVerified?: boolean;
 }
 
 export const UserManagementScreen: React.FC = () => {
@@ -112,6 +130,7 @@ export const UserManagementScreen: React.FC = () => {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingRoleChange, setPendingRoleChange] = useState<{ user: UserWithRole; role: string } | null>(null);
+  const [ownerSummaries, setOwnerSummaries] = useState<Record<string, OwnerSummary>>({});
 
   const handleRetry = () => {
     setFetchError(null);
@@ -158,6 +177,35 @@ export const UserManagementScreen: React.FC = () => {
     };
 
     fetchUsers();
+    return () => { cancelled = true; };
+  }, [retryCount]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchOwnerSummaries = async () => {
+      try {
+        const locationsRef = collection(db, 'locations');
+        const snapshot = await getDocs(query(locationsRef, orderBy('name', 'asc'), limit(500)));
+        if (cancelled) return;
+        const summaries: Record<string, OwnerSummary> = {};
+        snapshot.docs.forEach((locationDoc) => {
+          const data = locationDoc.data() as RawLocationOwnerDoc;
+          const ownerId = data.owner_id || data.ownerId;
+          if (!ownerId) return;
+          const publication = data.publication_status || data.publicationStatus || (data.is_verified || data.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
+          const subscription = data.subscription_status || data.subscriptionStatus || 'ACTIVE';
+          const current = summaries[ownerId] || { totalLocations: 0, publishedLocations: 0, overdueLocations: 0 };
+          current.totalLocations += 1;
+          if (publication === 'PUBLISHED') current.publishedLocations += 1;
+          if (['OVERDUE', 'SUSPENDED', 'CANCELLED'].includes(subscription)) current.overdueLocations += 1;
+          summaries[ownerId] = current;
+        });
+        setOwnerSummaries(summaries);
+      } catch (error) {
+        logger.error('Error fetching owner summaries:', error);
+      }
+    };
+    fetchOwnerSummaries();
     return () => { cancelled = true; };
   }, [retryCount]);
 
@@ -454,6 +502,15 @@ export const UserManagementScreen: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Chip label="Ativo" size="small" color="success" variant="outlined" />
+                          {(u.role === 'FIELD_OWNER' || ownerSummaries[u.id]) && (
+                            <Chip
+                              label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`}
+                              size="small"
+                              variant="outlined"
+                              sx={{ ml: 0.5 }}
+                              color={(ownerSummaries[u.id]?.overdueLocations || 0) > 0 ? 'warning' : 'default'}
+                            />
+                          )}
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
@@ -513,6 +570,15 @@ export const UserManagementScreen: React.FC = () => {
                           />
                         </ListItemButton>
                       </ListItem>
+                      {(u.role === 'FIELD_OWNER' || ownerSummaries[u.id]) && (
+                        <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                          <Chip label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`} size="small" variant="outlined" />
+                          <Chip label={`${ownerSummaries[u.id]?.publishedLocations || 0} publicada(s)`} size="small" color="success" variant="outlined" />
+                          {(ownerSummaries[u.id]?.overdueLocations || 0) > 0 && (
+                            <Chip label={`${ownerSummaries[u.id]?.overdueLocations} com pendência`} size="small" color="warning" />
+                          )}
+                        </Box>
+                      )}
                     </Box>
                   ))}
                 </List>
@@ -547,6 +613,13 @@ export const UserManagementScreen: React.FC = () => {
               <Typography variant="caption" color="text.secondary">
                 Role atual: {selectedUser.role}
               </Typography>
+              {(selectedUser.role === 'FIELD_OWNER' || ownerSummaries[selectedUser.id]) && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Dono de quadra com {ownerSummaries[selectedUser.id]?.totalLocations || 0} cadastro(s),
+                  {' '}{ownerSummaries[selectedUser.id]?.publishedLocations || 0} publicado(s)
+                  {' '}e {ownerSummaries[selectedUser.id]?.overdueLocations || 0} pendência(s) comerciais.
+                </Alert>
+              )}
             </Box>
           )}
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

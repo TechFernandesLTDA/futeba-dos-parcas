@@ -69,6 +69,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.7] - 2026-06-28
+
+#### Adicionado
+- Helpers compartilhados para comodidades comerciais de quadras.
+- Consulta auxiliar de preços ativos das quadras para filtros públicos.
+
+#### Mudado
+- `ManageLocationsScreen`, `LocationsMapScreen`, `FieldOwnerDashboardScreen` e `UserManagementScreen` passam a consumir o status comercial de quadras de forma mais explícita.
+
+#### Segurança
+- O fluxo continua preservando as alterações comerciais críticas via Cloud Functions protegidas.
+
+_Issues: #3084, #3099, #3100, #3101, #3103, #3105_
+
 ### [1.43.6] - 2026-06-28
 
 #### Adicionado

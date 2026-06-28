@@ -19,6 +19,7 @@ import {
   ListItemAvatar,
   Button,
   useTheme,
+  Alert,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import PageContainer from '../../components/common/PageContainer';
@@ -30,6 +31,7 @@ import {
   CalendarMonth as CalendarIcon,
   People as PeopleIcon,
   Edit as EditIcon,
+  Paid as PaidIcon,
 } from '@mui/icons-material';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -43,6 +45,13 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import {
+  LOCATION_PUBLICATION_STATUS_LABELS,
+  LOCATION_SUBSCRIPTION_STATUS_LABELS,
+  LocationPublicationStatus,
+  LocationSubscriptionStatus,
+  isLocationCommerciallyAvailable,
+} from '../../types/location';
 
 const logger = createLogger('FieldOwnerDashboardScreen');
 
@@ -62,6 +71,12 @@ interface LocationData {
   fieldCount: number;
   rating: number;
   ratingCount: number;
+  isVerified: boolean;
+  isActive: boolean;
+  publicationStatus?: LocationPublicationStatus;
+  subscriptionStatus?: LocationSubscriptionStatus;
+  monthlyFeeCents?: number;
+  billingDueDay?: number;
 }
 
 // #2276: interface tipada para o doc locations (substitui Record<string, any>).
@@ -72,6 +87,12 @@ interface RawLocationDoc {
   fieldCount?: number;
   rating?: number;
   ratingCount?: number;
+  isVerified?: boolean;
+  isActive?: boolean;
+  publicationStatus?: LocationPublicationStatus;
+  subscriptionStatus?: LocationSubscriptionStatus;
+  monthlyFeeCents?: number;
+  billingDueDay?: number;
 }
 
 interface LocationGameData {
@@ -188,6 +209,12 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             fieldCount: data.fieldCount || 1,
             rating: data.rating || 0,
             ratingCount: data.ratingCount || 0,
+            isVerified: data.isVerified === true,
+            isActive: data.isActive !== false,
+            publicationStatus: data.publicationStatus,
+            subscriptionStatus: data.subscriptionStatus,
+            monthlyFeeCents: data.monthlyFeeCents,
+            billingDueDay: data.billingDueDay,
           };
         });
         setLocations(locs);
@@ -243,6 +270,34 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   useEffect(() => {
     setStats(calculateStats(locations, locationGames));
   }, [locations, locationGames]);
+
+  const publishedLocations = locations.filter((location) => isLocationCommerciallyAvailable({
+    ...location,
+    address: '',
+    cep: '',
+    street: '',
+    number: '',
+    complement: '',
+    district: '',
+    state: '',
+    country: 'BR',
+    neighborhood: '',
+    region: '',
+    ownerId: user?.id || '',
+    managers: [],
+    hasActiveFields: location.fieldCount > 0,
+    description: '',
+    amenities: [],
+    openingTime: '06:00',
+    closingTime: '23:00',
+    operatingDays: [1, 2, 3, 4, 5, 6, 7],
+    minGameDurationMinutes: 60,
+  })).length;
+
+  const formatMonthlyFee = (monthlyFeeCents?: number) => {
+    if (!monthlyFeeCents) return 'Mensalidade não definida';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthlyFeeCents / 100);
+  };
 
   if (loading) {
     return <LoadingState shimmerCount={4} itemType="CARD" />;
@@ -325,6 +380,17 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                     </Typography>
                   </Paper>
                 </Grid>
+                <Grid xs={12} sm={6} md={4} lg={3} xl={3}>
+                  <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                    <PaidIcon color="success" sx={{ mb: 0.5 }} />
+                    <Typography variant="h5" fontWeight={600}>
+                      {publishedLocations}/{locations.length}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Publicadas no app
+                    </Typography>
+                  </Paper>
+                </Grid>
               </Grid>
             </CardContent>
           </Card>
@@ -362,9 +428,9 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                     <ListItem
                       secondaryAction={
                         <Chip
-                          icon={<StarIcon />}
-                          label={loc.rating?.toFixed(1) || 'N/A'}
+                          label={LOCATION_SUBSCRIPTION_STATUS_LABELS[loc.subscriptionStatus || 'ACTIVE']}
                           size="small"
+                          color={['TRIAL', 'ACTIVE'].includes(loc.subscriptionStatus || 'ACTIVE') ? 'success' : 'warning'}
                         />
                       }
                     >
@@ -382,10 +448,45 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                         </ListItemAvatar>
                         <ListItemText
                           primary={loc.name}
-                          secondary={loc.city ? `${loc.city} • ${t('fieldOwner.fieldsCount', { count: loc.fieldCount || 1 })}` : t('fieldOwner.fieldsCount', { count: loc.fieldCount || 1 })}
+                          secondary={
+                            <Box component="span" sx={{ display: 'block' }}>
+                              <span>{loc.city ? `${loc.city} • ${t('fieldOwner.fieldsCount', { count: loc.fieldCount || 1 })}` : t('fieldOwner.fieldsCount', { count: loc.fieldCount || 1 })}</span>
+                              <br />
+                              <span>
+                                {LOCATION_PUBLICATION_STATUS_LABELS[loc.publicationStatus || (loc.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW')]} • {formatMonthlyFee(loc.monthlyFeeCents)}
+                                {loc.billingDueDay ? ` • vence dia ${loc.billingDueDay}` : ''}
+                              </span>
+                            </Box>
+                          }
                         />
                       </ListItemButton>
                     </ListItem>
+                    {!isLocationCommerciallyAvailable({
+                      ...loc,
+                      address: '',
+                      cep: '',
+                      street: '',
+                      number: '',
+                      complement: '',
+                      district: '',
+                      state: '',
+                      country: 'BR',
+                      neighborhood: '',
+                      region: '',
+                      ownerId: user?.id || '',
+                      managers: [],
+                      hasActiveFields: loc.fieldCount > 0,
+                      description: '',
+                      amenities: [],
+                      openingTime: '06:00',
+                      closingTime: '23:00',
+                      operatingDays: [1, 2, 3, 4, 5, 6, 7],
+                      minGameDurationMinutes: 60,
+                    }) && (
+                      <Alert severity="info" sx={{ mx: 2, mb: 1 }}>
+                        Esta quadra ainda não está disponível para jogadores. Verifique publicação, verificação e mensalidade.
+                      </Alert>
+                    )}
                   </Box>
                 ))}
               </List>

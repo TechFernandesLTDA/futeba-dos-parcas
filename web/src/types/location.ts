@@ -126,6 +126,7 @@ export const FIELD_TYPE_CONFIG: Record<FieldType, { label: string; icon: string 
 
 export const AMENITY_LABELS: Record<string, string> = {
   parking: 'Estacionamento',
+  bathroom: 'Banheiro',
   locker_room: 'Vestiário',
   shower: 'Chuveiro',
   bar: 'Bar',
@@ -135,7 +136,23 @@ export const AMENITY_LABELS: Record<string, string> = {
   air_conditioning: 'Ar Condicionado',
   bleachers: 'Arquibancada',
   scoreboard: 'Placar Eletrônico',
+  covered: 'Cobertura',
+  security: 'Segurança',
+  accessibility: 'Acessibilidade',
 };
+
+export const COMMERCIAL_AMENITIES = [
+  'parking',
+  'bathroom',
+  'locker_room',
+  'shower',
+  'bbq',
+  'bar',
+  'restaurant',
+  'wifi',
+  'bleachers',
+  'covered',
+] as const;
 
 export const LOCATION_PUBLICATION_STATUS_LABELS: Record<LocationPublicationStatus, string> = {
   DRAFT: 'Rascunho',
@@ -166,6 +183,23 @@ export function isLocationCommerciallyAvailable(location: Location): boolean {
     publicationStatus === 'PUBLISHED' &&
     ['TRIAL', 'ACTIVE'].includes(subscriptionStatus) &&
     location.hasActiveFields !== false;
+}
+
+export function getLocationAmenitySet(location: Location): Set<string> {
+  const amenities = new Set(location.amenities || []);
+  if (location.hasParking) amenities.add('parking');
+  if (location.hasShowers) {
+    amenities.add('shower');
+    amenities.add('locker_room');
+  }
+  if (location.hasLighting) amenities.add('lighting');
+  return amenities;
+}
+
+export function locationHasAmenities(location: Location, requiredAmenities: string[]): boolean {
+  if (requiredAmenities.length === 0) return true;
+  const amenities = getLocationAmenitySet(location);
+  return requiredAmenities.every((amenity) => amenities.has(amenity));
 }
 
 export function getFullAddress(location: Location): string {

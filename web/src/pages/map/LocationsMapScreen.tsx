@@ -15,6 +15,8 @@ import {
   useTheme,
   alpha,
   Button,
+  MenuItem,
+  Stack,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import PageContainer from '../../components/common/PageContainer';
@@ -26,7 +28,7 @@ import {
   Map as MapIcon,
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import { collection, collectionGroup, query, orderBy, onSnapshot, limit, where, getDocs } from 'firebase/firestore';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -36,9 +38,13 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
 import {
   FIELD_TYPE_CONFIG,
+  Field,
   FieldType,
   Location,
+  AMENITY_LABELS,
+  COMMERCIAL_AMENITIES,
   isLocationCommerciallyAvailable,
+  locationHasAmenities,
 } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -134,6 +140,10 @@ export const LocationsMapScreen: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [errorState, setErrorState] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [typeFilter, setTypeFilter] = useState<'ALL' | FieldType>('ALL');
+  const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
+  const [maxHourlyPrice, setMaxHourlyPrice] = useState('');
+  const [minPriceByLocation, setMinPriceByLocation] = useState<Record<string, number>>({});
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
@@ -166,10 +176,46 @@ export const LocationsMapScreen: React.FC = () => {
     return () => unsubscribe();
   }, [retryCount]);
 
-  const filteredLocations = locations.filter((loc) =>
-    loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    loc.city?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    let cancelled = false;
+    const loadFieldPrices = async () => {
+      try {
+        const prices: Record<string, number> = {};
+        const addField = (field: Field) => {
+          if (!field.locationId || field.isActive === false || !field.hourlyPrice) return;
+          prices[field.locationId] = Math.min(prices[field.locationId] || Number.MAX_SAFE_INTEGER, field.hourlyPrice);
+        };
+        const subFields = await getDocs(query(collectionGroup(db, 'fields'), where('is_active', '==', true), limit(500)));
+        subFields.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
+        const rootFields = await getDocs(query(collection(db, 'fields'), where('is_active', '==', true), limit(500)));
+        rootFields.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
+        if (!cancelled) setMinPriceByLocation(prices);
+      } catch (err) {
+        logger.error('Error loading field prices for public filters:', err);
+      }
+    };
+    loadFieldPrices();
+    return () => { cancelled = true; };
+  }, [retryCount]);
+
+  const handleAmenityFilter = (amenity: string) => {
+    setAmenityFilters((prev) =>
+      prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity],
+    );
+  };
+
+  const filteredLocations = locations.filter((loc) => {
+    const q = searchQuery.trim().toLowerCase();
+    const maxPrice = maxHourlyPrice ? Number(maxHourlyPrice.replace(',', '.')) : null;
+    const locationPrice = minPriceByLocation[loc.id] || null;
+    const matchesSearch = !q ||
+      loc.name.toLowerCase().includes(q) ||
+      loc.city?.toLowerCase().includes(q) ||
+      loc.address?.toLowerCase().includes(q);
+    const matchesType = typeFilter === 'ALL' || loc.fieldType === typeFilter || loc.primaryFieldType === typeFilter;
+    const matchesPrice = maxPrice === null || !Number.isFinite(maxPrice) || (locationPrice !== null && locationPrice <= maxPrice);
+    return matchesSearch && matchesType && matchesPrice && locationHasAmenities(loc, amenityFilters);
+  });
 
   return (
     <>
@@ -199,22 +245,53 @@ export const LocationsMapScreen: React.FC = () => {
           </Button>
         </Box>
         <Box sx={{ px: 2, pb: 2 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder={t('placeholder.searchField')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label={t('a11y.searchFields')}
-            inputProps={{ maxLength: 200 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <Stack spacing={1}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder={t('placeholder.searchField')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label={t('a11y.searchFields')}
+              inputProps={{ maxLength: 200 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <TextField select size="small" label="Tipo" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'ALL' | FieldType)} fullWidth>
+                <MenuItem value="ALL">Todos</MenuItem>
+                {(Object.keys(FIELD_TYPE_CONFIG) as FieldType[]).map((type) => (
+                  <MenuItem key={type} value={type}>{FIELD_TYPE_CONFIG[type].label}</MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                size="small"
+                label="Até R$/h"
+                value={maxHourlyPrice}
+                onChange={(e) => setMaxHourlyPrice(e.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}
+                fullWidth
+                inputMode="decimal"
+              />
+            </Stack>
+            <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5 }}>
+              {COMMERCIAL_AMENITIES.map((amenity) => (
+                <Chip
+                  key={amenity}
+                  label={AMENITY_LABELS[amenity] || amenity}
+                  size="small"
+                  color={amenityFilters.includes(amenity) ? 'primary' : 'default'}
+                  variant={amenityFilters.includes(amenity) ? 'filled' : 'outlined'}
+                  onClick={() => handleAmenityFilter(amenity)}
+                  sx={{ flexShrink: 0 }}
+                />
+              ))}
+            </Box>
+          </Stack>
         </Box>
       </Box>
 
@@ -290,6 +367,14 @@ export const LocationsMapScreen: React.FC = () => {
                         <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
                           <Chip label={getFieldTypeLabel(location.primaryFieldType || location.fieldType)} size="small" />
                           <Chip label={`${location.fieldCount || 1} campos`} size="small" />
+                          {minPriceByLocation[location.id] && (
+                            <Chip
+                              label={`desde R$ ${minPriceByLocation[location.id]}/h`}
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                            />
+                          )}
                         </Box>
                       </Box>
                     </Box>
