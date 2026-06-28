@@ -53,6 +53,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.42.0] - 2026-06-28
+
+#### Adicionado
+- Componente local de seção para a tela de criação de jogo.
+- Resumo vivo com progresso dos campos essenciais.
+
+#### Mudado
+- Reorganização visual da tela `CreateGameScreen` com layout responsivo em grade.
+- Testes atualizados para cobrir o novo hero, seções e resumo.
+
 ### [1.41.0] - 2026-06-27
 
 #### Adicionado
