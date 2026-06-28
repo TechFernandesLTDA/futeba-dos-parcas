@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T14:07:46.796Z",
+  "generatedAt": "2026-06-28T15:25:21.418Z",
   "notes": [
+    {
+      "version": "1.43.4",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Criar jogo ficou mais claro ao preencher valores",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Corrige campos numéricos que preenchiam outro valor automaticamente quando o usuário apagava tudo.",
+        "Adiciona exemplos, placeholders e mensagens de validação para jogadores, goleiros, times, recorrência e valores.",
+        "Permite deixar preço vazio durante a edição; ao salvar, vazio é tratado como sem cobrança."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.43.3",
       "buildNumber": null,

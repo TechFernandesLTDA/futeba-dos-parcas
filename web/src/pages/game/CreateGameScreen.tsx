@@ -200,6 +200,35 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
+type NumericField =
+  | 'maxPlayers'
+  | 'maxGoalkeepers'
+  | 'numberOfTeams'
+  | 'totalCost'
+  | 'dailyPrice'
+  | 'recurrenceCount';
+
+const buildNumericDrafts = (data: GameFormData): Record<NumericField, string> => ({
+  maxPlayers: String(data.maxPlayers),
+  maxGoalkeepers: String(data.maxGoalkeepers),
+  numberOfTeams: String(data.numberOfTeams),
+  totalCost: data.totalCost ? String(data.totalCost) : '',
+  dailyPrice: data.dailyPrice ? String(data.dailyPrice) : '',
+  recurrenceCount: String(data.recurrenceCount),
+});
+
+const parseIntegerDraft = (value: string): number | null => {
+  if (!value.trim()) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const parseCurrencyDraft = (value: string): number | null => {
+  if (!value.trim()) return null;
+  const parsed = Number.parseFloat(value.replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 interface CreateGameSectionProps {
   icon: React.ReactNode;
   title: string;
@@ -387,6 +416,8 @@ export const CreateGameScreen: React.FC = () => {
     return initialFormData;
   });
 
+  const [numericDrafts, setNumericDrafts] = useState<Record<NumericField, string>>(() => buildNumericDrafts(formData));
+  const activeNumericFieldRef = useRef<NumericField | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [userInteracted, setUserInteracted] = useState(false);
   const isDirty = userInteracted && JSON.stringify(formData) !== JSON.stringify(defaultFormData);
@@ -411,6 +442,25 @@ export const CreateGameScreen: React.FC = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (activeNumericFieldRef.current) return;
+    setNumericDrafts({
+      maxPlayers: String(formData.maxPlayers),
+      maxGoalkeepers: String(formData.maxGoalkeepers),
+      numberOfTeams: String(formData.numberOfTeams),
+      totalCost: formData.totalCost ? String(formData.totalCost) : '',
+      dailyPrice: formData.dailyPrice ? String(formData.dailyPrice) : '',
+      recurrenceCount: String(formData.recurrenceCount),
+    });
+  }, [
+    formData.maxPlayers,
+    formData.maxGoalkeepers,
+    formData.numberOfTeams,
+    formData.totalCost,
+    formData.dailyPrice,
+    formData.recurrenceCount,
+  ]);
 
   // Recurrence preview — respeita o fim-de-série (spec #2398):
   // 'count' = N jogos no total (mostra count-1 datas futuras),
@@ -590,8 +640,43 @@ export const CreateGameScreen: React.FC = () => {
     }
   }, [formErrors]);
 
+  const handleNumericDraftChange = useCallback((
+    field: NumericField,
+    rawValue: string,
+    parser: (value: string) => number | null,
+  ) => {
+    setUserInteracted(true);
+    setNumericDrafts((prev) => ({ ...prev, [field]: rawValue }));
+    if ((formErrors as Record<string, string>)[field]) {
+      setFormErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+
+    if ((field === 'totalCost' || field === 'dailyPrice') && rawValue.trim() === '') {
+      setFormData((prev) => ({ ...prev, [field]: 0 }));
+      return;
+    }
+
+    const parsed = parser(rawValue);
+    if (parsed !== null) {
+      setFormData((prev) => ({ ...prev, [field]: parsed }));
+    }
+  }, [formErrors]);
+
+  const handleNumericDraftBlur = useCallback((field: NumericField) => {
+    activeNumericFieldRef.current = null;
+    if (!numericDrafts[field].trim()) {
+      setFormErrors((prev) => ({ ...prev, [field]: t('games.create.errorNumberRequired') }));
+    }
+  }, [numericDrafts, t]);
+
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
+    const parsedMaxPlayers = parseIntegerDraft(numericDrafts.maxPlayers);
+    const parsedMaxGoalkeepers = parseIntegerDraft(numericDrafts.maxGoalkeepers);
+    const parsedNumberOfTeams = parseIntegerDraft(numericDrafts.numberOfTeams);
+    const parsedTotalCost = parseCurrencyDraft(numericDrafts.totalCost) ?? 0;
+    const parsedDailyPrice = parseCurrencyDraft(numericDrafts.dailyPrice) ?? 0;
+    const parsedRecurrenceCount = parseIntegerDraft(numericDrafts.recurrenceCount);
 
     if (!formData.locationName.trim()) {
       errors.locationName = useCustomLocation ? t('games.create.errorLocationNameRequired') : t('games.create.errorSelectLocation');
@@ -618,18 +703,40 @@ export const CreateGameScreen: React.FC = () => {
       errors.streamUrl = t('games.create.errorStreamUrlInvalid');
     }
 
-    if (formData.maxPlayers < GAME_VALIDATION.MIN_PLAYERS || formData.maxPlayers > GAME_VALIDATION.MAX_PLAYERS) {
-      errors.maxPlayers = `Mínimo ${GAME_VALIDATION.MIN_PLAYERS} e máximo ${GAME_VALIDATION.MAX_PLAYERS} jogadores`;
+    if (parsedMaxPlayers === null || parsedMaxPlayers < GAME_VALIDATION.MIN_PLAYERS || parsedMaxPlayers > GAME_VALIDATION.MAX_PLAYERS) {
+      errors.maxPlayers = t('games.create.errorPlayersRange', {
+        min: GAME_VALIDATION.MIN_PLAYERS,
+        max: GAME_VALIDATION.MAX_PLAYERS,
+      });
     }
-    if (formData.maxGoalkeepers < GAME_VALIDATION.MIN_GOALKEEPERS || formData.maxGoalkeepers > GAME_VALIDATION.MAX_GOALKEEPERS) {
-      errors.maxGoalkeepers = `Mínimo ${GAME_VALIDATION.MIN_GOALKEEPERS} e máximo ${GAME_VALIDATION.MAX_GOALKEEPERS} goleiros`;
+    if (parsedMaxGoalkeepers === null || parsedMaxGoalkeepers < GAME_VALIDATION.MIN_GOALKEEPERS || parsedMaxGoalkeepers > GAME_VALIDATION.MAX_GOALKEEPERS) {
+      errors.maxGoalkeepers = t('games.create.errorGoalkeepersRange', {
+        min: GAME_VALIDATION.MIN_GOALKEEPERS,
+        max: GAME_VALIDATION.MAX_GOALKEEPERS,
+      });
     }
-    if (formData.numberOfTeams < GAME_VALIDATION.MIN_TEAMS || formData.numberOfTeams > GAME_VALIDATION.MAX_TEAMS) {
-      errors.numberOfTeams = `Mínimo ${GAME_VALIDATION.MIN_TEAMS} e máximo ${GAME_VALIDATION.MAX_TEAMS} times`;
+    if (parsedNumberOfTeams === null || parsedNumberOfTeams < GAME_VALIDATION.MIN_TEAMS || parsedNumberOfTeams > GAME_VALIDATION.MAX_TEAMS) {
+      errors.numberOfTeams = t('games.create.errorTeamsRange', {
+        min: GAME_VALIDATION.MIN_TEAMS,
+        max: GAME_VALIDATION.MAX_TEAMS,
+      });
     }
 
-    if (formData.totalCost < GAME_VALIDATION.MIN_PRICE) {
-      errors.totalCost = 'Preço não pode ser negativo';
+    if (parsedTotalCost < GAME_VALIDATION.MIN_PRICE) {
+      errors.totalCost = t('games.create.errorPriceNegative');
+    }
+    if (parsedDailyPrice < GAME_VALIDATION.MIN_PRICE) {
+      errors.dailyPrice = t('games.create.errorPriceNegative');
+    }
+    if (formData.recurrenceEnabled && formData.recurrenceEndMode === 'count' && (
+      parsedRecurrenceCount === null ||
+      parsedRecurrenceCount < 2 ||
+      parsedRecurrenceCount > RECURRENCE_HARD_CAP
+    )) {
+      errors.recurrenceCount = t('games.create.errorRecurrenceCountRange', {
+        min: 2,
+        max: RECURRENCE_HARD_CAP,
+      });
     }
 
     if (formData.pixPaymentEnabled) {
@@ -638,6 +745,17 @@ export const CreateGameScreen: React.FC = () => {
     }
 
     setFormErrors(errors);
+    if (Object.keys(errors).length === 0) {
+      setFormData((prev) => ({
+        ...prev,
+        maxPlayers: parsedMaxPlayers ?? prev.maxPlayers,
+        maxGoalkeepers: parsedMaxGoalkeepers ?? prev.maxGoalkeepers,
+        numberOfTeams: parsedNumberOfTeams ?? prev.numberOfTeams,
+        totalCost: parsedTotalCost,
+        dailyPrice: parsedDailyPrice,
+        recurrenceCount: parsedRecurrenceCount ?? prev.recurrenceCount,
+      }));
+    }
     return Object.keys(errors).length === 0;
   };
 
@@ -871,6 +989,12 @@ export const CreateGameScreen: React.FC = () => {
     if (!validateForm()) return;
 
     try {
+      const maxPlayersValue = parseIntegerDraft(numericDrafts.maxPlayers) ?? formData.maxPlayers;
+      const maxGoalkeepersValue = parseIntegerDraft(numericDrafts.maxGoalkeepers) ?? formData.maxGoalkeepers;
+      const numberOfTeamsValue = parseIntegerDraft(numericDrafts.numberOfTeams) ?? formData.numberOfTeams;
+      const totalCostValue = parseCurrencyDraft(numericDrafts.totalCost) ?? 0;
+      const dailyPriceValue = parseCurrencyDraft(numericDrafts.dailyPrice) ?? 0;
+      const recurrenceCountValue = parseIntegerDraft(numericDrafts.recurrenceCount) ?? formData.recurrenceCount;
       const [year, month, day] = formData.date.split('-').map(Number);
       const [hours, minutes] = formData.time.split(':').map(Number);
       const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
@@ -988,11 +1112,11 @@ export const CreateGameScreen: React.FC = () => {
         dateTime,
         fieldType: formData.fieldType,
         gameType: formData.gameType || formData.fieldType,
-        maxPlayers: formData.maxPlayers,
-        maxGoalkeepers: formData.maxGoalkeepers,
-        numberOfTeams: formData.numberOfTeams,
-        dailyPrice: formData.dailyPrice,
-        totalCost: formData.totalCost,
+        maxPlayers: maxPlayersValue,
+        maxGoalkeepers: maxGoalkeepersValue,
+        numberOfTeams: numberOfTeamsValue,
+        dailyPrice: dailyPriceValue,
+        totalCost: totalCostValue,
         pixPaymentEnabled: formData.pixPaymentEnabled,
         rules: formData.rules || '',
         visibility: formData.visibility,
@@ -1001,7 +1125,7 @@ export const CreateGameScreen: React.FC = () => {
         // Emite no máximo um dos limites; o não usado fica undefined e é removido em useCreateGame.
         ...(formData.recurrenceEnabled ? { recurrenceIndex: 1 } : {}),
         ...(formData.recurrenceEnabled && formData.recurrenceEndMode === 'count'
-          ? { recurrenceCount: formData.recurrenceCount }
+          ? { recurrenceCount: recurrenceCountValue }
           : {}),
         ...(formData.recurrenceEnabled && formData.recurrenceEndMode === 'until' && formData.recurrenceEndDate
           ? { recurrenceEndDate: formData.recurrenceEndDate }
@@ -1670,34 +1794,52 @@ export const CreateGameScreen: React.FC = () => {
         <TextField
           label={t('games.create.maxPlayers')}
           type="number"
-          value={formData.maxPlayers}
-          onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('maxPlayers', isNaN(v) ? GAME_VALIDATION.MIN_PLAYERS : v); }}
+          value={numericDrafts.maxPlayers}
+          onFocus={() => { activeNumericFieldRef.current = 'maxPlayers'; }}
+          onBlur={() => handleNumericDraftBlur('maxPlayers')}
+          onChange={(e) => handleNumericDraftChange('maxPlayers', e.target.value, parseIntegerDraft)}
           error={!!formErrors.maxPlayers}
-          helperText={formErrors.maxPlayers || `Mín ${GAME_VALIDATION.MIN_PLAYERS} — Máx ${GAME_VALIDATION.MAX_PLAYERS}`}
+          helperText={formErrors.maxPlayers || t('games.create.maxPlayersHelp', {
+            min: GAME_VALIDATION.MIN_PLAYERS,
+            max: GAME_VALIDATION.MAX_PLAYERS,
+          })}
           fullWidth
-          inputProps={{ min: GAME_VALIDATION.MIN_PLAYERS, max: GAME_VALIDATION.MAX_PLAYERS }}
+          placeholder="14"
+          inputProps={{ min: GAME_VALIDATION.MIN_PLAYERS, max: GAME_VALIDATION.MAX_PLAYERS, inputMode: 'numeric' }}
         />
         <TextField
           label={t('games.create.maxGoalkeepers')}
           type="number"
-          value={formData.maxGoalkeepers}
-          onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('maxGoalkeepers', isNaN(v) ? 0 : v); }}
+          value={numericDrafts.maxGoalkeepers}
+          onFocus={() => { activeNumericFieldRef.current = 'maxGoalkeepers'; }}
+          onBlur={() => handleNumericDraftBlur('maxGoalkeepers')}
+          onChange={(e) => handleNumericDraftChange('maxGoalkeepers', e.target.value, parseIntegerDraft)}
           error={!!formErrors.maxGoalkeepers}
-          helperText={formErrors.maxGoalkeepers || `Máx ${GAME_VALIDATION.MAX_GOALKEEPERS}`}
+          helperText={formErrors.maxGoalkeepers || t('games.create.maxGoalkeepersHelp', {
+            min: GAME_VALIDATION.MIN_GOALKEEPERS,
+            max: GAME_VALIDATION.MAX_GOALKEEPERS,
+          })}
           fullWidth
-          inputProps={{ min: GAME_VALIDATION.MIN_GOALKEEPERS, max: GAME_VALIDATION.MAX_GOALKEEPERS }}
+          placeholder="2"
+          inputProps={{ min: GAME_VALIDATION.MIN_GOALKEEPERS, max: GAME_VALIDATION.MAX_GOALKEEPERS, inputMode: 'numeric' }}
         />
       </Box>
 
       <TextField
         label={t('games.create.numberOfTeams')}
         type="number"
-        value={formData.numberOfTeams}
-        onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('numberOfTeams', isNaN(v) ? 2 : v); }}
+        value={numericDrafts.numberOfTeams}
+        onFocus={() => { activeNumericFieldRef.current = 'numberOfTeams'; }}
+        onBlur={() => handleNumericDraftBlur('numberOfTeams')}
+        onChange={(e) => handleNumericDraftChange('numberOfTeams', e.target.value, parseIntegerDraft)}
         error={!!formErrors.numberOfTeams}
-        helperText={formErrors.numberOfTeams || `${GAME_VALIDATION.MIN_TEAMS} a ${GAME_VALIDATION.MAX_TEAMS} times`}
+        helperText={formErrors.numberOfTeams || t('games.create.numberOfTeamsHelp', {
+          min: GAME_VALIDATION.MIN_TEAMS,
+          max: GAME_VALIDATION.MAX_TEAMS,
+        })}
         fullWidth
-        inputProps={{ min: GAME_VALIDATION.MIN_TEAMS, max: GAME_VALIDATION.MAX_TEAMS }}
+        placeholder="2"
+        inputProps={{ min: GAME_VALIDATION.MIN_TEAMS, max: GAME_VALIDATION.MAX_TEAMS, inputMode: 'numeric' }}
       />
 
       <FormControl error={!!formErrors.visibility}>
@@ -1756,13 +1898,14 @@ export const CreateGameScreen: React.FC = () => {
                 type="number"
                 size="small"
                 label={t('games.create.recurrenceCountLabel')}
-                value={formData.recurrenceCount}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value);
-                  handleInputChange('recurrenceCount', isNaN(v) ? 2 : Math.max(2, Math.min(RECURRENCE_HARD_CAP, v)));
-                }}
-                inputProps={{ min: 2, max: RECURRENCE_HARD_CAP }}
-                helperText={t('games.create.recurrenceCountHelp')}
+                value={numericDrafts.recurrenceCount}
+                onFocus={() => { activeNumericFieldRef.current = 'recurrenceCount'; }}
+                onBlur={() => handleNumericDraftBlur('recurrenceCount')}
+                onChange={(e) => handleNumericDraftChange('recurrenceCount', e.target.value, parseIntegerDraft)}
+                error={!!formErrors.recurrenceCount}
+                inputProps={{ min: 2, max: RECURRENCE_HARD_CAP, inputMode: 'numeric' }}
+                placeholder="10"
+                helperText={formErrors.recurrenceCount || t('games.create.recurrenceCountHelp')}
                 fullWidth
               />
             )}
@@ -1802,25 +1945,43 @@ export const CreateGameScreen: React.FC = () => {
       <TextField
         label="Preço total do aluguel"
         type="number"
-        value={formData.totalCost}
-        onChange={(e) => { const v = parseFloat(e.target.value); handleInputChange('totalCost', isNaN(v) ? 0 : v); }}
+        value={numericDrafts.totalCost}
+        onFocus={() => { activeNumericFieldRef.current = 'totalCost'; }}
+        onBlur={() => {
+          activeNumericFieldRef.current = null;
+          if (numericDrafts.totalCost.trim() === '') {
+            handleNumericDraftChange('totalCost', '', parseCurrencyDraft);
+          }
+        }}
+        onChange={(e) => handleNumericDraftChange('totalCost', e.target.value, parseCurrencyDraft)}
         error={!!formErrors.totalCost}
-        helperText={formErrors.totalCost}
+        helperText={formErrors.totalCost || t('games.create.totalCostHelp')}
         fullWidth
+        placeholder="180,00"
         InputProps={{
           startAdornment: <InputAdornment position="start">R$</InputAdornment>,
         }}
-        inputProps={{ min: 0, step: 0.01 }}
+        inputProps={{ min: 0, step: 0.01, inputMode: 'decimal' }}
       />
 
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
         <TextField
           label="Preço por jogador"
           type="number"
-          value={formData.dailyPrice}
-          onChange={(e) => { const v = parseFloat(e.target.value); handleInputChange('dailyPrice', isNaN(v) ? 0 : v); }}
+          value={numericDrafts.dailyPrice}
+          onFocus={() => { activeNumericFieldRef.current = 'dailyPrice'; }}
+          onBlur={() => {
+            activeNumericFieldRef.current = null;
+            if (numericDrafts.dailyPrice.trim() === '') {
+              handleNumericDraftChange('dailyPrice', '', parseCurrencyDraft);
+            }
+          }}
+          onChange={(e) => handleNumericDraftChange('dailyPrice', e.target.value, parseCurrencyDraft)}
           fullWidth
           disabled={!formData.priceManualOverride}
+          error={!!formErrors.dailyPrice}
+          helperText={formErrors.dailyPrice || t('games.create.dailyPriceHelp')}
+          placeholder="15,00"
           InputProps={{
             startAdornment: <InputAdornment position="start">R$</InputAdornment>,
             endAdornment: formData.totalCost > 0 && formData.maxPlayers > 0 && (
@@ -1831,7 +1992,7 @@ export const CreateGameScreen: React.FC = () => {
               </InputAdornment>
             ),
           }}
-          inputProps={{ min: 0, step: 0.01 }}
+          inputProps={{ min: 0, step: 0.01, inputMode: 'decimal' }}
         />
         <FormControlLabel
           control={
@@ -1908,18 +2069,24 @@ export const CreateGameScreen: React.FC = () => {
   const selectedTimeLabel = formData.time
     ? `${formData.time}${formData.endTime ? ` - ${formData.endTime}` : ''}`
     : 'Escolha o horário';
+  const maxPlayersReadyValue = parseIntegerDraft(numericDrafts.maxPlayers);
+  const maxGoalkeepersReadyValue = parseIntegerDraft(numericDrafts.maxGoalkeepers);
+  const numberOfTeamsReadyValue = parseIntegerDraft(numericDrafts.numberOfTeams);
   const locationReady = Boolean(formData.locationName.trim()) && (
     useCustomLocation
       ? Boolean(formData.locationAddress.trim())
       : !formData.locationId || fields.length === 0 || Boolean(formData.fieldId)
   );
   const scheduleReady = Boolean(formData.date && formData.time && !formErrors.date && !formErrors.time && !formErrors.endTime);
-  const settingsReady = formData.maxPlayers >= GAME_VALIDATION.MIN_PLAYERS
-    && formData.maxPlayers <= GAME_VALIDATION.MAX_PLAYERS
-    && formData.maxGoalkeepers >= GAME_VALIDATION.MIN_GOALKEEPERS
-    && formData.maxGoalkeepers <= GAME_VALIDATION.MAX_GOALKEEPERS
-    && formData.numberOfTeams >= GAME_VALIDATION.MIN_TEAMS
-    && formData.numberOfTeams <= GAME_VALIDATION.MAX_TEAMS;
+  const settingsReady = maxPlayersReadyValue !== null
+    && maxPlayersReadyValue >= GAME_VALIDATION.MIN_PLAYERS
+    && maxPlayersReadyValue <= GAME_VALIDATION.MAX_PLAYERS
+    && maxGoalkeepersReadyValue !== null
+    && maxGoalkeepersReadyValue >= GAME_VALIDATION.MIN_GOALKEEPERS
+    && maxGoalkeepersReadyValue <= GAME_VALIDATION.MAX_GOALKEEPERS
+    && numberOfTeamsReadyValue !== null
+    && numberOfTeamsReadyValue >= GAME_VALIDATION.MIN_TEAMS
+    && numberOfTeamsReadyValue <= GAME_VALIDATION.MAX_TEAMS;
   const paymentReady = !formData.pixPaymentEnabled || Boolean(formData.pixKey.trim() && formData.pixBeneficiaryName.trim());
   const requiredChecklist = [
     { label: 'Local e quadra', done: locationReady },
