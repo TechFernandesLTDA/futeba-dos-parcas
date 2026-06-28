@@ -54,9 +54,9 @@ const StatTile: React.FC<StatTileProps> = ({ icon, label, value, tone }) => {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: 2.25,
-        p: 1.25,
-        minHeight: 78,
+        borderRadius: { xs: 2, sm: 2.25 },
+        p: { xs: 1, sm: 1.25 },
+        minHeight: { xs: 64, sm: 78 },
         bgcolor: alpha(theme.palette.background.paper, 0.74),
         border: `1px solid ${alpha(tone, 0.24)}`,
         boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.3)}`,
@@ -67,8 +67,8 @@ const StatTile: React.FC<StatTileProps> = ({ icon, label, value, tone }) => {
           position: 'absolute',
           right: -12,
           top: -14,
-          width: 54,
-          height: 54,
+          width: { xs: 46, sm: 54 },
+          height: { xs: 46, sm: 54 },
           borderRadius: '50%',
           bgcolor: alpha(tone, 0.13),
         }}
@@ -81,15 +81,16 @@ const StatTile: React.FC<StatTileProps> = ({ icon, label, value, tone }) => {
             fontWeight: 900,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
-            fontSize: '0.66rem',
+            fontSize: { xs: '0.58rem', sm: '0.66rem' },
+            lineHeight: 1.1,
           }}
         >
           {label}
         </Typography>
         <Box
           sx={{
-            width: 28,
-            height: 28,
+            width: { xs: 24, sm: 28 },
+            height: { xs: 24, sm: 28 },
             borderRadius: '50%',
             display: 'grid',
             placeItems: 'center',
@@ -105,9 +106,9 @@ const StatTile: React.FC<StatTileProps> = ({ icon, label, value, tone }) => {
         sx={{
           color: 'text.primary',
           fontWeight: 950,
-          fontSize: '1.55rem',
+          fontSize: { xs: '1.32rem', sm: '1.55rem' },
           lineHeight: 1,
-          mt: 1.1,
+          mt: { xs: 0.7, sm: 1.1 },
           letterSpacing: '-0.04em',
         }}
       >
@@ -130,7 +131,7 @@ const AttributeLane: React.FC<AttributeLaneProps> = ({ label, value, tone }) => 
 
   return (
     <Box sx={{ minWidth: 0 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1, mb: 0.55 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 0.75, mb: { xs: 0.35, sm: 0.55 } }}>
         <Typography
           variant="caption"
           sx={{
@@ -138,7 +139,7 @@ const AttributeLane: React.FC<AttributeLaneProps> = ({ label, value, tone }) => 
             fontWeight: 900,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            fontSize: '0.66rem',
+            fontSize: { xs: '0.58rem', sm: '0.66rem' },
           }}
         >
           {label}
@@ -148,7 +149,7 @@ const AttributeLane: React.FC<AttributeLaneProps> = ({ label, value, tone }) => 
           sx={{
             color: theme.palette.common.white,
             fontWeight: 950,
-            fontSize: '0.78rem',
+            fontSize: { xs: '0.7rem', sm: '0.78rem' },
             fontVariantNumeric: 'tabular-nums',
           }}
         >
@@ -157,7 +158,7 @@ const AttributeLane: React.FC<AttributeLaneProps> = ({ label, value, tone }) => 
       </Box>
       <Box
         sx={{
-          height: 9,
+          height: { xs: 7, sm: 9 },
           borderRadius: 999,
           bgcolor: alpha(theme.palette.common.black, 0.28),
           overflow: 'hidden',
@@ -437,24 +438,31 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         sx: {
           background: 'transparent',
           boxShadow: 'none',
-          overflow: 'visible',
-          m: { xs: 1.5, sm: 4 },
-          width: { xs: 'calc(100vw - 24px)', sm: 472 },
-          maxWidth: { xs: 'calc(100vw - 24px)', sm: 472 },
+          overflow: 'hidden',
+          m: { xs: 0.75, sm: 4 },
+          width: { xs: 'calc(100vw - 14px)', sm: 472 },
+          maxWidth: { xs: 'calc(100vw - 14px)', sm: 472 },
+          maxHeight: { xs: 'calc(100dvh - 14px)', sm: 'calc(100dvh - 64px)' },
         },
       }}
       sx={{
         '& .MuiDialog-container': {
-          alignItems: 'center',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           px: { xs: 0, sm: 2 },
-          py: { xs: 1.5, sm: 4 },
+          py: { xs: 0.75, sm: 4 },
         },
       }}
     >
       <DialogContent
         sx={{
           p: 0,
-          overflow: 'visible',
+          maxHeight: { xs: 'calc(100dvh - 14px)', sm: 'calc(100dvh - 64px)' },
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
         }}
       >
         <Box
@@ -462,8 +470,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 1,
+            mb: { xs: 0.5, sm: 1 },
             px: 0.5,
+            position: 'sticky',
+            top: 0,
+            zIndex: 3,
+            pointerEvents: 'none',
+            '& > *': { pointerEvents: 'auto' },
           }}
         >
           <Tooltip title={t('tooltip.close')} disableTouchListener>
@@ -507,11 +520,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           sx={{
             position: 'relative',
             overflow: 'hidden',
-            borderRadius: { xs: 4, sm: 5 },
+            borderRadius: { xs: 3.25, sm: 5 },
             background: fieldGradient,
             boxShadow: `0 28px 90px ${alpha(theme.palette.common.black, 0.48)}, 0 0 0 1px ${alpha(theme.palette.common.white, 0.12)}`,
             border: `1px solid ${alpha(theme.palette.common.white, 0.16)}`,
             isolation: 'isolate',
+            mb: { xs: 0.75, sm: 0 },
           }}
         >
           <Box
@@ -532,7 +546,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           <Box
             sx={{
               position: 'absolute',
-              inset: 14,
+              inset: { xs: 9, sm: 14 },
               borderRadius: { xs: 3, sm: 4 },
               border: `1px solid ${alpha(theme.palette.common.white, 0.16)}`,
               pointerEvents: 'none',
@@ -550,10 +564,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: '1fr auto',
-                  gap: 1.5,
+                  gap: { xs: 1, sm: 1.5 },
                   alignItems: 'start',
-                  px: { xs: 2.25, sm: 2.75 },
-                  pt: { xs: 2.25, sm: 2.75 },
+                  px: { xs: 1.55, sm: 2.75 },
+                  pt: { xs: 1.45, sm: 2.75 },
                 }}
               >
                 <Box sx={{ minWidth: 0 }}>
@@ -561,15 +575,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     variant="overline"
                     sx={{
                       color: alpha(theme.palette.common.white, 0.74),
-                      fontSize: '0.66rem',
+                      fontSize: { xs: '0.56rem', sm: '0.66rem' },
                       fontWeight: 900,
-                      letterSpacing: '0.18em',
+                      letterSpacing: { xs: '0.13em', sm: '0.18em' },
                       lineHeight: 1,
                     }}
                   >
                     {t('player.card.brand')}
                   </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 0.5, sm: 0.75 }, mt: { xs: 0.65, sm: 1 } }}>
                     <Chip
                       label={cardEdition}
                       size="small"
@@ -579,6 +593,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         border: `1px solid ${alpha(gColors.gold, 0.42)}`,
                         fontWeight: 900,
                         letterSpacing: '0.08em',
+                        height: { xs: 24, sm: 28 },
+                        '& .MuiChip-label': {
+                          px: { xs: 0.8, sm: 1 },
+                          fontSize: { xs: '0.68rem', sm: '0.8125rem' },
+                        },
                       }}
                     />
                     <Chip
@@ -589,6 +608,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         bgcolor: alpha(levelColor, 0.3),
                         border: `1px solid ${alpha(levelColor, 0.52)}`,
                         fontWeight: 900,
+                        height: { xs: 24, sm: 28 },
+                        '& .MuiChip-label': {
+                          px: { xs: 0.8, sm: 1 },
+                          fontSize: { xs: '0.68rem', sm: '0.8125rem' },
+                        },
                       }}
                     />
                   </Box>
@@ -596,11 +620,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
 
                 <Box
                   sx={{
-                    width: 94,
-                    minHeight: 98,
-                    borderRadius: 3,
+                    width: { xs: 76, sm: 94 },
+                    minHeight: { xs: 80, sm: 98 },
+                    borderRadius: { xs: 2.5, sm: 3 },
                     textAlign: 'center',
-                    p: 1,
+                    p: { xs: 0.75, sm: 1 },
                     bgcolor: alpha(theme.palette.common.black, 0.28),
                     border: `1px solid ${alpha(theme.palette.common.white, 0.18)}`,
                     boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.14)}`,
@@ -609,7 +633,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   <Typography
                     sx={{
                       color: gColors.gold,
-                      fontSize: '2.8rem',
+                      fontSize: { xs: '2.18rem', sm: '2.8rem' },
                       fontWeight: 950,
                       lineHeight: 0.9,
                       letterSpacing: '-0.08em',
@@ -625,7 +649,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       fontWeight: 900,
                       letterSpacing: '0.12em',
                       textTransform: 'uppercase',
-                      fontSize: '0.66rem',
+                      fontSize: { xs: '0.56rem', sm: '0.66rem' },
                     }}
                   >
                     {t('player.card.overall')}
@@ -637,9 +661,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: { xs: '1fr', sm: '150px 1fr' },
-                  gap: { xs: 1.5, sm: 2 },
-                  px: { xs: 2.25, sm: 2.75 },
-                  pt: 1.75,
+                  gap: { xs: 1, sm: 2 },
+                  px: { xs: 1.55, sm: 2.75 },
+                  pt: { xs: 0.8, sm: 1.75 },
                   alignItems: 'center',
                 }}
               >
@@ -647,8 +671,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   sx={{
                     position: 'relative',
                     justifySelf: { xs: 'center', sm: 'start' },
-                    width: 148,
-                    height: 148,
+                    width: { xs: 116, sm: 148 },
+                    height: { xs: 116, sm: 148 },
                   }}
                 >
                   <Box
@@ -666,12 +690,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     slotProps={{ img: { loading: 'lazy' } }}
                     sx={{
                       position: 'absolute',
-                      inset: 10,
-                      width: 128,
-                      height: 128,
+                      inset: { xs: 8, sm: 10 },
+                      width: { xs: 100, sm: 128 },
+                      height: { xs: 100, sm: 128 },
                       bgcolor: alpha(levelColor, 0.32),
                       color: theme.palette.common.white,
-                      fontSize: '3.15rem',
+                      fontSize: { xs: '2.35rem', sm: '3.15rem' },
                       fontWeight: 950,
                       border: `4px solid ${alpha(theme.palette.common.white, 0.78)}`,
                       boxShadow: `0 18px 36px ${alpha(theme.palette.common.black, 0.36)}`,
@@ -682,11 +706,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   <Box
                     sx={{
                       position: 'absolute',
-                      right: -4,
-                      bottom: 12,
-                      minWidth: 52,
-                      height: 38,
-                      px: 1,
+                      right: { xs: -8, sm: -4 },
+                      bottom: { xs: 8, sm: 12 },
+                      minWidth: { xs: 44, sm: 52 },
+                      height: { xs: 32, sm: 38 },
+                      px: { xs: 0.75, sm: 1 },
                       borderRadius: 999,
                       bgcolor: theme.palette.background.paper,
                       border: `2px solid ${alpha(levelColor, 0.7)}`,
@@ -696,7 +720,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       boxShadow: theme.shadows[6],
                     }}
                   >
-                    <Typography sx={{ fontWeight: 950, lineHeight: 1, fontSize: '0.95rem' }}>
+                    <Typography sx={{ fontWeight: 950, lineHeight: 1, fontSize: { xs: '0.8rem', sm: '0.95rem' } }}>
                       {positionCode}
                     </Typography>
                   </Box>
@@ -714,6 +738,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       textTransform: 'uppercase',
                       textWrap: 'balance',
                       textShadow: `0 8px 20px ${alpha(theme.palette.common.black, 0.36)}`,
+                      fontSize: { xs: '1.62rem', sm: theme.typography.h4.fontSize },
                     }}
                   >
                     {getFitPlayerName(player.name)}
@@ -724,7 +749,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       sx={{
                         color: alpha(theme.palette.common.white, 0.72),
                         fontWeight: 800,
-                        mt: 0.75,
+                        mt: { xs: 0.45, sm: 0.75 },
                       }}
                     >
                       {player.nickname}
@@ -736,11 +761,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       alignItems: 'center',
                       justifyContent: { xs: 'center', sm: 'flex-start' },
                       gap: 0.8,
-                      mt: 1.15,
+                      mt: { xs: 0.75, sm: 1.15 },
                       minWidth: 0,
                     }}
                   >
-                    <TeamBadge teamId={player.favoriteTeam} size={22} />
+                    <TeamBadge teamId={player.favoriteTeam} size={20} />
                     <Typography
                       variant="caption"
                       sx={{
@@ -761,20 +786,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
 
               <Box
                 sx={{
-                  mx: { xs: 2.25, sm: 2.75 },
-                  mt: 2,
-                  p: 1.6,
-                  borderRadius: 3,
+                  mx: { xs: 1.35, sm: 2.75 },
+                  mt: { xs: 1.15, sm: 2 },
+                  p: { xs: 1.1, sm: 1.6 },
+                  borderRadius: { xs: 2.5, sm: 3 },
                   bgcolor: alpha(theme.palette.common.black, 0.24),
                   border: `1px solid ${alpha(theme.palette.common.white, 0.14)}`,
                   boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.08)}`,
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.85 }}>
-                  <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.76), fontWeight: 900 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: { xs: 0.6, sm: 0.85 } }}>
+                  <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.76), fontWeight: 900, fontSize: { xs: '0.66rem', sm: '0.75rem' } }}>
                     {player.experiencePoints.toLocaleString(numberLocale)} XP
                   </Typography>
-                  <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.7), fontWeight: 800, textAlign: 'right' }}>
+                  <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.7), fontWeight: 800, textAlign: 'right', fontSize: { xs: '0.66rem', sm: '0.75rem' } }}>
                     {player.level < 20
                       ? t('player.card.xpToNextLevel', {
                         xp: xpRemaining.toLocaleString(numberLocale),
@@ -787,7 +812,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   variant="determinate"
                   value={xpProgress * 100}
                   sx={{
-                    height: 10,
+                    height: { xs: 8, sm: 10 },
                     borderRadius: 999,
                     bgcolor: alpha(theme.palette.common.black, 0.32),
                     '& .MuiLinearProgress-bar': {
@@ -802,11 +827,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: 1.1,
-                  mx: { xs: 2.25, sm: 2.75 },
-                  mt: 1.4,
-                  p: 1.6,
-                  borderRadius: 3,
+                  gap: { xs: 0.75, sm: 1.1 },
+                  mx: { xs: 1.35, sm: 2.75 },
+                  mt: { xs: 0.9, sm: 1.4 },
+                  p: { xs: 1.1, sm: 1.6 },
+                  borderRadius: { xs: 2.5, sm: 3 },
                   bgcolor: alpha(theme.palette.common.black, 0.2),
                   border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
                 }}
@@ -824,12 +849,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                  gap: 1,
-                  p: { xs: 2.25, sm: 2.75 },
-                  pt: 1.5,
+                  gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))' },
+                  gap: { xs: 0.75, sm: 1 },
+                  p: { xs: 1.35, sm: 2.75 },
+                  pt: { xs: 1.15, sm: 1.5 },
                   bgcolor: alpha(theme.palette.background.default, 0.82),
-                  mt: 2,
+                  mt: { xs: 1.15, sm: 2 },
                 }}
               >
                 <StatTile
@@ -877,7 +902,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               position: 'relative',
               zIndex: 1,
               px: 2,
-              py: 1.15,
+              py: { xs: 0.75, sm: 1.15 },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -893,7 +918,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 fontWeight: 800,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                fontSize: '0.68rem',
+                fontSize: { xs: '0.58rem', sm: '0.68rem' },
               }}
             >
               {t('player.card.footerUrl')}

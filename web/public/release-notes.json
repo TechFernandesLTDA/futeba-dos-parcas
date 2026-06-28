@@ -1,7 +1,41 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T03:10:10.416Z",
+  "generatedAt": "2026-06-28T03:39:46.889Z",
   "notes": [
+    {
+      "version": "1.43.1",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Card do jogador ajustado no mobile",
+      "highlights": [
+        {
+          "icon": "phone_android",
+          "title": "Cabe melhor no celular",
+          "description": "O card agora respeita a altura real do navegador mobile e evita ficar cortado."
+        },
+        {
+          "icon": "tune",
+          "title": "Layout mais compacto",
+          "description": "Foto, rating, XP, atributos e estatísticas foram reduzidos em telas pequenas."
+        },
+        {
+          "icon": "swipe",
+          "title": "Rolagem interna",
+          "description": "Quando a tela é baixa, o card pode rolar dentro do modal sem perder os botões de fechar e compartilhar."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Corrige o card do jogador ficando alto demais e parcialmente cortado no navegador mobile.",
+        "Ajusta espaçamentos, tamanhos e grade de estatísticas para telas pequenas.",
+        "Mantém o visual do redesign e o compartilhamento/baixar imagem."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.43.0",
       "buildNumber": null,
