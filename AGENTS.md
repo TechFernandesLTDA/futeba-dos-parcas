@@ -148,6 +148,7 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 | Purpose | Path |
 |---------|------|
 | Project map | `docs/PROJECT_MAP.md` |
+| LM workspace guide | `docs/LLM_WORKSPACE_GUIDE.md` |
 | Agent usage | `docs/AGENT_OPERATING_MODEL.md` |
 | QA smoke matrix | `docs/QA_SMOKE_MATRIX.md` |
 | Android entry | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
@@ -159,5 +160,5 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 | Web services | `web/src/services/firebase.ts` |
 | Spec templates | `specs/_TEMPLATE_FEATURE_MOBILE.md`, `_TEMPLATE_BUGFIX_MOBILE.md` |
 | Decision log | `specs/DECISIONS.md` |
-| CI workflows | `.github/workflows/` (14 workflows) |
+| CI workflows | `.github/workflows/` (23 workflows) |
 | Cloud Functions | `functions/src/index.ts` (main entry) |

@@ -3,7 +3,7 @@
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
 [![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
-[![Version](https://img.shields.io/badge/web-1.43.2-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Version](https://img.shields.io/badge/web-1.43.5-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
@@ -70,8 +70,8 @@ Versões atuais por plataforma:
 
 | Plataforma | Versão |
 |------------|--------|
-| Web | `1.43.2` |
-| Android | `1.32.0` (`buildNumber` 57) |
+| Web | `1.43.5` |
+| Android | `1.32.1` (`buildNumber` 58) |
 | iOS | `1.6.0` (`buildNumber` 17) |
 | Functions | `1.2.1` |
 
@@ -83,7 +83,7 @@ Fonte de verdade: [`versions.json`](versions.json). Status de governança: [`doc
 
 ### Android
 - **Linguagem:** Kotlin 2.2.10
-- **UI:** Jetpack Compose + Compose BOM 2025.09.01
+- **UI:** Jetpack Compose + Compose BOM 2024.09.00
 - **Arquitetura:** MVVM + Clean Architecture
 - **Injeção de Dependência:** Koin 4.1.1
 - **Async:** Coroutines + Flow
@@ -181,7 +181,7 @@ futeba-dos-parcas/
 ├── firestore.rules         # Firestore security rules
 ├── specs/                  # Specs técnicas (SDD)
 ├── scripts/                # Scripts utilitários (~70 scripts)
-└── .github/workflows/      # CI/CD pipelines (14+ workflows)
+└── .github/workflows/      # CI/CD pipelines (23 workflows)
 ```
 
 ---
@@ -190,6 +190,7 @@ futeba-dos-parcas/
 
 ### 🤖 Para Desenvolvimento Assistido por IA
 - **[CLAUDE.md](CLAUDE.md)** — Guia completo com build commands, arquitetura, padrões, gotchas e workflow SDD
+- **[LLM Workspace Guide](docs/LLM_WORKSPACE_GUIDE.md)** — Ordem de leitura e fontes da verdade para LMs/agentes sem desperdiçar contexto
 - **[.claude/rules/](.claude/rules)** — Padrões detalhados: Compose, Material 3, ViewModels, Firestore, testes, segurança
 - **[.claude/PROJECT_CONTEXT.md](.claude/PROJECT_CONTEXT.md)** — Contexto consolidado para LLMs
 
@@ -248,10 +249,10 @@ Este repositório é configurado com variáveis de ambiente e chaves de acesso p
 
 ## 📊 Status do Projeto
 
-- ✅ **Android:** Produção (`1.32.0`, build 57)
-- ✅ **Web:** Produção (`1.43.2` em https://futebadosparcas.web.app)
+- ✅ **Android:** Produção (`1.32.1`, build 58)
+- ✅ **Web:** Produção (`1.43.5` em https://futebadosparcas.web.app)
 - ✅ **Backend:** Firebase Cloud Functions v2 (`1.2.1`)
-- ✅ **CI/CD:** GitHub Actions (14+ workflows)
+- ✅ **CI/CD:** GitHub Actions (23 workflows)
 - 🚧 **iOS:** Em desenvolvimento (`1.6.0`, KMP/CMP em evolução)
 
 Governança e fila atual: [`docs/GITHUB_STATUS.md`](docs/GITHUB_STATUS.md).

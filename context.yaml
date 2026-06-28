@@ -19,10 +19,13 @@ documents:
       - type: file
         description: "Documentacao do projeto"
         sourcePaths:
+          - "AGENTS.md"
           - "CLAUDE.md"
           - "README.md"
-          - "ARCHITECTURE.md"
-          - "KOTLIN_MULTIPLATFORM_PLAN.md"
+          - "docs/LLM_WORKSPACE_GUIDE.md"
+          - "docs/PROJECT_MAP.md"
+          - "docs/TECH_STACK_AND_CONTEXT.md"
+          - ".claude/ARCHITECTURE.md"
 
       # Estrutura de diretorios
       - type: tree
@@ -66,7 +69,7 @@ documents:
       - type: file
         description: "Entidades Room (cache local)"
         sourcePaths:
-          - "app/src/main/java/com/futebadosparcas/data/local/entities"
+          - "app/src/main/java/com/futebadosparcas/data/local/model"
         filePattern: "*.kt"
 
   # ---------------------------------------------------------------------------
@@ -164,15 +167,15 @@ documents:
         filePattern: "*.kt"
 
   # ---------------------------------------------------------------------------
-  # 8. DEPENDENCY INJECTION - Hilt Modules
+  # 8. DEPENDENCY INJECTION - Koin Modules
   # ---------------------------------------------------------------------------
-  - description: "Modulos de Injecao de Dependencia (Hilt)"
+  - description: "Modulos de Injecao de Dependencia (Koin)"
     outputPath: "llm-context/di-modules.md"
     sources:
       - type: file
-        description: "Hilt Modules"
+        description: "Koin Modules"
         sourcePaths:
-          - "app/src/main/java/com/futebadosparcas/di"
+          - "app/src/main/java/com/futebadosparcas/di/koin"
         filePattern: "*.kt"
 
   # ---------------------------------------------------------------------------
@@ -205,7 +208,7 @@ documents:
       - type: file
         description: "Firebase Platform (KMP)"
         sourcePaths:
-          - "shared/src/androidMain/kotlin/com/futebadosparcas/platform/firebase"
+          - "shared/src/nativeAndAndroidMain/kotlin/com/futebadosparcas/platform"
         filePattern: "*.kt"
 
   # ---------------------------------------------------------------------------
@@ -283,6 +286,9 @@ documents:
         sourcePaths:
           - "CLAUDE.md"
           - "README.md"
+          - "AGENTS.md"
+          - "docs/LLM_WORKSPACE_GUIDE.md"
+          - "docs/PROJECT_MAP.md"
 
       - type: tree
         description: "Estrutura completa"

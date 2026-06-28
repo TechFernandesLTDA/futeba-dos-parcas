@@ -80,7 +80,7 @@ sealed class UiState {
 ./gradlew detekt                           # Static analysis (Detekt - the real linter for Kotlin)
 ./gradlew clean                            # Clean build
 
-# Cloud Functions (in /functions directory, Node 20)
+# Cloud Functions (in /functions directory, Node 22)
 cd functions && npm install                # Install deps
 npm run build                              # Compile TypeScript
 npm run lint                               # ESLint (same as CI)
@@ -146,7 +146,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 - **Squash-merge only** on `master`. `delete_branch_on_merge: true`. **NEVER push direto a master**
 - **Branch protection**: 1 approving review + code owner review required, no force-push, no deletions
 - **Conventional Commits enforced** via `commitlint.config.js` + Husky pre-commit hook
-- **Node 20** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
+- **Node 22** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`
 - **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`)
 - **Self-hosted macOS runners** for `macos-arm64` jobs (KMP iOS, CodeQL JS/TS, Play Store deploy) — use skill `futeba-runner` to manage
@@ -181,11 +181,11 @@ fastlane beta                              # Deploy to Firebase App Distribution
 - **Custom Claims** for role-based authorization (zero-cost JWT validation)
 - **Room** for local cache
 - **Coroutines & StateFlow** for async
-- **Web App**: React 18 + TypeScript + Material UI 5 + Vite 5 + TanStack Query
+- **Web App**: React 18 + TypeScript + Material UI 5 + Vite 8 + TanStack Query
 
 ### Version
 
-- **Current**: 1.22.0 (versionCode: 46) — released 2026-05-11 (mega audit wave: 141 fixes, 15 PRs, 219 issues fechadas)
+- **Current versions**: Web 1.43.5, Android 1.32.1 (build 58), iOS 1.6.0 (build 17), Functions 1.2.1. Source of truth: `versions.json`.
 - **SDK**: compileSdk 36, minSdk 24, targetSdk 35, JDK 17
 - **Kotlin**: 2.2.10
 - **AGP**: 9.0.1
@@ -206,10 +206,10 @@ The project uses a multi-module setup:
 - **`:shared`** - Kotlin Multiplatform shared code (business logic, domain models, repository interfaces)
 - **`:composeApp`** - Compose Multiplatform UI (shared UI components for Android/iOS)
 - **`:baselineprofile`** - Baseline profiles for performance optimization
-- **`web/`** - React web application (React 18 + TypeScript + MUI 5 + Vite 5)
+- **`web/`** - React web application (React 18 + TypeScript + MUI 5 + Vite 8)
 - **`archive/backend/`** - 🗄️ ARQUIVADO/dormente: REST API Express + TypeORM + PostgreSQL sem nenhum consumidor (web/Android/iOS usam Firestore + Cloud Functions). Decisão #1356 (2026-05-19). Não tratar como produção.
 - **`iosApp/`** - iOS app scaffold (CocoaPods, consumes KMP framework via `build_shared.sh`)
-- **`functions/`** - Firebase Cloud Functions v2 (Node 20, TypeScript, 12 Jest test suites)
+- **`functions/`** - Firebase Cloud Functions v2 (Node 22, TypeScript, Jest test suites)
 - **`fastlane/`** - Android release automation (Firebase App Distribution beta + Play Store)
 
 ### Architecture Layers
