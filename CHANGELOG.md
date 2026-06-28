@@ -11,6 +11,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 > edite os arquivos-fonte. Versões anteriores à adoção do sistema (2026-05-22)
 > estão preservadas em "Histórico anterior", mais abaixo.
 
+## Unreleased
+
+### Documentação
+- Atualiza README, índice de documentação, mapa do projeto e estratégia de branches com o status GitHub/release verificado em 2026-06-28.
+- Adiciona `docs/GITHUB_STATUS.md` como painel operacional de issues, PRs, proteção de branch e versões correntes.
+
 <!-- AUTOGEN:START -->
 
 ## Android

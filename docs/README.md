@@ -13,6 +13,7 @@ Documentação organizada do projeto Futeba dos Parças.
 | [PROJECT_MAP.md](PROJECT_MAP.md) | Mapa operacional de pastas, fronteiras e comandos |
 | [.claude/ARCHITECTURE.md](../.claude/ARCHITECTURE.md) | Arquitetura geral do sistema |
 | [TECH_STACK_AND_CONTEXT.md](TECH_STACK_AND_CONTEXT.md) | Stack, bibliotecas e contexto técnico |
+| [GITHUB_STATUS.md](GITHUB_STATUS.md) | Status operacional do GitHub, proteção de branch e releases |
 | [CHANGELOG.md](../CHANGELOG.md) | Histórico de versões |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Guia para contribuidores |
 | [specs/DECISIONS.md](../specs/DECISIONS.md) | Decisões técnicas registradas |
@@ -133,5 +134,5 @@ Regras específicas para Claude Code em [../.claude/rules/](../.claude/rules/)
 
 ---
 
-**Última Atualização:** 2026-06-21
+**Última Atualização:** 2026-06-28
 **Status:** ✅ Documentação organizada e atualizada

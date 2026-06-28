@@ -3,7 +3,7 @@
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
 [![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
-[![Version](https://img.shields.io/badge/version-1.31.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Version](https://img.shields.io/badge/web-1.43.2-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
@@ -56,11 +56,34 @@
 
 ---
 
+## 📌 Status Atual
+
+| Área | Estado |
+|------|--------|
+| Issues abertas | 0 |
+| PRs abertos | 0 |
+| Branch padrão | `master` |
+| Proteção da `master` | 1 review obrigatório, CODEOWNERS obrigatório, stale reviews ligados |
+| Web produção | [`https://futebadosparcas.web.app`](https://futebadosparcas.web.app) |
+
+Versões atuais por plataforma:
+
+| Plataforma | Versão |
+|------------|--------|
+| Web | `1.43.2` |
+| Android | `1.32.0` (`buildNumber` 57) |
+| iOS | `1.6.0` (`buildNumber` 17) |
+| Functions | `1.2.1` |
+
+Fonte de verdade: [`versions.json`](versions.json). Status de governança: [`docs/GITHUB_STATUS.md`](docs/GITHUB_STATUS.md).
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Android
 - **Linguagem:** Kotlin 2.2.10
-- **UI:** Jetpack Compose + Compose BOM 2024.09.00
+- **UI:** Jetpack Compose + Compose BOM 2025.09.01
 - **Arquitetura:** MVVM + Clean Architecture
 - **Injeção de Dependência:** Koin 4.1.1
 - **Async:** Coroutines + Flow
@@ -225,11 +248,13 @@ Este repositório é configurado com variáveis de ambiente e chaves de acesso p
 
 ## 📊 Status do Projeto
 
-- ✅ **Android:** Produção (v1.31.0 na Play Store)
-- ✅ **Web:** Produção (https://futebadosparcas.web.app)
-- ✅ **Backend:** Firebase Cloud Functions v2
+- ✅ **Android:** Produção (`1.32.0`, build 57)
+- ✅ **Web:** Produção (`1.43.2` em https://futebadosparcas.web.app)
+- ✅ **Backend:** Firebase Cloud Functions v2 (`1.2.1`)
 - ✅ **CI/CD:** GitHub Actions (14+ workflows)
-- 🚧 **iOS:** Em desenvolvimento (KMP ~95%, FASE 1 completa)
+- 🚧 **iOS:** Em desenvolvimento (`1.6.0`, KMP/CMP em evolução)
+
+Governança e fila atual: [`docs/GITHUB_STATUS.md`](docs/GITHUB_STATUS.md).
 
 ---
 

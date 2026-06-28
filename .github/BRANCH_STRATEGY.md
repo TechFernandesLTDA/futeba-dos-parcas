@@ -1,154 +1,106 @@
-# Estratégia de Branches — Futeba dos Parças
+# Branch Strategy — Futeba dos Parças
 
-## Visão Geral
+Last updated: 2026-06-28
 
-```
-master (produção)
-  |
-  +-- develop (integração)
-       |
-       +-- feature/SPEC-XXX-descricao
-       +-- fix/BUG-XXX-descricao
-       +-- perf/PERF-XXX-descricao
-       +-- docs/descricao
-       +-- chore/descricao
-```
+## Current Model
 
-## Branches Principais
+`master` is the production/default branch. Work is done through short-lived
+branches and merged by squash PR after review and CI.
 
-| Branch | Propósito | Proteção |
-|--------|-----------|----------|
-| `master` | Código em produção, sempre estável | Protegida, requer PR + review |
-| `develop` | Integração de features, pré-release | Protegida, requer PR |
-
-## Branches de Trabalho
-
-| Prefixo | Uso | Exemplo |
-|---------|-----|---------|
-| `feature/` | Nova funcionalidade (requer spec aprovada) | `feature/SPEC-015-notificacoes-push` |
-| `fix/` | Correção de bug | `fix/BUG-042-crash-ao-abrir-jogo` |
-| `perf/` | Otimização de performance | `perf/PERF-003-cache-firestore` |
-| `docs/` | Documentação | `docs/atualizar-readme` |
-| `chore/` | Configuração, CI/CD, tooling | `chore/atualizar-dependencias` |
-| `release/` | Preparação de release | `release/1.9.0` |
-| `hotfix/` | Correção urgente em produção | `hotfix/crash-login` |
-
-## Convenção de Nomes
-
-### Branches
-
-```
-<tipo>/<referencia>-<descricao-curta>
+```text
+master
+  ├── codex/<short-description>
+  ├── feature/<short-description>
+  ├── fix/<short-description>
+  ├── docs/<short-description>
+  ├── chore/<short-description>
+  └── hotfix/<short-description>
 ```
 
-- Usar kebab-case (palavras separadas por hífen)
-- Referenciar spec/bug quando aplicável
-- Descrição curta e objetiva (máx. 5 palavras)
+There is no active `develop` integration branch in the current repository flow.
+Do not create or target `develop` unless a new decision in `specs/DECISIONS.md`
+explicitly reintroduces it.
 
-### Commits
+## Protected Branch
 
-Formato: `tipo(escopo): mensagem em portugues`
+| Branch | Purpose | Protection |
+|--------|---------|------------|
+| `master` | Production/default branch | PR required, 1 approval, CODEOWNERS review, stale review dismissal |
 
-```
-feat(game): adicionar votacao de MVP
-fix(auth): corrigir loop de login
-perf(firestore): implementar cache LRU
-refactor(ui): migrar para Compose
-docs(specs): adicionar spec de notificacoes
-test(game): adicionar testes do GameViewModel
-chore(ci): configurar GitHub Actions
-style(ui): ajustar espacamento do card
-```
+`master` protection:
 
-**Tipos permitidos:**
+- Required approving reviews: 1
+- CODEOWNERS review: enabled
+- Dismiss stale reviews: enabled
+- Force pushes: disabled
+- Branch deletion: disabled
+- Squash merge only
+- Delete branch on merge: enabled
 
-| Tipo | Descrição |
-|------|-----------|
-| `feat` | Nova funcionalidade |
-| `fix` | Correção de bug |
-| `perf` | Melhoria de performance |
-| `refactor` | Refatoração sem mudar comportamento |
-| `docs` | Documentação |
-| `test` | Testes |
-| `chore` | Build, CI, tooling |
-| `style` | Formatação, lint |
+## Branch Prefixes
 
-**Escopos comuns:** `game`, `auth`, `group`, `ui`, `firestore`, `functions`, `ci`, `deps`, `navigation`
+| Prefix | Use |
+|--------|-----|
+| `codex/` | AI-assisted implementation/documentation work |
+| `feature/` | New feature with approved spec |
+| `fix/` | Bug fix |
+| `docs/` | Documentation only |
+| `chore/` | Tooling, CI, repo maintenance |
+| `release/` | Platform release preparation |
+| `hotfix/` | Urgent production fix |
 
-## Fluxo de Trabalho
+Use kebab-case and keep names short, for example:
 
-### Feature Nova
-
-```
-1. Criar spec em /specs/ e obter aprovação
-2. Criar branch: git checkout -b feature/SPEC-XXX-descricao develop
-3. Implementar com commits atômicos
-4. Abrir PR para develop
-5. Code review + CI passa
-6. Squash merge para develop
+```bash
+codex/docs-github-housekeeping
+fix/web-player-card-stats
+feature/group-polls
 ```
 
-### Bugfix
+## Commits
 
-```
-1. Criar branch: git checkout -b fix/BUG-XXX-descricao develop
-2. Corrigir o bug
-3. Abrir PR para develop
-4. Code review + CI passa
-5. Squash merge para develop
-```
+Use Conventional Commits:
 
-### Hotfix (urgente em produção)
-
-```
-1. Criar branch: git checkout -b hotfix/descricao master
-2. Corrigir o problema
-3. Abrir PR para master E develop
-4. Merge (não squash) para manter histórico
+```text
+feat: add post-game highlights
+fix: correct player card statistics source
+docs: update github status
+chore: audit xp log source integrity
 ```
 
-### Release
+Common types:
 
-```
-1. Criar branch: git checkout -b release/X.Y.Z develop
-2. Bump de versão (scripts/bump-version.js)
-3. Testes finais
-4. Merge para master (não squash)
-5. Tag: git tag vX.Y.Z
-6. Merge de volta para develop
-```
+| Type | Meaning |
+|------|---------|
+| `feat` | User-facing feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `test` | Tests |
+| `refactor` | Behavior-preserving code restructure |
+| `perf` | Performance improvement |
+| `chore` | Build, tooling, maintenance |
 
-## Estratégia de Merge
+## Pull Requests
 
-| Situação | Estratégia | Motivo |
-|----------|------------|--------|
-| Feature -> develop | **Squash merge** | Histórico limpo, 1 commit por feature |
-| Fix -> develop | **Squash merge** | Histórico limpo |
-| Release -> master | **Merge commit** | Preservar histórico de release |
-| Hotfix -> master | **Merge commit** | Rastreabilidade |
-| develop -> feature | **Rebase** | Manter branch atualizada |
+Every PR should include:
 
-## Proteção de Branches
+- Clear summary and validation commands.
+- Linked issue/spec when applicable.
+- Screenshots or videos for visual UI changes.
+- Release/versioning notes for user-visible changes.
+- CI green before merge.
 
-### master
+Docs-only PRs do not require platform version bumps unless they change
+user-facing app metadata, deployed content or release artifacts.
 
-- Requer Pull Request para merge
-- Requer pelo menos 1 review aprovado
-- Requer CI (lint, detekt, tests, build) passando
-- Não permitir force push
-- Não permitir delete
+## Releases
 
-### develop
+User-visible deploys must follow `docs/RELEASE_PROCESS.md`:
 
-- Requer Pull Request para merge
-- Requer CI passando
-- Não permitir force push
+- Bump affected platform versions via `versions.json` and native files.
+- Add `release-notes/<platform>/<version>.md`.
+- Regenerate `CHANGELOG.md` and bundles with `scripts/release-notes.js`.
+- Create a GitHub tag/release using the repo convention.
+- Report deployed platform, version, tag/release, changelog and URL.
 
-## Regras Importantes
-
-1. **NUNCA** fazer push direto para `master` ou `develop`
-2. **SEMPRE** criar PR, mesmo para mudanças pequenas
-3. **SEMPRE** referenciar spec/issue no PR
-4. **SEMPRE** garantir que CI passa antes de solicitar review
-5. **NUNCA** fazer merge com testes falhando
-6. **SEMPRE** deletar branch após merge
+Do not silently deploy user-visible changes.
