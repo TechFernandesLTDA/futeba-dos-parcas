@@ -40,6 +40,11 @@ const logger = createLogger('GroupEditScreen');
 
 const GROUP_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 const GROUP_PHOTO_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const GROUP_PHOTO_EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 
 export const GroupEditScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -137,7 +142,8 @@ export const GroupEditScreen: React.FC = () => {
   }, [previewUrl]);
 
   const handleUploadPhoto = async (file: File): Promise<string> => {
-    const groupPhotoRef = storageRef(storage, `groups/${groupId}/logo.jpg`);
+    const extension = GROUP_PHOTO_EXTENSION_BY_TYPE[file.type] || 'jpg';
+    const groupPhotoRef = storageRef(storage, `groups/${groupId}/logo.${extension}`);
     await uploadBytes(groupPhotoRef, file, { contentType: file.type });
     return getDownloadURL(groupPhotoRef);
   };

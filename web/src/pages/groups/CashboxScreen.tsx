@@ -16,6 +16,9 @@ import {
   ListItemAvatar,
   ListItemText,
   Divider,
+  Stack,
+  IconButton,
+  Link,
   useTheme,
   useMediaQuery,
   alpha,
@@ -31,9 +34,13 @@ import {
   TrendingDown as TrendingDownIcon,
   History as HistoryIcon,
   Visibility as VisibilityIcon,
+  ReceiptLong as ReceiptIcon,
+  Block as VoidIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
+import { storage } from '../../services/firebaseStorage';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -56,7 +63,21 @@ interface CashboxTransaction {
   createdBy: string;
   createdByName: string;
   createdAt: Date;
+  status?: 'ACTIVE' | 'VOIDED';
+  receiptUrl?: string;
+  voidedBy?: string;
+  voidedAt?: Date;
 }
+
+type CashboxFilter = 'ALL' | 'INCOME' | 'EXPENSE' | 'VOIDED';
+
+const RECEIPT_MAX_BYTES = 5 * 1024 * 1024;
+const RECEIPT_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const RECEIPT_EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 
 export const CashboxScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -79,10 +100,13 @@ export const CashboxScreen: React.FC = () => {
   // #2231: rastreia se o campo já foi tocado para só exibir erro após interação.
   const [amountTouched, setAmountTouched] = useState(false);
   const [descriptionTouched, setDescriptionTouched] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [filter, setFilter] = useState<CashboxFilter>('ALL');
+  const [voidingId, setVoidingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
 
   // #2231: validação em tempo real do formulário de transação.
   const parsedAmount = parseFloat(amount);
@@ -119,6 +143,7 @@ export const CashboxScreen: React.FC = () => {
         setTransactions(data);
 
         const total = data.reduce((sum, t) => {
+          if (t.status === 'VOIDED') return sum;
           return t.type === 'INCOME' ? sum + t.amount : sum - t.amount;
         }, 0);
         setBalance(total);
@@ -140,7 +165,7 @@ export const CashboxScreen: React.FC = () => {
             const memberRole = memberData.role as string | undefined;
             const memberStatus = memberData.status as string | undefined;
             setIsAdminOrOwner(memberRole === 'ADMIN' || memberRole === 'OWNER');
-            setIsConfirmedMember(memberStatus === 'ACTIVE');
+            setIsConfirmedMember(memberStatus === 'ACTIVE' || !memberStatus);
           }
         })
         .catch((err) => {
@@ -155,20 +180,55 @@ export const CashboxScreen: React.FC = () => {
     };
   }, [groupId, user, retryCount, t, showError]);
 
+  const displayedTransactions = transactions.filter((transaction) => {
+    if (filter === 'VOIDED') return transaction.status === 'VOIDED';
+    if (transaction.status === 'VOIDED') return false;
+    if (filter === 'ALL') return true;
+    return transaction.type === filter;
+  });
+
+  const handleReceiptChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!RECEIPT_ACCEPTED_TYPES.includes(file.type)) {
+      showError(t('cashbox.receiptInvalidType'));
+      return;
+    }
+
+    if (file.size > RECEIPT_MAX_BYTES) {
+      showError(t('cashbox.receiptTooLarge'));
+      return;
+    }
+
+    setReceiptFile(file);
+  };
+
+  const uploadReceipt = useCallback(async (): Promise<string | null> => {
+    if (!receiptFile || !groupId) return null;
+    const extension = RECEIPT_EXTENSION_BY_TYPE[receiptFile.type] || 'jpg';
+    const receiptPath = `groups/${groupId}/receipts/${Date.now()}.${extension}`;
+    const receiptRef = storageRef(storage, receiptPath);
+    await uploadBytes(receiptRef, receiptFile, { contentType: receiptFile.type });
+    return getDownloadURL(receiptRef);
+  }, [groupId, receiptFile]);
+
   const handleAddTransaction = useCallback(async () => {
     const parsedAmount = parseFloat(amount);
-    if (!groupId || !user || !description || isNaN(parsedAmount) || parsedAmount <= 0) return;
+    if (!groupId || !user || !description.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
     setSubmitting(true);
     try {
       const userName = firebaseUser?.displayName || user?.name || t('cashbox.defaultUserName');
+      const receiptUrl = await uploadReceipt();
 
       await addDoc(collection(db, 'groups', groupId, 'cashbox'), {
         group_id: groupId,
         type: transactionType,
         amount: parsedAmount,
-        description,
+        description: description.trim(),
         category: 'OTHER',
         status: 'ACTIVE',
+        receipt_url: receiptUrl,
         created_by: user?.id,
         created_by_name: userName,
         created_at: serverTimestamp(),
@@ -177,12 +237,34 @@ export const CashboxScreen: React.FC = () => {
       setDialogOpen(false);
       setAmount('');
       setDescription('');
+      setReceiptFile(null);
+      setAmountTouched(false);
+      setDescriptionTouched(false);
+      showSuccess(t('cashbox.addSuccess'));
     } catch (err: unknown) {
       showError(getFirestoreErrorMessage(err, t('cashbox.addError')));
     } finally {
       setSubmitting(false);
     }
-  }, [amount, description, groupId, user, firebaseUser, transactionType, showError, t]);
+  }, [amount, description, groupId, user, firebaseUser, transactionType, uploadReceipt, showSuccess, showError, t]);
+
+  const handleVoidTransaction = useCallback(async (transactionId: string) => {
+    if (!groupId || !user) return;
+    setVoidingId(transactionId);
+    try {
+      await updateDoc(doc(db, 'groups', groupId, 'cashbox', transactionId), {
+        status: 'VOIDED',
+        voided_by: user.id,
+        voided_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      });
+      showSuccess(t('cashbox.voidSuccess'));
+    } catch (err: unknown) {
+      showError(getFirestoreErrorMessage(err, t('cashbox.voidError')));
+    } finally {
+      setVoidingId(null);
+    }
+  }, [groupId, user, showError, showSuccess, t]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(navigator.language || 'pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -245,6 +327,7 @@ export const CashboxScreen: React.FC = () => {
                 setTransactionType('INCOME');
                 setAmountTouched(false);
                 setDescriptionTouched(false);
+                setReceiptFile(null);
                 setDialogOpen(true);
               }}
             >
@@ -259,6 +342,7 @@ export const CashboxScreen: React.FC = () => {
                 setTransactionType('EXPENSE');
                 setAmountTouched(false);
                 setDescriptionTouched(false);
+                setReceiptFile(null);
                 setDialogOpen(true);
               }}
             >
@@ -266,6 +350,20 @@ export const CashboxScreen: React.FC = () => {
             </Button>
           </Box>
         )}
+
+        <Stack direction="row" spacing={1} sx={{ mb: 2, overflowX: 'auto', pb: 0.5 }} aria-label={t('cashbox.filtersAria')}>
+          {(['ALL', 'INCOME', 'EXPENSE', 'VOIDED'] as CashboxFilter[]).map((item) => (
+            <Chip
+              key={item}
+              label={t(`cashbox.filters.${item.toLowerCase()}`)}
+              clickable
+              color={filter === item ? 'primary' : 'default'}
+              variant={filter === item ? 'filled' : 'outlined'}
+              onClick={() => setFilter(item)}
+              sx={{ flexShrink: 0 }}
+            />
+          ))}
+        </Stack>
 
         {error ? (
           <ErrorState message={error} onRetry={handleRetry} />
@@ -277,12 +375,33 @@ export const CashboxScreen: React.FC = () => {
             title={t('empty.noTransaction')}
             description={t('empty.noTransactionDesc')}
           />
+        ) : displayedTransactions.length === 0 ? (
+          <EmptyState
+            icon={<HistoryIcon />}
+            title={t('cashbox.noFilteredTransactions')}
+            description={t('cashbox.noFilteredTransactionsDesc')}
+          />
         ) : (
           <List disablePadding aria-label={t('a11y.transactionHistory')}>
-            {transactions.map((transaction, index) => (
+            {displayedTransactions.map((transaction, index) => (
               <Box key={transaction.id}>
                 {index > 0 && <Divider />}
-                <ListItem sx={{ py: 1.5 }}>
+                <ListItem
+                  sx={{ py: 1.5, opacity: transaction.status === 'VOIDED' ? 0.64 : 1 }}
+                  secondaryAction={
+                    isAdminOrOwner && transaction.status !== 'VOIDED' ? (
+                      <IconButton
+                        edge="end"
+                        color="warning"
+                        disabled={voidingId === transaction.id}
+                        aria-label={t('cashbox.voidTransaction')}
+                        onClick={() => handleVoidTransaction(transaction.id)}
+                      >
+                        {voidingId === transaction.id ? <CircularProgress size={18} /> : <VoidIcon />}
+                      </IconButton>
+                    ) : undefined
+                  }
+                >
                   <ListItemAvatar>
                     <Avatar
                       sx={{
@@ -294,13 +413,28 @@ export const CashboxScreen: React.FC = () => {
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={transaction.description}
-                    secondary={`${transaction.createdByName} • ${transaction.createdAt.toLocaleDateString(navigator.language || 'pt-BR')}`}
+                    primary={
+                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        <Typography variant="body1">{transaction.description}</Typography>
+                        {transaction.status === 'VOIDED' && <Chip size="small" label={t('cashbox.voided')} color="warning" variant="outlined" />}
+                      </Stack>
+                    }
+                    secondary={
+                      <Stack spacing={0.25}>
+                        <span>{`${transaction.createdByName} • ${transaction.createdAt.toLocaleDateString(navigator.language || 'pt-BR')}`}</span>
+                        {transaction.receiptUrl && (
+                          <Link href={transaction.receiptUrl} target="_blank" rel="noopener noreferrer" underline="hover">
+                            {t('cashbox.receipt')}
+                          </Link>
+                        )}
+                      </Stack>
+                    }
                   />
                   <Typography
                     variant="subtitle1"
                     fontWeight={600}
-                    color={transaction.type === 'INCOME' ? 'success.main' : 'error.main'}
+                    color={transaction.status === 'VOIDED' ? 'text.disabled' : transaction.type === 'INCOME' ? 'success.main' : 'error.main'}
+                    sx={{ pr: isAdminOrOwner && transaction.status !== 'VOIDED' ? 5 : 0 }}
                   >
                     {transaction.type === 'INCOME' ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </Typography>
@@ -341,6 +475,21 @@ export const CashboxScreen: React.FC = () => {
             helperText={descriptionTouched && !descriptionValid ? t('cashbox.descriptionError') : ' '}
             inputProps={{ maxLength: 500 }}
           />
+          <Button
+            component="label"
+            variant="outlined"
+            startIcon={<ReceiptIcon />}
+            fullWidth
+            sx={{ mt: 1, justifyContent: 'flex-start' }}
+          >
+            {receiptFile ? t('cashbox.receiptSelected', { name: receiptFile.name }) : t('cashbox.addReceipt')}
+            <input
+              type="file"
+              hidden
+              accept={RECEIPT_ACCEPTED_TYPES.join(',')}
+              onChange={handleReceiptChange}
+            />
+          </Button>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} disabled={submitting}>{t('common.cancel')}</Button>
