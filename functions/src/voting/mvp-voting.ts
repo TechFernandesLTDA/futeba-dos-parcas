@@ -744,11 +744,12 @@ export const concludeMvpVoting =
                 bestGkId,
                 worstPlayerId,
                 totalVotes: votes.length,
-                mvpVotes: mvpCounts.length,
+                mvpVotes:
+                  countTalliedVotes(mvpCounts),
                 bestGkVotes:
-                  bestGkCounts.length,
+                  countTalliedVotes(bestGkCounts),
                 worstVotes:
-                  worstCounts.length,
+                  countTalliedVotes(worstCounts),
               };
             }
           );
@@ -788,7 +789,11 @@ export const concludeMvpVoting =
               gameId,
               result.mvpId as string,
               "MVP",
-              XP_ACTIONS.MVP
+              XP_ACTIONS.MVP,
+              {
+                totalVotes: result.totalVotes,
+                categoryVotes: result.mvpVotes,
+              }
             );
             mvpXpApplied = true;
           } catch (xpError) {
@@ -806,7 +811,11 @@ export const concludeMvpVoting =
               gameId,
               result.worstPlayerId as string,
               "BOLA_MURCHA",
-              XP_ACTIONS.WORST_PLAYER
+              XP_ACTIONS.WORST_PLAYER,
+              {
+                totalVotes: result.totalVotes,
+                categoryVotes: result.worstVotes,
+              }
             );
             worstXpApplied = true;
           } catch (xpError) {
@@ -909,6 +918,16 @@ function tallyVotes(
 }
 
 /**
+ * Soma votos contabilizados em uma categoria.
+ *
+ * @param {VoteTally[]} tallies - Contagem por jogador.
+ * @return {number} Total de votos da categoria.
+ */
+function countTalliedVotes(tallies: VoteTally[]): number {
+  return tallies.reduce((total, tally) => total + tally.count, 0);
+}
+
+/**
  * Resolve o vencedor a partir da contagem
  * de votos.
  *
@@ -972,6 +991,7 @@ function resolveWinner(
  * @param {string} userId - ID do usuário (MVP ou worst player)
  * @param {"MVP" | "BOLA_MURCHA"} reason - tipo de delta
  * @param {number} xpDelta - +30 (MVP) ou -10 (Bola Murcha)
+ * @param {object} audit - Metadados auditáveis da votação que gerou o XP
  * @return {Promise<void>}
  */
 async function applyVotingXpDelta(
@@ -979,7 +999,8 @@ async function applyVotingXpDelta(
   gameId: string,
   userId: string,
   reason: "MVP" | "BOLA_MURCHA",
-  xpDelta: number
+  xpDelta: number,
+  audit: Record<string, number | undefined> = {}
 ): Promise<void> {
   const logId =
     reason === "MVP" ?
@@ -1165,6 +1186,10 @@ async function applyVotingXpDelta(
       // FIX #1993: usa getLevelForXp() canônico de xp/pipeline.ts
       // em vez de recalcular level inline (evita drift por inconsistência).
       const newLevel = getLevelForXp(newXp);
+      const sourceTotalVotes =
+        typeof audit.totalVotes === "number" ? audit.totalVotes : null;
+      const sourceCategoryVotes =
+        typeof audit.categoryVotes === "number" ? audit.categoryVotes : null;
 
       // FIX #1990: atualizar season_participation e ranking_deltas
       // para que o XP de voto conte nos rankings de temporada.
@@ -1230,6 +1255,11 @@ async function applyVotingXpDelta(
         reason,
         transaction_id: logId,
         source: "mvp_voting_concluded",
+        source_collection: "mvp_votes",
+        source_event_id: gameId,
+        source_vote_category: reason,
+        source_total_votes: sourceTotalVotes,
+        source_category_votes: sourceCategoryVotes,
         created_at: FieldValue
           .serverTimestamp(),
       });

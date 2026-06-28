@@ -421,6 +421,11 @@ function buildXpLogData(
     transaction_id: transactionId,
     user_id: data.userId,
     game_id: data.gameId,
+    source: "game_finished",
+    source_collection: "games",
+    source_event_id: data.gameId,
+    source_confirmation_id:
+      `${data.gameId}_${data.userId}`,
     xp_earned: data.xpEarned,
     xp_before: data.xpBefore,
     xp_after: data.xpAfter,

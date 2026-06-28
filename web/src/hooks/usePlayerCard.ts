@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { getLevelForXp } from '../types/gamification';
 import { PreferredPosition } from '../types/user';
+import { normalizePlayerStats } from '../utils/playerStats';
 
 export interface PlayerCardData {
   id: string;
@@ -67,7 +68,11 @@ interface RawUserDoc {
 }
 
 async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
-  const userDoc = await getDoc(doc(db, 'users', userId));
+  const [userDoc, statsDoc, streakSnap] = await Promise.all([
+    getDoc(doc(db, 'users', userId)),
+    getDoc(doc(db, 'statistics', userId)),
+    getDocs(query(collection(db, 'user_streaks'), where('user_id', '==', userId), limit(1))),
+  ]);
 
   if (!userDoc.exists()) {
     throw new Error('Jogador não encontrado');
@@ -75,6 +80,13 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
 
   const raw = userDoc.data();
   const data = snakeToCamel<RawUserDoc>(raw);
+  const statsRaw = statsDoc.exists() ? statsDoc.data() : undefined;
+  const streakRaw = streakSnap.docs[0]?.data();
+  const playerStats = normalizePlayerStats(
+    { ...(statsRaw ?? {}), ...(streakRaw ?? {}) },
+    raw,
+    userId,
+  );
 
   const totalXp = data.experiencePoints ?? raw.experience_points ?? 0;
   const level = data.level ?? getLevelForXp(totalXp);
@@ -101,16 +113,16 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
     level,
     experiencePoints: totalXp,
     preferredPosition: data.preferredPosition ?? raw.preferred_position ?? undefined,
-    totalGames: data.totalGames ?? raw.total_games ?? 0,
-    totalGoals: data.totalGoals ?? raw.total_goals ?? 0,
-    totalAssists: data.totalAssists ?? raw.total_assists ?? 0,
-    totalSaves: data.totalSaves ?? raw.total_saves ?? 0,
-    mvpCount: data.mvpCount ?? raw.mvp_count ?? 0,
-    totalWins: data.totalWins ?? raw.total_wins ?? 0,
-    totalDraws: data.totalDraws ?? raw.total_draws ?? 0,
-    totalLosses: data.totalLosses ?? raw.total_losses ?? 0,
-    currentStreak: data.currentStreak ?? raw.current_streak ?? 0,
-    bestStreak: data.bestStreak ?? raw.best_streak ?? 0,
+    totalGames: playerStats.totalGames,
+    totalGoals: playerStats.totalGoals,
+    totalAssists: playerStats.totalAssists,
+    totalSaves: playerStats.totalSaves,
+    mvpCount: playerStats.mvpCount,
+    totalWins: playerStats.totalWins,
+    totalDraws: playerStats.totalDraws,
+    totalLosses: playerStats.totalLosses,
+    currentStreak: playerStats.currentStreak,
+    bestStreak: playerStats.bestStreak,
     overallRating,
     strikerRating,
     midRating,

@@ -86,6 +86,11 @@ export interface UserStatistics {
 export interface XpLog {
     user_id: string;
     game_id: string;
+    transaction_id?: string;
+    source?: string;
+    source_collection?: string;
+    source_event_id?: string;
+    source_confirmation_id?: string;
     xp_earned: number;
     xp_before: number;
     xp_after: number;

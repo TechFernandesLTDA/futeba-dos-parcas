@@ -14,6 +14,7 @@ const mockDocGet = jest.fn();
 jest.mock("firebase-admin", () => {
   const mockFieldValue = {
     serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
+    increment: jest.fn((value: number) => ({ _type: "Increment", value })),
   };
 
   const mockAdmin: any = {
@@ -500,6 +501,110 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(result.success).toBe(true);
     expect(result.results.mvpId).toBe("playerA");
     expect(result.alreadyConcluded).toBe(false);
+  });
+
+  test("grava log de XP do MVP com origem auditavel da votacao", async () => {
+    const votes = [
+      { category: "MVP", voted_player_id: "playerA" },
+      { category: "MVP", voted_player_id: "playerA" },
+      { category: "MVP", voted_player_id: "playerB" },
+    ];
+
+    const votingTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    let votingCallIndex = 0;
+    const votingResponses = [
+      {
+        docs: votes.map((v) => ({ data: () => v })),
+        empty: false,
+      },
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "OPEN",
+          owner_id: "owner1",
+        }),
+      },
+      { docs: [], empty: true },
+    ];
+    votingTx.get.mockImplementation(() => {
+      const snap = votingResponses[votingCallIndex++] ||
+        { exists: false, data: () => ({}) };
+      return Promise.resolve(snap);
+    });
+
+    const xpTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    const gameDate = new Date("2026-06-10T12:00:00-03:00");
+    let xpCallIndex = 0;
+    const xpResponses = [
+      { exists: false, data: () => null },
+      { exists: false, data: () => ({}) },
+      {
+        exists: true,
+        data: () => ({
+          dateTime: { toDate: () => gameDate },
+          gender: "mixed",
+        }),
+      },
+      {
+        exists: true,
+        data: () => ({
+          experience_points: 120,
+          level: 1,
+        }),
+      },
+      {
+        exists: true,
+        data: () => ({
+          currentMvpStreak: 1,
+          bestMvpStreak: 2,
+        }),
+      },
+    ];
+    xpTx.get.mockImplementation(() => {
+      const snap = xpResponses[xpCallIndex++] ||
+        { exists: false, data: () => ({}) };
+      return Promise.resolve(snap);
+    });
+
+    mockRunTransaction
+      .mockImplementationOnce(async (callback: any) => callback(votingTx))
+      .mockImplementationOnce(async (callback: any) => callback(xpTx));
+
+    const request = {
+      auth: { uid: "owner1", token: { profileComplete: true } },
+      data: { gameId: "game1" },
+    };
+
+    const result = await concludeMvpVotingHandler!(request);
+
+    const xpLogSet = xpTx.set.mock.calls.find(
+      ([, data]) => data?.reason === "MVP"
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.results.mvpId).toBe("playerA");
+    expect(result.xpApplied.mvp).toBe(true);
+    expect(xpLogSet?.[1]).toEqual(expect.objectContaining({
+      user_id: "playerA",
+      game_id: "game1",
+      xp_earned: 30,
+      transaction_id: "mvp_game1_playerA",
+      source: "mvp_voting_concluded",
+      source_collection: "mvp_votes",
+      source_event_id: "game1",
+      source_vote_category: "MVP",
+      source_total_votes: 3,
+      source_category_votes: 3,
+    }));
   });
 
   test("deve resolver empate pelo playerId alfabético (determinístico)", async () => {

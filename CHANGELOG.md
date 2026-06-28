@@ -53,6 +53,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.2] - 2026-06-28
+
+#### Corrigido
+- `usePlayerCard`, `useStatistics`, `usePlayers` e `AuthContext` passam a ler `statistics/{uid}` e `user_streaks` como fonte canônica.
+- Adiciona normalizador compartilhado para mapear `gamesWon`, `bestPlayerCount`, `totalGames` e campos legados sem drift.
+
 ### [1.43.1] - 2026-06-28
 
 #### Corrigido
@@ -342,6 +348,12 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.1] - 2026-06-28
+
+#### Segurança
+- `xp_logs` passam a gravar `transaction_id`, `source`, `source_collection`, `source_event_id` e `source_confirmation_id` no fluxo principal.
+- XP de votação passa a gravar metadados da votação, incluindo categoria e contagem de votos.
 
 ### [1.2.0] - 2026-06-27
 
