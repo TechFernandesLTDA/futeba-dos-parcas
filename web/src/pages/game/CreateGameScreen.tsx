@@ -64,7 +64,7 @@ import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 import { ptBR as dateFnsPtBR } from 'date-fns/locale';
 import { format as formatDate, isWeekend, isSameDay, addDays, parse } from 'date-fns';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
-import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
+import { FormScaffold } from '../../components/layout';
 import { PageContainer } from '../../components/common/PageContainer';
 import { ShareDialog } from '../../components/game/ShareDialog';
 import { QuickLocationDialog } from '../../components/locations/QuickLocationDialog';
@@ -2232,7 +2232,6 @@ export const CreateGameScreen: React.FC = () => {
 
   return (<>
     <LocalizationProvider dateAdapter={AdapterDateFnsV3} adapterLocale={dateFnsPtBR}>
-    <AdaptiveFormSheet closeDestination={closeDestination} isDirty={isDirty}>
     <FormScaffold
       title={t('games.createGame')}
       closeDestination={closeDestination}
@@ -2454,7 +2453,6 @@ export const CreateGameScreen: React.FC = () => {
         </Box>
       </PageContainer>
     </FormScaffold>
-    </AdaptiveFormSheet>
     </LocalizationProvider>
 
     {createdGameData && (

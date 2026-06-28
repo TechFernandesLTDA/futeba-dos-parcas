@@ -1,7 +1,40 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T01:18:33.366Z",
+  "generatedAt": "2026-06-28T01:47:49.573Z",
   "notes": [
+    {
+      "version": "1.42.1",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Criar Jogo em tela cheia no desktop",
+      "highlights": [
+        {
+          "icon": "desktop_windows",
+          "title": "Desktop corrigido",
+          "description": "A tela de Criar Jogo voltou a ocupar a largura completa no computador."
+        },
+        {
+          "icon": "sports_soccer",
+          "title": "Layout preservado",
+          "description": "O novo resumo, checklist e seções continuam disponíveis sem ficar espremidos."
+        },
+        {
+          "icon": "check_circle",
+          "title": "Uso mais confortável",
+          "description": "A criação de jogo agora aproveita melhor telas grandes."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Corrige a renderização desktop que deixava o Criar Jogo preso em um painel lateral estreito.",
+        "Mantém o comportamento mobile e as proteções de rascunho/alterações não salvas."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.42.0",
       "buildNumber": null,
