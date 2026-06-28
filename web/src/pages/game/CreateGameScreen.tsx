@@ -33,10 +33,10 @@ import {
   ListItemIcon,
   Tooltip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Add as AddIcon,
   Save as SaveIcon,
-  ContentCopy as TemplateIcon,
   Delete as DeleteIcon,
   Star as StarIcon,
   StarBorder as StarBorderIcon,
@@ -45,6 +45,16 @@ import {
   History as HistoryIcon,
   ContentPaste as ContentPasteIcon,
   AddLocation as AddLocationIcon,
+  Bolt as BoltIcon,
+  CheckCircle as CheckCircleIcon,
+  EventAvailable as EventAvailableIcon,
+  Groups as GroupsIcon,
+  Paid as PaidIcon,
+  Place as PlaceIcon,
+  RadioButtonUnchecked as RadioButtonUncheckedIcon,
+  Rule as RuleIcon,
+  SportsSoccer as SportsSoccerIcon,
+  Tune as TuneIcon,
 } from '@mui/icons-material';
 import Badge from '@mui/material/Badge';
 import { AdapterDateFns as AdapterDateFnsV3 } from '@mui/x-date-pickers/AdapterDateFnsV3';
@@ -184,6 +194,115 @@ const defaultFormData: GameFormData = {
   autoInviteMembers: true,
   gender: 'MIXED' as GameGender,
 };
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+
+interface CreateGameSectionProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  statusLabel?: string;
+  statusColor?: 'success' | 'warning' | 'default';
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggle?: () => void;
+  children: React.ReactNode;
+}
+
+const CreateGameSection: React.FC<CreateGameSectionProps> = ({
+  icon,
+  title,
+  subtitle,
+  statusLabel,
+  statusColor = 'default',
+  collapsible = false,
+  expanded = true,
+  onToggle,
+  children,
+}) => (
+  <Card
+    variant="outlined"
+    sx={(theme) => ({
+      overflow: 'hidden',
+      borderColor: alpha(theme.palette.primary.main, 0.14),
+      boxShadow: theme.shadowsCustom?.card ?? theme.shadows[1],
+      transition: theme.transitions.create(['border-color', 'box-shadow', 'transform'], {
+        duration: theme.transitions.duration.short,
+      }),
+      '&:hover': {
+        borderColor: alpha(theme.palette.primary.main, 0.28),
+        boxShadow: theme.shadowsCustom?.cardHover ?? theme.shadows[3],
+      },
+    })}
+  >
+    <CardContent sx={{ p: { xs: 2, md: 2.5 }, '&:last-child': { pb: { xs: 2, md: 2.5 } } }}>
+      <Box
+        onClick={collapsible ? onToggle : undefined}
+        onKeyDown={(event) => {
+          if (!collapsible || !onToggle) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onToggle();
+          }
+        }}
+        role={collapsible ? 'button' : undefined}
+        tabIndex={collapsible ? 0 : undefined}
+        aria-expanded={collapsible ? expanded : undefined}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          cursor: collapsible ? 'pointer' : 'default',
+        }}
+      >
+        <Box
+          sx={(theme) => ({
+            width: 44,
+            height: 44,
+            borderRadius: 3,
+            display: 'grid',
+            placeItems: 'center',
+            color: 'primary.main',
+            bgcolor: alpha(theme.palette.primary.main, 0.1),
+            flexShrink: 0,
+          })}
+        >
+          {icon}
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle1" fontWeight={800}>
+            {title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {subtitle}
+          </Typography>
+        </Box>
+        {statusLabel && (
+          <Chip
+            size="small"
+            label={statusLabel}
+            color={statusColor === 'default' ? undefined : statusColor}
+            variant={statusColor === 'default' ? 'outlined' : 'filled'}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          />
+        )}
+        {collapsible && (
+          <Box component="span" aria-hidden="true" sx={{ display: 'inline-flex', color: 'text.secondary' }}>
+            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </Box>
+        )}
+      </Box>
+      <Collapse in={!collapsible || expanded} timeout="auto" unmountOnExit={collapsible}>
+        <Box sx={{ mt: 2.25 }}>
+          {children}
+        </Box>
+      </Collapse>
+    </CardContent>
+  </Card>
+);
 
 export const CreateGameScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -1783,6 +1902,334 @@ export const CreateGameScreen: React.FC = () => {
     </Box>
   );
 
+  const selectedDateLabel = formData.date
+    ? formatDate(parse(formData.date, 'yyyy-MM-dd', new Date()), 'EEE, dd/MM', { locale: dateFnsPtBR })
+    : 'Escolha a data';
+  const selectedTimeLabel = formData.time
+    ? `${formData.time}${formData.endTime ? ` - ${formData.endTime}` : ''}`
+    : 'Escolha o horário';
+  const locationReady = Boolean(formData.locationName.trim()) && (
+    useCustomLocation
+      ? Boolean(formData.locationAddress.trim())
+      : !formData.locationId || fields.length === 0 || Boolean(formData.fieldId)
+  );
+  const scheduleReady = Boolean(formData.date && formData.time && !formErrors.date && !formErrors.time && !formErrors.endTime);
+  const settingsReady = formData.maxPlayers >= GAME_VALIDATION.MIN_PLAYERS
+    && formData.maxPlayers <= GAME_VALIDATION.MAX_PLAYERS
+    && formData.maxGoalkeepers >= GAME_VALIDATION.MIN_GOALKEEPERS
+    && formData.maxGoalkeepers <= GAME_VALIDATION.MAX_GOALKEEPERS
+    && formData.numberOfTeams >= GAME_VALIDATION.MIN_TEAMS
+    && formData.numberOfTeams <= GAME_VALIDATION.MAX_TEAMS;
+  const paymentReady = !formData.pixPaymentEnabled || Boolean(formData.pixKey.trim() && formData.pixBeneficiaryName.trim());
+  const requiredChecklist = [
+    { label: 'Local e quadra', done: locationReady },
+    { label: 'Data e horário', done: scheduleReady },
+    { label: 'Formato do jogo', done: settingsReady },
+    { label: 'Pagamento', done: paymentReady },
+  ];
+  const completedRequired = requiredChecklist.filter((item) => item.done).length;
+  const completionPercent = Math.round((completedRequired / requiredChecklist.length) * 100);
+  const recurrenceLabel = formData.recurrenceEnabled
+    ? formData.recurrenceType === 'weekly'
+      ? 'Semanal'
+      : formData.recurrenceType === 'biweekly'
+        ? 'Quinzenal'
+        : 'Mensal'
+    : 'Jogo único';
+
+  const renderCreateHero = () => (
+    <Card
+      variant="outlined"
+      sx={(theme) => ({
+        mb: 2.5,
+        overflow: 'hidden',
+        color: 'primary.contrastText',
+        border: 0,
+        background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 58%, ${theme.palette.secondary.dark} 100%)`,
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(circle at 18% 20%, ${alpha(theme.palette.common.white, 0.26)}, transparent 28%), radial-gradient(circle at 92% 12%, ${alpha(theme.palette.common.white, 0.18)}, transparent 22%)`,
+          pointerEvents: 'none',
+        },
+      })}
+    >
+      <CardContent
+        sx={{
+          position: 'relative',
+          p: { xs: 2.5, md: 3 },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) auto' },
+          gap: 2,
+          alignItems: 'center',
+        }}
+      >
+        <Box>
+          <Chip
+            icon={<SportsSoccerIcon />}
+            label="Convocação da pelada"
+            size="small"
+            sx={(theme) => ({
+              mb: 1.5,
+              color: 'primary.contrastText',
+              bgcolor: alpha(theme.palette.common.white, 0.16),
+              border: 1,
+              borderColor: alpha(theme.palette.common.white, 0.24),
+              '& .MuiChip-icon': { color: 'primary.contrastText' },
+            })}
+          />
+          <Typography
+            variant="h4"
+            component="p"
+            sx={{ fontWeight: 900, letterSpacing: '-0.04em', maxWidth: 680 }}
+          >
+            Monte o jogo sem deixar ponta solta.
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={(theme) => ({
+              mt: 1,
+              maxWidth: 620,
+              color: alpha(theme.palette.common.white, 0.88),
+            })}
+          >
+            Defina local, horário, formato, pagamento e regras com um resumo ao vivo antes de chamar a galera.
+          </Typography>
+        </Box>
+        <Box
+          sx={(theme) => ({
+            minWidth: { xs: '100%', md: 260 },
+            borderRadius: 4,
+            p: 2,
+            bgcolor: alpha(theme.palette.common.white, 0.14),
+            border: 1,
+            borderColor: alpha(theme.palette.common.white, 0.24),
+            backdropFilter: 'blur(12px)',
+          })}
+        >
+          <Typography variant="caption" sx={(theme) => ({ color: alpha(theme.palette.common.white, 0.78) })}>
+            Prévia rápida
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 900 }}>
+            {formData.locationName || 'Local em aberto'}
+          </Typography>
+          <Typography variant="body2" sx={(theme) => ({ color: alpha(theme.palette.common.white, 0.86) })}>
+            {selectedDateLabel} · {selectedTimeLabel}
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  const renderTemplateAccelerator = () => (
+    <Card
+      variant="outlined"
+      sx={(theme) => ({
+        mb: 2.5,
+        borderColor: alpha(theme.palette.secondary.main, 0.18),
+        boxShadow: theme.shadowsCustom?.card ?? theme.shadows[1],
+      })}
+    >
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: { xs: 2, md: 2.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flex: 1 }}>
+            <Box
+              sx={(theme) => ({
+                width: 40,
+                height: 40,
+                borderRadius: 2.5,
+                display: 'grid',
+                placeItems: 'center',
+                color: 'secondary.main',
+                bgcolor: alpha(theme.palette.secondary.main, 0.1),
+              })}
+            >
+              <BoltIcon />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={800}>
+                Acelere a criação
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Use um template, duplique um jogo anterior ou salve este rascunho como padrão.
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<SaveIcon />}
+              onClick={() => setTemplateDialogOpen(true)}
+            >
+              Salvar template
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<ContentPasteIcon />}
+              onClick={() => setDuplicateDialogOpen(true)}
+              disabled={recentGames.length === 0}
+            >
+              Duplicar anterior
+            </Button>
+          </Box>
+        </Box>
+        <Divider />
+        {templatesLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+            <CircularProgress size={20} />
+          </Box>
+        ) : templates.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            Nenhum template salvo ainda. Depois de preencher um jogo redondo, salve como template para criar o próximo em poucos toques.
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 1 }}>
+            {templates.map((tpl) => (
+              <Card key={tpl.id} variant="outlined" sx={{ bgcolor: 'background.default' }}>
+                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1.25, '&:last-child': { pb: 1.25 } }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={700} noWrap>
+                      {tpl.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {tpl.location_name || 'Sem local'} {tpl.time ? `· ${tpl.time}` : ''} {tpl.recurrence_type ? `· ${tpl.recurrence_type === 'weekly' ? 'Semanal' : tpl.recurrence_type === 'biweekly' ? 'Quinzenal' : 'Mensal'}` : ''} {tpl.max_players ? `· ${tpl.max_players} jog.` : ''}
+                    </Typography>
+                  </Box>
+                  <Button size="small" variant="outlined" onClick={() => handleLoadTemplate(tpl.id)}>
+                    Carregar
+                  </Button>
+                  <Tooltip title={tpl.time ? 'Criar usando a próxima ocorrência' : 'Template sem horário definido'}>
+                    <span>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color={tpl.time ? 'primary' : 'inherit'}
+                        disabled={!tpl.time}
+                        onClick={() => handleQuickCreateFromTemplate(tpl)}
+                      >
+                        Criar
+                      </Button>
+                    </span>
+                  </Tooltip>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteTemplate(tpl.id)}
+                    aria-label={`Remover template ${tpl.name}`}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderGameSummary = () => (
+    <Card
+      variant="outlined"
+      sx={(theme) => ({
+        position: { lg: 'sticky' },
+        top: { lg: 88 },
+        borderColor: alpha(theme.palette.primary.main, 0.18),
+        boxShadow: theme.shadowsCustom?.cardPremium ?? theme.shadows[2],
+        overflow: 'hidden',
+      })}
+    >
+      <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+          <Box
+            sx={(theme) => ({
+              width: 42,
+              height: 42,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              color: 'primary.main',
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+            })}
+          >
+            <SportsSoccerIcon />
+          </Box>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={900}>
+              Resumo do jogo
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {completedRequired}/{requiredChecklist.length} essenciais prontos
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+          <CircularProgress
+            variant="determinate"
+            value={completionPercent}
+            size={56}
+            thickness={5}
+            aria-label={`Progresso do formulário: ${completionPercent}%`}
+          />
+          <Box>
+            <Typography variant="h6" fontWeight={900}>
+              {completionPercent}%
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              pronto para publicar
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          {[
+            { icon: <PlaceIcon fontSize="small" />, label: 'Local', value: formData.fieldName || formData.locationName || 'Ainda não definido' },
+            { icon: <EventAvailableIcon fontSize="small" />, label: 'Agenda', value: `${selectedDateLabel} · ${selectedTimeLabel}` },
+            { icon: <GroupsIcon fontSize="small" />, label: 'Elenco', value: `${formData.maxPlayers} jogadores · ${formData.maxGoalkeepers} goleiros` },
+            { icon: <PaidIcon fontSize="small" />, label: 'Valor', value: formData.totalCost > 0 ? `${currencyFormatter.format(formData.dailyPrice)} por jogador` : 'Sem cobrança definida' },
+            { icon: <TuneIcon fontSize="small" />, label: 'Ritmo', value: recurrenceLabel },
+          ].map((row) => (
+            <Box key={row.label} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              <Box sx={{ color: 'text.secondary', mt: 0.25 }}>{row.icon}</Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {row.label}
+                </Typography>
+                <Typography variant="body2" fontWeight={700}>
+                  {row.value}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+
+        <Divider sx={{ my: 2 }} />
+
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          Checklist antes de chamar a galera
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+          {requiredChecklist.map((item) => (
+            <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {item.done ? (
+                <CheckCircleIcon color="success" fontSize="small" />
+              ) : (
+                <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+              )}
+              <Typography variant="body2" color={item.done ? 'text.primary' : 'text.secondary'}>
+                {item.label}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
   return (<>
     <LocalizationProvider dateAdapter={AdapterDateFnsV3} adapterLocale={dateFnsPtBR}>
     <AdaptiveFormSheet closeDestination={closeDestination} isDirty={isDirty}>
@@ -1793,7 +2240,7 @@ export const CreateGameScreen: React.FC = () => {
       isDirty={isDirty}
       loading={loading}
     >
-      <PageContainer maxWidth="form">
+      <PageContainer maxWidth="detail">
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} role="alert" aria-live="assertive">
             {error}
@@ -1810,84 +2257,8 @@ export const CreateGameScreen: React.FC = () => {
           </Alert>
         )}
 
-        {/* Templates + Duplicate */}
-        <Card sx={{ mb: 2, bgcolor: 'action.hover' }}>
-          <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TemplateIcon color="action" />
-              <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>
-                Templates
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<SaveIcon />}
-                onClick={() => setTemplateDialogOpen(true)}
-              >
-                Salvar
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ContentPasteIcon />}
-                onClick={() => setDuplicateDialogOpen(true)}
-                disabled={recentGames.length === 0}
-              >
-                Duplicar anterior
-              </Button>
-            </Box>
-            <Divider />
-            {templatesLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
-                <CircularProgress size={20} />
-              </Box>
-            ) : templates.length === 0 ? (
-              <Typography variant="caption" color="text.secondary">
-                Nenhum template salvo. Preencha o formulário e salve como template para criação rápida.
-              </Typography>
-            ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                {templates.map((tpl) => (
-                  <Card key={tpl.id} variant="outlined" sx={{ bgcolor: 'background.default' }}>
-                    <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1, '&:last-child': { pb: 1 } }}>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={600} noWrap>
-                          {tpl.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" noWrap>
-                          {tpl.location_name || 'Sem local'} {tpl.time ? `· ${tpl.time}` : ''} {tpl.recurrence_type ? `· ${tpl.recurrence_type === 'weekly' ? 'Semanal' : tpl.recurrence_type === 'biweekly' ? 'Quinzenal' : 'Mensal'}` : ''} {tpl.max_players ? `· ${tpl.max_players} jog.` : ''}
-                        </Typography>
-                      </Box>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleLoadTemplate(tpl.id)}
-                      >
-                        Carregar
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color={tpl.time ? 'primary' : 'inherit'}
-                        disabled={!tpl.time}
-                        onClick={() => handleQuickCreateFromTemplate(tpl)}
-                      >
-                        Criar Agora
-                      </Button>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteTemplate(tpl.id)}
-                        aria-label={`Remover template ${tpl.name}`}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
+        {renderCreateHero()}
+        {renderTemplateAccelerator()}
 
         {/* Template save dialog */}
         <Dialog open={templateDialogOpen} onClose={() => setTemplateDialogOpen(false)} fullWidth maxWidth="xs" aria-labelledby="save-template-dialog-title">
@@ -1981,95 +2352,91 @@ export const CreateGameScreen: React.FC = () => {
           </DialogActions>
         </Dialog>
 
-        <Divider sx={{ mb: 2 }} />
-
-        {/* Single-page form sections */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {/* Section 1: Location */}
-          <Card>
-            <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                📍 Local
-              </Typography>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 360px' },
+            gap: { xs: 2.5, lg: 3 },
+            alignItems: 'start',
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, minWidth: 0 }}>
+            <CreateGameSection
+              icon={<PlaceIcon />}
+              title="Local"
+              subtitle="Escolha a quadra, use favoritos ou cadastre um local rápido."
+              statusLabel={locationReady ? 'Pronto' : 'Pendente'}
+              statusColor={locationReady ? 'success' : 'warning'}
+            >
               {renderLocationSection()}
-            </CardContent>
-          </Card>
+            </CreateGameSection>
 
-          {/* Section 2: Date & Time */}
-          <Card>
-            <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                📅 Data e Horário
-              </Typography>
+            <CreateGameSection
+              icon={<EventAvailableIcon />}
+              title="Data e horário"
+              subtitle="Veja disponibilidade, horários populares e conflitos antes de publicar."
+              statusLabel={scheduleReady ? 'Pronto' : 'Pendente'}
+              statusColor={scheduleReady ? 'success' : 'warning'}
+            >
               {renderDateTimeSection()}
-            </CardContent>
-          </Card>
+            </CreateGameSection>
 
-          {/* Section 3: Game Settings */}
-          <Card>
-            <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                ⚙️ Configurações
-              </Typography>
+            <CreateGameSection
+              icon={<TuneIcon />}
+              title="Configurações"
+              subtitle="Defina elenco, visibilidade, gênero, recorrência e convites automáticos."
+              statusLabel={settingsReady ? 'Pronto' : 'Revisar'}
+              statusColor={settingsReady ? 'success' : 'warning'}
+            >
               {renderSettingsSection()}
-            </CardContent>
-          </Card>
+            </CreateGameSection>
 
-          {/* Section 4: Payment (collapsible) */}
-          <Card>
-            <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-              <Box
-                onClick={() => setPaymentExpanded(!paymentExpanded)}
-                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-              >
-                <Typography variant="subtitle1" fontWeight={600}>
-                  💰 Pagamento
-                </Typography>
-                <IconButton size="small">
-                  {paymentExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
-              </Box>
-              <Collapse in={paymentExpanded}>
-                <Box sx={{ mt: 2 }}>
-                  {renderPaymentSection()}
-                </Box>
-              </Collapse>
-            </CardContent>
-          </Card>
+            <CreateGameSection
+              icon={<PaidIcon />}
+              title="Pagamento"
+              subtitle="Calcule o valor por jogador e configure Pix quando necessário."
+              statusLabel={paymentReady ? 'Opcional' : 'Pendente'}
+              statusColor={paymentReady ? 'default' : 'warning'}
+              collapsible
+              expanded={paymentExpanded}
+              onToggle={() => setPaymentExpanded(!paymentExpanded)}
+            >
+              {renderPaymentSection()}
+            </CreateGameSection>
 
-          {/* Section 5: Rules (collapsible) */}
-          <Card>
-            <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-              <Box
-                onClick={() => setRulesExpanded(!rulesExpanded)}
-                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-              >
-                <Typography variant="subtitle1" fontWeight={600}>
-                  📋 Regras
-                </Typography>
-                <IconButton size="small">
-                  {rulesExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
-              </Box>
-              <Collapse in={rulesExpanded}>
-                <Box sx={{ mt: 2 }}>
-                  <TextField
-                    label={t('games.create.gameRules')}
-                    value={formData.rules}
-                    onChange={(e) => handleInputChange('rules', e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    placeholder={t('games.create.gameRulesPlaceholder')}
-                    inputProps={{ maxLength: 500 }}
-                  />
-                  <Alert severity="info" sx={{ mt: 1 }}>
-                    {t('games.create.rulesShownInfo')}
-                  </Alert>
-                </Box>
-              </Collapse>
-            </CardContent>
-          </Card>
+            <CreateGameSection
+              icon={<RuleIcon />}
+              title="Regras"
+              subtitle="Combine detalhes que evitam dúvida: atraso, colete, goleiro e critérios de presença."
+              statusLabel={formData.rules.trim() ? 'Definidas' : 'Opcional'}
+              statusColor={formData.rules.trim() ? 'success' : 'default'}
+              collapsible
+              expanded={rulesExpanded}
+              onToggle={() => setRulesExpanded(!rulesExpanded)}
+            >
+              <TextField
+                label={t('games.create.gameRules')}
+                value={formData.rules}
+                onChange={(e) => handleInputChange('rules', e.target.value)}
+                fullWidth
+                multiline
+                rows={4}
+                placeholder={t('games.create.gameRulesPlaceholder')}
+                inputProps={{ maxLength: 500 }}
+              />
+              <Alert severity="info" sx={{ mt: 1 }}>
+                {t('games.create.rulesShownInfo')}
+              </Alert>
+            </CreateGameSection>
+          </Box>
+
+          <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+            {renderGameSummary()}
+          </Box>
+        </Box>
+
+        <Box sx={{ display: { xs: 'block', lg: 'none' }, mt: 2.5 }}>
+          {renderGameSummary()}
         </Box>
 
         {/* Sticky submit button */}

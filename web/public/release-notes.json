@@ -1,7 +1,45 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-27T20:37:46.629Z",
+  "generatedAt": "2026-06-28T01:18:33.366Z",
   "notes": [
+    {
+      "version": "1.42.0",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Tela de Criar Jogo redesenhada",
+      "highlights": [
+        {
+          "icon": "sports_soccer",
+          "title": "Convocação mais clara",
+          "description": "A criação de jogo agora abre com uma prévia visual da pelada e orienta o preenchimento do início ao fim."
+        },
+        {
+          "icon": "check_circle",
+          "title": "Checklist ao vivo",
+          "description": "Um resumo mostra local, agenda, elenco, valor e pendências essenciais antes de publicar."
+        },
+        {
+          "icon": "bolt",
+          "title": "Atalhos mais fortes",
+          "description": "Templates e duplicação de jogos anteriores ficaram mais destacados para criar partidas recorrentes com menos esforço."
+        }
+      ],
+      "added": [
+        "Hero contextual na tela de Criar Jogo.",
+        "Resumo/checklist do jogo em tempo real, lateral no desktop e abaixo do formulário no mobile.",
+        "Seções com ícones, subtítulos e status de preenchimento."
+      ],
+      "improved": [
+        "A hierarquia visual da tela ficou mais clara em desktop e mobile.",
+        "Pagamento e regras continuam opcionais, mas agora aparecem com contexto e status.",
+        "A tela ficou mais resiliente quando renderizada fora do tema principal do app."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.41.0",
       "buildNumber": null,

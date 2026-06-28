@@ -134,12 +134,14 @@ describe('CreateGameScreen', () => {
 
   it('exibe as seções do formulário de página única', () => {
     renderCreateGameScreen();
-    // Formulário single-page (#2250): seções em vez de stepper.
-    expect(screen.getByText('📍 Local')).toBeInTheDocument();
-    expect(screen.getByText('📅 Data e Horário')).toBeInTheDocument();
-    expect(screen.getByText('⚙️ Configurações')).toBeInTheDocument();
-    expect(screen.getByText('💰 Pagamento')).toBeInTheDocument();
-    expect(screen.getByText('📋 Regras')).toBeInTheDocument();
+    // Formulário single-page (#2250): seções em vez de stepper, agora com resumo vivo.
+    expect(screen.getByText('Monte o jogo sem deixar ponta solta.')).toBeInTheDocument();
+    expect(screen.getAllByText('Local')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Data e horário')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Configurações')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Pagamento')[0]).toBeInTheDocument();
+    expect(screen.getByText('Regras')).toBeInTheDocument();
+    expect(screen.getAllByText('Resumo do jogo')[0]).toBeInTheDocument();
   });
 
   it('exibe o botão de submit "Criar Jogo"', () => {
