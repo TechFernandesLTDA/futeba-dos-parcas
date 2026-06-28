@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T15:25:21.418Z",
+  "generatedAt": "2026-06-28T16:21:18.936Z",
   "notes": [
     {
       "version": "1.43.4",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-06-28",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "Criar jogo ficou mais claro ao preencher valores",
       "highlights": [],
       "added": [],
