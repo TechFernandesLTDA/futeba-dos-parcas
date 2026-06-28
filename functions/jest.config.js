@@ -26,6 +26,7 @@ module.exports = {
   collectCoverageFrom: [
     "src/**/*.ts",
     "!src/**/*.d.ts",
+    "!src/scripts/**",
   ],
   coverageDirectory: "coverage",
   // Reporters explicitos: "lcov" gera coverage/lcov.info, consumido pelo gate

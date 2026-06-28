@@ -79,6 +79,50 @@ The parent location stores denormalized summary fields for discovery and admin o
 - `has_active_fields`
 - `photos` / `photo_url`
 
+## Legacy Backfill Before Broad Monetization
+
+Tracked by #3131.
+
+Before enforcing monetized venue rules broadly, run the venue backfill in
+dry-run mode and review the report:
+
+```bash
+cd functions
+npm run build
+npm run backfill:venues
+```
+
+The script audits `locations`, nested `locations/{locationId}/fields`, and
+legacy root `fields`. It can safely backfill:
+
+- missing `publication_status`, defaulting to `PENDING_REVIEW`;
+- missing `subscription_status` / `commercial_status`, defaulting to `TRIAL`;
+- missing `monthly_fee_cents` and `billing_due_day`, defaulting to `null`;
+- inconsistent `field_count`, `has_active_fields`, `field_type`, and
+  `primary_field_type`;
+- missing nested field documents when legacy `field_count` says fields should
+  exist;
+- field defaults such as `location_id`, `type`, `is_active`, `hourly_price`,
+  `photos`, `amenities`, and `managers`.
+
+Only run execute mode after reviewing the dry-run output:
+
+```bash
+cd functions
+npm run backfill:venues:execute
+```
+
+Safety rules:
+
+- The backfill never publishes a venue automatically.
+- Existing explicit admin decisions are preserved.
+- Venues with missing price, owner, photos, address, or playable fields remain
+  in manual review.
+- Legacy root `fields` are counted and reported to avoid duplicate nested
+  field creation.
+- Publication still requires an admin decision through
+  `setLocationPublicationStatus`.
+
 ## Follow-Up Scope
 
 - Add the billing ledger and recurring monthly charge workflow tracked by #3114.
