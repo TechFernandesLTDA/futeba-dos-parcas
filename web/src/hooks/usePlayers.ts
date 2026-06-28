@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { collection, doc, documentId, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, documentId, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { normalizePlayerStats } from '../utils/playerStats';
 
 const logger = createLogger('usePlayers');
 
@@ -90,42 +91,87 @@ export const usePlayers = (groupId?: string) => {
             }
             return result.value.docs;
           });
+          const [statsResults, streakResults] = await Promise.all([
+            Promise.allSettled(
+              chunks.map((chunk) =>
+                getDocs(query(collection(db, 'statistics'), where(documentId(), 'in', chunk)))
+              )
+            ),
+            Promise.allSettled(
+              chunks.map((chunk) =>
+                getDocs(query(collection(db, 'user_streaks'), where('user_id', 'in', chunk)))
+              )
+            ),
+          ]);
+
+          if (cancelled) return;
+
+          const statsByUserId = new Map<string, Record<string, unknown>>();
+          statsResults.forEach((result) => {
+            if (result.status === 'rejected') {
+              logger.error('Falha ao ler estatísticas de jogadores:', result.reason);
+              return;
+            }
+            result.value.docs.forEach((statsDoc) => statsByUserId.set(statsDoc.id, statsDoc.data()));
+          });
+
+          const streakByUserId = new Map<string, Record<string, unknown>>();
+          streakResults.forEach((result) => {
+            if (result.status === 'rejected') {
+              logger.error('Falha ao ler streaks de jogadores:', result.reason);
+              return;
+            }
+            result.value.docs.forEach((streakDoc) => {
+              const streakData = streakDoc.data();
+              const streakUserId = (streakData.user_id ?? streakData.userId) as string | undefined;
+              if (streakUserId) streakByUserId.set(streakUserId, streakData);
+            });
+          });
+
           const playersData = allUserDocs.map((userDoc) => {
             const raw = userDoc.data();
-          const data = snakeToCamel(raw) as Record<string, unknown>;
-          return {
-            id: userDoc.id,
-            name: (data.name as string) || 'Jogador',
-            email: (data.email as string) || '',
-            photoUrl: (data.photoUrl as string) || raw.photo_url || '',
-            favoriteTeam: (data.favoriteTeam as string) ?? raw.favorite_team ?? undefined,
-            level: (data.level as number) || 1,
-            xp: (data.experiencePoints as number) ?? (data.xp as number) ?? 0,
-            division: (data.division as string) || 'BRONZE',
-            gamesPlayed: (data.gamesPlayed as number) || (raw.games_played as number) || 0,
-            wins: (data.wins as number) || 0,
-            goals: (data.goals as number) || 0,
-            assists: (data.assists as number) || 0,
-            mvpCount: (data.mvpCount as number) || (raw.mvp_count as number) || 0,
-            streak: (data.streak as number) || 0,
-            strikerRating: (data.strikerRating as number) ?? (raw.striker_rating as number) ?? 0,
-            midRating: (data.midRating as number) ?? (raw.mid_rating as number) ?? 0,
-            defenderRating: (data.defenderRating as number) ?? (raw.defender_rating as number) ?? 0,
-            gkRating: (data.gkRating as number) ?? (raw.gk_rating as number) ?? 0,
-            autoStrikerRating: (data.autoStrikerRating as number) ?? (raw.auto_striker_rating as number) ?? 0,
-            autoMidRating: (data.autoMidRating as number) ?? (raw.auto_mid_rating as number) ?? 0,
-            autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
-            autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
-            autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
-            reputationOverallAvg: (data.reputationOverallAvg as number) ?? (raw.reputation_overall_avg as number) ?? 0,
-            reputationPunctualityAvg: (data.reputationPunctualityAvg as number) ?? (raw.reputation_punctuality_avg as number) ?? 0,
-            reputationRespectAvg: (data.reputationRespectAvg as number) ?? (raw.reputation_respect_avg as number) ?? 0,
-            reputationCommitmentAvg: (data.reputationCommitmentAvg as number) ?? (raw.reputation_commitment_avg as number) ?? 0,
-            reputationReviewsCount: (data.reputationReviewsCount as number) ?? (raw.reputation_reviews_count as number) ?? 0,
-            lookingForGameToday: data.lookingForGameToday === true,
-            lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
-            createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
-          } as Player;
+            const data = snakeToCamel(raw) as Record<string, unknown>;
+            const stats = normalizePlayerStats(
+              {
+                ...(statsByUserId.get(userDoc.id) ?? {}),
+                ...(streakByUserId.get(userDoc.id) ?? {}),
+              },
+              raw,
+              userDoc.id,
+            );
+            return {
+              id: userDoc.id,
+              name: (data.name as string) || 'Jogador',
+              email: (data.email as string) || '',
+              photoUrl: (data.photoUrl as string) || raw.photo_url || '',
+              favoriteTeam: (data.favoriteTeam as string) ?? raw.favorite_team ?? undefined,
+              level: (data.level as number) || 1,
+              xp: (data.experiencePoints as number) ?? (data.xp as number) ?? 0,
+              division: (data.division as string) || 'BRONZE',
+              gamesPlayed: stats.totalGames,
+              wins: stats.totalWins,
+              goals: stats.totalGoals,
+              assists: stats.totalAssists,
+              mvpCount: stats.mvpCount,
+              streak: stats.currentStreak,
+              strikerRating: (data.strikerRating as number) ?? (raw.striker_rating as number) ?? 0,
+              midRating: (data.midRating as number) ?? (raw.mid_rating as number) ?? 0,
+              defenderRating: (data.defenderRating as number) ?? (raw.defender_rating as number) ?? 0,
+              gkRating: (data.gkRating as number) ?? (raw.gk_rating as number) ?? 0,
+              autoStrikerRating: (data.autoStrikerRating as number) ?? (raw.auto_striker_rating as number) ?? 0,
+              autoMidRating: (data.autoMidRating as number) ?? (raw.auto_mid_rating as number) ?? 0,
+              autoDefenderRating: (data.autoDefenderRating as number) ?? (raw.auto_defender_rating as number) ?? 0,
+              autoGkRating: (data.autoGkRating as number) ?? (raw.auto_gk_rating as number) ?? 0,
+              autoRatingSamples: (data.autoRatingSamples as number) ?? (raw.auto_rating_samples as number) ?? 0,
+              reputationOverallAvg: (data.reputationOverallAvg as number) ?? (raw.reputation_overall_avg as number) ?? 0,
+              reputationPunctualityAvg: (data.reputationPunctualityAvg as number) ?? (raw.reputation_punctuality_avg as number) ?? 0,
+              reputationRespectAvg: (data.reputationRespectAvg as number) ?? (raw.reputation_respect_avg as number) ?? 0,
+              reputationCommitmentAvg: (data.reputationCommitmentAvg as number) ?? (raw.reputation_commitment_avg as number) ?? 0,
+              reputationReviewsCount: (data.reputationReviewsCount as number) ?? (raw.reputation_reviews_count as number) ?? 0,
+              lookingForGameToday: data.lookingForGameToday === true,
+              lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
+              createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
+            } as Player;
           });
 
           if (cancelled) return;
@@ -164,11 +210,23 @@ export const usePlayerDetail = (userId?: string) => {
 
     const fetchPlayer = async () => {
       try {
-        const userDoc = await getDoc(doc(db, 'users', userId));
+        const [userDoc, statsDoc, streakSnap] = await Promise.all([
+          getDoc(doc(db, 'users', userId)),
+          getDoc(doc(db, 'statistics', userId)),
+          getDocs(query(collection(db, 'user_streaks'), where('user_id', '==', userId), limit(1))),
+        ]);
         if (cancelled) return;
         if (userDoc.exists()) {
           const raw = userDoc.data();
           const data = snakeToCamel(raw) as Record<string, unknown>;
+          const stats = normalizePlayerStats(
+            {
+              ...(statsDoc.exists() ? statsDoc.data() : {}),
+              ...(streakSnap.docs[0]?.data() ?? {}),
+            },
+            raw,
+            userId,
+          );
           if (!cancelled) {
             setPlayer({
               id: userId,
@@ -179,12 +237,12 @@ export const usePlayerDetail = (userId?: string) => {
               level: (data.level as number) || 1,
               xp: (data.experiencePoints as number) ?? (data.xp as number) ?? 0,
               division: (data.division as string) || 'BRONZE',
-              gamesPlayed: (data.gamesPlayed as number) || (raw.games_played as number) || 0,
-              wins: (data.wins as number) || 0,
-              goals: (data.goals as number) || 0,
-              assists: (data.assists as number) || 0,
-              mvpCount: (data.mvpCount as number) || (raw.mvp_count as number) || 0,
-              streak: (data.streak as number) || 0,
+              gamesPlayed: stats.totalGames,
+              wins: stats.totalWins,
+              goals: stats.totalGoals,
+              assists: stats.totalAssists,
+              mvpCount: stats.mvpCount,
+              streak: stats.currentStreak,
               strikerRating: (data.strikerRating as number) ?? (raw.striker_rating as number) ?? 0,
               midRating: (data.midRating as number) ?? (raw.mid_rating as number) ?? 0,
               defenderRating: (data.defenderRating as number) ?? (raw.defender_rating as number) ?? 0,

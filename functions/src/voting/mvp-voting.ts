@@ -788,7 +788,11 @@ export const concludeMvpVoting =
               gameId,
               result.mvpId as string,
               "MVP",
-              XP_ACTIONS.MVP
+              XP_ACTIONS.MVP,
+              {
+                totalVotes: result.totalVotes,
+                categoryVotes: result.mvpVotes,
+              }
             );
             mvpXpApplied = true;
           } catch (xpError) {
@@ -806,7 +810,11 @@ export const concludeMvpVoting =
               gameId,
               result.worstPlayerId as string,
               "BOLA_MURCHA",
-              XP_ACTIONS.WORST_PLAYER
+              XP_ACTIONS.WORST_PLAYER,
+              {
+                totalVotes: result.totalVotes,
+                categoryVotes: result.worstVotes,
+              }
             );
             worstXpApplied = true;
           } catch (xpError) {
@@ -972,6 +980,7 @@ function resolveWinner(
  * @param {string} userId - ID do usuário (MVP ou worst player)
  * @param {"MVP" | "BOLA_MURCHA"} reason - tipo de delta
  * @param {number} xpDelta - +30 (MVP) ou -10 (Bola Murcha)
+ * @param {object} audit - Metadados auditáveis da votação que gerou o XP
  * @return {Promise<void>}
  */
 async function applyVotingXpDelta(
@@ -979,7 +988,11 @@ async function applyVotingXpDelta(
   gameId: string,
   userId: string,
   reason: "MVP" | "BOLA_MURCHA",
-  xpDelta: number
+  xpDelta: number,
+  audit: {
+    totalVotes?: number;
+    categoryVotes?: number;
+  } = {}
 ): Promise<void> {
   const logId =
     reason === "MVP" ?
@@ -1230,6 +1243,11 @@ async function applyVotingXpDelta(
         reason,
         transaction_id: logId,
         source: "mvp_voting_concluded",
+        source_collection: "mvp_votes",
+        source_event_id: gameId,
+        source_vote_category: reason,
+        source_total_votes: audit.totalVotes ?? null,
+        source_category_votes: audit.categoryVotes ?? null,
         created_at: FieldValue
           .serverTimestamp(),
       });

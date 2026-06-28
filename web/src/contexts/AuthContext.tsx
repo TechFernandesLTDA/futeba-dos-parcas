@@ -11,7 +11,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where } from 'firebase/firestore';
+import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where, limit } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
 import { User } from '../types';
@@ -22,6 +22,7 @@ import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
 import { useTranslation } from 'react-i18next';
 import { syncFieldOwnerClaim } from '../services/cloudFunctions';
+import { normalizePlayerStats } from '../utils/playerStats';
 
 const logger = createLogger('AuthContext');
 
@@ -59,6 +60,25 @@ function normalizeUserData(converted: Record<string, unknown>, id: string, raw: 
     createdAt: toDate(raw.created_at) ?? toDate(raw.createdAt),
     updatedAt: toDate(raw.updated_at) ?? toDate(raw.updatedAt),
   } as User;
+}
+
+function mergeUserStats(user: User, statsRaw: Record<string, unknown>, fallbackRaw: Record<string, unknown>): User {
+  const stats = normalizePlayerStats(statsRaw, fallbackRaw, user.id);
+  return {
+    ...user,
+    totalGames: stats.totalGames,
+    totalGoals: stats.totalGoals,
+    totalAssists: stats.totalAssists,
+    totalWins: stats.totalWins,
+    totalDraws: stats.totalDraws,
+    totalLosses: stats.totalLosses,
+    totalSaves: stats.totalSaves,
+    mvpCount: stats.mvpCount,
+    yellowCards: stats.yellowCards,
+    redCards: stats.redCards,
+    currentStreak: stats.currentStreak,
+    bestStreak: stats.bestStreak,
+  };
 }
 
 interface AuthContextType {
@@ -114,23 +134,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = userDoc.data();
       const converted = snakeToCamel(raw);
 
-      let piiData: Record<string, unknown> = {};
-      if (includePrivate) {
-        try {
-          const privateDoc = await getDoc(doc(db, 'users_private', uid));
-          if (privateDoc.exists()) {
-            piiData = snakeToCamel(privateDoc.data());
-          }
-        } catch (privateErr) {
-          logger.debug('users_private read denied:', privateErr);
-        }
-      }
+      const [statsDoc, streakSnap, privateDoc] = await Promise.all([
+        getDoc(doc(db, 'statistics', uid)),
+        getDocs(query(collection(db, 'user_streaks'), where('user_id', '==', uid), limit(1))),
+        includePrivate
+          ? getDoc(doc(db, 'users_private', uid)).catch((privateErr) => {
+            logger.debug('users_private read denied:', privateErr);
+            return null;
+          })
+          : Promise.resolve(null),
+      ]);
 
-      return normalizeUserData(
+      const piiData = privateDoc?.exists() ? snakeToCamel(privateDoc.data()) : {};
+      const statsRaw = statsDoc.exists() ? statsDoc.data() : {};
+      const streakRaw = streakSnap.docs[0]?.data() ?? {};
+
+      return mergeUserStats(normalizeUserData(
         { ...converted, ...piiData },
         userDoc.id,
         raw,
-      );
+      ), { ...statsRaw, ...streakRaw }, raw);
     } catch (err) {
       logger.error('Error fetching user data:', err);
       setError(t('feedback.generic.loadDataError'));

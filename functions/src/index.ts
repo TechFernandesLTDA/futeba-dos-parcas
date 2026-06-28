@@ -1034,6 +1034,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
               const log: XpLog = {
                 user_id: uid,
                 game_id: gameId,
+                transaction_id:
+                  `game_${gameId}_user_${uid}`,
+                source: "game_finished",
+                source_collection: "games",
+                source_event_id: gameId,
+                source_confirmation_id:
+                  `${gameId}_${uid}`,
                 xp_earned: playerXp,
                 xp_before: currentXp,
                 xp_after: finalXp,

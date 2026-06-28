@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { UserStats } from '../types/user';
 import { createLogger } from '../utils/logger';
 import { useTranslation } from 'react-i18next';
+import { normalizePlayerStats } from '../utils/playerStats';
 
 const logger = createLogger('useStatistics');
 
@@ -27,11 +28,28 @@ export function useStatistics(userId: string | undefined): UseStatisticsResult {
     setLoading(true);
     setError(null);
     try {
-      const userRef = doc(db, 'users', userId);
-      const docSnap = await getDoc(userRef);
+      const [userSnap, statsSnap, streakSnap] = await Promise.all([
+        getDoc(doc(db, 'users', userId)),
+        getDoc(doc(db, 'statistics', userId)),
+        getDocs(query(collection(db, 'user_streaks'), where('user_id', '==', userId), limit(1))),
+      ]);
       if (cancelledRef.current) return;
-      if (docSnap.exists()) {
-        setStats(snakeToCamel(docSnap.data()) as UserStats);
+      if (userSnap.exists() || statsSnap.exists()) {
+        const userRaw = userSnap.exists() ? userSnap.data() : {};
+        const userData = snakeToCamel<Record<string, unknown>>(userRaw);
+        const statsRaw = statsSnap.exists() ? statsSnap.data() : undefined;
+        const streakRaw = streakSnap.docs[0]?.data();
+        const normalized = normalizePlayerStats(
+          { ...(statsRaw ?? {}), ...(streakRaw ?? {}) },
+          userRaw,
+          userId,
+        );
+
+        setStats({
+          ...normalized,
+          level: (userData.level as number) ?? normalized.level,
+          experiencePoints: (userData.experiencePoints as number) ?? normalized.experiencePoints,
+        } as UserStats);
       } else {
         setStats(null);
       }
