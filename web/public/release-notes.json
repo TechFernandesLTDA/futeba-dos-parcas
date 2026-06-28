@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T16:42:45.091Z",
+  "generatedAt": "2026-06-28T16:53:14.031Z",
   "notes": [
     {
       "version": "1.43.5",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-06-28",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "Criar jogo ficou mais leve no celular",
       "highlights": [],
       "added": [],
