@@ -20,6 +20,9 @@ import {
   DialogContentText,
   DialogActions,
   CircularProgress,
+  MenuItem,
+  Stack,
+  Alert,
 } from '@mui/material';
 import PageContainer from '../../components/common/PageContainer';
 import {
@@ -52,6 +55,9 @@ import {
   LocationPublicationStatus,
   LocationSubscriptionStatus,
   canManageLocation,
+  AMENITY_LABELS,
+  COMMERCIAL_AMENITIES,
+  locationHasAmenities,
 } from '../../types/location';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
@@ -79,6 +85,14 @@ export const ManageLocationsScreen: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [commercialActionLoading, setCommercialActionLoading] = useState<string | null>(null);
+  const [publicationFilter, setPublicationFilter] = useState<'ALL' | LocationPublicationStatus>('ALL');
+  const [subscriptionFilter, setSubscriptionFilter] = useState<'ALL' | LocationSubscriptionStatus>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | string>('ALL');
+  const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
+  const [billingTarget, setBillingTarget] = useState<Location | null>(null);
+  const [billingMonthlyFee, setBillingMonthlyFee] = useState('');
+  const [billingDueDay, setBillingDueDay] = useState('');
+  const [billingNotes, setBillingNotes] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -110,15 +124,23 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const filteredLocations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return locations;
-    return locations.filter(
-      (loc) =>
+    return locations.filter((loc) => {
+      const matchesSearch = !q ||
         loc.name?.toLowerCase().includes(q) ||
         loc.address?.toLowerCase().includes(q) ||
         loc.city?.toLowerCase().includes(q) ||
-        loc.district?.toLowerCase().includes(q),
-    );
-  }, [locations, searchQuery]);
+        loc.district?.toLowerCase().includes(q) ||
+        loc.ownerId?.toLowerCase().includes(q);
+      const matchesPublication = publicationFilter === 'ALL' || getPublicationStatus(loc) === publicationFilter;
+      const matchesSubscription = subscriptionFilter === 'ALL' || getSubscriptionStatus(loc) === subscriptionFilter;
+      const matchesType = typeFilter === 'ALL' || loc.fieldType === typeFilter || loc.primaryFieldType === typeFilter;
+      return matchesSearch &&
+        matchesPublication &&
+        matchesSubscription &&
+        matchesType &&
+        locationHasAmenities(loc, amenityFilters);
+    });
+  }, [locations, searchQuery, publicationFilter, subscriptionFilter, typeFilter, amenityFilters]);
 
   const canManage = (loc: Location) =>
     isAdmin || (user?.id ? canManageLocation(loc, user.id) : false);
@@ -139,6 +161,12 @@ export const ManageLocationsScreen: React.FC = () => {
   };
 
   const handleClearSearch = () => setSearchQuery('');
+
+  const handleAmenityFilter = (amenity: string) => {
+    setAmenityFilters((prev) =>
+      prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity],
+    );
+  };
 
   const getPublicationStatus = (location: Location): LocationPublicationStatus =>
     location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
@@ -201,6 +229,47 @@ export const ManageLocationsScreen: React.FC = () => {
     }
   };
 
+  const openBillingDialog = (location: Location) => {
+    setBillingTarget(location);
+    setBillingMonthlyFee(location.monthlyFeeCents ? String(location.monthlyFeeCents / 100) : '');
+    setBillingDueDay(location.billingDueDay ? String(location.billingDueDay) : '');
+    setBillingNotes(location.adminNotes || '');
+  };
+
+  const handleSaveBilling = async () => {
+    if (!billingTarget) return;
+    const monthlyFeeCents = billingMonthlyFee.trim()
+      ? Math.round(Number(billingMonthlyFee.replace(',', '.')) * 100)
+      : null;
+    const billingDue = billingDueDay.trim() ? Number(billingDueDay) : null;
+    if (monthlyFeeCents !== null && (!Number.isFinite(monthlyFeeCents) || monthlyFeeCents < 0)) {
+      showError('Informe uma mensalidade válida.');
+      return;
+    }
+    if (billingDue !== null && (!Number.isInteger(billingDue) || billingDue < 1 || billingDue > 28)) {
+      showError('Dia de vencimento deve ficar entre 1 e 28.');
+      return;
+    }
+    const actionKey = `${billingTarget.id}:billing`;
+    setCommercialActionLoading(actionKey);
+    try {
+      await setLocationSubscription({
+        locationId: billingTarget.id,
+        subscriptionStatus: getSubscriptionStatus(billingTarget),
+        monthlyFeeCents,
+        billingDueDay: billingDue,
+        adminNotes: billingNotes.trim() || null,
+      });
+      showSuccess('Mensalidade atualizada.');
+      setBillingTarget(null);
+    } catch (err) {
+      logger.error('Erro ao salvar mensalidade:', err);
+      showError('Não foi possível salvar a mensalidade.');
+    } finally {
+      setCommercialActionLoading(null);
+    }
+  };
+
   return (
     <>
       {/* Header sticky */}
@@ -230,29 +299,68 @@ export const ManageLocationsScreen: React.FC = () => {
           </Button>
         </Box>
         <Box sx={{ px: 2, pb: 2 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder={t('placeholder.searchGroupNameAddressCity')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label={t('a11y.searchLocations')}
-            inputProps={{ maxLength: 200 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: searchQuery ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={handleClearSearch} aria-label={t('a11y.clearSearch')} edge="end" sx={{ minWidth: 44, minHeight: 44 }}>
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ) : null,
-            }}
-          />
+          <Stack spacing={1}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder={t('placeholder.searchGroupNameAddressCity')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label={t('a11y.searchLocations')}
+              inputProps={{ maxLength: 200 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={handleClearSearch} aria-label={t('a11y.clearSearch')} edge="end" sx={{ minWidth: 44, minHeight: 44 }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              }}
+            />
+            {isAdmin && (
+              <>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                  <TextField select size="small" label="Publicação" value={publicationFilter} onChange={(e) => setPublicationFilter(e.target.value as 'ALL' | LocationPublicationStatus)} fullWidth>
+                    <MenuItem value="ALL">Todas</MenuItem>
+                    {Object.entries(LOCATION_PUBLICATION_STATUS_LABELS).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>{label}</MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField select size="small" label="Mensalidade" value={subscriptionFilter} onChange={(e) => setSubscriptionFilter(e.target.value as 'ALL' | LocationSubscriptionStatus)} fullWidth>
+                    <MenuItem value="ALL">Todas</MenuItem>
+                    {Object.entries(LOCATION_SUBSCRIPTION_STATUS_LABELS).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>{label}</MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField select size="small" label="Tipo" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} fullWidth>
+                    <MenuItem value="ALL">Todos</MenuItem>
+                    {Object.entries(FIELD_TYPE_CONFIG).map(([value, config]) => (
+                      <MenuItem key={value} value={value}>{config.label}</MenuItem>
+                    ))}
+                  </TextField>
+                </Stack>
+                <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5 }}>
+                  {COMMERCIAL_AMENITIES.map((amenity) => (
+                    <Chip
+                      key={amenity}
+                      label={AMENITY_LABELS[amenity] || amenity}
+                      size="small"
+                      color={amenityFilters.includes(amenity) ? 'primary' : 'default'}
+                      variant={amenityFilters.includes(amenity) ? 'filled' : 'outlined'}
+                      onClick={() => handleAmenityFilter(amenity)}
+                      sx={{ flexShrink: 0 }}
+                    />
+                  ))}
+                </Box>
+              </>
+            )}
+          </Stack>
         </Box>
       </Box>
 
@@ -394,6 +502,13 @@ export const ManageLocationsScreen: React.FC = () => {
                                 />
                               )}
                             </Box>
+                            {isAdmin && (
+                              <Alert severity={publicationStatus === 'PUBLISHED' && ['TRIAL', 'ACTIVE'].includes(subscriptionStatus) ? 'success' : 'warning'} sx={{ mt: 1 }}>
+                                {publicationStatus === 'PUBLISHED' && ['TRIAL', 'ACTIVE'].includes(subscriptionStatus)
+                                  ? 'Visível para usuários.'
+                                  : 'Não aparece para seleção pública até publicação/mensalidade ficarem válidas.'}
+                              </Alert>
+                            )}
                           </Box>
                         </Box>
                       </CardContent>
@@ -441,6 +556,14 @@ export const ManageLocationsScreen: React.FC = () => {
                             Marcar em dia
                           </Button>
                         )}
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={isCommercialActionBusy}
+                          onClick={() => openBillingDialog(location)}
+                        >
+                          Mensalidade
+                        </Button>
                       </Box>
                     )}
                     {userCanManage && (
@@ -524,6 +647,54 @@ export const ManageLocationsScreen: React.FC = () => {
             startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}
           >
             {t('common.delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!billingTarget} onClose={() => !commercialActionLoading && setBillingTarget(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Mensalidade da quadra</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {billingTarget?.name}
+            </Typography>
+            <TextField
+              label="Mensalidade do dono da quadra (R$)"
+              value={billingMonthlyFee}
+              onChange={(e) => setBillingMonthlyFee(e.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}
+              fullWidth
+              inputMode="decimal"
+              placeholder="Ex.: 199.90"
+            />
+            <TextField
+              label="Dia de vencimento"
+              value={billingDueDay}
+              onChange={(e) => setBillingDueDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              fullWidth
+              helperText="Use 1 a 28 para evitar meses sem o dia selecionado."
+            />
+            <TextField
+              label="Notas internas"
+              value={billingNotes}
+              onChange={(e) => setBillingNotes(e.target.value)}
+              fullWidth
+              multiline
+              rows={3}
+              inputProps={{ maxLength: 500 }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBillingTarget(null)} disabled={!!commercialActionLoading}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            onClick={handleSaveBilling}
+            variant="contained"
+            disabled={!!commercialActionLoading}
+            startIcon={commercialActionLoading?.endsWith(':billing') ? <CircularProgress size={16} /> : null}
+          >
+            Salvar
           </Button>
         </DialogActions>
       </Dialog>

@@ -44,9 +44,20 @@ Required current-state checks:
 - `subscriptionStatus` is `TRIAL` or `ACTIVE` with legacy fallback
 - `hasActiveFields !== false`
 
+## Web Management Surfaces
+
+Current web P1 surfaces:
+
+- Admin venue list filters by publication status, billing status, field type, and commercial amenities.
+- Admin venue cards expose whether the venue is visible to regular users.
+- Admins can edit monthly fee, billing due day, and internal billing notes from the venue list.
+- Public venue discovery filters by search, field type, amenities, and maximum hourly price from active field documents.
+- Field owner dashboard shows publication, billing status, monthly fee, due day, and visibility warnings.
+- Admin user management highlights field owners and summarizes their venue counts, published venues, and commercial pending items.
+
 ## Follow-Up Scope
 
-- Admin list/detail must expose filters and complete billing edit dialogs.
-- Field owner dashboard must show publication, subscription, and pending checklist.
+- Complete venue registration form with structured address, operating hours, owner notes, and editable field-level details.
+- Add full field CRUD/editing for `locations/{locationId}/fields` in the owner/admin flow.
 - Firestore indexes must be added when server-side filters replace client filtering.
 - Android/KMP UI parity must be handled before a mobile release claiming full support.

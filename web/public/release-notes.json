@@ -1,7 +1,33 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T20:21:32.543Z",
+  "generatedAt": "2026-06-28T20:56:06.539Z",
   "notes": [
+    {
+      "version": "1.43.7",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Administração e descoberta de quadras ficaram mais completas",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Admins agora conseguem filtrar quadras por publicação, mensalidade, tipo e comodidades.",
+        "A tela pública de quadras ganhou filtros por tipo, comodidades e preço máximo por hora.",
+        "O painel do dono de quadra mostra publicação, mensalidade e alertas quando a quadra ainda não está visível.",
+        "O admin de usuários passa a destacar donos de quadra e resumir quantas quadras cada um possui."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3084,
+        3099,
+        3100,
+        3101,
+        3103,
+        3105
+      ]
+    },
     {
       "version": "1.43.6",
       "buildNumber": null,
