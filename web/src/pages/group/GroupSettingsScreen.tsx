@@ -49,14 +49,12 @@ import { useToast } from '../../contexts/ToastContext';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
-import { pluralizeCount } from '../../utils/pluralize';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const logger = createLogger('GroupSettingsScreen');
 
-// Fix #414: ROLE_CONFIG extraído para constants/group.ts (single source of truth)
-import { ROLE_CONFIG, getRoleColor } from '../../constants/group';
+import { getRoleColor } from '../../constants/group';
 import { useTranslation } from 'react-i18next';
 
 export const GroupSettingsScreen: React.FC = () => {
@@ -87,6 +85,11 @@ export const GroupSettingsScreen: React.FC = () => {
   const myMember = members.find((m) => m.userId === uid);
   const isOwner = myMember?.role === 'OWNER';
   const isAdminOrOwner = isOwner || myMember?.role === 'ADMIN';
+  const canManageMember = (member: (typeof members)[0]) => {
+    if (member.userId === uid) return false;
+    if (isOwner) return true;
+    return myMember?.role === 'ADMIN' && member.role === 'MEMBER';
+  };
   // Carregar pending requests so para owner/admin (rules so permitem ler)
   const {
     requests: pendingRequests,
@@ -298,7 +301,7 @@ export const GroupSettingsScreen: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                   <GroupIcon fontSize="small" color="action" />
                   <Typography variant="caption" color="text.secondary">
-                    {pluralizeCount(group.memberCount || members.length, 'membro', 'membros')}
+                    {t('groups.membersCount', { count: group.memberCount || members.length })}
                   </Typography>
                   {group.isPublic ? (
                     <Chip label={t('group.public')} size="small" variant="outlined" />
@@ -373,7 +376,7 @@ export const GroupSettingsScreen: React.FC = () => {
                           </ListItemAvatar>
                           <ListItemText
                             primary={req.userName}
-                            secondary={req.requestedAt ? t('group.settings.requestedAt', { date: req.requestedAt.toLocaleDateString('pt-BR') }) : null}
+                            secondary={req.requestedAt ? t('group.settings.requestedAt', { date: req.requestedAt.toLocaleDateString(navigator.language || 'pt-BR') }) : null}
                           />
                         </ListItem>
                         {!isLast && <Divider variant="inset" component="li" />}
@@ -406,16 +409,18 @@ export const GroupSettingsScreen: React.FC = () => {
                   <ListItem
                     sx={{ py: 1.5 }}
                     secondaryAction={
-                      <IconButton
-                        edge="end"
-                        aria-label={t('group.settings.actionsForMember', { name: member.userName })}
-                        onClick={(e) => {
-                          setSelectedMember(member);
-                          setMemberMenuAnchor(e.currentTarget);
-                        }}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
+                      canManageMember(member) ? (
+                        <IconButton
+                          edge="end"
+                          aria-label={t('group.settings.actionsForMember', { name: member.userName })}
+                          onClick={(e) => {
+                            setSelectedMember(member);
+                            setMemberMenuAnchor(e.currentTarget);
+                          }}
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
+                      ) : undefined
                     }
                   >
                     <ListItemAvatar>
@@ -433,7 +438,7 @@ export const GroupSettingsScreen: React.FC = () => {
                             {member.userName}
                           </Typography>
                           <Chip
-                            label={ROLE_CONFIG[member.role]?.label || t('group.role.member')}
+                            label={t(`group.role.${member.role.toLowerCase()}`)}
                             size="small"
                             sx={{
                               height: 20,
@@ -444,7 +449,7 @@ export const GroupSettingsScreen: React.FC = () => {
                           />
                         </Box>
                       }
-                      secondary={pluralizeCount(member.totalGames || 0, 'jogo', 'jogos')}
+                      secondary={t('groups.gamesCount', { count: member.totalGames || 0 })}
                     />
                   </ListItem>
                   {index < members.length - 1 && <Divider />}
@@ -542,7 +547,7 @@ export const GroupSettingsScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={actionLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleDeleteGroup}
@@ -612,7 +617,7 @@ export const GroupSettingsScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setKickDialogOpen(false)} disabled={kickLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleKickMember}
@@ -642,7 +647,7 @@ export const GroupSettingsScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setTransferDialogOpen(false)} disabled={transferLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleTransferOwnership}

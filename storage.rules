@@ -6,8 +6,8 @@ rules_version = '2';
 //
 // Estrutura de Caminhos Padronizada:
 // - users/{userId}/profile.jpg
-// - groups/{groupId}/logo.jpg
-// - groups/{groupId}/receipts/{timestamp}.jpg
+// - groups/{groupId}/logo.{jpg|jpeg|png|webp}
+// - groups/{groupId}/receipts/{timestamp}.{jpg|png|webp}
 // - locations/{locationId}/photos/{timestamp}.jpg
 // - locations/{locationId}/fields/{timestamp}.jpg
 // - temp_fields/{timestamp}.jpg (temporário, sem locationId)
@@ -100,7 +100,7 @@ service firebase.storage {
 
     // ============================================
     // LOGOS DE GRUPOS
-    // Path: groups/{groupId}/logo.jpg
+    // Path: groups/{groupId}/logo.{jpg|jpeg|png|webp}
     //
     // SEGURANÇA: Upload restrito a admins/owners do grupo via isGroupAdmin().
     // A função isGroupAdmin() lê o documento groups/{groupId}/members/{uid}
@@ -112,17 +112,23 @@ service firebase.storage {
     // desabilitar temporariamente isGroupAdmin() e manter a validação
     // apenas na camada de app (GroupRepository.updateGroup + Cloud Function).
     // ============================================
-    match /groups/{groupId}/logo.jpg {
+    match /groups/{groupId}/{fileName} {
       // Qualquer usuário autenticado pode ver logos de grupos
       // (necessário para preview em convites, buscas, etc.)
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && fileName.matches('logo\\.(jpg|jpeg|png|webp)');
 
       // Apenas admins ou owners do grupo podem fazer upload do logo
       // Máximo 5MB, apenas imagem
-      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
+      allow write: if isAuthenticated() &&
+                   fileName.matches('logo\\.(jpg|jpeg|png|webp)') &&
+                   isGroupAdmin(groupId) &&
+                   isImage() &&
+                   isUnderSize(5);
 
       // Apenas admins ou owners do grupo podem deletar o logo
-      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+      allow delete: if isAuthenticated() &&
+                    fileName.matches('logo\\.(jpg|jpeg|png|webp)') &&
+                    isGroupAdmin(groupId);
     }
 
     // ============================================

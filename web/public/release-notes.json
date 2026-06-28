@@ -1,7 +1,53 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T04:10:16.122Z",
+  "generatedAt": "2026-06-28T14:07:46.796Z",
   "notes": [
+    {
+      "version": "1.43.3",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Grupos mais completos e seguros no celular",
+      "highlights": [
+        {
+          "icon": "groups",
+          "title": "Fluxos visíveis",
+          "description": "Jogadores, recorrências, desafios, convites e fotos ficam acessíveis direto no detalhe do grupo."
+        },
+        {
+          "icon": "receipt",
+          "title": "Caixa auditável",
+          "description": "Entradas e saídas podem ter comprovante, filtro e estorno sem apagar histórico."
+        },
+        {
+          "icon": "photo_library",
+          "title": "Álbum do grupo",
+          "description": "Fotos dos jogos finalizados aparecem agregadas no grupo automaticamente."
+        }
+      ],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Corrige abas do grupo que não rolavam direito em telas pequenas.",
+        "Corrige botão de criar jogo aparecendo para visitante ou não-membro.",
+        "Corrige menu de ações de membros aparecendo vazio para quem não tinha permissão.",
+        "Corrige upload de logo do grupo para respeitar JPG, PNG e WebP.",
+        "Remove textos soltos e melhora truncamento/descoberta de ações na tela de grupos."
+      ],
+      "issueRefs": [
+        3030,
+        3031,
+        3032,
+        3033,
+        3034,
+        3035,
+        3036,
+        3037,
+        3038
+      ]
+    },
     {
       "version": "1.43.2",
       "buildNumber": null,

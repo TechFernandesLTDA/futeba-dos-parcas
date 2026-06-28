@@ -62,6 +62,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.3] - 2026-06-28
+
+#### Corrigido
+- `GroupDetailScreen` passa a condicionar ações sensíveis por membership/admin e usa tabs scrollable no mobile.
+- `CashboxScreen` adiciona ledger com filtros, `receipt_url` opcional e fluxo de `VOIDED` auditável.
+- `GroupEditScreen` e `storage.rules` alinham extensões reais de logo do grupo.
+- `GroupSettingsScreen` oculta menus sem ações possíveis e remove textos hardcoded.
+- `GroupPhotosPanel` agrega `game_photos` a partir de jogos reais do grupo sem duplicar dados.
+
+_Issues: #3030, #3031, #3032, #3033, #3034, #3035, #3036, #3037, #3038_
+
 ### [1.43.2] - 2026-06-28
 
 #### Corrigido

@@ -308,6 +308,8 @@
     "addError": "Error adding transaction",
     "addExpense": "Add Expense",
     "addIncome": "Add Income",
+    "addReceipt": "Attach receipt",
+    "addSuccess": "Transaction recorded",
     "amountError": "Enter a value greater than zero",
     "amountLabel": "Amount (R$)",
     "balanceAriaLabel": "Balance {{status}}: {{value}}",
@@ -319,10 +321,27 @@
     "descriptionError": "Enter a description",
     "descriptionLabel": "Description",
     "expense": "Expense",
+    "filters": {
+      "all": "Active",
+      "expense": "Expenses",
+      "income": "Income",
+      "voided": "Voided"
+    },
+    "filtersAria": "Cashbox filters",
     "groupTitle": "Group Cashbox",
     "income": "Income",
+    "noFilteredTransactions": "No transactions in this filter",
+    "noFilteredTransactionsDesc": "Change the filter to see other cashbox entries.",
     "readOnly": "Read only",
-    "title": "Cashbox"
+    "receipt": "View receipt",
+    "receiptInvalidType": "Receipt must be JPG, PNG, or WebP",
+    "receiptSelected": "Receipt: {{name}}",
+    "receiptTooLarge": "Receipt must be up to 5 MB",
+    "title": "Cashbox",
+    "voidError": "Error voiding transaction",
+    "voidSuccess": "Transaction voided",
+    "voidTransaction": "Void transaction",
+    "voided": "Voided"
   },
   "challenges": {
     "accept": "Accept",
@@ -1340,6 +1359,7 @@
     "groupLeague": "Group League",
     "groupLeagueDesc": "Track the standings and member performance in the group's internal league.",
     "groupSettings": "Group settings",
+    "challenges": "Challenges",
     "invite": "Invite",
     "inviteCode": "Invite Code",
     "inviteLink": "Invite Link",
@@ -1350,7 +1370,9 @@
     "noMembersDesc": "The group has no members yet. Invite friends to get started!",
     "notFound": "Group not found",
     "notFoundDesc": "The group you are looking for is not available.",
+    "quickActions": "Quick actions",
     "sectionsAria": "Group sections",
+    "schedules": "Schedules",
     "shareInviteLink": "Share the link below to invite players",
     "viewDetails": "View Details",
     "viewStandings": "View Standings",
@@ -1370,6 +1392,17 @@
     "totalVotes": "{{count}} vote",
     "totalVotes_one": "{{count}} vote",
     "totalVotes_other": "{{count}} votes"
+  },
+  "groupPhotos": {
+    "description": "{{count}} recent photo from group games",
+    "description_one": "{{count}} recent photo from group games",
+    "description_other": "{{count}} recent photos from group games",
+    "emptyDesc": "When players add photos to finished games, they appear here automatically.",
+    "emptyTitle": "No group photos yet",
+    "loadError": "Error loading group photos.",
+    "photoAlt": "Photo uploaded by {{name}}",
+    "tab": "Photos",
+    "title": "Group photos"
   },
   "postGameMessages": {
     "description": "Leave a short note for the post-game recap.",

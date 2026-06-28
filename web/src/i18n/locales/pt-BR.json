@@ -308,6 +308,8 @@
     "addError": "Erro ao adicionar transação",
     "addExpense": "Adicionar Saída",
     "addIncome": "Adicionar Entrada",
+    "addReceipt": "Anexar comprovante",
+    "addSuccess": "Transação registrada",
     "amountError": "Informe um valor maior que zero",
     "amountLabel": "Valor (R$)",
     "balanceAriaLabel": "Saldo {{status}}: {{value}}",
@@ -319,10 +321,27 @@
     "descriptionError": "Informe uma descrição",
     "descriptionLabel": "Descrição",
     "expense": "Saída",
+    "filters": {
+      "all": "Ativas",
+      "expense": "Saídas",
+      "income": "Entradas",
+      "voided": "Estornadas"
+    },
+    "filtersAria": "Filtros do caixa",
     "groupTitle": "Caixa do Grupo",
     "income": "Entrada",
+    "noFilteredTransactions": "Nenhuma transação nesse filtro",
+    "noFilteredTransactionsDesc": "Troque o filtro para ver outros lançamentos do caixa.",
     "readOnly": "Somente leitura",
-    "title": "Caixinha"
+    "receipt": "Ver comprovante",
+    "receiptInvalidType": "Comprovante precisa ser JPG, PNG ou WebP",
+    "receiptSelected": "Comprovante: {{name}}",
+    "receiptTooLarge": "Comprovante precisa ter até 5 MB",
+    "title": "Caixinha",
+    "voidError": "Erro ao estornar transação",
+    "voidSuccess": "Transação estornada",
+    "voidTransaction": "Estornar transação",
+    "voided": "Estornada"
   },
   "challenges": {
     "accept": "Aceitar",
@@ -1340,6 +1359,7 @@
     "groupLeague": "Liga do Grupo",
     "groupLeagueDesc": "Acompanhe a classificação e o desempenho dos membros na liga interna do grupo.",
     "groupSettings": "Configurações do grupo",
+    "challenges": "Desafios",
     "invite": "Convidar",
     "inviteCode": "Código do Convite",
     "inviteLink": "Link de Convite",
@@ -1350,7 +1370,9 @@
     "noMembersDesc": "O grupo ainda não tem membros. Convide amigos pra começar!",
     "notFound": "Grupo não encontrado",
     "notFoundDesc": "O grupo que você procura não está disponível.",
+    "quickActions": "Ações rápidas",
     "sectionsAria": "Seções do grupo",
+    "schedules": "Recorrências",
     "shareInviteLink": "Compartilhe o link abaixo para convidar jogadores",
     "viewDetails": "Ver Detalhes",
     "viewStandings": "Ver Classificação",
@@ -1370,6 +1392,17 @@
     "totalVotes": "{{count}} voto",
     "totalVotes_one": "{{count}} voto",
     "totalVotes_other": "{{count}} votos"
+  },
+  "groupPhotos": {
+    "description": "{{count}} foto recente dos jogos do grupo",
+    "description_one": "{{count}} foto recente dos jogos do grupo",
+    "description_other": "{{count}} fotos recentes dos jogos do grupo",
+    "emptyDesc": "Quando jogadores adicionarem fotos nos jogos finalizados, elas aparecem aqui automaticamente.",
+    "emptyTitle": "Nenhuma foto do grupo ainda",
+    "loadError": "Erro ao carregar fotos do grupo.",
+    "photoAlt": "Foto enviada por {{name}}",
+    "tab": "Fotos",
+    "title": "Fotos do grupo"
   },
   "postGameMessages": {
     "description": "Deixe uma mensagem curta para a resenha do jogo.",
