@@ -9,7 +9,10 @@ cd scripts
 npm install
 ```
 
-Certifique-se que `serviceAccountKey.json` está presente no diretório `scripts/`.
+Scripts modernos usam Application Default Credentials (ADC), compatível com
+`gcloud auth application-default login`, Firebase CLI e CI com
+`GOOGLE_APPLICATION_CREDENTIALS`. Scripts legados podem ainda pedir
+`serviceAccountKey.json`; prefira migrar para ADC ao tocá-los.
 
 ## Scripts Disponíveis
 
@@ -125,6 +128,39 @@ node validation/report_inconsistencies.js --output=report.json --json
 - Timestamps inconsistentes
 - Dados obrigatórios faltando
 
+### 6. check_xp_logs.js
+
+Audita se logs de XP positivos têm origem auditável. Pontuação nova deve ter
+`source_collection` e `source_event_id`; dados históricos sem origem podem ser
+marcados como `legacy_unattributed`, sem inventar uma origem falsa.
+
+```bash
+# Auditoria estrita
+node validation/check_xp_logs.js --project=futebadosparcas
+
+# JSON para CI/relatórios
+node validation/check_xp_logs.js --project=futebadosparcas --json
+
+# Aumentar/reduzir a amostra no relatório
+node validation/check_xp_logs.js --project=futebadosparcas --max-details=100
+
+# Conferir se a origem apontada existe
+node validation/check_xp_logs.js --project=futebadosparcas --check-source-exists
+
+# Backfill seguro: classifica histórico sem origem como legado
+node validation/check_xp_logs.js --project=futebadosparcas --fix --dry-run
+node validation/check_xp_logs.js --project=futebadosparcas --fix
+
+# Exit 0 quando só restarem legados já classificados
+node validation/check_xp_logs.js --project=futebadosparcas --allow-legacy
+```
+
+**Validações:**
+- XP positivo com `source_collection` + `source_event_id`
+- Separação entre violação nova (`missing_source`) e histórico marcado
+  (`legacy_unattributed`)
+- Verificação opcional da existência do documento de origem
+
 ## Fluxo Recomendado
 
 1. **Diagnóstico inicial:**
@@ -142,6 +178,7 @@ node validation/report_inconsistencies.js --output=report.json --json
    node validation/validate_users.js
    node validation/validate_games.js
    node validation/validate_financial.js
+   node validation/check_xp_logs.js --project=futebadosparcas
    ```
 
 4. **Corrigir problemas (com backup):**
@@ -155,6 +192,7 @@ node validation/report_inconsistencies.js --output=report.json --json
 
 - `0`: Sucesso, sem problemas encontrados
 - `1`: Problemas encontrados (em modo validação) ou erro
+- `2`: Erro de uso/argumentos ou falha inesperada de execução
 
 ## Constantes de Validação
 
