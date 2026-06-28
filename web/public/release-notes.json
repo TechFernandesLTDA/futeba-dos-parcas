@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T20:56:06.539Z",
+  "generatedAt": "2026-06-28T21:11:23.482Z",
   "notes": [
     {
       "version": "1.43.7",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-06-28",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "Administração e descoberta de quadras ficaram mais completas",
       "highlights": [],
       "added": [],
