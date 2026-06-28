@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.10] - 2026-06-28
+
+#### Adicionado
+- `ManageLocationsScreen` ganhou o painel "Dono e gerentes" para transferência administrativa e convites de managers.
+- Cliente web passou a consumir as callables `assignLocationOwner`, `inviteLocationManager`, `acceptLocationManagerInvite` e `removeLocationManager`.
+
+#### Segurança
+- A UI deixa claro que managers não podem publicar, cobrar, alterar dono ou mensalidade.
+
+_Issues: #3102, #3127, #3087, #3091_
+
 ### [1.43.9] - 2026-06-28
 
 #### Mudado
@@ -444,6 +455,21 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.3] - 2026-06-28
+
+#### Adicionado
+- Callable `assignLocationOwner` para administradores transferirem ownership de uma location.
+- Callable `inviteLocationManager` para owner/admin criar convite pendente por UID ou email.
+- Callable `acceptLocationManagerInvite` para o destinatário aceitar e entrar em `managers`.
+- Callable `removeLocationManager` para owner/admin revogar acesso operacional.
+
+#### Segurança
+- Firestore Rules bloqueiam alteração client-side de `managers` por owner/manager.
+- Convites em `locations/{locationId}/manager_invites` são somente leitura para owner, admin, manager atual ou destinatário.
+- Clientes não criam, aceitam nem removem convites diretamente no Firestore.
+
+_Issues: #3102, #3127, #3087, #3091_
 
 ### [1.2.2] - 2026-06-28
 

@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T22:44:28.185Z",
+  "generatedAt": "2026-06-28T23:36:50.959Z",
   "notes": [
+    {
+      "version": "1.43.10",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Gestão segura de donos e gerentes de quadras",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Administradores podem transferir o dono de uma quadra pela tela de gerenciamento.",
+        "Donos de quadra e administradores podem criar convites de gerente sem liberar acesso imediato.",
+        "Gerentes atuais podem ser removidos com registro de motivo interno para auditoria."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3102,
+        3127,
+        3087,
+        3091
+      ]
+    },
     {
       "version": "1.43.9",
       "buildNumber": null,

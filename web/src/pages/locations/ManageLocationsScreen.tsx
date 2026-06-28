@@ -38,7 +38,10 @@ import {
 import { collection, query, orderBy, where, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import {
+  assignLocationOwner,
   deleteLocation,
+  inviteLocationManager,
+  removeLocationManager,
   setLocationPublicationStatus,
   setLocationSubscription,
 } from '../../services/cloudFunctions';
@@ -93,6 +96,12 @@ export const ManageLocationsScreen: React.FC = () => {
   const [billingMonthlyFee, setBillingMonthlyFee] = useState('');
   const [billingDueDay, setBillingDueDay] = useState('');
   const [billingNotes, setBillingNotes] = useState('');
+  const [teamTarget, setTeamTarget] = useState<Location | null>(null);
+  const [teamOwnerId, setTeamOwnerId] = useState('');
+  const [teamReason, setTeamReason] = useState('');
+  const [managerUid, setManagerUid] = useState('');
+  const [managerEmail, setManagerEmail] = useState('');
+  const [teamActionLoading, setTeamActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -144,6 +153,9 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const canManage = (loc: Location) =>
     isAdmin || (user?.id ? canManageLocation(loc, user.id) : false);
+
+  const canManageTeam = (loc: Location) =>
+    isAdmin || Boolean(user?.id && loc.ownerId === user.id);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -236,6 +248,14 @@ export const ManageLocationsScreen: React.FC = () => {
     setBillingNotes(location.adminNotes || '');
   };
 
+  const openTeamDialog = (location: Location) => {
+    setTeamTarget(location);
+    setTeamOwnerId(location.ownerId || '');
+    setTeamReason('');
+    setManagerUid('');
+    setManagerEmail('');
+  };
+
   const handleSaveBilling = async () => {
     if (!billingTarget) return;
     const monthlyFeeCents = billingMonthlyFee.trim()
@@ -267,6 +287,82 @@ export const ManageLocationsScreen: React.FC = () => {
       showError('Não foi possível salvar a mensalidade.');
     } finally {
       setCommercialActionLoading(null);
+    }
+  };
+
+  const handleAssignOwner = async () => {
+    if (!teamTarget || !isAdmin) return;
+    const newOwnerId = teamOwnerId.trim();
+    if (!newOwnerId) {
+      showError('Informe o UID do novo dono.');
+      return;
+    }
+    setTeamActionLoading('assign-owner');
+    try {
+      await assignLocationOwner({
+        locationId: teamTarget.id,
+        newOwnerId,
+        reason: teamReason.trim() || null,
+      });
+      showSuccess('Dono da quadra atualizado.');
+      setTeamTarget(null);
+    } catch (err) {
+      logger.error('Erro ao transferir dono da quadra:', err);
+      showError('Não foi possível atualizar o dono da quadra.');
+    } finally {
+      setTeamActionLoading(null);
+    }
+  };
+
+  const handleInviteManager = async () => {
+    if (!teamTarget) return;
+    const uid = managerUid.trim();
+    const email = managerEmail.trim();
+    if (!uid && !email) {
+      showError('Informe o UID ou email do gerente.');
+      return;
+    }
+    setTeamActionLoading('invite-manager');
+    try {
+      const result = await inviteLocationManager({
+        locationId: teamTarget.id,
+        managerUid: uid || null,
+        managerEmail: email || null,
+      });
+      showSuccess(
+        result.data.alreadyManager
+          ? 'Este usuário já é gerente da quadra.'
+          : 'Convite de gerente criado. O acesso só libera após aceite.',
+      );
+      setManagerUid('');
+      setManagerEmail('');
+    } catch (err) {
+      logger.error('Erro ao convidar gerente da quadra:', err);
+      showError('Não foi possível convidar o gerente.');
+    } finally {
+      setTeamActionLoading(null);
+    }
+  };
+
+  const handleRemoveManager = async (uid: string) => {
+    if (!teamTarget) return;
+    setTeamActionLoading(`remove-manager:${uid}`);
+    try {
+      await removeLocationManager({
+        locationId: teamTarget.id,
+        managerUid: uid,
+        reason: teamReason.trim() || null,
+      });
+      showSuccess('Gerente removido da quadra.');
+      setTeamTarget((current) => current ? {
+        ...current,
+        managers: current.managers.filter((managerId) => managerId !== uid),
+      } : current);
+    } catch (err) {
+      logger.error('Erro ao remover gerente da quadra:', err);
+      showError('Não foi possível remover o gerente.');
+    } finally {
+      setTeamActionLoading(null);
     }
   };
 
@@ -400,6 +496,7 @@ export const ManageLocationsScreen: React.FC = () => {
                   ? FIELD_TYPE_CONFIG[location.fieldType]?.label || location.fieldType
                   : null;
                 const userCanManage = canManage(location);
+                const userCanManageTeam = canManageTeam(location);
                 const publicationStatus = getPublicationStatus(location);
                 const subscriptionStatus = getSubscriptionStatus(location);
                 const isCommercialActionBusy = commercialActionLoading?.startsWith(`${location.id}:`) ?? false;
@@ -566,6 +663,18 @@ export const ManageLocationsScreen: React.FC = () => {
                         </Button>
                       </Box>
                     )}
+                    {userCanManageTeam && (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 2, pb: 2 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={Boolean(teamActionLoading)}
+                          onClick={() => openTeamDialog(location)}
+                        >
+                          Dono e gerentes
+                        </Button>
+                      </Box>
+                    )}
                     {userCanManage && (
                       <Box
                         sx={{
@@ -695,6 +804,101 @@ export const ManageLocationsScreen: React.FC = () => {
             startIcon={commercialActionLoading?.endsWith(':billing') ? <CircularProgress size={16} /> : null}
           >
             Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!teamTarget} onClose={() => !teamActionLoading && setTeamTarget(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Dono e gerentes da quadra</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {teamTarget?.name}
+            </Typography>
+            <Alert severity="info">
+              Gerentes só ganham acesso após aceitar convite. Eles não podem publicar, cobrar,
+              alterar dono ou mudar mensalidade.
+            </Alert>
+            {isAdmin && (
+              <Stack spacing={1}>
+                <TextField
+                  label="UID do dono"
+                  value={teamOwnerId}
+                  onChange={(e) => setTeamOwnerId(e.target.value.trim())}
+                  fullWidth
+                  helperText="A transferência de dono é exclusiva de administradores."
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleAssignOwner}
+                  disabled={!!teamActionLoading || !teamOwnerId.trim()}
+                  startIcon={teamActionLoading === 'assign-owner' ? <CircularProgress size={16} /> : null}
+                >
+                  Transferir dono
+                </Button>
+              </Stack>
+            )}
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">Convidar gerente</Typography>
+              <TextField
+                label="UID do gerente"
+                value={managerUid}
+                onChange={(e) => setManagerUid(e.target.value.trim())}
+                fullWidth
+                placeholder="Opcional se informar email"
+              />
+              <TextField
+                label="Email do gerente"
+                value={managerEmail}
+                onChange={(e) => setManagerEmail(e.target.value)}
+                fullWidth
+                type="email"
+                placeholder="Opcional se informar UID"
+              />
+              <Button
+                variant="contained"
+                onClick={handleInviteManager}
+                disabled={!!teamActionLoading || (!managerUid.trim() && !managerEmail.trim())}
+                startIcon={teamActionLoading === 'invite-manager' ? <CircularProgress size={16} /> : null}
+              >
+                Criar convite
+              </Button>
+            </Stack>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">Gerentes atuais</Typography>
+              {teamTarget?.managers.length ? (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {teamTarget.managers.map((uid) => (
+                    <Chip
+                      key={uid}
+                      label={uid}
+                      onDelete={() => handleRemoveManager(uid)}
+                      disabled={!!teamActionLoading}
+                      color={teamActionLoading === `remove-manager:${uid}` ? 'warning' : 'default'}
+                    />
+                  ))}
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Nenhum gerente vinculado.
+                </Typography>
+              )}
+            </Stack>
+            <TextField
+              label="Motivo interno"
+              value={teamReason}
+              onChange={(e) => setTeamReason(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              inputProps={{ maxLength: 500 }}
+              helperText="Usado na auditoria de transferência/remoção."
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTeamTarget(null)} disabled={!!teamActionLoading}>
+            {t('common.close')}
           </Button>
         </DialogActions>
       </Dialog>

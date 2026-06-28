@@ -29,8 +29,18 @@ The client cannot directly write publication or billing fields unless the caller
 - `setLocationPublicationStatus`
 - `setLocationSubscription`
 - `registerLocationSubscriptionPayment`
+- `assignLocationOwner`
+- `inviteLocationManager`
+- `acceptLocationManagerInvite`
+- `removeLocationManager`
 
 Each function writes both `locations/{locationId}/commercial_events` and global `audit_logs`.
+
+Owner/manager access must not be granted by editing `locations/{locationId}.managers`
+directly from the client. Admins can transfer `owner_id` through
+`assignLocationOwner`; owners and admins create manager invites through
+`inviteLocationManager`; the invited user only becomes a manager after accepting
+with `acceptLocationManagerInvite`.
 
 ## User-Facing Eligibility
 

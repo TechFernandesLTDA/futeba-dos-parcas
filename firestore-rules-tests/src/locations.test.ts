@@ -18,12 +18,14 @@ import {
   asPlayerA,
   asPlayerB,
   asFieldOwner,
+  asUser,
   asAnon,
   seedDoc,
   UID_ADMIN,
   UID_FIELD_OWNER,
   UID_PLAYER_A,
   UID_PLAYER_B,
+  UID_PLAYER_C,
 } from "./helpers.js";
 
 let testEnv: RulesTestEnvironment;
@@ -258,6 +260,22 @@ describe("locations — atualização", () => {
     );
   });
 
+  it("Owner NÃO pode alterar 'managers' diretamente — deve usar convite via Function", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`locations/${LOC_PLAYER_A_OWNED}`).update({
+        name: "Campo",
+        owner_id: UID_PLAYER_A,
+        is_active: true,
+        is_verified: false,
+        rating: null,
+        latitude: -23.5,
+        longitude: -46.6,
+        managers: [UID_PLAYER_B],
+      })
+    );
+  });
+
   it("Admin pode atualizar is_verified (verificar local)", async () => {
     const db = asAdmin(testEnv);
     await assertSucceeds(
@@ -272,6 +290,66 @@ describe("locations — atualização", () => {
     await assertFails(
       db.doc(`locations/${LOC_PLAYER_A_OWNED}`).update({ name: "Invasão" })
     );
+  });
+});
+
+// ============================================================
+// MANAGER INVITES
+// ============================================================
+
+describe("locations — convites de managers", () => {
+  const INVITE_PATH = `locations/${LOC_PLAYER_A_OWNED}/manager_invites/invite-001`;
+
+  beforeAll(async () => {
+    await seedDoc(testEnv, INVITE_PATH, {
+      manager_uid: UID_PLAYER_B,
+      manager_email: "manager@example.com",
+      status: "PENDING",
+      created_by: UID_PLAYER_A,
+      created_at: new Date(),
+      expires_at: new Date(Date.now() + 86400000),
+    });
+  });
+
+  it("Owner, admin e destinatario podem ler convite de manager", async () => {
+    await assertSucceeds(asPlayerA(testEnv).doc(INVITE_PATH).get());
+    await assertSucceeds(asAdmin(testEnv).doc(INVITE_PATH).get());
+    await assertSucceeds(asPlayerB(testEnv).doc(INVITE_PATH).get());
+  });
+
+  it("Destinatario por email pode ler convite mesmo sem manager_uid", async () => {
+    const inviteByEmailPath =
+      `locations/${LOC_PLAYER_A_OWNED}/manager_invites/invite-email`;
+    await seedDoc(testEnv, inviteByEmailPath, {
+      manager_uid: null,
+      manager_email: "playerc@example.com",
+      status: "PENDING",
+      created_by: UID_PLAYER_A,
+      created_at: new Date(),
+      expires_at: new Date(Date.now() + 86400000),
+    });
+
+    const db = asUser(testEnv, UID_PLAYER_C, {
+      email: "PlayerC@Example.com",
+    });
+    await assertSucceeds(db.doc(inviteByEmailPath).get());
+  });
+
+  it("Usuario sem vinculo nao pode ler convite de manager", async () => {
+    const db = asUser(testEnv, "uid-outsider-001");
+    await assertFails(db.doc(INVITE_PATH).get());
+  });
+
+  it("Clientes nao criam, aceitam nem deletam convite direto", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`locations/${LOC_PLAYER_A_OWNED}/manager_invites/new`).set({
+        manager_uid: UID_PLAYER_B,
+        status: "PENDING",
+      })
+    );
+    await assertFails(db.doc(INVITE_PATH).update({status: "ACCEPTED"}));
+    await assertFails(db.doc(INVITE_PATH).delete());
   });
 });
 

@@ -1247,6 +1247,7 @@ service cloud.firestore {
       // 2. Owner pode atualizar campos basicos (nome, endereco, etc.)
       //    - NAO pode alterar: owner_id, created_at, is_verified
       //    - NAO pode alterar: is_active (apenas admin pode desativar)
+      //    - NAO pode alterar: managers (usar invite/accept via Functions)
       // 3. Managers podem atualizar campos basicos (mesmas restricoes do owner)
       // 4. Validacao de dados em todas as atualizacoes
       allow update: if isAuthenticated() && (
@@ -1259,6 +1260,7 @@ service cloud.firestore {
          fieldUnchanged('created_at') &&
          fieldUnchanged('is_verified') &&
          fieldUnchanged('is_active') &&
+         fieldUnchanged('managers') &&
          commercialFieldsUnchanged()) ||
         // Manager: mesmas permissoes do owner
         (isLocationManager() &&
@@ -1381,6 +1383,29 @@ service cloud.firestore {
         // Write: BLOQUEADO para clientes
         // Apenas Cloud Functions com Admin SDK podem escrever logs
         // Isso garante integridade e confiabilidade dos logs
+        allow create, update, delete: if false;
+      }
+
+      match /manager_invites/{inviteId} {
+
+        function canReadManagerInvite() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            resource.data.manager_uid == userId() ||
+            (
+              resource.data.manager_email is string &&
+              request.auth.token.email is string &&
+              resource.data.manager_email == request.auth.token.email.lower()
+            ) ||
+            isAdmin()
+          );
+        }
+
+        allow read: if isAuthenticated() && canReadManagerInvite();
+
+        // Criacao, aceite e remocao passam por Cloud Functions auditadas.
         allow create, update, delete: if false;
       }
 
