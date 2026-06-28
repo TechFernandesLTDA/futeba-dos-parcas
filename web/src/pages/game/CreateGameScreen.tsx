@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -1497,6 +1497,35 @@ export const CreateGameScreen: React.FC = () => {
     handleStartTimeChange(slot);
   };
 
+  const suggestedTimeChips = useMemo(() => {
+    const seen = new Set<string>();
+    const add = (
+      time: string,
+      source: 'habitual' | 'popular' | 'suggested',
+      label?: string,
+    ) => {
+      if (!time || seen.has(time)) return null;
+      seen.add(time);
+      const [slotH, slotM] = time.split(':').map(Number);
+      const endSlot = Number.isFinite(slotH) && Number.isFinite(slotM)
+        ? formatTime(slotH * 60 + slotM + DEFAULT_GAME_DURATION_MINUTES)
+        : '';
+      return {
+        time,
+        source,
+        label: label || (endSlot ? `${time} → ${endSlot}` : time),
+      };
+    };
+
+    return [
+      habitualTime && formData.locationId
+        ? add(habitualTime.time, 'habitual', `Habitual · ${habitualTime.time}`)
+        : null,
+      ...popularTimes.map((pt) => add(pt.time, 'popular', `Popular · ${pt.time}`)),
+      ...TIME_SLOTS.map((slot) => add(slot, 'suggested')),
+    ].filter(Boolean) as Array<{ time: string; source: 'habitual' | 'popular' | 'suggested'; label: string }>;
+  }, [formData.locationId, habitualTime, popularTimes]);
+
   const renderDateTimeSection = () => {
     const { byDate, fullyBookedDates, conflictDates } = fieldGames;
 
@@ -1624,27 +1653,35 @@ export const CreateGameScreen: React.FC = () => {
         </Alert>
       )}
 
-      {/* Quick-select time grid */}
+      {/* Quick-select time chips */}
       <Box>
         <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block', mb: 0.5 }}>
-          Toque no horário de início — o fim é preenchido automaticamente com +1h
+          Horários prontos — sem duplicar habitual, populares e sugestões
         </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-          {TIME_SLOTS.map((slot) => {
-            const isSelected = formData.time === slot;
-            const [slotH, slotM] = slot.split(':').map(Number);
-            const endSlot = formatTime(slotH * 60 + slotM + DEFAULT_GAME_DURATION_MINUTES);
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 0.75,
+            flexWrap: { xs: 'nowrap', sm: 'wrap' },
+            overflowX: { xs: 'auto', sm: 'visible' },
+            pb: { xs: 0.5, sm: 0 },
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {suggestedTimeChips.map(({ time, source, label }) => {
+            const isSelected = formData.time === time;
             return (
               <Chip
-                key={slot}
+                key={`${source}-${time}`}
                 size="small"
-                label={`${slot} → ${endSlot}`}
-                color={isSelected ? 'primary' : 'default'}
+                label={label}
+                color={isSelected ? 'primary' : source === 'habitual' ? 'success' : source === 'popular' ? 'info' : 'default'}
                 variant={isSelected ? 'filled' : 'outlined'}
-                onClick={() => handleTimeSlotClick(slot)}
+                onClick={() => handleTimeSlotClick(time)}
                 sx={{
-                  minWidth: 90,
-                  fontWeight: isSelected ? 600 : 400,
+                  flex: '0 0 auto',
+                  minWidth: source === 'suggested' ? 90 : 'auto',
+                  fontWeight: isSelected || source !== 'suggested' ? 700 : 400,
                 }}
               />
             );
@@ -1681,43 +1718,6 @@ export const CreateGameScreen: React.FC = () => {
           size="small"
         />
       </Box>
-
-      {/* Habitual time chip */}
-      {habitualTime && formData.locationId && (
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
-          <HistoryIcon sx={{ fontSize: 16, color: 'primary.main', mr: 0.5 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
-            Seu horário habitual:
-          </Typography>
-          <Chip
-            size="small"
-            label={`${habitualTime.dayLabel} ${habitualTime.time}`}
-            color={formData.time === habitualTime.time ? 'primary' : 'default'}
-            variant={formData.time === habitualTime.time ? 'filled' : 'outlined'}
-            onClick={() => handleStartTimeChange(habitualTime.time)}
-          />
-        </Box>
-      )}
-
-      {/* Popular times chips */}
-      {popularTimes.length > 0 && formData.fieldId && (
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
-          <HistoryIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
-            Horários populares neste campo:
-          </Typography>
-          {popularTimes.map((pt) => (
-            <Chip
-              key={pt.time}
-              size="small"
-              label={`${pt.time}`}
-              color={formData.time === pt.time ? 'primary' : 'default'}
-              variant={formData.time === pt.time ? 'filled' : 'outlined'}
-              onClick={() => handleStartTimeChange(pt.time)}
-            />
-          ))}
-        </Box>
-      )}
 
       {/* Recurrence preview */}
       {formData.recurrenceEnabled && recurrencePreview.length > 0 && (

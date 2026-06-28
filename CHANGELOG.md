@@ -69,6 +69,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.5] - 2026-06-28
+
+#### Mudado
+- `FieldAvailabilityTimeline` passa a renderizar uma experiência compacta em telas pequenas.
+- `CreateGameScreen` deduplica sugestões de horário e evita blocos repetidos no fluxo de data e horário.
+
 ### [1.43.4] - 2026-06-28
 
 #### Corrigido

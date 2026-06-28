@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T16:21:18.936Z",
+  "generatedAt": "2026-06-28T16:42:45.091Z",
   "notes": [
+    {
+      "version": "1.43.5",
+      "buildNumber": null,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Criar jogo ficou mais leve no celular",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A disponibilidade da quadra no mobile agora aparece como um resumo compacto com horários livres rápidos.",
+        "O mapa de disponibilidade dos próximos 7 dias continua disponível, mas fica recolhido atrás do botão `7 dias`.",
+        "Horários habituais, populares e sugestões foram unidos em uma única régua horizontal, sem chips duplicados."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.43.4",
       "buildNumber": null,
