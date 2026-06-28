@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T19:43:15.072Z",
+  "generatedAt": "2026-06-28T20:21:32.543Z",
   "notes": [
     {
       "version": "1.43.6",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-06-28",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "Controle comercial de quadras começou a chegar ao admin",
       "highlights": [],
       "added": [],
