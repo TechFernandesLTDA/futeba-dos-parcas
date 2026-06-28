@@ -1,7 +1,25 @@
 {
   "platform": "android",
-  "generatedAt": "2026-06-28T14:07:46.794Z",
+  "generatedAt": "2026-06-28T16:21:18.933Z",
   "notes": [
+    {
+      "version": "1.32.1",
+      "buildNumber": 58,
+      "releaseDate": "2026-06-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Criar jogo ficou mais didático no Android",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Adiciona placeholders e teclado numérico/decimal nos campos de preço e jogadores.",
+        "Mostra exemplos e faixas aceitas para preço, jogadores, goleiros, times e recorrência.",
+        "Deixa mais claro quando usar `0` em jogos sem cobrança."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.26.0",
       "buildNumber": 50,

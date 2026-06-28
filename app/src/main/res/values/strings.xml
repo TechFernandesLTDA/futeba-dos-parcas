@@ -2064,9 +2064,15 @@ subir no ranking!</string>
     <!-- Create Game - Additional (migrated from moko-resources) -->
     <string name="create_game_label_visibility">Visibilidade</string>
     <string name="create_game_hint_price">Preço por jogador</string>
+    <string name="create_game_price_helper">Ex.: 15,00. Use 0 se o jogo não tiver cobrança.</string>
+    <string name="create_game_price_placeholder">15,00</string>
     <string name="create_game_hint_max_players">Max Jogadores</string>
+    <string name="create_game_max_players_helper">Ex.: 14. Total de vagas, de 2 a 50 jogadores.</string>
+    <string name="create_game_max_players_placeholder">14</string>
     <string name="create_game_label_max_goalkeepers">Máx. goleiros</string>
+    <string name="create_game_goalkeepers_helper">Aceita de %1$d a %2$d goleiros</string>
     <string name="create_game_label_number_of_teams">Número de times</string>
+    <string name="create_game_teams_helper">Normalmente 2 times. Aceita de %1$d a %2$d</string>
     <string name="create_game_cd_increment_goalkeepers">Aumentar máximo de goleiros</string>
     <string name="create_game_cd_decrement_goalkeepers">Diminuir máximo de goleiros</string>
     <string name="create_game_cd_increment_teams">Aumentar número de times</string>
@@ -2077,6 +2083,7 @@ subir no ranking!</string>
     <string name="create_game_recurrence_end_count">Repetir por N jogos</string>
     <string name="create_game_recurrence_end_until">Repetir até uma data</string>
     <string name="create_game_recurrence_count_label">Total de jogos na série</string>
+    <string name="create_game_recurrence_count_helper">Total entre %1$d e %2$d jogos, incluindo este</string>
     <string name="create_game_recurrence_count_increment_cd">Aumentar total de jogos</string>
     <string name="create_game_recurrence_count_decrement_cd">Diminuir total de jogos</string>
     <string name="create_game_recurrence_until_hint">Selecionar data de término</string>

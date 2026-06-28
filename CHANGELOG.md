@@ -24,6 +24,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.32.1] - 2026-06-28
+
+#### Corrigido
+- `CreateGameScreen` usa `KeyboardOptions` adequadas para campos numéricos.
+- `NumberStepper` passa a exibir helper text com os limites aceitos.
+- Recursos de string do fluxo de Criar Jogo foram atualizados para documentar ranges e exemplos.
+
 ### [1.26.0] - 2026-05-22
 
 #### Adicionado
@@ -61,6 +68,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.43.4] - 2026-06-28
+
+#### Corrigido
+- `CreateGameScreen` separa rascunho de digitação dos valores numéricos validados.
+- Payload de criação usa os valores normalizados no submit, evitando envio de número antigo após campo limpo.
+- Traduções `pt-BR`, `en` e `es` mantidas em paridade para novas mensagens do formulário.
 
 ### [1.43.3] - 2026-06-28
 

@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardOptions
 import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
@@ -815,9 +817,13 @@ private fun CreateGameContent(
                 onValueChange = onPriceChange,
                 label = { Text(stringResource(R.string.create_game_hint_price)) },
                 isError = priceError != null,
-                supportingText = priceError?.let { { Text(it) } },
+                supportingText = {
+                    Text(priceError ?: stringResource(R.string.create_game_price_helper))
+                },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                placeholder = { Text(stringResource(R.string.create_game_price_placeholder)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 leadingIcon = {
                     Text(
                         text = "R$",
@@ -831,8 +837,12 @@ private fun CreateGameContent(
                 onValueChange = onMaxPlayersChange,
                 label = { Text(stringResource(R.string.create_game_hint_max_players)) },
                 isError = maxPlayersError != null,
-                supportingText = maxPlayersError?.let { { Text(it) } },
+                supportingText = {
+                    Text(maxPlayersError ?: stringResource(R.string.create_game_max_players_helper))
+                },
                 modifier = Modifier.weight(1f),
+                placeholder = { Text(stringResource(R.string.create_game_max_players_placeholder)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true
             )
         }
@@ -852,6 +862,11 @@ private fun CreateGameContent(
                 onValueChange = onMaxGoalkeepersChange,
                 decrementCd = stringResource(R.string.create_game_cd_decrement_goalkeepers),
                 incrementCd = stringResource(R.string.create_game_cd_increment_goalkeepers),
+                helperText = stringResource(
+                    R.string.create_game_goalkeepers_helper,
+                    GameValidation.MIN_GOALKEEPERS,
+                    GameValidation.MAX_GOALKEEPERS
+                ),
                 modifier = Modifier.weight(1f)
             )
 
@@ -863,6 +878,11 @@ private fun CreateGameContent(
                 onValueChange = onNumberOfTeamsChange,
                 decrementCd = stringResource(R.string.create_game_cd_decrement_teams),
                 incrementCd = stringResource(R.string.create_game_cd_increment_teams),
+                helperText = stringResource(
+                    R.string.create_game_teams_helper,
+                    GameValidation.MIN_NUMBER_OF_TEAMS,
+                    GameValidation.MAX_NUMBER_OF_TEAMS
+                ),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -969,6 +989,11 @@ private fun RecurrenceEndSelector(
                     onValueChange = onCountChange,
                     decrementCd = stringResource(R.string.create_game_recurrence_count_decrement_cd),
                     incrementCd = stringResource(R.string.create_game_recurrence_count_increment_cd),
+                    helperText = stringResource(
+                        R.string.create_game_recurrence_count_helper,
+                        CreateGameViewModel.MIN_RECURRENCE_COUNT,
+                        CreateGameViewModel.MAX_RECURRENCE_COUNT
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -1046,6 +1071,7 @@ private fun NumberStepper(
     onValueChange: (Int) -> Unit,
     decrementCd: String,
     incrementCd: String,
+    helperText: String,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -1091,6 +1117,12 @@ private fun NumberStepper(
                 )
             }
         }
+        Text(
+            text = helperText,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
 
