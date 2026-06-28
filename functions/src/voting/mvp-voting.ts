@@ -1000,10 +1000,7 @@ async function applyVotingXpDelta(
   userId: string,
   reason: "MVP" | "BOLA_MURCHA",
   xpDelta: number,
-  audit: {
-    totalVotes?: number;
-    categoryVotes?: number;
-  } = {}
+  audit: Record<string, number | undefined> = {}
 ): Promise<void> {
   const logId =
     reason === "MVP" ?
@@ -1189,6 +1186,10 @@ async function applyVotingXpDelta(
       // FIX #1993: usa getLevelForXp() canônico de xp/pipeline.ts
       // em vez de recalcular level inline (evita drift por inconsistência).
       const newLevel = getLevelForXp(newXp);
+      const sourceTotalVotes =
+        typeof audit.totalVotes === "number" ? audit.totalVotes : null;
+      const sourceCategoryVotes =
+        typeof audit.categoryVotes === "number" ? audit.categoryVotes : null;
 
       // FIX #1990: atualizar season_participation e ranking_deltas
       // para que o XP de voto conte nos rankings de temporada.
@@ -1257,8 +1258,8 @@ async function applyVotingXpDelta(
         source_collection: "mvp_votes",
         source_event_id: gameId,
         source_vote_category: reason,
-        source_total_votes: audit.totalVotes ?? null,
-        source_category_votes: audit.categoryVotes ?? null,
+        source_total_votes: sourceTotalVotes,
+        source_category_votes: sourceCategoryVotes,
         created_at: FieldValue
           .serverTimestamp(),
       });
