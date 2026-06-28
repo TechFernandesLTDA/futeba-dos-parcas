@@ -364,6 +364,48 @@ service cloud.firestore {
              isValidLongitude(data.get('location_lng', null));
     }
 
+    function isLocationAvailableForGame(locationId) {
+      let loc = get(/databases/$(database)/documents/locations/$(locationId));
+      return loc != null &&
+        loc.data.is_active == true &&
+        loc.data.is_verified == true &&
+        loc.data.get('publication_status', 'PUBLISHED') == 'PUBLISHED' &&
+        loc.data.get('subscription_status', 'ACTIVE') in ['TRIAL', 'ACTIVE'] &&
+        loc.data.get('has_active_fields', false) == true &&
+        (!('deleted_at' in loc.data) || loc.data.deleted_at == null);
+    }
+
+    function isNestedLocationFieldAvailable(locationId, fieldId) {
+      let fieldDoc = get(/databases/$(database)/documents/locations/$(locationId)/fields/$(fieldId));
+      return fieldDoc != null &&
+        fieldDoc.data.location_id == locationId &&
+        fieldDoc.data.get('is_active', true) == true;
+    }
+
+    function isRootLocationFieldAvailable(locationId, fieldId) {
+      let fieldDoc = get(/databases/$(database)/documents/fields/$(fieldId));
+      return fieldDoc != null &&
+        fieldDoc.data.location_id == locationId &&
+        fieldDoc.data.get('is_active', true) == true;
+    }
+
+    function isGameVenueAvailable(data) {
+      let locationId = data.get('location_id', null);
+      let fieldId = data.get('field_id', null);
+      return (locationId == null && fieldId == null) ||
+        (
+          locationId is string &&
+          locationId.size() > 0 &&
+          fieldId is string &&
+          fieldId.size() > 0 &&
+          isLocationAvailableForGame(locationId) &&
+          (
+            isNestedLocationFieldAvailable(locationId, fieldId) ||
+            isRootLocationFieldAvailable(locationId, fieldId)
+          )
+        );
+    }
+
     // SECFIX #422: rejeita criacao de jogo com data no passado
     // (impede backdating fraudulento -> XP retroativo).
     // Permite tolerancia de 1h (timezone/clock skew).
@@ -679,6 +721,9 @@ service cloud.firestore {
                        isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
                        // Validacao de coordenadas (#29)
                        hasValidCoordinates(request.resource.data) &&
+                       // P0 #3120: location_id catalogado so pode criar jogo
+                       // se a quadra estiver publicada, em dia e com field ativo.
+                       isGameVenueAvailable(request.resource.data) &&
                        // Validacao de genero do jogo (Fase 4b) - enforcement SOFT
                        isValidGameGender(request.resource.data.get('gender', null));
 

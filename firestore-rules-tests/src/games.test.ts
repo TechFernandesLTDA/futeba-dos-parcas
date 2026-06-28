@@ -32,9 +32,30 @@ let testEnv: RulesTestEnvironment;
 const GAME_ACTIVE = "game-active-001";
 const GAME_DELETED = "game-deleted-001";
 const GAME_PLAYER_A_OWNER = "game-player-a-owner-001";
+const LOCATION_PUBLISHED = "loc-published-game-001";
+const LOCATION_SUSPENDED = "loc-suspended-game-001";
+const LOCATION_OVERDUE = "loc-overdue-game-001";
+const FIELD_ACTIVE = "field-active-game-001";
+const FIELD_INACTIVE = "field-inactive-game-001";
 
 // Data futura para evitar rejeição de data passada (SECFIX #422)
 const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+const validGamePayload = (overrides: Record<string, unknown> = {}) => ({
+  title: "Novo Jogo",
+  owner_id: UID_PLAYER_A,
+  status: "SCHEDULED",
+  date_time: futureDate,
+  max_players: 10,
+  max_goalkeepers: 2,
+  players_count: 0,
+  goalkeepers_count: 0,
+  team1_score: null,
+  team2_score: null,
+  group_id: null,
+  co_organizers: [],
+  ...overrides,
+});
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -86,6 +107,49 @@ beforeAll(async () => {
     co_organizers: [UID_FIELD_OWNER], // co-organizer
     group_id: null,
   });
+
+  const baseLocation = {
+    name: "Arena Publicada",
+    owner_id: UID_FIELD_OWNER,
+    managers: [UID_FIELD_OWNER],
+    is_active: true,
+    is_verified: true,
+    publication_status: "PUBLISHED",
+    commercial_status: "ACTIVE",
+    subscription_status: "ACTIVE",
+    has_active_fields: true,
+    rating: 0,
+  };
+
+  await seedDoc(testEnv, `locations/${LOCATION_PUBLISHED}`, baseLocation);
+  await seedDoc(testEnv, `locations/${LOCATION_SUSPENDED}`, {
+    ...baseLocation,
+    publication_status: "SUSPENDED",
+  });
+  await seedDoc(testEnv, `locations/${LOCATION_OVERDUE}`, {
+    ...baseLocation,
+    subscription_status: "OVERDUE",
+  });
+  await seedDoc(testEnv, `locations/${LOCATION_PUBLISHED}/fields/${FIELD_ACTIVE}`, {
+    name: "Quadra 1",
+    location_id: LOCATION_PUBLISHED,
+    is_active: true,
+  });
+  await seedDoc(testEnv, `locations/${LOCATION_PUBLISHED}/fields/${FIELD_INACTIVE}`, {
+    name: "Quadra Inativa",
+    location_id: LOCATION_PUBLISHED,
+    is_active: false,
+  });
+  await seedDoc(testEnv, `locations/${LOCATION_SUSPENDED}/fields/${FIELD_ACTIVE}`, {
+    name: "Quadra Suspensa",
+    location_id: LOCATION_SUSPENDED,
+    is_active: true,
+  });
+  await seedDoc(testEnv, `locations/${LOCATION_OVERDUE}/fields/${FIELD_ACTIVE}`, {
+    name: "Quadra Vencida",
+    location_id: LOCATION_OVERDUE,
+    is_active: true,
+  });
 });
 
 afterAll(async () => {
@@ -126,20 +190,56 @@ describe("games — criação", () => {
   it("Player pode criar jogo com owner_id próprio", async () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(
-      db.doc("games/game-new-by-player-a").set({
-        title: "Novo Jogo",
-        owner_id: UID_PLAYER_A,
-        status: "SCHEDULED",
-        date_time: futureDate,
-        max_players: 10,
-        max_goalkeepers: 2,
-        players_count: 0,
-        goalkeepers_count: 0,
-        team1_score: null,
-        team2_score: null,
-        group_id: null,
-        co_organizers: [],
-      })
+      db.doc("games/game-new-by-player-a").set(validGamePayload())
+    );
+  });
+
+  it("Player pode criar jogo em location publicada, em dia e com quadra ativa", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("games/game-location-available").set(validGamePayload({
+        location_id: LOCATION_PUBLISHED,
+        field_id: FIELD_ACTIVE,
+      }))
+    );
+  });
+
+  it("Player NÃO pode criar jogo em location suspensa", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-location-suspended").set(validGamePayload({
+        location_id: LOCATION_SUSPENDED,
+        field_id: FIELD_ACTIVE,
+      }))
+    );
+  });
+
+  it("Player NÃO pode criar jogo em location com mensalidade vencida", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-location-overdue").set(validGamePayload({
+        location_id: LOCATION_OVERDUE,
+        field_id: FIELD_ACTIVE,
+      }))
+    );
+  });
+
+  it("Player NÃO pode criar jogo em location catalogada sem field_id ativo", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-location-without-field").set(validGamePayload({
+        location_id: LOCATION_PUBLISHED,
+      }))
+    );
+  });
+
+  it("Player NÃO pode criar jogo selecionando field inativo", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-location-inactive-field").set(validGamePayload({
+        location_id: LOCATION_PUBLISHED,
+        field_id: FIELD_INACTIVE,
+      }))
     );
   });
 

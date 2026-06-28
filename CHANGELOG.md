@@ -69,6 +69,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.9] - 2026-06-28
+
+#### Mudado
+- `CreateGameScreen` limpa selecoes de locais que deixam de estar disponiveis e exige `fieldId` ativo para locais catalogados.
+- `QuickLocationDialog` continua salvando rascunho de local, mas o jogo usa os dados como local manual ate aprovacao comercial.
+
+#### Segurança
+- Firestore Rules agora bloqueiam criacao direta de jogos com `location_id` de quadra suspensa, vencida, nao publicada, sem verificacao ou sem campo ativo.
+- Testes de rules cobrem location publicada, suspensa, vencida, sem `field_id` e field inativo.
+
+_Issues: #3120, #3084, #3091_
+
 ### [1.43.8] - 2026-06-28
 
 #### Adicionado
