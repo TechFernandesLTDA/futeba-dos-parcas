@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T21:15:35.871Z",
+  "generatedAt": "2026-06-29T21:46:20.025Z",
   "notes": [
+    {
+      "version": "1.43.23",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Descoberta de quadras ganha filtros completos",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de quadras no mapa agora permite filtrar por tipo, região, preço máximo, comodidades e locais abertos agora.",
+        "A ordenação ganhou opções para relevância, melhor avaliação, menor preço, proximidade e maior uso.",
+        "Os cards de quadras mostram preço inicial, distância quando disponível, status de funcionamento, tipo, quantidade de campos e principais comodidades.",
+        "O painel de filtros foi reorganizado para funcionar melhor em web mobile e desktop, com chips roláveis no celular e sem scroll horizontal da página."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3105
+      ]
+    },
     {
       "version": "1.43.22",
       "buildNumber": null,
