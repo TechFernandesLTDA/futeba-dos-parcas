@@ -353,6 +353,43 @@ describe("locations — convites de managers", () => {
   });
 });
 
+describe("locations — ledger financeiro", () => {
+  const LEDGER_PATH =
+    `locations/${LOC_PLAYER_A_OWNED}/subscription_ledger/entry-001`;
+
+  beforeAll(async () => {
+    await seedDoc(testEnv, LEDGER_PATH, {
+      type: "PAYMENT_REGISTERED",
+      actor_user_id: UID_ADMIN,
+      amount_cents: 19990,
+      period_key: "2026-07",
+      review_status: "APPROVED",
+      created_at: new Date(),
+    });
+  });
+
+  it("Owner e admin podem ler o ledger financeiro", async () => {
+    await assertSucceeds(asPlayerA(testEnv).doc(LEDGER_PATH).get());
+    await assertSucceeds(asAdmin(testEnv).doc(LEDGER_PATH).get());
+  });
+
+  it("Usuario sem vinculo nao pode ler o ledger financeiro", async () => {
+    await assertFails(asPlayerB(testEnv).doc(LEDGER_PATH).get());
+  });
+
+  it("Clientes nao escrevem nem alteram ledger financeiro direto", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`locations/${LOC_PLAYER_A_OWNED}/subscription_ledger/new`).set({
+        type: "PAYMENT_REGISTERED",
+        amount_cents: 1,
+      })
+    );
+    await assertFails(db.doc(LEDGER_PATH).update({amount_cents: 1}));
+    await assertFails(db.doc(LEDGER_PATH).delete());
+  });
+});
+
 // ============================================================
 // DELEÇÃO (DELETE)
 // ============================================================

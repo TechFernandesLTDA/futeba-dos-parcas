@@ -37,6 +37,8 @@ The client cannot directly write publication or billing fields unless the caller
 - `removeLocationManager`
 
 Each function writes both `locations/{locationId}/commercial_events` and global `audit_logs`.
+Billing-sensitive functions also write immutable entries to
+`locations/{locationId}/subscription_ledger`.
 
 ## Owner Commercial Onboarding
 
@@ -91,6 +93,8 @@ Current web P1 surfaces:
 - Admin venue list filters by publication status, billing status, field type, and commercial amenities.
 - Admin venue cards expose whether the venue is visible to regular users.
 - Admins can edit monthly fee, billing due day, and internal billing notes from the venue list.
+- Admins see expected monthly revenue and counts for eligible, overdue, suspended, and cancelled venues.
+- Admins and venue owners can inspect the subscription ledger with plan/status/payment/review events.
 - Public venue discovery filters by search, field type, amenities, and maximum hourly price from active field documents.
 - Field owner dashboard shows publication, billing status, monthly fee, due day, and visibility warnings.
 - Admin user management highlights field owners and summarizes their venue counts, published venues, and commercial pending items.
@@ -163,9 +167,29 @@ Safety rules:
 - Publication still requires an admin decision through
   `setLocationPublicationStatus`.
 
+## Billing Ledger
+
+The authoritative financial trail for venue billing lives in
+`locations/{locationId}/subscription_ledger/{entryId}`.
+
+Ledger entries are immutable and written only by Cloud Functions using the Admin SDK.
+Clients can read the ledger only when they are the venue owner, a venue manager, or an admin.
+
+Current event types:
+
+- `SUBSCRIPTION_STATUS_CHANGED`: admin changed plan, fee, due day, or subscription status.
+- `PAYMENT_REGISTERED`: admin registered and approved a payment directly.
+- `PAYMENT_RECEIPT_SUBMITTED`: owner/admin submitted a private receipt for review.
+- `PAYMENT_RECEIPT_APPROVED`: admin approved a receipt and reactivated the subscription.
+- `PAYMENT_RECEIPT_REJECTED`: admin rejected a receipt without changing the subscription.
+
+Each entry can include `amount_cents`, `period_key`, `payment_id`, `method`,
+`review_status`, previous/next subscription status, plan amount, due day, actor,
+reason, effective date, and server `created_at`.
+
 ## Follow-Up Scope
 
-- Add the billing ledger and recurring monthly charge workflow tracked by #3114.
+- Add the recurring monthly charge workflow tracked by #3132.
 - Add owner publication/change requests with admin approval tracked by #3115.
 - Firestore indexes must be added when server-side filters replace client filtering.
 - Android/KMP UI parity must be handled before a mobile release claiming full support.

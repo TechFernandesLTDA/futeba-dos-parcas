@@ -1198,7 +1198,8 @@ service cloud.firestore {
           fieldUnchanged('admin_notes') &&
           fieldUnchanged('last_payment_at') &&
           fieldUnchanged('last_payment_amount_cents') &&
-          fieldUnchanged('last_payment_period_key');
+          fieldUnchanged('last_payment_period_key') &&
+          fieldUnchanged('last_payment_id');
       }
 
       // ------------------------------------------
@@ -1446,6 +1447,21 @@ service cloud.firestore {
         }
 
         allow read: if isAuthenticated() && canReadSubscriptionPayments();
+        allow create, update, delete: if false;
+      }
+
+      match /subscription_ledger/{entryId} {
+
+        function canReadSubscriptionLedger() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        allow read: if isAuthenticated() && canReadSubscriptionLedger();
         allow create, update, delete: if false;
       }
 
