@@ -69,6 +69,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.20] - 2026-06-29
+
+#### Mudado
+- `UserManagementScreen` passa a consumir `lastLoginAtIso` da callable `searchAdminUsers`.
+- A UI deixa de tratar login como atualização cadastral, evitando leitura incorreta no CRM admin.
+- Cobertura unitária valida a exibição separada de última atualização e último login.
+
+_Issues: #3101_
+
 ### [1.43.19] - 2026-06-29
 
 #### Mudado
@@ -545,6 +554,14 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.15] - 2026-06-29
+
+#### Mudado
+- `searchAdminUsers` adiciona `lastLoginAtIso` ao contrato da linha de usuário.
+- `updatedAtIso` fica restrito a campos de atualização cadastral.
+
+_Issues: #3101_
 
 ### [1.2.14] - 2026-06-29
 

@@ -58,6 +58,7 @@ export interface AdminUserCrmRow {
   role: string;
   createdAtIso: string | null;
   updatedAtIso: string | null;
+  lastLoginAtIso: string | null;
   gamesPlayed: number;
   level: number;
   ownerSummary: AdminOwnerSummary;
