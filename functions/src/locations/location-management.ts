@@ -1181,8 +1181,18 @@ secureCallable<SetLocationSubscriptionRequest>(
       SUBSCRIPTION_STATUSES,
       "subscriptionStatus"
     );
-    const monthlyFeeCents = request.data.monthlyFeeCents ?? null;
-    const billingDueDay = request.data.billingDueDay ?? null;
+    const hasMonthlyFee = request.data.monthlyFeeCents !== undefined;
+    const hasBillingDueDay = request.data.billingDueDay !== undefined;
+    const hasBillingStartsAt = request.data.billingStartsAtIso !== undefined;
+    const hasBillingExpiresAt = request.data.billingExpiresAtIso !== undefined;
+    const hasAdminNotes = request.data.adminNotes !== undefined;
+    const {locRef, locData} = await getExistingLocation(locationId);
+    const monthlyFeeCents = hasMonthlyFee ?
+      request.data.monthlyFeeCents ?? null :
+      locData.monthly_fee_cents ?? null;
+    const billingDueDay = hasBillingDueDay ?
+      request.data.billingDueDay ?? null :
+      locData.billing_due_day ?? null;
 
     if (monthlyFeeCents !== null &&
       (!Number.isInteger(monthlyFeeCents) || monthlyFeeCents < 0)
@@ -1195,16 +1205,18 @@ secureCallable<SetLocationSubscriptionRequest>(
       throw new HttpsError("invalid-argument", "billingDueDay must be 1-31");
     }
 
-    const billingStartsAt = parseOptionalIsoDate(
-      request.data.billingStartsAtIso,
-      "billingStartsAtIso"
-    );
-    const billingExpiresAt = parseOptionalIsoDate(
-      request.data.billingExpiresAtIso,
-      "billingExpiresAtIso"
-    );
-    const adminNotes = optionalTrimmed(request.data.adminNotes, 2000);
-    const {locRef, locData} = await getExistingLocation(locationId);
+    const billingStartsAt = hasBillingStartsAt ?
+      parseOptionalIsoDate(request.data.billingStartsAtIso, "billingStartsAtIso") :
+      locData.billing_starts_at ?? null;
+    const billingExpiresAt = hasBillingExpiresAt ?
+      parseOptionalIsoDate(
+        request.data.billingExpiresAtIso,
+        "billingExpiresAtIso"
+      ) :
+      locData.billing_expires_at ?? null;
+    const adminNotes = hasAdminNotes ?
+      optionalTrimmed(request.data.adminNotes, 2000) :
+      null;
     const before = {
       subscription_status: locData.subscription_status ?? null,
       commercial_status: locData.commercial_status ?? null,
@@ -1213,17 +1225,17 @@ secureCallable<SetLocationSubscriptionRequest>(
       billing_starts_at: locData.billing_starts_at ?? null,
       billing_expires_at: locData.billing_expires_at ?? null,
     };
-    const update = {
+    const update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
       subscription_status: subscriptionStatus,
       commercial_status: subscriptionStatus,
-      monthly_fee_cents: monthlyFeeCents,
-      billing_due_day: billingDueDay,
-      billing_starts_at: billingStartsAt,
-      billing_expires_at: billingExpiresAt,
-      admin_notes: adminNotes,
       updated_at: FieldValue.serverTimestamp(),
       updated_by: request.auth.uid,
     };
+    if (hasMonthlyFee) update.monthly_fee_cents = monthlyFeeCents;
+    if (hasBillingDueDay) update.billing_due_day = billingDueDay;
+    if (hasBillingStartsAt) update.billing_starts_at = billingStartsAt;
+    if (hasBillingExpiresAt) update.billing_expires_at = billingExpiresAt;
+    if (hasAdminNotes) update.admin_notes = adminNotes;
 
     const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
       locationId,

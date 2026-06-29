@@ -536,6 +536,18 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.2.11] - 2026-06-29
+
+#### Corrigido
+- `setLocationSubscription` agora distingue campo ausente de campo explicitamente `null`.
+- Campos opcionais so sao gravados quando enviados pelo caller.
+- Teste regressivo cobre alteracao parcial de status preservando `monthly_fee_cents`, `billing_due_day`, `billing_starts_at` e `billing_expires_at`.
+
+#### Segurança
+- Reduz risco de perda silenciosa de configuracao financeira em callable admin.
+
+_Issues: #3148, #3132, #3121_
+
 ### [1.2.10] - 2026-06-29
 
 #### Adicionado
