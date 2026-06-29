@@ -73,10 +73,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 #### Adicionado
 - `ManageLocationsScreen` ganhou o painel "Dono e gerentes" para transferência administrativa e convites de managers.
+- `LocationDetailScreen` passou a carregar campos e fotos da quadra para uma visão unificada de visualização e edição.
 - Cliente web passou a consumir as callables `assignLocationOwner`, `inviteLocationManager`, `acceptLocationManagerInvite` e `removeLocationManager`.
 
 #### Segurança
 - A UI deixa claro que managers não podem publicar, cobrar, alterar dono ou mensalidade.
+- `AuthContext` aplica a role efetiva das custom claims quando disponível, evitando perda temporária de menus administrativos.
 
 _Issues: #3102, #3127, #3087, #3091_
 
@@ -468,6 +470,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - Firestore Rules bloqueiam alteração client-side de `managers` por owner/manager.
 - Convites em `locations/{locationId}/manager_invites` são somente leitura para owner, admin, manager atual ou destinatário.
 - Clientes não criam, aceitam nem removem convites diretamente no Firestore.
+- Cobertura dos callables de dono/gerente reforçada para convites por UID/email, aceite, remoção e fluxos inválidos.
 
 _Issues: #3102, #3127, #3087, #3091_
 

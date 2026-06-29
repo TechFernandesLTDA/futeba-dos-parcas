@@ -15,6 +15,7 @@ import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query
 import { auth, googleProvider, db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
 import { User } from '../types';
+import type { UserRole } from '../types/user';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getAuthErrorMessage } from '../utils/firebaseErrors';
@@ -25,6 +26,7 @@ import { syncFieldOwnerClaim } from '../services/cloudFunctions';
 import { normalizePlayerStats } from '../utils/playerStats';
 
 const logger = createLogger('AuthContext');
+const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
 
 // FIX #1568: helper que aplica defaults defensivos antes dos casts "as User"
 // para evitar crashes downstream em campos undefined vindos do Firestore
@@ -79,6 +81,25 @@ function mergeUserStats(user: User, statsRaw: Record<string, unknown>, fallbackR
     currentStreak: stats.currentStreak,
     bestStreak: stats.bestStreak,
   };
+}
+
+function isUserRole(value: unknown): value is UserRole {
+  return typeof value === 'string' && USER_ROLES.includes(value as UserRole);
+}
+
+async function getClaimRole(firebaseUser: FirebaseUser): Promise<UserRole | null> {
+  try {
+    const token = await firebaseUser.getIdTokenResult(false);
+    return isUserRole(token.claims.role) ? token.claims.role : null;
+  } catch (err) {
+    logger.debug('Não foi possível ler role das custom claims:', err);
+    return null;
+  }
+}
+
+function applyClaimRole(userData: User, claimRole: UserRole | null): User {
+  if (!claimRole || userData.role === claimRole) return userData;
+  return {...userData, role: claimRole};
 }
 
 interface AuthContextType {
@@ -251,6 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (firebaseUser) {
           let userData = await fetchUserDataRef.current(firebaseUser.uid, true);
+          const claimRole = await getClaimRole(firebaseUser);
 
           // FIX #584/H4: descarta resultado se uid mudou durante fetch
           if (lastFetchUid !== firebaseUser.uid) {
@@ -270,9 +292,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Só seta userData se for não-nulo: createUserDocument pode retornar null
           // mesmo com firebaseUser autenticado (ex.: Firestore offline).
           if (userData) {
-            setUser(userData);
+            const effectiveUserData = applyClaimRole(userData, claimRole);
+            setUser(effectiveUserData);
             if (
-              (userData.role === 'FIELD_OWNER' || userData.role === 'ADMIN') &&
+              (effectiveUserData.role === 'FIELD_OWNER' || effectiveUserData.role === 'ADMIN') &&
               lastClaimSyncUidRef.current !== firebaseUser.uid
             ) {
               lastClaimSyncUidRef.current = firebaseUser.uid;
@@ -425,7 +448,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userData = await fetchUserDataRef.current(currentUser.uid, true);
       if (userData) {
-        setUser(userData);
+        const claimRole = await getClaimRole(currentUser);
+        setUser(applyClaimRole(userData, claimRole));
         setError(null);
       } else {
         // fetchUserData retornou null sem lançar — provavelmente doc não existe

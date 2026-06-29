@@ -5,6 +5,7 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
+let mockUserRole: 'PLAYER' | 'FIELD_OWNER' | 'ADMIN' | undefined;
 vi.mock('../../services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
   messagingPromise: Promise.resolve(null),
@@ -25,6 +26,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
       name: 'Carlos Teste',
       nickname: 'Carlão',
       email: 'carlos@test.com',
+      role: mockUserRole,
       level: 5,
       experiencePoints: 850,
       totalGames: 42,
@@ -129,6 +131,7 @@ function renderProfileTab() {
 describe('ProfileTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUserRole = undefined;
   });
 
   it('renderiza o nome do usuário', () => {
@@ -180,5 +183,15 @@ describe('ProfileTab', () => {
   it('possui menu com aria-label acessível', () => {
     renderProfileTab();
     expect(screen.getByRole('list', { name: /menu do perfil/i })).toBeInTheDocument();
+  });
+
+  it('mostra Gerenciar Usuários para administradores', async () => {
+    const user = userEvent.setup();
+    mockUserRole = 'ADMIN';
+
+    renderProfileTab();
+
+    await user.click(screen.getByText('Gerenciar Usuários'));
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/users');
   });
 });

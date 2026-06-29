@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-28T23:36:50.959Z",
+  "generatedAt": "2026-06-29T00:01:45.167Z",
   "notes": [
     {
       "version": "1.43.10",
@@ -15,7 +15,9 @@
       "improved": [
         "Administradores podem transferir o dono de uma quadra pela tela de gerenciamento.",
         "Donos de quadra e administradores podem criar convites de gerente sem liberar acesso imediato.",
-        "Gerentes atuais podem ser removidos com registro de motivo interno para auditoria."
+        "Gerentes atuais podem ser removidos com registro de motivo interno para auditoria.",
+        "A tela de detalhe da quadra agora mostra uma central operacional para admin/dono com status comercial, mensalidade, equipe, fotos, comodidades, campos e preços.",
+        "O menu \"Gerenciar Usuários\" fica consistente para administradores mesmo quando o documento público do usuário ainda não refletiu a custom claim."
       ],
       "fixed": [],
       "issueRefs": [

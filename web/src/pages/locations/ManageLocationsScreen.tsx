@@ -34,6 +34,7 @@ import {
   Close as CloseIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, where, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -385,6 +386,16 @@ export const ManageLocationsScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             {t('locations.manage')}
           </Typography>
+          {isAdmin && (
+            <Button
+              variant="outlined"
+              startIcon={<AdminIcon />}
+              onClick={() => navigate('/admin/users')}
+              sx={{ display: { xs: 'none', md: 'inline-flex' }, mr: 1 }}
+            >
+              Usuários
+            </Button>
+          )}
           <Button
             variant="contained"
             startIcon={<AddIcon />}
