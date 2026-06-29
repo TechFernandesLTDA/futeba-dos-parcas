@@ -57,6 +57,23 @@ interface RegisterLocationSubscriptionPaymentRequest {
   notes?: string | null;
 }
 
+interface SubmitLocationSubscriptionReceiptRequest {
+  locationId: string;
+  amountCents: number;
+  periodKey: string;
+  paidAtIso?: string | null;
+  method?: string | null;
+  receiptStoragePath: string;
+  notes?: string | null;
+}
+
+interface ReviewLocationSubscriptionReceiptRequest {
+  locationId: string;
+  paymentId: string;
+  decision: "APPROVED" | "REJECTED";
+  notes?: string | null;
+}
+
 interface AssignLocationOwnerRequest {
   locationId: string;
   newOwnerId: string;
@@ -215,6 +232,69 @@ function assertAdminOrLocationOwner(
       "Only the location owner or admin can manage managers"
     );
   }
+}
+
+/**
+ * Garante caller admin global.
+ * @param {object} request Requisicao callable autenticada.
+ */
+function assertAdmin(
+  request: {auth?: {uid: string; token?: Record<string, unknown>}}
+) {
+  if (request.auth?.token?.role !== "ADMIN") {
+    throw new HttpsError("permission-denied", "Only admins can review receipts");
+  }
+}
+
+/**
+ * Garante caller admin ou dono atual da location.
+ * @param {object} request Requisicao callable autenticada.
+ * @param {FirebaseFirestore.DocumentData} locData Dados da location.
+ */
+function assertAdminOrLocationOwnerForReceipt(
+  request: {auth?: {uid: string; token?: Record<string, unknown>}},
+  locData: FirebaseFirestore.DocumentData
+) {
+  const callerUid = request.auth?.uid;
+  const isAdmin = request.auth?.token?.role === "ADMIN";
+  if (!callerUid || (!isAdmin && locData.owner_id !== callerUid)) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the location owner or admin can submit receipts"
+    );
+  }
+}
+
+/**
+ * Valida path privado oficial de comprovante comercial da quadra.
+ * @param {unknown} value Path recebido do cliente.
+ * @param {string} locationId ID da location.
+ * @param {unknown} ownerId Owner esperado.
+ * @return {string} Path validado.
+ */
+function requireLocationReceiptStoragePath(
+  value: unknown,
+  locationId: string,
+  ownerId: unknown
+): string {
+  const storagePath = requireNonEmptyString(value, "receiptStoragePath");
+  if (typeof ownerId !== "string" || !ownerId.trim()) {
+    throw new HttpsError("failed-precondition", "Location owner is not configured");
+  }
+  const escapedLocationId = locationId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedOwnerId = ownerId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `^locations/${escapedLocationId}/subscription_receipts/` +
+    `${escapedOwnerId}/[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp|pdf)$`,
+    "i"
+  );
+  if (!pattern.test(storagePath)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "receiptStoragePath must use the official private location receipt path"
+    );
+  }
+  return storagePath;
 }
 
 /**
@@ -629,6 +709,185 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       locationId,
       paymentId: paymentRef.id,
       subscriptionStatus: "ACTIVE",
+    };
+  }
+);
+
+export const submitLocationSubscriptionReceipt =
+secureCallable<SubmitLocationSubscriptionReceiptRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    rateLimit: {maxRequests: 10, windowMs: 60000, keyPrefix: "locPaySubmit"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "submitLocationSubscriptionReceipt",
+      locationId: req.data?.locationId,
+      periodKey: req.data?.periodKey,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const periodKey = requireNonEmptyString(request.data.periodKey, "periodKey");
+    const {amountCents} = request.data;
+    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+      throw new HttpsError("invalid-argument", "amountCents must be > 0");
+    }
+    const paidAt = parseOptionalIsoDate(request.data.paidAtIso, "paidAtIso") ||
+      new Date();
+    const method = optionalTrimmed(request.data.method, 80);
+    const notes = optionalTrimmed(request.data.notes, 1000);
+    const {locRef, locData} = await getExistingLocation(locationId);
+    assertAdminOrLocationOwnerForReceipt(request, locData);
+    const receiptStoragePath = requireLocationReceiptStoragePath(
+      request.data.receiptStoragePath,
+      locationId,
+      locData.owner_id
+    );
+    const paymentRef = locRef.collection("subscription_payments").doc();
+
+    await paymentRef.set({
+      amount_cents: amountCents,
+      period_key: periodKey,
+      paid_at: paidAt,
+      method,
+      receipt_storage_path: receiptStoragePath,
+      receipt_url: null,
+      notes,
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+      submitted_at: FieldValue.serverTimestamp(),
+      submitted_by: request.auth.uid,
+      created_at: FieldValue.serverTimestamp(),
+      created_by: request.auth.uid,
+    });
+
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: "LOCATION_SUBSCRIPTION_RECEIPT_SUBMITTED",
+      after: {
+        payment_id: paymentRef.id,
+        amount_cents: amountCents,
+        period_key: periodKey,
+        receipt_storage_path: receiptStoragePath,
+        review_status: "PENDING_REVIEW",
+      },
+      reason: notes,
+    });
+
+    return {
+      success: true,
+      locationId,
+      paymentId: paymentRef.id,
+      reviewStatus: "PENDING_REVIEW",
+    };
+  }
+);
+
+export const reviewLocationSubscriptionReceipt =
+secureCallable<ReviewLocationSubscriptionReceiptRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {maxRequests: 20, windowMs: 60000, keyPrefix: "locPayReview"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "reviewLocationSubscriptionReceipt",
+      locationId: req.data?.locationId,
+      paymentId: req.data?.paymentId,
+      decision: req.data?.decision,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    assertAdmin(request);
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const paymentId = requireNonEmptyString(request.data.paymentId, "paymentId");
+    const decision = requireEnum(
+      request.data.decision,
+      ["APPROVED", "REJECTED"] as const,
+      "decision"
+    );
+    const notes = optionalTrimmed(request.data.notes, 1000);
+    const {locRef, locData} = await getExistingLocation(locationId);
+    const paymentRef = locRef.collection("subscription_payments").doc(paymentId);
+    const paymentDoc = await paymentRef.get();
+    if (!paymentDoc.exists) {
+      throw new HttpsError("not-found", `Payment ${paymentId} not found`);
+    }
+    const paymentData = paymentDoc.data() || {};
+    if (paymentData.review_status !== "PENDING_REVIEW" &&
+      paymentData.status !== "PENDING_REVIEW"
+    ) {
+      throw new HttpsError("failed-precondition", "Payment is not pending review");
+    }
+    if (typeof paymentData.receipt_storage_path !== "string") {
+      throw new HttpsError("failed-precondition", "Payment has no private receipt path");
+    }
+
+    const batch = db().batch();
+    const paymentUpdate: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+      review_status: decision,
+      status: decision,
+      reviewed_at: FieldValue.serverTimestamp(),
+      reviewed_by: request.auth.uid,
+      review_notes: notes,
+      updated_at: FieldValue.serverTimestamp(),
+    };
+
+    if (decision === "APPROVED") {
+      batch.update(paymentRef, paymentUpdate);
+      batch.update(locRef, {
+        subscription_status: "ACTIVE",
+        commercial_status: "ACTIVE",
+        last_payment_at: paymentData.paid_at ?? null,
+        last_payment_amount_cents: paymentData.amount_cents ?? null,
+        last_payment_period_key: paymentData.period_key ?? null,
+        last_payment_id: paymentId,
+        updated_at: FieldValue.serverTimestamp(),
+        updated_by: request.auth.uid,
+      });
+    } else {
+      batch.update(paymentRef, paymentUpdate);
+    }
+
+    await batch.commit();
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: decision === "APPROVED" ?
+        "LOCATION_SUBSCRIPTION_RECEIPT_APPROVED" :
+        "LOCATION_SUBSCRIPTION_RECEIPT_REJECTED",
+      before: {
+        subscription_status: locData.subscription_status ?? null,
+        commercial_status: locData.commercial_status ?? null,
+        payment_id: paymentId,
+      },
+      after: {
+        subscription_status: decision === "APPROVED" ? "ACTIVE" :
+          locData.subscription_status ?? null,
+        commercial_status: decision === "APPROVED" ? "ACTIVE" :
+          locData.commercial_status ?? null,
+        payment_id: paymentId,
+        review_status: decision,
+      },
+      reason: notes,
+    });
+
+    return {
+      success: true,
+      locationId,
+      paymentId,
+      reviewStatus: decision,
+      subscriptionStatus: decision === "APPROVED" ? "ACTIVE" :
+        locData.subscription_status ?? null,
     };
   }
 );

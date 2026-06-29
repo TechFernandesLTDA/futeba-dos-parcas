@@ -69,6 +69,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.11] - 2026-06-29
+
+#### Adicionado
+- Tela `ManageLocationsScreen` ganhou diálogo de comprovantes com upload privado, pendências e ações de aprovação/rejeição.
+- Cliente web passou a consumir as callables `submitLocationSubscriptionReceipt` e `reviewLocationSubscriptionReceipt`.
+
+#### Segurança
+- Uploads de comprovantes usam path oficial `locations/{locationId}/subscription_receipts/{ownerId}/{fileName}`.
+- Comprovantes comerciais não usam URL pública e ficam legíveis apenas para owner/admin pelas regras de Storage.
+
+_Issues: #3133, #3091, #3084_
+
 ### [1.43.10] - 2026-06-28
 
 #### Adicionado
@@ -457,6 +469,19 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.4] - 2026-06-29
+
+#### Adicionado
+- Callable `submitLocationSubscriptionReceipt` para owner/admin criar pagamento `PENDING_REVIEW` com `receipt_storage_path` privado.
+- Callable `reviewLocationSubscriptionReceipt` para admin aprovar/rejeitar comprovante e vincular o arquivo ao ledger de pagamentos.
+- Cobertura de testes para submissão, aprovação, rejeição, permissões e paths inválidos.
+
+#### Segurança
+- Validação server-side exige path oficial de comprovante com `ownerId` da própria location.
+- Managers não podem enviar comprovantes comerciais de mensalidade.
+
+_Issues: #3133, #3091, #3084_
 
 ### [1.2.3] - 2026-06-28
 

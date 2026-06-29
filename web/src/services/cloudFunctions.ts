@@ -56,6 +56,40 @@ export const registerLocationSubscriptionPayment = httpsCallable<
   }
 >(functions, 'registerLocationSubscriptionPayment');
 
+export const submitLocationSubscriptionReceipt = httpsCallable<
+  {
+    locationId: string;
+    amountCents: number;
+    periodKey: string;
+    paidAtIso?: string | null;
+    method?: string | null;
+    receiptStoragePath: string;
+    notes?: string | null;
+  },
+  {
+    success: boolean;
+    locationId: string;
+    paymentId: string;
+    reviewStatus: 'PENDING_REVIEW';
+  }
+>(functions, 'submitLocationSubscriptionReceipt');
+
+export const reviewLocationSubscriptionReceipt = httpsCallable<
+  {
+    locationId: string;
+    paymentId: string;
+    decision: 'APPROVED' | 'REJECTED';
+    notes?: string | null;
+  },
+  {
+    success: boolean;
+    locationId: string;
+    paymentId: string;
+    reviewStatus: 'APPROVED' | 'REJECTED';
+    subscriptionStatus: string | null;
+  }
+>(functions, 'reviewLocationSubscriptionReceipt');
+
 export const assignLocationOwner = httpsCallable<
   {
     locationId: string;

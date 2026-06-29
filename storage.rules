@@ -2,14 +2,16 @@ rules_version = '2';
 
 // ============================================
 // FIREBASE STORAGE SECURITY RULES
-// Futeba dos Parças - v1.4.2
+// Futeba dos Parças - v1.4.3
 //
 // Estrutura de Caminhos Padronizada:
 // - users/{userId}/profile.jpg
 // - groups/{groupId}/logo.{jpg|jpeg|png|webp}
 // - groups/{groupId}/receipts/{timestamp}.{jpg|png|webp}
 // - locations/{locationId}/photos/{timestamp}.jpg
-// - locations/{locationId}/fields/{timestamp}.jpg
+// - locations/{locationId}/fields/{fieldId}/photos/{timestamp}.jpg
+// - locations/{locationId}/subscription_receipts/{ownerId}/{timestamp}.{jpg|jpeg|png|webp|pdf}
+// - locations/{locationId}/fields/{timestamp}.jpg (legado)
 // - temp_fields/{timestamp}.jpg (temporário, sem locationId)
 // - games/{gameId}/photos/{userId}/{timestamp}.jpg
 // ============================================
@@ -56,11 +58,71 @@ service firebase.storage {
       return isAuthenticated() && request.auth.token.role == 'ADMIN';
     }
 
+    function getLocation(locationId) {
+      return firestore.get(/databases/(default)/documents/locations/$(locationId));
+    }
+
+    function locationExists(locationId) {
+      return getLocation(locationId) != null;
+    }
+
+    function isLocationOwner(locationId) {
+      return isAuthenticated() &&
+             locationExists(locationId) &&
+             getLocation(locationId).data.owner_id == request.auth.uid;
+    }
+
+    function isLocationManager(locationId) {
+      return isAuthenticated() &&
+             locationExists(locationId) &&
+             request.auth.uid in getLocation(locationId).data.get('managers', []);
+    }
+
+    function canReadLocationPrivate(locationId) {
+      return isAdmin() || isLocationOwner(locationId) || isLocationManager(locationId);
+    }
+
+    function canWriteLocationMedia(locationId) {
+      return isAdmin() || isLocationOwner(locationId) || isLocationManager(locationId);
+    }
+
+    function canWriteLocationCommercialReceipt(locationId, ownerId) {
+      return locationExists(locationId) &&
+             getLocation(locationId).data.owner_id == ownerId &&
+             (isAdmin() || isLocationOwner(locationId));
+    }
+
+    function isPublishedLocation(locationId) {
+      return locationExists(locationId) &&
+             getLocation(locationId).data.is_active == true &&
+             getLocation(locationId).data.is_verified == true &&
+             getLocation(locationId).data.get('publication_status', 'PENDING_REVIEW') == 'PUBLISHED';
+    }
+
+    function canReadLocationPublicMedia(locationId) {
+      return isAuthenticated() &&
+             (isPublishedLocation(locationId) || canReadLocationPrivate(locationId));
+    }
+
     // Verifica se o arquivo é uma imagem válida.
     // Blacklist explícito de SVG/XML para prevenir XSS via imagem com script embutido.
     function isImage() {
       return request.resource.contentType.matches('image/.*') &&
              !(request.resource.contentType in ['image/svg+xml', 'image/svg', 'image/xml']);
+    }
+
+    function isPublicLocationImageFile(fileName) {
+      return fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp)');
+    }
+
+    function isCommercialReceiptFile(fileName) {
+      return fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp|pdf)') &&
+             request.resource.contentType in [
+               'image/jpeg',
+               'image/png',
+               'image/webp',
+               'application/pdf'
+             ];
     }
 
     // Verifica tamanho máximo do arquivo (em MB)
@@ -175,14 +237,14 @@ service firebase.storage {
     // Owner/manager do local pode escrever.
     // ============================================
     match /locations/{locationId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-                     (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                      request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', [])) &&
-                     isImage() && isUnderSize(5);
-      allow delete: if isAuthenticated() &&
-                      (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                       request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', []));
+      allow read: if canReadLocationPublicMedia(locationId) &&
+                    fileName.matches('photo\\.(jpg|jpeg|png|webp)|thumb\\.(jpg|jpeg|png|webp)');
+      allow write: if canWriteLocationMedia(locationId) &&
+                     fileName.matches('photo\\.(jpg|jpeg|png|webp)|thumb\\.(jpg|jpeg|png|webp)') &&
+                     isImage() &&
+                     isUnderSize(5);
+      allow delete: if canWriteLocationMedia(locationId) &&
+                      fileName.matches('photo\\.(jpg|jpeg|png|webp)|thumb\\.(jpg|jpeg|png|webp)');
     }
 
     // ============================================
@@ -190,20 +252,19 @@ service firebase.storage {
     // Path: locations/{locationId}/photos/{timestamp}.jpg
     // ============================================
     match /locations/{locationId}/photos/{fileName} {
-      // Qualquer usuário autenticado pode ver fotos de locais
-      allow read: if isAuthenticated();
+      allow read: if canReadLocationPublicMedia(locationId) &&
+                    isPublicLocationImageFile(fileName);
 
       // #1573: owner OU manager do local pode fazer upload (paridade com Firestore rules)
       // Máximo 5MB por foto, apenas imagem
-      allow write: if isAuthenticated() &&
-                     (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                      request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', [])) &&
-                     isImage() && isUnderSize(5);
+      allow write: if canWriteLocationMedia(locationId) &&
+                     isPublicLocationImageFile(fileName) &&
+                     isImage() &&
+                     isUnderSize(5);
 
       // #1573: owner OU manager do local pode deletar (paridade com Firestore rules)
-      allow delete: if isAuthenticated() &&
-                      (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                       request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', []));
+      allow delete: if canWriteLocationMedia(locationId) &&
+                      isPublicLocationImageFile(fileName);
     }
 
     // ============================================
@@ -211,20 +272,19 @@ service firebase.storage {
     // Path: locations/{locationId}/fields/{timestamp}.jpg
     // ============================================
     match /locations/{locationId}/fields/{fileName} {
-      // Qualquer usuário autenticado pode ver fotos de campos
-      allow read: if isAuthenticated();
+      allow read: if canReadLocationPublicMedia(locationId) &&
+                    isPublicLocationImageFile(fileName);
 
       // #1573: owner OU manager do local pode fazer upload (paridade com Firestore rules)
       // Máximo 5MB por foto, apenas imagem
-      allow write: if isAuthenticated() &&
-                     (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                      request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', [])) &&
-                     isImage() && isUnderSize(5);
+      allow write: if canWriteLocationMedia(locationId) &&
+                     isPublicLocationImageFile(fileName) &&
+                     isImage() &&
+                     isUnderSize(5);
 
       // #1573: owner OU manager do local pode deletar (paridade com Firestore rules)
-      allow delete: if isAuthenticated() &&
-                      (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                       request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', []));
+      allow delete: if canWriteLocationMedia(locationId) &&
+                      isPublicLocationImageFile(fileName);
     }
 
     // ============================================
@@ -233,14 +293,41 @@ service firebase.storage {
     // #2158: Android usa locations/{locationId}/fields/{fieldId}/photo.jpg e thumb.jpg
     // ============================================
     match /locations/{locationId}/fields/{fieldId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-                     (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                      request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', [])) &&
-                     isImage() && isUnderSize(5);
-      allow delete: if isAuthenticated() &&
-                      (firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid ||
-                       request.auth.uid in firestore.get(/databases/(default)/documents/locations/$(locationId)).data.get('managers', []));
+      allow read: if canReadLocationPublicMedia(locationId) &&
+                    fileName.matches('photo\\.(jpg|jpeg|png|webp)|thumb\\.(jpg|jpeg|png|webp)');
+      allow write: if canWriteLocationMedia(locationId) &&
+                     fileName.matches('photo\\.(jpg|jpeg|png|webp)|thumb\\.(jpg|jpeg|png|webp)') &&
+                     isImage() &&
+                     isUnderSize(5);
+      allow delete: if canWriteLocationMedia(locationId) &&
+                      fileName.matches('photo\\.(jpg|jpeg|png|webp)|thumb\\.(jpg|jpeg|png|webp)');
+    }
+
+    // ============================================
+    // FOTOS DE CAMPOS COM FIELDID — PATH OFICIAL WEB
+    // Path: locations/{locationId}/fields/{fieldId}/photos/{fileName}
+    // ============================================
+    match /locations/{locationId}/fields/{fieldId}/photos/{fileName} {
+      allow read: if canReadLocationPublicMedia(locationId) &&
+                    isPublicLocationImageFile(fileName);
+      allow write: if canWriteLocationMedia(locationId) &&
+                     isPublicLocationImageFile(fileName) &&
+                     isImage() &&
+                     isUnderSize(5);
+      allow delete: if canWriteLocationMedia(locationId) &&
+                      isPublicLocationImageFile(fileName);
+    }
+
+    // ============================================
+    // COMPROVANTES PRIVADOS DE MENSALIDADE DE QUADRAS
+    // Path: locations/{locationId}/subscription_receipts/{ownerId}/{fileName}
+    // ============================================
+    match /locations/{locationId}/subscription_receipts/{ownerId}/{fileName} {
+      allow read: if isAdmin() || isLocationOwner(locationId);
+      allow write: if canWriteLocationCommercialReceipt(locationId, ownerId) &&
+                     isCommercialReceiptFile(fileName) &&
+                     isUnderSize(10);
+      allow delete: if isAdmin();
     }
 
     // ============================================
