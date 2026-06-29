@@ -98,7 +98,9 @@ class FakeCollectionRef {
       .filter((path) => !path.slice(prefix.length).includes("/"))
       .slice(0, this.limitSize)
       .map((path) => ({
+        id: path.split("/").pop() || "",
         ref: new FakeDocRef(path, path.split("/").pop() || "", this.store),
+        data: () => this.store.get(path),
       }));
     return {
       docs,
@@ -193,6 +195,7 @@ const {
   assignLocationOwner,
   deleteLocation,
   deleteLocationSubcollection,
+  getAdminLocationBillingSummary,
   inviteLocationManager,
   registerLocationSubscriptionPayment,
   reviewLocationSubscriptionReceipt,
@@ -310,21 +313,28 @@ describe("location commercial admin callables", () => {
 
   it("expõe contexto de auditoria para publicação, assinatura e pagamento", async () => {
     const deleteOptions = mockSecureCallableOptions[0];
-    const publicationOptions = mockSecureCallableOptions[1];
-    const subscriptionOptions = mockSecureCallableOptions[2];
-    const paymentOptions = mockSecureCallableOptions[3];
-    const submitReceiptOptions = mockSecureCallableOptions[4];
-    const reviewReceiptOptions = mockSecureCallableOptions[5];
-    const assignOwnerOptions = mockSecureCallableOptions[6];
-    const inviteManagerOptions = mockSecureCallableOptions[7];
-    const acceptInviteOptions = mockSecureCallableOptions[8];
-    const removeManagerOptions = mockSecureCallableOptions[9];
+    const billingSummaryOptions = mockSecureCallableOptions[1];
+    const publicationOptions = mockSecureCallableOptions[2];
+    const subscriptionOptions = mockSecureCallableOptions[3];
+    const paymentOptions = mockSecureCallableOptions[4];
+    const submitReceiptOptions = mockSecureCallableOptions[5];
+    const reviewReceiptOptions = mockSecureCallableOptions[6];
+    const assignOwnerOptions = mockSecureCallableOptions[7];
+    const inviteManagerOptions = mockSecureCallableOptions[8];
+    const acceptInviteOptions = mockSecureCallableOptions[9];
+    const removeManagerOptions = mockSecureCallableOptions[10];
 
     await expect(deleteOptions.auditLogContext({
       data: {locationId: "location-1"},
     })).resolves.toEqual({
       function: "deleteLocation",
       locationId: "location-1",
+    });
+    await expect(billingSummaryOptions.auditLogContext({
+      data: {periodKey: "2026-07"},
+    })).resolves.toEqual({
+      function: "getAdminLocationBillingSummary",
+      periodKey: "2026-07",
     });
     await expect(publicationOptions.auditLogContext({
       data: {locationId: "location-1", publicationStatus: "PUBLISHED"},
@@ -399,6 +409,113 @@ describe("location commercial admin callables", () => {
       locationId: "location-1",
       managerUid: "manager-2",
     });
+  });
+
+  it("calcula painel financeiro admin por periodo sem expor calculo ao client", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      name: "Arena Ativa",
+      city: "São Paulo",
+      state: "SP",
+      publication_status: "PUBLISHED",
+      subscription_status: "ACTIVE",
+      monthly_fee_cents: 20000,
+      billing_due_day: 10,
+      updated_at: new Date("2026-07-02T10:00:00.000Z"),
+    });
+    firestoreStore.set("locations/location-2", {
+      name: "Arena Vencida",
+      owner_id: "owner-2",
+      city: "Santos",
+      state: "SP",
+      publication_status: "PUBLISHED",
+      subscription_status: "OVERDUE",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    });
+    firestoreStore.set("locations/location-3", {
+      name: "Arena Trial",
+      owner_id: "owner-3",
+      city: "Campinas",
+      state: "SP",
+      publication_status: "PENDING_REVIEW",
+      subscription_status: "TRIAL",
+      monthly_fee_cents: 9900,
+    });
+    firestoreStore.set("locations/location-4", {
+      name: "Arena Suspensa",
+      owner_id: "owner-4",
+      city: "Rio de Janeiro",
+      state: "RJ",
+      publication_status: "SUSPENDED",
+      subscription_status: "SUSPENDED",
+      monthly_fee_cents: 30000,
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 20000,
+      period_key: "2026-07",
+      review_status: "APPROVED",
+      paid_at: new Date("2026-07-03T12:00:00.000Z"),
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-2", {
+      amount_cents: 20000,
+      period_key: "2026-06",
+      review_status: "APPROVED",
+      paid_at: new Date("2026-06-03T12:00:00.000Z"),
+    });
+    firestoreStore.set("locations/location-2/subscription_payments/payment-3", {
+      amount_cents: 5000,
+      period_key: "2026-07",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await expect(getAdminLocationBillingSummary({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {periodKey: "2026-07"},
+    })).resolves.toMatchObject({
+      periodKey: "2026-07",
+      scannedLocations: 4,
+      scanComplete: true,
+      summary: {
+        expectedMrrCents: 35000,
+        receivedCents: 20000,
+        overdueCents: 15000,
+        trialCents: 9900,
+        suspendedCents: 30000,
+        activeLocations: 1,
+        trialLocations: 1,
+        overdueLocations: 1,
+        suspendedLocations: 1,
+        pendingReceiptLocations: 1,
+      },
+      locations: expect.arrayContaining([
+        expect.objectContaining({
+          id: "location-1",
+          expectedCents: 20000,
+          receivedCents: 20000,
+          openBalanceCents: 0,
+          lastPaymentAtIso: "2026-07-03T12:00:00.000Z",
+        }),
+        expect.objectContaining({
+          id: "location-2",
+          expectedCents: 15000,
+          receivedCents: 0,
+          openBalanceCents: 15000,
+          pendingReceiptCount: 1,
+        }),
+      ]),
+    });
+  });
+
+  it("rejeita painel financeiro sem auth ou periodo invalido", async () => {
+    await expect(getAdminLocationBillingSummary({
+      data: {periodKey: "2026-07"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+
+    await expect(getAdminLocationBillingSummary({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {periodKey: "2026-13"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
   });
 
   it("transfere owner como admin e remove novo owner da lista de managers", async () => {

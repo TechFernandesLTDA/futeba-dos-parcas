@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T03:21:58.473Z",
+  "generatedAt": "2026-06-29T04:26:01.634Z",
   "notes": [
+    {
+      "version": "1.43.17",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Admin ganha painel financeiro de quadras monetizadas",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de gerenciamento de quadras mostra MRR previsto, recebido no período, vencido, trial e suspenso.",
+        "Admins conseguem filtrar quadras por vencimento, cidade, dono, status comercial, publicação, tipo e comodidades.",
+        "Cada quadra passa a exibir recebido, saldo aberto e comprovantes pendentes do período selecionado.",
+        "Admins podem exportar o resumo financeiro do período em CSV.",
+        "O resumo financeiro vem do backend, evitando cálculo sensível e limitado no client."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3124,
+        3119,
+        3086,
+        3084
+      ]
+    },
     {
       "version": "1.43.16",
       "buildNumber": null,
