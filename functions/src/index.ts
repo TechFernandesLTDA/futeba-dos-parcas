@@ -2343,3 +2343,7 @@ export {joinPublicGame} from "./games/join-public-game";
 // ADMIN CRM
 // ==========================================
 export {searchAdminUsers} from "./admin/user-crm";
+export {
+  requestVenueOwnerOnboarding,
+  reviewVenueOwnerOnboarding,
+} from "./admin/venue-owner-onboarding";

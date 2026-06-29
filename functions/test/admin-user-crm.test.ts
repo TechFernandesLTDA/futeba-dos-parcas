@@ -7,6 +7,7 @@ type FakeDoc = {
 
 const mockUsersGet = jest.fn();
 const mockLocationsGet = jest.fn();
+const mockOnboardingGet = jest.fn();
 const mockSecureCallable = jest.fn((_options, handler) => handler);
 
 function queryRef(get: jest.Mock) {
@@ -22,6 +23,7 @@ jest.mock("../src/_db", () => ({
     collection: (name: string) => {
       if (name === "users") return queryRef(mockUsersGet);
       if (name === "locations") return queryRef(mockLocationsGet);
+      if (name === "venue_owner_onboarding") return queryRef(mockOnboardingGet);
       throw new Error(`Unexpected collection ${name}`);
     },
   }),
@@ -88,6 +90,17 @@ describe("searchAdminUsers", () => {
         }),
       ],
     });
+    mockOnboardingGet.mockResolvedValue({
+      docs: [
+        userDoc("owner-old", {
+          status: "IN_REVIEW",
+          contact_name: "Dono Antigo",
+          contact_email: "dono.antigo@test.com",
+          business_name: "Arena Antiga",
+          notes: "Quero publicar a quadra principal.",
+        }),
+      ],
+    });
 
     let searchAdminUsers: (request: unknown) => Promise<unknown>;
     jest.isolateModules(() => {
@@ -113,6 +126,10 @@ describe("searchAdminUsers", () => {
           monthlyFeeCents: number | null;
           managersCount: number;
         }>;
+        ownerOnboarding: {
+          status: string;
+          businessName: string | null;
+        } | null;
       }>;
       totalMatched: number;
     };
@@ -134,6 +151,10 @@ describe("searchAdminUsers", () => {
         managersCount: 0,
       }),
     ]));
+    expect(result.users[0].ownerOnboarding).toMatchObject({
+      status: "IN_REVIEW",
+      businessName: "Arena Antiga",
+    });
   });
 
   it("registra callable admin-only com rate limit dedicado", () => {

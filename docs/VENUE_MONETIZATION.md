@@ -26,6 +26,8 @@ Legacy venues that are already `is_active == true` and `is_verified == true` are
 
 The client cannot directly write publication or billing fields unless the caller is `ADMIN`. Sensitive operations should go through Cloud Functions:
 
+- `requestVenueOwnerOnboarding`
+- `reviewVenueOwnerOnboarding`
 - `setLocationPublicationStatus`
 - `setLocationSubscription`
 - `registerLocationSubscriptionPayment`
@@ -35,6 +37,34 @@ The client cannot directly write publication or billing fields unless the caller
 - `removeLocationManager`
 
 Each function writes both `locations/{locationId}/commercial_events` and global `audit_logs`.
+
+## Owner Commercial Onboarding
+
+The controlled path from player to field owner is stored in
+`venue_owner_onboarding/{ownerUid}`.
+
+Statuses:
+
+- `LEAD`: commercial interest exists, but has not been submitted for review.
+- `IN_REVIEW`: owner submitted contact/business information and accepted that
+  publication and billing require admin approval.
+- `APPROVED`: admin approved the commercial onboarding and the user is promoted
+  to `FIELD_OWNER`.
+- `REJECTED`: admin rejected the request with a reason; the owner can resubmit.
+- `SUSPENDED` / `CANCELLED`: admin-only terminal/blocked states.
+
+Security rules allow the owner and admins to read the onboarding document and
+event log, but deny all client writes. All writes must go through Cloud
+Functions:
+
+- `requestVenueOwnerOnboarding`: authenticated owner submits or updates an
+  `IN_REVIEW` request. It never grants `FIELD_OWNER`.
+- `reviewVenueOwnerOnboarding`: admin-only review. Approval requires checklist
+  confirmation for contact, locations, terms, and billing; approval synchronizes
+  Firebase Auth custom claims and `users/{uid}.role`.
+
+The admin user CRM includes the onboarding status so admins can review the
+request from the same commercial profile used to inspect linked venues.
 
 Owner/manager access must not be granted by editing `locations/{locationId}.managers`
 directly from the client. Admins can transfer `owner_id` through

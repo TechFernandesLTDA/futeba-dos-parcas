@@ -26,6 +26,7 @@ import {
   TextField,
   Alert,
   Checkbox,
+  FormControlLabel,
   MenuItem,
   Table,
   TableBody,
@@ -47,8 +48,10 @@ import {
   OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import {
+  reviewVenueOwnerOnboarding,
   searchAdminUsers,
   setUserRole as setUserRoleCallable,
+  type AdminOwnerOnboardingSummary,
   type AdminOwnerLocationSummary,
   type AdminUserCrmRow,
   type AdminUserSearchResponse,
@@ -93,6 +96,7 @@ interface OwnerSummary {
 interface OwnerProfile {
   summary: OwnerSummary;
   locations: AdminOwnerLocationSummary[];
+  onboarding: AdminOwnerOnboardingSummary | null;
 }
 
 const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
@@ -145,6 +149,14 @@ export const UserManagementScreen: React.FC = () => {
   const [ownerSummaries, setOwnerSummaries] = useState<Record<string, OwnerSummary>>({});
   const [ownerProfiles, setOwnerProfiles] = useState<Record<string, OwnerProfile>>({});
   const [confirmText, setConfirmText] = useState('');
+  const [onboardingReviewReason, setOnboardingReviewReason] = useState('');
+  const [onboardingReviewLoading, setOnboardingReviewLoading] = useState<string | null>(null);
+  const [onboardingChecklist, setOnboardingChecklist] = useState({
+    contactReviewed: false,
+    locationsReviewed: false,
+    termsReviewed: false,
+    billingReviewed: false,
+  });
   const [searchMeta, setSearchMeta] = useState<{
     totalMatched: number;
     scannedUsers: number;
@@ -172,6 +184,7 @@ export const UserManagementScreen: React.FC = () => {
       acc[item.id] = {
         summary: item.ownerSummary,
         locations: item.ownerLocations || [],
+        onboarding: item.ownerOnboarding,
       };
       return acc;
     }, {});
@@ -377,6 +390,67 @@ export const UserManagementScreen: React.FC = () => {
   };
 
   const selectedOwnerProfile = selectedUser ? ownerProfiles[selectedUser.id] : undefined;
+  const selectedOnboarding = selectedOwnerProfile?.onboarding;
+  const onboardingCanApprove = Object.values(onboardingChecklist).every(Boolean);
+  const onboardingNeedsReview = selectedOnboarding &&
+    ['IN_REVIEW', 'REJECTED', 'SUSPENDED'].includes(selectedOnboarding.status);
+
+  const handleOnboardingChecklist = (field: keyof typeof onboardingChecklist) => {
+    setOnboardingChecklist((current) => ({ ...current, [field]: !current[field] }));
+  };
+
+  const handleReviewOnboarding = async (decision: 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'CANCELLED') => {
+    if (!selectedUser || !selectedOnboarding) return;
+    if (decision === 'APPROVED' && !onboardingCanApprove) {
+      showError('Revise todo o checklist antes de aprovar.');
+      return;
+    }
+    if (decision !== 'APPROVED' && !onboardingReviewReason.trim()) {
+      showError('Informe o motivo da decisão.');
+      return;
+    }
+    setOnboardingReviewLoading(decision);
+    try {
+      const response = await reviewVenueOwnerOnboarding({
+        ownerUid: selectedUser.id,
+        decision,
+        reason: onboardingReviewReason.trim() || null,
+        checklist: decision === 'APPROVED' ? onboardingChecklist : null,
+      });
+      const nextStatus = response.data.status;
+      setOwnerProfiles((current) => ({
+        ...current,
+        [selectedUser.id]: {
+          ...(current[selectedUser.id] || { summary: ownerSummaries[selectedUser.id], locations: [] }),
+          onboarding: {
+            ...selectedOnboarding,
+            status: nextStatus,
+            reviewReason: onboardingReviewReason.trim() || null,
+            reviewedAtIso: new Date().toISOString(),
+          },
+        },
+      }));
+      if (decision === 'APPROVED') {
+        setUsers((current) => current.map((user) => (
+          user.id === selectedUser.id ? { ...user, role: 'FIELD_OWNER' } : user
+        )));
+        setSelectedUser((current) => current ? { ...current, role: 'FIELD_OWNER' } : current);
+      }
+      setOnboardingReviewReason('');
+      setOnboardingChecklist({
+        contactReviewed: false,
+        locationsReviewed: false,
+        termsReviewed: false,
+        billingReviewed: false,
+      });
+      showSuccess(`Onboarding ${nextStatus.toLowerCase()} para ${selectedUser.name}.`);
+    } catch (error) {
+      logger.error('Error reviewing owner onboarding:', error);
+      showError(getFunctionsErrorMessage(error, 'reviewVenueOwnerOnboarding', 'Não foi possível revisar o onboarding.'));
+    } finally {
+      setOnboardingReviewLoading(null);
+    }
+  };
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -738,6 +812,106 @@ export const UserManagementScreen: React.FC = () => {
                       <Typography variant="body2">{selectedUser.updatedAt ? selectedUser.updatedAt.toLocaleDateString() : 'Não informada'}</Typography>
                     </Box>
                   </Box>
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined" sx={{ mb: 2 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="subtitle2">Onboarding comercial</Typography>
+                    <Chip
+                      label={selectedOnboarding?.status || 'Sem solicitação'}
+                      size="small"
+                      color={selectedOnboarding?.status === 'APPROVED' ? 'success' : selectedOnboarding?.status === 'IN_REVIEW' ? 'info' : 'default'}
+                      variant={selectedOnboarding ? 'filled' : 'outlined'}
+                    />
+                  </Box>
+                  {selectedOnboarding ? (
+                    <Box sx={{ display: 'grid', gap: 1.25 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Responsável: {selectedOnboarding.contactName || selectedUser.name} · {selectedOnboarding.contactEmail || selectedUser.email || 'email não informado'} · {selectedOnboarding.phone || selectedUser.phone || 'telefone não informado'}
+                      </Typography>
+                      {selectedOnboarding.businessName && (
+                        <Typography variant="body2" color="text.secondary">
+                          Empresa/quadra: {selectedOnboarding.businessName}
+                        </Typography>
+                      )}
+                      {selectedOnboarding.notes && (
+                        <Alert severity="info">{selectedOnboarding.notes}</Alert>
+                      )}
+                      {selectedOnboarding.reviewReason && (
+                        <Alert severity="warning">Motivo anterior: {selectedOnboarding.reviewReason}</Alert>
+                      )}
+                      {onboardingNeedsReview && (
+                        <Box sx={{ display: 'grid', gap: 1 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            Para aprovar, confirme que contato, quadras, termos e cobrança foram revisados.
+                          </Typography>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 0.5 }}>
+                            <FormControlLabel
+                              control={<Checkbox checked={onboardingChecklist.contactReviewed} onChange={() => handleOnboardingChecklist('contactReviewed')} />}
+                              label="Contato revisado"
+                            />
+                            <FormControlLabel
+                              control={<Checkbox checked={onboardingChecklist.locationsReviewed} onChange={() => handleOnboardingChecklist('locationsReviewed')} />}
+                              label="Quadras revisadas"
+                            />
+                            <FormControlLabel
+                              control={<Checkbox checked={onboardingChecklist.termsReviewed} onChange={() => handleOnboardingChecklist('termsReviewed')} />}
+                              label="Termos revisados"
+                            />
+                            <FormControlLabel
+                              control={<Checkbox checked={onboardingChecklist.billingReviewed} onChange={() => handleOnboardingChecklist('billingReviewed')} />}
+                              label="Cobrança revisada"
+                            />
+                          </Box>
+                          <TextField
+                            label="Motivo/observação da revisão"
+                            value={onboardingReviewReason}
+                            onChange={(event) => setOnboardingReviewReason(event.target.value)}
+                            size="small"
+                            multiline
+                            minRows={2}
+                            inputProps={{ maxLength: 800 }}
+                          />
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="success"
+                              disabled={!!onboardingReviewLoading || !onboardingCanApprove}
+                              startIcon={onboardingReviewLoading === 'APPROVED' ? <CircularProgress size={16} /> : null}
+                              onClick={() => handleReviewOnboarding('APPROVED')}
+                            >
+                              Aprovar e promover
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="warning"
+                              disabled={!!onboardingReviewLoading}
+                              onClick={() => handleReviewOnboarding('REJECTED')}
+                            >
+                              Rejeitar
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              disabled={!!onboardingReviewLoading}
+                              onClick={() => handleReviewOnboarding('SUSPENDED')}
+                            >
+                              Suspender
+                            </Button>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      Este usuário ainda não abriu solicitação comercial pelo app.
+                    </Typography>
+                  )}
                 </CardContent>
               </Card>
 

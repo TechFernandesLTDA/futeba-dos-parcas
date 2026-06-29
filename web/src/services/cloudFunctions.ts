@@ -37,6 +37,18 @@ export interface AdminOwnerLocationSummary {
   updatedAtIso: string | null;
 }
 
+export interface AdminOwnerOnboardingSummary {
+  status: VenueOwnerOnboardingStatus;
+  submittedAtIso: string | null;
+  reviewedAtIso: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  phone: string | null;
+  businessName: string | null;
+  notes: string | null;
+  reviewReason: string | null;
+}
+
 export interface AdminUserCrmRow {
   id: string;
   name: string;
@@ -50,6 +62,7 @@ export interface AdminUserCrmRow {
   level: number;
   ownerSummary: AdminOwnerSummary;
   ownerLocations: AdminOwnerLocationSummary[];
+  ownerOnboarding: AdminOwnerOnboardingSummary | null;
 }
 
 export interface AdminUserSearchResponse {
@@ -71,6 +84,50 @@ export const searchAdminUsers = httpsCallable<
   },
   AdminUserSearchResponse
 >(functions, 'searchAdminUsers');
+
+export type VenueOwnerOnboardingStatus =
+  | 'LEAD'
+  | 'IN_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'SUSPENDED'
+  | 'CANCELLED';
+
+export interface VenueOwnerOnboardingResponse {
+  success: boolean;
+  ownerUid: string;
+  status: VenueOwnerOnboardingStatus;
+  role?: string;
+}
+
+export const requestVenueOwnerOnboarding = httpsCallable<
+  {
+    contactName?: string | null;
+    contactEmail?: string | null;
+    phone?: string | null;
+    businessName?: string | null;
+    commercialDocument?: string | null;
+    notes?: string | null;
+    locationIds?: string[];
+    termsAccepted?: boolean | null;
+  },
+  VenueOwnerOnboardingResponse
+>(functions, 'requestVenueOwnerOnboarding');
+
+export const reviewVenueOwnerOnboarding = httpsCallable<
+  {
+    ownerUid: string;
+    decision: 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'CANCELLED';
+    reason?: string | null;
+    checklist?: {
+      contactReviewed?: boolean;
+      locationsReviewed?: boolean;
+      termsReviewed?: boolean;
+      billingReviewed?: boolean;
+    } | null;
+  },
+  VenueOwnerOnboardingResponse
+>(functions, 'reviewVenueOwnerOnboarding');
 
 export const deleteLocation = httpsCallable<
   { locationId: string },

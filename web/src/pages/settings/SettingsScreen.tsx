@@ -25,6 +25,7 @@ import {
   TextField,
 } from '@mui/material';
 import {
+  Business as BusinessIcon,
   Person as PersonIcon,
   Palette as PaletteIcon,
   Info as InfoIcon,
@@ -250,6 +251,16 @@ export const SettingsScreen: React.FC = () => {
                     <NotificationsIcon />
                   </ListItemIcon>
                   <ListItemText primary={t('nav.notifications')} secondary={t('settings.notificationsPrefs')} />
+                </ListItemButton>
+                <Divider />
+                <ListItemButton onClick={() => navigate('/owner/onboarding')}>
+                  <ListItemIcon>
+                    <BusinessIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Cadastrar minha quadra"
+                    secondary="Solicite aprovação comercial para virar dono de quadra"
+                  />
                 </ListItemButton>
                 <Divider />
                 {user?.role === 'ADMIN' && (
