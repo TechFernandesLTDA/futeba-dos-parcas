@@ -7,7 +7,7 @@ fixtures de autenticação por role (PLAYER, FIELD_OWNER, ADMIN).
 
 ## Pré-requisitos
 
-- Node 20 (`.nvmrc` — rode `nvm use` na raiz do projeto)
+- Node 22 (`.nvmrc` — rode `nvm use` na raiz do projeto)
 - Firebase CLI instalado (`npm install -g firebase-tools`)
 - Dependências instaladas: `cd web && npm install`
 
@@ -132,6 +132,25 @@ VITE_USE_EMULATOR=true \
 npx playwright test --grep "fixtures por role"
 ```
 
+### QA visual das telas novas web (desktop + mobile)
+
+```bash
+cd web
+FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+VITE_USE_EMULATOR=true \
+npx playwright test e2e/visual-new-screens.spec.ts
+```
+
+Este spec roda nos projetos `chromium` e `mobile-chrome` do Playwright e valida:
+
+- ausência de overflow horizontal;
+- conteúdo principal visível depois do carregamento;
+- nenhum elemento renderizado fora da viewport;
+- ações com alvo mínimo de 44x44px no mobile.
+
+Toda nova tela web de administração, quadras ou portal do dono deve entrar neste
+spec quando for criada ou alterada.
+
 ### Com UI interativa (debug)
 
 ```bash
@@ -172,6 +191,7 @@ web/e2e/
 │   └── index.ts       # test.extend<{ playerPage, fieldOwnerPage, adminPage }>
 ├── auth.spec.ts       # Testes de auth (UI pública + smoke fixtures)
 ├── navigation.spec.ts # Testes de navegação
+├── visual-new-screens.spec.ts # QA visual desktop/mobile das telas novas
 ├── globalSetup.ts     # Seed automático antes dos testes
 └── README.md          # Este arquivo
 

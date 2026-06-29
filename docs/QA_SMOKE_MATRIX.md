@@ -1,6 +1,6 @@
 # QA Smoke Matrix
 
-Last updated: 2026-06-21
+Last updated: 2026-06-29
 
 This matrix is the repeatable checklist for Plato or any QA/E2E pass. Keep it focused: it should catch regressions in real user flows without becoming a full release certification every time.
 
@@ -11,7 +11,7 @@ Current test surface:
 | Area | Location | Count / Shape |
 | --- | --- | --- |
 | Web unit/integration | `web/src/**/*.test.*` | 85 files |
-| Web E2E | `web/e2e/*.spec.ts` | 5 specs |
+| Web E2E | `web/e2e/*.spec.ts` | 6 specs |
 | Functions Jest | `functions/test/**/*.test.ts` | 57 files |
 | Firestore rules | `firestore-rules-tests/src/*.test.ts` | 31 specs |
 | Android JVM | `app/src/test/**/*` | 47 files |
@@ -36,6 +36,17 @@ npm test
 cd web
 nvm use
 npm run test:e2e
+```
+
+For the new admin, field-owner and locations screens, run the dedicated visual
+contract on both Playwright projects (`chromium` and `mobile-chrome`):
+
+```bash
+cd web
+nvm use
+FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+VITE_USE_EMULATOR=true \
+npx playwright test e2e/visual-new-screens.spec.ts
 ```
 
 For local production-like route testing:
@@ -97,6 +108,7 @@ Real SMS should be a controlled manual smoke or staging-only run. Do not consume
 | --- | --- | --- |
 | Route-to-route navigation | new page starts at top, top bar does not cover header content | Playwright |
 | Mobile top bar / bottom nav | no overlap, no horizontal overflow, touch targets at least 44px | Playwright screenshot/a11y assertions |
+| New admin/locations/owner screens | `/locations`, `/location/create`, `/owner/dashboard`, `/owner/onboarding`, `/admin/users`, `/admin/performance` render on desktop and mobile with no overflow, no offscreen content and 44px mobile actions | `web/e2e/visual-new-screens.spec.ts` |
 | Forms on mobile | inputs visible with keyboard pressure, submit/loading states do not shift layout | Playwright manual-assisted |
 | Loading/error/empty/success | all screens touched by the change expose the four states | Component tests + visual smoke |
 | Release notes/changelog | latest version appears in app surface and fallback JSON | Vitest + production smoke |
@@ -154,7 +166,7 @@ Before production deploy or PR ready-for-review:
 
 ## Known Gaps
 
-- No dedicated visual snapshot baseline exists yet for key web routes/viewports.
+- Pixel-perfect visual snapshot baselines are still not used; current coverage is a visual contract focused on layout breakage, viewport overflow and mobile touch targets.
 - Google login and real SMS need a controlled strategy: emulator/mock in CI, manual smoke in staging/production only when necessary.
 - Some older docs mention Node 20; current repo rule is Node 22.
 - Macrobenchmark documentation and workflow gates may not fully match; verify before treating perf upload as a hard pass/fail gate.

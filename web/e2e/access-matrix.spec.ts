@@ -217,10 +217,14 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
  * @param selector String do selector (texto ou role)
  * @param type Tipo: 'text', 'role', ou 'heading'
  */
-function selectLocator(page: Page, selector: string, type: string | undefined) {
+function selectLocator(
+  page: Page,
+  selector: string,
+  type: AccessMatrixEntry['expectedElementSelector']
+) {
   switch (type) {
     case 'role':
-      return page.getByRole(selector);
+      return page.getByRole(selector as Parameters<Page['getByRole']>[0]);
     case 'heading':
       return page.getByRole('heading', { name: selector });
     case 'text':
