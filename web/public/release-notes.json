@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T21:46:20.025Z",
+  "generatedAt": "2026-06-29T22:40:50.823Z",
   "notes": [
+    {
+      "version": "1.43.24",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Donos de quadra ganham painel comercial com checklist e financeiro",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O dashboard do dono de quadra agora mostra status de cadastro, aprovação, publicação e mensalidade em cada unidade.",
+        "O painel resume jogos recentes, próximos jogos, avaliação média, preço médio por hora e pendências comerciais.",
+        "Cada quadra ganhou atalhos mais claros para editar cadastro, revisar campos e horários, atualizar fotos e enviar comprovantes.",
+        "Quando o dono ainda não cadastrou nenhuma quadra, a tela orienta o primeiro passo com estado vazio guiado."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3103
+      ]
+    },
     {
       "version": "1.43.23",
       "buildNumber": null,

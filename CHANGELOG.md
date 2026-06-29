@@ -69,6 +69,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.24] - 2026-06-29
+
+#### Adicionado
+- Novo helper testável `ownerDashboard` para centralizar métricas, checklist comercial, preço médio e status por quadra.
+- Cobertura unitária para a lógica agregada do dashboard e para os estados principais da `FieldOwnerDashboardScreen`.
+
+#### Mudado
+- `FieldOwnerDashboardScreen` foi reestruturada para um layout responsivo com cards SaaS, blocos de ação e fluxo de comprovantes integrado.
+- Textos PT-BR, EN e ES do dashboard do dono de quadra foram expandidos para cobrir os novos estados e ações.
+
+_Issues: #3103_
+
 ### [1.43.23] - 2026-06-29
 
 #### Adicionado
