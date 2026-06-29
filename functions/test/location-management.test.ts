@@ -756,10 +756,68 @@ describe("location commercial admin callables", () => {
       type: "SUBSCRIPTION_STATUS_CHANGED",
       actor_user_id: "admin-1",
       previous_subscription_status: "TRIAL",
+      previous_commercial_status: "TRIAL",
       next_subscription_status: "ACTIVE",
+      next_commercial_status: "ACTIVE",
       monthly_fee_cents: 12990,
       billing_due_day: 10,
       reason: "Plano fundador",
+    });
+  });
+
+  it("preserva status anterior no ledger ao alterar assinatura suspensa", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+    });
+
+    await setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        subscriptionStatus: "CANCELLED",
+        monthlyFeeCents: 0,
+        billingDueDay: null,
+        adminNotes: "Contrato encerrado",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "SUBSCRIPTION_STATUS_CHANGED",
+      previous_subscription_status: "OVERDUE",
+      next_subscription_status: "CANCELLED",
+      previous_commercial_status: "SUSPENDED",
+      next_commercial_status: "CANCELLED",
+      monthly_fee_cents: 0,
+      billing_due_day: null,
+      reason: "Contrato encerrado",
+    });
+  });
+
+  it("registra assinatura de quadra legada sem status anterior no ledger", async () => {
+    firestoreStore.set("locations/location-1", {
+      name: "Arena Parcas",
+      owner_id: "owner-1",
+      managers: [],
+    });
+
+    await setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        subscriptionStatus: "TRIAL",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "SUBSCRIPTION_STATUS_CHANGED",
+      previous_subscription_status: null,
+      next_subscription_status: "TRIAL",
+      previous_commercial_status: null,
+      next_commercial_status: "TRIAL",
     });
   });
 
@@ -867,11 +925,71 @@ describe("location commercial admin callables", () => {
       period_key: "2026-07",
       review_status: "APPROVED",
       previous_subscription_status: "TRIAL",
+      previous_commercial_status: "TRIAL",
       next_subscription_status: "ACTIVE",
+      next_commercial_status: "ACTIVE",
       reason: "Pago antecipado",
     });
     expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
     expect(collectionSize("audit_logs")).toBe(1);
+  });
+
+  it("registra pagamento com status comercial anterior no ledger", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+    });
+
+    await registerLocationSubscriptionPayment({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        amountCents: 15000,
+        periodKey: "2026-09",
+        method: "boleto",
+        notes: "Regularizado",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_REGISTERED",
+      amount_cents: 15000,
+      period_key: "2026-09",
+      method: "boleto",
+      previous_subscription_status: "OVERDUE",
+      next_subscription_status: "ACTIVE",
+      previous_commercial_status: "SUSPENDED",
+      next_commercial_status: "ACTIVE",
+      reason: "Regularizado",
+    });
+  });
+
+  it("registra pagamento de quadra legada sem status anterior no ledger", async () => {
+    firestoreStore.set("locations/location-1", {
+      name: "Arena Parcas",
+      owner_id: "owner-1",
+      managers: [],
+    });
+
+    await registerLocationSubscriptionPayment({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        amountCents: 15000,
+        periodKey: "2026-10",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_REGISTERED",
+      previous_subscription_status: null,
+      next_subscription_status: "ACTIVE",
+      previous_commercial_status: null,
+      next_commercial_status: "ACTIVE",
+    });
   });
 
   it("rejeita pagamento sem auth, periodo, valor ou data valida", async () => {
@@ -977,10 +1095,69 @@ describe("location commercial admin callables", () => {
       review_status: "PENDING_REVIEW",
       previous_subscription_status: "TRIAL",
       next_subscription_status: "TRIAL",
+      previous_commercial_status: "TRIAL",
+      next_commercial_status: "TRIAL",
       reason: "Enviado pelo dono",
     });
     expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
     expect(collectionSize("audit_logs")).toBe(1);
+  });
+
+  it("envio de comprovante mantem assinatura ativa no ledger sem reativar nada", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+    });
+
+    await submitLocationSubscriptionReceipt({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        amountCents: 12990,
+        periodKey: "2026-08",
+        receiptStoragePath:
+          "locations/location-1/subscription_receipts/owner-1/2026-08.pdf",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_SUBMITTED",
+      previous_subscription_status: "ACTIVE",
+      next_subscription_status: "ACTIVE",
+      previous_commercial_status: "ACTIVE",
+      next_commercial_status: "ACTIVE",
+      review_status: "PENDING_REVIEW",
+    });
+  });
+
+  it("envio de comprovante de quadra legada mantem status nulo no ledger", async () => {
+    firestoreStore.set("locations/location-1", {
+      name: "Arena Parcas",
+      owner_id: "owner-1",
+      managers: [],
+    });
+
+    await submitLocationSubscriptionReceipt({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        amountCents: 12990,
+        periodKey: "2026-09",
+        receiptStoragePath:
+          "locations/location-1/subscription_receipts/owner-1/2026-09.pdf",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_SUBMITTED",
+      previous_subscription_status: null,
+      next_subscription_status: null,
+      previous_commercial_status: null,
+      next_commercial_status: null,
+    });
   });
 
   it("bloqueia comprovante de manager, path fora do owner e valores invalidos", async () => {
@@ -1081,9 +1258,50 @@ describe("location commercial admin callables", () => {
       review_status: "APPROVED",
       previous_subscription_status: "TRIAL",
       next_subscription_status: "ACTIVE",
+      previous_commercial_status: "TRIAL",
+      next_commercial_status: "ACTIVE",
       reason: "Conferido no banco",
     });
     expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+  });
+
+  it("aprova comprovante atrasado e registra metodo e status anterior no ledger", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 15990,
+      period_key: "2026-08",
+      method: "pix",
+      paid_at: new Date("2026-08-08T12:00:00.000Z"),
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-08.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_APPROVED",
+      amount_cents: 15990,
+      period_key: "2026-08",
+      method: "pix",
+      previous_subscription_status: "OVERDUE",
+      next_subscription_status: "ACTIVE",
+      previous_commercial_status: "SUSPENDED",
+      next_commercial_status: "ACTIVE",
+    });
   });
 
   it("admin rejeita comprovante pendente sem alterar assinatura", async () => {
@@ -1127,8 +1345,84 @@ describe("location commercial admin callables", () => {
       period_key: "2026-07",
       payment_id: "payment-1",
       review_status: "REJECTED",
+      previous_subscription_status: "TRIAL",
       next_subscription_status: "TRIAL",
+      previous_commercial_status: "TRIAL",
+      next_commercial_status: "TRIAL",
       reason: "Valor divergente",
+    });
+  });
+
+  it("rejeita comprovante legado malformado sem fabricar dados no ledger", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: "15990",
+      period_key: 202608,
+      method: 42,
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/legacy.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "REJECTED",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_REJECTED",
+      amount_cents: null,
+      period_key: null,
+      method: null,
+      previous_subscription_status: "ACTIVE",
+      next_subscription_status: "ACTIVE",
+      previous_commercial_status: "ACTIVE",
+      next_commercial_status: "ACTIVE",
+      effective_at: {_type: "ServerTimestamp"},
+    });
+  });
+
+  it("rejeita comprovante de quadra legada sem fabricar status no ledger", async () => {
+    firestoreStore.set("locations/location-1", {
+      name: "Arena Parcas",
+      owner_id: "owner-1",
+      managers: [],
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 12990,
+      period_key: "2026-09",
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-09.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "REJECTED",
+      },
+    });
+
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_REJECTED",
+      previous_subscription_status: null,
+      next_subscription_status: null,
+      previous_commercial_status: null,
+      next_commercial_status: null,
     });
   });
 
