@@ -221,8 +221,9 @@ export const UserManagementScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching admin users:', error);
-          setFetchError(getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar usuários.'));
-          showErrorRef.current('Erro ao carregar usuários.');
+          const message = getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar usuários.');
+          setFetchError(message);
+          showErrorRef.current(message);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -249,8 +250,9 @@ export const UserManagementScreen: React.FC = () => {
       applySearchResponse(response.data, true);
     } catch (error) {
       logger.error('Error loading more users:', error);
-      setFetchError(getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar mais usuários.'));
-      showError(t('feedback.admin.loadMoreUsersError'));
+      const message = getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar mais usuários.');
+      setFetchError(message);
+      showError(message);
     } finally {
       setLoadingMore(false);
     }

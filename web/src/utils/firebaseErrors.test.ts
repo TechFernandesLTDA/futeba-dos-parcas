@@ -25,7 +25,7 @@ vi.mock('firebase/firestore', () => ({
   limit: vi.fn((...args) => args[0]),
 }));
 
-import { getAuthErrorMessage, getFirestoreErrorMessage } from './firebaseErrors';
+import { getAuthErrorMessage, getFirestoreErrorMessage, getFunctionsErrorMessage } from './firebaseErrors';
 
 describe('getAuthErrorMessage', () => {
   it('retorna mensagem PT-BR para auth/invalid-credential', () => {
@@ -99,5 +99,26 @@ describe('getFirestoreErrorMessage', () => {
   it('retorna mensagem padrão sem fallback', () => {
     const error = { code: 'unknown' };
     expect(getFirestoreErrorMessage(error)).toBe('Erro ao acessar dados. Tente novamente');
+  });
+});
+
+describe('getFunctionsErrorMessage', () => {
+  it('retorna mensagem acionável para failed-precondition', () => {
+    const error = { code: 'functions/failed-precondition' };
+    expect(getFunctionsErrorMessage(error, 'searchAdminUsers')).toBe(
+      'Operação temporariamente indisponível. Recarregue a página e tente novamente.'
+    );
+  });
+
+  it('retorna mensagem acionável para unavailable sem prefixo', () => {
+    const error = { code: 'unavailable' };
+    expect(getFunctionsErrorMessage(error, 'searchAdminUsers')).toBe(
+      'Servidor temporariamente indisponível. Recarregue a página e tente novamente.'
+    );
+  });
+
+  it('retorna fallback para código desconhecido de Functions', () => {
+    const error = { code: 'unknown' };
+    expect(getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro custom')).toBe('Erro custom');
   });
 });

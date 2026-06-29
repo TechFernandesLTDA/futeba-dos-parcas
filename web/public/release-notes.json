@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T14:10:49.670Z",
+  "generatedAt": "2026-06-29T14:29:18.117Z",
   "notes": [
+    {
+      "version": "1.43.19",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Web orienta melhor quando uma operação administrativa fica temporariamente indisponível",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de gerenciamento de usuários agora mostra no alerta e no toast a mesma mensagem contextual retornada pelo tratamento central de Cloud Functions.",
+        "Mensagens temporárias de indisponibilidade orientam recarregar a página e tentar novamente, reduzindo confusão durante rollouts ou instabilidades breves."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3149
+      ]
+    },
     {
       "version": "1.43.18",
       "buildNumber": null,
