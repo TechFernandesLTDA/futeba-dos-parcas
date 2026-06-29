@@ -1121,6 +1121,48 @@ describe("location commercial admin callables", () => {
     });
   });
 
+  it("preserva configuracao comercial em alteracao parcial de status", async () => {
+    const startsAt = new Date("2026-07-01T00:00:00.000Z");
+    const expiresAt = new Date("2026-07-31T23:59:59.000Z");
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      monthly_fee_cents: 12990,
+      billing_due_day: 10,
+      billing_starts_at: startsAt,
+      billing_expires_at: expiresAt,
+      admin_notes: "Plano fundador",
+    });
+
+    await setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        subscriptionStatus: "SUSPENDED",
+      },
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "SUSPENDED",
+      commercial_status: "SUSPENDED",
+      monthly_fee_cents: 12990,
+      billing_due_day: 10,
+      billing_starts_at: startsAt,
+      billing_expires_at: expiresAt,
+      admin_notes: "Plano fundador",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "SUBSCRIPTION_STATUS_CHANGED",
+      previous_subscription_status: "ACTIVE",
+      next_subscription_status: "SUSPENDED",
+      monthly_fee_cents: 12990,
+      billing_due_day: 10,
+      reason: null,
+    });
+  });
+
   it("registra assinatura de quadra legada sem status anterior no ledger", async () => {
     firestoreStore.set("locations/location-1", {
       name: "Arena Parcas",
@@ -1206,10 +1248,12 @@ describe("location commercial admin callables", () => {
     expect(firestoreStore.get("locations/location-1")).toMatchObject({
       subscription_status: "OVERDUE",
       commercial_status: "OVERDUE",
-      billing_starts_at: null,
-      billing_expires_at: null,
       admin_notes: null,
     });
+    expect(firestoreStore.get("locations/location-1"))
+      .not.toHaveProperty("billing_starts_at");
+    expect(firestoreStore.get("locations/location-1"))
+      .not.toHaveProperty("billing_expires_at");
   });
 
   it("registra pagamento e reativa assinatura da quadra", async () => {
