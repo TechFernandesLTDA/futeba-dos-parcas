@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.23] - 2026-06-29
+
+#### Adicionado
+- Novo helper testável `publicLocationFilters` para centralizar filtros, ordenação, distância, preço e funcionamento por horário.
+- Cobertura unitária para filtros públicos, ordenação, cálculo de distância, preço e horários overnight.
+
+#### Mudado
+- `LocationsMapScreen` usa estado único de filtros e métricas de campos por location para buscar tipo e menor preço com mais consistência.
+
+_Issues: #3105_
+
 ### [1.43.22] - 2026-06-29
 
 #### Adicionado

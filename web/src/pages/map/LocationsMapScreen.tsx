@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -17,6 +17,10 @@ import {
   Button,
   MenuItem,
   Stack,
+  Divider,
+  FormControlLabel,
+  Switch,
+  Tooltip,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import PageContainer from '../../components/common/PageContainer';
@@ -27,6 +31,10 @@ import {
   Add as AddIcon,
   Map as MapIcon,
   SportsSoccer as SoccerIcon,
+  Tune as TuneIcon,
+  RestartAlt as ResetIcon,
+  AccessTime as OpenNowIcon,
+  Place as PlaceIcon,
 } from '@mui/icons-material';
 import { collection, collectionGroup, query, orderBy, onSnapshot, limit, where, getDocs } from 'firebase/firestore';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
@@ -44,8 +52,19 @@ import {
   AMENITY_LABELS,
   COMMERCIAL_AMENITIES,
   isLocationCommerciallyAvailable,
-  locationHasAmenities,
 } from '../../types/location';
+import {
+  PUBLIC_LOCATION_SORT_LABELS,
+  PublicLocationFilterState,
+  countActivePublicLocationFilters,
+  filterAndSortPublicLocations,
+  formatHourlyPrice,
+  getDistanceKm,
+  getPublicLocationAmenities,
+  getPublicLocationAreaOptions,
+  isPublicLocationOpenAt,
+  parseHourlyPriceFilter,
+} from './publicLocationFilters';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../contexts/ToastContext';
@@ -54,6 +73,16 @@ import { createLogger } from '../../utils/logger';
 import { pageSpacing } from '../../theme/pageTokens';
 
 const logger = createLogger('LocationsMapScreen');
+
+const DEFAULT_PUBLIC_LOCATION_FILTERS: PublicLocationFilterState = {
+  searchQuery: '',
+  typeFilter: 'ALL',
+  areaFilter: 'ALL',
+  maxHourlyPrice: '',
+  amenityFilters: [],
+  openNowOnly: false,
+  sortBy: 'RELEVANCE',
+};
 
 function getFieldTypeLabel(type?: FieldType) {
   return FIELD_TYPE_CONFIG[type || 'OUTROS']?.label || FIELD_TYPE_CONFIG.OUTROS.label;
@@ -136,14 +165,13 @@ export const LocationsMapScreen: React.FC = () => {
 
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<PublicLocationFilterState>(DEFAULT_PUBLIC_LOCATION_FILTERS);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [errorState, setErrorState] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [typeFilter, setTypeFilter] = useState<'ALL' | FieldType>('ALL');
-  const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
-  const [maxHourlyPrice, setMaxHourlyPrice] = useState('');
   const [minPriceByLocation, setMinPriceByLocation] = useState<Record<string, number>>({});
+  const [fieldTypesByLocation, setFieldTypesByLocation] = useState<Record<string, FieldType[]>>({});
+  const [userPosition, setUserPosition] = useState<{ latitude: number; longitude: number } | null>(null);
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
@@ -181,15 +209,26 @@ export const LocationsMapScreen: React.FC = () => {
     const loadFieldPrices = async () => {
       try {
         const prices: Record<string, number> = {};
+        const fieldTypes: Record<string, Set<FieldType>> = {};
         const addField = (field: Field) => {
-          if (!field.locationId || field.isActive === false || !field.hourlyPrice) return;
+          if (!field.locationId || field.isActive === false) return;
+          if (field.type) {
+            fieldTypes[field.locationId] = fieldTypes[field.locationId] || new Set<FieldType>();
+            fieldTypes[field.locationId].add(field.type);
+          }
+          if (!field.hourlyPrice) return;
           prices[field.locationId] = Math.min(prices[field.locationId] || Number.MAX_SAFE_INTEGER, field.hourlyPrice);
         };
         const subFields = await getDocs(query(collectionGroup(db, 'fields'), where('is_active', '==', true), limit(500)));
         subFields.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
         const rootFields = await getDocs(query(collection(db, 'fields'), where('is_active', '==', true), limit(500)));
         rootFields.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
-        if (!cancelled) setMinPriceByLocation(prices);
+        if (!cancelled) {
+          setMinPriceByLocation(prices);
+          setFieldTypesByLocation(Object.fromEntries(
+            Object.entries(fieldTypes).map(([locationId, types]) => [locationId, Array.from(types)]),
+          ));
+        }
       } catch (err) {
         logger.error('Error loading field prices for public filters:', err);
       }
@@ -198,24 +237,61 @@ export const LocationsMapScreen: React.FC = () => {
     return () => { cancelled = true; };
   }, [retryCount]);
 
-  const handleAmenityFilter = (amenity: string) => {
-    setAmenityFilters((prev) =>
-      prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity],
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    let cancelled = false;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (cancelled) return;
+        setUserPosition({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      () => {
+        if (!cancelled) setUserPosition(null);
+      },
+      { enableHighAccuracy: false, maximumAge: 10 * 60 * 1000, timeout: 5000 },
     );
+
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleAmenityFilter = (amenity: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      amenityFilters: prev.amenityFilters.includes(amenity)
+        ? prev.amenityFilters.filter((item) => item !== amenity)
+        : [...prev.amenityFilters, amenity],
+    }));
   };
 
-  const filteredLocations = locations.filter((loc) => {
-    const q = searchQuery.trim().toLowerCase();
-    const maxPrice = maxHourlyPrice ? Number(maxHourlyPrice.replace(',', '.')) : null;
-    const locationPrice = minPriceByLocation[loc.id] || null;
-    const matchesSearch = !q ||
-      loc.name.toLowerCase().includes(q) ||
-      loc.city?.toLowerCase().includes(q) ||
-      loc.address?.toLowerCase().includes(q);
-    const matchesType = typeFilter === 'ALL' || loc.fieldType === typeFilter || loc.primaryFieldType === typeFilter;
-    const matchesPrice = maxPrice === null || !Number.isFinite(maxPrice) || (locationPrice !== null && locationPrice <= maxPrice);
-    return matchesSearch && matchesType && matchesPrice && locationHasAmenities(loc, amenityFilters);
-  });
+  const publicLocationMetrics = useMemo(() => ({
+    minPriceByLocation,
+    fieldTypesByLocation,
+    userPosition,
+  }), [fieldTypesByLocation, minPriceByLocation, userPosition]);
+
+  const areaOptions = useMemo(() => getPublicLocationAreaOptions(locations), [locations]);
+
+  const filteredLocations = useMemo(() => filterAndSortPublicLocations(
+    locations,
+    filters,
+    publicLocationMetrics,
+  ), [filters, locations, publicLocationMetrics]);
+
+  const activeFilterCount = countActivePublicLocationFilters(filters);
+  const maxPriceCents = parseHourlyPriceFilter(filters.maxHourlyPrice);
+
+  const resetFilters = () => setFilters(DEFAULT_PUBLIC_LOCATION_FILTERS);
+
+  useEffect(() => {
+    if (!selectedLocation) return;
+    if (!filteredLocations.some((location) => location.id === selectedLocation.id)) {
+      setSelectedLocation(null);
+    }
+  }, [filteredLocations, selectedLocation]);
 
   return (
     <>
@@ -244,59 +320,178 @@ export const LocationsMapScreen: React.FC = () => {
             Adicionar Local
           </Button>
         </Box>
-        <Box sx={{ px: 2, pb: 2 }}>
-          <Stack spacing={1}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder={t('placeholder.searchField')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label={t('a11y.searchFields')}
-              inputProps={{ maxLength: 200 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-              <TextField select size="small" label="Tipo" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'ALL' | FieldType)} fullWidth>
-                <MenuItem value="ALL">Todos</MenuItem>
-                {(Object.keys(FIELD_TYPE_CONFIG) as FieldType[]).map((type) => (
-                  <MenuItem key={type} value={type}>{FIELD_TYPE_CONFIG[type].label}</MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                size="small"
-                label="Até R$/h"
-                value={maxHourlyPrice}
-                onChange={(e) => setMaxHourlyPrice(e.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}
-                fullWidth
-                inputMode="decimal"
-              />
-            </Stack>
-            <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5 }}>
-              {COMMERCIAL_AMENITIES.map((amenity) => (
-                <Chip
-                  key={amenity}
-                  label={AMENITY_LABELS[amenity] || amenity}
-                  size="small"
-                  color={amenityFilters.includes(amenity) ? 'primary' : 'default'}
-                  variant={amenityFilters.includes(amenity) ? 'filled' : 'outlined'}
-                  onClick={() => handleAmenityFilter(amenity)}
-                  sx={{ flexShrink: 0 }}
-                />
-              ))}
-            </Box>
-          </Stack>
+        <Box sx={{ px: { xs: 1.5, sm: 2 }, pb: 2 }}>
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 3,
+              bgcolor: alpha(theme.palette.background.paper, 0.92),
+              boxShadow: `0 12px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`,
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
+              <Stack spacing={1.5}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <TuneIcon color="primary" />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      Encontre a quadra ideal
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {filteredLocations.length} de {locations.length} quadra{locations.length !== 1 ? 's' : ''} publicada{locations.length !== 1 ? 's' : ''}
+                    </Typography>
+                  </Box>
+                  {activeFilterCount > 0 && (
+                    <Chip size="small" color="primary" label={`${activeFilterCount} filtro${activeFilterCount > 1 ? 's' : ''}`} />
+                  )}
+                  <Tooltip title="Limpar filtros">
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={resetFilters}
+                        disabled={activeFilterCount === 0}
+                        aria-label="Limpar filtros de quadras"
+                      >
+                        <ResetIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Stack>
+
+                <Grid container spacing={1}>
+                  <Grid xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Buscar"
+                      placeholder="Nome, bairro, cidade ou endereço"
+                      value={filters.searchQuery}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, searchQuery: e.target.value }))}
+                      aria-label={t('a11y.searchFields')}
+                      inputProps={{ maxLength: 200 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid xs={12} sm={6} md={2}>
+                    <TextField
+                      select
+                      size="small"
+                      label="Tipo"
+                      value={filters.typeFilter}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, typeFilter: e.target.value as 'ALL' | FieldType }))}
+                      fullWidth
+                    >
+                      <MenuItem value="ALL">Todos</MenuItem>
+                      {(Object.keys(FIELD_TYPE_CONFIG) as FieldType[]).map((type) => (
+                        <MenuItem key={type} value={type}>{FIELD_TYPE_CONFIG[type].label}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid xs={12} sm={6} md={2}>
+                    <TextField
+                      select
+                      size="small"
+                      label="Região"
+                      value={filters.areaFilter}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, areaFilter: e.target.value }))}
+                      fullWidth
+                    >
+                      <MenuItem value="ALL">Todas</MenuItem>
+                      {areaOptions.map((area) => (
+                        <MenuItem key={area} value={area}>{area}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid xs={12} sm={6} md={2}>
+                    <TextField
+                      size="small"
+                      label="Até R$/h"
+                      placeholder="Ex.: 150"
+                      value={filters.maxHourlyPrice}
+                      onChange={(e) => setFilters((prev) => ({
+                        ...prev,
+                        maxHourlyPrice: e.target.value.replace(',', '.').replace(/[^\d.]/g, ''),
+                      }))}
+                      fullWidth
+                      inputMode="decimal"
+                      helperText={maxPriceCents ? `Limite ${formatHourlyPrice(maxPriceCents)}/h` : 'Preço máximo por hora'}
+                    />
+                  </Grid>
+                  <Grid xs={12} sm={6} md={2}>
+                    <TextField
+                      select
+                      size="small"
+                      label="Ordenar"
+                      value={filters.sortBy}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, sortBy: e.target.value as PublicLocationFilterState['sortBy'] }))}
+                      fullWidth
+                    >
+                      {Object.entries(PUBLIC_LOCATION_SORT_LABELS).map(([value, label]) => (
+                        <MenuItem key={value} value={value}>{label}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </Grid>
+
+                <Divider />
+
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                  <FormControlLabel
+                    control={(
+                      <Switch
+                        checked={filters.openNowOnly}
+                        onChange={(e) => setFilters((prev) => ({ ...prev, openNowOnly: e.target.checked }))}
+                        inputProps={{ 'aria-label': 'Mostrar somente quadras abertas agora' }}
+                      />
+                    )}
+                    label={(
+                      <Stack direction="row" spacing={0.75} alignItems="center">
+                        <OpenNowIcon fontSize="small" color="action" />
+                        <Typography variant="body2">Abertas agora</Typography>
+                      </Stack>
+                    )}
+                    sx={{ mr: { sm: 1 }, flexShrink: 0 }}
+                  />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 0.75,
+                      overflowX: { xs: 'auto', md: 'visible' },
+                      flexWrap: { xs: 'nowrap', md: 'wrap' },
+                      pb: { xs: 0.5, md: 0 },
+                      WebkitOverflowScrolling: 'touch',
+                    }}
+                  >
+                    {COMMERCIAL_AMENITIES.map((amenity) => {
+                      const selected = filters.amenityFilters.includes(amenity);
+                      return (
+                        <Chip
+                          key={amenity}
+                          label={AMENITY_LABELS[amenity] || amenity}
+                          size="small"
+                          color={selected ? 'primary' : 'default'}
+                          variant={selected ? 'filled' : 'outlined'}
+                          onClick={() => handleAmenityFilter(amenity)}
+                          sx={{ flexShrink: 0, cursor: 'pointer' }}
+                        />
+                      );
+                    })}
+                  </Box>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
         </Box>
       </Box>
 
       {/* Mapa */}
-      <Box sx={{ height: 300, position: 'relative' }}>
+      <Box sx={{ height: { xs: 240, md: 360 }, position: 'relative' }}>
         <LocationsMapView locations={filteredLocations} selectedLocation={selectedLocation} onLocationSelect={setSelectedLocation} />
       </Box>
 
@@ -314,74 +509,140 @@ export const LocationsMapScreen: React.FC = () => {
           />
         ) : (
           <Grid container spacing={2}>
-            {filteredLocations.map((location) => (
-              <Grid xs={12} sm={12} md={6} lg={4} xl={3} key={location.id}>
-                <Card
-                  role="button"
-                  tabIndex={0}
-                  aria-label={location.name}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      navigate(`/location/${location.id}`);
-                    }
-                  }}
-                  sx={{
-                    cursor: 'pointer',
-                    transition: (tr) => tr.transitions.create('transform', { duration: tr.transitions.duration.shorter }),
-                    '&:hover': { transform: 'scale(1.01)' },
-                  }}
-                  onClick={() => navigate(`/location/${location.id}`)}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      {location.photoUrl ? (
-                        <Box
-                          component="img"
-                          src={location.photoUrl}
-                          alt={location.name}
-                          loading="lazy"
-                          sx={{ width: 80, height: 80, borderRadius: 1, objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <Avatar
-                          variant="rounded"
-                          sx={{ width: 80, height: 80, bgcolor: theme.palette.primary.main }}
-                        >
-                          <SoccerIcon />
-                        </Avatar>
-                      )}
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" fontWeight={600}>
-                          {location.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" noWrap>
-                          {location.address}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <Rating value={location.rating || 0} size="small" readOnly />
-                          <Typography variant="caption" color="text.secondary">
-                            ({location.ratingCount || 0})
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                          <Chip label={getFieldTypeLabel(location.primaryFieldType || location.fieldType)} size="small" />
-                          <Chip label={`${location.fieldCount || 1} campos`} size="small" />
-                          {minPriceByLocation[location.id] && (
+            {filteredLocations.map((location) => {
+              const minPrice = minPriceByLocation[location.id] || null;
+              const priceLabel = formatHourlyPrice(minPrice);
+              const distanceKm = getDistanceKm(location, userPosition);
+              const openNow = isPublicLocationOpenAt(location);
+              const amenityLabels = getPublicLocationAmenities(location)
+                .slice(0, 3)
+                .map((amenity) => AMENITY_LABELS[amenity] || amenity);
+              const locationArea = [location.district || location.neighborhood || location.region, location.city]
+                .filter(Boolean)
+                .join(', ');
+
+              return (
+                <Grid xs={12} sm={12} md={6} lg={4} xl={3} key={location.id}>
+                  <Card
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver detalhes de ${location.name}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/location/${location.id}`);
+                      }
+                    }}
+                    sx={{
+                      height: '100%',
+                      cursor: 'pointer',
+                      borderRadius: 3,
+                      transition: (tr) => tr.transitions.create(['transform', 'box-shadow', 'border-color'], { duration: tr.transitions.duration.shorter }),
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 16px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.32 : 0.12)}`,
+                        borderColor: alpha(theme.palette.primary.main, 0.4),
+                      },
+                      '&:focus-visible': {
+                        outline: `3px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                        outlineOffset: 2,
+                      },
+                    }}
+                    onClick={() => navigate(`/location/${location.id}`)}
+                  >
+                    <CardContent sx={{ height: '100%' }}>
+                      <Box sx={{ display: 'flex', gap: 1.5, height: '100%' }}>
+                        {location.photoUrl ? (
+                          <Box
+                            component="img"
+                            src={location.photoUrl}
+                            alt={location.name}
+                            loading="lazy"
+                            sx={{
+                              width: { xs: 92, sm: 104 },
+                              height: { xs: 104, sm: 116 },
+                              borderRadius: 2,
+                              objectFit: 'cover',
+                              flexShrink: 0,
+                              bgcolor: 'action.hover',
+                            }}
+                          />
+                        ) : (
+                          <Avatar
+                            variant="rounded"
+                            sx={{
+                              width: { xs: 92, sm: 104 },
+                              height: { xs: 104, sm: 116 },
+                              borderRadius: 2,
+                              bgcolor: alpha(theme.palette.primary.main, 0.14),
+                              color: 'primary.main',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <SoccerIcon />
+                          </Avatar>
+                        )}
+                        <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+                          <Stack direction="row" spacing={1} alignItems="flex-start">
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography variant="subtitle1" fontWeight={800} noWrap>
+                                {location.name}
+                              </Typography>
+                              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+                                <PlaceIcon sx={{ fontSize: 16, color: 'text.secondary', flexShrink: 0 }} />
+                                <Typography variant="body2" color="text.secondary" noWrap>
+                                  {locationArea || location.address}
+                                </Typography>
+                              </Stack>
+                            </Box>
                             <Chip
-                              label={`desde R$ ${minPriceByLocation[location.id]}/h`}
+                              label={openNow ? 'Aberta' : 'Ver horário'}
                               size="small"
-                              color="success"
-                              variant="outlined"
+                              color={openNow ? 'success' : 'default'}
+                              variant={openNow ? 'filled' : 'outlined'}
+                              sx={{ flexShrink: 0 }}
                             />
+                          </Stack>
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                            <Rating value={location.averageRating || location.rating || 0} size="small" readOnly />
+                            <Typography variant="caption" color="text.secondary">
+                              {location.ratingCount || location.reviewCount || 0} avaliação{(location.ratingCount || location.reviewCount || 0) !== 1 ? 'ões' : ''}
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                            <Chip label={getFieldTypeLabel(location.primaryFieldType || location.fieldType)} size="small" />
+                            <Chip label={`${location.fieldCount || 1} campo${(location.fieldCount || 1) !== 1 ? 's' : ''}`} size="small" />
+                            {priceLabel && (
+                              <Chip
+                                label={`desde ${priceLabel}/h`}
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                              />
+                            )}
+                            {distanceKm !== null && (
+                              <Chip
+                                label={`${distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`}`}
+                                size="small"
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+
+                          {amenityLabels.length > 0 && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              {amenityLabels.join(' · ')}
+                            </Typography>
                           )}
-                        </Box>
+                        </Stack>
                       </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         )}
       </PageContainer>
