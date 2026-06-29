@@ -1,5 +1,6 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
@@ -71,6 +72,7 @@ mockSearchAdminUsers.mockResolvedValue({
         },
         phone: null,
         updatedAtIso: null,
+        lastLoginAtIso: null,
         ownerLocations: [],
       },
       {
@@ -93,7 +95,8 @@ mockSearchAdminUsers.mockResolvedValue({
           managersTotal: 2,
         },
         phone: '+5511999999999',
-        updatedAtIso: null,
+        updatedAtIso: '2026-06-27T10:15:00.000Z',
+        lastLoginAtIso: '2026-06-28T12:30:00.000Z',
         ownerLocations: [
           {
             id: 'loc-1',
@@ -182,5 +185,18 @@ describe('UserManagementScreen', () => {
   it('mostra resumo comercial de dono de quadra na lista', async () => {
     renderWithTheme(<UserManagementScreen />);
     expect(await screen.findByText('R$ 150,00')).toBeInTheDocument();
+  });
+
+  it('mostra último login separado da última atualização na ficha comercial', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<UserManagementScreen />);
+
+    await user.click(await screen.findByText(/admin@test\.com/));
+
+    expect(await screen.findByText('Ficha comercial do usuário')).toBeInTheDocument();
+    expect(screen.getByText('Última atualização')).toBeInTheDocument();
+    expect(screen.getByText('Último login')).toBeInTheDocument();
+    expect(screen.getByText(/27\/06\/2026/)).toBeInTheDocument();
+    expect(screen.getByText(/28\/06\/2026/)).toBeInTheDocument();
   });
 });

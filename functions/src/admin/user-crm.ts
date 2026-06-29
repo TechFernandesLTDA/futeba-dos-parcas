@@ -68,6 +68,7 @@ interface AdminUserCrmRow {
   role: string;
   createdAtIso: string | null;
   updatedAtIso: string | null;
+  lastLoginAtIso: string | null;
   gamesPlayed: number;
   level: number;
   ownerSummary: OwnerSummary;
@@ -482,12 +483,8 @@ export const searchAdminUsers = secureCallable<
         photoUrl: stringOrEmpty(data.photo_url || data.photoUrl) || null,
         role: roleValue,
         createdAtIso: toIso(data.created_at || data.createdAt),
-        updatedAtIso: toIso(
-          data.updated_at ||
-          data.updatedAt ||
-          data.last_login_at ||
-          data.lastLoginAt
-        ),
+        updatedAtIso: toIso(data.updated_at || data.updatedAt),
+        lastLoginAtIso: toIso(data.last_login_at || data.lastLoginAt),
         gamesPlayed: numberOrDefault(data.games_played || data.gamesPlayed, 0),
         level: numberOrDefault(data.level, 1),
         ownerSummary,

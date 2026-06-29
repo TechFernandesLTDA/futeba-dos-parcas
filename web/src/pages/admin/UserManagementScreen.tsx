@@ -78,6 +78,7 @@ interface UserWithRole {
   role: string;
   createdAt?: Date;
   updatedAt?: Date;
+  lastLoginAt?: Date;
   gamesPlayed: number;
   level: number;
 }
@@ -108,9 +109,24 @@ const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
   role: data.role || 'PLAYER',
   createdAt: data.createdAtIso ? new Date(data.createdAtIso) : undefined,
   updatedAt: data.updatedAtIso ? new Date(data.updatedAtIso) : undefined,
+  lastLoginAt: data.lastLoginAtIso ? new Date(data.lastLoginAtIso) : undefined,
   gamesPlayed: data.gamesPlayed || 0,
   level: data.level || 1,
 });
+
+const formatAdminDateTime = (date?: Date): string => {
+  if (!date || Number.isNaN(date.getTime())) {
+    return 'Não informada';
+  }
+
+  return date.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 export const UserManagementScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -800,7 +816,7 @@ export const UserManagementScreen: React.FC = () => {
               <Card variant="outlined" sx={{ mb: 2 }}>
                 <CardContent>
                   <Typography variant="subtitle2" gutterBottom>Contato e atividade</Typography>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
                     <Box>
                       <Typography variant="caption" color="text.secondary">Email</Typography>
                       <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{selectedUser.email || 'Não cadastrado'}</Typography>
@@ -811,7 +827,11 @@ export const UserManagementScreen: React.FC = () => {
                     </Box>
                     <Box>
                       <Typography variant="caption" color="text.secondary">Última atualização</Typography>
-                      <Typography variant="body2">{selectedUser.updatedAt ? selectedUser.updatedAt.toLocaleDateString() : 'Não informada'}</Typography>
+                      <Typography variant="body2">{formatAdminDateTime(selectedUser.updatedAt)}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Último login</Typography>
+                      <Typography variant="body2">{formatAdminDateTime(selectedUser.lastLoginAt)}</Typography>
                     </Box>
                   </Box>
                 </CardContent>

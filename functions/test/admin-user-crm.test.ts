@@ -71,6 +71,8 @@ describe("searchAdminUsers", () => {
       games_played: 7,
       level: 3,
       created_at: timestamp("2025-01-01T00:00:00.000Z"),
+      updated_at: timestamp("2026-06-27T10:15:00.000Z"),
+      last_login_at: timestamp("2026-06-28T12:30:00.000Z"),
     }));
 
     mockUsersGet.mockResolvedValue({docs: users});
@@ -113,6 +115,8 @@ describe("searchAdminUsers", () => {
     }) as {
       users: Array<{
         id: string;
+        updatedAtIso: string | null;
+        lastLoginAtIso: string | null;
         ownerSummary: {
           totalLocations: number;
           overdueLocations: number;
@@ -136,6 +140,8 @@ describe("searchAdminUsers", () => {
 
     expect(result.totalMatched).toBe(1);
     expect(result.users[0].id).toBe("owner-old");
+    expect(result.users[0].updatedAtIso).toBe("2026-06-27T10:15:00.000Z");
+    expect(result.users[0].lastLoginAtIso).toBe("2026-06-28T12:30:00.000Z");
     expect(result.users[0].ownerSummary).toMatchObject({
       totalLocations: 2,
       overdueLocations: 1,
