@@ -69,6 +69,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.12] - 2026-06-29
+
+#### Mudado
+- `ManageLocationsScreen` passou a listar os últimos pagamentos da subcoleção `subscription_payments` para owner/admin.
+- O fluxo admin usa `submitLocationSubscriptionReceipt` seguido de `reviewLocationSubscriptionReceipt` para registrar e aprovar manualmente mantendo auditoria.
+- A versão web foi atualizada para `1.43.12`.
+
+_Issues: #3123, #3119, #3084_
+
 ### [1.43.11] - 2026-06-29
 
 #### Adicionado
