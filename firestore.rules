@@ -1118,6 +1118,16 @@ service cloud.firestore {
     // ** Campos protegidos: owner_id, created_at, is_verified, is_active (apenas admin)
     //
     // ============================================
+    match /venue_owner_onboarding/{ownerId} {
+      allow read: if isAuthenticated() && (isAdmin() || userId() == ownerId);
+      allow create, update, delete: if false;
+
+      match /events/{eventId} {
+        allow read: if isAuthenticated() && (isAdmin() || userId() == ownerId);
+        allow create, update, delete: if false;
+      }
+    }
+
     match /locations/{locationId} {
 
       // ------------------------------------------

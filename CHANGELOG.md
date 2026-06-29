@@ -69,6 +69,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.15] - 2026-06-29
+
+#### Adicionado
+- Rota web `/owner/onboarding` para solicitação de dono de quadra.
+- Revisão admin integrada ao `UserManagementScreen`.
+- A versão web foi atualizada para `1.43.15`.
+
+_Issues: #3137, #3115, #3125, #3088, #3084_
+
 ### [1.43.14] - 2026-06-29
 
 #### Mudado
@@ -495,6 +504,20 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.7] - 2026-06-29
+
+#### Adicionado
+- Callables `requestVenueOwnerOnboarding` e `reviewVenueOwnerOnboarding`.
+- Coleção `venue_owner_onboarding/{ownerUid}` com eventos imutáveis em subcoleção.
+- `searchAdminUsers` passa a retornar o resumo do onboarding comercial.
+- Firestore Rules permitem leitura para owner/admin e bloqueiam escrita direta do cliente.
+
+#### Segurança
+- Owner não pode alterar estados sensíveis nem se promover para `FIELD_OWNER`.
+- Aprovação admin exige checklist de contato, quadras, termos e cobrança.
+
+_Issues: #3137, #3115, #3125, #3088, #3084_
 
 ### [1.2.6] - 2026-06-29
 

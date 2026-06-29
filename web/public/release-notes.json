@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T01:53:28.610Z",
+  "generatedAt": "2026-06-29T02:22:21.488Z",
   "notes": [
+    {
+      "version": "1.43.15",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Donos de quadra agora têm onboarding comercial controlado",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Usuários podem solicitar aprovação para cadastrar quadras pela nova tela \"Cadastrar minha quadra\".",
+        "A tela de Configurações ganhou entrada para iniciar ou acompanhar o onboarding comercial.",
+        "Admins passam a revisar o onboarding pela ficha comercial do usuário, com checklist obrigatório antes da aprovação.",
+        "A aprovação promove o usuário para `FIELD_OWNER`; rejeição/suspensão exigem motivo."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3137,
+        3115,
+        3125,
+        3088,
+        3084
+      ]
+    },
     {
       "version": "1.43.14",
       "buildNumber": null,

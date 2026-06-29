@@ -47,6 +47,18 @@ interface OwnerLocationSummary {
   updatedAtIso: string | null;
 }
 
+interface OwnerOnboardingSummary {
+  status: string;
+  submittedAtIso: string | null;
+  reviewedAtIso: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  phone: string | null;
+  businessName: string | null;
+  notes: string | null;
+  reviewReason: string | null;
+}
+
 interface AdminUserCrmRow {
   id: string;
   name: string;
@@ -60,6 +72,7 @@ interface AdminUserCrmRow {
   level: number;
   ownerSummary: OwnerSummary;
   ownerLocations: OwnerLocationSummary[];
+  ownerOnboarding: OwnerOnboardingSummary | null;
 }
 
 const USER_SCAN_LIMIT = 10000;
@@ -330,6 +343,33 @@ async function loadOwnerSummaries(): Promise<{
 }
 
 /**
+ * Carrega status de onboarding comercial por owner.
+ * @return {Promise<Map<string, OwnerOnboardingSummary>>} Map por owner uid.
+ */
+async function loadOwnerOnboarding(): Promise<Map<string, OwnerOnboardingSummary>> {
+  const snapshot = await db()
+    .collection("venue_owner_onboarding")
+    .limit(USER_SCAN_LIMIT)
+    .get();
+  const onboarding = new Map<string, OwnerOnboardingSummary>();
+  snapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    onboarding.set(doc.id, {
+      status: stringOrEmpty(data.status) || "LEAD",
+      submittedAtIso: toIso(data.submitted_at || data.submittedAt),
+      reviewedAtIso: toIso(data.reviewed_at || data.reviewedAt),
+      contactName: stringOrEmpty(data.contact_name || data.contactName) || null,
+      contactEmail: stringOrEmpty(data.contact_email || data.contactEmail) || null,
+      phone: stringOrEmpty(data.phone) || null,
+      businessName: stringOrEmpty(data.business_name || data.businessName) || null,
+      notes: stringOrEmpty(data.notes) || null,
+      reviewReason: stringOrEmpty(data.review_reason || data.reviewReason) || null,
+    });
+  });
+  return onboarding;
+}
+
+/**
  * Aplica filtro comercial ao usuario retornado.
  * @param {AdminUserCrmRow} user Usuario com summary agregado.
  * @param {AdminOwnerFilter} ownerFilter Filtro selecionado.
@@ -365,6 +405,8 @@ function matchesSearch(user: AdminUserCrmRow, search: string): boolean {
     user.email,
     user.phone || "",
     user.role,
+    user.ownerOnboarding?.status || "",
+    user.ownerOnboarding?.businessName || "",
     ...user.ownerLocations.flatMap((location) => [
       location.id,
       location.name,
@@ -412,7 +454,10 @@ export const searchAdminUsers = secureCallable<
     const ownerFilter = normalizeOwnerFilter(request.data?.ownerFilter);
     const pageSize = parsePageSize(request.data?.pageSize);
     const offset = parseOffset(request.data?.pageToken);
-    const ownerData = await loadOwnerSummaries();
+    const [ownerData, onboardingData] = await Promise.all([
+      loadOwnerSummaries(),
+      loadOwnerOnboarding(),
+    ]);
 
     const snapshot = await db()
       .collection("users")
@@ -425,6 +470,7 @@ export const searchAdminUsers = secureCallable<
       const ownerSummary = ownerData.summaries.get(userDoc.id) ||
         emptyOwnerSummary();
       const ownerLocations = ownerData.locationsByOwner.get(userDoc.id) || [];
+      const ownerOnboarding = onboardingData.get(userDoc.id) || null;
       return {
         id: userDoc.id,
         name: stringOrEmpty(data.name) || "Sem nome",
@@ -445,6 +491,7 @@ export const searchAdminUsers = secureCallable<
         level: numberOrDefault(data.level, 1),
         ownerSummary,
         ownerLocations,
+        ownerOnboarding,
       };
     }).sort((a, b) => {
       const aTime = a.createdAtIso ? new Date(a.createdAtIso).getTime() : 0;
