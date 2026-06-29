@@ -27,18 +27,39 @@ interface OwnerSummary {
   pendingLocations: number;
   overdueLocations: number;
   incompleteLocations: number;
+  activeSubscriptionLocations: number;
+  monthlyFeeTotalCents: number;
+  managersTotal: number;
+}
+
+interface OwnerLocationSummary {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  publicationStatus: string;
+  subscriptionStatus: string;
+  monthlyFeeCents: number | null;
+  billingDueDay: number | null;
+  fieldCount: number;
+  managersCount: number;
+  managersPreview: string[];
+  updatedAtIso: string | null;
 }
 
 interface AdminUserCrmRow {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   photoUrl: string | null;
   role: string;
   createdAtIso: string | null;
+  updatedAtIso: string | null;
   gamesPlayed: number;
   level: number;
   ownerSummary: OwnerSummary;
+  ownerLocations: OwnerLocationSummary[];
 }
 
 const USER_SCAN_LIMIT = 10000;
@@ -61,6 +82,9 @@ const emptyOwnerSummary = (): OwnerSummary => ({
   pendingLocations: 0,
   overdueLocations: 0,
   incompleteLocations: 0,
+  activeSubscriptionLocations: 0,
+  monthlyFeeTotalCents: 0,
+  managersTotal: 0,
 });
 
 /**
@@ -160,6 +184,40 @@ function stringOrEmpty(value: unknown): string {
 }
 
 /**
+ * Retorna array de strings seguro.
+ * @param {unknown} value Valor bruto.
+ * @return {string[]} Array normalizado.
+ */
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+/**
+ * Retorna numero positivo ou null.
+ * @param {unknown} value Valor bruto.
+ * @return {number | null} Numero seguro.
+ */
+function positiveNumberOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ?
+    value :
+    null;
+}
+
+/**
+ * Retorna inteiro positivo ou null.
+ * @param {unknown} value Valor bruto.
+ * @return {number | null} Inteiro seguro.
+ */
+function positiveIntegerOrNull(value: unknown): number | null {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value > 0 ?
+    value :
+    null;
+}
+
+/**
  * Detecta se uma quadra ainda nao tem cadastro comercial completo.
  * @param {FirebaseFirestore.DocumentData} data Dados da location.
  * @return {boolean} True quando faltam campos comerciais essenciais.
@@ -184,6 +242,7 @@ function commercialIncomplete(data: FirebaseFirestore.DocumentData): boolean {
  */
 async function loadOwnerSummaries(): Promise<{
   summaries: Map<string, OwnerSummary>;
+  locationsByOwner: Map<string, OwnerLocationSummary[]>;
   scannedLocations: number;
   locationScanComplete: boolean;
 }> {
@@ -192,6 +251,7 @@ async function loadOwnerSummaries(): Promise<{
     .limit(LOCATION_SCAN_LIMIT)
     .get();
   const summaries = new Map<string, OwnerSummary>();
+  const locationsByOwner = new Map<string, OwnerLocationSummary[]>();
 
   snapshot.docs.forEach((locationDoc) => {
     const data = locationDoc.data();
@@ -205,6 +265,13 @@ async function loadOwnerSummaries(): Promise<{
     const subscription = stringOrEmpty(
       data.subscription_status || data.subscriptionStatus
     );
+    const managers = stringArray(data.managers);
+    const monthlyFeeCents = positiveNumberOrNull(
+      data.monthly_fee_cents ?? data.monthlyFeeCents
+    );
+    const billingDueDay = positiveIntegerOrNull(
+      data.billing_due_day ?? data.billingDueDay
+    );
 
     summary.totalLocations += 1;
     if (publication === "PUBLISHED" || data.is_verified === true) {
@@ -216,14 +283,47 @@ async function loadOwnerSummaries(): Promise<{
     if (["OVERDUE", "SUSPENDED", "CANCELLED"].includes(subscription)) {
       summary.overdueLocations += 1;
     }
+    if (["TRIAL", "ACTIVE"].includes(subscription)) {
+      summary.activeSubscriptionLocations += 1;
+    }
+    if (monthlyFeeCents) {
+      summary.monthlyFeeTotalCents += monthlyFeeCents;
+    }
+    summary.managersTotal += managers.length;
     if (commercialIncomplete(data)) {
       summary.incompleteLocations += 1;
     }
     summaries.set(ownerId, summary);
+
+    const ownerLocations = locationsByOwner.get(ownerId) || [];
+    ownerLocations.push({
+      id: locationDoc.id,
+      name: stringOrEmpty(data.name) || "Quadra sem nome",
+      city: stringOrEmpty(data.city) || null,
+      state: stringOrEmpty(data.state) || null,
+      publicationStatus: publication || "PENDING_REVIEW",
+      subscriptionStatus: subscription || "TRIAL",
+      monthlyFeeCents,
+      billingDueDay,
+      fieldCount: numberOrDefault(data.field_count ?? data.fieldCount, 0),
+      managersCount: managers.length,
+      managersPreview: managers.slice(0, 5),
+      updatedAtIso: toIso(data.updated_at || data.updatedAt),
+    });
+    locationsByOwner.set(ownerId, ownerLocations);
+  });
+
+  locationsByOwner.forEach((locations) => {
+    locations.sort((a, b) => {
+      const aTime = a.updatedAtIso ? new Date(a.updatedAtIso).getTime() : 0;
+      const bTime = b.updatedAtIso ? new Date(b.updatedAtIso).getTime() : 0;
+      return bTime - aTime || a.name.localeCompare(b.name);
+    });
   });
 
   return {
     summaries,
+    locationsByOwner,
     scannedLocations: snapshot.docs.length,
     locationScanComplete: snapshot.docs.length < LOCATION_SCAN_LIMIT,
   };
@@ -263,7 +363,16 @@ function matchesSearch(user: AdminUserCrmRow, search: string): boolean {
     user.id,
     user.name,
     user.email,
+    user.phone || "",
     user.role,
+    ...user.ownerLocations.flatMap((location) => [
+      location.id,
+      location.name,
+      location.city || "",
+      location.state || "",
+      location.publicationStatus,
+      location.subscriptionStatus,
+    ]),
   ].some((value) => value.toLowerCase().includes(search));
 }
 
@@ -315,16 +424,27 @@ export const searchAdminUsers = secureCallable<
       const roleValue = stringOrEmpty(data.role) || "PLAYER";
       const ownerSummary = ownerData.summaries.get(userDoc.id) ||
         emptyOwnerSummary();
+      const ownerLocations = ownerData.locationsByOwner.get(userDoc.id) || [];
       return {
         id: userDoc.id,
         name: stringOrEmpty(data.name) || "Sem nome",
         email: stringOrEmpty(data.email),
+        phone: stringOrEmpty(
+          data.phone || data.phone_number || data.phoneNumber
+        ) || null,
         photoUrl: stringOrEmpty(data.photo_url || data.photoUrl) || null,
         role: roleValue,
         createdAtIso: toIso(data.created_at || data.createdAt),
+        updatedAtIso: toIso(
+          data.updated_at ||
+          data.updatedAt ||
+          data.last_login_at ||
+          data.lastLoginAt
+        ),
         gamesPlayed: numberOrDefault(data.games_played || data.gamesPlayed, 0),
         level: numberOrDefault(data.level, 1),
         ownerSummary,
+        ownerLocations,
       };
     }).sort((a, b) => {
       const aTime = a.createdAtIso ? new Date(a.createdAtIso).getTime() : 0;

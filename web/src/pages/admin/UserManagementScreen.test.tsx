@@ -65,7 +65,13 @@ mockSearchAdminUsers.mockResolvedValue({
           pendingLocations: 0,
           overdueLocations: 0,
           incompleteLocations: 0,
+          activeSubscriptionLocations: 0,
+          monthlyFeeTotalCents: 0,
+          managersTotal: 0,
         },
+        phone: null,
+        updatedAtIso: null,
+        ownerLocations: [],
       },
       {
         id: 'user-2',
@@ -77,12 +83,33 @@ mockSearchAdminUsers.mockResolvedValue({
         level: 10,
         createdAtIso: new Date().toISOString(),
         ownerSummary: {
-          totalLocations: 0,
-          publishedLocations: 0,
+          totalLocations: 1,
+          publishedLocations: 1,
           pendingLocations: 0,
           overdueLocations: 0,
           incompleteLocations: 0,
+          activeSubscriptionLocations: 1,
+          monthlyFeeTotalCents: 15000,
+          managersTotal: 2,
         },
+        phone: '+5511999999999',
+        updatedAtIso: null,
+        ownerLocations: [
+          {
+            id: 'loc-1',
+            name: 'Arena Teste',
+            city: 'São Paulo',
+            state: 'SP',
+            publicationStatus: 'PUBLISHED',
+            subscriptionStatus: 'ACTIVE',
+            monthlyFeeCents: 15000,
+            billingDueDay: 10,
+            fieldCount: 2,
+            managersCount: 2,
+            managersPreview: ['manager-1', 'manager-2'],
+            updatedAtIso: null,
+          },
+        ],
       },
     ],
     nextPageToken: null,
@@ -150,5 +177,10 @@ describe('UserManagementScreen', () => {
   it('mostra filtro comercial', async () => {
     renderWithTheme(<UserManagementScreen />);
     expect(await screen.findByText('Todos')).toBeInTheDocument();
+  });
+
+  it('mostra resumo comercial de dono de quadra na lista', async () => {
+    renderWithTheme(<UserManagementScreen />);
+    expect(await screen.findByText('R$ 150,00')).toBeInTheDocument();
   });
 });

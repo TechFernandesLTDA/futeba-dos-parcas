@@ -1,11 +1,13 @@
 import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Typography,
   Card,
+  CardContent,
   IconButton,
   List,
   ListItem,
@@ -32,18 +34,22 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   AdminPanelSettings as AdminIcon,
+  Business as BusinessIcon,
   Search as SearchIcon,
   SearchOff as SearchOffIcon,
   PersonOff as PersonOffIcon,
   Edit as EditIcon,
+  OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import {
   searchAdminUsers,
   setUserRole as setUserRoleCallable,
+  type AdminOwnerLocationSummary,
   type AdminUserCrmRow,
   type AdminUserSearchResponse,
 } from '../../services/cloudFunctions';
@@ -64,9 +70,11 @@ interface UserWithRole {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   photoUrl?: string;
   role: string;
   createdAt?: Date;
+  updatedAt?: Date;
   gamesPlayed: number;
   level: number;
 }
@@ -77,15 +85,25 @@ interface OwnerSummary {
   pendingLocations: number;
   overdueLocations: number;
   incompleteLocations: number;
+  activeSubscriptionLocations: number;
+  monthlyFeeTotalCents: number;
+  managersTotal: number;
+}
+
+interface OwnerProfile {
+  summary: OwnerSummary;
+  locations: AdminOwnerLocationSummary[];
 }
 
 const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
   id: data.id,
   name: data.name || 'Sem nome',
   email: data.email || '',
+  phone: data.phone || undefined,
   photoUrl: data.photoUrl || undefined,
   role: data.role || 'PLAYER',
   createdAt: data.createdAtIso ? new Date(data.createdAtIso) : undefined,
+  updatedAt: data.updatedAtIso ? new Date(data.updatedAtIso) : undefined,
   gamesPlayed: data.gamesPlayed || 0,
   level: data.level || 1,
 });
@@ -93,6 +111,7 @@ const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
 export const UserManagementScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.userManagement'));
+  const navigate = useNavigate();
   const goBack = useNavigateBack();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -124,6 +143,8 @@ export const UserManagementScreen: React.FC = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingRoleChange, setPendingRoleChange] = useState<{ user: UserWithRole; role: string } | null>(null);
   const [ownerSummaries, setOwnerSummaries] = useState<Record<string, OwnerSummary>>({});
+  const [ownerProfiles, setOwnerProfiles] = useState<Record<string, OwnerProfile>>({});
+  const [confirmText, setConfirmText] = useState('');
   const [searchMeta, setSearchMeta] = useState<{
     totalMatched: number;
     scannedUsers: number;
@@ -147,9 +168,17 @@ export const UserManagementScreen: React.FC = () => {
       acc[item.id] = item.ownerSummary;
       return acc;
     }, {});
+    const nextProfiles = data.users.reduce<Record<string, OwnerProfile>>((acc, item) => {
+      acc[item.id] = {
+        summary: item.ownerSummary,
+        locations: item.ownerLocations || [],
+      };
+      return acc;
+    }, {});
 
     setUsers((prev) => (append ? [...prev, ...parsedUsers] : parsedUsers));
     setOwnerSummaries((prev) => (append ? { ...prev, ...nextSummaries } : nextSummaries));
+    setOwnerProfiles((prev) => (append ? { ...prev, ...nextProfiles } : nextProfiles));
     setNextPageToken(data.nextPageToken);
     setHasMore(Boolean(data.nextPageToken));
     setSearchMeta({
@@ -217,6 +246,7 @@ export const UserManagementScreen: React.FC = () => {
   const confirmRoleChange = (user: UserWithRole, newRole: string) => {
     if (user.role === newRole) return;
     setPendingRoleChange({ user, role: newRole });
+    setConfirmText('');
     setConfirmDialogOpen(true);
   };
 
@@ -244,6 +274,12 @@ export const UserManagementScreen: React.FC = () => {
     let errorCount = 0;
     for (const uid of selectedUsers) {
       if (uid === currentUser?.id) continue;
+      const user = users.find((item) => item.id === uid);
+      const hasLinkedLocations = (ownerSummaries[uid]?.totalLocations || 0) > 0;
+      if (newRole === 'PLAYER' && user?.role === 'FIELD_OWNER' && hasLinkedLocations) {
+        errorCount++;
+        continue;
+      }
       try {
         await setUserRoleCallable({ uid, role: newRole });
         setUsers((prev) =>
@@ -303,6 +339,21 @@ export const UserManagementScreen: React.FC = () => {
     pendingRoleChange?.user.role === 'ADMIN' && pendingRoleChange?.role !== 'ADMIN';
   const isPendingAdminPromotion =
     pendingRoleChange?.user.role !== 'ADMIN' && pendingRoleChange?.role === 'ADMIN';
+  const pendingOwnerSummary = pendingRoleChange ? ownerSummaries[pendingRoleChange.user.id] : undefined;
+  const isPendingFieldOwnerDemotion =
+    pendingRoleChange?.user.role === 'FIELD_OWNER' &&
+    pendingRoleChange?.role === 'PLAYER' &&
+    Boolean((pendingOwnerSummary?.totalLocations || 0) > 0);
+  const requiresStrongConfirmation =
+    isPendingSelfDemotion ||
+    isPendingAdminDemotion ||
+    isPendingAdminPromotion ||
+    isPendingFieldOwnerDemotion;
+  const canConfirmRoleChange = !requiresStrongConfirmation || confirmText.trim().toUpperCase() === 'ALTERAR';
+  const selectedOwnerRiskCount = Array.from(selectedUsers).filter((uid) => {
+    const user = users.find((item) => item.id === uid);
+    return user?.role === 'FIELD_OWNER' && (ownerSummaries[uid]?.totalLocations || 0) > 0;
+  }).length;
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -311,6 +362,21 @@ export const UserManagementScreen: React.FC = () => {
       default: return theme.palette.grey[500];
     }
   };
+
+  const formatCurrency = (amountCents?: number | null) => {
+    if (!amountCents) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(amountCents / 100);
+  };
+
+  const openLocation = (locationId: string, edit = false) => {
+    setDialogOpen(false);
+    navigate(edit ? `/location/${locationId}/edit` : `/location/${locationId}`);
+  };
+
+  const selectedOwnerProfile = selectedUser ? ownerProfiles[selectedUser.id] : undefined;
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -512,6 +578,14 @@ export const UserManagementScreen: React.FC = () => {
                                 variant="outlined"
                                 color={(ownerSummaries[u.id]?.overdueLocations || 0) > 0 ? 'warning' : 'default'}
                               />
+                              {(ownerSummaries[u.id]?.monthlyFeeTotalCents || 0) > 0 && (
+                                <Chip
+                                  label={formatCurrency(ownerSummaries[u.id]?.monthlyFeeTotalCents)}
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                />
+                              )}
                               {(ownerSummaries[u.id]?.incompleteLocations || 0) > 0 && (
                                 <Chip label="cadastro incompleto" size="small" color="info" variant="outlined" />
                               )}
@@ -580,6 +654,9 @@ export const UserManagementScreen: React.FC = () => {
                         <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
                           <Chip label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`} size="small" variant="outlined" />
                           <Chip label={`${ownerSummaries[u.id]?.publishedLocations || 0} publicada(s)`} size="small" color="success" variant="outlined" />
+                          {(ownerSummaries[u.id]?.monthlyFeeTotalCents || 0) > 0 && (
+                            <Chip label={formatCurrency(ownerSummaries[u.id]?.monthlyFeeTotalCents)} size="small" color="success" variant="outlined" />
+                          )}
                           {(ownerSummaries[u.id]?.pendingLocations || 0) > 0 && (
                             <Chip label={`${ownerSummaries[u.id]?.pendingLocations} em revisão`} size="small" color="info" variant="outlined" />
                           )}
@@ -611,27 +688,157 @@ export const UserManagementScreen: React.FC = () => {
         )}
       </PageContainer>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="manage-user-dialog-title">
-        <DialogTitle id="manage-user-dialog-title">Gerenciar Usuário</DialogTitle>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="md" aria-labelledby="manage-user-dialog-title">
+        <DialogTitle id="manage-user-dialog-title">Ficha comercial do usuário</DialogTitle>
         <DialogContent>
           {selectedUser && (
             <Box sx={{ pt: 1 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                {selectedUser.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {selectedUser.email}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Role atual: {selectedUser.role}
-              </Typography>
-              {(selectedUser.role === 'FIELD_OWNER' || ownerSummaries[selectedUser.id]) && (
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  Dono de quadra com {ownerSummaries[selectedUser.id]?.totalLocations || 0} cadastro(s),
-                  {' '}{ownerSummaries[selectedUser.id]?.publishedLocations || 0} publicado(s)
-                  {' '}e {ownerSummaries[selectedUser.id]?.overdueLocations || 0} pendência(s) comerciais.
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                <PlayerAvatar name={selectedUser.name} photoUrl={selectedUser.photoUrl} size={56} level={selectedUser.level} />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="h6" gutterBottom>
+                    {selectedUser.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap>
+                    {selectedUser.email || 'Email não cadastrado'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap>
+                    {selectedUser.phone || 'Telefone não cadastrado'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    UID: {selectedUser.id}
+                  </Typography>
+                </Box>
+                <Chip
+                  label={selectedUser.role}
+                  size="small"
+                  sx={{
+                    ml: 'auto',
+                    bgcolor: alpha(getRoleColor(selectedUser.role), 0.1),
+                    color: getRoleColor(selectedUser.role),
+                    fontWeight: 700,
+                  }}
+                />
+              </Box>
+
+              <Card variant="outlined" sx={{ mb: 2 }}>
+                <CardContent>
+                  <Typography variant="subtitle2" gutterBottom>Contato e atividade</Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Email</Typography>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{selectedUser.email || 'Não cadastrado'}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Telefone</Typography>
+                      <Typography variant="body2">{selectedUser.phone || 'Não cadastrado'}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Última atualização</Typography>
+                      <Typography variant="body2">{selectedUser.updatedAt ? selectedUser.updatedAt.toLocaleDateString() : 'Não informada'}</Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5, mb: 2 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="overline" color="text.secondary">Receita mensal</Typography>
+                    <Typography variant="h6">{formatCurrency(selectedOwnerProfile?.summary.monthlyFeeTotalCents)}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedOwnerProfile?.summary.activeSubscriptionLocations || 0} assinatura(s) ativa(s)
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="overline" color="text.secondary">Quadras</Typography>
+                    <Typography variant="h6">{selectedOwnerProfile?.summary.totalLocations || 0}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedOwnerProfile?.summary.publishedLocations || 0} publicadas · {selectedOwnerProfile?.summary.pendingLocations || 0} em revisão
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="overline" color="text.secondary">Riscos</Typography>
+                    <Typography variant="h6">{(selectedOwnerProfile?.summary.overdueLocations || 0) + (selectedOwnerProfile?.summary.incompleteLocations || 0)}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedOwnerProfile?.summary.overdueLocations || 0} pendências · {selectedOwnerProfile?.summary.incompleteLocations || 0} incompletas
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              {(selectedOwnerProfile?.summary.totalLocations || 0) > 0 ? (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <BusinessIcon fontSize="small" />
+                    Quadras vinculadas e ações comerciais
+                  </Typography>
+                  <List dense disablePadding>
+                    {selectedOwnerProfile?.locations.map((location) => (
+                      <ListItem
+                        key={location.id}
+                        sx={{
+                          border: `1px solid ${theme.palette.divider}`,
+                          borderRadius: 2,
+                          mb: 1,
+                        }}
+                        secondaryAction={
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              endIcon={<OpenInNewIcon fontSize="small" />}
+                              onClick={() => openLocation(location.id)}
+                            >
+                              Ver
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={() => openLocation(location.id, true)}
+                            >
+                              Editar
+                            </Button>
+                          </Box>
+                        }
+                      >
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                              <Typography variant="body2" fontWeight={700}>{location.name}</Typography>
+                              <Chip label={location.publicationStatus} size="small" variant="outlined" />
+                              <Chip
+                                label={location.subscriptionStatus}
+                                size="small"
+                                color={['OVERDUE', 'SUSPENDED', 'CANCELLED'].includes(location.subscriptionStatus) ? 'warning' : 'success'}
+                                variant="outlined"
+                              />
+                            </Box>
+                          }
+                          secondary={[
+                            location.city || location.state ? `${location.city || 'Cidade não informada'}${location.state ? `/${location.state}` : ''}` : 'Endereço comercial incompleto',
+                            `${location.fieldCount} campo(s)`,
+                            `${location.managersCount} gerente(s)`,
+                            location.monthlyFeeCents ? `${formatCurrency(location.monthlyFeeCents)}${location.billingDueDay ? ` · vence dia ${location.billingDueDay}` : ''}` : 'Mensalidade não definida',
+                          ].join(' · ')}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              ) : (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Este usuário ainda não tem quadras vinculadas. Promover para Field Owner apenas prepara o acesso comercial.
                 </Alert>
               )}
+
+              <Alert severity={(selectedOwnerProfile?.summary.overdueLocations || 0) > 0 ? 'warning' : 'info'} sx={{ mb: 2 }}>
+                Alterações de role usam a operação auditada de permissões. Rebaixar dono de quadra com cadastros vinculados exige confirmação reforçada.
+              </Alert>
             </Box>
           )}
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
@@ -672,11 +879,29 @@ export const UserManagementScreen: React.FC = () => {
             <Alert severity="warning" sx={{ mb: 2 }}>
               Admins têm acesso total ao sistema. Confirme apenas se este usuário deve administrar a plataforma.
             </Alert>
+          ) : isPendingFieldOwnerDemotion ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Este dono possui {pendingOwnerSummary?.totalLocations || 0} quadra(s) vinculada(s),
+              {' '}{pendingOwnerSummary?.publishedLocations || 0} publicada(s) e
+              {' '}{formatCurrency(pendingOwnerSummary?.monthlyFeeTotalCents)} de mensalidade agregada.
+              Rebaixar para Player não transfere nem suspende as quadras automaticamente.
+            </Alert>
           ) : null}
           <Typography sx={{ mb: 2 }}>
             Alterar role de <strong>{pendingRoleChange?.user.name}</strong> de{' '}
             <strong>{pendingRoleChange?.user.role}</strong> para <strong>{pendingRoleChange?.role}</strong>?
           </Typography>
+          {requiresStrongConfirmation && (
+            <TextField
+              fullWidth
+              size="small"
+              label="Digite ALTERAR para confirmar"
+              value={confirmText}
+              onChange={(event) => setConfirmText(event.target.value)}
+              sx={{ mb: 2 }}
+              inputProps={{ maxLength: 20 }}
+            />
+          )}
           <Alert severity="info">
             O usuário precisará fazer login novamente após a alteração.
           </Alert>
@@ -686,7 +911,7 @@ export const UserManagementScreen: React.FC = () => {
           <Button
             color={isPendingAdminDemotion ? 'error' : 'primary'}
             variant="contained"
-            disabled={actionLoading}
+            disabled={actionLoading || !canConfirmRoleChange}
             onClick={() => {
               const roleChange = pendingRoleChange;
               if (roleChange) {
@@ -694,9 +919,10 @@ export const UserManagementScreen: React.FC = () => {
               }
               setConfirmDialogOpen(false);
               setPendingRoleChange(null);
+              setConfirmText('');
             }}
           >
-            {t('common.confirm')}
+            {actionLoading ? <CircularProgress size={20} /> : t('common.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -710,11 +936,17 @@ export const UserManagementScreen: React.FC = () => {
           <Alert severity="info" sx={{ mb: 2 }}>
             Usuários alterados precisarão fazer login novamente. Seu próprio usuário é ignorado em alterações em lote.
           </Alert>
+          {selectedOwnerRiskCount > 0 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {selectedOwnerRiskCount} dono(s) selecionado(s) têm quadras vinculadas. Rebaixamento em lote para Player fica bloqueado;
+              faça a alteração individual pela ficha comercial para revisar impacto.
+            </Alert>
+          )}
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setBulkDialogOpen(false)} disabled={bulkLoading}>{t('common.cancel')}</Button>
-          <Button onClick={() => handleBulkRoleChange('PLAYER')} disabled={bulkLoading}>Player</Button>
+          <Button onClick={() => handleBulkRoleChange('PLAYER')} disabled={bulkLoading || selectedOwnerRiskCount > 0}>Player</Button>
           <Button onClick={() => handleBulkRoleChange('FIELD_OWNER')} disabled={bulkLoading} color="warning">Field Owner</Button>
           <Button onClick={() => handleBulkRoleChange('ADMIN')} disabled={bulkLoading} color="error">Admin</Button>
         </DialogActions>
