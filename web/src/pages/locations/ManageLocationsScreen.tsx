@@ -48,6 +48,7 @@ import {
   AdminLocationBillingSummaryResponse,
   inviteLocationManager,
   removeLocationManager,
+  reviewLocationCommercialRequest,
   reviewLocationSubscriptionReceipt,
   setLocationPublicationStatus,
   setLocationSubscription,
@@ -171,6 +172,19 @@ const getLedgerTypeLabel = (type?: string) => {
   return type || 'Evento financeiro';
 };
 
+const getCommercialRequestStatusLabel = (status?: string) => {
+  if (status === 'PENDING_REVIEW') return 'Em revisão';
+  if (status === 'NEEDS_CHANGES') return 'Ajustes solicitados';
+  if (status === 'APPROVED') return 'Aprovada';
+  if (status === 'REJECTED') return 'Rejeitada';
+  return 'Sem solicitação';
+};
+
+const getCommercialRequestTypeLabel = (type?: string) => {
+  if (type === 'COMMERCIAL_UPDATE') return 'Alteração comercial';
+  return 'Publicação';
+};
+
 const csvCell = (value: unknown) => {
   const text = value === null || value === undefined ? '' : String(value);
   return `"${text.replace(/"/g, '""')}"`;
@@ -229,6 +243,9 @@ export const ManageLocationsScreen: React.FC = () => {
   const [receiptActionLoading, setReceiptActionLoading] = useState<string | null>(null);
   const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPaymentReview[]>([]);
   const [subscriptionLedger, setSubscriptionLedger] = useState<SubscriptionLedgerEntry[]>([]);
+  const [requestReviewTarget, setRequestReviewTarget] = useState<Location | null>(null);
+  const [requestReviewNotes, setRequestReviewNotes] = useState('');
+  const [requestReviewActionLoading, setRequestReviewActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -541,6 +558,40 @@ export const ManageLocationsScreen: React.FC = () => {
       showError('Não foi possível alterar a mensalidade da quadra.');
     } finally {
       setCommercialActionLoading(null);
+    }
+  };
+
+  const handleReviewCommercialRequest = async (
+    location: Location,
+    decision: 'APPROVED' | 'NEEDS_CHANGES' | 'REJECTED',
+  ) => {
+    if (!location.latestCommercialRequestId) {
+      showError('Esta quadra não possui solicitação ativa para revisão.');
+      return;
+    }
+    const actionKey = `${location.id}:request:${decision}`;
+    setRequestReviewActionLoading(actionKey);
+    try {
+      await reviewLocationCommercialRequest({
+        locationId: location.id,
+        requestId: location.latestCommercialRequestId,
+        decision,
+        notes: requestReviewNotes.trim() || null,
+      });
+      showSuccess(
+        decision === 'APPROVED'
+          ? 'Solicitação aprovada com sucesso.'
+          : decision === 'NEEDS_CHANGES'
+            ? 'Solicitação devolvida para ajustes.'
+            : 'Solicitação rejeitada.',
+      );
+      setRequestReviewTarget(null);
+      setRequestReviewNotes('');
+    } catch (err) {
+      logger.error('Erro ao revisar solicitação comercial:', err);
+      showError('Não foi possível revisar a solicitação comercial.');
+    } finally {
+      setRequestReviewActionLoading(null);
     }
   };
 
@@ -1061,6 +1112,11 @@ export const ManageLocationsScreen: React.FC = () => {
         ) : (
           !error && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {isAdmin && filteredLocations.some((location) => location.latestCommercialRequestStatus === 'PENDING_REVIEW') && (
+                <Alert severity="info">
+                  {filteredLocations.filter((location) => location.latestCommercialRequestStatus === 'PENDING_REVIEW').length} solicitação(ões) comercial(is) aguardando revisão administrativa.
+                </Alert>
+              )}
               {filteredLocations.map((location) => {
                 const fieldTypeLabel = location.fieldType
                   ? FIELD_TYPE_CONFIG[location.fieldType]?.label || location.fieldType
@@ -1072,6 +1128,8 @@ export const ManageLocationsScreen: React.FC = () => {
                 const isCommercialActionBusy = commercialActionLoading?.startsWith(`${location.id}:`) ?? false;
                 const billingRow = billingRowsByLocationId.get(location.id);
                 const commercialIssues = getLocationCommercialIssues(location);
+                const hasCommercialRequest = Boolean(location.latestCommercialRequestStatus);
+                const requestPending = location.latestCommercialRequestStatus === 'PENDING_REVIEW';
 
                 return (
                   <Card key={location.id} sx={{ position: 'relative' }}>
@@ -1263,6 +1321,43 @@ export const ManageLocationsScreen: React.FC = () => {
                                   : `Pendências: ${commercialIssues.slice(0, 4).join(', ')}${commercialIssues.length > 4 ? '...' : ''}.`}
                               </Alert>
                             )}
+                            {isAdmin && hasCommercialRequest && (
+                              <Alert
+                                severity={requestPending ? 'info' : location.latestCommercialRequestStatus === 'REJECTED' ? 'error' : 'success'}
+                                sx={{ mt: 1 }}
+                              >
+                                <Stack spacing={0.5}>
+                                  <Typography variant="body2" fontWeight={700}>
+                                    {getCommercialRequestTypeLabel(location.latestCommercialRequestType)} · {getCommercialRequestStatusLabel(location.latestCommercialRequestStatus)}
+                                  </Typography>
+                                  {location.latestCommercialRequestRequestedSections?.length ? (
+                                    <Typography variant="caption" color="text.secondary">
+                                      Seções: {location.latestCommercialRequestRequestedSections.join(' · ')}
+                                    </Typography>
+                                  ) : null}
+                                  {location.latestCommercialRequestPendingItemIds?.length ? (
+                                    <Typography variant="caption" color="text.secondary">
+                                      Checklist pendente: {location.latestCommercialRequestPendingItemIds.join(' · ')}
+                                    </Typography>
+                                  ) : null}
+                                  {location.latestCommercialRequestCommercialIssueCodes?.length ? (
+                                    <Typography variant="caption" color="text.secondary">
+                                      Issues comerciais: {location.latestCommercialRequestCommercialIssueCodes.join(' · ')}
+                                    </Typography>
+                                  ) : null}
+                                  {location.latestCommercialRequestOwnerNotes ? (
+                                    <Typography variant="caption" color="text.secondary">
+                                      Dono: {location.latestCommercialRequestOwnerNotes}
+                                    </Typography>
+                                  ) : null}
+                                  {location.latestCommercialRequestAdminNotes ? (
+                                    <Typography variant="caption" color="text.secondary">
+                                      Admin: {location.latestCommercialRequestAdminNotes}
+                                    </Typography>
+                                  ) : null}
+                                </Stack>
+                              </Alert>
+                            )}
                           </Box>
                         </Box>
                       </CardContent>
@@ -1327,6 +1422,20 @@ export const ManageLocationsScreen: React.FC = () => {
                         >
                           Comprovantes
                         </Button>
+                        {requestPending && (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="success"
+                            disabled={Boolean(requestReviewActionLoading)}
+                            onClick={() => {
+                              setRequestReviewTarget(location);
+                              setRequestReviewNotes('');
+                            }}
+                          >
+                            Revisar solicitação
+                          </Button>
+                        )}
                       </Box>
                     )}
                     {userCanManageTeam && (
@@ -1433,6 +1542,83 @@ export const ManageLocationsScreen: React.FC = () => {
             startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}
           >
             {t('common.delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!requestReviewTarget}
+        onClose={() => !requestReviewActionLoading && setRequestReviewTarget(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Revisar solicitação comercial</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <DialogContentText>
+              {requestReviewTarget?.name}
+            </DialogContentText>
+            <Alert severity="info">
+              {getCommercialRequestTypeLabel(requestReviewTarget?.latestCommercialRequestType)} · {getCommercialRequestStatusLabel(requestReviewTarget?.latestCommercialRequestStatus)}
+            </Alert>
+            {requestReviewTarget?.latestCommercialRequestRequestedSections?.length ? (
+              <Typography variant="body2">
+                Seções solicitadas: {requestReviewTarget.latestCommercialRequestRequestedSections.join(' · ')}
+              </Typography>
+            ) : null}
+            {requestReviewTarget?.latestCommercialRequestOwnerNotes ? (
+              <Typography variant="body2">
+                Observação do dono: {requestReviewTarget.latestCommercialRequestOwnerNotes}
+              </Typography>
+            ) : null}
+            {requestReviewTarget?.latestCommercialRequestPendingItemIds?.length ? (
+              <Typography variant="body2" color="text.secondary">
+                Checklist pendente: {requestReviewTarget.latestCommercialRequestPendingItemIds.join(' · ')}
+              </Typography>
+            ) : null}
+            {requestReviewTarget?.latestCommercialRequestCommercialIssueCodes?.length ? (
+              <Typography variant="body2" color="text.secondary">
+                Issues comerciais: {requestReviewTarget.latestCommercialRequestCommercialIssueCodes.join(' · ')}
+              </Typography>
+            ) : null}
+            <TextField
+              label="Observação do admin"
+              value={requestReviewNotes}
+              onChange={(event) => setRequestReviewNotes(event.target.value)}
+              multiline
+              rows={4}
+              fullWidth
+              inputProps={{ maxLength: 2000 }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRequestReviewTarget(null)} disabled={Boolean(requestReviewActionLoading)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="outlined"
+            color="warning"
+            disabled={Boolean(requestReviewActionLoading)}
+            onClick={() => requestReviewTarget && handleReviewCommercialRequest(requestReviewTarget, 'NEEDS_CHANGES')}
+          >
+            Pedir ajustes
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            disabled={Boolean(requestReviewActionLoading)}
+            onClick={() => requestReviewTarget && handleReviewCommercialRequest(requestReviewTarget, 'REJECTED')}
+          >
+            Rejeitar
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            disabled={Boolean(requestReviewActionLoading)}
+            onClick={() => requestReviewTarget && handleReviewCommercialRequest(requestReviewTarget, 'APPROVED')}
+          >
+            {requestReviewActionLoading?.includes('APPROVED') ? <CircularProgress size={16} color="inherit" /> : 'Aprovar'}
           </Button>
         </DialogActions>
       </Dialog>

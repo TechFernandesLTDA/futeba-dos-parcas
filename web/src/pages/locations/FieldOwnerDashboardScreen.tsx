@@ -21,6 +21,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  MenuItem,
   Paper,
   Stack,
   TextField,
@@ -60,7 +61,10 @@ import { ref as storageRef, uploadBytes } from 'firebase/storage';
 import PageContainer from '../../components/common/PageContainer';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
-import { submitLocationSubscriptionReceipt } from '../../services/cloudFunctions';
+import {
+  requestLocationCommercialReview,
+  submitLocationSubscriptionReceipt,
+} from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -73,6 +77,8 @@ import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 import {
   Field,
+  LocationCommercialRequestStatus,
+  LocationCommercialRequestType,
   LocationPublicationStatus,
   LocationSubscriptionStatus,
 } from '../../types/location';
@@ -113,6 +119,16 @@ interface RawLocationDoc {
   isActive?: boolean;
   publicationStatus?: LocationPublicationStatus;
   subscriptionStatus?: LocationSubscriptionStatus;
+  latestCommercialRequestId?: string;
+  latestCommercialRequestType?: LocationCommercialRequestType;
+  latestCommercialRequestStatus?: LocationCommercialRequestStatus;
+  latestCommercialRequestRequestedSections?: string[];
+  latestCommercialRequestOwnerNotes?: string | null;
+  latestCommercialRequestAdminNotes?: string | null;
+  latestCommercialRequestPendingItemIds?: string[];
+  latestCommercialRequestCommercialIssueCodes?: string[];
+  latestCommercialRequestRequestedAt?: unknown;
+  latestCommercialRequestReviewedAt?: unknown;
   monthlyFeeCents?: number;
   billingDueDay?: number | null;
   currentBillingCycleStatus?: string;
@@ -165,6 +181,16 @@ interface LocationData extends OwnerDashboardLocationLike {
   currentBillingOpenBalanceCents?: number;
   billingDueAt?: Date | null;
   billingSuspendAt?: Date | null;
+  latestCommercialRequestId?: string;
+  latestCommercialRequestType?: LocationCommercialRequestType;
+  latestCommercialRequestStatus?: LocationCommercialRequestStatus;
+  latestCommercialRequestRequestedSections?: string[];
+  latestCommercialRequestOwnerNotes?: string | null;
+  latestCommercialRequestAdminNotes?: string | null;
+  latestCommercialRequestPendingItemIds?: string[];
+  latestCommercialRequestCommercialIssueCodes?: string[];
+  latestCommercialRequestRequestedAt?: Date | null;
+  latestCommercialRequestReviewedAt?: Date | null;
 }
 
 interface SubscriptionPaymentReview {
@@ -338,6 +364,11 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const [receiptActionLoading, setReceiptActionLoading] = useState(false);
   const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPaymentReview[]>([]);
   const [subscriptionLedger, setSubscriptionLedger] = useState<SubscriptionLedgerEntry[]>([]);
+  const [commercialRequestTarget, setCommercialRequestTarget] = useState<LocationData | null>(null);
+  const [commercialRequestType, setCommercialRequestType] = useState<LocationCommercialRequestType>('PUBLICATION');
+  const [commercialRequestSections, setCommercialRequestSections] = useState('');
+  const [commercialRequestNotes, setCommercialRequestNotes] = useState('');
+  const [commercialRequestLoading, setCommercialRequestLoading] = useState(false);
 
   const retryDashboard = useCallback(() => {
     setError(null);
@@ -367,6 +398,15 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
 
   const getCommercialIssueLabel = useCallback((issue: string) => {
     const issueKeyMap: Record<string, string> = {
+      inactive: 'inactive',
+      notVerified: 'notVerified',
+      notPublished: 'notPublished',
+      billingIrregular: 'billingIrregular',
+      noFields: 'noFields',
+      noActiveFields: 'noActiveFields',
+      noMonthlyFee: 'noMonthlyFee',
+      noDueDay: 'noDueDay',
+      incompleteAddress: 'incompleteAddress',
       inativa: 'inactive',
       'não verificada': 'notVerified',
       'não publicada': 'notPublished',
@@ -402,6 +442,20 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
     };
     return t(`fieldOwner.subscriptionState.${keyMap[status]}`);
   }, [t]);
+
+  const getCommercialRequestStatusLabel = useCallback((status?: LocationCommercialRequestStatus) => {
+    if (!status) return '';
+    if (status === 'PENDING_REVIEW') return 'Em revisão';
+    if (status === 'NEEDS_CHANGES') return 'Ajustes solicitados';
+    if (status === 'APPROVED') return 'Aprovada';
+    if (status === 'REJECTED') return 'Rejeitada';
+    return status;
+  }, []);
+
+  const getCommercialRequestTypeLabel = useCallback((type?: LocationCommercialRequestType) => {
+    if (type === 'COMMERCIAL_UPDATE') return 'Alteração comercial';
+    return 'Publicação';
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -439,6 +493,16 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             isActive: data.isActive !== false,
             publicationStatus: data.publicationStatus,
             subscriptionStatus: data.subscriptionStatus,
+            latestCommercialRequestId: data.latestCommercialRequestId,
+            latestCommercialRequestType: data.latestCommercialRequestType,
+            latestCommercialRequestStatus: data.latestCommercialRequestStatus,
+            latestCommercialRequestRequestedSections: data.latestCommercialRequestRequestedSections || [],
+            latestCommercialRequestOwnerNotes: data.latestCommercialRequestOwnerNotes || null,
+            latestCommercialRequestAdminNotes: data.latestCommercialRequestAdminNotes || null,
+            latestCommercialRequestPendingItemIds: data.latestCommercialRequestPendingItemIds || [],
+            latestCommercialRequestCommercialIssueCodes: data.latestCommercialRequestCommercialIssueCodes || [],
+            latestCommercialRequestRequestedAt: toDate(data.latestCommercialRequestRequestedAt),
+            latestCommercialRequestReviewedAt: toDate(data.latestCommercialRequestReviewedAt),
             monthlyFeeCents: data.monthlyFeeCents,
             billingDueDay: data.billingDueDay ?? null,
             currentBillingCycleStatus: data.currentBillingCycleStatus,
@@ -704,6 +768,20 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
     setReceiptNotes('');
   }, [receiptActionLoading]);
 
+  const openCommercialRequestDialog = useCallback((location: LocationData) => {
+    setCommercialRequestTarget(location);
+    setCommercialRequestType(location.publicationStatus === 'PUBLISHED' ? 'COMMERCIAL_UPDATE' : 'PUBLICATION');
+    setCommercialRequestSections(location.publicationStatus === 'PUBLISHED' ? 'Fotos, horários, preços' : '');
+    setCommercialRequestNotes('');
+  }, []);
+
+  const closeCommercialRequestDialog = useCallback(() => {
+    if (commercialRequestLoading) return;
+    setCommercialRequestTarget(null);
+    setCommercialRequestSections('');
+    setCommercialRequestNotes('');
+  }, [commercialRequestLoading]);
+
   const priorityActions = useMemo(() => {
     const actions: Array<{
       id: string;
@@ -746,6 +824,27 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       });
     }
 
+    const firstReadyForRequest = locations.find((location) => {
+      const status = locationStatusById[location.id];
+      if (!status || location.latestCommercialRequestStatus === 'PENDING_REVIEW') return false;
+      return location.publicationStatus === 'PUBLISHED'
+        ? status.pendingCount === 0
+        : status.pendingCount === 0 && !status.commerciallyAvailable;
+    });
+    if (firstReadyForRequest) {
+      actions.push({
+        id: `request-${firstReadyForRequest.id}`,
+        title: firstReadyForRequest.publicationStatus === 'PUBLISHED'
+          ? 'Solicitar alteração comercial'
+          : 'Solicitar publicação',
+        description: firstReadyForRequest.publicationStatus === 'PUBLISHED'
+          ? 'Envie fotos, horários e preços para revisão administrativa.'
+          : 'Envie o cadastro completo para revisão e publicação.',
+        icon: <CheckCircleIcon fontSize="small" />,
+        onClick: () => openCommercialRequestDialog(firstReadyForRequest),
+      });
+    }
+
     actions.push({
       id: 'manage-all',
       title: t('fieldOwner.manageAllLocations'),
@@ -763,7 +862,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
     });
 
     return actions.slice(0, 4);
-  }, [locale, locationStatusById, locations, navigate, openReceiptDialog, t]);
+  }, [locale, locationStatusById, locations, navigate, openCommercialRequestDialog, openReceiptDialog, t]);
 
   const handleReceiptFile = useCallback((file: File | null) => {
     if (!file) {
@@ -856,6 +955,40 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
     showSuccess,
     t,
     uploadReceipt,
+  ]);
+
+  const handleSubmitCommercialRequest = useCallback(async () => {
+    if (!commercialRequestTarget) return;
+    const requestedSections = commercialRequestSections
+      .split(/[,\n;]/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+
+    setCommercialRequestLoading(true);
+    try {
+      await requestLocationCommercialReview({
+        locationId: commercialRequestTarget.id,
+        requestType: commercialRequestType,
+        requestedSections,
+        notes: commercialRequestNotes.trim() || null,
+      });
+      showSuccess('Solicitação comercial enviada para revisão.');
+      closeCommercialRequestDialog();
+    } catch (requestError) {
+      logger.error('Erro ao enviar solicitação comercial:', requestError);
+      showError(getFirestoreErrorMessage(requestError) || 'Não foi possível enviar a solicitação comercial.');
+    } finally {
+      setCommercialRequestLoading(false);
+    }
+  }, [
+    closeCommercialRequestDialog,
+    commercialRequestNotes,
+    commercialRequestSections,
+    commercialRequestTarget,
+    commercialRequestType,
+    showError,
+    showSuccess,
   ]);
 
   if (loading) {
@@ -1221,6 +1354,44 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           </Alert>
                         ) : null}
 
+                        {location.latestCommercialRequestStatus ? (
+                          <Alert
+                            severity={
+                              location.latestCommercialRequestStatus === 'APPROVED'
+                                ? 'success'
+                                : location.latestCommercialRequestStatus === 'REJECTED'
+                                  ? 'error'
+                                  : 'info'
+                            }
+                          >
+                            <Stack spacing={0.5}>
+                              <Typography variant="body2" fontWeight={700}>
+                                {getCommercialRequestTypeLabel(location.latestCommercialRequestType)} · {getCommercialRequestStatusLabel(location.latestCommercialRequestStatus)}
+                              </Typography>
+                              {location.latestCommercialRequestRequestedSections?.length ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  Seções: {location.latestCommercialRequestRequestedSections.join(' · ')}
+                                </Typography>
+                              ) : null}
+                              {location.latestCommercialRequestPendingItemIds?.length ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  Checklist pendente: {location.latestCommercialRequestPendingItemIds.map(getChecklistItemLabel).join(' · ')}
+                                </Typography>
+                              ) : null}
+                              {location.latestCommercialRequestCommercialIssueCodes?.length ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  Issues comerciais: {location.latestCommercialRequestCommercialIssueCodes.map(getCommercialIssueLabel).join(' · ')}
+                                </Typography>
+                              ) : null}
+                              {location.latestCommercialRequestAdminNotes ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  Retorno do admin: {location.latestCommercialRequestAdminNotes}
+                                </Typography>
+                              ) : null}
+                            </Stack>
+                          </Alert>
+                        ) : null}
+
                         <Paper
                           variant="outlined"
                           sx={{
@@ -1316,6 +1487,20 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                             {t('fieldOwner.paymentsAndReceipts')}
                           </Button>
                           <Button
+                            variant={location.latestCommercialRequestStatus === 'PENDING_REVIEW' ? 'outlined' : 'contained'}
+                            color="secondary"
+                            startIcon={<CheckCircleIcon />}
+                            onClick={() => openCommercialRequestDialog(location)}
+                            disabled={location.latestCommercialRequestStatus === 'PENDING_REVIEW'}
+                            fullWidth
+                          >
+                            {location.latestCommercialRequestStatus === 'PENDING_REVIEW'
+                              ? 'Solicitação em revisão'
+                              : location.publicationStatus === 'PUBLISHED'
+                                ? 'Solicitar alteração comercial'
+                                : 'Solicitar publicação'}
+                          </Button>
+                          <Button
                             variant="text"
                             startIcon={<LaunchIcon />}
                             onClick={() => navigate(`/location/${location.id}`)}
@@ -1333,6 +1518,67 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
           </Stack>
         )}
       </PageContainer>
+
+      <Dialog
+        open={!!commercialRequestTarget}
+        onClose={closeCommercialRequestDialog}
+        fullWidth
+        fullScreen={fullScreenDialog}
+        maxWidth="sm"
+      >
+        <DialogTitle>Solicitação comercial</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {commercialRequestTarget?.name}
+            </Typography>
+            <TextField
+              select
+              label="Tipo de solicitação"
+              value={commercialRequestType}
+              onChange={(event) => setCommercialRequestType(event.target.value as LocationCommercialRequestType)}
+              fullWidth
+            >
+              <MenuItem value="PUBLICATION">Publicação</MenuItem>
+              <MenuItem value="COMMERCIAL_UPDATE">Alteração comercial</MenuItem>
+            </TextField>
+            <TextField
+              label="Seções alteradas"
+              value={commercialRequestSections}
+              onChange={(event) => setCommercialRequestSections(event.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="Ex.: Fotos, horários, preços"
+            />
+            <TextField
+              label="Observações"
+              value={commercialRequestNotes}
+              onChange={(event) => setCommercialRequestNotes(event.target.value)}
+              fullWidth
+              multiline
+              rows={4}
+              inputProps={{ maxLength: 2000 }}
+            />
+            <Alert severity="info">
+              A publicação e as alterações comerciais passam por revisão administrativa antes de refletirem no catálogo público.
+            </Alert>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeCommercialRequestDialog} disabled={commercialRequestLoading}>
+            {t('common.close')}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmitCommercialRequest}
+            disabled={commercialRequestLoading}
+            startIcon={commercialRequestLoading ? <CircularProgress size={16} /> : <CheckCircleIcon />}
+          >
+            Enviar para revisão
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={!!receiptTarget}

@@ -2,6 +2,8 @@ export type FieldType = 'SOCIETY' | 'FUTSAL' | 'CAMPO' | 'AREIA' | 'OUTROS';
 export type LocationPublicationStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'SUSPENDED' | 'REJECTED';
 export type LocationCommercialStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
 export type LocationSubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
+export type LocationCommercialRequestType = 'PUBLICATION' | 'COMMERCIAL_UPDATE';
+export type LocationCommercialRequestStatus = 'PENDING_REVIEW' | 'NEEDS_CHANGES' | 'APPROVED' | 'REJECTED';
 
 export interface Location {
   id: string;
@@ -44,6 +46,21 @@ export interface Location {
   unpublishedReason?: string;
   ownerNotes?: string;
   adminNotes?: string;
+  latestCommercialRequestId?: string;
+  latestCommercialRequestType?: LocationCommercialRequestType;
+  latestCommercialRequestStatus?: LocationCommercialRequestStatus;
+  latestCommercialRequestRequestedSections?: string[];
+  latestCommercialRequestOwnerNotes?: string;
+  latestCommercialRequestAdminNotes?: string;
+  latestCommercialRequestPendingItemIds?: string[];
+  latestCommercialRequestCommercialIssueCodes?: string[];
+  latestCommercialRequestChecklistCompleted?: number;
+  latestCommercialRequestChecklistTotal?: number;
+  latestCommercialRequestActiveFieldCount?: number;
+  latestCommercialRequestPhotoCount?: number;
+  latestCommercialRequestRequestedAt?: Date;
+  latestCommercialRequestUpdatedAt?: Date;
+  latestCommercialRequestReviewedAt?: Date;
   
   // Rating
   rating: number;

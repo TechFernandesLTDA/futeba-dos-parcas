@@ -1196,6 +1196,21 @@ service cloud.firestore {
           fieldUnchanged('published_by') &&
           fieldUnchanged('unpublished_reason') &&
           fieldUnchanged('admin_notes') &&
+          fieldUnchanged('latest_commercial_request_id') &&
+          fieldUnchanged('latest_commercial_request_type') &&
+          fieldUnchanged('latest_commercial_request_status') &&
+          fieldUnchanged('latest_commercial_request_requested_sections') &&
+          fieldUnchanged('latest_commercial_request_owner_notes') &&
+          fieldUnchanged('latest_commercial_request_admin_notes') &&
+          fieldUnchanged('latest_commercial_request_pending_item_ids') &&
+          fieldUnchanged('latest_commercial_request_commercial_issue_codes') &&
+          fieldUnchanged('latest_commercial_request_checklist_completed') &&
+          fieldUnchanged('latest_commercial_request_checklist_total') &&
+          fieldUnchanged('latest_commercial_request_active_field_count') &&
+          fieldUnchanged('latest_commercial_request_photo_count') &&
+          fieldUnchanged('latest_commercial_request_requested_at') &&
+          fieldUnchanged('latest_commercial_request_updated_at') &&
+          fieldUnchanged('latest_commercial_request_reviewed_at') &&
           fieldUnchanged('last_payment_at') &&
           fieldUnchanged('last_payment_amount_cents') &&
           fieldUnchanged('last_payment_period_key') &&
@@ -1432,6 +1447,21 @@ service cloud.firestore {
         }
 
         allow read: if isAuthenticated() && canReadCommercialEvents();
+        allow create, update, delete: if false;
+      }
+
+      match /publication_requests/{requestId} {
+
+        function canReadPublicationRequests() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        allow read: if isAuthenticated() && canReadPublicationRequests();
         allow create, update, delete: if false;
       }
 
