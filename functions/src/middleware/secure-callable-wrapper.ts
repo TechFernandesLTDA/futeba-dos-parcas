@@ -70,6 +70,14 @@ export interface SecureCallableOptions {
   appCheck?: boolean;
 
   /**
+   * Consome o token App Check para bloquear replay.
+   * Use em operacoes mutantes/sensiveis. Callables de leitura podem
+   * manter App Check sem consumo para evitar falso positivo em retries.
+   * Default: mesmo valor de appCheck.
+   */
+  consumeAppCheckToken?: boolean;
+
+  /**
    * P0 #34: Rate limiting config
    * - Se definido: aplica rate limiting
    * - Se undefined: sem rate limiting
@@ -133,12 +141,14 @@ export function secureCallable<
     enableAuditLog:
       options.enableAuditLog ?? true,
     auditLogContext: options.auditLogContext,
+    consumeAppCheckToken: options.consumeAppCheckToken ??
+      (options.appCheck ?? (!process.env.FUNCTIONS_EMULATOR)),
   };
 
   return onCall(
     {
       enforceAppCheck: config.appCheck,
-      consumeAppCheckToken: config.appCheck,
+      consumeAppCheckToken: config.consumeAppCheckToken,
     },
     async (
       request: CallableRequest<TRequest>
@@ -181,7 +191,10 @@ export function secureCallable<
           }
 
           // Token consumido (replay attack)
-          if (appCheckToken.alreadyConsumed) {
+          if (
+            config.consumeAppCheckToken &&
+            appCheckToken.alreadyConsumed
+          ) {
             logger.warn(
               "[SECURE_CALLABLE] " +
               `${requestId}: App Check ` +
