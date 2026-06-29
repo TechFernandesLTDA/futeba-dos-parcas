@@ -818,6 +818,36 @@ describe("location commercial admin callables", () => {
     })).rejects.toMatchObject({code: "invalid-argument"});
   });
 
+  it("mantem App Check sem consumir token no painel financeiro admin", async () => {
+    let billingSummaryOptions:
+      typeof mockSecureCallableOptions[number] | undefined;
+    let context: unknown;
+    for (const options of mockSecureCallableOptions) {
+      const candidateContext = await options.auditLogContext?.({
+        data: {periodKey: "2026-07"},
+      });
+      if (
+        candidateContext &&
+        typeof candidateContext === "object" &&
+        "function" in candidateContext &&
+        candidateContext.function === "getAdminLocationBillingSummary"
+      ) {
+        billingSummaryOptions = options;
+        context = candidateContext;
+        break;
+      }
+    }
+
+    expect(context).toMatchObject({
+      function: "getAdminLocationBillingSummary",
+    });
+    expect(billingSummaryOptions).toMatchObject({
+      appCheck: true,
+      consumeAppCheckToken: false,
+      requiredRole: "ADMIN",
+    });
+  });
+
   it("transfere owner como admin e remove novo owner da lista de managers", async () => {
     firestoreStore.set("users/owner-2", {
       name: "Novo dono",

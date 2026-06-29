@@ -536,6 +536,18 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.2.13] - 2026-06-29
+
+#### Corrigido
+- `secureCallable` passa a separar `enforceAppCheck` de `consumeAppCheckToken`.
+- `getAdminLocationBillingSummary` usa `consumeAppCheckToken: false`, preservando App Check obrigatorio sem bloquear retries legitimos de leitura.
+- Teste regressivo garante a configuracao segura do callable do painel financeiro.
+
+#### Segurança
+- Mantem App Check e role `ADMIN` obrigatorios no painel financeiro, sem reduzir autorizacao do endpoint.
+
+_Issues: #3149_
+
 ### [1.2.12] - 2026-06-29
 
 #### Corrigido
