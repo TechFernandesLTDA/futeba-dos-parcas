@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T00:01:45.167Z",
+  "generatedAt": "2026-06-29T00:37:51.785Z",
   "notes": [
+    {
+      "version": "1.43.11",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Comprovantes de mensalidade de quadras agora têm fluxo privado de revisão",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Donos de quadra e administradores podem enviar comprovantes de mensalidade por um caminho privado no Storage.",
+        "Administradores podem revisar pendências de comprovante na tela de gerenciamento de quadras.",
+        "Aprovar um comprovante ativa a mensalidade; rejeitar não altera a situação comercial da quadra.",
+        "Fotos de quadras e campos agora respeitam publicação da quadra antes de ficarem visíveis para usuários autenticados fora da equipe/admin."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3133,
+        3091,
+        3084
+      ]
+    },
     {
       "version": "1.43.10",
       "buildNumber": null,

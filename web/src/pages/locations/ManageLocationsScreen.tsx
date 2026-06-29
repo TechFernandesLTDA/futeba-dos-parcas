@@ -35,16 +35,21 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   AdminPanelSettings as AdminIcon,
+  ReceiptLong as ReceiptIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, where, onSnapshot, limit } from 'firebase/firestore';
+import { collection, query, orderBy, where, onSnapshot, limit, Timestamp } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes } from 'firebase/storage';
 import { db } from '../../services/firebase';
+import { storage } from '../../services/firebaseStorage';
 import {
   assignLocationOwner,
   deleteLocation,
   inviteLocationManager,
   removeLocationManager,
+  reviewLocationSubscriptionReceipt,
   setLocationPublicationStatus,
   setLocationSubscription,
+  submitLocationSubscriptionReceipt,
 } from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
@@ -70,6 +75,46 @@ import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('ManageLocationsScreen');
+const RECEIPT_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const RECEIPT_EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
+const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
+
+interface SubscriptionPaymentReview {
+  id: string;
+  amountCents?: number;
+  periodKey?: string;
+  method?: string | null;
+  receiptStoragePath?: string | null;
+  reviewStatus?: string;
+  status?: string;
+  submittedBy?: string;
+  submittedAt?: Date | null;
+}
+
+const toDate = (value: unknown): Date | null => {
+  if (value instanceof Date) return value;
+  if (value instanceof Timestamp) return value.toDate();
+  if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  return null;
+};
+
+const safeStorageName = (name: string) =>
+  name.replace(/\.[^.]+$/, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80) || 'comprovante';
+
+const currentPeriodKey = () => new Date().toISOString().slice(0, 7);
 
 export const ManageLocationsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -103,6 +148,14 @@ export const ManageLocationsScreen: React.FC = () => {
   const [managerUid, setManagerUid] = useState('');
   const [managerEmail, setManagerEmail] = useState('');
   const [teamActionLoading, setTeamActionLoading] = useState<string | null>(null);
+  const [receiptTarget, setReceiptTarget] = useState<Location | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptAmount, setReceiptAmount] = useState('');
+  const [receiptPeriodKey, setReceiptPeriodKey] = useState(currentPeriodKey());
+  const [receiptMethod, setReceiptMethod] = useState('pix');
+  const [receiptNotes, setReceiptNotes] = useState('');
+  const [receiptActionLoading, setReceiptActionLoading] = useState<string | null>(null);
+  const [pendingReceipts, setPendingReceipts] = useState<SubscriptionPaymentReview[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -131,6 +184,44 @@ export const ManageLocationsScreen: React.FC = () => {
 
     return () => unsubscribe();
   }, [reloadKey, isAdmin, user?.id, t]);
+
+  useEffect(() => {
+    if (!receiptTarget || !isAdmin) {
+      setPendingReceipts([]);
+      return undefined;
+    }
+    const paymentsRef = collection(db, 'locations', receiptTarget.id, 'subscription_payments');
+    const paymentsQuery = query(paymentsRef, orderBy('created_at', 'desc'), limit(20));
+    const unsubscribe = onSnapshot(
+      paymentsQuery,
+      (snapshot) => {
+        setPendingReceipts(snapshot.docs
+          .map((paymentDoc) => {
+            const data = snakeToCamel<Record<string, unknown>>(paymentDoc.data());
+            return {
+              id: paymentDoc.id,
+              amountCents: typeof data.amountCents === 'number' ? data.amountCents : undefined,
+              periodKey: typeof data.periodKey === 'string' ? data.periodKey : undefined,
+              method: typeof data.method === 'string' ? data.method : null,
+              receiptStoragePath: typeof data.receiptStoragePath === 'string' ? data.receiptStoragePath : null,
+              reviewStatus: typeof data.reviewStatus === 'string' ? data.reviewStatus : undefined,
+              status: typeof data.status === 'string' ? data.status : undefined,
+              submittedBy: typeof data.submittedBy === 'string' ? data.submittedBy : undefined,
+              submittedAt: toDate(data.submittedAt),
+            };
+          })
+          .filter((payment) => (
+            payment.reviewStatus === 'PENDING_REVIEW' ||
+            payment.status === 'PENDING_REVIEW'
+          )));
+      },
+      (err) => {
+        logger.error('Erro ao carregar comprovantes pendentes:', err);
+        showError('Não foi possível carregar os comprovantes pendentes.');
+      },
+    );
+    return unsubscribe;
+  }, [receiptTarget, isAdmin, showError]);
 
   const filteredLocations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -249,6 +340,15 @@ export const ManageLocationsScreen: React.FC = () => {
     setBillingNotes(location.adminNotes || '');
   };
 
+  const openReceiptDialog = (location: Location) => {
+    setReceiptTarget(location);
+    setReceiptFile(null);
+    setReceiptAmount(location.monthlyFeeCents ? String(location.monthlyFeeCents / 100) : '');
+    setReceiptPeriodKey(currentPeriodKey());
+    setReceiptMethod('pix');
+    setReceiptNotes('');
+  };
+
   const openTeamDialog = (location: Location) => {
     setTeamTarget(location);
     setTeamOwnerId(location.ownerId || '');
@@ -288,6 +388,104 @@ export const ManageLocationsScreen: React.FC = () => {
       showError('Não foi possível salvar a mensalidade.');
     } finally {
       setCommercialActionLoading(null);
+    }
+  };
+
+  const handleReceiptFile = (file: File | null) => {
+    if (!file) {
+      setReceiptFile(null);
+      return;
+    }
+    if (!RECEIPT_ALLOWED_TYPES.includes(file.type)) {
+      showError('Comprovante precisa ser JPG, PNG, WebP ou PDF.');
+      return;
+    }
+    if (file.size > RECEIPT_MAX_BYTES) {
+      showError('Comprovante precisa ter até 10 MB.');
+      return;
+    }
+    setReceiptFile(file);
+  };
+
+  const uploadReceipt = async (location: Location, file: File) => {
+    const extension = RECEIPT_EXTENSION_BY_TYPE[file.type] || 'pdf';
+    const path = [
+      'locations',
+      location.id,
+      'subscription_receipts',
+      location.ownerId,
+      `${Date.now()}-${safeStorageName(file.name)}.${extension}`,
+    ].join('/');
+    const ref = storageRef(storage, path);
+    await uploadBytes(ref, file, {
+      contentType: file.type,
+      customMetadata: {
+        locationId: location.id,
+        ownerId: location.ownerId,
+        commercialDocument: 'subscription_receipt',
+      },
+    });
+    return ref.fullPath;
+  };
+
+  const handleSubmitReceipt = async () => {
+    if (!receiptTarget || !receiptFile) {
+      showError('Selecione o comprovante.');
+      return;
+    }
+    const amountCents = Math.round(Number(receiptAmount.replace(',', '.')) * 100);
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+      showError('Informe o valor pago.');
+      return;
+    }
+    if (!/^\d{4}-\d{2}$/.test(receiptPeriodKey.trim())) {
+      showError('Informe o período no formato AAAA-MM.');
+      return;
+    }
+    setReceiptActionLoading('submit');
+    try {
+      const receiptStoragePath = await uploadReceipt(receiptTarget, receiptFile);
+      await submitLocationSubscriptionReceipt({
+        locationId: receiptTarget.id,
+        amountCents,
+        periodKey: receiptPeriodKey.trim(),
+        paidAtIso: new Date().toISOString(),
+        method: receiptMethod.trim() || null,
+        receiptStoragePath,
+        notes: receiptNotes.trim() || null,
+      });
+      showSuccess('Comprovante enviado para revisão. A mensalidade só muda após aprovação.');
+      setReceiptFile(null);
+      setReceiptNotes('');
+    } catch (err) {
+      logger.error('Erro ao enviar comprovante da quadra:', err);
+      showError('Não foi possível enviar o comprovante.');
+    } finally {
+      setReceiptActionLoading(null);
+    }
+  };
+
+  const handleReviewReceipt = async (
+    payment: SubscriptionPaymentReview,
+    decision: 'APPROVED' | 'REJECTED',
+  ) => {
+    if (!receiptTarget || !isAdmin) return;
+    setReceiptActionLoading(`${decision}:${payment.id}`);
+    try {
+      await reviewLocationSubscriptionReceipt({
+        locationId: receiptTarget.id,
+        paymentId: payment.id,
+        decision,
+        notes: receiptNotes.trim() || null,
+      });
+      showSuccess(decision === 'APPROVED'
+        ? 'Comprovante aprovado e mensalidade ativada.'
+        : 'Comprovante rejeitado sem alterar a mensalidade.');
+    } catch (err) {
+      logger.error('Erro ao revisar comprovante da quadra:', err);
+      showError('Não foi possível revisar o comprovante.');
+    } finally {
+      setReceiptActionLoading(null);
     }
   };
 
@@ -672,10 +870,30 @@ export const ManageLocationsScreen: React.FC = () => {
                         >
                           Mensalidade
                         </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<ReceiptIcon />}
+                          disabled={Boolean(receiptActionLoading)}
+                          onClick={() => openReceiptDialog(location)}
+                        >
+                          Comprovantes
+                        </Button>
                       </Box>
                     )}
                     {userCanManageTeam && (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, px: 2, pb: 2 }}>
+                        {!isAdmin && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<ReceiptIcon />}
+                            disabled={Boolean(receiptActionLoading)}
+                            onClick={() => openReceiptDialog(location)}
+                          >
+                            Enviar comprovante
+                          </Button>
+                        )}
                         <Button
                           size="small"
                           variant="outlined"
@@ -815,6 +1033,131 @@ export const ManageLocationsScreen: React.FC = () => {
             startIcon={commercialActionLoading?.endsWith(':billing') ? <CircularProgress size={16} /> : null}
           >
             Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!receiptTarget} onClose={() => !receiptActionLoading && setReceiptTarget(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Comprovantes da mensalidade</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {receiptTarget?.name}
+            </Typography>
+            <Alert severity="info">
+              O arquivo fica em Storage privado. Envio de dono/admin cria uma pendência
+              e não altera a mensalidade até aprovação administrativa.
+            </Alert>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <TextField
+                label="Valor pago (R$)"
+                value={receiptAmount}
+                onChange={(e) => setReceiptAmount(e.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}
+                fullWidth
+                inputMode="decimal"
+                placeholder="Ex.: 199.90"
+              />
+              <TextField
+                label="Período"
+                value={receiptPeriodKey}
+                onChange={(e) => setReceiptPeriodKey(e.target.value.replace(/[^\d-]/g, '').slice(0, 7))}
+                fullWidth
+                placeholder="AAAA-MM"
+                helperText="Ex.: 2026-07"
+              />
+            </Stack>
+            <TextField
+              label="Método"
+              value={receiptMethod}
+              onChange={(e) => setReceiptMethod(e.target.value)}
+              fullWidth
+              placeholder="pix, boleto, cartão..."
+              inputProps={{ maxLength: 80 }}
+            />
+            <TextField
+              label={isAdmin ? 'Notas de envio/revisão' : 'Observações'}
+              value={receiptNotes}
+              onChange={(e) => setReceiptNotes(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              inputProps={{ maxLength: 1000 }}
+            />
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<ReceiptIcon />}
+              disabled={!!receiptActionLoading}
+            >
+              {receiptFile ? `Arquivo: ${receiptFile.name}` : 'Selecionar comprovante'}
+              <input
+                hidden
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                onChange={(event) => handleReceiptFile(event.target.files?.[0] ?? null)}
+              />
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmitReceipt}
+              disabled={!!receiptActionLoading || !receiptFile}
+              startIcon={receiptActionLoading === 'submit' ? <CircularProgress size={16} /> : null}
+            >
+              Enviar para revisão
+            </Button>
+            {isAdmin && (
+              <Stack spacing={1}>
+                <Typography variant="subtitle2">Pendências de revisão</Typography>
+                {pendingReceipts.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum comprovante pendente para esta quadra.
+                  </Typography>
+                ) : (
+                  pendingReceipts.map((payment) => (
+                    <Card key={payment.id} variant="outlined">
+                      <CardContent>
+                        <Stack spacing={1}>
+                          <Typography variant="subtitle2">
+                            {formatMonthlyFee(payment.amountCents)} · {payment.periodKey || 'Período não informado'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {payment.receiptStoragePath || 'Sem path privado'} · enviado por {payment.submittedBy || 'desconhecido'}
+                            {payment.submittedAt ? ` em ${payment.submittedAt.toLocaleString('pt-BR')}` : ''}
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="success"
+                              disabled={!!receiptActionLoading}
+                              onClick={() => handleReviewReceipt(payment, 'APPROVED')}
+                              startIcon={receiptActionLoading === `APPROVED:${payment.id}` ? <CircularProgress size={16} /> : null}
+                            >
+                              Aprovar
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              disabled={!!receiptActionLoading}
+                              onClick={() => handleReviewReceipt(payment, 'REJECTED')}
+                              startIcon={receiptActionLoading === `REJECTED:${payment.id}` ? <CircularProgress size={16} /> : null}
+                            >
+                              Rejeitar
+                            </Button>
+                          </Box>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </Stack>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReceiptTarget(null)} disabled={!!receiptActionLoading}>
+            {t('common.close')}
           </Button>
         </DialogActions>
       </Dialog>

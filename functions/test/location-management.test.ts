@@ -191,12 +191,15 @@ jest.mock("firebase-functions/v2/https", () => ({
 const {
   acceptLocationManagerInvite,
   assignLocationOwner,
+  deleteLocation,
   deleteLocationSubcollection,
   inviteLocationManager,
   registerLocationSubscriptionPayment,
+  reviewLocationSubscriptionReceipt,
   removeLocationManager,
   setLocationPublicationStatus,
   setLocationSubscription,
+  submitLocationSubscriptionReceipt,
 } = require("../src/locations/location-management");
 
 describe("deleteLocationSubcollection", () => {
@@ -260,15 +263,67 @@ describe("location commercial admin callables", () => {
     expect(collectionSize("audit_logs")).toBe(1);
   });
 
+  it("deleta quadra com subcolecoes comerciais e registra auditoria", async () => {
+    seedSubcollection("locations/location-1/reviews", 2);
+    seedSubcollection("locations/location-1/fields", 1);
+    seedSubcollection("locations/location-1/subscription_payments", 1);
+
+    await expect(deleteLocation({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "location-1"},
+    })).resolves.toEqual({
+      success: true,
+      deletedCount: 5,
+    });
+
+    expect(firestoreStore.has("locations/location-1")).toBe(false);
+    expect(collectionSize("locations/location-1/reviews")).toBe(0);
+    expect(collectionSize("locations/location-1/fields")).toBe(0);
+    expect(collectionSize("locations/location-1/subscription_payments")).toBe(0);
+    const [, auditLog] = findFirstDoc("audit_logs");
+    expect(auditLog).toMatchObject({
+      type: "LOCATION_DELETE",
+      target_location_id: "location-1",
+      actor_user_id: "admin-1",
+      location_name: "Arena Parcas",
+      deleted_docs_count: 5,
+    });
+  });
+
+  it("rejeita exclusao de quadra sem auth, locationId valido ou doc existente", async () => {
+    await expect(deleteLocation({
+      data: {locationId: "location-1"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+
+    await expect(deleteLocation({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: ""},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(deleteLocation({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "missing"},
+    })).rejects.toMatchObject({code: "not-found"});
+  });
+
   it("expõe contexto de auditoria para publicação, assinatura e pagamento", async () => {
+    const deleteOptions = mockSecureCallableOptions[0];
     const publicationOptions = mockSecureCallableOptions[1];
     const subscriptionOptions = mockSecureCallableOptions[2];
     const paymentOptions = mockSecureCallableOptions[3];
-    const assignOwnerOptions = mockSecureCallableOptions[4];
-    const inviteManagerOptions = mockSecureCallableOptions[5];
-    const acceptInviteOptions = mockSecureCallableOptions[6];
-    const removeManagerOptions = mockSecureCallableOptions[7];
+    const submitReceiptOptions = mockSecureCallableOptions[4];
+    const reviewReceiptOptions = mockSecureCallableOptions[5];
+    const assignOwnerOptions = mockSecureCallableOptions[6];
+    const inviteManagerOptions = mockSecureCallableOptions[7];
+    const acceptInviteOptions = mockSecureCallableOptions[8];
+    const removeManagerOptions = mockSecureCallableOptions[9];
 
+    await expect(deleteOptions.auditLogContext({
+      data: {locationId: "location-1"},
+    })).resolves.toEqual({
+      function: "deleteLocation",
+      locationId: "location-1",
+    });
     await expect(publicationOptions.auditLogContext({
       data: {locationId: "location-1", publicationStatus: "PUBLISHED"},
     })).resolves.toEqual({
@@ -289,6 +344,25 @@ describe("location commercial admin callables", () => {
       function: "registerLocationSubscriptionPayment",
       locationId: "location-1",
       periodKey: "2026-07",
+    });
+    await expect(submitReceiptOptions.auditLogContext({
+      data: {locationId: "location-1", periodKey: "2026-07"},
+    })).resolves.toEqual({
+      function: "submitLocationSubscriptionReceipt",
+      locationId: "location-1",
+      periodKey: "2026-07",
+    });
+    await expect(reviewReceiptOptions.auditLogContext({
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+      },
+    })).resolves.toEqual({
+      function: "reviewLocationSubscriptionReceipt",
+      locationId: "location-1",
+      paymentId: "payment-1",
+      decision: "APPROVED",
     });
     await expect(assignOwnerOptions.auditLogContext({
       data: {locationId: "location-1", newOwnerId: "owner-2"},
@@ -827,6 +901,215 @@ describe("location commercial admin callables", () => {
       receipt_url: null,
       notes: null,
     });
+  });
+
+  it("owner envia comprovante privado sem ativar assinatura automaticamente", async () => {
+    await expect(submitLocationSubscriptionReceipt({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        amountCents: 12990,
+        periodKey: "2026-07",
+        paidAtIso: "2026-07-08T12:00:00.000Z",
+        method: "pix",
+        receiptStoragePath:
+          "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+        notes: "Enviado pelo dono",
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      locationId: "location-1",
+      paymentId: expect.any(String),
+      reviewStatus: "PENDING_REVIEW",
+    });
+
+    const location = firestoreStore.get("locations/location-1");
+    expect(location).toMatchObject({
+      subscription_status: "TRIAL",
+      commercial_status: "TRIAL",
+    });
+    const [, payment] = findFirstDoc("locations/location-1/subscription_payments");
+    expect(payment).toMatchObject({
+      amount_cents: 12990,
+      period_key: "2026-07",
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      receipt_url: null,
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+      submitted_by: "owner-1",
+    });
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+    expect(collectionSize("audit_logs")).toBe(1);
+  });
+
+  it("bloqueia comprovante de manager, path fora do owner e valores invalidos", async () => {
+    await expect(submitLocationSubscriptionReceipt({
+      data: {
+        locationId: "location-1",
+        amountCents: 12990,
+        periodKey: "2026-07",
+        receiptStoragePath:
+          "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      },
+    })).rejects.toMatchObject({code: "unauthenticated"});
+
+    await expect(submitLocationSubscriptionReceipt({
+      auth: {uid: "manager-existing", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        amountCents: 12990,
+        periodKey: "2026-07",
+        receiptStoragePath:
+          "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      },
+    })).rejects.toMatchObject({code: "permission-denied"});
+
+    await expect(submitLocationSubscriptionReceipt({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        amountCents: 0,
+        periodKey: "2026-07",
+        receiptStoragePath:
+          "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(submitLocationSubscriptionReceipt({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        amountCents: 12990,
+        periodKey: "2026-07",
+        receiptStoragePath:
+          "locations/location-1/subscription_receipts/other-owner/2026-07.pdf",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+  });
+
+  it("admin aprova comprovante pendente e ativa assinatura", async () => {
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 12990,
+      period_key: "2026-07",
+      paid_at: new Date("2026-07-08T12:00:00.000Z"),
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+      submitted_by: "owner-1",
+    });
+
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+        notes: "Conferido no banco",
+      },
+    })).resolves.toEqual({
+      success: true,
+      locationId: "location-1",
+      paymentId: "payment-1",
+      reviewStatus: "APPROVED",
+      subscriptionStatus: "ACTIVE",
+    });
+
+    expect(firestoreStore.get("locations/location-1/subscription_payments/payment-1"))
+      .toMatchObject({
+        status: "APPROVED",
+        review_status: "APPROVED",
+        reviewed_by: "admin-1",
+        review_notes: "Conferido no banco",
+      });
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      last_payment_amount_cents: 12990,
+      last_payment_period_key: "2026-07",
+      last_payment_id: "payment-1",
+      updated_by: "admin-1",
+    });
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+  });
+
+  it("admin rejeita comprovante pendente sem alterar assinatura", async () => {
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 12990,
+      period_key: "2026-07",
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "REJECTED",
+        notes: "Valor divergente",
+      },
+    })).resolves.toMatchObject({
+      reviewStatus: "REJECTED",
+      subscriptionStatus: "TRIAL",
+    });
+
+    expect(firestoreStore.get("locations/location-1/subscription_payments/payment-1"))
+      .toMatchObject({
+        status: "REJECTED",
+        review_status: "REJECTED",
+        review_notes: "Valor divergente",
+      });
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "TRIAL",
+      commercial_status: "TRIAL",
+    });
+  });
+
+  it("bloqueia revisao sem admin, pagamento ausente ou nao pendente", async () => {
+    await expect(reviewLocationSubscriptionReceipt({
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+      },
+    })).rejects.toMatchObject({code: "unauthenticated"});
+
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+      },
+    })).rejects.toMatchObject({code: "permission-denied"});
+
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "missing",
+        decision: "APPROVED",
+      },
+    })).rejects.toMatchObject({code: "not-found"});
+
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      status: "APPROVED",
+      review_status: "APPROVED",
+    });
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "REJECTED",
+      },
+    })).rejects.toMatchObject({code: "failed-precondition"});
   });
 });
 
