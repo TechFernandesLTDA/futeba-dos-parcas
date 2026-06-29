@@ -69,6 +69,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.18] - 2026-06-29
+
+#### Adicionado
+- Novos campos tipados em `AdminLocationBillingSummaryRow` para ciclo atual.
+- Chips administrativos para ciclo, vencimento e suspensao.
+- Alerta financeiro no painel do dono de quadra baseado em `current_billing_open_balance_cents`.
+- A versao web foi atualizada para `1.43.18`.
+
+_Issues: #3132, #3124, #3119, #3086, #3084_
+
 ### [1.43.17] - 2026-06-29
 
 #### Adicionado
@@ -525,6 +535,21 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.10] - 2026-06-29
+
+#### Adicionado
+- Scheduler `processLocationBillingCycles` diario em America/Sao_Paulo.
+- Callable admin `runLocationBillingAutomation`.
+- Subcolecao `subscription_cycles/{periodKey}` com status `PAID`, `PARTIAL`, `PENDING`, `OVERDUE` e `SUSPENDED`.
+- Ledger e evento comercial idempotentes para reativacao, atraso e suspensao por automacao.
+- Testes unitarios cobrindo processamento mensal, idempotencia, callable admin e handler agendado.
+
+#### Segurança
+- Automacao manual exige `requiredRole: ADMIN` e rate limit dedicado.
+- Saldos e status de ciclo sao calculados no backend a partir de pagamentos aprovados.
+
+_Issues: #3132, #3124, #3119, #3091, #3086, #3084_
 
 ### [1.2.9] - 2026-06-29
 
