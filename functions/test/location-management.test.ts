@@ -267,26 +267,28 @@ describe("location commercial admin callables", () => {
     seedSubcollection("locations/location-1/reviews", 2);
     seedSubcollection("locations/location-1/fields", 1);
     seedSubcollection("locations/location-1/subscription_payments", 1);
+    seedSubcollection("locations/location-1/subscription_ledger", 1);
 
     await expect(deleteLocation({
       auth: {uid: "admin-1", token: {role: "ADMIN"}},
       data: {locationId: "location-1"},
     })).resolves.toEqual({
       success: true,
-      deletedCount: 5,
+      deletedCount: 6,
     });
 
     expect(firestoreStore.has("locations/location-1")).toBe(false);
     expect(collectionSize("locations/location-1/reviews")).toBe(0);
     expect(collectionSize("locations/location-1/fields")).toBe(0);
     expect(collectionSize("locations/location-1/subscription_payments")).toBe(0);
+    expect(collectionSize("locations/location-1/subscription_ledger")).toBe(0);
     const [, auditLog] = findFirstDoc("audit_logs");
     expect(auditLog).toMatchObject({
       type: "LOCATION_DELETE",
       target_location_id: "location-1",
       actor_user_id: "admin-1",
       location_name: "Arena Parcas",
-      deleted_docs_count: 5,
+      deleted_docs_count: 6,
     });
   });
 
@@ -749,6 +751,16 @@ describe("location commercial admin callables", () => {
     expect(location?.billing_starts_at).toBeInstanceOf(Date);
     expect(location?.billing_expires_at).toBeInstanceOf(Date);
     expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "SUBSCRIPTION_STATUS_CHANGED",
+      actor_user_id: "admin-1",
+      previous_subscription_status: "TRIAL",
+      next_subscription_status: "ACTIVE",
+      monthly_fee_cents: 12990,
+      billing_due_day: 10,
+      reason: "Plano fundador",
+    });
   });
 
   it("rejeita valores comerciais invalidos", async () => {
@@ -846,6 +858,18 @@ describe("location commercial admin callables", () => {
     });
     expect(location?.last_payment_at).toBeInstanceOf(Date);
     expect(collectionSize("locations/location-1/subscription_payments")).toBe(1);
+    expect(collectionSize("locations/location-1/subscription_ledger")).toBe(1);
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_REGISTERED",
+      actor_user_id: "admin-1",
+      amount_cents: 9900,
+      period_key: "2026-07",
+      review_status: "APPROVED",
+      previous_subscription_status: "TRIAL",
+      next_subscription_status: "ACTIVE",
+      reason: "Pago antecipado",
+    });
     expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
     expect(collectionSize("audit_logs")).toBe(1);
   });
@@ -858,6 +882,11 @@ describe("location commercial admin callables", () => {
     await expect(registerLocationSubscriptionPayment({
       auth: {uid: "admin-1"},
       data: {locationId: "location-1", amountCents: 9900, periodKey: " "},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(registerLocationSubscriptionPayment({
+      auth: {uid: "admin-1"},
+      data: {locationId: "location-1", amountCents: 9900, periodKey: "2026-13"},
     })).rejects.toMatchObject({code: "invalid-argument"});
 
     await expect(registerLocationSubscriptionPayment({
@@ -938,6 +967,17 @@ describe("location commercial admin callables", () => {
       status: "PENDING_REVIEW",
       review_status: "PENDING_REVIEW",
       submitted_by: "owner-1",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_SUBMITTED",
+      actor_user_id: "owner-1",
+      amount_cents: 12990,
+      period_key: "2026-07",
+      review_status: "PENDING_REVIEW",
+      previous_subscription_status: "TRIAL",
+      next_subscription_status: "TRIAL",
+      reason: "Enviado pelo dono",
     });
     expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
     expect(collectionSize("audit_logs")).toBe(1);
@@ -1031,6 +1071,18 @@ describe("location commercial admin callables", () => {
       last_payment_id: "payment-1",
       updated_by: "admin-1",
     });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_APPROVED",
+      actor_user_id: "admin-1",
+      amount_cents: 12990,
+      period_key: "2026-07",
+      payment_id: "payment-1",
+      review_status: "APPROVED",
+      previous_subscription_status: "TRIAL",
+      next_subscription_status: "ACTIVE",
+      reason: "Conferido no banco",
+    });
     expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
   });
 
@@ -1066,6 +1118,17 @@ describe("location commercial admin callables", () => {
     expect(firestoreStore.get("locations/location-1")).toMatchObject({
       subscription_status: "TRIAL",
       commercial_status: "TRIAL",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_REJECTED",
+      actor_user_id: "admin-1",
+      amount_cents: 12990,
+      period_key: "2026-07",
+      payment_id: "payment-1",
+      review_status: "REJECTED",
+      next_subscription_status: "TRIAL",
+      reason: "Valor divergente",
     });
   });
 

@@ -69,6 +69,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.16] - 2026-06-29
+
+#### Adicionado
+- Leitura de `locations/{locationId}/subscription_ledger` no gerenciamento de quadras.
+- Labels e timeline para eventos financeiros comerciais.
+- Resumo administrativo calculado a partir dos status comerciais carregados.
+- A versão web foi atualizada para `1.43.16`.
+
+_Issues: #3114, #3091, #3084_
+
 ### [1.43.15] - 2026-06-29
 
 #### Adicionado
@@ -504,6 +514,19 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.8] - 2026-06-29
+
+#### Adicionado
+- Subcoleção `locations/{locationId}/subscription_ledger`.
+- Entradas de ledger para status/plano, pagamento registrado, comprovante enviado e revisão de comprovante.
+- Testes unitários cobrindo ledger em Functions.
+
+#### Segurança
+- Firestore Rules permitem leitura do ledger apenas para owner, manager ou admin.
+- Escrita direta no ledger segue bloqueada para clientes; somente Cloud Functions via Admin SDK gravam eventos.
+
+_Issues: #3114, #3091, #3084_
 
 ### [1.2.7] - 2026-06-29
 

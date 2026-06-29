@@ -74,6 +74,24 @@ interface ReviewLocationSubscriptionReceiptRequest {
   notes?: string | null;
 }
 
+interface LocationSubscriptionLedgerEntry {
+  type: string;
+  actor_user_id: string;
+  amount_cents?: number | null;
+  period_key?: string | null;
+  payment_id?: string | null;
+  method?: string | null;
+  review_status?: string | null;
+  previous_subscription_status?: string | null;
+  next_subscription_status?: string | null;
+  previous_commercial_status?: string | null;
+  next_commercial_status?: string | null;
+  monthly_fee_cents?: number | null;
+  billing_due_day?: number | null;
+  reason?: string | null;
+  effective_at?: Date | FirebaseFirestore.FieldValue | null;
+}
+
 interface AssignLocationOwnerRequest {
   locationId: string;
   newOwnerId: string;
@@ -120,6 +138,7 @@ const LOCATION_SUBCOLLECTIONS = [
   "audit_logs",
   "commercial_events",
   "subscription_payments",
+  "subscription_ledger",
 ];
 
 /**
@@ -133,6 +152,19 @@ function requireNonEmptyString(value: unknown, field: string): string {
     throw new HttpsError("invalid-argument", `${field} must be a non-empty string`);
   }
   return value.trim();
+}
+
+/**
+ * Valida periodo comercial no formato AAAA-MM.
+ * @param {unknown} value Valor bruto recebido.
+ * @return {string} Periodo validado.
+ */
+function requirePeriodKey(value: unknown): string {
+  const periodKey = requireNonEmptyString(value, "periodKey");
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodKey)) {
+    throw new HttpsError("invalid-argument", "periodKey must use YYYY-MM");
+  }
+  return periodKey;
 }
 
 /**
@@ -339,6 +371,30 @@ async function writeLocationCommercialEvent(params: {
       target_location_id: params.locationId,
     }),
   ]);
+}
+
+/**
+ * Cria entrada imutavel do ledger financeiro da quadra.
+ * @param {string} locationId ID da location.
+ * @param {LocationSubscriptionLedgerEntry} entry Dados financeiros auditaveis.
+ * @return {FirebaseFirestore.DocumentReference} Referencia criada.
+ */
+function createSubscriptionLedgerRef(
+  locationId: string,
+  entry: LocationSubscriptionLedgerEntry
+) {
+  const ledgerRef = db()
+    .collection("locations")
+    .doc(locationId)
+    .collection("subscription_ledger")
+    .doc();
+  return {
+    ledgerRef,
+    data: {
+      ...entry,
+      created_at: FieldValue.serverTimestamp(),
+    },
+  };
 }
 
 /**
@@ -619,7 +675,25 @@ secureCallable<SetLocationSubscriptionRequest>(
       updated_by: request.auth.uid,
     };
 
-    await locRef.update(update);
+    const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+      locationId,
+      {
+        type: "SUBSCRIPTION_STATUS_CHANGED",
+        actor_user_id: request.auth.uid,
+        previous_subscription_status: locData.subscription_status ?? null,
+        next_subscription_status: subscriptionStatus,
+        previous_commercial_status: locData.commercial_status ?? null,
+        next_commercial_status: subscriptionStatus,
+        monthly_fee_cents: monthlyFeeCents,
+        billing_due_day: billingDueDay,
+        reason: adminNotes,
+        effective_at: FieldValue.serverTimestamp(),
+      }
+    );
+    const batch = db().batch();
+    batch.update(locRef, update);
+    batch.set(ledgerRef, ledgerData);
+    await batch.commit();
     await writeLocationCommercialEvent({
       locationId,
       actorUserId: request.auth.uid,
@@ -652,7 +726,7 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
     }
     const locationId = requireNonEmptyString(request.data.locationId, "locationId");
-    const periodKey = requireNonEmptyString(request.data.periodKey, "periodKey");
+    const periodKey = requirePeriodKey(request.data.periodKey);
     const {amountCents} = request.data;
     if (!Number.isInteger(amountCents) || amountCents <= 0) {
       throw new HttpsError("invalid-argument", "amountCents must be > 0");
@@ -664,6 +738,24 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
     const notes = optionalTrimmed(request.data.notes, 1000);
     const {locRef, locData} = await getExistingLocation(locationId);
     const paymentRef = locRef.collection("subscription_payments").doc();
+    const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+      locationId,
+      {
+        type: "PAYMENT_REGISTERED",
+        actor_user_id: request.auth.uid,
+        amount_cents: amountCents,
+        period_key: periodKey,
+        payment_id: paymentRef.id,
+        method,
+        review_status: "APPROVED",
+        previous_subscription_status: locData.subscription_status ?? null,
+        next_subscription_status: "ACTIVE",
+        previous_commercial_status: locData.commercial_status ?? null,
+        next_commercial_status: "ACTIVE",
+        reason: notes,
+        effective_at: paidAt,
+      }
+    );
     const batch = db().batch();
 
     batch.set(paymentRef, {
@@ -675,6 +767,10 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       notes,
       created_at: FieldValue.serverTimestamp(),
       created_by: request.auth.uid,
+      status: "APPROVED",
+      review_status: "APPROVED",
+      reviewed_at: FieldValue.serverTimestamp(),
+      reviewed_by: request.auth.uid,
     });
     batch.update(locRef, {
       subscription_status: "ACTIVE",
@@ -685,6 +781,7 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       updated_at: FieldValue.serverTimestamp(),
       updated_by: request.auth.uid,
     });
+    batch.set(ledgerRef, ledgerData);
     await batch.commit();
 
     await writeLocationCommercialEvent({
@@ -731,7 +828,7 @@ secureCallable<SubmitLocationSubscriptionReceiptRequest>(
       throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
     }
     const locationId = requireNonEmptyString(request.data.locationId, "locationId");
-    const periodKey = requireNonEmptyString(request.data.periodKey, "periodKey");
+    const periodKey = requirePeriodKey(request.data.periodKey);
     const {amountCents} = request.data;
     if (!Number.isInteger(amountCents) || amountCents <= 0) {
       throw new HttpsError("invalid-argument", "amountCents must be > 0");
@@ -748,8 +845,27 @@ secureCallable<SubmitLocationSubscriptionReceiptRequest>(
       locData.owner_id
     );
     const paymentRef = locRef.collection("subscription_payments").doc();
+    const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+      locationId,
+      {
+        type: "PAYMENT_RECEIPT_SUBMITTED",
+        actor_user_id: request.auth.uid,
+        amount_cents: amountCents,
+        period_key: periodKey,
+        payment_id: paymentRef.id,
+        method,
+        review_status: "PENDING_REVIEW",
+        previous_subscription_status: locData.subscription_status ?? null,
+        next_subscription_status: locData.subscription_status ?? null,
+        previous_commercial_status: locData.commercial_status ?? null,
+        next_commercial_status: locData.commercial_status ?? null,
+        reason: notes,
+        effective_at: paidAt,
+      }
+    );
 
-    await paymentRef.set({
+    const batch = db().batch();
+    batch.set(paymentRef, {
       amount_cents: amountCents,
       period_key: periodKey,
       paid_at: paidAt,
@@ -764,6 +880,8 @@ secureCallable<SubmitLocationSubscriptionReceiptRequest>(
       created_at: FieldValue.serverTimestamp(),
       created_by: request.auth.uid,
     });
+    batch.set(ledgerRef, ledgerData);
+    await batch.commit();
 
     await writeLocationCommercialEvent({
       locationId,
@@ -857,6 +975,32 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
     } else {
       batch.update(paymentRef, paymentUpdate);
     }
+
+    const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+      locationId,
+      {
+        type: decision === "APPROVED" ?
+          "PAYMENT_RECEIPT_APPROVED" :
+          "PAYMENT_RECEIPT_REJECTED",
+        actor_user_id: request.auth.uid,
+        amount_cents: typeof paymentData.amount_cents === "number" ?
+          paymentData.amount_cents : null,
+        period_key: typeof paymentData.period_key === "string" ?
+          paymentData.period_key : null,
+        payment_id: paymentId,
+        method: typeof paymentData.method === "string" ? paymentData.method : null,
+        review_status: decision,
+        previous_subscription_status: locData.subscription_status ?? null,
+        next_subscription_status: decision === "APPROVED" ? "ACTIVE" :
+          locData.subscription_status ?? null,
+        previous_commercial_status: locData.commercial_status ?? null,
+        next_commercial_status: decision === "APPROVED" ? "ACTIVE" :
+          locData.commercial_status ?? null,
+        reason: notes,
+        effective_at: paymentData.paid_at ?? FieldValue.serverTimestamp(),
+      }
+    );
+    batch.set(ledgerRef, ledgerData);
 
     await batch.commit();
     await writeLocationCommercialEvent({

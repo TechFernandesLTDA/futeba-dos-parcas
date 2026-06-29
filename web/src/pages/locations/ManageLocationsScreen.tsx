@@ -97,6 +97,24 @@ interface SubscriptionPaymentReview {
   paidAt?: Date | null;
 }
 
+interface SubscriptionLedgerEntry {
+  id: string;
+  type?: string;
+  amountCents?: number | null;
+  periodKey?: string | null;
+  paymentId?: string | null;
+  method?: string | null;
+  reviewStatus?: string | null;
+  previousSubscriptionStatus?: string | null;
+  nextSubscriptionStatus?: string | null;
+  monthlyFeeCents?: number | null;
+  billingDueDay?: number | null;
+  reason?: string | null;
+  actorUserId?: string | null;
+  createdAt?: Date | null;
+  effectiveAt?: Date | null;
+}
+
 const toDate = (value: unknown): Date | null => {
   if (value instanceof Date) return value;
   if (value instanceof Timestamp) return value.toDate();
@@ -132,6 +150,15 @@ const getPaymentStatusColor = (status: string): 'success' | 'warning' | 'error' 
   if (status === 'REJECTED') return 'error';
   if (status === 'PENDING_REVIEW') return 'warning';
   return 'default';
+};
+
+const getLedgerTypeLabel = (type?: string) => {
+  if (type === 'SUBSCRIPTION_STATUS_CHANGED') return 'Plano/status atualizado';
+  if (type === 'PAYMENT_REGISTERED') return 'Pagamento registrado';
+  if (type === 'PAYMENT_RECEIPT_SUBMITTED') return 'Comprovante enviado';
+  if (type === 'PAYMENT_RECEIPT_APPROVED') return 'Comprovante aprovado';
+  if (type === 'PAYMENT_RECEIPT_REJECTED') return 'Comprovante rejeitado';
+  return type || 'Evento financeiro';
 };
 
 export const ManageLocationsScreen: React.FC = () => {
@@ -175,6 +202,7 @@ export const ManageLocationsScreen: React.FC = () => {
   const [receiptNotes, setReceiptNotes] = useState('');
   const [receiptActionLoading, setReceiptActionLoading] = useState<string | null>(null);
   const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPaymentReview[]>([]);
+  const [subscriptionLedger, setSubscriptionLedger] = useState<SubscriptionLedgerEntry[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -207,6 +235,7 @@ export const ManageLocationsScreen: React.FC = () => {
   useEffect(() => {
     if (!receiptTarget) {
       setSubscriptionPayments([]);
+      setSubscriptionLedger([]);
       return undefined;
     }
     const paymentsRef = collection(db, 'locations', receiptTarget.id, 'subscription_payments');
@@ -239,6 +268,45 @@ export const ManageLocationsScreen: React.FC = () => {
     return unsubscribe;
   }, [receiptTarget, showError]);
 
+  useEffect(() => {
+    if (!receiptTarget) {
+      setSubscriptionLedger([]);
+      return undefined;
+    }
+    const ledgerRef = collection(db, 'locations', receiptTarget.id, 'subscription_ledger');
+    const ledgerQuery = query(ledgerRef, orderBy('created_at', 'desc'), limit(50));
+    const unsubscribe = onSnapshot(
+      ledgerQuery,
+      (snapshot) => {
+        setSubscriptionLedger(snapshot.docs.map((ledgerDoc) => {
+          const data = snakeToCamel<Record<string, unknown>>(ledgerDoc.data());
+          return {
+            id: ledgerDoc.id,
+            type: typeof data.type === 'string' ? data.type : undefined,
+            amountCents: typeof data.amountCents === 'number' ? data.amountCents : null,
+            periodKey: typeof data.periodKey === 'string' ? data.periodKey : null,
+            paymentId: typeof data.paymentId === 'string' ? data.paymentId : null,
+            method: typeof data.method === 'string' ? data.method : null,
+            reviewStatus: typeof data.reviewStatus === 'string' ? data.reviewStatus : null,
+            previousSubscriptionStatus: typeof data.previousSubscriptionStatus === 'string' ? data.previousSubscriptionStatus : null,
+            nextSubscriptionStatus: typeof data.nextSubscriptionStatus === 'string' ? data.nextSubscriptionStatus : null,
+            monthlyFeeCents: typeof data.monthlyFeeCents === 'number' ? data.monthlyFeeCents : null,
+            billingDueDay: typeof data.billingDueDay === 'number' ? data.billingDueDay : null,
+            reason: typeof data.reason === 'string' ? data.reason : null,
+            actorUserId: typeof data.actorUserId === 'string' ? data.actorUserId : null,
+            createdAt: toDate(data.createdAt),
+            effectiveAt: toDate(data.effectiveAt),
+          };
+        }));
+      },
+      (err) => {
+        logger.error('Erro ao carregar ledger financeiro da quadra:', err);
+        showError('Não foi possível carregar o histórico financeiro.');
+      },
+    );
+    return unsubscribe;
+  }, [receiptTarget, showError]);
+
   const filteredLocations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return locations.filter((loc) => {
@@ -258,6 +326,27 @@ export const ManageLocationsScreen: React.FC = () => {
         locationHasAmenities(loc, amenityFilters);
     });
   }, [locations, searchQuery, publicationFilter, subscriptionFilter, typeFilter, amenityFilters]);
+
+  const commercialSummary = useMemo(() => {
+    const initial = {
+      eligible: 0,
+      overdue: 0,
+      suspendedOrCancelled: 0,
+      monthlyFeeTotalCents: 0,
+    };
+    return locations.reduce((summary, location) => {
+      const status = getSubscriptionStatus(location);
+      if (['TRIAL', 'ACTIVE'].includes(status)) {
+        summary.eligible += 1;
+        summary.monthlyFeeTotalCents += location.monthlyFeeCents || 0;
+      }
+      if (status === 'OVERDUE') summary.overdue += 1;
+      if (status === 'SUSPENDED' || status === 'CANCELLED') {
+        summary.suspendedOrCancelled += 1;
+      }
+      return summary;
+    }, initial);
+  }, [locations]);
 
   const canManage = (loc: Location) =>
     isAdmin || (user?.id ? canManageLocation(loc, user.id) : false);
@@ -706,10 +795,55 @@ export const ManageLocationsScreen: React.FC = () => {
         )}
 
         {!loading && !error && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {t('locations.localsCount', { count: filteredLocations.length })}
-            {searchQuery && ` ${t('locations.searchingFor', { query: searchQuery })}`}
-          </Typography>
+          <>
+            {isAdmin && (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, minmax(0, 1fr))' },
+                  gap: 1,
+                  mb: 2,
+                }}
+              >
+                <Card variant="outlined">
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Typography variant="caption" color="text.secondary">Receita prevista</Typography>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      {formatMonthlyFee(commercialSummary.monthlyFeeTotalCents)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card variant="outlined">
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Typography variant="caption" color="text.secondary">Em dia/teste</Typography>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      {commercialSummary.eligible}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card variant="outlined">
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Typography variant="caption" color="text.secondary">Vencidas</Typography>
+                    <Typography variant="subtitle1" fontWeight={700} color={commercialSummary.overdue > 0 ? 'warning.main' : 'text.primary'}>
+                      {commercialSummary.overdue}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card variant="outlined">
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Typography variant="caption" color="text.secondary">Suspensas/canceladas</Typography>
+                    <Typography variant="subtitle1" fontWeight={700} color={commercialSummary.suspendedOrCancelled > 0 ? 'error.main' : 'text.primary'}>
+                      {commercialSummary.suspendedOrCancelled}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Box>
+            )}
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {t('locations.localsCount', { count: filteredLocations.length })}
+              {searchQuery && ` ${t('locations.searchingFor', { query: searchQuery })}`}
+            </Typography>
+          </>
         )}
 
         {loading ? (
@@ -1223,6 +1357,62 @@ export const ManageLocationsScreen: React.FC = () => {
                 })
               )}
             </Stack>
+            <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, pt: 2 }}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle2">Ledger financeiro auditável</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Histórico imutável das mudanças de plano, status, pagamentos e revisões que
+                  explicam o estado comercial atual da quadra.
+                </Typography>
+                {subscriptionLedger.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum evento financeiro registrado ainda.
+                  </Typography>
+                ) : (
+                  subscriptionLedger.map((entry) => (
+                    <Card key={entry.id} variant="outlined">
+                      <CardContent>
+                        <Stack spacing={0.75}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                            <Typography variant="subtitle2">
+                              {getLedgerTypeLabel(entry.type)}
+                            </Typography>
+                            {entry.reviewStatus && (
+                              <Chip
+                                size="small"
+                                label={getPaymentStatusLabel(entry.reviewStatus)}
+                                color={getPaymentStatusColor(entry.reviewStatus)}
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            {entry.amountCents ? `${formatMonthlyFee(entry.amountCents)} · ` : ''}
+                            {entry.periodKey ? `${entry.periodKey} · ` : ''}
+                            {entry.method ? `${entry.method} · ` : ''}
+                            {entry.effectiveAt ? entry.effectiveAt.toLocaleDateString('pt-BR') : 'sem data efetiva'}
+                          </Typography>
+                          {(entry.previousSubscriptionStatus || entry.nextSubscriptionStatus || entry.monthlyFeeCents || entry.billingDueDay) && (
+                            <Typography variant="caption" color="text.secondary">
+                              {entry.previousSubscriptionStatus || 'sem status'} → {entry.nextSubscriptionStatus || 'sem status'}
+                              {entry.monthlyFeeCents ? ` · plano ${formatMonthlyFee(entry.monthlyFeeCents)}` : ''}
+                              {entry.billingDueDay ? ` · vence dia ${entry.billingDueDay}` : ''}
+                            </Typography>
+                          )}
+                          {(entry.reason || entry.actorUserId || entry.createdAt) && (
+                            <Typography variant="caption" color="text.secondary">
+                              {entry.reason ? `${entry.reason} · ` : ''}
+                              {entry.actorUserId ? `ator ${entry.actorUserId}` : 'ator não informado'}
+                              {entry.createdAt ? ` · ${entry.createdAt.toLocaleString('pt-BR')}` : ''}
+                            </Typography>
+                          )}
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </Stack>
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>

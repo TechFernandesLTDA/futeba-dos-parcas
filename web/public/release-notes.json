@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T02:22:21.488Z",
+  "generatedAt": "2026-06-29T03:21:58.473Z",
   "notes": [
+    {
+      "version": "1.43.16",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Gestão de quadras agora mostra ledger financeiro auditável",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de gerenciamento de quadras exibe um ledger financeiro imutável no diálogo de comprovantes.",
+        "Admins e donos de quadra conseguem ver eventos de plano, status, pagamentos e revisão que explicam o estado comercial atual.",
+        "Admins passam a ver cards de receita prevista, quadras em dia/teste, vencidas e suspensas/canceladas.",
+        "O histórico de pagamentos continua separado das pendências, mas agora ganha contexto financeiro completo."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3114,
+        3091,
+        3084
+      ]
+    },
     {
       "version": "1.43.15",
       "buildNumber": null,
