@@ -3,7 +3,7 @@
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
 [![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
-[![Version](https://img.shields.io/badge/web-1.43.5-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Version](https://img.shields.io/badge/web-1.43.16-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
@@ -60,7 +60,7 @@
 
 | Área | Estado |
 |------|--------|
-| Issues abertas | 0 |
+| Issues abertas | 27 |
 | PRs abertos | 0 |
 | Branch padrão | `master` |
 | Proteção da `master` | 1 review obrigatório, CODEOWNERS obrigatório, stale reviews ligados |
@@ -70,10 +70,10 @@ Versões atuais por plataforma:
 
 | Plataforma | Versão |
 |------------|--------|
-| Web | `1.43.5` |
+| Web | `1.43.16` |
 | Android | `1.32.1` (`buildNumber` 58) |
 | iOS | `1.6.0` (`buildNumber` 17) |
-| Functions | `1.2.1` |
+| Functions | `1.2.8` |
 
 Fonte de verdade: [`versions.json`](versions.json). Status de governança: [`docs/GITHUB_STATUS.md`](docs/GITHUB_STATUS.md).
 
@@ -250,8 +250,8 @@ Este repositório é configurado com variáveis de ambiente e chaves de acesso p
 ## 📊 Status do Projeto
 
 - ✅ **Android:** Produção (`1.32.1`, build 58)
-- ✅ **Web:** Produção (`1.43.5` em https://futebadosparcas.web.app)
-- ✅ **Backend:** Firebase Cloud Functions v2 (`1.2.1`)
+- ✅ **Web:** Produção (`1.43.16` em https://futebadosparcas.web.app)
+- ✅ **Backend:** Firebase Cloud Functions v2 (`1.2.8`)
 - ✅ **CI/CD:** GitHub Actions (23 workflows)
 - 🚧 **iOS:** Em desenvolvimento (`1.6.0`, KMP/CMP em evolução)
 
