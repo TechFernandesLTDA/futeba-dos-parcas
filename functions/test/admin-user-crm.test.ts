@@ -171,4 +171,65 @@ describe("searchAdminUsers", () => {
       expect.any(Function)
     );
   });
+
+  it("normaliza onboarding comercial legado com aliases camelCase", async () => {
+    mockUsersGet.mockResolvedValue({
+      docs: [
+        userDoc("owner-legacy", {
+          name: "Dono Legacy",
+          email: "legacy@test.com",
+          role: "PLAYER",
+          created_at: timestamp("2026-01-01T00:00:00.000Z"),
+        }),
+      ],
+    });
+    mockLocationsGet.mockResolvedValue({docs: []});
+    mockOnboardingGet.mockResolvedValue({
+      docs: [
+        userDoc("owner-legacy", {
+          submittedAt: timestamp("2026-02-01T00:00:00.000Z"),
+          reviewedAt: timestamp("2026-02-02T00:00:00.000Z"),
+          contactName: "Responsavel Legacy",
+          contactEmail: "responsavel@test.com",
+          businessName: "Arena Legacy",
+          notes: "Migrado de formato antigo",
+          reviewReason: "Aguardando documentos",
+        }),
+      ],
+    });
+
+    let searchAdminUsers: (request: unknown) => Promise<unknown>;
+    jest.isolateModules(() => {
+      searchAdminUsers = require("../src/admin/user-crm").searchAdminUsers;
+    });
+
+    const result = await searchAdminUsers!({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {search: "legacy", role: "ALL", ownerFilter: "ALL", pageSize: 10},
+    }) as {
+      users: Array<{
+        ownerOnboarding: {
+          status: string;
+          contactName: string | null;
+          contactEmail: string | null;
+          businessName: string | null;
+          notes: string | null;
+          reviewReason: string | null;
+          submittedAtIso: string | null;
+          reviewedAtIso: string | null;
+        } | null;
+      }>;
+    };
+
+    expect(result.users[0].ownerOnboarding).toMatchObject({
+      status: "LEAD",
+      contactName: "Responsavel Legacy",
+      contactEmail: "responsavel@test.com",
+      businessName: "Arena Legacy",
+      notes: "Migrado de formato antigo",
+      reviewReason: "Aguardando documentos",
+      submittedAtIso: "2026-02-01T00:00:00.000Z",
+      reviewedAtIso: "2026-02-02T00:00:00.000Z",
+    });
+  });
 });
