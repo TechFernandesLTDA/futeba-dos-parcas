@@ -69,6 +69,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.14] - 2026-06-29
+
+#### Mudado
+- `UserManagementScreen` passa a renderizar o detalhe comercial usando dados retornados por `searchAdminUsers`.
+- A versão web foi atualizada para `1.43.14`.
+
+_Issues: #3126, #3101, #3087, #3084_
+
 ### [1.43.13] - 2026-06-29
 
 #### Mudado
@@ -487,6 +495,17 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.6] - 2026-06-29
+
+#### Mudado
+- `searchAdminUsers` retorna `ownerLocations`, contatos básicos, timestamps de atualização e agregados financeiros por owner.
+- A versão Functions foi atualizada para `1.2.6`.
+
+#### Segurança
+- A callable continua admin-only, com App Check em produção, rate limit dedicado e auditoria habilitada.
+
+_Issues: #3126, #3101, #3087, #3084_
 
 ### [1.2.5] - 2026-06-29
 

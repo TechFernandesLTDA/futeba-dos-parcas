@@ -104,7 +104,15 @@ describe("searchAdminUsers", () => {
           totalLocations: number;
           overdueLocations: number;
           incompleteLocations: number;
+          monthlyFeeTotalCents: number;
+          managersTotal: number;
         };
+        ownerLocations: Array<{
+          id: string;
+          name: string;
+          monthlyFeeCents: number | null;
+          managersCount: number;
+        }>;
       }>;
       totalMatched: number;
     };
@@ -115,7 +123,17 @@ describe("searchAdminUsers", () => {
       totalLocations: 2,
       overdueLocations: 1,
       incompleteLocations: 1,
+      monthlyFeeTotalCents: 12000,
+      managersTotal: 0,
     });
+    expect(result.users[0].ownerLocations).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "loc-1",
+        name: "Quadra sem nome",
+        monthlyFeeCents: 12000,
+        managersCount: 0,
+      }),
+    ]));
   });
 
   it("registra callable admin-only com rate limit dedicado", () => {

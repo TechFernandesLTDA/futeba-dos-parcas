@@ -17,18 +17,39 @@ export interface AdminOwnerSummary {
   pendingLocations: number;
   overdueLocations: number;
   incompleteLocations: number;
+  activeSubscriptionLocations: number;
+  monthlyFeeTotalCents: number;
+  managersTotal: number;
+}
+
+export interface AdminOwnerLocationSummary {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  publicationStatus: string;
+  subscriptionStatus: string;
+  monthlyFeeCents: number | null;
+  billingDueDay: number | null;
+  fieldCount: number;
+  managersCount: number;
+  managersPreview: string[];
+  updatedAtIso: string | null;
 }
 
 export interface AdminUserCrmRow {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   photoUrl: string | null;
   role: string;
   createdAtIso: string | null;
+  updatedAtIso: string | null;
   gamesPlayed: number;
   level: number;
   ownerSummary: AdminOwnerSummary;
+  ownerLocations: AdminOwnerLocationSummary[];
 }
 
 export interface AdminUserSearchResponse {
