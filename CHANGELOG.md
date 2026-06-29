@@ -536,6 +536,18 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.2.12] - 2026-06-29
+
+#### Corrigido
+- `getAdminLocationBillingSummary` usa paginacao por `documentId` com `scanComplete: true` apenas apos varrer todas as paginas.
+- Leituras de `subscription_payments` usam `where("period_key", "==", periodKey)` e paralelismo controlado por chunks.
+- Teste regressivo cobre mais de 500 quadras, pagamento antigo fora do periodo e pagamento aprovado duplicado no mesmo ciclo.
+
+#### Segurança
+- Reduz risco de decisao administrativa com MRR subestimado ou recebido inflado por dados financeiros duplicados.
+
+_Issues: #3149_
+
 ### [1.2.11] - 2026-06-29
 
 #### Corrigido
