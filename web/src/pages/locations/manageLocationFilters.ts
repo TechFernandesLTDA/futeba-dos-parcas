@@ -1,7 +1,9 @@
 import {
+  Field,
   Location,
   LocationPublicationStatus,
   LocationSubscriptionStatus,
+  getLocationAmenitySet,
   locationHasAmenities,
 } from '../../types/location';
 
@@ -22,6 +24,14 @@ export interface ManageLocationFilterState {
   activeFieldsFilter: LocationBooleanFilter;
   monthlyFeeFilter: LocationMonthlyFeeFilter;
   amenityFilters: string[];
+}
+
+export interface LocationQualityChecklistItem {
+  id: string;
+  label: string;
+  description: string;
+  complete: boolean;
+  actionLabel: string;
 }
 
 export const getLocationPublicationStatus = (location: Location): LocationPublicationStatus =>
@@ -68,6 +78,95 @@ export const getLocationCommercialIssues = (location: Location): string[] => {
   if (!location.city || !location.state) issues.push('endereço incompleto');
 
   return issues;
+};
+
+export const getLocationQualityChecklist = (
+  location: Location,
+  fields: Field[] = [],
+  photos: string[] = [],
+): LocationQualityChecklistItem[] => {
+  const activeFields = fields.filter((field) => field.isActive !== false);
+  const hasFieldRegistry = fields.length > 0 || (location.fieldCount || 0) > 0;
+  const hasActiveFieldRegistry = activeFields.length > 0 || location.hasActiveFields === true;
+  const hasPricedField = activeFields.some((field) =>
+    typeof field.hourlyPrice === 'number' && field.hourlyPrice > 0,
+  );
+  const hasContact = Boolean(location.phone || location.whatsapp || location.website || location.instagram);
+  const hasAddress = Boolean(location.address && location.city && location.state);
+  const hasAmenities = getLocationAmenitySet(location).size > 0;
+  const publicationStatus = getLocationPublicationStatus(location);
+  const subscriptionStatus = getLocationSubscriptionStatus(location);
+
+  return [
+    {
+      id: 'identity',
+      label: 'Identidade e descrição',
+      description: 'Nome, descrição e contexto ajudam o usuário a reconhecer a quadra.',
+      complete: Boolean(location.name?.trim() && location.description?.trim()),
+      actionLabel: 'Completar nome e descrição',
+    },
+    {
+      id: 'address',
+      label: 'Endereço completo',
+      description: 'Endereço, cidade e UF são obrigatórios para descoberta e navegação.',
+      complete: hasAddress,
+      actionLabel: 'Completar endereço',
+    },
+    {
+      id: 'contact',
+      label: 'Contato do local',
+      description: 'Telefone, WhatsApp, site ou Instagram reduzem atrito operacional.',
+      complete: hasContact,
+      actionLabel: 'Adicionar contato',
+    },
+    {
+      id: 'photos',
+      label: 'Fotos reais',
+      description: 'Pelo menos uma foto evita cadastro genérico e melhora confiança.',
+      complete: photos.length > 0,
+      actionLabel: 'Adicionar fotos',
+    },
+    {
+      id: 'fields',
+      label: 'Campos cadastrados',
+      description: 'A unidade precisa ter campos/quadras operacionais associados.',
+      complete: hasFieldRegistry,
+      actionLabel: 'Cadastrar campos',
+    },
+    {
+      id: 'active-fields',
+      label: 'Campos ativos',
+      description: 'Ao menos um campo ativo deve estar disponível para seleção.',
+      complete: hasActiveFieldRegistry,
+      actionLabel: 'Ativar campo',
+    },
+    {
+      id: 'pricing',
+      label: 'Preço por campo',
+      description: 'Preço/hora preenchido habilita comparação e filtros comerciais.',
+      complete: hasPricedField,
+      actionLabel: 'Definir preços',
+    },
+    {
+      id: 'amenities',
+      label: 'Comodidades',
+      description: 'Banheiro, estacionamento, churrasqueira e similares melhoram filtros.',
+      complete: hasAmenities,
+      actionLabel: 'Marcar comodidades',
+    },
+    {
+      id: 'commercial',
+      label: 'Publicação e mensalidade',
+      description: 'Publicação, verificação, atividade e mensalidade precisam estar válidas.',
+      complete: location.isActive === true &&
+        location.isVerified === true &&
+        publicationStatus === 'PUBLISHED' &&
+        ['TRIAL', 'ACTIVE'].includes(subscriptionStatus) &&
+        Boolean(location.monthlyFeeCents && location.monthlyFeeCents > 0) &&
+        Boolean(location.billingDueDay),
+      actionLabel: 'Regularizar publicação',
+    },
+  ];
 };
 
 export const locationMatchesManageFilters = (
