@@ -11,6 +11,46 @@ export const setUserRole = httpsCallable<
   { success: boolean }
 >(functions, 'setUserRole');
 
+export interface AdminOwnerSummary {
+  totalLocations: number;
+  publishedLocations: number;
+  pendingLocations: number;
+  overdueLocations: number;
+  incompleteLocations: number;
+}
+
+export interface AdminUserCrmRow {
+  id: string;
+  name: string;
+  email: string;
+  photoUrl: string | null;
+  role: string;
+  createdAtIso: string | null;
+  gamesPlayed: number;
+  level: number;
+  ownerSummary: AdminOwnerSummary;
+}
+
+export interface AdminUserSearchResponse {
+  users: AdminUserCrmRow[];
+  nextPageToken: string | null;
+  totalMatched: number;
+  scannedUsers: number;
+  scannedLocations: number;
+  scanComplete: boolean;
+}
+
+export const searchAdminUsers = httpsCallable<
+  {
+    search?: string | null;
+    role?: 'ALL' | 'ADMIN' | 'FIELD_OWNER' | 'PLAYER' | null;
+    ownerFilter?: 'ALL' | 'FIELD_OWNER' | 'HAS_LOCATIONS' | 'PUBLISHED' | 'OVERDUE' | 'INCOMPLETE' | null;
+    pageSize?: number | null;
+    pageToken?: string | null;
+  },
+  AdminUserSearchResponse
+>(functions, 'searchAdminUsers');
+
 export const deleteLocation = httpsCallable<
   { locationId: string },
   { success: boolean; deletedCount: number }

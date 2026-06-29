@@ -41,21 +41,24 @@ import {
   PersonOff as PersonOffIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, getDocs, startAfter, DocumentSnapshot } from 'firebase/firestore';
-import { db } from '../../services/firebase';
-import { setUserRole as setUserRoleCallable } from '../../services/cloudFunctions';
+import {
+  searchAdminUsers,
+  setUserRole as setUserRoleCallable,
+  type AdminUserCrmRow,
+  type AdminUserSearchResponse,
+} from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 // #2176: EmptyState canônico (rico, com i18n) vive em common/EmptyState — não no GameCard.
 import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { LocationPublicationStatus, LocationSubscriptionStatus } from '../../types/location';
 
 const logger = createLogger('UserManagementScreen');
+const ADMIN_USER_PAGE_SIZE = 50;
+type OwnerFilter = 'ALL' | 'FIELD_OWNER' | 'HAS_LOCATIONS' | 'PUBLISHED' | 'OVERDUE' | 'INCOMPLETE';
 
 interface UserWithRole {
   id: string;
@@ -71,30 +74,21 @@ interface UserWithRole {
 interface OwnerSummary {
   totalLocations: number;
   publishedLocations: number;
+  pendingLocations: number;
   overdueLocations: number;
+  incompleteLocations: number;
 }
 
-// #2276: interface tipada para o doc users (substitui Record<string, any>).
-interface RawAdminUserDoc {
-  name?: string;
-  email?: string;
-  photoUrl?: string;
-  role?: string;
-  createdAt?: { toDate?: () => Date };
-  gamesPlayed?: number;
-  level?: number;
-}
-
-interface RawLocationOwnerDoc {
-  owner_id?: string;
-  ownerId?: string;
-  publication_status?: LocationPublicationStatus;
-  publicationStatus?: LocationPublicationStatus;
-  subscription_status?: LocationSubscriptionStatus;
-  subscriptionStatus?: LocationSubscriptionStatus;
-  is_verified?: boolean;
-  isVerified?: boolean;
-}
+const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
+  id: data.id,
+  name: data.name || 'Sem nome',
+  email: data.email || '',
+  photoUrl: data.photoUrl || undefined,
+  role: data.role || 'PLAYER',
+  createdAt: data.createdAtIso ? new Date(data.createdAtIso) : undefined,
+  gamesPlayed: data.gamesPlayed || 0,
+  level: data.level || 1,
+});
 
 export const UserManagementScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -110,15 +104,14 @@ export const UserManagementScreen: React.FC = () => {
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
-  const PAGE_SIZE = 50;
-
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('ALL');
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -131,6 +124,13 @@ export const UserManagementScreen: React.FC = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingRoleChange, setPendingRoleChange] = useState<{ user: UserWithRole; role: string } | null>(null);
   const [ownerSummaries, setOwnerSummaries] = useState<Record<string, OwnerSummary>>({});
+  const [searchMeta, setSearchMeta] = useState<{
+    totalMatched: number;
+    scannedUsers: number;
+    scannedLocations: number;
+    scanComplete: boolean;
+  } | null>(null);
+  const hasActiveFilters = Boolean(searchQuery.trim()) || roleFilter !== 'ALL' || ownerFilter !== 'ALL';
 
   const handleRetry = () => {
     setFetchError(null);
@@ -138,91 +138,76 @@ export const UserManagementScreen: React.FC = () => {
     setRetryCount((n) => n + 1);
   };
 
-  const parseUserDoc = (d: DocumentSnapshot) => {
-    const data = snakeToCamel<RawAdminUserDoc>(d.data() ?? {});
-    return {
-      id: d.id,
-      name: data.name || 'Sem nome',
-      email: data.email || '',
-      photoUrl: data.photoUrl,
-      role: data.role || 'PLAYER',
-      createdAt: data.createdAt?.toDate?.(),
-      gamesPlayed: data.gamesPlayed || 0,
-      level: data.level || 1,
-    };
-  };
+  const applySearchResponse = useCallback((
+    data: AdminUserSearchResponse,
+    append: boolean,
+  ) => {
+    const parsedUsers = data.users.map(parseAdminUser);
+    const nextSummaries = data.users.reduce<Record<string, OwnerSummary>>((acc, item) => {
+      acc[item.id] = item.ownerSummary;
+      return acc;
+    }, {});
+
+    setUsers((prev) => (append ? [...prev, ...parsedUsers] : parsedUsers));
+    setOwnerSummaries((prev) => (append ? { ...prev, ...nextSummaries } : nextSummaries));
+    setNextPageToken(data.nextPageToken);
+    setHasMore(Boolean(data.nextPageToken));
+    setSearchMeta({
+      totalMatched: data.totalMatched,
+      scannedUsers: data.scannedUsers,
+      scannedLocations: data.scannedLocations,
+      scanComplete: data.scanComplete,
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const fetchUsers = async () => {
+    const timer = window.setTimeout(async () => {
       try {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, orderBy('created_at', 'desc'), limit(PAGE_SIZE));
-        const snapshot = await getDocs(q);
-
+        setLoading(true);
+        setFetchError(null);
+        setSelectedUsers(new Set());
+        const response = await searchAdminUsers({
+          search: searchQuery.trim() || null,
+          role: roleFilter as 'ALL' | 'ADMIN' | 'FIELD_OWNER' | 'PLAYER',
+          ownerFilter,
+          pageSize: ADMIN_USER_PAGE_SIZE,
+          pageToken: null,
+        });
         if (cancelled) return;
-
-        setUsers(snapshot.docs.map(parseUserDoc));
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
-        setHasMore(snapshot.docs.length === PAGE_SIZE);
+        applySearchResponse(response.data, false);
       } catch (error) {
         if (!cancelled) {
-          logger.error('Error fetching users:', error);
-          setFetchError('Erro ao carregar usuários.');
+          logger.error('Error fetching admin users:', error);
+          setFetchError(getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar usuários.'));
           showErrorRef.current('Erro ao carregar usuários.');
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
-    };
+    }, searchQuery.trim() ? 350 : 0);
 
-    fetchUsers();
-    return () => { cancelled = true; };
-  }, [retryCount]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchOwnerSummaries = async () => {
-      try {
-        const locationsRef = collection(db, 'locations');
-        const snapshot = await getDocs(query(locationsRef, orderBy('name', 'asc'), limit(500)));
-        if (cancelled) return;
-        const summaries: Record<string, OwnerSummary> = {};
-        snapshot.docs.forEach((locationDoc) => {
-          const data = locationDoc.data() as RawLocationOwnerDoc;
-          const ownerId = data.owner_id || data.ownerId;
-          if (!ownerId) return;
-          const publication = data.publication_status || data.publicationStatus || (data.is_verified || data.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
-          const subscription = data.subscription_status || data.subscriptionStatus || 'ACTIVE';
-          const current = summaries[ownerId] || { totalLocations: 0, publishedLocations: 0, overdueLocations: 0 };
-          current.totalLocations += 1;
-          if (publication === 'PUBLISHED') current.publishedLocations += 1;
-          if (['OVERDUE', 'SUSPENDED', 'CANCELLED'].includes(subscription)) current.overdueLocations += 1;
-          summaries[ownerId] = current;
-        });
-        setOwnerSummaries(summaries);
-      } catch (error) {
-        logger.error('Error fetching owner summaries:', error);
-      }
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
     };
-    fetchOwnerSummaries();
-    return () => { cancelled = true; };
-  }, [retryCount]);
+  }, [applySearchResponse, retryCount, searchQuery, roleFilter, ownerFilter]);
 
   const handleLoadMore = async () => {
-    if (!lastDoc || loadingMore) return;
+    if (!nextPageToken || loadingMore) return;
     setLoadingMore(true);
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, orderBy('created_at', 'desc'), startAfter(lastDoc), limit(PAGE_SIZE));
-      const snapshot = await getDocs(q);
-
-      setUsers((prev) => [...prev, ...snapshot.docs.map(parseUserDoc)]);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
+      const response = await searchAdminUsers({
+        search: searchQuery.trim() || null,
+        role: roleFilter as 'ALL' | 'ADMIN' | 'FIELD_OWNER' | 'PLAYER',
+        ownerFilter,
+        pageSize: ADMIN_USER_PAGE_SIZE,
+        pageToken: nextPageToken,
+      });
+      applySearchResponse(response.data, true);
     } catch (error) {
       logger.error('Error loading more users:', error);
-      setFetchError('Erro ao carregar mais usuários.');
+      setFetchError(getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar mais usuários.'));
       showError(t('feedback.admin.loadMoreUsersError'));
     } finally {
       setLoadingMore(false);
@@ -285,13 +270,7 @@ export const UserManagementScreen: React.FC = () => {
   };
 
   const filteredUsers = useMemo(() => {
-    let result = users.filter((u) => {
-      const matchesSearch =
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
-      return matchesSearch && matchesRole;
-    });
+    let result = users;
     const dir = sortDirection === 'asc' ? 1 : -1;
     result = [...result].sort((a, b) => {
       switch (sortField) {
@@ -307,7 +286,7 @@ export const UserManagementScreen: React.FC = () => {
       }
     });
     return result;
-  }, [users, searchQuery, roleFilter, sortField, sortDirection]);
+  }, [users, sortField, sortDirection]);
 
   const handleTableSort = useCallback((field: 'name' | 'email' | 'role' | 'createdAt') => {
     if (sortField === field) {
@@ -363,7 +342,7 @@ export const UserManagementScreen: React.FC = () => {
             </Button>
           )}
         </Box>
-        <Box sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ px: 2, pb: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 180px 220px' }, gap: 1 }}>
           <TextField
             fullWidth
             size="small"
@@ -379,14 +358,28 @@ export const UserManagementScreen: React.FC = () => {
           <TextField
             select
             size="small"
+            label="Role"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            sx={{ minWidth: 150 }}
           >
             <MenuItem value="ALL">Todos os roles</MenuItem>
             <MenuItem value="ADMIN">Admin</MenuItem>
             <MenuItem value="FIELD_OWNER">Field Owner</MenuItem>
             <MenuItem value="PLAYER">Player</MenuItem>
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="Comercial"
+            value={ownerFilter}
+            onChange={(e) => setOwnerFilter(e.target.value as OwnerFilter)}
+          >
+            <MenuItem value="ALL">Todos</MenuItem>
+            <MenuItem value="FIELD_OWNER">Donos de quadra</MenuItem>
+            <MenuItem value="HAS_LOCATIONS">Com quadras</MenuItem>
+            <MenuItem value="PUBLISHED">Com publicada</MenuItem>
+            <MenuItem value="OVERDUE">Com pendência</MenuItem>
+            <MenuItem value="INCOMPLETE">Cadastro incompleto</MenuItem>
           </TextField>
         </Box>
       </Box>
@@ -403,13 +396,17 @@ export const UserManagementScreen: React.FC = () => {
         ) : loading ? (
           <LoadingState shimmerCount={8} itemType="LIST" />
         ) : filteredUsers.length === 0 ? (
-          searchQuery ? (
+          hasActiveFilters ? (
             <EmptyState
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
               title={t('empty.noUserFound')}
-              description={t('empty.noUserFoundDesc', { query: searchQuery })}
-              actionLabel={t('empty.clearSearch')}
-              onAction={() => setSearchQuery('')}
+              description={t('empty.noUserFoundDesc', { query: searchQuery || 'filtros selecionados' })}
+              actionLabel="Limpar filtros"
+              onAction={() => {
+                setSearchQuery('');
+                setRoleFilter('ALL');
+                setOwnerFilter('ALL');
+              }}
             />
           ) : (
             <EmptyState
@@ -421,8 +418,13 @@ export const UserManagementScreen: React.FC = () => {
         ) : (
           <>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-              {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} exibido{filteredUsers.length !== 1 ? 's' : ''}
-              {hasMore && !searchQuery ? ' (mais disponíveis)' : ''}
+              {filteredUsers.length} de {searchMeta?.totalMatched ?? filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} exibido{filteredUsers.length !== 1 ? 's' : ''}
+              {' · busca server-side em '}
+              {searchMeta?.scannedUsers ?? filteredUsers.length} usuário{(searchMeta?.scannedUsers ?? filteredUsers.length) !== 1 ? 's' : ''}
+              {' e '}
+              {searchMeta?.scannedLocations ?? 0} quadra{(searchMeta?.scannedLocations ?? 0) !== 1 ? 's' : ''}
+              {searchMeta?.scanComplete === false ? ' · limite de varredura atingido' : ''}
+              {hasMore ? ' · mais disponíveis' : ''}
             </Typography>
             {isMdUp ? (
               <TableContainer>
@@ -502,14 +504,18 @@ export const UserManagementScreen: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Chip label="Ativo" size="small" color="success" variant="outlined" />
-                          {(u.role === 'FIELD_OWNER' || ownerSummaries[u.id]) && (
-                            <Chip
-                              label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`}
-                              size="small"
-                              variant="outlined"
-                              sx={{ ml: 0.5 }}
-                              color={(ownerSummaries[u.id]?.overdueLocations || 0) > 0 ? 'warning' : 'default'}
-                            />
+                          {(u.role === 'FIELD_OWNER' || (ownerSummaries[u.id]?.totalLocations || 0) > 0) && (
+                            <Box sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 0.5, ml: 0.5 }}>
+                              <Chip
+                                label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`}
+                                size="small"
+                                variant="outlined"
+                                color={(ownerSummaries[u.id]?.overdueLocations || 0) > 0 ? 'warning' : 'default'}
+                              />
+                              {(ownerSummaries[u.id]?.incompleteLocations || 0) > 0 && (
+                                <Chip label="cadastro incompleto" size="small" color="info" variant="outlined" />
+                              )}
+                            </Box>
                           )}
                         </TableCell>
                         <TableCell>
@@ -570,12 +576,18 @@ export const UserManagementScreen: React.FC = () => {
                           />
                         </ListItemButton>
                       </ListItem>
-                      {(u.role === 'FIELD_OWNER' || ownerSummaries[u.id]) && (
+                      {(u.role === 'FIELD_OWNER' || (ownerSummaries[u.id]?.totalLocations || 0) > 0) && (
                         <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
                           <Chip label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`} size="small" variant="outlined" />
                           <Chip label={`${ownerSummaries[u.id]?.publishedLocations || 0} publicada(s)`} size="small" color="success" variant="outlined" />
+                          {(ownerSummaries[u.id]?.pendingLocations || 0) > 0 && (
+                            <Chip label={`${ownerSummaries[u.id]?.pendingLocations} em revisão`} size="small" color="info" variant="outlined" />
+                          )}
                           {(ownerSummaries[u.id]?.overdueLocations || 0) > 0 && (
                             <Chip label={`${ownerSummaries[u.id]?.overdueLocations} com pendência`} size="small" color="warning" />
+                          )}
+                          {(ownerSummaries[u.id]?.incompleteLocations || 0) > 0 && (
+                            <Chip label={`${ownerSummaries[u.id]?.incompleteLocations} incompleta(s)`} size="small" color="info" />
                           )}
                         </Box>
                       )}
@@ -584,7 +596,7 @@ export const UserManagementScreen: React.FC = () => {
                 </List>
               </Card>
             )}
-            {hasMore && !searchQuery && (
+            {hasMore && (
               <Button
                 fullWidth
                 variant="outlined"

@@ -1,30 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
-const mockGetDocs = vi.fn();
-const mockCollection = vi.fn();
-const mockQuery = vi.fn();
-const mockOrderBy = vi.fn();
-const mockLimit = vi.fn();
-const mockStartAfter = vi.fn();
-
-vi.mock('firebase/firestore', () => ({
-  collection: (...args: unknown[]) => mockCollection(...args),
-  query: (...args: unknown[]) => mockQuery(...args),
-  orderBy: (...args: unknown[]) => mockOrderBy(...args),
-  limit: (...args: unknown[]) => mockLimit(...args),
-  startAfter: (...args: unknown[]) => mockStartAfter(...args),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
-  DocumentSnapshot: vi.fn(),
-}));
-
-vi.mock('../../services/firebase', () => ({ db: {} }));
+const mockSearchAdminUsers = vi.fn();
 
 vi.mock('../../services/cloudFunctions', () => ({
   setUserRole: vi.fn().mockResolvedValue(undefined),
+  searchAdminUsers: (...args: unknown[]) => mockSearchAdminUsers(...args),
 }));
 
 vi.mock('../../contexts/AuthContext', () => ({
@@ -41,10 +25,6 @@ vi.mock('../../hooks/useNavigateBack', () => ({
 
 vi.mock('../../hooks/useDocumentTitle', () => ({
   useDocumentTitle: vi.fn(),
-}));
-
-vi.mock('../../utils/firestoreHelpers', () => ({
-  snakeToCamel: (obj: Record<string, unknown>) => obj,
 }));
 
 vi.mock('../../utils/logger', () => ({
@@ -67,19 +47,50 @@ vi.mock('../../components/common/GameCard', () => ({
   PlayerAvatar: ({ name }: { name: string }) => <div data-testid="player-avatar">{name}</div>,
 }));
 
-mockGetDocs.mockResolvedValue({
-  docs: [
-    {
-      id: 'user-1',
-      data: () => ({ name: 'João', email: 'joao@test.com', role: 'PLAYER', gamesPlayed: 10, level: 5, createdAt: new Date() }),
-    },
-    {
-      id: 'user-2',
-      data: () => ({ name: 'Admin', email: 'admin@test.com', role: 'ADMIN', gamesPlayed: 50, level: 10, createdAt: new Date() }),
-    },
-  ],
-  size: 2,
-  length: 2,
+mockSearchAdminUsers.mockResolvedValue({
+  data: {
+    users: [
+      {
+        id: 'user-1',
+        name: 'João',
+        email: 'joao@test.com',
+        role: 'PLAYER',
+        photoUrl: null,
+        gamesPlayed: 10,
+        level: 5,
+        createdAtIso: new Date().toISOString(),
+        ownerSummary: {
+          totalLocations: 0,
+          publishedLocations: 0,
+          pendingLocations: 0,
+          overdueLocations: 0,
+          incompleteLocations: 0,
+        },
+      },
+      {
+        id: 'user-2',
+        name: 'Admin',
+        email: 'admin@test.com',
+        role: 'ADMIN',
+        photoUrl: null,
+        gamesPlayed: 50,
+        level: 10,
+        createdAtIso: new Date().toISOString(),
+        ownerSummary: {
+          totalLocations: 0,
+          publishedLocations: 0,
+          pendingLocations: 0,
+          overdueLocations: 0,
+          incompleteLocations: 0,
+        },
+      },
+    ],
+    nextPageToken: null,
+    totalMatched: 2,
+    scannedUsers: 2,
+    scannedLocations: 0,
+    scanComplete: true,
+  },
 });
 
 import { UserManagementScreen } from './UserManagementScreen';
@@ -95,6 +106,10 @@ function renderWithTheme(ui: React.ReactElement) {
 }
 
 describe('UserManagementScreen', () => {
+  beforeEach(() => {
+    mockSearchAdminUsers.mockClear();
+  });
+
   it('renderiza título', async () => {
     renderWithTheme(<UserManagementScreen />);
     expect(await screen.findByText('Gerenciar Usuários')).toBeInTheDocument();
@@ -118,5 +133,22 @@ describe('UserManagementScreen', () => {
   it('mostra role filter dropdown', async () => {
     renderWithTheme(<UserManagementScreen />);
     expect(await screen.findByText('Todos os roles')).toBeInTheDocument();
+  });
+
+  it('busca usuários pela callable server-side', async () => {
+    renderWithTheme(<UserManagementScreen />);
+    expect(await screen.findByText('Gerenciar Usuários')).toBeInTheDocument();
+    expect(mockSearchAdminUsers).toHaveBeenCalledWith({
+      search: null,
+      role: 'ALL',
+      ownerFilter: 'ALL',
+      pageSize: 50,
+      pageToken: null,
+    });
+  });
+
+  it('mostra filtro comercial', async () => {
+    renderWithTheme(<UserManagementScreen />);
+    expect(await screen.findByText('Todos')).toBeInTheDocument();
   });
 });

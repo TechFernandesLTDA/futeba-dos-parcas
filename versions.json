@@ -6,13 +6,13 @@
     "buildNumber": 58
   },
   "web": {
-    "version": "1.43.12"
+    "version": "1.43.13"
   },
   "ios": {
     "version": "1.6.0",
     "buildNumber": 17
   },
   "functions": {
-    "version": "1.2.4"
+    "version": "1.2.5"
   }
 }

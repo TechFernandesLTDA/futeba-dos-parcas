@@ -69,6 +69,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.13] - 2026-06-29
+
+#### Mudado
+- `UserManagementScreen` deixa de depender apenas do primeiro lote local de 50 usuários para busca e filtros.
+- Integração web adicionada para a callable `searchAdminUsers`.
+- A versão web foi atualizada para `1.43.13`.
+
+_Issues: #3136, #3101, #3087, #3084_
+
 ### [1.43.12] - 2026-06-29
 
 #### Mudado
@@ -478,6 +487,17 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.5] - 2026-06-29
+
+#### Adicionado
+- Callable admin-only `searchAdminUsers` com paginação, busca textual e filtros por role/status comercial.
+- Agregação server-side de `locations` por owner para total de quadras, publicadas, pendentes, suspensas/vencidas e cadastro comercial incompleto.
+
+#### Segurança
+- A callable exige autenticação, role `ADMIN`, App Check fora do emulador e rate limit dedicado.
+
+_Issues: #3136, #3101, #3087, #3084_
 
 ### [1.2.4] - 2026-06-29
 
