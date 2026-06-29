@@ -57,6 +57,30 @@ interface RegisterLocationSubscriptionPaymentRequest {
   notes?: string | null;
 }
 
+interface AssignLocationOwnerRequest {
+  locationId: string;
+  newOwnerId: string;
+  reason?: string | null;
+}
+
+interface InviteLocationManagerRequest {
+  locationId: string;
+  managerUid?: string | null;
+  managerEmail?: string | null;
+  message?: string | null;
+}
+
+interface AcceptLocationManagerInviteRequest {
+  locationId: string;
+  inviteId: string;
+}
+
+interface RemoveLocationManagerRequest {
+  locationId: string;
+  managerUid: string;
+  reason?: string | null;
+}
+
 interface CalculateAutoRatingsRequest {
   userId: string;
 }
@@ -71,6 +95,7 @@ interface AutoRatingsForUser {
 }
 
 const DELETE_BATCH_SIZE = 500;
+const MANAGER_INVITE_TTL_DAYS = 14;
 const LOCATION_SUBCOLLECTIONS = [
   "reviews",
   "fields",
@@ -104,6 +129,20 @@ function optionalTrimmed(value: unknown, maxLength: number): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
   return trimmed.slice(0, maxLength);
+}
+
+/**
+ * Normaliza e valida email opcional para convites comerciais.
+ * @param {unknown} value Valor bruto recebido.
+ * @return {string | null} Email em lowercase ou null.
+ */
+function optionalEmail(value: unknown): string | null {
+  const email = optionalTrimmed(value, 254)?.toLowerCase() ?? null;
+  if (email === null) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new HttpsError("invalid-argument", "managerEmail must be valid");
+  }
+  return email;
 }
 
 /**
@@ -157,6 +196,35 @@ async function getExistingLocation(locationId: string) {
     throw new HttpsError("not-found", `Location ${locationId} not found`);
   }
   return {locRef, locData: locDoc.data() || {}};
+}
+
+/**
+ * Garante que o caller e admin global ou owner atual da location.
+ * @param {object} request Requisicao callable autenticada.
+ * @param {FirebaseFirestore.DocumentData} locData Dados da location.
+ */
+function assertAdminOrLocationOwner(
+  request: {auth?: {uid: string; token?: Record<string, unknown>}},
+  locData: FirebaseFirestore.DocumentData
+) {
+  const callerUid = request.auth?.uid;
+  const isAdmin = request.auth?.token?.role === "ADMIN";
+  if (!callerUid || (!isAdmin && locData.owner_id !== callerUid)) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the location owner or admin can manage managers"
+    );
+  }
+}
+
+/**
+ * Calcula expiracao padrao de convite de manager.
+ * @return {Date} Data de expiracao.
+ */
+function managerInviteExpiresAt(): Date {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + MANAGER_INVITE_TTL_DAYS);
+  return expiresAt;
 }
 
 /**
@@ -562,6 +630,240 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       paymentId: paymentRef.id,
       subscriptionStatus: "ACTIVE",
     };
+  }
+);
+
+export const assignLocationOwner = secureCallable<AssignLocationOwnerRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {maxRequests: 20, windowMs: 60000, keyPrefix: "locOwner"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "assignLocationOwner",
+      locationId: req.data?.locationId,
+      newOwnerId: req.data?.newOwnerId,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const newOwnerId = requireNonEmptyString(request.data.newOwnerId, "newOwnerId");
+    const reason = optionalTrimmed(request.data.reason, 500);
+    const {locRef, locData} = await getExistingLocation(locationId);
+    const newOwnerDoc = await db().collection("users").doc(newOwnerId).get();
+    if (!newOwnerDoc.exists) {
+      throw new HttpsError("not-found", `User ${newOwnerId} not found`);
+    }
+
+    const previousOwnerId = typeof locData.owner_id === "string" ?
+      locData.owner_id :
+      null;
+    if (previousOwnerId === newOwnerId) {
+      return {success: true, locationId, ownerId: newOwnerId, changed: false};
+    }
+
+    await locRef.update({
+      owner_id: newOwnerId,
+      managers: FieldValue.arrayRemove(newOwnerId),
+      updated_at: FieldValue.serverTimestamp(),
+      updated_by: request.auth.uid,
+    });
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: "LOCATION_OWNER_ASSIGNED",
+      before: {owner_id: previousOwnerId},
+      after: {owner_id: newOwnerId},
+      reason,
+    });
+
+    return {success: true, locationId, ownerId: newOwnerId, changed: true};
+  }
+);
+
+export const inviteLocationManager =
+secureCallable<InviteLocationManagerRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    rateLimit: {maxRequests: 20, windowMs: 60000, keyPrefix: "locMgrInvite"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "inviteLocationManager",
+      locationId: req.data?.locationId,
+      managerUid: req.data?.managerUid,
+      managerEmail: req.data?.managerEmail,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const managerUid = optionalTrimmed(request.data.managerUid, 128);
+    const managerEmail = optionalEmail(request.data.managerEmail);
+    if (!managerUid && !managerEmail) {
+      throw new HttpsError(
+        "invalid-argument",
+        "managerUid or managerEmail is required"
+      );
+    }
+    const {locRef, locData} = await getExistingLocation(locationId);
+    assertAdminOrLocationOwner(request, locData);
+    if (managerUid && managerUid === locData.owner_id) {
+      throw new HttpsError("invalid-argument", "Owner cannot be invited as manager");
+    }
+    if (managerUid && Array.isArray(locData.managers) &&
+      locData.managers.includes(managerUid)
+    ) {
+      return {success: true, locationId, inviteId: null, alreadyManager: true};
+    }
+
+    const inviteRef = locRef.collection("manager_invites").doc();
+    await inviteRef.set({
+      manager_uid: managerUid ?? null,
+      manager_email: managerEmail,
+      status: "PENDING",
+      message: optionalTrimmed(request.data.message, 500),
+      created_at: FieldValue.serverTimestamp(),
+      created_by: request.auth.uid,
+      expires_at: managerInviteExpiresAt(),
+    });
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: "LOCATION_MANAGER_INVITED",
+      after: {
+        invite_id: inviteRef.id,
+        manager_uid: managerUid ?? null,
+        manager_email: managerEmail,
+      },
+    });
+
+    return {
+      success: true,
+      locationId,
+      inviteId: inviteRef.id,
+      alreadyManager: false,
+    };
+  }
+);
+
+export const acceptLocationManagerInvite =
+secureCallable<AcceptLocationManagerInviteRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    rateLimit: {maxRequests: 20, windowMs: 60000, keyPrefix: "locMgrAccept"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "acceptLocationManagerInvite",
+      locationId: req.data?.locationId,
+      inviteId: req.data?.inviteId,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const inviteId = requireNonEmptyString(request.data.inviteId, "inviteId");
+    const {locRef, locData} = await getExistingLocation(locationId);
+    const inviteRef = locRef.collection("manager_invites").doc(inviteId);
+    const inviteDoc = await inviteRef.get();
+    if (!inviteDoc.exists) {
+      throw new HttpsError("not-found", `Invite ${inviteId} not found`);
+    }
+    const inviteData = inviteDoc.data() || {};
+    if (inviteData.status !== "PENDING") {
+      throw new HttpsError("failed-precondition", "Invite is not pending");
+    }
+    const uidMatches = inviteData.manager_uid === request.auth.uid;
+    const authEmail = typeof request.auth.token?.email === "string" ?
+      request.auth.token.email.toLowerCase() :
+      null;
+    const emailMatches = Boolean(
+      inviteData.manager_email && authEmail &&
+      inviteData.manager_email === authEmail
+    );
+    if (!uidMatches && !emailMatches) {
+      throw new HttpsError(
+        "permission-denied",
+        "Invite does not belong to this user"
+      );
+    }
+    if (locData.owner_id === request.auth.uid) {
+      throw new HttpsError("failed-precondition", "Owner is already the owner");
+    }
+
+    const batch = db().batch();
+    batch.update(locRef, {
+      managers: FieldValue.arrayUnion(request.auth.uid),
+      updated_at: FieldValue.serverTimestamp(),
+      updated_by: request.auth.uid,
+    });
+    batch.update(inviteRef, {
+      status: "ACCEPTED",
+      accepted_at: FieldValue.serverTimestamp(),
+      accepted_by: request.auth.uid,
+    });
+    await batch.commit();
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: "LOCATION_MANAGER_INVITE_ACCEPTED",
+      after: {manager_uid: request.auth.uid, invite_id: inviteId},
+    });
+
+    return {success: true, locationId, managerUid: request.auth.uid};
+  }
+);
+
+export const removeLocationManager =
+secureCallable<RemoveLocationManagerRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    rateLimit: {maxRequests: 20, windowMs: 60000, keyPrefix: "locMgrRemove"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "removeLocationManager",
+      locationId: req.data?.locationId,
+      managerUid: req.data?.managerUid,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const managerUid = requireNonEmptyString(request.data.managerUid, "managerUid");
+    const reason = optionalTrimmed(request.data.reason, 500);
+    const {locRef, locData} = await getExistingLocation(locationId);
+    assertAdminOrLocationOwner(request, locData);
+    if (managerUid === locData.owner_id) {
+      throw new HttpsError("invalid-argument", "Owner cannot be removed as manager");
+    }
+
+    await locRef.update({
+      managers: FieldValue.arrayRemove(managerUid),
+      updated_at: FieldValue.serverTimestamp(),
+      updated_by: request.auth.uid,
+    });
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: "LOCATION_MANAGER_REMOVED",
+      before: {manager_uid: managerUid},
+      after: {manager_uid: null},
+      reason,
+    });
+
+    return {success: true, locationId, managerUid};
   }
 );
 

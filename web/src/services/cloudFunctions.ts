@@ -56,6 +56,44 @@ export const registerLocationSubscriptionPayment = httpsCallable<
   }
 >(functions, 'registerLocationSubscriptionPayment');
 
+export const assignLocationOwner = httpsCallable<
+  {
+    locationId: string;
+    newOwnerId: string;
+    reason?: string | null;
+  },
+  { success: boolean; locationId: string; ownerId: string; changed: boolean }
+>(functions, 'assignLocationOwner');
+
+export const inviteLocationManager = httpsCallable<
+  {
+    locationId: string;
+    managerUid?: string | null;
+    managerEmail?: string | null;
+    message?: string | null;
+  },
+  {
+    success: boolean;
+    locationId: string;
+    inviteId: string | null;
+    alreadyManager: boolean;
+  }
+>(functions, 'inviteLocationManager');
+
+export const acceptLocationManagerInvite = httpsCallable<
+  { locationId: string; inviteId: string },
+  { success: boolean; locationId: string; managerUid: string }
+>(functions, 'acceptLocationManagerInvite');
+
+export const removeLocationManager = httpsCallable<
+  {
+    locationId: string;
+    managerUid: string;
+    reason?: string | null;
+  },
+  { success: boolean; locationId: string; managerUid: string }
+>(functions, 'removeLocationManager');
+
 export const calculateAutoRatings = httpsCallable<
   { userId: string },
   { success: boolean }

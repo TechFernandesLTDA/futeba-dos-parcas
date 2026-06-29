@@ -6,6 +6,36 @@
  */
 
 type StoredDoc = Record<string, unknown>;
+type ArraySentinel = {
+  _op: "arrayUnion" | "arrayRemove";
+  values: unknown[];
+};
+
+function isArraySentinel(value: unknown): value is ArraySentinel {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    "_op" in value &&
+    "values" in value
+  );
+}
+
+function applyUpdate(current: StoredDoc, data: StoredDoc) {
+  const next = {...current};
+  Object.entries(data).forEach(([key, value]) => {
+    if (isArraySentinel(value)) {
+      const currentArray = Array.isArray(next[key]) ? next[key] as unknown[] : [];
+      if (value._op === "arrayUnion") {
+        next[key] = Array.from(new Set([...currentArray, ...value.values]));
+      } else {
+        next[key] = currentArray.filter((item) => !value.values.includes(item));
+      }
+      return;
+    }
+    next[key] = value;
+  });
+  return next;
+}
 
 class FakeDocRef {
   constructor(
@@ -24,7 +54,11 @@ class FakeDocRef {
 
   async update(data: StoredDoc) {
     const current = this.store.get(this.path) || {};
-    this.store.set(this.path, {...current, ...data});
+    this.store.set(this.path, applyUpdate(current, data));
+  }
+
+  async set(data: StoredDoc) {
+    this.store.set(this.path, data);
   }
 
   async delete() {
@@ -129,6 +163,8 @@ jest.mock("../src/middleware/secure-callable-wrapper", () => ({
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+    arrayUnion: jest.fn((...values: unknown[]) => ({_op: "arrayUnion", values})),
+    arrayRemove: jest.fn((...values: unknown[]) => ({_op: "arrayRemove", values})),
   },
 }));
 
@@ -153,8 +189,12 @@ jest.mock("firebase-functions/v2/https", () => ({
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
+  acceptLocationManagerInvite,
+  assignLocationOwner,
   deleteLocationSubcollection,
+  inviteLocationManager,
   registerLocationSubscriptionPayment,
+  removeLocationManager,
   setLocationPublicationStatus,
   setLocationSubscription,
 } = require("../src/locations/location-management");
@@ -184,6 +224,8 @@ describe("location commercial admin callables", () => {
     resetFirestore();
     firestoreStore.set("locations/location-1", {
       name: "Arena Parcas",
+      owner_id: "owner-1",
+      managers: ["manager-existing"],
       publication_status: "PENDING_REVIEW",
       subscription_status: "TRIAL",
       commercial_status: "TRIAL",
@@ -222,6 +264,10 @@ describe("location commercial admin callables", () => {
     const publicationOptions = mockSecureCallableOptions[1];
     const subscriptionOptions = mockSecureCallableOptions[2];
     const paymentOptions = mockSecureCallableOptions[3];
+    const assignOwnerOptions = mockSecureCallableOptions[4];
+    const inviteManagerOptions = mockSecureCallableOptions[5];
+    const acceptInviteOptions = mockSecureCallableOptions[6];
+    const removeManagerOptions = mockSecureCallableOptions[7];
 
     await expect(publicationOptions.auditLogContext({
       data: {locationId: "location-1", publicationStatus: "PUBLISHED"},
@@ -244,6 +290,326 @@ describe("location commercial admin callables", () => {
       locationId: "location-1",
       periodKey: "2026-07",
     });
+    await expect(assignOwnerOptions.auditLogContext({
+      data: {locationId: "location-1", newOwnerId: "owner-2"},
+    })).resolves.toEqual({
+      function: "assignLocationOwner",
+      locationId: "location-1",
+      newOwnerId: "owner-2",
+    });
+    await expect(inviteManagerOptions.auditLogContext({
+      data: {
+        locationId: "location-1",
+        managerUid: "manager-2",
+        managerEmail: "manager@example.com",
+      },
+    })).resolves.toEqual({
+      function: "inviteLocationManager",
+      locationId: "location-1",
+      managerUid: "manager-2",
+      managerEmail: "manager@example.com",
+    });
+    await expect(acceptInviteOptions.auditLogContext({
+      data: {locationId: "location-1", inviteId: "invite-1"},
+    })).resolves.toEqual({
+      function: "acceptLocationManagerInvite",
+      locationId: "location-1",
+      inviteId: "invite-1",
+    });
+    await expect(removeManagerOptions.auditLogContext({
+      data: {locationId: "location-1", managerUid: "manager-2"},
+    })).resolves.toEqual({
+      function: "removeLocationManager",
+      locationId: "location-1",
+      managerUid: "manager-2",
+    });
+  });
+
+  it("transfere owner como admin e remove novo owner da lista de managers", async () => {
+    firestoreStore.set("users/owner-2", {
+      name: "Novo dono",
+      role: "FIELD_OWNER",
+    });
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      managers: ["owner-2", "manager-existing"],
+    });
+
+    await expect(assignLocationOwner({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        newOwnerId: "owner-2",
+        reason: "Contrato transferido",
+      },
+    })).resolves.toEqual({
+      success: true,
+      locationId: "location-1",
+      ownerId: "owner-2",
+      changed: true,
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      owner_id: "owner-2",
+      managers: ["manager-existing"],
+      updated_by: "admin-1",
+    });
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+    expect(collectionSize("audit_logs")).toBe(1);
+  });
+
+  it("rejeita transferencia de owner para usuario inexistente", async () => {
+    await expect(assignLocationOwner({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "location-1", newOwnerId: "missing"},
+    })).rejects.toMatchObject({code: "not-found"});
+  });
+
+  it("nao altera owner quando o novo dono ja e o atual", async () => {
+    firestoreStore.set("users/owner-1", {
+      name: "Dono atual",
+      role: "FIELD_OWNER",
+    });
+
+    await expect(assignLocationOwner({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "location-1", newOwnerId: "owner-1"},
+    })).resolves.toEqual({
+      success: true,
+      locationId: "location-1",
+      ownerId: "owner-1",
+      changed: false,
+    });
+
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(0);
+  });
+
+  it("rejeita transferencia de owner sem auth", async () => {
+    await expect(assignLocationOwner({
+      data: {locationId: "location-1", newOwnerId: "owner-1"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+  });
+
+  it("cria convite pendente de manager sem conceder acesso imediato", async () => {
+    await expect(inviteLocationManager({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        managerUid: "manager-2",
+        managerEmail: "Manager2@Example.com",
+        message: "Ajude a operar a quadra",
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      locationId: "location-1",
+      inviteId: expect.any(String),
+      alreadyManager: false,
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      managers: ["manager-existing"],
+    });
+    const [, invite] = findFirstDoc("locations/location-1/manager_invites");
+    expect(invite).toMatchObject({
+      manager_uid: "manager-2",
+      manager_email: "manager2@example.com",
+      status: "PENDING",
+      created_by: "owner-1",
+    });
+    expect(invite?.expires_at).toBeInstanceOf(Date);
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+  });
+
+  it("bloqueia convite de manager por usuario que nao e owner/admin", async () => {
+    await expect(inviteLocationManager({
+      auth: {uid: "manager-existing", token: {role: "FIELD_OWNER"}},
+      data: {locationId: "location-1", managerUid: "manager-2"},
+    })).rejects.toMatchObject({code: "permission-denied"});
+  });
+
+  it("cria convite somente por email e normaliza managerUid ausente", async () => {
+    await expect(inviteLocationManager({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        managerEmail: "Novo.Gerente@Example.com",
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      alreadyManager: false,
+    });
+
+    const [, invite] = findFirstDoc("locations/location-1/manager_invites");
+    expect(invite).toMatchObject({
+      manager_uid: null,
+      manager_email: "novo.gerente@example.com",
+      message: null,
+    });
+  });
+
+  it("rejeita convite sem destinatario, email invalido ou owner como manager", async () => {
+    await expect(inviteLocationManager({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {locationId: "location-1"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(inviteLocationManager({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {locationId: "location-1", managerEmail: "email-invalido"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(inviteLocationManager({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {locationId: "location-1", managerUid: "owner-1"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+  });
+
+  it("retorna alreadyManager sem criar novo convite", async () => {
+    await expect(inviteLocationManager({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {locationId: "location-1", managerUid: "manager-existing"},
+    })).resolves.toEqual({
+      success: true,
+      locationId: "location-1",
+      inviteId: null,
+      alreadyManager: true,
+    });
+
+    expect(collectionSize("locations/location-1/manager_invites")).toBe(0);
+  });
+
+  it("rejeita convite de manager sem auth", async () => {
+    await expect(inviteLocationManager({
+      data: {locationId: "location-1", managerUid: "manager-2"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+  });
+
+  it("aceita convite e adiciona manager somente para o destinatario correto", async () => {
+    firestoreStore.set("locations/location-1/manager_invites/invite-1", {
+      manager_uid: "manager-2",
+      manager_email: "manager2@example.com",
+      status: "PENDING",
+    });
+
+    await expect(acceptLocationManagerInvite({
+      auth: {
+        uid: "manager-2",
+        token: {email: "manager2@example.com", role: "PLAYER"},
+      },
+      data: {locationId: "location-1", inviteId: "invite-1"},
+    })).resolves.toEqual({
+      success: true,
+      locationId: "location-1",
+      managerUid: "manager-2",
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      managers: ["manager-existing", "manager-2"],
+      updated_by: "manager-2",
+    });
+    expect(firestoreStore.get("locations/location-1/manager_invites/invite-1"))
+      .toMatchObject({
+        status: "ACCEPTED",
+        accepted_by: "manager-2",
+      });
+  });
+
+  it("rejeita aceite de convite por outro usuario", async () => {
+    firestoreStore.set("locations/location-1/manager_invites/invite-1", {
+      manager_uid: "manager-2",
+      manager_email: "manager2@example.com",
+      status: "PENDING",
+    });
+
+    await expect(acceptLocationManagerInvite({
+      auth: {
+        uid: "attacker",
+        token: {email: "attacker@example.com", role: "PLAYER"},
+      },
+      data: {locationId: "location-1", inviteId: "invite-1"},
+    })).rejects.toMatchObject({code: "permission-denied"});
+  });
+
+  it("aceita convite quando apenas o email autenticado corresponde", async () => {
+    firestoreStore.set("locations/location-1/manager_invites/invite-email", {
+      manager_uid: null,
+      manager_email: "manager-email@example.com",
+      status: "PENDING",
+    });
+
+    await expect(acceptLocationManagerInvite({
+      auth: {
+        uid: "manager-email-uid",
+        token: {email: "MANAGER-EMAIL@example.com", role: "PLAYER"},
+      },
+      data: {locationId: "location-1", inviteId: "invite-email"},
+    })).resolves.toEqual({
+      success: true,
+      locationId: "location-1",
+      managerUid: "manager-email-uid",
+    });
+  });
+
+  it("rejeita aceite de convite ausente, nao pendente, owner ou sem auth", async () => {
+    await expect(acceptLocationManagerInvite({
+      data: {locationId: "location-1", inviteId: "invite-1"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+
+    await expect(acceptLocationManagerInvite({
+      auth: {uid: "manager-2", token: {email: "manager2@example.com"}},
+      data: {locationId: "location-1", inviteId: "missing"},
+    })).rejects.toMatchObject({code: "not-found"});
+
+    firestoreStore.set("locations/location-1/manager_invites/invite-used", {
+      manager_uid: "manager-2",
+      status: "ACCEPTED",
+    });
+    await expect(acceptLocationManagerInvite({
+      auth: {uid: "manager-2", token: {email: "manager2@example.com"}},
+      data: {locationId: "location-1", inviteId: "invite-used"},
+    })).rejects.toMatchObject({code: "failed-precondition"});
+
+    firestoreStore.set("locations/location-1/manager_invites/invite-owner", {
+      manager_uid: "owner-1",
+      status: "PENDING",
+    });
+    await expect(acceptLocationManagerInvite({
+      auth: {uid: "owner-1", token: {email: "owner@example.com"}},
+      data: {locationId: "location-1", inviteId: "invite-owner"},
+    })).rejects.toMatchObject({code: "failed-precondition"});
+  });
+
+  it("remove manager como owner e registra auditoria", async () => {
+    await expect(removeLocationManager({
+      auth: {uid: "owner-1", token: {role: "FIELD_OWNER"}},
+      data: {
+        locationId: "location-1",
+        managerUid: "manager-existing",
+        reason: "Saiu da operacao",
+      },
+    })).resolves.toEqual({
+      success: true,
+      locationId: "location-1",
+      managerUid: "manager-existing",
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      managers: [],
+      updated_by: "owner-1",
+    });
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+    expect(collectionSize("audit_logs")).toBe(1);
+  });
+
+  it("rejeita remocao de manager sem auth ou tentando remover owner", async () => {
+    await expect(removeLocationManager({
+      data: {locationId: "location-1", managerUid: "manager-existing"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+
+    await expect(removeLocationManager({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "location-1", managerUid: "owner-1"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
   });
 
   it("suspende publicacao com motivo sem desativar historico comercial", async () => {
@@ -483,6 +849,14 @@ function collectionSize(path: string) {
     .filter((docPath) => docPath.startsWith(prefix))
     .filter((docPath) => !docPath.slice(prefix.length).includes("/"))
     .length;
+}
+
+function findFirstDoc(path: string) {
+  const prefix = `${path}/`;
+  return Array.from(firestoreStore.entries())
+    .find(([docPath]) =>
+      docPath.startsWith(prefix) && !docPath.slice(prefix.length).includes("/")
+    ) || [];
 }
 
 function totalDeleteCalls() {

@@ -23,6 +23,8 @@ import {
   CircularProgress,
   TextField,
   Pagination,
+  Chip,
+  Stack,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import PageContainer from '../../components/common/PageContainer';
@@ -41,12 +43,26 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Send as SendIcon,
+  Paid as PaidIcon,
+  Groups as GroupsIcon,
+  Verified as VerifiedIcon,
+  PhotoLibrary as PhotoLibraryIcon,
 } from '@mui/icons-material';
 import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
-import { Location, FIELD_TYPE_CONFIG, canManageLocation } from '../../types/location';
+import {
+  Location,
+  Field,
+  FIELD_TYPE_CONFIG,
+  AMENITY_LABELS,
+  LOCATION_PUBLICATION_STATUS_LABELS,
+  LOCATION_SUBSCRIPTION_STATUS_LABELS,
+  canManageLocation,
+  getLocationAmenitySet,
+  isLocationCommerciallyAvailable,
+} from '../../types/location';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
@@ -78,6 +94,7 @@ export const LocationDetailScreen: React.FC = () => {
   const { locationId } = useParams<{ locationId: string }>();
 
   const [location, setLocation] = useState<Location | null>(null);
+  const [fields, setFields] = useState<Field[]>([]);
   const [reviews, setReviews] = useState<LocationReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +158,26 @@ export const LocationDetailScreen: React.FC = () => {
       (err) => {
         logger.error('Erro ao carregar avaliações:', err);
         showErrorRef.current('Não foi possível carregar as avaliações.');
+      }
+    );
+    return () => unsubscribe();
+  }, [locationId]);
+
+  useEffect(() => {
+    if (!locationId) return;
+    const fieldsRef = collection(db, 'locations', locationId, 'fields');
+    const q = query(fieldsRef, orderBy('name', 'asc'), limit(50));
+    const unsubscribe = onSnapshot(
+      q,
+      (snap) => {
+        setFields(snap.docs.map((d) => ({
+          ...snakeToCamel<Field>(d.data()),
+          id: d.id,
+        })));
+      },
+      (err) => {
+        logger.error('Erro ao carregar campos da quadra:', err);
+        showErrorRef.current('Não foi possível carregar os campos desta quadra.');
       }
     );
     return () => unsubscribe();
@@ -247,6 +284,21 @@ export const LocationDetailScreen: React.FC = () => {
   const reviewCount = reviews.length || location.reviewCount || location.ratingCount || 0;
   const fullAddress = [location.address, location.district, location.city, location.state].filter(Boolean).join(', ');
   const fieldTypeLabel = location.fieldType ? FIELD_TYPE_CONFIG[location.fieldType]?.label || location.fieldType : 'Campo';
+  const publicationStatus = location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
+  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
+  const commerciallyAvailable = isLocationCommerciallyAvailable(location);
+  const amenities = Array.from(getLocationAmenitySet(location));
+  const photos = Array.from(new Set([location.photoUrl, ...(location.photos || [])].filter(Boolean))) as string[];
+  const activeFields = fields.filter((field) => field.isActive !== false);
+  const priceValues = activeFields
+    .map((field) => field.hourlyPrice)
+    .filter((price): price is number => typeof price === 'number' && price > 0);
+  const minHourlyPrice = priceValues.length > 0 ? Math.min(...priceValues) : null;
+  const formatCurrency = (cents: number | null) => {
+    if (cents === null) return 'A definir';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
+  };
+  const formatMonthlyFee = formatCurrency(typeof location.monthlyFeeCents === 'number' ? location.monthlyFeeCents : null);
 
   const totalPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
   const pagedReviews = reviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
@@ -256,6 +308,76 @@ export const LocationDetailScreen: React.FC = () => {
       {renderHeader(location.name)}
       <PageContainer maxWidth="detail">
         {!location.isVerified && <Alert severity="info" sx={{ mb: 2 }}>Este local ainda não foi verificado.</Alert>}
+
+        {userCanEdit && (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Stack spacing={2}>
+                <Alert severity={commerciallyAvailable ? 'success' : 'warning'}>
+                  {commerciallyAvailable
+                    ? 'Quadra disponível para seleção dos usuários.'
+                    : 'Quadra ainda não está totalmente disponível para os usuários.'}
+                </Alert>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+                  <Box>
+                    <Typography variant="overline" color="text.secondary">Central da quadra</Typography>
+                    <Typography variant="h6" fontWeight={700}>{location.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Visualize, edite e acompanhe cadastro, cobrança, equipe e campos em um só lugar.
+                    </Typography>
+                  </Box>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                    <Button variant="contained" startIcon={<EditIcon />} onClick={() => navigate(`/location/${location.id}/edit`)}>
+                      Editar cadastro completo
+                    </Button>
+                    <Button variant="outlined" startIcon={<GroupsIcon />} onClick={() => navigate('/locations')}>
+                      Dono, gerentes e mensalidade
+                    </Button>
+                    {user?.role === 'ADMIN' && (
+                      <Button variant="outlined" startIcon={<GroupsIcon />} onClick={() => navigate('/admin/users')}>
+                        Usuários
+                      </Button>
+                    )}
+                  </Stack>
+                </Box>
+                <Grid container spacing={1.5}>
+                  <Grid xs={6} md={3}>
+                    <Paper variant="outlined" sx={{ p: 1.5, height: '100%' }}>
+                      <VerifiedIcon color={commerciallyAvailable ? 'success' : 'warning'} />
+                      <Typography variant="caption" color="text.secondary" display="block">Publicação</Typography>
+                      <Typography variant="subtitle2">{LOCATION_PUBLICATION_STATUS_LABELS[publicationStatus]}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid xs={6} md={3}>
+                    <Paper variant="outlined" sx={{ p: 1.5, height: '100%' }}>
+                      <PaidIcon color={subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' ? 'success' : 'warning'} />
+                      <Typography variant="caption" color="text.secondary" display="block">Mensalidade</Typography>
+                      <Typography variant="subtitle2">{LOCATION_SUBSCRIPTION_STATUS_LABELS[subscriptionStatus]}</Typography>
+                      <Typography variant="caption" color="text.secondary">{formatMonthlyFee}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid xs={6} md={3}>
+                    <Paper variant="outlined" sx={{ p: 1.5, height: '100%' }}>
+                      <GroupsIcon color="primary" />
+                      <Typography variant="caption" color="text.secondary" display="block">Time operacional</Typography>
+                      <Typography variant="subtitle2">{1 + (location.managers?.length || 0)} pessoa(s)</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid xs={6} md={3}>
+                    <Paper variant="outlined" sx={{ p: 1.5, height: '100%' }}>
+                      <SoccerIcon color="primary" />
+                      <Typography variant="caption" color="text.secondary" display="block">Campos ativos</Typography>
+                      <Typography variant="subtitle2">{activeFields.length || location.fieldCount || 0}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {minHourlyPrice === null ? 'Preço a definir' : `Desde ${formatCurrency(minHourlyPrice)}/h`}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
 
         <Card sx={{ mb: 2 }}>
           {location.photoUrl && <Box component="img" src={location.photoUrl} alt={location.name} loading="lazy" sx={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }} />}
@@ -269,6 +391,19 @@ export const LocationDetailScreen: React.FC = () => {
               <LocationIcon color="action" fontSize="small" sx={{ mt: 0.5 }} />
               <Typography variant="body2" color="text.secondary">{fullAddress}</Typography>
             </Box>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1.5 }}>
+              <Chip
+                size="small"
+                color={commerciallyAvailable ? 'success' : 'default'}
+                label={commerciallyAvailable ? 'Disponível no app' : 'Indisponível no app'}
+              />
+              {userCanEdit && (
+                <>
+                  <Chip size="small" variant="outlined" label={LOCATION_PUBLICATION_STATUS_LABELS[publicationStatus]} />
+                  <Chip size="small" variant="outlined" label={LOCATION_SUBSCRIPTION_STATUS_LABELS[subscriptionStatus]} />
+                </>
+              )}
+            </Stack>
             {location.phone && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <PhoneIcon color="action" fontSize="small" />
@@ -284,6 +419,36 @@ export const LocationDetailScreen: React.FC = () => {
             {location.description && <Typography variant="body2" sx={{ mt: 2 }}>{location.description}</Typography>}
           </CardContent>
         </Card>
+
+        {photos.length > 1 && (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                <PhotoLibraryIcon color="primary" />
+                <Typography variant="subtitle1" fontWeight={600}>Fotos da quadra</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5 }}>
+                {photos.map((photo, index) => (
+                  <Box
+                    key={photo}
+                    component="img"
+                    src={photo}
+                    alt={`${location.name} foto ${index + 1}`}
+                    loading="lazy"
+                    sx={{
+                      width: 160,
+                      height: 104,
+                      borderRadius: 2,
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                      border: `1px solid ${theme.palette.divider}`,
+                    }}
+                  />
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+        )}
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
@@ -308,6 +473,74 @@ export const LocationDetailScreen: React.FC = () => {
               {location.hasParking && <Grid xs={6} sm={4} md={3} lg={3} xl={3}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><ParkingIcon color="info" /><Typography variant="body2" sx={{ mt: 0.5 }}>Estacionamento</Typography></Paper></Grid>}
               {location.hasShowers && <Grid xs={6} sm={4} md={3} lg={3} xl={3}><Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}><ShowerIcon color="info" /><Typography variant="body2" sx={{ mt: 0.5 }}>Vestiários</Typography></Paper></Grid>}
             </Grid>
+            {amenities.length > 0 && (
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 2 }}>
+                {amenities.map((amenity) => (
+                  <Chip
+                    key={amenity}
+                    size="small"
+                    variant="outlined"
+                    label={AMENITY_LABELS[amenity] || amenity}
+                  />
+                ))}
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>Quadras e preços</Typography>
+            {fields.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <SoccerIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  Nenhum campo cadastrado ainda.
+                </Typography>
+                {userCanEdit && (
+                  <Button sx={{ mt: 1 }} size="small" variant="outlined" onClick={() => navigate(`/location/${location.id}/edit`)}>
+                    Completar cadastro de campos
+                  </Button>
+                )}
+              </Box>
+            ) : (
+              <Stack spacing={1.25}>
+                {fields.map((field) => {
+                  const typeLabel = FIELD_TYPE_CONFIG[field.type]?.label || field.type;
+                  const fieldPrice = typeof field.hourlyPrice === 'number' && field.hourlyPrice > 0
+                    ? `${formatCurrency(field.hourlyPrice)}/h`
+                    : 'Preço a definir';
+                  return (
+                    <Paper
+                      key={field.id}
+                      variant="outlined"
+                      sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center' }}
+                    >
+                      <Avatar
+                        variant="rounded"
+                        src={field.photoUrl || field.photos?.[0]}
+                        sx={{ width: 56, height: 56, bgcolor: 'action.hover' }}
+                      >
+                        <SoccerIcon />
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <Typography variant="subtitle2" noWrap>{field.name}</Typography>
+                          <Chip size="small" label={typeLabel} />
+                          {!field.isActive && <Chip size="small" color="warning" label="Inativa" />}
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          {[field.surface, field.dimensions, field.isCovered ? 'Coberta' : null].filter(Boolean).join(' • ') || 'Detalhes a completar'}
+                        </Typography>
+                      </Box>
+                      <Typography variant="subtitle2" color="primary" sx={{ whiteSpace: 'nowrap' }}>
+                        {fieldPrice}
+                      </Typography>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            )}
           </CardContent>
         </Card>
 
