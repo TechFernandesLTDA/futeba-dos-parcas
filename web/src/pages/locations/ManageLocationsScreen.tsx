@@ -68,8 +68,16 @@ import {
   canManageLocation,
   AMENITY_LABELS,
   COMMERCIAL_AMENITIES,
-  locationHasAmenities,
 } from '../../types/location';
+import {
+  LocationBooleanFilter,
+  LocationDueFilter,
+  LocationMonthlyFeeFilter,
+  getLocationCommercialIssues,
+  getLocationPublicationStatus,
+  getLocationSubscriptionStatus,
+  locationMatchesManageFilters,
+} from './manageLocationFilters';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -189,10 +197,14 @@ export const ManageLocationsScreen: React.FC = () => {
   const [publicationFilter, setPublicationFilter] = useState<'ALL' | LocationPublicationStatus>('ALL');
   const [subscriptionFilter, setSubscriptionFilter] = useState<'ALL' | LocationSubscriptionStatus>('ALL');
   const [typeFilter, setTypeFilter] = useState<'ALL' | string>('ALL');
-  const [dueFilter, setDueFilter] = useState<'ALL' | 'NO_DUE' | '1_7' | '8_14' | '15_21' | '22_28'>('ALL');
+  const [dueFilter, setDueFilter] = useState<LocationDueFilter>('ALL');
   const [cityFilter, setCityFilter] = useState('ALL');
   const [ownerFilter, setOwnerFilter] = useState('');
   const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
+  const [verifiedFilter, setVerifiedFilter] = useState<LocationBooleanFilter>('ALL');
+  const [activeFilter, setActiveFilter] = useState<LocationBooleanFilter>('ALL');
+  const [activeFieldsFilter, setActiveFieldsFilter] = useState<LocationBooleanFilter>('ALL');
+  const [monthlyFeeFilter, setMonthlyFeeFilter] = useState<LocationMonthlyFeeFilter>('ALL');
   const [billingPeriod, setBillingPeriod] = useState(currentPeriodKey());
   const [billingSummary, setBillingSummary] = useState<AdminLocationBillingSummaryResponse | null>(null);
   const [billingSummaryLoading, setBillingSummaryLoading] = useState(false);
@@ -350,36 +362,20 @@ export const ManageLocationsScreen: React.FC = () => {
   }, [receiptTarget, showError]);
 
   const filteredLocations = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    const ownerQuery = ownerFilter.trim().toLowerCase();
-    return locations.filter((loc) => {
-      const matchesSearch = !q ||
-        loc.name?.toLowerCase().includes(q) ||
-        loc.address?.toLowerCase().includes(q) ||
-        loc.city?.toLowerCase().includes(q) ||
-        loc.district?.toLowerCase().includes(q) ||
-        loc.ownerId?.toLowerCase().includes(q);
-      const matchesPublication = publicationFilter === 'ALL' || getPublicationStatus(loc) === publicationFilter;
-      const matchesSubscription = subscriptionFilter === 'ALL' || getSubscriptionStatus(loc) === subscriptionFilter;
-      const matchesType = typeFilter === 'ALL' || loc.fieldType === typeFilter || loc.primaryFieldType === typeFilter;
-      const matchesCity = cityFilter === 'ALL' || loc.city === cityFilter;
-      const matchesOwner = !ownerQuery || loc.ownerId?.toLowerCase().includes(ownerQuery);
-      const dueDay = loc.billingDueDay ?? null;
-      const matchesDue = dueFilter === 'ALL' ||
-        (dueFilter === 'NO_DUE' && dueDay === null) ||
-        (dueFilter === '1_7' && dueDay !== null && dueDay >= 1 && dueDay <= 7) ||
-        (dueFilter === '8_14' && dueDay !== null && dueDay >= 8 && dueDay <= 14) ||
-        (dueFilter === '15_21' && dueDay !== null && dueDay >= 15 && dueDay <= 21) ||
-        (dueFilter === '22_28' && dueDay !== null && dueDay >= 22 && dueDay <= 28);
-      return matchesSearch &&
-        matchesPublication &&
-        matchesSubscription &&
-        matchesType &&
-        matchesCity &&
-        matchesOwner &&
-        matchesDue &&
-        locationHasAmenities(loc, amenityFilters);
-    });
+    return locations.filter((loc) => locationMatchesManageFilters(loc, {
+      searchQuery,
+      ownerFilter,
+      publicationFilter,
+      subscriptionFilter,
+      typeFilter,
+      cityFilter,
+      dueFilter,
+      verifiedFilter,
+      activeFilter,
+      activeFieldsFilter,
+      monthlyFeeFilter,
+      amenityFilters,
+    }));
   }, [
     locations,
     searchQuery,
@@ -389,6 +385,10 @@ export const ManageLocationsScreen: React.FC = () => {
     cityFilter,
     ownerFilter,
     dueFilter,
+    verifiedFilter,
+    activeFilter,
+    activeFieldsFilter,
+    monthlyFeeFilter,
     amenityFilters,
   ]);
 
@@ -477,12 +477,6 @@ export const ManageLocationsScreen: React.FC = () => {
       prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity],
     );
   };
-
-  const getPublicationStatus = (location: Location): LocationPublicationStatus =>
-    location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
-
-  const getSubscriptionStatus = (location: Location): LocationSubscriptionStatus =>
-    location.subscriptionStatus || 'ACTIVE';
 
   const formatMonthlyFee = (monthlyFeeCents?: number) => {
     if (!monthlyFeeCents) return 'Mensalidade não definida';
@@ -594,7 +588,7 @@ export const ManageLocationsScreen: React.FC = () => {
     try {
       await setLocationSubscription({
         locationId: billingTarget.id,
-        subscriptionStatus: getSubscriptionStatus(billingTarget),
+        subscriptionStatus: getLocationSubscriptionStatus(billingTarget),
         monthlyFeeCents,
         billingDueDay: billingDue,
         adminNotes: billingNotes.trim() || null,
@@ -914,6 +908,30 @@ export const ManageLocationsScreen: React.FC = () => {
                     placeholder="Filtrar por UID"
                   />
                 </Stack>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                  <TextField select size="small" label="Verificada" value={verifiedFilter} onChange={(e) => setVerifiedFilter(e.target.value as LocationBooleanFilter)} fullWidth>
+                    <MenuItem value="ALL">Todas</MenuItem>
+                    <MenuItem value="YES">Sim</MenuItem>
+                    <MenuItem value="NO">Não</MenuItem>
+                  </TextField>
+                  <TextField select size="small" label="Ativa" value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as LocationBooleanFilter)} fullWidth>
+                    <MenuItem value="ALL">Todas</MenuItem>
+                    <MenuItem value="YES">Sim</MenuItem>
+                    <MenuItem value="NO">Não</MenuItem>
+                  </TextField>
+                  <TextField select size="small" label="Campos ativos" value={activeFieldsFilter} onChange={(e) => setActiveFieldsFilter(e.target.value as LocationBooleanFilter)} fullWidth>
+                    <MenuItem value="ALL">Todos</MenuItem>
+                    <MenuItem value="YES">Com campos ativos</MenuItem>
+                    <MenuItem value="NO">Sem campos ativos</MenuItem>
+                  </TextField>
+                  <TextField select size="small" label="Mensalidade" value={monthlyFeeFilter} onChange={(e) => setMonthlyFeeFilter(e.target.value as LocationMonthlyFeeFilter)} fullWidth>
+                    <MenuItem value="ALL">Todas</MenuItem>
+                    <MenuItem value="NO_FEE">Sem mensalidade</MenuItem>
+                    <MenuItem value="UP_TO_100">Até R$ 100</MenuItem>
+                    <MenuItem value="100_300">R$ 100 a R$ 300</MenuItem>
+                    <MenuItem value="300_PLUS">Acima de R$ 300</MenuItem>
+                  </TextField>
+                </Stack>
                 <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5 }}>
                   {COMMERCIAL_AMENITIES.map((amenity) => (
                     <Chip
@@ -1049,16 +1067,17 @@ export const ManageLocationsScreen: React.FC = () => {
                   : null;
                 const userCanManage = canManage(location);
                 const userCanManageTeam = canManageTeam(location);
-                const publicationStatus = getPublicationStatus(location);
-                const subscriptionStatus = getSubscriptionStatus(location);
+                const publicationStatus = getLocationPublicationStatus(location);
+                const subscriptionStatus = getLocationSubscriptionStatus(location);
                 const isCommercialActionBusy = commercialActionLoading?.startsWith(`${location.id}:`) ?? false;
                 const billingRow = billingRowsByLocationId.get(location.id);
+                const commercialIssues = getLocationCommercialIssues(location);
 
                 return (
                   <Card key={location.id} sx={{ position: 'relative' }}>
                     <CardActionArea onClick={() => navigate(`/location/${location.id}`)}>
                       <CardContent>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                           {location.photoUrl ? (
                             <Box
                               component="img"
@@ -1066,8 +1085,8 @@ export const ManageLocationsScreen: React.FC = () => {
                               alt={location.name}
                               loading="lazy"
                               sx={{
-                                width: 80,
-                                height: 80,
+                                width: { xs: '100%', sm: 80 },
+                                height: { xs: 148, sm: 80 },
                                 borderRadius: 1,
                                 objectFit: 'cover',
                                 flexShrink: 0,
@@ -1077,8 +1096,8 @@ export const ManageLocationsScreen: React.FC = () => {
                             <Avatar
                               variant="rounded"
                               sx={{
-                                width: 80,
-                                height: 80,
+                                width: { xs: '100%', sm: 80 },
+                                height: { xs: 148, sm: 80 },
                                 bgcolor: 'primary.main',
                                 flexShrink: 0,
                               }}
@@ -1144,6 +1163,28 @@ export const ManageLocationsScreen: React.FC = () => {
                                 color={['TRIAL', 'ACTIVE'].includes(subscriptionStatus) ? 'success' : 'error'}
                                 variant="outlined"
                               />
+                              {isAdmin && (
+                                <>
+                                  <Chip
+                                    label={location.isActive ? 'Ativa' : 'Inativa'}
+                                    size="small"
+                                    color={location.isActive ? 'success' : 'error'}
+                                    variant="outlined"
+                                  />
+                                  <Chip
+                                    label={location.isVerified ? 'Verificada' : 'Não verificada'}
+                                    size="small"
+                                    color={location.isVerified ? 'success' : 'warning'}
+                                    variant="outlined"
+                                  />
+                                  <Chip
+                                    label={location.hasActiveFields ? 'Campos ativos' : 'Sem campos ativos'}
+                                    size="small"
+                                    color={location.hasActiveFields ? 'success' : 'warning'}
+                                    variant="outlined"
+                                  />
+                                </>
+                              )}
                               {isAdmin && (
                                 <Chip
                                   label={formatMonthlyFee(location.monthlyFeeCents)}
@@ -1216,10 +1257,10 @@ export const ManageLocationsScreen: React.FC = () => {
                               )}
                             </Box>
                             {isAdmin && (
-                              <Alert severity={publicationStatus === 'PUBLISHED' && ['TRIAL', 'ACTIVE'].includes(subscriptionStatus) ? 'success' : 'warning'} sx={{ mt: 1 }}>
-                                {publicationStatus === 'PUBLISHED' && ['TRIAL', 'ACTIVE'].includes(subscriptionStatus)
-                                  ? 'Visível para usuários.'
-                                  : 'Não aparece para seleção pública até publicação/mensalidade ficarem válidas.'}
+                              <Alert severity={commercialIssues.length === 0 ? 'success' : 'warning'} sx={{ mt: 1 }}>
+                                {commercialIssues.length === 0
+                                  ? 'Cadastro comercial completo e visível para usuários.'
+                                  : `Pendências: ${commercialIssues.slice(0, 4).join(', ')}${commercialIssues.length > 4 ? '...' : ''}.`}
                               </Alert>
                             )}
                           </Box>

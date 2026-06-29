@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T20:09:01.750Z",
+  "generatedAt": "2026-06-29T20:49:23.105Z",
   "notes": [
+    {
+      "version": "1.43.21",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Admin de quadras ganha filtros comerciais completos",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A lista administrativa de quadras agora filtra por publicação, mensalidade, cidade, dono, tipo, vencimento, verificação, atividade, campos ativos, valor de mensalidade e amenidades.",
+        "Os cartões mostram status comercial, mensalidade, campos ativos e pendências de cadastro com leitura melhor em desktop e mobile."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3099
+      ]
+    },
     {
       "version": "1.43.20",
       "buildNumber": null,
