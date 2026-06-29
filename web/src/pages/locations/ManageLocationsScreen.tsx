@@ -44,6 +44,8 @@ import { storage } from '../../services/firebaseStorage';
 import {
   assignLocationOwner,
   deleteLocation,
+  getAdminLocationBillingSummary,
+  AdminLocationBillingSummaryResponse,
   inviteLocationManager,
   removeLocationManager,
   reviewLocationSubscriptionReceipt,
@@ -161,6 +163,11 @@ const getLedgerTypeLabel = (type?: string) => {
   return type || 'Evento financeiro';
 };
 
+const csvCell = (value: unknown) => {
+  const text = value === null || value === undefined ? '' : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
 export const ManageLocationsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.manageLocations'));
@@ -182,7 +189,14 @@ export const ManageLocationsScreen: React.FC = () => {
   const [publicationFilter, setPublicationFilter] = useState<'ALL' | LocationPublicationStatus>('ALL');
   const [subscriptionFilter, setSubscriptionFilter] = useState<'ALL' | LocationSubscriptionStatus>('ALL');
   const [typeFilter, setTypeFilter] = useState<'ALL' | string>('ALL');
+  const [dueFilter, setDueFilter] = useState<'ALL' | 'NO_DUE' | '1_7' | '8_14' | '15_21' | '22_28'>('ALL');
+  const [cityFilter, setCityFilter] = useState('ALL');
+  const [ownerFilter, setOwnerFilter] = useState('');
   const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
+  const [billingPeriod, setBillingPeriod] = useState(currentPeriodKey());
+  const [billingSummary, setBillingSummary] = useState<AdminLocationBillingSummaryResponse | null>(null);
+  const [billingSummaryLoading, setBillingSummaryLoading] = useState(false);
+  const [billingSummaryError, setBillingSummaryError] = useState<string | null>(null);
   const [billingTarget, setBillingTarget] = useState<Location | null>(null);
   const [billingMonthlyFee, setBillingMonthlyFee] = useState('');
   const [billingDueDay, setBillingDueDay] = useState('');
@@ -231,6 +245,34 @@ export const ManageLocationsScreen: React.FC = () => {
 
     return () => unsubscribe();
   }, [reloadKey, isAdmin, user?.id, t]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setBillingSummary(null);
+      setBillingSummaryError(null);
+      setBillingSummaryLoading(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setBillingSummaryLoading(true);
+    setBillingSummaryError(null);
+    getAdminLocationBillingSummary({ periodKey: billingPeriod })
+      .then((result) => {
+        if (cancelled) return;
+        setBillingSummary(result.data);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        logger.error('Erro ao carregar resumo financeiro das quadras:', err);
+        setBillingSummaryError('Não foi possível carregar o painel financeiro.');
+      })
+      .finally(() => {
+        if (!cancelled) setBillingSummaryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, billingPeriod]);
 
   useEffect(() => {
     if (!receiptTarget) {
@@ -309,6 +351,7 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const filteredLocations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
+    const ownerQuery = ownerFilter.trim().toLowerCase();
     return locations.filter((loc) => {
       const matchesSearch = !q ||
         loc.name?.toLowerCase().includes(q) ||
@@ -319,34 +362,45 @@ export const ManageLocationsScreen: React.FC = () => {
       const matchesPublication = publicationFilter === 'ALL' || getPublicationStatus(loc) === publicationFilter;
       const matchesSubscription = subscriptionFilter === 'ALL' || getSubscriptionStatus(loc) === subscriptionFilter;
       const matchesType = typeFilter === 'ALL' || loc.fieldType === typeFilter || loc.primaryFieldType === typeFilter;
+      const matchesCity = cityFilter === 'ALL' || loc.city === cityFilter;
+      const matchesOwner = !ownerQuery || loc.ownerId?.toLowerCase().includes(ownerQuery);
+      const dueDay = loc.billingDueDay ?? null;
+      const matchesDue = dueFilter === 'ALL' ||
+        (dueFilter === 'NO_DUE' && dueDay === null) ||
+        (dueFilter === '1_7' && dueDay !== null && dueDay >= 1 && dueDay <= 7) ||
+        (dueFilter === '8_14' && dueDay !== null && dueDay >= 8 && dueDay <= 14) ||
+        (dueFilter === '15_21' && dueDay !== null && dueDay >= 15 && dueDay <= 21) ||
+        (dueFilter === '22_28' && dueDay !== null && dueDay >= 22 && dueDay <= 28);
       return matchesSearch &&
         matchesPublication &&
         matchesSubscription &&
         matchesType &&
+        matchesCity &&
+        matchesOwner &&
+        matchesDue &&
         locationHasAmenities(loc, amenityFilters);
     });
-  }, [locations, searchQuery, publicationFilter, subscriptionFilter, typeFilter, amenityFilters]);
+  }, [
+    locations,
+    searchQuery,
+    publicationFilter,
+    subscriptionFilter,
+    typeFilter,
+    cityFilter,
+    ownerFilter,
+    dueFilter,
+    amenityFilters,
+  ]);
 
-  const commercialSummary = useMemo(() => {
-    const initial = {
-      eligible: 0,
-      overdue: 0,
-      suspendedOrCancelled: 0,
-      monthlyFeeTotalCents: 0,
-    };
-    return locations.reduce((summary, location) => {
-      const status = getSubscriptionStatus(location);
-      if (['TRIAL', 'ACTIVE'].includes(status)) {
-        summary.eligible += 1;
-        summary.monthlyFeeTotalCents += location.monthlyFeeCents || 0;
-      }
-      if (status === 'OVERDUE') summary.overdue += 1;
-      if (status === 'SUSPENDED' || status === 'CANCELLED') {
-        summary.suspendedOrCancelled += 1;
-      }
-      return summary;
-    }, initial);
-  }, [locations]);
+  const cityOptions = useMemo(() => (
+    Array.from(new Set(locations.map((loc) => loc.city).filter(Boolean) as string[])).sort((a, b) =>
+      a.localeCompare(b, 'pt-BR'),
+    )
+  ), [locations]);
+
+  const billingRowsByLocationId = useMemo(() => new Map(
+    (billingSummary?.locations || []).map((row) => [row.id, row]),
+  ), [billingSummary]);
 
   const canManage = (loc: Location) =>
     isAdmin || (user?.id ? canManageLocation(loc, user.id) : false);
@@ -371,6 +425,53 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const handleClearSearch = () => setSearchQuery('');
 
+  const handleExportBillingCsv = () => {
+    if (!billingSummary) {
+      showError('Carregue o resumo financeiro antes de exportar.');
+      return;
+    }
+    const header = [
+      'id',
+      'nome',
+      'owner_uid',
+      'cidade',
+      'estado',
+      'publicacao',
+      'mensalidade_status',
+      'mensalidade_centavos',
+      'vencimento_dia',
+      'previsto_centavos',
+      'recebido_centavos',
+      'saldo_centavos',
+      'comprovantes_pendentes',
+      'ultimo_pagamento',
+    ];
+    const rows = billingSummary.locations.map((row) => [
+      row.id,
+      row.name,
+      row.ownerId,
+      row.city,
+      row.state,
+      row.publicationStatus,
+      row.subscriptionStatus,
+      row.monthlyFeeCents,
+      row.billingDueDay,
+      row.expectedCents,
+      row.receivedCents,
+      row.openBalanceCents,
+      row.pendingReceiptCount,
+      row.lastPaymentAtIso,
+    ].map(csvCell).join(','));
+    const csv = [header.map(csvCell).join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `quadras-financeiro-${billingSummary.periodKey}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleAmenityFilter = (amenity: string) => {
     setAmenityFilters((prev) =>
       prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity],
@@ -385,10 +486,14 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const formatMonthlyFee = (monthlyFeeCents?: number) => {
     if (!monthlyFeeCents) return 'Mensalidade não definida';
+    return formatCurrency(monthlyFeeCents);
+  };
+
+  const formatCurrency = (amountCents = 0) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(monthlyFeeCents / 100);
+    }).format(amountCents / 100);
   };
 
   const handlePublicationStatus = async (
@@ -770,6 +875,38 @@ export const ManageLocationsScreen: React.FC = () => {
                     ))}
                   </TextField>
                 </Stack>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                  <TextField
+                    size="small"
+                    label="Período financeiro"
+                    value={billingPeriod}
+                    onChange={(e) => setBillingPeriod(e.target.value.replace(/[^\d-]/g, '').slice(0, 7))}
+                    helperText="AAAA-MM"
+                    fullWidth
+                  />
+                  <TextField select size="small" label="Vencimento" value={dueFilter} onChange={(e) => setDueFilter(e.target.value as typeof dueFilter)} fullWidth>
+                    <MenuItem value="ALL">Todos</MenuItem>
+                    <MenuItem value="1_7">Dia 1 a 7</MenuItem>
+                    <MenuItem value="8_14">Dia 8 a 14</MenuItem>
+                    <MenuItem value="15_21">Dia 15 a 21</MenuItem>
+                    <MenuItem value="22_28">Dia 22 a 28</MenuItem>
+                    <MenuItem value="NO_DUE">Sem vencimento</MenuItem>
+                  </TextField>
+                  <TextField select size="small" label="Cidade" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} fullWidth>
+                    <MenuItem value="ALL">Todas</MenuItem>
+                    {cityOptions.map((city) => (
+                      <MenuItem key={city} value={city}>{city}</MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    size="small"
+                    label="Dono (UID)"
+                    value={ownerFilter}
+                    onChange={(e) => setOwnerFilter(e.target.value)}
+                    fullWidth
+                    placeholder="Filtrar por UID"
+                  />
+                </Stack>
                 <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5 }}>
                   {COMMERCIAL_AMENITIES.map((amenity) => (
                     <Chip
@@ -797,47 +934,81 @@ export const ManageLocationsScreen: React.FC = () => {
         {!loading && !error && (
           <>
             {isAdmin && (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, minmax(0, 1fr))' },
-                  gap: 1,
-                  mb: 2,
-                }}
-              >
-                <Card variant="outlined">
-                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                    <Typography variant="caption" color="text.secondary">Receita prevista</Typography>
-                    <Typography variant="subtitle1" fontWeight={700}>
-                      {formatMonthlyFee(commercialSummary.monthlyFeeTotalCents)}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                <Card variant="outlined">
-                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                    <Typography variant="caption" color="text.secondary">Em dia/teste</Typography>
-                    <Typography variant="subtitle1" fontWeight={700}>
-                      {commercialSummary.eligible}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                <Card variant="outlined">
-                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                    <Typography variant="caption" color="text.secondary">Vencidas</Typography>
-                    <Typography variant="subtitle1" fontWeight={700} color={commercialSummary.overdue > 0 ? 'warning.main' : 'text.primary'}>
-                      {commercialSummary.overdue}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                <Card variant="outlined">
-                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                    <Typography variant="caption" color="text.secondary">Suspensas/canceladas</Typography>
-                    <Typography variant="subtitle1" fontWeight={700} color={commercialSummary.suspendedOrCancelled > 0 ? 'error.main' : 'text.primary'}>
-                      {commercialSummary.suspendedOrCancelled}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Box>
+              <>
+                {billingSummaryError && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    {billingSummaryError}
+                  </Alert>
+                )}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(5, minmax(0, 1fr))' },
+                    gap: 1,
+                    mb: 2,
+                  }}
+                >
+                  <Card variant="outlined">
+                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                      <Typography variant="caption" color="text.secondary">MRR previsto</Typography>
+                      <Typography variant="subtitle1" fontWeight={700}>
+                        {billingSummaryLoading ? '...' : formatCurrency(billingSummary?.summary.expectedMrrCents || 0)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card variant="outlined">
+                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                      <Typography variant="caption" color="text.secondary">Recebido {billingPeriod}</Typography>
+                      <Typography variant="subtitle1" fontWeight={700} color="success.main">
+                        {billingSummaryLoading ? '...' : formatCurrency(billingSummary?.summary.receivedCents || 0)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card variant="outlined">
+                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                      <Typography variant="caption" color="text.secondary">Vencido</Typography>
+                      <Typography variant="subtitle1" fontWeight={700} color={(billingSummary?.summary.overdueCents || 0) > 0 ? 'warning.main' : 'text.primary'}>
+                        {billingSummaryLoading ? '...' : formatCurrency(billingSummary?.summary.overdueCents || 0)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card variant="outlined">
+                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                      <Typography variant="caption" color="text.secondary">Trial</Typography>
+                      <Typography variant="subtitle1" fontWeight={700}>
+                        {billingSummaryLoading ? '...' : `${billingSummary?.summary.trialLocations || 0} · ${formatCurrency(billingSummary?.summary.trialCents || 0)}`}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card variant="outlined">
+                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                      <Typography variant="caption" color="text.secondary">Suspenso</Typography>
+                      <Typography variant="subtitle1" fontWeight={700} color={(billingSummary?.summary.suspendedCents || 0) > 0 ? 'error.main' : 'text.primary'}>
+                        {billingSummaryLoading ? '...' : `${billingSummary?.summary.suspendedLocations || 0} · ${formatCurrency(billingSummary?.summary.suspendedCents || 0)}`}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+                {billingSummary && !billingSummary.scanComplete && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Resumo limitado às primeiras {billingSummary.scanLimit} quadras. Criar agregação paginada antes de escalar volume maior.
+                  </Alert>
+                )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Resumo gerado pelo backend para {billingSummary?.periodKey || billingPeriod}
+                    {billingSummary?.generatedAtIso ? ` em ${new Date(billingSummary.generatedAtIso).toLocaleString('pt-BR')}` : ''}.
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={handleExportBillingCsv}
+                    disabled={billingSummaryLoading || !billingSummary}
+                  >
+                    Exportar CSV
+                  </Button>
+                </Box>
+              </>
             )}
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {t('locations.localsCount', { count: filteredLocations.length })}
@@ -874,6 +1045,7 @@ export const ManageLocationsScreen: React.FC = () => {
                 const publicationStatus = getPublicationStatus(location);
                 const subscriptionStatus = getSubscriptionStatus(location);
                 const isCommercialActionBusy = commercialActionLoading?.startsWith(`${location.id}:`) ?? false;
+                const billingRow = billingRowsByLocationId.get(location.id);
 
                 return (
                   <Card key={location.id} sx={{ position: 'relative' }}>
@@ -971,6 +1143,37 @@ export const ManageLocationsScreen: React.FC = () => {
                                   size="small"
                                   variant="outlined"
                                 />
+                              )}
+                              {isAdmin && billingRow && (
+                                <>
+                                  <Chip
+                                    label={`Recebido ${formatCurrency(billingRow.receivedCents)}`}
+                                    size="small"
+                                    color={billingRow.receivedCents > 0 ? 'success' : 'default'}
+                                    variant="outlined"
+                                  />
+                                  <Chip
+                                    label={`Saldo ${formatCurrency(billingRow.openBalanceCents)}`}
+                                    size="small"
+                                    color={billingRow.openBalanceCents > 0 ? 'warning' : 'success'}
+                                    variant="outlined"
+                                  />
+                                  {billingRow.pendingReceiptCount > 0 && (
+                                    <Chip
+                                      label={`${billingRow.pendingReceiptCount} comprovante(s) pendente(s)`}
+                                      size="small"
+                                      color="warning"
+                                      variant="filled"
+                                    />
+                                  )}
+                                  {billingRow.billingDueDay && (
+                                    <Chip
+                                      label={`Vence dia ${billingRow.billingDueDay}`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                </>
                               )}
                             </Box>
                             {isAdmin && (

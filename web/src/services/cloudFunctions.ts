@@ -156,6 +156,53 @@ export const setLocationSubscription = httpsCallable<
   { success: boolean; locationId: string; subscriptionStatus: string }
 >(functions, 'setLocationSubscription');
 
+export interface AdminLocationBillingSummaryTotals {
+  expectedMrrCents: number;
+  receivedCents: number;
+  overdueCents: number;
+  trialCents: number;
+  suspendedCents: number;
+  activeLocations: number;
+  trialLocations: number;
+  overdueLocations: number;
+  suspendedLocations: number;
+  cancelledLocations: number;
+  pendingReceiptLocations: number;
+}
+
+export interface AdminLocationBillingSummaryRow {
+  id: string;
+  name: string;
+  ownerId: string | null;
+  city: string | null;
+  state: string | null;
+  publicationStatus: string;
+  subscriptionStatus: string;
+  monthlyFeeCents: number;
+  billingDueDay: number | null;
+  expectedCents: number;
+  receivedCents: number;
+  openBalanceCents: number;
+  pendingReceiptCount: number;
+  lastPaymentAtIso: string | null;
+  updatedAtIso: string | null;
+}
+
+export interface AdminLocationBillingSummaryResponse {
+  periodKey: string;
+  generatedAtIso: string;
+  scannedLocations: number;
+  scanLimit: number;
+  scanComplete: boolean;
+  summary: AdminLocationBillingSummaryTotals;
+  locations: AdminLocationBillingSummaryRow[];
+}
+
+export const getAdminLocationBillingSummary = httpsCallable<
+  { periodKey?: string | null },
+  AdminLocationBillingSummaryResponse
+>(functions, 'getAdminLocationBillingSummary');
+
 export const registerLocationSubscriptionPayment = httpsCallable<
   {
     locationId: string;

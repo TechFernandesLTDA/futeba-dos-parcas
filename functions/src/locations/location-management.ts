@@ -116,6 +116,10 @@ interface RemoveLocationManagerRequest {
   reason?: string | null;
 }
 
+interface GetAdminLocationBillingSummaryRequest {
+  periodKey?: string | null;
+}
+
 interface CalculateAutoRatingsRequest {
   userId: string;
 }
@@ -131,6 +135,7 @@ interface AutoRatingsForUser {
 
 const DELETE_BATCH_SIZE = 500;
 const MANAGER_INVITE_TTL_DAYS = 14;
+const BILLING_SUMMARY_LOCATION_LIMIT = 500;
 const LOCATION_SUBCOLLECTIONS = [
   "reviews",
   "fields",
@@ -210,6 +215,42 @@ function parseOptionalIsoDate(value: unknown, field: string): Date | null {
     throw new HttpsError("invalid-argument", `${field} must be a valid ISO date`);
   }
   return parsed;
+}
+
+/**
+ * Converte valores Firestore/Date em ISO string segura para resposta callable.
+ * @param {unknown} value Valor bruto vindo do Firestore.
+ * @return {string | null} Data ISO ou null.
+ */
+function toIsoString(value: unknown): string | null {
+  if (value instanceof Date) return value.toISOString();
+  if (value && typeof value === "object" &&
+    "toDate" in value &&
+    typeof value.toDate === "function"
+  ) {
+    const parsed = value.toDate();
+    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ?
+      parsed.toISOString() :
+      null;
+  }
+  return null;
+}
+
+/**
+ * Periodo comercial atual no formato AAAA-MM.
+ * @return {string} Periodo atual em UTC.
+ */
+function currentBillingPeriodKey(): string {
+  return new Date().toISOString().slice(0, 7);
+}
+
+/**
+ * Soma campo monetario apenas quando ele e inteiro positivo.
+ * @param {unknown} value Valor bruto.
+ * @return {number} Valor normalizado em centavos.
+ */
+function positiveCents(value: unknown): number {
+  return Number.isInteger(value) && Number(value) > 0 ? Number(value) : 0;
 }
 
 /**
@@ -540,6 +581,135 @@ export const deleteLocation = secureCallable<DeleteLocationRequest>(
 
     logger.info(`Location ${locationId} deleted (cascade: ${deletedCount} docs)`);
     return {success: true, deletedCount};
+  }
+);
+
+export const getAdminLocationBillingSummary =
+secureCallable<GetAdminLocationBillingSummaryRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {maxRequests: 30, windowMs: 60000, keyPrefix: "locBillSum"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "getAdminLocationBillingSummary",
+      periodKey: req.data?.periodKey ?? null,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    const periodKey = request.data?.periodKey ?
+      requirePeriodKey(request.data.periodKey) :
+      currentBillingPeriodKey();
+    const locationsSnapshot = await db()
+      .collection("locations")
+      .limit(BILLING_SUMMARY_LOCATION_LIMIT)
+      .get();
+    const summary = {
+      expectedMrrCents: 0,
+      receivedCents: 0,
+      overdueCents: 0,
+      trialCents: 0,
+      suspendedCents: 0,
+      activeLocations: 0,
+      trialLocations: 0,
+      overdueLocations: 0,
+      suspendedLocations: 0,
+      cancelledLocations: 0,
+      pendingReceiptLocations: 0,
+    };
+    const rows = [];
+
+    for (const doc of locationsSnapshot.docs) {
+      const locData = doc.data() || {};
+      const locationId = doc.id || doc.ref?.id;
+      if (!locationId) continue;
+      const subscriptionStatus = typeof locData.subscription_status === "string" ?
+        locData.subscription_status :
+        "ACTIVE";
+      const publicationStatus = typeof locData.publication_status === "string" ?
+        locData.publication_status :
+        (locData.is_verified === true ? "PUBLISHED" : "PENDING_REVIEW");
+      const monthlyFeeCents = positiveCents(locData.monthly_fee_cents);
+      if (subscriptionStatus === "ACTIVE") {
+        summary.activeLocations += 1;
+        summary.expectedMrrCents += monthlyFeeCents;
+      } else if (subscriptionStatus === "TRIAL") {
+        summary.trialLocations += 1;
+        summary.trialCents += monthlyFeeCents;
+      } else if (subscriptionStatus === "OVERDUE") {
+        summary.overdueLocations += 1;
+        summary.expectedMrrCents += monthlyFeeCents;
+        summary.overdueCents += monthlyFeeCents;
+      } else if (subscriptionStatus === "SUSPENDED") {
+        summary.suspendedLocations += 1;
+        summary.suspendedCents += monthlyFeeCents;
+      } else if (subscriptionStatus === "CANCELLED") {
+        summary.cancelledLocations += 1;
+      }
+
+      const paymentsSnapshot = await db()
+        .collection("locations")
+        .doc(locationId)
+        .collection("subscription_payments")
+        .get();
+      let receivedCents = 0;
+      let pendingReceiptCount = 0;
+      let lastPaymentAtIso: string | null = null;
+      for (const paymentDoc of paymentsSnapshot.docs) {
+        const payment = paymentDoc.data() || {};
+        if (payment.period_key !== periodKey) continue;
+        const reviewStatus = payment.review_status || payment.status;
+        if (reviewStatus === "APPROVED") {
+          receivedCents += positiveCents(payment.amount_cents);
+          const paidAtIso = toIsoString(payment.paid_at);
+          if (paidAtIso && (!lastPaymentAtIso || paidAtIso > lastPaymentAtIso)) {
+            lastPaymentAtIso = paidAtIso;
+          }
+        } else if (reviewStatus === "PENDING_REVIEW") {
+          pendingReceiptCount += 1;
+        }
+      }
+      summary.receivedCents += receivedCents;
+      if (pendingReceiptCount > 0) {
+        summary.pendingReceiptLocations += 1;
+      }
+
+      rows.push({
+        id: locationId,
+        name: typeof locData.name === "string" ? locData.name : locationId,
+        ownerId: typeof locData.owner_id === "string" ? locData.owner_id : null,
+        city: typeof locData.city === "string" ? locData.city : null,
+        state: typeof locData.state === "string" ? locData.state : null,
+        publicationStatus,
+        subscriptionStatus,
+        monthlyFeeCents,
+        billingDueDay: Number.isInteger(locData.billing_due_day) ?
+          Number(locData.billing_due_day) :
+          null,
+        expectedCents: ["ACTIVE", "OVERDUE"].includes(subscriptionStatus) ?
+          monthlyFeeCents :
+          0,
+        receivedCents,
+        openBalanceCents: Math.max(monthlyFeeCents - receivedCents, 0),
+        pendingReceiptCount,
+        lastPaymentAtIso,
+        updatedAtIso: toIsoString(locData.updated_at),
+      });
+    }
+
+    return {
+      periodKey,
+      generatedAtIso: new Date().toISOString(),
+      scannedLocations: locationsSnapshot.size,
+      scanLimit: BILLING_SUMMARY_LOCATION_LIMIT,
+      scanComplete: locationsSnapshot.size < BILLING_SUMMARY_LOCATION_LIMIT,
+      summary,
+      locations: rows,
+    };
   }
 );
 

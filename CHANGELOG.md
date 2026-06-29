@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.17] - 2026-06-29
+
+#### Adicionado
+- Integração web com `getAdminLocationBillingSummary`.
+- Cards administrativos alimentados por resumo financeiro server-side.
+- Filtros comerciais adicionais para vencimento, cidade e UID do dono.
+- Exportação CSV admin baseada nas linhas retornadas pelo backend.
+- A versão web foi atualizada para `1.43.17`.
+
+_Issues: #3124, #3119, #3086, #3084_
+
 ### [1.43.16] - 2026-06-29
 
 #### Adicionado
@@ -514,6 +525,18 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.9] - 2026-06-29
+
+#### Adicionado
+- Callable `getAdminLocationBillingSummary` exclusiva para admins.
+- Resumo financeiro por período com linhas por quadra, saldo aberto e pendências de comprovante.
+- Testes unitários cobrindo agregação financeira e validação de período.
+
+#### Segurança
+- Dados financeiros consolidados ficam atrás de `requiredRole: ADMIN`.
+
+_Issues: #3124, #3119, #3091, #3086, #3084_
 
 ### [1.2.8] - 2026-06-29
 
