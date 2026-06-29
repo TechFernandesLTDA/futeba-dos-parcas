@@ -94,6 +94,7 @@ interface SubscriptionPaymentReview {
   status?: string;
   submittedBy?: string;
   submittedAt?: Date | null;
+  paidAt?: Date | null;
 }
 
 const toDate = (value: unknown): Date | null => {
@@ -115,6 +116,23 @@ const safeStorageName = (name: string) =>
     .slice(0, 80) || 'comprovante';
 
 const currentPeriodKey = () => new Date().toISOString().slice(0, 7);
+
+const getPaymentStatus = (payment: SubscriptionPaymentReview) =>
+  payment.reviewStatus || payment.status || 'PENDING_REVIEW';
+
+const getPaymentStatusLabel = (status: string) => {
+  if (status === 'APPROVED') return 'Aprovado';
+  if (status === 'REJECTED') return 'Rejeitado';
+  if (status === 'PENDING_REVIEW') return 'Em revisão';
+  return status;
+};
+
+const getPaymentStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
+  if (status === 'APPROVED') return 'success';
+  if (status === 'REJECTED') return 'error';
+  if (status === 'PENDING_REVIEW') return 'warning';
+  return 'default';
+};
 
 export const ManageLocationsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -152,10 +170,11 @@ export const ManageLocationsScreen: React.FC = () => {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptAmount, setReceiptAmount] = useState('');
   const [receiptPeriodKey, setReceiptPeriodKey] = useState(currentPeriodKey());
+  const [receiptPaidAt, setReceiptPaidAt] = useState(new Date().toISOString().slice(0, 10));
   const [receiptMethod, setReceiptMethod] = useState('pix');
   const [receiptNotes, setReceiptNotes] = useState('');
   const [receiptActionLoading, setReceiptActionLoading] = useState<string | null>(null);
-  const [pendingReceipts, setPendingReceipts] = useState<SubscriptionPaymentReview[]>([]);
+  const [subscriptionPayments, setSubscriptionPayments] = useState<SubscriptionPaymentReview[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -186,8 +205,8 @@ export const ManageLocationsScreen: React.FC = () => {
   }, [reloadKey, isAdmin, user?.id, t]);
 
   useEffect(() => {
-    if (!receiptTarget || !isAdmin) {
-      setPendingReceipts([]);
+    if (!receiptTarget) {
+      setSubscriptionPayments([]);
       return undefined;
     }
     const paymentsRef = collection(db, 'locations', receiptTarget.id, 'subscription_payments');
@@ -195,7 +214,7 @@ export const ManageLocationsScreen: React.FC = () => {
     const unsubscribe = onSnapshot(
       paymentsQuery,
       (snapshot) => {
-        setPendingReceipts(snapshot.docs
+        setSubscriptionPayments(snapshot.docs
           .map((paymentDoc) => {
             const data = snakeToCamel<Record<string, unknown>>(paymentDoc.data());
             return {
@@ -208,20 +227,17 @@ export const ManageLocationsScreen: React.FC = () => {
               status: typeof data.status === 'string' ? data.status : undefined,
               submittedBy: typeof data.submittedBy === 'string' ? data.submittedBy : undefined,
               submittedAt: toDate(data.submittedAt),
+              paidAt: toDate(data.paidAt),
             };
-          })
-          .filter((payment) => (
-            payment.reviewStatus === 'PENDING_REVIEW' ||
-            payment.status === 'PENDING_REVIEW'
-          )));
+          }));
       },
       (err) => {
         logger.error('Erro ao carregar comprovantes pendentes:', err);
-        showError('Não foi possível carregar os comprovantes pendentes.');
+        showError('Não foi possível carregar pagamentos e comprovantes.');
       },
     );
     return unsubscribe;
-  }, [receiptTarget, isAdmin, showError]);
+  }, [receiptTarget, showError]);
 
   const filteredLocations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -345,6 +361,7 @@ export const ManageLocationsScreen: React.FC = () => {
     setReceiptFile(null);
     setReceiptAmount(location.monthlyFeeCents ? String(location.monthlyFeeCents / 100) : '');
     setReceiptPeriodKey(currentPeriodKey());
+    setReceiptPaidAt(new Date().toISOString().slice(0, 10));
     setReceiptMethod('pix');
     setReceiptNotes('');
   };
@@ -428,7 +445,7 @@ export const ManageLocationsScreen: React.FC = () => {
     return ref.fullPath;
   };
 
-  const handleSubmitReceipt = async () => {
+  const handleSubmitReceipt = async (approveImmediately = false) => {
     if (!receiptTarget || !receiptFile) {
       showError('Selecione o comprovante.');
       return;
@@ -442,19 +459,33 @@ export const ManageLocationsScreen: React.FC = () => {
       showError('Informe o período no formato AAAA-MM.');
       return;
     }
-    setReceiptActionLoading('submit');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(receiptPaidAt.trim())) {
+      showError('Informe a data de pagamento.');
+      return;
+    }
+    setReceiptActionLoading(approveImmediately ? 'submit-approve' : 'submit');
     try {
       const receiptStoragePath = await uploadReceipt(receiptTarget, receiptFile);
-      await submitLocationSubscriptionReceipt({
+      const submitted = await submitLocationSubscriptionReceipt({
         locationId: receiptTarget.id,
         amountCents,
         periodKey: receiptPeriodKey.trim(),
-        paidAtIso: new Date().toISOString(),
+        paidAtIso: `${receiptPaidAt.trim()}T12:00:00.000Z`,
         method: receiptMethod.trim() || null,
         receiptStoragePath,
         notes: receiptNotes.trim() || null,
       });
-      showSuccess('Comprovante enviado para revisão. A mensalidade só muda após aprovação.');
+      if (approveImmediately && isAdmin) {
+        await reviewLocationSubscriptionReceipt({
+          locationId: receiptTarget.id,
+          paymentId: submitted.data.paymentId,
+          decision: 'APPROVED',
+          notes: receiptNotes.trim() || 'Registrado manualmente pelo administrador.',
+        });
+        showSuccess('Pagamento registrado, aprovado e mensalidade ativada.');
+      } else {
+        showSuccess('Comprovante enviado para revisão. A mensalidade só muda após aprovação.');
+      }
       setReceiptFile(null);
       setReceiptNotes('');
     } catch (err) {
@@ -1067,6 +1098,15 @@ export const ManageLocationsScreen: React.FC = () => {
               />
             </Stack>
             <TextField
+              label="Data do pagamento"
+              type="date"
+              value={receiptPaidAt}
+              onChange={(e) => setReceiptPaidAt(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText="Usada no histórico financeiro e na reativação da mensalidade."
+            />
+            <TextField
               label="Método"
               value={receiptMethod}
               onChange={(e) => setReceiptMethod(e.target.value)}
@@ -1099,60 +1139,90 @@ export const ManageLocationsScreen: React.FC = () => {
             </Button>
             <Button
               variant="contained"
-              onClick={handleSubmitReceipt}
+              onClick={() => handleSubmitReceipt(false)}
               disabled={!!receiptActionLoading || !receiptFile}
               startIcon={receiptActionLoading === 'submit' ? <CircularProgress size={16} /> : null}
             >
               Enviar para revisão
             </Button>
             {isAdmin && (
-              <Stack spacing={1}>
-                <Typography variant="subtitle2">Pendências de revisão</Typography>
-                {pendingReceipts.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    Nenhum comprovante pendente para esta quadra.
-                  </Typography>
-                ) : (
-                  pendingReceipts.map((payment) => (
+              <Button
+                variant="outlined"
+                color="success"
+                onClick={() => handleSubmitReceipt(true)}
+                disabled={!!receiptActionLoading || !receiptFile}
+                startIcon={receiptActionLoading === 'submit-approve' ? <CircularProgress size={16} /> : null}
+              >
+                Registrar e aprovar agora
+              </Button>
+            )}
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">
+                {isAdmin ? 'Histórico e pendências' : 'Meus pagamentos e pendências'}
+              </Typography>
+              {subscriptionPayments.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  Nenhum pagamento ou comprovante encontrado para esta quadra.
+                </Typography>
+              ) : (
+                subscriptionPayments.map((payment) => {
+                  const status = getPaymentStatus(payment);
+                  const isPending = status === 'PENDING_REVIEW';
+                  return (
                     <Card key={payment.id} variant="outlined">
                       <CardContent>
                         <Stack spacing={1}>
-                          <Typography variant="subtitle2">
-                            {formatMonthlyFee(payment.amountCents)} · {payment.periodKey || 'Período não informado'}
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                            <Typography variant="subtitle2">
+                              {formatMonthlyFee(payment.amountCents)} · {payment.periodKey || 'Período não informado'}
+                            </Typography>
+                            <Chip
+                              label={getPaymentStatusLabel(status)}
+                              size="small"
+                              color={getPaymentStatusColor(status)}
+                              variant={status === 'APPROVED' ? 'filled' : 'outlined'}
+                            />
+                          </Box>
+                          <Typography variant="caption" color="text.secondary">
+                            {payment.method ? `${payment.method} · ` : ''}
+                            {payment.paidAt ? `pago em ${payment.paidAt.toLocaleDateString('pt-BR')} · ` : ''}
+                            {payment.receiptStoragePath || 'Sem path privado'}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {payment.receiptStoragePath || 'Sem path privado'} · enviado por {payment.submittedBy || 'desconhecido'}
+                            Enviado por {payment.submittedBy || 'desconhecido'}
                             {payment.submittedAt ? ` em ${payment.submittedAt.toLocaleString('pt-BR')}` : ''}
                           </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="success"
-                              disabled={!!receiptActionLoading}
-                              onClick={() => handleReviewReceipt(payment, 'APPROVED')}
-                              startIcon={receiptActionLoading === `APPROVED:${payment.id}` ? <CircularProgress size={16} /> : null}
-                            >
-                              Aprovar
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              disabled={!!receiptActionLoading}
-                              onClick={() => handleReviewReceipt(payment, 'REJECTED')}
-                              startIcon={receiptActionLoading === `REJECTED:${payment.id}` ? <CircularProgress size={16} /> : null}
-                            >
-                              Rejeitar
-                            </Button>
-                          </Box>
+                          {isAdmin && isPending && (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                disabled={!!receiptActionLoading}
+                                onClick={() => handleReviewReceipt(payment, 'APPROVED')}
+                                startIcon={receiptActionLoading === `APPROVED:${payment.id}` ? <CircularProgress size={16} /> : null}
+                              >
+                                Aprovar
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                disabled={!!receiptActionLoading}
+                                onClick={() => handleReviewReceipt(payment, 'REJECTED')}
+                                startIcon={receiptActionLoading === `REJECTED:${payment.id}` ? <CircularProgress size={16} /> : null}
+                              >
+                                Rejeitar
+                              </Button>
+                            </Box>
+                          )}
                         </Stack>
                       </CardContent>
                     </Card>
-                  ))
-                )}
-              </Stack>
-            )}
+                  );
+                })
+              )}
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>
