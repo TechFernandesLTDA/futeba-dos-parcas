@@ -79,7 +79,8 @@ class FakeCollectionRef {
       field: string;
       op: "==";
       value: unknown;
-    }> = []
+    }> = [],
+    private readonly startAfterId?: string
   ) {}
 
   doc(id = `auto-${autoId++}`) {
@@ -97,7 +98,8 @@ class FakeCollectionRef {
       this.path,
       this.store,
       size,
-      this.whereFilters
+      this.whereFilters,
+      this.startAfterId
     );
   }
 
@@ -106,7 +108,29 @@ class FakeCollectionRef {
       this.path,
       this.store,
       this.limitSize,
-      [...this.whereFilters, {field, op, value}]
+      [...this.whereFilters, {field, op, value}],
+      this.startAfterId
+    );
+  }
+
+  orderBy() {
+    return new FakeCollectionRef(
+      this.path,
+      this.store,
+      this.limitSize,
+      this.whereFilters,
+      this.startAfterId
+    );
+  }
+
+  startAfter(doc: {id?: string} | string) {
+    const id = typeof doc === "string" ? doc : doc.id;
+    return new FakeCollectionRef(
+      this.path,
+      this.store,
+      this.limitSize,
+      this.whereFilters,
+      id
     );
   }
 
@@ -120,6 +144,12 @@ class FakeCollectionRef {
         return this.whereFilters.every((filter) =>
           filter.op === "==" && data[filter.field] === filter.value
         );
+      })
+      .sort()
+      .filter((path) => {
+        if (!this.startAfterId) return true;
+        const id = path.split("/").pop() || "";
+        return id > this.startAfterId;
       })
       .slice(0, this.limitSize)
       .map((path) => ({
@@ -188,6 +218,9 @@ jest.mock("../src/middleware/secure-callable-wrapper", () => ({
 }));
 
 jest.mock("firebase-admin/firestore", () => ({
+  FieldPath: {
+    documentId: jest.fn(() => "__name__"),
+  },
   FieldValue: {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
     arrayUnion: jest.fn((...values: unknown[]) => ({_op: "arrayUnion", values})),
@@ -552,6 +585,65 @@ describe("location commercial admin callables", () => {
           pendingReceiptCount: 1,
         }),
       ]),
+    });
+  });
+
+  it("varre todas as quadras e nao infla recebido com pagamento duplicado", async () => {
+    firestoreStore.delete("locations/location-1");
+    for (let index = 0; index < 505; index += 1) {
+      const id = `location-${String(index).padStart(3, "0")}`;
+      firestoreStore.set(`locations/${id}`, {
+        name: `Arena ${index}`,
+        owner_id: `owner-${index}`,
+        publication_status: "PUBLISHED",
+        subscription_status: "ACTIVE",
+        monthly_fee_cents: 100,
+        billing_due_day: 10,
+      });
+    }
+    firestoreStore.set("locations/location-010/subscription_payments/payment-1", {
+      amount_cents: 100,
+      period_key: "2026-07",
+      review_status: "APPROVED",
+      paid_at: new Date("2026-07-03T12:00:00.000Z"),
+    });
+    firestoreStore.set("locations/location-010/subscription_payments/payment-2", {
+      amount_cents: 100,
+      period_key: "2026-07",
+      review_status: "APPROVED",
+      paid_at: new Date("2026-07-04T12:00:00.000Z"),
+    });
+    firestoreStore.set("locations/location-010/subscription_payments/payment-old", {
+      amount_cents: 99900,
+      period_key: "2026-06",
+      review_status: "APPROVED",
+      paid_at: new Date("2026-06-03T12:00:00.000Z"),
+    });
+
+    const result = await getAdminLocationBillingSummary({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {periodKey: "2026-07"},
+    });
+    const duplicatedRow = result.locations.find(
+      (location: {id: string}) => location.id === "location-010"
+    );
+
+    expect(result).toMatchObject({
+      periodKey: "2026-07",
+      scannedLocations: 505,
+      scanLimit: 500,
+      scanComplete: true,
+      summary: {
+        expectedMrrCents: 50500,
+        receivedCents: 100,
+        activeLocations: 505,
+      },
+    });
+    expect(result.locations).toHaveLength(505);
+    expect(duplicatedRow).toMatchObject({
+      receivedCents: 100,
+      openBalanceCents: 0,
+      lastPaymentAtIso: "2026-07-04T12:00:00.000Z",
     });
   });
 
