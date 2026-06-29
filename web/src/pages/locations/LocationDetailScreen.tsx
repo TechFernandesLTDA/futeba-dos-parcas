@@ -47,6 +47,10 @@ import {
   Groups as GroupsIcon,
   Verified as VerifiedIcon,
   PhotoLibrary as PhotoLibraryIcon,
+  CheckCircle as CheckCircleIcon,
+  ErrorOutline as ErrorOutlineIcon,
+  History as HistoryIcon,
+  AssignmentTurnedIn as ChecklistIcon,
 } from '@mui/icons-material';
 import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -63,6 +67,12 @@ import {
   getLocationAmenitySet,
   isLocationCommerciallyAvailable,
 } from '../../types/location';
+import {
+  getLocationCommercialIssues,
+  getLocationPublicationStatus,
+  getLocationQualityChecklist,
+  getLocationSubscriptionStatus,
+} from './manageLocationFilters';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
@@ -81,6 +91,42 @@ interface LocationReview {
   comment: string;
   createdAt: Date;
 }
+
+interface CommercialEventEntry {
+  id: string;
+  type?: string | null;
+  action?: string | null;
+  previousPublicationStatus?: string | null;
+  nextPublicationStatus?: string | null;
+  previousCommercialStatus?: string | null;
+  nextCommercialStatus?: string | null;
+  actorUserId?: string | null;
+  reason?: string | null;
+  createdAt?: Date | null;
+}
+
+interface SubscriptionLedgerEntry {
+  id: string;
+  type?: string | null;
+  amountCents?: number | null;
+  periodKey?: string | null;
+  previousSubscriptionStatus?: string | null;
+  nextSubscriptionStatus?: string | null;
+  monthlyFeeCents?: number | null;
+  billingDueDay?: number | null;
+  actorUserId?: string | null;
+  reason?: string | null;
+  createdAt?: Date | null;
+  effectiveAt?: Date | null;
+}
+
+const toDate = (value: unknown): Date | null => {
+  if (value instanceof Date) return value;
+  if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  return null;
+};
 
 export const LocationDetailScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -107,6 +153,10 @@ export const LocationDetailScreen: React.FC = () => {
   const [newReviewComment, setNewReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewCommentError, setReviewCommentError] = useState(false); // #2231
+  const [commercialEvents, setCommercialEvents] = useState<CommercialEventEntry[]>([]);
+  const [subscriptionLedger, setSubscriptionLedger] = useState<SubscriptionLedgerEntry[]>([]);
+  const [commercialHistoryLoading, setCommercialHistoryLoading] = useState(false);
+  const [commercialHistoryError, setCommercialHistoryError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!locationId) return;
@@ -192,6 +242,86 @@ export const LocationDetailScreen: React.FC = () => {
   // Home/login.
   const canManageLocations = user?.role === 'ADMIN' || user?.role === 'FIELD_OWNER';
   const locationsListPath = canManageLocations ? '/locations' : '/map/locations';
+
+  useEffect(() => {
+    if (!locationId || !userCanEdit) {
+      setCommercialEvents([]);
+      setSubscriptionLedger([]);
+      setCommercialHistoryError(null);
+      setCommercialHistoryLoading(false);
+      return undefined;
+    }
+
+    setCommercialHistoryLoading(true);
+    setCommercialHistoryError(null);
+    let pendingSnapshots = 2;
+    const finishSnapshot = () => {
+      pendingSnapshots -= 1;
+      if (pendingSnapshots <= 0) setCommercialHistoryLoading(false);
+    };
+    const failSnapshot = (message: string, err: unknown) => {
+      logger.error(message, err);
+      setCommercialHistoryError('Não foi possível carregar todo o histórico comercial.');
+      setCommercialHistoryLoading(false);
+    };
+
+    const commercialRef = collection(db, 'locations', locationId, 'commercial_events');
+    const commercialQuery = query(commercialRef, orderBy('created_at', 'desc'), limit(20));
+    const unsubscribeCommercial = onSnapshot(
+      commercialQuery,
+      (snap) => {
+        setCommercialEvents(snap.docs.map((eventDoc) => {
+          const data = snakeToCamel<Record<string, unknown>>(eventDoc.data());
+          return {
+            id: eventDoc.id,
+            type: typeof data.type === 'string' ? data.type : null,
+            action: typeof data.action === 'string' ? data.action : null,
+            previousPublicationStatus: typeof data.previousPublicationStatus === 'string' ? data.previousPublicationStatus : null,
+            nextPublicationStatus: typeof data.nextPublicationStatus === 'string' ? data.nextPublicationStatus : null,
+            previousCommercialStatus: typeof data.previousCommercialStatus === 'string' ? data.previousCommercialStatus : null,
+            nextCommercialStatus: typeof data.nextCommercialStatus === 'string' ? data.nextCommercialStatus : null,
+            actorUserId: typeof data.actorUserId === 'string' ? data.actorUserId : null,
+            reason: typeof data.reason === 'string' ? data.reason : null,
+            createdAt: toDate(data.createdAt),
+          };
+        }));
+        finishSnapshot();
+      },
+      (err) => failSnapshot('Erro ao carregar eventos comerciais da quadra:', err),
+    );
+
+    const ledgerRef = collection(db, 'locations', locationId, 'subscription_ledger');
+    const ledgerQuery = query(ledgerRef, orderBy('created_at', 'desc'), limit(20));
+    const unsubscribeLedger = onSnapshot(
+      ledgerQuery,
+      (snap) => {
+        setSubscriptionLedger(snap.docs.map((ledgerDoc) => {
+          const data = snakeToCamel<Record<string, unknown>>(ledgerDoc.data());
+          return {
+            id: ledgerDoc.id,
+            type: typeof data.type === 'string' ? data.type : null,
+            amountCents: typeof data.amountCents === 'number' ? data.amountCents : null,
+            periodKey: typeof data.periodKey === 'string' ? data.periodKey : null,
+            previousSubscriptionStatus: typeof data.previousSubscriptionStatus === 'string' ? data.previousSubscriptionStatus : null,
+            nextSubscriptionStatus: typeof data.nextSubscriptionStatus === 'string' ? data.nextSubscriptionStatus : null,
+            monthlyFeeCents: typeof data.monthlyFeeCents === 'number' ? data.monthlyFeeCents : null,
+            billingDueDay: typeof data.billingDueDay === 'number' ? data.billingDueDay : null,
+            actorUserId: typeof data.actorUserId === 'string' ? data.actorUserId : null,
+            reason: typeof data.reason === 'string' ? data.reason : null,
+            createdAt: toDate(data.createdAt),
+            effectiveAt: toDate(data.effectiveAt),
+          };
+        }));
+        finishSnapshot();
+      },
+      (err) => failSnapshot('Erro ao carregar ledger financeiro da quadra:', err),
+    );
+
+    return () => {
+      unsubscribeCommercial();
+      unsubscribeLedger();
+    };
+  }, [locationId, userCanEdit]);
 
   const handleDelete = async () => {
     if (!locationId || !location) return;
@@ -284,8 +414,8 @@ export const LocationDetailScreen: React.FC = () => {
   const reviewCount = reviews.length || location.reviewCount || location.ratingCount || 0;
   const fullAddress = [location.address, location.district, location.city, location.state].filter(Boolean).join(', ');
   const fieldTypeLabel = location.fieldType ? FIELD_TYPE_CONFIG[location.fieldType]?.label || location.fieldType : 'Campo';
-  const publicationStatus = location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
-  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
+  const publicationStatus = getLocationPublicationStatus(location);
+  const subscriptionStatus = getLocationSubscriptionStatus(location);
   const commerciallyAvailable = isLocationCommerciallyAvailable(location);
   const amenities = Array.from(getLocationAmenitySet(location));
   const photos = Array.from(new Set([location.photoUrl, ...(location.photos || [])].filter(Boolean))) as string[];
@@ -299,6 +429,38 @@ export const LocationDetailScreen: React.FC = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
   };
   const formatMonthlyFee = formatCurrency(typeof location.monthlyFeeCents === 'number' ? location.monthlyFeeCents : null);
+  const qualityChecklist = getLocationQualityChecklist(location, fields, photos);
+  const completedChecklistCount = qualityChecklist.filter((item) => item.complete).length;
+  const commercialIssues = getLocationCommercialIssues(location);
+  const commercialHistory = [
+    ...commercialEvents.map((event) => ({
+      id: `event:${event.id}`,
+      kind: 'Evento comercial',
+      title: event.action || event.type || 'Decisão comercial',
+      detail: [
+        event.nextPublicationStatus ? `Publicação: ${event.previousPublicationStatus || 'n/a'} -> ${event.nextPublicationStatus}` : null,
+        event.nextCommercialStatus ? `Comercial: ${event.previousCommercialStatus || 'n/a'} -> ${event.nextCommercialStatus}` : null,
+        event.reason,
+      ].filter(Boolean).join(' · '),
+      actorUserId: event.actorUserId,
+      createdAt: event.createdAt,
+    })),
+    ...subscriptionLedger.map((entry) => ({
+      id: `ledger:${entry.id}`,
+      kind: 'Financeiro',
+      title: entry.type || 'Evento financeiro',
+      detail: [
+        entry.periodKey ? `Período ${entry.periodKey}` : null,
+        typeof entry.amountCents === 'number' ? formatCurrency(entry.amountCents) : null,
+        entry.nextSubscriptionStatus ? `Status: ${entry.previousSubscriptionStatus || 'n/a'} -> ${entry.nextSubscriptionStatus}` : null,
+        typeof entry.monthlyFeeCents === 'number' ? `Mensalidade ${formatCurrency(entry.monthlyFeeCents)}` : null,
+        entry.billingDueDay ? `Vence dia ${entry.billingDueDay}` : null,
+        entry.reason,
+      ].filter(Boolean).join(' · '),
+      actorUserId: entry.actorUserId,
+      createdAt: entry.createdAt || entry.effectiveAt,
+    })),
+  ].sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)).slice(0, 20);
 
   const totalPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
   const pagedReviews = reviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
@@ -377,6 +539,164 @@ export const LocationDetailScreen: React.FC = () => {
               </Stack>
             </CardContent>
           </Card>
+        )}
+
+        {userCanEdit && (
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid xs={12} md={7}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 1.5 }}>
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <ChecklistIcon color="primary" />
+                        <Typography variant="subtitle1" fontWeight={700}>Checklist de publicação</Typography>
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        {completedChecklistCount}/{qualityChecklist.length} itens completos para uma quadra confiável.
+                      </Typography>
+                    </Box>
+                    <Chip
+                      size="small"
+                      color={completedChecklistCount === qualityChecklist.length ? 'success' : 'warning'}
+                      label={completedChecklistCount === qualityChecklist.length ? 'Completo' : 'Com pendências'}
+                    />
+                  </Box>
+
+                  {commercialIssues.length > 0 && (
+                    <Alert severity="warning" sx={{ mb: 1.5 }}>
+                      Pendências comerciais: {commercialIssues.join(', ')}.
+                    </Alert>
+                  )}
+
+                  <Stack spacing={1}>
+                    {qualityChecklist.map((item) => (
+                      <Paper
+                        key={item.id}
+                        variant="outlined"
+                        sx={{
+                          p: 1.25,
+                          display: 'flex',
+                          gap: 1.25,
+                          alignItems: 'flex-start',
+                          borderColor: item.complete ? 'success.light' : 'warning.light',
+                        }}
+                      >
+                        {item.complete ? (
+                          <CheckCircleIcon color="success" fontSize="small" sx={{ mt: 0.25 }} />
+                        ) : (
+                          <ErrorOutlineIcon color="warning" fontSize="small" sx={{ mt: 0.25 }} />
+                        )}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="subtitle2">{item.label}</Typography>
+                          <Typography variant="body2" color="text.secondary">{item.description}</Typography>
+                        </Box>
+                        {!item.complete && (
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => navigate(`/location/${location.id}/edit`)}
+                            sx={{ display: { xs: 'none', sm: 'inline-flex' }, whiteSpace: 'nowrap' }}
+                          >
+                            {item.actionLabel}
+                          </Button>
+                        )}
+                      </Paper>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid xs={12} md={5}>
+              <Stack spacing={2}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1.5 }}>
+                      Resumo administrativo
+                    </Typography>
+                    <Grid container spacing={1}>
+                      <Grid xs={6}>
+                        <Paper variant="outlined" sx={{ p: 1.25 }}>
+                          <Typography variant="caption" color="text.secondary">Fotos</Typography>
+                          <Typography variant="h6" fontWeight={700}>{photos.length}</Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid xs={6}>
+                        <Paper variant="outlined" sx={{ p: 1.25 }}>
+                          <Typography variant="caption" color="text.secondary">Comodidades</Typography>
+                          <Typography variant="h6" fontWeight={700}>{amenities.length}</Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid xs={6}>
+                        <Paper variant="outlined" sx={{ p: 1.25 }}>
+                          <Typography variant="caption" color="text.secondary">Campos cadastrados</Typography>
+                          <Typography variant="h6" fontWeight={700}>{fields.length || location.fieldCount || 0}</Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid xs={6}>
+                        <Paper variant="outlined" sx={{ p: 1.25 }}>
+                          <Typography variant="caption" color="text.secondary">Campos ativos</Typography>
+                          <Typography variant="h6" fontWeight={700}>{activeFields.length}</Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Stack spacing={0.75}>
+                      <Typography variant="body2"><strong>Dono:</strong> {location.ownerId || 'Não definido'}</Typography>
+                      <Typography variant="body2"><strong>Gerentes:</strong> {location.managers?.length || 0}</Typography>
+                      <Typography variant="body2"><strong>Vencimento:</strong> {location.billingDueDay ? `dia ${location.billingDueDay}` : 'Não definido'}</Typography>
+                      <Typography variant="body2"><strong>Menor preço:</strong> {minHourlyPrice === null ? 'A definir' : `${formatCurrency(minHourlyPrice)}/h`}</Typography>
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <HistoryIcon color="primary" />
+                      <Typography variant="subtitle1" fontWeight={700}>Histórico comercial</Typography>
+                    </Box>
+                    {commercialHistoryError && (
+                      <Alert severity="warning" sx={{ mb: 1.5 }}>
+                        {commercialHistoryError}
+                      </Alert>
+                    )}
+                    {commercialHistoryLoading ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 2 }}>
+                        <CircularProgress size={18} />
+                        <Typography variant="body2" color="text.secondary">Carregando histórico...</Typography>
+                      </Box>
+                    ) : commercialHistory.length === 0 ? (
+                      <Alert severity="info">
+                        Nenhum evento comercial auditável registrado ainda.
+                      </Alert>
+                    ) : (
+                      <Stack spacing={1}>
+                        {commercialHistory.slice(0, 8).map((entry) => (
+                          <Paper key={entry.id} variant="outlined" sx={{ p: 1.25 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                              <Chip size="small" label={entry.kind} variant="outlined" />
+                              <Typography variant="caption" color="text.secondary">
+                                {entry.createdAt ? entry.createdAt.toLocaleString('pt-BR') : 'Data indisponível'}
+                              </Typography>
+                            </Box>
+                            <Typography variant="subtitle2" sx={{ mt: 0.75 }}>{entry.title}</Typography>
+                            {entry.detail && (
+                              <Typography variant="body2" color="text.secondary">{entry.detail}</Typography>
+                            )}
+                            {entry.actorUserId && (
+                              <Typography variant="caption" color="text.secondary">Ator: {entry.actorUserId}</Typography>
+                            )}
+                          </Paper>
+                        ))}
+                      </Stack>
+                    )}
+                  </CardContent>
+                </Card>
+              </Stack>
+            </Grid>
+          </Grid>
         )}
 
         <Card sx={{ mb: 2 }}>

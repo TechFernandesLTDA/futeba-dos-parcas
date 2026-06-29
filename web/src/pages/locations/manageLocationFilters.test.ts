@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { Location } from '../../types/location';
+import { Field, Location } from '../../types/location';
 import {
   getLocationCommercialIssues,
   getLocationPublicationStatus,
+  getLocationQualityChecklist,
   locationMatchesManageFilters,
   ManageLocationFilterState,
 } from './manageLocationFilters';
@@ -61,6 +62,19 @@ const baseFilters = (overrides: Partial<ManageLocationFilterState> = {}): Manage
   ...overrides,
 });
 
+const baseField = (overrides: Partial<Field> = {}): Field => ({
+  id: 'field-1',
+  locationId: 'loc-1',
+  name: 'Campo 1',
+  type: 'SOCIETY',
+  isActive: true,
+  hourlyPrice: 18000,
+  photos: [],
+  managers: [],
+  isCovered: false,
+  ...overrides,
+});
+
 describe('manageLocationFilters', () => {
   it('usa verificação como fallback para status de publicação legado', () => {
     expect(getLocationPublicationStatus(baseLocation({ publicationStatus: undefined, isVerified: true })))
@@ -113,5 +127,38 @@ describe('manageLocationFilters', () => {
       'sem vencimento',
       'endereço incompleto',
     ]);
+  });
+
+  it('gera checklist de qualidade para publicação da quadra', () => {
+    const checklist = getLocationQualityChecklist(
+      baseLocation({ phone: '11999999999', photoUrl: 'https://example.com/photo.jpg' }),
+      [baseField()],
+      ['https://example.com/photo.jpg'],
+    );
+
+    expect(checklist).toHaveLength(9);
+    expect(checklist.every((item) => item.complete)).toBe(true);
+
+    const incomplete = getLocationQualityChecklist(
+      baseLocation({
+        description: '',
+        phone: undefined,
+        whatsapp: undefined,
+        website: undefined,
+        instagram: undefined,
+        amenities: [],
+        hasParking: false,
+        hasLighting: false,
+        hasShowers: false,
+        monthlyFeeCents: 0,
+        billingDueDay: undefined,
+        hasActiveFields: false,
+      }),
+      [baseField({ hourlyPrice: 0, isActive: false })],
+      [],
+    );
+
+    expect(incomplete.filter((item) => !item.complete).map((item) => item.id))
+      .toEqual(['identity', 'contact', 'photos', 'active-fields', 'pricing', 'amenities', 'commercial']);
   });
 });

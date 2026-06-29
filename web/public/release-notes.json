@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T20:49:23.105Z",
+  "generatedAt": "2026-06-29T21:15:35.871Z",
   "notes": [
+    {
+      "version": "1.43.22",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Detalhe administrativo da quadra ganha checklist de qualidade",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Administradores e donos de quadra agora veem checklist de publicação no detalhe da quadra.",
+        "A tela mostra resumo de fotos, campos, contatos, endereço, comodidades, preços, dono, gerentes, vencimento e pendências comerciais.",
+        "O histórico comercial reúne eventos auditáveis e movimentações financeiras para facilitar acompanhamento da publicação e mensalidade."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3100
+      ]
+    },
     {
       "version": "1.43.21",
       "buildNumber": null,

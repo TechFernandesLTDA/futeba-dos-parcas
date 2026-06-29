@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.22] - 2026-06-29
+
+#### Adicionado
+- `LocationDetailScreen` passa a ler `commercial_events` e `subscription_ledger` com estados de loading, erro e vazio.
+- `manageLocationFilters` exporta checklist testável de qualidade cadastral/comercial.
+
+#### Mudado
+- O detalhe da quadra reutiliza as regras comerciais compartilhadas para manter lista e detalhe consistentes.
+
+_Issues: #3100_
+
 ### [1.43.21] - 2026-06-29
 
 #### Adicionado
