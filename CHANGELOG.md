@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.21] - 2026-06-29
+
+#### Adicionado
+- Helper testável centraliza os filtros comerciais de `ManageLocationsScreen`.
+- Testes unitários cobrem fallback de publicação, filtros comerciais e checklist de pendências.
+
+#### Mudado
+- A lista admin reaproveita regras comerciais compartilhadas para evitar divergência entre filtro, chips e alerta de disponibilidade.
+
+_Issues: #3099_
+
 ### [1.43.20] - 2026-06-29
 
 #### Mudado
