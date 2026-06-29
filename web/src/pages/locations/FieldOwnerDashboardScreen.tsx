@@ -73,8 +73,6 @@ import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 import {
   Field,
-  LOCATION_PUBLICATION_STATUS_LABELS,
-  LOCATION_SUBSCRIPTION_STATUS_LABELS,
   LocationPublicationStatus,
   LocationSubscriptionStatus,
 } from '../../types/location';
@@ -177,7 +175,6 @@ interface SubscriptionPaymentReview {
   receiptStoragePath?: string | null;
   reviewStatus?: string;
   status?: string;
-  submittedBy?: string | null;
   submittedAt?: Date | null;
   paidAt?: Date | null;
 }
@@ -194,7 +191,6 @@ interface SubscriptionLedgerEntry {
   monthlyFeeCents?: number | null;
   billingDueDay?: number | null;
   reason?: string | null;
-  actorUserId?: string | null;
   createdAt?: Date | null;
   effectiveAt?: Date | null;
 }
@@ -252,37 +248,22 @@ const currentDateInput = () => {
   return `${year}-${month}-${day}`;
 };
 
-const formatCurrency = (valueCents?: number | null) => {
+const formatCurrency = (valueCents?: number | null, locale = 'pt-BR') => {
   if (!valueCents || valueCents <= 0) return null;
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valueCents / 100);
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: 'BRL' }).format(valueCents / 100);
 };
 
-const formatDate = (value?: Date | null) => value ? value.toLocaleDateString('pt-BR') : null;
+const formatDate = (value?: Date | null, locale = 'pt-BR') =>
+  value ? value.toLocaleDateString(locale) : null;
 
 const getPaymentStatus = (payment: SubscriptionPaymentReview) =>
   payment.reviewStatus || payment.status || 'PENDING_REVIEW';
-
-const getPaymentStatusLabel = (status: string) => {
-  if (status === 'APPROVED') return 'Aprovado';
-  if (status === 'REJECTED') return 'Rejeitado';
-  if (status === 'PENDING_REVIEW') return 'Em revisão';
-  return status;
-};
 
 const getPaymentStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
   if (status === 'APPROVED') return 'success';
   if (status === 'REJECTED') return 'error';
   if (status === 'PENDING_REVIEW') return 'warning';
   return 'default';
-};
-
-const getLedgerTypeLabel = (type?: string | null) => {
-  if (type === 'SUBSCRIPTION_STATUS_CHANGED') return 'Plano/status atualizado';
-  if (type === 'PAYMENT_REGISTERED') return 'Pagamento registrado';
-  if (type === 'PAYMENT_RECEIPT_SUBMITTED') return 'Comprovante enviado';
-  if (type === 'PAYMENT_RECEIPT_APPROVED') return 'Comprovante aprovado';
-  if (type === 'PAYMENT_RECEIPT_REJECTED') return 'Comprovante rejeitado';
-  return type || 'Evento financeiro';
 };
 
 interface SummaryCardProps {
@@ -324,7 +305,7 @@ const SummaryCard = ({ icon, label, value, helper }: SummaryCardProps) => (
 );
 
 export const FieldOwnerDashboardScreen: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useDocumentTitle(t('page.title.fieldOwnerDashboard'));
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/locations');
@@ -334,6 +315,11 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const { showError, showSuccess } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const locale = useMemo(() => {
+    if (i18n.resolvedLanguage === 'en') return 'en-US';
+    if (i18n.resolvedLanguage === 'es') return 'es-ES';
+    return 'pt-BR';
+  }, [i18n.resolvedLanguage]);
 
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [fieldsByLocation, setFieldsByLocation] = useState<Record<string, Field[]>>({});
@@ -358,6 +344,64 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
     setLoading(true);
     setRetryCount((count) => count + 1);
   }, []);
+
+  const getPaymentStatusLabel = useCallback((status: string) => {
+    if (status === 'APPROVED') return t('fieldOwner.paymentStatus.approved');
+    if (status === 'REJECTED') return t('fieldOwner.paymentStatus.rejected');
+    if (status === 'PENDING_REVIEW') return t('fieldOwner.paymentStatus.pendingReview');
+    return status;
+  }, [t]);
+
+  const getLedgerTypeLabel = useCallback((type?: string | null) => {
+    if (type === 'SUBSCRIPTION_STATUS_CHANGED') return t('fieldOwner.ledgerType.subscriptionStatusChanged');
+    if (type === 'PAYMENT_REGISTERED') return t('fieldOwner.ledgerType.paymentRegistered');
+    if (type === 'PAYMENT_RECEIPT_SUBMITTED') return t('fieldOwner.ledgerType.paymentReceiptSubmitted');
+    if (type === 'PAYMENT_RECEIPT_APPROVED') return t('fieldOwner.ledgerType.paymentReceiptApproved');
+    if (type === 'PAYMENT_RECEIPT_REJECTED') return t('fieldOwner.ledgerType.paymentReceiptRejected');
+    return t('fieldOwner.ledgerType.generic');
+  }, [t]);
+
+  const getChecklistItemLabel = useCallback((itemId: string) => (
+    t(`fieldOwner.checklistItems.${itemId}`, { defaultValue: itemId })
+  ), [t]);
+
+  const getCommercialIssueLabel = useCallback((issue: string) => {
+    const issueKeyMap: Record<string, string> = {
+      inativa: 'inactive',
+      'não verificada': 'notVerified',
+      'não publicada': 'notPublished',
+      'mensalidade irregular': 'billingIrregular',
+      'sem quadras cadastradas': 'noFields',
+      'sem quadras ativas': 'noActiveFields',
+      'sem mensalidade': 'noMonthlyFee',
+      'sem vencimento': 'noDueDay',
+      'endereço incompleto': 'incompleteAddress',
+    };
+    const issueKey = issueKeyMap[issue];
+    return issueKey ? t(`fieldOwner.commercialIssue.${issueKey}`) : issue;
+  }, [t]);
+
+  const getPublicationStatusLabel = useCallback((status: LocationPublicationStatus) => {
+    const keyMap: Record<LocationPublicationStatus, string> = {
+      DRAFT: 'draft',
+      PENDING_REVIEW: 'pendingReview',
+      PUBLISHED: 'published',
+      SUSPENDED: 'suspended',
+      REJECTED: 'rejected',
+    };
+    return t(`fieldOwner.publicationStatus.${keyMap[status]}`);
+  }, [t]);
+
+  const getSubscriptionStatusLabel = useCallback((status: LocationSubscriptionStatus) => {
+    const keyMap: Record<LocationSubscriptionStatus, string> = {
+      TRIAL: 'trial',
+      ACTIVE: 'active',
+      OVERDUE: 'overdue',
+      SUSPENDED: 'suspended',
+      CANCELLED: 'cancelled',
+    };
+    return t(`fieldOwner.subscriptionState.${keyMap[status]}`);
+  }, [t]);
 
   useEffect(() => {
     if (!user) {
@@ -565,7 +609,6 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             receiptStoragePath: typeof data.receiptStoragePath === 'string' ? data.receiptStoragePath : null,
             reviewStatus: typeof data.reviewStatus === 'string' ? data.reviewStatus : undefined,
             status: typeof data.status === 'string' ? data.status : undefined,
-            submittedBy: typeof data.submittedBy === 'string' ? data.submittedBy : null,
             submittedAt: toDate(data.submittedAt),
             paidAt: toDate(data.paidAt),
           };
@@ -595,7 +638,6 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             monthlyFeeCents: typeof data.monthlyFeeCents === 'number' ? data.monthlyFeeCents : null,
             billingDueDay: typeof data.billingDueDay === 'number' ? data.billingDueDay : null,
             reason: typeof data.reason === 'string' ? data.reason : null,
-            actorUserId: typeof data.actorUserId === 'string' ? data.actorUserId : null,
             createdAt: toDate(data.createdAt),
             effectiveAt: toDate(data.effectiveAt),
           };
@@ -689,7 +731,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
         title: t('fieldOwner.completeRegistration'),
         description: `${firstPending.name} · ${locationStatusById[firstPending.id].pendingCount} ${t('fieldOwner.pendingItemsShort')}`,
         icon: <PendingIcon fontSize="small" />,
-        onClick: () => navigate(`/location/${firstPending.id}/edit`),
+        onClick: () => navigate(`/location/${firstPending.id}/edit#basic-info`),
       });
     }
 
@@ -698,7 +740,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       actions.push({
         id: `billing-${firstWithBalance.id}`,
         title: t('fieldOwner.sendReceipt'),
-        description: `${firstWithBalance.name} · ${formatCurrency(firstWithBalance.currentBillingOpenBalanceCents) || t('fieldOwner.subscriptionPending')}`,
+        description: `${firstWithBalance.name} · ${formatCurrency(firstWithBalance.currentBillingOpenBalanceCents, locale) || t('fieldOwner.subscriptionPending')}`,
         icon: <ReceiptIcon fontSize="small" />,
         onClick: () => openReceiptDialog(firstWithBalance),
       });
@@ -721,9 +763,9 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
     });
 
     return actions.slice(0, 4);
-  }, [locationStatusById, locations, navigate, openReceiptDialog, t]);
+  }, [locale, locationStatusById, locations, navigate, openReceiptDialog, t]);
 
-  const handleReceiptFile = (file: File | null) => {
+  const handleReceiptFile = useCallback((file: File | null) => {
     if (!file) {
       setReceiptFile(null);
       return;
@@ -737,9 +779,9 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       return;
     }
     setReceiptFile(file);
-  };
+  }, [showError, t]);
 
-  const uploadReceipt = async (location: LocationData, file: File) => {
+  const uploadReceipt = useCallback(async (location: LocationData, file: File) => {
     const extension = RECEIPT_EXTENSION_BY_TYPE[file.type] || 'pdf';
     const path = [
       'locations',
@@ -758,15 +800,15 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       },
     });
     return ref.fullPath;
-  };
+  }, []);
 
-  const handleSubmitReceipt = async () => {
+  const handleSubmitReceipt = useCallback(async () => {
     if (!receiptTarget || !receiptFile) {
       showError(t('fieldOwner.receiptSelectFile'));
       return;
     }
 
-    const amountCents = Math.round(Number(receiptAmount.replace(',', '.')) * 100);
+    const amountCents = Math.round(Number(receiptAmount.replace(/,/g, '.')) * 100);
     if (!Number.isFinite(amountCents) || amountCents <= 0) {
       showError(t('fieldOwner.receiptAmountError'));
       return;
@@ -795,13 +837,26 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
       showSuccess(t('fieldOwner.receiptSuccess'));
       setReceiptFile(null);
       setReceiptNotes('');
+      setReceiptTarget(null);
     } catch (submitError) {
       logger.error('Erro ao enviar comprovante da quadra:', submitError);
       showError(t('fieldOwner.receiptSubmitError'));
     } finally {
       setReceiptActionLoading(false);
     }
-  };
+  }, [
+    receiptAmount,
+    receiptFile,
+    receiptMethod,
+    receiptNotes,
+    receiptPaidAt,
+    receiptPeriodKey,
+    receiptTarget,
+    showError,
+    showSuccess,
+    t,
+    uploadReceipt,
+  ]);
 
   if (loading) {
     return <LoadingState shimmerCount={4} itemType="CARD" />;
@@ -873,7 +928,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                   {stats.averageHourlyPriceCents ? (
                     <Chip
                       color="info"
-                      label={t('fieldOwner.averagePriceChip', { value: formatCurrency(stats.averageHourlyPriceCents) })}
+                      label={t('fieldOwner.averagePriceChip', { value: formatCurrency(stats.averageHourlyPriceCents, locale) })}
                     />
                   ) : null}
                 </Stack>
@@ -975,7 +1030,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
               <SummaryCard
                 icon={<PaidIcon />}
                 label={t('fieldOwner.averageHourlyPrice')}
-                value={formatCurrency(stats.averageHourlyPriceCents) || t('fieldOwner.notConfigured')}
+                value={formatCurrency(stats.averageHourlyPriceCents, locale) || t('fieldOwner.notConfigured')}
               />
               <SummaryCard
                 icon={<PendingIcon />}
@@ -1030,10 +1085,10 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
               {locations.map((location) => {
                 const status = locationStatusById[location.id];
                 const fields = fieldsByLocation[location.id] || [];
-                const averagePrice = formatCurrency(status.averageHourlyPriceCents);
-                const minPrice = formatCurrency(status.minHourlyPriceCents);
-                const paymentLabel = formatCurrency(location.currentBillingOpenBalanceCents)
-                  || formatCurrency(location.monthlyFeeCents)
+                const averagePrice = formatCurrency(status.averageHourlyPriceCents, locale);
+                const minPrice = formatCurrency(status.minHourlyPriceCents, locale);
+                const paymentLabel = formatCurrency(location.currentBillingOpenBalanceCents, locale)
+                  || formatCurrency(location.monthlyFeeCents, locale)
                   || t('fieldOwner.notConfigured');
 
                 return (
@@ -1046,8 +1101,9 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                               src={location.photoUrl}
                               variant="rounded"
                               sx={{
-                                width: 68,
-                                height: 68,
+                                width: { xs: 56, sm: 68 },
+                                height: { xs: 56, sm: 68 },
+                                flexShrink: 0,
                                 bgcolor: alpha(theme.palette.primary.main, 0.16),
                                 color: 'primary.main',
                               }}
@@ -1055,7 +1111,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                               <SoccerIcon />
                             </Avatar>
                             <Stack spacing={0.5} sx={{ minWidth: 0 }}>
-                              <Typography variant="h6" fontWeight={800} noWrap>
+                              <Typography variant="h6" fontWeight={800} sx={{ overflowWrap: 'anywhere' }}>
                                 {location.name}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -1097,13 +1153,13 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           <Chip
                             color={status.publicationStatus === 'PUBLISHED' ? 'success' : 'default'}
                             label={t('fieldOwner.publicationStatusChip', {
-                              status: LOCATION_PUBLICATION_STATUS_LABELS[status.publicationStatus],
+                              status: getPublicationStatusLabel(status.publicationStatus),
                             })}
                           />
                           <Chip
                             color={['TRIAL', 'ACTIVE'].includes(status.subscriptionStatus) ? 'success' : 'warning'}
                             label={t('fieldOwner.subscriptionStatusChip', {
-                              status: LOCATION_SUBSCRIPTION_STATUS_LABELS[status.subscriptionStatus],
+                              status: getSubscriptionStatusLabel(status.subscriptionStatus),
                             })}
                           />
                           <Chip
@@ -1154,11 +1210,11 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                                 location.currentBillingCycleStatus
                                   ? t('fieldOwner.billingCycleLabel', { value: location.currentBillingCycleStatus })
                                   : null,
-                                formatDate(location.billingDueAt)
-                                  ? t('fieldOwner.billingDueDateLabel', { value: formatDate(location.billingDueAt) })
+                                formatDate(location.billingDueAt, locale)
+                                  ? t('fieldOwner.billingDueDateLabel', { value: formatDate(location.billingDueAt, locale) })
                                   : null,
-                                formatDate(location.billingSuspendAt)
-                                  ? t('fieldOwner.billingSuspendDateLabel', { value: formatDate(location.billingSuspendAt) })
+                                formatDate(location.billingSuspendAt, locale)
+                                  ? t('fieldOwner.billingSuspendDateLabel', { value: formatDate(location.billingSuspendAt, locale) })
                                   : null,
                               ].filter(Boolean).join(' · ')}
                             </Typography>
@@ -1201,12 +1257,18 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                                 </Typography>
                                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                                   {status.pendingItems.slice(0, 4).map((item) => (
-                                    <Chip key={item} size="small" color="warning" variant="outlined" label={item} />
+                                    <Chip
+                                      key={item}
+                                      size="small"
+                                      color="warning"
+                                      variant="outlined"
+                                      label={getChecklistItemLabel(item)}
+                                    />
                                   ))}
                                 </Stack>
                                 {status.commercialIssues.length > 0 ? (
                                   <Typography variant="caption" color="text.secondary">
-                                    {status.commercialIssues.join(' · ')}
+                                    {status.commercialIssues.map(getCommercialIssueLabel).join(' · ')}
                                   </Typography>
                                 ) : null}
                               </>
@@ -1224,7 +1286,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           <Button
                             variant="outlined"
                             startIcon={<EditIcon />}
-                            onClick={() => navigate(`/location/${location.id}/edit`)}
+                            onClick={() => navigate(`/location/${location.id}/edit#basic-info`)}
                             fullWidth
                           >
                             {t('fieldOwner.editLocation')}
@@ -1232,7 +1294,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           <Button
                             variant="outlined"
                             startIcon={<ScheduleIcon />}
-                            onClick={() => navigate(`/location/${location.id}/edit`)}
+                            onClick={() => navigate(`/location/${location.id}/edit#fields`)}
                             fullWidth
                           >
                             {t('fieldOwner.editFieldsAndSchedule')}
@@ -1240,7 +1302,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           <Button
                             variant="outlined"
                             startIcon={<PhotoIcon />}
-                            onClick={() => navigate(`/location/${location.id}/edit`)}
+                            onClick={() => navigate(`/location/${location.id}/edit#photos`)}
                             fullWidth
                           >
                             {t('fieldOwner.managePhotos')}
@@ -1289,7 +1351,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             {(receiptTarget?.currentBillingOpenBalanceCents || 0) > 0 ? (
               <Alert severity="warning">
                 {t('fieldOwner.openBalanceAlertTitle', {
-                  value: formatCurrency(receiptTarget?.currentBillingOpenBalanceCents) || t('fieldOwner.subscriptionPending'),
+                  value: formatCurrency(receiptTarget?.currentBillingOpenBalanceCents, locale) || t('fieldOwner.subscriptionPending'),
                 })}
               </Alert>
             ) : (
@@ -1302,7 +1364,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
               <TextField
                 label={t('fieldOwner.receiptAmountLabel')}
                 value={receiptAmount}
-                onChange={(event) => setReceiptAmount(event.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}
+                onChange={(event) => setReceiptAmount(event.target.value.replace(/,/g, '.').replace(/[^\d.]/g, ''))}
                 fullWidth
                 inputMode="decimal"
                 placeholder="199.90"
@@ -1388,7 +1450,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           <Stack spacing={1}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
                               <Typography variant="subtitle2" fontWeight={700}>
-                                {formatCurrency(payment.amountCents) || t('fieldOwner.notConfigured')}
+                                {formatCurrency(payment.amountCents, locale) || t('fieldOwner.notConfigured')}
                                 {payment.periodKey ? ` · ${payment.periodKey}` : ''}
                               </Typography>
                               <Chip
@@ -1401,14 +1463,13 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                             <Typography variant="caption" color="text.secondary">
                               {[
                                 payment.method || null,
-                                payment.paidAt ? `pago em ${payment.paidAt.toLocaleDateString('pt-BR')}` : null,
+                                payment.paidAt ? t('fieldOwner.paidAtLabel', { value: formatDate(payment.paidAt, locale) }) : null,
                                 receiptName || null,
                               ].filter(Boolean).join(' · ')}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
                               {[
-                                payment.submittedBy ? `enviado por ${payment.submittedBy}` : null,
-                                payment.submittedAt ? payment.submittedAt.toLocaleString('pt-BR') : null,
+                                payment.submittedAt ? t('fieldOwner.submittedAtLabel', { value: payment.submittedAt.toLocaleString(locale) }) : null,
                               ].filter(Boolean).join(' · ')}
                             </Typography>
                           </Stack>
@@ -1452,10 +1513,10 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           </Box>
                           <Typography variant="body2" color="text.secondary">
                             {[
-                              entry.amountCents ? formatCurrency(entry.amountCents) : null,
+                              entry.amountCents ? formatCurrency(entry.amountCents, locale) : null,
                               entry.periodKey || null,
                               entry.method || null,
-                              entry.effectiveAt ? entry.effectiveAt.toLocaleDateString('pt-BR') : null,
+                              entry.effectiveAt ? formatDate(entry.effectiveAt, locale) : null,
                             ].filter(Boolean).join(' · ')}
                           </Typography>
                           {(entry.previousSubscriptionStatus || entry.nextSubscriptionStatus || entry.monthlyFeeCents || entry.billingDueDay) ? (
@@ -1463,17 +1524,20 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                               {[
                                 entry.previousSubscriptionStatus || null,
                                 entry.nextSubscriptionStatus ? `→ ${entry.nextSubscriptionStatus}` : null,
-                                entry.monthlyFeeCents ? `plano ${formatCurrency(entry.monthlyFeeCents)}` : null,
-                                entry.billingDueDay ? `vence dia ${entry.billingDueDay}` : null,
+                                entry.monthlyFeeCents
+                                  ? t('fieldOwner.planAmountLabel', { value: formatCurrency(entry.monthlyFeeCents, locale) })
+                                  : null,
+                                entry.billingDueDay
+                                  ? t('fieldOwner.billingDayLabel', { value: entry.billingDueDay })
+                                  : null,
                               ].filter(Boolean).join(' · ')}
                             </Typography>
                           ) : null}
-                          {(entry.reason || entry.actorUserId || entry.createdAt) ? (
+                          {(entry.reason || entry.createdAt) ? (
                             <Typography variant="caption" color="text.secondary">
                               {[
                                 entry.reason || null,
-                                entry.actorUserId ? `ator ${entry.actorUserId}` : null,
-                                entry.createdAt ? entry.createdAt.toLocaleString('pt-BR') : null,
+                                entry.createdAt ? t('fieldOwner.recordedAtLabel', { value: entry.createdAt.toLocaleString(locale) }) : null,
                               ].filter(Boolean).join(' · ')}
                             </Typography>
                           ) : null}

@@ -2734,6 +2734,7 @@
     "notConfigured": "No configurado",
     "openBalanceAlertTitle": "Mensualidad pendiente: {{value}}",
     "paymentHistoryTitle": "Pagos y comprobantes",
+    "paidAtLabel": "pagado el {{value}}",
     "paymentsAndReceipts": "Comprobantes y pagos",
     "paymentsDialogTitle": "Comprobantes de la mensualidad",
     "pendingApproval": "Pendiente",
@@ -2764,11 +2765,15 @@
     "receiptSubmitLabel": "Enviar para revisión",
     "receiptSuccess": "Comprobante enviado para revisión con éxito.",
     "receiptTypeError": "El comprobante debe ser JPG, PNG, WebP o PDF.",
+    "recordedAtLabel": "registrado el {{value}}",
     "registrationStatusChip": "Registro: {{completed}}/{{total}}",
     "sendReceipt": "Enviar comprobante",
     "startingAt": "desde {{value}}",
+    "submittedAtLabel": "enviado el {{value}}",
     "subscriptionPending": "mensualidad pendiente",
     "subscriptionStatusChip": "Mensualidad: {{status}}",
+    "planAmountLabel": "plan {{value}}",
+    "billingDayLabel": "vence el día {{value}}",
     "quickActions": "Acciones Rápidas",
     "locationReadyDescription": "Registro, fotos, precio y mensualidad están consistentes para operar en la app.",
     "summary": "Resumen",
@@ -2777,7 +2782,56 @@
     "upcomingGames": "Próximos Partidos",
     "viewPublicCatalog": "Ver catálogo público",
     "viewPublicPage": "Ver página pública",
-    "viewSchedule": "Ver Agenda"
+    "viewSchedule": "Ver Agenda",
+    "checklistItems": {
+      "identity": "Identidad y descripción",
+      "address": "Dirección completa",
+      "contact": "Contacto del local",
+      "photos": "Fotos reales",
+      "fields": "Canchas registradas",
+      "active-fields": "Canchas activas",
+      "pricing": "Precio por cancha",
+      "amenities": "Comodidades",
+      "commercial": "Publicación y mensualidad"
+    },
+    "commercialIssue": {
+      "inactive": "inactiva",
+      "notVerified": "no verificada",
+      "notPublished": "no publicada",
+      "billingIrregular": "mensualidad irregular",
+      "noFields": "sin canchas registradas",
+      "noActiveFields": "sin canchas activas",
+      "noMonthlyFee": "sin mensualidad",
+      "noDueDay": "sin vencimiento",
+      "incompleteAddress": "dirección incompleta"
+    },
+    "paymentStatus": {
+      "approved": "Aprobado",
+      "rejected": "Rechazado",
+      "pendingReview": "En revisión"
+    },
+    "ledgerType": {
+      "subscriptionStatusChanged": "Plan/estado actualizado",
+      "paymentRegistered": "Pago registrado",
+      "paymentReceiptSubmitted": "Comprobante enviado",
+      "paymentReceiptApproved": "Comprobante aprobado",
+      "paymentReceiptRejected": "Comprobante rechazado",
+      "generic": "Evento financiero"
+    },
+    "publicationStatus": {
+      "draft": "Borrador",
+      "pendingReview": "En revisión",
+      "published": "Publicado",
+      "suspended": "Suspendido",
+      "rejected": "Rechazado"
+    },
+    "subscriptionState": {
+      "trial": "Prueba",
+      "active": "Al día",
+      "overdue": "Vencida",
+      "suspended": "Suspendida",
+      "cancelled": "Cancelada"
+    }
   },
   "adaptiveFormSheet": {
     "discardTitle": "¿Descartar cambios?",

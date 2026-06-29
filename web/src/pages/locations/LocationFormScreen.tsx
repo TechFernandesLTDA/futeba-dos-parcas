@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -112,6 +112,7 @@ const defaultFieldDrafts = [createLocationFieldDraft(1)];
 export const LocationFormScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const { locationId } = useParams<{ locationId: string }>();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -133,6 +134,9 @@ export const LocationFormScreen: React.FC = () => {
   const [fields, setFields] = useState<LocationFieldDraft[]>(defaultFieldDrafts);
   const [initialFields, setInitialFields] = useState<LocationFieldDraft[]>(defaultFieldDrafts);
   const [geoLoading, setGeoLoading] = useState(false);
+  const basicInfoRef = useRef<HTMLDivElement | null>(null);
+  const photosRef = useRef<HTMLDivElement | null>(null);
+  const fieldsRef = useRef<HTMLDivElement | null>(null);
 
   // Carrega dados existentes quando em modo edição
   useEffect(() => {
@@ -208,6 +212,23 @@ export const LocationFormScreen: React.FC = () => {
     load();
     return () => { cancelled = true; };
   }, [isEdit, locationId]);
+
+  useEffect(() => {
+    if (fetchLoading) return;
+    const sectionMap: Record<string, { current: HTMLDivElement | null }> = {
+      '#basic-info': basicInfoRef,
+      '#photos': photosRef,
+      '#fields': fieldsRef,
+    };
+    const sectionRef = sectionMap[routeLocation.hash];
+    if (!sectionRef?.current) return;
+
+    const timer = window.setTimeout(() => {
+      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [fetchLoading, routeLocation.hash]);
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm) ||
     JSON.stringify(fields) !== JSON.stringify(initialFields);
@@ -546,7 +567,7 @@ export const LocationFormScreen: React.FC = () => {
         isDirty={isDirty}
         loading={loading}
         footer={
-          <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, width: '100%' }}>
             <Button variant="outlined" onClick={handleCancel} disabled={loading} fullWidth>
               {t('common.cancel')}
             </Button>
@@ -556,9 +577,9 @@ export const LocationFormScreen: React.FC = () => {
           </Box>
         }
       >
-        <PageContainer maxWidth="form" disablePadding >
+        <PageContainer maxWidth="form" disablePadding>
           <Stack spacing={2}>
-            <Card>
+            <Card ref={basicInfoRef} id="location-form-basic-info">
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                   {t('locations.form.basicInfo')}
@@ -590,7 +611,7 @@ export const LocationFormScreen: React.FC = () => {
                       value={form.cep}
                       onChange={(e) => handleChange('cep', e.target.value.replace(/\D/g, '').slice(0, 8))}
                       fullWidth
-                      placeholder="00000000"
+                      placeholder="00000-000"
                       inputProps={{ inputMode: 'numeric', maxLength: 8 }}
                     />
                     <TextField
@@ -598,6 +619,7 @@ export const LocationFormScreen: React.FC = () => {
                       value={form.number}
                       onChange={(e) => handleChange('number', e.target.value)}
                       sx={{ minWidth: { sm: 140 } }}
+                      placeholder="123"
                       inputProps={{ maxLength: 20 }}
                     />
                   </Stack>
@@ -607,6 +629,7 @@ export const LocationFormScreen: React.FC = () => {
                       fullWidth
                       value={form.street}
                       onChange={(e) => handleChange('street', e.target.value)}
+                      placeholder="Rua, avenida ou alameda"
                       inputProps={{ maxLength: 200 }}
                     />
                     <TextField
@@ -614,6 +637,7 @@ export const LocationFormScreen: React.FC = () => {
                       fullWidth
                       value={form.complement}
                       onChange={(e) => handleChange('complement', e.target.value)}
+                      placeholder="Bloco, portão, referência"
                       inputProps={{ maxLength: 100 }}
                     />
                   </Stack>
@@ -651,6 +675,7 @@ export const LocationFormScreen: React.FC = () => {
                     value={form.region}
                     onChange={(e) => handleChange('region', e.target.value)}
                     helperText="Use para zona, região comercial ou referência local."
+                    placeholder="Ex.: Zona Sul"
                     inputProps={{ maxLength: 100 }}
                   />
                   <Box>
@@ -669,7 +694,7 @@ export const LocationFormScreen: React.FC = () => {
                         : t('locations.form.captureCoordinates')}
                     </Button>
                   </Box>
-                  <Box>
+                  <Box ref={photosRef} id="location-form-photos">
                     <input
                       type="file"
                       accept="image/*"
@@ -689,7 +714,7 @@ export const LocationFormScreen: React.FC = () => {
                         : t('locations.form.addPhoto')}
                     </Button>
                     {(form.existingPhotos.length > 0 || form.photoPreviews.length > 0) && (
-                      <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', mt: 1, pb: 0.5 }}>
+                      <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', mt: 1, pb: 0.5, pr: 1 }}>
                         {[...form.existingPhotos, ...form.photoPreviews].map((photo, index) => (
                           <Box
                             key={`${photo}-${index}`}
@@ -706,7 +731,7 @@ export const LocationFormScreen: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card ref={fieldsRef} id="location-form-fields">
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                   {t('locations.form.fieldsSection')}

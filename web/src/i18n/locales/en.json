@@ -2734,6 +2734,7 @@
     "notConfigured": "Not configured",
     "openBalanceAlertTitle": "Open subscription balance: {{value}}",
     "paymentHistoryTitle": "Payments and receipts",
+    "paidAtLabel": "paid on {{value}}",
     "paymentsAndReceipts": "Receipts and payments",
     "paymentsDialogTitle": "Subscription receipts",
     "pendingApproval": "Pending",
@@ -2764,11 +2765,15 @@
     "receiptSubmitLabel": "Send for review",
     "receiptSuccess": "Receipt submitted for review successfully.",
     "receiptTypeError": "Receipt must be JPG, PNG, WebP, or PDF.",
+    "recordedAtLabel": "recorded on {{value}}",
     "registrationStatusChip": "Registration: {{completed}}/{{total}}",
     "sendReceipt": "Send receipt",
     "startingAt": "starting at {{value}}",
+    "submittedAtLabel": "submitted on {{value}}",
     "subscriptionPending": "billing pending",
     "subscriptionStatusChip": "Billing: {{status}}",
+    "planAmountLabel": "plan {{value}}",
+    "billingDayLabel": "due day {{value}}",
     "quickActions": "Quick Actions",
     "locationReadyDescription": "Registration, photos, pricing, and billing are consistent for app operation.",
     "summary": "Summary",
@@ -2777,7 +2782,56 @@
     "upcomingGames": "Upcoming Games",
     "viewPublicCatalog": "View public catalog",
     "viewPublicPage": "View public page",
-    "viewSchedule": "View Schedule"
+    "viewSchedule": "View Schedule",
+    "checklistItems": {
+      "identity": "Identity and description",
+      "address": "Full address",
+      "contact": "Venue contact",
+      "photos": "Real photos",
+      "fields": "Registered fields",
+      "active-fields": "Active fields",
+      "pricing": "Field pricing",
+      "amenities": "Amenities",
+      "commercial": "Publication and billing"
+    },
+    "commercialIssue": {
+      "inactive": "inactive",
+      "notVerified": "not verified",
+      "notPublished": "not published",
+      "billingIrregular": "billing irregular",
+      "noFields": "no registered fields",
+      "noActiveFields": "no active fields",
+      "noMonthlyFee": "no monthly fee",
+      "noDueDay": "no due day",
+      "incompleteAddress": "incomplete address"
+    },
+    "paymentStatus": {
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "pendingReview": "In review"
+    },
+    "ledgerType": {
+      "subscriptionStatusChanged": "Plan/status updated",
+      "paymentRegistered": "Payment registered",
+      "paymentReceiptSubmitted": "Receipt submitted",
+      "paymentReceiptApproved": "Receipt approved",
+      "paymentReceiptRejected": "Receipt rejected",
+      "generic": "Financial event"
+    },
+    "publicationStatus": {
+      "draft": "Draft",
+      "pendingReview": "In review",
+      "published": "Published",
+      "suspended": "Suspended",
+      "rejected": "Rejected"
+    },
+    "subscriptionState": {
+      "trial": "Trial",
+      "active": "Up to date",
+      "overdue": "Overdue",
+      "suspended": "Suspended",
+      "cancelled": "Cancelled"
+    }
   },
   "adaptiveFormSheet": {
     "discardTitle": "Discard changes?",

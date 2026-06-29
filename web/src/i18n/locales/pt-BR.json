@@ -2734,6 +2734,7 @@
     "notConfigured": "Não configurado",
     "openBalanceAlertTitle": "Mensalidade em aberto: {{value}}",
     "paymentHistoryTitle": "Pagamentos e comprovantes",
+    "paidAtLabel": "pago em {{value}}",
     "paymentsAndReceipts": "Comprovantes e pagamentos",
     "paymentsDialogTitle": "Comprovantes da mensalidade",
     "pendingApproval": "Pendente",
@@ -2764,11 +2765,15 @@
     "receiptSubmitLabel": "Enviar para revisão",
     "receiptSuccess": "Comprovante enviado para revisão com sucesso.",
     "receiptTypeError": "Comprovante precisa ser JPG, PNG, WebP ou PDF.",
+    "recordedAtLabel": "registrado em {{value}}",
     "registrationStatusChip": "Cadastro: {{completed}}/{{total}}",
     "sendReceipt": "Enviar comprovante",
     "startingAt": "a partir de {{value}}",
+    "submittedAtLabel": "enviado em {{value}}",
     "subscriptionPending": "mensalidade pendente",
     "subscriptionStatusChip": "Mensalidade: {{status}}",
+    "planAmountLabel": "plano {{value}}",
+    "billingDayLabel": "vence dia {{value}}",
     "quickActions": "Ações Rápidas",
     "locationReadyDescription": "Cadastro, fotos, preço e mensalidade estão consistentes para operar no app.",
     "summary": "Resumo",
@@ -2777,7 +2782,56 @@
     "upcomingGames": "Próximos Jogos",
     "viewPublicCatalog": "Ver catálogo público",
     "viewPublicPage": "Visualizar página pública",
-    "viewSchedule": "Ver Agenda"
+    "viewSchedule": "Ver Agenda",
+    "checklistItems": {
+      "identity": "Identidade e descrição",
+      "address": "Endereço completo",
+      "contact": "Contato do local",
+      "photos": "Fotos reais",
+      "fields": "Campos cadastrados",
+      "active-fields": "Campos ativos",
+      "pricing": "Preço por campo",
+      "amenities": "Comodidades",
+      "commercial": "Publicação e mensalidade"
+    },
+    "commercialIssue": {
+      "inactive": "inativa",
+      "notVerified": "não verificada",
+      "notPublished": "não publicada",
+      "billingIrregular": "mensalidade irregular",
+      "noFields": "sem quadras cadastradas",
+      "noActiveFields": "sem quadras ativas",
+      "noMonthlyFee": "sem mensalidade",
+      "noDueDay": "sem vencimento",
+      "incompleteAddress": "endereço incompleto"
+    },
+    "paymentStatus": {
+      "approved": "Aprovado",
+      "rejected": "Rejeitado",
+      "pendingReview": "Em revisão"
+    },
+    "ledgerType": {
+      "subscriptionStatusChanged": "Plano/status atualizado",
+      "paymentRegistered": "Pagamento registrado",
+      "paymentReceiptSubmitted": "Comprovante enviado",
+      "paymentReceiptApproved": "Comprovante aprovado",
+      "paymentReceiptRejected": "Comprovante rejeitado",
+      "generic": "Evento financeiro"
+    },
+    "publicationStatus": {
+      "draft": "Rascunho",
+      "pendingReview": "Em revisão",
+      "published": "Publicado",
+      "suspended": "Suspenso",
+      "rejected": "Reprovado"
+    },
+    "subscriptionState": {
+      "trial": "Teste",
+      "active": "Em dia",
+      "overdue": "Vencido",
+      "suspended": "Suspenso",
+      "cancelled": "Cancelado"
+    }
   },
   "adaptiveFormSheet": {
     "discardTitle": "Descartar mudanças?",
