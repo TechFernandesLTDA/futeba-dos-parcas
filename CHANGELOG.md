@@ -69,6 +69,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.19] - 2026-06-29
+
+#### Mudado
+- `UserManagementScreen` reutiliza a mensagem calculada por `getFunctionsErrorMessage` no toast.
+- `getFunctionsErrorMessage` recebeu mensagens mais acionáveis para `failed-precondition` e `unavailable`.
+- Cobertura unitária adicionada para erros de Cloud Functions no mapper Firebase.
+- A versão web foi atualizada para `1.43.19`.
+
+_Issues: #3149_
+
 ### [1.43.18] - 2026-06-29
 
 #### Adicionado
