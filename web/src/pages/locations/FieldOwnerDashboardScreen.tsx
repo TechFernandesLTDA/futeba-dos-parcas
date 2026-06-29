@@ -77,6 +77,10 @@ interface LocationData {
   subscriptionStatus?: LocationSubscriptionStatus;
   monthlyFeeCents?: number;
   billingDueDay?: number;
+  currentBillingCycleStatus?: string;
+  currentBillingOpenBalanceCents?: number;
+  billingDueAt?: Date | null;
+  billingSuspendAt?: Date | null;
 }
 
 // #2276: interface tipada para o doc locations (substitui Record<string, any>).
@@ -93,6 +97,10 @@ interface RawLocationDoc {
   subscriptionStatus?: LocationSubscriptionStatus;
   monthlyFeeCents?: number;
   billingDueDay?: number;
+  currentBillingCycleStatus?: string;
+  currentBillingOpenBalanceCents?: number;
+  billingDueAt?: unknown;
+  billingSuspendAt?: unknown;
 }
 
 interface LocationGameData {
@@ -215,6 +223,10 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             subscriptionStatus: data.subscriptionStatus,
             monthlyFeeCents: data.monthlyFeeCents,
             billingDueDay: data.billingDueDay,
+            currentBillingCycleStatus: data.currentBillingCycleStatus,
+            currentBillingOpenBalanceCents: data.currentBillingOpenBalanceCents,
+            billingDueAt: toDate(data.billingDueAt),
+            billingSuspendAt: toDate(data.billingSuspendAt),
           };
         });
         setLocations(locs);
@@ -297,6 +309,11 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   const formatMonthlyFee = (monthlyFeeCents?: number) => {
     if (!monthlyFeeCents) return 'Mensalidade não definida';
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(monthlyFeeCents / 100);
+  };
+
+  const formatBillingDate = (date?: Date | null) => {
+    if (!date) return null;
+    return date.toLocaleDateString('pt-BR');
   };
 
   if (loading) {
@@ -485,6 +502,14 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                     }) && (
                       <Alert severity="info" sx={{ mx: 2, mb: 1 }}>
                         Esta quadra ainda não está disponível para jogadores. Verifique publicação, verificação e mensalidade.
+                      </Alert>
+                    )}
+                    {(loc.currentBillingOpenBalanceCents || 0) > 0 && (
+                      <Alert severity="warning" sx={{ mx: 2, mb: 1 }}>
+                        Mensalidade em aberto: {formatMonthlyFee(loc.currentBillingOpenBalanceCents)}
+                        {loc.currentBillingCycleStatus ? ` • ciclo ${loc.currentBillingCycleStatus}` : ''}
+                        {formatBillingDate(loc.billingDueAt) ? ` • venc. ${formatBillingDate(loc.billingDueAt)}` : ''}
+                        {formatBillingDate(loc.billingSuspendAt) ? ` • susp. ${formatBillingDate(loc.billingSuspendAt)}` : ''}
                       </Alert>
                     )}
                   </Box>

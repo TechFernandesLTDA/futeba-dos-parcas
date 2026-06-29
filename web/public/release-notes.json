@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T04:26:01.634Z",
+  "generatedAt": "2026-06-29T12:04:49.546Z",
   "notes": [
+    {
+      "version": "1.43.18",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Web mostra ciclo financeiro atual das quadras",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Admins passam a ver status do ciclo mensal, saldo atual, vencimento e data de suspensao no gerenciamento de quadras.",
+        "Donos de quadra recebem alerta quando existe mensalidade em aberto no ciclo atual.",
+        "A tela deixa claro que o saldo vem do backend, reduzindo divergencia entre pagamento, status e exibicao."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3132,
+        3124,
+        3119,
+        3086,
+        3084
+      ]
+    },
     {
       "version": "1.43.17",
       "buildNumber": null,

@@ -496,6 +496,13 @@ export const ManageLocationsScreen: React.FC = () => {
     }).format(amountCents / 100);
   };
 
+  const formatBillingDate = (iso?: string | null) => {
+    if (!iso) return null;
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toLocaleDateString('pt-BR');
+  };
+
   const handlePublicationStatus = async (
     location: Location,
     publicationStatus: LocationPublicationStatus,
@@ -1152,10 +1159,26 @@ export const ManageLocationsScreen: React.FC = () => {
                                     color={billingRow.receivedCents > 0 ? 'success' : 'default'}
                                     variant="outlined"
                                   />
+                                  {billingRow.currentBillingCycleStatus && (
+                                    <Chip
+                                      label={`Ciclo ${billingRow.currentBillingCycleStatus}`}
+                                      size="small"
+                                      color={billingRow.currentBillingOpenBalanceCents > 0 ? 'warning' : 'success'}
+                                      variant="outlined"
+                                    />
+                                  )}
                                   <Chip
-                                    label={`Saldo ${formatCurrency(billingRow.openBalanceCents)}`}
+                                    label={`Saldo ${formatCurrency(
+                                      billingRow.currentBillingOpenBalanceCents ||
+                                      billingRow.openBalanceCents,
+                                    )}`}
                                     size="small"
-                                    color={billingRow.openBalanceCents > 0 ? 'warning' : 'success'}
+                                    color={
+                                      (billingRow.currentBillingOpenBalanceCents ||
+                                        billingRow.openBalanceCents) > 0 ?
+                                        'warning' :
+                                        'success'
+                                    }
                                     variant="outlined"
                                   />
                                   {billingRow.pendingReceiptCount > 0 && (
@@ -1164,6 +1187,22 @@ export const ManageLocationsScreen: React.FC = () => {
                                       size="small"
                                       color="warning"
                                       variant="filled"
+                                    />
+                                  )}
+                                  {formatBillingDate(billingRow.billingDueAtIso) && (
+                                    <Chip
+                                      label={`Venc. ${formatBillingDate(billingRow.billingDueAtIso)}`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {(billingRow.currentBillingOpenBalanceCents > 0 &&
+                                    formatBillingDate(billingRow.billingSuspendAtIso)) && (
+                                    <Chip
+                                      label={`Susp. ${formatBillingDate(billingRow.billingSuspendAtIso)}`}
+                                      size="small"
+                                      color="error"
+                                      variant="outlined"
                                     />
                                   )}
                                   {billingRow.billingDueDay && (

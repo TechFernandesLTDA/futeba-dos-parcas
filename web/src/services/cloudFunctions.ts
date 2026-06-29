@@ -183,6 +183,12 @@ export interface AdminLocationBillingSummaryRow {
   expectedCents: number;
   receivedCents: number;
   openBalanceCents: number;
+  currentBillingCycleStatus: string | null;
+  currentBillingPaidCents: number;
+  currentBillingOpenBalanceCents: number;
+  billingDueAtIso: string | null;
+  billingGraceEndsAtIso: string | null;
+  billingSuspendAtIso: string | null;
   pendingReceiptCount: number;
   lastPaymentAtIso: string | null;
   updatedAtIso: string | null;

@@ -74,7 +74,12 @@ class FakeCollectionRef {
   constructor(
     readonly path: string,
     private readonly store: Map<string, StoredDoc>,
-    private readonly limitSize?: number
+    private readonly limitSize?: number,
+    private readonly whereFilters: Array<{
+      field: string;
+      op: "==";
+      value: unknown;
+    }> = []
   ) {}
 
   doc(id = `auto-${autoId++}`) {
@@ -88,7 +93,21 @@ class FakeCollectionRef {
   }
 
   limit(size: number) {
-    return new FakeCollectionRef(this.path, this.store, size);
+    return new FakeCollectionRef(
+      this.path,
+      this.store,
+      size,
+      this.whereFilters
+    );
+  }
+
+  where(field: string, op: "==", value: unknown) {
+    return new FakeCollectionRef(
+      this.path,
+      this.store,
+      this.limitSize,
+      [...this.whereFilters, {field, op, value}]
+    );
   }
 
   async get() {
@@ -96,6 +115,12 @@ class FakeCollectionRef {
     const docs = Array.from(this.store.keys())
       .filter((path) => path.startsWith(prefix))
       .filter((path) => !path.slice(prefix.length).includes("/"))
+      .filter((path) => {
+        const data = this.store.get(path) || {};
+        return this.whereFilters.every((filter) =>
+          filter.op === "==" && data[filter.field] === filter.value
+        );
+      })
       .slice(0, this.limitSize)
       .map((path) => ({
         id: path.split("/").pop() || "",
@@ -189,6 +214,10 @@ jest.mock("firebase-functions/v2/https", () => ({
   },
 }));
 
+jest.mock("firebase-functions/v2/scheduler", () => ({
+  onSchedule: jest.fn((_config, handler) => handler),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
   acceptLocationManagerInvite,
@@ -197,9 +226,12 @@ const {
   deleteLocationSubcollection,
   getAdminLocationBillingSummary,
   inviteLocationManager,
+  processLocationBillingAutomation,
+  processLocationBillingCycles,
   registerLocationSubscriptionPayment,
   reviewLocationSubscriptionReceipt,
   removeLocationManager,
+  runLocationBillingAutomation,
   setLocationPublicationStatus,
   setLocationSubscription,
   submitLocationSubscriptionReceipt,
@@ -312,103 +344,119 @@ describe("location commercial admin callables", () => {
   });
 
   it("expõe contexto de auditoria para publicação, assinatura e pagamento", async () => {
-    const deleteOptions = mockSecureCallableOptions[0];
-    const billingSummaryOptions = mockSecureCallableOptions[1];
-    const publicationOptions = mockSecureCallableOptions[2];
-    const subscriptionOptions = mockSecureCallableOptions[3];
-    const paymentOptions = mockSecureCallableOptions[4];
-    const submitReceiptOptions = mockSecureCallableOptions[5];
-    const reviewReceiptOptions = mockSecureCallableOptions[6];
-    const assignOwnerOptions = mockSecureCallableOptions[7];
-    const inviteManagerOptions = mockSecureCallableOptions[8];
-    const acceptInviteOptions = mockSecureCallableOptions[9];
-    const removeManagerOptions = mockSecureCallableOptions[10];
+    const cases = [
+      {
+        data: {locationId: "location-1"},
+        expected: {function: "deleteLocation", locationId: "location-1"},
+      },
+      {
+        data: {periodKey: "2026-07"},
+        expected: {
+          function: "runLocationBillingAutomation",
+          periodKey: "2026-07",
+        },
+      },
+      {
+        data: {periodKey: "2026-07"},
+        expected: {
+          function: "getAdminLocationBillingSummary",
+          periodKey: "2026-07",
+        },
+      },
+      {
+        data: {locationId: "location-1", publicationStatus: "PUBLISHED"},
+        expected: {
+          function: "setLocationPublicationStatus",
+          locationId: "location-1",
+          publicationStatus: "PUBLISHED",
+        },
+      },
+      {
+        data: {locationId: "location-1", subscriptionStatus: "OVERDUE"},
+        expected: {
+          function: "setLocationSubscription",
+          locationId: "location-1",
+          subscriptionStatus: "OVERDUE",
+        },
+      },
+      {
+        data: {locationId: "location-1", periodKey: "2026-07"},
+        expected: {
+          function: "registerLocationSubscriptionPayment",
+          locationId: "location-1",
+          periodKey: "2026-07",
+        },
+      },
+      {
+        data: {locationId: "location-1", periodKey: "2026-07"},
+        expected: {
+          function: "submitLocationSubscriptionReceipt",
+          locationId: "location-1",
+          periodKey: "2026-07",
+        },
+      },
+      {
+        data: {
+          locationId: "location-1",
+          paymentId: "payment-1",
+          decision: "APPROVED",
+        },
+        expected: {
+          function: "reviewLocationSubscriptionReceipt",
+          locationId: "location-1",
+          paymentId: "payment-1",
+          decision: "APPROVED",
+        },
+      },
+      {
+        data: {locationId: "location-1", newOwnerId: "owner-2"},
+        expected: {
+          function: "assignLocationOwner",
+          locationId: "location-1",
+          newOwnerId: "owner-2",
+        },
+      },
+      {
+        data: {
+          locationId: "location-1",
+          managerUid: "manager-2",
+          managerEmail: "manager@example.com",
+        },
+        expected: {
+          function: "inviteLocationManager",
+          locationId: "location-1",
+          managerUid: "manager-2",
+          managerEmail: "manager@example.com",
+        },
+      },
+      {
+        data: {locationId: "location-1", inviteId: "invite-1"},
+        expected: {
+          function: "acceptLocationManagerInvite",
+          locationId: "location-1",
+          inviteId: "invite-1",
+        },
+      },
+      {
+        data: {locationId: "location-1", managerUid: "manager-2"},
+        expected: {
+          function: "removeLocationManager",
+          locationId: "location-1",
+          managerUid: "manager-2",
+        },
+      },
+    ];
 
-    await expect(deleteOptions.auditLogContext({
-      data: {locationId: "location-1"},
-    })).resolves.toEqual({
-      function: "deleteLocation",
-      locationId: "location-1",
-    });
-    await expect(billingSummaryOptions.auditLogContext({
-      data: {periodKey: "2026-07"},
-    })).resolves.toEqual({
-      function: "getAdminLocationBillingSummary",
-      periodKey: "2026-07",
-    });
-    await expect(publicationOptions.auditLogContext({
-      data: {locationId: "location-1", publicationStatus: "PUBLISHED"},
-    })).resolves.toEqual({
-      function: "setLocationPublicationStatus",
-      locationId: "location-1",
-      publicationStatus: "PUBLISHED",
-    });
-    await expect(subscriptionOptions.auditLogContext({
-      data: {locationId: "location-1", subscriptionStatus: "OVERDUE"},
-    })).resolves.toEqual({
-      function: "setLocationSubscription",
-      locationId: "location-1",
-      subscriptionStatus: "OVERDUE",
-    });
-    await expect(paymentOptions.auditLogContext({
-      data: {locationId: "location-1", periodKey: "2026-07"},
-    })).resolves.toEqual({
-      function: "registerLocationSubscriptionPayment",
-      locationId: "location-1",
-      periodKey: "2026-07",
-    });
-    await expect(submitReceiptOptions.auditLogContext({
-      data: {locationId: "location-1", periodKey: "2026-07"},
-    })).resolves.toEqual({
-      function: "submitLocationSubscriptionReceipt",
-      locationId: "location-1",
-      periodKey: "2026-07",
-    });
-    await expect(reviewReceiptOptions.auditLogContext({
-      data: {
-        locationId: "location-1",
-        paymentId: "payment-1",
-        decision: "APPROVED",
-      },
-    })).resolves.toEqual({
-      function: "reviewLocationSubscriptionReceipt",
-      locationId: "location-1",
-      paymentId: "payment-1",
-      decision: "APPROVED",
-    });
-    await expect(assignOwnerOptions.auditLogContext({
-      data: {locationId: "location-1", newOwnerId: "owner-2"},
-    })).resolves.toEqual({
-      function: "assignLocationOwner",
-      locationId: "location-1",
-      newOwnerId: "owner-2",
-    });
-    await expect(inviteManagerOptions.auditLogContext({
-      data: {
-        locationId: "location-1",
-        managerUid: "manager-2",
-        managerEmail: "manager@example.com",
-      },
-    })).resolves.toEqual({
-      function: "inviteLocationManager",
-      locationId: "location-1",
-      managerUid: "manager-2",
-      managerEmail: "manager@example.com",
-    });
-    await expect(acceptInviteOptions.auditLogContext({
-      data: {locationId: "location-1", inviteId: "invite-1"},
-    })).resolves.toEqual({
-      function: "acceptLocationManagerInvite",
-      locationId: "location-1",
-      inviteId: "invite-1",
-    });
-    await expect(removeManagerOptions.auditLogContext({
-      data: {locationId: "location-1", managerUid: "manager-2"},
-    })).resolves.toEqual({
-      function: "removeLocationManager",
-      locationId: "location-1",
-      managerUid: "manager-2",
-    });
+    const contexts = [];
+    for (const options of mockSecureCallableOptions) {
+      if (!options.auditLogContext) continue;
+      for (const testCase of cases) {
+        contexts.push(await options.auditLogContext({data: testCase.data}));
+      }
+    }
+    for (const testCase of cases) {
+      expect(contexts).toContainEqual(testCase.expected);
+    }
   });
 
   it("calcula painel financeiro admin por periodo sem expor calculo ao client", async () => {
@@ -505,6 +553,166 @@ describe("location commercial admin callables", () => {
         }),
       ]),
     });
+  });
+
+  it("processa ciclos de cobranca e muda status de forma idempotente", async () => {
+    firestoreStore.delete("locations/location-1");
+    firestoreStore.set("locations/paid", {
+      name: "Arena Quitada",
+      owner_id: "owner-paid",
+      subscription_status: "OVERDUE",
+      commercial_status: "OVERDUE",
+      monthly_fee_cents: 10000,
+      billing_due_day: 10,
+    });
+    firestoreStore.set("locations/paid/subscription_payments/payment-1", {
+      amount_cents: 10000,
+      period_key: "2026-07",
+      review_status: "APPROVED",
+    });
+    firestoreStore.set("locations/overdue", {
+      name: "Arena Vencida",
+      owner_id: "owner-overdue",
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      monthly_fee_cents: 20000,
+      billing_due_day: 10,
+    });
+    firestoreStore.set("locations/suspended", {
+      name: "Arena Suspensa",
+      owner_id: "owner-suspended",
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      monthly_fee_cents: 30000,
+      billing_due_day: 1,
+    });
+    firestoreStore.set("locations/partial", {
+      name: "Arena Parcial",
+      owner_id: "owner-partial",
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      monthly_fee_cents: 40000,
+      billing_due_day: 25,
+    });
+    firestoreStore.set("locations/partial/subscription_payments/payment-2", {
+      amount_cents: 15000,
+      period_key: "2026-07",
+      review_status: "APPROVED",
+    });
+    firestoreStore.set("locations/cancelled", {
+      owner_id: "owner-cancelled",
+      subscription_status: "CANCELLED",
+      monthly_fee_cents: 10000,
+      billing_due_day: 5,
+    });
+    firestoreStore.set("locations/future-trial", {
+      owner_id: "owner-future",
+      subscription_status: "TRIAL",
+      monthly_fee_cents: 10000,
+      billing_due_day: 5,
+      billing_starts_at: new Date("2026-08-01T00:00:00.000Z"),
+    });
+    firestoreStore.set("locations/inconsistent", {
+      owner_id: "owner-broken",
+      subscription_status: "ACTIVE",
+      billing_due_day: 5,
+    });
+
+    const result = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: new Date("2026-07-20T12:00:00.000Z"),
+      actorUserId: "system-test",
+    });
+
+    expect(result).toMatchObject({
+      processedLocations: 4,
+      skippedLocations: 2,
+      paidLocations: 1,
+      partialLocations: 1,
+      overdueLocations: 1,
+      suspendedLocations: 1,
+      reactivatedLocations: 1,
+      inconsistentLocations: 1,
+      ledgerEntriesCreated: 3,
+    });
+    expect(firestoreStore.get("locations/paid")).toMatchObject({
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      current_billing_cycle_status: "PAID",
+      current_billing_paid_cents: 10000,
+      current_billing_open_balance_cents: 0,
+    });
+    expect(firestoreStore.get("locations/overdue")).toMatchObject({
+      subscription_status: "OVERDUE",
+      commercial_status: "OVERDUE",
+      current_billing_cycle_status: "OVERDUE",
+      current_billing_open_balance_cents: 20000,
+    });
+    expect(firestoreStore.get("locations/suspended")).toMatchObject({
+      subscription_status: "SUSPENDED",
+      commercial_status: "SUSPENDED",
+      current_billing_cycle_status: "SUSPENDED",
+      current_billing_open_balance_cents: 30000,
+    });
+    expect(firestoreStore.get("locations/partial")).toMatchObject({
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      current_billing_cycle_status: "PARTIAL",
+      current_billing_paid_cents: 15000,
+      current_billing_open_balance_cents: 25000,
+    });
+    expect(collectionSize("locations/paid/subscription_cycles")).toBe(1);
+    expect(collectionSize("locations/overdue/subscription_cycles")).toBe(1);
+    expect(collectionSize("locations/suspended/subscription_cycles")).toBe(1);
+    expect(collectionSize("locations/partial/subscription_cycles")).toBe(1);
+    expect(collectionSize("locations/paid/subscription_ledger")).toBe(1);
+    expect(collectionSize("locations/overdue/subscription_ledger")).toBe(1);
+    expect(collectionSize("locations/suspended/subscription_ledger")).toBe(1);
+
+    const secondRun = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: new Date("2026-07-20T12:00:00.000Z"),
+      actorUserId: "system-test",
+    });
+    expect(secondRun.ledgerEntriesCreated).toBe(0);
+    expect(collectionSize("locations/paid/subscription_ledger")).toBe(1);
+    expect(collectionSize("locations/overdue/subscription_ledger")).toBe(1);
+    expect(collectionSize("locations/suspended/subscription_ledger")).toBe(1);
+  });
+
+  it("permite disparo admin manual e registra handler agendado", async () => {
+    firestoreStore.set("locations/location-1", {
+      owner_id: "owner-1",
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      monthly_fee_cents: 10000,
+      billing_due_day: 1,
+    });
+
+    await expect(runLocationBillingAutomation({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {periodKey: "2026-06"},
+    })).resolves.toMatchObject({
+      periodKey: "2026-06",
+      processedLocations: 1,
+      suspendedLocations: 1,
+    });
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "SUSPENDED",
+      current_billing_cycle_status: "SUSPENDED",
+    });
+    expect(typeof processLocationBillingCycles).toBe("function");
+  });
+
+  it("rejeita automacao manual sem admin ou periodo invalido", async () => {
+    await expect(runLocationBillingAutomation({
+      data: {periodKey: "2026-07"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+
+    await expect(runLocationBillingAutomation({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {periodKey: "2026-13"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
   });
 
   it("rejeita painel financeiro sem auth ou periodo invalido", async () => {

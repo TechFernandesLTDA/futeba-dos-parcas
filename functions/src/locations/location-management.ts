@@ -1,4 +1,5 @@
 import {FieldValue} from "firebase-admin/firestore";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 import {HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {
@@ -120,6 +121,24 @@ interface GetAdminLocationBillingSummaryRequest {
   periodKey?: string | null;
 }
 
+interface RunLocationBillingAutomationRequest {
+  periodKey?: string | null;
+}
+
+interface LocationBillingAutomationResult {
+  periodKey: string;
+  processedLocations: number;
+  skippedLocations: number;
+  paidLocations: number;
+  partialLocations: number;
+  pendingLocations: number;
+  overdueLocations: number;
+  suspendedLocations: number;
+  reactivatedLocations: number;
+  inconsistentLocations: number;
+  ledgerEntriesCreated: number;
+}
+
 interface CalculateAutoRatingsRequest {
   userId: string;
 }
@@ -136,6 +155,9 @@ interface AutoRatingsForUser {
 const DELETE_BATCH_SIZE = 500;
 const MANAGER_INVITE_TTL_DAYS = 14;
 const BILLING_SUMMARY_LOCATION_LIMIT = 500;
+const BILLING_AUTOMATION_LOCATION_LIMIT = 500;
+const DEFAULT_BILLING_GRACE_DAYS = 5;
+const DEFAULT_BILLING_SUSPENSION_DAYS = 15;
 const LOCATION_SUBCOLLECTIONS = [
   "reviews",
   "fields",
@@ -144,6 +166,7 @@ const LOCATION_SUBCOLLECTIONS = [
   "commercial_events",
   "subscription_payments",
   "subscription_ledger",
+  "subscription_cycles",
 ];
 
 /**
@@ -242,6 +265,78 @@ function toIsoString(value: unknown): string | null {
  */
 function currentBillingPeriodKey(): string {
   return new Date().toISOString().slice(0, 7);
+}
+
+/**
+ * Periodo comercial de uma data no formato AAAA-MM.
+ * @param {Date} date Data base.
+ * @return {string} Periodo em UTC.
+ */
+function billingPeriodKeyForDate(date: Date): string {
+  return date.toISOString().slice(0, 7);
+}
+
+/**
+ * Retorna o ultimo dia do mes UTC.
+ * @param {number} year Ano UTC.
+ * @param {number} month Mes UTC no intervalo 1-12.
+ * @return {number} Quantidade de dias.
+ */
+function daysInUtcMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/**
+ * Limita inteiro opcional com fallback.
+ * @param {unknown} value Valor bruto.
+ * @param {number} fallback Valor padrao.
+ * @param {number} min Valor minimo.
+ * @param {number} max Valor maximo.
+ * @return {number} Inteiro seguro.
+ */
+function boundedInteger(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  if (!Number.isInteger(value)) return fallback;
+  return Math.min(Math.max(Number(value), min), max);
+}
+
+/**
+ * Calcula datas relevantes do ciclo mensal.
+ * @param {string} periodKey Periodo AAAA-MM.
+ * @param {unknown} rawDueDay Dia de vencimento.
+ * @param {unknown} rawGraceDays Dias de tolerancia.
+ * @param {unknown} rawSuspensionDays Dias ate suspensao.
+ * @return {object} Datas de cobranca.
+ */
+function buildBillingCycleDates(
+  periodKey: string,
+  rawDueDay: unknown,
+  rawGraceDays: unknown,
+  rawSuspensionDays: unknown
+) {
+  const [year, month] = periodKey.split("-").map(Number);
+  const dueDay = boundedInteger(rawDueDay, 10, 1, 31);
+  const graceDays = boundedInteger(
+    rawGraceDays,
+    DEFAULT_BILLING_GRACE_DAYS,
+    0,
+    90
+  );
+  const suspensionDays = boundedInteger(
+    rawSuspensionDays,
+    DEFAULT_BILLING_SUSPENSION_DAYS,
+    graceDays,
+    180
+  );
+  const clampedDueDay = Math.min(dueDay, daysInUtcMonth(year, month));
+  const dueAt = new Date(Date.UTC(year, month - 1, clampedDueDay, 12, 0, 0));
+  const graceEndsAt = new Date(dueAt.getTime() + graceDays * 86400000);
+  const suspendAt = new Date(dueAt.getTime() + suspensionDays * 86400000);
+  return {dueDay, graceDays, suspensionDays, dueAt, graceEndsAt, suspendAt};
 }
 
 /**
@@ -439,6 +534,238 @@ function createSubscriptionLedgerRef(
 }
 
 /**
+ * Soma pagamentos aprovados de uma quadra para o periodo.
+ * @param {string} locationId ID da location.
+ * @param {string} periodKey Periodo AAAA-MM.
+ * @return {Promise<number>} Total aprovado em centavos.
+ */
+async function sumApprovedSubscriptionPayments(
+  locationId: string,
+  periodKey: string
+): Promise<number> {
+  const paymentsSnapshot = await db()
+    .collection("locations")
+    .doc(locationId)
+    .collection("subscription_payments")
+    .where("period_key", "==", periodKey)
+    .get();
+  let paidCents = 0;
+  for (const paymentDoc of paymentsSnapshot.docs) {
+    const payment = paymentDoc.data() || {};
+    const reviewStatus = payment.review_status || payment.status;
+    if (reviewStatus === "APPROVED") {
+      paidCents += positiveCents(payment.amount_cents);
+    }
+  }
+  return paidCents;
+}
+
+/**
+ * Processa ciclos mensais de cobranca de quadras.
+ * @param {object} params Parametros opcionais de execucao.
+ * @return {Promise<LocationBillingAutomationResult>} Resultado consolidado.
+ */
+export async function processLocationBillingAutomation(params?: {
+  periodKey?: string | null;
+  now?: Date;
+  actorUserId?: string;
+}): Promise<LocationBillingAutomationResult> {
+  const now = params?.now || new Date();
+  const periodKey = params?.periodKey ?
+    requirePeriodKey(params.periodKey) :
+    billingPeriodKeyForDate(now);
+  const actorUserId = params?.actorUserId || "system:billing-automation";
+  const locationsSnapshot = await db()
+    .collection("locations")
+    .limit(BILLING_AUTOMATION_LOCATION_LIMIT)
+    .get();
+  const result: LocationBillingAutomationResult = {
+    periodKey,
+    processedLocations: 0,
+    skippedLocations: 0,
+    paidLocations: 0,
+    partialLocations: 0,
+    pendingLocations: 0,
+    overdueLocations: 0,
+    suspendedLocations: 0,
+    reactivatedLocations: 0,
+    inconsistentLocations: 0,
+    ledgerEntriesCreated: 0,
+  };
+
+  for (const doc of locationsSnapshot.docs) {
+    const locationId = doc.id || doc.ref?.id;
+    const locData = doc.data() || {};
+    if (!locationId) {
+      result.skippedLocations += 1;
+      continue;
+    }
+
+    const subscriptionStatus = typeof locData.subscription_status === "string" ?
+      locData.subscription_status :
+      "ACTIVE";
+    if (subscriptionStatus === "CANCELLED") {
+      result.skippedLocations += 1;
+      continue;
+    }
+
+    const billingStartsAtIso = toIsoString(locData.billing_starts_at);
+    if (billingStartsAtIso && new Date(billingStartsAtIso).getTime() > now.getTime()) {
+      result.skippedLocations += 1;
+      continue;
+    }
+
+    const ownerId = typeof locData.owner_id === "string" ?
+      locData.owner_id :
+      null;
+    const monthlyFeeCents = positiveCents(locData.monthly_fee_cents);
+    const billingDueDay = Number.isInteger(locData.billing_due_day) ?
+      Number(locData.billing_due_day) :
+      null;
+    if (!ownerId || monthlyFeeCents <= 0 || !billingDueDay) {
+      result.inconsistentLocations += 1;
+      continue;
+    }
+
+    const paidCents = await sumApprovedSubscriptionPayments(locationId, periodKey);
+    const openBalanceCents = Math.max(monthlyFeeCents - paidCents, 0);
+    const cycleDates = buildBillingCycleDates(
+      periodKey,
+      billingDueDay,
+      locData.billing_grace_days,
+      locData.billing_suspension_days
+    );
+
+    let cycleStatus: "PAID" | "PARTIAL" | "PENDING" | "OVERDUE" | "SUSPENDED";
+    if (openBalanceCents <= 0) {
+      cycleStatus = "PAID";
+      result.paidLocations += 1;
+    } else if (now.getTime() >= cycleDates.suspendAt.getTime()) {
+      cycleStatus = "SUSPENDED";
+      result.suspendedLocations += 1;
+    } else if (now.getTime() >= cycleDates.graceEndsAt.getTime()) {
+      cycleStatus = "OVERDUE";
+      result.overdueLocations += 1;
+    } else if (paidCents > 0) {
+      cycleStatus = "PARTIAL";
+      result.partialLocations += 1;
+    } else {
+      cycleStatus = "PENDING";
+      result.pendingLocations += 1;
+    }
+
+    let nextSubscriptionStatus = subscriptionStatus;
+    if (cycleStatus === "PAID") {
+      nextSubscriptionStatus = "ACTIVE";
+    } else if (cycleStatus === "OVERDUE") {
+      nextSubscriptionStatus = "OVERDUE";
+    } else if (cycleStatus === "SUSPENDED") {
+      nextSubscriptionStatus = "SUSPENDED";
+    }
+
+    const locRef = doc.ref;
+    const cycleRef = locRef.collection("subscription_cycles").doc(periodKey);
+    const batch = db().batch();
+    const statusChanged = nextSubscriptionStatus !== subscriptionStatus ||
+      locData.commercial_status !== nextSubscriptionStatus;
+    const update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+      current_billing_period_key: periodKey,
+      current_billing_cycle_status: cycleStatus,
+      current_billing_paid_cents: paidCents,
+      current_billing_open_balance_cents: openBalanceCents,
+      billing_due_at: cycleDates.dueAt,
+      billing_grace_ends_at: cycleDates.graceEndsAt,
+      billing_suspend_at: cycleDates.suspendAt,
+      updated_at: FieldValue.serverTimestamp(),
+      updated_by: actorUserId,
+    };
+    if (statusChanged) {
+      update.subscription_status = nextSubscriptionStatus;
+      update.commercial_status = nextSubscriptionStatus;
+    }
+
+    batch.set(cycleRef, {
+      period_key: periodKey,
+      location_id: locationId,
+      owner_id: ownerId,
+      amount_cents: monthlyFeeCents,
+      paid_cents: paidCents,
+      open_balance_cents: openBalanceCents,
+      billing_due_day: billingDueDay,
+      due_at: cycleDates.dueAt,
+      grace_ends_at: cycleDates.graceEndsAt,
+      suspend_at: cycleDates.suspendAt,
+      grace_days: cycleDates.graceDays,
+      suspension_days: cycleDates.suspensionDays,
+      status: cycleStatus,
+      previous_status: locData.current_billing_cycle_status || null,
+      created_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
+      processed_at: FieldValue.serverTimestamp(),
+    }, {merge: true});
+    batch.update(locRef, update);
+
+    let ledgerType: string | null = null;
+    if (statusChanged) {
+      if (cycleStatus === "PAID") {
+        ledgerType = "BILLING_AUTOMATION_REACTIVATED";
+        result.reactivatedLocations += 1;
+      } else if (cycleStatus === "OVERDUE") {
+        ledgerType = "BILLING_AUTOMATION_OVERDUE";
+      } else if (cycleStatus === "SUSPENDED") {
+        ledgerType = "BILLING_AUTOMATION_SUSPENDED";
+      }
+    }
+
+    if (ledgerType) {
+      const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+        locationId,
+        {
+          type: ledgerType,
+          actor_user_id: actorUserId,
+          amount_cents: openBalanceCents,
+          period_key: periodKey,
+          previous_subscription_status: subscriptionStatus,
+          next_subscription_status: nextSubscriptionStatus,
+          previous_commercial_status: locData.commercial_status ?? null,
+          next_commercial_status: nextSubscriptionStatus,
+          billing_due_day: billingDueDay,
+          reason: `Automacao mensal ${periodKey}: ${cycleStatus}`,
+          effective_at: now,
+        }
+      );
+      batch.set(ledgerRef, ledgerData);
+      result.ledgerEntriesCreated += 1;
+    }
+
+    await batch.commit();
+    if (statusChanged) {
+      await writeLocationCommercialEvent({
+        locationId,
+        actorUserId,
+        type: "LOCATION_BILLING_AUTOMATION_STATUS_CHANGED",
+        before: {
+          subscription_status: subscriptionStatus,
+          commercial_status: locData.commercial_status ?? null,
+        },
+        after: {
+          subscription_status: nextSubscriptionStatus,
+          commercial_status: nextSubscriptionStatus,
+          billing_cycle_status: cycleStatus,
+          open_balance_cents: openBalanceCents,
+          period_key: periodKey,
+        },
+        reason: `Automacao mensal ${periodKey}`,
+      });
+    }
+
+    result.processedLocations += 1;
+  }
+
+  return result;
+}
+
+/**
  * Atualiza ratings automaticos e historico a partir de statistics/{userId}.
  * @param {string} userId ID do usuario.
  * @param {FirebaseFirestore.DocumentData} stats Documento statistics.
@@ -584,6 +911,46 @@ export const deleteLocation = secureCallable<DeleteLocationRequest>(
   }
 );
 
+export const runLocationBillingAutomation =
+secureCallable<RunLocationBillingAutomationRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {maxRequests: 5, windowMs: 60000, keyPrefix: "locBillAuto"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "runLocationBillingAutomation",
+      periodKey: req.data?.periodKey ?? null,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    const periodKey = request.data?.periodKey ?
+      requirePeriodKey(request.data.periodKey) :
+      null;
+    return processLocationBillingAutomation({
+      periodKey,
+      actorUserId: request.auth.uid,
+    });
+  }
+);
+
+export const processLocationBillingCycles = onSchedule(
+  {
+    schedule: "every day 04:20",
+    timeZone: "America/Sao_Paulo",
+    retryCount: 3,
+    maxRetrySeconds: 300,
+  },
+  async () => {
+    const result = await processLocationBillingAutomation();
+    logger.info("Location billing automation finished", result);
+  }
+);
+
 export const getAdminLocationBillingSummary =
 secureCallable<GetAdminLocationBillingSummaryRequest>(
   {
@@ -695,6 +1062,19 @@ secureCallable<GetAdminLocationBillingSummaryRequest>(
           0,
         receivedCents,
         openBalanceCents: Math.max(monthlyFeeCents - receivedCents, 0),
+        currentBillingCycleStatus:
+          typeof locData.current_billing_cycle_status === "string" ?
+            locData.current_billing_cycle_status :
+            null,
+        currentBillingPaidCents: positiveCents(
+          locData.current_billing_paid_cents
+        ),
+        currentBillingOpenBalanceCents: positiveCents(
+          locData.current_billing_open_balance_cents
+        ),
+        billingDueAtIso: toIsoString(locData.billing_due_at),
+        billingGraceEndsAtIso: toIsoString(locData.billing_grace_ends_at),
+        billingSuspendAtIso: toIsoString(locData.billing_suspend_at),
         pendingReceiptCount,
         lastPaymentAtIso,
         updatedAtIso: toIsoString(locData.updated_at),
