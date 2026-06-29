@@ -164,6 +164,8 @@ describe("searchAdminUsers", () => {
 
     expect(mockSecureCallable).toHaveBeenCalledWith(
       expect.objectContaining({
+        appCheck: false,
+        consumeAppCheckToken: false,
         requireAuth: true,
         requiredRole: "ADMIN",
         rateLimit: expect.objectContaining({keyPrefix: "adminUserCrm"}),

@@ -434,6 +434,7 @@ export const searchAdminUsers = secureCallable<
 >(
   {
     appCheck: !process.env.FUNCTIONS_EMULATOR,
+    consumeAppCheckToken: false,
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {maxRequests: 30, windowMs: 60000, keyPrefix: "adminUserCrm"},
