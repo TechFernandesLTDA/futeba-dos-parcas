@@ -536,6 +536,17 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.2.14] - 2026-06-29
+
+#### Corrigido
+- `searchAdminUsers` passa a usar `consumeAppCheckToken: false`, mantendo `enforceAppCheck` ativo para a callable.
+- Teste regressivo cobre a configuração segura da callable admin de leitura.
+
+#### Segurança
+- Mantém autenticação, App Check, rate limit e role `ADMIN` obrigatórios no CRM de usuários.
+
+_Issues: #3149_
+
 ### [1.2.13] - 2026-06-29
 
 #### Corrigido
