@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Field, Location } from '../../types/location';
+import { Field, isLocationCommerciallyAvailable, Location } from '../../types/location';
 import {
   getLocationCommercialIssues,
   getLocationPublicationStatus,
@@ -22,6 +22,8 @@ const baseLocation = (overrides: Partial<Location> = {}): Location => ({
   country: 'BR',
   neighborhood: 'Centro',
   region: 'Zona Sul',
+  latitude: -23.55052,
+  longitude: -46.633308,
   ownerId: 'owner-123',
   managers: [],
   isVerified: true,
@@ -72,6 +74,12 @@ const baseField = (overrides: Partial<Field> = {}): Field => ({
   photos: [],
   managers: [],
   isCovered: false,
+  playersPerTeam: 7,
+  minBookingMinutes: 60,
+  surface: 'Grama sintética',
+  dimensions: '40m x 20m',
+  rules: 'Usar chuteira society.',
+  amenities: ['lighting'],
   ...overrides,
 });
 
@@ -129,6 +137,31 @@ describe('manageLocationFilters', () => {
     ]);
   });
 
+  it('prioriza pendência da conta agregada sem duplicar mensalidade irregular', () => {
+    const issues = getLocationCommercialIssues(baseLocation({
+      subscriptionStatus: 'ACTIVE',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'OVERDUE',
+    }));
+
+    expect(issues).toContain('conta comercial irregular');
+    expect(issues).not.toContain('mensalidade irregular');
+  });
+
+  it('mantém disponibilidade pública baseada no status individual da quadra', () => {
+    expect(isLocationCommerciallyAvailable(baseLocation({
+      subscriptionStatus: 'ACTIVE',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'OVERDUE',
+    }))).toBe(true);
+
+    expect(isLocationCommerciallyAvailable(baseLocation({
+      subscriptionStatus: 'OVERDUE',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'ACTIVE',
+    }))).toBe(false);
+  });
+
   it('gera checklist de qualidade para publicação da quadra', () => {
     const checklist = getLocationQualityChecklist(
       baseLocation({ phone: '11999999999', photoUrl: 'https://example.com/photo.jpg' }),
@@ -136,7 +169,7 @@ describe('manageLocationFilters', () => {
       ['https://example.com/photo.jpg'],
     );
 
-    expect(checklist).toHaveLength(9);
+    expect(checklist).toHaveLength(12);
     expect(checklist.every((item) => item.complete)).toBe(true);
 
     const incomplete = getLocationQualityChecklist(
@@ -146,6 +179,11 @@ describe('manageLocationFilters', () => {
         whatsapp: undefined,
         website: undefined,
         instagram: undefined,
+        latitude: undefined,
+        longitude: undefined,
+        openingTime: '',
+        closingTime: '',
+        operatingDays: [],
         amenities: [],
         hasParking: false,
         hasLighting: false,
@@ -159,6 +197,52 @@ describe('manageLocationFilters', () => {
     );
 
     expect(incomplete.filter((item) => !item.complete).map((item) => item.id))
-      .toEqual(['identity', 'contact', 'photos', 'active-fields', 'pricing', 'amenities', 'commercial']);
+      .toEqual([
+        'identity',
+        'contact',
+        'geolocation',
+        'operating-hours',
+        'photos',
+        'active-fields',
+        'pricing',
+        'field-details',
+        'amenities',
+        'commercial',
+      ]);
+  });
+
+  it('marca pendencia quando campos ativos nao possuem detalhes operacionais completos', () => {
+    const checklist = getLocationQualityChecklist(
+      baseLocation({ phone: '11999999999', photoUrl: 'https://example.com/photo.jpg' }),
+      [baseField({
+        playersPerTeam: undefined,
+        minBookingMinutes: undefined,
+        surface: '',
+        dimensions: '',
+        rules: '',
+        amenities: [],
+        isCovered: false,
+      })],
+      ['https://example.com/photo.jpg'],
+    );
+
+    expect(checklist.find((item) => item.id === 'field-details')?.complete).toBe(false);
+  });
+
+  it('marca pendencia quando horarios ou geolocalizacao nao foram definidos', () => {
+    const checklist = getLocationQualityChecklist(
+      baseLocation({
+        phone: '11999999999',
+        photoUrl: 'https://example.com/photo.jpg',
+        latitude: undefined,
+        longitude: undefined,
+        operatingDays: [],
+      }),
+      [baseField()],
+      ['https://example.com/photo.jpg'],
+    );
+
+    expect(checklist.find((item) => item.id === 'geolocation')?.complete).toBe(false);
+    expect(checklist.find((item) => item.id === 'operating-hours')?.complete).toBe(false);
   });
 });

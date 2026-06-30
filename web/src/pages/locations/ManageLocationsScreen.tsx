@@ -36,6 +36,8 @@ import {
   Delete as DeleteIcon,
   AdminPanelSettings as AdminIcon,
   ReceiptLong as ReceiptIcon,
+  EmojiEvents as TrophyIcon,
+  LocalOffer as OfferIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, where, onSnapshot, limit, Timestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes } from 'firebase/storage';
@@ -61,6 +63,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
 import {
   Location,
+  FieldType,
   FIELD_TYPE_CONFIG,
   LOCATION_BILLING_CYCLE_LABELS,
   LOCATION_BILLING_PLAN_LABELS,
@@ -83,6 +86,10 @@ import {
   getLocationSubscriptionStatus,
   locationMatchesManageFilters,
 } from './manageLocationFilters';
+import {
+  getBestRatedLocations,
+  getCheapestLocationsByType,
+} from './manageLocationRankings';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -439,6 +446,16 @@ export const ManageLocationsScreen: React.FC = () => {
     (billingSummary?.locations || []).map((row) => [row.id, row]),
   ), [billingSummary]);
 
+  const bestRatedLocations = useMemo(
+    () => getBestRatedLocations(filteredLocations, 3),
+    [filteredLocations],
+  );
+
+  const cheapestLocationsByType = useMemo(
+    () => getCheapestLocationsByType(filteredLocations),
+    [filteredLocations],
+  );
+
   const canManage = (loc: Location) =>
     isAdmin || (user?.id ? canManageLocation(loc, user.id) : false);
 
@@ -471,6 +488,13 @@ export const ManageLocationsScreen: React.FC = () => {
       'id',
       'nome',
       'owner_uid',
+      'venue_account_id',
+      'venue_account_status',
+      'venue_account_scope',
+      'venue_account_plan',
+      'venue_account_total_centavos',
+      'venue_account_quadras',
+      'venue_account_campos_ativos',
       'cidade',
       'estado',
       'publicacao',
@@ -492,6 +516,13 @@ export const ManageLocationsScreen: React.FC = () => {
       row.id,
       row.name,
       row.ownerId,
+      row.venueAccountId,
+      row.venueAccountStatus,
+      row.venueAccountChargeScope,
+      row.venueAccountPlanLabel || row.venueAccountPlanCode,
+      row.venueAccountMonthlyTotalCents,
+      row.venueAccountLinkedLocationsCount,
+      row.venueAccountActiveFieldsCount,
       row.city,
       row.state,
       row.publicationStatus,
@@ -537,6 +568,9 @@ export const ManageLocationsScreen: React.FC = () => {
     }).format(amountCents / 100);
   };
 
+  const getFieldTypeLabel = (fieldType?: FieldType | null) =>
+    fieldType ? FIELD_TYPE_CONFIG[fieldType]?.label || fieldType : 'Quadra';
+
 const formatBillingDate = (iso?: string | null) => {
   if (!iso) return null;
   const parsed = new Date(iso);
@@ -553,6 +587,30 @@ const getBillingPlanLabel = (location: Pick<Location, 'billingPlanCode' | 'billi
 const getBillingCycleLabel = (cycle?: string | null) => {
   if (!cycle) return null;
   return LOCATION_BILLING_CYCLE_LABELS[cycle as LocationBillingCycle] || cycle;
+};
+
+const getVenueAccountScopeLabel = (scope?: string | null) => {
+  if (scope === 'OWNER') return 'Cobrança por dono';
+  if (scope === 'FIELD_COUNT') return 'Cobrança por campo';
+  if (scope === 'MANUAL_OVERRIDE') return 'Cobrança manual';
+  if (scope === 'LOCATION') return 'Cobrança por quadra';
+  return null;
+};
+
+const getVenueAccountStatusLabel = (status?: string | null) => {
+  if (status === 'TRIAL') return 'Conta em teste';
+  if (status === 'ACTIVE') return 'Conta em dia';
+  if (status === 'OVERDUE') return 'Conta em atraso';
+  if (status === 'SUSPENDED') return 'Conta suspensa';
+  if (status === 'CANCELLED') return 'Conta cancelada';
+  return null;
+};
+
+const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warning' | 'error' | 'default' => {
+  if (status === 'TRIAL' || status === 'ACTIVE') return 'success';
+  if (status === 'OVERDUE') return 'warning';
+  if (status === 'SUSPENDED' || status === 'CANCELLED') return 'error';
+  return 'default';
 };
 
   const handlePublicationStatus = async (
@@ -1150,6 +1208,139 @@ const getBillingCycleLabel = (cycle?: string | null) => {
                 </Box>
               </>
             )}
+            {(bestRatedLocations.length > 0 || cheapestLocationsByType.length > 0) && (
+              <Card
+                variant="outlined"
+                sx={{
+                  mb: 2,
+                  overflow: 'hidden',
+                  borderColor: theme.palette.success.light,
+                  background: `linear-gradient(135deg, ${theme.palette.success.light}18 0%, ${theme.palette.background.paper} 42%, ${theme.palette.warning.light}14 100%)`,
+                }}
+              >
+                <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    {bestRatedLocations.length > 0 && (
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              bgcolor: 'warning.light',
+                              color: 'warning.contrastText',
+                            }}
+                          >
+                            <TrophyIcon fontSize="small" />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={800}>
+                              Melhores quadras
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Nota real, avaliações e jogos como desempate.
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: 'repeat(3, minmax(210px, 1fr))', sm: 'repeat(3, minmax(0, 1fr))' },
+                            gap: 1,
+                            overflowX: { xs: 'auto', sm: 'visible' },
+                            pb: { xs: 0.5, sm: 0 },
+                          }}
+                        >
+                          {bestRatedLocations.map((item, index) => (
+                            <Card
+                              key={item.location.id}
+                              variant="outlined"
+                              sx={{ bgcolor: 'background.paper', minWidth: { xs: 210, sm: 0 } }}
+                            >
+                              <CardActionArea onClick={() => navigate(`/location/${item.location.id}`)}>
+                                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+                                  <Stack direction="row" justifyContent="space-between" spacing={1}>
+                                    <Typography variant="caption" color="text.secondary">
+                                      #{index + 1}
+                                    </Typography>
+                                    <Rating value={item.rating} precision={0.1} readOnly size="small" />
+                                  </Stack>
+                                  <Typography variant="body2" fontWeight={800} noWrap>
+                                    {item.location.name}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {item.rating.toFixed(1)} de nota · {item.ratingCount} avaliação(ões)
+                                  </Typography>
+                                </CardContent>
+                              </CardActionArea>
+                            </Card>
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                    {cheapestLocationsByType.length > 0 && (
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              bgcolor: 'success.light',
+                              color: 'success.contrastText',
+                            }}
+                          >
+                            <OfferIcon fontSize="small" />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={800}>
+                              Mais baratas por tipo
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Preço mínimo por hora calculado no backend.
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 1,
+                            overflowX: 'auto',
+                            pb: 0.5,
+                          }}
+                        >
+                          {cheapestLocationsByType.map((item) => (
+                            <Card
+                              key={item.fieldType}
+                              variant="outlined"
+                              sx={{ minWidth: 178, bgcolor: 'background.paper' }}
+                            >
+                              <CardActionArea onClick={() => navigate(`/location/${item.location.id}`)}>
+                                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+                                  <Chip
+                                    size="small"
+                                    label={getFieldTypeLabel(item.fieldType)}
+                                    sx={{ mb: 0.75 }}
+                                  />
+                                  <Typography variant="h6" fontWeight={900} lineHeight={1.1}>
+                                    {formatCurrency(item.priceCents)}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" noWrap>
+                                    {item.location.name}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" display="block">
+                                    {item.activeFieldCount || 1} campo(s) ativo(s)
+                                  </Typography>
+                                </CardContent>
+                              </CardActionArea>
+                            </Card>
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {t('locations.localsCount', { count: filteredLocations.length })}
               {searchQuery && ` ${t('locations.searchingFor', { query: searchQuery })}`}
@@ -1194,6 +1385,25 @@ const getBillingCycleLabel = (cycle?: string | null) => {
                 const commercialIssues = getLocationCommercialIssues(location);
                 const hasCommercialRequest = Boolean(location.latestCommercialRequestStatus);
                 const requestPending = location.latestCommercialRequestStatus === 'PENDING_REVIEW';
+                const venueAccountId = billingRow?.venueAccountId || location.venueAccountId || null;
+                const venueAccountStatus = billingRow?.venueAccountStatus || location.venueAccountStatus || null;
+                const venueAccountScope = billingRow?.venueAccountChargeScope || location.venueAccountChargeScope || null;
+                const venueAccountPlanLabel =
+                  billingRow?.venueAccountPlanLabel ||
+                  location.venueAccountPlanLabel ||
+                  null;
+                const venueAccountMonthlyTotalCents =
+                  billingRow?.venueAccountMonthlyTotalCents ??
+                  location.venueAccountMonthlyTotalCents ??
+                  null;
+                const venueAccountLinkedLocationsCount =
+                  billingRow?.venueAccountLinkedLocationsCount ??
+                  location.venueAccountLinkedLocationsCount ??
+                  null;
+                const venueAccountActiveFieldsCount =
+                  billingRow?.venueAccountActiveFieldsCount ??
+                  location.venueAccountActiveFieldsCount ??
+                  null;
 
                 return (
                   <Card key={location.id} sx={{ position: 'relative' }}>
@@ -1335,6 +1545,60 @@ const getBillingCycleLabel = (cycle?: string | null) => {
                                   variant="outlined"
                                 />
                               ) : null}
+                              {isAdmin && venueAccountId && (
+                                <>
+                                  <Chip
+                                    label="Conta comercial"
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                  {getVenueAccountStatusLabel(venueAccountStatus) && (
+                                    <Chip
+                                      label={getVenueAccountStatusLabel(venueAccountStatus)}
+                                      size="small"
+                                      color={getVenueAccountStatusColor(venueAccountStatus)}
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {getVenueAccountScopeLabel(venueAccountScope) && (
+                                    <Chip
+                                      label={getVenueAccountScopeLabel(venueAccountScope)}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {venueAccountPlanLabel && (
+                                    <Chip
+                                      label={`Plano ${venueAccountPlanLabel}`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {typeof venueAccountMonthlyTotalCents === 'number' && (
+                                    <Chip
+                                      label={`Conta ${formatCurrency(venueAccountMonthlyTotalCents)}`}
+                                      size="small"
+                                      color="success"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {typeof venueAccountLinkedLocationsCount === 'number' && (
+                                    <Chip
+                                      label={`${venueAccountLinkedLocationsCount} quadra(s) no pacote`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {typeof venueAccountActiveFieldsCount === 'number' && (
+                                    <Chip
+                                      label={`${venueAccountActiveFieldsCount} campo(s) ativos`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                </>
+                              )}
                               {isAdmin && billingRow && (
                                 <>
                                   <Chip
@@ -1411,6 +1675,16 @@ const getBillingCycleLabel = (cycle?: string | null) => {
                                 {commercialIssues.length === 0
                                   ? 'Cadastro comercial completo e visível para usuários.'
                                   : `Pendências: ${commercialIssues.slice(0, 4).join(', ')}${commercialIssues.length > 4 ? '...' : ''}.`}
+                              </Alert>
+                            )}
+                            {isAdmin && venueAccountId && (
+                              <Alert
+                                severity={venueAccountStatus === 'OVERDUE' || venueAccountStatus === 'SUSPENDED' ? 'warning' : 'info'}
+                                sx={{ mt: 1 }}
+                              >
+                                Esta quadra está vinculada à conta comercial agregada {venueAccountId}
+                                {getVenueAccountScopeLabel(venueAccountScope) ? ` · ${getVenueAccountScopeLabel(venueAccountScope)}` : ''}
+                                {typeof venueAccountLinkedLocationsCount === 'number' ? ` · ${venueAccountLinkedLocationsCount} quadra(s) no mesmo contrato` : ''}.
                               </Alert>
                             )}
                             {(isAdmin &&

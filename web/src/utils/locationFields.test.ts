@@ -33,6 +33,7 @@ describe('locationFields', () => {
       activeFieldCount: 1,
       hasActiveFields: true,
       primaryFieldType: 'SOCIETY',
+      playersPerTeam: null,
     });
   });
 
@@ -48,6 +49,7 @@ describe('locationFields', () => {
       activeFieldCount: 0,
       hasActiveFields: false,
       primaryFieldType: 'AREIA',
+      playersPerTeam: null,
     });
   });
 
@@ -65,12 +67,20 @@ describe('locationFields', () => {
       surface: 'Piso',
       isCovered: true,
       dimensions: '40m x 20m',
+      playersPerTeam: 5,
+      minBookingMinutes: 90,
+      rules: 'Sem chuteira de trava.',
+      amenities: ['covered', 'lighting'],
     };
 
     expect(fieldToDraft(field)).toMatchObject({
       id: 'field-1',
       persistedId: 'field-1',
       hourlyPrice: '',
+      playersPerTeam: '5',
+      minBookingMinutes: '90',
+      rules: 'Sem chuteira de trava.',
+      amenities: ['covered', 'lighting'],
       existingPhotos: ['https://example.com/cover.jpg'],
       isCovered: true,
     });

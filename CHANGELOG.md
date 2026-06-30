@@ -24,6 +24,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.32.2] - 2026-06-30
+
+#### Mudado
+- `Location` no Android e no KMP agora inclui campos comerciais, de conta de quadra e agregados de descoberta.
+- Mappers Android/KMP preservam os campos monetizados nas duas direções.
+- Desserialização Firestore do shared lê os campos comerciais e agregados usados pela web.
+- Docs e matriz de QA registram o contrato cross-platform de quadras monetizadas.
+
+_Issues: #3109, #3129 · PRs: #3166_
+
 ### [1.32.1] - 2026-06-28
 
 #### Corrigido
@@ -68,6 +78,88 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.43.34] - 2026-06-30
+
+#### Mudado
+- `ManageLocationsScreen` passa a renderizar rankings derivados do conjunto filtrado.
+- `manageLocationRankings` centraliza a regra de melhores quadras e quadras mais baratas por tipo.
+- Cobertura adicionada para ranking por avaliação e menor preço por tipo.
+
+_Issues: #3107 · PRs: #3166_
+
+### [1.43.33] - 2026-06-30
+
+#### Mudado
+- `FieldOwnerDashboardScreen` passa a consumir agregados denormalizados em `locations`.
+- Tipos web de `Location` agora expõem agregados comerciais mantidos pelo backend.
+- Modelo KMP de `Location` foi alinhado com os novos campos denormalizados.
+
+_Issues: #3106, #3128 · PRs: #3166_
+
+### [1.43.32] - 2026-06-30
+
+#### Corrigido
+- `isLocationCommerciallyAvailable` não usa mais `venueAccountStatus` como substituto silencioso de `subscriptionStatus`.
+- `getLocationCommercialIssues` torna mutuamente exclusivos os avisos de mensalidade individual e conta agregada.
+
+_Issues: #3121 · PRs: #3166_
+
+### [1.43.31] - 2026-06-30
+
+#### Adicionado
+- Campos editáveis de funcionamento no `LocationFormScreen`.
+- Itens `geolocation` e `operating-hours` no checklist web de qualidade da quadra.
+
+#### Corrigido
+- `ownerDashboard` agora propaga latitude/longitude para o checklist de completude.
+
+_Issues: #3122_
+
+### [1.43.30] - 2026-06-30
+
+#### Adicionado
+- Formulário web em `/admin/users` usando a callable `upsertVenueAccount`.
+- Teste cobrindo o salvamento da conta comercial agregada.
+
+#### Mudado
+- O gerenciamento de usuários deixa de apenas exibir `venue_accounts` e passa a operar a configuração comercial centralizada.
+
+_Issues: #3121_
+
+### [1.43.29] - 2026-06-30
+
+#### Adicionado
+- Modelo web de `Field` e drafts de quadra com `playersPerTeam`, `minBookingMinutes`, `rules` e `amenities`.
+- Testes de checklist cobrindo pendência de detalhes operacionais por campo.
+
+#### Mudado
+- `LocationFieldsEditor` ganhou controles responsivos para capacidade, duração mínima, regras e comodidades por campo.
+- `getLocationQualityChecklist` agora exige detalhes mínimos dos campos ativos antes de considerar o cadastro comercial completo.
+
+_Issues: #3122_
+
+### [1.43.28] - 2026-06-30
+
+#### Adicionado
+- Cobertura adicionada para garantir que uma conta comercial agregada suspensa bloqueia a disponibilidade mesmo quando o status legado da quadra está ativo.
+
+#### Mudado
+- `FieldOwnerDashboardScreen` agora lê os campos `venueAccount*` denormalizados em `locations`.
+- `ownerDashboard` propaga `venueAccountStatus` para os cálculos de checklist, issues comerciais e disponibilidade.
+
+_Issues: #3125, #3135_
+
+### [1.43.27] - 2026-06-30
+
+#### Adicionado
+- Integração web com `venueAccount` no CRM admin e com campos `venueAccount*` no resumo financeiro de quadras.
+- Teste de regras garantindo leitura controlada de `venue_accounts` e bloqueio de escrita cliente nos campos denormalizados.
+
+#### Mudado
+- Filtros e alertas comerciais de quadras passam a considerar `venueAccountStatus` antes do status legado por quadra.
+
+_Issues: #3087, #3119, #3122, #3135_
 
 ### [1.43.26] - 2026-06-29
 
@@ -623,6 +715,64 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.23] - 2026-06-30
+
+#### Adicionado
+- `recomputeLocationCommercialStats` para recomputar uma quadra específica ou um lote limitado.
+- `rebuildLocationCommercialStats` como job diário.
+- Triggers `onNestedLocationFieldWrittenUpdateStats`, `onRootFieldWrittenUpdateLocationStats`, `onLocationReviewWrittenUpdateStats` e `onGameWrittenUpdateLocationStats`.
+- Helpers testados para agregados de campos/preços, jogos e reviews.
+
+_Issues: #3106, #3128 · PRs: #3166_
+
+### [1.2.22] - 2026-06-30
+
+#### Corrigido
+- `backfill-venue-commercial-data` compara o snapshot existente antes de marcar conta agregada como pendente de sync.
+- Valores `0` em centavos passam a ser tratados como válidos no backfill.
+- `persistVenueAccount` registra falha de evento/audit log sem transformar uma atualização já persistida em erro para o callable.
+
+_Issues: #3121 · PRs: #3166_
+
+### [1.2.21] - 2026-06-30
+
+#### Corrigido
+- `upsertVenueAccount` passa a validar `billingDueDay` com limite máximo de 31.
+- Adiciona cobertura de regressão para preservar dados comerciais existentes e validar campos de cobrança antes da persistência.
+
+_Issues: #3122_
+
+### [1.2.20] - 2026-06-30
+
+#### Mudado
+- `buildLocationCommercialRequestSnapshot` adiciona pendências `geolocation` e `operating-hours`.
+- `ready_for_publication_approval` agora depende de mapa e horários operacionais válidos.
+
+_Issues: #3122_
+
+### [1.2.19] - 2026-06-30
+
+#### Mudado
+- `setLocationPublicationStatus` calcula o snapshot comercial antes de publicar e bloqueia `PUBLISHED` quando `ready_for_publication_approval` não é verdadeiro.
+
+#### Corrigido
+- Fecha o gap em que uma quadra poderia ser publicada sem o evento comercial/financeiro mínimo definido.
+
+_Issues: #3121_
+
+### [1.2.18] - 2026-06-30
+
+#### Adicionado
+- Nova coleção `venue_accounts/{ownerUid}` com eventos imutáveis em subcoleção e auditoria global.
+- Novos callables admin-only: `upsertVenueAccount`, `linkLocationToVenueAccount`, `unlinkLocationFromVenueAccount`.
+- Backfill de monetização passa a criar/sincronizar contas comerciais agregadas e denormalizar `venue_account_*` nas quadras elegíveis.
+- Testes unitários cobrindo criação, vínculo, desvínculo, auditoria e rejeição de vínculos inválidos.
+
+#### Mudado
+- Firestore rules protegem `venue_accounts` e impedem escrita cliente nos campos comerciais agregados de `locations`.
+
+_Issues: #3087, #3119, #3122, #3135_
 
 ### [1.2.17] - 2026-06-29
 

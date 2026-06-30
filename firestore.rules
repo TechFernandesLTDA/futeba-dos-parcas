@@ -1128,6 +1128,16 @@ service cloud.firestore {
       }
     }
 
+    match /venue_accounts/{accountId} {
+      allow read: if isAuthenticated() && (isAdmin() || userId() == accountId);
+      allow create, update, delete: if false;
+
+      match /events/{eventId} {
+        allow read: if isAuthenticated() && (isAdmin() || userId() == accountId);
+        allow create, update, delete: if false;
+      }
+    }
+
     match /locations/{locationId} {
 
       // ------------------------------------------
@@ -1219,7 +1229,15 @@ service cloud.firestore {
           fieldUnchanged('last_payment_at') &&
           fieldUnchanged('last_payment_amount_cents') &&
           fieldUnchanged('last_payment_period_key') &&
-          fieldUnchanged('last_payment_id');
+          fieldUnchanged('last_payment_id') &&
+          fieldUnchanged('venue_account_id') &&
+          fieldUnchanged('venue_account_status') &&
+          fieldUnchanged('venue_account_charge_scope') &&
+          fieldUnchanged('venue_account_plan_code') &&
+          fieldUnchanged('venue_account_plan_label') &&
+          fieldUnchanged('venue_account_monthly_total_cents') &&
+          fieldUnchanged('venue_account_linked_locations_count') &&
+          fieldUnchanged('venue_account_active_fields_count');
       }
 
       // ------------------------------------------

@@ -38,7 +38,7 @@ export const getLocationPublicationStatus = (location: Location): LocationPublic
   location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
 
 export const getLocationSubscriptionStatus = (location: Location): LocationSubscriptionStatus =>
-  location.subscriptionStatus || 'ACTIVE';
+  location.venueAccountStatus || location.subscriptionStatus || 'ACTIVE';
 
 const matchesBooleanFilter = (value: boolean | undefined, filter: LocationBooleanFilter) => {
   if (filter === 'ALL') return true;
@@ -65,12 +65,16 @@ const matchesMonthlyFeeFilter = (monthlyFeeCents: number | undefined, filter: Lo
 export const getLocationCommercialIssues = (location: Location): string[] => {
   const issues: string[] = [];
   const publicationStatus = getLocationPublicationStatus(location);
-  const subscriptionStatus = getLocationSubscriptionStatus(location);
+  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
 
   if (location.isActive !== true) issues.push('inativa');
   if (location.isVerified !== true) issues.push('não verificada');
   if (publicationStatus !== 'PUBLISHED') issues.push('não publicada');
-  if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) issues.push('mensalidade irregular');
+  if (location.venueAccountId && !['TRIAL', 'ACTIVE'].includes(location.venueAccountStatus || 'ACTIVE')) {
+    issues.push('conta comercial irregular');
+  } else if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) {
+    issues.push('mensalidade irregular');
+  }
   if ((location.fieldCount || 0) <= 0) issues.push('sem quadras cadastradas');
   if (location.hasActiveFields === false) issues.push('sem quadras ativas');
   if (!location.monthlyFeeCents || location.monthlyFeeCents <= 0) issues.push('sem mensalidade');
@@ -91,8 +95,35 @@ export const getLocationQualityChecklist = (
   const hasPricedField = activeFields.some((field) =>
     typeof field.hourlyPrice === 'number' && field.hourlyPrice > 0,
   );
+  const hasCompleteFieldDetails = activeFields.length > 0 && activeFields.every((field) => {
+    const hasPlayersPerTeam = typeof field.playersPerTeam === 'number' &&
+      field.playersPerTeam >= 3 &&
+      field.playersPerTeam <= 11;
+    const hasMinBooking = typeof field.minBookingMinutes === 'number' &&
+      field.minBookingMinutes >= 30 &&
+      field.minBookingMinutes <= 240 &&
+      field.minBookingMinutes % 30 === 0;
+    return hasPlayersPerTeam &&
+      hasMinBooking &&
+      Boolean(field.surface?.trim()) &&
+      Boolean(field.dimensions?.trim()) &&
+      Boolean(field.rules?.trim()) &&
+      Boolean(field.amenities?.length || field.isCovered);
+  });
   const hasContact = Boolean(location.phone || location.whatsapp || location.website || location.instagram);
   const hasAddress = Boolean(location.address && location.city && location.state);
+  const hasGeolocation = typeof location.latitude === 'number' &&
+    Number.isFinite(location.latitude) &&
+    typeof location.longitude === 'number' &&
+    Number.isFinite(location.longitude);
+  const hasOperatingHours = Boolean(
+    location.openingTime &&
+    location.closingTime &&
+    location.openingTime !== location.closingTime &&
+    location.operatingDays?.length &&
+    typeof location.minGameDurationMinutes === 'number' &&
+    location.minGameDurationMinutes >= 30,
+  );
   const hasAmenities = getLocationAmenitySet(location).size > 0;
   const publicationStatus = getLocationPublicationStatus(location);
   const subscriptionStatus = getLocationSubscriptionStatus(location);
@@ -118,6 +149,20 @@ export const getLocationQualityChecklist = (
       description: 'Telefone, WhatsApp, site ou Instagram reduzem atrito operacional.',
       complete: hasContact,
       actionLabel: 'Adicionar contato',
+    },
+    {
+      id: 'geolocation',
+      label: 'Ponto no mapa',
+      description: 'Latitude e longitude evitam seleção incorreta e melhoram descoberta por proximidade.',
+      complete: hasGeolocation,
+      actionLabel: 'Capturar localização',
+    },
+    {
+      id: 'operating-hours',
+      label: 'Horários de funcionamento',
+      description: 'Dias, abertura, fechamento e duração mínima precisam estar claros para reservas.',
+      complete: hasOperatingHours,
+      actionLabel: 'Definir horários',
     },
     {
       id: 'photos',
@@ -146,6 +191,13 @@ export const getLocationQualityChecklist = (
       description: 'Preço/hora preenchido habilita comparação e filtros comerciais.',
       complete: hasPricedField,
       actionLabel: 'Definir preços',
+    },
+    {
+      id: 'field-details',
+      label: 'Detalhes operacionais dos campos',
+      description: 'Capacidade, superfície, dimensões, duração, regras e comodidades por campo precisam estar completos.',
+      complete: hasCompleteFieldDetails,
+      actionLabel: 'Completar detalhes dos campos',
     },
     {
       id: 'amenities',

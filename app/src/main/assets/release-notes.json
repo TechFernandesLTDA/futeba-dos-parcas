@@ -1,7 +1,28 @@
 {
   "platform": "android",
-  "generatedAt": "2026-06-30T01:14:13.739Z",
+  "generatedAt": "2026-06-30T05:46:25.054Z",
   "notes": [
+    {
+      "version": "1.32.2",
+      "buildNumber": 59,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": false,
+      "headline": "O Android acompanha melhor o contrato comercial das quadras monetizadas.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Preserva status de publicação, mensalidade e conta comercial ao carregar quadras.",
+        "Mantém agregados de quadras, preços e jogos disponíveis para listagem/detalhe mobile.",
+        "Reduz risco de uma quadra indisponível aparecer como selecionável por fallback legado."
+      ],
+      "issueRefs": [
+        3109,
+        3129
+      ]
+    },
     {
       "version": "1.32.1",
       "buildNumber": 58,

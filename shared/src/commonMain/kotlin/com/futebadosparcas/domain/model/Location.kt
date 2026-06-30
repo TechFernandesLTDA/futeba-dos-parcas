@@ -40,10 +40,23 @@ data class Location(
     @SerialName("publication_status") val publicationStatus: String = "DRAFT",
     @SerialName("commercial_status") val commercialStatus: String = "TRIAL",
     @SerialName("subscription_status") val subscriptionStatus: String = "TRIAL",
+    @SerialName("billing_plan_code") val billingPlanCode: String? = null,
+    @SerialName("billing_plan_label") val billingPlanLabel: String? = null,
+    @SerialName("billing_cycle") val billingCycle: String? = null,
+    @SerialName("billing_base_fee_cents") val billingBaseFeeCents: Long? = null,
     @SerialName("monthly_fee_cents") val monthlyFeeCents: Long? = null,
     @SerialName("billing_due_day") val billingDueDay: Int? = null,
     @SerialName("billing_starts_at") val billingStartsAt: Long? = null,
     @SerialName("billing_expires_at") val billingExpiresAt: Long? = null,
+    @SerialName("billing_exception_note") val billingExceptionNote: String? = null,
+    @SerialName("venue_account_id") val venueAccountId: String? = null,
+    @SerialName("venue_account_status") val venueAccountStatus: String? = null,
+    @SerialName("venue_account_charge_scope") val venueAccountChargeScope: String? = null,
+    @SerialName("venue_account_plan_code") val venueAccountPlanCode: String? = null,
+    @SerialName("venue_account_plan_label") val venueAccountPlanLabel: String? = null,
+    @SerialName("venue_account_monthly_total_cents") val venueAccountMonthlyTotalCents: Long? = null,
+    @SerialName("venue_account_linked_locations_count") val venueAccountLinkedLocationsCount: Int = 0,
+    @SerialName("venue_account_active_fields_count") val venueAccountActiveFieldsCount: Int = 0,
     @SerialName("published_at") val publishedAt: Long? = null,
     @SerialName("published_by") val publishedBy: String? = null,
     @SerialName("unpublished_reason") val unpublishedReason: String? = null,
@@ -60,6 +73,7 @@ data class Location(
 
     // Infraestrutura (amenidades)
     val amenities: List<String> = emptyList(), // ["estacionamento", "vestiario", "churrasqueira", "bar", "restaurante"]
+    @SerialName("amenities_normalized") val amenitiesNormalized: List<String> = emptyList(),
 
     // Contato
     val phone: String? = null,
@@ -74,8 +88,21 @@ data class Location(
 
     // Dados Denormalizados de Fields (para reduzir queries)
     val fieldCount: Int = 0,
+    @SerialName("active_field_count") val activeFieldCount: Int = 0,
+    @SerialName("active_field_types") val activeFieldTypes: List<String> = emptyList(),
+    @SerialName("active_field_amenities") val activeFieldAmenities: List<String> = emptyList(),
     val primaryFieldType: String? = null, // Tipo de campo mais comum
     val hasActiveFields: Boolean = false,
+    @SerialName("min_hourly_price_cents") val minHourlyPriceCents: Long? = null,
+    @SerialName("average_hourly_price_cents") val averageHourlyPriceCents: Long? = null,
+    @SerialName("games_count") val gamesCount: Int = 0,
+    @SerialName("finished_games_count") val finishedGamesCount: Int = 0,
+    @SerialName("upcoming_games_count") val upcomingGamesCount: Int = 0,
+    @SerialName("games_this_week_count") val gamesThisWeekCount: Int = 0,
+    @SerialName("games_last_30_days_count") val gamesLast30DaysCount: Int = 0,
+    @SerialName("last_game_at") val lastGameAt: Long? = null,
+    @SerialName("last_activity_at") val lastActivityAt: Long? = null,
+    @SerialName("location_stats_updated_at") val locationStatsUpdatedAt: Long? = null,
 
     // Auditoria
     val createdAt: Long? = null,

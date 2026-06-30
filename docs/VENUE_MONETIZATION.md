@@ -10,6 +10,12 @@ Legacy venues that are already `is_active == true` and `is_verified == true` are
 
 ## Location Commercial Fields
 
+Location billing fields remain supported for legacy compatibility and per-venue
+visibility, but the account-level commercial source of truth is
+`venue_accounts/{ownerUid}`. New admin workflows should prefer the account
+document and let Cloud Functions denormalize the current account state back into
+linked locations.
+
 - `publication_status`: `DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `SUSPENDED`, or `REJECTED`.
 - `commercial_status`: mirrors the commercial account state: `TRIAL`, `ACTIVE`, `OVERDUE`, `SUSPENDED`, or `CANCELLED`.
 - `subscription_status`: billing status used by UI filters and eligibility.
@@ -26,6 +32,43 @@ Legacy venues that are already `is_active == true` and `is_verified == true` are
 - `unpublished_reason`: reason for suspension/rejection/unpublication.
 - `owner_notes`: notes provided by the owner.
 - `admin_notes`: internal admin notes.
+- `venue_account_id`: owner-level commercial account linked to this venue.
+- `venue_account_status`: denormalized account status used by availability and admin filters.
+- `venue_account_charge_scope`: account billing scope (`OWNER`, `LOCATION`, `FIELD_COUNT`, `MANUAL_OVERRIDE`).
+- `venue_account_plan_code` / `venue_account_plan_label`: denormalized plan shown in admin lists.
+- `venue_account_monthly_total_cents`: current account monthly total, denormalized for dashboards and exports.
+- `venue_account_linked_locations_count`: number of venues on the same account.
+- `venue_account_active_fields_count`: active fields counted for account-level billing.
+
+## Venue Accounts
+
+`venue_accounts/{ownerUid}` represents the commercial contract for one field
+owner. The document id intentionally matches the owner's user id so admin,
+rules, backfill, and CRM screens can join data without an extra lookup table.
+
+Core fields:
+
+- `owner_uid`: owner user id.
+- `status`: `TRIAL`, `ACTIVE`, `OVERDUE`, `SUSPENDED`, or `CANCELLED`.
+- `billing_scope`: `OWNER`, `LOCATION`, `FIELD_COUNT`, or `MANUAL_OVERRIDE`.
+- `billing_plan_code` / `billing_plan_label`: internal/commercial plan.
+- `billing_cycle`: `MONTHLY`, `QUARTERLY`, `SEMIANNUAL`, `ANNUAL`, or `CUSTOM`.
+- `billing_base_fee_cents`: owner-level base fee when billing by owner or manual override.
+- `default_location_fee_cents`: fee multiplied by linked venues when billing by location.
+- `price_per_active_field_cents`: fee multiplied by active fields when billing by field count.
+- `monthly_fee_override_cents`: fixed manual override.
+- `billing_due_day`, `billing_starts_at`, `billing_expires_at`: payment schedule.
+- `billing_contact_name`, `billing_contact_email`, `billing_contact_phone`, `billing_contact_document`: finance contact.
+- `linked_location_ids`: venues currently covered by the account.
+- `linked_locations_count`, `published_locations_count`, `active_fields_count`: computed account metrics.
+- `legacy_monthly_fee_total_cents`: sum of legacy per-location monthly fees.
+- `computed_monthly_fee_cents`: authoritative current monthly total for admin CRM and dashboards.
+- `created_at`, `created_by`, `updated_at`, `updated_by`: audit metadata.
+
+Every account change writes an immutable event under
+`venue_accounts/{ownerUid}/events/{eventId}` and a global `audit_logs` entry.
+Client writes are denied by Firestore rules; account mutations must use admin
+Cloud Functions.
 
 ## Protected Operations
 
@@ -33,6 +76,9 @@ The client cannot directly write publication or billing fields unless the caller
 
 - `requestVenueOwnerOnboarding`
 - `reviewVenueOwnerOnboarding`
+- `upsertVenueAccount`
+- `linkLocationToVenueAccount`
+- `unlinkLocationFromVenueAccount`
 - `setLocationPublicationStatus`
 - `setLocationSubscription`
 - `registerLocationSubscriptionPayment`
@@ -44,6 +90,9 @@ The client cannot directly write publication or billing fields unless the caller
 Each function writes both `locations/{locationId}/commercial_events` and global `audit_logs`.
 Billing-sensitive functions also write immutable entries to
 `locations/{locationId}/subscription_ledger`.
+Venue-account functions write immutable entries to
+`venue_accounts/{ownerUid}/events` plus global `audit_logs`, and synchronize the
+denormalized `venue_account_*` fields on linked locations.
 
 ## Owner Commercial Onboarding
 
@@ -124,9 +173,48 @@ Each playable field should be stored under its parent venue at `locations/{locat
 The parent location stores denormalized summary fields for discovery and admin operations:
 
 - `field_count`
+- `active_field_count`
+- `active_field_types`
+- `active_field_amenities`
 - `primary_field_type`
 - `has_active_fields`
+- `min_hourly_price_cents`
+- `average_hourly_price_cents`
+- `games_count`, `finished_games_count`, `upcoming_games_count`
+- `games_this_week_count`, `games_last_30_days_count`
+- `last_game_at`, `last_activity_at`, `location_stats_updated_at`
 - `photos` / `photo_url`
+
+## Cross-Platform Contract
+
+The web app reads Firestore directly and is the fastest-moving surface for venue
+monetization. Android and KMP must still deserialize the same public/commercial
+contract so mobile discovery, create-game location selection, and venue detail
+screens do not silently fall back to stale legacy assumptions.
+
+Minimum parity fields for `locations/{locationId}`:
+
+| Contract area | Firestore fields | Web | KMP/shared | Android legacy model |
+| --- | --- | --- | --- | --- |
+| Visibility | `is_active`, `is_verified`, `publication_status`, `subscription_status`, `has_active_fields` | `web/src/types/location.ts` | `shared/.../domain/model/Location.kt` | `app/.../data/model/Location.kt` |
+| Billing | `commercial_status`, `billing_plan_code`, `billing_plan_label`, `billing_cycle`, `billing_base_fee_cents`, `monthly_fee_cents`, `billing_due_day`, `billing_starts_at`, `billing_expires_at`, `billing_exception_note` | typed and displayed in admin/owner surfaces | deserialized for mobile fallback/status | mapped Android<->KMP |
+| Venue account | `venue_account_id`, `venue_account_status`, `venue_account_charge_scope`, `venue_account_plan_code`, `venue_account_plan_label`, `venue_account_monthly_total_cents`, `venue_account_linked_locations_count`, `venue_account_active_fields_count` | typed and used by CRM/dashboard | deserialized for parity | mapped Android<->KMP |
+| Discovery stats | `active_field_count`, `active_field_types`, `active_field_amenities`, `primary_field_type`, `min_hourly_price_cents`, `average_hourly_price_cents`, game counters and activity timestamps | filters, rankings, owner dashboard | deserialized for mobile list/detail | mapped Android<->KMP |
+
+Fallback rule: Android/KMP may hide owner/admin-only actions until dedicated UI
+exists, but it must not publish, select, rank, or show a venue as available
+unless `isCommerciallyAvailable()` is true. That method intentionally requires
+`PUBLISHED`, `TRIAL`/`ACTIVE`, verified/active status, and active fields.
+
+When adding or renaming any venue commercial field:
+
+- update `web/src/types/location.ts`;
+- update `shared/src/commonMain/kotlin/com/futebadosparcas/domain/model/Location.kt`;
+- update `app/src/main/java/com/futebadosparcas/data/model/Location.kt`;
+- update `app/src/main/java/com/futebadosparcas/util/ModelMappers.kt`;
+- update `shared/src/nativeAndAndroidMain/kotlin/.../LocationFirebaseOperations.kt`;
+- update Firestore Rules/indexes/tests when the field affects permissions or queries;
+- document the release impact in `release-notes/<platform>/<version>.md`.
 
 ## Legacy Backfill Before Broad Monetization
 
@@ -142,7 +230,9 @@ npm run backfill:venues
 ```
 
 The script audits `locations`, nested `locations/{locationId}/fields`, and
-legacy root `fields`. It can safely backfill:
+legacy root `fields`. It also groups venues by `owner_id` to create or
+synchronize `venue_accounts/{ownerUid}` and denormalize `venue_account_*`
+fields back to linked venues. It can safely backfill:
 
 - missing `publication_status`, defaulting to `PENDING_REVIEW`;
 - missing `subscription_status` / `commercial_status`, defaulting to `TRIAL`;
@@ -153,6 +243,10 @@ legacy root `fields`. It can safely backfill:
   exist;
 - field defaults such as `location_id`, `type`, `is_active`, `hourly_price`,
   `photos`, `amenities`, and `managers`.
+- one owner-level venue account per `owner_id`, preserving existing explicit
+  account billing settings where present;
+- `linked_location_ids`, account counts, legacy monthly total, computed monthly
+  total, and denormalized `venue_account_*` fields on each eligible venue.
 
 Only run execute mode after reviewing the dry-run output:
 
@@ -167,6 +261,8 @@ Safety rules:
 - Existing explicit admin decisions are preserved.
 - Venues with missing price, owner, photos, address, or playable fields remain
   in manual review.
+- Venues already linked to a different `venue_account_id` are reported for
+  manual review and are not relinked automatically.
 - Legacy root `fields` are counted and reported to avoid duplicate nested
   field creation.
 - Publication still requires an admin decision through
@@ -193,9 +289,30 @@ Each entry can include `amount_cents`, `period_key`, `payment_id`, `method`,
 billing cycle, base plan amount, negotiated amount, due day, exception note,
 actor, reason, effective date, and server `created_at`.
 
+## Firestore Index Matrix
+
+The commercial venue module keeps index definitions in `firestore.indexes.json`.
+When adding public discovery, admin filters, owner dashboards, or rankings, use
+the existing indexed shapes instead of introducing client-side full scans.
+
+Current venue/discovery index families:
+
+- Public venue discovery: `locations` by `is_active`, `publication_status`, `subscription_status`, `city`, then `rating` or `name`.
+- Public venue rankings by type: `locations` by `is_active`, `primary_field_type`, `city`, then `rating`.
+- Amenity filters: `locations.amenities` with `array-contains`, plus `is_active`, `city`, and `rating`.
+- Owner/admin management: `locations` by `owner_id`, `publication_status`, `subscription_status`, then `name`.
+- Billing/admin follow-up: `locations` by `subscription_status`, `billing_due_day`, then `name`, and by `venue_account_id`, then `name`.
+- Cheapest fields/ranking support: `fields` by `is_active`, `type`, and `hourly_price` for both root field documents and `locations/{locationId}/fields` collection-group queries.
+
+Deploy index-only changes with:
+
+```bash
+firebase deploy --only firestore:indexes --project futebadosparcas
+```
+
 ## Follow-Up Scope
 
 - Add the recurring monthly charge workflow tracked by #3132.
 - Add owner publication/change requests with admin approval tracked by #3115.
-- Firestore indexes must be added when server-side filters replace client filtering.
+- Keep the Firestore index matrix above in sync when server-side filters replace client filtering.
 - Android/KMP UI parity must be handled before a mobile release claiming full support.

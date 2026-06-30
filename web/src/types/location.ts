@@ -4,8 +4,15 @@ export type LocationCommercialStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPEND
 export type LocationSubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
 export type LocationBillingPlanCode = 'TRIAL' | 'BASIC' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
 export type LocationBillingCycle = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUAL' | 'ANNUAL' | 'CUSTOM';
+export type VenueAccountBillingScope = 'OWNER' | 'LOCATION' | 'FIELD_COUNT' | 'MANUAL_OVERRIDE';
 export type LocationCommercialRequestType = 'PUBLICATION' | 'COMMERCIAL_UPDATE';
 export type LocationCommercialRequestStatus = 'PENDING_REVIEW' | 'NEEDS_CHANGES' | 'APPROVED' | 'REJECTED';
+
+export interface LocationHourlyPriceAggregate {
+  minHourlyPriceCents: number;
+  averageHourlyPriceCents: number;
+  activeFieldCount: number;
+}
 
 export interface Location {
   id: string;
@@ -48,6 +55,14 @@ export interface Location {
   billingStartsAt?: Date;
   billingExpiresAt?: Date;
   billingExceptionNote?: string;
+  venueAccountId?: string;
+  venueAccountStatus?: LocationSubscriptionStatus;
+  venueAccountChargeScope?: VenueAccountBillingScope;
+  venueAccountPlanCode?: LocationBillingPlanCode;
+  venueAccountPlanLabel?: string;
+  venueAccountMonthlyTotalCents?: number;
+  venueAccountLinkedLocationsCount?: number;
+  venueAccountActiveFieldsCount?: number;
   publishedAt?: Date;
   publishedBy?: string;
   unpublishedReason?: string;
@@ -102,8 +117,25 @@ export interface Location {
   fieldCount: number;
   fieldType?: FieldType;
   primaryFieldType?: FieldType;
+  activeFieldCount?: number;
+  activeFieldTypes?: FieldType[];
+  activeFieldAmenities?: string[];
   playersPerTeam?: number;
   hasActiveFields: boolean;
+
+  // Backend-maintained commercial aggregates
+  minHourlyPriceCents?: number | null;
+  averageHourlyPriceCents?: number | null;
+  hourlyPriceByType?: Partial<Record<FieldType, LocationHourlyPriceAggregate>>;
+  amenitiesNormalized?: string[];
+  gamesCount?: number;
+  finishedGamesCount?: number;
+  upcomingGamesCount?: number;
+  gamesThisWeekCount?: number;
+  gamesLast30DaysCount?: number;
+  lastGameAt?: Date | null;
+  lastActivityAt?: Date | null;
+  locationStatsUpdatedAt?: Date | null;
   
   createdAt?: Date;
   updatedAt?: Date;
@@ -124,6 +156,10 @@ export interface Field {
   surface?: string;
   isCovered: boolean;
   dimensions?: string;
+  playersPerTeam?: number;
+  minBookingMinutes?: number;
+  rules?: string;
+  amenities?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

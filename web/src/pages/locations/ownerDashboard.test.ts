@@ -21,6 +21,8 @@ const baseLocation = (overrides: Partial<OwnerDashboardLocationLike> = {}): Owne
   country: 'BR',
   neighborhood: 'Centro',
   region: 'Zona Sul',
+  latitude: -23.55052,
+  longitude: -46.633308,
   ownerId: 'owner-123',
   managers: [],
   isVerified: true,
@@ -29,6 +31,7 @@ const baseLocation = (overrides: Partial<OwnerDashboardLocationLike> = {}): Owne
   subscriptionStatus: 'ACTIVE',
   monthlyFeeCents: 19990,
   billingDueDay: 10,
+  venueAccountStatus: 'ACTIVE',
   rating: 4.8,
   ratingCount: 12,
   description: 'Quadra pronta para jogos.',
@@ -58,6 +61,12 @@ const baseField = (overrides: Partial<Field> = {}): Field => ({
   photos: [],
   managers: [],
   isCovered: false,
+  playersPerTeam: 7,
+  minBookingMinutes: 60,
+  surface: 'Grama sintética',
+  dimensions: '40m x 20m',
+  rules: 'Usar chuteira society.',
+  amenities: ['lighting'],
   ...overrides,
 });
 
@@ -95,6 +104,7 @@ describe('ownerDashboard', () => {
         isVerified: false,
         publicationStatus: 'DRAFT',
         subscriptionStatus: 'OVERDUE',
+        venueAccountStatus: undefined,
         monthlyFeeCents: 0,
         billingDueDay: null,
         description: '',
@@ -119,6 +129,23 @@ describe('ownerDashboard', () => {
         'Publicação e mensalidade',
       ]),
     );
+  });
+
+  it('sinaliza status agregado irregular sem derrubar disponibilidade individual', () => {
+    const summary = summarizeOwnerLocationStatus(
+      baseLocation({
+        subscriptionStatus: 'ACTIVE',
+        venueAccountId: 'owner-123',
+        venueAccountStatus: 'SUSPENDED',
+      }),
+      [baseField()],
+      [],
+    );
+
+    expect(summary.subscriptionStatus).toBe('SUSPENDED');
+    expect(summary.commerciallyAvailable).toBe(true);
+    expect(summary.commercialIssues).toContain('conta comercial irregular');
+    expect(summary.commercialIssues).not.toContain('mensalidade irregular');
   });
 
   it('calcula os agregados do dashboard do owner', () => {

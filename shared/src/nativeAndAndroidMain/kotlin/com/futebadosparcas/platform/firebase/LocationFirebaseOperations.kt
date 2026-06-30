@@ -42,6 +42,36 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
             isVerified = get<Boolean?>("is_verified") ?: get<Boolean?>("isVerified") ?: false,
             isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: true,
 
+            // Status comercial/publicacao
+            publicationStatus = get<String?>("publication_status") ?: get<String?>("publicationStatus") ?: "DRAFT",
+            commercialStatus = get<String?>("commercial_status") ?: get<String?>("commercialStatus") ?: "TRIAL",
+            subscriptionStatus = get<String?>("subscription_status") ?: get<String?>("subscriptionStatus") ?: "TRIAL",
+            billingPlanCode = get<String?>("billing_plan_code") ?: get<String?>("billingPlanCode"),
+            billingPlanLabel = get<String?>("billing_plan_label") ?: get<String?>("billingPlanLabel"),
+            billingCycle = get<String?>("billing_cycle") ?: get<String?>("billingCycle"),
+            billingBaseFeeCents = get<Long?>("billing_base_fee_cents") ?: get<Long?>("billingBaseFeeCents"),
+            monthlyFeeCents = get<Long?>("monthly_fee_cents") ?: get<Long?>("monthlyFeeCents"),
+            billingDueDay = get<Long?>("billing_due_day")?.toInt() ?: get<Long?>("billingDueDay")?.toInt(),
+            billingStartsAt = safeLongLocation("billing_starts_at") ?: safeLongLocation("billingStartsAt"),
+            billingExpiresAt = safeLongLocation("billing_expires_at") ?: safeLongLocation("billingExpiresAt"),
+            billingExceptionNote = get<String?>("billing_exception_note") ?: get<String?>("billingExceptionNote"),
+            venueAccountId = get<String?>("venue_account_id") ?: get<String?>("venueAccountId"),
+            venueAccountStatus = get<String?>("venue_account_status") ?: get<String?>("venueAccountStatus"),
+            venueAccountChargeScope = get<String?>("venue_account_charge_scope") ?: get<String?>("venueAccountChargeScope"),
+            venueAccountPlanCode = get<String?>("venue_account_plan_code") ?: get<String?>("venueAccountPlanCode"),
+            venueAccountPlanLabel = get<String?>("venue_account_plan_label") ?: get<String?>("venueAccountPlanLabel"),
+            venueAccountMonthlyTotalCents = get<Long?>("venue_account_monthly_total_cents")
+                ?: get<Long?>("venueAccountMonthlyTotalCents"),
+            venueAccountLinkedLocationsCount = get<Long?>("venue_account_linked_locations_count")?.toInt()
+                ?: get<Long?>("venueAccountLinkedLocationsCount")?.toInt() ?: 0,
+            venueAccountActiveFieldsCount = get<Long?>("venue_account_active_fields_count")?.toInt()
+                ?: get<Long?>("venueAccountActiveFieldsCount")?.toInt() ?: 0,
+            publishedAt = safeLongLocation("published_at") ?: safeLongLocation("publishedAt"),
+            publishedBy = get<String?>("published_by") ?: get<String?>("publishedBy"),
+            unpublishedReason = get<String?>("unpublished_reason") ?: get<String?>("unpublishedReason"),
+            ownerNotes = get<String?>("owner_notes") ?: get<String?>("ownerNotes"),
+            adminNotes = get<String?>("admin_notes") ?: get<String?>("adminNotes"),
+
             // Avaliação
             rating = get<Double?>("rating") ?: 0.0,
             ratingCount = get<Long?>("rating_count")?.toInt() ?: get<Long?>("ratingCount")?.toInt() ?: 0,
@@ -68,8 +98,28 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
 
             // Dados denormalizados de Fields
             fieldCount = get<Long?>("field_count")?.toInt() ?: get<Long?>("fieldCount")?.toInt() ?: 0,
+            activeFieldCount = get<Long?>("active_field_count")?.toInt() ?: get<Long?>("activeFieldCount")?.toInt() ?: 0,
+            activeFieldTypes = (get<List<*>?>("active_field_types") ?: get<List<*>?>("activeFieldTypes"))
+                ?.mapNotNull { it as? String } ?: emptyList(),
+            activeFieldAmenities = (get<List<*>?>("active_field_amenities") ?: get<List<*>?>("activeFieldAmenities"))
+                ?.mapNotNull { it as? String } ?: emptyList(),
             primaryFieldType = get<String?>("primary_field_type") ?: get<String?>("primaryFieldType"),
             hasActiveFields = get<Boolean?>("has_active_fields") ?: get<Boolean?>("hasActiveFields") ?: false,
+            minHourlyPriceCents = get<Long?>("min_hourly_price_cents") ?: get<Long?>("minHourlyPriceCents"),
+            averageHourlyPriceCents = get<Long?>("average_hourly_price_cents") ?: get<Long?>("averageHourlyPriceCents"),
+            gamesCount = get<Long?>("games_count")?.toInt() ?: get<Long?>("gamesCount")?.toInt() ?: 0,
+            finishedGamesCount = get<Long?>("finished_games_count")?.toInt()
+                ?: get<Long?>("finishedGamesCount")?.toInt() ?: 0,
+            upcomingGamesCount = get<Long?>("upcoming_games_count")?.toInt()
+                ?: get<Long?>("upcomingGamesCount")?.toInt() ?: 0,
+            gamesThisWeekCount = get<Long?>("games_this_week_count")?.toInt()
+                ?: get<Long?>("gamesThisWeekCount")?.toInt() ?: 0,
+            gamesLast30DaysCount = get<Long?>("games_last_30_days_count")?.toInt()
+                ?: get<Long?>("gamesLast30DaysCount")?.toInt() ?: 0,
+            lastGameAt = safeLongLocation("last_game_at") ?: safeLongLocation("lastGameAt"),
+            lastActivityAt = safeLongLocation("last_activity_at") ?: safeLongLocation("lastActivityAt"),
+            locationStatsUpdatedAt = safeLongLocation("location_stats_updated_at")
+                ?: safeLongLocation("locationStatsUpdatedAt"),
 
             createdAt = safeLongLocation("created_at") ?: safeLongLocation("createdAt"),
             updatedAt = safeLongLocation("updated_at") ?: safeLongLocation("updatedAt")

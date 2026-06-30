@@ -1,7 +1,173 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T01:14:13.743Z",
+  "generatedAt": "2026-06-30T05:46:25.057Z",
   "notes": [
+    {
+      "version": "1.43.34",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A tela de quadras agora destaca melhores quadras e menores preços por tipo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Adiciona ranking compacto de melhores quadras na listagem/gestão de quadras.",
+        "Adiciona cartões de menor preço por tipo de quadra, com rolagem horizontal no mobile.",
+        "Usa agregados reais do backend para nota, avaliações, jogos e preço mínimo por hora."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3107
+      ]
+    },
+    {
+      "version": "1.43.33",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Painel do dono de quadra passa a usar estatísticas comerciais consolidadas.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O dashboard do dono deixa de buscar jogos em massa no navegador para calcular métricas de agenda.",
+        "O app reconhece os novos agregados de preço, campos ativos, tipos de quadra, avaliações e jogos da quadra."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3106,
+        3128
+      ]
+    },
+    {
+      "version": "1.43.32",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Quadras ativas deixam de sumir do mapa por status agregado de conta.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A listagem pública usa o status comercial individual da quadra para disponibilidade.",
+        "O painel administrativo mostra a pendência específica de conta comercial irregular sem duplicar a pendência de mensalidade."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3121
+      ]
+    },
+    {
+      "version": "1.43.31",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Cadastro de quadras agora inclui funcionamento e ponto no mapa.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de cadastro/edição de quadras ganhou horário de abertura, fechamento, dias disponíveis e duração mínima do jogo.",
+        "O checklist comercial passa a exigir ponto no mapa e horários de funcionamento antes de considerar o cadastro completo.",
+        "O painel do dono de quadra usa latitude/longitude no checklist, evitando pendências fantasmas quando a localização já está completa."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3122
+      ]
+    },
+    {
+      "version": "1.43.30",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Admin agora configura a conta comercial agregada do dono de quadra.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A ficha comercial de usuários ganhou criação e edição de conta comercial por dono de quadra.",
+        "O admin pode definir status, modelo de cobrança, plano, ciclo, mensalidade final, vencimento, vigência, contato financeiro e observações.",
+        "A conta comercial permite vincular as quadras do dono ao contrato único, mantendo o fluxo auditado pelas Cloud Functions."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3121
+      ]
+    },
+    {
+      "version": "1.43.29",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Cadastro de quadras ganha detalhes operacionais por campo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Cada campo/quadra agora pode registrar jogadores por time, duração mínima de reserva, regras, superfície, dimensões e comodidades específicas.",
+        "O cadastro continua aceitando rascunhos incompletos, mas o checklist comercial agora aponta quando faltam detalhes operacionais dos campos.",
+        "A localização passa a consolidar `players_per_team` a partir da quadra principal ativa para melhorar listagens e filtros."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3122
+      ]
+    },
+    {
+      "version": "1.43.28",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Portal do dono de quadra passa a mostrar melhor a conta comercial agregada.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O dashboard do dono agora exibe quando a quadra faz parte de uma conta comercial agregada, com status, plano, escopo de cobrança, valor total do contrato, quantidade de quadras e campos ativos.",
+        "O bloco de plano e cobrança ficou mais claro para diferenciar valor individual da quadra e valor total do contrato do dono."
+      ],
+      "fixed": [
+        "A disponibilidade comercial exibida no dashboard do dono passa a respeitar o status da conta agregada quando ela estiver suspensa, vencida ou cancelada."
+      ],
+      "issueRefs": [
+        3125,
+        3135
+      ]
+    },
+    {
+      "version": "1.43.27",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Admin de quadras passa a enxergar a conta comercial agregada do dono.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de usuários admin agora mostra a conta comercial do dono de quadra, status, escopo de cobrança, plano, total mensal calculado e contato financeiro.",
+        "A tela de gerenciamento de quadras agora exibe quando uma quadra está vinculada a uma conta comercial agregada, incluindo status, plano, valor total e quantidade de quadras/campos no contrato.",
+        "O CSV financeiro de quadras ganhou colunas de conta comercial para facilitar conferência operacional."
+      ],
+      "fixed": [
+        "A elegibilidade comercial das quadras passa a considerar o status da conta agregada quando disponível, evitando divergência entre contrato do dono e disponibilidade pública."
+      ],
+      "issueRefs": [
+        3087,
+        3119,
+        3122,
+        3135
+      ]
+    },
     {
       "version": "1.43.26",
       "buildNumber": null,

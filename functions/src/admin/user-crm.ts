@@ -3,6 +3,18 @@ import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
 import {db} from "../_db";
+import {
+  VenueAccountBillingScope,
+  VenueAccountBillingCycle,
+  VenueAccountPlanCode,
+  VenueAccountStatus,
+  buildVenueAccountLocationSnapshot,
+  computeVenueAccountMetrics,
+  normalizeVenueAccountBillingCycle,
+  normalizeVenueAccountBillingScope,
+  normalizeVenueAccountPlanCode,
+  normalizeVenueAccountStatus,
+} from "../locations/venue-account-shared";
 
 type AdminUserRoleFilter = "ALL" | "ADMIN" | "FIELD_OWNER" | "PLAYER";
 type AdminOwnerFilter =
@@ -59,6 +71,25 @@ interface OwnerOnboardingSummary {
   reviewReason: string | null;
 }
 
+interface VenueAccountSummary {
+  id: string;
+  status: VenueAccountStatus;
+  billingScope: VenueAccountBillingScope;
+  billingPlanCode: VenueAccountPlanCode | null;
+  billingPlanLabel: string | null;
+  billingCycle: VenueAccountBillingCycle | null;
+  billingDueDay: number | null;
+  billingContactName: string | null;
+  billingContactEmail: string | null;
+  linkedLocationIds: string[];
+  linkedLocationsCount: number;
+  publishedLocationsCount: number;
+  activeFieldCount: number;
+  legacyMonthlyFeeTotalCents: number;
+  computedMonthlyFeeCents: number;
+  updatedAtIso: string | null;
+}
+
 interface AdminUserCrmRow {
   id: string;
   name: string;
@@ -74,6 +105,7 @@ interface AdminUserCrmRow {
   ownerSummary: OwnerSummary;
   ownerLocations: OwnerLocationSummary[];
   ownerOnboarding: OwnerOnboardingSummary | null;
+  venueAccount: VenueAccountSummary | null;
 }
 
 const USER_SCAN_LIMIT = 10000;
@@ -232,6 +264,15 @@ function positiveIntegerOrNull(value: unknown): number | null {
 }
 
 /**
+ * Retorna numero finito ou null para campos monetarios opcionais.
+ * @param {unknown} value Valor bruto.
+ * @return {number | null} Numero preservado ou null.
+ */
+function finiteNumberOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
  * Detecta se uma quadra ainda nao tem cadastro comercial completo.
  * @param {FirebaseFirestore.DocumentData} data Dados da location.
  * @return {boolean} True quando faltam campos comerciais essenciais.
@@ -257,6 +298,10 @@ function commercialIncomplete(data: FirebaseFirestore.DocumentData): boolean {
 async function loadOwnerSummaries(): Promise<{
   summaries: Map<string, OwnerSummary>;
   locationsByOwner: Map<string, OwnerLocationSummary[]>;
+  locationSnapshotsByOwner: Map<
+    string,
+    ReturnType<typeof buildVenueAccountLocationSnapshot>[]
+  >;
   scannedLocations: number;
   locationScanComplete: boolean;
 }> {
@@ -266,6 +311,10 @@ async function loadOwnerSummaries(): Promise<{
     .get();
   const summaries = new Map<string, OwnerSummary>();
   const locationsByOwner = new Map<string, OwnerLocationSummary[]>();
+  const locationSnapshotsByOwner = new Map<
+    string,
+    ReturnType<typeof buildVenueAccountLocationSnapshot>[]
+  >();
 
   snapshot.docs.forEach((locationDoc) => {
     const data = locationDoc.data();
@@ -325,6 +374,19 @@ async function loadOwnerSummaries(): Promise<{
       updatedAtIso: toIso(data.updated_at || data.updatedAt),
     });
     locationsByOwner.set(ownerId, ownerLocations);
+
+    const locationSnapshots = locationSnapshotsByOwner.get(ownerId) || [];
+    locationSnapshots.push(buildVenueAccountLocationSnapshot({
+      id: locationDoc.id,
+      ownerId,
+      publicationStatus: publication,
+      isVerified: data.is_verified,
+      fieldCount: data.field_count ?? data.fieldCount,
+      activeFieldCount: data.active_field_count,
+      hasActiveFields: data.has_active_fields ?? data.hasActiveFields,
+      monthlyFeeCents,
+    }));
+    locationSnapshotsByOwner.set(ownerId, locationSnapshots);
   });
 
   locationsByOwner.forEach((locations) => {
@@ -338,6 +400,7 @@ async function loadOwnerSummaries(): Promise<{
   return {
     summaries,
     locationsByOwner,
+    locationSnapshotsByOwner,
     scannedLocations: snapshot.docs.length,
     locationScanComplete: snapshot.docs.length < LOCATION_SCAN_LIMIT,
   };
@@ -368,6 +431,22 @@ async function loadOwnerOnboarding(): Promise<Map<string, OwnerOnboardingSummary
     });
   });
   return onboarding;
+}
+
+/**
+ * Carrega contas comerciais por owner.
+ * @return {Promise<Map<string, Record<string, unknown>>>} Map por owner uid.
+ */
+async function loadVenueAccounts(): Promise<Map<string, Record<string, unknown>>> {
+  const snapshot = await db()
+    .collection("venue_accounts")
+    .limit(USER_SCAN_LIMIT)
+    .get();
+  const accounts = new Map<string, Record<string, unknown>>();
+  snapshot.docs.forEach((doc) => {
+    accounts.set(doc.id, doc.data() || {});
+  });
+  return accounts;
 }
 
 /**
@@ -416,6 +495,12 @@ function matchesSearch(user: AdminUserCrmRow, search: string): boolean {
       location.publicationStatus,
       location.subscriptionStatus,
     ]),
+    user.venueAccount?.status || "",
+    user.venueAccount?.billingScope || "",
+    user.venueAccount?.billingPlanLabel || "",
+    user.venueAccount?.billingPlanCode || "",
+    user.venueAccount?.billingContactName || "",
+    user.venueAccount?.billingContactEmail || "",
   ].some((value) => value.toLowerCase().includes(search));
 }
 
@@ -456,9 +541,10 @@ export const searchAdminUsers = secureCallable<
     const ownerFilter = normalizeOwnerFilter(request.data?.ownerFilter);
     const pageSize = parsePageSize(request.data?.pageSize);
     const offset = parseOffset(request.data?.pageToken);
-    const [ownerData, onboardingData] = await Promise.all([
+    const [ownerData, onboardingData, venueAccounts] = await Promise.all([
       loadOwnerSummaries(),
       loadOwnerOnboarding(),
+      loadVenueAccounts(),
     ]);
 
     const snapshot = await db()
@@ -469,10 +555,79 @@ export const searchAdminUsers = secureCallable<
     const rows = snapshot.docs.map((userDoc) => {
       const data = userDoc.data();
       const roleValue = stringOrEmpty(data.role) || "PLAYER";
-      const ownerSummary = ownerData.summaries.get(userDoc.id) ||
-        emptyOwnerSummary();
+      const ownerSummary = {
+        ...(ownerData.summaries.get(userDoc.id) || emptyOwnerSummary()),
+      };
       const ownerLocations = ownerData.locationsByOwner.get(userDoc.id) || [];
       const ownerOnboarding = onboardingData.get(userDoc.id) || null;
+      const venueAccountRaw = venueAccounts.get(userDoc.id) || null;
+      const venueAccount = venueAccountRaw ? (() => {
+        const metrics = computeVenueAccountMetrics(
+          {
+            status: normalizeVenueAccountStatus(venueAccountRaw.status),
+            billingScope: normalizeVenueAccountBillingScope(
+              venueAccountRaw.billing_scope
+            ),
+            billingPlanCode: normalizeVenueAccountPlanCode(
+              venueAccountRaw.billing_plan_code
+            ),
+            billingPlanLabel:
+              stringOrEmpty(venueAccountRaw.billing_plan_label) || null,
+            billingCycle: normalizeVenueAccountBillingCycle(
+              venueAccountRaw.billing_cycle
+            ),
+            billingBaseFeeCents: finiteNumberOrNull(
+              venueAccountRaw.billing_base_fee_cents
+            ),
+            defaultLocationFeeCents:
+              finiteNumberOrNull(
+                venueAccountRaw.default_location_fee_cents
+              ),
+            pricePerActiveFieldCents:
+              finiteNumberOrNull(
+                venueAccountRaw.price_per_active_field_cents
+              ),
+            monthlyFeeOverrideCents:
+              finiteNumberOrNull(
+                venueAccountRaw.monthly_fee_override_cents
+              ),
+            billingDueDay: positiveIntegerOrNull(
+              venueAccountRaw.billing_due_day
+            ),
+          },
+          ownerData.locationSnapshotsByOwner.get(userDoc.id) || []
+        );
+        ownerSummary.monthlyFeeTotalCents = metrics.computedMonthlyFeeCents;
+        return {
+          id: userDoc.id,
+          status: normalizeVenueAccountStatus(venueAccountRaw.status),
+          billingScope: normalizeVenueAccountBillingScope(
+            venueAccountRaw.billing_scope
+          ),
+          billingPlanCode: normalizeVenueAccountPlanCode(
+            venueAccountRaw.billing_plan_code
+          ),
+          billingPlanLabel:
+            stringOrEmpty(venueAccountRaw.billing_plan_label) || null,
+          billingCycle: normalizeVenueAccountBillingCycle(
+            venueAccountRaw.billing_cycle
+          ),
+          billingDueDay: positiveIntegerOrNull(
+            venueAccountRaw.billing_due_day
+          ),
+          billingContactName:
+            stringOrEmpty(venueAccountRaw.billing_contact_name) || null,
+          billingContactEmail:
+            stringOrEmpty(venueAccountRaw.billing_contact_email) || null,
+          linkedLocationIds: stringArray(venueAccountRaw.linked_location_ids),
+          linkedLocationsCount: metrics.linkedLocationsCount,
+          publishedLocationsCount: metrics.publishedLocationsCount,
+          activeFieldCount: metrics.activeFieldCount,
+          legacyMonthlyFeeTotalCents: metrics.legacyMonthlyFeeTotalCents,
+          computedMonthlyFeeCents: metrics.computedMonthlyFeeCents,
+          updatedAtIso: toIso(venueAccountRaw.updated_at),
+        };
+      })() : null;
       return {
         id: userDoc.id,
         name: stringOrEmpty(data.name) || "Sem nome",
@@ -490,6 +645,7 @@ export const searchAdminUsers = secureCallable<
         ownerSummary,
         ownerLocations,
         ownerOnboarding,
+        venueAccount,
       };
     }).sort((a, b) => {
       const aTime = a.createdAtIso ? new Date(a.createdAtIso).getTime() : 0;
