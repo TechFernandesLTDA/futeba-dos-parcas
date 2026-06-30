@@ -79,6 +79,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.37] - 2026-06-30
+
+#### Corrigido
+- Corrige o cálculo de `totalCost` na tela de criação de jogo para usar `hourlyPrice * duração / 60`.
+- Adiciona helpers testáveis para normalizar preço por hora em reais ou centavos e preservar compatibilidade com cadastros antigos.
+
 ### [1.43.36] - 2026-06-30
 
 #### Corrigido

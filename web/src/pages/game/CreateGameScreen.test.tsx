@@ -73,6 +73,7 @@ vi.mock('../../utils/logger', () => ({
 
 vi.mock('../../utils/firestoreHelpers', () => ({
   snakeToCamel: (obj: Record<string, unknown>) => obj as Record<string, unknown>,
+  normalizeField: (obj: Record<string, unknown>) => obj as Record<string, unknown>,
 }));
 
 vi.mock('../../services/firebase', () => ({
@@ -94,6 +95,12 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 import { CreateGameScreen } from './CreateGameScreen';
+import {
+  calculateFieldRentalCost,
+  formatGameDurationLabel,
+  getGameDurationMinutes,
+  normalizeHourlyPriceForGame,
+} from '../../utils/gamePricing';
 
 const theme = createTheme();
 
@@ -166,5 +173,25 @@ describe('CreateGameScreen', () => {
     expect(
       screen.getByText(/nenhuma quadra publicada e com mensalidade válida/i),
     ).toBeInTheDocument();
+  });
+});
+
+describe('CreateGameScreen pricing helpers', () => {
+  it('calcula aluguel proporcional pela duração usando preço por hora em centavos', () => {
+    expect(normalizeHourlyPriceForGame(35000)).toBe(350);
+    expect(calculateFieldRentalCost(35000, '18:00', '20:00')).toBe(700);
+    expect(calculateFieldRentalCost(35000, '18:00', '19:30')).toBe(525);
+    expect(calculateFieldRentalCost(35000, '18:00', '18:30')).toBe(175);
+  });
+
+  it('mantém compatibilidade com quadras antigas que já vinham em reais', () => {
+    expect(normalizeHourlyPriceForGame(350)).toBe(350);
+    expect(calculateFieldRentalCost(350, '18:00', '19:30')).toBe(525);
+  });
+
+  it('usa duração padrão de uma hora quando o horário final ainda não foi preenchido', () => {
+    expect(getGameDurationMinutes('18:00', '')).toBe(60);
+    expect(formatGameDurationLabel(90)).toBe('1h30');
+    expect(calculateFieldRentalCost(35000, '18:00')).toBe(350);
   });
 });
