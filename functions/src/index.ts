@@ -2347,3 +2347,8 @@ export {
   requestVenueOwnerOnboarding,
   reviewVenueOwnerOnboarding,
 } from "./admin/venue-owner-onboarding";
+export {
+  upsertVenueAccount,
+  linkLocationToVenueAccount,
+  unlinkLocationFromVenueAccount,
+} from "./admin/venue-accounts";

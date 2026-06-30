@@ -82,6 +82,17 @@ interface SetLocationSubscriptionRequest {
   adminNotes?: string | null;
 }
 
+interface VenueAccountRowProjection {
+  venueAccountId: string | null;
+  venueAccountStatus: string | null;
+  venueAccountChargeScope: string | null;
+  venueAccountPlanCode: string | null;
+  venueAccountPlanLabel: string | null;
+  venueAccountMonthlyTotalCents: number | null;
+  venueAccountLinkedLocationsCount: number | null;
+  venueAccountActiveFieldsCount: number | null;
+}
+
 interface RegisterLocationSubscriptionPaymentRequest {
   locationId: string;
   amountCents: number;
@@ -1344,6 +1355,37 @@ secureCallable<GetAdminLocationBillingSummaryRequest>(
           periodKey,
           monthlyFeeCents
         );
+        const venueAccountProjection: VenueAccountRowProjection = {
+          venueAccountId: typeof locData.venue_account_id === "string" ?
+            locData.venue_account_id :
+            null,
+          venueAccountStatus: typeof locData.venue_account_status === "string" ?
+            locData.venue_account_status :
+            null,
+          venueAccountChargeScope:
+            typeof locData.venue_account_charge_scope === "string" ?
+              locData.venue_account_charge_scope :
+              null,
+          venueAccountPlanCode: typeof locData.venue_account_plan_code === "string" ?
+            locData.venue_account_plan_code :
+            null,
+          venueAccountPlanLabel:
+            typeof locData.venue_account_plan_label === "string" ?
+              locData.venue_account_plan_label :
+              null,
+          venueAccountMonthlyTotalCents:
+            Number.isInteger(locData.venue_account_monthly_total_cents) ?
+              Number(locData.venue_account_monthly_total_cents) :
+              null,
+          venueAccountLinkedLocationsCount:
+            Number.isInteger(locData.venue_account_linked_locations_count) ?
+              Number(locData.venue_account_linked_locations_count) :
+              null,
+          venueAccountActiveFieldsCount:
+            Number.isInteger(locData.venue_account_active_fields_count) ?
+              Number(locData.venue_account_active_fields_count) :
+              null,
+        };
 
         return {
           row: {
@@ -1400,6 +1442,7 @@ secureCallable<GetAdminLocationBillingSummaryRequest>(
             pendingReceiptCount: paymentTotals.pendingReceiptCount,
             lastPaymentAtIso: paymentTotals.lastPaymentAtIso,
             updatedAtIso: toIsoString(locData.updated_at),
+            ...venueAccountProjection,
           },
           subscriptionStatus,
           monthlyFeeCents,

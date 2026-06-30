@@ -36,6 +36,26 @@ const SUBSCRIPTION_STATUSES = new Set([
   "SUSPENDED",
   "CANCELLED",
 ]);
+const VENUE_ACCOUNT_SCOPES = new Set([
+  "OWNER",
+  "LOCATION",
+  "FIELD_COUNT",
+  "MANUAL_OVERRIDE",
+]);
+const VENUE_ACCOUNT_PLANS = new Set([
+  "TRIAL",
+  "BASIC",
+  "PRO",
+  "ENTERPRISE",
+  "CUSTOM",
+]);
+const VENUE_ACCOUNT_CYCLES = new Set([
+  "MONTHLY",
+  "QUARTERLY",
+  "SEMIANNUAL",
+  "ANNUAL",
+  "CUSTOM",
+]);
 
 type Data = FirebaseFirestore.DocumentData;
 type UpdateData = FirebaseFirestore.UpdateData<Data>;
@@ -54,12 +74,27 @@ interface LocationFix {
   manualReview: string[];
 }
 
+interface VenueAccountFix {
+  ownerId: string;
+  locationIds: string[];
+  accountUpdates: UpdateData;
+  locationUpdates: Array<{
+    id: string;
+    ref: FirebaseFirestore.DocumentReference;
+    updates: UpdateData;
+  }>;
+  manualReview: string[];
+}
+
 interface Stats {
   scanned: number;
   locationsWithFixes: number;
   locationsUpdated: number;
   fieldsUpdated: number;
   fieldsCreated: number;
+  venueAccountsWithFixes: number;
+  venueAccountsUpdated: number;
+  venueAccountLocationsUpdated: number;
   manualReview: number;
   errors: number;
 }
@@ -78,6 +113,16 @@ function finiteNumber(value: unknown): number | null {
 
 function valid(value: unknown, allowed: Set<string>): boolean {
   return typeof value === "string" && allowed.has(value);
+}
+
+function positiveInt(value: unknown): number {
+  const number = finiteNumber(value);
+  return number && Number.isInteger(number) && number > 0 ? number : 0;
+}
+
+function cents(value: unknown): number {
+  const number = finiteNumber(value);
+  return number && Number.isInteger(number) && number > 0 ? number : 0;
 }
 
 function inferFieldType(value: unknown, name: string): string {
@@ -211,6 +256,92 @@ function buildLocationUpdates(params: {
   return {updates: withAudit(updates), manualReview: review};
 }
 
+function inferVenueAccountStatus(locations: Data[]): string {
+  const statuses = locations
+    .map((location) => location.subscription_status)
+    .filter((status): status is string => valid(status, SUBSCRIPTION_STATUSES));
+  if (statuses.includes("SUSPENDED")) return "SUSPENDED";
+  if (statuses.includes("OVERDUE")) return "OVERDUE";
+  if (statuses.includes("ACTIVE")) return "ACTIVE";
+  if (statuses.includes("CANCELLED")) return "CANCELLED";
+  return "TRIAL";
+}
+
+function computeVenueAccountTotals(locations: Data[]) {
+  const activeFieldCount = locations.reduce(
+    (sum, location) => sum + (
+      positiveInt(location.active_field_count) ||
+      (location.has_active_fields === false ? 0 : positiveInt(location.field_count))
+    ),
+    0
+  );
+  const legacyMonthlyFeeTotalCents = locations.reduce(
+    (sum, location) => sum + cents(location.monthly_fee_cents),
+    0
+  );
+  const publishedLocationsCount = locations.filter((location) =>
+    location.publication_status === "PUBLISHED" || location.is_verified === true
+  ).length;
+  const positiveFees = locations
+    .map((location) => cents(location.monthly_fee_cents))
+    .filter((fee) => fee > 0);
+  const uniqueFees = Array.from(new Set(positiveFees));
+
+  return {
+    activeFieldCount,
+    legacyMonthlyFeeTotalCents,
+    publishedLocationsCount,
+    defaultLocationFeeCents:
+      uniqueFees.length === 1 && positiveFees.length === locations.length ?
+        uniqueFees[0] :
+        null,
+  };
+}
+
+function buildVenueAccountDocument(params: {
+  ownerId: string;
+  existing: Data | null;
+  locations: Data[];
+  locationIds: string[];
+}): UpdateData {
+  const totals = computeVenueAccountTotals(params.locations);
+  const status = valid(params.existing?.status, SUBSCRIPTION_STATUSES) ?
+    params.existing?.status :
+    inferVenueAccountStatus(params.locations);
+  const billingScope = valid(params.existing?.billing_scope, VENUE_ACCOUNT_SCOPES) ?
+    params.existing?.billing_scope :
+    "LOCATION";
+  const computedMonthlyFeeCents = billingScope === "LOCATION" &&
+    typeof params.existing?.default_location_fee_cents === "number" ?
+    cents(params.existing.default_location_fee_cents) * params.locations.length :
+    totals.legacyMonthlyFeeTotalCents;
+
+  return {
+    owner_uid: params.ownerId,
+    status,
+    billing_scope: billingScope,
+    billing_plan_code: valid(params.existing?.billing_plan_code, VENUE_ACCOUNT_PLANS) ?
+      params.existing?.billing_plan_code :
+      null,
+    billing_plan_label: nonEmptyString(params.existing?.billing_plan_label),
+    billing_cycle: valid(params.existing?.billing_cycle, VENUE_ACCOUNT_CYCLES) ?
+      params.existing?.billing_cycle :
+      null,
+    default_location_fee_cents: typeof params.existing?.default_location_fee_cents === "number" ?
+      params.existing?.default_location_fee_cents :
+      totals.defaultLocationFeeCents,
+    linked_location_ids: params.locationIds,
+    linked_locations_count: params.locationIds.length,
+    published_locations_count: totals.publishedLocationsCount,
+    active_fields_count: totals.activeFieldCount,
+    legacy_monthly_fee_total_cents: totals.legacyMonthlyFeeTotalCents,
+    computed_monthly_fee_cents: computedMonthlyFeeCents,
+    backfill_source: SOURCE,
+    updated_at: FieldValue.serverTimestamp(),
+    created_at: params.existing?.created_at ?? FieldValue.serverTimestamp(),
+  };
+}
+
 async function auditLocation(
   locDoc: FirebaseFirestore.QueryDocumentSnapshot
 ): Promise<LocationFix> {
@@ -295,10 +426,88 @@ async function applyFix(fix: LocationFix): Promise<void> {
   await batch.commit();
 }
 
+async function buildVenueAccountFix(
+  ownerId: string,
+  locationDocs: FirebaseFirestore.QueryDocumentSnapshot[]
+): Promise<VenueAccountFix> {
+  const accountRef = db.collection("venue_accounts").doc(ownerId);
+  const accountSnap = await accountRef.get();
+  const existing = accountSnap.data() ?? null;
+  const manualReview: string[] = [];
+  const eligibleLocationDocs = locationDocs.filter((locationDoc) => {
+    const data = locationDoc.data();
+    const linkedAccount = nonEmptyString(data.venue_account_id);
+    if (linkedAccount && linkedAccount !== ownerId) {
+      manualReview.push(
+        `${locationDoc.id} already linked to venue account ${linkedAccount}`
+      );
+      return false;
+    }
+    return true;
+  });
+  const locations = eligibleLocationDocs.map((locationDoc) => locationDoc.data());
+  const locationIds = eligibleLocationDocs.map((locationDoc) => locationDoc.id);
+  const accountUpdates = buildVenueAccountDocument({
+    ownerId,
+    existing,
+    locations,
+    locationIds,
+  });
+  const locationUpdates = eligibleLocationDocs.map((locationDoc) => ({
+    id: locationDoc.id,
+    ref: locationDoc.ref,
+    updates: withAudit({
+      venue_account_id: ownerId,
+      venue_account_status: accountUpdates.status,
+      venue_account_charge_scope: accountUpdates.billing_scope,
+      venue_account_plan_code: accountUpdates.billing_plan_code,
+      venue_account_plan_label: accountUpdates.billing_plan_label,
+      venue_account_monthly_total_cents:
+        accountUpdates.computed_monthly_fee_cents,
+      venue_account_linked_locations_count:
+        accountUpdates.linked_locations_count,
+      venue_account_active_fields_count: accountUpdates.active_fields_count,
+    }),
+  })).filter((locationUpdate) =>
+    Object.entries(locationUpdate.updates).some(([key, value]) =>
+      key !== "updated_at" &&
+      key !== "backfill_source" &&
+      locationUpdate.ref &&
+      locationDocs.find((doc) => doc.id === locationUpdate.id)?.data()[key] !== value
+    )
+  );
+
+  return {
+    ownerId,
+    locationIds,
+    accountUpdates,
+    locationUpdates,
+    manualReview,
+  };
+}
+
+async function applyVenueAccountFix(fix: VenueAccountFix): Promise<void> {
+  const batch = db.batch();
+  batch.set(
+    db.collection("venue_accounts").doc(fix.ownerId),
+    fix.accountUpdates,
+    {merge: true}
+  );
+  for (const locationUpdate of fix.locationUpdates) {
+    batch.update(locationUpdate.ref, locationUpdate.updates);
+  }
+  await batch.commit();
+}
+
 function hasFixes(fix: LocationFix): boolean {
   return Object.keys(fix.locationUpdates).length > 0 ||
     fix.fieldFixes.length > 0 ||
     fix.fieldsToCreate > 0;
+}
+
+function hasVenueAccountFixes(fix: VenueAccountFix): boolean {
+  return Object.keys(fix.accountUpdates).length > 0 ||
+    fix.locationUpdates.length > 0;
 }
 
 function printFix(fix: LocationFix, execute: boolean): void {
@@ -322,6 +531,24 @@ function printFix(fix: LocationFix, execute: boolean): void {
   }
 }
 
+function printVenueAccountFix(fix: VenueAccountFix, execute: boolean): void {
+  if (!hasVenueAccountFixes(fix) && fix.manualReview.length === 0) return;
+  console.log(`\nvenue account ${fix.ownerId}`);
+  if (hasVenueAccountFixes(fix)) {
+    console.log(`  ${execute ? "synced" : "would sync"}:`);
+    console.log(`    - venue_accounts/${fix.ownerId}`);
+    console.log(`    - linked locations: ${fix.locationIds.length}`);
+    console.log(`    - monthly total: ${fix.accountUpdates.computed_monthly_fee_cents ?? 0}`);
+    for (const locationUpdate of fix.locationUpdates) {
+      console.log(`    - locations/${locationUpdate.id}.venue_account_*`);
+    }
+  }
+  if (fix.manualReview.length > 0) {
+    console.log("  manual review:");
+    for (const item of fix.manualReview) console.log(`    - ${item}`);
+  }
+}
+
 async function backfill(execute: boolean): Promise<void> {
   const stats: Stats = {
     scanned: 0,
@@ -329,6 +556,9 @@ async function backfill(execute: boolean): Promise<void> {
     locationsUpdated: 0,
     fieldsUpdated: 0,
     fieldsCreated: 0,
+    venueAccountsWithFixes: 0,
+    venueAccountsUpdated: 0,
+    venueAccountLocationsUpdated: 0,
     manualReview: 0,
     errors: 0,
   };
@@ -338,9 +568,20 @@ async function backfill(execute: boolean): Promise<void> {
 
   const snap = await db.collection("locations").get();
   stats.scanned = snap.size;
+  const locationsByOwner = new Map<
+    string,
+    FirebaseFirestore.QueryDocumentSnapshot[]
+  >();
 
   for (const locDoc of snap.docs) {
     try {
+      const ownerId = nonEmptyString(locDoc.data().owner_id);
+      if (ownerId) {
+        locationsByOwner.set(ownerId, [
+          ...(locationsByOwner.get(ownerId) ?? []),
+          locDoc,
+        ]);
+      }
       const fix = await auditLocation(locDoc);
       if (hasFixes(fix)) stats.locationsWithFixes++;
       if (fix.manualReview.length > 0) stats.manualReview++;
@@ -357,12 +598,32 @@ async function backfill(execute: boolean): Promise<void> {
     }
   }
 
+  for (const [ownerId, ownerLocationDocs] of locationsByOwner.entries()) {
+    try {
+      const fix = await buildVenueAccountFix(ownerId, ownerLocationDocs);
+      if (hasVenueAccountFixes(fix)) stats.venueAccountsWithFixes++;
+      if (fix.manualReview.length > 0) stats.manualReview++;
+      stats.venueAccountLocationsUpdated += fix.locationUpdates.length;
+      printVenueAccountFix(fix, execute);
+      if (execute && hasVenueAccountFixes(fix)) {
+        await applyVenueAccountFix(fix);
+        stats.venueAccountsUpdated++;
+      }
+    } catch (err) {
+      stats.errors++;
+      console.error(`ERROR venue account ${ownerId}: ${String(err)}`);
+    }
+  }
+
   console.log("\n" + "=".repeat(72));
   console.log(`locations scanned:      ${stats.scanned}`);
   console.log(`locations with fixes:   ${stats.locationsWithFixes}`);
   console.log(`locations updated:      ${execute ? stats.locationsUpdated : 0}`);
   console.log(`field docs needing fix: ${stats.fieldsUpdated}`);
   console.log(`field docs to create:   ${stats.fieldsCreated}`);
+  console.log(`venue accounts to sync: ${stats.venueAccountsWithFixes}`);
+  console.log(`venue accounts updated: ${execute ? stats.venueAccountsUpdated : 0}`);
+  console.log(`venue account locations:${stats.venueAccountLocationsUpdated}`);
   console.log(`manual review required: ${stats.manualReview}`);
   console.log(`errors:                 ${stats.errors}`);
   console.log("=".repeat(72));

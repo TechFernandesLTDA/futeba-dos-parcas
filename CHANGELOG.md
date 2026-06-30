@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.27] - 2026-06-30
+
+#### Adicionado
+- Integração web com `venueAccount` no CRM admin e com campos `venueAccount*` no resumo financeiro de quadras.
+- Teste de regras garantindo leitura controlada de `venue_accounts` e bloqueio de escrita cliente nos campos denormalizados.
+
+#### Mudado
+- Filtros e alertas comerciais de quadras passam a considerar `venueAccountStatus` antes do status legado por quadra.
+
+_Issues: #3087, #3119, #3122, #3135_
+
 ### [1.43.26] - 2026-06-29
 
 #### Adicionado
@@ -623,6 +634,19 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.18] - 2026-06-30
+
+#### Adicionado
+- Nova coleção `venue_accounts/{ownerUid}` com eventos imutáveis em subcoleção e auditoria global.
+- Novos callables admin-only: `upsertVenueAccount`, `linkLocationToVenueAccount`, `unlinkLocationFromVenueAccount`.
+- Backfill de monetização passa a criar/sincronizar contas comerciais agregadas e denormalizar `venue_account_*` nas quadras elegíveis.
+- Testes unitários cobrindo criação, vínculo, desvínculo, auditoria e rejeição de vínculos inválidos.
+
+#### Mudado
+- Firestore rules protegem `venue_accounts` e impedem escrita cliente nos campos comerciais agregados de `locations`.
+
+_Issues: #3087, #3119, #3122, #3135_
 
 ### [1.2.17] - 2026-06-29
 

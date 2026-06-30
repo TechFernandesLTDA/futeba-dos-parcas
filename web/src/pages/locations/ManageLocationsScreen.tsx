@@ -471,6 +471,13 @@ export const ManageLocationsScreen: React.FC = () => {
       'id',
       'nome',
       'owner_uid',
+      'venue_account_id',
+      'venue_account_status',
+      'venue_account_scope',
+      'venue_account_plan',
+      'venue_account_total_centavos',
+      'venue_account_quadras',
+      'venue_account_campos_ativos',
       'cidade',
       'estado',
       'publicacao',
@@ -492,6 +499,13 @@ export const ManageLocationsScreen: React.FC = () => {
       row.id,
       row.name,
       row.ownerId,
+      row.venueAccountId,
+      row.venueAccountStatus,
+      row.venueAccountChargeScope,
+      row.venueAccountPlanLabel || row.venueAccountPlanCode,
+      row.venueAccountMonthlyTotalCents,
+      row.venueAccountLinkedLocationsCount,
+      row.venueAccountActiveFieldsCount,
       row.city,
       row.state,
       row.publicationStatus,
@@ -553,6 +567,30 @@ const getBillingPlanLabel = (location: Pick<Location, 'billingPlanCode' | 'billi
 const getBillingCycleLabel = (cycle?: string | null) => {
   if (!cycle) return null;
   return LOCATION_BILLING_CYCLE_LABELS[cycle as LocationBillingCycle] || cycle;
+};
+
+const getVenueAccountScopeLabel = (scope?: string | null) => {
+  if (scope === 'OWNER') return 'Cobrança por dono';
+  if (scope === 'FIELD_COUNT') return 'Cobrança por campo';
+  if (scope === 'MANUAL_OVERRIDE') return 'Cobrança manual';
+  if (scope === 'LOCATION') return 'Cobrança por quadra';
+  return null;
+};
+
+const getVenueAccountStatusLabel = (status?: string | null) => {
+  if (status === 'TRIAL') return 'Conta em teste';
+  if (status === 'ACTIVE') return 'Conta em dia';
+  if (status === 'OVERDUE') return 'Conta em atraso';
+  if (status === 'SUSPENDED') return 'Conta suspensa';
+  if (status === 'CANCELLED') return 'Conta cancelada';
+  return null;
+};
+
+const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warning' | 'error' | 'default' => {
+  if (status === 'TRIAL' || status === 'ACTIVE') return 'success';
+  if (status === 'OVERDUE') return 'warning';
+  if (status === 'SUSPENDED' || status === 'CANCELLED') return 'error';
+  return 'default';
 };
 
   const handlePublicationStatus = async (
@@ -1194,6 +1232,25 @@ const getBillingCycleLabel = (cycle?: string | null) => {
                 const commercialIssues = getLocationCommercialIssues(location);
                 const hasCommercialRequest = Boolean(location.latestCommercialRequestStatus);
                 const requestPending = location.latestCommercialRequestStatus === 'PENDING_REVIEW';
+                const venueAccountId = billingRow?.venueAccountId || location.venueAccountId || null;
+                const venueAccountStatus = billingRow?.venueAccountStatus || location.venueAccountStatus || null;
+                const venueAccountScope = billingRow?.venueAccountChargeScope || location.venueAccountChargeScope || null;
+                const venueAccountPlanLabel =
+                  billingRow?.venueAccountPlanLabel ||
+                  location.venueAccountPlanLabel ||
+                  null;
+                const venueAccountMonthlyTotalCents =
+                  billingRow?.venueAccountMonthlyTotalCents ??
+                  location.venueAccountMonthlyTotalCents ??
+                  null;
+                const venueAccountLinkedLocationsCount =
+                  billingRow?.venueAccountLinkedLocationsCount ??
+                  location.venueAccountLinkedLocationsCount ??
+                  null;
+                const venueAccountActiveFieldsCount =
+                  billingRow?.venueAccountActiveFieldsCount ??
+                  location.venueAccountActiveFieldsCount ??
+                  null;
 
                 return (
                   <Card key={location.id} sx={{ position: 'relative' }}>
@@ -1335,6 +1392,60 @@ const getBillingCycleLabel = (cycle?: string | null) => {
                                   variant="outlined"
                                 />
                               ) : null}
+                              {isAdmin && venueAccountId && (
+                                <>
+                                  <Chip
+                                    label="Conta comercial"
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                  {getVenueAccountStatusLabel(venueAccountStatus) && (
+                                    <Chip
+                                      label={getVenueAccountStatusLabel(venueAccountStatus)}
+                                      size="small"
+                                      color={getVenueAccountStatusColor(venueAccountStatus)}
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {getVenueAccountScopeLabel(venueAccountScope) && (
+                                    <Chip
+                                      label={getVenueAccountScopeLabel(venueAccountScope)}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {venueAccountPlanLabel && (
+                                    <Chip
+                                      label={`Plano ${venueAccountPlanLabel}`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {typeof venueAccountMonthlyTotalCents === 'number' && (
+                                    <Chip
+                                      label={`Conta ${formatCurrency(venueAccountMonthlyTotalCents)}`}
+                                      size="small"
+                                      color="success"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {typeof venueAccountLinkedLocationsCount === 'number' && (
+                                    <Chip
+                                      label={`${venueAccountLinkedLocationsCount} quadra(s) no pacote`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {typeof venueAccountActiveFieldsCount === 'number' && (
+                                    <Chip
+                                      label={`${venueAccountActiveFieldsCount} campo(s) ativos`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                </>
+                              )}
                               {isAdmin && billingRow && (
                                 <>
                                   <Chip
@@ -1411,6 +1522,16 @@ const getBillingCycleLabel = (cycle?: string | null) => {
                                 {commercialIssues.length === 0
                                   ? 'Cadastro comercial completo e visível para usuários.'
                                   : `Pendências: ${commercialIssues.slice(0, 4).join(', ')}${commercialIssues.length > 4 ? '...' : ''}.`}
+                              </Alert>
+                            )}
+                            {isAdmin && venueAccountId && (
+                              <Alert
+                                severity={venueAccountStatus === 'OVERDUE' || venueAccountStatus === 'SUSPENDED' ? 'warning' : 'info'}
+                                sx={{ mt: 1 }}
+                              >
+                                Esta quadra está vinculada à conta comercial agregada {venueAccountId}
+                                {getVenueAccountScopeLabel(venueAccountScope) ? ` · ${getVenueAccountScopeLabel(venueAccountScope)}` : ''}
+                                {typeof venueAccountLinkedLocationsCount === 'number' ? ` · ${venueAccountLinkedLocationsCount} quadra(s) no mesmo contrato` : ''}.
                               </Alert>
                             )}
                             {(isAdmin &&

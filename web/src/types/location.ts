@@ -4,6 +4,7 @@ export type LocationCommercialStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPEND
 export type LocationSubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
 export type LocationBillingPlanCode = 'TRIAL' | 'BASIC' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
 export type LocationBillingCycle = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUAL' | 'ANNUAL' | 'CUSTOM';
+export type VenueAccountBillingScope = 'OWNER' | 'LOCATION' | 'FIELD_COUNT' | 'MANUAL_OVERRIDE';
 export type LocationCommercialRequestType = 'PUBLICATION' | 'COMMERCIAL_UPDATE';
 export type LocationCommercialRequestStatus = 'PENDING_REVIEW' | 'NEEDS_CHANGES' | 'APPROVED' | 'REJECTED';
 
@@ -48,6 +49,14 @@ export interface Location {
   billingStartsAt?: Date;
   billingExpiresAt?: Date;
   billingExceptionNote?: string;
+  venueAccountId?: string;
+  venueAccountStatus?: LocationSubscriptionStatus;
+  venueAccountChargeScope?: VenueAccountBillingScope;
+  venueAccountPlanCode?: LocationBillingPlanCode;
+  venueAccountPlanLabel?: string;
+  venueAccountMonthlyTotalCents?: number;
+  venueAccountLinkedLocationsCount?: number;
+  venueAccountActiveFieldsCount?: number;
   publishedAt?: Date;
   publishedBy?: string;
   unpublishedReason?: string;
@@ -223,7 +232,10 @@ export function canManageLocation(location: Location, userId: string): boolean {
 export function isLocationCommerciallyAvailable(location: Location): boolean {
   const publicationStatus = location.publicationStatus ||
     (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
-  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
+  const subscriptionStatus =
+    location.venueAccountStatus ||
+    location.subscriptionStatus ||
+    'ACTIVE';
   return location.isActive === true &&
     location.isVerified === true &&
     publicationStatus === 'PUBLISHED' &&

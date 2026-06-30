@@ -38,7 +38,7 @@ export const getLocationPublicationStatus = (location: Location): LocationPublic
   location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
 
 export const getLocationSubscriptionStatus = (location: Location): LocationSubscriptionStatus =>
-  location.subscriptionStatus || 'ACTIVE';
+  location.venueAccountStatus || location.subscriptionStatus || 'ACTIVE';
 
 const matchesBooleanFilter = (value: boolean | undefined, filter: LocationBooleanFilter) => {
   if (filter === 'ALL') return true;
@@ -71,6 +71,9 @@ export const getLocationCommercialIssues = (location: Location): string[] => {
   if (location.isVerified !== true) issues.push('não verificada');
   if (publicationStatus !== 'PUBLISHED') issues.push('não publicada');
   if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) issues.push('mensalidade irregular');
+  if (location.venueAccountId && !['TRIAL', 'ACTIVE'].includes(location.venueAccountStatus || 'ACTIVE')) {
+    issues.push('conta comercial irregular');
+  }
   if ((location.fieldCount || 0) <= 0) issues.push('sem quadras cadastradas');
   if (location.hasActiveFields === false) issues.push('sem quadras ativas');
   if (!location.monthlyFeeCents || location.monthlyFeeCents <= 0) issues.push('sem mensalidade');

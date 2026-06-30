@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T01:14:13.743Z",
+  "generatedAt": "2026-06-30T02:43:48.720Z",
   "notes": [
+    {
+      "version": "1.43.27",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Admin de quadras passa a enxergar a conta comercial agregada do dono.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de usuários admin agora mostra a conta comercial do dono de quadra, status, escopo de cobrança, plano, total mensal calculado e contato financeiro.",
+        "A tela de gerenciamento de quadras agora exibe quando uma quadra está vinculada a uma conta comercial agregada, incluindo status, plano, valor total e quantidade de quadras/campos no contrato.",
+        "O CSV financeiro de quadras ganhou colunas de conta comercial para facilitar conferência operacional."
+      ],
+      "fixed": [
+        "A elegibilidade comercial das quadras passa a considerar o status da conta agregada quando disponível, evitando divergência entre contrato do dono e disponibilidade pública."
+      ],
+      "issueRefs": [
+        3087,
+        3119,
+        3122,
+        3135
+      ]
+    },
     {
       "version": "1.43.26",
       "buildNumber": null,

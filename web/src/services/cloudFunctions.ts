@@ -49,6 +49,25 @@ export interface AdminOwnerOnboardingSummary {
   reviewReason: string | null;
 }
 
+export interface AdminVenueAccountSummary {
+  id: string;
+  status: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
+  billingScope: 'OWNER' | 'LOCATION' | 'FIELD_COUNT' | 'MANUAL_OVERRIDE';
+  billingPlanCode: 'TRIAL' | 'BASIC' | 'PRO' | 'ENTERPRISE' | 'CUSTOM' | null;
+  billingPlanLabel: string | null;
+  billingCycle: 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUAL' | 'ANNUAL' | 'CUSTOM' | null;
+  billingDueDay: number | null;
+  billingContactName: string | null;
+  billingContactEmail: string | null;
+  linkedLocationIds: string[];
+  linkedLocationsCount: number;
+  publishedLocationsCount: number;
+  activeFieldCount: number;
+  legacyMonthlyFeeTotalCents: number;
+  computedMonthlyFeeCents: number;
+  updatedAtIso: string | null;
+}
+
 export interface AdminUserCrmRow {
   id: string;
   name: string;
@@ -64,6 +83,7 @@ export interface AdminUserCrmRow {
   ownerSummary: AdminOwnerSummary;
   ownerLocations: AdminOwnerLocationSummary[];
   ownerOnboarding: AdminOwnerOnboardingSummary | null;
+  venueAccount: AdminVenueAccountSummary | null;
 }
 
 export interface AdminUserSearchResponse {
@@ -129,6 +149,55 @@ export const reviewVenueOwnerOnboarding = httpsCallable<
   },
   VenueOwnerOnboardingResponse
 >(functions, 'reviewVenueOwnerOnboarding');
+
+export interface VenueAccountResponse {
+  success: boolean;
+  accountId: string;
+  ownerUid: string;
+  linkedLocationIds: string[];
+  linkedLocationsCount: number;
+  publishedLocationsCount: number;
+  activeFieldCount: number;
+  computedMonthlyFeeCents: number;
+  status: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
+  billingScope: 'OWNER' | 'LOCATION' | 'FIELD_COUNT' | 'MANUAL_OVERRIDE';
+}
+
+export const upsertVenueAccount = httpsCallable<
+  {
+    ownerUid: string;
+    billingContactName?: string | null;
+    billingContactEmail?: string | null;
+    billingContactPhone?: string | null;
+    billingContactDocument?: string | null;
+    status?: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED' | null;
+    billingScope?: 'OWNER' | 'LOCATION' | 'FIELD_COUNT' | 'MANUAL_OVERRIDE' | null;
+    billingPlanCode?: 'TRIAL' | 'BASIC' | 'PRO' | 'ENTERPRISE' | 'CUSTOM' | null;
+    billingPlanLabel?: string | null;
+    billingCycle?: 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUAL' | 'ANNUAL' | 'CUSTOM' | null;
+    billingBaseFeeCents?: number | null;
+    defaultLocationFeeCents?: number | null;
+    pricePerActiveFieldCents?: number | null;
+    monthlyFeeOverrideCents?: number | null;
+    billingDueDay?: number | null;
+    billingStartsAtIso?: string | null;
+    billingExpiresAtIso?: string | null;
+    notes?: string | null;
+    adminNotes?: string | null;
+    linkedLocationIds?: string[] | null;
+  },
+  VenueAccountResponse
+>(functions, 'upsertVenueAccount');
+
+export const linkLocationToVenueAccount = httpsCallable<
+  { ownerUid: string; locationId: string },
+  VenueAccountResponse
+>(functions, 'linkLocationToVenueAccount');
+
+export const unlinkLocationFromVenueAccount = httpsCallable<
+  { ownerUid: string; locationId: string },
+  VenueAccountResponse
+>(functions, 'unlinkLocationFromVenueAccount');
 
 export const deleteLocation = httpsCallable<
   { locationId: string },
@@ -236,6 +305,14 @@ export interface AdminLocationBillingSummaryRow {
   pendingReceiptCount: number;
   lastPaymentAtIso: string | null;
   updatedAtIso: string | null;
+  venueAccountId?: string | null;
+  venueAccountStatus?: string | null;
+  venueAccountChargeScope?: string | null;
+  venueAccountPlanCode?: string | null;
+  venueAccountPlanLabel?: string | null;
+  venueAccountMonthlyTotalCents?: number | null;
+  venueAccountLinkedLocationsCount?: number | null;
+  venueAccountActiveFieldsCount?: number | null;
 }
 
 export interface AdminLocationBillingSummaryResponse {
