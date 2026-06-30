@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, renderHook, screen, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // Mock Firebase modules
@@ -360,7 +360,7 @@ describe('AuthContext', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(() => {
-      render(<AuthConsumer />);
+      renderHook(() => useAuth());
     }).toThrow('useAuth must be used within an AuthProvider');
 
     consoleSpy.mockRestore();
