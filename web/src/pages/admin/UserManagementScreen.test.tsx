@@ -6,10 +6,12 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockSearchAdminUsers = vi.fn();
+const mockUpsertVenueAccount = vi.fn();
 
 vi.mock('../../services/cloudFunctions', () => ({
   setUserRole: vi.fn().mockResolvedValue(undefined),
   searchAdminUsers: (...args: unknown[]) => mockSearchAdminUsers(...args),
+  upsertVenueAccount: (...args: unknown[]) => mockUpsertVenueAccount(...args),
 }));
 
 vi.mock('../../contexts/AuthContext', () => ({
@@ -74,6 +76,8 @@ mockSearchAdminUsers.mockResolvedValue({
         updatedAtIso: null,
         lastLoginAtIso: null,
         ownerLocations: [],
+        ownerOnboarding: null,
+        venueAccount: null,
       },
       {
         id: 'user-2',
@@ -113,6 +117,18 @@ mockSearchAdminUsers.mockResolvedValue({
             updatedAtIso: null,
           },
         ],
+        ownerOnboarding: {
+          status: 'APPROVED',
+          submittedAtIso: null,
+          reviewedAtIso: null,
+          contactName: 'Financeiro Arena',
+          contactEmail: 'financeiro@arena.test',
+          phone: '+5511988887777',
+          businessName: 'Arena Teste LTDA',
+          notes: null,
+          reviewReason: null,
+        },
+        venueAccount: null,
       },
     ],
     nextPageToken: null,
@@ -138,6 +154,21 @@ function renderWithTheme(ui: React.ReactElement) {
 describe('UserManagementScreen', () => {
   beforeEach(() => {
     mockSearchAdminUsers.mockClear();
+    mockUpsertVenueAccount.mockReset();
+    mockUpsertVenueAccount.mockResolvedValue({
+      data: {
+        success: true,
+        accountId: 'user-2',
+        ownerUid: 'user-2',
+        linkedLocationIds: ['loc-1'],
+        linkedLocationsCount: 1,
+        publishedLocationsCount: 1,
+        activeFieldCount: 2,
+        computedMonthlyFeeCents: 19990,
+        status: 'ACTIVE',
+        billingScope: 'OWNER',
+      },
+    });
   });
 
   it('renderiza título', async () => {
@@ -198,5 +229,29 @@ describe('UserManagementScreen', () => {
     expect(screen.getByText('Último login')).toBeInTheDocument();
     expect(screen.getByText(/27\/06\/2026/)).toBeInTheDocument();
     expect(screen.getByText(/28\/06\/2026/)).toBeInTheDocument();
+  });
+
+  it('permite configurar conta comercial agregada do dono de quadra', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<UserManagementScreen />);
+
+    await user.click(await screen.findByText(/admin@test\.com/));
+    await user.click(await screen.findByRole('button', { name: 'Criar conta' }));
+    await user.clear(await screen.findByLabelText('Mensalidade final manual (R$)'));
+    await user.type(screen.getByLabelText('Mensalidade final manual (R$)'), '199.90');
+    await user.clear(await screen.findByLabelText('Dia de vencimento'));
+    await user.type(screen.getByLabelText('Dia de vencimento'), '10');
+    await user.click(screen.getByRole('button', { name: 'Salvar conta comercial' }));
+
+    expect(mockUpsertVenueAccount).toHaveBeenCalledWith(expect.objectContaining({
+      ownerUid: 'user-2',
+      status: 'TRIAL',
+      billingScope: 'OWNER',
+      monthlyFeeOverrideCents: 19990,
+      billingDueDay: 10,
+      linkedLocationIds: ['loc-1'],
+      billingContactName: 'Financeiro Arena',
+      billingContactEmail: 'financeiro@arena.test',
+    }));
   });
 });

@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T03:24:56.688Z",
+  "generatedAt": "2026-06-30T03:35:42.299Z",
   "notes": [
+    {
+      "version": "1.43.30",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Admin agora configura a conta comercial agregada do dono de quadra.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A ficha comercial de usuários ganhou criação e edição de conta comercial por dono de quadra.",
+        "O admin pode definir status, modelo de cobrança, plano, ciclo, mensalidade final, vencimento, vigência, contato financeiro e observações.",
+        "A conta comercial permite vincular as quadras do dono ao contrato único, mantendo o fluxo auditado pelas Cloud Functions."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3121
+      ]
+    },
     {
       "version": "1.43.29",
       "buildNumber": null,

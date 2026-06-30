@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.30] - 2026-06-30
+
+#### Adicionado
+- Formulário web em `/admin/users` usando a callable `upsertVenueAccount`.
+- Teste cobrindo o salvamento da conta comercial agregada.
+
+#### Mudado
+- O gerenciamento de usuários deixa de apenas exibir `venue_accounts` e passa a operar a configuração comercial centralizada.
+
+_Issues: #3121_
+
 ### [1.43.29] - 2026-06-30
 
 #### Adicionado
