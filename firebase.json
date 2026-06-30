@@ -11,6 +11,10 @@
   },
   "hosting": {
     "public": "web/dist",
+    "predeploy": [
+      "npm --prefix web ci",
+      "npm --prefix web run build"
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -126,11 +130,29 @@
       "ignore": [
         "node_modules",
         ".git",
+        ".npm-cache",
+        "src",
+        "test",
+        ".eslintrc.js",
+        ".npmrc",
+        "README.md",
+        "FUNCTIONS.md",
+        "OPTIMIZATION_SUMMARY.md",
+        "firestore-debug.log",
+        "install-infrastructure-deps.sh",
+        "jest.config.js",
+        "jest.integration.config.js",
+        "jest.perf.config.js",
+        "stryker.conf.json",
+        "tmpclaude-*",
+        "tsconfig.json",
+        "tsconfig.dev.json",
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local"
       ],
       "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" ci",
         "npm --prefix \"$RESOURCE_DIR\" run lint",
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
