@@ -47,6 +47,9 @@ class FakeCollectionRef {
   }
 
   async add(data: StoredDoc) {
+    if (failCollectionAddsFor.has(this.path)) {
+      throw new Error(`forced add failure for ${this.path}`);
+    }
     const ref = this.doc();
     await ref.set(data);
     return ref;
@@ -71,6 +74,7 @@ class FakeBatch {
 const firestoreStore = new Map<string, StoredDoc>();
 const batchInstances: FakeBatch[] = [];
 const mockSecureCallableOptions: Array<Record<string, unknown>> = [];
+const failCollectionAddsFor = new Set<string>();
 let autoId = 1;
 
 const fakeDb = {
@@ -125,12 +129,17 @@ const {
   upsertVenueAccount,
 } = require("../src/admin/venue-accounts");
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {logger} = require("firebase-functions/v2");
+
 function resetFirestore() {
   firestoreStore.clear();
   batchInstances.length = 0;
   mockSecureCallableOptions.length = 0;
+  failCollectionAddsFor.clear();
   fakeDb.collection.mockClear();
   fakeDb.batch.mockClear();
+  logger.warn.mockClear();
   autoId = 1;
 }
 
@@ -215,6 +224,38 @@ describe("venue account admin callables", () => {
     expect(Array.from(firestoreStore.keys()).some((path) =>
       path.startsWith("audit_logs/")
     )).toBe(true);
+  });
+
+  it("mantem sucesso quando evento de auditoria falha apos persistencia", async () => {
+    failCollectionAddsFor.add("venue_accounts/owner-1/events");
+
+    await expect(upsertVenueAccount({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        ownerUid: "owner-1",
+        status: "ACTIVE",
+        billingScope: "LOCATION",
+        defaultLocationFeeCents: 8000,
+        linkedLocationIds: ["location-1"],
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      accountId: "owner-1",
+      computedMonthlyFeeCents: 8000,
+    });
+
+    expect(firestoreStore.get("venue_accounts/owner-1")).toMatchObject({
+      owner_uid: "owner-1",
+      computed_monthly_fee_cents: 8000,
+    });
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      venue_account_id: "owner-1",
+      venue_account_monthly_total_cents: 8000,
+    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Venue account owner-1 synced but audit event failed",
+      expect.any(Error)
+    );
   });
 
   it("vincula e desvincula quadra mantendo denormalizacao consistente", async () => {

@@ -131,7 +131,7 @@ describe('ownerDashboard', () => {
     );
   });
 
-  it('considera status da conta comercial agregada para disponibilidade', () => {
+  it('sinaliza status agregado irregular sem derrubar disponibilidade individual', () => {
     const summary = summarizeOwnerLocationStatus(
       baseLocation({
         subscriptionStatus: 'ACTIVE',
@@ -143,8 +143,9 @@ describe('ownerDashboard', () => {
     );
 
     expect(summary.subscriptionStatus).toBe('SUSPENDED');
-    expect(summary.commerciallyAvailable).toBe(false);
-    expect(summary.commercialIssues).toContain('mensalidade irregular');
+    expect(summary.commerciallyAvailable).toBe(true);
+    expect(summary.commercialIssues).toContain('conta comercial irregular');
+    expect(summary.commercialIssues).not.toContain('mensalidade irregular');
   });
 
   it('calcula os agregados do dashboard do owner', () => {

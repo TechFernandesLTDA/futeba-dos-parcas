@@ -507,26 +507,33 @@ async function persistVenueAccount(params: {
   }
   await batch.commit();
 
-  await writeVenueAccountEvent({
-    accountId,
-    ownerUid,
-    actorUid: params.actorUid,
-    type: params.eventType,
-    reason: params.reason ?? null,
-    before: current ? {
-      status: isVenueAccountStatus(current.status) ? current.status : null,
-      billing_scope: isVenueAccountBillingScope(current.billing_scope) ?
-        current.billing_scope :
-        null,
-      linked_location_ids: normalizeIds(current.linked_location_ids),
-    } : null,
-    after: {
-      status: nextDocument.status,
-      billing_scope: nextDocument.billing_scope,
-      linked_location_ids: nextLinkedLocationIds,
-      computed_monthly_fee_cents: metrics.computedMonthlyFeeCents,
-    },
-  });
+  try {
+    await writeVenueAccountEvent({
+      accountId,
+      ownerUid,
+      actorUid: params.actorUid,
+      type: params.eventType,
+      reason: params.reason ?? null,
+      before: current ? {
+        status: isVenueAccountStatus(current.status) ? current.status : null,
+        billing_scope: isVenueAccountBillingScope(current.billing_scope) ?
+          current.billing_scope :
+          null,
+        linked_location_ids: normalizeIds(current.linked_location_ids),
+      } : null,
+      after: {
+        status: nextDocument.status,
+        billing_scope: nextDocument.billing_scope,
+        linked_location_ids: nextLinkedLocationIds,
+        computed_monthly_fee_cents: metrics.computedMonthlyFeeCents,
+      },
+    });
+  } catch (error) {
+    logger.warn(
+      `Venue account ${accountId} synced but audit event failed`,
+      error
+    );
+  }
 
   logger.info(`Venue account ${accountId} synced for owner ${ownerUid}`);
   return {

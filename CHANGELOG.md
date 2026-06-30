@@ -69,6 +69,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.32] - 2026-06-30
+
+#### Corrigido
+- `isLocationCommerciallyAvailable` não usa mais `venueAccountStatus` como substituto silencioso de `subscriptionStatus`.
+- `getLocationCommercialIssues` torna mutuamente exclusivos os avisos de mensalidade individual e conta agregada.
+
+_Issues: #3121 · PRs: #3166_
+
 ### [1.43.31] - 2026-06-30
 
 #### Adicionado
@@ -679,6 +687,15 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.22] - 2026-06-30
+
+#### Corrigido
+- `backfill-venue-commercial-data` compara o snapshot existente antes de marcar conta agregada como pendente de sync.
+- Valores `0` em centavos passam a ser tratados como válidos no backfill.
+- `persistVenueAccount` registra falha de evento/audit log sem transformar uma atualização já persistida em erro para o callable.
+
+_Issues: #3121 · PRs: #3166_
 
 ### [1.2.21] - 2026-06-30
 

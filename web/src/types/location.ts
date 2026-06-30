@@ -236,10 +236,7 @@ export function canManageLocation(location: Location, userId: string): boolean {
 export function isLocationCommerciallyAvailable(location: Location): boolean {
   const publicationStatus = location.publicationStatus ||
     (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
-  const subscriptionStatus =
-    location.venueAccountStatus ||
-    location.subscriptionStatus ||
-    'ACTIVE';
+  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
   return location.isActive === true &&
     location.isVerified === true &&
     publicationStatus === 'PUBLISHED' &&

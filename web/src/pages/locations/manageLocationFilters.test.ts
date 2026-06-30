@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Field, Location } from '../../types/location';
+import { Field, isLocationCommerciallyAvailable, Location } from '../../types/location';
 import {
   getLocationCommercialIssues,
   getLocationPublicationStatus,
@@ -135,6 +135,31 @@ describe('manageLocationFilters', () => {
       'sem vencimento',
       'endereço incompleto',
     ]);
+  });
+
+  it('prioriza pendência da conta agregada sem duplicar mensalidade irregular', () => {
+    const issues = getLocationCommercialIssues(baseLocation({
+      subscriptionStatus: 'ACTIVE',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'OVERDUE',
+    }));
+
+    expect(issues).toContain('conta comercial irregular');
+    expect(issues).not.toContain('mensalidade irregular');
+  });
+
+  it('mantém disponibilidade pública baseada no status individual da quadra', () => {
+    expect(isLocationCommerciallyAvailable(baseLocation({
+      subscriptionStatus: 'ACTIVE',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'OVERDUE',
+    }))).toBe(true);
+
+    expect(isLocationCommerciallyAvailable(baseLocation({
+      subscriptionStatus: 'OVERDUE',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'ACTIVE',
+    }))).toBe(false);
   });
 
   it('gera checklist de qualidade para publicação da quadra', () => {

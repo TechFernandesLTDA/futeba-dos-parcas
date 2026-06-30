@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T04:05:42.651Z",
+  "generatedAt": "2026-06-30T04:26:38.630Z",
   "notes": [
+    {
+      "version": "1.43.32",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Quadras ativas deixam de sumir do mapa por status agregado de conta.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A listagem pública usa o status comercial individual da quadra para disponibilidade.",
+        "O painel administrativo mostra a pendência específica de conta comercial irregular sem duplicar a pendência de mensalidade."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3121
+      ]
+    },
     {
       "version": "1.43.31",
       "buildNumber": null,

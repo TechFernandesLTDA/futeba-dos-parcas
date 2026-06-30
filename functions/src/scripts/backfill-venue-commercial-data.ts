@@ -122,7 +122,7 @@ function positiveInt(value: unknown): number {
 
 function cents(value: unknown): number {
   const number = finiteNumber(value);
-  return number && Number.isInteger(number) && number > 0 ? number : 0;
+  return number !== null && Number.isInteger(number) && number >= 0 ? number : 0;
 }
 
 function inferFieldType(value: unknown, name: string): string {
@@ -342,6 +342,27 @@ function buildVenueAccountDocument(params: {
   };
 }
 
+function valuesEqual(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  }
+  return a === b;
+}
+
+function buildChangedVenueAccountUpdates(
+  existing: Data | null,
+  candidate: UpdateData
+): UpdateData {
+  if (!existing) return candidate;
+
+  const updates: UpdateData = {};
+  for (const [key, value] of Object.entries(candidate)) {
+    if (key === "updated_at" || key === "backfill_source") continue;
+    if (!valuesEqual(existing[key], value)) updates[key] = value;
+  }
+  return Object.keys(updates).length > 0 ? withAudit(updates) : {};
+}
+
 async function auditLocation(
   locDoc: FirebaseFirestore.QueryDocumentSnapshot
 ): Promise<LocationFix> {
@@ -447,26 +468,31 @@ async function buildVenueAccountFix(
   });
   const locations = eligibleLocationDocs.map((locationDoc) => locationDoc.data());
   const locationIds = eligibleLocationDocs.map((locationDoc) => locationDoc.id);
-  const accountUpdates = buildVenueAccountDocument({
+  const accountCandidate = buildVenueAccountDocument({
     ownerId,
     existing,
     locations,
     locationIds,
   });
+  const accountUpdates = buildChangedVenueAccountUpdates(existing, accountCandidate);
+  const accountProjection = {
+    ...accountCandidate,
+    ...accountUpdates,
+  };
   const locationUpdates = eligibleLocationDocs.map((locationDoc) => ({
     id: locationDoc.id,
     ref: locationDoc.ref,
     updates: withAudit({
       venue_account_id: ownerId,
-      venue_account_status: accountUpdates.status,
-      venue_account_charge_scope: accountUpdates.billing_scope,
-      venue_account_plan_code: accountUpdates.billing_plan_code,
-      venue_account_plan_label: accountUpdates.billing_plan_label,
+      venue_account_status: accountProjection.status,
+      venue_account_charge_scope: accountProjection.billing_scope,
+      venue_account_plan_code: accountProjection.billing_plan_code,
+      venue_account_plan_label: accountProjection.billing_plan_label,
       venue_account_monthly_total_cents:
-        accountUpdates.computed_monthly_fee_cents,
+        accountProjection.computed_monthly_fee_cents,
       venue_account_linked_locations_count:
-        accountUpdates.linked_locations_count,
-      venue_account_active_fields_count: accountUpdates.active_fields_count,
+        accountProjection.linked_locations_count,
+      venue_account_active_fields_count: accountProjection.active_fields_count,
     }),
   })).filter((locationUpdate) =>
     Object.entries(locationUpdate.updates).some(([key, value]) =>
@@ -488,11 +514,13 @@ async function buildVenueAccountFix(
 
 async function applyVenueAccountFix(fix: VenueAccountFix): Promise<void> {
   const batch = db.batch();
-  batch.set(
-    db.collection("venue_accounts").doc(fix.ownerId),
-    fix.accountUpdates,
-    {merge: true}
-  );
+  if (Object.keys(fix.accountUpdates).length > 0) {
+    batch.set(
+      db.collection("venue_accounts").doc(fix.ownerId),
+      fix.accountUpdates,
+      {merge: true}
+    );
+  }
   for (const locationUpdate of fix.locationUpdates) {
     batch.update(locationUpdate.ref, locationUpdate.updates);
   }
@@ -636,9 +664,18 @@ async function backfill(execute: boolean): Promise<void> {
 
 const execute = process.argv.includes("--execute");
 
-backfill(execute)
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error("Backfill failed:", err);
-    process.exit(1);
-  });
+if (require.main === module) {
+  backfill(execute)
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error("Backfill failed:", err);
+      process.exit(1);
+    });
+}
+
+export {
+  buildChangedVenueAccountUpdates,
+  buildVenueAccountDocument,
+  cents,
+  hasVenueAccountFixes,
+};

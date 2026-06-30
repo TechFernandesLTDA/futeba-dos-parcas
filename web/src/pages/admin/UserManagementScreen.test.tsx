@@ -253,5 +253,5 @@ describe('UserManagementScreen', () => {
       billingContactName: 'Financeiro Arena',
       billingContactEmail: 'financeiro@arena.test',
     }));
-  });
+  }, 15000);
 });

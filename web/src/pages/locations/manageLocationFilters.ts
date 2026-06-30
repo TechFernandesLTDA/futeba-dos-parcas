@@ -65,14 +65,15 @@ const matchesMonthlyFeeFilter = (monthlyFeeCents: number | undefined, filter: Lo
 export const getLocationCommercialIssues = (location: Location): string[] => {
   const issues: string[] = [];
   const publicationStatus = getLocationPublicationStatus(location);
-  const subscriptionStatus = getLocationSubscriptionStatus(location);
+  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
 
   if (location.isActive !== true) issues.push('inativa');
   if (location.isVerified !== true) issues.push('não verificada');
   if (publicationStatus !== 'PUBLISHED') issues.push('não publicada');
-  if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) issues.push('mensalidade irregular');
   if (location.venueAccountId && !['TRIAL', 'ACTIVE'].includes(location.venueAccountStatus || 'ACTIVE')) {
     issues.push('conta comercial irregular');
+  } else if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) {
+    issues.push('mensalidade irregular');
   }
   if ((location.fieldCount || 0) <= 0) issues.push('sem quadras cadastradas');
   if (location.hasActiveFields === false) issues.push('sem quadras ativas');
