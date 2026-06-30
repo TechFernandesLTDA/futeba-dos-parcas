@@ -666,7 +666,18 @@ export const UserManagementScreen: React.FC = () => {
             </Button>
           )}
         </Box>
-        <Box sx={{ px: 2, pb: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 180px 220px' }, gap: 1 }}>
+        <Box
+          sx={{
+            px: 2,
+            pb: 2,
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 180px 220px' },
+            gap: 1,
+            '& .MuiInputBase-root': {
+              minHeight: { xs: 44, sm: 'auto' },
+            },
+          }}
+        >
           <TextField
             fullWidth
             size="small"
@@ -759,6 +770,7 @@ export const UserManagementScreen: React.FC = () => {
                         <Checkbox
                           checked={selectedUsers.size > 0 && selectedUsers.size === filteredUsers.filter(u => u.id !== currentUser?.id).length}
                           indeterminate={selectedUsers.size > 0 && selectedUsers.size < filteredUsers.filter(u => u.id !== currentUser?.id).length}
+                          sx={{ p: 1.25 }}
                           onChange={() => {
                             const eligible = filteredUsers.filter(u => u.id !== currentUser?.id);
                             if (selectedUsers.size === eligible.length) {
@@ -804,6 +816,7 @@ export const UserManagementScreen: React.FC = () => {
                               checked={selectedUsers.has(u.id)}
                               onChange={() => toggleSelect(u.id)}
                               disabled={u.id === currentUser?.id}
+                              sx={{ p: 1.25 }}
                             />
                           </TableCell>
                           <TableCell>
@@ -911,7 +924,7 @@ export const UserManagementScreen: React.FC = () => {
                             checked={selectedUsers.has(u.id)}
                             onChange={() => toggleSelect(u.id)}
                             disabled={u.id === currentUser?.id}
-                            sx={{ mr: 1 }}
+                            sx={{ p: 1.25, mr: 1 }}
                           />
                           <ListItemButton
                             onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
@@ -1082,20 +1095,24 @@ export const UserManagementScreen: React.FC = () => {
                           </Typography>
                           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 0.5 }}>
                             <FormControlLabel
-                              control={<Checkbox checked={onboardingChecklist.contactReviewed} onChange={() => handleOnboardingChecklist('contactReviewed')} />}
+                              control={<Checkbox checked={onboardingChecklist.contactReviewed} onChange={() => handleOnboardingChecklist('contactReviewed')} sx={{ p: 1.25 }} />}
                               label="Contato revisado"
+                              sx={{ minHeight: 44 }}
                             />
                             <FormControlLabel
-                              control={<Checkbox checked={onboardingChecklist.locationsReviewed} onChange={() => handleOnboardingChecklist('locationsReviewed')} />}
+                              control={<Checkbox checked={onboardingChecklist.locationsReviewed} onChange={() => handleOnboardingChecklist('locationsReviewed')} sx={{ p: 1.25 }} />}
                               label="Quadras revisadas"
+                              sx={{ minHeight: 44 }}
                             />
                             <FormControlLabel
-                              control={<Checkbox checked={onboardingChecklist.termsReviewed} onChange={() => handleOnboardingChecklist('termsReviewed')} />}
+                              control={<Checkbox checked={onboardingChecklist.termsReviewed} onChange={() => handleOnboardingChecklist('termsReviewed')} sx={{ p: 1.25 }} />}
                               label="Termos revisados"
+                              sx={{ minHeight: 44 }}
                             />
                             <FormControlLabel
-                              control={<Checkbox checked={onboardingChecklist.billingReviewed} onChange={() => handleOnboardingChecklist('billingReviewed')} />}
+                              control={<Checkbox checked={onboardingChecklist.billingReviewed} onChange={() => handleOnboardingChecklist('billingReviewed')} sx={{ p: 1.25 }} />}
                               label="Cobrança revisada"
+                              sx={{ minHeight: 44 }}
                             />
                           </Box>
                           <TextField
@@ -1581,9 +1598,11 @@ export const UserManagementScreen: React.FC = () => {
                       <Checkbox
                         checked={venueAccountForm.linkedLocationIds.includes(location.id)}
                         onChange={() => handleToggleVenueAccountLocation(location.id)}
+                        sx={{ p: 1.25 }}
                       />
                     }
                     label={`${location.name} · ${location.city || 'Cidade não informada'} · ${location.fieldCount} campo(s)`}
+                    sx={{ minHeight: 44 }}
                   />
                 ))}
               </Box>

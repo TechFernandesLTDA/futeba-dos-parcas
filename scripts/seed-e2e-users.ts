@@ -26,6 +26,8 @@ interface TestUser {
   email: string;
   password: string;
   displayName: string;
+  nickname: string;
+  preferredPosition: 'GOLEIRO' | 'ZAGUEIRO' | 'LATERAL' | 'VOLANTE' | 'MEIA' | 'ATACANTE';
   role: UserRole;
 }
 
@@ -41,6 +43,8 @@ const TEST_USERS: TestUser[] = [
     email: process.env.VITE_TEST_PLAYER_EMAIL || 'test.player@futeba.test',
     password: process.env.VITE_TEST_PLAYER_PASSWORD || 'Test123!@#',
     displayName: 'Jogador Teste E2E',
+    nickname: 'Player E2E',
+    preferredPosition: 'MEIA',
     role: 'PLAYER',
   },
   {
@@ -48,6 +52,8 @@ const TEST_USERS: TestUser[] = [
     email: process.env.VITE_TEST_FIELD_OWNER_EMAIL || 'test.fieldowner@futeba.test',
     password: process.env.VITE_TEST_FIELD_OWNER_PASSWORD || 'Test123!@#',
     displayName: 'Dono de Campo Teste E2E',
+    nickname: 'Owner E2E',
+    preferredPosition: 'VOLANTE',
     role: 'FIELD_OWNER',
   },
   {
@@ -55,6 +61,8 @@ const TEST_USERS: TestUser[] = [
     email: process.env.VITE_TEST_ADMIN_EMAIL || 'test.admin@futeba.test',
     password: process.env.VITE_TEST_ADMIN_PASSWORD || 'Test123!@#',
     displayName: 'Admin Teste E2E',
+    nickname: 'Admin E2E',
+    preferredPosition: 'ZAGUEIRO',
     role: 'ADMIN',
   },
 ];
@@ -127,8 +135,13 @@ async function upsertTestUser(user: TestUser): Promise<void> {
     }
   }
 
-  // Sempre (re)define Custom Claims para garantir idempotência
-  await authAdmin.setCustomUserClaims(userRecord.uid, { role: user.role });
+  // Sempre (re)define Custom Claims para garantir idempotência.
+  // E2E visual/acesso precisa de usuários já prontos para passar pelos gates.
+  await authAdmin.setCustomUserClaims(userRecord.uid, {
+    role: user.role,
+    verified: true,
+    profileComplete: true,
+  });
   console.log(`[seed] Custom Claims definidos: uid=${userRecord.uid} role=${user.role}`);
 
   // Cria/atualiza documento Firestore users/{uid}
@@ -138,6 +151,16 @@ async function upsertTestUser(user: TestUser): Promise<void> {
       uid: userRecord.uid,
       email: user.email,
       name: user.displayName,
+      nickname: user.nickname,
+      phone: '+5511999999999',
+      phone_number: '+5511999999999',
+      cpf_verified: true,
+      verified: true,
+      profile_complete: true,
+      preferred_position: user.preferredPosition,
+      preferred_field_types: ['SOCIETY'],
+      favorite_team: 'Futeba dos Parças',
+      is_searchable: true,
       role: user.role,
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),

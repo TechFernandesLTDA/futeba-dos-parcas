@@ -35,12 +35,17 @@ try {
 
 export { app };
 
+const shouldUseEmulators =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_USE_EMULATOR === 'true' &&
+  typeof window !== 'undefined';
+
 // App Check — DEVE ser inicializado ANTES dos outros services (auth,
 // firestore, functions) pra que SDK injete tokens automaticamente.
 export let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
 if (typeof window !== 'undefined') {
   const recaptchaKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-  if (recaptchaKey) {
+  if (recaptchaKey && !shouldUseEmulators) {
     try {
       // Em desenvolvimento, habilita token de debug para testes locais
       if (import.meta.env.DEV) {
@@ -53,7 +58,7 @@ if (typeof window !== 'undefined') {
     } catch (err) {
       console.warn('App Check initialization failed:', err);
     }
-  } else if (import.meta.env.DEV) {
+  } else if (import.meta.env.DEV && !shouldUseEmulators) {
     console.warn('App Check not configured');
   }
 }
@@ -76,9 +81,7 @@ export const db = initializeFirestore(app, {
 // produção fica IMUNE a vazamento de VITE_USE_EMULATOR via .env. E2E usa
 // `npm run dev` (Vite dev mode, DEV=true), então o emulador continua ativo lá.
 if (
-  import.meta.env.DEV &&
-  import.meta.env.VITE_USE_EMULATOR === 'true' &&
-  typeof window !== 'undefined'
+  shouldUseEmulators
 ) {
   const host = '127.0.0.1';
   try {

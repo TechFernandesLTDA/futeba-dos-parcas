@@ -55,6 +55,7 @@ function getCredentials(
  * o redirecionamento para a home (/).
  *
  * Os seletores são baseados nos atributos do LoginScreen.tsx:
+ * - Form aria-label="Entrar"
  * - TextField label="Email"
  * - TextField label="Senha"
  * - Button type="submit" com texto "Entrar"
@@ -63,16 +64,17 @@ async function performLogin(page: Page, credentials: TestCredentials): Promise<v
   await page.goto('/login');
 
   // Aguarda o formulário estar visível antes de interagir
-  await page.waitForSelector('form[aria-label="Formulário de login"]');
+  const loginForm = page.locator('form[aria-label="Entrar"]');
+  await loginForm.waitFor({ state: 'visible' });
 
   // Preenche email usando o label do TextField MUI
-  await page.getByLabel('Email').fill(credentials.email);
+  await loginForm.getByRole('textbox', { name: 'Email' }).fill(credentials.email);
 
-  // Preenche senha usando o label do TextField MUI
-  await page.getByLabel('Senha').fill(credentials.password);
+  // Preenche senha sem confundir com o botão "Mostrar senha".
+  await loginForm.getByRole('textbox', { name: 'Senha' }).fill(credentials.password);
 
   // Submete o formulário clicando no botão "Entrar"
-  await page.getByRole('button', { name: 'Entrar' }).click();
+  await loginForm.getByRole('button', { name: 'Entrar' }).click();
 
   // Aguarda redirecionamento para a home — resolveRedirect() retorna '/' por default
   await page.waitForURL('/');

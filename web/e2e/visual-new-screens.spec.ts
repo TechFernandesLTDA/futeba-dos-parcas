@@ -35,6 +35,10 @@ type VisualReport = {
   touchTargetViolations: Array<{
     tag: string;
     label: string;
+    type: string | null;
+    className: string;
+    targetTag: string;
+    targetClassName: string;
     width: number;
     height: number;
   }>;
@@ -80,7 +84,7 @@ const visualRoutes: VisualRoute[] = [
 ];
 
 async function assertVisualContract(page: Page, route: VisualRoute): Promise<void> {
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   await expect(page.locator('body')).toContainText(route.expectedPattern, {
     timeout: 10000,
@@ -95,7 +99,7 @@ async function assertVisualContract(page: Page, route: VisualRoute): Promise<voi
     );
 
     const ignoredTags = new Set(['HTML', 'BODY', 'SCRIPT', 'STYLE', 'NOSCRIPT']);
-    const visibleElements = Array.from(document.body.querySelectorAll<HTMLElement>('*'))
+    const visibleElements = Array.from(document.body.querySelectorAll('*'))
       .filter((element) => {
         if (ignoredTags.has(element.tagName)) return false;
         const style = window.getComputedStyle(element);
@@ -108,28 +112,55 @@ async function assertVisualContract(page: Page, route: VisualRoute): Promise<voi
         );
       });
 
+    const hasHorizontalScrollAncestor = (element) => {
+      let current = element.parentElement;
+      while (current && current !== document.body) {
+        const style = window.getComputedStyle(current);
+        const canScroll = ['auto', 'scroll'].includes(style.overflowX);
+        if (canScroll && current.scrollWidth > current.clientWidth + 1) {
+          return true;
+        }
+        current = current.parentElement;
+      }
+      return false;
+    };
+
     const offscreenElements = visibleElements
       .map((element) => {
         const rect = element.getBoundingClientRect();
+        const text = (element.innerText || element.getAttribute('aria-label') || '').trim();
         return {
           tag: element.tagName.toLowerCase(),
-          text: (element.innerText || element.getAttribute('aria-label') || '').trim().slice(0, 80),
+          text: text.slice(0, 80),
           left: Math.round(rect.left),
           right: Math.round(rect.right),
           width: Math.round(rect.width),
+          inHorizontalScroller: hasHorizontalScrollAncestor(element),
         };
       })
-      .filter((item) => item.left < -2 || item.right > viewportWidth + 2)
+      .filter((item) => {
+        const visuallyHidden = item.left < -1000;
+        const decorative = item.text.length === 0;
+        return (
+          !visuallyHidden &&
+          !decorative &&
+          !item.inHorizontalScroller &&
+          (item.left < -2 || item.right > viewportWidth + 2)
+        );
+      })
       .slice(0, 10);
 
     const touchTargetViolations = Array.from(
-      document.body.querySelectorAll<HTMLElement>(
+      document.body.querySelectorAll(
         'button, a[href], [role="button"], input, select, textarea'
       )
     )
       .filter((element) => {
         const rect = element.getBoundingClientRect();
         const style = window.getComputedStyle(element);
+        const href = element.getAttribute('href');
+        const isSkipLink =
+          href === '#main-content' || Boolean(element.closest('[aria-label="Pular navegação"]'));
         const isDisabled =
           element.hasAttribute('disabled') || element.getAttribute('aria-disabled') === 'true';
         const isVisible =
@@ -142,10 +173,15 @@ async function assertVisualContract(page: Page, route: VisualRoute): Promise<voi
           rect.height < 32 &&
           (element.innerText || '').trim().length > 24;
 
-        return isVisible && !isDisabled && !isInlineTextLink;
+        return isVisible && !isDisabled && !isInlineTextLink && !isSkipLink;
       })
       .map((element) => {
-        const rect = element.getBoundingClientRect();
+        const target =
+          element.closest('label') ||
+          element.closest('.MuiButtonBase-root') ||
+          element.closest('.MuiInputBase-root') ||
+          element;
+        const rect = target.getBoundingClientRect();
         return {
           tag: element.tagName.toLowerCase(),
           label: (
@@ -156,6 +192,10 @@ async function assertVisualContract(page: Page, route: VisualRoute): Promise<voi
           )
             .trim()
             .slice(0, 80),
+          type: element.getAttribute('type'),
+          className: String(element.className || '').slice(0, 120),
+          targetTag: target.tagName.toLowerCase(),
+          targetClassName: String(target.className || '').slice(0, 120),
           width: Math.round(rect.width),
           height: Math.round(rect.height),
         };

@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T05:46:25.057Z",
+  "generatedAt": "2026-06-30T19:45:59.184Z",
   "notes": [
+    {
+      "version": "1.43.35",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Telas de Administração e Donos de Quadra mais confiáveis em desktop e mobile.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Melhora alvos de toque no mobile em filtros, checkboxes, chips, uploads e switches.",
+        "Corrige a experiência de filtros de comodidades para não estourar a largura da tela.",
+        "Ajusta título da tela de criar/editar local para não exibir chave técnica."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.43.34",
       "buildNumber": null,
