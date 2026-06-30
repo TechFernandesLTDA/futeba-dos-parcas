@@ -79,6 +79,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.38] - 2026-06-30
+
+#### Corrigido
+- Centraliza no Web o cálculo de valor esperado de confirmação a partir de `daily_price`, com fallback para `total_cost / max_players` em jogos legados.
+- Persiste `payment_status`, `partial_payment`, `expected_payment` e `expected_payment_cents` na criação de confirmações Web e Android/KMP.
+- Expande as Firestore Rules para permitir apenas os novos campos financeiros seguros na criação de confirmações.
+
 ### [1.43.37] - 2026-06-30
 
 #### Corrigido

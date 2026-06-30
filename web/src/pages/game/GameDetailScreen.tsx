@@ -63,6 +63,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorScreen } from '../../components/common/ErrorScreen';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatGameDateLong } from '../../utils/dateFormatters';
+import { resolveExpectedPayment } from '../../utils/gamePayment';
 import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl } from '../../utils/calendarLinks';
 import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
@@ -73,6 +74,11 @@ import { PostGameReputationPanel } from './PostGameReputationPanel';
 import { PostGameHighlightsPanel } from './PostGameHighlightsPanel';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
 import type { GameConfirmation } from '../../types/game';
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
 
 const PostGameMessagesPanel: React.FC<{ gameId: string; canWrite: boolean }> = ({ gameId, canWrite }) => {
   const { t } = useTranslation();
@@ -258,6 +264,7 @@ export const GameDetailScreen: React.FC = () => {
     () => confirmations.filter((c) => c.status === 'WAITLIST'),
     [confirmations],
   );
+  const expectedPayment = useMemo(() => resolveExpectedPayment(game), [game]);
 
   const handleConfirmPresence = async (position: 'GOALKEEPER' | 'FIELD') => {
     if (!gameId) return;
@@ -915,7 +922,17 @@ export const GameDetailScreen: React.FC = () => {
       <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="position-dialog-title">
         <DialogTitle id="position-dialog-title">{t('games.detail.choosePosition')}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', gap: 2, pt: 1 }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight={700}>
+              Valor para confirmar: {currencyFormatter.format(expectedPayment)}
+            </Typography>
+            {game.totalCost > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                Custo total do jogo: {currencyFormatter.format(game.totalCost)}. O valor por jogador ja considera a duracao escolhida.
+              </Typography>
+            )}
+          </Alert>
+          <Box sx={{ display: 'flex', gap: 2, pt: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
             <Button
               variant="outlined"
               fullWidth
