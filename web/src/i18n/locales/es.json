@@ -2800,6 +2800,7 @@
       "fields": "Canchas registradas",
       "active-fields": "Canchas activas",
       "pricing": "Precio por cancha",
+      "field-details": "Detalles operativos de las canchas",
       "amenities": "Comodidades",
       "commercial": "Publicación y mensualidad"
     },

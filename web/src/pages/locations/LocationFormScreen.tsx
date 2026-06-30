@@ -44,6 +44,7 @@ import {
   createLocationFieldDraft,
   fieldToDraft,
   parseHourlyPrice,
+  parseOptionalPositiveInt,
   summarizeLocationFields,
 } from '../../utils/locationFields';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
@@ -257,6 +258,15 @@ export const LocationFormScreen: React.FC = () => {
       if (Number.isNaN(hourlyPrice)) {
         nextFieldErrors[`${field.id}.hourlyPrice`] = 'Informe um preço válido ou deixe vazio.';
       }
+      const playersPerTeam = parseOptionalPositiveInt(field.playersPerTeam);
+      if (Number.isNaN(playersPerTeam) || (playersPerTeam !== null && (playersPerTeam < 3 || playersPerTeam > 11))) {
+        nextFieldErrors[`${field.id}.playersPerTeam`] = 'Informe entre 3 e 11 jogadores por time ou deixe vazio.';
+      }
+      const minBookingMinutes = parseOptionalPositiveInt(field.minBookingMinutes);
+      if (Number.isNaN(minBookingMinutes) ||
+        (minBookingMinutes !== null && (minBookingMinutes < 30 || minBookingMinutes > 240 || minBookingMinutes % 30 !== 0))) {
+        nextFieldErrors[`${field.id}.minBookingMinutes`] = 'Use 30, 60, 90, 120, 150, 180, 210 ou 240 minutos.';
+      }
     });
     // #1339: telefone é opcional, mas se preenchido deve ter DDD + número
     // (10 dígitos fixo, 11 celular). Não força máscara (mudança de UX maior).
@@ -400,6 +410,7 @@ export const LocationFormScreen: React.FC = () => {
         field_type: fieldSummary.primaryFieldType,
         primary_field_type: fieldSummary.primaryFieldType,
         field_count: fieldSummary.fieldCount,
+        players_per_team: fieldSummary.playersPerTeam,
         has_active_fields: fieldSummary.hasActiveFields,
         description: form.description.trim(),
         has_lighting: form.hasLighting,
@@ -425,6 +436,10 @@ export const LocationFormScreen: React.FC = () => {
             field.photoFiles,
           );
           const fieldPhotos = [...field.existingPhotos, ...uploadedFieldPhotos];
+          const fieldAmenities = Array.from(new Set([
+            ...field.amenities,
+            ...(field.isCovered ? ['covered'] : []),
+          ]));
           const fieldPayload = {
             name: field.name.trim(),
             location_id: locationDocId,
@@ -432,10 +447,13 @@ export const LocationFormScreen: React.FC = () => {
             is_active: field.isActive,
             hourly_price: parseHourlyPrice(field.hourlyPrice),
             price_per_hour: parseHourlyPrice(field.hourlyPrice),
+            players_per_team: parseOptionalPositiveInt(field.playersPerTeam),
+            min_booking_minutes: parseOptionalPositiveInt(field.minBookingMinutes),
             surface: field.surface.trim() || null,
             dimensions: field.dimensions.trim() || null,
+            rules: field.rules.trim() || null,
             is_covered: field.isCovered,
-            amenities: field.isCovered ? ['covered'] : [],
+            amenities: fieldAmenities,
             photos: fieldPhotos,
             photo_url: fieldPhotos[0] || null,
             managers: [user.id],
@@ -489,6 +507,10 @@ export const LocationFormScreen: React.FC = () => {
             field.photoFiles,
           );
           const fieldPhotos = [...field.existingPhotos, ...uploadedFieldPhotos];
+          const fieldAmenities = Array.from(new Set([
+            ...field.amenities,
+            ...(field.isCovered ? ['covered'] : []),
+          ]));
           batch.set(fieldRef, {
             name: field.name.trim(),
             location_id: locationDocId,
@@ -496,10 +518,13 @@ export const LocationFormScreen: React.FC = () => {
             is_active: field.isActive,
             hourly_price: parseHourlyPrice(field.hourlyPrice),
             price_per_hour: parseHourlyPrice(field.hourlyPrice),
+            players_per_team: parseOptionalPositiveInt(field.playersPerTeam),
+            min_booking_minutes: parseOptionalPositiveInt(field.minBookingMinutes),
             surface: field.surface.trim() || null,
             dimensions: field.dimensions.trim() || null,
+            rules: field.rules.trim() || null,
             is_covered: field.isCovered,
-            amenities: field.isCovered ? ['covered'] : [],
+            amenities: fieldAmenities,
             photos: fieldPhotos,
             photo_url: fieldPhotos[0] || null,
             managers: [user.id],

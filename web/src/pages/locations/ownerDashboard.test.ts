@@ -59,6 +59,12 @@ const baseField = (overrides: Partial<Field> = {}): Field => ({
   photos: [],
   managers: [],
   isCovered: false,
+  playersPerTeam: 7,
+  minBookingMinutes: 60,
+  surface: 'Grama sintética',
+  dimensions: '40m x 20m',
+  rules: 'Usar chuteira society.',
+  amenities: ['lighting'],
   ...overrides,
 });
 

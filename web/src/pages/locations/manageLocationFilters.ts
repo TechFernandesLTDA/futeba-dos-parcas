@@ -94,6 +94,21 @@ export const getLocationQualityChecklist = (
   const hasPricedField = activeFields.some((field) =>
     typeof field.hourlyPrice === 'number' && field.hourlyPrice > 0,
   );
+  const hasCompleteFieldDetails = activeFields.length > 0 && activeFields.every((field) => {
+    const hasPlayersPerTeam = typeof field.playersPerTeam === 'number' &&
+      field.playersPerTeam >= 3 &&
+      field.playersPerTeam <= 11;
+    const hasMinBooking = typeof field.minBookingMinutes === 'number' &&
+      field.minBookingMinutes >= 30 &&
+      field.minBookingMinutes <= 240 &&
+      field.minBookingMinutes % 30 === 0;
+    return hasPlayersPerTeam &&
+      hasMinBooking &&
+      Boolean(field.surface?.trim()) &&
+      Boolean(field.dimensions?.trim()) &&
+      Boolean(field.rules?.trim()) &&
+      Boolean(field.amenities?.length || field.isCovered);
+  });
   const hasContact = Boolean(location.phone || location.whatsapp || location.website || location.instagram);
   const hasAddress = Boolean(location.address && location.city && location.state);
   const hasAmenities = getLocationAmenitySet(location).size > 0;
@@ -149,6 +164,13 @@ export const getLocationQualityChecklist = (
       description: 'Preço/hora preenchido habilita comparação e filtros comerciais.',
       complete: hasPricedField,
       actionLabel: 'Definir preços',
+    },
+    {
+      id: 'field-details',
+      label: 'Detalhes operacionais dos campos',
+      description: 'Capacidade, superfície, dimensões, duração, regras e comodidades por campo precisam estar completos.',
+      complete: hasCompleteFieldDetails,
+      actionLabel: 'Completar detalhes dos campos',
     },
     {
       id: 'amenities',

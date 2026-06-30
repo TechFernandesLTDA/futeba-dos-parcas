@@ -6,8 +6,12 @@ export interface LocationFieldDraft {
   name: string;
   type: FieldType;
   hourlyPrice: string;
+  playersPerTeam: string;
+  minBookingMinutes: string;
   surface: string;
   dimensions: string;
+  rules: string;
+  amenities: string[];
   isCovered: boolean;
   isActive: boolean;
   existingPhotos: string[];
@@ -20,6 +24,7 @@ export interface LocationFieldSummary {
   activeFieldCount: number;
   hasActiveFields: boolean;
   primaryFieldType: FieldType;
+  playersPerTeam: number | null;
 }
 
 export const DEFAULT_FIELD_TYPE: FieldType = 'SOCIETY';
@@ -30,8 +35,12 @@ export function createLocationFieldDraft(index: number): LocationFieldDraft {
     name: index === 1 ? 'Quadra Principal' : `Quadra ${index}`,
     type: DEFAULT_FIELD_TYPE,
     hourlyPrice: '',
+    playersPerTeam: '',
+    minBookingMinutes: '60',
     surface: '',
     dimensions: '',
+    rules: '',
+    amenities: [],
     isCovered: false,
     isActive: true,
     existingPhotos: [],
@@ -50,8 +59,16 @@ export function fieldToDraft(field: Field): LocationFieldDraft {
     hourlyPrice: Number.isFinite(field.hourlyPrice) && field.hourlyPrice > 0
       ? String(field.hourlyPrice)
       : '',
+    playersPerTeam: Number.isFinite(field.playersPerTeam) && field.playersPerTeam
+      ? String(field.playersPerTeam)
+      : '',
+    minBookingMinutes: Number.isFinite(field.minBookingMinutes) && field.minBookingMinutes
+      ? String(field.minBookingMinutes)
+      : '60',
     surface: field.surface || '',
     dimensions: field.dimensions || '',
+    rules: field.rules || '',
+    amenities: field.amenities || [],
     isCovered: Boolean(field.isCovered),
     isActive: field.isActive !== false,
     existingPhotos: photos,
@@ -68,6 +85,7 @@ export function summarizeLocationFields(fields: LocationFieldDraft[]): LocationF
     activeFieldCount: activeFields.length,
     hasActiveFields: activeFields.length > 0,
     primaryFieldType: primaryField?.type || DEFAULT_FIELD_TYPE,
+    playersPerTeam: parseOptionalPositiveInt(primaryField?.playersPerTeam || ''),
   };
 }
 
@@ -76,4 +94,12 @@ export function parseHourlyPrice(value: string): number {
   if (!normalized) return 0;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : Number.NaN;
+}
+
+export function parseOptionalPositiveInt(value: string): number | null {
+  const normalized = value.trim();
+  if (!normalized) return null;
+  if (!/^\d+$/.test(normalized)) return Number.NaN;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : Number.NaN;
 }

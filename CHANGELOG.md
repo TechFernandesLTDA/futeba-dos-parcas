@@ -69,6 +69,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.29] - 2026-06-30
+
+#### Adicionado
+- Modelo web de `Field` e drafts de quadra com `playersPerTeam`, `minBookingMinutes`, `rules` e `amenities`.
+- Testes de checklist cobrindo pendência de detalhes operacionais por campo.
+
+#### Mudado
+- `LocationFieldsEditor` ganhou controles responsivos para capacidade, duração mínima, regras e comodidades por campo.
+- `getLocationQualityChecklist` agora exige detalhes mínimos dos campos ativos antes de considerar o cadastro comercial completo.
+
+_Issues: #3122_
+
 ### [1.43.28] - 2026-06-30
 
 #### Adicionado

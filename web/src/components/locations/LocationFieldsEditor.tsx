@@ -17,7 +17,12 @@ import {
   DeleteOutline as DeleteIcon,
   PhotoCamera as PhotoIcon,
 } from '@mui/icons-material';
-import { FIELD_TYPE_CONFIG, FieldType } from '../../types/location';
+import {
+  AMENITY_LABELS,
+  COMMERCIAL_AMENITIES,
+  FIELD_TYPE_CONFIG,
+  FieldType,
+} from '../../types/location';
 import { LocationFieldDraft, createLocationFieldDraft } from '../../utils/locationFields';
 
 interface LocationFieldsEditorProps {
@@ -41,8 +46,22 @@ export function LocationFieldsEditor({
     onChange(fields.map((field) => field.id === id ? { ...field, [key]: value } : field));
   };
 
+  const updateFieldPatch = (id: string, patch: Partial<LocationFieldDraft>) => {
+    onChange(fields.map((field) => field.id === id ? { ...field, ...patch } : field));
+  };
+
   const addField = () => {
     onChange([...fields, createLocationFieldDraft(fields.length + 1)]);
+  };
+
+  const toggleFieldAmenity = (field: LocationFieldDraft, amenity: string) => {
+    const nextAmenities = field.amenities.includes(amenity)
+      ? field.amenities.filter((item) => item !== amenity)
+      : [...field.amenities, amenity];
+    updateFieldPatch(field.id, {
+      amenities: nextAmenities,
+      ...(amenity === 'covered' ? { isCovered: nextAmenities.includes('covered') } : {}),
+    });
   };
 
   const removeField = (field: LocationFieldDraft) => {
@@ -143,6 +162,37 @@ export function LocationFieldsEditor({
                   disabled={disabled}
                 />
                 <TextField
+                  label="Jogadores por time"
+                  value={field.playersPerTeam}
+                  onChange={(event) => updateField(
+                    field.id,
+                    'playersPerTeam',
+                    event.target.value.replace(/\D/g, '').slice(0, 2),
+                  )}
+                  fullWidth
+                  error={Boolean(errors[`${field.id}.playersPerTeam`])}
+                  helperText={errors[`${field.id}.playersPerTeam`] || 'Ex.: 5 para futsal, 7 para society.'}
+                  inputProps={{ inputMode: 'numeric' }}
+                  disabled={disabled}
+                />
+                <TextField
+                  label="Duração mínima (min)"
+                  value={field.minBookingMinutes}
+                  onChange={(event) => updateField(
+                    field.id,
+                    'minBookingMinutes',
+                    event.target.value.replace(/\D/g, '').slice(0, 3),
+                  )}
+                  fullWidth
+                  error={Boolean(errors[`${field.id}.minBookingMinutes`])}
+                  helperText={errors[`${field.id}.minBookingMinutes`] || 'Use múltiplos de 30, como 60 ou 90.'}
+                  inputProps={{ inputMode: 'numeric' }}
+                  disabled={disabled}
+                />
+              </Stack>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <TextField
                   label="Superfície"
                   value={field.surface}
                   onChange={(event) => updateField(field.id, 'surface', event.target.value)}
@@ -151,9 +201,6 @@ export function LocationFieldsEditor({
                   inputProps={{ maxLength: 80 }}
                   disabled={disabled}
                 />
-              </Stack>
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
                 <TextField
                   label="Dimensões"
                   value={field.dimensions}
@@ -163,11 +210,53 @@ export function LocationFieldsEditor({
                   inputProps={{ maxLength: 60 }}
                   disabled={disabled}
                 />
+              </Stack>
+
+              <TextField
+                label="Regras e observações da quadra"
+                value={field.rules}
+                onChange={(event) => updateField(field.id, 'rules', event.target.value)}
+                fullWidth
+                multiline
+                minRows={2}
+                placeholder="Ex.: chuteira society obrigatória, sem bebida na área do campo..."
+                inputProps={{ maxLength: 600 }}
+                disabled={disabled}
+              />
+
+              <Stack spacing={1}>
+                <Typography variant="caption" color="text.secondary">
+                  Comodidades específicas deste campo
+                </Typography>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  {COMMERCIAL_AMENITIES.map((amenity) => (
+                    <Chip
+                      key={amenity}
+                      size="small"
+                      label={AMENITY_LABELS[amenity] || amenity}
+                      color={field.amenities.includes(amenity) ? 'primary' : 'default'}
+                      variant={field.amenities.includes(amenity) ? 'filled' : 'outlined'}
+                      onClick={() => toggleFieldAmenity(field, amenity)}
+                      disabled={disabled}
+                    />
+                  ))}
+                </Stack>
+              </Stack>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
                 <FormControlLabel
                   control={
                     <Switch
                       checked={field.isCovered}
-                      onChange={(event) => updateField(field.id, 'isCovered', event.target.checked)}
+                      onChange={(event) => {
+                        const nextCovered = event.target.checked;
+                        updateFieldPatch(field.id, {
+                          isCovered: nextCovered,
+                          amenities: nextCovered
+                            ? Array.from(new Set([...field.amenities, 'covered']))
+                            : field.amenities.filter((item) => item !== 'covered'),
+                        });
+                      }}
                       disabled={disabled}
                     />
                   }

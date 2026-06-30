@@ -72,6 +72,12 @@ const baseField = (overrides: Partial<Field> = {}): Field => ({
   photos: [],
   managers: [],
   isCovered: false,
+  playersPerTeam: 7,
+  minBookingMinutes: 60,
+  surface: 'Grama sintética',
+  dimensions: '40m x 20m',
+  rules: 'Usar chuteira society.',
+  amenities: ['lighting'],
   ...overrides,
 });
 
@@ -136,7 +142,7 @@ describe('manageLocationFilters', () => {
       ['https://example.com/photo.jpg'],
     );
 
-    expect(checklist).toHaveLength(9);
+    expect(checklist).toHaveLength(10);
     expect(checklist.every((item) => item.complete)).toBe(true);
 
     const incomplete = getLocationQualityChecklist(
@@ -159,6 +165,24 @@ describe('manageLocationFilters', () => {
     );
 
     expect(incomplete.filter((item) => !item.complete).map((item) => item.id))
-      .toEqual(['identity', 'contact', 'photos', 'active-fields', 'pricing', 'amenities', 'commercial']);
+      .toEqual(['identity', 'contact', 'photos', 'active-fields', 'pricing', 'field-details', 'amenities', 'commercial']);
+  });
+
+  it('marca pendencia quando campos ativos nao possuem detalhes operacionais completos', () => {
+    const checklist = getLocationQualityChecklist(
+      baseLocation({ phone: '11999999999', photoUrl: 'https://example.com/photo.jpg' }),
+      [baseField({
+        playersPerTeam: undefined,
+        minBookingMinutes: undefined,
+        surface: '',
+        dimensions: '',
+        rules: '',
+        amenities: [],
+        isCovered: false,
+      })],
+      ['https://example.com/photo.jpg'],
+    );
+
+    expect(checklist.find((item) => item.id === 'field-details')?.complete).toBe(false);
   });
 });

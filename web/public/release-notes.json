@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T03:13:05.119Z",
+  "generatedAt": "2026-06-30T03:24:56.688Z",
   "notes": [
+    {
+      "version": "1.43.29",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Cadastro de quadras ganha detalhes operacionais por campo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Cada campo/quadra agora pode registrar jogadores por time, duração mínima de reserva, regras, superfície, dimensões e comodidades específicas.",
+        "O cadastro continua aceitando rascunhos incompletos, mas o checklist comercial agora aponta quando faltam detalhes operacionais dos campos.",
+        "A localização passa a consolidar `players_per_team` a partir da quadra principal ativa para melhorar listagens e filtros."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3122
+      ]
+    },
     {
       "version": "1.43.28",
       "buildNumber": null,

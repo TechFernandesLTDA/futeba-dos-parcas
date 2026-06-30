@@ -133,6 +133,10 @@ export interface Field {
   surface?: string;
   isCovered: boolean;
   dimensions?: string;
+  playersPerTeam?: number;
+  minBookingMinutes?: number;
+  rules?: string;
+  amenities?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
