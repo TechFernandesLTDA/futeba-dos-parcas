@@ -68,6 +68,7 @@ export interface OwnerDashboardLocationLike {
   photoUrl?: string;
   photos?: string[];
   amenities?: string[];
+  amenitiesNormalized?: string[];
   phone?: string;
   whatsapp?: string;
   website?: string;
@@ -79,8 +80,20 @@ export interface OwnerDashboardLocationLike {
   fieldCount?: number;
   fieldType?: Field['type'];
   primaryFieldType?: Field['type'];
+  activeFieldCount?: number;
+  activeFieldTypes?: Field['type'][];
+  activeFieldAmenities?: string[];
   playersPerTeam?: number;
   hasActiveFields?: boolean;
+  minHourlyPriceCents?: number | null;
+  averageHourlyPriceCents?: number | null;
+  gamesCount?: number;
+  finishedGamesCount?: number;
+  upcomingGamesCount?: number;
+  gamesThisWeekCount?: number;
+  gamesLast30DaysCount?: number;
+  lastGameAt?: Date | null;
+  lastActivityAt?: Date | null;
 }
 
 export interface OwnerDashboardLocationStatus {
@@ -165,6 +178,7 @@ const buildLocationCandidate = (
     photoUrl: location.photoUrl,
     photos,
     amenities: location.amenities || [],
+    amenitiesNormalized: location.amenitiesNormalized,
     phone: location.phone,
     whatsapp: location.whatsapp,
     website: location.website,
@@ -178,10 +192,33 @@ const buildLocationCandidate = (
     primaryFieldType: location.primaryFieldType,
     playersPerTeam: location.playersPerTeam,
     hasActiveFields: location.hasActiveFields ?? activeFieldCount > 0,
+    activeFieldCount: location.activeFieldCount ?? activeFieldCount,
+    activeFieldTypes: location.activeFieldTypes,
+    activeFieldAmenities: location.activeFieldAmenities,
+    minHourlyPriceCents: location.minHourlyPriceCents,
+    averageHourlyPriceCents: location.averageHourlyPriceCents,
+    gamesCount: location.gamesCount,
+    finishedGamesCount: location.finishedGamesCount,
+    upcomingGamesCount: location.upcomingGamesCount,
+    gamesThisWeekCount: location.gamesThisWeekCount,
+    gamesLast30DaysCount: location.gamesLast30DaysCount,
+    lastGameAt: location.lastGameAt,
+    lastActivityAt: location.lastActivityAt,
   };
 };
 
-const getLocationPriceValues = (fields: Field[]) => {
+const getLocationPriceValues = (
+  fields: Field[],
+  location?: OwnerDashboardLocationLike,
+) => {
+  if (Number.isFinite(location?.averageHourlyPriceCents) ||
+    Number.isFinite(location?.minHourlyPriceCents)) {
+    return {
+      averageHourlyPriceCents: location?.averageHourlyPriceCents ?? null,
+      minHourlyPriceCents: location?.minHourlyPriceCents ?? null,
+    };
+  }
+
   const activeFields = fields.filter((field) => field.isActive !== false);
   const candidateFields = activeFields.length > 0 ? activeFields : fields;
   const prices = candidateFields
@@ -202,7 +239,18 @@ const getLocationPriceValues = (fields: Field[]) => {
   };
 };
 
-const getLocationGamesStats = (games: OwnerDashboardGame[]) => {
+const getLocationGamesStats = (
+  games: OwnerDashboardGame[],
+  location?: OwnerDashboardLocationLike,
+) => {
+  if (games.length === 0 && location) {
+    return {
+      gamesLast30Days: location.gamesLast30DaysCount || 0,
+      upcomingGames: location.upcomingGamesCount || 0,
+      gamesThisWeek: location.gamesThisWeekCount || 0,
+    };
+  }
+
   const now = new Date();
   const thirtyDaysAgo = new Date(now);
   thirtyDaysAgo.setDate(now.getDate() - 30);
@@ -238,8 +286,8 @@ export const summarizeOwnerLocationStatus = (
   );
   const pendingItems = checklist.filter((item) => !item.complete).map((item) => item.label);
   const commercialIssues = getLocationCommercialIssues(locationCandidate);
-  const priceStats = getLocationPriceValues(fields);
-  const gameStats = getLocationGamesStats(games);
+  const priceStats = getLocationPriceValues(fields, location);
+  const gameStats = getLocationGamesStats(games, location);
 
   return {
     publicationStatus: getLocationPublicationStatus(locationCandidate),
@@ -250,7 +298,8 @@ export const summarizeOwnerLocationStatus = (
     pendingCount: pendingItems.length,
     pendingItems,
     commercialIssues,
-    activeFieldCount: fields.filter((field) => field.isActive !== false).length,
+    activeFieldCount: location.activeFieldCount ??
+      fields.filter((field) => field.isActive !== false).length,
     averageHourlyPriceCents: priceStats.averageHourlyPriceCents,
     minHourlyPriceCents: priceStats.minHourlyPriceCents,
     upcomingGames: gameStats.upcomingGames,
@@ -271,19 +320,41 @@ export const calculateOwnerDashboardStats = (
     ),
   );
 
-  const overallGames = getLocationGamesStats(games);
+  const overallGames = games.length > 0 ?
+    getLocationGamesStats(games) :
+    {
+      gamesLast30Days: statsByLocation.reduce(
+        (sum, status) => sum + status.gamesLast30Days,
+        0,
+      ),
+      upcomingGames: statsByLocation.reduce(
+        (sum, status) => sum + status.upcomingGames,
+        0,
+      ),
+      gamesThisWeek: locations.reduce(
+        (sum, location) => sum + (location.gamesThisWeekCount || 0),
+        0,
+      ),
+    };
   const totalReviews = locations.reduce((sum, location) => sum + (location.ratingCount || 0), 0);
   const weightedRating = locations.reduce(
     (sum, location) => sum + ((location.rating || 0) * (location.ratingCount || 0)),
     0,
   );
-  const priceValues = Object.values(fieldsByLocation)
+  const aggregatedPriceValues = locations
+    .map((location) => location.averageHourlyPriceCents)
+    .filter((value): value is number =>
+      typeof value === 'number' && Number.isFinite(value) && value > 0);
+  const fieldPriceValues = Object.values(fieldsByLocation)
     .flatMap((fields) =>
       fields
         .filter((field) => field.isActive !== false)
         .map((field) => field.hourlyPrice)
         .filter((value): value is number => Number.isFinite(value) && value > 0),
     );
+  const priceValues = aggregatedPriceValues.length > 0 ?
+    aggregatedPriceValues :
+    fieldPriceValues;
 
   return {
     gamesLast30Days: overallGames.gamesLast30Days,

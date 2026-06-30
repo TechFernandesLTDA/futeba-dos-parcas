@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T04:26:38.630Z",
+  "generatedAt": "2026-06-30T04:53:57.350Z",
   "notes": [
+    {
+      "version": "1.43.33",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Painel do dono de quadra passa a usar estatísticas comerciais consolidadas.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O dashboard do dono deixa de buscar jogos em massa no navegador para calcular métricas de agenda.",
+        "O app reconhece os novos agregados de preço, campos ativos, tipos de quadra, avaliações e jogos da quadra."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3106,
+        3128
+      ]
+    },
     {
       "version": "1.43.32",
       "buildNumber": null,

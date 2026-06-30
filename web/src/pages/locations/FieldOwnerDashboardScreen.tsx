@@ -160,6 +160,7 @@ interface RawLocationDoc {
   photoUrl?: string | null;
   photos?: string[];
   amenities?: string[];
+  amenitiesNormalized?: string[];
   phone?: string | null;
   whatsapp?: string | null;
   website?: string | null;
@@ -169,10 +170,23 @@ interface RawLocationDoc {
   operatingDays?: number[];
   minGameDurationMinutes?: number;
   fieldCount?: number;
+  activeFieldCount?: number;
+  activeFieldTypes?: Field['type'][];
+  activeFieldAmenities?: string[];
   fieldType?: Field['type'];
   primaryFieldType?: Field['type'];
   playersPerTeam?: number;
   hasActiveFields?: boolean;
+  minHourlyPriceCents?: number | null;
+  averageHourlyPriceCents?: number | null;
+  gamesCount?: number;
+  finishedGamesCount?: number;
+  upcomingGamesCount?: number;
+  gamesThisWeekCount?: number;
+  gamesLast30DaysCount?: number;
+  lastGameAt?: unknown;
+  lastActivityAt?: unknown;
+  locationStatsUpdatedAt?: unknown;
 }
 
 interface RawFieldDoc {
@@ -253,14 +267,6 @@ interface SubscriptionLedgerEntry {
   effectiveAt?: Date | null;
 }
 
-const chunkArray = <T,>(items: T[], size: number) => {
-  const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
-};
-
 const toDate = (value: unknown): Date | null => {
   if (value instanceof Date) return value;
   if (value instanceof Timestamp) return value.toDate();
@@ -271,19 +277,6 @@ const toDate = (value: unknown): Date | null => {
   if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
     return value.toDate();
   }
-  return null;
-};
-
-const getGameDate = (data: Record<string, unknown>) => {
-  const explicitDate = toDate(data.dateTime ?? data.date_time);
-  if (explicitDate) return explicitDate;
-
-  if (typeof data.date === 'string' && data.date.trim()) {
-    const dateTime = `${data.date}T${typeof data.time === 'string' ? data.time : '00:00'}`;
-    const parsed = new Date(dateTime);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
   return null;
 };
 
@@ -581,6 +574,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             photoUrl: data.photoUrl || undefined,
             photos: data.photos || [],
             amenities: data.amenities || [],
+            amenitiesNormalized: data.amenitiesNormalized || [],
             phone: data.phone || undefined,
             whatsapp: data.whatsapp || undefined,
             website: data.website || undefined,
@@ -590,10 +584,22 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             operatingDays: data.operatingDays || [1, 2, 3, 4, 5, 6, 7],
             minGameDurationMinutes: data.minGameDurationMinutes || 60,
             fieldCount: data.fieldCount || 0,
+            activeFieldCount: data.activeFieldCount,
+            activeFieldTypes: data.activeFieldTypes || [],
+            activeFieldAmenities: data.activeFieldAmenities || [],
             fieldType: data.fieldType,
             primaryFieldType: data.primaryFieldType,
             playersPerTeam: data.playersPerTeam,
             hasActiveFields: data.hasActiveFields,
+            minHourlyPriceCents: data.minHourlyPriceCents ?? null,
+            averageHourlyPriceCents: data.averageHourlyPriceCents ?? null,
+            gamesCount: data.gamesCount || 0,
+            finishedGamesCount: data.finishedGamesCount || 0,
+            upcomingGamesCount: data.upcomingGamesCount || 0,
+            gamesThisWeekCount: data.gamesThisWeekCount || 0,
+            gamesLast30DaysCount: data.gamesLast30DaysCount || 0,
+            lastGameAt: toDate(data.lastGameAt),
+            lastActivityAt: toDate(data.lastActivityAt),
           };
         });
         setLocations(nextLocations);
@@ -676,43 +682,8 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
   }, [locations, retryCount, t]);
 
   useEffect(() => {
-    if (locations.length === 0) {
-      setLocationGames([]);
-      return;
-    }
-
-    const gamesByChunk = new Map<number, OwnerDashboardGame[]>();
-    const chunks = chunkArray(locations.map((location) => location.id), 10);
-    const unsubscribes = chunks.map((locationIds, index) => {
-      const gamesRef = collection(db, 'games');
-      const gamesQuery = query(gamesRef, where('location_id', 'in', locationIds), limit(500));
-
-      return onSnapshot(
-        gamesQuery,
-        (snapshot) => {
-          gamesByChunk.set(index, snapshot.docs.map((docSnapshot) => {
-            const data = docSnapshot.data();
-            return {
-              id: docSnapshot.id,
-              locationId: typeof data.location_id === 'string' ? data.location_id : '',
-              status: typeof data.status === 'string' ? data.status : undefined,
-              dateTime: getGameDate(data),
-              deletedAt: toDate(data.deleted_at ?? data.deletedAt),
-            };
-          }).filter((game) => Boolean(game.locationId)));
-
-          setLocationGames(Array.from(gamesByChunk.values()).flat());
-        },
-        (snapshotError) => {
-          logger.error('Error fetching location games:', snapshotError);
-          showErrorRef.current(t('fieldOwner.loadGamesError'));
-          setError(getFirestoreErrorMessage(snapshotError));
-        },
-      );
-    });
-
-    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
-  }, [locations, retryCount, t]);
+    setLocationGames([]);
+  }, [locations]);
 
   useEffect(() => {
     if (!receiptTarget) {

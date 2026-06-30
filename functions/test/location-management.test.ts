@@ -251,10 +251,17 @@ jest.mock("firebase-functions/v2/scheduler", () => ({
   onSchedule: jest.fn((_config, handler) => handler),
 }));
 
+jest.mock("firebase-functions/v2/firestore", () => ({
+  onDocumentWritten: jest.fn((_config, handler) => handler),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
   acceptLocationManagerInvite,
   assignLocationOwner,
+  buildLocationFieldAggregates,
+  buildLocationGameAggregates,
+  buildLocationReviewAggregates,
   deleteLocation,
   deleteLocationSubcollection,
   getAdminLocationBillingSummary,
@@ -269,6 +276,101 @@ const {
   setLocationSubscription,
   submitLocationSubscriptionReceipt,
 } = require("../src/locations/location-management");
+
+describe("location commercial aggregates", () => {
+  it("calcula campos ativos, preco minimo e media por tipo", () => {
+    expect(buildLocationFieldAggregates([
+      {
+        type: "SOCIETY",
+        is_active: true,
+        hourly_price: 12000,
+        amenities: ["Banheiro", "Churrasqueira gourmet"],
+      },
+      {
+        type: "SOCIETY",
+        is_active: true,
+        hourly_price: 18000,
+      },
+      {
+        type: "FUTSAL",
+        isActive: true,
+        hourlyPrice: 9000,
+      },
+      {
+        type: "CAMPO",
+        is_active: false,
+        hourly_price: 30000,
+      },
+    ])).toMatchObject({
+      field_count: 4,
+      active_field_count: 3,
+      has_active_fields: true,
+      active_field_amenities: ["banheiro", "churrasqueira_gourmet"],
+      active_field_types: ["FUTSAL", "SOCIETY"],
+      primary_field_type: "FUTSAL",
+      min_hourly_price_cents: 9000,
+      average_hourly_price_cents: 13000,
+      hourly_price_by_type: {
+        FUTSAL: {
+          min_hourly_price_cents: 9000,
+          average_hourly_price_cents: 9000,
+          active_field_count: 1,
+        },
+        SOCIETY: {
+          min_hourly_price_cents: 12000,
+          average_hourly_price_cents: 15000,
+          active_field_count: 2,
+        },
+      },
+    });
+  });
+
+  it("calcula jogos futuros, semana, ultimos 30 dias e ultima atividade", () => {
+    const now = new Date("2026-07-10T12:00:00.000Z");
+
+    expect(buildLocationGameAggregates([
+      {
+        status: "CONFIRMED",
+        dateTime: new Date("2026-07-12T12:00:00.000Z"),
+        updated_at: new Date("2026-07-09T12:00:00.000Z"),
+      },
+      {
+        status: "SCHEDULED",
+        date_time: new Date("2026-07-25T12:00:00.000Z"),
+      },
+      {
+        status: "FINISHED",
+        dateTime: new Date("2026-07-01T12:00:00.000Z"),
+      },
+      {
+        status: "CANCELLED",
+        dateTime: new Date("2026-07-11T12:00:00.000Z"),
+      },
+    ], now)).toMatchObject({
+      games_count: 3,
+      finished_games_count: 1,
+      upcoming_games_count: 2,
+      games_this_week_count: 1,
+      games_last_30_days_count: 1,
+      last_game_at: new Date("2026-07-25T12:00:00.000Z"),
+      last_activity_at: new Date("2026-07-25T12:00:00.000Z"),
+    });
+  });
+
+  it("calcula rating somente a partir de reviews validas", () => {
+    expect(buildLocationReviewAggregates([
+      {rating: 5},
+      {rating: 4},
+      {rating: 99},
+      {comment: "sem rating"},
+    ])).toEqual({
+      rating: 4.5,
+      average_rating: 4.5,
+      rating_count: 2,
+      review_count: 4,
+    });
+  });
+});
 
 describe("deleteLocationSubcollection", () => {
   beforeEach(() => {

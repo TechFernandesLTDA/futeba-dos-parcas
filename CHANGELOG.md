@@ -69,6 +69,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.33] - 2026-06-30
+
+#### Mudado
+- `FieldOwnerDashboardScreen` passa a consumir agregados denormalizados em `locations`.
+- Tipos web de `Location` agora expõem agregados comerciais mantidos pelo backend.
+- Modelo KMP de `Location` foi alinhado com os novos campos denormalizados.
+
+_Issues: #3106, #3128 · PRs: #3166_
+
 ### [1.43.32] - 2026-06-30
 
 #### Corrigido
@@ -687,6 +696,16 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.23] - 2026-06-30
+
+#### Adicionado
+- `recomputeLocationCommercialStats` para recomputar uma quadra específica ou um lote limitado.
+- `rebuildLocationCommercialStats` como job diário.
+- Triggers `onNestedLocationFieldWrittenUpdateStats`, `onRootFieldWrittenUpdateLocationStats`, `onLocationReviewWrittenUpdateStats` e `onGameWrittenUpdateLocationStats`.
+- Helpers testados para agregados de campos/preços, jogos e reviews.
+
+_Issues: #3106, #3128 · PRs: #3166_
 
 ### [1.2.22] - 2026-06-30
 

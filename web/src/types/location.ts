@@ -8,6 +8,12 @@ export type VenueAccountBillingScope = 'OWNER' | 'LOCATION' | 'FIELD_COUNT' | 'M
 export type LocationCommercialRequestType = 'PUBLICATION' | 'COMMERCIAL_UPDATE';
 export type LocationCommercialRequestStatus = 'PENDING_REVIEW' | 'NEEDS_CHANGES' | 'APPROVED' | 'REJECTED';
 
+export interface LocationHourlyPriceAggregate {
+  minHourlyPriceCents: number;
+  averageHourlyPriceCents: number;
+  activeFieldCount: number;
+}
+
 export interface Location {
   id: string;
   name: string;
@@ -111,8 +117,25 @@ export interface Location {
   fieldCount: number;
   fieldType?: FieldType;
   primaryFieldType?: FieldType;
+  activeFieldCount?: number;
+  activeFieldTypes?: FieldType[];
+  activeFieldAmenities?: string[];
   playersPerTeam?: number;
   hasActiveFields: boolean;
+
+  // Backend-maintained commercial aggregates
+  minHourlyPriceCents?: number | null;
+  averageHourlyPriceCents?: number | null;
+  hourlyPriceByType?: Partial<Record<FieldType, LocationHourlyPriceAggregate>>;
+  amenitiesNormalized?: string[];
+  gamesCount?: number;
+  finishedGamesCount?: number;
+  upcomingGamesCount?: number;
+  gamesThisWeekCount?: number;
+  gamesLast30DaysCount?: number;
+  lastGameAt?: Date | null;
+  lastActivityAt?: Date | null;
+  locationStatsUpdatedAt?: Date | null;
   
   createdAt?: Date;
   updatedAt?: Date;

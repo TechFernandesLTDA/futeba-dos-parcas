@@ -60,6 +60,7 @@ data class Location(
 
     // Infraestrutura (amenidades)
     val amenities: List<String> = emptyList(), // ["estacionamento", "vestiario", "churrasqueira", "bar", "restaurante"]
+    @SerialName("amenities_normalized") val amenitiesNormalized: List<String> = emptyList(),
 
     // Contato
     val phone: String? = null,
@@ -74,8 +75,21 @@ data class Location(
 
     // Dados Denormalizados de Fields (para reduzir queries)
     val fieldCount: Int = 0,
+    @SerialName("active_field_count") val activeFieldCount: Int = 0,
+    @SerialName("active_field_types") val activeFieldTypes: List<String> = emptyList(),
+    @SerialName("active_field_amenities") val activeFieldAmenities: List<String> = emptyList(),
     val primaryFieldType: String? = null, // Tipo de campo mais comum
     val hasActiveFields: Boolean = false,
+    @SerialName("min_hourly_price_cents") val minHourlyPriceCents: Long? = null,
+    @SerialName("average_hourly_price_cents") val averageHourlyPriceCents: Long? = null,
+    @SerialName("games_count") val gamesCount: Int = 0,
+    @SerialName("finished_games_count") val finishedGamesCount: Int = 0,
+    @SerialName("upcoming_games_count") val upcomingGamesCount: Int = 0,
+    @SerialName("games_this_week_count") val gamesThisWeekCount: Int = 0,
+    @SerialName("games_last_30_days_count") val gamesLast30DaysCount: Int = 0,
+    @SerialName("last_game_at") val lastGameAt: Long? = null,
+    @SerialName("last_activity_at") val lastActivityAt: Long? = null,
+    @SerialName("location_stats_updated_at") val locationStatsUpdatedAt: Long? = null,
 
     // Auditoria
     val createdAt: Long? = null,
