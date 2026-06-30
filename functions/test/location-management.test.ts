@@ -269,12 +269,19 @@ const {
   processLocationBillingAutomation,
   processLocationBillingCycles,
   registerLocationSubscriptionPayment,
+  rebuildLocationCommercialStats,
+  recomputeLocationAggregates,
+  recomputeLocationCommercialStats,
   reviewLocationSubscriptionReceipt,
   removeLocationManager,
   runLocationBillingAutomation,
   setLocationPublicationStatus,
   setLocationSubscription,
   submitLocationSubscriptionReceipt,
+  onGameWrittenUpdateLocationStats,
+  onLocationReviewWrittenUpdateStats,
+  onNestedLocationFieldWrittenUpdateStats,
+  onRootFieldWrittenUpdateLocationStats,
 } = require("../src/locations/location-management");
 
 describe("location commercial aggregates", () => {
@@ -325,6 +332,32 @@ describe("location commercial aggregates", () => {
     });
   });
 
+  it("mantem agregados vazios seguros quando nao ha campos ativos", () => {
+    expect(buildLocationFieldAggregates([
+      {
+        type: "SOCIETY",
+        is_active: false,
+        hourly_price: 12000,
+        amenities: ["Banheiro"],
+      },
+      {
+        type: "DESCONHECIDO",
+        is_active: false,
+        price_cents: 8000,
+      },
+    ])).toEqual({
+      field_count: 2,
+      active_field_count: 0,
+      has_active_fields: false,
+      active_field_types: [],
+      active_field_amenities: [],
+      primary_field_type: null,
+      min_hourly_price_cents: null,
+      average_hourly_price_cents: null,
+      hourly_price_by_type: {},
+    });
+  });
+
   it("calcula jogos futuros, semana, ultimos 30 dias e ultima atividade", () => {
     const now = new Date("2026-07-10T12:00:00.000Z");
 
@@ -357,6 +390,41 @@ describe("location commercial aggregates", () => {
     });
   });
 
+  it("ignora jogos excluidos e aceita timestamps Firestore validos", () => {
+    const now = new Date("2026-07-10T12:00:00.000Z");
+    const firestoreDate = {
+      toDate: () => new Date("2026-07-13T12:00:00.000Z"),
+    };
+    const invalidFirestoreDate = {
+      toDate: () => new Date("invalid"),
+    };
+
+    expect(buildLocationGameAggregates([
+      {
+        status: "CONFIRMED",
+        date_time: firestoreDate,
+        createdAt: invalidFirestoreDate,
+      },
+      {
+        status: "FINISHED",
+        dateTime: new Date("2026-07-09T12:00:00.000Z"),
+        deleted_at: new Date("2026-07-09T13:00:00.000Z"),
+      },
+      {
+        status: "FINISHED",
+        dateTime: invalidFirestoreDate,
+      },
+    ], now)).toMatchObject({
+      games_count: 2,
+      finished_games_count: 1,
+      upcoming_games_count: 1,
+      games_this_week_count: 1,
+      games_last_30_days_count: 0,
+      last_game_at: new Date("2026-07-13T12:00:00.000Z"),
+      last_activity_at: new Date("2026-07-13T12:00:00.000Z"),
+    });
+  });
+
   it("calcula rating somente a partir de reviews validas", () => {
     expect(buildLocationReviewAggregates([
       {rating: 5},
@@ -368,6 +436,155 @@ describe("location commercial aggregates", () => {
       average_rating: 4.5,
       rating_count: 2,
       review_count: 4,
+    });
+  });
+
+  it("persiste agregados comerciais completos no documento da quadra", async () => {
+    resetFirestore();
+    firestoreStore.set("locations/location-1", {
+      name: "Arena Parcas",
+      amenities: ["Churrasqueira", "Wi-Fi"],
+      has_parking: true,
+      hasLighting: true,
+      hasShowers: true,
+    });
+    firestoreStore.set("locations/location-1/fields/field-1", {
+      type: "SOCIETY",
+      status: "ACTIVE",
+      hourly_price: 20000,
+      amenities: ["Banheiro", "Cobertura"],
+    });
+    firestoreStore.set("fields/root-field-1", {
+      location_id: "location-1",
+      type: "FUTSAL",
+      isActive: true,
+      hourlyPrice: 10000,
+      amenities: ["Arquibancada"],
+    });
+    firestoreStore.set("games/game-1", {
+      location_id: "location-1",
+      status: "CONFIRMED",
+      dateTime: new Date("2026-08-01T12:00:00.000Z"),
+      updated_at: new Date("2026-07-02T12:00:00.000Z"),
+    });
+    firestoreStore.set("locations/location-1/reviews/review-1", {rating: 5});
+    firestoreStore.set("locations/location-1/reviews/review-2", {rating: 3});
+
+    await expect(recomputeLocationAggregates("location-1")).resolves
+      .toMatchObject({
+        field_count: 2,
+        active_field_count: 2,
+        active_field_types: ["FUTSAL", "SOCIETY"],
+        min_hourly_price_cents: 10000,
+        average_hourly_price_cents: 15000,
+        rating: 4,
+        rating_count: 2,
+        review_count: 2,
+        location_stats_source: "cloud_functions",
+      });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      amenities_normalized: [
+        "arquibancada",
+        "banheiro",
+        "churrasqueira",
+        "cobertura",
+        "lighting",
+        "locker_room",
+        "parking",
+        "shower",
+        "wi_fi",
+      ],
+      games_count: 1,
+      upcoming_games_count: 1,
+      location_stats_updated_at: {_type: "ServerTimestamp"},
+    });
+  });
+
+  it("retorna null ao recomputar quadra inexistente", async () => {
+    resetFirestore();
+
+    await expect(recomputeLocationAggregates("missing")).resolves.toBeNull();
+  });
+
+  it("recalcula agregados via callable admin para uma ou varias quadras", async () => {
+    resetFirestore();
+    firestoreStore.set("locations/location-1", {name: "Arena 1"});
+    firestoreStore.set("locations/location-2", {name: "Arena 2"});
+    firestoreStore.set("locations/location-1/fields/field-1", {
+      is_active: true,
+      hourly_price: 9000,
+    });
+
+    await expect(recomputeLocationCommercialStats({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "location-1"},
+    })).resolves.toEqual({
+      success: true,
+      processedLocations: 1,
+      locationId: "location-1",
+    });
+
+    await expect(recomputeLocationCommercialStats({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {limit: 10},
+    })).resolves.toMatchObject({
+      success: true,
+      processedLocations: 2,
+      scanComplete: true,
+      limit: 10,
+    });
+
+    await expect(recomputeLocationCommercialStats({
+      data: {locationId: "location-1"},
+    })).rejects.toMatchObject({code: "unauthenticated"});
+    await expect(recomputeLocationCommercialStats({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "missing"},
+    })).rejects.toMatchObject({code: "not-found"});
+  });
+
+  it("recalcula agregados por schedule e triggers de escrita", async () => {
+    resetFirestore();
+    firestoreStore.set("locations/location-1", {name: "Arena 1"});
+    firestoreStore.set("locations/location-2", {name: "Arena 2"});
+    firestoreStore.set("locations/location-1/fields/field-1", {
+      type: "SOCIETY",
+      is_active: true,
+      hourly_price: 11000,
+    });
+    firestoreStore.set("locations/location-2/fields/field-1", {
+      type: "FUTSAL",
+      is_active: true,
+      hourly_price: 7000,
+    });
+
+    await rebuildLocationCommercialStats();
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      min_hourly_price_cents: 11000,
+    });
+
+    await onNestedLocationFieldWrittenUpdateStats({
+      params: {locationId: "location-1"},
+    });
+    await onLocationReviewWrittenUpdateStats({
+      params: {locationId: "location-1"},
+    });
+    await onRootFieldWrittenUpdateLocationStats({
+      data: {
+        before: {data: () => ({location_id: "location-1"})},
+        after: {data: () => ({locationId: "location-2"})},
+      },
+    });
+    await onGameWrittenUpdateLocationStats({
+      data: {
+        before: {data: () => ({location_id: "location-2"})},
+        after: {data: () => ({location_id: ""})},
+      },
+    });
+
+    expect(firestoreStore.get("locations/location-2")).toMatchObject({
+      min_hourly_price_cents: 7000,
     });
   });
 });
@@ -543,6 +760,14 @@ describe("location commercial admin callables", () => {
 
   it("expõe contexto de auditoria para publicação, assinatura e pagamento", async () => {
     const cases = [
+      {
+        data: {locationId: "location-1", limit: 10},
+        expected: {
+          function: "recomputeLocationCommercialStats",
+          locationId: "location-1",
+          limit: 10,
+        },
+      },
       {
         data: {locationId: "location-1"},
         expected: {function: "deleteLocation", locationId: "location-1"},
