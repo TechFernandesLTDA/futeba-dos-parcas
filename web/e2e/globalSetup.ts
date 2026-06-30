@@ -11,7 +11,9 @@
  * Referência Playwright:
  * https://playwright.dev/docs/test-global-setup-teardown
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 export default async function globalSetup(): Promise<void> {
   // eslint-disable-next-line no-console
@@ -35,8 +37,7 @@ export default async function globalSetup(): Promise<void> {
     // eslint-disable-next-line no-console
     console.log('[globalSetup] Ambiente local — executando seeds...');
 
-    // Dynamic import evita problemas de CJS/ESM interop com scripts .ts
-    // quando Playwright carrega o globalSetup em contexto CommonJS.
+    // createRequire preserva o loader TS do Playwright mesmo com globalSetup em ESM.
     const { seedE2EUsers } = require('../../scripts/seed-e2e-users');
     const { seedE2EGroups } = require('../../scripts/seed-e2e-groups');
 

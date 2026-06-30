@@ -1,4 +1,33 @@
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+function loadEnvFiles(): void {
+  const values = new Map<string, string>();
+
+  for (const file of ['.env.production', '.env', '.env.local', '.env.test']) {
+    const path = resolve(process.cwd(), file);
+    if (!existsSync(path)) continue;
+
+    for (const rawLine of readFileSync(path, 'utf8').split('\n')) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+
+      const eq = line.indexOf('=');
+      if (eq === -1) continue;
+
+      const key = line.slice(0, eq).trim();
+      const value = line.slice(eq + 1).trim();
+      values.set(key, value);
+    }
+  }
+
+  for (const [key, value] of values) {
+    process.env[key] ??= value;
+  }
+}
+
+loadEnvFiles();
 
 export default defineConfig({
   testDir: './e2e',
@@ -11,7 +40,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? 'github' : 'html',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -30,8 +59,10 @@ export default defineConfig({
     // baixa memória) em vez de `vite dev` (compila on-the-fly, alta memória).
     // O dev server somado a Java emulators + functions + chromium estourava o
     // runner self-hosted (OOM, exit 137). #2784
-    command: process.env.CI ? 'npm run preview -- --port 5173 --strictPort' : 'npm run dev',
-    url: 'http://localhost:5173',
+    command: process.env.CI
+      ? 'npm run preview -- --host 127.0.0.1 --port 5173 --strictPort'
+      : 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
+    url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
     timeout: process.env.CI ? 60000 : 30000,
   },

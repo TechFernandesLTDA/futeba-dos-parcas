@@ -818,15 +818,16 @@ export const LocationFormScreen: React.FC = () => {
                               key={day.value}
                               control={
                                 <Checkbox
-                                  size="small"
                                   checked={form.operatingDays.includes(day.value)}
                                   onChange={() => handleOperatingDayToggle(day.value)}
+                                  sx={{ p: 1.25 }}
                                 />
                               }
                               label={day.label}
                               sx={{
                                 border: `1px solid ${form.operatingDays.includes(day.value) ? 'currentColor' : 'transparent'}`,
                                 borderRadius: 999,
+                                minHeight: 44,
                                 px: 1,
                                 mr: 0,
                               }}
@@ -855,6 +856,7 @@ export const LocationFormScreen: React.FC = () => {
                       component="label"
                       htmlFor="location-photo-input"
                       fullWidth
+                      sx={{ minHeight: { xs: 44, sm: 40 } }}
                     >
                       {form.existingPhotos.length || form.photoPreviews.length
                         ? t('locations.form.changePhoto')
@@ -909,7 +911,7 @@ export const LocationFormScreen: React.FC = () => {
                       color={form.amenities.includes(amenity) ? 'primary' : 'default'}
                       variant={form.amenities.includes(amenity) ? 'filled' : 'outlined'}
                       onClick={() => handleAmenityToggle(amenity)}
-                      sx={{ mb: 1 }}
+                      sx={{ mb: 1, minHeight: { xs: 44, sm: 32 }, px: { xs: 0.5, sm: 0 } }}
                     />
                   ))}
                 </Stack>

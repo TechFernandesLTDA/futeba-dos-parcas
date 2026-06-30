@@ -1002,7 +1002,15 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
             {t('locations.addLocation')}
           </Button>
         </Box>
-        <Box sx={{ px: 2, pb: 2 }}>
+        <Box
+          sx={{
+            px: 2,
+            pb: 2,
+            '& .MuiInputBase-root': {
+              minHeight: { xs: 44, sm: 'auto' },
+            },
+          }}
+        >
           <Stack spacing={1}>
             <TextField
               fullWidth
@@ -1105,7 +1113,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                     <MenuItem value="300_PLUS">Acima de R$ 300</MenuItem>
                   </TextField>
                 </Stack>
-                <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, pb: 0.5 }}>
                   {COMMERCIAL_AMENITIES.map((amenity) => (
                     <Chip
                       key={amenity}
@@ -1114,7 +1122,10 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                       color={amenityFilters.includes(amenity) ? 'primary' : 'default'}
                       variant={amenityFilters.includes(amenity) ? 'filled' : 'outlined'}
                       onClick={() => handleAmenityFilter(amenity)}
-                      sx={{ flexShrink: 0 }}
+                      sx={{
+                        minHeight: { xs: 44, sm: 32 },
+                        px: { xs: 0.5, sm: 0 },
+                      }}
                     />
                   ))}
                 </Box>

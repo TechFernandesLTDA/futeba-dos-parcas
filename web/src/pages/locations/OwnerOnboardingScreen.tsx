@@ -269,9 +269,11 @@ export const OwnerOnboardingScreen: React.FC = () => {
                       <Checkbox
                         checked={termsAccepted}
                         onChange={(event) => setTermsAccepted(event.target.checked)}
+                        sx={{ p: 1.25 }}
                       />
                     }
                     label="Entendo que a publicação das quadras e a mensalidade dependem de aprovação administrativa."
+                    sx={{ alignItems: 'flex-start', minHeight: 44 }}
                   />
                 )}
                 <Button

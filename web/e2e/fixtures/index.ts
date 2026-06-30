@@ -45,9 +45,9 @@ export const test = base.extend<AuthFixtures>({
    * O estado de autenticação persiste durante o teste mas é descartado
    * ao final, garantindo isolamento entre specs.
    */
-  playerPage: async ({ browser }, use) => {
+  playerPage: async ({ browser, baseURL }, use) => {
     // Contexto isolado para não vazar estado entre fixtures de roles diferentes
-    const context = await browser.newContext();
+    const context = await browser.newContext({ baseURL });
     const page = await context.newPage();
 
     await loginAsPlayer(page);
@@ -62,8 +62,8 @@ export const test = base.extend<AuthFixtures>({
   /**
    * Fixture fieldOwnerPage: abre contexto isolado e autentica como FIELD_OWNER.
    */
-  fieldOwnerPage: async ({ browser }, use) => {
-    const context = await browser.newContext();
+  fieldOwnerPage: async ({ browser, baseURL }, use) => {
+    const context = await browser.newContext({ baseURL });
     const page = await context.newPage();
 
     await loginAsFieldOwner(page);
@@ -76,8 +76,8 @@ export const test = base.extend<AuthFixtures>({
   /**
    * Fixture adminPage: abre contexto isolado e autentica como ADMIN.
    */
-  adminPage: async ({ browser }, use) => {
-    const context = await browser.newContext();
+  adminPage: async ({ browser, baseURL }, use) => {
+    const context = await browser.newContext({ baseURL });
     const page = await context.newPage();
 
     await loginAsAdmin(page);

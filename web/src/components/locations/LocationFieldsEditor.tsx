@@ -238,6 +238,7 @@ export function LocationFieldsEditor({
                       variant={field.amenities.includes(amenity) ? 'filled' : 'outlined'}
                       onClick={() => toggleFieldAmenity(field, amenity)}
                       disabled={disabled}
+                      sx={{ minHeight: { xs: 44, sm: 32 }, px: { xs: 0.5, sm: 0 } }}
                     />
                   ))}
                 </Stack>
@@ -261,6 +262,7 @@ export function LocationFieldsEditor({
                     />
                   }
                   label="Coberta"
+                  sx={{ minHeight: 44 }}
                 />
                 <FormControlLabel
                   control={
@@ -271,6 +273,7 @@ export function LocationFieldsEditor({
                     />
                   }
                   label="Ativa"
+                  sx={{ minHeight: 44 }}
                 />
               </Stack>
 
@@ -280,6 +283,7 @@ export function LocationFieldsEditor({
                   component="label"
                   startIcon={<PhotoIcon />}
                   disabled={disabled}
+                  sx={{ minHeight: { xs: 44, sm: 40 } }}
                 >
                   Adicionar fotos da quadra
                   <input

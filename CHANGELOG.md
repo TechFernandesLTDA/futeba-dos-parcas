@@ -79,6 +79,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.35] - 2026-06-30
+
+#### Mudado
+- Fortalece o contrato visual E2E para telas administrativas e de quadras em desktop e mobile.
+- Atualiza fixtures e seeds E2E para usuários admin/dono de quadra completos e autenticáveis.
+- Desativa App Check no modo emulador para evitar ruído falso de `403` em testes locais.
+
 ### [1.43.34] - 2026-06-30
 
 #### Mudado
