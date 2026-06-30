@@ -2,6 +2,8 @@ export type FieldType = 'SOCIETY' | 'FUTSAL' | 'CAMPO' | 'AREIA' | 'OUTROS';
 export type LocationPublicationStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'SUSPENDED' | 'REJECTED';
 export type LocationCommercialStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
 export type LocationSubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
+export type LocationBillingPlanCode = 'TRIAL' | 'BASIC' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
+export type LocationBillingCycle = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUAL' | 'ANNUAL' | 'CUSTOM';
 export type LocationCommercialRequestType = 'PUBLICATION' | 'COMMERCIAL_UPDATE';
 export type LocationCommercialRequestStatus = 'PENDING_REVIEW' | 'NEEDS_CHANGES' | 'APPROVED' | 'REJECTED';
 
@@ -37,10 +39,15 @@ export interface Location {
   publicationStatus?: LocationPublicationStatus;
   commercialStatus?: LocationCommercialStatus;
   subscriptionStatus?: LocationSubscriptionStatus;
+  billingPlanCode?: LocationBillingPlanCode;
+  billingPlanLabel?: string;
+  billingCycle?: LocationBillingCycle;
+  billingBaseFeeCents?: number;
   monthlyFeeCents?: number;
   billingDueDay?: number;
   billingStartsAt?: Date;
   billingExpiresAt?: Date;
+  billingExceptionNote?: string;
   publishedAt?: Date;
   publishedBy?: string;
   unpublishedReason?: string;
@@ -191,6 +198,22 @@ export const LOCATION_SUBSCRIPTION_STATUS_LABELS: Record<LocationSubscriptionSta
   OVERDUE: 'Vencido',
   SUSPENDED: 'Suspenso',
   CANCELLED: 'Cancelado',
+};
+
+export const LOCATION_BILLING_PLAN_LABELS: Record<LocationBillingPlanCode, string> = {
+  TRIAL: 'Teste',
+  BASIC: 'Básico',
+  PRO: 'Pro',
+  ENTERPRISE: 'Enterprise',
+  CUSTOM: 'Personalizado',
+};
+
+export const LOCATION_BILLING_CYCLE_LABELS: Record<LocationBillingCycle, string> = {
+  MONTHLY: 'Mensal',
+  QUARTERLY: 'Trimestral',
+  SEMIANNUAL: 'Semestral',
+  ANNUAL: 'Anual',
+  CUSTOM: 'Personalizado',
 };
 
 export function canManageLocation(location: Location, userId: string): boolean {

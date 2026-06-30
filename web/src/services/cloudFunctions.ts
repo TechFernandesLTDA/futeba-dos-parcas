@@ -180,10 +180,15 @@ export const setLocationSubscription = httpsCallable<
   {
     locationId: string;
     subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELLED';
+    billingPlanCode?: 'TRIAL' | 'BASIC' | 'PRO' | 'ENTERPRISE' | 'CUSTOM' | null;
+    billingPlanLabel?: string | null;
+    billingCycle?: 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUAL' | 'ANNUAL' | 'CUSTOM' | null;
+    billingBaseFeeCents?: number | null;
     monthlyFeeCents?: number | null;
     billingDueDay?: number | null;
     billingStartsAtIso?: string | null;
     billingExpiresAtIso?: string | null;
+    billingExceptionNote?: string | null;
     adminNotes?: string | null;
   },
   { success: boolean; locationId: string; subscriptionStatus: string }
@@ -211,11 +216,17 @@ export interface AdminLocationBillingSummaryRow {
   state: string | null;
   publicationStatus: string;
   subscriptionStatus: string;
+  billingPlanCode?: string | null;
+  billingPlanLabel?: string | null;
+  billingCycle?: string | null;
+  billingBaseFeeCents?: number | null;
   monthlyFeeCents: number;
   billingDueDay: number | null;
+  billingStartsAtIso?: string | null;
   expectedCents: number;
   receivedCents: number;
   openBalanceCents: number;
+  billingExceptionNote?: string | null;
   currentBillingCycleStatus: string | null;
   currentBillingPaidCents: number;
   currentBillingOpenBalanceCents: number;

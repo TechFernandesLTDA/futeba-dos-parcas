@@ -1,6 +1,8 @@
 import {
   Field,
   Location,
+  LocationBillingCycle,
+  LocationBillingPlanCode,
   LocationPublicationStatus,
   LocationSubscriptionStatus,
   isLocationCommerciallyAvailable,
@@ -40,8 +42,15 @@ export interface OwnerDashboardLocationLike {
   isActive: boolean;
   publicationStatus?: LocationPublicationStatus;
   subscriptionStatus?: LocationSubscriptionStatus;
+  billingPlanCode?: LocationBillingPlanCode;
+  billingPlanLabel?: string;
+  billingCycle?: LocationBillingCycle;
+  billingBaseFeeCents?: number;
   monthlyFeeCents?: number;
   billingDueDay?: number | null;
+  billingStartsAt?: Date | null;
+  billingExpiresAt?: Date | null;
+  billingExceptionNote?: string;
   rating: number;
   ratingCount: number;
   description?: string;
@@ -120,8 +129,15 @@ const buildLocationCandidate = (
     isActive: location.isActive !== false,
     publicationStatus: location.publicationStatus,
     subscriptionStatus: location.subscriptionStatus,
+    billingPlanCode: location.billingPlanCode,
+    billingPlanLabel: location.billingPlanLabel,
+    billingCycle: location.billingCycle,
+    billingBaseFeeCents: location.billingBaseFeeCents,
     monthlyFeeCents: location.monthlyFeeCents,
     billingDueDay: location.billingDueDay ?? undefined,
+    billingStartsAt: location.billingStartsAt ?? undefined,
+    billingExpiresAt: location.billingExpiresAt ?? undefined,
+    billingExceptionNote: location.billingExceptionNote,
     rating: location.rating || 0,
     ratingCount: location.ratingCount || 0,
     description: location.description || '',

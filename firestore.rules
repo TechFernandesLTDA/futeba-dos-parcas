@@ -1188,10 +1188,15 @@ service cloud.firestore {
           fieldUnchanged('publication_status') &&
           fieldUnchanged('commercial_status') &&
           fieldUnchanged('subscription_status') &&
+          fieldUnchanged('billing_plan_code') &&
+          fieldUnchanged('billing_plan_label') &&
+          fieldUnchanged('billing_cycle') &&
+          fieldUnchanged('billing_base_fee_cents') &&
           fieldUnchanged('monthly_fee_cents') &&
           fieldUnchanged('billing_due_day') &&
           fieldUnchanged('billing_starts_at') &&
           fieldUnchanged('billing_expires_at') &&
+          fieldUnchanged('billing_exception_note') &&
           fieldUnchanged('published_at') &&
           fieldUnchanged('published_by') &&
           fieldUnchanged('unpublished_reason') &&
