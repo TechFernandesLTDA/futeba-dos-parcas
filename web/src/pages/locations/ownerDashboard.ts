@@ -5,6 +5,7 @@ import {
   LocationBillingPlanCode,
   LocationPublicationStatus,
   LocationSubscriptionStatus,
+  VenueAccountBillingScope,
   isLocationCommerciallyAvailable,
 } from '../../types/location';
 import {
@@ -51,6 +52,14 @@ export interface OwnerDashboardLocationLike {
   billingStartsAt?: Date | null;
   billingExpiresAt?: Date | null;
   billingExceptionNote?: string;
+  venueAccountId?: string;
+  venueAccountStatus?: LocationSubscriptionStatus;
+  venueAccountChargeScope?: VenueAccountBillingScope;
+  venueAccountPlanCode?: LocationBillingPlanCode;
+  venueAccountPlanLabel?: string;
+  venueAccountMonthlyTotalCents?: number;
+  venueAccountLinkedLocationsCount?: number;
+  venueAccountActiveFieldsCount?: number;
   rating: number;
   ratingCount: number;
   description?: string;
@@ -138,6 +147,14 @@ const buildLocationCandidate = (
     billingStartsAt: location.billingStartsAt ?? undefined,
     billingExpiresAt: location.billingExpiresAt ?? undefined,
     billingExceptionNote: location.billingExceptionNote,
+    venueAccountId: location.venueAccountId,
+    venueAccountStatus: location.venueAccountStatus,
+    venueAccountChargeScope: location.venueAccountChargeScope,
+    venueAccountPlanCode: location.venueAccountPlanCode,
+    venueAccountPlanLabel: location.venueAccountPlanLabel,
+    venueAccountMonthlyTotalCents: location.venueAccountMonthlyTotalCents,
+    venueAccountLinkedLocationsCount: location.venueAccountLinkedLocationsCount,
+    venueAccountActiveFieldsCount: location.venueAccountActiveFieldsCount,
     rating: location.rating || 0,
     ratingCount: location.ratingCount || 0,
     description: location.description || '',

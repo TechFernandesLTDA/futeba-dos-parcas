@@ -84,6 +84,7 @@ import {
   LocationCommercialRequestType,
   LocationPublicationStatus,
   LocationSubscriptionStatus,
+  VenueAccountBillingScope,
 } from '../../types/location';
 import {
   calculateOwnerDashboardStats,
@@ -145,6 +146,14 @@ interface RawLocationDoc {
   currentBillingOpenBalanceCents?: number;
   billingDueAt?: unknown;
   billingSuspendAt?: unknown;
+  venueAccountId?: string | null;
+  venueAccountStatus?: LocationSubscriptionStatus | null;
+  venueAccountChargeScope?: VenueAccountBillingScope | null;
+  venueAccountPlanCode?: LocationBillingPlanCode | null;
+  venueAccountPlanLabel?: string | null;
+  venueAccountMonthlyTotalCents?: number | null;
+  venueAccountLinkedLocationsCount?: number | null;
+  venueAccountActiveFieldsCount?: number | null;
   rating?: number;
   ratingCount?: number;
   description?: string;
@@ -191,6 +200,14 @@ interface LocationData extends OwnerDashboardLocationLike {
   currentBillingOpenBalanceCents?: number;
   billingDueAt?: Date | null;
   billingSuspendAt?: Date | null;
+  venueAccountId?: string;
+  venueAccountStatus?: LocationSubscriptionStatus;
+  venueAccountChargeScope?: VenueAccountBillingScope;
+  venueAccountPlanCode?: LocationBillingPlanCode;
+  venueAccountPlanLabel?: string;
+  venueAccountMonthlyTotalCents?: number;
+  venueAccountLinkedLocationsCount?: number;
+  venueAccountActiveFieldsCount?: number;
   latestCommercialRequestId?: string;
   latestCommercialRequestType?: LocationCommercialRequestType;
   latestCommercialRequestStatus?: LocationCommercialRequestStatus;
@@ -306,6 +323,14 @@ const getBillingPlanLabel = (location: Pick<LocationData, 'billingPlanCode' | 'b
 const getBillingCycleLabel = (cycle?: string | null) => {
   if (!cycle) return null;
   return LOCATION_BILLING_CYCLE_LABELS[cycle as LocationBillingCycle] || cycle;
+};
+
+const getAccountScopeLabel = (scope?: string | null) => {
+  if (scope === 'OWNER') return 'Contrato do dono';
+  if (scope === 'LOCATION') return 'Por quadra';
+  if (scope === 'FIELD_COUNT') return 'Por campo ativo';
+  if (scope === 'MANUAL_OVERRIDE') return 'Valor combinado';
+  return null;
 };
 
 const getPaymentStatus = (payment: SubscriptionPaymentReview) =>
@@ -542,6 +567,14 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             currentBillingOpenBalanceCents: data.currentBillingOpenBalanceCents,
             billingDueAt: toDate(data.billingDueAt),
             billingSuspendAt: toDate(data.billingSuspendAt),
+            venueAccountId: data.venueAccountId || undefined,
+            venueAccountStatus: data.venueAccountStatus || undefined,
+            venueAccountChargeScope: data.venueAccountChargeScope || undefined,
+            venueAccountPlanCode: data.venueAccountPlanCode || undefined,
+            venueAccountPlanLabel: data.venueAccountPlanLabel || undefined,
+            venueAccountMonthlyTotalCents: data.venueAccountMonthlyTotalCents ?? undefined,
+            venueAccountLinkedLocationsCount: data.venueAccountLinkedLocationsCount ?? undefined,
+            venueAccountActiveFieldsCount: data.venueAccountActiveFieldsCount ?? undefined,
             rating: data.rating || 0,
             ratingCount: data.ratingCount || 0,
             description: data.description || '',
@@ -1260,9 +1293,14 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                 const billingCycleLabel = getBillingCycleLabel(location.billingCycle);
                 const baseFeeLabel = formatCurrency(location.billingBaseFeeCents, locale);
                 const negotiatedFeeLabel = formatCurrency(location.monthlyFeeCents, locale);
+                const venueAccountFeeLabel = formatCurrency(location.venueAccountMonthlyTotalCents, locale);
+                const venueAccountPlanLabel = location.venueAccountPlanLabel ||
+                  (location.venueAccountPlanCode ? LOCATION_BILLING_PLAN_LABELS[location.venueAccountPlanCode] : null);
+                const venueAccountScopeLabel = getAccountScopeLabel(location.venueAccountChargeScope);
                 const billingStartLabel = formatDate(location.billingStartsAt, locale);
                 const paymentLabel = formatCurrency(location.currentBillingOpenBalanceCents, locale)
                   || negotiatedFeeLabel
+                  || venueAccountFeeLabel
                   || t('fieldOwner.notConfigured');
 
                 return (
@@ -1336,6 +1374,14 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                               status: getSubscriptionStatusLabel(status.subscriptionStatus),
                             })}
                           />
+                          {location.venueAccountId ? (
+                            <Chip
+                              color={['TRIAL', 'ACTIVE'].includes(location.venueAccountStatus || 'TRIAL') ? 'info' : 'warning'}
+                              label={t('fieldOwner.venueAccountChip', {
+                                status: getSubscriptionStatusLabel(location.venueAccountStatus || 'TRIAL'),
+                              })}
+                            />
+                          ) : null}
                           <Chip
                             color={status.commerciallyAvailable ? 'success' : 'warning'}
                             label={status.commerciallyAvailable ? t('fieldOwner.availableInApp') : t('fieldOwner.needsAttention')}
@@ -1398,8 +1444,28 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                         <Paper variant="outlined" sx={{ p: 1.75, borderRadius: 3 }}>
                           <Stack spacing={1}>
                             <Typography variant="subtitle2" fontWeight={800}>
-                              Plano e cobrança
+                              {t('fieldOwner.billingPanelTitle')}
                             </Typography>
+                            {location.venueAccountId ? (
+                              <Alert severity={['OVERDUE', 'SUSPENDED', 'CANCELLED'].includes(location.venueAccountStatus || '') ? 'warning' : 'info'}>
+                                <Typography variant="body2" fontWeight={700}>
+                                  {t('fieldOwner.venueAccountPanelTitle')}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {[
+                                    venueAccountScopeLabel,
+                                    venueAccountPlanLabel ? t('fieldOwner.venueAccountPlanLabel', { value: venueAccountPlanLabel }) : null,
+                                    venueAccountFeeLabel ? t('fieldOwner.venueAccountTotalLabel', { value: venueAccountFeeLabel }) : null,
+                                    typeof location.venueAccountLinkedLocationsCount === 'number'
+                                      ? t('fieldOwner.venueAccountLocationsLabel', { count: location.venueAccountLinkedLocationsCount })
+                                      : null,
+                                    typeof location.venueAccountActiveFieldsCount === 'number'
+                                      ? t('fieldOwner.venueAccountFieldsLabel', { count: location.venueAccountActiveFieldsCount })
+                                      : null,
+                                  ].filter(Boolean).join(' · ')}
+                                </Typography>
+                              </Alert>
+                            ) : null}
                             <Box
                               sx={{
                                 display: 'grid',

@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T02:43:48.720Z",
+  "generatedAt": "2026-06-30T03:13:05.119Z",
   "notes": [
+    {
+      "version": "1.43.28",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Portal do dono de quadra passa a mostrar melhor a conta comercial agregada.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O dashboard do dono agora exibe quando a quadra faz parte de uma conta comercial agregada, com status, plano, escopo de cobrança, valor total do contrato, quantidade de quadras e campos ativos.",
+        "O bloco de plano e cobrança ficou mais claro para diferenciar valor individual da quadra e valor total do contrato do dono."
+      ],
+      "fixed": [
+        "A disponibilidade comercial exibida no dashboard do dono passa a respeitar o status da conta agregada quando ela estiver suspensa, vencida ou cancelada."
+      ],
+      "issueRefs": [
+        3125,
+        3135
+      ]
+    },
     {
       "version": "1.43.27",
       "buildNumber": null,

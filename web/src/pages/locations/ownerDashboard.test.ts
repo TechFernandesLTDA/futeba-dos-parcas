@@ -29,6 +29,7 @@ const baseLocation = (overrides: Partial<OwnerDashboardLocationLike> = {}): Owne
   subscriptionStatus: 'ACTIVE',
   monthlyFeeCents: 19990,
   billingDueDay: 10,
+  venueAccountStatus: 'ACTIVE',
   rating: 4.8,
   ratingCount: 12,
   description: 'Quadra pronta para jogos.',
@@ -95,6 +96,7 @@ describe('ownerDashboard', () => {
         isVerified: false,
         publicationStatus: 'DRAFT',
         subscriptionStatus: 'OVERDUE',
+        venueAccountStatus: undefined,
         monthlyFeeCents: 0,
         billingDueDay: null,
         description: '',
@@ -119,6 +121,22 @@ describe('ownerDashboard', () => {
         'Publicação e mensalidade',
       ]),
     );
+  });
+
+  it('considera status da conta comercial agregada para disponibilidade', () => {
+    const summary = summarizeOwnerLocationStatus(
+      baseLocation({
+        subscriptionStatus: 'ACTIVE',
+        venueAccountId: 'owner-123',
+        venueAccountStatus: 'SUSPENDED',
+      }),
+      [baseField()],
+      [],
+    );
+
+    expect(summary.subscriptionStatus).toBe('SUSPENDED');
+    expect(summary.commerciallyAvailable).toBe(false);
+    expect(summary.commercialIssues).toContain('mensalidade irregular');
   });
 
   it('calcula os agregados do dashboard do owner', () => {

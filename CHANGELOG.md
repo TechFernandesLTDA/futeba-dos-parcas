@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.28] - 2026-06-30
+
+#### Adicionado
+- Cobertura adicionada para garantir que uma conta comercial agregada suspensa bloqueia a disponibilidade mesmo quando o status legado da quadra está ativo.
+
+#### Mudado
+- `FieldOwnerDashboardScreen` agora lê os campos `venueAccount*` denormalizados em `locations`.
+- `ownerDashboard` propaga `venueAccountStatus` para os cálculos de checklist, issues comerciais e disponibilidade.
+
+_Issues: #3125, #3135_
+
 ### [1.43.27] - 2026-06-30
 
 #### Adicionado
