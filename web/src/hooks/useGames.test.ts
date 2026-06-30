@@ -296,7 +296,15 @@ describe('useConfirmPresence', () => {
     vi.clearAllMocks();
     mockDoc.mockReturnValue('mock-doc-ref');
     mockSetDoc.mockResolvedValue(undefined);
-    mockGetDoc.mockResolvedValue({ exists: () => true });
+    mockGetDoc.mockResolvedValue({
+      id: 'game-1',
+      exists: () => true,
+      data: () => ({
+        daily_price: 87.5,
+        total_cost: 700,
+        max_players: 8,
+      }),
+    });
     mockDeleteDoc.mockResolvedValue(undefined);
   });
 
@@ -309,6 +317,24 @@ describe('useConfirmPresence', () => {
 
     // Verifica que o doc ID é determinístico
     expect(mockDoc).toHaveBeenCalledWith({}, 'confirmations', 'game-1_test-user-id');
+  });
+
+  it('grava o valor esperado da confirmação a partir do daily_price proporcional do jogo', async () => {
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.confirmPresence('game-1');
+    });
+
+    expect(mockSetDoc).toHaveBeenCalledWith(
+      'mock-doc-ref',
+      expect.objectContaining({
+        payment_status: 'PENDING',
+        partial_payment: 0,
+        expected_payment: 87.5,
+        expected_payment_cents: 8750,
+      })
+    );
   });
 
   it('exige autenticação para confirmar presença', async () => {

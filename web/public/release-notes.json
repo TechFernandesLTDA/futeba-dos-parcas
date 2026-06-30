@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T21:57:25.225Z",
+  "generatedAt": "2026-06-30T22:35:04.626Z",
   "notes": [
+    {
+      "version": "1.43.38",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Confirmação de presença agora usa o valor proporcional correto do jogo.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Ao confirmar presença, o jogador vê o valor por pessoa já calculado pela duração escolhida na criação do jogo.",
+        "A confirmação deixa de depender de qualquer recálculo por hora e passa a usar o valor proporcional salvo no jogo.",
+        "O registro financeiro da presença guarda o valor esperado para manter relatórios e pagamentos alinhados."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.43.37",
       "buildNumber": null,

@@ -72,6 +72,8 @@ export interface GameConfirmation {
   
   // Payment
   partialPayment: number;
+  expectedPayment?: number;
+  expectedPaymentCents?: number;
   wasPresent: boolean;
   
   // Check-in

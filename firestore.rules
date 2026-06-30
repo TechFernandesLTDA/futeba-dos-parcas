@@ -950,7 +950,18 @@ service cloud.firestore {
       // user_photo, is_casual_player) alem dos campos base. Bloqueia self-injection
       // de is_mvp, goals, assists, saves, etc.
       allow create: if (isAdmin() || isVerifiedOrGrace()) &&
-                       request.resource.data.keys().hasOnly(['game_id', 'user_id', 'status', 'position', 'created_at', 'id', 'user_name', 'user_photo', 'is_casual_player']) &&
+                       request.resource.data.keys().hasOnly([
+                         'game_id', 'user_id', 'status', 'position', 'created_at',
+                         'id', 'user_name', 'user_photo', 'is_casual_player',
+                         'payment_status', 'partial_payment', 'expected_payment',
+                         'expected_payment_cents'
+                       ]) &&
+                       request.resource.data.get('payment_status', 'PENDING') == 'PENDING' &&
+                       request.resource.data.get('partial_payment', 0) == 0 &&
+                       isNonNegativeNumber(request.resource.data.get('expected_payment', 0)) &&
+                       isNonNegativeNumber(request.resource.data.get('expected_payment_cents', 0)) &&
+                       request.resource.data.get('expected_payment', 0) <= 500 &&
+                       request.resource.data.get('expected_payment_cents', 0) <= 50000 &&
                        ((
                          // Self-confirm: exige jogo existente, status != CANCELLED/FINISHED
                          request.resource.data.user_id == userId() &&

@@ -748,6 +748,14 @@ data class GameConfirmation(
     @set:PropertyName("partial_payment")
     var partialPayment: Double = 0.0,
 
+    @get:PropertyName("expected_payment")
+    @set:PropertyName("expected_payment")
+    var expectedPayment: Double = 0.0,
+
+    @get:PropertyName("expected_payment_cents")
+    @set:PropertyName("expected_payment_cents")
+    var expectedPaymentCents: Long = 0,
+
     // Indica se o jogador esteve presente no jogo (para relatório pós-jogo)
     @get:PropertyName("was_present")
     @set:PropertyName("was_present")

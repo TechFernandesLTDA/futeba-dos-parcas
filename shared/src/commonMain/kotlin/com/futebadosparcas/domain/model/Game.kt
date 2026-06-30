@@ -296,6 +296,8 @@ data class GameConfirmation(
 
     // Pagamento e presença
     @SerialName("partial_payment") val partialPayment: Double = 0.0,
+    @SerialName("expected_payment") val expectedPayment: Double = 0.0,
+    @SerialName("expected_payment_cents") val expectedPaymentCents: Long = 0,
     @SerialName("was_present") val wasPresent: Boolean = false
 ) {
     init {

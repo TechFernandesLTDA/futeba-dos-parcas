@@ -26,6 +26,8 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.math.round
+import kotlin.math.roundToLong
 
 /**
  * Implementação multiplataforma do FirebaseDataSource usando GitLive Firebase SDK 2.4.0.
@@ -254,6 +256,12 @@ actual class FirebaseDataSource actual constructor() {
             // Usar ID determinístico {gameId}_{userId} para consistência com security rules
             val docId = "${gameId}_${userId}"
             val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document(docId)
+            val game = firestore.collection(COLLECTION_GAMES)
+                .document(gameId)
+                .get()
+                .toGameOrNull()
+                ?: return Result.failure(Exception("Jogo não encontrado"))
+            val expectedPayment = game.expectedPaymentForConfirmation()
 
             val confirmationData = mapOf(
                 "id" to docId,
@@ -263,6 +271,10 @@ actual class FirebaseDataSource actual constructor() {
                 "user_photo" to (userPhoto ?: ""),
                 "position" to position,
                 "status" to "CONFIRMED",
+                "payment_status" to PaymentStatus.PENDING.name,
+                "partial_payment" to 0.0,
+                "expected_payment" to expectedPayment,
+                "expected_payment_cents" to expectedPayment.toPaymentCents(),
                 "is_casual_player" to isCasualPlayer,
                 "created_at" to FieldValue.serverTimestamp
             )
@@ -276,6 +288,10 @@ actual class FirebaseDataSource actual constructor() {
                 userPhoto = userPhoto,
                 position = position,
                 status = "CONFIRMED",
+                paymentStatus = PaymentStatus.PENDING.name,
+                partialPayment = 0.0,
+                expectedPayment = expectedPayment,
+                expectedPaymentCents = expectedPayment.toPaymentCents(),
                 isCasualPlayer = isCasualPlayer
             )
             Result.success(confirmation)
@@ -3814,9 +3830,25 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameConfirmationOr
         isMvp = get<Boolean?>("is_mvp") ?: get<Boolean?>("isMvp") ?: false,
         isBestGk = get<Boolean?>("is_best_gk") ?: get<Boolean?>("isBestGk") ?: false,
         isWorstPlayer = get<Boolean?>("is_worst_player") ?: get<Boolean?>("isWorstPlayer") ?: false,
-        confirmedAt = safeLong("confirmed_at") ?: safeLong("confirmedAt")
+        confirmedAt = safeLong("confirmed_at") ?: safeLong("confirmedAt"),
+        partialPayment = get<Double?>("partial_payment") ?: get<Double?>("partialPayment") ?: 0.0,
+        expectedPayment = get<Double?>("expected_payment") ?: get<Double?>("expectedPayment") ?: 0.0,
+        expectedPaymentCents = safeLong("expected_payment_cents") ?: safeLong("expectedPaymentCents") ?: 0,
+        wasPresent = get<Boolean?>("was_present") ?: get<Boolean?>("wasPresent") ?: false
     )
 }
+
+private fun Game?.expectedPaymentForConfirmation(): Double {
+    val raw = when {
+        this == null -> 0.0
+        dailyPrice > 0.0 -> dailyPrice
+        totalCost > 0.0 && maxPlayers > 0 -> totalCost / maxPlayers
+        else -> 0.0
+    }
+    return round(raw * 100.0) / 100.0
+}
+
+private fun Double.toPaymentCents(): Long = (this * 100.0).roundToLong()
 
 private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toStatisticsOrNull(): Statistics? {
     if (!exists) return null

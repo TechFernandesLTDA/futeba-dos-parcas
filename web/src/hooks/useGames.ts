@@ -28,6 +28,7 @@ import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 import { getIsPublicFromVisibility } from '../utils/gameLifecycle';
+import { resolveExpectedPayment, toPaymentCents } from '../utils/gamePayment';
 
 const logger = createLogger('useGames');
 
@@ -201,6 +202,15 @@ export function useConfirmPresence() {
         // Doc ID determinístico {gameId}_{userId} (igual ao Android)
         const confirmationId = `${gameId}_${uid}`;
         const confirmationRef = doc(db, 'confirmations', confirmationId);
+        const gameRef = doc(db, 'games', gameId);
+        const gameSnap = await getDoc(gameRef);
+
+        if (!gameSnap.exists()) {
+          throw new Error('Game not found');
+        }
+
+        const game = parseGameDoc(gameSnap.id, gameSnap.data());
+        const expectedPayment = resolveExpectedPayment(game);
 
         const displayName = firebaseUser?.displayName || user?.name || 'Jogador';
         const photoURL = firebaseUser?.photoURL || user?.photoUrl || null;
@@ -215,6 +225,10 @@ export function useConfirmPresence() {
           user_photo: photoURL || '',
           position,
           status: 'CONFIRMED' as ConfirmationStatus,
+          payment_status: 'PENDING',
+          partial_payment: 0,
+          expected_payment: expectedPayment,
+          expected_payment_cents: toPaymentCents(expectedPayment),
           is_casual_player: false,
           created_at: serverTimestamp(),
         };
