@@ -69,6 +69,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.25] - 2026-06-29
+
+#### Adicionado
+- Contrato web para `requestLocationCommercialReview` e `reviewLocationCommercialRequest`.
+- Novos tipos de request comercial e metadados resumidos na entidade `Location`.
+
+#### Mudado
+- `FieldOwnerDashboardScreen` integra CTA, status e modal de solicitação comercial por quadra.
+- `ManageLocationsScreen` passa a renderizar fila de revisão comercial e diálogo administrativo de decisão.
+
+_Issues: #3115, #3125_
+
 ### [1.43.24] - 2026-06-29
 
 #### Adicionado
@@ -599,6 +611,19 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.16] - 2026-06-29
+
+#### Adicionado
+- Novas callables `requestLocationCommercialReview` e `reviewLocationCommercialRequest`.
+- Snapshot comercial com checklist, pendências e issues operacionais salvo junto da solicitação.
+- Subcoleção `publication_requests` adicionada ao lifecycle auditável de quadras.
+
+#### Mudado
+- O backend consolida o último status de solicitação comercial também no documento principal da `location`.
+- Eventos de submissão e revisão comercial passam a alimentar `commercial_events` para rastreabilidade.
+
+_Issues: #3115_
 
 ### [1.2.15] - 2026-06-29
 

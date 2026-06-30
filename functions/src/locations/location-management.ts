@@ -29,8 +29,19 @@ const SUBSCRIPTION_STATUSES = [
   "CANCELLED",
 ] as const;
 
+const COMMERCIAL_REQUEST_TYPES = [
+  "PUBLICATION",
+  "COMMERCIAL_UPDATE",
+] as const;
+
 type PublicationStatus = (typeof PUBLICATION_STATUSES)[number];
 type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+type CommercialRequestType = (typeof COMMERCIAL_REQUEST_TYPES)[number];
+type CommercialRequestStatus =
+  "PENDING_REVIEW" |
+  "NEEDS_CHANGES" |
+  "APPROVED" |
+  "REJECTED";
 
 interface SetLocationPublicationStatusRequest {
   locationId: string;
@@ -72,6 +83,20 @@ interface ReviewLocationSubscriptionReceiptRequest {
   locationId: string;
   paymentId: string;
   decision: "APPROVED" | "REJECTED";
+  notes?: string | null;
+}
+
+interface RequestLocationCommercialReviewRequest {
+  locationId: string;
+  requestType: CommercialRequestType;
+  requestedSections?: string[] | null;
+  notes?: string | null;
+}
+
+interface ReviewLocationCommercialRequest {
+  locationId: string;
+  requestId: string;
+  decision: Exclude<CommercialRequestStatus, "PENDING_REVIEW">;
   notes?: string | null;
 }
 
@@ -165,6 +190,7 @@ const LOCATION_SUBCOLLECTIONS = [
   "availability",
   "audit_logs",
   "commercial_events",
+  "publication_requests",
   "subscription_payments",
   "subscription_ledger",
   "subscription_cycles",
@@ -221,6 +247,32 @@ function optionalEmail(value: unknown): string | null {
     throw new HttpsError("invalid-argument", "managerEmail must be valid");
   }
   return email;
+}
+
+/**
+ * Normaliza lista opcional de strings removendo duplicidade e ruído.
+ * @param {unknown} value Valor bruto.
+ * @param {number} maxItems Limite de itens.
+ * @param {number} maxLength Limite por item.
+ * @return {string[]} Lista sanitizada.
+ */
+function normalizeStringArray(
+  value: unknown,
+  maxItems: number,
+  maxLength: number
+): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    const trimmed = item.trim().slice(0, maxLength);
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    normalized.push(trimmed);
+    if (normalized.length >= maxItems) break;
+  }
+  return normalized;
 }
 
 /**
@@ -464,6 +516,165 @@ function requireLocationReceiptStoragePath(
     );
   }
   return storagePath;
+}
+
+/**
+ * Extrai lista de fotos do cadastro principal do local.
+ * @param {FirebaseFirestore.DocumentData} locData Dados da location.
+ * @return {string[]} URLs/caminhos válidos.
+ */
+function getLocationPhotos(
+  locData: FirebaseFirestore.DocumentData
+): string[] {
+  const photos = Array.isArray(locData.photos) ?
+    locData.photos.filter((item) => typeof item === "string" && item.trim()) :
+    [];
+  const photoUrl = typeof locData.photo_url === "string" && locData.photo_url.trim() ?
+    [locData.photo_url.trim()] :
+    [];
+  return Array.from(new Set([...photos, ...photoUrl]));
+}
+
+/**
+ * Extrai preço hora independentemente do formato legado.
+ * @param {FirebaseFirestore.DocumentData} fieldData Dados do campo.
+ * @return {number} Valor monetário.
+ */
+function getFieldHourlyPrice(fieldData: FirebaseFirestore.DocumentData): number {
+  const value = fieldData.hourly_price ?? fieldData.hourlyPrice;
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ?
+    value :
+    0;
+}
+
+/**
+ * Determina se um campo está ativo considerando formatos legados.
+ * @param {FirebaseFirestore.DocumentData} fieldData Dados do campo.
+ * @return {boolean} Indicador de atividade.
+ */
+function isFieldActive(fieldData: FirebaseFirestore.DocumentData): boolean {
+  if (typeof fieldData.is_active === "boolean") return fieldData.is_active;
+  if (typeof fieldData.isActive === "boolean") return fieldData.isActive;
+  return true;
+}
+
+/**
+ * Carrega campos da quadra nas estruturas raiz e aninhada sem duplicar IDs.
+ * @param {string} locationId ID da location.
+ * @return {Promise<FirebaseFirestore.DocumentData[]>} Lista consolidada.
+ */
+async function getLocationFields(
+  locationId: string
+): Promise<FirebaseFirestore.DocumentData[]> {
+  const [nestedSnapshot, rootSnapshot] = await Promise.all([
+    db().collection("locations").doc(locationId).collection("fields").get(),
+    db().collection("fields").where("location_id", "==", locationId).limit(200).get(),
+  ]);
+
+  const seen = new Set<string>();
+  const fields: FirebaseFirestore.DocumentData[] = [];
+  for (const snapshot of [nestedSnapshot, rootSnapshot]) {
+    for (const doc of snapshot.docs) {
+      if (seen.has(doc.id)) continue;
+      seen.add(doc.id);
+      fields.push(doc.data() || {});
+    }
+  }
+  return fields;
+}
+
+/**
+ * Monta snapshot operacional/comercial para solicitações do owner.
+ * @param {FirebaseFirestore.DocumentData} locData Dados da location.
+ * @param {FirebaseFirestore.DocumentData[]} fields Campos vinculados.
+ * @return {Record<string, unknown>} Resumo auditável.
+ */
+function buildLocationCommercialRequestSnapshot(
+  locData: FirebaseFirestore.DocumentData,
+  fields: FirebaseFirestore.DocumentData[]
+): Record<string, unknown> {
+  const photos = getLocationPhotos(locData);
+  const activeFields = fields.filter((field) => isFieldActive(field));
+  const hasFieldRegistry = fields.length > 0 ||
+    (typeof locData.field_count === "number" && locData.field_count > 0);
+  const hasActiveFieldRegistry = activeFields.length > 0 ||
+    locData.has_active_fields === true;
+  const hasPricedField = activeFields.some((field) => getFieldHourlyPrice(field) > 0);
+  const hasContact = Boolean(
+    (typeof locData.phone === "string" && locData.phone.trim()) ||
+    (typeof locData.whatsapp === "string" && locData.whatsapp.trim()) ||
+    (typeof locData.website === "string" && locData.website.trim()) ||
+    (typeof locData.instagram === "string" && locData.instagram.trim())
+  );
+  const hasAddress = Boolean(
+    typeof locData.address === "string" && locData.address.trim() &&
+    typeof locData.city === "string" && locData.city.trim() &&
+    typeof locData.state === "string" && locData.state.trim()
+  );
+
+  const pendingItemIds: string[] = [];
+  if (!(typeof locData.name === "string" && locData.name.trim() &&
+    typeof locData.description === "string" && locData.description.trim())
+  ) {
+    pendingItemIds.push("identity");
+  }
+  if (!hasAddress) pendingItemIds.push("address");
+  if (!hasContact) pendingItemIds.push("contact");
+  if (photos.length === 0) pendingItemIds.push("photos");
+  if (!hasFieldRegistry) pendingItemIds.push("fields");
+  if (!hasActiveFieldRegistry) pendingItemIds.push("active-fields");
+  if (!hasPricedField) pendingItemIds.push("pricing");
+
+  const publicationStatus = typeof locData.publication_status === "string" ?
+    locData.publication_status :
+    "DRAFT";
+  const subscriptionStatus = typeof locData.subscription_status === "string" ?
+    locData.subscription_status :
+    "TRIAL";
+  const commercialIssueCodes: string[] = [];
+  if (locData.is_active !== true) commercialIssueCodes.push("inactive");
+  if (locData.is_verified !== true) commercialIssueCodes.push("notVerified");
+  if (publicationStatus !== "PUBLISHED") commercialIssueCodes.push("notPublished");
+  if (!["TRIAL", "ACTIVE"].includes(subscriptionStatus)) {
+    commercialIssueCodes.push("billingIrregular");
+  }
+  if (!hasFieldRegistry) commercialIssueCodes.push("noFields");
+  if (!hasActiveFieldRegistry) commercialIssueCodes.push("noActiveFields");
+  if (!positiveCents(locData.monthly_fee_cents)) commercialIssueCodes.push("noMonthlyFee");
+  if (!Number.isInteger(locData.billing_due_day)) commercialIssueCodes.push("noDueDay");
+  if (!hasAddress) commercialIssueCodes.push("incompleteAddress");
+
+  const ownerReadyForPublication = pendingItemIds.length === 0 && locData.is_active !== false;
+  const readyForPublicationApproval = ownerReadyForPublication &&
+    locData.is_active === true &&
+    locData.is_verified === true &&
+    hasActiveFieldRegistry &&
+    positiveCents(locData.monthly_fee_cents) > 0 &&
+    Number.isInteger(locData.billing_due_day) &&
+    ["TRIAL", "ACTIVE"].includes(subscriptionStatus);
+
+  return {
+    publication_status: publicationStatus,
+    subscription_status: subscriptionStatus,
+    is_active: locData.is_active === true,
+    is_verified: locData.is_verified === true,
+    field_count: fields.length,
+    active_field_count: activeFields.length,
+    photo_count: photos.length,
+    checklist_completed: 7 - pendingItemIds.length,
+    checklist_total: 7,
+    pending_item_ids: pendingItemIds,
+    commercial_issue_codes: commercialIssueCodes,
+    owner_ready_for_publication: ownerReadyForPublication,
+    ready_for_publication_approval: readyForPublicationApproval,
+    monthly_fee_cents: positiveCents(locData.monthly_fee_cents) || null,
+    billing_due_day: Number.isInteger(locData.billing_due_day) ?
+      Number(locData.billing_due_day) :
+      null,
+    city: typeof locData.city === "string" ? locData.city : null,
+    state: typeof locData.state === "string" ? locData.state : null,
+    requested_at_iso: new Date().toISOString(),
+  };
 }
 
 /**
@@ -1256,6 +1467,289 @@ secureCallable<SetLocationPublicationStatusRequest>(
     });
 
     return {success: true, locationId, publicationStatus};
+  }
+);
+
+export const requestLocationCommercialReview =
+secureCallable<RequestLocationCommercialReviewRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    rateLimit: {maxRequests: 10, windowMs: 60000, keyPrefix: "locCommReq"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "requestLocationCommercialReview",
+      locationId: req.data?.locationId,
+      requestType: req.data?.requestType,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const requestType = requireEnum(
+      request.data.requestType,
+      COMMERCIAL_REQUEST_TYPES,
+      "requestType"
+    );
+    const notes = optionalTrimmed(request.data.notes, 2000);
+    const requestedSections = normalizeStringArray(
+      request.data.requestedSections,
+      8,
+      60
+    );
+    const {locRef, locData} = await getExistingLocation(locationId);
+    assertAdminOrLocationOwner(request, locData);
+
+    if (locData.latest_commercial_request_status === "PENDING_REVIEW") {
+      throw new HttpsError(
+        "failed-precondition",
+        "There is already a pending commercial request for this location"
+      );
+    }
+    if (requestType === "PUBLICATION" &&
+      locData.publication_status === "PUBLISHED"
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Published locations should use COMMERCIAL_UPDATE requests"
+      );
+    }
+
+    const fields = await getLocationFields(locationId);
+    const snapshot = buildLocationCommercialRequestSnapshot(locData, fields);
+    const pendingItemIds = Array.isArray(snapshot.pending_item_ids) ?
+      snapshot.pending_item_ids :
+      [];
+    if (requestType === "PUBLICATION" &&
+      snapshot.owner_ready_for_publication !== true
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Complete the minimum registration before requesting publication: ${pendingItemIds.join(", ")}`
+      );
+    }
+
+    const requestRef = locRef.collection("publication_requests").doc();
+    const publicationStatus = requestType === "PUBLICATION" &&
+      locData.publication_status !== "PUBLISHED" ?
+      "PENDING_REVIEW" :
+      (typeof locData.publication_status === "string" ?
+        locData.publication_status :
+        "DRAFT");
+
+    const batch = db().batch();
+    batch.set(requestRef, {
+      location_id: locationId,
+      request_type: requestType,
+      status: "PENDING_REVIEW",
+      requested_sections: requestedSections,
+      owner_notes: notes,
+      admin_notes: null,
+      submitted_by: request.auth.uid,
+      reviewer_user_id: null,
+      snapshot,
+      created_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
+      reviewed_at: null,
+      closed_at: null,
+    });
+    batch.update(locRef, {
+      latest_commercial_request_id: requestRef.id,
+      latest_commercial_request_type: requestType,
+      latest_commercial_request_status: "PENDING_REVIEW",
+      latest_commercial_request_requested_sections: requestedSections,
+      latest_commercial_request_owner_notes: notes,
+      latest_commercial_request_admin_notes: null,
+      latest_commercial_request_pending_item_ids: snapshot.pending_item_ids,
+      latest_commercial_request_commercial_issue_codes:
+        snapshot.commercial_issue_codes,
+      latest_commercial_request_checklist_completed:
+        snapshot.checklist_completed,
+      latest_commercial_request_checklist_total: snapshot.checklist_total,
+      latest_commercial_request_active_field_count:
+        snapshot.active_field_count,
+      latest_commercial_request_photo_count: snapshot.photo_count,
+      latest_commercial_request_requested_at: FieldValue.serverTimestamp(),
+      latest_commercial_request_updated_at: FieldValue.serverTimestamp(),
+      latest_commercial_request_reviewed_at: null,
+      owner_notes: notes,
+      publication_status: publicationStatus,
+      unpublished_reason: null,
+      updated_at: FieldValue.serverTimestamp(),
+      updated_by: request.auth.uid,
+    });
+    await batch.commit();
+
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: "LOCATION_COMMERCIAL_REQUEST_SUBMITTED",
+      before: {
+        latest_commercial_request_status:
+          locData.latest_commercial_request_status ?? null,
+        publication_status: locData.publication_status ?? null,
+      },
+      after: {
+        request_id: requestRef.id,
+        request_type: requestType,
+        request_status: "PENDING_REVIEW",
+        requested_sections: requestedSections,
+        publication_status: publicationStatus,
+      },
+      reason: notes,
+    });
+
+    return {
+      success: true,
+      locationId,
+      requestId: requestRef.id,
+      requestStatus: "PENDING_REVIEW",
+      publicationStatus,
+    };
+  }
+);
+
+export const reviewLocationCommercialRequest =
+secureCallable<ReviewLocationCommercialRequest>(
+  {
+    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {maxRequests: 20, windowMs: 60000, keyPrefix: "locCommReview"},
+    enableAuditLog: true,
+    auditLogContext: async (req) => ({
+      function: "reviewLocationCommercialRequest",
+      locationId: req.data?.locationId,
+      requestId: req.data?.requestId,
+      decision: req.data?.decision,
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+    }
+    assertAdmin(request);
+
+    const locationId = requireNonEmptyString(request.data.locationId, "locationId");
+    const requestId = requireNonEmptyString(request.data.requestId, "requestId");
+    const decision = requireEnum(
+      request.data.decision,
+      ["NEEDS_CHANGES", "APPROVED", "REJECTED"] as const,
+      "decision"
+    );
+    const notes = optionalTrimmed(request.data.notes, 2000);
+    const {locRef, locData} = await getExistingLocation(locationId);
+    const commercialRequestRef = locRef.collection("publication_requests").doc(requestId);
+    const commercialRequestDoc = await commercialRequestRef.get();
+    if (!commercialRequestDoc.exists) {
+      throw new HttpsError("not-found", `Commercial request ${requestId} not found`);
+    }
+    const commercialRequestData = commercialRequestDoc.data() || {};
+    if (commercialRequestData.status !== "PENDING_REVIEW") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Commercial request is not pending review"
+      );
+    }
+
+    const requestType = requireEnum(
+      commercialRequestData.request_type,
+      COMMERCIAL_REQUEST_TYPES,
+      "requestType"
+    );
+    const fields = await getLocationFields(locationId);
+    const snapshot = buildLocationCommercialRequestSnapshot(locData, fields);
+    let nextPublicationStatus = typeof locData.publication_status === "string" ?
+      locData.publication_status :
+      "DRAFT";
+
+    if (decision === "APPROVED" && requestType === "PUBLICATION") {
+      if (snapshot.ready_for_publication_approval !== true) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Location is not ready for publication approval"
+        );
+      }
+      nextPublicationStatus = "PUBLISHED";
+    } else if (requestType === "PUBLICATION" && nextPublicationStatus !== "PUBLISHED") {
+      nextPublicationStatus = decision === "REJECTED" ? "REJECTED" : "DRAFT";
+    }
+
+    const batch = db().batch();
+    batch.update(commercialRequestRef, {
+      status: decision,
+      admin_notes: notes,
+      reviewer_user_id: request.auth.uid,
+      snapshot,
+      reviewed_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
+      closed_at: FieldValue.serverTimestamp(),
+    });
+
+    const locationUpdate: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+      latest_commercial_request_id: requestId,
+      latest_commercial_request_type: requestType,
+      latest_commercial_request_status: decision,
+      latest_commercial_request_requested_sections:
+        commercialRequestData.requested_sections ?? [],
+      latest_commercial_request_owner_notes:
+        commercialRequestData.owner_notes ?? null,
+      latest_commercial_request_admin_notes: notes,
+      latest_commercial_request_pending_item_ids: snapshot.pending_item_ids,
+      latest_commercial_request_commercial_issue_codes:
+        snapshot.commercial_issue_codes,
+      latest_commercial_request_checklist_completed:
+        snapshot.checklist_completed,
+      latest_commercial_request_checklist_total: snapshot.checklist_total,
+      latest_commercial_request_active_field_count:
+        snapshot.active_field_count,
+      latest_commercial_request_photo_count: snapshot.photo_count,
+      latest_commercial_request_updated_at: FieldValue.serverTimestamp(),
+      latest_commercial_request_reviewed_at: FieldValue.serverTimestamp(),
+      admin_notes: notes,
+      publication_status: nextPublicationStatus,
+      unpublished_reason: decision === "REJECTED" ? notes : null,
+      updated_at: FieldValue.serverTimestamp(),
+      updated_by: request.auth.uid,
+    };
+
+    if (decision === "APPROVED" && requestType === "PUBLICATION") {
+      locationUpdate.published_at = FieldValue.serverTimestamp();
+      locationUpdate.published_by = request.auth.uid;
+      locationUpdate.unpublished_reason = null;
+    }
+
+    batch.update(locRef, locationUpdate);
+    await batch.commit();
+
+    await writeLocationCommercialEvent({
+      locationId,
+      actorUserId: request.auth.uid,
+      type: "LOCATION_COMMERCIAL_REQUEST_REVIEWED",
+      before: {
+        request_id: requestId,
+        request_status: commercialRequestData.status ?? null,
+        publication_status: locData.publication_status ?? null,
+      },
+      after: {
+        request_id: requestId,
+        request_type: requestType,
+        request_status: decision,
+        publication_status: nextPublicationStatus,
+      },
+      reason: notes,
+    });
+
+    return {
+      success: true,
+      locationId,
+      requestId,
+      requestStatus: decision,
+      publicationStatus: nextPublicationStatus,
+    };
   }
 );
 

@@ -144,6 +144,38 @@ export const setLocationPublicationStatus = httpsCallable<
   { success: boolean; locationId: string; publicationStatus: string }
 >(functions, 'setLocationPublicationStatus');
 
+export const requestLocationCommercialReview = httpsCallable<
+  {
+    locationId: string;
+    requestType: 'PUBLICATION' | 'COMMERCIAL_UPDATE';
+    requestedSections?: string[] | null;
+    notes?: string | null;
+  },
+  {
+    success: boolean;
+    locationId: string;
+    requestId: string;
+    requestStatus: 'PENDING_REVIEW';
+    publicationStatus: string;
+  }
+>(functions, 'requestLocationCommercialReview');
+
+export const reviewLocationCommercialRequest = httpsCallable<
+  {
+    locationId: string;
+    requestId: string;
+    decision: 'APPROVED' | 'NEEDS_CHANGES' | 'REJECTED';
+    notes?: string | null;
+  },
+  {
+    success: boolean;
+    locationId: string;
+    requestId: string;
+    requestStatus: 'APPROVED' | 'NEEDS_CHANGES' | 'REJECTED';
+    publicationStatus: string;
+  }
+>(functions, 'reviewLocationCommercialRequest');
+
 export const setLocationSubscription = httpsCallable<
   {
     locationId: string;
