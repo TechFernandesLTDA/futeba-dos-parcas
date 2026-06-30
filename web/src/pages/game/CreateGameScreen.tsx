@@ -94,10 +94,17 @@ import { useTranslation } from 'react-i18next';
 import { isSchedulingBlockingStatus } from '../../utils/gameLifecycle';
 import { GAME_VALIDATION } from '../../utils/validationConstants';
 import { getNextRecurrenceDates, formatRecurrencePreview } from '../../utils/recurrencePreview';
+import {
+  calculateFieldRentalCost,
+  calculatePerPlayerPrice,
+  DEFAULT_GAME_DURATION_MINUTES,
+  formatGameDurationLabel,
+  getGameDurationMinutes,
+  normalizeHourlyPriceForGame,
+} from '../../utils/gamePricing';
 
 const logger = createLogger('CreateGameScreen');
 
-const DEFAULT_GAME_DURATION_MINUTES = 60;
 const TIME_SLOTS = [
   '18:00', '18:30', '19:00', '19:30',
   '20:00', '20:30', '21:00', '21:30',
@@ -453,6 +460,23 @@ export const CreateGameScreen: React.FC = () => {
   const { habitualTime } = useHabitualTime(formData.locationId);
 
   const { data: fieldGames } = useFieldGames(formData.fieldId, 60);
+  const selectedField = useMemo(
+    () => fields.find((field) => field.id === formData.fieldId),
+    [fields, formData.fieldId],
+  );
+  const selectedFieldPricing = useMemo(() => {
+    if (!selectedField?.hourlyPrice) return null;
+    const hourlyPrice = normalizeHourlyPriceForGame(selectedField.hourlyPrice);
+    if (hourlyPrice <= 0) return null;
+    const durationMinutes = getGameDurationMinutes(formData.time, formData.endTime);
+    const totalCost = calculateFieldRentalCost(selectedField.hourlyPrice, formData.time, formData.endTime);
+    return {
+      hourlyPrice,
+      durationMinutes,
+      durationLabel: formatGameDurationLabel(durationMinutes),
+      totalCost,
+    };
+  }, [formData.endTime, formData.time, selectedField?.hourlyPrice]);
 
   // Auto-save draft on form changes
   useEffect(() => {
@@ -557,8 +581,13 @@ export const CreateGameScreen: React.FC = () => {
             fieldName: f.name,
             fieldType: (f.type as FieldType) || prev.fieldType,
             gameType: (f.type as string) || prev.gameType,
-            totalCost: f.hourlyPrice || prev.totalCost,
-            dailyPrice: prev.priceManualOverride ? prev.dailyPrice : Math.round((f.hourlyPrice || prev.totalCost) / prev.maxPlayers * 100) / 100,
+            totalCost: calculateFieldRentalCost(f.hourlyPrice, prev.time, prev.endTime) || prev.totalCost,
+            dailyPrice: prev.priceManualOverride
+              ? prev.dailyPrice
+              : calculatePerPlayerPrice(
+                calculateFieldRentalCost(f.hourlyPrice, prev.time, prev.endTime) || prev.totalCost,
+                prev.maxPlayers,
+              ),
           }));
         }
       } catch (_err) {
@@ -602,12 +631,26 @@ export const CreateGameScreen: React.FC = () => {
   // Auto-calculate price per player
   useEffect(() => {
     if (!formData.priceManualOverride && formData.totalCost > 0 && formData.maxPlayers > 0) {
-      const calculated = Math.round((formData.totalCost / formData.maxPlayers) * 100) / 100;
+      const calculated = calculatePerPlayerPrice(formData.totalCost, formData.maxPlayers);
       if (calculated !== formData.dailyPrice) {
         setFormData((prev) => ({ ...prev, dailyPrice: calculated }));
       }
     }
   }, [formData.totalCost, formData.maxPlayers, formData.priceManualOverride, formData.dailyPrice]);
+
+  useEffect(() => {
+    if (useCustomLocation || !selectedFieldPricing || selectedFieldPricing.totalCost <= 0) return;
+    setFormData((prev) => {
+      if (prev.totalCost === selectedFieldPricing.totalCost) return prev;
+      return {
+        ...prev,
+        totalCost: selectedFieldPricing.totalCost,
+        dailyPrice: prev.priceManualOverride
+          ? prev.dailyPrice
+          : calculatePerPlayerPrice(selectedFieldPricing.totalCost, prev.maxPlayers),
+      };
+    });
+  }, [selectedFieldPricing, useCustomLocation]);
 
   useEffect(() => {
     if (group && !formData.groupId) {
@@ -1472,14 +1515,17 @@ export const CreateGameScreen: React.FC = () => {
             onChange={(e) => {
               const field = fields.find((f) => f.id === e.target.value);
               if (field) {
+                const totalCost = calculateFieldRentalCost(field.hourlyPrice, formData.time, formData.endTime);
                 setFormData((prev) => ({
                   ...prev,
                   fieldId: field.id,
                   fieldName: field.name,
                   fieldType: (field.type as FieldType) || prev.fieldType,
                   gameType: (field.type as string) || prev.gameType,
-                  totalCost: field.hourlyPrice || prev.totalCost,
-                  dailyPrice: prev.priceManualOverride ? prev.dailyPrice : Math.round((field.hourlyPrice || 0) / prev.maxPlayers * 100) / 100,
+                  totalCost: totalCost || prev.totalCost,
+                  dailyPrice: prev.priceManualOverride
+                    ? prev.dailyPrice
+                    : calculatePerPlayerPrice(totalCost || prev.totalCost, prev.maxPlayers),
                 }));
               }
             }}
@@ -1491,7 +1537,9 @@ export const CreateGameScreen: React.FC = () => {
             {fields.map((f) => (
               <MenuItem key={f.id} value={f.id}>
                 {f.name} — {FIELD_TYPE_LABELS[f.type as FieldType] || f.type}
-                {f.hourlyPrice ? ` (R$ ${f.hourlyPrice})` : ''}
+                {normalizeHourlyPriceForGame(f.hourlyPrice)
+                  ? ` (${currencyFormatter.format(normalizeHourlyPriceForGame(f.hourlyPrice))}/h)`
+                  : ''}
                 {f.isCovered ? ` · ${t('games.create.covered')}` : ''}
               </MenuItem>
             ))}
@@ -1994,6 +2042,14 @@ export const CreateGameScreen: React.FC = () => {
         inputProps={{ min: 0, step: 0.01, inputMode: 'decimal' }}
       />
 
+      {selectedField && selectedFieldPricing && (
+        <Alert severity="info" icon={false}>
+          {selectedField.name}: {currencyFormatter.format(selectedFieldPricing.hourlyPrice)}/h x {selectedFieldPricing.durationLabel}
+          {' = '}
+          <strong>{currencyFormatter.format(selectedFieldPricing.totalCost)}</strong>
+        </Alert>
+      )}
+
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
         <TextField
           label="Preço por jogador"
@@ -2039,7 +2095,7 @@ export const CreateGameScreen: React.FC = () => {
 
       {formData.totalCost > 0 && formData.maxPlayers > 0 && !formData.priceManualOverride && (
         <Alert severity="info" icon={false}>
-          R$ {formData.totalCost.toFixed(2)} ÷ {formData.maxPlayers} jogadores = <strong>R$ {formData.dailyPrice.toFixed(2)}</strong> por pessoa
+          {currencyFormatter.format(formData.totalCost)} ÷ {formData.maxPlayers} jogadores = <strong>{currencyFormatter.format(formData.dailyPrice)}</strong> por pessoa
         </Alert>
       )}
 
