@@ -69,6 +69,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.34] - 2026-06-30
+
+#### Mudado
+- `ManageLocationsScreen` passa a renderizar rankings derivados do conjunto filtrado.
+- `manageLocationRankings` centraliza a regra de melhores quadras e quadras mais baratas por tipo.
+- Cobertura adicionada para ranking por avaliação e menor preço por tipo.
+
+_Issues: #3107 · PRs: #3166_
+
 ### [1.43.33] - 2026-06-30
 
 #### Mudado

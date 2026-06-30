@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T04:53:57.350Z",
+  "generatedAt": "2026-06-30T05:24:08.394Z",
   "notes": [
+    {
+      "version": "1.43.34",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A tela de quadras agora destaca melhores quadras e menores preços por tipo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Adiciona ranking compacto de melhores quadras na listagem/gestão de quadras.",
+        "Adiciona cartões de menor preço por tipo de quadra, com rolagem horizontal no mobile.",
+        "Usa agregados reais do backend para nota, avaliações, jogos e preço mínimo por hora."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3107
+      ]
+    },
     {
       "version": "1.43.33",
       "buildNumber": null,
