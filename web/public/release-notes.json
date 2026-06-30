@@ -1,7 +1,23 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T19:45:59.184Z",
+  "generatedAt": "2026-06-30T20:32:21.068Z",
   "notes": [
+    {
+      "version": "1.43.36",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Telas de locais com títulos consistentes em todos os idiomas.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Corrige as traduções em inglês e espanhol das telas de criar e editar local."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.43.35",
       "buildNumber": null,

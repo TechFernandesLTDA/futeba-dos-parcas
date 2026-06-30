@@ -79,6 +79,11 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.36] - 2026-06-30
+
+#### Corrigido
+- Restaura a paridade de chaves i18n entre `pt-BR`, `en` e `es`, corrigindo a falha do `Web CI`.
+
 ### [1.43.35] - 2026-06-30
 
 #### Mudado
