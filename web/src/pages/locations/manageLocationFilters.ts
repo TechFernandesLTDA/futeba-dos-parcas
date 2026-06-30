@@ -111,6 +111,18 @@ export const getLocationQualityChecklist = (
   });
   const hasContact = Boolean(location.phone || location.whatsapp || location.website || location.instagram);
   const hasAddress = Boolean(location.address && location.city && location.state);
+  const hasGeolocation = typeof location.latitude === 'number' &&
+    Number.isFinite(location.latitude) &&
+    typeof location.longitude === 'number' &&
+    Number.isFinite(location.longitude);
+  const hasOperatingHours = Boolean(
+    location.openingTime &&
+    location.closingTime &&
+    location.openingTime !== location.closingTime &&
+    location.operatingDays?.length &&
+    typeof location.minGameDurationMinutes === 'number' &&
+    location.minGameDurationMinutes >= 30,
+  );
   const hasAmenities = getLocationAmenitySet(location).size > 0;
   const publicationStatus = getLocationPublicationStatus(location);
   const subscriptionStatus = getLocationSubscriptionStatus(location);
@@ -136,6 +148,20 @@ export const getLocationQualityChecklist = (
       description: 'Telefone, WhatsApp, site ou Instagram reduzem atrito operacional.',
       complete: hasContact,
       actionLabel: 'Adicionar contato',
+    },
+    {
+      id: 'geolocation',
+      label: 'Ponto no mapa',
+      description: 'Latitude e longitude evitam seleção incorreta e melhoram descoberta por proximidade.',
+      complete: hasGeolocation,
+      actionLabel: 'Capturar localização',
+    },
+    {
+      id: 'operating-hours',
+      label: 'Horários de funcionamento',
+      description: 'Dias, abertura, fechamento e duração mínima precisam estar claros para reservas.',
+      complete: hasOperatingHours,
+      actionLabel: 'Definir horários',
     },
     {
       id: 'photos',

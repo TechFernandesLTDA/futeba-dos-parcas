@@ -69,6 +69,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.31] - 2026-06-30
+
+#### Adicionado
+- Campos editáveis de funcionamento no `LocationFormScreen`.
+- Itens `geolocation` e `operating-hours` no checklist web de qualidade da quadra.
+
+#### Corrigido
+- `ownerDashboard` agora propaga latitude/longitude para o checklist de completude.
+
+_Issues: #3122_
+
 ### [1.43.30] - 2026-06-30
 
 #### Adicionado
@@ -668,6 +679,14 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.20] - 2026-06-30
+
+#### Mudado
+- `buildLocationCommercialRequestSnapshot` adiciona pendências `geolocation` e `operating-hours`.
+- `ready_for_publication_approval` agora depende de mapa e horários operacionais válidos.
+
+_Issues: #3122_
 
 ### [1.2.19] - 2026-06-30
 

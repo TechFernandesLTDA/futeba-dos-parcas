@@ -37,6 +37,8 @@ export interface OwnerDashboardLocationLike {
   country: string;
   neighborhood: string;
   region: string;
+  latitude?: number;
+  longitude?: number;
   ownerId: string;
   managers: string[];
   isVerified: boolean;
@@ -132,6 +134,8 @@ const buildLocationCandidate = (
     country: location.country || 'BR',
     neighborhood: location.neighborhood || location.district || '',
     region: location.region || location.state || '',
+    latitude: location.latitude,
+    longitude: location.longitude,
     ownerId: location.ownerId || '',
     managers: location.managers || [],
     isVerified: location.isVerified === true,

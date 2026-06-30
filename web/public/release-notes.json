@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T03:40:41.075Z",
+  "generatedAt": "2026-06-30T03:54:43.845Z",
   "notes": [
+    {
+      "version": "1.43.31",
+      "buildNumber": null,
+      "releaseDate": "2026-06-30",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Cadastro de quadras agora inclui funcionamento e ponto no mapa.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de cadastro/edição de quadras ganhou horário de abertura, fechamento, dias disponíveis e duração mínima do jogo.",
+        "O checklist comercial passa a exigir ponto no mapa e horários de funcionamento antes de considerar o cadastro completo.",
+        "O painel do dono de quadra usa latitude/longitude no checklist, evitando pendências fantasmas quando a localização já está completa."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3122
+      ]
+    },
     {
       "version": "1.43.30",
       "buildNumber": null,

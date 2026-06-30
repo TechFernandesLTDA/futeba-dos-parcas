@@ -22,6 +22,8 @@ const baseLocation = (overrides: Partial<Location> = {}): Location => ({
   country: 'BR',
   neighborhood: 'Centro',
   region: 'Zona Sul',
+  latitude: -23.55052,
+  longitude: -46.633308,
   ownerId: 'owner-123',
   managers: [],
   isVerified: true,
@@ -142,7 +144,7 @@ describe('manageLocationFilters', () => {
       ['https://example.com/photo.jpg'],
     );
 
-    expect(checklist).toHaveLength(10);
+    expect(checklist).toHaveLength(12);
     expect(checklist.every((item) => item.complete)).toBe(true);
 
     const incomplete = getLocationQualityChecklist(
@@ -152,6 +154,11 @@ describe('manageLocationFilters', () => {
         whatsapp: undefined,
         website: undefined,
         instagram: undefined,
+        latitude: undefined,
+        longitude: undefined,
+        openingTime: '',
+        closingTime: '',
+        operatingDays: [],
         amenities: [],
         hasParking: false,
         hasLighting: false,
@@ -165,7 +172,18 @@ describe('manageLocationFilters', () => {
     );
 
     expect(incomplete.filter((item) => !item.complete).map((item) => item.id))
-      .toEqual(['identity', 'contact', 'photos', 'active-fields', 'pricing', 'field-details', 'amenities', 'commercial']);
+      .toEqual([
+        'identity',
+        'contact',
+        'geolocation',
+        'operating-hours',
+        'photos',
+        'active-fields',
+        'pricing',
+        'field-details',
+        'amenities',
+        'commercial',
+      ]);
   });
 
   it('marca pendencia quando campos ativos nao possuem detalhes operacionais completos', () => {
@@ -184,5 +202,22 @@ describe('manageLocationFilters', () => {
     );
 
     expect(checklist.find((item) => item.id === 'field-details')?.complete).toBe(false);
+  });
+
+  it('marca pendencia quando horarios ou geolocalizacao nao foram definidos', () => {
+    const checklist = getLocationQualityChecklist(
+      baseLocation({
+        phone: '11999999999',
+        photoUrl: 'https://example.com/photo.jpg',
+        latitude: undefined,
+        longitude: undefined,
+        operatingDays: [],
+      }),
+      [baseField()],
+      ['https://example.com/photo.jpg'],
+    );
+
+    expect(checklist.find((item) => item.id === 'geolocation')?.complete).toBe(false);
+    expect(checklist.find((item) => item.id === 'operating-hours')?.complete).toBe(false);
   });
 });

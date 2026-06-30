@@ -308,6 +308,12 @@ describe("location commercial admin callables", () => {
 	      state: "SP",
 	      phone: "+5511999999999",
 	      photo_url: "https://example.com/arena.jpg",
+	      latitude: -23.55052,
+	      longitude: -46.633308,
+	      opening_time: "08:00",
+	      closing_time: "23:00",
+	      operating_days: [1, 2, 3, 4, 5, 6],
+	      min_game_duration_minutes: 60,
 	      monthly_fee_cents: 19990,
 	      billing_due_day: 10,
 	    });
@@ -348,6 +354,30 @@ describe("location commercial admin callables", () => {
 	    firestoreStore.set("locations/location-1", {
 	      ...firestoreStore.get("locations/location-1"),
 	      monthly_fee_cents: null,
+	    });
+
+	    await expect(setLocationPublicationStatus({
+	      auth: {uid: "admin-1"},
+	      data: {
+	        locationId: "location-1",
+	        publicationStatus: "PUBLISHED",
+	      },
+	    })).rejects.toMatchObject({code: "failed-precondition"});
+
+	    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+	      publication_status: "PENDING_REVIEW",
+	      is_verified: false,
+	    });
+	  });
+
+	  it("bloqueia publicacao direta sem geolocalizacao ou horarios operacionais", async () => {
+	    firestoreStore.set("locations/location-1", {
+	      ...firestoreStore.get("locations/location-1"),
+	      latitude: null,
+	      longitude: null,
+	      opening_time: "",
+	      closing_time: "",
+	      operating_days: [],
 	    });
 
 	    await expect(setLocationPublicationStatus({

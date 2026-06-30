@@ -21,6 +21,8 @@ const baseLocation = (overrides: Partial<OwnerDashboardLocationLike> = {}): Owne
   country: 'BR',
   neighborhood: 'Centro',
   region: 'Zona Sul',
+  latitude: -23.55052,
+  longitude: -46.633308,
   ownerId: 'owner-123',
   managers: [],
   isVerified: true,

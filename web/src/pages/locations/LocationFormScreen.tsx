@@ -11,6 +11,8 @@ import {
   Alert,
   Chip,
   Stack,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import PageContainer from '../../components/common/PageContainer';
 import { MyLocation as GeoIcon } from '@mui/icons-material';
@@ -76,6 +78,10 @@ interface FormState {
   amenities: string[];
   latitude: number | null;
   longitude: number | null;
+  openingTime: string;
+  closingTime: string;
+  operatingDays: number[];
+  minGameDurationMinutes: string;
   photoFiles: File[];
   photoPreviews: string[];
   existingPhotos: string[];
@@ -103,12 +109,25 @@ const defaultForm: FormState = {
   amenities: [],
   latitude: null,
   longitude: null,
+  openingTime: '06:00',
+  closingTime: '23:00',
+  operatingDays: [1, 2, 3, 4, 5, 6, 7],
+  minGameDurationMinutes: '60',
   photoFiles: [],
   photoPreviews: [],
   existingPhotos: [],
 };
 
 const defaultFieldDrafts = [createLocationFieldDraft(1)];
+const OPERATING_DAY_OPTIONS = [
+  { value: 1, label: 'Seg' },
+  { value: 2, label: 'Ter' },
+  { value: 3, label: 'Qua' },
+  { value: 4, label: 'Qui' },
+  { value: 5, label: 'Sex' },
+  { value: 6, label: 'Sáb' },
+  { value: 7, label: 'Dom' },
+];
 
 export const LocationFormScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -188,6 +207,10 @@ export const LocationFormScreen: React.FC = () => {
             amenities: data.amenities || [],
             latitude: data.latitude ?? null,
             longitude: data.longitude ?? null,
+            openingTime: data.openingTime || '06:00',
+            closingTime: data.closingTime || '23:00',
+            operatingDays: data.operatingDays?.length ? data.operatingDays : [1, 2, 3, 4, 5, 6, 7],
+            minGameDurationMinutes: data.minGameDurationMinutes ? String(data.minGameDurationMinutes) : '60',
             photoFiles: [],
             photoPreviews: [],
             existingPhotos: data.photos?.length ? data.photos : (data.photoUrl ? [data.photoUrl] : []),
@@ -283,6 +306,26 @@ export const LocationFormScreen: React.FC = () => {
     if (form.longitude !== null && (form.longitude < -180 || form.longitude > 180)) {
       e.longitude = t('locations.form.validation.longitudeRange');
     }
+    if (!/^\d{2}:\d{2}$/.test(form.openingTime)) {
+      e.openingTime = 'Informe um horário de abertura válido.';
+    }
+    if (!/^\d{2}:\d{2}$/.test(form.closingTime)) {
+      e.closingTime = 'Informe um horário de fechamento válido.';
+    }
+    if (form.openingTime && form.closingTime && form.openingTime === form.closingTime) {
+      e.closingTime = 'Abertura e fechamento não podem ser iguais.';
+    }
+    if (form.operatingDays.length === 0) {
+      e.operatingDays = 'Selecione pelo menos um dia de funcionamento.';
+    }
+    const minGameDuration = parseOptionalPositiveInt(form.minGameDurationMinutes);
+    if (Number.isNaN(minGameDuration) ||
+      minGameDuration === null ||
+      minGameDuration < 30 ||
+      minGameDuration > 240 ||
+      minGameDuration % 30 !== 0) {
+      e.minGameDurationMinutes = 'Use 30, 60, 90, 120, 150, 180, 210 ou 240 minutos.';
+    }
     setErrors(e);
     setFieldErrors(nextFieldErrors);
     return Object.keys(e).length === 0 && Object.keys(nextFieldErrors).length === 0;
@@ -331,6 +374,16 @@ export const LocationFormScreen: React.FC = () => {
         hasLighting: amenities.includes('lighting'),
       };
     });
+  };
+
+  const handleOperatingDayToggle = (day: number) => {
+    setForm((prev) => {
+      const operatingDays = prev.operatingDays.includes(day)
+        ? prev.operatingDays.filter((item) => item !== day)
+        : [...prev.operatingDays, day].sort((a, b) => a - b);
+      return { ...prev, operatingDays };
+    });
+    if (errors.operatingDays) setErrors((prev) => ({ ...prev, operatingDays: undefined }));
   };
 
   const handleLocationPhotos = (files: FileList | null) => {
@@ -421,6 +474,10 @@ export const LocationFormScreen: React.FC = () => {
         photo_url: locationPhotos[0] || null,
         latitude: form.latitude,
         longitude: form.longitude,
+        operating_days: form.operatingDays,
+        opening_time: form.openingTime,
+        closing_time: form.closingTime,
+        min_game_duration_minutes: parseOptionalPositiveInt(form.minGameDurationMinutes),
         updated_at: serverTimestamp(),
         updated_by: user.id,
       };
@@ -492,10 +549,6 @@ export const LocationFormScreen: React.FC = () => {
           unpublished_reason: null,
           owner_notes: null,
           admin_notes: null,
-          operating_days: [1, 2, 3, 4, 5, 6, 7],
-          opening_time: '06:00',
-          closing_time: '23:00',
-          min_game_duration_minutes: 60,
           country: 'BR',
           created_at: serverTimestamp(),
         });
@@ -718,6 +771,75 @@ export const LocationFormScreen: React.FC = () => {
                           })
                         : t('locations.form.captureCoordinates')}
                     </Button>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+                      Funcionamento
+                    </Typography>
+                    <Stack spacing={1.5}>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <TextField
+                          label="Abre às"
+                          type="time"
+                          value={form.openingTime}
+                          onChange={(e) => handleChange('openingTime', e.target.value)}
+                          error={!!errors.openingTime}
+                          helperText={errors.openingTime || 'Horário em que a primeira reserva pode começar.'}
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                        />
+                        <TextField
+                          label="Fecha às"
+                          type="time"
+                          value={form.closingTime}
+                          onChange={(e) => handleChange('closingTime', e.target.value)}
+                          error={!!errors.closingTime}
+                          helperText={errors.closingTime || 'Pode passar da meia-noite, ex.: 02:00.'}
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                        />
+                        <TextField
+                          label="Duração mínima do jogo (min)"
+                          value={form.minGameDurationMinutes}
+                          onChange={(e) => handleChange('minGameDurationMinutes', e.target.value.replace(/\D/g, '').slice(0, 3))}
+                          error={!!errors.minGameDurationMinutes}
+                          helperText={errors.minGameDurationMinutes || 'Use múltiplos de 30, como 60 ou 90.'}
+                          inputProps={{ inputMode: 'numeric' }}
+                          fullWidth
+                        />
+                      </Stack>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75 }}>
+                          Dias disponíveis para reserva
+                        </Typography>
+                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                          {OPERATING_DAY_OPTIONS.map((day) => (
+                            <FormControlLabel
+                              key={day.value}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  checked={form.operatingDays.includes(day.value)}
+                                  onChange={() => handleOperatingDayToggle(day.value)}
+                                />
+                              }
+                              label={day.label}
+                              sx={{
+                                border: `1px solid ${form.operatingDays.includes(day.value) ? 'currentColor' : 'transparent'}`,
+                                borderRadius: 999,
+                                px: 1,
+                                mr: 0,
+                              }}
+                            />
+                          ))}
+                        </Stack>
+                        {errors.operatingDays && (
+                          <Typography variant="caption" color="error" role="alert">
+                            {errors.operatingDays}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Stack>
                   </Box>
                   <Box ref={photosRef} id="location-form-photos">
                     <input

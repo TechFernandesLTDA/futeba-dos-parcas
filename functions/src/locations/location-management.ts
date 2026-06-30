@@ -650,6 +650,22 @@ function buildLocationCommercialRequestSnapshot(
     typeof locData.city === "string" && locData.city.trim() &&
     typeof locData.state === "string" && locData.state.trim()
   );
+  const hasGeolocation =
+    typeof locData.latitude === "number" &&
+    Number.isFinite(locData.latitude) &&
+    typeof locData.longitude === "number" &&
+    Number.isFinite(locData.longitude);
+  const hasOperatingHours = Boolean(
+    typeof locData.opening_time === "string" &&
+    locData.opening_time.trim() &&
+    typeof locData.closing_time === "string" &&
+    locData.closing_time.trim() &&
+    locData.opening_time !== locData.closing_time &&
+    Array.isArray(locData.operating_days) &&
+    locData.operating_days.length > 0 &&
+    Number.isInteger(locData.min_game_duration_minutes) &&
+    Number(locData.min_game_duration_minutes) >= 30
+  );
 
   const pendingItemIds: string[] = [];
   if (!(typeof locData.name === "string" && locData.name.trim() &&
@@ -658,6 +674,8 @@ function buildLocationCommercialRequestSnapshot(
     pendingItemIds.push("identity");
   }
   if (!hasAddress) pendingItemIds.push("address");
+  if (!hasGeolocation) pendingItemIds.push("geolocation");
+  if (!hasOperatingHours) pendingItemIds.push("operating-hours");
   if (!hasContact) pendingItemIds.push("contact");
   if (photos.length === 0) pendingItemIds.push("photos");
   if (!hasFieldRegistry) pendingItemIds.push("fields");
@@ -682,11 +700,15 @@ function buildLocationCommercialRequestSnapshot(
   if (!positiveCents(locData.monthly_fee_cents)) commercialIssueCodes.push("noMonthlyFee");
   if (!Number.isInteger(locData.billing_due_day)) commercialIssueCodes.push("noDueDay");
   if (!hasAddress) commercialIssueCodes.push("incompleteAddress");
+  if (!hasGeolocation) commercialIssueCodes.push("missingGeolocation");
+  if (!hasOperatingHours) commercialIssueCodes.push("missingOperatingHours");
 
   const ownerReadyForPublication = pendingItemIds.length === 0 && locData.is_active !== false;
   const readyForPublicationApproval = ownerReadyForPublication &&
     locData.is_active === true &&
     locData.is_verified === true &&
+    hasGeolocation &&
+    hasOperatingHours &&
     hasActiveFieldRegistry &&
     positiveCents(locData.monthly_fee_cents) > 0 &&
     Number.isInteger(locData.billing_due_day) &&
@@ -700,8 +722,8 @@ function buildLocationCommercialRequestSnapshot(
     field_count: fields.length,
     active_field_count: activeFields.length,
     photo_count: photos.length,
-    checklist_completed: 7 - pendingItemIds.length,
-    checklist_total: 7,
+    checklist_completed: 9 - pendingItemIds.length,
+    checklist_total: 9,
     pending_item_ids: pendingItemIds,
     commercial_issue_codes: commercialIssueCodes,
     owner_ready_for_publication: ownerReadyForPublication,
