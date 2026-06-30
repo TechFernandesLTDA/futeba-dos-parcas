@@ -62,6 +62,18 @@ data class Location(
     @get:PropertyName("subscription_status")
     @set:PropertyName("subscription_status")
     var subscriptionStatus: String = "TRIAL",
+    @get:PropertyName("billing_plan_code")
+    @set:PropertyName("billing_plan_code")
+    var billingPlanCode: String? = null,
+    @get:PropertyName("billing_plan_label")
+    @set:PropertyName("billing_plan_label")
+    var billingPlanLabel: String? = null,
+    @get:PropertyName("billing_cycle")
+    @set:PropertyName("billing_cycle")
+    var billingCycle: String? = null,
+    @get:PropertyName("billing_base_fee_cents")
+    @set:PropertyName("billing_base_fee_cents")
+    var billingBaseFeeCents: Long? = null,
     @get:PropertyName("monthly_fee_cents")
     @set:PropertyName("monthly_fee_cents")
     var monthlyFeeCents: Long? = null,
@@ -74,6 +86,33 @@ data class Location(
     @get:PropertyName("billing_expires_at")
     @set:PropertyName("billing_expires_at")
     var billingExpiresAt: Date? = null,
+    @get:PropertyName("billing_exception_note")
+    @set:PropertyName("billing_exception_note")
+    var billingExceptionNote: String? = null,
+    @get:PropertyName("venue_account_id")
+    @set:PropertyName("venue_account_id")
+    var venueAccountId: String? = null,
+    @get:PropertyName("venue_account_status")
+    @set:PropertyName("venue_account_status")
+    var venueAccountStatus: String? = null,
+    @get:PropertyName("venue_account_charge_scope")
+    @set:PropertyName("venue_account_charge_scope")
+    var venueAccountChargeScope: String? = null,
+    @get:PropertyName("venue_account_plan_code")
+    @set:PropertyName("venue_account_plan_code")
+    var venueAccountPlanCode: String? = null,
+    @get:PropertyName("venue_account_plan_label")
+    @set:PropertyName("venue_account_plan_label")
+    var venueAccountPlanLabel: String? = null,
+    @get:PropertyName("venue_account_monthly_total_cents")
+    @set:PropertyName("venue_account_monthly_total_cents")
+    var venueAccountMonthlyTotalCents: Long? = null,
+    @get:PropertyName("venue_account_linked_locations_count")
+    @set:PropertyName("venue_account_linked_locations_count")
+    var venueAccountLinkedLocationsCount: Int = 0,
+    @get:PropertyName("venue_account_active_fields_count")
+    @set:PropertyName("venue_account_active_fields_count")
+    var venueAccountActiveFieldsCount: Int = 0,
     @get:PropertyName("published_at")
     @set:PropertyName("published_at")
     var publishedAt: Date? = null,
@@ -128,12 +167,51 @@ data class Location(
     @get:PropertyName("field_count")
     @set:PropertyName("field_count")
     var fieldCount: Int = 0,
+    @get:PropertyName("active_field_count")
+    @set:PropertyName("active_field_count")
+    var activeFieldCount: Int = 0,
+    @get:PropertyName("active_field_types")
+    @set:PropertyName("active_field_types")
+    var activeFieldTypes: List<String> = emptyList(),
+    @get:PropertyName("active_field_amenities")
+    @set:PropertyName("active_field_amenities")
+    var activeFieldAmenities: List<String> = emptyList(),
     @get:PropertyName("primary_field_type")
     @set:PropertyName("primary_field_type")
     var primaryFieldType: String? = null, // Tipo de campo mais comum
     @get:PropertyName("has_active_fields")
     @set:PropertyName("has_active_fields")
     var hasActiveFields: Boolean = false,
+    @get:PropertyName("min_hourly_price_cents")
+    @set:PropertyName("min_hourly_price_cents")
+    var minHourlyPriceCents: Long? = null,
+    @get:PropertyName("average_hourly_price_cents")
+    @set:PropertyName("average_hourly_price_cents")
+    var averageHourlyPriceCents: Long? = null,
+    @get:PropertyName("games_count")
+    @set:PropertyName("games_count")
+    var gamesCount: Int = 0,
+    @get:PropertyName("finished_games_count")
+    @set:PropertyName("finished_games_count")
+    var finishedGamesCount: Int = 0,
+    @get:PropertyName("upcoming_games_count")
+    @set:PropertyName("upcoming_games_count")
+    var upcomingGamesCount: Int = 0,
+    @get:PropertyName("games_this_week_count")
+    @set:PropertyName("games_this_week_count")
+    var gamesThisWeekCount: Int = 0,
+    @get:PropertyName("games_last_30_days_count")
+    @set:PropertyName("games_last_30_days_count")
+    var gamesLast30DaysCount: Int = 0,
+    @get:PropertyName("last_game_at")
+    @set:PropertyName("last_game_at")
+    var lastGameAt: Date? = null,
+    @get:PropertyName("last_activity_at")
+    @set:PropertyName("last_activity_at")
+    var lastActivityAt: Date? = null,
+    @get:PropertyName("location_stats_updated_at")
+    @set:PropertyName("location_stats_updated_at")
+    var locationStatsUpdatedAt: Date? = null,
 
     // Auditoria
     @ServerTimestamp

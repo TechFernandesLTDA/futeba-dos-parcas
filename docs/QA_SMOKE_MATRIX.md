@@ -109,6 +109,8 @@ Real SMS should be a controlled manual smoke or staging-only run. Do not consume
 | Route-to-route navigation | new page starts at top, top bar does not cover header content | Playwright |
 | Mobile top bar / bottom nav | no overlap, no horizontal overflow, touch targets at least 44px | Playwright screenshot/a11y assertions |
 | New admin/locations/owner screens | `/locations`, `/location/create`, `/owner/dashboard`, `/owner/onboarding`, `/admin/users`, `/admin/performance` render on desktop and mobile with no overflow, no offscreen content and 44px mobile actions | `web/e2e/visual-new-screens.spec.ts` |
+| Monetized venue discovery | public lists only show active, verified, published, commercially eligible venues with active fields; filters/rankings use denormalized field stats instead of full client scans | Vitest helpers + Playwright mobile/desktop smoke |
+| Venue admin/owner parity | admin CRM, venue detail/edit, owner dashboard and public discovery show the same publication, billing and venue-account status labels on desktop and mobile | Component tests + manual production smoke |
 | Forms on mobile | inputs visible with keyboard pressure, submit/loading states do not shift layout | Playwright manual-assisted |
 | Loading/error/empty/success | all screens touched by the change expose the four states | Component tests + visual smoke |
 | Release notes/changelog | latest version appears in app surface and fallback JSON | Vitest + production smoke |
@@ -143,6 +145,8 @@ Real SMS should be a controlled manual smoke or staging-only run. Do not consume
 | Onboarding phone | Activity is resolved from context, recoverable SMS errors surface | JVM/Compose test where possible |
 | Theme/layout | small screens scroll, no clipped primary controls | Instrumented/manual screenshot |
 | Games/lists | adaptive layouts do not crash on narrow/wide screens | JVM + macrobenchmark when touched |
+| Venue monetization parity | `Location` Android model, KMP `Location`, Android<->KMP mappers and Firestore deserializer preserve commercial, venue-account and aggregate fields | `:app:compileDebugKotlin` + shared compile/tests |
+| Create-game venue selection | unavailable monetized venues are not selectable; legacy verified venues still follow documented fallback until backfill is complete | JVM/ViewModel test or manual device smoke |
 | Performance | startup/list navigation not materially worse after large UI changes | baseline profile / macrobenchmark |
 
 ## iOS Accessibility

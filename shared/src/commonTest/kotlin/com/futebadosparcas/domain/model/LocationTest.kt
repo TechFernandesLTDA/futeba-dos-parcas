@@ -113,6 +113,70 @@ class LocationTest {
         assertEquals(-49.2733, location.longitude)
     }
 
+    // ---- Commercial availability / venue monetization ----
+
+    @Test
+    fun location_isCommerciallyAvailable_publicadaAtivaEComCampo_retornaTrue() {
+        val location = makeLocation(isVerified = true).copy(
+            isActive = true,
+            publicationStatus = "PUBLISHED",
+            subscriptionStatus = "ACTIVE",
+            hasActiveFields = true
+        )
+
+        assertTrue(location.isCommerciallyAvailable())
+    }
+
+    @Test
+    fun location_isCommerciallyAvailable_publicacaoNaoAprovada_retornaFalse() {
+        val location = makeLocation(isVerified = true).copy(
+            publicationStatus = "PENDING_REVIEW",
+            subscriptionStatus = "ACTIVE",
+            hasActiveFields = true
+        )
+
+        assertFalse(location.isCommerciallyAvailable())
+    }
+
+    @Test
+    fun location_preservaContratoComercialEAgregadosDeQuadra() {
+        val location = makeLocation(isVerified = true).copy(
+            publicationStatus = "PUBLISHED",
+            commercialStatus = "ACTIVE",
+            subscriptionStatus = "TRIAL",
+            billingPlanCode = "PRO",
+            billingPlanLabel = "Pro",
+            billingCycle = "MONTHLY",
+            billingBaseFeeCents = 14990,
+            monthlyFeeCents = 12990,
+            billingDueDay = 10,
+            venueAccountId = "owner-1",
+            venueAccountStatus = "ACTIVE",
+            venueAccountChargeScope = "FIELD_COUNT",
+            venueAccountMonthlyTotalCents = 25980,
+            venueAccountLinkedLocationsCount = 2,
+            venueAccountActiveFieldsCount = 4,
+            activeFieldCount = 2,
+            activeFieldTypes = listOf("FUTSAL", "SOCIETY"),
+            activeFieldAmenities = listOf("parking", "bbq"),
+            primaryFieldType = "FUTSAL",
+            hasActiveFields = true,
+            minHourlyPriceCents = 8000,
+            averageHourlyPriceCents = 9500,
+            gamesCount = 12,
+            gamesLast30DaysCount = 3
+        )
+
+        assertEquals("PRO", location.billingPlanCode)
+        assertEquals(12990, location.monthlyFeeCents)
+        assertEquals("FIELD_COUNT", location.venueAccountChargeScope)
+        assertEquals(2, location.activeFieldCount)
+        assertEquals(listOf("FUTSAL", "SOCIETY"), location.activeFieldTypes)
+        assertEquals(8000, location.minHourlyPriceCents)
+        assertEquals(12, location.gamesCount)
+        assertTrue(location.isCommerciallyAvailable())
+    }
+
     // ---- LocationReview ----
 
     @Test

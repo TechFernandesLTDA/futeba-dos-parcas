@@ -173,9 +173,48 @@ Each playable field should be stored under its parent venue at `locations/{locat
 The parent location stores denormalized summary fields for discovery and admin operations:
 
 - `field_count`
+- `active_field_count`
+- `active_field_types`
+- `active_field_amenities`
 - `primary_field_type`
 - `has_active_fields`
+- `min_hourly_price_cents`
+- `average_hourly_price_cents`
+- `games_count`, `finished_games_count`, `upcoming_games_count`
+- `games_this_week_count`, `games_last_30_days_count`
+- `last_game_at`, `last_activity_at`, `location_stats_updated_at`
 - `photos` / `photo_url`
+
+## Cross-Platform Contract
+
+The web app reads Firestore directly and is the fastest-moving surface for venue
+monetization. Android and KMP must still deserialize the same public/commercial
+contract so mobile discovery, create-game location selection, and venue detail
+screens do not silently fall back to stale legacy assumptions.
+
+Minimum parity fields for `locations/{locationId}`:
+
+| Contract area | Firestore fields | Web | KMP/shared | Android legacy model |
+| --- | --- | --- | --- | --- |
+| Visibility | `is_active`, `is_verified`, `publication_status`, `subscription_status`, `has_active_fields` | `web/src/types/location.ts` | `shared/.../domain/model/Location.kt` | `app/.../data/model/Location.kt` |
+| Billing | `commercial_status`, `billing_plan_code`, `billing_plan_label`, `billing_cycle`, `billing_base_fee_cents`, `monthly_fee_cents`, `billing_due_day`, `billing_starts_at`, `billing_expires_at`, `billing_exception_note` | typed and displayed in admin/owner surfaces | deserialized for mobile fallback/status | mapped Android<->KMP |
+| Venue account | `venue_account_id`, `venue_account_status`, `venue_account_charge_scope`, `venue_account_plan_code`, `venue_account_plan_label`, `venue_account_monthly_total_cents`, `venue_account_linked_locations_count`, `venue_account_active_fields_count` | typed and used by CRM/dashboard | deserialized for parity | mapped Android<->KMP |
+| Discovery stats | `active_field_count`, `active_field_types`, `active_field_amenities`, `primary_field_type`, `min_hourly_price_cents`, `average_hourly_price_cents`, game counters and activity timestamps | filters, rankings, owner dashboard | deserialized for mobile list/detail | mapped Android<->KMP |
+
+Fallback rule: Android/KMP may hide owner/admin-only actions until dedicated UI
+exists, but it must not publish, select, rank, or show a venue as available
+unless `isCommerciallyAvailable()` is true. That method intentionally requires
+`PUBLISHED`, `TRIAL`/`ACTIVE`, verified/active status, and active fields.
+
+When adding or renaming any venue commercial field:
+
+- update `web/src/types/location.ts`;
+- update `shared/src/commonMain/kotlin/com/futebadosparcas/domain/model/Location.kt`;
+- update `app/src/main/java/com/futebadosparcas/data/model/Location.kt`;
+- update `app/src/main/java/com/futebadosparcas/util/ModelMappers.kt`;
+- update `shared/src/nativeAndAndroidMain/kotlin/.../LocationFirebaseOperations.kt`;
+- update Firestore Rules/indexes/tests when the field affects permissions or queries;
+- document the release impact in `release-notes/<platform>/<version>.md`.
 
 ## Legacy Backfill Before Broad Monetization
 

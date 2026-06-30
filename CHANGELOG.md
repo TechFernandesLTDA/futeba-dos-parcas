@@ -24,6 +24,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.32.2] - 2026-06-30
+
+#### Mudado
+- `Location` no Android e no KMP agora inclui campos comerciais, de conta de quadra e agregados de descoberta.
+- Mappers Android/KMP preservam os campos monetizados nas duas direções.
+- Desserialização Firestore do shared lê os campos comerciais e agregados usados pela web.
+- Docs e matriz de QA registram o contrato cross-platform de quadras monetizadas.
+
+_Issues: #3109, #3129 · PRs: #3166_
+
 ### [1.32.1] - 2026-06-28
 
 #### Corrigido
