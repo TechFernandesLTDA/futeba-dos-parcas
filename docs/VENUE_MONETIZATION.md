@@ -250,9 +250,30 @@ Each entry can include `amount_cents`, `period_key`, `payment_id`, `method`,
 billing cycle, base plan amount, negotiated amount, due day, exception note,
 actor, reason, effective date, and server `created_at`.
 
+## Firestore Index Matrix
+
+The commercial venue module keeps index definitions in `firestore.indexes.json`.
+When adding public discovery, admin filters, owner dashboards, or rankings, use
+the existing indexed shapes instead of introducing client-side full scans.
+
+Current venue/discovery index families:
+
+- Public venue discovery: `locations` by `is_active`, `publication_status`, `subscription_status`, `city`, then `rating` or `name`.
+- Public venue rankings by type: `locations` by `is_active`, `primary_field_type`, `city`, then `rating`.
+- Amenity filters: `locations.amenities` with `array-contains`, plus `is_active`, `city`, and `rating`.
+- Owner/admin management: `locations` by `owner_id`, `publication_status`, `subscription_status`, then `name`.
+- Billing/admin follow-up: `locations` by `subscription_status`, `billing_due_day`, then `name`, and by `venue_account_id`, then `name`.
+- Cheapest fields/ranking support: `fields` by `is_active`, `type`, and `hourly_price` for both root field documents and `locations/{locationId}/fields` collection-group queries.
+
+Deploy index-only changes with:
+
+```bash
+firebase deploy --only firestore:indexes --project futebadosparcas
+```
+
 ## Follow-Up Scope
 
 - Add the recurring monthly charge workflow tracked by #3132.
 - Add owner publication/change requests with admin approval tracked by #3115.
-- Firestore indexes must be added when server-side filters replace client filtering.
+- Keep the Firestore index matrix above in sync when server-side filters replace client filtering.
 - Android/KMP UI parity must be handled before a mobile release claiming full support.
