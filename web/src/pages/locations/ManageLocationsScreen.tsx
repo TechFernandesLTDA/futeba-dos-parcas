@@ -62,8 +62,12 @@ import { ScreenFab } from '../../components/layout';
 import {
   Location,
   FIELD_TYPE_CONFIG,
+  LOCATION_BILLING_CYCLE_LABELS,
+  LOCATION_BILLING_PLAN_LABELS,
   LOCATION_PUBLICATION_STATUS_LABELS,
   LOCATION_SUBSCRIPTION_STATUS_LABELS,
+  LocationBillingCycle,
+  LocationBillingPlanCode,
   LocationPublicationStatus,
   LocationSubscriptionStatus,
   canManageLocation,
@@ -118,8 +122,13 @@ interface SubscriptionLedgerEntry {
   reviewStatus?: string | null;
   previousSubscriptionStatus?: string | null;
   nextSubscriptionStatus?: string | null;
+  billingPlanCode?: string | null;
+  billingPlanLabel?: string | null;
+  billingCycle?: string | null;
+  billingBaseFeeCents?: number | null;
   monthlyFeeCents?: number | null;
   billingDueDay?: number | null;
+  billingExceptionNote?: string | null;
   reason?: string | null;
   actorUserId?: string | null;
   createdAt?: Date | null;
@@ -224,8 +233,14 @@ export const ManageLocationsScreen: React.FC = () => {
   const [billingSummaryLoading, setBillingSummaryLoading] = useState(false);
   const [billingSummaryError, setBillingSummaryError] = useState<string | null>(null);
   const [billingTarget, setBillingTarget] = useState<Location | null>(null);
+  const [billingPlanCode, setBillingPlanCode] = useState<LocationBillingPlanCode | ''>('');
+  const [billingPlanLabel, setBillingPlanLabel] = useState('');
+  const [billingCycle, setBillingCycle] = useState<LocationBillingCycle | ''>('');
+  const [billingBaseFee, setBillingBaseFee] = useState('');
   const [billingMonthlyFee, setBillingMonthlyFee] = useState('');
   const [billingDueDay, setBillingDueDay] = useState('');
+  const [billingStartsAt, setBillingStartsAt] = useState('');
+  const [billingExceptionNote, setBillingExceptionNote] = useState('');
   const [billingNotes, setBillingNotes] = useState('');
   const [teamTarget, setTeamTarget] = useState<Location | null>(null);
   const [teamOwnerId, setTeamOwnerId] = useState('');
@@ -361,8 +376,13 @@ export const ManageLocationsScreen: React.FC = () => {
             reviewStatus: typeof data.reviewStatus === 'string' ? data.reviewStatus : null,
             previousSubscriptionStatus: typeof data.previousSubscriptionStatus === 'string' ? data.previousSubscriptionStatus : null,
             nextSubscriptionStatus: typeof data.nextSubscriptionStatus === 'string' ? data.nextSubscriptionStatus : null,
+            billingPlanCode: typeof data.billingPlanCode === 'string' ? data.billingPlanCode : null,
+            billingPlanLabel: typeof data.billingPlanLabel === 'string' ? data.billingPlanLabel : null,
+            billingCycle: typeof data.billingCycle === 'string' ? data.billingCycle : null,
+            billingBaseFeeCents: typeof data.billingBaseFeeCents === 'number' ? data.billingBaseFeeCents : null,
             monthlyFeeCents: typeof data.monthlyFeeCents === 'number' ? data.monthlyFeeCents : null,
             billingDueDay: typeof data.billingDueDay === 'number' ? data.billingDueDay : null,
+            billingExceptionNote: typeof data.billingExceptionNote === 'string' ? data.billingExceptionNote : null,
             reason: typeof data.reason === 'string' ? data.reason : null,
             actorUserId: typeof data.actorUserId === 'string' ? data.actorUserId : null,
             createdAt: toDate(data.createdAt),
@@ -455,11 +475,16 @@ export const ManageLocationsScreen: React.FC = () => {
       'estado',
       'publicacao',
       'mensalidade_status',
+      'plano',
+      'ciclo',
+      'plano_base_centavos',
       'mensalidade_centavos',
       'vencimento_dia',
+      'inicio_cobranca',
       'previsto_centavos',
       'recebido_centavos',
       'saldo_centavos',
+      'excecao_comercial',
       'comprovantes_pendentes',
       'ultimo_pagamento',
     ];
@@ -471,11 +496,16 @@ export const ManageLocationsScreen: React.FC = () => {
       row.state,
       row.publicationStatus,
       row.subscriptionStatus,
+      row.billingPlanLabel || row.billingPlanCode,
+      row.billingCycle,
+      row.billingBaseFeeCents,
       row.monthlyFeeCents,
       row.billingDueDay,
+      row.billingStartsAtIso,
       row.expectedCents,
       row.receivedCents,
       row.openBalanceCents,
+      row.billingExceptionNote,
       row.pendingReceiptCount,
       row.lastPaymentAtIso,
     ].map(csvCell).join(','));
@@ -507,12 +537,23 @@ export const ManageLocationsScreen: React.FC = () => {
     }).format(amountCents / 100);
   };
 
-  const formatBillingDate = (iso?: string | null) => {
-    if (!iso) return null;
-    const parsed = new Date(iso);
-    if (Number.isNaN(parsed.getTime())) return null;
-    return parsed.toLocaleDateString('pt-BR');
-  };
+const formatBillingDate = (iso?: string | null) => {
+  if (!iso) return null;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString('pt-BR');
+};
+
+const getBillingPlanLabel = (location: Pick<Location, 'billingPlanCode' | 'billingPlanLabel'>) => {
+  if (location.billingPlanLabel?.trim()) return location.billingPlanLabel.trim();
+  if (location.billingPlanCode) return LOCATION_BILLING_PLAN_LABELS[location.billingPlanCode];
+  return null;
+};
+
+const getBillingCycleLabel = (cycle?: string | null) => {
+  if (!cycle) return null;
+  return LOCATION_BILLING_CYCLE_LABELS[cycle as LocationBillingCycle] || cycle;
+};
 
   const handlePublicationStatus = async (
     location: Location,
@@ -597,8 +638,14 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const openBillingDialog = (location: Location) => {
     setBillingTarget(location);
+    setBillingPlanCode(location.billingPlanCode || '');
+    setBillingPlanLabel(location.billingPlanLabel || '');
+    setBillingCycle(location.billingCycle || '');
+    setBillingBaseFee(location.billingBaseFeeCents ? String(location.billingBaseFeeCents / 100) : '');
     setBillingMonthlyFee(location.monthlyFeeCents ? String(location.monthlyFeeCents / 100) : '');
     setBillingDueDay(location.billingDueDay ? String(location.billingDueDay) : '');
+    setBillingStartsAt(toDate(location.billingStartsAt)?.toISOString().slice(0, 10) || '');
+    setBillingExceptionNote(location.billingExceptionNote || '');
     setBillingNotes(location.adminNotes || '');
   };
 
@@ -622,10 +669,17 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const handleSaveBilling = async () => {
     if (!billingTarget) return;
+    const billingBaseFeeCents = billingBaseFee.trim()
+      ? Math.round(Number(billingBaseFee.replace(',', '.')) * 100)
+      : null;
     const monthlyFeeCents = billingMonthlyFee.trim()
       ? Math.round(Number(billingMonthlyFee.replace(',', '.')) * 100)
       : null;
     const billingDue = billingDueDay.trim() ? Number(billingDueDay) : null;
+    if (billingBaseFeeCents !== null && (!Number.isFinite(billingBaseFeeCents) || billingBaseFeeCents < 0)) {
+      showError('Informe um valor base válido.');
+      return;
+    }
     if (monthlyFeeCents !== null && (!Number.isFinite(monthlyFeeCents) || monthlyFeeCents < 0)) {
       showError('Informe uma mensalidade válida.');
       return;
@@ -634,21 +688,31 @@ export const ManageLocationsScreen: React.FC = () => {
       showError('Dia de vencimento deve ficar entre 1 e 28.');
       return;
     }
+    if (billingStartsAt.trim() && Number.isNaN(new Date(`${billingStartsAt}T00:00:00.000Z`).getTime())) {
+      showError('Informe uma data de início válida.');
+      return;
+    }
     const actionKey = `${billingTarget.id}:billing`;
     setCommercialActionLoading(actionKey);
     try {
       await setLocationSubscription({
         locationId: billingTarget.id,
         subscriptionStatus: getLocationSubscriptionStatus(billingTarget),
+        billingPlanCode: billingPlanCode || null,
+        billingPlanLabel: billingPlanLabel.trim() || null,
+        billingCycle: billingCycle || null,
+        billingBaseFeeCents,
         monthlyFeeCents,
         billingDueDay: billingDue,
+        billingStartsAtIso: billingStartsAt.trim() ? `${billingStartsAt}T00:00:00.000Z` : null,
+        billingExceptionNote: billingExceptionNote.trim() || null,
         adminNotes: billingNotes.trim() || null,
       });
-      showSuccess('Mensalidade atualizada.');
+      showSuccess('Configuração comercial atualizada.');
       setBillingTarget(null);
     } catch (err) {
       logger.error('Erro ao salvar mensalidade:', err);
-      showError('Não foi possível salvar a mensalidade.');
+      showError('Não foi possível salvar a configuração comercial.');
     } finally {
       setCommercialActionLoading(null);
     }
@@ -1250,6 +1314,27 @@ export const ManageLocationsScreen: React.FC = () => {
                                   variant="outlined"
                                 />
                               )}
+                              {isAdmin && getBillingPlanLabel(location) && (
+                                <Chip
+                                  label={`Plano ${getBillingPlanLabel(location)}`}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              )}
+                              {isAdmin && location.billingCycle && (
+                                <Chip
+                                  label={`Ciclo ${getBillingCycleLabel(location.billingCycle)}`}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              )}
+                              {isAdmin && location.billingBaseFeeCents ? (
+                                <Chip
+                                  label={`Base ${formatCurrency(location.billingBaseFeeCents)}`}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              ) : null}
                               {isAdmin && billingRow && (
                                 <>
                                   <Chip
@@ -1311,6 +1396,13 @@ export const ManageLocationsScreen: React.FC = () => {
                                       variant="outlined"
                                     />
                                   )}
+                                  {billingRow.billingStartsAtIso && (
+                                    <Chip
+                                      label={`Início ${formatBillingDate(billingRow.billingStartsAtIso)}`}
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
                                 </>
                               )}
                             </Box>
@@ -1321,6 +1413,16 @@ export const ManageLocationsScreen: React.FC = () => {
                                   : `Pendências: ${commercialIssues.slice(0, 4).join(', ')}${commercialIssues.length > 4 ? '...' : ''}.`}
                               </Alert>
                             )}
+                            {(isAdmin &&
+                              (billingRow?.billingExceptionNote ||
+                                (typeof location.billingBaseFeeCents === 'number' &&
+                                  typeof location.monthlyFeeCents === 'number' &&
+                                  location.billingBaseFeeCents !== location.monthlyFeeCents))) ? (
+                              <Alert severity="info" sx={{ mt: 1 }}>
+                                {billingRow?.billingExceptionNote
+                                  || 'Cobrança negociada com exceção comercial em relação ao plano base.'}
+                              </Alert>
+                            ) : null}
                             {isAdmin && hasCommercialRequest && (
                               <Alert
                                 severity={requestPending ? 'info' : location.latestCommercialRequestStatus === 'REJECTED' ? 'error' : 'success'}
@@ -1631,12 +1733,56 @@ export const ManageLocationsScreen: React.FC = () => {
               {billingTarget?.name}
             </Typography>
             <TextField
+              select
+              label="Plano base"
+              value={billingPlanCode}
+              onChange={(e) => setBillingPlanCode(e.target.value as LocationBillingPlanCode | '')}
+              fullWidth
+              helperText="Define o plano padrão da quadra antes de negociações."
+            >
+              <MenuItem value="">Não definido</MenuItem>
+              {Object.entries(LOCATION_BILLING_PLAN_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>{label}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Ciclo"
+              value={billingCycle}
+              onChange={(e) => setBillingCycle(e.target.value as LocationBillingCycle | '')}
+              fullWidth
+              helperText="Usado para deixar claro como a cobrança foi combinada."
+            >
+              <MenuItem value="">Não definido</MenuItem>
+              {Object.entries(LOCATION_BILLING_CYCLE_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>{label}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Nome comercial do plano"
+              value={billingPlanLabel}
+              onChange={(e) => setBillingPlanLabel(e.target.value)}
+              fullWidth
+              helperText="Ex.: Fundador 2026, Parceiro Premium, Plano customizado."
+              inputProps={{ maxLength: 120 }}
+            />
+            <TextField
+              label="Valor base do plano (R$)"
+              value={billingBaseFee}
+              onChange={(e) => setBillingBaseFee(e.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}
+              fullWidth
+              inputMode="decimal"
+              placeholder="Ex.: 249.90"
+              helperText="Preço cheio antes de descontos ou acordos específicos."
+            />
+            <TextField
               label="Mensalidade do dono da quadra (R$)"
               value={billingMonthlyFee}
               onChange={(e) => setBillingMonthlyFee(e.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}
               fullWidth
               inputMode="decimal"
               placeholder="Ex.: 199.90"
+              helperText="Valor efetivamente cobrado nesta quadra."
             />
             <TextField
               label="Dia de vencimento"
@@ -1644,6 +1790,25 @@ export const ManageLocationsScreen: React.FC = () => {
               onChange={(e) => setBillingDueDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
               fullWidth
               helperText="Use 1 a 28 para evitar meses sem o dia selecionado."
+            />
+            <TextField
+              label="Início da cobrança"
+              type="date"
+              value={billingStartsAt}
+              onChange={(e) => setBillingStartsAt(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText="A data de início ajuda no acompanhamento comercial e financeiro."
+            />
+            <TextField
+              label="Exceção comercial"
+              value={billingExceptionNote}
+              onChange={(e) => setBillingExceptionNote(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              helperText="Resumo do acordo diferente do plano base. O dono vê apenas que existe uma condição personalizada."
+              inputProps={{ maxLength: 1000 }}
             />
             <TextField
               label="Notas internas"
@@ -1861,9 +2026,19 @@ export const ManageLocationsScreen: React.FC = () => {
                             {entry.method ? `${entry.method} · ` : ''}
                             {entry.effectiveAt ? entry.effectiveAt.toLocaleDateString('pt-BR') : 'sem data efetiva'}
                           </Typography>
-                          {(entry.previousSubscriptionStatus || entry.nextSubscriptionStatus || entry.monthlyFeeCents || entry.billingDueDay) && (
+                          {(entry.previousSubscriptionStatus ||
+                            entry.nextSubscriptionStatus ||
+                            entry.billingPlanCode ||
+                            entry.billingPlanLabel ||
+                            entry.billingCycle ||
+                            entry.billingBaseFeeCents ||
+                            entry.monthlyFeeCents ||
+                            entry.billingDueDay) && (
                             <Typography variant="caption" color="text.secondary">
                               {entry.previousSubscriptionStatus || 'sem status'} → {entry.nextSubscriptionStatus || 'sem status'}
+                              {entry.billingPlanLabel || entry.billingPlanCode ? ` · plano ${entry.billingPlanLabel || entry.billingPlanCode}` : ''}
+                              {entry.billingCycle ? ` · ciclo ${getBillingCycleLabel(entry.billingCycle)}` : ''}
+                              {entry.billingBaseFeeCents ? ` · base ${formatCurrency(entry.billingBaseFeeCents)}` : ''}
                               {entry.monthlyFeeCents ? ` · plano ${formatMonthlyFee(entry.monthlyFeeCents)}` : ''}
                               {entry.billingDueDay ? ` · vence dia ${entry.billingDueDay}` : ''}
                             </Typography>

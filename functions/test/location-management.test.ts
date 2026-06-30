@@ -1174,10 +1174,15 @@ describe("location commercial admin callables", () => {
       data: {
         locationId: "location-1",
         subscriptionStatus: "ACTIVE",
+        billingPlanCode: "BASIC",
+        billingPlanLabel: "Fundador 2026",
+        billingCycle: "MONTHLY",
+        billingBaseFeeCents: 14990,
         monthlyFeeCents: 12990,
         billingDueDay: 10,
         billingStartsAtIso: "2026-07-01T00:00:00.000Z",
         billingExpiresAtIso: "2026-07-31T23:59:59.000Z",
+        billingExceptionNote: "Desconto de lançamento",
         adminNotes: "Plano fundador",
       },
     })).resolves.toEqual({
@@ -1190,8 +1195,13 @@ describe("location commercial admin callables", () => {
     expect(location).toMatchObject({
       subscription_status: "ACTIVE",
       commercial_status: "ACTIVE",
+      billing_plan_code: "BASIC",
+      billing_plan_label: "Fundador 2026",
+      billing_cycle: "MONTHLY",
+      billing_base_fee_cents: 14990,
       monthly_fee_cents: 12990,
       billing_due_day: 10,
+      billing_exception_note: "Desconto de lançamento",
       admin_notes: "Plano fundador",
       updated_by: "admin-1",
     });
@@ -1206,8 +1216,13 @@ describe("location commercial admin callables", () => {
       previous_commercial_status: "TRIAL",
       next_subscription_status: "ACTIVE",
       next_commercial_status: "ACTIVE",
+      billing_plan_code: "BASIC",
+      billing_plan_label: "Fundador 2026",
+      billing_cycle: "MONTHLY",
+      billing_base_fee_cents: 14990,
       monthly_fee_cents: 12990,
       billing_due_day: 10,
+      billing_exception_note: "Desconto de lançamento",
       reason: "Plano fundador",
     });
   });
@@ -1250,10 +1265,15 @@ describe("location commercial admin callables", () => {
       ...firestoreStore.get("locations/location-1"),
       subscription_status: "ACTIVE",
       commercial_status: "ACTIVE",
+      billing_plan_code: "PRO",
+      billing_plan_label: "Plano Pro",
+      billing_cycle: "MONTHLY",
+      billing_base_fee_cents: 14990,
       monthly_fee_cents: 12990,
       billing_due_day: 10,
       billing_starts_at: startsAt,
       billing_expires_at: expiresAt,
+      billing_exception_note: "Cliente legacy",
       admin_notes: "Plano fundador",
     });
 
@@ -1268,10 +1288,15 @@ describe("location commercial admin callables", () => {
     expect(firestoreStore.get("locations/location-1")).toMatchObject({
       subscription_status: "SUSPENDED",
       commercial_status: "SUSPENDED",
+      billing_plan_code: "PRO",
+      billing_plan_label: "Plano Pro",
+      billing_cycle: "MONTHLY",
+      billing_base_fee_cents: 14990,
       monthly_fee_cents: 12990,
       billing_due_day: 10,
       billing_starts_at: startsAt,
       billing_expires_at: expiresAt,
+      billing_exception_note: "Cliente legacy",
       admin_notes: "Plano fundador",
     });
     const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
@@ -1279,8 +1304,13 @@ describe("location commercial admin callables", () => {
       type: "SUBSCRIPTION_STATUS_CHANGED",
       previous_subscription_status: "ACTIVE",
       next_subscription_status: "SUSPENDED",
+      billing_plan_code: "PRO",
+      billing_plan_label: "Plano Pro",
+      billing_cycle: "MONTHLY",
+      billing_base_fee_cents: 14990,
       monthly_fee_cents: 12990,
       billing_due_day: 10,
+      billing_exception_note: "Cliente legacy",
       reason: null,
     });
   });
@@ -1325,6 +1355,33 @@ describe("location commercial admin callables", () => {
       data: {
         locationId: "location-1",
         subscriptionStatus: "ACTIVE",
+        billingPlanCode: "VIP",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        subscriptionStatus: "ACTIVE",
+        billingCycle: "WEEKLY",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        subscriptionStatus: "ACTIVE",
+        billingBaseFeeCents: -1,
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        subscriptionStatus: "ACTIVE",
         monthlyFeeCents: -1,
       },
     })).rejects.toMatchObject({code: "invalid-argument"});
@@ -1353,6 +1410,16 @@ describe("location commercial admin callables", () => {
         locationId: "location-1",
         subscriptionStatus: "ACTIVE",
         billingExpiresAtIso: "not-a-date",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        subscriptionStatus: "ACTIVE",
+        billingStartsAtIso: "2026-08-01T00:00:00.000Z",
+        billingExpiresAtIso: "2026-07-01T00:00:00.000Z",
       },
     })).rejects.toMatchObject({code: "invalid-argument"});
   });
