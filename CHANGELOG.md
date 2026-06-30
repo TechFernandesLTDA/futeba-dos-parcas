@@ -680,6 +680,14 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.2.21] - 2026-06-30
+
+#### Corrigido
+- `upsertVenueAccount` passa a validar `billingDueDay` com limite máximo de 31.
+- Adiciona cobertura de regressão para preservar dados comerciais existentes e validar campos de cobrança antes da persistência.
+
+_Issues: #3122_
+
 ### [1.2.20] - 2026-06-30
 
 #### Mudado

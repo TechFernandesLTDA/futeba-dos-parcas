@@ -146,6 +146,16 @@ function parseOptionalIsoDate(value: unknown, field: string): Date | null {
 }
 
 /**
+ * Normaliza dia de vencimento comercial.
+ * @param {unknown} value Valor bruto.
+ * @return {number | null} Dia de 1 a 31 ou null.
+ */
+function billingDueDayOrNull(value: unknown): number | null {
+  const day = positiveIntegerOrNull(value);
+  return day !== null && day >= 1 && day <= 31 ? day : null;
+}
+
+/**
  * Monta configuracao comercial a partir do estado atual + input.
  * @param {Record<string, unknown> | null} current Estado atual.
  * @param {UpsertVenueAccountRequest} input Input admin.
@@ -219,7 +229,7 @@ function buildCommercialConfig(
     centsOrNull(monthlyFeeOverrideCandidate);
   const billingDueDay = billingDueDayCandidate === null ?
     null :
-    positiveIntegerOrNull(billingDueDayCandidate);
+    billingDueDayOrNull(billingDueDayCandidate);
 
   if (billingBaseFeeCandidate !== undefined &&
     billingBaseFeeCandidate !== null &&

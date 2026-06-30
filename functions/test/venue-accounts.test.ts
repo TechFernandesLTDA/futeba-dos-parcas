@@ -256,6 +256,75 @@ describe("venue account admin callables", () => {
     });
   });
 
+  it("atualiza conta existente preservando campos omitidos e datas comerciais", async () => {
+    firestoreStore.set("venue_accounts/owner-1", {
+      owner_uid: "owner-1",
+      status: "TRIAL",
+      billing_scope: "OWNER",
+      billing_plan_code: "BASIC",
+      billing_plan_label: "Fundador",
+      billing_cycle: "MONTHLY",
+      billing_base_fee_cents: 12000,
+      default_location_fee_cents: 9000,
+      price_per_active_field_cents: 4000,
+      monthly_fee_override_cents: 18000,
+      billing_due_day: 15,
+      billing_contact_name: "Financeiro Antigo",
+      billing_contact_email: "old@example.com",
+      billing_contact_phone: "+5511999999999",
+      billing_contact_document: "12345678900",
+      billing_starts_at: new Date("2026-07-01T00:00:00.000Z"),
+      billing_expires_at: new Date("2026-12-31T00:00:00.000Z"),
+      notes: "Observacao antiga",
+      admin_notes: "Nota interna antiga",
+      linked_location_ids: ["location-1", "location-2"],
+    });
+
+    const result = await upsertVenueAccount({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        ownerUid: "owner-1",
+        status: "ACTIVE",
+        billingScope: "MANUAL_OVERRIDE",
+        billingStartsAtIso: "2026-08-01T00:00:00.000Z",
+        billingExpiresAtIso: "2026-12-01T00:00:00.000Z",
+        billingContactName: " Financeiro Novo ",
+        billingContactPhone: " +5511888888888 ",
+        billingContactDocument: " 11222333000144 ",
+        notes: " Plano migrado ",
+        adminNotes: " Revisado pelo admin ",
+      },
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      accountId: "owner-1",
+      billingScope: "MANUAL_OVERRIDE",
+      computedMonthlyFeeCents: 18000,
+      linkedLocationIds: ["location-1", "location-2"],
+    });
+    expect(firestoreStore.get("venue_accounts/owner-1")).toMatchObject({
+      billing_contact_name: "Financeiro Novo",
+      billing_contact_email: "old@example.com",
+      billing_contact_phone: "+5511888888888",
+      billing_contact_document: "11222333000144",
+      billing_plan_code: "BASIC",
+      billing_plan_label: "Fundador",
+      billing_cycle: "MONTHLY",
+      billing_base_fee_cents: 12000,
+      monthly_fee_override_cents: 18000,
+      notes: "Plano migrado",
+      admin_notes: "Revisado pelo admin",
+    });
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      venue_account_status: "ACTIVE",
+      venue_account_charge_scope: "MANUAL_OVERRIDE",
+      venue_account_plan_code: "BASIC",
+      venue_account_plan_label: "Fundador",
+      venue_account_monthly_total_cents: 18000,
+    });
+  });
+
   it("rejeita quadra de outro dono ou ja vinculada a outra conta", async () => {
     firestoreStore.set("locations/location-foreign", {
       owner_id: "owner-2",
@@ -271,6 +340,37 @@ describe("venue account admin callables", () => {
     })).rejects.toMatchObject({
       code: "failed-precondition",
     });
+  });
+
+  it("rejeita entrada comercial invalida antes de persistir", async () => {
+    await expect(upsertVenueAccount({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {ownerUid: "owner-1", billingContactEmail: "email-invalido"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(upsertVenueAccount({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {ownerUid: "owner-1", billingBaseFeeCents: -1},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(upsertVenueAccount({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {ownerUid: "owner-1", billingDueDay: 40},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(upsertVenueAccount({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        ownerUid: "owner-1",
+        billingStartsAtIso: "2026-12-31T00:00:00.000Z",
+        billingExpiresAtIso: "2026-01-01T00:00:00.000Z",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(upsertVenueAccount({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {ownerUid: "owner-1", linkedLocationIds: ["missing-location"]},
+    })).rejects.toMatchObject({code: "not-found"});
   });
 
   it("registra callables admin-only com rate limits dedicados", () => {
