@@ -293,19 +293,32 @@ describe("deleteLocationSubcollection", () => {
 describe("location commercial admin callables", () => {
   beforeEach(() => {
     resetFirestore();
-    firestoreStore.set("locations/location-1", {
-      name: "Arena Parcas",
-      owner_id: "owner-1",
-      managers: ["manager-existing"],
-      publication_status: "PENDING_REVIEW",
-      subscription_status: "TRIAL",
-      commercial_status: "TRIAL",
-      is_active: true,
-      is_verified: false,
-    });
-  });
+	    firestoreStore.set("locations/location-1", {
+	      name: "Arena Parcas",
+	      description: "Quadra completa para jogos dos parças.",
+	      owner_id: "owner-1",
+	      managers: ["manager-existing"],
+	      publication_status: "PENDING_REVIEW",
+	      subscription_status: "TRIAL",
+	      commercial_status: "TRIAL",
+	      is_active: true,
+	      is_verified: false,
+	      address: "Rua das Quadras, 100",
+	      city: "Sao Paulo",
+	      state: "SP",
+	      phone: "+5511999999999",
+	      photo_url: "https://example.com/arena.jpg",
+	      monthly_fee_cents: 19990,
+	      billing_due_day: 10,
+	    });
+	    firestoreStore.set("locations/location-1/fields/field-1", {
+	      name: "Campo 1",
+	      is_active: true,
+	      hourly_price: 12000,
+	    });
+	  });
 
-  it("publica uma quadra e registra auditoria comercial", async () => {
+	  it("publica uma quadra e registra auditoria comercial", async () => {
     await expect(setLocationPublicationStatus({
       auth: {uid: "admin-1"},
       data: {
@@ -327,9 +340,29 @@ describe("location commercial admin callables", () => {
       published_by: "admin-1",
       updated_by: "admin-1",
     });
-    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
-    expect(collectionSize("audit_logs")).toBe(1);
-  });
+	    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+	    expect(collectionSize("audit_logs")).toBe(1);
+	  });
+
+	  it("bloqueia publicacao direta quando a mensalidade comercial nao foi definida", async () => {
+	    firestoreStore.set("locations/location-1", {
+	      ...firestoreStore.get("locations/location-1"),
+	      monthly_fee_cents: null,
+	    });
+
+	    await expect(setLocationPublicationStatus({
+	      auth: {uid: "admin-1"},
+	      data: {
+	        locationId: "location-1",
+	        publicationStatus: "PUBLISHED",
+	      },
+	    })).rejects.toMatchObject({code: "failed-precondition"});
+
+	    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+	      publication_status: "PENDING_REVIEW",
+	      is_verified: false,
+	    });
+	  });
 
   it("deleta quadra com subcolecoes comerciais e registra auditoria", async () => {
     seedSubcollection("locations/location-1/reviews", 2);
@@ -340,10 +373,10 @@ describe("location commercial admin callables", () => {
     await expect(deleteLocation({
       auth: {uid: "admin-1", token: {role: "ADMIN"}},
       data: {locationId: "location-1"},
-    })).resolves.toEqual({
-      success: true,
-      deletedCount: 6,
-    });
+	    })).resolves.toEqual({
+	      success: true,
+	      deletedCount: 7,
+	    });
 
     expect(firestoreStore.has("locations/location-1")).toBe(false);
     expect(collectionSize("locations/location-1/reviews")).toBe(0);
@@ -352,12 +385,12 @@ describe("location commercial admin callables", () => {
     expect(collectionSize("locations/location-1/subscription_ledger")).toBe(0);
     const [, auditLog] = findFirstDoc("audit_logs");
     expect(auditLog).toMatchObject({
-      type: "LOCATION_DELETE",
-      target_location_id: "location-1",
-      actor_user_id: "admin-1",
-      location_name: "Arena Parcas",
-      deleted_docs_count: 6,
-    });
+	      type: "LOCATION_DELETE",
+	      target_location_id: "location-1",
+	      actor_user_id: "admin-1",
+	      location_name: "Arena Parcas",
+	      deleted_docs_count: 7,
+	    });
   });
 
   it("rejeita exclusao de quadra sem auth, locationId valido ou doc existente", async () => {

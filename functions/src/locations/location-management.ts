@@ -1537,6 +1537,24 @@ secureCallable<SetLocationPublicationStatusRequest>(
     };
 
     if (isPublished) {
+      const fields = await getLocationFields(locationId);
+      const publicationSnapshot = buildLocationCommercialRequestSnapshot(
+        {
+          ...locData,
+          publication_status: "PUBLISHED",
+          is_verified: true,
+        },
+        fields
+      );
+      if (publicationSnapshot.ready_for_publication_approval !== true) {
+        const issueCodes = Array.isArray(publicationSnapshot.commercial_issue_codes) ?
+          publicationSnapshot.commercial_issue_codes :
+          [];
+        throw new HttpsError(
+          "failed-precondition",
+          `Location is not ready for publication: ${issueCodes.join(", ")}`
+        );
+      }
       update.published_at = FieldValue.serverTimestamp();
       update.published_by = request.auth.uid;
     }

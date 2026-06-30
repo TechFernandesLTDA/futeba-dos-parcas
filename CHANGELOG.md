@@ -669,6 +669,16 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.2.19] - 2026-06-30
+
+#### Mudado
+- `setLocationPublicationStatus` calcula o snapshot comercial antes de publicar e bloqueia `PUBLISHED` quando `ready_for_publication_approval` não é verdadeiro.
+
+#### Corrigido
+- Fecha o gap em que uma quadra poderia ser publicada sem o evento comercial/financeiro mínimo definido.
+
+_Issues: #3121_
+
 ### [1.2.18] - 2026-06-30
 
 #### Adicionado
