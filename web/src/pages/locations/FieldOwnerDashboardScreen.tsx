@@ -48,7 +48,6 @@ import {
 } from '@mui/icons-material';
 import {
   collection,
-  collectionGroup,
   getDocs,
   limit,
   onSnapshot,
@@ -77,6 +76,10 @@ import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 import {
   Field,
+  LOCATION_BILLING_CYCLE_LABELS,
+  LOCATION_BILLING_PLAN_LABELS,
+  LocationBillingCycle,
+  LocationBillingPlanCode,
   LocationCommercialRequestStatus,
   LocationCommercialRequestType,
   LocationPublicationStatus,
@@ -119,6 +122,13 @@ interface RawLocationDoc {
   isActive?: boolean;
   publicationStatus?: LocationPublicationStatus;
   subscriptionStatus?: LocationSubscriptionStatus;
+  billingPlanCode?: LocationBillingPlanCode;
+  billingPlanLabel?: string | null;
+  billingCycle?: LocationBillingCycle;
+  billingBaseFeeCents?: number;
+  billingStartsAt?: unknown;
+  billingExpiresAt?: unknown;
+  billingExceptionNote?: string | null;
   latestCommercialRequestId?: string;
   latestCommercialRequestType?: LocationCommercialRequestType;
   latestCommercialRequestStatus?: LocationCommercialRequestStatus;
@@ -214,8 +224,13 @@ interface SubscriptionLedgerEntry {
   reviewStatus?: string | null;
   previousSubscriptionStatus?: string | null;
   nextSubscriptionStatus?: string | null;
+  billingPlanCode?: string | null;
+  billingPlanLabel?: string | null;
+  billingCycle?: string | null;
+  billingBaseFeeCents?: number | null;
   monthlyFeeCents?: number | null;
   billingDueDay?: number | null;
+  billingExceptionNote?: string | null;
   reason?: string | null;
   createdAt?: Date | null;
   effectiveAt?: Date | null;
@@ -281,6 +296,17 @@ const formatCurrency = (valueCents?: number | null, locale = 'pt-BR') => {
 
 const formatDate = (value?: Date | null, locale = 'pt-BR') =>
   value ? value.toLocaleDateString(locale) : null;
+
+const getBillingPlanLabel = (location: Pick<LocationData, 'billingPlanCode' | 'billingPlanLabel'>) => {
+  if (location.billingPlanLabel?.trim()) return location.billingPlanLabel.trim();
+  if (location.billingPlanCode) return LOCATION_BILLING_PLAN_LABELS[location.billingPlanCode];
+  return null;
+};
+
+const getBillingCycleLabel = (cycle?: string | null) => {
+  if (!cycle) return null;
+  return LOCATION_BILLING_CYCLE_LABELS[cycle as LocationBillingCycle] || cycle;
+};
 
 const getPaymentStatus = (payment: SubscriptionPaymentReview) =>
   payment.reviewStatus || payment.status || 'PENDING_REVIEW';
@@ -493,6 +519,13 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             isActive: data.isActive !== false,
             publicationStatus: data.publicationStatus,
             subscriptionStatus: data.subscriptionStatus,
+            billingPlanCode: data.billingPlanCode,
+            billingPlanLabel: data.billingPlanLabel || undefined,
+            billingCycle: data.billingCycle,
+            billingBaseFeeCents: data.billingBaseFeeCents,
+            billingStartsAt: toDate(data.billingStartsAt),
+            billingExpiresAt: toDate(data.billingExpiresAt),
+            billingExceptionNote: data.billingExceptionNote || undefined,
             latestCommercialRequestId: data.latestCommercialRequestId,
             latestCommercialRequestType: data.latestCommercialRequestType,
             latestCommercialRequestStatus: data.latestCommercialRequestStatus,
@@ -551,14 +584,12 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
     }
 
     let cancelled = false;
-    const locationIds = locations.map((location) => location.id);
     const loadFields = async () => {
       try {
-        const chunks = chunkArray(locationIds, 10);
         const chunkSnapshots = await Promise.all(
-          chunks.flatMap((ids) => [
-            getDocs(query(collectionGroup(db, 'fields'), where('location_id', 'in', ids), limit(500))),
-            getDocs(query(collection(db, 'fields'), where('location_id', 'in', ids), limit(500))),
+          locations.flatMap((location) => [
+            getDocs(query(collection(db, 'locations', location.id, 'fields'), limit(100))),
+            getDocs(query(collection(db, 'fields'), where('location_id', '==', location.id), limit(100))),
           ]),
         );
 
@@ -699,8 +730,13 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
             reviewStatus: typeof data.reviewStatus === 'string' ? data.reviewStatus : null,
             previousSubscriptionStatus: typeof data.previousSubscriptionStatus === 'string' ? data.previousSubscriptionStatus : null,
             nextSubscriptionStatus: typeof data.nextSubscriptionStatus === 'string' ? data.nextSubscriptionStatus : null,
+            billingPlanCode: typeof data.billingPlanCode === 'string' ? data.billingPlanCode : null,
+            billingPlanLabel: typeof data.billingPlanLabel === 'string' ? data.billingPlanLabel : null,
+            billingCycle: typeof data.billingCycle === 'string' ? data.billingCycle : null,
+            billingBaseFeeCents: typeof data.billingBaseFeeCents === 'number' ? data.billingBaseFeeCents : null,
             monthlyFeeCents: typeof data.monthlyFeeCents === 'number' ? data.monthlyFeeCents : null,
             billingDueDay: typeof data.billingDueDay === 'number' ? data.billingDueDay : null,
+            billingExceptionNote: typeof data.billingExceptionNote === 'string' ? data.billingExceptionNote : null,
             reason: typeof data.reason === 'string' ? data.reason : null,
             createdAt: toDate(data.createdAt),
             effectiveAt: toDate(data.effectiveAt),
@@ -1220,8 +1256,13 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                 const fields = fieldsByLocation[location.id] || [];
                 const averagePrice = formatCurrency(status.averageHourlyPriceCents, locale);
                 const minPrice = formatCurrency(status.minHourlyPriceCents, locale);
+                const billingPlanLabel = getBillingPlanLabel(location);
+                const billingCycleLabel = getBillingCycleLabel(location.billingCycle);
+                const baseFeeLabel = formatCurrency(location.billingBaseFeeCents, locale);
+                const negotiatedFeeLabel = formatCurrency(location.monthlyFeeCents, locale);
+                const billingStartLabel = formatDate(location.billingStartsAt, locale);
                 const paymentLabel = formatCurrency(location.currentBillingOpenBalanceCents, locale)
-                  || formatCurrency(location.monthlyFeeCents, locale)
+                  || negotiatedFeeLabel
                   || t('fieldOwner.notConfigured');
 
                 return (
@@ -1353,6 +1394,45 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                             </Typography>
                           </Alert>
                         ) : null}
+
+                        <Paper variant="outlined" sx={{ p: 1.75, borderRadius: 3 }}>
+                          <Stack spacing={1}>
+                            <Typography variant="subtitle2" fontWeight={800}>
+                              Plano e cobrança
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+                                gap: 1,
+                              }}
+                            >
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Plano:</strong> {billingPlanLabel || t('fieldOwner.notConfigured')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Ciclo:</strong> {billingCycleLabel || t('fieldOwner.notConfigured')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Valor cobrado:</strong> {negotiatedFeeLabel || t('fieldOwner.notConfigured')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Valor base:</strong> {baseFeeLabel || t('fieldOwner.notConfigured')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Vencimento:</strong> {location.billingDueDay ? `dia ${location.billingDueDay}` : t('fieldOwner.notConfigured')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Início da cobrança:</strong> {billingStartLabel || t('fieldOwner.notConfigured')}
+                              </Typography>
+                            </Box>
+                            {location.billingExceptionNote ? (
+                              <Alert severity="info" sx={{ mt: 0.5 }}>
+                                Condição comercial personalizada aplicada ao seu contrato.
+                              </Alert>
+                            ) : null}
+                          </Stack>
+                        </Paper>
 
                         {location.latestCommercialRequestStatus ? (
                           <Alert
@@ -1765,11 +1845,27 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                               entry.effectiveAt ? formatDate(entry.effectiveAt, locale) : null,
                             ].filter(Boolean).join(' · ')}
                           </Typography>
-                          {(entry.previousSubscriptionStatus || entry.nextSubscriptionStatus || entry.monthlyFeeCents || entry.billingDueDay) ? (
+                          {(entry.previousSubscriptionStatus ||
+                            entry.nextSubscriptionStatus ||
+                            entry.billingPlanCode ||
+                            entry.billingPlanLabel ||
+                            entry.billingCycle ||
+                            entry.billingBaseFeeCents ||
+                            entry.monthlyFeeCents ||
+                            entry.billingDueDay) ? (
                             <Typography variant="caption" color="text.secondary">
                               {[
                                 entry.previousSubscriptionStatus || null,
                                 entry.nextSubscriptionStatus ? `→ ${entry.nextSubscriptionStatus}` : null,
+                                entry.billingPlanLabel || entry.billingPlanCode
+                                  ? `plano ${entry.billingPlanLabel || entry.billingPlanCode}`
+                                  : null,
+                                entry.billingCycle
+                                  ? `ciclo ${getBillingCycleLabel(entry.billingCycle)}`
+                                  : null,
+                                entry.billingBaseFeeCents
+                                  ? `base ${formatCurrency(entry.billingBaseFeeCents, locale)}`
+                                  : null,
                                 entry.monthlyFeeCents
                                   ? t('fieldOwner.planAmountLabel', { value: formatCurrency(entry.monthlyFeeCents, locale) })
                                   : null,

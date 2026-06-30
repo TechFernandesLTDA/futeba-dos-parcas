@@ -29,6 +29,22 @@ const SUBSCRIPTION_STATUSES = [
   "CANCELLED",
 ] as const;
 
+const BILLING_PLAN_CODES = [
+  "TRIAL",
+  "BASIC",
+  "PRO",
+  "ENTERPRISE",
+  "CUSTOM",
+] as const;
+
+const BILLING_CYCLES = [
+  "MONTHLY",
+  "QUARTERLY",
+  "SEMIANNUAL",
+  "ANNUAL",
+  "CUSTOM",
+] as const;
+
 const COMMERCIAL_REQUEST_TYPES = [
   "PUBLICATION",
   "COMMERCIAL_UPDATE",
@@ -36,6 +52,8 @@ const COMMERCIAL_REQUEST_TYPES = [
 
 type PublicationStatus = (typeof PUBLICATION_STATUSES)[number];
 type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+type BillingPlanCode = (typeof BILLING_PLAN_CODES)[number];
+type BillingCycle = (typeof BILLING_CYCLES)[number];
 type CommercialRequestType = (typeof COMMERCIAL_REQUEST_TYPES)[number];
 type CommercialRequestStatus =
   "PENDING_REVIEW" |
@@ -52,10 +70,15 @@ interface SetLocationPublicationStatusRequest {
 interface SetLocationSubscriptionRequest {
   locationId: string;
   subscriptionStatus: SubscriptionStatus;
+  billingPlanCode?: BillingPlanCode | null;
+  billingPlanLabel?: string | null;
+  billingCycle?: BillingCycle | null;
+  billingBaseFeeCents?: number | null;
   monthlyFeeCents?: number | null;
   billingDueDay?: number | null;
   billingStartsAtIso?: string | null;
   billingExpiresAtIso?: string | null;
+  billingExceptionNote?: string | null;
   adminNotes?: string | null;
 }
 
@@ -112,8 +135,13 @@ interface LocationSubscriptionLedgerEntry {
   next_subscription_status?: string | null;
   previous_commercial_status?: string | null;
   next_commercial_status?: string | null;
+  billing_plan_code?: string | null;
+  billing_plan_label?: string | null;
+  billing_cycle?: string | null;
+  billing_base_fee_cents?: number | null;
   monthly_fee_cents?: number | null;
   billing_due_day?: number | null;
+  billing_exception_note?: string | null;
   reason?: string | null;
   effective_at?: Date | FirebaseFirestore.FieldValue | null;
 }
@@ -1328,16 +1356,34 @@ secureCallable<GetAdminLocationBillingSummaryRequest>(
             state: typeof locData.state === "string" ? locData.state : null,
             publicationStatus,
             subscriptionStatus,
+            billingPlanCode: typeof locData.billing_plan_code === "string" ?
+              locData.billing_plan_code :
+              null,
+            billingPlanLabel: typeof locData.billing_plan_label === "string" ?
+              locData.billing_plan_label :
+              null,
+            billingCycle: typeof locData.billing_cycle === "string" ?
+              locData.billing_cycle :
+              null,
+            billingBaseFeeCents:
+              Number.isInteger(locData.billing_base_fee_cents) &&
+              Number(locData.billing_base_fee_cents) >= 0 ?
+                Number(locData.billing_base_fee_cents) :
+                null,
             monthlyFeeCents,
             billingDueDay: Number.isInteger(locData.billing_due_day) ?
               Number(locData.billing_due_day) :
               null,
+            billingStartsAtIso: toIsoString(locData.billing_starts_at),
             expectedCents,
             receivedCents: paymentTotals.receivedCents,
             openBalanceCents: Math.max(
               monthlyFeeCents - paymentTotals.receivedCents,
               0
             ),
+            billingExceptionNote: typeof locData.billing_exception_note === "string" ?
+              locData.billing_exception_note :
+              null,
             currentBillingCycleStatus:
               typeof locData.current_billing_cycle_status === "string" ?
                 locData.current_billing_cycle_status :
@@ -1777,12 +1823,47 @@ secureCallable<SetLocationSubscriptionRequest>(
       SUBSCRIPTION_STATUSES,
       "subscriptionStatus"
     );
+    const hasBillingPlanCode = request.data.billingPlanCode !== undefined;
+    const hasBillingPlanLabel = request.data.billingPlanLabel !== undefined;
+    const hasBillingCycle = request.data.billingCycle !== undefined;
+    const hasBillingBaseFee = request.data.billingBaseFeeCents !== undefined;
     const hasMonthlyFee = request.data.monthlyFeeCents !== undefined;
     const hasBillingDueDay = request.data.billingDueDay !== undefined;
     const hasBillingStartsAt = request.data.billingStartsAtIso !== undefined;
     const hasBillingExpiresAt = request.data.billingExpiresAtIso !== undefined;
+    const hasBillingExceptionNote = request.data.billingExceptionNote !== undefined;
     const hasAdminNotes = request.data.adminNotes !== undefined;
     const {locRef, locData} = await getExistingLocation(locationId);
+    const billingPlanCode = hasBillingPlanCode ?
+      (request.data.billingPlanCode === null ?
+        null :
+        requireEnum(
+          request.data.billingPlanCode,
+          BILLING_PLAN_CODES,
+          "billingPlanCode"
+        )) :
+      (typeof locData.billing_plan_code === "string" ?
+        locData.billing_plan_code :
+        null);
+    const billingPlanLabel = hasBillingPlanLabel ?
+      optionalTrimmed(request.data.billingPlanLabel, 120) :
+      (typeof locData.billing_plan_label === "string" ?
+        locData.billing_plan_label :
+        null);
+    const billingCycle = hasBillingCycle ?
+      (request.data.billingCycle === null ?
+        null :
+        requireEnum(
+          request.data.billingCycle,
+          BILLING_CYCLES,
+          "billingCycle"
+        )) :
+      (typeof locData.billing_cycle === "string" ?
+        locData.billing_cycle :
+        null);
+    const billingBaseFeeCents = hasBillingBaseFee ?
+      request.data.billingBaseFeeCents ?? null :
+      locData.billing_base_fee_cents ?? null;
     const monthlyFeeCents = hasMonthlyFee ?
       request.data.monthlyFeeCents ?? null :
       locData.monthly_fee_cents ?? null;
@@ -1790,6 +1871,14 @@ secureCallable<SetLocationSubscriptionRequest>(
       request.data.billingDueDay ?? null :
       locData.billing_due_day ?? null;
 
+    if (billingBaseFeeCents !== null &&
+      (!Number.isInteger(billingBaseFeeCents) || billingBaseFeeCents < 0)
+    ) {
+      throw new HttpsError(
+        "invalid-argument",
+        "billingBaseFeeCents must be >= 0"
+      );
+    }
     if (monthlyFeeCents !== null &&
       (!Number.isInteger(monthlyFeeCents) || monthlyFeeCents < 0)
     ) {
@@ -1810,16 +1899,33 @@ secureCallable<SetLocationSubscriptionRequest>(
         "billingExpiresAtIso"
       ) :
       locData.billing_expires_at ?? null;
+    if (billingStartsAt && billingExpiresAt && billingStartsAt > billingExpiresAt) {
+      throw new HttpsError(
+        "invalid-argument",
+        "billingStartsAtIso must be <= billingExpiresAtIso"
+      );
+    }
+    const billingExceptionNote = hasBillingExceptionNote ?
+      optionalTrimmed(request.data.billingExceptionNote, 1000) :
+      (typeof locData.billing_exception_note === "string" ?
+        locData.billing_exception_note :
+        null);
     const adminNotes = hasAdminNotes ?
       optionalTrimmed(request.data.adminNotes, 2000) :
       null;
     const before = {
       subscription_status: locData.subscription_status ?? null,
       commercial_status: locData.commercial_status ?? null,
+      billing_plan_code: locData.billing_plan_code ?? null,
+      billing_plan_label: locData.billing_plan_label ?? null,
+      billing_cycle: locData.billing_cycle ?? null,
+      billing_base_fee_cents: locData.billing_base_fee_cents ?? null,
       monthly_fee_cents: locData.monthly_fee_cents ?? null,
       billing_due_day: locData.billing_due_day ?? null,
       billing_starts_at: locData.billing_starts_at ?? null,
       billing_expires_at: locData.billing_expires_at ?? null,
+      billing_exception_note: locData.billing_exception_note ?? null,
+      admin_notes: locData.admin_notes ?? null,
     };
     const update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
       subscription_status: subscriptionStatus,
@@ -1827,10 +1933,17 @@ secureCallable<SetLocationSubscriptionRequest>(
       updated_at: FieldValue.serverTimestamp(),
       updated_by: request.auth.uid,
     };
+    if (hasBillingPlanCode) update.billing_plan_code = billingPlanCode;
+    if (hasBillingPlanLabel) update.billing_plan_label = billingPlanLabel;
+    if (hasBillingCycle) update.billing_cycle = billingCycle;
+    if (hasBillingBaseFee) update.billing_base_fee_cents = billingBaseFeeCents;
     if (hasMonthlyFee) update.monthly_fee_cents = monthlyFeeCents;
     if (hasBillingDueDay) update.billing_due_day = billingDueDay;
     if (hasBillingStartsAt) update.billing_starts_at = billingStartsAt;
     if (hasBillingExpiresAt) update.billing_expires_at = billingExpiresAt;
+    if (hasBillingExceptionNote) {
+      update.billing_exception_note = billingExceptionNote;
+    }
     if (hasAdminNotes) update.admin_notes = adminNotes;
 
     const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
@@ -1842,8 +1955,13 @@ secureCallable<SetLocationSubscriptionRequest>(
         next_subscription_status: subscriptionStatus,
         previous_commercial_status: locData.commercial_status ?? null,
         next_commercial_status: subscriptionStatus,
+        billing_plan_code: billingPlanCode,
+        billing_plan_label: billingPlanLabel,
+        billing_cycle: billingCycle,
+        billing_base_fee_cents: billingBaseFeeCents,
         monthly_fee_cents: monthlyFeeCents,
         billing_due_day: billingDueDay,
+        billing_exception_note: billingExceptionNote,
         reason: adminNotes,
         effective_at: FieldValue.serverTimestamp(),
       }

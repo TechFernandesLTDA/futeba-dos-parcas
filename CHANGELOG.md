@@ -69,6 +69,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.43.26] - 2026-06-29
+
+#### Adicionado
+- Novos campos comerciais para plano, ciclo, valor base e exceção comercial no contrato web de `Location`.
+- Exportação administrativa de billing com colunas para plano, ciclo, valor base, início da cobrança e exceção comercial.
+
+#### Mudado
+- `ManageLocationsScreen` passa a salvar e renderizar a configuração comercial expandida por quadra.
+- `FieldOwnerDashboardScreen` passa a carregar campos por subcoleção da location e fallback legado, reduzindo erros de permissão em produção.
+
+_Issues: #3121, #3125_
+
 ### [1.43.25] - 2026-06-29
 
 #### Adicionado
@@ -611,6 +623,18 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.2.17] - 2026-06-29
+
+#### Adicionado
+- Validações de `billingPlanCode`, `billingCycle`, `billingBaseFeeCents` e coerência entre início e fim de cobrança em `setLocationSubscription`.
+- Persistência de `billing_plan_code`, `billing_plan_label`, `billing_cycle`, `billing_base_fee_cents` e `billing_exception_note` na location e no `subscription_ledger`.
+
+#### Mudado
+- `getAdminLocationBillingSummary` passa a incluir plano, ciclo, valor base, início da cobrança e exceção comercial.
+- Eventos e snapshots comerciais de assinatura ficam mais completos para auditoria de antes/depois.
+
+_Issues: #3121_
 
 ### [1.2.16] - 2026-06-29
 

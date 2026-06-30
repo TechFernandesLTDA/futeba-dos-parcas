@@ -196,8 +196,14 @@ describe('FieldOwnerDashboardScreen', () => {
           isActive: true,
           publicationStatus: 'PUBLISHED',
           subscriptionStatus: 'ACTIVE',
+          billingPlanCode: 'BASIC',
+          billingPlanLabel: 'Fundador 2026',
+          billingCycle: 'MONTHLY',
+          billingBaseFeeCents: 24990,
           monthlyFeeCents: 19990,
           billingDueDay: 10,
+          billingStartsAt: new Date('2026-07-01T00:00:00.000Z'),
+          billingExceptionNote: 'Condição especial',
           currentBillingCycleStatus: 'OVERDUE',
           currentBillingOpenBalanceCents: 19990,
           rating: 4.8,
@@ -269,6 +275,10 @@ describe('FieldOwnerDashboardScreen', () => {
       expect(screen.getByText(/Mensalidade em aberto/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Comprovantes e pagamentos' })).toBeInTheDocument();
       expect(screen.getByText('Checklist comercial')).toBeInTheDocument();
+      expect(screen.getByText('Plano e cobrança')).toBeInTheDocument();
+      expect(screen.getByText('Fundador 2026')).toBeInTheDocument();
+      expect(screen.getByText('Mensal')).toBeInTheDocument();
+      expect(screen.getByText('Condição comercial personalizada aplicada ao seu contrato.')).toBeInTheDocument();
     });
   });
 });

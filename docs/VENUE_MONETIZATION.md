@@ -13,10 +13,15 @@ Legacy venues that are already `is_active == true` and `is_verified == true` are
 - `publication_status`: `DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `SUSPENDED`, or `REJECTED`.
 - `commercial_status`: mirrors the commercial account state: `TRIAL`, `ACTIVE`, `OVERDUE`, `SUSPENDED`, or `CANCELLED`.
 - `subscription_status`: billing status used by UI filters and eligibility.
+- `billing_plan_code`: base plan tracked by the commercial team (`TRIAL`, `BASIC`, `PRO`, `ENTERPRISE`, `CUSTOM`).
+- `billing_plan_label`: human-friendly commercial label shown in admin and owner surfaces.
+- `billing_cycle`: recurrence cycle (`MONTHLY`, `QUARTERLY`, `SEMIANNUAL`, `ANNUAL`, `CUSTOM`).
+- `billing_base_fee_cents`: default plan price in cents before negotiation.
 - `monthly_fee_cents`: monthly fee charged to the venue owner, in cents.
 - `billing_due_day`: day of month for billing, 1-31.
 - `billing_starts_at`: when billing starts.
 - `billing_expires_at`: when current billing eligibility expires.
+- `billing_exception_note`: reason for negotiated exception or custom billing handling.
 - `published_at` / `published_by`: publication audit metadata.
 - `unpublished_reason`: reason for suspension/rejection/unpublication.
 - `owner_notes`: notes provided by the owner.
@@ -92,11 +97,11 @@ Current web P1 surfaces:
 
 - Admin venue list filters by publication status, billing status, field type, and commercial amenities.
 - Admin venue cards expose whether the venue is visible to regular users.
-- Admins can edit monthly fee, billing due day, and internal billing notes from the venue list.
+- Admins can edit base plan, cycle, base fee, negotiated fee, billing start, due day, public-safe exception status, and internal billing notes from the venue list.
 - Admins see expected monthly revenue and counts for eligible, overdue, suspended, and cancelled venues.
 - Admins and venue owners can inspect the subscription ledger with plan/status/payment/review events.
 - Public venue discovery filters by search, field type, amenities, and maximum hourly price from active field documents.
-- Field owner dashboard shows publication, billing status, monthly fee, due day, and visibility warnings.
+- Field owner dashboard shows publication, billing status, plan summary, negotiated monthly fee, due day, billing start, and visibility warnings without exposing internal admin notes.
 - Admin user management highlights field owners and summarizes their venue counts, published venues, and commercial pending items.
 - Venue registration/editing captures structured address, phone, WhatsApp, Instagram, website, commercial amenities, multiple venue photos, and coordinates.
 - Venue registration/editing manages individual fields at `locations/{locationId}/fields`, including type, hourly price, surface, dimensions, covered status, active status, and field photos.
@@ -184,8 +189,9 @@ Current event types:
 - `PAYMENT_RECEIPT_REJECTED`: admin rejected a receipt without changing the subscription.
 
 Each entry can include `amount_cents`, `period_key`, `payment_id`, `method`,
-`review_status`, previous/next subscription status, plan amount, due day, actor,
-reason, effective date, and server `created_at`.
+`review_status`, previous/next subscription status, base plan code/label,
+billing cycle, base plan amount, negotiated amount, due day, exception note,
+actor, reason, effective date, and server `created_at`.
 
 ## Follow-Up Scope
 

@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-29T23:52:16.554Z",
+  "generatedAt": "2026-06-30T01:14:13.743Z",
   "notes": [
+    {
+      "version": "1.43.26",
+      "buildNumber": null,
+      "releaseDate": "2026-06-29",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Admin e dono de quadra passam a enxergar cobrança e plano comercial com mais clareza e menos erros",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A gestão de quadras do admin agora permite configurar plano base, nome comercial, ciclo, valor base, valor negociado, início da cobrança e exceção comercial por quadra.",
+        "A listagem administrativa mostra plano, ciclo, valor base, início da cobrança e alerta de exceção comercial direto no card da quadra.",
+        "O portal do dono de quadra passou a exibir um resumo do contrato comercial com plano, ciclo, valor cobrado, valor base, vencimento e status seguro da condição negociada."
+      ],
+      "fixed": [
+        "O dashboard do dono de quadra deixa de falhar por permissão ao carregar campos vinculados às quadras no fluxo web.",
+        "O resumo comercial do dono deixa de depender de anotações internas do admin, evitando vazamento de informação administrativa."
+      ],
+      "issueRefs": [
+        3121,
+        3125
+      ]
+    },
     {
       "version": "1.43.25",
       "buildNumber": null,
