@@ -3,6 +3,9 @@ process.env.FUNCTIONS_EMULATOR = "true";
 const store = new Map<string, Record<string, unknown>>();
 const setCalls: Array<{path: string; data: Record<string, unknown>}> = [];
 const updateCalls: Array<{path: string; data: Record<string, unknown>}> = [];
+const mockRandomInt = jest.fn(() => 0);
+const mockCheckRateLimit = jest.fn().mockResolvedValue({allowed: true});
+const mockCheckRateLimitByIp = jest.fn().mockResolvedValue({allowed: true});
 
 function snap(path: string) {
   const data = store.get(path);
@@ -92,10 +95,11 @@ jest.mock("firebase-admin/firestore", () => ({
   },
 }));
 
-const firestoreHandlers: Record<string, (event: unknown) => Promise<void>> = {};
+const firestoreHandlers: Record<string, Array<(event: unknown) => Promise<void>>> = {};
 jest.mock("firebase-functions/v2/firestore", () => ({
   onDocumentCreated: jest.fn((config: {document: string}, handler: (event: unknown) => Promise<void>) => {
-    firestoreHandlers[config.document] = handler;
+    firestoreHandlers[config.document] = firestoreHandlers[config.document] || [];
+    firestoreHandlers[config.document].push(handler);
     return handler;
   }),
 }));
@@ -119,17 +123,25 @@ jest.mock("firebase-functions/v2/https", () => ({
 }));
 
 jest.mock("../../src/middleware/rate-limiter", () => ({
-  checkRateLimit: jest.fn().mockResolvedValue({allowed: true}),
-  checkRateLimitByIp: jest.fn().mockResolvedValue({allowed: true}),
+  checkRateLimit: mockCheckRateLimit,
+  checkRateLimitByIp: mockCheckRateLimitByIp,
 }));
 
 jest.mock("../../src/auth/anti-abuse", () => ({
   clientIp: jest.fn().mockReturnValue("127.0.0.1"),
 }));
 
+jest.mock("crypto", () => ({
+  ...jest.requireActual("crypto"),
+  randomInt: mockRandomInt,
+}));
+
 describe("auth/invite-code apadrinhamento", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRandomInt.mockReturnValue(0);
+    mockCheckRateLimit.mockResolvedValue({allowed: true});
+    mockCheckRateLimitByIp.mockResolvedValue({allowed: true});
     store.clear();
     setCalls.length = 0;
     updateCalls.length = 0;
@@ -139,6 +151,73 @@ describe("auth/invite-code apadrinhamento", () => {
     jest.isolateModules(() => {
       require("../../src/auth/invite-code");
     });
+  });
+
+  it("generateMyInviteCode sincroniza codigo existente do usuario", async () => {
+    store.set("users/member-1", {
+      invite_code: "OLD123",
+      name: "",
+      invite_count: 4,
+    });
+
+    const result = await callableHandlers.generateMyInviteCode({
+      auth: {uid: "member-1", token: {name: "Nome Token"}},
+      data: {},
+    }) as {inviteCode: string};
+
+    expect(result).toEqual({inviteCode: "OLD123"});
+    expect(store.get("invite_codes/OLD123")).toMatchObject({
+      user_id: "member-1",
+      inviter_name: "Nome Token",
+      active: true,
+    });
+  });
+
+  it("generateMyInviteCode cria codigo novo com owner atomico", async () => {
+    store.set("users/member-2", {
+      name: "Bruno Padrinho",
+      invite_count: 7,
+    });
+
+    const result = await callableHandlers.generateMyInviteCode({
+      auth: {uid: "member-2", token: {}},
+      data: {},
+    }) as {inviteCode: string};
+
+    expect(result).toEqual({inviteCode: "AAAAAA"});
+    expect(store.get("invite_codes/AAAAAA")).toMatchObject({
+      user_id: "member-2",
+      inviter_name: "Bruno Padrinho",
+      active: true,
+    });
+    expect(store.get("users/member-2")).toMatchObject({
+      invite_code: "AAAAAA",
+      invite_count: 7,
+    });
+  });
+
+  it("validateInviteCode bloqueia rate limit, codigo invalido e auto-convite", async () => {
+    mockCheckRateLimitByIp.mockResolvedValueOnce({allowed: false});
+    await expect(callableHandlers.validateInviteCode({
+      data: {inviteCode: "ABC123"},
+      rawRequest: {headers: {}, ip: "127.0.0.1"},
+    })).rejects.toMatchObject({code: "resource-exhausted"});
+
+    mockCheckRateLimitByIp.mockResolvedValue({allowed: true});
+    await expect(callableHandlers.validateInviteCode({
+      data: {inviteCode: "!"},
+      rawRequest: {headers: {}, ip: "127.0.0.1"},
+    })).resolves.toEqual({valid: false});
+
+    store.set("users/inviter-self", {
+      invite_code: "SELF123",
+      name: "Auto Convite",
+    });
+    await expect(callableHandlers.validateInviteCode({
+      auth: {uid: "inviter-self"},
+      data: {inviteCode: "SELF123"},
+      rawRequest: {headers: {}, ip: "127.0.0.1"},
+    })).resolves.toEqual({valid: false});
   });
 
   it("validateInviteCode valida codigo legado e sincroniza invite_codes/{code}", async () => {
@@ -179,7 +258,7 @@ describe("auth/invite-code apadrinhamento", () => {
       invited_by_code: "ABC123",
     });
 
-    await firestoreHandlers["users/{userId}"]({
+    await firestoreHandlers["users/{userId}"][1]({
       params: {userId: "new-user"},
       data: {data: () => store.get("users/new-user")},
     });
@@ -205,5 +284,59 @@ describe("auth/invite-code apadrinhamento", () => {
       xp_before: 90,
       xp_after: 140,
     });
+  });
+
+  it("onUserCreatedGenerateInviteCode gera codigo com owner para novo usuario", async () => {
+    store.set("users/member-3", {
+      name: "Carla Criadora",
+    });
+
+    await firestoreHandlers["users/{userId}"][0]({
+      params: {userId: "member-3"},
+      data: {data: () => store.get("users/member-3")},
+    });
+
+    expect(store.get("users/member-3")).toMatchObject({
+      invite_code: "AAAAAA",
+      invite_count: 0,
+    });
+    expect(store.get("invite_codes/AAAAAA")).toMatchObject({
+      user_id: "member-3",
+      inviter_name: "Carla Criadora",
+      active: true,
+    });
+  });
+
+  it("onUserCreatedProcessInvite ignora convite ausente, invalido e ja resgatado", async () => {
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "without-code"},
+      data: {data: () => ({email: "sem@test.com"})},
+    });
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "invalid-code"},
+      data: {data: () => ({invited_by_code: "BAD123"})},
+    });
+
+    store.set("users/inviter-2", {
+      invite_code: "USED123",
+      name: "Padrinho Usado",
+      invite_count: 1,
+      experience_points: 20,
+    });
+    store.set("app_invite_redemptions/already-user", {
+      invite_code: "USED123",
+    });
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "already-user"},
+      data: {data: () => ({invited_by_code: "USED123"})},
+    });
+
+    expect(store.get("users/inviter-2")).toMatchObject({
+      invite_count: 1,
+      experience_points: 20,
+    });
+    expect(store.has("xp_logs/app_invite_inviter-2_already-user")).toBe(false);
   });
 });
