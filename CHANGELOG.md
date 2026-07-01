@@ -79,6 +79,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.44.2] - 2026-07-01
+
+#### Corrigido
+- Atualiza `og:image` e metadados Twitter para usar `/logo.png`, o asset canônico do splash.
+- Declara tipo, dimensões e texto alternativo da imagem social.
+
 ### [1.44.1] - 2026-07-01
 
 #### Corrigido

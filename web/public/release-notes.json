@@ -1,7 +1,23 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-01T15:26:14.079Z",
+  "generatedAt": "2026-07-01T15:48:13.704Z",
   "notes": [
+    {
+      "version": "1.44.2",
+      "buildNumber": null,
+      "releaseDate": "2026-07-01",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O preview dos links compartilhados agora usa a bola oficial do Futeba.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Links de convite e outras páginas do Web passam a exibir a imagem bonita da bola usada na abertura do app."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.44.1",
       "buildNumber": null,
