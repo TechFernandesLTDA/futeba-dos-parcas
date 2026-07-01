@@ -119,19 +119,19 @@ export const md3TypeScale = {
     fontSize: '1rem',         // 16px
     lineHeight: '1.5rem',     // 24px
     letterSpacing: '0.009375rem', // 0.15px
-    fontWeight: 600,
+    fontWeight: 500,
   },
   titleSmall: {
     fontSize: '0.875rem',     // 14px
     lineHeight: '1.25rem',    // 20px
     letterSpacing: '0.00625rem',  // 0.1px
-    fontWeight: 700,
+    fontWeight: 500,
   },
   // body* — conteúdo principal (fixos para legibilidade)
   bodyLarge: {
     fontSize: '1rem',         // 16px
     lineHeight: '1.5rem',     // 24px
-    letterSpacing: '0.009375rem', // 0.15px
+    letterSpacing: '0.03125rem', // 0.5px
     fontWeight: 400,
   },
   bodyMedium: {
@@ -151,19 +151,19 @@ export const md3TypeScale = {
     fontSize: '0.875rem',     // 14px
     lineHeight: '1.25rem',    // 20px
     letterSpacing: '0.00625rem',  // 0.1px
-    fontWeight: 600,
+    fontWeight: 500,
   },
   labelMedium: {
     fontSize: '0.75rem',      // 12px
     lineHeight: '1rem',       // 16px
     letterSpacing: '0.03125rem',  // 0.5px
-    fontWeight: 600,
+    fontWeight: 500,
   },
   labelSmall: {
     fontSize: '0.6875rem',    // 11px
     lineHeight: '1rem',       // 16px
     letterSpacing: '0.03125rem',  // 0.5px
-    fontWeight: 600,
+    fontWeight: 500,
   },
 } as const;
 
