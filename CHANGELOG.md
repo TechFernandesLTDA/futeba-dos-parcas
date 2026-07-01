@@ -79,6 +79,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.44.0] - 2026-07-01
+
+#### Adicionado
+- Integra o cadastro Web com a callable `validateInviteCode` para validar códigos de apadrinhamento antes da criação do perfil.
+- Propaga `invited_by_code` na criação de `users/{uid}` para permitir validação por Firestore Rules.
+
+#### Segurança
+- Bloqueia criação automática de perfil sem convite no AuthContext.
+- Encerra sessão de novos usuários Google sem convite, mantendo login normal para usuários existentes.
+
 ### [1.43.38] - 2026-06-30
 
 #### Corrigido
@@ -740,6 +750,17 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.3.0] - 2026-07-01
+
+#### Adicionado
+- Adiciona a callable pública `validateInviteCode` com rate limit por IP.
+- Cria `app_invite_redemptions/{uid}` como trilha de auditoria do primeiro acesso por convite.
+- Registra `xp_logs/app_invite_<padrinho>_<convidado>` para o bônus de apadrinhamento.
+
+#### Segurança
+- Sincroniza `invite_codes/{code}` com o dono do código para validação nas Firestore Rules.
+- Bloqueia updates client-side em `invite_code`, `invite_count`, `invited_by`, `invited_by_code`, `invite_accepted_at` e `invite_source`.
 
 ### [1.2.23] - 2026-06-30
 

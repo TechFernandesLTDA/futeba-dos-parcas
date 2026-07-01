@@ -2318,6 +2318,7 @@ export {
   onUserCreatedGenerateInviteCode,
   onUserCreatedProcessInvite,
   generateMyInviteCode,
+  validateInviteCode,
 } from "./auth/invite-code";
 export {onUserInviteCountChanged} from "./badges/ambassador-badge";
 export {processWeeklyRanking} from "./growth/weekly-ranking";

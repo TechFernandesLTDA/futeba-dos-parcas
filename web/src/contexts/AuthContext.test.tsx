@@ -33,6 +33,8 @@ vi.mock('firebase/auth', () => ({
 const mockGetDoc = vi.fn();
 const mockGetDocs = vi.fn();
 const mockSetDoc = vi.fn();
+const mockUpdateDoc = vi.fn();
+const mockRunTransaction = vi.fn();
 const mockDoc = vi.fn();
 const mockCollection = vi.fn();
 const mockQuery = vi.fn();
@@ -53,6 +55,10 @@ vi.mock('firebase/firestore', () => ({
   getDocs: (...args: any[]) => mockGetDocs(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setDoc: (...args: any[]) => mockSetDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  updateDoc: (...args: any[]) => mockUpdateDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  runTransaction: (...args: any[]) => mockRunTransaction(...args),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
   limit: vi.fn((...args) => args[0]),
 }));
@@ -69,6 +75,7 @@ vi.mock('../services/firebase', () => ({
 // Mock de cloudFunctions para isolar o teste do Cloud Functions real
 vi.mock('../services/cloudFunctions', () => ({
   syncFieldOwnerClaim: vi.fn().mockResolvedValue({ data: { synced: false, role: '', success: true, message: '' } }),
+  validateInviteCode: vi.fn().mockResolvedValue({ data: { valid: true, inviteCode: 'ABC123', inviterName: 'Padrinho' } }),
 }));
 
 vi.mock('../utils/firestoreHelpers', () => ({
@@ -106,6 +113,13 @@ describe('AuthContext', () => {
     mockQuery.mockImplementation((...args) => ({ type: 'query', args }));
     mockWhere.mockImplementation((...args) => ({ type: 'where', args }));
     mockGetDocs.mockResolvedValue({ docs: [], empty: true });
+    mockRunTransaction.mockImplementation(async (_db, callback) => {
+      return callback({
+        get: mockGetDoc,
+        set: mockSetDoc,
+        update: mockUpdateDoc,
+      });
+    });
     // Padrão: onAuthStateChanged retorna unsubscribe e não dispara
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
@@ -249,13 +263,21 @@ describe('AuthContext', () => {
   });
 
   it('signUp cria conta e documento do usuário', async () => {
-    const mockResult = { user: { uid: 'new-uid', email: 'new@test.com' } };
+    const mockResult = {
+      user: {
+        uid: 'new-uid',
+        email: 'new@test.com',
+        displayName: null,
+        photoURL: null,
+        getIdToken: vi.fn().mockResolvedValue('token'),
+      },
+    };
     mockCreateUserWithEmailAndPassword.mockResolvedValue(mockResult);
     mockUpdateProfile.mockResolvedValue(undefined);
     mockGetDoc.mockResolvedValue({ exists: () => false });
     mockSetDoc.mockResolvedValue(undefined);
 
-    let signUpFn: ((email: string, password: string, name: string) => Promise<void>) | undefined;
+    let signUpFn: ((email: string, password: string, name: string, inviteCode: string) => Promise<void>) | undefined;
     function Extractor() {
       const auth = useAuth();
       signUpFn = auth.signUp;
@@ -271,7 +293,7 @@ describe('AuthContext', () => {
     await waitFor(() => expect(signUpFn).toBeDefined());
 
     await act(async () => {
-      await signUpFn!('new@test.com', 'password123', 'Novo Jogador');
+      await signUpFn!('new@test.com', 'password123', 'Novo Jogador', 'ABC123');
     });
 
     expect(mockCreateUserWithEmailAndPassword).toHaveBeenCalledWith(
@@ -280,6 +302,35 @@ describe('AuthContext', () => {
       'password123'
     );
     expect(mockUpdateProfile).toHaveBeenCalled();
+    expect(mockSetDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        invited_by_code: 'ABC123',
+        invite_source: 'email_password',
+      })
+    );
+  });
+
+  it('signUp rejeita cadastro sem convite', async () => {
+    let signUpFn: ((email: string, password: string, name: string, inviteCode?: string) => Promise<void>) | undefined;
+    function Extractor() {
+      const auth = useAuth();
+      signUpFn = auth.signUp;
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(signUpFn).toBeDefined());
+
+    await expect(signUpFn!('new@test.com', 'password123', 'Novo Jogador')).rejects.toThrow(
+      'Para criar sua conta'
+    );
+    expect(mockCreateUserWithEmailAndPassword).not.toHaveBeenCalled();
   });
 
   it('trata erros de autenticação definindo error state', async () => {
@@ -331,7 +382,11 @@ describe('AuthContext', () => {
   it('signInWithGoogle chama signInWithPopup', async () => {
     const mockResult = { user: { uid: 'google-uid', email: 'google@test.com', displayName: 'Google User' } };
     mockSignInWithPopup.mockResolvedValue(mockResult);
-    mockGetDoc.mockResolvedValue({ exists: () => false });
+    mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'google-uid',
+      data: () => ({ name: 'Google User', email: 'google@test.com' }),
+    });
     mockSetDoc.mockResolvedValue(undefined);
 
     let signInWithGoogleFn: (() => Promise<void>) | undefined;
