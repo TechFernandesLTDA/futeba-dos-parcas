@@ -22,11 +22,16 @@ import { getAuthErrorMessage } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
 import { useTranslation } from 'react-i18next';
-import { syncFieldOwnerClaim } from '../services/cloudFunctions';
+import { syncFieldOwnerClaim, validateInviteCode } from '../services/cloudFunctions';
 import { normalizePlayerStats } from '../utils/playerStats';
 
 const logger = createLogger('AuthContext');
 const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
+const INVITE_REQUIRED_MESSAGE = 'Para criar sua conta, abra um convite de outro membro do Futeba dos Parças.';
+
+function normalizeInviteCode(input?: string | null): string {
+  return (input || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
 
 // FIX #1568: helper que aplica defaults defensivos antes dos casts "as User"
 // para evitar crashes downstream em campos undefined vindos do Firestore
@@ -59,6 +64,7 @@ function normalizeUserData(converted: Record<string, unknown>, id: string, raw: 
     lookingForGameToday: converted.lookingForGameToday === true,
     lookingForGameTodayUntil: toDate(raw.looking_for_game_today_until) ?? toDate(raw.lookingForGameTodayUntil),
     lookingForGameTodayUpdatedAt: toDate(raw.looking_for_game_today_updated_at) ?? toDate(raw.lookingForGameTodayUpdatedAt),
+    inviteAcceptedAt: toDate(raw.invite_accepted_at) ?? toDate(raw.inviteAcceptedAt),
     createdAt: toDate(raw.created_at) ?? toDate(raw.createdAt),
     updatedAt: toDate(raw.updated_at) ?? toDate(raw.updatedAt),
   } as User;
@@ -111,7 +117,7 @@ interface AuthContextType {
   
   // Auth methods
   signIn: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (inviteCode?: string) => Promise<void>;
   signUp: (email: string, password: string, name: string, inviteCode?: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -185,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Create user document if doesn't exist
   // FIX #1555: usa runTransaction para evitar race condition em logins simultâneos
   // (duas abas podiam fazer getDoc+setDoc independentes para o mesmo uid)
-  const createUserDocument = async (firebaseUser: FirebaseUser, additionalData?: Partial<User>) => {
+  const createUserDocument = async (firebaseUser: FirebaseUser, additionalData?: Record<string, unknown>) => {
     const userRef = doc(db, 'users', firebaseUser.uid);
 
     try {
@@ -193,8 +199,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userSnap = await transaction.get(userRef);
 
         if (!userSnap.exists()) {
+          const invitedByCode = normalizeInviteCode(additionalData?.invited_by_code as string | undefined);
+          if (!invitedByCode) {
+            throw new Error(INVITE_REQUIRED_MESSAGE);
+          }
+
           const { displayName, photoURL } = firebaseUser;
           const userData = {
+            email: firebaseUser.email || '',
             name: displayName || 'Usuário',
             nickname: '',
             photo_url: photoURL || '',
@@ -220,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             is_searchable: true,
             is_verified: false,
             favorite_team: null,
+            invited_by_code: invitedByCode,
             created_at: serverTimestamp(),
             updated_at: serverTimestamp(),
             ...additionalData,
@@ -237,6 +250,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (err) {
       logger.error('Error creating user document:', err);
+      if (err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE) {
+        throw err;
+      }
       setError(t('feedback.auth.createAccountError'));
       return null;
     }
@@ -321,9 +337,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         logger.error('Auth state change error:', err);
         if (lastFetchUid === currentUid) {
+          if (err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE) {
+            await signOut(auth).catch((signOutErr) => {
+              logger.warn('Falha ao encerrar sessão sem convite:', signOutErr);
+            });
+            setFirebaseUser(null);
+          }
           setUser(null);
           setLoading(false);
-          setError(t('feedback.auth.verifyAuthError'));
+          setError(err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE ?
+            INVITE_REQUIRED_MESSAGE :
+            t('feedback.auth.verifyAuthError'));
         }
       }
     },
@@ -352,13 +376,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Sign in with Google
-  const signInWithGoogle = useCallback(async () => {
+  const signInWithGoogle = useCallback(async (inviteCode?: string) => {
     setError(null);
     try {
+      const normalizedInviteCode = normalizeInviteCode(inviteCode);
       const result = await signInWithPopup(auth, googleProvider);
-      await createUserDocumentRef.current(result.user);
+      const createdOrLoaded = await createUserDocumentRef.current(
+        result.user,
+        normalizedInviteCode ? {
+          invited_by_code: normalizedInviteCode,
+          invite_source: 'google',
+        } : undefined,
+      );
+      if (!createdOrLoaded) {
+        await signOut(auth);
+        throw new Error(INVITE_REQUIRED_MESSAGE);
+      }
     } catch (err: unknown) {
       if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
+      if (err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE) {
+        await signOut(auth).catch((signOutErr) => {
+          logger.warn('Falha ao encerrar sessão Google sem convite:', signOutErr);
+        });
+      }
       // FIX #942: tratar account-exists-with-different-credential explicitamente
       // (ex: usuário tentou login via Google mas já tem conta com email/senha)
       if (err instanceof FirebaseError) {
@@ -374,19 +414,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(async (email: string, password: string, name: string, inviteCode?: string) => {
     setError(null);
     try {
+      const normalizedInviteCode = normalizeInviteCode(inviteCode);
+      if (!normalizedInviteCode) {
+        throw new Error(INVITE_REQUIRED_MESSAGE);
+      }
+
+      const inviteValidation = await validateInviteCode({ inviteCode: normalizedInviteCode });
+      if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
+        throw new Error('Convite inválido ou expirado. Peça um novo convite para quem te chamou.');
+      }
+
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
-
-      let invitedBy: string | undefined;
-      if (inviteCode) {
-        try {
-          const q = query(collection(db, 'users'), where('invite_code', '==', inviteCode.toUpperCase()));
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            invitedBy = snap.docs[0].id;
-          }
-        } catch { /* non-fatal */ }
-      }
 
       // NOTA (#1023): forçar refresh do token ANTES de qualquer escrita no Firestore
       try {
@@ -396,7 +435,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.warn('Falha ao forçar refresh de token após cadastro:', tokenErr);
       }
 
-      await createUserDocumentRef.current(result.user, { name, ...(invitedBy ? { invited_by: invitedBy } : {}) });
+      await createUserDocumentRef.current(result.user, {
+        name,
+        invited_by_code: inviteValidation.data.inviteCode,
+        invite_source: 'email_password',
+      });
     } catch (err) {
       setError((err as Error).message || 'Erro ao criar conta');
       throw err;

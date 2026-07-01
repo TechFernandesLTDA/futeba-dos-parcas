@@ -30,6 +30,7 @@ import {
 let testEnv: RulesTestEnvironment;
 
 const G1 = "audit-game-1"; // owner = PLAYER_A
+const AUDIT_INVITE_CODE = "AUDIT123";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -59,6 +60,13 @@ beforeAll(async () => {
     is_on_the_way: true,
     eta_minutes: 10,
     updated_at: new Date(),
+  });
+
+  await seedDoc(testEnv, `invite_codes/${AUDIT_INVITE_CODE}`, {
+    user_id: UID_PLAYER_A,
+    inviter_name: "Jogador A",
+    active: true,
+    created_at: new Date(),
   });
 });
 
@@ -138,6 +146,7 @@ describe("#5 users.create — bloqueia self-injecao de auto_*_rating", () => {
       mid_rating: 3.0,
       defender_rating: 3.0,
       gk_rating: 3.0,
+      invited_by_code: AUDIT_INVITE_CODE,
       created_at: new Date(),
       ...extra,
     };

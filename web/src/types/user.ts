@@ -71,6 +71,8 @@ export interface User {
   // Invite
   inviteCode?: string;
   invitedBy?: string;
+  invitedByCode?: string;
+  inviteAcceptedAt?: Date;
   inviteCount: number;
 
   // Streak

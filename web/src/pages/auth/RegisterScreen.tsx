@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   useNavigate,
   useLocation,
@@ -27,6 +27,7 @@ import {
   VisibilityOff,
   Google,
   ArrowBack,
+  Key,
 } from '@mui/icons-material';
 import { useTheme, useMediaQuery, alpha } from '@mui/material';
 import { getAuth } from 'firebase/auth';
@@ -47,6 +48,7 @@ export function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -56,12 +58,33 @@ export function RegisterScreen() {
     email?: string;
     password?: string;
     confirmPassword?: string;
+    inviteCode?: string;
   }>({});
 
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const queryInvite = searchParams.get('invite');
+    if (queryInvite) {
+      setInviteCode(queryInvite);
+      try {
+        sessionStorage.setItem('inviteCode', queryInvite);
+      } catch (error) {
+        console.warn('Failed to persist invite code from URL:', error);
+      }
+      return;
+    }
+
+    try {
+      const storedInviteCode = sessionStorage.getItem('inviteCode');
+      if (storedInviteCode) setInviteCode(storedInviteCode);
+    } catch (error) {
+      console.warn('Failed to read invite code from sessionStorage:', error);
+    }
+  }, [searchParams]);
 
   /**
    * Resolve destino pós-cadastro (mesma lógica do LoginScreen).
@@ -83,8 +106,22 @@ export function RegisterScreen() {
       : '/';
   };
 
-  const validate = (emailVal: string) => {
+  const normalizeInviteCode = (value: string) => value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  const validateInviteOnly = (inviteCodeVal: string) => {
     const errs: typeof fieldErrors = {};
+    if (!inviteCodeVal) errs.inviteCode = t('auth.errorInviteRequired');
+    else if (!/^[A-Z0-9]{6,10}$/.test(inviteCodeVal)) errs.inviteCode = t('auth.errorInviteInvalidFormat');
+
+    setFieldErrors((prev) => ({ ...prev, inviteCode: errs.inviteCode }));
+    return !errs.inviteCode;
+  };
+
+  const validate = (emailVal: string, inviteCodeVal: string) => {
+    const errs: typeof fieldErrors = {};
+    if (!inviteCodeVal) errs.inviteCode = t('auth.errorInviteRequired');
+    else if (!/^[A-Z0-9]{6,10}$/.test(inviteCodeVal)) errs.inviteCode = t('auth.errorInviteInvalidFormat');
+
     if (!name.trim()) errs.name = t('auth.errorEnterName');
     else if (name.trim().length < 3) errs.name = t('auth.errorNameMinLength');
 
@@ -105,28 +142,21 @@ export function RegisterScreen() {
     // #1339: normaliza email (trim + lowercase) antes de validar e enviar,
     // evitando mismatch de autenticação por espaços/caixa (ex: " User@X.com ").
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedInviteCode = normalizeInviteCode(inviteCode);
     if (normalizedEmail !== email) setEmail(normalizedEmail);
-    if (!validate(normalizedEmail)) return;
+    if (normalizedInviteCode !== inviteCode) setInviteCode(normalizedInviteCode);
+    if (!validate(normalizedEmail, normalizedInviteCode)) return;
 
     setLoading(true);
     setError('');
 
     try {
-      let storedInviteCode: string | null = null;
       try {
-        storedInviteCode = sessionStorage.getItem('inviteCode');
+        sessionStorage.removeItem('inviteCode');
       } catch (error) {
-        console.warn('Failed to read invite code from sessionStorage:', error);
+        console.warn('Failed to remove invite code from sessionStorage:', error);
       }
-      const inviteCode = searchParams.get('invite') || storedInviteCode || undefined;
-      if (inviteCode) {
-        try {
-          sessionStorage.removeItem('inviteCode');
-        } catch (error) {
-          console.warn('Failed to remove invite code from sessionStorage:', error);
-        }
-      }
-      await signUp(normalizedEmail, password, name.trim(), inviteCode);
+      await signUp(normalizedEmail, password, name.trim(), normalizedInviteCode);
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, t('auth.registerFailed')));
@@ -136,11 +166,15 @@ export function RegisterScreen() {
   };
 
   const handleGoogleLogin = async () => {
+    const normalizedInviteCode = normalizeInviteCode(inviteCode);
+    if (normalizedInviteCode !== inviteCode) setInviteCode(normalizedInviteCode);
+    if (!validateInviteOnly(normalizedInviteCode)) return;
+
     setLoading(true);
     setError('');
 
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(normalizedInviteCode);
       if (!getAuth().currentUser) return;
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {
@@ -240,7 +274,33 @@ export function RegisterScreen() {
             </Alert>
           )}
 
+          <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+            {t('auth.inviteOnlyNotice')}
+          </Alert>
+
           <form onSubmit={handleRegister} aria-label={t('auth.createAccountTitle')}>
+            <TextField
+              fullWidth
+              label={t('auth.inviteCode')}
+              value={inviteCode}
+              onChange={(e) => {
+                setInviteCode(e.target.value.toUpperCase());
+                if (fieldErrors.inviteCode) setFieldErrors((p) => ({ ...p, inviteCode: undefined }));
+              }}
+              error={!!fieldErrors.inviteCode}
+              helperText={fieldErrors.inviteCode || t('auth.inviteCodeHelper')}
+              disabled={loading}
+              inputProps={{ autoComplete: 'one-time-code', maxLength: 10 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Key color="action" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
+
             <TextField
               fullWidth
               label={t('auth.fullName')}

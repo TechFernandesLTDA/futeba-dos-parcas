@@ -11,6 +11,18 @@ export const setUserRole = httpsCallable<
   { success: boolean }
 >(functions, 'setUserRole');
 
+export interface InviteCodeValidationResponse {
+  valid: boolean;
+  inviteCode?: string;
+  inviterName?: string;
+  xpReward?: number;
+}
+
+export const validateInviteCode = httpsCallable<
+  { inviteCode: string },
+  InviteCodeValidationResponse
+>(functions, 'validateInviteCode');
+
 export interface AdminOwnerSummary {
   totalLocations: number;
   publishedLocations: number;

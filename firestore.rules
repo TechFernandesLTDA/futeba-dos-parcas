@@ -89,6 +89,15 @@ service cloud.firestore {
       return isAdmin();
     }
 
+    function isValidAppInviteCodeForUser(code, targetUserId) {
+      return code is string &&
+             code.matches('^[A-Z0-9]{6,10}$') &&
+             exists(/databases/$(database)/documents/invite_codes/$(code)) &&
+             get(/databases/$(database)/documents/invite_codes/$(code)).data.active == true &&
+             get(/databases/$(database)/documents/invite_codes/$(code)).data.user_id is string &&
+             get(/databases/$(database)/documents/invite_codes/$(code)).data.user_id != targetUserId;
+    }
+
     // ============================================
     // PERF_001: CUSTOM CLAIMS - FASE 2 COMPLETA + P0 OTIMIZACOES
     // ============================================
@@ -498,6 +507,7 @@ service cloud.firestore {
       // (experience_points, level, milestones_achieved, verified, verifiedAt, cpfVerifiedAt)
       allow create: if isOwner(userId) &&
                        request.resource.data.role == 'PLAYER' &&
+                       isValidAppInviteCodeForUser(request.resource.data.invited_by_code, userId) &&
                        // #1979: previne self-injection de campos gamificados/sensiveis no create
                        !('experience_points' in request.resource.data) &&
                        !('level' in request.resource.data) &&
@@ -561,6 +571,12 @@ service cloud.firestore {
            fieldUnchanged('id') &&
            fieldUnchanged('created_at') &&
            fieldUnchanged('role') &&
+           fieldUnchanged('invite_code') &&
+           fieldUnchanged('invite_count') &&
+           fieldUnchanged('invited_by') &&
+           fieldUnchanged('invited_by_code') &&
+           fieldUnchanged('invite_accepted_at') &&
+           fieldUnchanged('invite_source') &&
            // PERF_001 P0 #29: Campos de gamificacao NUNCA podem ser editados por users
            // Garante que XP so é alterado por Cloud Functions (Admin SDK)
            fieldUnchanged('experience_points') &&

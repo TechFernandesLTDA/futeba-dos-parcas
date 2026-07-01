@@ -4,11 +4,89 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {randomInt} from "crypto";
-import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  checkRateLimit,
+  checkRateLimitByIp,
+} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
+import {clientIp} from "./anti-abuse";
+import {getLevelForXp} from "../xp/pipeline";
 
 const db = () => admin.firestore();
 const INVITE_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const APP_INVITE_ACCEPTED_XP = 50;
+
+interface InviteValidationResult {
+  valid: boolean;
+  inviteCode?: string;
+  inviterName?: string;
+  xpReward?: number;
+}
+
+/**
+ * Normaliza codigo de convite para o formato canonico.
+ * @param {unknown} input Valor recebido da callable ou do Firestore.
+ * @return {string} Codigo em uppercase, apenas A-Z0-9.
+ */
+function normalizeInviteCode(input: unknown): string {
+  return typeof input === "string" ?
+    input.trim().toUpperCase().replace(/[^A-Z0-9]/g, "") :
+    "";
+}
+
+/**
+ * Resolve o padrinho dono de um codigo de convite.
+ * @param {string} code Codigo de convite canonico.
+ * @return {Promise<object|null>} Dados publicos do padrinho ou null.
+ */
+async function findInviterByCode(code: string): Promise<{
+  uid: string;
+  name: string;
+  data: FirebaseFirestore.DocumentData;
+} | null> {
+  if (!/^[A-Z0-9]{6,10}$/.test(code)) return null;
+
+  const snap = await db()
+    .collection("users")
+    .where("invite_code", "==", code)
+    .limit(1)
+    .get();
+
+  if (snap.empty) return null;
+
+  const doc = snap.docs[0];
+  const data = doc.data();
+  if (data.deleted_at) return null;
+
+  return {
+    uid: doc.id,
+    name: typeof data.name === "string" && data.name.trim() ?
+      data.name.trim() :
+      "Membro Futeba",
+    data,
+  };
+}
+
+/**
+ * Garante que invite_codes/{code} tenha owner para rules e cadastros.
+ * @param {string} code Codigo de convite canonico.
+ * @param {{uid: string, name: string}} inviter Dono do codigo.
+ * @return {Promise<void>} Promise resolvida apos persistir o lock.
+ */
+async function syncInviteCodeOwner(
+  code: string,
+  inviter: {uid: string; name: string}
+): Promise<void> {
+  await db()
+    .collection("invite_codes")
+    .doc(code)
+    .set({
+      user_id: inviter.uid,
+      inviter_name: inviter.name,
+      active: true,
+      updated_at: FieldValue.serverTimestamp(),
+    }, {merge: true});
+}
 
 /**
  * Gera um codigo alfanumerico aleatorio usando crypto.randomInt.
@@ -32,14 +110,24 @@ function generateInviteCode(length = 6): string {
  * podiam receber o mesmo codigo. Agora usamos invite_codes/{code}
  * como lock atomico: Firestore garante que dois docs com o mesmo ID
  * nunca sao criados concorrentemente.
+ * @param {{uid: string, name: string}|undefined} owner Dono opcional.
+ * @return {Promise<string>} Codigo unico reservado.
  */
-async function generateUniqueCode(): Promise<string> {
+async function generateUniqueCode(owner?: {
+  uid: string;
+  name?: string;
+}): Promise<string> {
   const inviteCodesRef = db().collection("invite_codes");
   for (const length of [6, 8]) {
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = generateInviteCode(length);
       try {
         await inviteCodesRef.doc(code).create({
+          ...(owner ? {
+            user_id: owner.uid,
+            inviter_name: owner.name || "Membro Futeba",
+            active: true,
+          } : {}),
           created_at: FieldValue.serverTimestamp(),
         });
         return code;
@@ -54,6 +142,11 @@ async function generateUniqueCode(): Promise<string> {
     const code = generateInviteCode(10);
     try {
       await inviteCodesRef.doc(code).create({
+        ...(owner ? {
+          user_id: owner.uid,
+          inviter_name: owner.name || "Membro Futeba",
+          active: true,
+        } : {}),
         created_at: FieldValue.serverTimestamp(),
       });
       return code;
@@ -87,7 +180,13 @@ export const onUserCreatedGenerateInviteCode = onDocumentCreated(
       return;
     }
 
-    const inviteCode = await generateUniqueCode();
+    const displayName = typeof data.name === "string" ?
+      data.name :
+      "Membro Futeba";
+    const inviteCode = await generateUniqueCode({
+      uid: userId,
+      name: displayName,
+    });
     const userRef = db().collection("users").doc(userId);
 
     try {
@@ -121,8 +220,8 @@ export const onUserCreatedGenerateInviteCode = onDocumentCreated(
 );
 
 /**
- * Firestore trigger: ao criar um novo usuario, se houver invited_by,
- * incrementa o invite_count do inviter.
+ * Firestore trigger: ao criar um novo usuario, valida o codigo de
+ * apadrinhamento, registra aceite auditavel e credita XP ao padrinho.
  */
 export const onUserCreatedProcessInvite = onDocumentCreated(
   {
@@ -134,8 +233,22 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
     const data = event.data?.data();
     if (!data) return;
 
-    const invitedByUid = data.invited_by as string | undefined;
-    if (!invitedByUid) return;
+    const inviteCode = normalizeInviteCode(data.invited_by_code);
+    if (!inviteCode) {
+      logger.warn("User created without app invite code", {userId});
+      return;
+    }
+
+    const inviter = await findInviterByCode(inviteCode);
+    if (!inviter) {
+      logger.warn("Invalid app invite code on user creation", {
+        userId,
+        inviteCode,
+      });
+      return;
+    }
+
+    const invitedByUid = inviter.uid;
 
     // FIX #2650: validate that the invite code is NOT triggered by
     // an invite code field from the requesting user itself (self-referral).
@@ -145,34 +258,124 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
     }
 
     try {
-      const inviterRef = db().collection("users").doc(invitedByUid);
-      const inviterDoc = await inviterRef.get();
-
-      if (!inviterDoc.exists) {
-        logger.warn("Inviter not found", {invitedByUid});
-        return;
-      }
-
-      // FIX #2650: validate that the inviter actually has an invite_code.
-      // invited_by is a client-writable field — must be verified server-side.
-      const inviterData = inviterDoc.data();
-      if (!inviterData?.invite_code || typeof inviterData.invite_code !== "string") {
-        logger.warn("Inviter has no invite_code — possible client forgery", {
-          invitedByUid,
-          newUser: userId,
-        });
-        return;
-      }
-
-      // FIX #2650: use FieldValue.increment(1) instead of read-then-update
-      // to avoid race conditions on concurrent invites.
-      await inviterRef.update({
-        invite_count: FieldValue.increment(1),
+      await syncInviteCodeOwner(inviteCode, {
+        uid: invitedByUid,
+        name: inviter.name,
       });
 
-      logger.info("Incremented invite count for inviter", {
+      const inviterRef = db().collection("users").doc(invitedByUid);
+      const invitedUserRef = db().collection("users").doc(userId);
+      const redemptionRef = db()
+        .collection("app_invite_redemptions")
+        .doc(userId);
+      const xpLogRef = db()
+        .collection("xp_logs")
+        .doc(`app_invite_${invitedByUid}_${userId}`);
+
+      await db().runTransaction(async (tx) => {
+        const [inviterDoc, redemptionDoc] = await Promise.all([
+          tx.get(inviterRef),
+          tx.get(redemptionRef),
+        ]);
+
+        if (redemptionDoc.exists) {
+          logger.info("App invite already redeemed, skipping", {
+            invitedByUid,
+            invitedUser: userId,
+          });
+          return;
+        }
+
+        if (!inviterDoc.exists) {
+          logger.warn("Inviter not found", {invitedByUid});
+          return;
+        }
+
+        const inviterData = inviterDoc.data();
+        if (inviterData?.invite_code !== inviteCode) {
+          logger.warn("Invite code owner mismatch", {
+            invitedByUid,
+            invitedUser: userId,
+            inviteCode,
+          });
+          return;
+        }
+
+        const xpBefore =
+          (inviterData?.experience_points as number | undefined) || 0;
+        const levelBefore =
+          (inviterData?.level as number | undefined) ||
+          getLevelForXp(xpBefore);
+        const xpAfter = xpBefore + APP_INVITE_ACCEPTED_XP;
+        const levelAfter = getLevelForXp(xpAfter);
+        const now = FieldValue.serverTimestamp();
+
+        tx.update(inviterRef, {
+          invite_count: FieldValue.increment(1),
+          experience_points: FieldValue.increment(APP_INVITE_ACCEPTED_XP),
+          level: levelAfter,
+        });
+
+        tx.update(invitedUserRef, {
+          invited_by: invitedByUid,
+          invite_accepted_at: now,
+        });
+
+        tx.set(redemptionRef, {
+          invite_code: inviteCode,
+          inviter_id: invitedByUid,
+          inviter_name: inviter.name,
+          invited_user_id: userId,
+          invited_user_email:
+            typeof data.email === "string" ? data.email : null,
+          accepted_at: now,
+          xp_awarded: APP_INVITE_ACCEPTED_XP,
+          xp_log_id: xpLogRef.id,
+          source: "first_access",
+        });
+
+        tx.set(xpLogRef, {
+          user_id: invitedByUid,
+          game_id: `app_invite:${userId}`,
+          transaction_id: xpLogRef.id,
+          source: "app_invite_accepted",
+          source_collection: "app_invite_redemptions",
+          source_event_id: userId,
+          source_confirmation_id: userId,
+          xp_earned: APP_INVITE_ACCEPTED_XP,
+          xp_before: xpBefore,
+          xp_after: xpAfter,
+          level_before: levelBefore,
+          level_after: levelAfter,
+          xp_participation: 0,
+          xp_goals: 0,
+          xp_assists: 0,
+          xp_saves: 0,
+          xp_result: 0,
+          xp_mvp: 0,
+          xp_clean_sheet: 0,
+          xp_milestones: APP_INVITE_ACCEPTED_XP,
+          xp_streak: 0,
+          xp_penalty: 0,
+          goals: 0,
+          assists: 0,
+          saves: 0,
+          was_mvp: false,
+          was_clean_sheet: false,
+          was_worst_player: false,
+          game_result: "APP_INVITE",
+          game_status: "FINISHED",
+          my_team_score: 0,
+          opponent_score: 0,
+          milestones_unlocked: ["APP_INVITE_ACCEPTED"],
+          created_at: now,
+        });
+      });
+
+      logger.info("Processed app invite for inviter", {
         inviterUid: invitedByUid,
         invitedUser: userId,
+        xpAwarded: APP_INVITE_ACCEPTED_XP,
       });
     } catch (err) {
       logger.error("Failed to process invite for user", {userId, err});
@@ -216,9 +419,22 @@ export const generateMyInviteCode = onCall(
       }
 
       const existingCode = userDoc.data()?.invite_code as string | undefined;
-      if (existingCode) return {inviteCode: existingCode};
+      if (existingCode) {
+        await syncInviteCodeOwner(existingCode, {
+          uid,
+          name: (userDoc.data()?.name as string | undefined) ||
+            request.auth?.token?.name as string | undefined ||
+            "Membro Futeba",
+        });
+        return {inviteCode: existingCode};
+      }
 
-      const inviteCode = await generateUniqueCode();
+      const inviteCode = await generateUniqueCode({
+        uid,
+        name: (userDoc.data()?.name as string | undefined) ||
+          request.auth?.token?.name as string | undefined ||
+          "Membro Futeba",
+      });
 
       await userRef.update({
         invite_code: inviteCode,
@@ -233,5 +449,56 @@ export const generateMyInviteCode = onCall(
       logger.error("generateMyInviteCode failed", {error, uid: request.auth?.uid});
       throw new HttpsError("internal", "An unexpected error occurred");
     }
+  }
+);
+
+/**
+ * Callable publico: valida um codigo de apadrinhamento antes do cadastro.
+ * Tambem repara o lock invite_codes/{code} para codigos legados que ainda
+ * existiam apenas em users/{uid}.invite_code.
+ */
+export const validateInviteCode = onCall(
+  {
+    region: FUNCTION_REGION,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
+  },
+  async (request): Promise<InviteValidationResult> => {
+    const ip = clientIp(request);
+    const rl = await checkRateLimitByIp(ip, {
+      maxRequests: 30,
+      windowMs: 60 * 1000,
+      keyPrefix: "validate_invite_code",
+    });
+    if (!rl.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Muitas tentativas. Tente novamente mais tarde."
+      );
+    }
+
+    const inviteCode = normalizeInviteCode(
+      (request.data as {inviteCode?: unknown} | undefined)?.inviteCode
+    );
+    const inviter = await findInviterByCode(inviteCode);
+    if (!inviter) {
+      return {valid: false};
+    }
+
+    if (request.auth?.uid && request.auth.uid === inviter.uid) {
+      return {valid: false};
+    }
+
+    await syncInviteCodeOwner(inviteCode, {
+      uid: inviter.uid,
+      name: inviter.name,
+    });
+
+    return {
+      valid: true,
+      inviteCode,
+      inviterName: inviter.name,
+      xpReward: APP_INVITE_ACCEPTED_XP,
+    };
   }
 );

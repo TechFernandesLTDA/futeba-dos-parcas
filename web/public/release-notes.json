@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-06-30T22:35:04.626Z",
+  "generatedAt": "2026-07-01T02:40:34.774Z",
   "notes": [
+    {
+      "version": "1.44.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-01",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O primeiro acesso ao Futeba agora é feito por convite de outro membro.",
+      "highlights": [],
+      "added": [
+        "A tela de cadastro passa a pedir o código de convite antes de criar a conta.",
+        "Links de convite preenchem o código automaticamente para acelerar o cadastro.",
+        "Quem convida passa a ver que o aceite do convite gera +50 XP e pontos de Embaixador."
+      ],
+      "improved": [],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.43.38",
       "buildNumber": null,

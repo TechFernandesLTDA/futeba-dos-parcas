@@ -56,8 +56,9 @@ describe('RegisterScreen', () => {
     vi.clearAllMocks();
   });
 
-  it('renderiza campos de nome, email, senha e confirmação de senha', () => {
+  it('renderiza campos de convite, nome, email, senha e confirmação de senha', () => {
     renderRegisterScreen();
+    expect(screen.getByLabelText(/código de convite/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/nome completo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     // Dois campos de senha
@@ -82,6 +83,7 @@ describe('RegisterScreen', () => {
     const user = userEvent.setup();
     renderRegisterScreen();
 
+    await user.type(screen.getByLabelText(/código de convite/i), 'ABC123');
     await user.type(screen.getByLabelText(/nome completo/i), 'AB');
     await user.click(screen.getByRole('button', { name: /criar conta/i }));
     expect(await screen.findByText('Nome deve ter pelo menos 3 caracteres')).toBeInTheDocument();
@@ -91,6 +93,7 @@ describe('RegisterScreen', () => {
     const user = userEvent.setup();
     renderRegisterScreen();
 
+    await user.type(screen.getByLabelText(/código de convite/i), 'ABC123');
     await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
     await user.type(screen.getByLabelText(/email/i), 'test@test.com');
     await user.type(screen.getByLabelText(/^senha$/i), '123456');
@@ -104,6 +107,7 @@ describe('RegisterScreen', () => {
     const user = userEvent.setup();
     renderRegisterScreen();
 
+    await user.type(screen.getByLabelText(/código de convite/i), 'ABC123');
     await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
     await user.type(screen.getByLabelText(/email/i), 'test@test.com');
     await user.type(screen.getByLabelText(/^senha$/i), '123');
@@ -118,6 +122,7 @@ describe('RegisterScreen', () => {
     const user = userEvent.setup();
     renderRegisterScreen();
 
+    await user.type(screen.getByLabelText(/código de convite/i), 'ABC123');
     await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
     await user.type(screen.getByLabelText(/email/i), 'test@test.com');
     await user.type(screen.getByLabelText(/^senha$/i), '123456');
@@ -126,7 +131,7 @@ describe('RegisterScreen', () => {
 
     await waitFor(() => {
       // signUp recebe 4 args: (email, password, name, inviteCode). #2330
-      expect(mockSignUp).toHaveBeenCalledWith('test@test.com', '123456', 'Jogador Teste', undefined);
+      expect(mockSignUp).toHaveBeenCalledWith('test@test.com', '123456', 'Jogador Teste', 'ABC123');
     });
   });
 
@@ -135,6 +140,7 @@ describe('RegisterScreen', () => {
     const user = userEvent.setup();
     renderRegisterScreen();
 
+    await user.type(screen.getByLabelText(/código de convite/i), 'ABC123');
     await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
     await user.type(screen.getByLabelText(/email/i), 'test@test.com');
     await user.type(screen.getByLabelText(/^senha$/i), '123456');
@@ -149,6 +155,7 @@ describe('RegisterScreen', () => {
     const user = userEvent.setup();
     renderRegisterScreen();
 
+    await user.type(screen.getByLabelText(/código de convite/i), 'ABC123');
     await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
     await user.type(screen.getByLabelText(/email/i), 'test@test.com');
     await user.type(screen.getByLabelText(/^senha$/i), '123456');
@@ -165,6 +172,7 @@ describe('RegisterScreen', () => {
     renderRegisterScreen();
     // RegisterScreen usa <Box component="form"> sem aria-label explícito.
     // Verificar presença dos campos de cadastro em vez do role "form". #2330
+    expect(screen.getByLabelText(/código de convite/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/nome completo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /criar conta/i })).toBeInTheDocument();

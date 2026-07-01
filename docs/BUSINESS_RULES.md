@@ -4,6 +4,7 @@
 - [Visão Geral](#visão-geral)
 - [Sistema de Gamificação](#sistema-de-gamificação)
 - [XP e Pontos](#xp-e-pontos)
+- [Apadrinhamento e Primeiro Acesso](#apadrinhamento-e-primeiro-acesso)
 - [Badges e Conquistas](#badges-e-conquistas)
 - [Rankings e Ligas](#rankings-e-ligas)
 - [Ciclo de Vida do Jogo](#ciclo-de-vida-do-jogo)
@@ -67,6 +68,7 @@ Cada jogador ganha XP de múltiplas fontes durante um jogo:
 | **Streak 5** | +35 XP | Exatos 5 jogos consecutivos | `calculateXP()` |
 | **Streak 7** | +50 XP | Exatos 7 jogos consecutivos | `calculateXP()` |
 | **Streak 10** | +100 XP | 10+ jogos consecutivos | `calculateXP()` |
+| **Apadrinhamento** | +50 XP | Novo membro aceita convite e conclui cadastro | `functions/src/auth/invite-code.ts:onUserCreatedProcessInvite` |
 
 > **Anti-cheat caps por jogo:** Gols ≤ 15, Assists ≤ 10, Saves ≤ 30, XP total máx +500 / mín −100. Apenas o tier de streak mais alto é aplicado. Fonte canônica: `shared/xp-constants.json`.
 
@@ -114,6 +116,28 @@ Jogo 10 ✓ → Streak = 1  (recomeça)
 - Rejeitar convite (se já tinha streak)
 
 **Referência:** `backend/SERVICES.md:StatisticsService` - atualiza streaks
+
+---
+
+## Apadrinhamento e Primeiro Acesso
+
+O primeiro acesso ao Futeba dos Parças é **somente por convite de outro membro**.
+
+### Regras
+
+- Todo novo perfil `users/{uid}` deve ser criado com `invited_by_code` válido.
+- O código deve existir em `invite_codes/{code}`, estar ativo e pertencer a outro usuário.
+- A validação pública do código é feita pela Cloud Function `validateInviteCode`, com rate limit por IP.
+- O aceite é processado por `onUserCreatedProcessInvite`, que resolve o padrinho pelo `invite_code`.
+- O padrinho recebe +50 XP e `invite_count +1` de forma server-side.
+- O aceite fica registrado em `app_invite_redemptions/{uid}` com `invite_code`, `inviter_id`, `invited_user_id`, `accepted_at`, `xp_awarded` e `xp_log_id`.
+- O bônus gera log imutável em `xp_logs/app_invite_<inviter>_<invited>`.
+
+### Restrições de segurança
+
+- Cliente não pode editar `invite_code`, `invite_count`, `invited_by`, `invited_by_code`, `invite_accepted_at` ou `invite_source`.
+- Cadastro via Google sem convite é permitido apenas para usuários que já têm perfil; primeiro acesso sem convite encerra a sessão.
+- Códigos legados em `users/{uid}.invite_code` são sincronizados para `invite_codes/{code}` quando validados ou quando o usuário abre a tela de convite.
 
 ---
 

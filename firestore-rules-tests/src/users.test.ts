@@ -77,6 +77,13 @@ beforeAll(async () => {
     defender_rating: null,
     gk_rating: null,
   });
+
+  await seedDoc(testEnv, "invite_codes/ABC123", {
+    user_id: UID_PLAYER_A,
+    inviter_name: "Jogador A",
+    active: true,
+    created_at: new Date(),
+  });
 });
 
 afterAll(async () => {
@@ -130,6 +137,26 @@ describe("users — criação", () => {
       userCtx.doc(`users/${newUid}`).set({
         name: "Novo Jogador",
         email: "novo@test.com",
+        role: "PLAYER",
+        striker_rating: 2.0,
+        mid_rating: 2.0,
+        defender_rating: 2.0,
+        gk_rating: 2.0,
+        is_searchable: true,
+        invited_by_code: "ABC123",
+      })
+    );
+  });
+
+  it("Player NÃO pode criar perfil sem código de apadrinhamento", async () => {
+    const newUid = "uid-new-player-no-invite";
+    const userCtx = testEnv
+      .authenticatedContext(newUid, { role: "PLAYER", verified: true })
+      .firestore();
+    await assertFails(
+      userCtx.doc(`users/${newUid}`).set({
+        name: "Sem Convite",
+        email: "semconvite@test.com",
         role: "PLAYER",
         striker_rating: 2.0,
         mid_rating: 2.0,
@@ -208,6 +235,16 @@ describe("users — campos imutáveis (atualização)", () => {
     const db = asPlayerA(testEnv);
     await assertFails(
       db.doc(`users/${UID_PLAYER_A}`).update({ level: 10 })
+    );
+  });
+
+  it("Player NÃO pode alterar contador ou código de convite", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`users/${UID_PLAYER_A}`).update({
+        invite_count: 999,
+        invite_code: "HACK99",
+      })
     );
   });
 
