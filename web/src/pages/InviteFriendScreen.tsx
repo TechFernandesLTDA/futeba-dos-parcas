@@ -69,7 +69,7 @@ export const InviteFriendScreen: React.FC = () => {
     if (navigator.share) {
       navigator.share({
         title: t('app.name'),
-        text: t('invite.shareText', { link: inviteLink }),
+        text: t('invite.shareText'),
         url: inviteLink,
       }).catch((err) => {
         if (err instanceof DOMException && err.name === 'AbortError') return;

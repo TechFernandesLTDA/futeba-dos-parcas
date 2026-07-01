@@ -79,6 +79,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.44.1] - 2026-07-01
+
+#### Corrigido
+- Remove o link interpolado do texto enviado ao Web Share API, mantendo a URL apenas no campo `url`.
+- Mantém as traduções de convite alinhadas em PT-BR, EN e ES.
+
 ### [1.44.0] - 2026-07-01
 
 #### Adicionado
