@@ -1,7 +1,24 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-01T02:40:34.774Z",
+  "generatedAt": "2026-07-01T15:26:14.079Z",
   "notes": [
+    {
+      "version": "1.44.1",
+      "buildNumber": null,
+      "releaseDate": "2026-07-01",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Compartilhar convite ficou mais limpo e sem link duplicado.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O texto de compartilhar convite ficou mais claro e mais direto.",
+        "O link de convite deixa de aparecer duplicado em apps de compartilhamento como WhatsApp e Telegram."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.44.0",
       "buildNumber": null,
