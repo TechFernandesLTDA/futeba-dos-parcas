@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-01T15:48:13.704Z",
+  "generatedAt": "2026-07-01T18:40:49.893Z",
   "notes": [
+    {
+      "version": "1.44.3",
+      "buildNumber": null,
+      "releaseDate": "2026-07-01",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A tipografia da versão web agora fica alinhada à identidade visual dos apps mobile.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Ajusta pesos e espaçamento de textos MD3 na web para combinar com Android e iOS, deixando cards, rótulos e seções com aparência mais consistente."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3181
+      ]
+    },
     {
       "version": "1.44.2",
       "buildNumber": null,

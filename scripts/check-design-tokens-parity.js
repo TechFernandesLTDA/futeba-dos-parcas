@@ -177,6 +177,64 @@ function checkTsObjectStrings(content, objectName, expected, label, sourceFile, 
   }
 }
 
+function pxToRemString(px) {
+  if (px === 0) return '0rem';
+  const rem = px / 16;
+  return `${Number(rem.toFixed(8))}rem`;
+}
+
+function typographyWeightValue(tokens, weightName) {
+  if (weightName === 'normal') return tokens.typography.weights.regular;
+  const value = tokens.typography.weights[weightName];
+  return typeof value === 'number' ? value : null;
+}
+
+function checkTsTypographyScale(content, tokens, sourceFile, errors) {
+  const scale = tokens.typography && tokens.typography.scale;
+  if (!scale || !tokens.typography.weights) {
+    errors.push('[typography] bloco `typography.scale` ausente ou incompleto em shared/design-tokens.json');
+    return;
+  }
+
+  const md3TypeScale = extractTsObject(content, 'md3TypeScale');
+  if (!md3TypeScale) {
+    errors.push(`[web typography token] md3TypeScale ausente em ${relative(sourceFile)}`);
+    return;
+  }
+
+  for (const [tokenName, token] of Object.entries(scale)) {
+    const tokenBlock = extractTsObject(md3TypeScale, tokenName);
+    if (!tokenBlock) {
+      errors.push(`[web typography token] ${tokenName} ausente em md3TypeScale em ${relative(sourceFile)}`);
+      continue;
+    }
+
+    const expectedWeight = typographyWeightValue(tokens, token.weight);
+    if (expectedWeight === null) {
+      errors.push(`[typography] peso desconhecido: ${tokenName}.weight="${token.weight}" em shared/design-tokens.json`);
+    } else {
+      const weightRe = new RegExp(`\\bfontWeight\\s*:\\s*${expectedWeight}\\b`);
+      if (!weightRe.test(tokenBlock)) {
+        errors.push(`[web typography token] ${tokenName}.fontWeight diverge — esperado ${expectedWeight} em ${relative(sourceFile)}`);
+      }
+    }
+
+    const expectedLetterSpacing = pxToRemString(token.letterSpacing);
+    const letterSpacingRe = new RegExp(`\\bletterSpacing\\s*:\\s*['"]${escapeRegExp(expectedLetterSpacing)}['"]`);
+    if (!letterSpacingRe.test(tokenBlock)) {
+      errors.push(`[web typography token] ${tokenName}.letterSpacing diverge — esperado "${expectedLetterSpacing}" em ${relative(sourceFile)}`);
+    }
+  }
+}
+
+function checkWebTypographyParity(tokens, errors) {
+  const file = path.join(ROOT, 'web', 'src', 'theme', 'index.ts');
+  const content = readRequiredFile(file, 'web typography tokens', errors);
+  if (!content) return;
+
+  checkTsTypographyScale(content, tokens, file, errors);
+}
+
 function checkKotlinValHexes(content, expected, label, sourceFile, errors) {
   for (const [name, rawHex] of Object.entries(expected)) {
     const expectedHex = kotlinHex(rawHex);
@@ -704,6 +762,7 @@ function main() {
   checkWebRadiusAndSpacing(tokens, errors);
   checkKotlinRadiusAndSpacing(tokens, errors);
   checkWebElevationParity(tokens, errors);
+  checkWebTypographyParity(tokens, errors);
 
   // Paridade de motion (durations + easings) — issue #2755.
   checkMotionParity(tokens, errors);
@@ -715,7 +774,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + surface + elevation + motion)');
+  console.log('✓ design tokens em paridade (cores + gamificação + radius + spacing + surface + elevation + typography + motion)');
   process.exit(0);
 }
 

@@ -79,6 +79,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.44.3] - 2026-07-01
+
+#### Corrigido
+- Alinha `md3TypeScale` da web aos valores canônicos de `shared/design-tokens.json`.
+- Amplia `scripts/check-design-tokens-parity.js` para validar peso e tracking da escala tipográfica web contra os tokens compartilhados.
+
+_Issues: #3181_
+
 ### [1.44.2] - 2026-07-01
 
 #### Corrigido
