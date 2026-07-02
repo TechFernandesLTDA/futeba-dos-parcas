@@ -63,7 +63,7 @@ export const AboutScreen: React.FC = () => {
       {/* #2174: header padronizado via ScreenHeader */}
       <ScreenHeader title={t('about.title')} onBack={goBack} />
 
-      <PageContainer maxWidth="focused">
+      <PageContainer maxWidth="detail">
         <Card sx={{ mb: 2, textAlign: 'center' }}>
           <CardContent>
             <Avatar
