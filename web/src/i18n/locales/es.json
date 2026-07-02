@@ -2068,6 +2068,14 @@
     "verifying": "Verificando...",
     "welcome": "¡Bienvenido a Futeba dos Parças!"
   },
+  "ownerOnboarding": {
+    "cnpjLabel": "CNPJ (opcional)",
+    "cnpjHelper": "Obligatorio para empresas; déjalo en blanco si eres persona física.",
+    "cnpjInvalid": "CNPJ inválido",
+    "cnpjAlreadyExists": "No pudimos procesar este CNPJ. Verifica los datos o contacta al soporte.",
+    "cnpjRegistered": "CNPJ registrado: {{masked}}",
+    "commercialDocumentHelper": "Nota libre que ayude a la revisión del registro comercial."
+  },
   "page": {
     "title": {
       "about": "Acerca de",

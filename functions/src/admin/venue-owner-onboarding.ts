@@ -3,6 +3,7 @@ import {FieldValue} from "firebase-admin/firestore";
 import {HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
+import {hashCnpj, isValidCnpj, maskCnpj} from "../validation/cnpj";
 import {db} from "../_db";
 
 type OnboardingStatus =
@@ -20,6 +21,7 @@ interface RequestVenueOwnerOnboardingRequest {
   phone?: string | null;
   businessName?: string | null;
   commercialDocument?: string | null;
+  cnpj?: string | null;
   notes?: string | null;
   locationIds?: unknown;
   termsAccepted?: boolean | null;
@@ -45,7 +47,32 @@ interface OnboardingResponse {
 }
 
 const COLLECTION = "venue_owner_onboarding";
+const CNPJ_INDEX_COLLECTION = "cnpj_index";
 const VALID_DECISIONS = new Set(["APPROVED", "REJECTED", "SUSPENDED", "CANCELLED"]);
+
+// Mensagem generica anti-enumeration: nao revela se o CNPJ ja esta cadastrado.
+const CNPJ_GENERIC_ERROR =
+  "Não foi possível processar este CNPJ. Verifique os dados ou contate o suporte";
+
+/**
+ * Salt de hashing vem de Firebase Functions secrets (CPF_SALT).
+ * Reusado para CNPJ com prefixo de dominio (decisao #1311).
+ * Setup: firebase functions:secrets:set CPF_SALT
+ *
+ * @return {string} Salt secreto.
+ * @throws {HttpsError} Se CPF_SALT nao configurado.
+ */
+function getCpfSalt(): string {
+  const salt = process.env.CPF_SALT;
+  if (!salt || salt.length < 16) {
+    throw new HttpsError(
+      "failed-precondition",
+      "CPF_SALT not configured. " +
+        "Run: firebase functions:secrets:set CPF_SALT"
+    );
+  }
+  return salt;
+}
 
 /**
  * Normaliza texto opcional com limite de tamanho.
@@ -169,6 +196,9 @@ export const requestVenueOwnerOnboarding = secureCallable<
     appCheck: !process.env.FUNCTIONS_EMULATOR,
     requireAuth: true,
     rateLimit: {maxRequests: 5, windowMs: 60000, keyPrefix: "venueOwnerOnboarding"},
+    // CRITICAL: secret precisa ser declarada pra ser acessivel
+    // via process.env.CPF_SALT em runtime (hash de CNPJ).
+    secrets: ["CPF_SALT"],
     enableAuditLog: true,
     auditLogContext: async (request) => ({
       function: "requestVenueOwnerOnboarding",
@@ -212,6 +242,20 @@ export const requestVenueOwnerOnboarding = secureCallable<
       );
     }
 
+    // CNPJ estruturado opcional (#3188): valida + hash com salt do projeto.
+    // NUNCA armazenar CNPJ em plaintext — apenas hash + mascara.
+    const cnpjInput = optionalTrimmed(request.data?.cnpj, 32);
+    let cnpjHash: string | null = null;
+    let cnpjMasked: string | null = null;
+    if (cnpjInput) {
+      if (!isValidCnpj(cnpjInput)) {
+        throw new HttpsError("invalid-argument", "CNPJ inválido");
+      }
+      const salt = getCpfSalt();
+      cnpjHash = hashCnpj(cnpjInput, salt);
+      cnpjMasked = maskCnpj(cnpjInput);
+    }
+
     const ref = db().collection(COLLECTION).doc(ownerUid);
     const currentSnap = await ref.get();
     const current = currentSnap.data() || null;
@@ -246,10 +290,46 @@ export const requestVenueOwnerOnboarding = secureCallable<
       source: "SELF_SERVICE",
     };
 
-    await ref.set({
+    const docWrite = {
       created_at: current?.created_at ?? FieldValue.serverTimestamp(),
       ...payload,
-    }, {merge: true});
+    };
+
+    if (cnpjHash) {
+      // Transaction: dedup de CNPJ via cnpj_index (mesmo padrao do
+      // cpf_index em auth/verification.ts). Mesmo uid = re-request
+      // idempotente; uid diferente = bloqueia com mensagem generica.
+      const indexRef = db().collection(CNPJ_INDEX_COLLECTION).doc(cnpjHash);
+      const previousHash =
+        typeof current?.cnpj_hash === "string" ? current.cnpj_hash : null;
+      await db().runTransaction(async (tx) => {
+        const indexSnap = await tx.get(indexRef);
+        if (indexSnap.exists && indexSnap.data()?.uid !== ownerUid) {
+          // Anti-enumeration: nao revelar que o CNPJ ja esta em uso.
+          logger.warn(
+            "[VENUE_ONBOARDING] Duplicate CNPJ attempt blocked — " +
+            `uid=${ownerUid} collided with existing cnpj_index`
+          );
+          throw new HttpsError("already-exists", CNPJ_GENERIC_ERROR);
+        }
+        if (previousHash && previousHash !== cnpjHash) {
+          // Usuario trocou de CNPJ: libera o hash antigo (aponta pro
+          // proprio uid, pois foi escrito por este mesmo fluxo).
+          tx.delete(db().collection(CNPJ_INDEX_COLLECTION).doc(previousHash));
+        }
+        tx.set(indexRef, {
+          uid: ownerUid,
+          created_at: FieldValue.serverTimestamp(),
+        }, {merge: true});
+        tx.set(ref, {
+          ...docWrite,
+          cnpj_hash: cnpjHash,
+          cnpj_masked: cnpjMasked,
+        }, {merge: true});
+      });
+    } else {
+      await ref.set(docWrite, {merge: true});
+    }
     await writeOnboardingEvent({
       ownerUid,
       actorUid: ownerUid,
@@ -317,7 +397,7 @@ export const reviewVenueOwnerOnboarding = secureCallable<
     }
 
     const before = onboardingSnap.data() || {};
-    const update = {
+    const update: Record<string, unknown> = {
       status: decision as OnboardingStatus,
       reviewed_at: FieldValue.serverTimestamp(),
       reviewed_by: adminUid,
@@ -326,6 +406,28 @@ export const reviewVenueOwnerOnboarding = secureCallable<
       updated_at: FieldValue.serverTimestamp(),
       updated_by: adminUid,
     };
+
+    // #3188: REJECTED libera o cnpj_index pra reuso (espelha o cleanup de
+    // cpf_index em auth/account-cleanup.ts). Delete condicionado ao uid do
+    // proprio dono — evita apagar entry re-registrada por outro usuario.
+    const rejectedCnpjHash =
+      decision === "REJECTED" && typeof before.cnpj_hash === "string" ?
+        before.cnpj_hash :
+        null;
+    if (rejectedCnpjHash) {
+      const indexRef =
+        db().collection(CNPJ_INDEX_COLLECTION).doc(rejectedCnpjHash);
+      await db().runTransaction(async (tx) => {
+        const indexSnap = await tx.get(indexRef);
+        if (indexSnap.exists && indexSnap.data()?.uid === ownerUid) {
+          tx.delete(indexRef);
+        }
+      });
+      update.cnpj_hash = null;
+      logger.info(
+        `[VENUE_ONBOARDING] cnpj_index liberado apos REJECTED de ${ownerUid}`
+      );
+    }
 
     if (decision === "APPROVED") {
       const claims = (await admin.auth().getUser(ownerUid)).customClaims || {};

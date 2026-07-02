@@ -1,4 +1,8 @@
 process.env.FUNCTIONS_EMULATOR = "true";
+// Salt de teste para hash de CNPJ (#3188) — minimo 16 chars
+process.env.CPF_SALT = "test-salt-0123456789abcdef";
+
+import {hashCnpj} from "../src/validation/cnpj";
 
 type StoredDoc = Record<string, unknown>;
 
@@ -71,6 +75,17 @@ jest.mock("../src/_db", () => ({
   db: () => ({
     collection: (name: string) => new FakeCollectionRef(name, firestoreStore),
     batch: mockBatch,
+    // Shim de transaction: delega pro fake store (suficiente pro dedup
+    // de cnpj_index — leituras antes de escritas, sem retry/contention).
+    runTransaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn({
+      get: (ref: FakeDocRef) => ref.get(),
+      set: (ref: FakeDocRef, data: StoredDoc, options?: {merge?: boolean}) => {
+        void ref.set(data, options);
+      },
+      delete: (ref: FakeDocRef) => {
+        firestoreStore.delete(ref.path);
+      },
+    }),
   }),
 }));
 
@@ -189,6 +204,124 @@ describe("venue owner onboarding", () => {
         "audit_logs/auto-2",
       ]));
     expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  it("registra cnpj_hash, cnpj_masked e cnpj_index com CNPJ valido (#3188)", async () => {
+    let requestVenueOwnerOnboarding: (request: unknown) => Promise<unknown>;
+    jest.isolateModules(() => {
+      requestVenueOwnerOnboarding =
+        require("../src/admin/venue-owner-onboarding").requestVenueOwnerOnboarding;
+    });
+
+    const result = await requestVenueOwnerOnboarding!({
+      auth: {uid: "player-1", token: {role: "PLAYER"}},
+      data: {
+        contactName: "Jogador Dono",
+        contactEmail: "dono@test.com",
+        termsAccepted: true,
+        businessName: "Arena Teste",
+        cnpj: "11.222.333/0001-81",
+      },
+    }) as {status: string};
+
+    const expectedHash = hashCnpj("11222333000181", process.env.CPF_SALT!);
+    expect(result.status).toBe("IN_REVIEW");
+    expect(firestoreStore.get("venue_owner_onboarding/player-1"))
+      .toMatchObject({
+        status: "IN_REVIEW",
+        cnpj_hash: expectedHash,
+        cnpj_masked: "**.***.***/0001-**",
+      });
+    expect(firestoreStore.get(`cnpj_index/${expectedHash}`))
+      .toMatchObject({uid: "player-1"});
+    // NUNCA armazenar CNPJ em plaintext
+    const doc = firestoreStore.get("venue_owner_onboarding/player-1") || {};
+    expect(JSON.stringify(doc)).not.toContain("11222333000181");
+  });
+
+  it("rejeita CNPJ invalido com invalid-argument (#3188)", async () => {
+    let requestVenueOwnerOnboarding: (request: unknown) => Promise<unknown>;
+    jest.isolateModules(() => {
+      requestVenueOwnerOnboarding =
+        require("../src/admin/venue-owner-onboarding").requestVenueOwnerOnboarding;
+    });
+
+    await expect(requestVenueOwnerOnboarding!({
+      auth: {uid: "player-1", token: {role: "PLAYER"}},
+      data: {
+        contactName: "Jogador Dono",
+        contactEmail: "dono@test.com",
+        termsAccepted: true,
+        cnpj: "11.222.333/0001-82",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+  });
+
+  it("bloqueia CNPJ duplicado de outro uid e permite re-request do mesmo uid (#3188)", async () => {
+    let requestVenueOwnerOnboarding: (request: unknown) => Promise<unknown>;
+    jest.isolateModules(() => {
+      requestVenueOwnerOnboarding =
+        require("../src/admin/venue-owner-onboarding").requestVenueOwnerOnboarding;
+    });
+
+    const cnpjHash = hashCnpj("11222333000181", process.env.CPF_SALT!);
+    firestoreStore.set(`cnpj_index/${cnpjHash}`, {uid: "outro-uid"});
+
+    // Anti-enumeration: mensagem generica, sem revelar existencia do CNPJ
+    await expect(requestVenueOwnerOnboarding!({
+      auth: {uid: "player-1", token: {role: "PLAYER"}},
+      data: {
+        contactName: "Jogador Dono",
+        contactEmail: "dono@test.com",
+        termsAccepted: true,
+        cnpj: "11.222.333/0001-81",
+      },
+    })).rejects.toMatchObject({code: "already-exists"});
+    expect(firestoreStore.get("venue_owner_onboarding/player-1")).toBeUndefined();
+
+    // Mesmo uid = re-request idempotente
+    firestoreStore.set(`cnpj_index/${cnpjHash}`, {uid: "player-1"});
+    await expect(requestVenueOwnerOnboarding!({
+      auth: {uid: "player-1", token: {role: "PLAYER"}},
+      data: {
+        contactName: "Jogador Dono",
+        contactEmail: "dono@test.com",
+        termsAccepted: true,
+        cnpj: "11.222.333/0001-81",
+      },
+    })).resolves.toMatchObject({status: "IN_REVIEW"});
+    expect(firestoreStore.get(`cnpj_index/${cnpjHash}`))
+      .toMatchObject({uid: "player-1"});
+  });
+
+  it("troca de CNPJ libera o hash antigo do mesmo uid (#3188)", async () => {
+    let requestVenueOwnerOnboarding: (request: unknown) => Promise<unknown>;
+    jest.isolateModules(() => {
+      requestVenueOwnerOnboarding =
+        require("../src/admin/venue-owner-onboarding").requestVenueOwnerOnboarding;
+    });
+
+    const oldHash = hashCnpj("11222333000181", process.env.CPF_SALT!);
+    const newHash = hashCnpj("12345678000195", process.env.CPF_SALT!);
+    firestoreStore.set(`cnpj_index/${oldHash}`, {uid: "player-1"});
+    firestoreStore.set("venue_owner_onboarding/player-1", {
+      status: "IN_REVIEW",
+      cnpj_hash: oldHash,
+    });
+
+    await requestVenueOwnerOnboarding!({
+      auth: {uid: "player-1", token: {role: "PLAYER"}},
+      data: {
+        contactName: "Jogador Dono",
+        contactEmail: "dono@test.com",
+        termsAccepted: true,
+        cnpj: "12.345.678/0001-95",
+      },
+    });
+
+    expect(firestoreStore.get(`cnpj_index/${oldHash}`)).toBeUndefined();
+    expect(firestoreStore.get(`cnpj_index/${newHash}`))
+      .toMatchObject({uid: "player-1"});
   });
 
   it("valida termos, email e dados minimos da solicitacao", async () => {
@@ -340,6 +473,65 @@ describe("venue owner onboarding", () => {
       }),
     ]));
     expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  it("rejeicao admin libera cnpj_index para reuso (#3188)", async () => {
+    const cnpjHash = hashCnpj("11222333000181", process.env.CPF_SALT!);
+    firestoreStore.set(`cnpj_index/${cnpjHash}`, {uid: "player-1"});
+    firestoreStore.set("venue_owner_onboarding/player-1", {
+      owner_uid: "player-1",
+      status: "IN_REVIEW",
+      cnpj_hash: cnpjHash,
+      cnpj_masked: "**.***.***/0001-**",
+    });
+
+    let reviewVenueOwnerOnboarding: (request: unknown) => Promise<unknown>;
+    jest.isolateModules(() => {
+      reviewVenueOwnerOnboarding =
+        require("../src/admin/venue-owner-onboarding").reviewVenueOwnerOnboarding;
+    });
+
+    await reviewVenueOwnerOnboarding!({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        ownerUid: "player-1",
+        decision: "REJECTED",
+        reason: "Cadastro comercial incompleto",
+      },
+    });
+
+    expect(firestoreStore.get(`cnpj_index/${cnpjHash}`)).toBeUndefined();
+    expect(firestoreStore.get("venue_owner_onboarding/player-1"))
+      .toMatchObject({status: "REJECTED", cnpj_hash: null});
+  });
+
+  it("rejeicao NAO apaga cnpj_index re-registrado por outro uid (#3188)", async () => {
+    const cnpjHash = hashCnpj("11222333000181", process.env.CPF_SALT!);
+    // Entry do index ja pertence a outro usuario (hash stale no doc)
+    firestoreStore.set(`cnpj_index/${cnpjHash}`, {uid: "outro-uid"});
+    firestoreStore.set("venue_owner_onboarding/player-1", {
+      owner_uid: "player-1",
+      status: "IN_REVIEW",
+      cnpj_hash: cnpjHash,
+    });
+
+    let reviewVenueOwnerOnboarding: (request: unknown) => Promise<unknown>;
+    jest.isolateModules(() => {
+      reviewVenueOwnerOnboarding =
+        require("../src/admin/venue-owner-onboarding").reviewVenueOwnerOnboarding;
+    });
+
+    await reviewVenueOwnerOnboarding!({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        ownerUid: "player-1",
+        decision: "REJECTED",
+        reason: "Cadastro comercial incompleto",
+      },
+    });
+
+    expect(firestoreStore.get(`cnpj_index/${cnpjHash}`))
+      .toMatchObject({uid: "outro-uid"});
   });
 
   it("falha revisao quando onboarding ou usuario nao existem", async () => {
