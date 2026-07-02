@@ -179,6 +179,7 @@ sealed class Screen(
     data object Preferences : Screen("preferences", titleResId = R.string.preferences)
     data object ThemeSettings : Screen("theme_settings", titleResId = R.string.theme_settings)
     data object GamificationSettings : Screen("gamification_settings", titleResId = R.string.gamification_settings)
+    data object ConnectedAccounts : Screen("connected_accounts", titleResId = R.string.connected_accounts_title)
     data object Developer : Screen("developer", titleResId = R.string.developer)
     data object LevelJourney : Screen("level_journey", titleResId = R.string.level_journey)
     data object About : Screen("about", titleResId = R.string.about)
@@ -491,6 +492,9 @@ fun AppNavHost(
                 },
                 onGamificationSettingsClick = {
                     navController.navigate(Screen.GamificationSettings.route)
+                },
+                onConnectedAccountsClick = {
+                    navController.navigate(Screen.ConnectedAccounts.route)
                 },
                 onDeveloperMenuClick = {
                     navController.navigate(Screen.Developer.route)
@@ -887,6 +891,18 @@ fun AppNavHost(
                 GamificationSettingsScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.ConnectedAccounts.route) {
+            val viewModel: com.futebadosparcas.ui.settings.ConnectedAccountsViewModel = koinViewModel()
+            SecondaryScreenWrapper(
+                titleResId = Screen.ConnectedAccounts.titleResId,
+                onNavigateBack = { navController.popBackStack() }
+            ) {
+                com.futebadosparcas.ui.settings.ConnectedAccountsScreen(
+                    viewModel = viewModel
                 )
             }
         }

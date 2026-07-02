@@ -4429,4 +4429,22 @@ subir no ranking!</string>
     <string name="main_new_achievement">🏆 Nova conquista: %1$s</string>
     <string name="game_detail_invite_whatsapp_message">⚽ *%1$s*\n\n📅 *%2$s* às *%3$s*\n📍 %4$s\n</string>
 
+    <!-- #3190: Contas conectadas — vincular/desvincular Google -->
+    <string name="connected_accounts_title">Contas conectadas</string>
+    <string name="connected_accounts_subtitle">Gerencie os métodos de login vinculados à sua conta.</string>
+    <string name="connected_accounts_provider_password">Senha (email)</string>
+    <string name="connected_accounts_provider_google">Google</string>
+    <string name="connected_accounts_provider_phone">Telefone</string>
+    <string name="connected_accounts_connected">Conectado</string>
+    <string name="connected_accounts_link_google">Vincular conta Google</string>
+    <string name="connected_accounts_unlink_google">Desvincular Google</string>
+    <string name="connected_accounts_link_success">Conta Google vinculada com sucesso</string>
+    <string name="connected_accounts_unlink_success">Conta Google desvinculada</string>
+    <string name="connected_accounts_link_error">Não foi possível vincular a conta Google</string>
+    <string name="connected_accounts_unlink_error">Não foi possível desvincular a conta Google</string>
+    <string name="connected_accounts_cannot_unlink">Não é possível desvincular o Google sem outro método de login (senha)</string>
+    <string name="connected_accounts_unlink_confirm_title">Desvincular conta Google?</string>
+    <string name="connected_accounts_unlink_confirm_desc">Você poderá entrar apenas com email e senha. Deseja desvincular a conta Google?</string>
+    <string name="auth_error_credential_in_use">Esta conta Google já está vinculada a outra conta. Entre com seu login original e vincule o Google pelo perfil.</string>
+
 </resources>

@@ -38,6 +38,8 @@ object AuthErrorMapper {
             "ERROR_INVALID_LOGIN_CREDENTIALS" -> R.string.auth_error_invalid_credentials
 
             "ERROR_EMAIL_ALREADY_IN_USE" -> R.string.auth_error_email_in_use
+            // #3190: Google já vinculado a outra conta — recovery pelo perfil
+            "ERROR_CREDENTIAL_ALREADY_IN_USE" -> R.string.auth_error_credential_in_use
             "ERROR_TOO_MANY_REQUESTS" -> R.string.auth_error_too_many_requests
             "ERROR_USER_DISABLED" -> R.string.auth_error_user_disabled
             "ERROR_WEAK_PASSWORD" -> R.string.auth_error_weak_password

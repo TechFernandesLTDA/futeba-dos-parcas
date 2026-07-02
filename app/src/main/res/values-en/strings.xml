@@ -247,4 +247,22 @@
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
+
+    <!-- #3190: Connected accounts — Google linking -->
+    <string name="connected_accounts_title">Connected accounts</string>
+    <string name="connected_accounts_subtitle">Manage the login methods linked to your account.</string>
+    <string name="connected_accounts_provider_password">Password (email)</string>
+    <string name="connected_accounts_provider_google">Google</string>
+    <string name="connected_accounts_provider_phone">Phone</string>
+    <string name="connected_accounts_connected">Connected</string>
+    <string name="connected_accounts_link_google">Link Google account</string>
+    <string name="connected_accounts_unlink_google">Unlink Google</string>
+    <string name="connected_accounts_link_success">Google account linked successfully</string>
+    <string name="connected_accounts_unlink_success">Google account unlinked</string>
+    <string name="connected_accounts_link_error">Could not link the Google account</string>
+    <string name="connected_accounts_unlink_error">Could not unlink the Google account</string>
+    <string name="connected_accounts_cannot_unlink">You can\'t unlink Google without another login method (password)</string>
+    <string name="connected_accounts_unlink_confirm_title">Unlink Google account?</string>
+    <string name="connected_accounts_unlink_confirm_desc">You\'ll only be able to sign in with email and password. Unlink the Google account?</string>
+    <string name="auth_error_credential_in_use">This Google account is already linked to another account. Sign in with your original method and link Google from your profile.</string>
 </resources>

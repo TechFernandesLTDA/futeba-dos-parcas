@@ -4,6 +4,7 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
@@ -246,5 +247,65 @@ class AuthRepository constructor(
      */
     fun cancel() {
         authScopeJob.cancel()
+    }
+
+    // ============================================================
+    // #3190: Contas conectadas — vincular/desvincular Google
+    // ============================================================
+
+    /**
+     * Lista os provedores de login vinculados à conta atual
+     * (ex: "password", "google.com", "phone"). Vazio se não logado.
+     */
+    fun getLinkedProviders(): List<String> =
+        auth.currentUser?.providerData?.map { it.providerId } ?: emptyList()
+
+    /**
+     * #3190: Vincula uma conta Google à conta email/senha atual.
+     * @param idToken Google ID token obtido via Credential Manager.
+     * @return Result.success(Unit) em caso de sucesso; Result.failure em
+     *   falha (inclui credential-already-in-use, requires-recent-login, etc.).
+     */
+    suspend fun linkGoogleAccount(idToken: String): Result<Unit> {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            return Result.failure(IllegalStateException("Not authenticated"))
+        }
+        return try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            currentUser.linkWithCredential(credential).await()
+            currentUser.reload().await()
+            // Força refresh do ID token para propagar o novo provedor
+            currentUser.getIdToken(true).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "linkGoogleAccount failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * #3190: Desvincula a conta Google. Guard: só permite se sobrar um
+     * método de login primário (password); telefone NÃO conta como primário.
+     */
+    suspend fun unlinkGoogleAccount(): Result<Unit> {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            return Result.failure(IllegalStateException("Not authenticated"))
+        }
+        val providers = currentUser.providerData.map { it.providerId }
+        val hasPassword = providers.contains("password")
+        if (!hasPassword) {
+            return Result.failure(IllegalStateException("app/require-primary-method"))
+        }
+        return try {
+            currentUser.unlink("google.com").await()
+            currentUser.reload().await()
+            currentUser.getIdToken(true).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "unlinkGoogleAccount failed: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 }
