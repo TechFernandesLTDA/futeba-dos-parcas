@@ -140,6 +140,8 @@ export const requestVenueOwnerOnboarding = httpsCallable<
     phone?: string | null;
     businessName?: string | null;
     commercialDocument?: string | null;
+    /** CNPJ estruturado (apenas dígitos) — opcional, #3188 */
+    cnpj?: string | null;
     notes?: string | null;
     locationIds?: string[];
     termsAccepted?: boolean | null;

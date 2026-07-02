@@ -19,6 +19,7 @@ import {
   Business as BusinessIcon,
 } from '@mui/icons-material';
 import { doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import PageContainer from '../../components/common/PageContainer';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -28,6 +29,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
+import { formatCnpj, isValidCnpj, stripCnpj } from '../../utils/cnpjValidator';
 
 const logger = createLogger('OwnerOnboardingScreen');
 
@@ -38,6 +40,7 @@ interface OnboardingDoc {
   phone?: string;
   businessName?: string;
   commercialDocument?: string;
+  cnpjMasked?: string;
   notes?: string;
   reviewReason?: string;
   submittedAt?: Date | null;
@@ -72,6 +75,7 @@ const statusColor = (status?: VenueOwnerOnboardingStatus): 'default' | 'info' | 
 
 export const OwnerOnboardingScreen: React.FC = () => {
   useDocumentTitle('Onboarding comercial de quadra');
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
@@ -84,6 +88,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [commercialDocument, setCommercialDocument] = useState('');
+  const [cnpj, setCnpj] = useState('');
   const [notes, setNotes] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -105,6 +110,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
             phone: typeof data.phone === 'string' ? data.phone : undefined,
             businessName: typeof data.business_name === 'string' ? data.business_name : undefined,
             commercialDocument: typeof data.commercial_document === 'string' ? data.commercial_document : undefined,
+            cnpjMasked: typeof data.cnpj_masked === 'string' ? data.cnpj_masked : undefined,
             notes: typeof data.notes === 'string' ? data.notes : undefined,
             reviewReason: typeof data.review_reason === 'string' ? data.review_reason : undefined,
             submittedAt: toDate(data.submitted_at),
@@ -129,6 +135,10 @@ export const OwnerOnboardingScreen: React.FC = () => {
     return unsubscribe;
   }, [showError, user]);
 
+  // CNPJ é opcional: submit permitido quando vazio OU válido (#3188)
+  const cnpjDigits = stripCnpj(cnpj);
+  const cnpjInvalid = cnpjDigits.length > 0 && !isValidCnpj(cnpjDigits);
+
   const handleSubmit = async () => {
     if (!contactName.trim()) {
       showError('Informe o nome do responsável.');
@@ -136,6 +146,10 @@ export const OwnerOnboardingScreen: React.FC = () => {
     }
     if (!contactEmail.trim() && !phone.trim()) {
       showError('Informe email ou telefone comercial.');
+      return;
+    }
+    if (cnpjInvalid) {
+      showError(t('ownerOnboarding.cnpjInvalid'));
       return;
     }
     if (!termsAccepted) {
@@ -150,6 +164,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
         phone: phone.trim() || null,
         businessName: businessName.trim() || null,
         commercialDocument: commercialDocument.trim() || null,
+        cnpj: cnpjDigits || null,
         notes: notes.trim() || null,
         termsAccepted: true,
       });
@@ -157,7 +172,13 @@ export const OwnerOnboardingScreen: React.FC = () => {
       setTermsAccepted(false);
     } catch (error) {
       logger.error('Error submitting venue owner onboarding:', error);
-      showError(getFunctionsErrorMessage(error, 'requestVenueOwnerOnboarding', 'Não foi possível enviar a solicitação.'));
+      const code = (error as { code?: string })?.code || '';
+      // Anti-enumeration: mensagem genérica quando o CNPJ colide com outra conta
+      if (code === 'functions/already-exists' || code === 'already-exists') {
+        showError(t('ownerOnboarding.cnpjAlreadyExists'));
+      } else {
+        showError(getFunctionsErrorMessage(error, 'requestVenueOwnerOnboarding', 'Não foi possível enviar a solicitação.'));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -247,12 +268,27 @@ export const OwnerOnboardingScreen: React.FC = () => {
                   inputProps={{ maxLength: 120 }}
                 />
                 <TextField
+                  label={t('ownerOnboarding.cnpjLabel')}
+                  value={cnpj}
+                  onChange={(event) => setCnpj(formatCnpj(event.target.value))}
+                  disabled={submitting || approved || locked}
+                  error={cnpjInvalid}
+                  helperText={
+                    cnpjInvalid
+                      ? t('ownerOnboarding.cnpjInvalid')
+                      : onboarding?.cnpjMasked && !cnpj
+                        ? t('ownerOnboarding.cnpjRegistered', { masked: onboarding.cnpjMasked })
+                        : t('ownerOnboarding.cnpjHelper')
+                  }
+                  inputProps={{ maxLength: 18, inputMode: 'numeric', autoComplete: 'off' }}
+                />
+                <TextField
                   label="Documento comercial (opcional)"
                   value={commercialDocument}
                   onChange={(event) => setCommercialDocument(event.target.value)}
                   disabled={submitting || approved || locked}
                   inputProps={{ maxLength: 64 }}
-                  helperText="Use CNPJ/CPF ou observação que ajude o cadastro comercial."
+                  helperText={t('ownerOnboarding.commercialDocumentHelper')}
                 />
                 <TextField
                   label="Observações para revisão"

@@ -109,6 +109,13 @@ export interface SecureCallableOptions {
    * adicional de audit
    */
   auditLogContext?: AuditLogContextFn;
+
+  /**
+   * Secrets do Firebase Functions necessarios
+   * em runtime (acessiveis via process.env).
+   * Ex: ["CPF_SALT"]
+   */
+  secrets?: string[];
 }
 
 // ==========================================
@@ -149,6 +156,8 @@ export function secureCallable<
     {
       enforceAppCheck: config.appCheck,
       consumeAppCheckToken: config.consumeAppCheckToken,
+      // Secrets declaradas aqui ficam acessiveis via process.env em runtime
+      ...(options.secrets ? {secrets: options.secrets} : {}),
     },
     async (
       request: CallableRequest<TRequest>

@@ -3047,6 +3047,15 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: cnpj_index (lookup de duplicatas CNPJ — #3188)
+    // ============================================
+    // SECURITY: Hash CNPJ -> uid mapping. Apenas Cloud Functions acessa.
+    // Cliente NUNCA pode listar/consultar (vazaria CNPJs cadastrados).
+    match /cnpj_index/{cnpjHash} {
+      allow read, write: if false;
+    }
+
+    // ============================================
     // COLECAO: verification_failures (Fase 6 anti-abuse #449)
     // ============================================
     // SECURITY: Apenas Cloud Functions escrevem. Admins leem para audit.
