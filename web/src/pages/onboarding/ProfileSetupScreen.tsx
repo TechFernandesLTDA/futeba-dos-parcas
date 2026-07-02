@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { recomputeMyProfileClaim } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TeamSelector } from '../../components/team/TeamSelector';
@@ -42,7 +43,7 @@ export const ProfileSetupScreen: React.FC = () => {
   const navigate = useNavigate();
   const goBack = useNavigateBack('/welcome');
   const theme = useTheme();
-  const { firebaseUser, refreshUser } = useAuth();
+  const { firebaseUser, refreshUser, refreshClaims } = useAuth();
   const { showError } = useToast();
 
   const [name, setName] = useState(firebaseUser?.displayName || '');
@@ -99,6 +100,21 @@ export const ProfileSetupScreen: React.FC = () => {
         }
         showError(t('feedback.profile.saveError'));
         return;
+      }
+
+      // #3187: recomputa o claim `profileComplete` no servidor e força refresh
+      // do ID token ANTES de navegar — senão o ProfileGate lê o claim stale do
+      // token cacheado e reabre o modal de perfil incompleto (loop de re-gate).
+      // Falhas são não-fatais: o claim é recomputado lazy em outros pontos.
+      try {
+        await recomputeMyProfileClaim();
+      } catch (recomputeErr) {
+        logger.warn('recomputeMyProfileClaim falhou (não-fatal):', recomputeErr);
+      }
+      try {
+        await refreshClaims();
+      } catch (claimsErr) {
+        logger.warn('Refresh de claims falhou (não-fatal):', claimsErr);
       }
 
       await refreshUser();

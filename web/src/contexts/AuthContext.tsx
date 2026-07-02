@@ -9,6 +9,7 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
+  getAdditionalUserInfo,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where, limit } from 'firebase/firestore';
@@ -18,7 +19,7 @@ import { User } from '../types';
 import type { UserRole } from '../types/user';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
-import { getAuthErrorMessage } from '../utils/firebaseErrors';
+import { getAuthErrorMessage, AppAuthError, APP_AUTH_ERROR_CODES } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +29,13 @@ import { normalizePlayerStats } from '../utils/playerStats';
 const logger = createLogger('AuthContext');
 const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
 const INVITE_REQUIRED_MESSAGE = 'Para criar sua conta, abra um convite de outro membro do Futeba dos Parças.';
+const INVITE_INVALID_MESSAGE = 'Convite inválido ou expirado. Peça um novo convite para quem te chamou.';
+
+// #3187: erros de convite agora carregam `.code` (AppAuthError) — telas mapeiam
+// por código via getAuthErrorMessage. Comparação por código, não por message.
+function isInviteRequiredError(err: unknown): boolean {
+  return (err as { code?: string })?.code === APP_AUTH_ERROR_CODES.inviteRequired;
+}
 
 function normalizeInviteCode(input?: string | null): string {
   return (input || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -201,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!userSnap.exists()) {
           const invitedByCode = normalizeInviteCode(additionalData?.invited_by_code as string | undefined);
           if (!invitedByCode) {
-            throw new Error(INVITE_REQUIRED_MESSAGE);
+            throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
           }
 
           const { displayName, photoURL } = firebaseUser;
@@ -250,7 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (err) {
       logger.error('Error creating user document:', err);
-      if (err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE) {
+      if (isInviteRequiredError(err)) {
         throw err;
       }
       setError(t('feedback.auth.createAccountError'));
@@ -337,7 +345,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         logger.error('Auth state change error:', err);
         if (lastFetchUid === currentUid) {
-          if (err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE) {
+          if (isInviteRequiredError(err)) {
             await signOut(auth).catch((signOutErr) => {
               logger.warn('Falha ao encerrar sessão sem convite:', signOutErr);
             });
@@ -345,8 +353,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           setUser(null);
           setLoading(false);
-          setError(err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE ?
-            INVITE_REQUIRED_MESSAGE :
+          // #3187: erros de convite passam pelo mapper (mensagem acionável i18n)
+          setError(isInviteRequiredError(err) ?
+            getAuthErrorMessage(err, t('feedback.auth.verifyAuthError')) :
             t('feedback.auth.verifyAuthError'));
         }
       }
@@ -370,45 +379,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       addBreadcrumb('auth', 'Falha no login com email/senha', {
         code: (err as { code?: string })?.code,
       });
-      setError((err as Error).message || 'Erro ao fazer login');
+      // #3187: nunca expor mensagem crua do Firebase no estado global de erro
+      setError(getAuthErrorMessage(err, t('auth.loginFailed')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Sign in with Google
+  // #3186: para usuários NOVOS o convite é validado SERVER-SIDE (validateInviteCode)
+  // ANTES de criar o doc — antes só o fluxo email/senha validava, e o gate de
+  // convite podia ser contornado logando com Google.
   const signInWithGoogle = useCallback(async (inviteCode?: string) => {
     setError(null);
     try {
       const normalizedInviteCode = normalizeInviteCode(inviteCode);
       const result = await signInWithPopup(auth, googleProvider);
-      const createdOrLoaded = await createUserDocumentRef.current(
-        result.user,
-        normalizedInviteCode ? {
-          invited_by_code: normalizedInviteCode,
+
+      // Uma única leitura distingue usuário novo (sem doc) de existente.
+      // Existente NÃO passa por checagem de convite; onAuthStateChanged carrega o perfil.
+      const userSnap = await getDoc(doc(db, 'users', result.user.uid));
+      if (!userSnap.exists()) {
+        const isNewAuthUser = getAdditionalUserInfo(result)?.isNewUser === true;
+
+        // Convite ausente/ inválido: remove a conta Auth recém-criada (não deixa
+        // órfã) e encerra a sessão. Se o delete falhar (ex.: requires-recent-login),
+        // ainda assim faz signOut.
+        const cleanupRejectedNewUser = async () => {
+          if (isNewAuthUser) {
+            try {
+              await result.user.delete();
+            } catch (deleteErr) {
+              logger.warn('Falha ao remover conta Auth recém-criada sem convite:', deleteErr);
+            }
+          }
+          await signOut(auth).catch((signOutErr) => {
+            logger.warn('Falha ao encerrar sessão Google sem convite:', signOutErr);
+          });
+        };
+
+        if (!normalizedInviteCode) {
+          await cleanupRejectedNewUser();
+          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
+        }
+
+        let inviteValidation: Awaited<ReturnType<typeof validateInviteCode>>;
+        try {
+          inviteValidation = await validateInviteCode({ inviteCode: normalizedInviteCode });
+        } catch (validationErr) {
+          logger.error('validateInviteCode falhou no fluxo Google:', validationErr);
+          await cleanupRejectedNewUser();
+          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
+        }
+        if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
+          await cleanupRejectedNewUser();
+          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
+        }
+
+        const created = await createUserDocumentRef.current(result.user, {
+          invited_by_code: inviteValidation.data.inviteCode,
           invite_source: 'google',
-        } : undefined,
-      );
-      if (!createdOrLoaded) {
-        await signOut(auth);
-        throw new Error(INVITE_REQUIRED_MESSAGE);
+        });
+        if (!created) {
+          await cleanupRejectedNewUser();
+          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
+        }
       }
     } catch (err: unknown) {
       if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
-      if (err instanceof Error && err.message === INVITE_REQUIRED_MESSAGE) {
-        await signOut(auth).catch((signOutErr) => {
-          logger.warn('Falha ao encerrar sessão Google sem convite:', signOutErr);
-        });
-      }
-      // FIX #942: tratar account-exists-with-different-credential explicitamente
-      // (ex: usuário tentou login via Google mas já tem conta com email/senha)
-      if (err instanceof FirebaseError) {
-        setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
-      } else {
-        setError(err instanceof Error ? err.message : 'Erro ao fazer login com Google');
-      }
+      // FIX #942 + #3187: sempre mapear pelo código (inclui account-exists-with-
+      // different-credential e os códigos app/invite-*) — nunca mensagem crua.
+      setError(getAuthErrorMessage(err, t('auth.googleLoginFailed')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Sign up with email/password
   const signUp = useCallback(async (email: string, password: string, name: string, inviteCode?: string) => {
@@ -416,12 +459,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const normalizedInviteCode = normalizeInviteCode(inviteCode);
       if (!normalizedInviteCode) {
-        throw new Error(INVITE_REQUIRED_MESSAGE);
+        throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
       }
 
       const inviteValidation = await validateInviteCode({ inviteCode: normalizedInviteCode });
       if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
-        throw new Error('Convite inválido ou expirado. Peça um novo convite para quem te chamou.');
+        throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
       }
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -441,10 +484,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         invite_source: 'email_password',
       });
     } catch (err) {
-      setError((err as Error).message || 'Erro ao criar conta');
+      // #3187: mapeia por código (inclui app/invite-*) — nunca mensagem crua
+      setError(getAuthErrorMessage(err, t('auth.registerFailed')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Logout
   const logout = useCallback(async () => {
@@ -457,10 +501,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Limpa breadcrumbs após logout — próxima sessão começa limpa
       clearBreadcrumbs();
     } catch (err) {
-      setError((err as Error).message || 'Erro ao sair');
+      setError(getAuthErrorMessage(err, t('feedback.auth.logoutError')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Reset password
   const resetPassword = useCallback(async (email: string) => {
@@ -478,10 +522,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.clear();
       }
     } catch (err) {
-      setError((err as Error).message || 'Erro ao enviar email de recuperação');
+      setError(getAuthErrorMessage(err, t('feedback.auth.resetPasswordError')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Refresh user data
   // FIX #1567: não wipa user=null em falha — mantém estado anterior e seta erro

@@ -241,10 +241,25 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
 
     const inviter = await findInviterByCode(inviteCode);
     if (!inviter) {
+      // #3187: antes era um no-op silencioso — contas criadas com codigo
+      // desconhecido ficavam invisiveis. Marca o doc com invite_status pra
+      // ficar queryavel em auditoria. NAO deleta a conta server-side
+      // (blocking functions fora de escopo — tracked #940).
       logger.warn("Invalid app invite code on user creation", {
         userId,
         inviteCode,
       });
+      try {
+        await db()
+          .collection("users")
+          .doc(userId)
+          .set({invite_status: "INVALID_CODE"}, {merge: true});
+      } catch (markErr) {
+        logger.error("Failed to mark user with INVALID_CODE invite status", {
+          userId,
+          markErr,
+        });
+      }
       return;
     }
 

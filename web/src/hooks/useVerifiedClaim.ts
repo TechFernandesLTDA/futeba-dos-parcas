@@ -8,7 +8,7 @@ const logger = createLogger('useVerifiedClaim');
  * Hook compartilhado para checar o custom claim `verified` do ID token.
  *
  * #2185: lógica unificada — antes estava duplicada em App.tsx (useVerifiedClaim
- * interno) e VerificationBanner.tsx, podendo divergir.
+ * interno) e no antigo VerificationBanner.tsx (removido em #3187), podendo divergir.
  *
  * Retorna:
  * - `null` enquanto aguarda a resolução do token (ou sem usuário);

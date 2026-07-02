@@ -27,6 +27,8 @@ vi.mock('firebase/auth', () => ({
   sendPasswordResetEmail: (...args: any[]) => mockSendPasswordResetEmail(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateProfile: (...args: any[]) => mockUpdateProfile(...args),
+  // #3186: fluxo Google usa isNewUser pra decidir se deleta conta Auth rejeitada
+  getAdditionalUserInfo: vi.fn(() => ({ isNewUser: false })),
   GoogleAuthProvider: vi.fn(),
 }));
 

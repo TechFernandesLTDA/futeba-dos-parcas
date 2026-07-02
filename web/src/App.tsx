@@ -52,7 +52,6 @@ import {
 // Splash & Onboarding
 const SplashScreen = lazy(() => import('./pages/splash/SplashScreen').then(m => ({ default: m.SplashScreen })));
 const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
-import { VerificationBanner } from './components/auth/VerificationBanner';
 import { useTranslation } from 'react-i18next';
 import type { User as FirebaseUser } from 'firebase/auth';
 const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
@@ -818,16 +817,17 @@ function App() {
                 </CommandPaletteBoundary>
               )}
               <ShortcutsDialog open={shortcutsOpen} onClose={closeShortcuts} />
+              {/* #3187: VerificationBanner (grace period) removido — código morto:
+                  ProtectedRoute redireciona users !verified pro onboarding
+                  incondicionalmente, então o banner nunca era exibido. */}
               {isDesktop ? (
                 <>
-                  <VerificationBanner />
                   <RouteAnnouncer />
                   <SafeScreen />
                   <ConnectionStatusWrapper />
                 </>
               ) : (
                 <MobileShell>
-                  <VerificationBanner />
                   <RouteAnnouncer />
                   <Box>
                     <SafeScreen />

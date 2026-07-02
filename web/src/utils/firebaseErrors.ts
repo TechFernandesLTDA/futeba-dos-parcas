@@ -7,6 +7,34 @@
 
 import { logError } from './errorLogger';
 
+/**
+ * Códigos de erro de auth do PRÓPRIO app (não são do Firebase).
+ * #3187: erros de convite lançados pelo AuthContext precisam de `.code`
+ * para que as telas consigam mapeá-los em mensagens acionáveis —
+ * antes eram Error message-only e caíam no fallback genérico.
+ */
+export const APP_AUTH_ERROR_CODES = {
+  inviteRequired: 'app/invite-required',
+  inviteInvalid: 'app/invite-invalid',
+} as const;
+
+/**
+ * Erro de auth do app com `.code` mapeável por getAuthErrorMessage.
+ * A `message` já é a string PT-BR exibida ao usuário (passada no constructor
+ * pelo AuthContext) — getAuthErrorMessage a retorna diretamente, sem acoplar
+ * este util ao singleton i18n (que quebraria testes que mockam react-i18next
+ * sem initReactI18next).
+ */
+export class AppAuthError extends Error {
+  code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'AppAuthError';
+    this.code = code;
+  }
+}
+
 const FIREBASE_AUTH_ERRORS: Record<string, string> = {
   'auth/invalid-credential': 'Email ou senha inválidos',
   'auth/invalid-email': 'Email inválido',
@@ -54,6 +82,12 @@ const LOG_WORTHY_CODES = new Set([
  */
 export function getAuthErrorMessage(error: unknown, fallback?: string): string {
   const code = (error as { code?: string })?.code || '';
+  // AppAuthError já carrega a mensagem PT-BR no constructor (ex.: convite
+  // obrigatório/inválido). Retorná-la diretamente evita importar o singleton
+  // i18n neste util — quebra testes que mockam react-i18next parcialmente.
+  if (code.startsWith('app/') && error instanceof AppAuthError && error.message) {
+    return error.message;
+  }
   return FIREBASE_AUTH_ERRORS[code] || fallback || 'Erro inesperado. Tente novamente';
 }
 
