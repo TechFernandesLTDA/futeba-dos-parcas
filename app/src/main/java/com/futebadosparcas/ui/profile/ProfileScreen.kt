@@ -85,6 +85,7 @@ fun ProfileScreen(
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
     onGamificationSettingsClick: () -> Unit,
+    onConnectedAccountsClick: () -> Unit,
     onDeveloperMenuClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
@@ -122,6 +123,7 @@ fun ProfileScreen(
                 onMyLocationsClick = onMyLocationsClick,
                 onManageLocationsClick = onManageLocationsClick,
                 onGamificationSettingsClick = onGamificationSettingsClick,
+                onConnectedAccountsClick = onConnectedAccountsClick,
                 onDeveloperMenuClick = onDeveloperMenuClick,
                 onLogoutClick = onLogoutClick,
                 onAvatarClick = {
@@ -158,6 +160,7 @@ fun ProfileScreen(
                 onMyLocationsClick = onMyLocationsClick,
                 onManageLocationsClick = onManageLocationsClick,
                 onGamificationSettingsClick = onGamificationSettingsClick,
+                onConnectedAccountsClick = onConnectedAccountsClick,
                 onDeveloperMenuClick = onDeveloperMenuClick,
                 onLogoutClick = onLogoutClick,
                 onAvatarClick = {
@@ -213,6 +216,7 @@ private fun ProfileContent(
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
     onGamificationSettingsClick: () -> Unit,
+    onConnectedAccountsClick: () -> Unit,
     onDeveloperMenuClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onAvatarClick: () -> Unit
@@ -335,7 +339,8 @@ private fun ProfileContent(
                 onNotificationsClick = onNotificationsClick,
                 onSettingsClick = onSettingsClick,
                 onSchedulesClick = onSchedulesClick,
-                onAboutClick = onAboutClick
+                onAboutClick = onAboutClick,
+                onConnectedAccountsClick = onConnectedAccountsClick
             )
         }
 
@@ -1057,7 +1062,8 @@ private fun SettingsSection(
     onNotificationsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onSchedulesClick: () -> Unit,
-    onAboutClick: () -> Unit
+    onAboutClick: () -> Unit,
+    onConnectedAccountsClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1075,6 +1081,13 @@ private fun SettingsSection(
                 icon = Icons.Default.Settings,
                 title = stringResource(R.string.profile_section_preferences),
                 onClick = onSettingsClick
+            )
+            HorizontalDivider()
+            // #3190: Contas conectadas — vincular/desvincular Google
+            SettingsMenuItem(
+                icon = Icons.Default.Link,
+                title = stringResource(R.string.connected_accounts_title),
+                onClick = onConnectedAccountsClick
             )
             HorizontalDivider()
             SettingsMenuItem(

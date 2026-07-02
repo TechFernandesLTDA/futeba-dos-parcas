@@ -314,6 +314,13 @@ val viewModelKoinModule = module {
         )
     }
 
+    // #3190: Contas conectadas — vincular/desvincular Google
+    viewModel {
+        com.futebadosparcas.ui.settings.ConnectedAccountsViewModel(
+            authRepository = get<AndroidAuthRepository>()
+        )
+    }
+
     viewModel {
         SchedulesViewModel(
             scheduleRepository = get(),

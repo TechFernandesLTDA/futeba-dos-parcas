@@ -79,6 +79,15 @@ class AuthErrorMapperTest {
         assertEquals(R.string.auth_error_email_in_use, result)
     }
 
+    // #3190: Google já vinculado a outra conta — recovery pelo perfil
+    @Test
+    fun mapAuthError_credentialAlreadyInUse_returnsCredentialInUse() {
+        val result = AuthErrorMapper.mapAuthError(
+            FirebaseAuthException("ERROR_CREDENTIAL_ALREADY_IN_USE", "credential in use")
+        )
+        assertEquals(R.string.auth_error_credential_in_use, result)
+    }
+
     @Test
     fun mapAuthError_tooManyRequests_returnsTooManyRequests() {
         val result = AuthErrorMapper.mapAuthError(
