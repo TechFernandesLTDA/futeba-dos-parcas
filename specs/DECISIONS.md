@@ -658,4 +658,21 @@ issues #2515/#2516/#2517; regressão de #2153; paridade com #611/#626.
 
 ---
 
+## 2026-07-01 — Auth Overhaul: CNPJ por-request (não em users), Google linking client-only, grace banner removido (épico #3183)
+
+**Contexto:** Auditoria completa de login/onboarding (4 agentes, web+Android+iOS+functions+rules) originou o épico #3183 (spec `SPEC_FEATURE_AUTH_OVERHAUL_CNPJ_GOOGLE_LINK.md`). Três decisões de design:
+
+**1. CNPJ vive no request de onboarding comercial, não no doc `users`.**
+CNPJ é PII empresarial e só é relevante no fluxo `venue_owner_onboarding`. Segue o padrão do CPF (decisão #1311): armazenado como hash (SHA-256 + `CPF_SALT` reutilizado, com prefixo de domínio `cnpj:` no input para evitar colisão de espaço com hashes de CPF) + `cnpj_index/{hash}` deny-all para unicidade transacional. Alternativa rejeitada: campo em `users` (amplia superfície de PII já problemática — #2630).
+
+**2. Google account linking é 100% client-side (Firebase Auth nativo).**
+`linkWithPopup`/`linkWithCredential` mantêm o mesmo uid — zero mudança em Firestore/functions. Guard de desvinculação: só permite `unlink('google.com')` se restar provedor `password`; telefone não conta como método primário de login. Alternativa rejeitada: merge server-side de contas distintas (já existe `requestAccountMerge` manual para colisão de telefone; escopo separado).
+
+**3. Grace-period banner de verificação removido.**
+`VerificationBanner` (countdown até 2026-08-03) era código morto: `ProtectedRoute` já redireciona `verified===false` incondicionalmente desde a Fase 5 do enforcement (#448). O hard gate é a política vigente; manter o banner só gerava mensagem contraditória.
+
+**Relacionado:** épico #3183, issues #3184-#3191, `specs/SPEC_FEATURE_AUTH_OVERHAUL_CNPJ_GOOGLE_LINK.md`, decisões #1311 e #3137.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
