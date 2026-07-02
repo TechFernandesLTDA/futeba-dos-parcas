@@ -240,7 +240,6 @@ const ACTIVE_GAME_STATUSES = new Set(["SCHEDULED", "CONFIRMED", "LIVE"]);
 const FINISHED_GAME_STATUSES = new Set(["FINISHED"]);
 const BILLING_SUMMARY_PAGE_SIZE = 500;
 const BILLING_SUMMARY_PAYMENT_CONCURRENCY = 25;
-const BILLING_AUTOMATION_LOCATION_LIMIT = 500;
 const DEFAULT_BILLING_GRACE_DAYS = 5;
 const DEFAULT_BILLING_SUSPENSION_DAYS = 15;
 const LOCATION_SUBCOLLECTIONS = [
@@ -1171,6 +1170,40 @@ async function fetchAllBillingSummaryLocationDocs(): Promise<
 }
 
 /**
+ * Carrega todas as quadras paginando por documentId para a automação de
+ * cobrança (processLocationBillingAutomation). Sem cap silencioso — mesmo
+ * padrão de fetchAllBillingSummaryLocationDocs (#3200).
+ * @return {Promise<Array<FirebaseFirestore.QueryDocumentSnapshot>>} Docs.
+ */
+async function fetchAllLocationDocsForBilling(): Promise<
+  Array<FirebaseFirestore.QueryDocumentSnapshot>
+> {
+  const docs: Array<FirebaseFirestore.QueryDocumentSnapshot> = [];
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+
+  while (true) {
+    let query: FirebaseFirestore.Query = db()
+      .collection("locations")
+      .orderBy(FieldPath.documentId())
+      .limit(BILLING_SUMMARY_PAGE_SIZE);
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+    const snapshot = await query.get();
+    docs.push(...snapshot.docs);
+    if (snapshot.size < BILLING_SUMMARY_PAGE_SIZE) {
+      break;
+    }
+    lastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+    if (!lastDoc) {
+      break;
+    }
+  }
+
+  return docs;
+}
+
+/**
  * Soma pagamentos do periodo filtrando no Firestore e limitando ao ciclo.
  * @param {string} locationId ID da quadra.
  * @param {string} periodKey Periodo AAAA-MM.
@@ -1230,10 +1263,9 @@ export async function processLocationBillingAutomation(params?: {
     requirePeriodKey(params.periodKey) :
     billingPeriodKeyForDate(now);
   const actorUserId = params?.actorUserId || "system:billing-automation";
-  const locationsSnapshot = await db()
-    .collection("locations")
-    .limit(BILLING_AUTOMATION_LOCATION_LIMIT)
-    .get();
+  // #3200: paginar por documentId para processar TODAS as quadras cobráveis,
+  // sem cap silencioso. Mesmo padrão de fetchAllBillingSummaryLocationDocs.
+  const allLocationDocs = await fetchAllLocationDocsForBilling();
   const result: LocationBillingAutomationResult = {
     periodKey,
     processedLocations: 0,
@@ -1248,7 +1280,7 @@ export async function processLocationBillingAutomation(params?: {
     ledgerEntriesCreated: 0,
   };
 
-  for (const doc of locationsSnapshot.docs) {
+  for (const doc of allLocationDocs) {
     const locationId = doc.id || doc.ref?.id;
     const locData = doc.data() || {};
     if (!locationId) {

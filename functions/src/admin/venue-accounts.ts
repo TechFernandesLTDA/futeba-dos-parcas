@@ -422,8 +422,11 @@ async function persistVenueAccount(params: {
       publicationStatus: data.publication_status,
       isVerified: data.is_verified,
       fieldCount: data.field_count,
-      activeFieldCount: data.venue_account_active_fields_count ??
-        data.active_field_count,
+      // #3199: usar active_field_count (valor por-quadra).
+      // venue_account_active_fields_count é o total AGREGADO da conta
+      // denormalizado em cada quadra — usá-lo aqui realimenta o loop
+      // (metrics × Nº quadras) e infla a cobrança FIELD_COUNT.
+      activeFieldCount: data.active_field_count,
       hasActiveFields: data.has_active_fields,
       monthlyFeeCents: data.monthly_fee_cents,
     });
