@@ -10,6 +10,8 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   getAdditionalUserInfo,
+  linkWithPopup,
+  unlink,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where, limit } from 'firebase/firestore';
@@ -141,6 +143,19 @@ interface AuthContextType {
    * Útil para chamar após etapas de onboarding (verificação de telefone/CPF).
    */
   refreshClaims: () => Promise<void>;
+
+  /**
+   * #3189: Vincula uma conta Google à conta email/senha atual via linkWithPopup.
+   * Lança FirebaseError em falhas (auth/credential-already-in-use se o Google
+   * já pertence a outra conta; auth/popup-* ; auth/requires-recent-login).
+   */
+  linkGoogleAccount: () => Promise<void>;
+
+  /**
+   * #3189: Desvincula a conta Google. Guard: só permite se restar um método
+   * de login primário (password) — telefone NÃO conta como primário.
+   */
+  unlinkGoogleAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -615,6 +630,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, refreshUser, t]);
 
+  // #3189: Vincular conta Google a uma conta email/senha existente.
+  const linkGoogleAccount = useCallback(async () => {
+    const currentUser = firebaseUserRef.current;
+    if (!currentUser) return;
+    try {
+      await linkWithPopup(currentUser, googleProvider);
+      // Recarrega o FirebaseUser para refletir o novo provider em providerData.
+      await currentUser.reload();
+      setFirebaseUser({ ...currentUser } as FirebaseUser);
+    } catch (err) {
+      // Popup fechado pelo usuário não é erro — silencioso (padrão do projeto).
+      if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
+      logger.error('Error linking Google account:', err);
+      throw err;
+    }
+  }, []);
+
+  // #3189: Desvincular conta Google. Guard: nunca deixar a conta sem método
+  // de login primário (telefone não conta como primário).
+  const unlinkGoogleAccount = useCallback(async () => {
+    const currentUser = firebaseUserRef.current;
+    if (!currentUser) return;
+    const providers = currentUser.providerData.map((p) => p.providerId);
+    const hasPassword = providers.includes('password');
+    if (!hasPassword) {
+      // Sem fallback de login por senha — bloqueia o desvinculamento.
+      throw new Error('app/require-primary-method');
+    }
+    try {
+      await unlink(currentUser, 'google.com');
+      await currentUser.reload();
+      setFirebaseUser({ ...currentUser } as FirebaseUser);
+    } catch (err) {
+      logger.error('Error unlinking Google account:', err);
+      throw err;
+    }
+  }, []);
+
   const value = useMemo<AuthContextType>(() => ({
     firebaseUser,
     user,
@@ -630,7 +683,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updatingProfile,
     refreshUser,
     refreshClaims,
-  }), [firebaseUser, user, loading, error, updatingProfile, signIn, signInWithGoogle, signUp, logout, resetPassword, updateUserProfile, refreshUser, refreshClaims]);
+    linkGoogleAccount,
+    unlinkGoogleAccount,
+  }), [firebaseUser, user, loading, error, updatingProfile, signIn, signInWithGoogle, signUp, logout, resetPassword, updateUserProfile, refreshUser, refreshClaims, linkGoogleAccount, unlinkGoogleAccount]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
