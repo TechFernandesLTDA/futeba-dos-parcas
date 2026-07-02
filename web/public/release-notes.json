@@ -1,7 +1,34 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-01T18:40:49.893Z",
+  "generatedAt": "2026-07-02T07:21:53.139Z",
   "notes": [
+    {
+      "version": "1.45.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-02",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "**Auth & Onboarding Overhaul**: CNPJ para donos de quadra, contas conectadas (Google) e correções de login/convite.",
+      "highlights": [],
+      "added": [
+        "**CNPJ no onboarding de dono de quadra**: novo campo CNPJ com máscara `99.999.999/9999-99` e validação, substituindo o texto livre de \"Documento comercial\". Obrigatório para empresas; opcional para pessoa física.",
+        "**Contas conectadas**: nova seção em Configurações permite vincular e desvincular sua conta Google à sua conta email/senha. Desvincular só é permitido se você tiver uma senha definida (nunca deixa a conta sem login primário)."
+      ],
+      "improved": [],
+      "fixed": [
+        "**Convite bypassável via Google corrigido**: o cadastro via Google agora valida o convite no servidor antes de criar a conta — antes era possível contornar o gate de convite logando com Google.",
+        "**Mensagens de erro de login limpas**: erros de autenticação agora mostram mensagens amigáveis em PT-BR em vez do texto cru do Firebase. Login com senha errada, Google, recuperação de senha e criação de conta todos mapeados.",
+        "**Setup de perfil não reabre mais**: após salvar o perfil no onboarding, o app não reabre mais o modal de perfil incompleto (o claim `profileComplete` é recomputado antes de navegar).",
+        "**Verificação de CPF com auditoria correta**: falhas de verificação recusadas pelo servidor agora são auditadas com a razão certa (antes eram classificadas como formato inválido)."
+      ],
+      "issueRefs": [
+        3186,
+        3187,
+        3188,
+        3189
+      ]
+    },
     {
       "version": "1.44.3",
       "buildNumber": null,

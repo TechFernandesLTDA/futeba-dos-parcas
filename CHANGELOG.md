@@ -79,6 +79,30 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.45.0] - 2026-07-02
+
+#### Adicionado
+- `web/src/utils/cnpjValidator.ts`: validador CNPJ (mod-11), máscara progressiva, strip — sincronizado com `functions/src/validation/cnpj.ts` e `shared/.../CnpjValidator.kt` (3 camadas).
+- `web/src/components/settings/ConnectedAccounts.tsx`: seção de contas conectadas (link/unlink Google via `linkWithPopup`/`unlink`, guard de método primário, dialog de confirmação, loading in-place).
+- `AuthContext`: `linkGoogleAccount`/`unlinkGoogleAccount`; `validateInviteCode` server-side no fluxo Google com cleanup de conta Auth rejeitada; `AppAuthError` + códigos `app/invite-*`.
+- `firebaseErrors`: mapeamento `auth/credential-already-in-use` (recovery) + `app/*` codes.
+
+#### Corrigido
+- `AuthContext.signInWithGoogle`: valida convite server-side antes de criar doc; remove conta Auth órfã se rejeitada (#3186).
+- `ProfileSetupScreen`: `recomputeMyProfileClaim` + `refreshClaims` antes de navegar (fix re-gate loop, #3187).
+- `AuthContext.setError`: sempre mapeado via `getAuthErrorMessage` (nunca mensagem crua).
+- `CpfVerificationScreen`: erro `app/cpf-verification-failed` para auditoria precisa.
+- `RegisterScreen`: min-length unificado em 2 via `validateName`.
+- `OwnerOnboardingScreen`: campo CNPJ estruturado + mapeamento anti-enumeration de CNPJ duplicado.
+- `VerificationBanner` removido (código morto).
+
+#### Segurança
+- `cnpj_index/{hash}` deny-all em `firestore.rules` (acesso só via Cloud Functions).
+- CNPJ nunca armazenado em plaintext (hash SHA-256 + salt + prefixo `cnpj:`).
+- Anti-enumeração preservada em convites e CNPJ duplicado (mensagens genéricas).
+
+_Issues: #3186, #3187, #3188, #3189 · PRs: #3194, #3195, #3196_
+
 ### [1.44.3] - 2026-07-01
 
 #### Corrigido
@@ -770,6 +794,25 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.4.0] - 2026-07-02
+
+#### Adicionado
+- `functions/src/validation/cnpj.ts`: `isValidCnpj` (mod-11 c/ pesos CNPJ), `stripCnpj`, `hashCnpj` (SHA-256 + `CPF_SALT` + prefixo `cnpj:` para evitar colisão cross-domain com hashes de CPF), `maskCnpj`.
+- `venue-owner-onboarding.ts`: campo `cnpj?` opcional validado server-side; transação verifica `cnpj_index/{hash}` (mesmo uid = idempotente; uid diferente = bloqueia com mensagem genérica anti-enumeration); troca de CNPJ libera o hash antigo; `REJECTED` libera `cnpj_index` para reuso (delete condicionado ao uid dono). Armazena apenas `cnpj_hash` + `cnpj_masked` (nunca plaintext).
+- `secure-callable-wrapper.ts`: opção `secrets?: string[]` para declarar secrets do Firebase Functions (acessíveis via `process.env` em runtime). `requestVenueOwnerOnboarding` declara `CPF_SALT`.
+- `firestore.rules`: `cnpj_index/{cnpjHash}` deny-all (acesso só via Cloud Functions).
+
+#### Corrigido
+- `auth/invite-code.ts` `onUserCreatedProcessInvite`: código desconhecido marca `invite_status: INVALID_CODE` no doc do usuário (auditável) em vez de no-op silencioso. Blocking functions fora de escopo (#940).
+
+#### Segurança
+- CNPJ nunca em plaintext; hash com salt + prefixo de domínio.
+- Anti-enumeração: CNPJ duplicado de outra conta retorna mensagem genérica (não revela existência).
+- `cnpj_index` deny-all no cliente.
+- Requer `CPF_SALT` secret configurado (`firebase functions:secrets:set CPF_SALT`) — já usado pelo fluxo de CPF, reutilizado para CNPJ com prefixo de domínio.
+
+_Issues: #3186, #3187, #3188 · PRs: #3194, #3195_
 
 ### [1.3.0] - 2026-07-01
 
