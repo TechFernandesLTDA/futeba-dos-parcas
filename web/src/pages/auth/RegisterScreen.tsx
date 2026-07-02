@@ -33,6 +33,7 @@ import { useTheme, useMediaQuery, alpha } from '@mui/material';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
+import { validateName } from '../../utils/validation';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { AppLogo } from '../../components/common/AppLogo';
@@ -122,8 +123,10 @@ export function RegisterScreen() {
     if (!inviteCodeVal) errs.inviteCode = t('auth.errorInviteRequired');
     else if (!/^[A-Z0-9]{6,10}$/.test(inviteCodeVal)) errs.inviteCode = t('auth.errorInviteInvalidFormat');
 
+    // #3187: validateName (utils/validation.ts) é a fonte única de verdade
+    // do tamanho mínimo (2) — antes divergia (3 aqui vs 2 no util).
     if (!name.trim()) errs.name = t('auth.errorEnterName');
-    else if (name.trim().length < 3) errs.name = t('auth.errorNameMinLength');
+    else if (!validateName(name).valid) errs.name = t('auth.errorNameMinLength');
 
     if (!emailVal) errs.email = t('auth.errorEnterEmail');
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) errs.email = t('auth.errorInvalidEmail');
@@ -312,7 +315,7 @@ export function RegisterScreen() {
               error={!!fieldErrors.name}
               helperText={fieldErrors.name}
               disabled={loading}
-              inputProps={{ autoComplete: 'name', maxLength: 100 }}
+              inputProps={{ autoComplete: 'name', maxLength: 50 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

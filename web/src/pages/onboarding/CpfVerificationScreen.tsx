@@ -186,7 +186,11 @@ export const CpfVerificationScreen: React.FC = () => {
       logger.info('Calling verifyCpf', { uid: firebaseUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });
       const verifyResult = await verifyCpf({ cpf: stripCpf(cpf) });
       if (!verifyResult.data.success) {
-        throw new Error(t('onboarding.verifyFailed'));
+        // #3187: erro com código próprio — antes era message-only (code undefined),
+        // caía no errorGeneric e era auditado como invalid_format (razão errada).
+        const verifyFailure = new Error(t('onboarding.verifyFailed')) as Error & { code?: string };
+        verifyFailure.code = 'app/cpf-verification-failed';
+        throw verifyFailure;
       }
       await setUserVerified({});
 
@@ -247,7 +251,10 @@ export const CpfVerificationScreen: React.FC = () => {
 
       let userMsg = t('onboarding.errorGeneric');
 
-      if (code === 'functions/already-exists') {
+      if (code === 'app/cpf-verification-failed') {
+        // #3187: verifyCpf respondeu success:false — mensagem específica
+        userMsg = t('onboarding.verifyFailed');
+      } else if (code === 'functions/already-exists') {
         userMsg = t('onboarding.errorCpfInUse');
       } else if (code === 'functions/invalid-argument') {
         userMsg = t('onboarding.errorInvalidCpf');

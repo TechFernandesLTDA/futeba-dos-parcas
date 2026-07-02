@@ -5,7 +5,39 @@
  * persistidos via logError para debug posterior.
  */
 
+import i18n from '../i18n';
 import { logError } from './errorLogger';
+
+/**
+ * Códigos de erro de auth do PRÓPRIO app (não são do Firebase).
+ * #3187: erros de convite lançados pelo AuthContext precisam de `.code`
+ * para que as telas consigam mapeá-los em mensagens acionáveis —
+ * antes eram Error message-only e caíam no fallback genérico.
+ */
+export const APP_AUTH_ERROR_CODES = {
+  inviteRequired: 'app/invite-required',
+  inviteInvalid: 'app/invite-invalid',
+} as const;
+
+/** Erro de auth do app com `.code` mapeável por getAuthErrorMessage. */
+export class AppAuthError extends Error {
+  code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'AppAuthError';
+    this.code = code;
+  }
+}
+
+/**
+ * Mapeia códigos `app/*` para chaves i18n (mensagens acionáveis).
+ * Usa i18n.t direto (este módulo não é um componente React).
+ */
+const APP_AUTH_ERROR_I18N_KEYS: Record<string, string> = {
+  [APP_AUTH_ERROR_CODES.inviteRequired]: 'auth.errorInviteRequiredAccount',
+  [APP_AUTH_ERROR_CODES.inviteInvalid]: 'auth.errorInviteInvalidOrExpired',
+};
 
 const FIREBASE_AUTH_ERRORS: Record<string, string> = {
   'auth/invalid-credential': 'Email ou senha inválidos',
@@ -54,6 +86,10 @@ const LOG_WORTHY_CODES = new Set([
  */
 export function getAuthErrorMessage(error: unknown, fallback?: string): string {
   const code = (error as { code?: string })?.code || '';
+  const appErrorKey = APP_AUTH_ERROR_I18N_KEYS[code];
+  if (appErrorKey) {
+    return i18n.t(appErrorKey);
+  }
   return FIREBASE_AUTH_ERRORS[code] || fallback || 'Erro inesperado. Tente novamente';
 }
 

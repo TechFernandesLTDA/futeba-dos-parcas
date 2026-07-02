@@ -1,5 +1,3 @@
-import type { User as FirebaseUser } from 'firebase/auth';
-
 export type VerificationFailureReason =
   | 'invalid_format'
   | 'invalid_cpf'
@@ -9,11 +7,9 @@ export type VerificationFailureReason =
   | 'code_expired'
   | 'code_incorrect';
 
-export function getNextVerificationPath(
-  firebaseUser: Pick<FirebaseUser, 'phoneNumber'> | null | undefined,
-): '/onboarding/phone' | '/onboarding/cpf' {
-  return firebaseUser?.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
-}
+// #3187: getNextVerificationPath removido — único consumidor era o
+// VerificationBanner (código morto deletado); ProtectedRoute em App.tsx
+// mantém a lógica de redirecionamento equivalente inline.
 
 export function mapCpfVerificationFailureReason(code?: string): VerificationFailureReason {
   switch (code) {
@@ -23,6 +19,11 @@ export function mapCpfVerificationFailureReason(code?: string): VerificationFail
       return 'invalid_cpf';
     case 'functions/resource-exhausted':
       return 'rate_limited';
+    // #3187: verifyCpf com success:false (verificação recusada pelo servidor) —
+    // audita como invalid_cpf (dentro do enum aceito pela callable
+    // logVerificationFailure), distinto de invalid_format.
+    case 'app/cpf-verification-failed':
+      return 'invalid_cpf';
     default:
       return 'invalid_format';
   }

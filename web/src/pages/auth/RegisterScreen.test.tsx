@@ -79,14 +79,15 @@ describe('RegisterScreen', () => {
     expect(await screen.findByText('Digite seu nome')).toBeInTheDocument();
   });
 
-  it('mostra erro para nome curto (< 3 caracteres)', async () => {
+  // #3187: mínimo unificado em 2 caracteres via validateName (utils/validation.ts)
+  it('mostra erro para nome curto (< 2 caracteres)', async () => {
     const user = userEvent.setup();
     renderRegisterScreen();
 
     await user.type(screen.getByLabelText(/código de convite/i), 'ABC123');
-    await user.type(screen.getByLabelText(/nome completo/i), 'AB');
+    await user.type(screen.getByLabelText(/nome completo/i), 'A');
     await user.click(screen.getByRole('button', { name: /criar conta/i }));
-    expect(await screen.findByText('Nome deve ter pelo menos 3 caracteres')).toBeInTheDocument();
+    expect(await screen.findByText('Nome deve ter pelo menos 2 caracteres')).toBeInTheDocument();
   });
 
   it('mostra erro para senhas diferentes', async () => {
