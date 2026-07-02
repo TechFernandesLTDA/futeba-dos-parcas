@@ -20,7 +20,6 @@ import type { UserRole } from '../types/user';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getAuthErrorMessage, AppAuthError, APP_AUTH_ERROR_CODES } from '../utils/firebaseErrors';
-import i18n from '../i18n';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
 import { useTranslation } from 'react-i18next';
@@ -381,10 +380,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         code: (err as { code?: string })?.code,
       });
       // #3187: nunca expor mensagem crua do Firebase no estado global de erro
-      setError(getAuthErrorMessage(err, i18n.t('auth.loginFailed')));
+      setError(getAuthErrorMessage(err, t('auth.loginFailed')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Sign in with Google
   // #3186: para usuários NOVOS o convite é validado SERVER-SIDE (validateInviteCode)
@@ -449,10 +448,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
       // FIX #942 + #3187: sempre mapear pelo código (inclui account-exists-with-
       // different-credential e os códigos app/invite-*) — nunca mensagem crua.
-      setError(getAuthErrorMessage(err, i18n.t('auth.googleLoginFailed')));
+      setError(getAuthErrorMessage(err, t('auth.googleLoginFailed')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Sign up with email/password
   const signUp = useCallback(async (email: string, password: string, name: string, inviteCode?: string) => {
@@ -486,10 +485,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (err) {
       // #3187: mapeia por código (inclui app/invite-*) — nunca mensagem crua
-      setError(getAuthErrorMessage(err, i18n.t('auth.registerFailed')));
+      setError(getAuthErrorMessage(err, t('auth.registerFailed')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Logout
   const logout = useCallback(async () => {
@@ -502,10 +501,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Limpa breadcrumbs após logout — próxima sessão começa limpa
       clearBreadcrumbs();
     } catch (err) {
-      setError(getAuthErrorMessage(err, i18n.t('feedback.auth.logoutError')));
+      setError(getAuthErrorMessage(err, t('feedback.auth.logoutError')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Reset password
   const resetPassword = useCallback(async (email: string) => {
@@ -523,10 +522,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.clear();
       }
     } catch (err) {
-      setError(getAuthErrorMessage(err, i18n.t('feedback.auth.resetPasswordError')));
+      setError(getAuthErrorMessage(err, t('feedback.auth.resetPasswordError')));
       throw err;
     }
-  }, []);
+  }, [t]);
 
   // Refresh user data
   // FIX #1567: não wipa user=null em falha — mantém estado anterior e seta erro

@@ -5,7 +5,6 @@
  * persistidos via logError para debug posterior.
  */
 
-import i18n from '../i18n';
 import { logError } from './errorLogger';
 
 /**
@@ -19,7 +18,13 @@ export const APP_AUTH_ERROR_CODES = {
   inviteInvalid: 'app/invite-invalid',
 } as const;
 
-/** Erro de auth do app com `.code` mapeável por getAuthErrorMessage. */
+/**
+ * Erro de auth do app com `.code` mapeável por getAuthErrorMessage.
+ * A `message` já é a string PT-BR exibida ao usuário (passada no constructor
+ * pelo AuthContext) — getAuthErrorMessage a retorna diretamente, sem acoplar
+ * este util ao singleton i18n (que quebraria testes que mockam react-i18next
+ * sem initReactI18next).
+ */
 export class AppAuthError extends Error {
   code: string;
 
@@ -29,15 +34,6 @@ export class AppAuthError extends Error {
     this.code = code;
   }
 }
-
-/**
- * Mapeia códigos `app/*` para chaves i18n (mensagens acionáveis).
- * Usa i18n.t direto (este módulo não é um componente React).
- */
-const APP_AUTH_ERROR_I18N_KEYS: Record<string, string> = {
-  [APP_AUTH_ERROR_CODES.inviteRequired]: 'auth.errorInviteRequiredAccount',
-  [APP_AUTH_ERROR_CODES.inviteInvalid]: 'auth.errorInviteInvalidOrExpired',
-};
 
 const FIREBASE_AUTH_ERRORS: Record<string, string> = {
   'auth/invalid-credential': 'Email ou senha inválidos',
@@ -86,9 +82,11 @@ const LOG_WORTHY_CODES = new Set([
  */
 export function getAuthErrorMessage(error: unknown, fallback?: string): string {
   const code = (error as { code?: string })?.code || '';
-  const appErrorKey = APP_AUTH_ERROR_I18N_KEYS[code];
-  if (appErrorKey) {
-    return i18n.t(appErrorKey);
+  // AppAuthError já carrega a mensagem PT-BR no constructor (ex.: convite
+  // obrigatório/inválido). Retorná-la diretamente evita importar o singleton
+  // i18n neste util — quebra testes que mockam react-i18next parcialmente.
+  if (code.startsWith('app/') && error instanceof AppAuthError && error.message) {
+    return error.message;
   }
   return FIREBASE_AUTH_ERRORS[code] || fallback || 'Erro inesperado. Tente novamente';
 }

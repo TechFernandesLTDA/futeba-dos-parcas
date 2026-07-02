@@ -11,6 +11,8 @@ const mockSetDoc = vi.hoisted(() => vi.fn());
 const mockUpdateDoc = vi.hoisted(() => vi.fn());
 const mockUpdateProfile = vi.hoisted(() => vi.fn());
 const mockRefreshUser = vi.hoisted(() => vi.fn());
+const mockRefreshClaims = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockRecomputeClaim = vi.hoisted(() => vi.fn().mockResolvedValue({success: true, profileComplete: true}));
 const mockShowError = vi.hoisted(() => vi.fn());
 
 vi.mock('firebase/firestore', () => ({
@@ -29,6 +31,10 @@ vi.mock('../../services/firebase', () => ({
   db: 'mock-db',
 }));
 
+vi.mock('../../services/cloudFunctions', () => ({
+  recomputeMyProfileClaim: (...args: unknown[]) => mockRecomputeClaim(...args),
+}));
+
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     firebaseUser: {
@@ -38,6 +44,7 @@ vi.mock('../../contexts/AuthContext', () => ({
       photoURL: null,
     },
     refreshUser: mockRefreshUser,
+    refreshClaims: mockRefreshClaims,
   }),
 }));
 

@@ -363,4 +363,35 @@ describe("auth/invite-code apadrinhamento", () => {
       Array.from(store.keys()).some((path) => path.startsWith("xp_logs/"))
     ).toBe(false);
   });
+
+  it("onUserCreatedProcessInvite nao propaga erro se o set de INVALID_CODE falhar (#3187)", async () => {
+    // Cobertura do catch (markErr): se o set que marca invite_status falha,
+    // o handler loga e segue — nao deixa a conta invisivel nem quebra o
+    // trigger de criacao de usuario.
+    store.set("users/ghost-fail", {
+      email: "ghost-fail@test.com",
+      invited_by_code: "NOPE99",
+    });
+    const originalSet = store.set.bind(store);
+    const setSpy = jest
+      .spyOn(store, "set")
+      .mockImplementation((path: unknown, data: unknown) => {
+        if (String(path) === "users/ghost-fail") {
+          throw new Error("firestore unavailable");
+        }
+        return originalSet(path, data);
+      });
+
+    await expect(
+      firestoreHandlers["users/{userId}"][1]({
+        params: {userId: "ghost-fail"},
+        data: {data: () => ({email: "ghost-fail@test.com", invited_by_code: "NOPE99"})},
+      })
+    ).resolves.toBeUndefined();
+
+    setSpy.mockRestore();
+    // set falhou: doc permanece sem invite_status, mas handler nao propagou
+    expect(store.get("users/ghost-fail")?.invite_status).toBeUndefined();
+    expect(store.has("app_invite_redemptions/ghost-fail")).toBe(false);
+  });
 });
