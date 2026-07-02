@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ErrorState } from '../../components/common/ErrorState';
+import { ConnectedAccounts } from '../../components/settings/ConnectedAccounts';
 import { deleteAccount } from '../../services/cloudFunctions';
 import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
 import { TeamBadge } from '../../components/team/TeamBadge';
@@ -201,6 +202,9 @@ export const SettingsScreen: React.FC = () => {
                 </Box>
               </CardContent>
             </Card>
+
+            {/* #3189: Contas conectadas — vincular/desvincular Google */}
+            <ConnectedAccounts />
 
             <Card sx={{ mb: 2 }}>
               <CardContent>
