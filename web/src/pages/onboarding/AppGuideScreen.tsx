@@ -13,7 +13,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   Typography,
   Button,
   Stack,
@@ -31,6 +30,7 @@ import { useOnboarding } from '../../hooks/useOnboarding';
 import { useToast } from '../../contexts/ToastContext';
 import { iconSizes } from '../../theme/iconSizes';
 import { componentMaxWidth } from '../../theme/pageTokens';
+import { PageContainer } from '../../components/common/PageContainer';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 
@@ -135,8 +135,8 @@ export const AppGuideScreen: React.FC = () => {
       </Box>
 
       {/* Conteúdo do slide */}
-      <Container
-        maxWidth="sm"
+      <PageContainer
+        maxWidth="focused"
         sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center' }}
       >
         {/* Ícone / ilustração */}
@@ -164,7 +164,7 @@ export const AppGuideScreen: React.FC = () => {
         <Typography variant="body1" color="text.secondary" sx={{ maxWidth: componentMaxWidth.stateMessage, mx: 'auto' }}>
           {t(slide.subtitleKey)}
         </Typography>
-      </Container>
+      </PageContainer>
 
       {/* Controles */}
       <Box sx={{ p: 2, pb: 4 }}>
