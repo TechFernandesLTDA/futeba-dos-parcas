@@ -57,6 +57,7 @@ import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.theme.AppDimensions
 import com.futebadosparcas.ui.theme.systemBarsPadding
 import com.futebadosparcas.ui.theme.surfaceGradient
+import com.futebadosparcas.util.ValidationHelper
 
 @Composable
 fun RegisterScreen(
@@ -133,6 +134,11 @@ private fun RegisterForm(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Erros de validação client-side (#3184) - exibidos inline via supportingText
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -150,10 +156,15 @@ private fun RegisterForm(
         ) {
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = {
+                    name = it
+                    nameError = null
+                },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.auth_name_label)) },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                isError = nameError != null,
+                supportingText = { nameError?.let { Text(it) } },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
@@ -164,10 +175,15 @@ private fun RegisterForm(
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    emailError = null
+                },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.auth_email_label)) },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                isError = emailError != null,
+                supportingText = { emailError?.let { Text(it) } },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next
@@ -178,7 +194,10 @@ private fun RegisterForm(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    passwordError = null
+                },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.auth_password_label)) },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
@@ -191,6 +210,8 @@ private fun RegisterForm(
                     }
                 },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                isError = passwordError != null,
+                supportingText = { passwordError?.let { Text(it) } },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
@@ -200,7 +221,15 @@ private fun RegisterForm(
             )
 
             Button(
-                onClick = { onRegisterWithEmail(email, password, name) },
+                onClick = {
+                    // Validação client-side antes do submit (#3184)
+                    nameError = ValidationHelper.validateName(name)
+                    emailError = ValidationHelper.validateEmail(email)
+                    passwordError = ValidationHelper.validatePassword(password)
+                    if (nameError == null && emailError == null && passwordError == null) {
+                        onRegisterWithEmail(email, password, name)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(AppDimensions.height_button_large),
                 shape = RoundedCornerShape(AppDimensions.radius_medium),
                 enabled = email.isNotBlank() && password.isNotBlank() && name.isNotBlank() && uiState !is RegisterState.Loading
@@ -237,13 +266,16 @@ private fun RegisterForm(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
                 ) {
-                    Text(
-                        text = (uiState as? RegisterState.Error)?.message ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(AppDimensions.spacing_medium)
-                    )
+                    // Resolve o resource id do erro em string localizada (#3184)
+                    (uiState as? RegisterState.Error)?.let { errorState ->
+                        Text(
+                            text = stringResource(errorState.errorResId),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(AppDimensions.spacing_medium)
+                        )
+                    }
                 }
             }
         }
