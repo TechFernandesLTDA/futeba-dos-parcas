@@ -1,9 +1,11 @@
 package com.futebadosparcas.ui.auth
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.repository.AuthRepository as AndroidAuthRepository
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.util.AuthErrorMapper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,9 +31,8 @@ class RegisterViewModel(
                     _registerState.value = RegisterState.Success(user)
                 },
                 onFailure = { error ->
-                    _registerState.value = RegisterState.Error(
-                        error.message ?: "Erro ao criar conta"
-                    )
+                    // Mapeia o erro bruto do Firebase para mensagem amigável PT-BR (#3184)
+                    _registerState.value = RegisterState.Error(AuthErrorMapper.mapAuthError(error))
                 }
             )
         }
@@ -51,5 +52,7 @@ sealed class RegisterState {
     object Idle : RegisterState()
     object Loading : RegisterState()
     data class Success(val user: User) : RegisterState()
-    data class Error(val message: String) : RegisterState()
+
+    /** Erro no registro - resolvido na UI via stringResource */
+    data class Error(@StringRes val errorResId: Int) : RegisterState()
 }

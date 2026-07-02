@@ -62,6 +62,7 @@ import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.theme.AppDimensions
 import com.futebadosparcas.ui.theme.systemBarsPadding
 import com.futebadosparcas.ui.theme.surfaceGradient
+import com.futebadosparcas.util.ValidationHelper
 @Composable
 fun LoginScreen(
     uiState: LoginState,
@@ -197,6 +198,10 @@ private fun LoginCard(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Erros de validação client-side (#3184) - exibidos inline via supportingText
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -245,10 +250,15 @@ private fun LoginCard(
             } else {
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        emailError = null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.auth_email_label)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    isError = emailError != null,
+                    supportingText = { emailError?.let { Text(it) } },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
@@ -259,7 +269,10 @@ private fun LoginCard(
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.auth_password_label)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
@@ -272,6 +285,8 @@ private fun LoginCard(
                         }
                     },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    isError = passwordError != null,
+                    supportingText = { passwordError?.let { Text(it) } },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
@@ -281,7 +296,14 @@ private fun LoginCard(
                 )
 
                 Button(
-                    onClick = { onEmailPasswordSignIn(email, password) },
+                    onClick = {
+                        // Validação client-side antes do submit (#3184)
+                        emailError = ValidationHelper.validateEmail(email)
+                        passwordError = ValidationHelper.validatePassword(password)
+                        if (emailError == null && passwordError == null) {
+                            onEmailPasswordSignIn(email, password)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth().height(AppDimensions.height_button_large),
                     shape = RoundedCornerShape(AppDimensions.radius_medium),
                     enabled = email.isNotBlank() && password.isNotBlank() && uiState !is LoginState.Loading
@@ -291,7 +313,11 @@ private fun LoginCard(
 
                 TextButton(
                     onClick = {
-                        if (email.isNotBlank()) onForgotPassword(email)
+                        // Valida formato do email antes de disparar o reset (#3184)
+                        emailError = ValidationHelper.validateEmail(email)
+                        if (emailError == null) {
+                            onForgotPassword(email)
+                        }
                     },
                     enabled = email.isNotBlank()
                 ) {
@@ -341,13 +367,16 @@ private fun LoginCard(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
                 ) {
-                    Text(
-                        text = (uiState as? LoginState.Error)?.message ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(AppDimensions.spacing_medium)
-                    )
+                    // Resolve o resource id do erro em string localizada (#3184)
+                    (uiState as? LoginState.Error)?.let { errorState ->
+                        Text(
+                            text = stringResource(errorState.errorResId),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(AppDimensions.spacing_medium)
+                        )
+                    }
                 }
             }
         }

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.credentials.CredentialManager
@@ -18,6 +19,7 @@ import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.AuthErrorMapper
 import com.futebadosparcas.util.BiometricHelper
 import com.futebadosparcas.util.PreferencesManager
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -63,6 +65,23 @@ class LoginActivityCompose : AppCompatActivity() {
         setContent {
             FutebaTheme {
                 val uiState by viewModel.loginState.collectAsStateWithLifecycle()
+                val resetState by viewModel.resetState.collectAsStateWithLifecycle()
+
+                // Feedback do reset de senha só APÓS o resultado assíncrono (#3184):
+                // antes o toast de sucesso disparava imediatamente ao clicar
+                LaunchedEffect(resetState) {
+                    when (val state = resetState) {
+                        is ResetState.EmailSent -> {
+                            showToast(getString(R.string.auth_reset_email_sent))
+                            viewModel.consumeResetState()
+                        }
+                        is ResetState.Error -> {
+                            showToast(getString(state.errorResId))
+                            viewModel.consumeResetState()
+                        }
+                        else -> Unit
+                    }
+                }
 
                 LoginScreen(
                     uiState = uiState,
@@ -73,7 +92,6 @@ class LoginActivityCompose : AppCompatActivity() {
                     },
                     onForgotPassword = { email ->
                         viewModel.sendPasswordResetEmail(email)
-                        showToast(getString(R.string.auth_reset_email_sent))
                     },
                     onNavigateToRegister = {
                         val intent = Intent(this, RegisterActivityCompose::class.java)
@@ -161,12 +179,13 @@ class LoginActivityCompose : AppCompatActivity() {
                 handleSignInResult(result)
             } catch (e: GetCredentialException) {
                 AppLogger.e(TAG, "Google Sign-In failed: ${e.javaClass.simpleName} - ${e.message}", e)
-                showToast(getString(R.string.login_error_google_signin, e.message ?: ""))
-                viewModel.onGoogleSignInError(getString(R.string.login_error_google_signin, e.message ?: ""))
+                showToast(getString(R.string.auth_error_generic))
+                viewModel.onGoogleSignInError(R.string.auth_error_generic)
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Unexpected error during sign-in: ${e.message}", e)
-                showToast(getString(R.string.login_error_unexpected, e.message ?: ""))
-                viewModel.onGoogleSignInError(getString(R.string.login_error_unexpected, e.message ?: ""))
+                val errorResId = AuthErrorMapper.mapAuthError(e)
+                showToast(getString(errorResId))
+                viewModel.onGoogleSignInError(errorResId)
             }
         }
     }
@@ -204,18 +223,18 @@ class LoginActivityCompose : AppCompatActivity() {
                     } catch (e: GoogleIdTokenParsingException) {
                         AppLogger.e(TAG, "Invalid Google ID token", e)
                         showToast(getString(R.string.login_error_token_google))
-                        viewModel.onGoogleSignInError(getString(R.string.login_error_token_google))
+                        viewModel.onGoogleSignInError(R.string.login_error_token_google)
                     }
                 } else {
                     AppLogger.e(TAG, "Unexpected credential type: ${credential.type}")
                     showToast(getString(R.string.login_error_unsupported_credential))
-                    viewModel.onGoogleSignInError(getString(R.string.login_error_unsupported_credential))
+                    viewModel.onGoogleSignInError(R.string.login_error_unsupported_credential)
                 }
             }
             else -> {
                 AppLogger.e(TAG, "Not a CustomCredential: ${credential.javaClass.name}")
                 showToast(getString(R.string.login_error_invalid_credential))
-                viewModel.onGoogleSignInError(getString(R.string.login_error_invalid_credential))
+                viewModel.onGoogleSignInError(R.string.login_error_invalid_credential)
             }
         }
     }
@@ -256,10 +275,12 @@ class LoginActivityCompose : AppCompatActivity() {
                         "${getString(R.string.login_signin_failure)} - ${task.exception?.message}",
                         task.exception
                     )
-                    val errorMsg = task.exception?.message
-                        ?: getString(R.string.error_authentication)
-                    showToast(getString(R.string.login_error_firebase, errorMsg))
-                    viewModel.onGoogleSignInError(errorMsg)
+                    // Mapeia o erro bruto do Firebase para mensagem amigável PT-BR (#3184)
+                    val errorResId = task.exception
+                        ?.let { AuthErrorMapper.mapAuthError(it) }
+                        ?: R.string.auth_error_generic
+                    showToast(getString(errorResId))
+                    viewModel.onGoogleSignInError(errorResId)
                 }
             }
     }

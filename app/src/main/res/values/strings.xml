@@ -2013,6 +2013,16 @@ subir no ranking!</string>
     <string name="auth_already_have_account">Já tem uma conta? Entrar</string>
     <string name="auth_reset_email_sent">Email de redefinição enviado. Verifique sua caixa de entrada.</string>
 
+    <!-- Auth Error Mapping (#3184) - mensagens PT-BR para códigos de erro do Firebase Auth -->
+    <string name="auth_error_invalid_credentials">Email ou senha inválidos</string>
+    <string name="auth_error_email_in_use">Este email já está em uso</string>
+    <string name="auth_error_too_many_requests">Muitas tentativas. Tente novamente mais tarde</string>
+    <string name="auth_error_user_disabled">Conta desativada. Entre em contato com o suporte</string>
+    <string name="auth_error_weak_password">Senha muito fraca. Use no mínimo 6 caracteres</string>
+    <string name="auth_error_invalid_email">Email inválido</string>
+    <string name="auth_error_network">Sem conexão. Verifique sua internet</string>
+    <string name="auth_error_generic">Erro ao autenticar. Tente novamente</string>
+
     <!-- Auth Register (deprecated) -->
     <string name="auth_register_message">O registro agora e feito via Google Sign-In</string>
     <string name="auth_register_redirect">Você será redirecionado para a tela de login</string>

@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.auth
 
+import com.futebadosparcas.R
 import com.futebadosparcas.data.repository.AuthRepository as AndroidAuthRepository
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.AuthRepository
@@ -210,13 +211,38 @@ class LoginViewModelTest {
         }
 
         @Test
+        @DisplayName("sendPasswordResetEmail com sucesso emite EmailSent sem tocar loginState")
+        fun `sendPasswordResetEmail with success emits EmailSent`() = runTest(testDispatcher) {
+            coEvery { androidAuthRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+
+            viewModel.sendPasswordResetEmail("joao@email.com")
+            advanceUntilIdle()
+
+            assertEquals(ResetState.EmailSent, viewModel.resetState.value)
+            // Estado de login nao deve ser poluido pelo fluxo de reset (#3184)
+            assertEquals(LoginState.Idle, viewModel.loginState.value)
+        }
+
+        @Test
+        @DisplayName("sendPasswordResetEmail com falha generica emite EmailSent (anti-enumeracao)")
+        fun `sendPasswordResetEmail with generic failure emits EmailSent`() = runTest(testDispatcher) {
+            coEvery { androidAuthRepository.sendPasswordResetEmail(any()) } returns
+                Result.failure(RuntimeException("user-not-found"))
+
+            viewModel.sendPasswordResetEmail("naoexiste@email.com")
+            advanceUntilIdle()
+
+            assertEquals(ResetState.EmailSent, viewModel.resetState.value)
+        }
+
+        @Test
         @DisplayName("onGoogleSignInError define estado de erro")
         fun `onGoogleSignInError sets error state`() {
-            viewModel.onGoogleSignInError("Popup fechado pelo usuario")
+            viewModel.onGoogleSignInError(R.string.auth_error_generic)
 
             val state = viewModel.loginState.value
             assertInstanceOf(LoginState.Error::class.java, state)
-            assertEquals("Popup fechado pelo usuario", (state as LoginState.Error).message)
+            assertEquals(R.string.auth_error_generic, (state as LoginState.Error).errorResId)
         }
     }
 }

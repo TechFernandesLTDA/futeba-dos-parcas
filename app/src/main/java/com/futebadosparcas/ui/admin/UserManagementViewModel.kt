@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.admin
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.domain.repository.UserRepository
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.Job
@@ -72,7 +73,9 @@ class UserManagementViewModel(
     }
 
     fun updateUserRole(user: User, newRole: String) {
-        val validRoles = setOf("ADMIN", "PLAYER", "MODERATOR")
+        // Whitelist derivada do enum canônico (#3185): inclui FIELD_OWNER e
+        // remove MODERATOR (role inexistente). Fica à prova de novas roles.
+        val validRoles = UserRole.entries.map { it.name }.toSet()
         if (newRole !in validRoles) {
             _uiState.value = UserManagementUiState.Error("Role inválida: $newRole")
             return
