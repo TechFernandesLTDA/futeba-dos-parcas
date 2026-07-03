@@ -1,7 +1,52 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-02T07:21:53.131Z",
+  "generatedAt": "2026-07-03T20:05:44.266Z",
   "notes": [
+    {
+      "version": "1.33.0",
+      "buildNumber": 60,
+      "releaseDate": "2026-07-03",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Android ganhou uma camada profissional de antifraude para votação, presença, jogo ao vivo, fechamento e XP.",
+      "highlights": [
+        {
+          "icon": "verified",
+          "title": "Presença com evidência",
+          "description": "O check-in e a participação do jogador agora respeitam sinais mais fortes antes de liberar efeitos do jogo."
+        },
+        {
+          "icon": "emoji_events",
+          "title": "XP sob revisão quando preciso",
+          "description": "Jogos com baixa confiança podem segurar recompensa até revisão administrativa."
+        },
+        {
+          "icon": "sports",
+          "title": "Lifecycle protegido",
+          "description": "Início, eventos e encerramento de partida passaram a usar fluxo validado no servidor."
+        }
+      ],
+      "added": [
+        "Novos estados de validação e revisão aparecem nas telas de jogo para deixar claro quando a partida está aprovada, pendente ou retida."
+      ],
+      "improved": [
+        "A experiência de jogo ao vivo ficou mais robusta com leitura de score e eventos alinhada ao backend antifraude.",
+        "O perfil e os dados de jogo no app passaram a refletir melhor retenções e liberações de XP."
+      ],
+      "fixed": [
+        "Ajustes no fluxo de jogo ao vivo e nos mapeamentos de modelo reduziram brechas de inconsistência entre cliente e servidor."
+      ],
+      "issueRefs": [
+        3208,
+        3209,
+        3211,
+        3213,
+        3214,
+        3215,
+        3216
+      ]
+    },
     {
       "version": "1.32.2",
       "buildNumber": 59,

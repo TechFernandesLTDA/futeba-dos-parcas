@@ -1,7 +1,66 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-02T07:21:53.139Z",
+  "generatedAt": "2026-07-03T20:05:44.269Z",
   "notes": [
+    {
+      "version": "1.46.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-03",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "**Validação antifraude por evidência**: votação, jogo ao vivo, fechamento e XP agora passam por trilhas mais seguras e auditáveis.",
+      "highlights": [
+        {
+          "icon": "verified_user",
+          "title": "Votação protegida",
+          "description": "O MVP agora usa fluxo validado no servidor para reduzir fraude e voto fora da janela."
+        },
+        {
+          "icon": "sports_soccer",
+          "title": "Início e fim mais confiáveis",
+          "description": "Abrir e encerrar jogo ao vivo passou a respeitar validações centrais e consistência de status."
+        },
+        {
+          "icon": "admin_panel_settings",
+          "title": "Revisão administrativa",
+          "description": "Jogos com baixa confiança ou XP retido agora aparecem com estados claros para revisão."
+        }
+      ],
+      "added": [
+        "Nova fila administrativa para revisar jogos com confiança baixa, XP retido e decisões pendentes.",
+        "Estados de validação mais completos nas telas de jogo e live, incluindo pendente, aprovado, baixa confiança e revisão necessária."
+      ],
+      "improved": [
+        "Fechamento automático de partidas passou a considerar melhor presença, sinais de localização e consistência do jogo antes de liberar recompensas.",
+        "Tabs principais e telas de jogo ficaram mais estáveis ao lidar com validação, paginação e dados derivados do servidor."
+      ],
+      "fixed": [
+        "Ajustes de placar, badges, convites, recorrência, temporada ativa, notificações e exclusões em lote eliminaram inconsistências encontradas na auditoria final.",
+        "A navegação e a leitura de jogos ao vivo ficaram mais consistentes após a migração dos fluxos críticos para Cloud Functions."
+      ],
+      "issueRefs": [
+        3199,
+        3200,
+        3201,
+        3202,
+        3208,
+        3209,
+        3211,
+        3213,
+        3214,
+        3215,
+        3216,
+        3219,
+        3220,
+        3221,
+        3222,
+        3223,
+        3224,
+        3225,
+        3226
+      ]
+    },
     {
       "version": "1.45.0",
       "buildNumber": null,
