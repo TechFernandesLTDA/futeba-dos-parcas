@@ -253,6 +253,10 @@ export interface Game {
   validationMode?: string;
   validationReasons?: string[];
   validationSignalsSummary?: string[];
+  autoCloseReviewRequired?: boolean;
+  autoCloseValidationReason?: string;
+  autoCloseValidationStatus?: GameValidationStatus;
+  autoCloseValidationScore?: number;
   
   // Cancel
   cancelledBy?: string;

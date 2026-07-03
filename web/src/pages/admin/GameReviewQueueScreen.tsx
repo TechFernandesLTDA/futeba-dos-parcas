@@ -40,7 +40,11 @@ import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('GameReviewQueueScreen');
 
-type QueueFilter = 'HELD_FOR_REVIEW' | 'ELIGIBLE' | 'REJECTED_BY_ADMIN';
+type QueueFilter =
+  | 'HELD_FOR_REVIEW'
+  | 'ELIGIBLE'
+  | 'REJECTED_BY_ADMIN'
+  | 'AUTO_CLOSE_REVIEW';
 
 interface ReviewQueueGame extends Game {
   ownerNameResolved: string;
@@ -64,6 +68,10 @@ function parseReviewGame(docId: string, raw: Record<string, unknown>): ReviewQue
     xpRewardHeldAt: toDate((raw.xp_reward_held_at ?? raw.xpRewardHeldAt) as Timestamp | Date),
     xpRewardReviewedAt: toDate((raw.xp_reward_reviewed_at ?? raw.xpRewardReviewedAt) as Timestamp | Date),
     validationUpdatedAt: toDate((raw.validation_updated_at ?? raw.validationUpdatedAt) as Timestamp | Date),
+    autoCloseReviewRequired: Boolean(raw.auto_close_review_required ?? raw.autoCloseReviewRequired),
+    autoCloseValidationReason: String(raw.auto_close_validation_reason ?? raw.autoCloseValidationReason ?? ''),
+    autoCloseValidationStatus: (raw.auto_close_validation_status ?? raw.autoCloseValidationStatus ?? converted.autoCloseValidationStatus) as Game['validationStatus'] | undefined,
+    autoCloseValidationScore: Number(raw.auto_close_validation_score ?? raw.autoCloseValidationScore ?? converted.autoCloseValidationScore ?? NaN),
     ownerNameResolved:
       String(raw.owner_name ?? raw.ownerName ?? converted.ownerName ?? raw.owner_id ?? converted.ownerId ?? 'Organizador'),
   } as ReviewQueueGame;
@@ -123,47 +131,96 @@ export const GameReviewQueueScreen: React.FC = () => {
 
   useEffect(() => {
     const gamesRef = collection(db, 'games');
-    const gamesQuery = query(
+    const rewardReviewQuery = query(
       gamesRef,
       where('xp_reward_status', 'in', TRACKED_REWARD_STATUSES),
       limit(100),
     );
+    const autoCloseReviewQuery = query(
+      gamesRef,
+      where('auto_close_review_required', '==', true),
+      limit(100),
+    );
 
-    const unsubscribe = onSnapshot(
-      gamesQuery,
+    const mergeQueueGames = (
+      rewardDocs: ReviewQueueGame[],
+      autoCloseDocs: ReviewQueueGame[],
+    ) => {
+      const merged = new Map<string, ReviewQueueGame>();
+      [...rewardDocs, ...autoCloseDocs].forEach((game) => {
+        if (game.status !== 'FINISHED' && game.status !== 'CANCELLED') return;
+        merged.set(game.id, game);
+      });
+
+      return Array.from(merged.values()).sort((a, b) => {
+        const aTime = a.xpRewardHeldAt?.getTime() ??
+          a.validationUpdatedAt?.getTime() ??
+          a.dateTime?.getTime() ??
+          0;
+        const bTime = b.xpRewardHeldAt?.getTime() ??
+          b.validationUpdatedAt?.getTime() ??
+          b.dateTime?.getTime() ??
+          0;
+        return bTime - aTime;
+      });
+    };
+
+    let rewardGames: ReviewQueueGame[] = [];
+    let autoCloseGames: ReviewQueueGame[] = [];
+
+    const updateState = () => {
+      setGames(mergeQueueGames(rewardGames, autoCloseGames));
+      setLoading(false);
+      setError(null);
+    };
+
+    const unsubscribeReward = onSnapshot(
+      rewardReviewQuery,
       (snapshot) => {
-        const parsed = snapshot.docs
-          .map((doc) => parseReviewGame(doc.id, doc.data()))
-          .filter((game) => game.status === 'FINISHED')
-          .sort((a, b) => {
-            const aTime = a.xpRewardHeldAt?.getTime() ?? a.validationUpdatedAt?.getTime() ?? a.dateTime?.getTime() ?? 0;
-            const bTime = b.xpRewardHeldAt?.getTime() ?? b.validationUpdatedAt?.getTime() ?? b.dateTime?.getTime() ?? 0;
-            return bTime - aTime;
-          });
-        setGames(parsed);
-        setLoading(false);
-        setError(null);
+        rewardGames = snapshot.docs
+          .map((doc) => parseReviewGame(doc.id, doc.data()));
+        updateState();
       },
       (snapshotError) => {
-        logger.error('Error loading game review queue:', snapshotError);
+        logger.error('Error loading reward review queue:', snapshotError);
         setError('Não foi possível carregar a fila de revisão.');
         setLoading(false);
       },
     );
 
-    return () => unsubscribe();
+    const unsubscribeAutoClose = onSnapshot(
+      autoCloseReviewQuery,
+      (snapshot) => {
+        autoCloseGames = snapshot.docs
+          .map((doc) => parseReviewGame(doc.id, doc.data()));
+        updateState();
+      },
+      (snapshotError) => {
+        logger.error('Error loading auto-close review queue:', snapshotError);
+        setError('Não foi possível carregar a fila de revisão.');
+        setLoading(false);
+      },
+    );
+
+    return () => {
+      unsubscribeReward();
+      unsubscribeAutoClose();
+    };
   }, []);
 
   const summary = useMemo(() => ({
     held: games.filter((game) => game.xpRewardStatus === 'HELD_FOR_REVIEW').length,
     approved: games.filter((game) => game.xpRewardStatus === 'ELIGIBLE').length,
     rejected: games.filter((game) => game.xpRewardStatus === 'REJECTED_BY_ADMIN').length,
+    autoClose: games.filter((game) => game.autoCloseReviewRequired === true).length,
   }), [games]);
 
   const filteredGames = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     return games.filter((game) => {
-      const matchesFilter = game.xpRewardStatus === filter;
+      const matchesFilter = filter === 'AUTO_CLOSE_REVIEW' ?
+        game.autoCloseReviewRequired === true :
+        game.xpRewardStatus === filter;
       if (!matchesFilter) return false;
       if (!normalizedSearch) return true;
       const haystack = [
@@ -172,6 +229,7 @@ export const GameReviewQueueScreen: React.FC = () => {
         game.id,
         game.validationReasons?.join(' '),
         game.xpRewardHoldReasons?.join(' '),
+        game.autoCloseValidationReason,
       ].join(' ').toLowerCase();
       return haystack.includes(normalizedSearch);
     });
@@ -225,7 +283,7 @@ export const GameReviewQueueScreen: React.FC = () => {
         </Alert>
 
         <Grid container spacing={2}>
-          <Grid xs={12} md={4}>
+          <Grid xs={12} md={3}>
             <Card>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Pendentes</Typography>
@@ -233,7 +291,7 @@ export const GameReviewQueueScreen: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={4}>
+          <Grid xs={12} md={3}>
             <Card>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Liberados manualmente</Typography>
@@ -241,11 +299,19 @@ export const GameReviewQueueScreen: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={4}>
+          <Grid xs={12} md={3}>
             <Card>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Rejeitados</Typography>
                 <Typography variant="h4" fontWeight={800}>{summary.rejected}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid xs={12} md={3}>
+            <Card>
+              <CardContent>
+                <Typography variant="overline" color="text.secondary">Auto-close com revisão</Typography>
+                <Typography variant="h4" fontWeight={800}>{summary.autoClose}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -263,6 +329,7 @@ export const GameReviewQueueScreen: React.FC = () => {
             <ToggleButton value="HELD_FOR_REVIEW">Pendentes</ToggleButton>
             <ToggleButton value="ELIGIBLE">Liberados</ToggleButton>
             <ToggleButton value="REJECTED_BY_ADMIN">Rejeitados</ToggleButton>
+            <ToggleButton value="AUTO_CLOSE_REVIEW">Auto-close</ToggleButton>
           </ToggleButtonGroup>
           <TextField
             value={search}
@@ -287,7 +354,12 @@ export const GameReviewQueueScreen: React.FC = () => {
             {filteredGames.map((game) => {
               const rewardMeta = getRewardStatusMeta(game.xpRewardStatus);
               const validationMeta = getValidationStatusMeta(game.validationStatus);
-              const reasons = game.xpRewardHoldReasons?.length ? game.xpRewardHoldReasons : game.validationReasons ?? [];
+              const reasons = game.xpRewardHoldReasons?.length ?
+                game.xpRewardHoldReasons :
+                game.validationReasons ?? [];
+              const autoCloseReasons = game.autoCloseValidationReason ?
+                [game.autoCloseValidationReason] :
+                [];
               return (
                 <Card key={game.id}>
                   <CardContent>
@@ -303,10 +375,16 @@ export const GameReviewQueueScreen: React.FC = () => {
                           </Typography>
                         </Box>
                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                          {game.autoCloseReviewRequired && (
+                            <Chip label="Auto-close em revisão" color="warning" variant="outlined" />
+                          )}
                           <Chip label={rewardMeta.label} color={rewardMeta.color} />
                           <Chip label={validationMeta.label} color={validationMeta.color} variant="outlined" />
                           {typeof game.validationScore === 'number' && (
                             <Chip label={`Score ${game.validationScore}`} variant="outlined" />
+                          )}
+                          {typeof game.autoCloseValidationScore === 'number' && Number.isFinite(game.autoCloseValidationScore) && (
+                            <Chip label={`Auto-close ${game.autoCloseValidationScore}`} variant="outlined" />
                           )}
                         </Stack>
                       </Stack>
@@ -316,13 +394,24 @@ export const GameReviewQueueScreen: React.FC = () => {
                           Motivos e sinais
                         </Typography>
                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                          {reasons.length > 0 ? reasons.map((reason) => (
+                          {[...reasons, ...autoCloseReasons].length > 0 ? [...reasons, ...autoCloseReasons].map((reason) => (
                             <Chip key={`${game.id}-${reason}`} label={reason} variant="outlined" />
                           )) : (
                             <Chip label="Sem razões registradas" variant="outlined" />
                           )}
                         </Stack>
                       </Box>
+
+                      {game.autoCloseReviewRequired && (
+                        <Alert severity="warning">
+                          <Typography variant="body2" fontWeight={700}>
+                            Fechamento automático orientado por evidência
+                          </Typography>
+                          <Typography variant="body2">
+                            Este jogo foi auto-fechado, mas há evidência suficiente para revisão manual antes de tratar o caso como encerrado operacionalmente.
+                          </Typography>
+                        </Alert>
+                      )}
 
                       {(game.xpRewardReviewReason || game.xpRewardReviewedAt) && (
                         <Alert severity={game.xpRewardStatus === 'REJECTED_BY_ADMIN' ? 'error' : 'info'}>
