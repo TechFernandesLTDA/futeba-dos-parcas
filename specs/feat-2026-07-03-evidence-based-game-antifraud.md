@@ -198,6 +198,53 @@ npm run build
 
 ---
 
+## 7. Branch Progress Snapshot
+
+Status observado na branch `feat/evidence-game-antifraud` nesta iniciativa:
+
+Entregue ate agora:
+
+- `validation_score`, `validation_status`, `validation_reasons` e resumo de sinais
+  calculados server-side.
+- gate de recompensas: jogos `REVIEW_REQUIRED` ficam com
+  `xp_reward_status = HELD_FOR_REVIEW` ate revisao administrativa.
+- revisao admin server-side com auditoria de:
+  - decisao;
+  - admin;
+  - motivo;
+  - status anterior/novo;
+  - timestamp.
+- MVP voting via Cloud Function e bloqueio de escrita client-side direta em
+  `mvp_votes`.
+- inicio/fim de jogo via callables no web e Android/shared.
+- rules endurecidas para bloquear transicoes diretas client-side para `LIVE`
+  e `FINISHED`.
+- eventos criticos/live score/live stats movidos para fluxo server-side com
+  callables e atualizacao transacional.
+- `scoreEventConsistent` alimentando o score de validacao.
+- sinais complementares de antifraude em check-in:
+  - deslocamento impossivel por distancia/tempo;
+  - late check-in;
+  - trilha em `game_validation_signals`.
+- auto-close orientado por evidencia com `auto_close_review_required` e
+  metadados de validacao.
+- UX web:
+  - fila admin `/admin/game-reviews`;
+  - banners de estado no detalhe do jogo.
+- UX Android:
+  - detalhe do jogo exibe estados de validacao/recompensa retida, aprovada,
+    rejeitada, baixa confianca e revisao necessaria.
+
+Ainda precisa de fechamento para review final do PR:
+
+- consolidar comentarios nas issues/PR com o recorte final entregue;
+- validar se ainda existe algum caminho legado restante para escrita indireta
+  ou bypass operacional em score/eventos/fechamento;
+- alinhar o estado final do PR remoto, pois parte dos commits locais pode
+  depender de permissao de push/autenticacao GitHub.
+
+---
+
 ## Referencias
 
 - #3204, #3205, #3206, #3207, #3208, #3209, #3217
