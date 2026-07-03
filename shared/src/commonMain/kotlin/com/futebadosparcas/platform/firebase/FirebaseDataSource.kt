@@ -93,6 +93,10 @@ expect class FirebaseDataSource() {
      */
     suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit>
 
+    // ========== MVP VOTING ==========
+
+    suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit>
+
     suspend fun searchUsers(query: String, limit: Int): Result<List<User>>
     suspend fun getAllUsers(): Result<List<User>>
     suspend fun updateUserRole(userId: String, newRole: String): Result<Unit>

@@ -785,6 +785,27 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit> {
+        return try {
+            if (vote.category == VoteCategory.CUSTOM) {
+                return Result.failure(Exception("Categoria de voto não suportada pelo servidor"))
+            }
+
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("submitMvpVote")
+                .invoke(
+                    mapOf(
+                        "gameId" to vote.gameId,
+                        "votedPlayerId" to vote.votedPlayerId,
+                        "category" to vote.category.name
+                    )
+                )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun searchUsers(query: String, limit: Int): Result<List<User>> {
         println("FirebaseDataSource: searchUsers called with query='$query', limit=$limit")
         return try {
