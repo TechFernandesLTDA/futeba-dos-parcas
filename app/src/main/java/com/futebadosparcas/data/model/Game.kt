@@ -146,10 +146,55 @@ data class Game(
     @get:PropertyName("xp_processing")
     @set:PropertyName("xp_processing")
     var xpProcessing: Boolean = false,
+    @get:PropertyName("xp_reward_status")
+    @set:PropertyName("xp_reward_status")
+    var xpRewardStatus: String? = null,
+    @get:PropertyName("xp_reward_held_at")
+    @set:PropertyName("xp_reward_held_at")
+    var xpRewardHeldAt: Date? = null,
+    @get:PropertyName("xp_reward_hold_reasons")
+    @set:PropertyName("xp_reward_hold_reasons")
+    var xpRewardHoldReasons: List<String> = emptyList(),
+    @get:PropertyName("xp_reward_review_decision")
+    @set:PropertyName("xp_reward_review_decision")
+    var xpRewardReviewDecision: String? = null,
+    @get:PropertyName("xp_reward_reviewed_at")
+    @set:PropertyName("xp_reward_reviewed_at")
+    var xpRewardReviewedAt: Date? = null,
+    @get:PropertyName("xp_reward_reviewed_by")
+    @set:PropertyName("xp_reward_reviewed_by")
+    var xpRewardReviewedBy: String? = null,
+    @get:PropertyName("xp_reward_review_reason")
+    @set:PropertyName("xp_reward_review_reason")
+    var xpRewardReviewReason: String? = null,
+    @get:PropertyName("xp_reward_review_previous_status")
+    @set:PropertyName("xp_reward_review_previous_status")
+    var xpRewardReviewPreviousStatus: String? = null,
+    @get:PropertyName("xp_reward_review_new_status")
+    @set:PropertyName("xp_reward_review_new_status")
+    var xpRewardReviewNewStatus: String? = null,
     // Timestamp de quando o XP foi processado
     @get:PropertyName("xp_processed_at")
     @set:PropertyName("xp_processed_at")
     var xpProcessedAt: Date? = null,
+    @get:PropertyName("validation_status")
+    @set:PropertyName("validation_status")
+    var validationStatus: String? = null,
+    @get:PropertyName("validation_score")
+    @set:PropertyName("validation_score")
+    var validationScore: Int? = null,
+    @get:PropertyName("validation_version")
+    @set:PropertyName("validation_version")
+    var validationVersion: Int? = null,
+    @get:PropertyName("validation_updated_at")
+    @set:PropertyName("validation_updated_at")
+    var validationUpdatedAt: Date? = null,
+    @get:PropertyName("validation_mode")
+    @set:PropertyName("validation_mode")
+    var validationMode: String? = null,
+    @get:PropertyName("validation_reasons")
+    @set:PropertyName("validation_reasons")
+    var validationReasons: List<String> = emptyList(),
     @get:PropertyName("mvp_id")
     @set:PropertyName("mvp_id")
     var mvpId: String? = null,
