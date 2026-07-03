@@ -48,7 +48,7 @@ val useCaseKoinModule = module {
 
     // Live game use cases
     single<AddGameEventUseCase> { AddGameEventUseCase(get()) }
-    single<FinishLiveGameUseCase> { FinishLiveGameUseCase(get(), get()) }
+    single<FinishLiveGameUseCase> { FinishLiveGameUseCase(get()) }
 
     // Notification use cases
     single<ObserveUnreadCountUseCase> { ObserveUnreadCountUseCase(get()) }

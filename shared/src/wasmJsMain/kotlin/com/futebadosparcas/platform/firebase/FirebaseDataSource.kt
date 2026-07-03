@@ -117,6 +117,8 @@ actual class FirebaseDataSource {
 
     // ========== LIVE GAME ==========
 
+    actual suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit> = stubResult()
+    actual suspend fun finishGameLifecycleViaCallable(gameId: String): Result<Unit> = stubResult()
     actual suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<LiveScore> = stubResult()
     actual suspend fun canManageGameEvents(gameId: String): Boolean = false
     actual suspend fun updateScoreForGoal(gameId: String, teamId: String): Result<Unit> = stubResult()

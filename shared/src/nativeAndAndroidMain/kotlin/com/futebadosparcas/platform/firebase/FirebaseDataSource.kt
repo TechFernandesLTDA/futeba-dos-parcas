@@ -806,6 +806,28 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit> {
+        return try {
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("startGameLifecycle")
+                .invoke(mapOf("gameId" to gameId))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun finishGameLifecycleViaCallable(gameId: String): Result<Unit> {
+        return try {
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("finishGameLifecycle")
+                .invoke(mapOf("gameId" to gameId))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun searchUsers(query: String, limit: Int): Result<List<User>> {
         println("FirebaseDataSource: searchUsers called with query='$query', limit=$limit")
         return try {

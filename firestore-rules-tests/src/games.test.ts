@@ -622,6 +622,30 @@ describe("games — atualização", () => {
     );
   });
 
+  it("Dono NÃO pode alterar status de recompensa/XP server-only", async () => {
+    await seedDoc(testEnv, "games/game-reward-update-owner", {
+      title: "Reward Owner",
+      owner_id: UID_PLAYER_A,
+      status: "FINISHED",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 10,
+      goalkeepers_count: 1,
+      team1_score: 2,
+      team2_score: 1,
+      xp_reward_status: "HELD_FOR_REVIEW",
+      co_organizers: [],
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-reward-update-owner").update({
+        xp_reward_status: "ELIGIBLE",
+      })
+    );
+  });
+
   it("Admin client NÃO pode alterar campos server-only de validação", async () => {
     await seedDoc(testEnv, "games/game-validation-update-admin", {
       title: "Validacao Admin",
@@ -656,6 +680,62 @@ describe("games — atualização", () => {
         team1_score: null,
         team2_score: null,
         status: "SCHEDULED",
+      })
+    );
+  });
+
+  it("Dono NÃO pode iniciar jogo direto para LIVE pelo cliente", async () => {
+    await seedDoc(testEnv, "games/game-confirmed-client-live", {
+      title: "Jogo Confirmado",
+      owner_id: UID_PLAYER_A,
+      status: "CONFIRMED",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 10,
+      goalkeepers_count: 1,
+      team1_score: 0,
+      team2_score: 0,
+      group_id: null,
+      co_organizers: [],
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-confirmed-client-live").update({
+        status: "LIVE",
+        players_count: 10,
+        goalkeepers_count: 1,
+        team1_score: 0,
+        team2_score: 0,
+      })
+    );
+  });
+
+  it("Dono NÃO pode finalizar jogo direto para FINISHED pelo cliente", async () => {
+    await seedDoc(testEnv, "games/game-live-client-finish", {
+      title: "Jogo Live",
+      owner_id: UID_PLAYER_A,
+      status: "LIVE",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 10,
+      goalkeepers_count: 1,
+      team1_score: 2,
+      team2_score: 1,
+      group_id: null,
+      co_organizers: [],
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-live-client-finish").update({
+        status: "FINISHED",
+        players_count: 10,
+        goalkeepers_count: 1,
+        team1_score: 2,
+        team2_score: 1,
       })
     );
   });

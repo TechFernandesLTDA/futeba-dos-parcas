@@ -28,6 +28,7 @@ import {
   restoreDeletedGroup,
   startGameLifecycle,
   finishGameLifecycle,
+  reviewHeldGameRewards,
   submitMvpVotes,
   updateUserPii,
 } from './cloudFunctions';
@@ -127,6 +128,22 @@ describe('cloudFunctions', () => {
     await finishGameLifecycle({ gameId: 'game-1' });
 
     expect(mockCallable).toHaveBeenCalledWith('finishGameLifecycle', { gameId: 'game-1' });
+  });
+
+  it('reviewHeldGameRewards chama callable com ação e motivo', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, newStatus: 'ELIGIBLE' } });
+
+    await reviewHeldGameRewards({
+      gameId: 'game-1',
+      action: 'APPROVE',
+      reason: 'Evidências complementares conferidas.',
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('reviewHeldGameRewards', {
+      gameId: 'game-1',
+      action: 'APPROVE',
+      reason: 'Evidências complementares conferidas.',
+    });
   });
 
   it('propaga erros de função', async () => {

@@ -130,6 +130,8 @@ expect class FirebaseDataSource() {
 
     // ========== LIVE GAME ==========
 
+    suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit>
+    suspend fun finishGameLifecycleViaCallable(gameId: String): Result<Unit>
     suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<LiveScore>
     suspend fun canManageGameEvents(gameId: String): Boolean
     suspend fun updateScoreForGoal(gameId: String, teamId: String): Result<Unit>

@@ -18,6 +18,8 @@ import com.futebadosparcas.util.toAndroidGame
 import com.futebadosparcas.util.toAndroidGames
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.ktx.functions
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
@@ -45,6 +47,7 @@ class GameRepositoryImpl constructor(
 
     companion object {
         private const val TAG = "GameRepository"
+        private const val FUNCTIONS_REGION = "southamerica-east1"
     }
 
     // ========== Helper Methods para Conversao KMP -> Android ==========
@@ -303,43 +306,24 @@ class GameRepositoryImpl constructor(
     override suspend fun updateGameStatus(gameId: String, status: String): Result<Unit> {
         return try {
             if (status == GameStatus.LIVE.name) {
-                // Ao iniciar o jogo, sincronizar nomes dos times e inicializar placar
-                try {
-                    val teamsResult = getGameTeams(gameId)
-                    if (teamsResult.isSuccess) {
-                        val teams = teamsResult.getOrNull() ?: emptyList()
-                        if (teams.size >= 2) {
-                            val updates = mapOf(
-                                "status" to status,
-                                "team1_name" to teams[0].name,
-                                "team2_name" to teams[1].name,
-                                "team1_score" to 0,
-                                "team2_score" to 0
-                            )
-                            gamesCollection.document(gameId).update(updates).await()
-
-                            // Criar ou resetar documento na coleção live_scores
-                            liveGameRepository.startLiveGame(gameId, teams[0].id, teams[1].id)
-                            AppLogger.d(TAG) { "Jogo $gameId iniciado: nomes sincronizados e placar resetado." }
-                        } else {
-                            gamesCollection.document(gameId).update("status", status).await()
-                        }
-                    } else {
-                        gamesCollection.document(gameId).update("status", status).await()
-                    }
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Erro ao processar início de jogo LIVE para $gameId", e)
-                    gamesCollection.document(gameId).update("status", status).await()
-                }
-            } else {
-                gamesCollection.document(gameId).update("status", status).await()
+                Firebase.functions(FUNCTIONS_REGION)
+                    .getHttpsCallable("startGameLifecycle")
+                    .call(mapOf("gameId" to gameId))
+                    .await()
+                AppLogger.d(TAG) { "Jogo $gameId iniciado via Cloud Function." }
+                return Result.success(Unit)
             }
 
             if (status == GameStatus.FINISHED.name) {
-                // Logic migrated to Cloud Functions (Badges, XP, etc)
-                AppLogger.i(TAG) { "Jogo finalizado. Badges e XP serão processados via Cloud Functions." }
+                Firebase.functions(FUNCTIONS_REGION)
+                    .getHttpsCallable("finishGameLifecycle")
+                    .call(mapOf("gameId" to gameId))
+                    .await()
+                AppLogger.i(TAG) { "Jogo $gameId finalizado via Cloud Function." }
+                return Result.success(Unit)
             }
 
+            gamesCollection.document(gameId).update("status", status).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

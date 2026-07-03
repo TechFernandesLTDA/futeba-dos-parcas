@@ -73,7 +73,7 @@ import { GamePhotosTab } from './GamePhotosTab';
 import { PostGameReputationPanel } from './PostGameReputationPanel';
 import { PostGameHighlightsPanel } from './PostGameHighlightsPanel';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
-import type { GameConfirmation } from '../../types/game';
+import type { Game, GameConfirmation, XpRewardStatus } from '../../types/game';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -132,6 +132,72 @@ const PostGameMessageItem: React.FC<{ message: PostGameMessage }> = ({ message }
     </Box>
   </Stack>
 );
+
+function getRewardAlertConfig(game: Game, isAdmin: boolean, canManage: boolean) {
+  if (game.status !== 'FINISHED') return null;
+
+  const reasons = game.xpRewardHoldReasons?.length ? game.xpRewardHoldReasons : game.validationReasons ?? [];
+  const shared = {
+    reasons,
+    reviewedAt: game.xpRewardReviewedAt,
+    reviewReason: game.xpRewardReviewReason,
+  };
+
+  switch (game.xpRewardStatus as XpRewardStatus | undefined) {
+    case 'HELD_FOR_REVIEW':
+      return {
+        severity: 'warning' as const,
+        title: 'Recompensas retidas para revisão',
+        body: isAdmin || canManage
+          ? 'Este jogo foi sinalizado pelo antifraude e aguarda decisão administrativa antes de liberar XP, ranking e badges.'
+          : 'Este jogo está em análise pelo antifraude. XP, ranking e badges ficam pausados até o fim da revisão.',
+        cta: isAdmin ? '/admin/game-reviews' : null,
+        ctaLabel: 'Abrir fila de revisão',
+        ...shared,
+      };
+    case 'ELIGIBLE':
+      return {
+        severity: 'info' as const,
+        title: 'Recompensas liberadas para processamento',
+        body: game.xpRewardReviewDecision === 'APPROVED'
+          ? 'A revisão administrativa liberou este jogo para processamento de XP e demais recompensas.'
+          : 'O jogo está elegível para processamento de XP e demais recompensas.',
+        cta: null,
+        ctaLabel: null,
+        ...shared,
+      };
+    case 'REJECTED_BY_ADMIN':
+      return {
+        severity: 'error' as const,
+        title: 'Recompensas rejeitadas',
+        body: 'A revisão administrativa rejeitou as recompensas deste jogo. XP, ranking e badges não serão processados.',
+        cta: isAdmin ? '/admin/game-reviews' : null,
+        ctaLabel: 'Ver revisão',
+        ...shared,
+      };
+    case 'PROCESSED':
+      return {
+        severity: 'success' as const,
+        title: 'Recompensas processadas',
+        body: 'XP, ranking e badges já foram processados para este jogo.',
+        cta: null,
+        ctaLabel: null,
+        ...shared,
+      };
+    default:
+      if (game.validationStatus === 'LOW_CONFIDENCE') {
+        return {
+          severity: 'info' as const,
+          title: 'Jogo com baixa confiança',
+          body: 'O antifraude registrou baixa confiança neste jogo, mas o processamento segue ativo.',
+          cta: null,
+          ctaLabel: null,
+          ...shared,
+        };
+      }
+      return null;
+  }
+}
 
 const CheckInSocialPanel: React.FC<{
   checkedInPlayers: GameConfirmation[];
@@ -244,6 +310,10 @@ export const GameDetailScreen: React.FC = () => {
   const showPostGameMessages = game?.status === 'FINISHED';
   const canWritePostGameMessage = showPostGameMessages && (isConfirmed || !!canManage);
   const canManagePostGameContent = !!canManage;
+  const rewardAlert = useMemo(
+    () => (game ? getRewardAlertConfig(game, isCurrentUserAdmin, !!canManage) : null),
+    [game, isCurrentUserAdmin, canManage],
+  );
   const checkedInPlayers = useMemo(
     () => confirmations.filter((confirmation) => confirmation.checkedIn),
     [confirmations],
@@ -708,6 +778,30 @@ export const GameDetailScreen: React.FC = () => {
       {/* ====== Painel de informações + Listas de jogadores ====== */}
       {isLg ? (
         <PageContainer maxWidth="detail">
+          {rewardAlert && (
+            <Alert
+              severity={rewardAlert.severity}
+              sx={{ mb: 2 }}
+              action={rewardAlert.cta ? (
+                <Button color="inherit" size="small" onClick={() => navigate(rewardAlert.cta!)}>
+                  {rewardAlert.ctaLabel}
+                </Button>
+              ) : undefined}
+            >
+              <Typography variant="body2" fontWeight={700}>{rewardAlert.title}</Typography>
+              <Typography variant="body2">{rewardAlert.body}</Typography>
+              {rewardAlert.reasons.length > 0 && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Motivos: {rewardAlert.reasons.join(' • ')}
+                </Typography>
+              )}
+              {rewardAlert.reviewReason && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Revisão: {rewardAlert.reviewReason}
+                </Typography>
+              )}
+            </Alert>
+          )}
           <Grid container spacing={3}>
             <Grid xs={12} lg={4}>
               <GameInfoPanel game={game} />
@@ -768,6 +862,30 @@ export const GameDetailScreen: React.FC = () => {
         </PageContainer>
       ) : (
         <PageContainer maxWidth="detail">
+          {rewardAlert && (
+            <Alert
+              severity={rewardAlert.severity}
+              sx={{ mb: 2 }}
+              action={rewardAlert.cta ? (
+                <Button color="inherit" size="small" onClick={() => navigate(rewardAlert.cta!)}>
+                  {rewardAlert.ctaLabel}
+                </Button>
+              ) : undefined}
+            >
+              <Typography variant="body2" fontWeight={700}>{rewardAlert.title}</Typography>
+              <Typography variant="body2">{rewardAlert.body}</Typography>
+              {rewardAlert.reasons.length > 0 && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Motivos: {rewardAlert.reasons.join(' • ')}
+                </Typography>
+              )}
+              {rewardAlert.reviewReason && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Revisão: {rewardAlert.reviewReason}
+                </Typography>
+              )}
+            </Alert>
+          )}
           <GameInfoPanel game={game} />
           <GamePlayersSection
             game={game}

@@ -1,4 +1,6 @@
 export type GameStatus = 'SCHEDULED' | 'CONFIRMED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
+export type GameValidationStatus = 'VALIDATED' | 'LOW_CONFIDENCE' | 'REVIEW_REQUIRED';
+export type XpRewardStatus = 'ELIGIBLE' | 'HELD_FOR_REVIEW' | 'PROCESSED' | 'REJECTED_BY_ADMIN';
 
 export type GameVisibility = 'GROUP_ONLY' | 'PUBLIC_CLOSED' | 'PUBLIC_OPEN';
 
@@ -232,7 +234,25 @@ export interface Game {
   // XP
   xpProcessed: boolean;
   xpProcessedAt?: Date;
+  xpRewardStatus?: XpRewardStatus;
+  xpRewardHeldAt?: Date;
+  xpRewardHoldReasons?: string[];
+  xpRewardReviewDecision?: 'APPROVED' | 'REJECTED';
+  xpRewardReviewedAt?: Date;
+  xpRewardReviewedBy?: string;
+  xpRewardReviewReason?: string;
+  xpRewardReviewPreviousStatus?: string;
+  xpRewardReviewNewStatus?: string;
   postGameReportGenerated: boolean;
+
+  // Validation
+  validationStatus?: GameValidationStatus;
+  validationScore?: number;
+  validationVersion?: number;
+  validationUpdatedAt?: Date;
+  validationMode?: string;
+  validationReasons?: string[];
+  validationSignalsSummary?: string[];
   
   // Cancel
   cancelledBy?: string;

@@ -43,6 +43,9 @@ function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
     updatedAt: toDate((raw.updated_at ?? raw.updatedAt) as Timestamp | Date),
     votingDeadline: toDate((raw.voting_deadline ?? raw.votingDeadline) as Timestamp | Date),
     xpProcessedAt: toDate((raw.xp_processed_at ?? raw.xpProcessedAt) as Timestamp | Date),
+    xpRewardHeldAt: toDate((raw.xp_reward_held_at ?? raw.xpRewardHeldAt) as Timestamp | Date),
+    xpRewardReviewedAt: toDate((raw.xp_reward_reviewed_at ?? raw.xpRewardReviewedAt) as Timestamp | Date),
+    validationUpdatedAt: toDate((raw.validation_updated_at ?? raw.validationUpdatedAt) as Timestamp | Date),
     deletedAt: toDate((raw.deleted_at ?? raw.deletedAt) as Timestamp | Date),
   } as Game;
 }

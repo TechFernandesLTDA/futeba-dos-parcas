@@ -290,11 +290,24 @@ export const onGameStatusUpdate = onDocumentUpdated(
       );
     }
 
+    const releasedForProcessing =
+      before.status === "FINISHED" &&
+      after.status === "FINISHED" &&
+      before.xp_reward_status ===
+        "HELD_FOR_REVIEW" &&
+      after.xp_reward_status === "ELIGIBLE" &&
+      after.xp_reward_review_decision ===
+        "APPROVED";
+
     // Check Trigger Conditions:
-    // Status changed to FINISHED and xp not yet processed
+    // Status changed to FINISHED or admin released
+    // a held game back into processing.
     if (
-      before.status !== "FINISHED" &&
-      after.status === "FINISHED"
+      (
+        before.status !== "FINISHED" &&
+        after.status === "FINISHED"
+      ) ||
+      releasedForProcessing
     ) {
       const gameRef = event.data.after.ref;
       const lockResult = await db().runTransaction(
@@ -464,6 +477,10 @@ export const onGameStatusUpdate = onDocumentUpdated(
           return;
         }
 
+        const manualRewardApproval =
+          gameData.xp_reward_review_decision ===
+          "APPROVED";
+
         try {
           const validationResult =
             buildGameValidationFromFirestore({
@@ -476,7 +493,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
             ...validationResult,
             xp_reward_status:
               validationResult.validation_status ===
-              "REVIEW_REQUIRED" ?
+                "REVIEW_REQUIRED" &&
+              !manualRewardApproval ?
                 "HELD_FOR_REVIEW" :
                 "ELIGIBLE",
             validation_updated_at:
@@ -497,7 +515,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
           if (
             validationResult.validation_status ===
-            "REVIEW_REQUIRED"
+              "REVIEW_REQUIRED" &&
+            !manualRewardApproval
           ) {
             await event.data.after.ref.update({
               xp_processing: false,
@@ -520,6 +539,25 @@ export const onGameStatusUpdate = onDocumentUpdated(
               },
             );
             return;
+          }
+
+          if (
+            validationResult.validation_status ===
+              "REVIEW_REQUIRED" &&
+            manualRewardApproval
+          ) {
+            logger.warn(
+              "[GAME_VALIDATION_GATE] Processing " +
+              `manual override for game ${gameId}`,
+              {
+                score:
+                  validationResult.validation_score,
+                reasons:
+                  validationResult.validation_reasons,
+                reviewedBy:
+                  gameData.xp_reward_reviewed_by,
+              },
+            );
           }
         } catch (validationError) {
           logger.warn(
@@ -2294,6 +2332,7 @@ export {
   startGameLifecycle,
   finishGameLifecycle,
 } from "./games/lifecycle";
+export {reviewHeldGameRewards} from "./games/reward-review";
 
 // Issue #2968: reputacao leve pos-jogo com agregacao server-side
 export {submitPostGameReputation} from "./reputation/post-game-reputation";

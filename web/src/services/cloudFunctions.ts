@@ -534,6 +534,21 @@ export const finishGameLifecycle = httpsCallable<
   { success: boolean; status: 'FINISHED'; team1Score: number; team2Score: number; aggregatedPlayers: number }
 >(functions, 'finishGameLifecycle');
 
+export const reviewHeldGameRewards = httpsCallable<
+  {
+    gameId: string;
+    action: 'APPROVE' | 'REJECT';
+    reason: string;
+  },
+  {
+    success: boolean;
+    gameId: string;
+    action: 'APPROVE' | 'REJECT';
+    previousStatus: 'HELD_FOR_REVIEW';
+    newStatus: 'ELIGIBLE' | 'REJECTED_BY_ADMIN';
+  }
+>(functions, 'reviewHeldGameRewards');
+
 // Reputacao pos-jogo
 export const submitPostGameReputation = httpsCallable<
   {
