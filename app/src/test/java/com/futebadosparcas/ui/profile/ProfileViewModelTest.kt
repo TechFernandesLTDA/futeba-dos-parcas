@@ -3,11 +3,11 @@ package com.futebadosparcas.ui.profile
 import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.LiveGameRepository
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.LiveGameRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
