@@ -1350,22 +1350,21 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent> {
         return try {
-            val docRef = firestore.collection("game_events").document
-            val eventData = mapOf(
-                "id" to docRef.id,
-                "game_id" to gameId,
-                "event_type" to event.eventType,
-                "player_id" to event.playerId,
-                "player_name" to event.playerName,
-                "team_id" to event.teamId,
-                "assisted_by_id" to event.assistedById,
-                "assisted_by_name" to event.assistedByName,
-                "minute" to event.minute,
-                "created_by" to event.createdBy,
-                "created_at" to FieldValue.serverTimestamp
-            )
-            docRef.set(eventData)
-            Result.success(event.copy(id = docRef.id))
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("submitLiveGameEvent")
+                .invoke(
+                    mapOf(
+                        "gameId" to gameId,
+                        "eventType" to event.eventType,
+                        "playerId" to event.playerId,
+                        "playerName" to event.playerName,
+                        "teamId" to event.teamId,
+                        "assistedById" to event.assistedById,
+                        "assistedByName" to event.assistedByName,
+                        "minute" to event.minute,
+                    )
+                )
+            Result.success(event)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -1629,110 +1628,14 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> {
         return try {
-            // Validar permissão
-            if (!canManageGameEvents(gameId)) {
-                return Result.failure(Exception("Você não tem permissão para deletar eventos"))
-            }
-
-            // Buscar o evento antes de deletar
-            val eventDoc = firestore.collection("game_events").document(eventId).get()
-            val event = eventDoc.toGameEventOrNull()
-                ?: return Result.failure(Exception("Evento não encontrado"))
-
-            val eventType = event.getEventTypeEnum()
-
-            // Reverter estatísticas em transação
-            firestore.runTransaction<Unit> {
-                val scoreDocRef = firestore.collection("live_scores").document(gameId)
-                val gameDocRef = firestore.collection("games").document(gameId)
-
-                // Reverter placar se for gol
-                if (eventType == GameEventType.GOAL) {
-                    val scoreSnapshot = get(scoreDocRef)
-                    val score = scoreSnapshot.toLiveScoreOrNull()
-
-                    if (score != null) {
-                        when {
-                            score.team1Id == event.teamId -> {
-                                val newScore = maxOf(0, score.team1Score - 1)
-                                update(scoreDocRef, mapOf("team1_score" to newScore))
-                                update(gameDocRef, mapOf("team1_score" to newScore))
-                            }
-                            score.team2Id == event.teamId -> {
-                                val newScore = maxOf(0, score.team2Score - 1)
-                                update(scoreDocRef, mapOf("team2_score" to newScore))
-                                update(gameDocRef, mapOf("team2_score" to newScore))
-                            }
-                        }
-                    }
-                }
-
-                // Reverter estatísticas do jogador
-                if (event.playerId.isNotEmpty()) {
-                    val statsId = "${gameId}_${event.playerId}"
-                    val statsDocRef = firestore.collection("live_player_stats").document(statsId)
-                    val confirmationId = "${gameId}_${event.playerId}"
-                    val confDocRef = firestore.collection("confirmations").document(confirmationId)
-
-                    val statsSnapshot = get(statsDocRef)
-
-                    if (statsSnapshot.exists) {
-                        when (eventType) {
-                            GameEventType.GOAL -> update(statsDocRef, mapOf("goals" to maxOf(0, statsSnapshot.getGoals() - 1)))
-                            GameEventType.SAVE -> update(statsDocRef, mapOf("saves" to maxOf(0, statsSnapshot.getSaves() - 1)))
-                            GameEventType.YELLOW_CARD -> update(statsDocRef, mapOf("yellow_cards" to maxOf(0, statsSnapshot.getYellowCards() - 1)))
-                            GameEventType.RED_CARD -> update(statsDocRef, mapOf("red_cards" to maxOf(0, statsSnapshot.getRedCards() - 1)))
-                            else -> {}
-                        }
-                    }
-
-                    // Reverter em confirmations
-                    val confSnapshot = get(confDocRef)
-                    if (confSnapshot.exists) {
-                        when (eventType) {
-                            GameEventType.GOAL -> {
-                                val currentGoals = confSnapshot.get<Long?>("goals") ?: 0
-                                update(confDocRef, mapOf("goals" to maxOf(0, currentGoals - 1)))
-                            }
-                            GameEventType.YELLOW_CARD -> {
-                                val currentYellow = confSnapshot.get<Long?>("yellow_cards") ?: 0
-                                update(confDocRef, mapOf("yellow_cards" to maxOf(0, currentYellow - 1)))
-                            }
-                            GameEventType.RED_CARD -> {
-                                val currentRed = confSnapshot.get<Long?>("red_cards") ?: 0
-                                update(confDocRef, mapOf("red_cards" to maxOf(0, currentRed - 1)))
-                            }
-                            GameEventType.SAVE -> {
-                                val currentSaves = confSnapshot.get<Long?>("saves") ?: 0
-                                update(confDocRef, mapOf("saves" to maxOf(0, currentSaves - 1)))
-                            }
-                            else -> {}
-                        }
-                    }
-                }
-
-                // Reverter assistência se for gol com assistência
-                if (eventType == GameEventType.GOAL && !event.assistedById.isNullOrEmpty()) {
-                    val assistStatsId = "${gameId}_${event.assistedById}"
-                    val assistStatsDocRef = firestore.collection("live_player_stats").document(assistStatsId)
-                    val assistConfDocRef = firestore.collection("confirmations").document(assistStatsId)
-
-                    val assistSnapshot = get(assistStatsDocRef)
-                    if (assistSnapshot.exists) {
-                        update(assistStatsDocRef, mapOf("assists" to maxOf(0, assistSnapshot.getAssists() - 1)))
-                    }
-
-                    val assistConfSnapshot = get(assistConfDocRef)
-                    if (assistConfSnapshot.exists) {
-                        val currentAssists = assistConfSnapshot.get<Long?>("assists") ?: 0
-                        update(assistConfDocRef, mapOf("assists" to maxOf(0, currentAssists - 1)))
-                    }
-                }
-
-                // Deletar o evento
-                delete(firestore.collection("game_events").document(eventId))
-            }
-
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("deleteLiveGameEvent")
+                .invoke(
+                    mapOf(
+                        "gameId" to gameId,
+                        "eventId" to eventId,
+                    )
+                )
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

@@ -23,6 +23,9 @@ import {isGameShape} from "./validation/guards";
 import {
   buildGameValidationFromFirestore,
 } from "./game-validation/aggregate";
+import {
+  isScoreConsistentFromEventStream,
+} from "./games/live-events";
 
 // Padroniza região default de TODAS as functions v2 que não especificam
 // region explicitamente. Antes, 15 functions ficavam em us-central1
@@ -480,6 +483,28 @@ export const onGameStatusUpdate = onDocumentUpdated(
         const manualRewardApproval =
           gameData.xp_reward_review_decision ===
           "APPROVED";
+        const liveScoreData =
+          liveScoreDoc.exists ?
+            liveScoreDoc.data() :
+            undefined;
+        const scoreEventConsistent =
+          liveScoreData &&
+          typeof liveScoreData.team1_id === "string" &&
+          typeof liveScoreData.team2_id === "string" ?
+            isScoreConsistentFromEventStream(
+              gameEventsSnap.docs,
+              liveScoreData.team1_id,
+              liveScoreData.team2_id,
+              typeof liveScoreData.team1_score ===
+                "number" ?
+                liveScoreData.team1_score :
+                gameData.team1_score ?? 0,
+              typeof liveScoreData.team2_score ===
+                "number" ?
+                liveScoreData.team2_score :
+                gameData.team2_score ?? 0,
+            ) :
+            undefined;
 
         try {
           const validationResult =
@@ -487,6 +512,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
               confirmations: confirmationsSnap.docs
                 .map((doc) => doc.data()),
               eventCount: gameEventsSnap.size,
+              scoreEventConsistent,
               mode: "SOFT_GATE",
             });
           await event.data.after.ref.update({
@@ -2333,6 +2359,10 @@ export {
   finishGameLifecycle,
 } from "./games/lifecycle";
 export {reviewHeldGameRewards} from "./games/reward-review";
+export {
+  submitLiveGameEvent,
+  deleteLiveGameEvent,
+} from "./games/live-events";
 
 // Issue #2968: reputacao leve pos-jogo com agregacao server-side
 export {submitPostGameReputation} from "./reputation/post-game-reputation";

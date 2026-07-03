@@ -51,13 +51,6 @@ class LiveGameRepositoryImpl(
         assistedByName: String?,
         minute: Int
     ): Result<GameEvent> {
-        // Verificar permissão primeiro
-        val canManage = dataSource.canManageGameEvents(gameId)
-        if (!canManage) {
-            return Result.failure(Exception("Você não tem permissão para adicionar eventos neste jogo"))
-        }
-
-        // Criar evento
         val event = GameEvent(
             gameId = gameId,
             eventType = eventType.name,
@@ -69,35 +62,7 @@ class LiveGameRepositoryImpl(
             minute = minute,
             createdBy = dataSource.getCurrentAuthUserId() ?: ""
         )
-
-        // Salvar evento
-        val savedEventResult = dataSource.addGameEvent(gameId, event)
-        if (savedEventResult.isFailure) {
-            return savedEventResult
-        }
-
-        // Se for gol, atualizar placar
-        if (eventType == GameEventType.GOAL) {
-            val updateResult = dataSource.updateScoreForGoal(gameId, teamId)
-            if (updateResult.isFailure) {
-                return Result.failure(updateResult.exceptionOrNull() ?: Exception("Erro ao atualizar placar"))
-            }
-        }
-
-        // Atualizar estatísticas do jogador
-        val statsResult = dataSource.updatePlayerStats(
-            gameId = gameId,
-            playerId = playerId,
-            teamId = teamId,
-            eventType = eventType,
-            assistedById = assistedById
-        )
-
-        if (statsResult.isFailure) {
-            return Result.failure(statsResult.exceptionOrNull() ?: Exception("Erro ao atualizar estatísticas"))
-        }
-
-        return savedEventResult
+        return dataSource.addGameEvent(gameId, event)
     }
 
     override suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> {

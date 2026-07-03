@@ -486,6 +486,7 @@ service cloud.firestore {
       ]);
     }
 
+    // ATENCAO: manter esta lista espelhada com hasNoGameValidationClientFields().
     function gameValidationFieldsUnchanged() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
         'validation_status',
@@ -2563,59 +2564,10 @@ service cloud.firestore {
     match /game_events/{eventId} {
       allow read: if isAuthenticated();
 
-      // FASE 5 #448: game_event create exige verified (30-day grace)
-      // SECURITY: Validacao na criacao de eventos
-      // 1. game_id obrigatorio
-      // 2. type deve ser um dos tipos validos
-      // 3. Campos de score (se presentes) devem ter bounds
-      // #1991: created_by deve SEMPRE refletir o auth.uid real — admin/owner não podem
-      // criar eventos atribuindo created_by a outro usuário (XP fraud/prevention).
-      allow create: if isVerifiedOrGrace() && (
-        isAdmin() ||
-        isGameOwner(request.resource.data.game_id) ||
-        isConfirmedPlayer(request.resource.data.game_id)
-      ) &&
-      // #1991: created_by SEMPRE deve ser o caller — previne admin/owner de injetar
-      // eventos com created_by de terceiros para inflar/deflar XP fraudulento
-      request.resource.data.created_by == userId() &&
-      // game_id obrigatorio
-      request.resource.data.game_id is string &&
-      request.resource.data.game_id.size() > 0 &&
-      // type obrigatorio e deve ser valido
-      request.resource.data.type is string &&
-      request.resource.data.type in ['GOAL', 'ASSIST', 'SAVE', 'YELLOW_CARD', 'RED_CARD', 'SUBSTITUTION', 'FOUL', 'PENALTY', 'OWN_GOAL', 'GAME_START', 'GAME_END', 'HALF_TIME', 'TIMEOUT', 'OTHER'];
-
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        (isConfirmedPlayer(resource.data.game_id) && resource.data.created_by == userId())
-      ) &&
-      // #2155: created_by e game_id sao imutaveis
-      fieldUnchanged('game_id') &&
-      fieldUnchanged('created_by');
-
-      // SECFIX #610: confirmedPlayer só pode deletar eventos que ELE mesmo criou.
-      // Sem o check de ownership, qualquer jogador confirmado poderia deletar gols/
-      // assistências de outros jogadores — privilege escalation em sistema gamificado.
-      //
-      // Fallback legacy: eventos antigos podem não ter `created_by` setado (Android
-      // não populava antes do fix). Pra esses, aceitamos `player_id == userId()`
-      // como ownership proxy — o jogador do evento pode auto-deletar. Não reabre
-      // privilege escalation (limitado a eventos próprios), apenas permite recovery
-      // de eventos legacy.
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        (
-          isConfirmedPlayer(resource.data.game_id) && (
-            resource.data.created_by == userId() ||
-            (
-              (!('created_by' in resource.data) || resource.data.created_by == '') &&
-              resource.data.player_id == userId()
-            )
-          )
-        )
-      );
+      // #3211: eventos críticos são escritos apenas por Cloud Functions callables
+      // (`submitLiveGameEvent` / `deleteLiveGameEvent`) com validação de status,
+      // ator, player confirmado, time e consistência do placar.
+      allow create, update, delete: if false;
     }
 
     // ============================================
@@ -2624,35 +2576,9 @@ service cloud.firestore {
     match /live_scores/{scoreId} {
       allow read: if isAuthenticated();
 
-      // PERF_001 P0 #30: Validacao estrita de scores (max 100 gols por time)
-      // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{scoreId})
-      // scoreId é o próprio gameId, então owner_id está em resource.data
-      // SECFIX #869: isConfirmedPlayer branch removido — qualquer criação requer owner_id == userId()
-      // (game owner é o único caso legítimo; confirmed players não devem criar scores de outros)
-      allow create: if isAuthenticated() && (
-        isAdmin() ||
-        request.resource.data.owner_id == userId()
-      ) &&
-      // Validacao de bounds para placares
-      isValidScore(request.resource.data.get('team1_score', null)) &&
-      isValidScore(request.resource.data.get('team2_score', null));
-
-      // SECURITY: No update, owner_id nao pode ser alterado (previne transferencia de ownership)
-      // SECFIX #1603: isConfirmedPlayer removido — jogador confirmado nao pode alterar placar (anti-fraude)
-      // Apenas admin ou game owner (owner_id) podem atualizar live_scores
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.owner_id == userId()
-      ) &&
-      fieldUnchanged('owner_id') &&
-      // Validacao de bounds para placares
-      isValidScore(request.resource.data.get('team1_score', null)) &&
-      isValidScore(request.resource.data.get('team2_score', null));
-
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.owner_id == userId()
-      );
+      // #3211: placar ao vivo é derivado e mantido apenas no servidor para evitar
+      // fraude por writes diretos no cliente.
+      allow create, update, delete: if false;
     }
 
     // ============================================
@@ -2661,42 +2587,9 @@ service cloud.firestore {
     match /live_player_stats/{statId} {
       allow read: if isAuthenticated();
 
-      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
-      // Previne exploits de XP inflados durante jogo ao vivo
-      // SECURITY: Separado create/update para validar fieldUnchanged('game_id') no update
-      // SECFIX #857: confirmed player só pode criar/atualizar as próprias stats (player_id == userId())
-      allow create: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(request.resource.data.game_id) ||
-        (isConfirmedPlayer(request.resource.data.game_id) &&
-         request.resource.data.player_id == userId())
-      ) &&
-      // game_id obrigatorio
-      request.resource.data.game_id is string &&
-      // Validacao de bounds para stats de jogo
-      isValidScore(request.resource.data.get('goals', null)) &&
-      isValidScore(request.resource.data.get('assists', null)) &&
-      isValidScore(request.resource.data.get('saves', null));
-
-      // SECURITY: No update, game_id nao pode ser alterado (previne mover stats entre jogos)
-      // SECFIX #857: confirmed player só pode atualizar as próprias stats (player_id == userId())
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        (isConfirmedPlayer(resource.data.game_id) &&
-         resource.data.player_id == userId())
-      ) &&
-      fieldUnchanged('game_id') &&
-      fieldUnchanged('player_id') &&
-      // Validacao de bounds para stats de jogo
-      isValidScore(request.resource.data.get('goals', null)) &&
-      isValidScore(request.resource.data.get('assists', null)) &&
-      isValidScore(request.resource.data.get('saves', null));
-
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id)
-      );
+      // #3211: estatísticas derivadas do jogo ao vivo são mantidas apenas pelo
+      // servidor junto com o evento oficial.
+      allow create, update, delete: if false;
     }
 
     // ============================================

@@ -83,7 +83,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
     );
   });
 
-  it("Usuario nao verificado PODE criar game_event (dentro da grace ate 2026-08-03)", async () => {
+  it("Usuario nao verificado NAO pode criar game_event direto; deve usar Cloud Function", async () => {
     await seedDoc(testEnv, `games/grace-game-event`, {
       title: "Grace Event Test",
       owner_id: UID_PLAYER_A,
@@ -108,7 +108,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
       verified: false,
       profileComplete: true,
     });
-    await assertSucceeds(
+    await assertFails(
       unverifiedDb.doc(`game_events/ge-grace-unverified`).set({
         game_id: "grace-game-event",
         type: "GOAL",

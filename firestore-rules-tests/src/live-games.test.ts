@@ -8,8 +8,8 @@
  * Cobre:
  * - live_games: leitura para qualquer autenticado; write apenas owner ou admin
  * - live_games/events: leitura auth; create/update/delete owner/admin ou confirmed player (próprios eventos)
- * - live_scores: leitura auth; create owner_id==self ou admin; update owner/admin apenas (SECFIX #1603)
- * - live_player_stats: leitura auth; create owner/admin/confirmed player (próprias stats); update fieldUnchanged(game_id, player_id)
+ * - live_scores: leitura auth; escrita client-side bloqueada (somente Cloud Functions)
+ * - live_player_stats: leitura auth; escrita client-side bloqueada (somente Cloud Functions)
  */
 
 import { describe, it, beforeAll, afterAll } from "vitest";
@@ -306,9 +306,9 @@ describe("live_scores — leitura e escrita", () => {
     await assertFails(db.doc(`live_scores/${LIVE_GAME_ID}`).get());
   });
 
-  it("Owner pode criar live_score com owner_id == self e placares válidos", async () => {
+  it("Owner NÃO pode criar live_score direto", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_scores/live-score-new`).set({
         owner_id: UID_PLAYER_A,
         team1_score: 0,
@@ -331,9 +331,9 @@ describe("live_scores — leitura e escrita", () => {
     );
   });
 
-  it("Owner pode atualizar live_score sem alterar owner_id", async () => {
+  it("Owner NÃO pode atualizar live_score direto", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_scores/${LIVE_GAME_ID}`).update({
         team1_score: 2,
         team2_score: 1,
@@ -354,9 +354,9 @@ describe("live_scores — leitura e escrita", () => {
     );
   });
 
-  it("Admin pode atualizar live_score", async () => {
+  it("Admin client NÃO pode atualizar live_score direto", async () => {
     const db = asAdmin(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_scores/${LIVE_GAME_ID}`).update({
         team1_score: 3,
         team2_score: 1,
@@ -378,10 +378,9 @@ describe("live_player_stats — leitura e escrita", () => {
     );
   });
 
-  it("Confirmed player pode criar suas próprias stats (player_id == self)", async () => {
-    // Rule: isConfirmedPlayer(game_id) && player_id == userId()
+  it("Confirmed player NÃO pode criar stats direto", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_player_stats/stat-b-new`).set({
         game_id: LIVE_GAME_ID,
         player_id: UID_PLAYER_B,
@@ -406,9 +405,9 @@ describe("live_player_stats — leitura e escrita", () => {
     );
   });
 
-  it("Confirmed player pode atualizar suas próprias stats", async () => {
+  it("Confirmed player NÃO pode atualizar stats direto", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db
         .doc(`live_player_stats/${LIVE_GAME_ID}_${UID_PLAYER_B}`)
         .update({ goals: 2, assists: 0, saves: 0 })

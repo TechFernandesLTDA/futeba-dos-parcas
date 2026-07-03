@@ -40,14 +40,10 @@ class LiveGameViewModel(
     // Flag para evitar navegação múltipla para votação
     private var hasNavigatedToVote: Boolean = false
 
-    // Flag para evitar iniciar live game múltiplas vezes
-    private var hasTriedToStartLiveGame: Boolean = false
-
     fun loadGame(gameId: String) {
         scoreObserverJob?.cancel()
         currentGameId = gameId
         hasNavigatedToVote = false
-        hasTriedToStartLiveGame = false
 
         scoreObserverJob = viewModelScope.launch {
             _uiState.value = LiveGameUiState.Loading
@@ -100,20 +96,6 @@ class LiveGameViewModel(
                         } else {
                             // Fallback logging se times mudaram/foram deletados
                             com.futebadosparcas.util.AppLogger.w("LiveGameViewModel") { "Times do placar salvo não encontrados. Usando padrão." }
-                        }
-                    }
-
-                    // Handler para iniciar jogo se necessário
-                    // Qualquer usuário confirmado pode iniciar se score não existir
-                    if (score == null && game.status == "LIVE" && !hasTriedToStartLiveGame) {
-                        hasTriedToStartLiveGame = true
-                        try {
-                            // Iniciar placar ao vivo (qualquer um pode fazer isso se ainda não existe)
-                            liveGameRepository.startLiveGame(gameId, team1.id, team2.id)
-                        } catch (e: Exception) {
-                            // Resetar flag para permitir nova tentativa em caso de falha (#1608)
-                            hasTriedToStartLiveGame = false
-                            com.futebadosparcas.util.AppLogger.e("LiveGameViewModel", "Falha ao iniciar jogo ao vivo: ${e.message}", e)
                         }
                     }
 
